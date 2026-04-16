@@ -164,6 +164,7 @@ export const Inbox: React.FC = () => {
     });
     const [shortLink, setShortLink] = useState<string | null>(null);
     const [isGeneratingShortLink, setIsGeneratingShortLink] = useState(false);
+    const [linkChannel, setLinkChannel] = useState<'LINK' | 'ZALO' | 'FACEBOOK' | 'SMS'>('LINK');
     
     // --- SUPERVISOR STATE ---
     const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread
@@ -208,11 +209,11 @@ export const Inbox: React.FC = () => {
     }, []);
 
     // Generate short link when widget modal opens or params change
-    const generateShortLink = useCallback(async (title: string, desc: string, agentId?: string) => {
+    const generateShortLink = useCallback(async (title: string, desc: string, agentId?: string, channel: string = 'LINK') => {
         setIsGeneratingShortLink(true);
         setShortLink(null);
         const origin = window.location.origin;
-        const fullUrl = `${origin}/livechat?title=${encodeURIComponent(title)}&desc=${encodeURIComponent(desc)}${agentId ? `&agent=${agentId}` : ''}&source=LINK&lang=${language}`;
+        const fullUrl = `${origin}/livechat?title=${encodeURIComponent(title)}&desc=${encodeURIComponent(desc)}${agentId ? `&agent=${agentId}` : ''}&source=${channel}&lang=${language}`;
         try {
             const res = await fetch('/api/links/shorten', {
                 method: 'POST',
@@ -298,14 +299,14 @@ export const Inbox: React.FC = () => {
         staleTime: 60_000,
     });
 
-    // Auto-generate short link when widget modal opens (debounced on title/desc changes)
+    // Auto-generate short link when widget modal opens (debounced on title/desc/channel changes)
     useEffect(() => {
         if (!isWidgetModalOpen) return;
         const timer = setTimeout(() => {
-            generateShortLink(widgetTitle, widgetDesc, currentUser?.id);
+            generateShortLink(widgetTitle, widgetDesc, currentUser?.id, linkChannel);
         }, 600);
         return () => clearTimeout(timer);
-    }, [isWidgetModalOpen, widgetTitle, widgetDesc, currentUser?.id, generateShortLink]);
+    }, [isWidgetModalOpen, widgetTitle, widgetDesc, currentUser?.id, linkChannel, generateShortLink]);
 
     // --- WEBSOCKET INTEGRATION ---
     useEffect(() => {
@@ -1145,6 +1146,27 @@ export const Inbox: React.FC = () => {
                                                 <span className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full font-medium border border-emerald-200">{t('inbox.widget_short_valid')}</span>
                                             )}
                                         </div>
+                                        {/* Channel selector — choose platform to share link */}
+                                        <div className="flex gap-2 mb-2">
+                                            {([
+                                                { key: 'LINK' as const, label: t('inbox.widget_channel_link'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
+                                                { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
+                                                { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
+                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
+                                            ]).map(({ key, label, activeClass }) => (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => setLinkChannel(key)}
+                                                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                        linkChannel === key
+                                                            ? activeClass
+                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
+                                                    }`}
+                                                >
+                                                    {label}
+                                                </button>
+                                            ))}
+                                        </div>
                                         <div className="flex gap-2">
                                             {isGeneratingShortLink ? (
                                                 <div className="flex-1 flex items-center gap-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2">
@@ -1154,13 +1176,13 @@ export const Inbox: React.FC = () => {
                                             ) : (
                                                 <input
                                                     readOnly
-                                                    value={shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=LINK&lang=${language}` : '?source=LINK'}`}
+                                                    value={shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=${linkChannel}&lang=${language}` : `?source=${linkChannel}`}`}
                                                     className="flex-1 min-w-0 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm text-[var(--text-secondary)] font-mono"
                                                 />
                                             )}
                                             <button
                                                 onClick={() => {
-                                                    const link = shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=LINK&lang=${language}` : '?source=LINK'}`;
+                                                    const link = shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=${linkChannel}&lang=${language}` : `?source=${linkChannel}`}`;
                                                     navigator.clipboard.writeText(link).catch(() => {});
                                                     notify(t('inbox.widget_link_copied'), 'success');
                                                 }}
@@ -1170,7 +1192,7 @@ export const Inbox: React.FC = () => {
                                                 {t('inbox.widget_copy')}
                                             </button>
                                             <button
-                                                onClick={() => generateShortLink(widgetTitle, widgetDesc, currentUser?.id)}
+                                                onClick={() => generateShortLink(widgetTitle, widgetDesc, currentUser?.id, linkChannel)}
                                                 disabled={isGeneratingShortLink}
                                                 title={t('inbox.widget_refresh_link')}
                                                 className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors disabled:opacity-40"
@@ -1178,7 +1200,7 @@ export const Inbox: React.FC = () => {
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                             </button>
                                             <a
-                                                href={shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=LINK&lang=${language}` : '?source=LINK'}`}
+                                                href={shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=${linkChannel}&lang=${language}` : `?source=${linkChannel}`}`}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 title={t('inbox.widget_open_link')}
