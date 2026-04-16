@@ -37824,6 +37824,276 @@ init_listingRepository();
 init_logger();
 init_db();
 import { Router as Router20 } from "express";
+
+// server/middleware/rateLimiter.ts
+var stores = /* @__PURE__ */ new Map();
+function getStore(name) {
+  if (!stores.has(name)) {
+    stores.set(name, /* @__PURE__ */ new Map());
+  }
+  return stores.get(name);
+}
+function cleanupStore(store) {
+  const now = Date.now();
+  for (const [key, entry] of store) {
+    if (now > entry.resetAt) {
+      store.delete(key);
+    }
+  }
+}
+setInterval(() => {
+  for (const store of stores.values()) {
+    cleanupStore(store);
+  }
+}, 6e4);
+var upstashClient = null;
+async function getUpstashClient() {
+  const url2 = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url2 || !token) return null;
+  if (upstashClient) return upstashClient;
+  try {
+    const { Redis: Redis3 } = await Promise.resolve().then(() => (init_nodejs(), nodejs_exports));
+    upstashClient = new Redis3({ url: url2, token });
+    return upstashClient;
+  } catch (e) {
+    upstashClient = null;
+    return null;
+  }
+}
+async function upstashIncr(client, key, windowSecs) {
+  const count = await client.incr(key);
+  if (count === 1) {
+    await client.expire(key, windowSecs);
+  }
+  return count;
+}
+function rateLimit(options) {
+  const { name, windowMs, maxRequests, message: message2 } = options;
+  const windowSecs = Math.ceil(windowMs / 1e3);
+  const keyFn = options.keyFn || ((req) => {
+    const user = req.user;
+    return user?.id || req.ip || "anonymous";
+  });
+  return async (req, res, next) => {
+    const key = keyFn(req);
+    let count;
+    let resetAt;
+    const redis = await getUpstashClient();
+    if (redis) {
+      const redisKey = `rl:${name}:${key}`;
+      try {
+        count = await upstashIncr(redis, redisKey, windowSecs);
+        const ttl = await redis.ttl(redisKey);
+        resetAt = Date.now() + (ttl > 0 ? ttl * 1e3 : windowMs);
+      } catch {
+        const store = getStore(name);
+        const now = Date.now();
+        let entry = store.get(key);
+        if (!entry || now > entry.resetAt) {
+          entry = { count: 0, resetAt: now + windowMs };
+          store.set(key, entry);
+        }
+        entry.count++;
+        count = entry.count;
+        resetAt = entry.resetAt;
+      }
+    } else {
+      const store = getStore(name);
+      const now = Date.now();
+      let entry = store.get(key);
+      if (!entry || now > entry.resetAt) {
+        entry = { count: 0, resetAt: now + windowMs };
+        store.set(key, entry);
+      }
+      entry.count++;
+      count = entry.count;
+      resetAt = entry.resetAt;
+    }
+    res.setHeader("X-RateLimit-Limit", maxRequests);
+    res.setHeader("X-RateLimit-Remaining", Math.max(0, maxRequests - count));
+    res.setHeader("X-RateLimit-Reset", Math.ceil(resetAt / 1e3));
+    if (count > maxRequests) {
+      const retryAfter = Math.ceil((resetAt - Date.now()) / 1e3);
+      res.setHeader("Retry-After", retryAfter);
+      return res.status(429).json({
+        error: message2 || "Too many requests. Please try again later.",
+        retryAfter
+      });
+    }
+    next();
+  };
+}
+var aiRateLimit = rateLimit({
+  name: "ai",
+  windowMs: 6e4,
+  maxRequests: 20,
+  message: "AI request limit exceeded. Please wait before making more AI requests."
+});
+var authRateLimit = rateLimit({
+  name: "auth",
+  windowMs: 15 * 6e4,
+  maxRequests: 15,
+  keyFn: (req) => req.ip || "anonymous",
+  message: "Too many login attempts. Please try again later."
+});
+var apiRateLimit = rateLimit({
+  name: "api",
+  windowMs: 6e4,
+  maxRequests: 600
+});
+var webhookRateLimit = rateLimit({
+  name: "webhook",
+  windowMs: 6e4,
+  maxRequests: 100,
+  keyFn: (req) => req.ip || "anonymous"
+});
+var publicLeadRateLimit = rateLimit({
+  name: "public_lead",
+  windowMs: 6e4,
+  maxRequests: 5,
+  keyFn: (req) => req.ip || "anonymous",
+  message: "Too many lead submissions from this IP. Please try again later."
+});
+var livechatRateLimit = rateLimit({
+  name: "livechat",
+  windowMs: 6e4,
+  maxRequests: 60,
+  keyFn: (req) => req.ip || "anonymous",
+  message: "B\u1EA1n \u0111ang g\u1EEDi tin nh\u1EAFn qu\xE1 nhanh. Vui l\xF2ng \u0111\u1EE3i m\u1ED9t ch\xFAt."
+});
+var guestValuationRateLimit = rateLimit({
+  name: "guest_valuation",
+  windowMs: 24 * 60 * 6e4,
+  maxRequests: 2,
+  keyFn: (req) => `gv:${req.ip || "anon"}`,
+  message: "B\u1EA1n \u0111\xE3 d\xF9ng h\u1EBFt 2 l\u01B0\u1EE3t \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED h\xF4m nay. \u0110\u0103ng nh\u1EADp \u0111\u1EC3 ti\u1EBFp t\u1EE5c."
+});
+var VALUATION_PLAN_LIMITS = {
+  INDIVIDUAL: 20,
+  TEAM: 150,
+  ENTERPRISE: -1
+  // -1 = unlimited
+};
+function monthlyResetTs() {
+  const d = /* @__PURE__ */ new Date();
+  d.setMonth(d.getMonth() + 1, 1);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+async function getUserPlan(tenantId) {
+  try {
+    const { pool: pool3 } = await Promise.resolve().then(() => (init_db(), db_exports));
+    const result = await pool3.query(
+      `SELECT plan_id FROM subscriptions WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [tenantId]
+    );
+    return result.rows[0]?.plan_id || "INDIVIDUAL";
+  } catch {
+    return "INDIVIDUAL";
+  }
+}
+async function getMonthlyQuotaStatus(userId, tenantId) {
+  const period = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
+  const plan = await getUserPlan(tenantId);
+  const limit = VALUATION_PLAN_LIMITS[plan] ?? VALUATION_PLAN_LIMITS.INDIVIDUAL;
+  const isUnlimited = limit === -1;
+  const resetAt = new Date(monthlyResetTs()).toISOString();
+  if (isUnlimited) {
+    return { used: 0, limit: -1, remaining: -1, plan, resetAt, isUnlimited: true };
+  }
+  const redisKey = `mq:val:${userId}:${period}`;
+  let used = 0;
+  const redis = await getUpstashClient();
+  if (redis) {
+    try {
+      const val = await redis.get(redisKey);
+      used = val ? parseInt(String(val), 10) : 0;
+    } catch {
+    }
+  } else {
+    const store = getStore("monthly_quota");
+    const entry = store.get(redisKey);
+    used = entry ? entry.count : 0;
+  }
+  const remaining = Math.max(0, limit - used);
+  return { used, limit, remaining, plan, resetAt, isUnlimited: false };
+}
+function monthlyValuationQuota(req, res, next) {
+  const user = req.user;
+  if (!user) {
+    next();
+    return;
+  }
+  const userId = user.id || user.userId || "unknown";
+  const tenantId = user.tenantId || userId;
+  const period = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
+  (async () => {
+    const plan = await getUserPlan(tenantId);
+    const limit = VALUATION_PLAN_LIMITS[plan] ?? VALUATION_PLAN_LIMITS.INDIVIDUAL;
+    const isUnlimited = limit === -1;
+    const resetTs = monthlyResetTs();
+    const resetAt = new Date(resetTs).toISOString();
+    if (isUnlimited) {
+      req.quotaInfo = { used: 0, limit: -1, remaining: -1, plan, resetAt, isUnlimited: true };
+      res.setHeader("X-Quota-Limit", "unlimited");
+      next();
+      return;
+    }
+    const redisKey = `mq:val:${userId}:${period}`;
+    const ttlSecs = Math.max(1, Math.ceil((resetTs - Date.now()) / 1e3));
+    let used;
+    const redis = await getUpstashClient();
+    if (redis) {
+      try {
+        used = await upstashIncr(redis, redisKey, ttlSecs);
+      } catch {
+        const store = getStore("monthly_quota");
+        const now = Date.now();
+        let entry = store.get(redisKey);
+        if (!entry || now > entry.resetAt) entry = { count: 0, resetAt: resetTs };
+        entry.count++;
+        store.set(redisKey, entry);
+        used = entry.count;
+      }
+    } else {
+      const store = getStore("monthly_quota");
+      const now = Date.now();
+      let entry = store.get(redisKey);
+      if (!entry || now > entry.resetAt) entry = { count: 0, resetAt: resetTs };
+      entry.count++;
+      store.set(redisKey, entry);
+      used = entry.count;
+    }
+    const remaining = Math.max(0, limit - used);
+    res.setHeader("X-Quota-Limit", limit);
+    res.setHeader("X-Quota-Used", used);
+    res.setHeader("X-Quota-Remaining", remaining);
+    res.setHeader("X-Quota-Reset", Math.ceil(resetTs / 1e3));
+    req.quotaInfo = { used, limit, remaining, plan, resetAt, isUnlimited: false };
+    if (used > limit) {
+      res.status(429).json({
+        error: "monthly_quota_exceeded",
+        message: `B\u1EA1n \u0111\xE3 s\u1EED d\u1EE5ng h\u1EBFt ${limit} l\u01B0\u1EE3t \u0111\u1ECBnh gi\xE1 AI th\xE1ng n\xE0y (g\xF3i ${plan}). N\xE2ng c\u1EA5p \u0111\u1EC3 ti\u1EBFp t\u1EE5c.`,
+        quota: { used, limit, remaining: 0, plan, resetAt }
+      });
+      return;
+    }
+    next();
+  })().catch((err4) => {
+    console.error("[monthlyValuationQuota] Error:", err4);
+    next();
+  });
+}
+var userValuationRateLimit = rateLimit({
+  name: "user_valuation_legacy",
+  windowMs: 24 * 60 * 6e4,
+  maxRequests: 20,
+  keyFn: (req) => `uv:${req.user?.id || req.ip || "user"}`,
+  message: "Vui l\xF2ng th\u1EED l\u1EA1i sau."
+});
+
+// server/routes/valuationRoutes.ts
 function normalizeAddrKey(addr) {
   return addr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 }
@@ -37913,14 +38183,44 @@ function stripPropertyTypePrefix(address) {
   }
   return result.trim();
 }
-function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, guestValuationRateLimit2, userValuationRateLimit2) {
+function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, guestValuationRateLimit2, _userValuationRateLimit) {
   const router = Router20();
+  router.get("/quota", optionalAuth, async (req, res) => {
+    const user = req.user;
+    if (!user) {
+      return res.json({
+        authenticated: false,
+        guestLimit: 2,
+        message: "\u0110\u0103ng nh\u1EADp \u0111\u1EC3 xem quota \u0111\u1ECBnh gi\xE1 AI."
+      });
+    }
+    try {
+      const userId = user.id || user.userId || "unknown";
+      const tenantId = user.tenantId || userId;
+      const quota = await getMonthlyQuotaStatus(userId, tenantId);
+      const planLabels = {
+        INDIVIDUAL: "Mi\u1EC5n ph\xED",
+        TEAM: "Team ($49/th\xE1ng)",
+        ENTERPRISE: "Enterprise ($199/th\xE1ng)"
+      };
+      return res.json({
+        authenticated: true,
+        ...quota,
+        planLabel: planLabels[quota.plan] || quota.plan,
+        planLimits: VALUATION_PLAN_LIMITS
+      });
+    } catch (err4) {
+      return res.status(500).json({ error: "Kh\xF4ng th\u1EC3 ki\u1EC3m tra quota." });
+    }
+  });
   router.post(
     "/advanced",
     optionalAuth,
     (req, res, next) => {
-      const limiter = req.user ? userValuationRateLimit2 || aiRateLimit2 : guestValuationRateLimit2;
-      return limiter(req, res, next);
+      if (req.user) {
+        return monthlyValuationQuota(req, res, next);
+      }
+      return guestValuationRateLimit2(req, res, next);
     },
     async (req, res) => {
       try {
@@ -38176,7 +38476,9 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
             direction: direction || void 0,
             frontageWidth: frontageWidth !== void 0 ? Number(frontageWidth) : void 0,
             bedrooms: bedrooms !== void 0 ? Number(bedrooms) : void 0
-          }
+          },
+          // Quota info — helps frontend show remaining uses without extra round-trip
+          quota: req.quotaInfo || null
         });
       } catch (error48) {
         logger.error("[Valuation] Advanced valuation error:", error48);
@@ -56833,158 +57135,6 @@ function errorHandler(err4, req, res, _next) {
   });
 }
 
-// server/middleware/rateLimiter.ts
-var stores = /* @__PURE__ */ new Map();
-function getStore(name) {
-  if (!stores.has(name)) {
-    stores.set(name, /* @__PURE__ */ new Map());
-  }
-  return stores.get(name);
-}
-function cleanupStore(store) {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now > entry.resetAt) {
-      store.delete(key);
-    }
-  }
-}
-setInterval(() => {
-  for (const store of stores.values()) {
-    cleanupStore(store);
-  }
-}, 6e4);
-var upstashClient = null;
-async function getUpstashClient() {
-  const url2 = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url2 || !token) return null;
-  if (upstashClient) return upstashClient;
-  try {
-    const { Redis: Redis3 } = await Promise.resolve().then(() => (init_nodejs(), nodejs_exports));
-    upstashClient = new Redis3({ url: url2, token });
-    return upstashClient;
-  } catch (e) {
-    upstashClient = null;
-    return null;
-  }
-}
-async function upstashIncr(client, key, windowSecs) {
-  const count = await client.incr(key);
-  if (count === 1) {
-    await client.expire(key, windowSecs);
-  }
-  return count;
-}
-function rateLimit(options) {
-  const { name, windowMs, maxRequests, message: message2 } = options;
-  const windowSecs = Math.ceil(windowMs / 1e3);
-  const keyFn = options.keyFn || ((req) => {
-    const user = req.user;
-    return user?.id || req.ip || "anonymous";
-  });
-  return async (req, res, next) => {
-    const key = keyFn(req);
-    let count;
-    let resetAt;
-    const redis = await getUpstashClient();
-    if (redis) {
-      const redisKey = `rl:${name}:${key}`;
-      try {
-        count = await upstashIncr(redis, redisKey, windowSecs);
-        const ttl = await redis.ttl(redisKey);
-        resetAt = Date.now() + (ttl > 0 ? ttl * 1e3 : windowMs);
-      } catch {
-        const store = getStore(name);
-        const now = Date.now();
-        let entry = store.get(key);
-        if (!entry || now > entry.resetAt) {
-          entry = { count: 0, resetAt: now + windowMs };
-          store.set(key, entry);
-        }
-        entry.count++;
-        count = entry.count;
-        resetAt = entry.resetAt;
-      }
-    } else {
-      const store = getStore(name);
-      const now = Date.now();
-      let entry = store.get(key);
-      if (!entry || now > entry.resetAt) {
-        entry = { count: 0, resetAt: now + windowMs };
-        store.set(key, entry);
-      }
-      entry.count++;
-      count = entry.count;
-      resetAt = entry.resetAt;
-    }
-    res.setHeader("X-RateLimit-Limit", maxRequests);
-    res.setHeader("X-RateLimit-Remaining", Math.max(0, maxRequests - count));
-    res.setHeader("X-RateLimit-Reset", Math.ceil(resetAt / 1e3));
-    if (count > maxRequests) {
-      const retryAfter = Math.ceil((resetAt - Date.now()) / 1e3);
-      res.setHeader("Retry-After", retryAfter);
-      return res.status(429).json({
-        error: message2 || "Too many requests. Please try again later.",
-        retryAfter
-      });
-    }
-    next();
-  };
-}
-var aiRateLimit = rateLimit({
-  name: "ai",
-  windowMs: 6e4,
-  maxRequests: 20,
-  message: "AI request limit exceeded. Please wait before making more AI requests."
-});
-var authRateLimit = rateLimit({
-  name: "auth",
-  windowMs: 15 * 6e4,
-  maxRequests: 15,
-  keyFn: (req) => req.ip || "anonymous",
-  message: "Too many login attempts. Please try again later."
-});
-var apiRateLimit = rateLimit({
-  name: "api",
-  windowMs: 6e4,
-  maxRequests: 600
-});
-var webhookRateLimit = rateLimit({
-  name: "webhook",
-  windowMs: 6e4,
-  maxRequests: 100,
-  keyFn: (req) => req.ip || "anonymous"
-});
-var publicLeadRateLimit = rateLimit({
-  name: "public_lead",
-  windowMs: 6e4,
-  maxRequests: 5,
-  keyFn: (req) => req.ip || "anonymous",
-  message: "Too many lead submissions from this IP. Please try again later."
-});
-var livechatRateLimit = rateLimit({
-  name: "livechat",
-  windowMs: 6e4,
-  maxRequests: 60,
-  keyFn: (req) => req.ip || "anonymous",
-  message: "B\u1EA1n \u0111ang g\u1EEDi tin nh\u1EAFn qu\xE1 nhanh. Vui l\xF2ng \u0111\u1EE3i m\u1ED9t ch\xFAt."
-});
-var guestValuationRateLimit = rateLimit({
-  name: "guest_valuation",
-  windowMs: 24 * 60 * 6e4,
-  maxRequests: 1,
-  keyFn: (req) => `gv:${req.ip || "anon"}`,
-  message: "B\u1EA1n \u0111\xE3 d\xF9ng h\u1EBFt 1 l\u01B0\u1EE3t \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED h\xF4m nay. \u0110\u0103ng nh\u1EADp \u0111\u1EC3 ti\u1EBFp t\u1EE5c."
-});
-var userValuationRateLimit = rateLimit({
-  name: "user_valuation",
-  windowMs: 24 * 60 * 6e4,
-  maxRequests: 3,
-  keyFn: (req) => `uv:${req.user?.id || req.user?.tenantId || req.ip || "user"}`,
-  message: "B\u1EA1n \u0111\xE3 d\xF9ng h\u1EBFt 3 l\u01B0\u1EE3t \u0111\u1ECBnh gi\xE1 h\xF4m nay. Vui l\xF2ng th\u1EED l\u1EA1i v\xE0o ng\xE0y mai."
-});
-
 // server.ts
 init_logger();
 
@@ -61894,45 +62044,51 @@ async function startServer() {
       sendAiError(res, error48, "summarize-lead");
     }
   });
-  app.post("/api/ai/valuation", optionalAuth, async (req, res, next) => {
-    const limiter = req.user ? aiRateLimit : guestValuationRateLimit;
-    return limiter(req, res, next);
-  }, validateBody(schemas.aiValuation), async (req, res) => {
-    try {
-      const {
-        address,
-        area,
-        roadWidth,
-        legal,
-        propertyType,
-        // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn, Kage, Kbr)
-        floorLevel,
-        direction,
-        frontageWidth,
-        furnishing,
-        monthlyRent,
-        buildingAge,
-        bedrooms
-      } = req.body;
-      const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
-      const [result] = await Promise.all([
-        aiService2.getRealtimeValuation(address, area, roadWidth, legal, propertyType, req.tenantId, {
-          floorLevel: floorLevel !== void 0 ? Number(floorLevel) : void 0,
-          direction: direction || void 0,
-          frontageWidth: frontageWidth !== void 0 ? Number(frontageWidth) : void 0,
-          furnishing: furnishing || void 0,
-          monthlyRent: monthlyRent !== void 0 ? Number(monthlyRent) : void 0,
-          buildingAge: buildingAge !== void 0 ? Number(buildingAge) : void 0,
-          bedrooms: bedrooms !== void 0 ? Number(bedrooms) : void 0
-        }),
-        // Populate/warm the market data cache from this request (fire-and-forget)
-        marketDataService.getMarketData(address).catch(() => null)
-      ]);
-      res.json(result);
-    } catch (error48) {
-      sendAiError(res, error48, "valuation");
+  app.post(
+    "/api/ai/valuation",
+    optionalAuth,
+    (req, res, next) => {
+      if (req.user) return monthlyValuationQuota(req, res, next);
+      return guestValuationRateLimit(req, res, next);
+    },
+    validateBody(schemas.aiValuation),
+    async (req, res) => {
+      try {
+        const {
+          address,
+          area,
+          roadWidth,
+          legal,
+          propertyType,
+          // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn, Kage, Kbr)
+          floorLevel,
+          direction,
+          frontageWidth,
+          furnishing,
+          monthlyRent,
+          buildingAge,
+          bedrooms
+        } = req.body;
+        const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
+        const [result] = await Promise.all([
+          aiService2.getRealtimeValuation(address, area, roadWidth, legal, propertyType, req.tenantId, {
+            floorLevel: floorLevel !== void 0 ? Number(floorLevel) : void 0,
+            direction: direction || void 0,
+            frontageWidth: frontageWidth !== void 0 ? Number(frontageWidth) : void 0,
+            furnishing: furnishing || void 0,
+            monthlyRent: monthlyRent !== void 0 ? Number(monthlyRent) : void 0,
+            buildingAge: buildingAge !== void 0 ? Number(buildingAge) : void 0,
+            bedrooms: bedrooms !== void 0 ? Number(bedrooms) : void 0
+          }),
+          // Populate/warm the market data cache from this request (fire-and-forget)
+          marketDataService.getMarketData(address).catch(() => null)
+        ]);
+        res.json(result);
+      } catch (error48) {
+        sendAiError(res, error48, "valuation");
+      }
     }
-  });
+  );
   app.post("/api/ai/generate-content", authenticateToken, aiRateLimit, async (req, res) => {
     try {
       const { prompt, model, temperature, systemInstruction, responseMimeType, responseSchema, stream } = req.body;

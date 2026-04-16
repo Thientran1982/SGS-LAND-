@@ -398,6 +398,12 @@ export const AiValuation: React.FC = () => {
     const [showGuestGate, setShowGuestGate] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const [history, setHistory] = useState<ValuationHistoryItem[]>([]);
+    // Monthly quota state for authenticated users
+    const [quotaInfo, setQuotaInfo] = useState<{
+        used: number; limit: number; remaining: number;
+        plan: string; planLabel: string; resetAt: string; isUnlimited: boolean;
+    } | null>(null);
+    const [showQuotaGate, setShowQuotaGate] = useState(false);
 
     // Feedback / RLHF states
     const [valuationId, setValuationId] = useState<string | null>(null);
@@ -413,10 +419,19 @@ export const AiValuation: React.FC = () => {
 
     useEffect(() => {
         setHistory(readHistory());
-        db.getCurrentUser().then((user) => {
+        db.getCurrentUser().then(async (user) => {
             setCurrentUser(user);
             if (!user) {
                 setGuestUsed(readGuestVal().count);
+            } else {
+                // Fetch monthly quota for authenticated users
+                try {
+                    const res = await fetch('/api/valuation/quota', { credentials: 'include' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.authenticated) setQuotaInfo(data);
+                    }
+                } catch { /* ignore — UI will show nothing */ }
             }
         });
     }, []);
@@ -608,6 +623,11 @@ export const AiValuation: React.FC = () => {
                 return;
             }
         }
+        // Auth user monthly quota gate — soft check before calling API
+        if (currentUser && quotaInfo && !quotaInfo.isUnlimited && quotaInfo.remaining <= 0) {
+            setShowQuotaGate(true);
+            return;
+        }
 
         if (intervalRef.current) clearInterval(intervalRef.current);
         // Reset feedback states for a new valuation
@@ -667,7 +687,8 @@ export const AiValuation: React.FC = () => {
             // If this is a rate-limit (429) or quota error, show clear message and stop.
             // Do NOT run the offline fallback — it would show wrong prices.
             const errMsg: string = _err?.message || '';
-            const isRateLimit = errMsg.includes('hết lượt') || errMsg.includes('hết 1 lượt') || errMsg.includes('hết 3 lượt') || errMsg.includes('Too many') || errMsg.includes('rate limit') || errMsg.includes('429') || errMsg.includes('Hệ thống AI đang bận');
+            const isMonthlyQuota = errMsg.includes('monthly_quota_exceeded') || errMsg.includes('tháng này');
+            const isRateLimit = isMonthlyQuota || errMsg.includes('hết lượt') || errMsg.includes('hết 1 lượt') || errMsg.includes('hết 3 lượt') || errMsg.includes('Too many') || errMsg.includes('rate limit') || errMsg.includes('429') || errMsg.includes('Hệ thống AI đang bận');
             if (intervalRef.current) clearInterval(intervalRef.current);
             if (isRateLimit) {
                 setProgress(0);
@@ -678,6 +699,10 @@ export const AiValuation: React.FC = () => {
                     writeGuestVal(exhausted);
                     setGuestUsed(GUEST_DAILY_LIMIT);
                     setShowGuestGate(true);
+                } else if (isMonthlyQuota) {
+                    // Sync quota state to show 0 remaining
+                    setQuotaInfo(prev => prev ? { ...prev, remaining: 0, used: prev.limit } : prev);
+                    setShowQuotaGate(true);
                 } else {
                     notify(errMsg || 'Bạn đã dùng hết lượt định giá hôm nay. Vui lòng thử lại vào ngày mai.', 'error');
                 }
@@ -783,6 +808,13 @@ export const AiValuation: React.FC = () => {
                 const updated: GuestValRecord = { count: v.count + 1, date: todayStr() };
                 writeGuestVal(updated);
                 setGuestUsed(updated.count);
+            }
+            // Sync monthly quota from server response (avoids extra round-trip)
+            if (currentUser && aiResult.quota) {
+                setQuotaInfo(prev => prev
+                    ? { ...prev, ...aiResult.quota }
+                    : aiResult.quota
+                );
             }
         }, 500);
     };
@@ -919,6 +951,26 @@ export const AiValuation: React.FC = () => {
                                     ? 'Hết lượt hôm nay'
                                     : `Còn ${GUEST_DAILY_LIMIT - guestUsed}/${GUEST_DAILY_LIMIT} lượt`}
                             </span>
+                        )}
+                        {currentUser && quotaInfo && !quotaInfo.isUnlimited && (
+                            <button
+                                onClick={() => quotaInfo.remaining <= 0 ? setShowQuotaGate(true) : undefined}
+                                className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium border cursor-default select-none transition-colors ${
+                                    quotaInfo.remaining <= 0
+                                        ? 'bg-rose-900/40 border-rose-700/50 text-rose-300 cursor-pointer'
+                                        : quotaInfo.remaining <= 3
+                                        ? 'bg-amber-900/40 border-amber-700/50 text-amber-300'
+                                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                                }`}
+                                title={`Quota định giá AI tháng này · ${quotaInfo.planLabel}`}
+                            >
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                {quotaInfo.remaining <= 0
+                                    ? 'Hết lượt tháng'
+                                    : `${quotaInfo.remaining}/${quotaInfo.limit} lượt`}
+                            </button>
                         )}
                         <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-emerald-500 text-[var(--text-primary)] font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] whitespace-nowrap">
                             {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
@@ -2458,6 +2510,70 @@ export const AiValuation: React.FC = () => {
                         </button>
                     </div>
                     <p className="text-xs text-slate-600">Lượt định giá khách reset mỗi ngày lúc 00:00</p>
+                </div>
+            </div>,
+            document.body
+        )}
+        {showQuotaGate && createPortal(
+            <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowQuotaGate(false)}>
+                <div
+                    className="max-w-sm w-full bg-slate-800 border border-slate-700 rounded-2xl p-7 flex flex-col items-center gap-5 text-center shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                        <svg className="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h2 className="text-lg font-bold text-white">
+                            Đã dùng hết {quotaInfo?.limit} lượt định giá AI tháng này
+                        </h2>
+                        <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
+                            Gói <span className="text-amber-400 font-medium">{quotaInfo?.planLabel || 'Miễn phí'}</span> giới hạn{' '}
+                            <strong className="text-white">{quotaInfo?.limit} lượt/tháng</strong>.
+                            Nâng cấp để tiếp tục định giá không giới hạn.
+                        </p>
+                    </div>
+
+                    <ul className="w-full text-left space-y-2">
+                        {[
+                            'Định giá AI không giới hạn mỗi tháng',
+                            'Ưu tiên xử lý (response nhanh hơn)',
+                            'Xuất báo cáo định giá PDF',
+                            'Dữ liệu comps nội bộ độc quyền',
+                            'Hỗ trợ ưu tiên qua email/Zalo',
+                        ].map(b => (
+                            <li key={b} className="flex items-center gap-2 text-xs text-slate-300">
+                                <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {b}
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div className="flex flex-col gap-2.5 w-full">
+                        <a
+                            href="mailto:info@sgsland.vn?subject=Nâng cấp gói định giá AI"
+                            className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-400 active:scale-95 transition-all shadow-lg shadow-amber-500/20 text-center block"
+                        >
+                            Liên hệ nâng cấp →
+                        </a>
+                        <button
+                            onClick={() => setShowQuotaGate(false)}
+                            className="w-full py-2.5 bg-slate-700/50 text-slate-400 text-sm rounded-xl hover:bg-slate-700 transition-colors"
+                        >
+                            Đóng — đợi reset tháng sau
+                        </button>
+                    </div>
+                    {quotaInfo?.resetAt && (
+                        <p className="text-xs text-slate-600">
+                            Quota reset:{' '}
+                            {new Date(quotaInfo.resetAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        </p>
+                    )}
                 </div>
             </div>,
             document.body

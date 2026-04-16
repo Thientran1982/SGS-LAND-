@@ -183,21 +183,162 @@ export const livechatRateLimit = rateLimit({
   message: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một chút.',
 });
 
-// Guest valuation requests: 1/day per IP (free tier).
-// Authenticated users use userValuationRateLimit (3/day per user ID) instead.
+// Guest valuation requests: 2/day per IP (free tier).
+// Authenticated users use monthlyValuationQuota (plan-based) instead.
 export const guestValuationRateLimit = rateLimit({
   name: 'guest_valuation',
   windowMs: 24 * 60 * 60_000,
-  maxRequests: 1,
+  maxRequests: 2,
   keyFn: (req) => `gv:${req.ip || 'anon'}`,
-  message: 'Bạn đã dùng hết 1 lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục.',
+  message: 'Bạn đã dùng hết 2 lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục.',
 });
 
-// Authenticated user valuation requests: 3/day per user ID.
+// ---------------------------------------------------------------------------
+// Monthly Valuation Quota — plan-based, Redis-backed
+// INDIVIDUAL (free): 20/month  |  TEAM: 150/month  |  ENTERPRISE: unlimited
+// ---------------------------------------------------------------------------
+
+export const VALUATION_PLAN_LIMITS: Record<string, number> = {
+  INDIVIDUAL: 20,
+  TEAM: 150,
+  ENTERPRISE: -1, // -1 = unlimited
+};
+
+function monthlyResetTs(): number {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1, 1);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+async function getUserPlan(tenantId: string): Promise<string> {
+  try {
+    const { pool } = await import('../db');
+    const result = await pool.query(
+      `SELECT plan_id FROM subscriptions WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [tenantId]
+    );
+    return result.rows[0]?.plan_id || 'INDIVIDUAL';
+  } catch {
+    return 'INDIVIDUAL';
+  }
+}
+
+// Read-only quota check — for GET /api/valuation/quota (no increment)
+export async function getMonthlyQuotaStatus(userId: string, tenantId: string): Promise<{
+  used: number; limit: number; remaining: number; plan: string;
+  resetAt: string; isUnlimited: boolean;
+}> {
+  const period = new Date().toISOString().slice(0, 7);
+  const plan = await getUserPlan(tenantId);
+  const limit = VALUATION_PLAN_LIMITS[plan] ?? VALUATION_PLAN_LIMITS.INDIVIDUAL;
+  const isUnlimited = limit === -1;
+  const resetAt = new Date(monthlyResetTs()).toISOString();
+
+  if (isUnlimited) {
+    return { used: 0, limit: -1, remaining: -1, plan, resetAt, isUnlimited: true };
+  }
+
+  const redisKey = `mq:val:${userId}:${period}`;
+  let used = 0;
+
+  const redis = await getUpstashClient();
+  if (redis) {
+    try {
+      const val = await redis.get(redisKey);
+      used = val ? parseInt(String(val), 10) : 0;
+    } catch { /* ignore */ }
+  } else {
+    const store = getStore('monthly_quota');
+    const entry = store.get(redisKey);
+    used = entry ? entry.count : 0;
+  }
+
+  const remaining = Math.max(0, limit - used);
+  return { used, limit, remaining, plan, resetAt, isUnlimited: false };
+}
+
+// Middleware: increment + enforce monthly quota for authenticated users.
+// Call AFTER optionalAuth so req.user is available.
+// Guests fall through to guestValuationRateLimit — do NOT stack both.
+export function monthlyValuationQuota(req: Request, res: Response, next: NextFunction): void {
+  const user = (req as any).user;
+  if (!user) { next(); return; } // Guest handled separately
+
+  const userId: string = user.id || user.userId || 'unknown';
+  const tenantId: string = user.tenantId || userId;
+  const period = new Date().toISOString().slice(0, 7);
+
+  (async () => {
+    const plan = await getUserPlan(tenantId);
+    const limit = VALUATION_PLAN_LIMITS[plan] ?? VALUATION_PLAN_LIMITS.INDIVIDUAL;
+    const isUnlimited = limit === -1;
+    const resetTs = monthlyResetTs();
+    const resetAt = new Date(resetTs).toISOString();
+
+    if (isUnlimited) {
+      (req as any).quotaInfo = { used: 0, limit: -1, remaining: -1, plan, resetAt, isUnlimited: true };
+      res.setHeader('X-Quota-Limit', 'unlimited');
+      next();
+      return;
+    }
+
+    const redisKey = `mq:val:${userId}:${period}`;
+    const ttlSecs = Math.max(1, Math.ceil((resetTs - Date.now()) / 1000));
+    let used: number;
+
+    const redis = await getUpstashClient();
+    if (redis) {
+      try {
+        used = await upstashIncr(redis, redisKey, ttlSecs);
+      } catch {
+        const store = getStore('monthly_quota');
+        const now = Date.now();
+        let entry = store.get(redisKey);
+        if (!entry || now > entry.resetAt) entry = { count: 0, resetAt: resetTs };
+        entry.count++;
+        store.set(redisKey, entry);
+        used = entry.count;
+      }
+    } else {
+      const store = getStore('monthly_quota');
+      const now = Date.now();
+      let entry = store.get(redisKey);
+      if (!entry || now > entry.resetAt) entry = { count: 0, resetAt: resetTs };
+      entry.count++;
+      store.set(redisKey, entry);
+      used = entry.count;
+    }
+
+    const remaining = Math.max(0, limit - used);
+    res.setHeader('X-Quota-Limit', limit);
+    res.setHeader('X-Quota-Used', used);
+    res.setHeader('X-Quota-Remaining', remaining);
+    res.setHeader('X-Quota-Reset', Math.ceil(resetTs / 1000));
+    (req as any).quotaInfo = { used, limit, remaining, plan, resetAt, isUnlimited: false };
+
+    if (used > limit) {
+      res.status(429).json({
+        error: 'monthly_quota_exceeded',
+        message: `Bạn đã sử dụng hết ${limit} lượt định giá AI tháng này (gói ${plan}). Nâng cấp để tiếp tục.`,
+        quota: { used, limit, remaining: 0, plan, resetAt },
+      });
+      return;
+    }
+
+    next();
+  })().catch((err) => {
+    // Fail open — if quota check errors, let request through
+    console.error('[monthlyValuationQuota] Error:', err);
+    next();
+  });
+}
+
+// Keep for backward compatibility (no longer used in routes but exported)
 export const userValuationRateLimit = rateLimit({
-  name: 'user_valuation',
+  name: 'user_valuation_legacy',
   windowMs: 24 * 60 * 60_000,
-  maxRequests: 3,
-  keyFn: (req) => `uv:${(req as any).user?.id || (req as any).user?.tenantId || req.ip || 'user'}`,
-  message: 'Bạn đã dùng hết 3 lượt định giá hôm nay. Vui lòng thử lại vào ngày mai.',
+  maxRequests: 20,
+  keyFn: (req) => `uv:${(req as any).user?.id || req.ip || 'user'}`,
+  message: 'Vui lòng thử lại sau.',
 });

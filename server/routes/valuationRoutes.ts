@@ -16,6 +16,7 @@ import { priceCalibrationService } from '../services/priceCalibrationService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
 import { pool } from '../db';
+import { getMonthlyQuotaStatus, monthlyValuationQuota, VALUATION_PLAN_LIMITS } from '../middleware/rateLimiter';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
@@ -162,23 +163,56 @@ export function createValuationRoutes(
   aiRateLimit: any,
   optionalAuth: any,
   guestValuationRateLimit: any,
-  userValuationRateLimit?: any,
+  _userValuationRateLimit?: any,
 ): Router {
   const router = Router();
 
   // ──────────────────────────────────────────────────────────────────────────
+  // GET /api/valuation/quota
+  // Read-only quota status for authenticated users — no increment.
+  // ──────────────────────────────────────────────────────────────────────────
+  router.get('/quota', optionalAuth, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (!user) {
+      return res.json({
+        authenticated: false,
+        guestLimit: 2,
+        message: 'Đăng nhập để xem quota định giá AI.',
+      });
+    }
+    try {
+      const userId: string = user.id || user.userId || 'unknown';
+      const tenantId: string = user.tenantId || userId;
+      const quota = await getMonthlyQuotaStatus(userId, tenantId);
+      const planLabels: Record<string, string> = {
+        INDIVIDUAL: 'Miễn phí',
+        TEAM: 'Team ($49/tháng)',
+        ENTERPRISE: 'Enterprise ($199/tháng)',
+      };
+      return res.json({
+        authenticated: true,
+        ...quota,
+        planLabel: planLabels[quota.plan] || quota.plan,
+        planLimits: VALUATION_PLAN_LIMITS,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Không thể kiểm tra quota.' });
+    }
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
   // POST /api/valuation/advanced
-  // Guests: 1/day per IP | Auth users: 3/day per user ID
+  // Auth users: monthly quota (plan-based) | Guests: 2/day per IP
   // ──────────────────────────────────────────────────────────────────────────
   router.post(
     '/advanced',
     optionalAuth,
     (req: Request, res: Response, next: any) => {
-      // Auth users → userValuationRateLimit (3/day); guests → guestValuationRateLimit (1/day)
-      const limiter = (req as any).user
-        ? (userValuationRateLimit || aiRateLimit)
-        : guestValuationRateLimit;
-      return limiter(req, res, next);
+      // Auth users → monthlyValuationQuota; guests → guestValuationRateLimit
+      if ((req as any).user) {
+        return monthlyValuationQuota(req, res, next);
+      }
+      return guestValuationRateLimit(req, res, next);
     },
     async (req: Request, res: Response) => {
     try {
@@ -503,6 +537,8 @@ export function createValuationRoutes(
           frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
           bedrooms: bedrooms !== undefined ? Number(bedrooms) : undefined,
         },
+        // Quota info — helps frontend show remaining uses without extra round-trip
+        quota: (req as any).quotaInfo || null,
       });
     } catch (error: any) {
       logger.error('[Valuation] Advanced valuation error:', error);
