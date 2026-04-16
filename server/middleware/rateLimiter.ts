@@ -194,14 +194,21 @@ export const guestValuationRateLimit = rateLimit({
 });
 
 // ---------------------------------------------------------------------------
-// Monthly Valuation Quota — plan-based, Redis-backed
-// INDIVIDUAL (free): 20/month  |  TEAM: 150/month  |  ENTERPRISE: unlimited
+// Monthly AI Quota — plan-based, Redis-backed
+// Covers: Valuation (thẩm định) + ARIA persona analysis
+// INDIVIDUAL (free): 5/month each  |  TEAM: 50/month each  |  ENTERPRISE: unlimited
 // ---------------------------------------------------------------------------
 
 export const VALUATION_PLAN_LIMITS: Record<string, number> = {
-  INDIVIDUAL: 20,
-  TEAM: 150,
-  ENTERPRISE: -1, // -1 = unlimited
+  INDIVIDUAL: 5,
+  TEAM: 50,
+  ENTERPRISE: -1,  // -1 = unlimited
+};
+
+export const ARIA_PLAN_LIMITS: Record<string, number> = {
+  INDIVIDUAL: 5,
+  TEAM: 50,
+  ENTERPRISE: -1,
 };
 
 function monthlyResetTs(): number {
@@ -342,3 +349,113 @@ export const userValuationRateLimit = rateLimit({
   keyFn: (req) => `uv:${(req as any).user?.id || req.ip || 'user'}`,
   message: 'Vui lòng thử lại sau.',
 });
+
+// ---------------------------------------------------------------------------
+// Monthly ARIA Quota — same Redis-backed pattern as valuation quota
+// Tracks per-user monthly usage of ARIA persona analysis (summarizeLead)
+// ---------------------------------------------------------------------------
+
+export async function getMonthlyAriaQuotaStatus(userId: string, tenantId: string): Promise<{
+  used: number; limit: number; remaining: number; plan: string;
+  resetAt: string; isUnlimited: boolean;
+}> {
+  const period = new Date().toISOString().slice(0, 7);
+  const plan = await getUserPlan(tenantId);
+  const limit = ARIA_PLAN_LIMITS[plan] ?? ARIA_PLAN_LIMITS.INDIVIDUAL;
+  const isUnlimited = limit === -1;
+  const resetAt = new Date(monthlyResetTs()).toISOString();
+
+  if (isUnlimited) {
+    return { used: 0, limit: -1, remaining: -1, plan, resetAt, isUnlimited: true };
+  }
+
+  const redisKey = `mq:aria:${userId}:${period}`;
+  let used = 0;
+
+  const redis = await getUpstashClient();
+  if (redis) {
+    try {
+      const val = await redis.get(redisKey);
+      used = val ? parseInt(String(val), 10) : 0;
+    } catch { /* ignore */ }
+  } else {
+    const store = getStore('monthly_quota');
+    const entry = store.get(redisKey);
+    used = entry ? entry.count : 0;
+  }
+
+  const remaining = Math.max(0, limit - used);
+  return { used, limit, remaining, plan, resetAt, isUnlimited: false };
+}
+
+export function monthlyAriaQuota(req: Request, res: Response, next: NextFunction): void {
+  const user = (req as any).user;
+  if (!user) { next(); return; }
+
+  const userId: string = user.id || user.userId || 'unknown';
+  const tenantId: string = user.tenantId || userId;
+  const period = new Date().toISOString().slice(0, 7);
+
+  (async () => {
+    const plan = await getUserPlan(tenantId);
+    const limit = ARIA_PLAN_LIMITS[plan] ?? ARIA_PLAN_LIMITS.INDIVIDUAL;
+    const isUnlimited = limit === -1;
+    const resetTs = monthlyResetTs();
+    const resetAt = new Date(resetTs).toISOString();
+
+    if (isUnlimited) {
+      (req as any).ariaQuotaInfo = { used: 0, limit: -1, remaining: -1, plan, resetAt, isUnlimited: true };
+      res.setHeader('X-Aria-Quota-Limit', 'unlimited');
+      next();
+      return;
+    }
+
+    const redisKey = `mq:aria:${userId}:${period}`;
+    const ttlSecs = Math.max(1, Math.ceil((resetTs - Date.now()) / 1000));
+    let used: number;
+
+    const redis = await getUpstashClient();
+    if (redis) {
+      try {
+        used = await upstashIncr(redis, redisKey, ttlSecs);
+      } catch {
+        const store = getStore('monthly_quota');
+        const now = Date.now();
+        let entry = store.get(redisKey);
+        if (!entry || now > entry.resetAt) entry = { count: 0, resetAt: resetTs };
+        entry.count++;
+        store.set(redisKey, entry);
+        used = entry.count;
+      }
+    } else {
+      const store = getStore('monthly_quota');
+      const now = Date.now();
+      let entry = store.get(redisKey);
+      if (!entry || now > entry.resetAt) entry = { count: 0, resetAt: resetTs };
+      entry.count++;
+      store.set(redisKey, entry);
+      used = entry.count;
+    }
+
+    const remaining = Math.max(0, limit - used);
+    res.setHeader('X-Aria-Quota-Limit', limit);
+    res.setHeader('X-Aria-Quota-Used', used);
+    res.setHeader('X-Aria-Quota-Remaining', remaining);
+    res.setHeader('X-Aria-Quota-Reset', Math.ceil(resetTs / 1000));
+    (req as any).ariaQuotaInfo = { used, limit, remaining, plan, resetAt, isUnlimited: false };
+
+    if (used > limit) {
+      res.status(429).json({
+        error: 'aria_quota_exceeded',
+        message: `Bạn đã dùng hết ${limit} lượt phân tích ARIA tháng này (gói ${plan}). Nâng cấp để tiếp tục.`,
+        quota: { used, limit, remaining: 0, plan, resetAt },
+      });
+      return;
+    }
+
+    next();
+  })().catch((err) => {
+    console.error('[monthlyAriaQuota] Error:', err);
+    next();
+  });
+}

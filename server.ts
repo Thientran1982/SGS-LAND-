@@ -55,7 +55,7 @@ import { priceCalibrationService } from "./server/services/priceCalibrationServi
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus } from "./server/middleware/rateLimiter";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
@@ -662,7 +662,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/ai/summarize-lead", authenticateToken, aiRateLimit, async (req, res) => {
+  app.post("/api/ai/summarize-lead", authenticateToken, aiRateLimit, monthlyAriaQuota, async (req, res) => {
     try {
       const { lead, logs, lang } = req.body;
       const { aiService } = await import('./server/ai');
@@ -678,9 +678,32 @@ async function startServer() {
       }
 
       const result = await aiService.summarizeLead(lead, interactions || [], lang, (req as any).tenantId);
-      res.json({ summary: result });
+
+      // Include ARIA quota info in response for frontend credit display
+      const quotaInfo = (req as any).ariaQuotaInfo;
+      res.json({ summary: result, quota: quotaInfo || null });
     } catch (error) {
       sendAiError(res, error, 'summarize-lead');
+    }
+  });
+
+  // ── Unified AI Quota Status endpoint ─────────────────────────────────────
+  // GET /api/ai/quota — returns remaining credits for valuation + ARIA
+  app.get("/api/ai/quota", authenticateToken, async (req: express.Request, res: express.Response) => {
+    try {
+      const user = (req as any).user;
+      const userId = user.id || user.userId;
+      const tenantId = (req as any).tenantId || user.tenantId;
+
+      const [valuation, aria] = await Promise.all([
+        getMonthlyQuotaStatus(userId, tenantId),
+        getMonthlyAriaQuotaStatus(userId, tenantId),
+      ]);
+
+      res.json({ valuation, aria });
+    } catch (err) {
+      logger.error('[GET /api/ai/quota] Error:', err);
+      res.status(500).json({ error: 'Failed to fetch quota status' });
     }
   });
 
