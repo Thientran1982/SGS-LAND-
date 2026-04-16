@@ -439,7 +439,7 @@ function parseBudgetFromMessage(msg: string): number | undefined {
 }
 
 // Module-level system context builder (no recreation per call)
-function buildSystemContext(lead: Lead | null): string {
+function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]): string {
     if (!lead) return 'Khách vãng lai — chưa có hồ sơ.';
     const parts = [`Khách hàng: ${lead.name}`];
     if (lead.stage)                              parts.push(`Giai đoạn: ${lead.stage}`);
@@ -474,7 +474,18 @@ function buildSystemContext(lead: Lead | null): string {
         if (diffDays > 0) parts.push(`Lần cuối tương tác: ${diffDays} ngày trước`);
     }
 
-    return parts.join(' | ');
+    let favoritesBlock = '';
+    if (userFavorites && userFavorites.length > 0) {
+        const favLines = userFavorites.slice(0, 8).map((f, i) => {
+            const price = f.price ? `${(f.price / 1e9).toFixed(2)} Tỷ` : 'Chưa rõ giá';
+            const area  = f.area  ? `${f.area}m²` : '';
+            const label = f.title || f.address || `BĐS #${i + 1}`;
+            return `  ${i + 1}. [ID:${f.id}] ${label}${area ? ' — ' + area : ''} — ${price}${f.propertyType ? ' (' + f.propertyType + ')' : ''}`;
+        }).join('\n');
+        favoritesBlock = `\n[WATCHLIST KHÁCH HÀNG — ${userFavorites.length} BĐS đã lưu]:\n${favLines}\n→ Ưu tiên đề xuất BĐS KHÁC với watchlist. Nếu khách hỏi về BĐS đã lưu, hãy nhắc tên/địa chỉ cụ thể.`;
+    }
+
+    return parts.join(' | ') + favoritesBlock;
 }
 
 // Typed Router plan output
@@ -755,6 +766,15 @@ const TOOL_EXECUTOR = {
 // 3. LANGGRAPH CORE (Native Implementation)
 // -----------------------------------------------------------------------------
 
+export type CompactFavorite = {
+    id: string;
+    title?: string;
+    address?: string;
+    price?: number;
+    area?: number;
+    propertyType?: string;
+};
+
 export type AgentState = {
     lead: Lead;
     userMessage: string;
@@ -771,6 +791,7 @@ export type AgentState = {
     tenantId: string;
     lang?: string;
     escalated?: boolean;
+    userFavorites?: CompactFavorite[];
 };
 
 type NodeFunction = (state: AgentState) => Promise<Partial<AgentState>>;
@@ -1055,17 +1076,30 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
                 : budgetMax < 15e9 ? '7–15 Tỷ' : 'Trên 15 Tỷ';
             const buyerProfile = isInvestor ? 'ĐẦU_TƯ' : isFirstBuyer ? 'Ở_THỰC_LẦN_ĐẦU' : 'CHƯA_RÕ';
 
+            // ── Build favorites cross-check block ──────────────────────────────────
+            const favs = state.userFavorites || [];
+            const favIds = new Set(favs.map(f => f.id));
+            let favCrossCheck = '';
+            if (favs.length > 0) {
+                const favSummary = favs.slice(0, 5).map((f, i) => {
+                    const price = f.price ? `${(f.price / 1e9).toFixed(2)} Tỷ` : '?';
+                    return `  ${i + 1}. [${f.id}] ${f.title || f.address || 'BĐS'} — ${price}`;
+                }).join('\n');
+                favCrossCheck = `\n\nWATCHLIST (${favs.length} BĐS khách đã lưu — KHÔNG đề xuất lại, trừ khi khách hỏi trực tiếp):\n${favSummary}\n→ Nếu kết quả tìm kiếm trùng ID với watchlist, hãy đánh dấu "★ ĐÃ LƯU" và ưu tiên giới thiệu BĐS MỚI chưa có trong danh sách.`;
+            }
+
             // ── Gemini pre-processing: rank + differentiate top matches ─────────────
             const inventoryAnalysisPrompt = `KẾT QUẢ TÌM KIẾM KHO HÀNG:
 ${searchRes}
 
-HỒ SƠ: Ngân sách ${budgetTier} | Khu vực: ${extraction.location_keyword || 'Chưa rõ'} | Loại: ${extraction.property_type || 'Chưa rõ'} | Diện tích: ${extraction.area_min ? '>=' + extraction.area_min + 'm²' : 'Chưa rõ'} | Mục đích: ${isInvestor ? 'ĐẦU TƯ' : isFirstBuyer ? 'Ở THỰC LẦN ĐẦU' : 'Chưa rõ'} | Khẩn cấp: ${isUrgent ? 'CÓ' : 'Không'}
+HỒ SƠ: Ngân sách ${budgetTier} | Khu vực: ${extraction.location_keyword || 'Chưa rõ'} | Loại: ${extraction.property_type || 'Chưa rõ'} | Diện tích: ${extraction.area_min ? '>=' + extraction.area_min + 'm²' : 'Chưa rõ'} | Mục đích: ${isInvestor ? 'ĐẦU TƯ' : isFirstBuyer ? 'Ở THỰC LẦN ĐẦU' : 'Chưa rõ'} | Khẩn cấp: ${isUrgent ? 'CÓ' : 'Không'}${favCrossCheck}
 
 PHÂN TÍCH TOP 3 BĐS PHÙ HỢP NHẤT (bullet point, max 200 từ):
 1. Xếp hạng + lý do ngắn gọn (khớp hồ sơ ở điểm nào)
 2. Điểm KHÁC BIỆT nổi bật mỗi BĐS (không chỉ liệt kê thông số)
 3. ${isInvestor ? 'Ước tính tỷ suất cho thuê (%)' : '1 điểm mạnh + 1 rủi ro tiềm ẩn mỗi căn'}
-4. Khuyến nghị căn PHÙ NHẤT — lý do 1 câu`;
+4. Khuyến nghị căn PHÙ NHẤT — lý do 1 câu
+${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU" và đề xuất phương án so sánh' : ''}`;
 
             // ── RLHF injection: học từ feedback các lần tìm kho trước ─────────────
             const invRlhf = await buildRlhfContext(state.tenantId, 'SEARCH_INVENTORY').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }));
@@ -2261,7 +2295,8 @@ ${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slic
         history: Interaction[],
         t: (k: string) => string,
         tenantId?: string,
-        lang?: string
+        lang?: string,
+        userFavorites?: CompactFavorite[]
     ): Promise<AgentTraceResponse> {
         // Graceful fallback when Gemini API key is not configured
         if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY && !process.env.API_KEY) {
@@ -2314,17 +2349,27 @@ ${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slic
             }
         }
 
+        const compactFavorites: CompactFavorite[] | undefined = userFavorites?.map(f => ({
+            id: f.id,
+            title: f.title,
+            address: f.address,
+            price: f.price,
+            area: f.area,
+            propertyType: f.propertyType,
+        }));
+
         const initialState: AgentState = {
             lead,
             userMessage,
             history: fullHistory,
             trace: [],
-            systemContext: buildSystemContext(lead) + memoryDigest,
+            systemContext: buildSystemContext(lead, compactFavorites) + memoryDigest,
             finalResponse: "",
             suggestedAction: 'NONE',
             t,
             tenantId: tenantId || 'default',
-            lang: detectMessageLang(userMessage, lang)
+            lang: detectMessageLang(userMessage, lang),
+            userFavorites: compactFavorites,
         };
 
         const startTs = Date.now();

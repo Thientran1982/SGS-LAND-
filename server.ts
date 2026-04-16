@@ -610,9 +610,24 @@ async function startServer() {
     try {
       const { lead, userMessage, history, lang } = req.body;
       const tenantId = (req as any).tenantId;
+      const userId = (req as any).user?.id;
       const { aiService } = await import('./server/ai');
       const t = serverT(lang || 'vn');
-      const result = await aiService.processMessage(lead, userMessage, history, t, tenantId, lang || 'vn');
+      let userFavorites: any[] = [];
+      if (userId) {
+        try {
+          const favRaw = await listingRepository.getFavorites(tenantId, userId);
+          userFavorites = favRaw.map((f: any) => ({
+            id: f.id,
+            title: f.title,
+            address: f.address,
+            price: f.price,
+            area: f.area,
+            propertyType: f.propertyType || f.property_type,
+          }));
+        } catch { }
+      }
+      const result = await aiService.processMessage(lead, userMessage, history, t, tenantId, lang || 'vn', userFavorites);
       if (result.escalated && lead?.id) {
         broadcastIo?.to(`tenant:${tenantId}`).emit('escalate_to_human', { leadId: lead.id });
       }
