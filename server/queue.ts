@@ -172,9 +172,20 @@ async function triggerAutoReply(
     const history = allHistory.slice(-20);
 
     // 3. Gọi AI tạo câu trả lời
+    // Thử fetch favorites nếu lead có userId liên kết (thường không có với Zalo/Facebook leads)
+    let autoReplyFavorites: any[] = [];
+    try {
+      if (lead.userId) {
+        const { listingRepository } = await import('./repositories/listingRepository');
+        const favRaw = await listingRepository.getFavorites(tenantId, lead.userId);
+        autoReplyFavorites = favRaw.map((f: any) => ({
+          id: f.id, title: f.title, address: f.address, price: f.price, area: f.area, propertyType: f.propertyType,
+        }));
+      }
+    } catch { }
     const { aiService } = await import('./ai');
     const t = (key: string) => key;
-    const aiResult = await aiService.processMessage(lead, inboundText, history, t, tenantId, 'vn');
+    const aiResult = await aiService.processMessage(lead, inboundText, history, t, tenantId, 'vn', autoReplyFavorites);
     if (!aiResult?.content) {
       logger.warn(`[AutoReply] AI không trả về nội dung cho lead ${lead.id}`);
       return;
