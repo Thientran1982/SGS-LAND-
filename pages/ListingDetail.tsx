@@ -934,31 +934,35 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         <div className="mt-8 relative">
             <div className="flex items-center justify-between gap-3 mb-4">
                 <h3 className="text-lg font-bold text-[var(--text-primary)] truncate">{t('inventory.project_units')}</h3>
-                {canManageUnits && (
+                {isAuth && (canManageUnits || userRole === 'SALES' || userRole === 'MARKETING') && (
                     <div className="flex items-center gap-2 shrink-0">
-                        <input 
-                            type="file" 
-                            accept=".xlsx, .xls" 
-                            className="hidden" 
-                            ref={fileInputRef}
-                            onChange={handleImportExcel}
-                        />
-                        <button 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm whitespace-nowrap"
-                            title={t('inventory.import_excel')}
-                        >
-                            <Upload className="w-4 h-4 shrink-0" />
-                            <span className="hidden sm:inline">{t('inventory.import_excel')}</span>
-                        </button>
-                        <button 
-                            onClick={handleExportExcel}
-                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm whitespace-nowrap"
-                            title={t('inventory.export_excel')}
-                        >
-                            <Download className="w-4 h-4 shrink-0" />
-                            <span className="hidden sm:inline">{t('inventory.export_excel')}</span>
-                        </button>
+                        {canManageUnits && (
+                            <>
+                                <input 
+                                    type="file" 
+                                    accept=".xlsx, .xls" 
+                                    className="hidden" 
+                                    ref={fileInputRef}
+                                    onChange={handleImportExcel}
+                                />
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm whitespace-nowrap"
+                                    title={t('inventory.import_excel')}
+                                >
+                                    <Upload className="w-4 h-4 shrink-0" />
+                                    <span className="hidden sm:inline">{t('inventory.import_excel')}</span>
+                                </button>
+                                <button 
+                                    onClick={handleExportExcel}
+                                    className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm whitespace-nowrap"
+                                    title={t('inventory.export_excel')}
+                                >
+                                    <Download className="w-4 h-4 shrink-0" />
+                                    <span className="hidden sm:inline">{t('inventory.export_excel')}</span>
+                                </button>
+                            </>
+                        )}
                         <button 
                             onClick={handleAddUnit}
                             className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap"
@@ -1229,6 +1233,7 @@ export const ListingDetail: React.FC = () => {
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [showPhone, setShowPhone] = useState(false);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [isEditFormOpen, setIsEditFormOpen] = useState(false);
 
     const canViewInternalInfo = useMemo(() => {
         if (!currentUser || !listing) return false;
@@ -1245,6 +1250,13 @@ export const ListingDetail: React.FC = () => {
         // Explicitly authorized
         if (listing.authorizedAgents?.includes(currentUser.id)) return true;
 
+        return false;
+    }, [currentUser, listing]);
+
+    const canManageListing = useMemo(() => {
+        if (!currentUser || !listing) return false;
+        if ([UserRole.ADMIN, UserRole.TEAM_LEAD].includes(currentUser.role)) return true;
+        if (listing.createdBy === currentUser.id) return true;
         return false;
     }, [currentUser, listing]);
 
@@ -1480,6 +1492,14 @@ export const ListingDetail: React.FC = () => {
         }
     };
 
+    const handleProjectFormSubmit = async (data: Partial<Listing>) => {
+        if (!listing) return;
+        await db.updateListing(listing.id, data);
+        await fetchListingData();
+        setIsEditFormOpen(false);
+        notify(t('common.success'), 'success');
+    };
+
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
     if (!listing) return <div className="p-10 text-center text-[var(--text-secondary)]">{t('common.product_not_found')}</div>;
 
@@ -1544,6 +1564,17 @@ export const ListingDetail: React.FC = () => {
                     {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                 </button>
                 <div className="flex gap-2 items-center">
+                    {canManageListing && (
+                        <button
+                            type="button"
+                            onClick={() => setIsEditFormOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 rounded-xl text-xs font-bold transition-colors"
+                            title={t('inventory.edit_title')}
+                        >
+                            <Edit2 className="w-4 h-4 pointer-events-none" />
+                            <span className="hidden sm:inline">{t('inventory.edit_title')}</span>
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={handleToggleFavorite}
@@ -2034,6 +2065,16 @@ export const ListingDetail: React.FC = () => {
                 onClose={() => setShareOpen(false)} 
                 t={t} 
             />
+
+            {isEditFormOpen && listing && (
+                <ListingForm
+                    isOpen={isEditFormOpen}
+                    onClose={() => setIsEditFormOpen(false)}
+                    onSubmit={handleProjectFormSubmit}
+                    initialData={listing}
+                    t={t}
+                />
+            )}
         </article>
         {/* Mobile Bottom CTA Bar — rendered via portal on document.body so position:fixed
             works correctly on iOS Safari (fixed inside overflow-y:auto containers is broken) */}
