@@ -75,6 +75,7 @@ export default function LiveChat() {
     const [input, setInput] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const [isHumanMode, setIsHumanMode] = useState(false);
+    const [modeNotificationCode, setModeNotificationCode] = useState<'HUMAN_TAKEOVER' | 'AI_ACTIVE' | null>(null);
     const [startError, setStartError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -161,8 +162,9 @@ export default function LiveChat() {
 
         const handleModeChanged = (data: any) => {
             if (data?.leadId !== leadId) return;
-            setIsHumanMode(data.status === 'HUMAN_TAKEOVER');
-            // Clear thinking indicator when mode changes
+            const toHuman = data.status === 'HUMAN_TAKEOVER';
+            setIsHumanMode(toHuman);
+            setModeNotificationCode(toHuman ? 'HUMAN_TAKEOVER' : 'AI_ACTIVE');
             setIsThinking(false);
         };
 
@@ -331,23 +333,29 @@ export default function LiveChat() {
     return (
         <div className="h-full w-full bg-[var(--glass-surface)] flex flex-col max-w-2xl mx-auto shadow-2xl overflow-hidden">
             {/* Header */}
-            <div className="bg-indigo-600 text-white p-4 flex items-center justify-between shadow-md z-10 shrink-0">
+            <div className={`${isHumanMode ? 'bg-emerald-600' : 'bg-indigo-600'} text-white p-4 flex items-center justify-between shadow-md z-10 shrink-0 transition-colors duration-500`}>
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[var(--bg-surface)]/20 rounded-full flex items-center justify-center backdrop-blur shrink-0">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur shrink-0">
+                        {isHumanMode ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        )}
                     </div>
                     <div className="min-w-0">
                         <h2 className="font-bold text-lg leading-tight truncate py-0.5">{t('livechat.support_online')}</h2>
-                        <div className="flex items-center gap-1.5 text-indigo-100 text-xs">
-                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shrink-0"></span>
-                            <span className="truncate">{t('livechat.we_are_online')}</span>
+                        <div className="flex items-center gap-1.5 text-white/80 text-xs">
+                            <span className={`w-2 h-2 ${isHumanMode ? 'bg-emerald-300' : 'bg-emerald-400'} rounded-full animate-pulse shrink-0`}></span>
+                            <span className="truncate">
+                                {isHumanMode ? t('livechat.agent_assisting') : t('livechat.ai_assisting')}
+                            </span>
                         </div>
                     </div>
                 </div>
                 <button
                     type="button"
                     onClick={handleEndChat}
-                    className="text-indigo-200 hover:text-white transition-colors text-xs font-bold bg-indigo-700/50 px-3 py-1.5 rounded-lg shrink-0 ml-2"
+                    className={`${isHumanMode ? 'text-emerald-200 bg-emerald-700/50' : 'text-indigo-200 bg-indigo-700/50'} hover:text-white transition-colors text-xs font-bold px-3 py-1.5 rounded-lg shrink-0 ml-2`}
                 >
                     {t('livechat.end_chat')}
                 </button>
@@ -355,6 +363,24 @@ export default function LiveChat() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 bg-[var(--glass-surface)]/50">
+                {modeNotificationCode && (
+                    <div className="flex justify-center py-1">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${
+                            modeNotificationCode === 'HUMAN_TAKEOVER'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                        }`}>
+                            {modeNotificationCode === 'HUMAN_TAKEOVER' ? (
+                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            ) : (
+                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            )}
+                            {modeNotificationCode === 'HUMAN_TAKEOVER'
+                                ? t('livechat.agent_takeover_notice')
+                                : t('livechat.ai_resume_notice')}
+                        </span>
+                    </div>
+                )}
                 {messages.filter(m => !isSysMessage(m)).map((msg, idx, arr) => (
                     <MessageBubble
                         key={msg.id}
