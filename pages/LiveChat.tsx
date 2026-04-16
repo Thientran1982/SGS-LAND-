@@ -48,7 +48,7 @@ function getSearchQueryParams(): URLSearchParams {
 }
 
 export default function LiveChat() {
-    const { t, language } = useTranslation();
+    const { t, language, setLanguage } = useTranslation();
     const { socket } = useSocket();
     const [leadId, setLeadId] = useState<string | null>(null);
     const [leadName, setLeadName] = useState('');
@@ -66,6 +66,15 @@ export default function LiveChat() {
         const handler = () => setChatParams(getSearchQueryParams());
         window.addEventListener('popstate', handler);
         return () => window.removeEventListener('popstate', handler);
+    }, []);
+
+    // Apply lang param from URL if present (e.g. ?lang=vn or ?lang=en)
+    useEffect(() => {
+        const langParam = chatParams.get('lang');
+        if (langParam === 'vn' || langParam === 'en') {
+            setLanguage(langParam);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const w = window as any;
     // Priority: URL params → embed window globals → SEO overrides (admin-set custom text) → default translation
