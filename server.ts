@@ -2577,6 +2577,31 @@ async function startServer() {
     }
   });
 
+  // /c/:code — Short link redirect (always registered, both dev & prod)
+  // Must be before Vite middleware so it works in development as well.
+  app.get('/c/:code', async (req: express.Request, res: express.Response) => {
+    const code = String(req.params.code).replace(/[^a-z0-9]/gi, '');
+    if (!code || code.length > 20) return res.status(404).send('Link không tồn tại') as any;
+    try {
+      let targetUrl: string | null = null;
+      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        const { Redis } = await import('@upstash/redis');
+        const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+        targetUrl = await redis.get<string>(`sl:${code}`);
+      } else {
+        const mem = (global as any).__shortLinks?.[code];
+        if (mem && mem.exp > Date.now()) targetUrl = mem.url;
+      }
+      if (!targetUrl) {
+        return res.status(404).send('Link không tồn tại hoặc đã hết hạn') as any;
+      }
+      return res.redirect(302, targetUrl);
+    } catch (err) {
+      logger.error('[ShortLink] Redirect error:', err);
+      return res.status(500).send('Lỗi server') as any;
+    }
+  });
+
   // Vite middleware for development (dynamically imported so vite is not required in production)
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
