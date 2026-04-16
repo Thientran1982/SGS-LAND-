@@ -1467,26 +1467,80 @@ export const ListingDetail: React.FC = () => {
         if (!listing) return;
         setIsValuating(true);
         try {
+            // ── Resolve AVM property type ──────────────────────────────────────────
+            // Prefer explicit AVM type set on attributes; fall back to listing.type enum
+            const avmPropertyType: string = (() => {
+                if (listing.attributes?.propertyType && typeof listing.attributes.propertyType === 'string') {
+                    return listing.attributes.propertyType;
+                }
+                switch (listing.type) {
+                    case PropertyType.APARTMENT:  return 'apartment_center';
+                    case PropertyType.PENTHOUSE:  return 'penthouse';
+                    case PropertyType.VILLA:      return 'villa';
+                    case PropertyType.LAND:       return 'land_urban';
+                    case PropertyType.OFFICE:     return 'office';
+                    case PropertyType.COMMERCIAL: return 'shophouse';
+                    case PropertyType.PROJECT:    return 'project';
+                    default:                      return 'townhouse_center';
+                }
+            })();
+
+            // ── Normalize legal status → human-readable Vietnamese ─────────────────
+            const legalMap: Record<string, string> = {
+                PinkBook: 'Sổ hồng / Sổ đỏ',
+                Contract: 'HDMB (Hợp đồng mua bán)',
+                Waiting:  'Vi bằng / chờ sổ',
+            };
+            const legal = legalMap[listing.attributes?.legalStatus as string] || listing.attributes?.legalStatus || 'Sổ hồng';
+
+            // ── Build address: prefer title (often more specific) + location ────────
+            // Many listings have specific street address in title; combine for better accuracy
+            const address = listing.location || listing.title;
+
             const result = await aiService.getRealtimeValuation(
-                listing.location,
+                address,
                 listing.area,
                 listing.attributes?.roadWidth || 0,
-                listing.attributes?.legalStatus || 'Sổ hồng'
+                legal,
+                avmPropertyType,
+                {
+                    direction:     listing.attributes?.direction     as string | undefined,
+                    floorLevel:    listing.attributes?.floor         as number | undefined,
+                    frontageWidth: listing.attributes?.frontage      as number | undefined,
+                    furnishing:    listing.attributes?.furniture     as string | undefined,
+                    buildingAge:   listing.attributes?.buildingAge   as number | undefined,
+                    bedrooms:      listing.bedrooms,
+                }
             );
-            
-            // Map service result to UI state
+
+            // ── Build reasoning from market trend + top factors ────────────────────
+            const topFactors = (result.factors || [])
+                .filter((f: any) => Math.abs(f.impact) >= 3)
+                .slice(0, 3)
+                .map((f: any) => `${f.label} (${f.isPositive ? '+' : ''}${f.impact.toFixed(0)}%)`)
+                .join(', ');
+            const reasoning = [
+                result.marketTrend,
+                topFactors ? `Các yếu tố điều chỉnh: ${topFactors}.` : ''
+            ].filter(Boolean).join(' ');
+
             setValuation({
-                estimatedPrice: result.estimatedPrice,
+                estimatedPrice: result.totalPrice,
                 confidenceScore: result.confidence / 100,
-                pricePerM2: result.basePrice,
-                reasoning: result.reasoning,
-                comparables: result.comparables
+                pricePerM2: result.pricePerM2,
+                rangeMin: result.rangeMin,
+                rangeMax: result.rangeMax,
+                trendGrowthPct: result.trendGrowthPct,
+                marketTrend: result.marketTrend,
+                reasoning,
+                factors: result.factors || [],
+                isRealtime: result.isRealtime,
             });
-            
+
             notify("Thẩm định AI hoàn tất", 'success');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            notify("Lỗi thẩm định AI", 'error');
+            notify(error?.message || "Lỗi thẩm định AI", 'error');
         } finally {
             setIsValuating(false);
         }
@@ -1831,38 +1885,72 @@ export const ListingDetail: React.FC = () => {
 
                                             {/* Full AI valuation result */}
                                             {valuation && (
-                                                <div className="animate-enter space-y-5">
-                                                    <div className="flex flex-wrap items-end gap-2">
-                                                        <span className="text-2xl md:text-3xl font-black text-[var(--text-primary)] break-words">{formatCurrency(valuation.estimatedPrice)}</span>
-                                                        <span className="text-sm font-bold text-[var(--text-secondary)] mb-1">/ tổng</span>
+                                                <div className="animate-enter space-y-4">
+                                                    {/* Realtime badge */}
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${valuation.isRealtime ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
+                                                            {valuation.isRealtime ? 'Dữ liệu thực tế' : 'Ước tính khu vực'}
+                                                        </span>
+                                                        <span className="text-[10px] text-[var(--text-tertiary)]">Độ tin cậy: {(valuation.confidenceScore * 100).toFixed(0)}%</span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                        <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 min-w-0">
-                                                            <div className="text-xs font-bold text-emerald-600 uppercase mb-1 truncate">Độ tin cậy AI</div>
-                                                            <div className="text-xl font-black text-emerald-900">{(valuation.confidenceScore * 100).toFixed(0)}%</div>
+
+                                                    {/* Main price */}
+                                                    <div>
+                                                        <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1">Giá thẩm định AI</div>
+                                                        <div className="text-2xl md:text-3xl font-black text-[var(--text-primary)] break-words">{formatCurrency(valuation.estimatedPrice)}</div>
+                                                        {valuation.rangeMin > 0 && valuation.rangeMax > 0 && (
+                                                            <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                                                                Khoảng: {formatCurrency(valuation.rangeMin)} – {formatCurrency(valuation.rangeMax)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Stats row */}
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 min-w-0">
+                                                            <div className="text-[10px] font-bold text-indigo-600 uppercase mb-0.5">Đơn giá /m²</div>
+                                                            <div className="text-base font-black text-indigo-900 break-all">{formatCurrency(valuation.pricePerM2)}</div>
                                                         </div>
-                                                        <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 min-w-0">
-                                                            <div className="text-xs font-bold text-indigo-600 uppercase mb-1 truncate">Đơn giá m²</div>
-                                                            <div className="text-xl font-black text-indigo-900 break-all">{formatCurrency(valuation.pricePerM2)}</div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Phân tích thị trường</h4>
-                                                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed italic">"{valuation.reasoning}"</p>
-                                                    </div>
-                                                    {valuation.comparables && valuation.comparables.length > 0 && (
-                                                        <div className="space-y-2">
-                                                            <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Tài sản so sánh</h4>
-                                                            <div className="space-y-2">
-                                                                {valuation.comparables.map((comp: any, idx: number) => (
-                                                                    <div key={idx} className="flex justify-between items-center gap-2 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] flex-wrap">
-                                                                        <span className="text-xs font-medium text-[var(--text-secondary)] truncate flex-1 min-w-[120px]">{comp.address}</span>
-                                                                        <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{formatCurrency(comp.price)}</span>
-                                                                    </div>
-                                                                ))}
+                                                        <div className={`p-3 rounded-xl border min-w-0 ${valuation.trendGrowthPct >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                                                            <div className={`text-[10px] font-bold uppercase mb-0.5 ${valuation.trendGrowthPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>Xu hướng</div>
+                                                            <div className={`text-base font-black ${valuation.trendGrowthPct >= 0 ? 'text-emerald-900' : 'text-rose-900'}`}>
+                                                                {valuation.trendGrowthPct >= 0 ? '+' : ''}{valuation.trendGrowthPct?.toFixed(1)}%/năm
                                                             </div>
                                                         </div>
+                                                    </div>
+
+                                                    {/* Market analysis */}
+                                                    {valuation.reasoning && (
+                                                        <div className="space-y-1">
+                                                            <h4 className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Phân tích thị trường</h4>
+                                                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{valuation.reasoning}</p>
+                                                        </div>
                                                     )}
+
+                                                    {/* Key factors */}
+                                                    {valuation.factors && valuation.factors.length > 0 && (
+                                                        <div className="space-y-1.5">
+                                                            <h4 className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Yếu tố điều chỉnh</h4>
+                                                            {valuation.factors.filter((f: any) => f.type === 'AVM' && Math.abs(f.impact) >= 2).slice(0, 4).map((f: any, i: number) => (
+                                                                <div key={i} className="flex items-center justify-between gap-2 text-xs">
+                                                                    <span className="text-[var(--text-secondary)] truncate">{f.label}</span>
+                                                                    <span className={`font-bold whitespace-nowrap ${f.isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                        {f.isPositive ? '+' : ''}{f.impact.toFixed(1)}%
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Re-run button */}
+                                                    <button
+                                                        onClick={() => { setValuation(null); setTimeout(handleAiValuation, 50); }}
+                                                        className="w-full py-2 rounded-xl text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <Sparkles className="w-3 h-3" />
+                                                        Thẩm định lại
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
