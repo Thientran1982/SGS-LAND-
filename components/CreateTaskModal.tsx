@@ -64,10 +64,12 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
   }, [onClose]);
 
   const searchUsers = useCallback(async (q: string) => {
-    if (!q.trim()) { setUserResults([]); return; }
     setSearchingUsers(true);
     try {
-      const r = await api.get<{ data: SimpleUser[] }>(`/api/users?search=${encodeURIComponent(q)}&pageSize=10`);
+      const url = q.trim()
+        ? `/api/users/members?search=${encodeURIComponent(q)}&pageSize=20`
+        : '/api/users/members?pageSize=50';
+      const r = await api.get<{ data: SimpleUser[] }>(url);
       setUserResults(r.data || []);
     } catch {
       setUserResults([]);
@@ -217,20 +219,22 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
           </div>
 
           {/* Department */}
-          {departments.length > 0 && (
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[var(--text-secondary)]">Phòng ban</label>
-              <SelectDropdown
-                value={form.department_id}
-                onChange={val => setForm(p => ({ ...p, department_id: val }))}
-                placeholder="Chưa chọn"
-                options={[
-                  { value: '', label: 'Chưa chọn' },
-                  ...departments.map(d => ({ value: d.id, label: d.name })),
-                ]}
-              />
-            </div>
-          )}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[var(--text-secondary)]">Phòng ban</label>
+            <SelectDropdown
+              value={form.department_id}
+              onChange={val => setForm(p => ({ ...p, department_id: val }))}
+              placeholder="Chưa chọn"
+              options={[
+                { value: '', label: departments.length === 0 ? 'Chưa có phòng ban' : 'Chưa chọn' },
+                ...departments.map(d => ({ value: d.id, label: d.name })),
+              ]}
+              disabled={departments.length === 0}
+            />
+            {departments.length === 0 && (
+              <p className="text-[11px] text-[var(--text-tertiary)]">Phòng ban chưa được thiết lập cho tenant này.</p>
+            )}
+          </div>
 
           {/* Assignees */}
           <div className="space-y-2">
@@ -254,7 +258,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               <input
                 value={assigneeSearch}
                 onChange={e => { setAssigneeSearch(e.target.value); setUserPickerOpen(true); }}
-                onFocus={() => setUserPickerOpen(true)}
+                onFocus={() => { setUserPickerOpen(true); if (!assigneeSearch.trim()) searchUsers(''); }}
                 placeholder="Tìm tên nhân viên..."
                 className="w-full h-[38px] pl-9 pr-3 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
               />
