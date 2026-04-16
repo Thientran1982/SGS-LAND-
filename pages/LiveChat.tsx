@@ -39,6 +39,23 @@ async function publicGetMessages(leadId: string): Promise<{ messages: Interactio
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const SYS_CONTENT_PATTERNS = ['đang bận', 'system busy', 'tạm thời không khả dụng', 'temporarily busy'];
+
+// Returns true for AI system-generated error/quota messages that should never
+// be shown to the customer (e.g. "Hệ thống AI đang bận, vui lòng thử lại sau").
+function isSysMessage(msg: Interaction): boolean {
+    if ((msg as any).metadata?.isSysMsg) return true;
+    if ((msg as any).metadata?.isAgent && msg.direction === 'OUTBOUND') {
+        const c = (msg.content || '').toLowerCase();
+        return SYS_CONTENT_PATTERNS.some(p => c.includes(p));
+    }
+    return false;
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -114,7 +131,7 @@ export default function LiveChat() {
                 }
                 setLeadId(data.lead.id);
                 setLeadName(data.lead.name);
-                setMessages(data.messages || []);
+                setMessages((data.messages || []).filter((m: Interaction) => !isSysMessage(m)));
             } else {
                 localStorage.removeItem('livechat_lead_id');
                 localStorage.removeItem('livechat_agent_id');
@@ -132,6 +149,7 @@ export default function LiveChat() {
         const handleNewMessage = (data: any) => {
             const msg: Interaction = data?.message ?? data;
             if (!msg || msg.leadId !== leadId) return;
+            if (isSysMessage(msg)) return;
             setMessages(prev => {
                 if (prev.find(m => m.id === msg.id)) return prev;
                 return [...prev, msg];
@@ -223,11 +241,13 @@ export default function LiveChat() {
                 if (res.ok) {
                     const data = await res.json();
                     const aiMsg: Interaction = data.reply;
-                    setMessages(prev => {
-                        if (prev.find(m => m.id === aiMsg.id)) return prev;
-                        return [...prev, aiMsg];
-                    });
-                    socket.emit('send_message', { room: leadId, message: aiMsg });
+                    if (!isSysMessage(aiMsg)) {
+                        setMessages(prev => {
+                            if (prev.find(m => m.id === aiMsg.id)) return prev;
+                            return [...prev, aiMsg];
+                        });
+                        socket.emit('send_message', { room: leadId, message: aiMsg });
+                    }
                 } else {
                     // Fallback canned reply
                     const fallbackMsg = await publicSendMessage(leadId, t('livechat.auto_reply'), 'OUTBOUND', { isAgent: true }).catch(() => null);
@@ -321,7 +341,7 @@ export default function LiveChat() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 bg-[var(--glass-surface)]/50">
-                {messages.map((msg, idx) => (
+                {messages.filter(m => !isSysMessage(m)).map((msg, idx, arr) => (
                     <MessageBubble
                         key={msg.id}
                         msg={msg}
@@ -330,7 +350,7 @@ export default function LiveChat() {
                         formatDate={(iso: string) => new Date(iso).toLocaleDateString()}
                         formatCurrency={(v: number) => v.toLocaleString() + 'đ'}
                         formatDateTime={(iso: string) => new Date(iso).toLocaleString()}
-                        showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(messages[idx-1].timestamp).getDate()}
+                        showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(arr[idx-1].timestamp).getDate()}
                     />
                 ))}
                 {isThinking && (
