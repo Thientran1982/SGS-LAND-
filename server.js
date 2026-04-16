@@ -1836,7 +1836,7 @@ var init_task_management = __esm({
         BEFORE UPDATE ON wf_tasks
         FOR EACH ROW EXECUTE FUNCTION update_wf_task_timestamp();
     `);
-        const DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
+        const DEFAULT_TENANT2 = "00000000-0000-0000-0000-000000000001";
         await client.query(`
       INSERT INTO departments (id, tenant_id, name, description) VALUES
         ('d1000000-0000-0000-0000-000000000001', $1, 'Kinh doanh', 'Ph\xF2ng kinh doanh v\xE0 b\xE1n h\xE0ng'),
@@ -1846,16 +1846,16 @@ var init_task_management = __esm({
         ('d1000000-0000-0000-0000-000000000005', $1, 'Ch\u0103m s\xF3c Kh\xE1ch h\xE0ng', 'Ph\xF2ng ch\u0103m s\xF3c kh\xE1ch h\xE0ng'),
         ('d1000000-0000-0000-0000-000000000006', $1, 'Ban Gi\xE1m \u0111\u1ED1c', 'Ban gi\xE1m \u0111\u1ED1c \u0111i\u1EC1u h\xE0nh')
       ON CONFLICT (id) DO NOTHING;
-    `, [DEFAULT_TENANT]);
+    `, [DEFAULT_TENANT2]);
         const adminRes = await client.query(
           `SELECT id FROM users WHERE tenant_id = $1 ORDER BY created_at ASC LIMIT 1`,
-          [DEFAULT_TENANT]
+          [DEFAULT_TENANT2]
         );
         const adminId = adminRes.rows[0]?.id || null;
         if (!adminId) return;
         const projectsRes = await client.query(
           `SELECT id FROM projects WHERE tenant_id = $1 LIMIT 5`,
-          [DEFAULT_TENANT]
+          [DEFAULT_TENANT2]
         );
         const projectIds = projectsRes.rows.map((r) => r.id);
         const proj = (i) => projectIds[i % projectIds.length] || null;
@@ -1907,7 +1907,7 @@ var init_task_management = __esm({
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id
       `, [
-            DEFAULT_TENANT,
+            DEFAULT_TENANT2,
             task.title,
             `Chi ti\u1EBFt c\xF4ng vi\u1EC7c: ${task.title}. Th\u1EF1c hi\u1EC7n \u0111\xFAng quy tr\xECnh v\xE0 b\xE1o c\xE1o k\u1EBFt qu\u1EA3 k\u1ECBp th\u1EDDi.`,
             projectId,
@@ -1927,13 +1927,13 @@ var init_task_management = __esm({
         INSERT INTO task_assignments (tenant_id, task_id, user_id, assigned_by, is_primary)
         VALUES ($1, $2, $3, $4, true)
         ON CONFLICT (task_id, user_id) DO NOTHING
-      `, [DEFAULT_TENANT, taskId, adminId, adminId]);
+      `, [DEFAULT_TENANT2, taskId, adminId, adminId]);
         }
         for (let i = 0; i < Math.min(5, insertedTaskIds.length); i++) {
           await client.query(`
         INSERT INTO task_activity_logs (tenant_id, task_id, user_id, action, detail)
         VALUES ($1, $2, $3, 'created', 'C\xF4ng vi\u1EC7c \u0111\u01B0\u1EE3c t\u1EA1o')
-      `, [DEFAULT_TENANT, insertedTaskIds[i], adminId]);
+      `, [DEFAULT_TENANT2, insertedTaskIds[i], adminId]);
         }
       },
       async down(client) {
@@ -4447,6 +4447,136 @@ var init_fix_department_uuid = __esm({
   }
 });
 
+// server/migrations/060_ai_agents.ts
+async function up(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ai_agents (
+      id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id          UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      name               VARCHAR(100) NOT NULL,
+      display_name       VARCHAR(255) NOT NULL,
+      role               VARCHAR(100) NOT NULL,
+      description        TEXT,
+      system_instruction TEXT NOT NULL,
+      skills             JSONB NOT NULL DEFAULT '[]'::jsonb,
+      model              VARCHAR(100),
+      active             BOOLEAN NOT NULL DEFAULT true,
+      metadata           JSONB DEFAULT '{}'::jsonb,
+      created_at         TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at         TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(tenant_id, name)
+    );
+  `);
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ai_agent_memories (
+      id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      agent_id    UUID NOT NULL REFERENCES ai_agents(id) ON DELETE CASCADE,
+      lead_id     UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+      summary     TEXT NOT NULL,
+      signals     JSONB DEFAULT '{}'::jsonb,
+      created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS idx_agent_memories_lead
+      ON ai_agent_memories(tenant_id, lead_id, created_at DESC);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS idx_agent_memories_agent
+      ON ai_agent_memories(agent_id, created_at DESC);
+  `);
+  for (const tbl of ["ai_agents", "ai_agent_memories"]) {
+    await client.query(`ALTER TABLE ${tbl} ENABLE ROW LEVEL SECURITY;`);
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies
+          WHERE tablename = '${tbl}'
+            AND policyname = '${tbl}_tenant_isolation'
+        ) THEN
+          CREATE POLICY ${tbl}_tenant_isolation ON ${tbl}
+            USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+  }
+  const systemInstruction = `B\u1EA1n l\xE0 ARIA \u2014 Chuy\xEAn gia Ph\xE2n t\xEDch Ch\xE2n dung Kh\xE1ch h\xE0ng B\u1EA5t \u0111\u1ED9ng s\u1EA3n h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam.
+H\u1ED3 s\u01A1: 15+ n\u0103m kinh nghi\u1EC7m th\u1EF1c chi\u1EBFn t\u01B0 v\u1EA5n B\u0110S, am hi\u1EC3u t\xE2m l\xFD ng\u01B0\u1EDDi mua Vi\u1EC7t Nam, th\xE0nh th\u1EA1o ph\xE2n t\xEDch h\xE0nh vi v\xE0 d\u1EF1 \u0111o\xE1n quy\u1EBFt \u0111\u1ECBnh mua.
+S\u1EE9 m\u1EC7nh: Cung c\u1EA5p ph\xE2n t\xEDch ch\xE2n dung kh\xE1ch h\xE0ng ch\xEDnh x\xE1c, s\u1EAFc b\xE9n v\xE0 c\xF3 t\xEDnh h\xE0nh \u0111\u1ED9ng cao \u0111\u1EC3 gi\xFAp \u0111\u1ED9i sale ch\u1ED1t deal hi\u1EC7u qu\u1EA3 h\u01A1n.
+Nguy\xEAn t\u1EAFc:
+- Ch\u1EC9 k\u1EBFt lu\u1EADn t\u1EEB d\u1EEF li\u1EC7u th\u1EF1c t\u1EBF trong h\u1ED3 s\u01A1. Kh\xF4ng suy di\u1EC5n v\xF4 c\u0103n c\u1EE9.
+- \u01AFu ti\xEAn insight actionable h\u01A1n nh\u1EADn x\xE9t chung chung.
+- Tham chi\u1EBFu l\u1ECBch s\u1EED ph\xE2n t\xEDch tr\u01B0\u1EDBc n\u1EBFu c\xF3 \u0111\u1EC3 cung c\u1EA5p \u0111\xE1nh gi\xE1 ti\u1EBFn tri\u1EC3n.
+- V\u0103n phong: Chuy\xEAn nghi\u1EC7p, s\xFAc t\xEDch, nh\u01B0 b\xE1o c\xE1o c\u1EE7a chuy\xEAn gia t\u01B0 v\u1EA5n cao c\u1EA5p.
+\u0110\u1ECBnh d\u1EA1ng \u0111\u1EA7u ra: V\u0103n xu\xF4i \u0111\xE1nh s\u1ED1 1-4, KH\xD4NG d\xF9ng markdown, KH\xD4NG d\xF9ng k\xFD t\u1EF1 **, #, -, \u2022.`;
+  const skills = JSON.stringify([
+    {
+      id: "persona_typing",
+      name: "Ph\xE2n lo\u1EA1i ch\xE2n dung",
+      description: "X\xE1c \u0111\u1ECBnh lo\u1EA1i kh\xE1ch h\xE0ng, m\u1EE9c \u0111\u1ED9 nghi\xEAm t\xFAc v\xE0 kh\u1EA3 n\u0103ng ra quy\u1EBFt \u0111\u1ECBnh",
+      prompt_fragment: "Ph\xE2n lo\u1EA1i: mua \u1EDF th\u1EF1c / \u0111\u1EA7u t\u01B0 / l\u01B0\u1EDBt s\xF3ng / t\xECm hi\u1EC3u. \u0110\xE1nh gi\xE1 m\u1EE9c \u0111\u1ED9 nghi\xEAm t\xFAc v\xE0 kh\u1EA3 n\u0103ng ra quy\u1EBFt \u0111\u1ECBnh d\u1EF1a tr\xEAn d\u1EEF li\u1EC7u th\u1EF1c."
+    },
+    {
+      id: "core_need_detection",
+      name: "Ph\xE1t hi\u1EC7n nhu c\u1EA7u c\u1ED1t l\xF5i",
+      description: "T\xECm \u0111\u1ED9ng l\u1EF1c mua th\u1EF1c s\u1EF1 v\xE0 \xE1p l\u1EF1c \u1EA9n",
+      prompt_fragment: "X\xE1c \u0111\u1ECBnh \u0111\u1ED9ng l\u1EF1c mua th\u1EF1c s\u1EF1 (c\xF3 th\u1EC3 kh\xE1c \u0111i\u1EC1u h\u1ECD n\xF3i). T\xECm \xE1p l\u1EF1c \u1EA9n: deadline gia \u0111\xECnh, \xE1p l\u1EF1c t\xE0i ch\xEDnh, k\u1EF3 v\u1ECDng sinh l\u1EDDi."
+    },
+    {
+      id: "risk_assessment",
+      name: "\u0110\xE1nh gi\xE1 r\u1EE7i ro deal",
+      description: "Ph\xE1t hi\u1EC7n r\xE0o c\u1EA3n, lo ng\u1EA1i v\xE0 nguy c\u01A1 m\u1EA5t deal",
+      prompt_fragment: "\u0110\xE1nh gi\xE1: t\xE2m tr\u1EA1ng hi\u1EC7n t\u1EA1i, r\xE0o c\u1EA3n t\xE0i ch\xEDnh/ph\xE1p l\xFD/gia \u0111\xECnh, d\u1EA5u hi\u1EC7u do d\u1EF1 ho\u1EB7c so s\xE1nh \u0111a d\u1EF1 \xE1n."
+    },
+    {
+      id: "closing_strategy",
+      name: "Chi\u1EBFn l\u01B0\u1EE3c ch\u1ED1t deal",
+      description: "\u0110\u1EC1 xu\u1EA5t h\xE0nh \u0111\u1ED9ng c\u1EE5 th\u1EC3 trong 24-48h",
+      prompt_fragment: "\u0110\u1EC1 xu\u1EA5t 1-2 b\u01B0\u1EDBc c\u1EE5 th\u1EC3 nh\u1EA5t cho sale th\u1EF1c hi\u1EC7n trong 24-48h \u0111\u1EC3 \u0111\u1EA9y deal ti\u1EBFn l\xEAn. H\xE0nh \u0111\u1ED9ng ph\u1EA3i kh\u1EA3 thi, \u0111o \u0111\u1EBFm \u0111\u01B0\u1EE3c."
+    },
+    {
+      id: "memory_continuity",
+      name: "Ti\u1EBFp n\u1ED1i l\u1ECBch s\u1EED ph\xE2n t\xEDch",
+      description: "Tham chi\u1EBFu c\xE1c l\u1EA7n ph\xE2n t\xEDch tr\u01B0\u1EDBc \u0111\u1EC3 theo d\xF5i ti\u1EBFn tri\u1EC3n",
+      prompt_fragment: "N\u1EBFu c\xF3 l\u1ECBch s\u1EED ph\xE2n t\xEDch tr\u01B0\u1EDBc, so s\xE1nh v\u1EDBi hi\u1EC7n t\u1EA1i: t\xE2m tr\u1EA1ng kh\xE1ch \u0111\xE3 thay \u0111\u1ED5i th\u1EBF n\xE0o, deal ti\u1EBFn tri\u1EC3n hay tho\xE1i lui?"
+    }
+  ]);
+  await client.query(`
+    INSERT INTO ai_agents (tenant_id, name, display_name, role, description, system_instruction, skills, model, active)
+    VALUES (
+      $1,
+      'ARIA',
+      'ARIA \u2014 Chuy\xEAn gia Ph\xE2n t\xEDch Ch\xE2n dung Kh\xE1ch h\xE0ng',
+      'persona_analyst',
+      'Agent AI chuy\xEAn ph\xE2n t\xEDch ch\xE2n dung t\xE2m l\xFD, h\xE0nh vi mua v\xE0 chi\u1EBFn l\u01B0\u1EE3c ch\u1ED1t deal cho t\u1EEBng kh\xE1ch h\xE0ng B\u0110S.',
+      $2,
+      $3::jsonb,
+      NULL,
+      true
+    )
+    ON CONFLICT (tenant_id, name) DO UPDATE SET
+      display_name       = EXCLUDED.display_name,
+      description        = EXCLUDED.description,
+      system_instruction = EXCLUDED.system_instruction,
+      skills             = EXCLUDED.skills,
+      updated_at         = CURRENT_TIMESTAMP;
+  `, [DEFAULT_TENANT, systemInstruction, skills]);
+}
+async function down(client) {
+  await client.query(`DROP TABLE IF EXISTS ai_agent_memories CASCADE;`);
+  await client.query(`DROP TABLE IF EXISTS ai_agents CASCADE;`);
+}
+var description, DEFAULT_TENANT, ai_agents_default;
+var init_ai_agents = __esm({
+  "server/migrations/060_ai_agents.ts"() {
+    description = "060: Create ai_agents and ai_agent_memories tables; seed ARIA persona analyst agent";
+    DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
+    ai_agents_default = { up, down, description };
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -4624,6 +4754,7 @@ var init_runner = __esm({
     init_email_campaign_log();
     init_seed_departments_all_tenants();
     init_fix_department_uuid();
+    init_ai_agents();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -4684,7 +4815,8 @@ var init_runner = __esm({
       "056_bank_rates.ts": bank_rates_default,
       "057_email_campaign_log.ts": email_campaign_log_default,
       "058_seed_departments_all_tenants.ts": seed_departments_all_tenants_default,
-      "059_fix_department_uuid.ts": fix_department_uuid_default
+      "059_fix_department_uuid.ts": fix_department_uuid_default,
+      "060_ai_agents.ts": ai_agents_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -18282,13 +18414,13 @@ ${lines.join("\n")}` : "";
           return "";
         }
       }
-      async logSystemChange(tenantId, changeType, changeScope, description, oldValue, newValue, changedBy) {
+      async logSystemChange(tenantId, changeType, changeScope, description2, oldValue, newValue, changedBy) {
         try {
           await withTransaction(async (client) => {
             await client.query(
               `INSERT INTO agent_system_change_log (tenant_id, change_type, change_scope, description, old_value, new_value, changed_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-              [tenantId || null, changeType, changeScope, description, oldValue || null, newValue || null, changedBy || null]
+              [tenantId || null, changeType, changeScope, description2, oldValue || null, newValue || null, changedBy || null]
             );
           });
         } catch {
@@ -18318,6 +18450,196 @@ ${lines.join("\n")}` : "";
       }
     };
     feedbackRepository = new FeedbackRepository();
+  }
+});
+
+// server/repositories/agentRepository.ts
+var TENANT_FILTER, AGENT_CACHE_TTL_MS, agentCache, AgentRepository, agentRepository;
+var init_agentRepository = __esm({
+  "server/repositories/agentRepository.ts"() {
+    init_baseRepository();
+    init_logger();
+    TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
+    AGENT_CACHE_TTL_MS = 5 * 60 * 1e3;
+    agentCache = /* @__PURE__ */ new Map();
+    AgentRepository = class extends BaseRepository {
+      // ── Row mappers ────────────────────────────────────────────────────────────
+      rowToAgent(row) {
+        return {
+          id: row.id,
+          tenantId: row.tenant_id,
+          name: row.name,
+          displayName: row.display_name,
+          role: row.role,
+          description: row.description || "",
+          systemInstruction: row.system_instruction,
+          skills: Array.isArray(row.skills) ? row.skills : [],
+          model: row.model || null,
+          active: row.active ?? true,
+          metadata: row.metadata || {},
+          createdAt: row.created_at,
+          updatedAt: row.updated_at
+        };
+      }
+      rowToMemory(row) {
+        return {
+          id: row.id,
+          tenantId: row.tenant_id,
+          agentId: row.agent_id,
+          leadId: row.lead_id,
+          summary: row.summary,
+          signals: row.signals || {},
+          createdAt: row.created_at
+        };
+      }
+      // ── Agent CRUD ─────────────────────────────────────────────────────────────
+      /**
+       * Load an agent by name (e.g. 'ARIA').
+       * Results are cached for AGENT_CACHE_TTL_MS.
+       */
+      async getAgentByName(tenantId, name) {
+        const cacheKey2 = `${tenantId}:${name}`;
+        const cached2 = agentCache.get(cacheKey2);
+        if (cached2 && cached2.expiresAt > Date.now()) return cached2.agent;
+        try {
+          return await this.withTenant(tenantId, async (client) => {
+            const res = await client.query(
+              `SELECT * FROM ai_agents WHERE name = $1 AND ${TENANT_FILTER} AND active = true LIMIT 1`,
+              [name]
+            );
+            if (!res.rows.length) return null;
+            const agent = this.rowToAgent(res.rows[0]);
+            agentCache.set(cacheKey2, { agent, expiresAt: Date.now() + AGENT_CACHE_TTL_MS });
+            return agent;
+          });
+        } catch (e) {
+          logger.warn(`AgentRepository.getAgentByName failed for '${name}':`, e);
+          return null;
+        }
+      }
+      /** Invalidate cache for an agent after update. */
+      invalidateCache(tenantId, name) {
+        agentCache.delete(`${tenantId}:${name}`);
+      }
+      /** List all agents for a tenant. */
+      async listAgents(tenantId) {
+        return this.withTenant(tenantId, async (client) => {
+          const res = await client.query(
+            `SELECT * FROM ai_agents WHERE ${TENANT_FILTER} ORDER BY created_at ASC`
+          );
+          return res.rows.map(this.rowToAgent);
+        });
+      }
+      /** Update an agent's config (skills, system_instruction, model). */
+      async updateAgent(tenantId, agentId, patch) {
+        return this.withTenant(tenantId, async (client) => {
+          const sets = [];
+          const vals = [];
+          let idx = 1;
+          if (patch.systemInstruction !== void 0) {
+            sets.push(`system_instruction = $${idx++}`);
+            vals.push(patch.systemInstruction);
+          }
+          if (patch.skills !== void 0) {
+            sets.push(`skills = $${idx++}::jsonb`);
+            vals.push(JSON.stringify(patch.skills));
+          }
+          if (patch.model !== void 0) {
+            sets.push(`model = $${idx++}`);
+            vals.push(patch.model);
+          }
+          if (patch.displayName !== void 0) {
+            sets.push(`display_name = $${idx++}`);
+            vals.push(patch.displayName);
+          }
+          if (patch.description !== void 0) {
+            sets.push(`description = $${idx++}`);
+            vals.push(patch.description);
+          }
+          if (patch.active !== void 0) {
+            sets.push(`active = $${idx++}`);
+            vals.push(patch.active);
+          }
+          sets.push("updated_at = CURRENT_TIMESTAMP");
+          vals.push(agentId, tenantId);
+          const res = await client.query(
+            `UPDATE ai_agents SET ${sets.join(", ")}
+         WHERE id = $${idx++} AND tenant_id = $${idx++}
+         RETURNING *`,
+            vals
+          );
+          if (!res.rows.length) throw new Error("Agent not found");
+          const agent = this.rowToAgent(res.rows[0]);
+          agentCache.delete(`${tenantId}:${agent.name}`);
+          return agent;
+        });
+      }
+      // ── Memory CRUD ────────────────────────────────────────────────────────────
+      /**
+       * Save an analysis result to agent memory.
+       * Also trims old memories to keep only the last MAX_MEMORIES per lead.
+       */
+      async saveMemory(tenantId, agentId, leadId, summary, signals = {}) {
+        const MAX_MEMORIES = 10;
+        return this.withTenant(tenantId, async (client) => {
+          const res = await client.query(
+            `INSERT INTO ai_agent_memories (tenant_id, agent_id, lead_id, summary, signals)
+         VALUES ($1, $2, $3, $4, $5::jsonb)
+         RETURNING *`,
+            [tenantId, agentId, leadId, summary, JSON.stringify(signals)]
+          );
+          await client.query(
+            `DELETE FROM ai_agent_memories
+         WHERE agent_id = $1 AND lead_id = $2 AND tenant_id = $3
+           AND id NOT IN (
+             SELECT id FROM ai_agent_memories
+             WHERE agent_id = $1 AND lead_id = $2 AND tenant_id = $3
+             ORDER BY created_at DESC
+             LIMIT $4
+           )`,
+            [agentId, leadId, tenantId, MAX_MEMORIES]
+          );
+          return this.rowToMemory(res.rows[0]);
+        });
+      }
+      /**
+       * Retrieve the N most recent memories for a lead.
+       * Returned in chronological order (oldest first) for prompt injection.
+       */
+      async getLeadMemories(tenantId, agentId, leadId, limit = 3) {
+        try {
+          return await this.withTenant(tenantId, async (client) => {
+            const res = await client.query(
+              `SELECT * FROM ai_agent_memories
+           WHERE agent_id = $1 AND lead_id = $2 AND ${TENANT_FILTER}
+           ORDER BY created_at DESC
+           LIMIT $3`,
+              [agentId, leadId, limit]
+            );
+            return res.rows.map(this.rowToMemory).reverse();
+          });
+        } catch (e) {
+          logger.warn("AgentRepository.getLeadMemories failed:", e);
+          return [];
+        }
+      }
+      /** All memories for a lead across all agents (for admin view). */
+      async getAllLeadMemories(tenantId, leadId, limit = 20) {
+        return this.withTenant(tenantId, async (client) => {
+          const res = await client.query(
+            `SELECT m.*, a.name as agent_name
+         FROM ai_agent_memories m
+         JOIN ai_agents a ON a.id = m.agent_id
+         WHERE m.lead_id = $1 AND m.${TENANT_FILTER}
+         ORDER BY m.created_at DESC
+         LIMIT $2`,
+            [leadId, limit]
+          );
+          return res.rows.map((row) => ({ ...this.rowToMemory(row), agentName: row.agent_name }));
+        });
+      }
+    };
+    agentRepository = new AgentRepository();
   }
 });
 
@@ -18770,24 +19092,24 @@ function deserializeQueryResponse(rawResponse) {
   });
 }
 function deserializeDescribeResponse(rawResponse) {
-  const description = {};
+  const description2 = {};
   for (let i = 0; i < rawResponse.length; i += 2) {
     const descriptor = rawResponse[i];
     switch (descriptor) {
       case "name": {
-        description["name"] = rawResponse[i + 1];
+        description2["name"] = rawResponse[i + 1];
         break;
       }
       case "type": {
-        description["dataType"] = rawResponse[i + 1].toLowerCase();
+        description2["dataType"] = rawResponse[i + 1].toLowerCase();
         break;
       }
       case "prefixes": {
-        description["prefixes"] = rawResponse[i + 1];
+        description2["prefixes"] = rawResponse[i + 1];
         break;
       }
       case "language": {
-        description["language"] = rawResponse[i + 1];
+        description2["language"] = rawResponse[i + 1];
         break;
       }
       case "schema": {
@@ -18820,12 +19142,12 @@ function deserializeDescribeResponse(rawResponse) {
           }
           schema[fieldName] = fieldInfo;
         }
-        description["schema"] = schema;
+        description2["schema"] = schema;
         break;
       }
     }
   }
-  return description;
+  return description2;
 }
 function parseCountResponse(rawResponse) {
   return typeof rawResponse === "number" ? rawResponse : Number.parseInt(rawResponse, 10);
@@ -24782,6 +25104,7 @@ var init_ai = __esm({
     init_enterpriseConfigRepository();
     init_leadRepository();
     init_feedbackRepository();
+    init_agentRepository();
     GENAI_CONFIG = {
       MODELS: {
         ROUTER: "gemini-2.5-flash",
@@ -26629,9 +26952,29 @@ reasoning ph\u1EA3i b\u1EB1ng ${lang === "en" ? "English" : "Ti\u1EBFng Vi\u1EC7
             return `[${ts}] ${who}: ${content}`;
           }).join("\n") || (isVN ? "(Ch\u01B0a c\xF3 l\u1ECBch s\u1EED t\u01B0\u01A1ng t\xE1c)" : "(No interaction history)");
           const slaFmt = lead.slaBreached ? isVN ? "BREACH \u2014 c\u1EA7n li\xEAn h\u1EC7 ngay h\xF4m nay" : "BREACHED \u2014 contact immediately" : isVN ? "B\xECnh th\u01B0\u1EDDng" : "OK";
+          const aria = await agentRepository.getAgentByName(tenantId, "ARIA");
+          const previousMemories = aria ? await agentRepository.getLeadMemories(tenantId, aria.id, lead.id, 3) : [];
+          const memorySection = previousMemories.length > 0 ? isVN ? `
+=== L\u1ECACH S\u1EEC PH\xC2N T\xCDCH TR\u01AF\u1EDAC (${previousMemories.length} l\u1EA7n) ===
+` + previousMemories.map((m, i) => {
+            const dt = new Date(m.createdAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+            return `[L\u1EA7n ${i + 1} \u2014 ${dt}]
+${m.summary}`;
+          }).join("\n\n") : `
+=== PREVIOUS ANALYSIS HISTORY (${previousMemories.length} sessions) ===
+` + previousMemories.map((m, i) => {
+            const dt = new Date(m.createdAt).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+            return `[Session ${i + 1} \u2014 ${dt}]
+${m.summary}`;
+          }).join("\n\n") : "";
+          const fallbackSysVN = "B\u1EA1n l\xE0 chuy\xEAn gia ph\xE2n t\xEDch t\xE2m l\xFD v\xE0 h\xE0nh vi kh\xE1ch h\xE0ng b\u1EA5t \u0111\u1ED9ng s\u1EA3n h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, v\u1EDBi 15+ n\u0103m kinh nghi\u1EC7m th\u1EF1c chi\u1EBFn. \u0110\u1ECBnh d\u1EA1ng: V\u0103n xu\xF4i \u0111\xE1nh s\u1ED1 1-4, KH\xD4NG d\xF9ng markdown, KH\xD4NG d\xF9ng k\xFD t\u1EF1 **, #, -, \u2022.";
+          const fallbackSysEN = "You are a top real estate customer behavior analyst in Vietnam with 15+ years of experience. Format: Numbered prose 1-4, NO markdown, NO **, #, -, \u2022 characters.";
+          const systemInstruction = isVN ? aria?.systemInstruction || fallbackSysVN : aria?.systemInstruction ? aria.systemInstruction.replace("Ti\u1EBFng Vi\u1EC7t", "English").replace("\u0110\u1ECBnh d\u1EA1ng \u0111\u1EA7u ra: V\u0103n xu\xF4i \u0111\xE1nh s\u1ED1 1-4, KH\xD4NG d\xF9ng markdown, KH\xD4NG d\xF9ng k\xFD t\u1EF1 **, #, -, \u2022.", "Output format: Numbered prose 1-4, NO markdown, NO **, #, -, \u2022 characters.") : fallbackSysEN;
+          const governanceModel = await getGovernanceModel(tenantId);
+          const summarizeModel = aria?.model && aria.model.trim() ? aria.model.trim() : governanceModel;
           if (isVN) {
             const prompt = `Ng\xF4n ng\u1EEF \u0111\u1EA7u ra: Ti\u1EBFng Vi\u1EC7t
-
+${aria ? `Phi\xEAn ph\xE2n t\xEDch b\u1EDFi: ${aria.displayName}` : ""}
 === H\u1ED2 S\u01A0 KH\xC1CH H\xC0NG ===
 T\xEAn: ${lead.name} | Giai \u0111o\u1EA1n CRM: ${lead.stage || "Ch\u01B0a r\xF5"} | \u0110i\u1EC3m AI: ${scoreFmt}
 Ngu\u1ED3n ti\u1EBFp c\u1EADn: ${lead.source || "Ch\u01B0a r\xF5"} | Ph\u1EE5 tr\xE1ch: ${lead.assignedToName || "Ch\u01B0a ph\xE2n c\xF4ng"}
@@ -26646,29 +26989,32 @@ Lo\u1EA1i B\u0110S: ${pref.propertyTypes?.join(", ") || "Ch\u01B0a r\xF5"}
 Khu v\u1EF1c: ${pref.regions?.join(", ") || "Ch\u01B0a r\xF5"}
 Di\u1EC7n t\xEDch: ${areaParts.length ? areaParts.join(" ") : "Ch\u01B0a r\xF5"}
 H\u01B0\u1EDBng: ${pref.directions?.join(", ") || "Ch\u01B0a r\xF5"}
-
+${memorySection}
 === L\u1ECACH S\u1EEC T\u01AF\u01A0NG T\xC1C (${logs.length} tin nh\u1EAFn) ===
 ${formattedLogs}
 
 === Y\xCAU C\u1EA6U PH\xC2N T\xCDCH ===
-Vi\u1EBFt ph\xE2n t\xEDch ch\xE2n dung kh\xE1ch h\xE0ng theo 4 \u0111i\u1EC3m sau. M\u1ED7i \u0111i\u1EC3m 2-3 c\xE2u, ng\u1EAFn g\u1ECDn, th\u1EF1c chi\u1EBFn. D\xF9ng v\u0103n xu\xF4i \u0111\xE1nh s\u1ED1, KH\xD4NG d\xF9ng markdown hay k\xFD t\u1EF1 \u0111\u1EB7c bi\u1EC7t.
+Vi\u1EBFt ph\xE2n t\xEDch ch\xE2n dung kh\xE1ch h\xE0ng theo 4 \u0111i\u1EC3m sau. M\u1ED7i \u0111i\u1EC3m 2-3 c\xE2u, ng\u1EAFn g\u1ECDn, th\u1EF1c chi\u1EBFn. D\xF9ng v\u0103n xu\xF4i \u0111\xE1nh s\u1ED1, KH\xD4NG d\xF9ng markdown hay k\xFD t\u1EF1 \u0111\u1EB7c bi\u1EC7t.${previousMemories.length > 0 ? " \u0110i\u1EC3m 5 n\u1EBFu c\xF3 thay \u0111\u1ED5i \u0111\xE1ng k\u1EC3 so v\u1EDBi l\u1EA7n ph\xE2n t\xEDch tr\u01B0\u1EDBc." : ""}
 
 1. CH\xC2N DUNG: \u0110\xE2y l\xE0 lo\u1EA1i kh\xE1ch h\xE0ng n\xE0o (mua \u1EDF th\u1EF1c, \u0111\u1EA7u t\u01B0, l\u01B0\u1EDBt s\xF3ng, t\xECm hi\u1EC3u th\u1ECB tr\u01B0\u1EDDng)? M\u1EE9c \u0111\u1ED9 nghi\xEAm t\xFAc v\xE0 kh\u1EA3 n\u0103ng ra quy\u1EBFt \u0111\u1ECBnh.
 2. NHU C\u1EA6U C\u1ED0T L\xD5I: \u0110\u1ED9ng l\u1EF1c mua th\u1EF1c s\u1EF1 \u2014 \u0111i\u1EC1u h\u1ECD th\u1EF1c s\u1EF1 c\u1EA7n (c\xF3 th\u1EC3 kh\xE1c v\u1EDBi \u0111i\u1EC1u h\u1ECD n\xF3i). \xC1p l\u1EF1c ho\u1EB7c k\u1EF3 v\u1ECDng \u1EA9n.
 3. R\u1EE6I RO & R\xC0O C\u1EA2N: T\xE2m tr\u1EA1ng hi\u1EC7n t\u1EA1i, lo ng\u1EA1i ch\xEDnh, nguy c\u01A1 m\u1EA5t deal ho\u1EB7c k\xE9o d\xE0i pipeline b\u1EA5t th\u01B0\u1EDDng.
-4. H\xC0NH \u0110\u1ED8NG TI\u1EBEP THEO: 1-2 b\u01B0\u1EDBc c\u1EE5 th\u1EC3 v\xE0 kh\u1EA3 thi nh\u1EA5t cho sale th\u1EF1c hi\u1EC7n trong 24-48h t\u1EDBi \u0111\u1EC3 \u0111\u1EA9y deal ti\u1EBFn l\xEAn.`;
-            const summarizeModel = await getGovernanceModel(tenantId);
+4. H\xC0NH \u0110\u1ED8NG TI\u1EBEP THEO: 1-2 b\u01B0\u1EDBc c\u1EE5 th\u1EC3 v\xE0 kh\u1EA3 thi nh\u1EA5t cho sale th\u1EF1c hi\u1EC7n trong 24-48h t\u1EDBi \u0111\u1EC3 \u0111\u1EA9y deal ti\u1EBFn l\xEAn.${previousMemories.length > 0 ? "\n5. TI\u1EBEN TRI\u1EC2N: So v\u1EDBi l\u1EA7n ph\xE2n t\xEDch tr\u01B0\u1EDBc, t\xECnh h\xECnh \u0111\xE3 thay \u0111\u1ED5i ra sao? Deal \u0111ang t\u1ED1t l\xEAn hay x\u1EA5u \u0111i?" : ""}`;
             const response = await getAiClient2().models.generateContent({
               model: summarizeModel,
               contents: prompt,
-              config: {
-                systemInstruction: "B\u1EA1n l\xE0 chuy\xEAn gia ph\xE2n t\xEDch t\xE2m l\xFD v\xE0 h\xE0nh vi kh\xE1ch h\xE0ng b\u1EA5t \u0111\u1ED9ng s\u1EA3n h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, v\u1EDBi 15+ n\u0103m kinh nghi\u1EC7m th\u1EF1c chi\u1EBFn t\u01B0 v\u1EA5n v\xE0 ch\u1ED1t deal. Nhi\u1EC7m v\u1EE5: Vi\u1EBFt b\u1EA3n ph\xE2n t\xEDch ch\xE2n dung kh\xE1ch h\xE0ng ng\u1EAFn g\u1ECDn, s\u1EAFc b\xE9n v\xE0 c\xF3 t\xEDnh h\xE0nh \u0111\u1ED9ng cao cho nh\xE2n vi\xEAn sale B\u0110S. Nguy\xEAn t\u1EAFc: Ch\u1EC9 k\u1EBFt lu\u1EADn t\u1EEB d\u1EEF li\u1EC7u th\u1EF1c t\u1EBF trong h\u1ED3 s\u01A1. Kh\xF4ng suy di\u1EC5n v\xF4 c\u0103n c\u1EE9. \u01AFu ti\xEAn insight actionable h\u01A1n nh\u1EADn x\xE9t chung chung. V\u0103n phong: Chuy\xEAn nghi\u1EC7p, s\xFAc t\xEDch, nh\u01B0 b\xE1o c\xE1o c\u1EE7a chuy\xEAn gia t\u01B0 v\u1EA5n cao c\u1EA5p. \u0110\u1ECBnh d\u1EA1ng: V\u0103n xu\xF4i \u0111\xE1nh s\u1ED1 1-4, KH\xD4NG d\xF9ng markdown, KH\xD4NG d\xF9ng k\xFD t\u1EF1 **, #, -, \u2022."
-              }
+              config: { systemInstruction }
             });
-            return response.text || "Kh\xF4ng th\u1EC3 ph\xE2n t\xEDch kh\xE1ch h\xE0ng v\xE0o l\xFAc n\xE0y.";
+            const result = response.text || "Kh\xF4ng th\u1EC3 ph\xE2n t\xEDch kh\xE1ch h\xE0ng v\xE0o l\xFAc n\xE0y.";
+            if (aria && lead.id) {
+              agentRepository.saveMemory(tenantId, aria.id, lead.id, result).catch(
+                (e) => logger.warn("ARIA: saveMemory failed:", e)
+              );
+            }
+            return result;
           } else {
             const prompt = `Output language: English
-
+${aria ? `Analysis session by: ${aria.displayName}` : ""}
 === LEAD PROFILE ===
 Name: ${lead.name} | CRM Stage: ${lead.stage || "Unknown"} | AI Score: ${scoreFmt}
 Source: ${lead.source || "Unknown"} | Assigned to: ${lead.assignedToName || "Unassigned"}
@@ -26683,26 +27029,29 @@ Property types: ${pref.propertyTypes?.join(", ") || "Unknown"}
 Regions: ${pref.regions?.join(", ") || "Unknown"}
 Area: ${areaParts.length ? areaParts.join(" ") : "Unknown"}
 Directions: ${pref.directions?.join(", ") || "Unknown"}
-
+${memorySection}
 === INTERACTION HISTORY (${logs.length} messages) ===
 ${formattedLogs}
 
 === ANALYSIS REQUIRED ===
-Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise and actionable. Plain numbered prose, NO markdown, NO special characters.
+Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise and actionable. Plain numbered prose, NO markdown, NO special characters.${previousMemories.length > 0 ? " Add point 5 if there is a notable change vs previous analysis." : ""}
 
 1. PERSONA: What type of buyer is this (end-user, investor, speculator, market researcher)? Seriousness and decision-making capability.
 2. CORE NEED: Real buying motivation \u2014 what they truly need (may differ from what they say). Hidden pressures or expectations.
 3. RISKS & BLOCKERS: Current mindset, main concerns, risk of losing the deal or abnormal pipeline stall.
-4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.`;
-            const summarizeModel = await getGovernanceModel(tenantId);
+4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.${previousMemories.length > 0 ? "\n5. PROGRESS: Compared to previous analysis, how has the situation changed? Is the deal progressing or regressing?" : ""}`;
             const response = await getAiClient2().models.generateContent({
               model: summarizeModel,
               contents: prompt,
-              config: {
-                systemInstruction: "You are a top real estate customer psychology and behavior analyst in Vietnam, with 15+ years of hands-on deal closing experience. Task: Write a concise, sharp, high-action customer persona analysis for real estate sales agents. Principle: Only draw conclusions from actual data in the profile. No unfounded speculation. Prioritize actionable insights over generic observations. Tone: Professional, concise, like a senior consultant's briefing note. Format: Numbered prose 1-4, NO markdown, NO **, #, -, \u2022 characters."
-              }
+              config: { systemInstruction }
             });
-            return response.text || "Unable to analyze lead at this time.";
+            const result = response.text || "Unable to analyze lead at this time.";
+            if (aria && lead.id) {
+              agentRepository.saveMemory(tenantId, aria.id, lead.id, result).catch(
+                (e) => logger.warn("ARIA: saveMemory failed:", e)
+              );
+            }
+            return result;
           }
         } catch (e) {
           const msg = e?.message || String(e);
@@ -29345,7 +29694,7 @@ function buildListingMeta(listing) {
     areaStr ? `Di\u1EC7n t\xEDch: ${areaStr}` : "",
     listing.bedrooms ? `${listing.bedrooms} ph\xF2ng ng\u1EE7` : ""
   ].filter(Boolean);
-  const description = parts.join(" \u2014 ").slice(0, 160);
+  const description2 = parts.join(" \u2014 ").slice(0, 160);
   const images = Array.isArray(listing.images) ? listing.images : [];
   const image = images[0] || DEFAULT_IMAGE;
   const url2 = `${APP_URL2}/listing/${listing.id}`;
@@ -29354,7 +29703,7 @@ function buildListingMeta(listing) {
     "@type": "RealEstateListing",
     inLanguage: "vi",
     name: listing.title || "",
-    description,
+    description: description2,
     url: url2,
     image: images.slice(0, 5).length ? images.slice(0, 5) : void 0,
     address: listing.location ? { "@type": "PostalAddress", streetAddress: listing.location, addressCountry: "VN" } : void 0,
@@ -29363,12 +29712,12 @@ function buildListingMeta(listing) {
     ...listing.bedrooms != null ? { numberOfRooms: listing.bedrooms } : {}
   };
   const h1 = listing.title || `${transaction} ${type} ${areaStr}`.trim() || "B\u1EA5t \u0110\u1ED9ng S\u1EA3n SGS LAND";
-  return { title, description, h1, image, url: url2, type: "website", structuredData };
+  return { title, description: description2, h1, image, url: url2, type: "website", structuredData };
 }
 function buildArticleMeta(article) {
   const rawExcerpt = article.excerpt || (article.content ? article.content.replace(/<[^>]+>/g, "").slice(0, 160) : "");
   const title = article.title ? `${article.title} - Tin T\u1EE9c B\u0110S | SGS LAND` : DEFAULT_META.title;
-  const description = rawExcerpt.slice(0, 300) || DEFAULT_META.description;
+  const description2 = rawExcerpt.slice(0, 300) || DEFAULT_META.description;
   const image = article.coverImage || article.cover_image || DEFAULT_IMAGE;
   const url2 = article.slug ? `${APP_URL2}/news/${article.slug}` : `${APP_URL2}/news/${article.id}`;
   const structuredData = {
@@ -29376,7 +29725,7 @@ function buildArticleMeta(article) {
     "@type": "NewsArticle",
     inLanguage: "vi",
     headline: article.title || "",
-    description,
+    description: description2,
     image,
     url: url2,
     datePublished: article.publishedAt || article.published_at || void 0,
@@ -29388,7 +29737,7 @@ function buildArticleMeta(article) {
       logo: { "@type": "ImageObject", url: `${APP_URL2}/apple-touch-icon.png` }
     }
   };
-  return { title, description, h1: article.title || void 0, image, url: url2, type: "article", structuredData };
+  return { title, description: description2, h1: article.title || void 0, image, url: url2, type: "article", structuredData };
 }
 function buildStaticPageMeta(overrideTitle, overrideDesc, ogImage, pagePath) {
   const fullKey = pagePath.replace(/^\//, "") || "";
@@ -31676,11 +32025,11 @@ var STAGE_LABEL_VN = {
 };
 function createLeadRoutes(authenticateToken, getBroadcast) {
   const router = Router();
-  const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
+  const PARTNER_ROLES3 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (PARTNER_ROLES2.includes(user.role)) {
+      if (PARTNER_ROLES3.includes(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const tenantId = user.tenantId;
@@ -33405,11 +33754,11 @@ var contractRepository = new ContractRepository();
 // server/routes/contractRoutes.ts
 function createContractRoutes(authenticateToken) {
   const router = Router4();
-  const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
+  const PARTNER_ROLES3 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (PARTNER_ROLES2.includes(user.role)) {
+      if (PARTNER_ROLES3.includes(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -33633,8 +33982,8 @@ function createUserRoutes(authenticateToken, jwtSecret) {
   router.get("/members", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
-      if (PARTNER_ROLES2.includes(user.role)) {
+      const PARTNER_ROLES3 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
+      if (PARTNER_ROLES3.includes(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const search = req.query.search;
@@ -34051,7 +34400,7 @@ function calcDelta(current, previous) {
   if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round((current - previous) / previous * 100);
 }
-var TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
+var TENANT_FILTER2 = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
 var AnalyticsRepository = class extends BaseRepository {
   constructor() {
     super("leads");
@@ -34087,32 +34436,32 @@ var AnalyticsRepository = class extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'WON')::int as won_leads,
           COUNT(*) FILTER (WHERE stage = 'LOST')::int as lost_leads
         FROM leads l
-        WHERE l.${TENANT_FILTER} ${timeFilter} ${userLeadFilter}
+        WHERE l.${TENANT_FILTER2} ${timeFilter} ${userLeadFilter}
       `);
-      const prevLeadsResult = useTimeFilter ? await client.query(`SELECT COUNT(*)::int as total FROM leads l WHERE l.${TENANT_FILTER} ${prevTimeFilter} ${userLeadFilter}`) : { rows: [{ total: 0 }] };
+      const prevLeadsResult = useTimeFilter ? await client.query(`SELECT COUNT(*)::int as total FROM leads l WHERE l.${TENANT_FILTER2} ${prevTimeFilter} ${userLeadFilter}`) : { rows: [{ total: 0 }] };
       const leadsByStageResult = await client.query(`
         SELECT stage, COUNT(*)::int as count
         FROM leads
-        WHERE ${TENANT_FILTER} ${userLeadFilterNoAlias}
+        WHERE ${TENANT_FILTER2} ${userLeadFilterNoAlias}
         GROUP BY stage
       `);
       const leadsBySourceResult = await client.query(`
         SELECT COALESCE(source, 'UNKNOWN') as source, COUNT(*)::int as count
         FROM leads
-        WHERE ${TENANT_FILTER} ${userLeadFilterNoAlias}
+        WHERE ${TENANT_FILTER2} ${userLeadFilterNoAlias}
         GROUP BY source
       `);
       const listingsResult = await client.query(`
         SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int as available
         FROM listings
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER2}
       `);
       const proposalLeadJoin = isSalesScope && safeUserId ? `INNER JOIN leads lp ON p.lead_id = lp.id AND lp.tenant_id = p.tenant_id AND lp.assigned_to = '${safeUserId}'::uuid` : "";
       const proposalsResult = await client.query(`
         SELECT COUNT(p.id)::int as total, COUNT(p.id) FILTER (WHERE p.status = 'APPROVED')::int as approved
         FROM proposals p
         ${proposalLeadJoin}
-        WHERE p.${TENANT_FILTER}
+        WHERE p.${TENANT_FILTER2}
       `);
       const contractLeadJoin = isSalesScope && safeUserId ? `INNER JOIN proposals cp ON c.proposal_id = cp.id AND cp.tenant_id = c.tenant_id
            INNER JOIN leads cl ON cp.lead_id = cl.id AND cl.tenant_id = c.tenant_id AND cl.assigned_to = '${safeUserId}'::uuid` : "";
@@ -34120,7 +34469,7 @@ var AnalyticsRepository = class extends BaseRepository {
         SELECT COUNT(c.id)::int as total, COUNT(c.id) FILTER (WHERE c.status = 'SIGNED')::int as signed
         FROM contracts c
         ${contractLeadJoin}
-        WHERE c.${TENANT_FILTER}
+        WHERE c.${TENANT_FILTER2}
       `);
       const commissionRate = parseFloat(process.env.COMMISSION_RATE || "0.02");
       const wonLeadJoin = isSalesScope && safeUserId ? `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON' AND lrev.assigned_to = '${safeUserId}'::uuid` : `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON'`;
@@ -34137,7 +34486,7 @@ var AnalyticsRepository = class extends BaseRepository {
         SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
         FROM proposals p
         ${wonLeadJoin}
-        WHERE p.${TENANT_FILTER}
+        WHERE p.${TENANT_FILTER2}
           AND p.status = 'APPROVED'
           ${latestApprovedProposalFilter}
           ${useTimeFilter ? `AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days} days'` : ""}
@@ -34146,7 +34495,7 @@ var AnalyticsRepository = class extends BaseRepository {
             SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
             FROM proposals p
             ${wonLeadJoin}
-            WHERE p.${TENANT_FILTER}
+            WHERE p.${TENANT_FILTER2}
               AND p.status = 'APPROVED'
               ${latestApprovedProposalFilter}
               AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days * 2} days'
@@ -34159,7 +34508,7 @@ var AnalyticsRepository = class extends BaseRepository {
                ELSE l.commission END
         ), 0)::numeric as revenue
         FROM listings l
-        WHERE l.${TENANT_FILTER}
+        WHERE l.${TENANT_FILTER2}
           AND l.status = 'SOLD'
           AND l.commission IS NOT NULL AND l.commission > 0
           ${listingUserFilter}
@@ -34171,7 +34520,7 @@ var AnalyticsRepository = class extends BaseRepository {
                    ELSE l.commission END
             ), 0)::numeric as revenue
             FROM listings l
-            WHERE l.${TENANT_FILTER}
+            WHERE l.${TENANT_FILTER2}
               AND l.status = 'SOLD'
               AND l.commission IS NOT NULL AND l.commission > 0
               ${listingUserFilter}
@@ -34186,20 +34535,20 @@ var AnalyticsRepository = class extends BaseRepository {
           COUNT(p.id)::int as deal_count
         FROM leads l
         INNER JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id
-        WHERE l.${TENANT_FILTER}
+        WHERE l.${TENANT_FILTER2}
           AND l.stage NOT IN ('WON', 'LOST')
           AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
           ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'::uuid` : ""}
           ${useTimeFilter ? `AND l.created_at >= NOW() - INTERVAL '${days} days'` : ""}
         GROUP BY l.stage, l.score->>'grade'
       `);
-      const interactionLeadFilter = isSalesScope && safeUserId ? `AND i.lead_id IN (SELECT id FROM leads WHERE ${TENANT_FILTER} AND assigned_to = '${safeUserId}'::uuid)` : "";
+      const interactionLeadFilter = isSalesScope && safeUserId ? `AND i.lead_id IN (SELECT id FROM leads WHERE ${TENANT_FILTER2} AND assigned_to = '${safeUserId}'::uuid)` : "";
       const interactionStats = await client.query(`
         SELECT
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
         FROM interactions i
-        WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
+        WHERE i.${TENANT_FILTER2} ${interactionLeadFilter}
           ${useTimeFilter ? `AND i.timestamp >= NOW() - INTERVAL '${days} days'` : ""}
       `);
       const prevInteractionStats = useTimeFilter ? await client.query(`
@@ -34207,7 +34556,7 @@ var AnalyticsRepository = class extends BaseRepository {
               COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
               COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
             FROM interactions i
-            WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
+            WHERE i.${TENANT_FILTER2} ${interactionLeadFilter}
               AND i.timestamp >= NOW() - INTERVAL '${days * 2} days'
               AND i.timestamp < NOW() - INTERVAL '${days} days'
           `) : { rows: [{ total_outbound: 0, ai_outbound: 0 }] };
@@ -34218,7 +34567,7 @@ var AnalyticsRepository = class extends BaseRepository {
               COUNT(p.id)::int as deal_count
             FROM leads l
             INNER JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id
-            WHERE l.${TENANT_FILTER}
+            WHERE l.${TENANT_FILTER2}
               AND l.stage NOT IN ('WON', 'LOST')
               AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
               AND l.created_at >= NOW() - INTERVAL '${days * 2} days'
@@ -34231,7 +34580,7 @@ var AnalyticsRepository = class extends BaseRepository {
           EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400
         ), 0)::numeric as avg_days
         FROM leads
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER2}
           AND stage = 'WON'
           ${userLeadFilterNoAlias}
           ${useTimeFilter ? `AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days} days'` : ""}
@@ -34241,7 +34590,7 @@ var AnalyticsRepository = class extends BaseRepository {
               EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400
             ), 0)::numeric as avg_days
             FROM leads
-            WHERE ${TENANT_FILTER}
+            WHERE ${TENANT_FILTER2}
               AND stage = 'WON'
               ${userLeadFilterNoAlias}
               AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days * 2} days'
@@ -34252,7 +34601,7 @@ var AnalyticsRepository = class extends BaseRepository {
           TO_CHAR(created_at, 'DD/MM') as date,
           COUNT(*)::int as count
         FROM leads
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER2}
           ${userLeadFilterNoAlias}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : `AND created_at >= NOW() - INTERVAL '30 days'`}
         GROUP BY TO_CHAR(created_at, 'DD/MM'), DATE(created_at)
@@ -34268,7 +34617,7 @@ var AnalyticsRepository = class extends BaseRepository {
           l.name as lead_name
         FROM interactions i
         LEFT JOIN leads l ON i.lead_id = l.id AND l.tenant_id = i.tenant_id
-        WHERE i.${TENANT_FILTER}
+        WHERE i.${TENANT_FILTER2}
           ${interactionLeadFilter}
         ORDER BY i.timestamp DESC
         LIMIT 10
@@ -34281,7 +34630,7 @@ var AnalyticsRepository = class extends BaseRepository {
           COUNT(p.id)::int as proposal_demand
         FROM listings li
         LEFT JOIN proposals p ON p.listing_id = li.id AND p.tenant_id = li.tenant_id
-        WHERE li.${TENANT_FILTER}
+        WHERE li.${TENANT_FILTER2}
           AND li.status = 'AVAILABLE'
         GROUP BY li.id, li.attributes, li.price, li.created_at
         ORDER BY li.created_at DESC
@@ -34325,8 +34674,8 @@ var AnalyticsRepository = class extends BaseRepository {
             FROM (
               SELECT lead_id, MIN(timestamp) as ts
               FROM interactions
-              WHERE direction = 'INBOUND' AND ${TENANT_FILTER}
-                AND lead_id IN (SELECT id FROM leads WHERE assigned_to = u.id AND ${TENANT_FILTER})
+              WHERE direction = 'INBOUND' AND ${TENANT_FILTER2}
+                AND lead_id IN (SELECT id FROM leads WHERE assigned_to = u.id AND ${TENANT_FILTER2})
               GROUP BY lead_id
             ) first_in
             JOIN LATERAL (
@@ -34335,7 +34684,7 @@ var AnalyticsRepository = class extends BaseRepository {
               WHERE lead_id = first_in.lead_id
                 AND direction = 'OUTBOUND'
                 AND timestamp > first_in.ts
-                AND ${TENANT_FILTER}
+                AND ${TENANT_FILTER2}
             ) first_out ON first_out.ts IS NOT NULL
           ) as avg_response_minutes
         FROM users u
@@ -34347,7 +34696,7 @@ var AnalyticsRepository = class extends BaseRepository {
             AND li.status = 'SOLD'
             AND li.tenant_id = u.tenant_id
         ) sold ON true
-        WHERE u.${TENANT_FILTER}
+        WHERE u.${TENANT_FILTER2}
           AND u.role IN ('SALES', 'TEAM_LEAD')
         GROUP BY u.id, u.name, u.avatar, sold.cnt
         ORDER BY deals DESC
@@ -34359,7 +34708,7 @@ var AnalyticsRepository = class extends BaseRepository {
           SUM(p.final_price * $1)::numeric as revenue
         FROM proposals p
         ${wonLeadJoin}
-        WHERE p.${TENANT_FILTER}
+        WHERE p.${TENANT_FILTER2}
           AND p.status = 'APPROVED'
           ${latestApprovedProposalFilter}
         GROUP BY TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM')
@@ -34374,7 +34723,7 @@ var AnalyticsRepository = class extends BaseRepository {
                  ELSE l.commission END
           )::numeric as revenue
         FROM listings l
-        WHERE l.${TENANT_FILTER}
+        WHERE l.${TENANT_FILTER2}
           AND l.status = 'SOLD'
           AND l.commission IS NOT NULL AND l.commission > 0
           ${listingUserFilter}
@@ -34528,7 +34877,7 @@ var AnalyticsRepository = class extends BaseRepository {
       const funnelResult = await client.query(`
         SELECT stage, COUNT(*)::int as count
         FROM leads
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER2}
           ${userLeadFilter}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ""}
         GROUP BY stage
@@ -34566,7 +34915,7 @@ var AnalyticsRepository = class extends BaseRepository {
           ORDER BY pinner.updated_at DESC
           LIMIT 1
         ) p ON true
-        WHERE l.${TENANT_FILTER}
+        WHERE l.${TENANT_FILTER2}
           ${userLeadFilterL}
           ${useTimeFilter ? `AND (
             l.created_at >= NOW() - INTERVAL '${days} days'
@@ -34578,7 +34927,7 @@ var AnalyticsRepository = class extends BaseRepository {
       const campaignCostsResult = await client.query(`
         SELECT source, COALESCE(SUM(cost), 0)::numeric as total_cost
         FROM campaign_costs
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER2}
           ${useTimeFilter ? `AND period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ""}
         GROUP BY source
       `);
@@ -34663,7 +35012,7 @@ var AnalyticsRepository = class extends BaseRepository {
         ), 0)::numeric as revenue,
         COUNT(*)::int as sold_count
         FROM listings li
-        WHERE li.${TENANT_FILTER}
+        WHERE li.${TENANT_FILTER2}
           AND li.status = 'SOLD'
           AND li.commission IS NOT NULL AND li.commission > 0
           ${listingUserFilterBi}
@@ -34688,7 +35037,7 @@ var AnalyticsRepository = class extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'WON')::int as won,
           COUNT(*) FILTER (WHERE stage = 'LOST')::int as lost
         FROM leads
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER2}
           ${userLeadFilter}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ""}
         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
@@ -34719,7 +35068,7 @@ var AnalyticsRepository = class extends BaseRepository {
       const campaignCostsListResult = await client.query(`
         SELECT id, campaign_name, source, cost, period, created_at
         FROM campaign_costs
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER2}
           ${useTimeFilter ? `AND period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ""}
         ORDER BY created_at DESC
         LIMIT 100
@@ -34743,7 +35092,7 @@ var AnalyticsRepository = class extends BaseRepository {
   async updateCampaignCost(tenantId, id, cost) {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `UPDATE campaign_costs SET cost = $1 WHERE id = $2 AND ${TENANT_FILTER} RETURNING *`,
+        `UPDATE campaign_costs SET cost = $1 WHERE id = $2 AND ${TENANT_FILTER2} RETURNING *`,
         [cost, id]
       );
       if (result.rows.length === 0) throw new Error("Campaign cost not found");
@@ -34764,7 +35113,7 @@ var AnalyticsRepository = class extends BaseRepository {
   async deleteCampaignCost(tenantId, id) {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `DELETE FROM campaign_costs WHERE id = $1 AND ${TENANT_FILTER} RETURNING id`,
+        `DELETE FROM campaign_costs WHERE id = $1 AND ${TENANT_FILTER2} RETURNING id`,
         [id]
       );
       if (result.rows.length === 0) throw new Error("Campaign cost not found");
@@ -34805,13 +35154,13 @@ var AnalyticsRepository = class extends BaseRepository {
               SELECT p2.final_price FROM proposals p2
               WHERE p2.lead_id = won_l.id
                 AND p2.status = 'APPROVED'
-                AND p2.${TENANT_FILTER}
+                AND p2.${TENANT_FILTER2}
               ORDER BY p2.updated_at DESC
               LIMIT 1
             ) latest_p ON true
             WHERE won_l.assigned_to = $1
               AND won_l.stage = 'WON'
-              AND won_l.${TENANT_FILTER}
+              AND won_l.${TENANT_FILTER2}
           ), 0)::numeric
           +
           COALESCE((
@@ -34823,7 +35172,7 @@ var AnalyticsRepository = class extends BaseRepository {
             WHERE (li.assigned_to = $1 OR li.created_by = $1)
               AND li.status = 'SOLD'
               AND li.commission IS NOT NULL AND li.commission > 0
-              AND li.${TENANT_FILTER}
+              AND li.${TENANT_FILTER2}
           ), 0)::numeric AS revenue,
           -- Avg response: seconds from first INBOUND to first OUTBOUND per lead
           (
@@ -34831,9 +35180,9 @@ var AnalyticsRepository = class extends BaseRepository {
             FROM (
               SELECT lead_id, MIN(timestamp) as ts
               FROM interactions
-              WHERE direction = 'INBOUND' AND ${TENANT_FILTER}
+              WHERE direction = 'INBOUND' AND ${TENANT_FILTER2}
                 AND lead_id IN (
-                  SELECT id FROM leads WHERE assigned_to = $1 AND ${TENANT_FILTER}
+                  SELECT id FROM leads WHERE assigned_to = $1 AND ${TENANT_FILTER2}
                 )
               GROUP BY lead_id
             ) first_in
@@ -34843,11 +35192,11 @@ var AnalyticsRepository = class extends BaseRepository {
               WHERE lead_id = first_in.lead_id
                 AND direction = 'OUTBOUND'
                 AND timestamp > first_in.ts
-                AND ${TENANT_FILTER}
+                AND ${TENANT_FILTER2}
             ) first_out ON first_out.ts IS NOT NULL
           ) AS avg_response_minutes
         FROM leads l
-        WHERE l.assigned_to = $1 AND l.${TENANT_FILTER}
+        WHERE l.assigned_to = $1 AND l.${TENANT_FILTER2}
       `, [userId, commissionRate]);
       const row = leadRes.rows[0] || {};
       const won = row.won ?? 0;
@@ -34861,7 +35210,7 @@ var AnalyticsRepository = class extends BaseRepository {
         FROM listings
         WHERE (assigned_to = $1 OR created_by = $1)
           AND status = 'SOLD'
-          AND ${TENANT_FILTER}
+          AND ${TENANT_FILTER2}
       `, [userId]);
       const soldListings = soldListingsRes.rows[0]?.cnt ?? 0;
       const deals = won + soldListings;
@@ -34872,7 +35221,7 @@ var AnalyticsRepository = class extends BaseRepository {
         SELECT COUNT(*)::int as cnt
         FROM wf_tasks t
         JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
-        WHERE t.status = 'in_progress' AND t.${TENANT_FILTER}
+        WHERE t.status = 'in_progress' AND t.${TENANT_FILTER2}
       `, [userId]);
       const overdueRes = await client.query(`
         SELECT COUNT(*)::int as cnt
@@ -34880,7 +35229,7 @@ var AnalyticsRepository = class extends BaseRepository {
         JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
         WHERE t.status NOT IN ('done','cancelled')
           AND t.deadline < CURRENT_DATE
-          AND t.${TENANT_FILTER}
+          AND t.${TENANT_FILTER2}
       `, [userId]);
       const weekRes = await client.query(`
         SELECT COUNT(*)::int as cnt
@@ -34888,7 +35237,7 @@ var AnalyticsRepository = class extends BaseRepository {
         JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
         WHERE t.status = 'done'
           AND t.updated_at >= NOW() - INTERVAL '7 days'
-          AND t.${TENANT_FILTER}
+          AND t.${TENANT_FILTER2}
       `, [userId]);
       const monthRes = await client.query(`
         SELECT COUNT(*)::int as cnt
@@ -34896,7 +35245,7 @@ var AnalyticsRepository = class extends BaseRepository {
         JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
         WHERE t.status = 'done'
           AND t.updated_at >= NOW() - INTERVAL '30 days'
-          AND t.${TENANT_FILTER}
+          AND t.${TENANT_FILTER2}
       `, [userId]);
       const activeTasks = activeRes.rows[0]?.cnt ?? 0;
       const overdueTasks = overdueRes.rows[0]?.cnt ?? 0;
@@ -35020,11 +35369,11 @@ var visitorRepository = new VisitorRepository();
 // server/routes/analyticsRoutes.ts
 function createAnalyticsRoutes(authenticateToken) {
   const router = Router7();
-  const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
+  const PARTNER_ROLES3 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
   router.get("/summary", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (PARTNER_ROLES2.includes(user.role)) {
+      if (PARTNER_ROLES3.includes(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const timeRange = req.query.timeRange || "all";
@@ -35043,7 +35392,7 @@ function createAnalyticsRoutes(authenticateToken) {
   router.get("/bi-marts", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (PARTNER_ROLES2.includes(user.role)) {
+      if (PARTNER_ROLES3.includes(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const timeRange = req.query.timeRange || "all";
@@ -35123,7 +35472,7 @@ function createAnalyticsRoutes(authenticateToken) {
     try {
       const caller = req.user;
       const targetId = String(req.params.userId);
-      if (PARTNER_ROLES2.includes(caller.role)) {
+      if (PARTNER_ROLES3.includes(caller.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       if (caller.id !== targetId && !["ADMIN", "TEAM_LEAD"].includes(caller.role)) {
@@ -35139,7 +35488,7 @@ function createAnalyticsRoutes(authenticateToken) {
   router.get("/visitors", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (PARTNER_ROLES2.includes(user.role)) {
+      if (PARTNER_ROLES3.includes(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const days = Math.max(1, Math.min(parseInt(req.query.days) || 30, 365));
@@ -35332,7 +35681,7 @@ import fs3 from "fs";
 
 // server/repositories/documentRepository.ts
 init_baseRepository();
-var TENANT_FILTER2 = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
+var TENANT_FILTER3 = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
 var DocumentRepository = class extends BaseRepository {
   constructor() {
     super("documents");
@@ -35342,7 +35691,7 @@ var DocumentRepository = class extends BaseRepository {
       const page = pagination?.page || 1;
       const pageSize = pagination?.pageSize || 50;
       const offset = (page - 1) * pageSize;
-      const conditions = [`${TENANT_FILTER2}`];
+      const conditions = [`${TENANT_FILTER3}`];
       const values = [];
       let paramIndex = 1;
       if (filters?.search) {
@@ -35393,7 +35742,7 @@ var DocumentRepository = class extends BaseRepository {
       if (updates3.length === 0) return this.findById(tenantId, id);
       updates3.push(`updated_at = CURRENT_TIMESTAMP`);
       const result = await client.query(
-        `UPDATE documents SET ${updates3.join(", ")} WHERE id = $1 AND ${TENANT_FILTER2} RETURNING *`,
+        `UPDATE documents SET ${updates3.join(", ")} WHERE id = $1 AND ${TENANT_FILTER3} RETURNING *`,
         values
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
@@ -36654,8 +37003,87 @@ function createAiGovernanceRoutes(authenticateToken, optionalAuth) {
   return router;
 }
 
-// server/routes/sessionRoutes.ts
+// server/routes/agentRoutes.ts
+init_agentRepository();
 import { Router as Router14 } from "express";
+var ADMIN_ROLES = ["ADMIN", "TEAM_LEAD"];
+var PARTNER_ROLES2 = ["PARTNER", "PARTNER_AGENT"];
+function createAgentRoutes(authenticateToken) {
+  const router = Router14();
+  router.get("/", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      const agents = await agentRepository.listAgents(user.tenantId);
+      res.json(agents);
+    } catch (e) {
+      console.error("agentRoutes GET /agents error:", e);
+      res.status(500).json({ error: "Failed to list agents" });
+    }
+  });
+  router.get("/:name", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      const agent = await agentRepository.getAgentByName(user.tenantId, req.params.name.toUpperCase());
+      if (!agent) return res.status(404).json({ error: "Agent not found" });
+      res.json(agent);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to get agent" });
+    }
+  });
+  router.put("/:id", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin ho\u1EB7c Team Lead m\u1EDBi c\xF3 th\u1EC3 c\u1EADp nh\u1EADt agent" });
+      }
+      const { systemInstruction, skills, model, displayName, description: description2, active } = req.body;
+      const updated = await agentRepository.updateAgent(user.tenantId, req.params.id, {
+        systemInstruction,
+        skills,
+        model,
+        displayName,
+        description: description2,
+        active
+      });
+      res.json(updated);
+    } catch (e) {
+      console.error("agentRoutes PUT error:", e);
+      res.status(500).json({ error: e?.message || "Failed to update agent" });
+    }
+  });
+  router.get("/:agentId/memories/:leadId", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+      const memories = await agentRepository.getLeadMemories(
+        user.tenantId,
+        req.params.agentId,
+        req.params.leadId,
+        limit
+      );
+      res.json(memories);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to get memories" });
+    }
+  });
+  router.get("/memories/lead/:leadId", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      const memories = await agentRepository.getAllLeadMemories(user.tenantId, req.params.leadId);
+      res.json(memories);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to get lead memories" });
+    }
+  });
+  return router;
+}
+
+// server/routes/sessionRoutes.ts
+import { Router as Router15 } from "express";
 
 // server/repositories/sessionRepository.ts
 init_baseRepository();
@@ -36795,7 +37223,7 @@ var templateRepository = new TemplateRepository();
 
 // server/routes/sessionRoutes.ts
 function createSessionRoutes(authenticateToken) {
-  const router = Router14();
+  const router = Router15();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -36820,7 +37248,7 @@ function createSessionRoutes(authenticateToken) {
   return router;
 }
 function createTemplateRoutes(authenticateToken) {
-  const router = Router14();
+  const router = Router15();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -36886,7 +37314,7 @@ function createTemplateRoutes(authenticateToken) {
 }
 
 // server/routes/activityRoutes.ts
-import { Router as Router15 } from "express";
+import { Router as Router16 } from "express";
 
 // server/repositories/pageViewRepository.ts
 init_baseRepository();
@@ -37048,7 +37476,7 @@ var pageViewRepository = new PageViewRepository();
 
 // server/routes/activityRoutes.ts
 function createActivityRoutes(authenticateToken) {
-  const router = Router15();
+  const router = Router16();
   router.post("/pageview", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -37105,14 +37533,14 @@ function createActivityRoutes(authenticateToken) {
 
 // server/routes/notificationRoutes.ts
 init_notificationRepository();
-import { Router as Router16 } from "express";
-var ADMIN_ROLES = ["ADMIN", "TEAM_LEAD"];
+import { Router as Router17 } from "express";
+var ADMIN_ROLES2 = ["ADMIN", "TEAM_LEAD"];
 function createNotificationRoutes(authenticateToken) {
-  const router = Router16();
+  const router = Router17();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const isAdmin = ADMIN_ROLES2.includes(user.role);
       const notifications = isAdmin ? await notificationRepository.findByTenant(user.tenantId, 60) : await notificationRepository.findByUser(user.tenantId, user.id, 40);
       const unreadCount = isAdmin ? await notificationRepository.countUnreadByTenant(user.tenantId) : await notificationRepository.countUnread(user.tenantId, user.id);
       res.json({ notifications, unreadCount });
@@ -37124,7 +37552,7 @@ function createNotificationRoutes(authenticateToken) {
   router.get("/unread-count", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const isAdmin = ADMIN_ROLES2.includes(user.role);
       const count = isAdmin ? await notificationRepository.countUnreadByTenant(user.tenantId) : await notificationRepository.countUnread(user.tenantId, user.id);
       res.json({ count });
     } catch (error48) {
@@ -37135,7 +37563,7 @@ function createNotificationRoutes(authenticateToken) {
   router.patch("/:id/read", authenticateToken, validateUUIDParam(), async (req, res) => {
     try {
       const user = req.user;
-      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const isAdmin = ADMIN_ROLES2.includes(user.role);
       const notification = isAdmin ? await notificationRepository.markReadByTenant(user.tenantId, String(req.params.id)) : await notificationRepository.markRead(user.tenantId, user.id, String(req.params.id));
       if (!notification) return res.status(404).json({ error: "Notification not found" });
       res.json(notification);
@@ -37147,7 +37575,7 @@ function createNotificationRoutes(authenticateToken) {
   router.post("/read-all", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const isAdmin = ADMIN_ROLES2.includes(user.role);
       if (isAdmin) {
         await notificationRepository.markAllReadByTenant(user.tenantId);
       } else {
@@ -37162,7 +37590,7 @@ function createNotificationRoutes(authenticateToken) {
   router.delete("/read-all", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const isAdmin = ADMIN_ROLES2.includes(user.role);
       if (isAdmin) {
         await notificationRepository.deleteAllReadByTenant(user.tenantId);
       } else {
@@ -37177,7 +37605,7 @@ function createNotificationRoutes(authenticateToken) {
   router.delete("/:id", authenticateToken, validateUUIDParam(), async (req, res) => {
     try {
       const user = req.user;
-      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const isAdmin = ADMIN_ROLES2.includes(user.role);
       const deleted = isAdmin ? await notificationRepository.deleteOneByTenant(user.tenantId, String(req.params.id)) : await notificationRepository.deleteOne(user.tenantId, user.id, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: "Notification not found" });
       res.json({ success: true });
@@ -37190,7 +37618,7 @@ function createNotificationRoutes(authenticateToken) {
 }
 
 // server/routes/billingRoutes.ts
-import { Router as Router17 } from "express";
+import { Router as Router18 } from "express";
 
 // server/repositories/subscriptionRepository.ts
 init_baseRepository();
@@ -37346,7 +37774,7 @@ var subscriptionRepository = new SubscriptionRepository();
 
 // server/routes/billingRoutes.ts
 function createBillingRoutes(authenticateToken) {
-  const router = Router17();
+  const router = Router18();
   router.get("/subscription", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -37409,7 +37837,7 @@ function createBillingRoutes(authenticateToken) {
 
 // server/routes/uploadRoutes.ts
 init_constants();
-import { Router as Router18 } from "express";
+import { Router as Router19 } from "express";
 import multer from "multer";
 import path5 from "path";
 import crypto6 from "crypto";
@@ -37650,7 +38078,7 @@ async function compressImage(buf, mime) {
   }
 }
 function createUploadRoutes(authenticateToken) {
-  const router = Router18();
+  const router = Router19();
   router.post("/", authenticateToken, upload.array("files", MAX_FILES), handleMulterError, async (req, res) => {
     try {
       const files = req.files;
@@ -37725,7 +38153,7 @@ function createUploadRoutes(authenticateToken) {
   return router;
 }
 function createUploadServeRoute(authenticateToken) {
-  const router = Router18();
+  const router = Router19();
   router.get("/:tenantId/:filename", (req, res, next) => {
     const ext = path5.extname(String(req.params.filename)).toLowerCase();
     if (PUBLIC_MEDIA_EXTS.has(ext)) {
@@ -37814,7 +38242,7 @@ async function serveUploadedFile(req, res, userTenantId) {
 }
 
 // server/routes/scimRoutes.ts
-import { Router as Router19 } from "express";
+import { Router as Router20 } from "express";
 
 // server/middleware/scimAuth.ts
 init_enterpriseConfigRepository();
@@ -37938,7 +38366,7 @@ function baseUrl(req) {
   return `${req.protocol}://${req.get("host")}/scim/v2`;
 }
 function createScimRoutes() {
-  const router = Router19();
+  const router = Router20();
   router.use(scimAuthMiddleware);
   router.get("/ServiceProviderConfig", (_req, res) => {
     res.json({
@@ -38185,7 +38613,7 @@ init_priceCalibrationService();
 init_listingRepository();
 init_logger();
 init_db();
-import { Router as Router20 } from "express";
+import { Router as Router21 } from "express";
 
 // server/middleware/rateLimiter.ts
 var stores = /* @__PURE__ */ new Map();
@@ -38546,7 +38974,7 @@ function stripPropertyTypePrefix(address) {
   return result.trim();
 }
 function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, guestValuationRateLimit2, _userValuationRateLimit) {
-  const router = Router20();
+  const router = Router21();
   router.get("/quota", optionalAuth, async (req, res) => {
     const user = req.user;
     if (!user) {
@@ -39077,7 +39505,7 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
 }
 
 // server/routes/projectRoutes.ts
-import { Router as Router21 } from "express";
+import { Router as Router22 } from "express";
 
 // server/repositories/projectRepository.ts
 init_baseRepository();
@@ -39367,9 +39795,9 @@ var ProjectRepository = class extends BaseRepository {
 var projectRepository = new ProjectRepository();
 
 // server/routes/projectRoutes.ts
-var ADMIN_ROLES2 = ["ADMIN"];
+var ADMIN_ROLES3 = ["ADMIN"];
 function createProjectRoutes(authenticateToken) {
-  const router = Router21();
+  const router = Router22();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -39392,7 +39820,7 @@ function createProjectRoutes(authenticateToken) {
   router.get("/tenants", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       const tenants = await projectRepository.listTenants(user.tenantId);
       res.json(tenants);
     } catch (error48) {
@@ -39422,8 +39850,8 @@ function createProjectRoutes(authenticateToken) {
   router.post("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
-      const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
+      const { name, code, description: description2, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
       if (!name || typeof name !== "string" || !name.trim()) {
         return res.status(400).json({ error: "T\xEAn d\u1EF1 \xE1n l\xE0 b\u1EAFt bu\u1ED9c" });
       }
@@ -39433,7 +39861,7 @@ function createProjectRoutes(authenticateToken) {
       const project = await projectRepository.create(user.tenantId, {
         name: name.trim(),
         code: code?.trim(),
-        description: description?.trim(),
+        description: description2?.trim(),
         location: location?.trim(),
         totalUnits: totalUnits ? Number(totalUnits) : void 0,
         status,
@@ -39450,16 +39878,16 @@ function createProjectRoutes(authenticateToken) {
   router.put("/:id", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
       const id = req.params.id;
-      const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
+      const { name, code, description: description2, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
       if (totalUnits != null && (isNaN(Number(totalUnits)) || Number(totalUnits) < 0)) {
         return res.status(400).json({ error: "S\u1ED1 c\u0103n ph\u1EA3i l\xE0 s\u1ED1 kh\xF4ng \xE2m" });
       }
       const updated = await projectRepository.update(user.tenantId, id, {
         name: name?.trim(),
         code: code?.trim(),
-        description: description?.trim(),
+        description: description2?.trim(),
         location: location?.trim(),
         totalUnits: totalUnits != null ? Number(totalUnits) : void 0,
         status,
@@ -39477,7 +39905,7 @@ function createProjectRoutes(authenticateToken) {
   router.delete("/:id", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
       const deleted = await projectRepository.delete(user.tenantId, req.params.id);
       if (!deleted) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y d\u1EF1 \xE1n" });
       res.json({ success: true });
@@ -39489,7 +39917,7 @@ function createProjectRoutes(authenticateToken) {
   router.get("/:id/access", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
       const accesses = await projectRepository.getProjectAccess(user.tenantId, req.params.id);
       res.json(accesses);
     } catch (error48) {
@@ -39500,7 +39928,7 @@ function createProjectRoutes(authenticateToken) {
   router.post("/:id/access", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
       const { partnerTenantId, expiresAt, note } = req.body;
       if (!partnerTenantId) return res.status(400).json({ error: "Vui l\xF2ng ch\u1ECDn \u0111\u1ED1i t\xE1c" });
       const access = await projectRepository.grantAccess(user.tenantId, {
@@ -39520,7 +39948,7 @@ function createProjectRoutes(authenticateToken) {
   router.delete("/:id/access/:partnerTenantId", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n" });
       const id = req.params.id;
       const partnerTenantId = req.params.partnerTenantId;
       const revoked = await projectRepository.revokeAccess(user.tenantId, id, partnerTenantId);
@@ -39534,7 +39962,7 @@ function createProjectRoutes(authenticateToken) {
   router.get("/listings/:listingId/access", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Forbidden" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Forbidden" });
       const accesses = await projectRepository.getListingAccess(req.params.listingId);
       res.json(accesses);
     } catch (error48) {
@@ -39545,7 +39973,7 @@ function createProjectRoutes(authenticateToken) {
   router.post("/listings/:listingId/access", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Forbidden" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Forbidden" });
       const { partnerTenantId, expiresAt, note } = req.body;
       if (!partnerTenantId) return res.status(400).json({ error: "partnerTenantId is required" });
       const access = await projectRepository.grantListingAccess({
@@ -39565,7 +39993,7 @@ function createProjectRoutes(authenticateToken) {
   router.delete("/listings/:listingId/access/:partnerTenantId", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES2.includes(user.role)) return res.status(403).json({ error: "Forbidden" });
+      if (!ADMIN_ROLES3.includes(user.role)) return res.status(403).json({ error: "Forbidden" });
       const revoked = await projectRepository.revokeListingAccess(
         req.params.listingId,
         req.params.partnerTenantId
@@ -39582,13 +40010,13 @@ function createProjectRoutes(authenticateToken) {
 
 // server/routes/tenantRoutes.ts
 init_db();
-import { Router as Router22 } from "express";
+import { Router as Router23 } from "express";
 var DEFAULT_CONFIG = {
   primaryColor: "#4F46E5",
   features: { enableZalo: true, maxUsers: 100 }
 };
 function createTenantRoutes(authenticateToken) {
-  const router = Router22();
+  const router = Router23();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -39620,7 +40048,7 @@ function createTenantRoutes(authenticateToken) {
 }
 
 // server/routes/taskRoutes.ts
-import { Router as Router23 } from "express";
+import { Router as Router24 } from "express";
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -50410,12 +50838,12 @@ function _check(fn, params) {
   return ch;
 }
 // @__NO_SIDE_EFFECTS__
-function describe(description) {
+function describe(description2) {
   const ch = new $ZodCheck({ check: "describe" });
   ch._zod.onattach = [
     (inst) => {
       const existing = globalRegistry.get(inst) ?? {};
-      globalRegistry.add(inst, { ...existing, description });
+      globalRegistry.add(inst, { ...existing, description: description2 });
     }
   ];
   ch._zod.check = () => {
@@ -51843,9 +52271,9 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   inst.catch = (params) => _catch2(inst, params);
   inst.pipe = (target) => pipe(inst, target);
   inst.readonly = () => readonly(inst);
-  inst.describe = (description) => {
+  inst.describe = (description2) => {
     const cl = inst.clone();
-    globalRegistry.add(cl, { description });
+    globalRegistry.add(cl, { description: description2 });
     return cl;
   };
   Object.defineProperty(inst, "description", {
@@ -53468,7 +53896,7 @@ function parseMultiParam(val) {
   return val.split(",").map((s2) => s2.trim()).filter(Boolean);
 }
 function createTaskRoutes(authenticateToken) {
-  const router = Router23();
+  const router = Router24();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -53605,7 +54033,7 @@ function createTaskRoutes(authenticateToken) {
         const msg = parsed.error.issues[0]?.message || "D\u1EEF li\u1EC7u kh\xF4ng h\u1EE3p l\u1EC7";
         return res.status(400).json({ error: true, code: "VALIDATION", message: msg });
       }
-      const { title, description, project_id, department_id, category, priority, deadline, estimated_hours, assignee_ids } = parsed.data;
+      const { title, description: description2, project_id, department_id, category, priority, deadline, estimated_hours, assignee_ids } = parsed.data;
       if (deadline) {
         const dl = new Date(deadline);
         const today = /* @__PURE__ */ new Date();
@@ -53622,7 +54050,7 @@ function createTaskRoutes(authenticateToken) {
         `, [
           tenantId,
           title.trim(),
-          description || null,
+          description2 || null,
           project_id || null,
           department_id || null,
           category || null,
@@ -53770,7 +54198,7 @@ function createTaskRoutes(authenticateToken) {
         const msg = parsed.error.issues[0]?.message || "D\u1EEF li\u1EC7u kh\xF4ng h\u1EE3p l\u1EC7";
         return res.status(400).json({ error: true, code: "VALIDATION", message: msg });
       }
-      const { title, description, project_id, department_id, category, priority, deadline, estimated_hours } = parsed.data;
+      const { title, description: description2, project_id, department_id, category, priority, deadline, estimated_hours } = parsed.data;
       const task = await withTenantContext(tenantId, async (client) => {
         const current = await client.query("SELECT * FROM wf_tasks WHERE id = $1", [req.params.id]);
         if (!current.rows[0]) return null;
@@ -53782,9 +54210,9 @@ function createTaskRoutes(authenticateToken) {
           vals.push(title);
           pi++;
         }
-        if (description !== void 0) {
+        if (description2 !== void 0) {
           fields.push(`description = $${pi}`);
-          vals.push(description);
+          vals.push(description2);
           pi++;
         }
         if (project_id !== void 0) {
@@ -54204,13 +54632,13 @@ function createTaskRoutes(authenticateToken) {
 }
 
 // server/routes/departmentRoutes.ts
-import { Router as Router24 } from "express";
+import { Router as Router25 } from "express";
 init_db();
 var workloadParamsSchema = external_exports.object({
   userId: external_exports.string().uuid("userId ph\u1EA3i l\xE0 UUID h\u1EE3p l\u1EC7")
 });
 function createDepartmentRoutes(authenticateToken) {
-  const router = Router24();
+  const router = Router25();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -54288,7 +54716,7 @@ function createDepartmentRoutes(authenticateToken) {
 }
 
 // server/routes/taskReportRoutes.ts
-import { Router as Router25 } from "express";
+import { Router as Router26 } from "express";
 init_db();
 var UUID_SHAPE2 = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 var dateRangeQuerySchema = external_exports.object({
@@ -54301,7 +54729,7 @@ var dateRangeQuerySchema = external_exports.object({
   return true;
 }, { message: "from ph\u1EA3i nh\u1ECF h\u01A1n ho\u1EB7c b\u1EB1ng to" });
 function createTaskReportRoutes(authenticateToken) {
-  const router = Router25();
+  const router = Router26();
   router.get("/task-stats", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -54595,7 +55023,7 @@ function createTaskReportRoutes(authenticateToken) {
 }
 
 // server/routes/connectorRoutes.ts
-import { Router as Router26 } from "express";
+import { Router as Router27 } from "express";
 
 // server/repositories/connectorRepository.ts
 init_db();
@@ -54781,7 +55209,7 @@ var syncJobRepository = new SyncJobRepository();
 
 // server/routes/connectorRoutes.ts
 function createConnectorRoutes(authenticateToken) {
-  const router = Router26();
+  const router = Router27();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const { tenantId } = req.user;
@@ -54906,7 +55334,7 @@ function createConnectorRoutes(authenticateToken) {
 }
 
 // server/routes/scraperRoutes.ts
-import { Router as Router27 } from "express";
+import { Router as Router28 } from "express";
 import * as cheerio from "cheerio";
 var HEADERS_BROWSER = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -55190,8 +55618,8 @@ function isCacheValid() {
   return !!cachedResults && Date.now() - cacheTimestamp < CACHE_TTL_MS2;
 }
 function createScraperRoutes(authenticateToken) {
-  const router = Router27();
-  const ADMIN_ROLES4 = ["ADMIN", "TEAM_LEAD"];
+  const router = Router28();
+  const ADMIN_ROLES5 = ["ADMIN", "TEAM_LEAD"];
   const hasScraperApiKey = () => !!process.env.SCRAPERAPI_KEY;
   router.get("/status", authenticateToken, (_req, res) => {
     const apiReady = hasScraperApiKey();
@@ -55224,7 +55652,7 @@ function createScraperRoutes(authenticateToken) {
   router.post("/run", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES4.includes(user.role)) {
+      if (!ADMIN_ROLES5.includes(user.role)) {
         return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y scraper" });
       }
       const { sources = ["chotot", "alonhadat"], pages = 3 } = req.body;
@@ -55253,7 +55681,7 @@ function createScraperRoutes(authenticateToken) {
 
 // server/routes/scraperProjectRoutes.ts
 init_db();
-import { Router as Router28 } from "express";
+import { Router as Router29 } from "express";
 import * as cheerio2 from "cheerio";
 var PROJECT_CATALOG = [
   {
@@ -55965,7 +56393,7 @@ async function scrapeSgslandLeads() {
   const leads = [];
   const proj = PROJECT_CATALOG.find((p) => p.id === "sgsland");
   try {
-    const DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
+    const DEFAULT_TENANT2 = "00000000-0000-0000-0000-000000000001";
     const { rows } = await pool.query(
       `SELECT id, name, COALESCE(phone,'') AS phone, COALESCE(email,'') AS email,
               COALESCE(source,'DIRECT') AS source, COALESCE(stage,'NEW') AS stage,
@@ -55975,7 +56403,7 @@ async function scrapeSgslandLeads() {
           AND phone IS NOT NULL AND phone <> ''
         ORDER BY created_at DESC
         LIMIT 200`,
-      [DEFAULT_TENANT]
+      [DEFAULT_TENANT2]
     );
     for (const r of rows) {
       leads.push({
@@ -56605,8 +57033,8 @@ async function scrapeZaloLeads(zlToken) {
   return leads;
 }
 function createScraperProjectRoutes(authenticateToken) {
-  const router = Router28();
-  const ADMIN_ROLES4 = ["ADMIN", "TEAM_LEAD"];
+  const router = Router29();
+  const ADMIN_ROLES5 = ["ADMIN", "TEAM_LEAD"];
   router.get("/catalog", authenticateToken, (_req, res) => {
     const hasKey = !!process.env.SCRAPERAPI_KEY;
     res.json({
@@ -56698,8 +57126,8 @@ function createScraperProjectRoutes(authenticateToken) {
       }
       const { name, phone, email: email3, source, notes, projectId, project, sourceUrl, listing, interest } = req.body;
       if (!phone) return res.status(400).json({ error: "Thi\u1EBFu s\u1ED1 \u0111i\u1EC7n tho\u1EA1i" });
-      const DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
-      const tenantId = user.tenantId ?? DEFAULT_TENANT;
+      const DEFAULT_TENANT2 = "00000000-0000-0000-0000-000000000001";
+      const tenantId = user.tenantId ?? DEFAULT_TENANT2;
       const { rows: dup } = await pool.query(
         `SELECT id FROM leads WHERE tenant_id = $1 AND phone = $2 LIMIT 1`,
         [tenantId, phone]
@@ -56743,8 +57171,8 @@ function createScraperProjectRoutes(authenticateToken) {
         return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 import h\xE0ng lo\u1EA1t" });
       }
       const { leads = [] } = req.body;
-      const DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
-      const tenantId = user.tenantId ?? DEFAULT_TENANT;
+      const DEFAULT_TENANT2 = "00000000-0000-0000-0000-000000000001";
+      const tenantId = user.tenantId ?? DEFAULT_TENANT2;
       let imported = 0;
       let skipped = 0;
       const errors = [];
@@ -56836,7 +57264,7 @@ function createScraperProjectRoutes(authenticateToken) {
   router.post("/run", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES4.includes(user.role)) {
+      if (!ADMIN_ROLES5.includes(user.role)) {
         return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y scraper" });
       }
       const { projects = Object.keys(PROJECT_RUNNERS) } = req.body;
@@ -56887,7 +57315,7 @@ function createScraperProjectRoutes(authenticateToken) {
 // server/routes/engagementCronRoutes.ts
 init_logger();
 init_emailService();
-import { Router as Router29 } from "express";
+import { Router as Router30 } from "express";
 
 // server/repositories/campaignRepository.ts
 async function logCampaignEmail(pool3, tenantId, userId, email3, campaign) {
@@ -56967,7 +57395,7 @@ async function querySegmentC(pool3) {
 
 // server/routes/engagementCronRoutes.ts
 function createEngagementCronRouter(pool3, cronSecret) {
-  const router = Router29();
+  const router = Router30();
   router.post("/api/internal/engagement-email-cron", async (req, res) => {
     const providedSecret = req.headers["x-internal-secret"] || req.body?.secret;
     if (!providedSecret || providedSecret !== cronSecret) {
@@ -57064,7 +57492,7 @@ async function processUser(pool3, user, campaign, dryRun, stats, sendFn) {
 }
 
 // server/routes/errorLogRoutes.ts
-import { Router as Router30 } from "express";
+import { Router as Router31 } from "express";
 
 // server/repositories/errorLogRepository.ts
 var ErrorLogRepository = class {
@@ -57220,10 +57648,10 @@ var ErrorLogRepository = class {
 };
 
 // server/routes/errorLogRoutes.ts
-var ADMIN_ROLES3 = /* @__PURE__ */ new Set(["ADMIN", "TEAM_LEAD"]);
+var ADMIN_ROLES4 = /* @__PURE__ */ new Set(["ADMIN", "TEAM_LEAD"]);
 var DEFAULT_TENANT_ID2 = process.env.DEFAULT_TENANT_ID || "default";
 function createErrorLogRoutes(authenticateToken, pool3) {
-  const router = Router30();
+  const router = Router31();
   const repo = new ErrorLogRepository(pool3);
   router.post("/", async (req, res) => {
     try {
@@ -57255,7 +57683,7 @@ function createErrorLogRoutes(authenticateToken, pool3) {
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES3.has(user.role)) {
+      if (!ADMIN_ROLES4.has(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const page = parseInt(req.query.page) || 1;
@@ -57273,7 +57701,7 @@ function createErrorLogRoutes(authenticateToken, pool3) {
   router.get("/stats", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES3.has(user.role)) {
+      if (!ADMIN_ROLES4.has(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const stats = await repo.getStats(user.tenantId);
@@ -57285,7 +57713,7 @@ function createErrorLogRoutes(authenticateToken, pool3) {
   router.patch("/:id/resolve", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES3.has(user.role)) {
+      if (!ADMIN_ROLES4.has(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
@@ -57299,7 +57727,7 @@ function createErrorLogRoutes(authenticateToken, pool3) {
   router.post("/resolve-all", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES3.has(user.role)) {
+      if (!ADMIN_ROLES4.has(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const count = await repo.bulkResolve(user.tenantId, user.id);
@@ -57311,7 +57739,7 @@ function createErrorLogRoutes(authenticateToken, pool3) {
   router.delete("/resolved", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (!ADMIN_ROLES3.has(user.role)) {
+      if (!ADMIN_ROLES4.has(user.role)) {
         return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
       }
       const count = await repo.deleteResolved(user.tenantId);
@@ -63325,8 +63753,8 @@ async function startServer() {
       return res.status(403).json({ error: "Ch\u1EC9 ADMIN m\u1EDBi c\xF3 th\u1EC3 c\u1EADp nh\u1EADt SEO" });
     }
     const routeKey = req.params.key;
-    const { title, description, ogImage } = req.body;
-    if (typeof title !== "string" || typeof description !== "string") {
+    const { title, description: description2, ogImage } = req.body;
+    if (typeof title !== "string" || typeof description2 !== "string") {
       return res.status(400).json({ error: "title v\xE0 description l\xE0 b\u1EAFt bu\u1ED9c" });
     }
     try {
@@ -63340,7 +63768,7 @@ async function startServer() {
                updated_at = NOW(),
                updated_by = EXCLUDED.updated_by
          RETURNING route_key, title, description, og_image, updated_at`,
-        [routeKey, title, description, ogImage || null, user.id]
+        [routeKey, title, description2, ogImage || null, user.id]
       );
       const row = result.rows[0];
       res.json({ routeKey: row.route_key, title: row.title, description: row.description, ogImage: row.og_image, updatedAt: row.updated_at });
@@ -63457,6 +63885,7 @@ async function startServer() {
   app.use("/api/activity", apiRateLimit, createActivityRoutes(authenticateToken));
   app.use("/api/notifications", apiRateLimit, createNotificationRoutes(authenticateToken));
   app.use("/api/ai/governance", apiRateLimit, createAiGovernanceRoutes(authenticateToken, optionalAuth));
+  app.use("/api/agents", apiRateLimit, createAgentRoutes(authenticateToken));
   app.use("/api/enterprise", apiRateLimit, createEnterpriseRoutes(authenticateToken, io));
   app.use("/api/upload", apiRateLimit, createUploadRoutes(authenticateToken));
   app.use("/uploads", createUploadServeRoute(authenticateToken));
@@ -63870,12 +64299,12 @@ async function startServer() {
       if (!process.env.DATABASE_URL) {
         return res.status(503).json({ error: "Database not configured" });
       }
-      const { title, description, level } = req.body;
+      const { title, description: description2, level } = req.body;
       const tenantId = req.tenantId;
       const result = await withTenantContext(tenantId, async (client) => {
         return await client.query(
           "INSERT INTO courses (title, description, level) VALUES ($1, $2, $3) RETURNING *",
-          [title, description, level]
+          [title, description2, level]
         );
       });
       res.status(201).json(result.rows[0]);

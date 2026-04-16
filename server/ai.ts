@@ -8,6 +8,7 @@ import { aiGovernanceRepository } from './repositories/aiGovernanceRepository';
 import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepository';
 import { leadRepository } from './repositories/leadRepository';
 import { feedbackRepository } from './repositories/feedbackRepository';
+import { agentRepository } from './repositories/agentRepository';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -2551,9 +2552,49 @@ reasoning phải bằng ${lang === 'en' ? 'English' : 'Tiếng Việt'}, cụ th
                 ? (isVN ? 'BREACH — cần liên hệ ngay hôm nay' : 'BREACHED — contact immediately')
                 : (isVN ? 'Bình thường' : 'OK');
 
+            // ── Load ARIA agent from DB (with in-memory cache) ────────────────────
+            const aria = await agentRepository.getAgentByName(tenantId, 'ARIA');
+
+            // ── Load ARIA's previous memories for this lead ───────────────────────
+            const previousMemories = aria
+                ? await agentRepository.getLeadMemories(tenantId, aria.id, lead.id, 3)
+                : [];
+            const memorySection = previousMemories.length > 0
+                ? (isVN
+                    ? `\n=== LỊCH SỬ PHÂN TÍCH TRƯỚC (${previousMemories.length} lần) ===\n` +
+                      previousMemories.map((m, i) => {
+                          const dt = new Date(m.createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+                          return `[Lần ${i + 1} — ${dt}]\n${m.summary}`;
+                      }).join('\n\n')
+                    : `\n=== PREVIOUS ANALYSIS HISTORY (${previousMemories.length} sessions) ===\n` +
+                      previousMemories.map((m, i) => {
+                          const dt = new Date(m.createdAt).toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
+                          return `[Session ${i + 1} — ${dt}]\n${m.summary}`;
+                      }).join('\n\n'))
+                : '';
+
+            // ── Fallback system instruction if ARIA not yet in DB ─────────────────
+            const fallbackSysVN =
+                'Bạn là chuyên gia phân tích tâm lý và hành vi khách hàng bất động sản hàng đầu Việt Nam, ' +
+                'với 15+ năm kinh nghiệm thực chiến. ' +
+                'Định dạng: Văn xuôi đánh số 1-4, KHÔNG dùng markdown, KHÔNG dùng ký tự **, #, -, •.';
+            const fallbackSysEN =
+                'You are a top real estate customer behavior analyst in Vietnam with 15+ years of experience. ' +
+                'Format: Numbered prose 1-4, NO markdown, NO **, #, -, • characters.';
+
+            const systemInstruction = isVN
+                ? (aria?.systemInstruction || fallbackSysVN)
+                : (aria?.systemInstruction
+                    ? aria.systemInstruction.replace('Tiếng Việt', 'English').replace('Định dạng đầu ra: Văn xuôi đánh số 1-4, KHÔNG dùng markdown, KHÔNG dùng ký tự **, #, -, •.', 'Output format: Numbered prose 1-4, NO markdown, NO **, #, -, • characters.')
+                    : fallbackSysEN);
+
+            // Use ARIA's model override if set, otherwise fall back to governance model
+            const governanceModel = await getGovernanceModel(tenantId);
+            const summarizeModel = (aria?.model && aria.model.trim()) ? aria.model.trim() : governanceModel;
+
             if (isVN) {
                 const prompt = `Ngôn ngữ đầu ra: Tiếng Việt
-
+${aria ? `Phiên phân tích bởi: ${aria.displayName}` : ''}
 === HỒ SƠ KHÁCH HÀNG ===
 Tên: ${lead.name} | Giai đoạn CRM: ${lead.stage || 'Chưa rõ'} | Điểm AI: ${scoreFmt}
 Nguồn tiếp cận: ${lead.source || 'Chưa rõ'} | Phụ trách: ${lead.assignedToName || 'Chưa phân công'}
@@ -2568,38 +2609,36 @@ Loại BĐS: ${pref.propertyTypes?.join(', ') || 'Chưa rõ'}
 Khu vực: ${pref.regions?.join(', ') || 'Chưa rõ'}
 Diện tích: ${areaParts.length ? areaParts.join(' ') : 'Chưa rõ'}
 Hướng: ${pref.directions?.join(', ') || 'Chưa rõ'}
-
+${memorySection}
 === LỊCH SỬ TƯƠNG TÁC (${logs.length} tin nhắn) ===
 ${formattedLogs}
 
 === YÊU CẦU PHÂN TÍCH ===
-Viết phân tích chân dung khách hàng theo 4 điểm sau. Mỗi điểm 2-3 câu, ngắn gọn, thực chiến. Dùng văn xuôi đánh số, KHÔNG dùng markdown hay ký tự đặc biệt.
+Viết phân tích chân dung khách hàng theo 4 điểm sau. Mỗi điểm 2-3 câu, ngắn gọn, thực chiến. Dùng văn xuôi đánh số, KHÔNG dùng markdown hay ký tự đặc biệt.${previousMemories.length > 0 ? ' Điểm 5 nếu có thay đổi đáng kể so với lần phân tích trước.' : ''}
 
 1. CHÂN DUNG: Đây là loại khách hàng nào (mua ở thực, đầu tư, lướt sóng, tìm hiểu thị trường)? Mức độ nghiêm túc và khả năng ra quyết định.
 2. NHU CẦU CỐT LÕI: Động lực mua thực sự — điều họ thực sự cần (có thể khác với điều họ nói). Áp lực hoặc kỳ vọng ẩn.
 3. RỦI RO & RÀO CẢN: Tâm trạng hiện tại, lo ngại chính, nguy cơ mất deal hoặc kéo dài pipeline bất thường.
-4. HÀNH ĐỘNG TIẾP THEO: 1-2 bước cụ thể và khả thi nhất cho sale thực hiện trong 24-48h tới để đẩy deal tiến lên.`;
+4. HÀNH ĐỘNG TIẾP THEO: 1-2 bước cụ thể và khả thi nhất cho sale thực hiện trong 24-48h tới để đẩy deal tiến lên.${previousMemories.length > 0 ? '\n5. TIẾN TRIỂN: So với lần phân tích trước, tình hình đã thay đổi ra sao? Deal đang tốt lên hay xấu đi?' : ''}`;
 
-                const summarizeModel = await getGovernanceModel(tenantId);
                 const response = await getAiClient().models.generateContent({
                     model: summarizeModel,
                     contents: prompt,
-                    config: {
-                        systemInstruction:
-                            'Bạn là chuyên gia phân tích tâm lý và hành vi khách hàng bất động sản hàng đầu Việt Nam, ' +
-                            'với 15+ năm kinh nghiệm thực chiến tư vấn và chốt deal. ' +
-                            'Nhiệm vụ: Viết bản phân tích chân dung khách hàng ngắn gọn, sắc bén và có tính hành động cao cho nhân viên sale BĐS. ' +
-                            'Nguyên tắc: Chỉ kết luận từ dữ liệu thực tế trong hồ sơ. Không suy diễn vô căn cứ. ' +
-                            'Ưu tiên insight actionable hơn nhận xét chung chung. ' +
-                            'Văn phong: Chuyên nghiệp, súc tích, như báo cáo của chuyên gia tư vấn cao cấp. ' +
-                            'Định dạng: Văn xuôi đánh số 1-4, KHÔNG dùng markdown, KHÔNG dùng ký tự **, #, -, •.',
-                    }
+                    config: { systemInstruction }
                 });
-                return response.text || 'Không thể phân tích khách hàng vào lúc này.';
+                const result = response.text || 'Không thể phân tích khách hàng vào lúc này.';
+
+                // ── Save to ARIA's memory ─────────────────────────────────────────
+                if (aria && lead.id) {
+                    agentRepository.saveMemory(tenantId, aria.id, lead.id, result).catch(e =>
+                        logger.warn('ARIA: saveMemory failed:', e)
+                    );
+                }
+                return result;
 
             } else {
                 const prompt = `Output language: English
-
+${aria ? `Analysis session by: ${aria.displayName}` : ''}
 === LEAD PROFILE ===
 Name: ${lead.name} | CRM Stage: ${lead.stage || 'Unknown'} | AI Score: ${scoreFmt}
 Source: ${lead.source || 'Unknown'} | Assigned to: ${lead.assignedToName || 'Unassigned'}
@@ -2614,34 +2653,32 @@ Property types: ${pref.propertyTypes?.join(', ') || 'Unknown'}
 Regions: ${pref.regions?.join(', ') || 'Unknown'}
 Area: ${areaParts.length ? areaParts.join(' ') : 'Unknown'}
 Directions: ${pref.directions?.join(', ') || 'Unknown'}
-
+${memorySection}
 === INTERACTION HISTORY (${logs.length} messages) ===
 ${formattedLogs}
 
 === ANALYSIS REQUIRED ===
-Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise and actionable. Plain numbered prose, NO markdown, NO special characters.
+Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise and actionable. Plain numbered prose, NO markdown, NO special characters.${previousMemories.length > 0 ? ' Add point 5 if there is a notable change vs previous analysis.' : ''}
 
 1. PERSONA: What type of buyer is this (end-user, investor, speculator, market researcher)? Seriousness and decision-making capability.
 2. CORE NEED: Real buying motivation — what they truly need (may differ from what they say). Hidden pressures or expectations.
 3. RISKS & BLOCKERS: Current mindset, main concerns, risk of losing the deal or abnormal pipeline stall.
-4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.`;
+4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.${previousMemories.length > 0 ? '\n5. PROGRESS: Compared to previous analysis, how has the situation changed? Is the deal progressing or regressing?' : ''}`;
 
-                const summarizeModel = await getGovernanceModel(tenantId);
                 const response = await getAiClient().models.generateContent({
                     model: summarizeModel,
                     contents: prompt,
-                    config: {
-                        systemInstruction:
-                            'You are a top real estate customer psychology and behavior analyst in Vietnam, ' +
-                            'with 15+ years of hands-on deal closing experience. ' +
-                            'Task: Write a concise, sharp, high-action customer persona analysis for real estate sales agents. ' +
-                            'Principle: Only draw conclusions from actual data in the profile. No unfounded speculation. ' +
-                            'Prioritize actionable insights over generic observations. ' +
-                            'Tone: Professional, concise, like a senior consultant\'s briefing note. ' +
-                            'Format: Numbered prose 1-4, NO markdown, NO **, #, -, • characters.',
-                    }
+                    config: { systemInstruction }
                 });
-                return response.text || 'Unable to analyze lead at this time.';
+                const result = response.text || 'Unable to analyze lead at this time.';
+
+                // ── Save to ARIA's memory ─────────────────────────────────────────
+                if (aria && lead.id) {
+                    agentRepository.saveMemory(tenantId, aria.id, lead.id, result).catch(e =>
+                        logger.warn('ARIA: saveMemory failed:', e)
+                    );
+                }
+                return result;
             }
 
         } catch (e: any) {

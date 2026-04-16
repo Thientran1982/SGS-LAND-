@@ -32,6 +32,7 @@ import { createEnterpriseRoutes } from "./server/routes/enterpriseRoutes";
 import { createSequenceRoutes } from "./server/routes/sequenceRoutes";
 import { emailService } from "./server/services/emailService";
 import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
+import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
 import { createActivityRoutes } from "./server/routes/activityRoutes";
 import { createNotificationRoutes } from "./server/routes/notificationRoutes";
@@ -1820,6 +1821,7 @@ async function startServer() {
   app.use('/api/activity', apiRateLimit, createActivityRoutes(authenticateToken));
   app.use('/api/notifications', apiRateLimit, createNotificationRoutes(authenticateToken));
   app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken, optionalAuth));
+  app.use('/api/agents', apiRateLimit, createAgentRoutes(authenticateToken));
   app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken, io));
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
   app.use('/uploads', createUploadServeRoute(authenticateToken));
