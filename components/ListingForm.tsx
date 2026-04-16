@@ -62,6 +62,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [formData, setFormData] = useState<Partial<Listing>>(defaultState);
     const [images, setImages] = useState<string[]>([]);
     const [projects, setProjects] = useState<{value: string, label: string}[]>([]);
+    const [projectsLoading, setProjectsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -137,6 +138,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         if (isOpen) {
             setErrors({});
             // Load Projects for Dropdown from the Projects API
+            setProjectsLoading(true);
             db.getProjects(1, 200).then(res => {
                 const projectList = (res.data || [])
                     .filter((p: any) => p.status !== 'SUSPENDED')
@@ -145,7 +147,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                         label: p.name + (p.code ? ` (${p.code})` : '') + (p.location ? ` — ${p.location}` : '')
                     }));
                 setProjects(projectList);
-            }).catch(() => setProjects([]));
+            }).catch(() => setProjects([])).finally(() => setProjectsLoading(false));
 
             if (initialData && initialData.id) {
                 setFormData(JSON.parse(JSON.stringify(initialData)));
@@ -508,15 +510,25 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] focus:border-indigo-500 outline-none" />
                                         </div>
                                     )}
-                                    {!isProject && !isProjectUnit && (
+                                    {!isProject && !isProjectUnit && (projectsLoading || projects.length > 0 || !!formData.projectCode) && (
                                         <div>
-                                            <Dropdown
-                                                label={t('inventory.label_project')}
-                                                value={formData.projectCode || ''}
-                                                onChange={v => setFormData({...formData, projectCode: v as string})}
-                                                options={[{ value: '', label: t('inventory.project_none') }, ...projects]}
-                                                placeholder={t('inventory.project_select')}
-                                            />
+                                            {projectsLoading ? (
+                                                <div>
+                                                    <div className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1">{t('inventory.label_project')}</div>
+                                                    <div className="w-full h-[44px] rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] animate-pulse flex items-center px-3 gap-2">
+                                                        <div className="w-3 h-3 rounded-full bg-[var(--glass-border)] animate-pulse" />
+                                                        <div className="h-3 w-28 rounded bg-[var(--glass-border)] animate-pulse" />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <Dropdown
+                                                    label={t('inventory.label_project')}
+                                                    value={formData.projectCode || ''}
+                                                    onChange={v => setFormData({...formData, projectCode: v as string})}
+                                                    options={[{ value: '', label: t('inventory.project_none') }, ...projects]}
+                                                    placeholder={t('inventory.project_select')}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>
