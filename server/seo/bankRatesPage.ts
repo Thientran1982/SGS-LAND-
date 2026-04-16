@@ -383,6 +383,8 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
   <link rel="alternate" hreflang="x-default" href="${CANONICAL}"/>
   ${buildSchema(ugcRates.length)}
   <link rel="stylesheet" href="/bank-rates.css"/>
+  <!-- Microsoft Clarity -->
+  <script src="/clarity-init.js"></script>
 </head>
 <body>
 
