@@ -1098,7 +1098,7 @@ async function startServer() {
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
       const messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
-      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null } });
+      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null, threadStatus: (lead as any).thread_status || 'AI_ACTIVE' } });
     } catch (error) {
       console.error('Public livechat get messages error:', error);
       res.status(500).json({ error: 'Không thể tải lịch sử chat' });
@@ -1146,6 +1146,13 @@ async function startServer() {
 
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Lead not found' }) as any;
+
+      // If a human agent has taken over this conversation, skip AI processing entirely.
+      // The agent will reply manually via the Inbox; the widget should wait silently.
+      const threadStatus = (lead as any).thread_status || 'AI_ACTIVE';
+      if (threadStatus === 'HUMAN_TAKEOVER') {
+        return res.json({ noReply: true }) as any;
+      }
 
       // The client already saved the visitor's inbound message via /api/public/livechat/message
       // before calling this endpoint, so fetch history directly — it already contains that message.
@@ -1800,7 +1807,7 @@ async function startServer() {
   app.use('/api/listings', apiRateLimit, createListingRoutes(authenticateToken));
   app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
   app.use('/api/contracts', apiRateLimit, createContractRoutes(authenticateToken));
-  app.use('/api/inbox', apiRateLimit, createInteractionRoutes(authenticateToken));
+  app.use('/api/inbox', apiRateLimit, createInteractionRoutes(authenticateToken, () => broadcastIo));
   app.use('/api/users', apiRateLimit, createUserRoutes(authenticateToken, JWT_SECRET));
   app.use('/api/analytics', apiRateLimit, createAnalyticsRoutes(authenticateToken));
   app.use('/api/scoring', apiRateLimit, createScoringRoutes(authenticateToken));

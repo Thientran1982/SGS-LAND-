@@ -428,16 +428,24 @@ export const Inbox: React.FC = () => {
             db.updateThreadAiMode(leadId, 'HUMAN_TAKEOVER').catch(() => {});
         };
 
+        // Sync AI mode changes triggered by other agents or by the server
+        const handleAiModeChanged = (data: { leadId: string; status: string }) => {
+            if (!data?.leadId) return;
+            setAutoResponseMap(prev => ({ ...prev, [data.leadId]: data.status === 'AI_ACTIVE' }));
+        };
+
         socket.on("receive_message", handleNewMessage);
         socket.on("lead_scored", handleLeadScored);
         socket.on("new_inbound_message", handleNewInboundMessage);
         socket.on("escalate_to_human", handleEscalateToHuman);
+        socket.on("ai_mode_changed", handleAiModeChanged);
 
         return () => {
             socket.off("receive_message", handleNewMessage);
             socket.off("lead_scored", handleLeadScored);
             socket.off("new_inbound_message", handleNewInboundMessage);
             socket.off("escalate_to_human", handleEscalateToHuman);
+            socket.off("ai_mode_changed", handleAiModeChanged);
         };
     }, [selectedLeadId, socket, queryClient, notify, t]);
 
