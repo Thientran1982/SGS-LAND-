@@ -650,8 +650,8 @@ export const Dashboard: React.FC = () => {
                                 </div>
                                 <div className="text-xs2 text-indigo-200 font-bold uppercase tracking-wider mt-1">
                                     {language === 'vn'
-                                        ? `Hoa hồng ${Math.round((analytics.commissionRate ?? 0.02) * 100)}% trên deal chốt`
-                                        : `${Math.round((analytics.commissionRate ?? 0.02) * 100)}% commission on closed deals`}
+                                        ? 'Từ deal chốt & sản phẩm đã bán'
+                                        : 'From closed deals & sold listings'}
                                 </div>
                             </div>
                             <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">

@@ -53,7 +53,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         contactPhone: '',
         ownerName: '',
         ownerPhone: '',
-        commission: 0,
+        commission: 2,
         commissionUnit: 'PERCENT'
     };
 
@@ -602,6 +602,9 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                     />
                                                 </div>
                                             </div>
+                                            <p className="text-xs2 text-amber-600 dark:text-amber-400 mt-1.5 font-medium">
+                                                {t('inventory.label_commission_hint')}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
