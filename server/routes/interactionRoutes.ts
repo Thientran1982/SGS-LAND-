@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { interactionRepository } from '../repositories/interactionRepository';
 
-export function createInteractionRoutes(authenticateToken: any) {
+export function createInteractionRoutes(authenticateToken: any, getBroadcast?: () => any) {
   const router = Router();
 
   router.get('/threads', authenticateToken, async (req: Request, res: Response) => {
@@ -33,8 +33,17 @@ export function createInteractionRoutes(authenticateToken: any) {
       if (!['AI_ACTIVE', 'HUMAN_TAKEOVER'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status. Must be AI_ACTIVE or HUMAN_TAKEOVER' });
       }
-      await interactionRepository.updateThreadAiMode(user.tenantId, String(req.params.leadId), status);
-      res.json({ leadId: req.params.leadId, status });
+      const leadId = String(req.params.leadId);
+      await interactionRepository.updateThreadAiMode(user.tenantId, leadId, status);
+      // Broadcast real-time mode change to:
+      // 1. Customer's live chat widget (joined via join_livechat_room)
+      // 2. All agents in the tenant (joined via tenant:tenantId room)
+      const io = getBroadcast?.();
+      if (io) {
+        io.to(leadId).emit('ai_mode_changed', { leadId, status });
+        io.to(`tenant:${user.tenantId}`).emit('ai_mode_changed', { leadId, status });
+      }
+      res.json({ leadId, status });
     } catch (error) {
       console.error('Error updating thread AI mode:', error);
       res.status(500).json({ error: 'Failed to update AI mode' });

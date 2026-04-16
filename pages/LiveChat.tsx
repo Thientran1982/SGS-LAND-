@@ -32,7 +32,7 @@ async function publicSendMessage(leadId: string, content: string, direction: 'IN
     return data.message as Interaction;
 }
 
-async function publicGetMessages(leadId: string): Promise<{ messages: Interaction[]; lead: { id: string; name: string; assignedTo?: string | null } } | null> {
+async function publicGetMessages(leadId: string): Promise<{ messages: Interaction[]; lead: { id: string; name: string; assignedTo?: string | null; threadStatus?: string } } | null> {
     const res = await fetch(`/api/public/livechat/messages/${leadId}`);
     if (!res.ok) return null;
     return res.json();
@@ -74,6 +74,7 @@ export default function LiveChat() {
     const [messages, setMessages] = useState<Interaction[]>([]);
     const [input, setInput] = useState('');
     const [isThinking, setIsThinking] = useState(false);
+    const [isHumanMode, setIsHumanMode] = useState(false);
     const [startError, setStartError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -131,6 +132,7 @@ export default function LiveChat() {
                 }
                 setLeadId(data.lead.id);
                 setLeadName(data.lead.name);
+                setIsHumanMode(data.lead.threadStatus === 'HUMAN_TAKEOVER');
                 setMessages((data.messages || []).filter((m: Interaction) => !isSysMessage(m)));
             } else {
                 localStorage.removeItem('livechat_lead_id');
@@ -157,9 +159,18 @@ export default function LiveChat() {
             setIsThinking(false);
         };
 
+        const handleModeChanged = (data: any) => {
+            if (data?.leadId !== leadId) return;
+            setIsHumanMode(data.status === 'HUMAN_TAKEOVER');
+            // Clear thinking indicator when mode changes
+            setIsThinking(false);
+        };
+
         socket.on('receive_message', handleNewMessage);
+        socket.on('ai_mode_changed', handleModeChanged);
         return () => {
             socket.off('receive_message', handleNewMessage);
+            socket.off('ai_mode_changed', handleModeChanged);
             socket.emit('leave_room', leadId);
         };
     }, [leadId, socket]);
@@ -226,7 +237,8 @@ export default function LiveChat() {
             setMessages(prev => [...prev, tempMsg]);
         }
 
-        // 2. Call AI reply
+        // 2. Call AI reply — skip if a human agent has taken over the conversation
+        if (isHumanMode) return;
         setIsThinking(true);
         if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
 
@@ -240,6 +252,8 @@ export default function LiveChat() {
 
                 if (res.ok) {
                     const data = await res.json();
+                    // noReply = human agent took over; widget waits silently for agent reply
+                    if (data.noReply) return;
                     const aiMsg: Interaction = data.reply;
                     if (!isSysMessage(aiMsg)) {
                         setMessages(prev => {
