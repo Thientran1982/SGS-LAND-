@@ -3,10 +3,13 @@ import { z } from 'zod';
 import { withTenantContext } from '../db';
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
+// Broad UUID-shape regex — tolerates non-RFC-4122 department IDs from migration 020
+const UUID_SHAPE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 const dateRangeQuerySchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'from phải là ngày YYYY-MM-DD').optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'to phải là ngày YYYY-MM-DD').optional(),
-  department_id: z.string().uuid().optional(),
+  department_id: z.string().regex(UUID_SHAPE, 'Phòng ban không hợp lệ').optional(),
   user_id: z.string().uuid().optional(),
 }).refine(data => {
   if (data.from && data.to) return new Date(data.from) <= new Date(data.to);
