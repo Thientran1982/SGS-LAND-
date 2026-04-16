@@ -2396,6 +2396,15 @@ async function startServer() {
       logger.debug(`User ${socket.id} joined room ${room}`);
     });
 
+    // Allow unauthenticated live-chat visitors to join their conversation room.
+    // Validates that the room value is a UUID (can't join arbitrary rooms).
+    socket.on("join_livechat_room", (leadId: string) => {
+      if (!leadId || typeof leadId !== 'string') return;
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leadId)) return;
+      socket.join(leadId);
+      logger.debug(`LiveChat guest ${socket.id} joined room ${leadId}`);
+    });
+
     const requireAuth = (handler: (...args: any[]) => void) => {
       return (...args: any[]) => {
         if (!socket.data.authUser) return;

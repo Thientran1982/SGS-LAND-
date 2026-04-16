@@ -450,6 +450,15 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
         status: deliveryStatus,
       });
 
+      // Push real-time reply to customer's live chat widget (and other agents watching)
+      const io = getBroadcast?.();
+      if (io) {
+        io.to(String(req.params.id)).emit('receive_message', {
+          room: String(req.params.id),
+          message: interaction,
+        });
+      }
+
       // Return 201 even when delivery fails — the message is still recorded.
       // The client can detect failure via interaction.status === 'FAILED'.
       res.status(201).json({
