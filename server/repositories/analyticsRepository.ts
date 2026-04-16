@@ -387,6 +387,10 @@ export class AnalyticsRepository extends BaseRepository {
 
       // Agent leaderboard: always full-scope (context for entire team)
       // avgResponseMinutes: median time from first INBOUND to first OUTBOUND per lead, per agent
+      // deals = WON leads + SOLD listings (agent is assigned_to or created_by).
+      // This is consistent with how revenue is calculated — teams often mark listings SOLD
+      // without moving leads through WON stage, so counting only WON leads underreports deals.
+      // close_rate = deals / (deals + LOST leads) × 100.
       const agentLeaderboardResult = await client.query(`
         SELECT
           u.id,
@@ -395,19 +399,30 @@ export class AnalyticsRepository extends BaseRepository {
           -- Frontend AgentAvatar handles NULL gracefully with a coloured initials badge —
           -- much better than a DiceBear URL keyed on base64(name) which shows wrong initials.
           NULLIF(TRIM(COALESCE(u.avatar, '')), '') as avatar,
-          COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as deals,
-          -- Close rate = WON / resolved (WON + LOST).
-          -- Dividing by total leads (including in-progress) underestimates the actual win rate
-          -- because those leads haven't reached a terminal state yet — same fix as conversionByPeriod.
+          (
+            COUNT(l.id) FILTER (WHERE l.stage = 'WON')
+            + COALESCE(sold.cnt, 0)
+          )::int AS deals,
+          -- Close rate = (WON leads + SOLD listings) / (deals + LOST leads).
+          -- Including SOLD listings ensures agents who close deals via the inventory
+          -- (without moving a lead to WON) are credited correctly.
           CASE
-            WHEN (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COUNT(l.id) FILTER (WHERE l.stage = 'LOST')) > 0
+            WHEN (
+              COUNT(l.id) FILTER (WHERE l.stage = 'WON')
+              + COUNT(l.id) FILTER (WHERE l.stage = 'LOST')
+              + COALESCE(sold.cnt, 0)
+            ) > 0
             THEN ROUND(
-              COUNT(l.id) FILTER (WHERE l.stage = 'WON')::numeric
-              / (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COUNT(l.id) FILTER (WHERE l.stage = 'LOST'))::numeric
+              (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COALESCE(sold.cnt, 0))::numeric
+              / (
+                  COUNT(l.id) FILTER (WHERE l.stage = 'WON')
+                  + COUNT(l.id) FILTER (WHERE l.stage = 'LOST')
+                  + COALESCE(sold.cnt, 0)
+                )::numeric
               * 100
             )
             ELSE 0
-          END::int as close_rate,
+          END::int AS close_rate,
           COUNT(l.id)::int as total_leads,
           (
             SELECT ROUND(AVG(EXTRACT(EPOCH FROM (first_out.ts - first_in.ts)) / 60))::int
@@ -429,9 +444,16 @@ export class AnalyticsRepository extends BaseRepository {
           ) as avg_response_minutes
         FROM users u
         LEFT JOIN leads l ON l.assigned_to = u.id AND l.tenant_id = u.tenant_id
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*)::int AS cnt
+          FROM listings li
+          WHERE (li.assigned_to = u.id OR li.created_by = u.id)
+            AND li.status = 'SOLD'
+            AND li.tenant_id = u.tenant_id
+        ) sold ON true
         WHERE u.${TENANT_FILTER}
           AND u.role IN ('SALES', 'TEAM_LEAD')
-        GROUP BY u.id, u.name, u.avatar
+        GROUP BY u.id, u.name, u.avatar, sold.cnt
         ORDER BY deals DESC
         LIMIT 10
       `);
@@ -1042,10 +1064,27 @@ export class AnalyticsRepository extends BaseRepository {
       const lost      = row.lost           ?? 0;
       const inProgress = row.in_progress   ?? 0;
       const total     = row.total          ?? 0;
-      const closeRate = row.close_rate     ?? 0;
       const revenue   = parseFloat(row.revenue)  || 0;
       const avgMins   = row.avg_response_minutes != null
         ? Number(row.avg_response_minutes) : null;
+
+      // SOLD listings — agents often mark listings SOLD without moving leads to WON,
+      // so we add sold listing count to deals to stay consistent with revenue calculation.
+      const soldListingsRes = await client.query(`
+        SELECT COUNT(*)::int AS cnt
+        FROM listings
+        WHERE (assigned_to = $1 OR created_by = $1)
+          AND status = 'SOLD'
+          AND ${TENANT_FILTER}
+      `, [userId]);
+      const soldListings = soldListingsRes.rows[0]?.cnt ?? 0;
+
+      // deals = WON leads + SOLD listings
+      const deals = won + soldListings;
+      // closeRate = deals / (deals + LOST) — same denominator logic (resolved only)
+      const closeRate = (deals + lost) > 0
+        ? Math.round(deals / (deals + lost) * 100)
+        : 0;
 
       // SLA score: 70% close rate component + 30% response-speed bonus
       const responseBonus = avgMins == null ? 0
@@ -1098,7 +1137,7 @@ export class AnalyticsRepository extends BaseRepository {
       const workloadScore = activeTasks * 1 + overdueTasks * 2;
 
       return {
-        deals: won,
+        deals,
         lost,
         totalLeads: total,
         inProgress,

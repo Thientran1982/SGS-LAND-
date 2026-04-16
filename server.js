@@ -4362,6 +4362,91 @@ var init_email_campaign_log = __esm({
   }
 });
 
+// server/migrations/058_seed_departments_all_tenants.ts
+var DEFAULT_DEPARTMENTS, migration58, seed_departments_all_tenants_default;
+var init_seed_departments_all_tenants = __esm({
+  "server/migrations/058_seed_departments_all_tenants.ts"() {
+    DEFAULT_DEPARTMENTS = [
+      { name: "Kinh doanh", description: "Ph\xF2ng kinh doanh v\xE0 b\xE1n h\xE0ng" },
+      { name: "Ph\xE1p l\xFD & H\u1EE3p \u0111\u1ED3ng", description: "Ph\xF2ng ph\xE1p l\xFD v\xE0 so\u1EA1n th\u1EA3o h\u1EE3p \u0111\u1ED3ng" },
+      { name: "Marketing & Truy\u1EC1n th\xF4ng", description: "Ph\xF2ng marketing v\xE0 truy\u1EC1n th\xF4ng" },
+      { name: "K\u1EF9 thu\u1EADt & Th\u1EA9m \u0111\u1ECBnh", description: "Ph\xF2ng k\u1EF9 thu\u1EADt v\xE0 th\u1EA9m \u0111\u1ECBnh d\u1EF1 \xE1n" },
+      { name: "Ch\u0103m s\xF3c Kh\xE1ch h\xE0ng", description: "Ph\xF2ng ch\u0103m s\xF3c kh\xE1ch h\xE0ng" },
+      { name: "Ban Gi\xE1m \u0111\u1ED1c", description: "Ban gi\xE1m \u0111\u1ED1c \u0111i\u1EC1u h\xE0nh" }
+    ];
+    migration58 = {
+      description: "Seed default departments for all tenants that have none",
+      async up(client) {
+        const tenantsRes = await client.query(`
+      SELECT t.id
+      FROM tenants t
+      WHERE NOT EXISTS (
+        SELECT 1 FROM departments d WHERE d.tenant_id = t.id
+      )
+    `);
+        for (const row of tenantsRes.rows) {
+          const tenantId = row.id;
+          for (const dept of DEFAULT_DEPARTMENTS) {
+            await client.query(`
+          INSERT INTO departments (tenant_id, name, description)
+          VALUES ($1, $2, $3)
+          ON CONFLICT DO NOTHING
+        `, [tenantId, dept.name, dept.description]);
+          }
+        }
+      },
+      async down(client) {
+        const names = DEFAULT_DEPARTMENTS.map((d) => d.name);
+        await client.query(`
+      DELETE FROM departments
+      WHERE name = ANY($1::text[])
+        AND description IN (${DEFAULT_DEPARTMENTS.map((_, i) => `$${i + 2}`).join(",")})
+    `, [names, ...DEFAULT_DEPARTMENTS.map((d) => d.description)]);
+      }
+    };
+    seed_departments_all_tenants_default = migration58;
+  }
+});
+
+// server/migrations/059_fix_department_uuid.ts
+var NON_STANDARD_PATTERN, migration59, fix_department_uuid_default;
+var init_fix_department_uuid = __esm({
+  "server/migrations/059_fix_department_uuid.ts"() {
+    NON_STANDARD_PATTERN = /^d[0-9a-f]{7}-0000-0000-0000-[0-9a-f]{12}$/i;
+    migration59 = {
+      description: "Replace non-RFC-4122 department IDs with proper uuid_generate_v4() UUIDs",
+      async up(client) {
+        const deptRes = await client.query(`SELECT id, name FROM departments`);
+        const nonStandard = deptRes.rows.filter((r) => NON_STANDARD_PATTERN.test(r.id));
+        if (nonStandard.length === 0) return;
+        await client.query(`
+      ALTER TABLE wf_tasks DROP CONSTRAINT IF EXISTS wf_tasks_department_id_fkey
+    `);
+        for (const dept of nonStandard) {
+          const newIdRes = await client.query(`SELECT uuid_generate_v4() AS new_id`);
+          const newId = newIdRes.rows[0].new_id;
+          await client.query(
+            `UPDATE wf_tasks SET department_id = $1 WHERE department_id = $2`,
+            [newId, dept.id]
+          );
+          await client.query(
+            `UPDATE departments SET id = $1 WHERE id = $2`,
+            [newId, dept.id]
+          );
+        }
+        await client.query(`
+      ALTER TABLE wf_tasks
+        ADD CONSTRAINT wf_tasks_department_id_fkey
+        FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+    `);
+      },
+      async down(client) {
+      }
+    };
+    fix_department_uuid_default = migration59;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -4414,15 +4499,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration58 = MIGRATION_REGISTRY[file2];
-      if (!migration58 || typeof migration58.up !== "function") {
+      const migration60 = MIGRATION_REGISTRY[file2];
+      if (!migration60 || typeof migration60.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration58.description || ""}`);
-      await migration58.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration60.description || ""}`);
+      await migration60.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration58.description || null]
+        [file2, migration60.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
@@ -4457,15 +4542,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration58 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration58) {
+    const migration60 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration60) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration58.down) {
+    if (!migration60.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration58.down(client);
+    await migration60.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -4537,6 +4622,8 @@ var init_runner = __esm({
     init_seed_market_prices();
     init_bank_rates();
     init_email_campaign_log();
+    init_seed_departments_all_tenants();
+    init_fix_department_uuid();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -4595,7 +4682,9 @@ var init_runner = __esm({
       "054_error_logs.ts": error_logs_default,
       "055_seed_market_prices.ts": seed_market_prices_default,
       "056_bank_rates.ts": bank_rates_default,
-      "057_email_campaign_log.ts": email_campaign_log_default
+      "057_email_campaign_log.ts": email_campaign_log_default,
+      "058_seed_departments_all_tenants.ts": seed_departments_all_tenants_default,
+      "059_fix_department_uuid.ts": fix_department_uuid_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -15564,6 +15653,11 @@ var init_interactionRepository = __esm({
 });
 
 // server/repositories/listingRepository.ts
+var listingRepository_exports = {};
+__export(listingRepository_exports, {
+  ListingRepository: () => ListingRepository,
+  listingRepository: () => listingRepository
+});
 var ListingRepository, listingRepository;
 var init_listingRepository = __esm({
   "server/repositories/listingRepository.ts"() {
@@ -24635,7 +24729,7 @@ function parseBudgetFromMessage(msg) {
   if (trMatch) return parseFloat(trMatch[1].replace(",", ".")) * 1e6;
   return void 0;
 }
-function buildSystemContext(lead) {
+function buildSystemContext(lead, userFavorites) {
   if (!lead) return "Kh\xE1ch v\xE3ng lai \u2014 ch\u01B0a c\xF3 h\u1ED3 s\u01A1.";
   const parts = [`Kh\xE1ch h\xE0ng: ${lead.name}`];
   if (lead.stage) parts.push(`Giai \u0111o\u1EA1n: ${lead.stage}`);
@@ -24663,7 +24757,20 @@ function buildSystemContext(lead) {
     const diffDays = Math.floor((Date.now() - lastDate.getTime()) / 864e5);
     if (diffDays > 0) parts.push(`L\u1EA7n cu\u1ED1i t\u01B0\u01A1ng t\xE1c: ${diffDays} ng\xE0y tr\u01B0\u1EDBc`);
   }
-  return parts.join(" | ");
+  let favoritesBlock = "";
+  if (userFavorites && userFavorites.length > 0) {
+    const favLines = userFavorites.slice(0, 8).map((f, i) => {
+      const price = f.price ? `${(f.price / 1e9).toFixed(2)} T\u1EF7` : "Ch\u01B0a r\xF5 gi\xE1";
+      const area = f.area ? `${f.area}m\xB2` : "";
+      const label = f.title || f.address || `B\u0110S #${i + 1}`;
+      return `  ${i + 1}. [ID:${f.id}] ${label}${area ? " \u2014 " + area : ""} \u2014 ${price}${f.propertyType ? " (" + f.propertyType + ")" : ""}`;
+    }).join("\n");
+    favoritesBlock = `
+[WATCHLIST KH\xC1CH H\xC0NG \u2014 ${userFavorites.length} B\u0110S \u0111\xE3 l\u01B0u]:
+${favLines}
+\u2192 \u01AFu ti\xEAn \u0111\u1EC1 xu\u1EA5t B\u0110S KH\xC1C v\u1EDBi watchlist. N\u1EBFu kh\xE1ch h\u1ECFi v\u1EC1 B\u0110S \u0111\xE3 l\u01B0u, h\xE3y nh\u1EAFc t\xEAn/\u0111\u1ECBa ch\u1EC9 c\u1EE5 th\u1EC3.`;
+  }
+  return parts.join(" | ") + favoritesBlock;
 }
 var GENAI_CONFIG, _aiInstance, modelCache, valuationCache, toolDataCache, spendBuffer, spendFlushTimer, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, DEFAULT_ROUTER_INSTRUCTION, DEFAULT_WRITER_PERSONA, DEFAULT_INVENTORY_SYSTEM, DEFAULT_FINANCE_SYSTEM, DEFAULT_LEGAL_SYSTEM, DEFAULT_SALES_SYSTEM, DEFAULT_MARKETING_SYSTEM, DEFAULT_CONTRACT_SYSTEM, DEFAULT_LEAD_ANALYST_SYSTEM, DEFAULT_VALUATION_SYSTEM, DEFAULT_VALUATION_SEARCH_SYSTEM, DEFAULT_VALUATION_RENTAL_SYSTEM, ROUTER_SCHEMA, TOOL_EXECUTOR, StateGraph, AiEngine, aiService;
 var init_ai = __esm({
@@ -25096,6 +25203,7 @@ ${formatted}`;
           if (++iterations > MAX_ITERATIONS) {
             logger.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
             currentState.finalResponse = currentState.t("ai.msg_system_busy");
+            currentState.isSysMsg = true;
             break;
           }
           const nodeFunc = this.nodes.get(currentNode);
@@ -25115,6 +25223,7 @@ ${formatted}`;
             logger.error(`Error in node ${currentNode}:`, error48);
             currentState.trace.push({ id: `err_${Date.now()}`, node: "ERROR", status: "ERROR", output: error48.message, timestamp: Date.now() });
             currentState.finalResponse = currentState.t("ai.msg_system_busy");
+            currentState.isSysMsg = true;
             currentState.error = error48;
             break;
           }
@@ -25295,16 +25404,31 @@ QUY T\u1EAEC \u01AFU TI\xCAN khi tin nh\u1EAFn h\u1ED7n h\u1EE3p:
           const isUrgent = /gấp|tháng này|tuần này|tháng sau|sắp hết hàng|cần ngay|khẩn/.test(msg);
           const budgetTier = !budgetMax ? "Ch\u01B0a r\xF5" : budgetMax < 3e9 ? "D\u01B0\u1EDBi 3 T\u1EF7" : budgetMax < 7e9 ? "3\u20137 T\u1EF7" : budgetMax < 15e9 ? "7\u201315 T\u1EF7" : "Tr\xEAn 15 T\u1EF7";
           const buyerProfile = isInvestor ? "\u0110\u1EA6U_T\u01AF" : isFirstBuyer ? "\u1EDE_TH\u1EF0C_L\u1EA6N_\u0110\u1EA6U" : "CH\u01AFA_R\xD5";
+          const favs = state.userFavorites || [];
+          const favIds = new Set(favs.map((f) => f.id));
+          let favCrossCheck = "";
+          if (favs.length > 0) {
+            const favSummary = favs.slice(0, 5).map((f, i) => {
+              const price = f.price ? `${(f.price / 1e9).toFixed(2)} T\u1EF7` : "?";
+              return `  ${i + 1}. [${f.id}] ${f.title || f.address || "B\u0110S"} \u2014 ${price}`;
+            }).join("\n");
+            favCrossCheck = `
+
+WATCHLIST (${favs.length} B\u0110S kh\xE1ch \u0111\xE3 l\u01B0u \u2014 KH\xD4NG \u0111\u1EC1 xu\u1EA5t l\u1EA1i, tr\u1EEB khi kh\xE1ch h\u1ECFi tr\u1EF1c ti\u1EBFp):
+${favSummary}
+\u2192 N\u1EBFu k\u1EBFt qu\u1EA3 t\xECm ki\u1EBFm tr\xF9ng ID v\u1EDBi watchlist, h\xE3y \u0111\xE1nh d\u1EA5u "\u2605 \u0110\xC3 L\u01AFU" v\xE0 \u01B0u ti\xEAn gi\u1EDBi thi\u1EC7u B\u0110S M\u1EDAI ch\u01B0a c\xF3 trong danh s\xE1ch.`;
+          }
           const inventoryAnalysisPrompt = `K\u1EBET QU\u1EA2 T\xCCM KI\u1EBEM KHO H\xC0NG:
 ${searchRes}
 
-H\u1ED2 S\u01A0: Ng\xE2n s\xE1ch ${budgetTier} | Khu v\u1EF1c: ${extraction.location_keyword || "Ch\u01B0a r\xF5"} | Lo\u1EA1i: ${extraction.property_type || "Ch\u01B0a r\xF5"} | Di\u1EC7n t\xEDch: ${extraction.area_min ? ">=" + extraction.area_min + "m\xB2" : "Ch\u01B0a r\xF5"} | M\u1EE5c \u0111\xEDch: ${isInvestor ? "\u0110\u1EA6U T\u01AF" : isFirstBuyer ? "\u1EDE TH\u1EF0C L\u1EA6N \u0110\u1EA6U" : "Ch\u01B0a r\xF5"} | Kh\u1EA9n c\u1EA5p: ${isUrgent ? "C\xD3" : "Kh\xF4ng"}
+H\u1ED2 S\u01A0: Ng\xE2n s\xE1ch ${budgetTier} | Khu v\u1EF1c: ${extraction.location_keyword || "Ch\u01B0a r\xF5"} | Lo\u1EA1i: ${extraction.property_type || "Ch\u01B0a r\xF5"} | Di\u1EC7n t\xEDch: ${extraction.area_min ? ">=" + extraction.area_min + "m\xB2" : "Ch\u01B0a r\xF5"} | M\u1EE5c \u0111\xEDch: ${isInvestor ? "\u0110\u1EA6U T\u01AF" : isFirstBuyer ? "\u1EDE TH\u1EF0C L\u1EA6N \u0110\u1EA6U" : "Ch\u01B0a r\xF5"} | Kh\u1EA9n c\u1EA5p: ${isUrgent ? "C\xD3" : "Kh\xF4ng"}${favCrossCheck}
 
 PH\xC2N T\xCDCH TOP 3 B\u0110S PH\xD9 H\u1EE2P NH\u1EA4T (bullet point, max 200 t\u1EEB):
 1. X\u1EBFp h\u1EA1ng + l\xFD do ng\u1EAFn g\u1ECDn (kh\u1EDBp h\u1ED3 s\u01A1 \u1EDF \u0111i\u1EC3m n\xE0o)
 2. \u0110i\u1EC3m KH\xC1C BI\u1EC6T n\u1ED5i b\u1EADt m\u1ED7i B\u0110S (kh\xF4ng ch\u1EC9 li\u1EC7t k\xEA th\xF4ng s\u1ED1)
 3. ${isInvestor ? "\u01AF\u1EDBc t\xEDnh t\u1EF7 su\u1EA5t cho thu\xEA (%)" : "1 \u0111i\u1EC3m m\u1EA1nh + 1 r\u1EE7i ro ti\u1EC1m \u1EA9n m\u1ED7i c\u0103n"}
-4. Khuy\u1EBFn ngh\u1ECB c\u0103n PH\xD9 NH\u1EA4T \u2014 l\xFD do 1 c\xE2u`;
+4. Khuy\u1EBFn ngh\u1ECB c\u0103n PH\xD9 NH\u1EA4T \u2014 l\xFD do 1 c\xE2u
+${favIds.size > 0 ? '5. N\u1EBFu c\xF3 B\u0110S tr\xF9ng watchlist: ghi ch\xFA "\u2605 \u0110\xC3 L\u01AFU" v\xE0 \u0111\u1EC1 xu\u1EA5t ph\u01B0\u01A1ng \xE1n so s\xE1nh' : ""}`;
           const invRlhf = await buildRlhfContext(state.tenantId, "SEARCH_INVENTORY").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
           const invObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, "INVENTORY_AGENT").catch(() => "");
           const inventorySystemInstruction = await getInventoryInstruction(state.tenantId);
@@ -26307,7 +26431,7 @@ ${reconcileLine ? reconcileLine + "\n" : ""}Y\u1EBFu t\u1ED1: ${valResult.factor
         graph.addEdge("ESCALATION_NODE", "END");
         return graph;
       }
-      async processMessage(lead, userMessage, history, t, tenantId, lang) {
+      async processMessage(lead, userMessage, history, t, tenantId, lang, userFavorites) {
         if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY && !process.env.API_KEY) {
           return {
             agent: "SGS_AGENT",
@@ -26353,17 +26477,26 @@ ${reconcileLine ? reconcileLine + "\n" : ""}Y\u1EBFu t\u1ED1: ${valResult.factor
 [TR\xCD NH\u1EDA H\u1ED8I THO\u1EA0I]: ${parts.join(" | ")}`;
           }
         }
+        const compactFavorites = userFavorites?.map((f) => ({
+          id: f.id,
+          title: f.title,
+          address: f.address,
+          price: f.price,
+          area: f.area,
+          propertyType: f.propertyType
+        }));
         const initialState = {
           lead,
           userMessage,
           history: fullHistory,
           trace: [],
-          systemContext: buildSystemContext(lead) + memoryDigest,
+          systemContext: buildSystemContext(lead, compactFavorites) + memoryDigest,
           finalResponse: "",
           suggestedAction: "NONE",
           t,
           tenantId: tenantId || "default",
-          lang: detectMessageLang(userMessage, lang)
+          lang: detectMessageLang(userMessage, lang),
+          userFavorites: compactFavorites
         };
         const startTs = Date.now();
         try {
@@ -26388,6 +26521,7 @@ ${reconcileLine ? reconcileLine + "\n" : ""}Y\u1EBFu t\u1ED1: ${valResult.factor
             sentiment: "NEUTRAL",
             suggestedAction: finalState.suggestedAction,
             escalated: finalState.escalated,
+            isSysMsg: finalState.isSysMsg,
             intent: finalState.plan?.next_step,
             userMessage: userMessage?.slice(0, 300)
           };
@@ -30253,9 +30387,25 @@ async function triggerAutoReply(io, tenantId, lead, inboundText, channel) {
     const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
     const allHistory = await interactionRepository2.findByLead(tenantId, lead.id);
     const history = allHistory.slice(-20);
+    let autoReplyFavorites = [];
+    try {
+      if (lead.userId) {
+        const { listingRepository: listingRepository2 } = await Promise.resolve().then(() => (init_listingRepository(), listingRepository_exports));
+        const favRaw = await listingRepository2.getFavorites(tenantId, lead.userId);
+        autoReplyFavorites = favRaw.map((f) => ({
+          id: f.id,
+          title: f.title,
+          address: f.address,
+          price: f.price,
+          area: f.area,
+          propertyType: f.propertyType
+        }));
+      }
+    } catch {
+    }
     const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
     const t = (key) => key;
-    const aiResult = await aiService2.processMessage(lead, inboundText, history, t, tenantId, "vn");
+    const aiResult = await aiService2.processMessage(lead, inboundText, history, t, tenantId, "vn", autoReplyFavorites);
     if (!aiResult?.content) {
       logger.warn(`[AutoReply] AI kh\xF4ng tr\u1EA3 v\u1EC1 n\u1ED9i dung cho lead ${lead.id}`);
       return;
@@ -31450,7 +31600,7 @@ var STAGE_LABEL_VN = {
   LOST: "Th\u1EA5t b\u1EA1i",
   MANUAL: "Th\u1EE7 c\xF4ng"
 };
-function createLeadRoutes(authenticateToken) {
+function createLeadRoutes(authenticateToken, getBroadcast) {
   const router = Router();
   const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
   router.get("/", authenticateToken, async (req, res) => {
@@ -31626,6 +31776,7 @@ function createLeadRoutes(authenticateToken) {
         details: `Created lead: ${name}`,
         ipAddress: req.ip
       });
+      getBroadcast?.()?.to(`tenant:${user.tenantId}`).emit("lead_created", { leadId: lead.id });
       res.status(201).json(lead);
     } catch (error48) {
       console.error("Error creating lead:", error48);
@@ -31722,6 +31873,7 @@ function createLeadRoutes(authenticateToken) {
         }).catch(() => {
         });
       }
+      getBroadcast?.()?.to(`tenant:${user.tenantId}`).emit("lead_updated", { leadId: lead.id, stage: lead.stage });
       res.json(lead);
     } catch (error48) {
       console.error("Error updating lead:", error48);
@@ -31837,6 +31989,13 @@ function createLeadRoutes(authenticateToken) {
         senderId: user.id,
         status: deliveryStatus
       });
+      const io = getBroadcast?.();
+      if (io) {
+        io.to(String(req.params.id)).emit("receive_message", {
+          room: String(req.params.id),
+          message: interaction
+        });
+      }
       res.status(201).json({
         ...interaction,
         ...deliveryError ? { deliveryWarning: deliveryError } : {}
@@ -32574,7 +32733,14 @@ var ProposalRepository = class extends BaseRepository {
   async findByTokenGlobal(token) {
     const result = await pool.query(
       `SELECT p.*,
-              l.name as lead_name, li.title as listing_title, li.location as listing_location
+              l.name as lead_name,
+              li.title as listing_title,
+              li.location as listing_location,
+              li.images as listing_images,
+              li.area as listing_area,
+              li.bedrooms as listing_bedrooms,
+              li.type as listing_type,
+              li.attributes as listing_attributes
        FROM proposals p
        LEFT JOIN leads l ON p.lead_id = l.id
        LEFT JOIN listings li ON p.listing_id = li.id
@@ -33314,7 +33480,7 @@ function createContractRoutes(authenticateToken) {
 // server/routes/interactionRoutes.ts
 init_interactionRepository();
 import { Router as Router5 } from "express";
-function createInteractionRoutes(authenticateToken) {
+function createInteractionRoutes(authenticateToken, getBroadcast) {
   const router = Router5();
   router.get("/threads", authenticateToken, async (req, res) => {
     try {
@@ -33343,8 +33509,14 @@ function createInteractionRoutes(authenticateToken) {
       if (!["AI_ACTIVE", "HUMAN_TAKEOVER"].includes(status)) {
         return res.status(400).json({ error: "Invalid status. Must be AI_ACTIVE or HUMAN_TAKEOVER" });
       }
-      await interactionRepository.updateThreadAiMode(user.tenantId, String(req.params.leadId), status);
-      res.json({ leadId: req.params.leadId, status });
+      const leadId = String(req.params.leadId);
+      await interactionRepository.updateThreadAiMode(user.tenantId, leadId, status);
+      const io = getBroadcast?.();
+      if (io) {
+        io.to(leadId).emit("ai_mode_changed", { leadId, status });
+        io.to(`tenant:${user.tenantId}`).emit("ai_mode_changed", { leadId, status });
+      }
+      res.json({ leadId, status });
     } catch (error48) {
       console.error("Error updating thread AI mode:", error48);
       res.status(500).json({ error: "Failed to update AI mode" });
@@ -33906,6 +34078,32 @@ var AnalyticsRepository = class extends BaseRepository {
               AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days * 2} days'
               AND COALESCE(lrev.won_at, lrev.updated_at) < NOW() - INTERVAL '${days} days'
           `, [commissionRate]) : { rows: [{ revenue: "0" }] };
+      const listingUserFilter = isSalesScope && safeUserId ? `AND (l.assigned_to = '${safeUserId}'::uuid OR l.created_by = '${safeUserId}'::uuid)` : "";
+      const listingRevenueResult = await client.query(`
+        SELECT COALESCE(SUM(
+          CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+               ELSE l.commission END
+        ), 0)::numeric as revenue
+        FROM listings l
+        WHERE l.${TENANT_FILTER}
+          AND l.status = 'SOLD'
+          AND l.commission IS NOT NULL AND l.commission > 0
+          ${listingUserFilter}
+          ${useTimeFilter ? `AND l.updated_at >= NOW() - INTERVAL '${days} days'` : ""}
+      `);
+      const prevListingRevenueResult = useTimeFilter ? await client.query(`
+            SELECT COALESCE(SUM(
+              CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+                   ELSE l.commission END
+            ), 0)::numeric as revenue
+            FROM listings l
+            WHERE l.${TENANT_FILTER}
+              AND l.status = 'SOLD'
+              AND l.commission IS NOT NULL AND l.commission > 0
+              ${listingUserFilter}
+              AND l.updated_at >= NOW() - INTERVAL '${days * 2} days'
+              AND l.updated_at < NOW() - INTERVAL '${days} days'
+          `) : { rows: [{ revenue: "0" }] };
       const pipelineResult = await client.query(`
         SELECT
           l.stage,
@@ -34023,19 +34221,30 @@ var AnalyticsRepository = class extends BaseRepository {
           -- Frontend AgentAvatar handles NULL gracefully with a coloured initials badge \u2014
           -- much better than a DiceBear URL keyed on base64(name) which shows wrong initials.
           NULLIF(TRIM(COALESCE(u.avatar, '')), '') as avatar,
-          COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as deals,
-          -- Close rate = WON / resolved (WON + LOST).
-          -- Dividing by total leads (including in-progress) underestimates the actual win rate
-          -- because those leads haven't reached a terminal state yet \u2014 same fix as conversionByPeriod.
+          (
+            COUNT(l.id) FILTER (WHERE l.stage = 'WON')
+            + COALESCE(sold.cnt, 0)
+          )::int AS deals,
+          -- Close rate = (WON leads + SOLD listings) / (deals + LOST leads).
+          -- Including SOLD listings ensures agents who close deals via the inventory
+          -- (without moving a lead to WON) are credited correctly.
           CASE
-            WHEN (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COUNT(l.id) FILTER (WHERE l.stage = 'LOST')) > 0
+            WHEN (
+              COUNT(l.id) FILTER (WHERE l.stage = 'WON')
+              + COUNT(l.id) FILTER (WHERE l.stage = 'LOST')
+              + COALESCE(sold.cnt, 0)
+            ) > 0
             THEN ROUND(
-              COUNT(l.id) FILTER (WHERE l.stage = 'WON')::numeric
-              / (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COUNT(l.id) FILTER (WHERE l.stage = 'LOST'))::numeric
+              (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COALESCE(sold.cnt, 0))::numeric
+              / (
+                  COUNT(l.id) FILTER (WHERE l.stage = 'WON')
+                  + COUNT(l.id) FILTER (WHERE l.stage = 'LOST')
+                  + COALESCE(sold.cnt, 0)
+                )::numeric
               * 100
             )
             ELSE 0
-          END::int as close_rate,
+          END::int AS close_rate,
           COUNT(l.id)::int as total_leads,
           (
             SELECT ROUND(AVG(EXTRACT(EPOCH FROM (first_out.ts - first_in.ts)) / 60))::int
@@ -34057,9 +34266,16 @@ var AnalyticsRepository = class extends BaseRepository {
           ) as avg_response_minutes
         FROM users u
         LEFT JOIN leads l ON l.assigned_to = u.id AND l.tenant_id = u.tenant_id
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*)::int AS cnt
+          FROM listings li
+          WHERE (li.assigned_to = u.id OR li.created_by = u.id)
+            AND li.status = 'SOLD'
+            AND li.tenant_id = u.tenant_id
+        ) sold ON true
         WHERE u.${TENANT_FILTER}
           AND u.role IN ('SALES', 'TEAM_LEAD')
-        GROUP BY u.id, u.name, u.avatar
+        GROUP BY u.id, u.name, u.avatar, sold.cnt
         ORDER BY deals DESC
         LIMIT 10
       `);
@@ -34076,6 +34292,22 @@ var AnalyticsRepository = class extends BaseRepository {
         ORDER BY month DESC
         LIMIT 12
       `, [commissionRate]);
+      const listingRevenueByMonthResult = await client.query(`
+        SELECT
+          TO_CHAR(l.updated_at, 'YYYY-MM') as month,
+          SUM(
+            CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+                 ELSE l.commission END
+          )::numeric as revenue
+        FROM listings l
+        WHERE l.${TENANT_FILTER}
+          AND l.status = 'SOLD'
+          AND l.commission IS NOT NULL AND l.commission > 0
+          ${listingUserFilter}
+        GROUP BY TO_CHAR(l.updated_at, 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT 12
+      `);
       let pipelineValue = 0;
       let weightedProbSum = 0;
       let totalDeals = 0;
@@ -34107,8 +34339,8 @@ var AnalyticsRepository = class extends BaseRepository {
       const listingStats = listingsResult.rows[0];
       const proposalStats = proposalsResult.rows[0];
       const contractStats = contractsResult.rows[0];
-      const revenue = parseFloat(revenueResult.rows[0].revenue) || 0;
-      const prevRevenue = parseFloat(prevRevenueResult.rows[0].revenue) || 0;
+      const revenue = (parseFloat(revenueResult.rows[0].revenue) || 0) + (parseFloat(listingRevenueResult.rows[0].revenue) || 0);
+      const prevRevenue = (parseFloat(prevRevenueResult.rows[0].revenue) || 0) + (parseFloat(prevListingRevenueResult.rows[0].revenue) || 0);
       const salesVelocity = Math.round(parseFloat(salesVelocityResult.rows[0].avg_days) || 0);
       const prevSalesVelocity = Math.round(parseFloat(prevSalesVelocityResult.rows[0].avg_days) || 0);
       const conversionRate = leadStats.total > 0 ? Math.round(leadStats.won_leads / leadStats.total * 1e4) / 100 : 0;
@@ -34178,15 +34410,24 @@ var AnalyticsRepository = class extends BaseRepository {
         aiDeflectionRate: Math.round(aiDeflectionRate * 100) / 100,
         aiDeflectionRateDelta: prevAiDeflectionRate > 0 ? calcDelta(aiDeflectionRate, prevAiDeflectionRate) : 0,
         salesVelocity,
-        salesVelocityDelta: prevSalesVelocity > 0 ? calcDelta(salesVelocity, prevSalesVelocity) : 0,
+        // Negate: fewer days = faster = better. calcDelta returns positive when current > previous,
+        // but for velocity a positive change (more days) is BAD, so we flip the sign so the
+        // TrendIndicator correctly colours improvement (fewer days) as green.
+        salesVelocityDelta: prevSalesVelocity > 0 ? -calcDelta(salesVelocity, prevSalesVelocity) : 0,
         conversionRate,
         totalLeadsDelta: calcDelta(leadStats.total, prevLeadTotal),
         leadsByStage,
         leadsBySource,
-        revenueByMonth: revenueByMonthResult.rows.map((r) => ({
-          month: r.month,
-          revenue: parseFloat(r.revenue) || 0
-        })),
+        revenueByMonth: (() => {
+          const map2 = /* @__PURE__ */ new Map();
+          for (const r of revenueByMonthResult.rows) {
+            map2.set(r.month, (map2.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
+          }
+          for (const r of listingRevenueByMonthResult.rows) {
+            map2.set(r.month, (map2.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
+          }
+          return Array.from(map2.entries()).map(([month, revenue2]) => ({ month, revenue: revenue2 })).sort((a, b) => b.month.localeCompare(a.month)).slice(0, 12);
+        })(),
         leadsTrend: leadsTrendResult.rows.map((r) => ({
           date: r.date,
           count: r.count
@@ -34340,6 +34581,32 @@ var AnalyticsRepository = class extends BaseRepository {
           roi: Math.round(roi * 100) / 100
         };
       });
+      const listingUserFilterBi = isSalesScope && safeUserId ? `AND (li.assigned_to = '${safeUserId}'::uuid OR li.created_by = '${safeUserId}'::uuid)` : "";
+      const listingCommissionResult = await client.query(`
+        SELECT COALESCE(SUM(
+          CASE WHEN li.commission_unit = 'PERCENT' THEN li.price * li.commission / 100
+               ELSE li.commission END
+        ), 0)::numeric as revenue,
+        COUNT(*)::int as sold_count
+        FROM listings li
+        WHERE li.${TENANT_FILTER}
+          AND li.status = 'SOLD'
+          AND li.commission IS NOT NULL AND li.commission > 0
+          ${listingUserFilterBi}
+          ${useTimeFilter ? `AND li.updated_at >= NOW() - INTERVAL '${days} days'` : ""}
+      `);
+      const listingCommission = parseFloat(listingCommissionResult.rows[0]?.revenue) || 0;
+      const listingSoldCount = listingCommissionResult.rows[0]?.sold_count || 0;
+      if (listingCommission > 0) {
+        attribution.push({
+          channel: "DIRECT_SALE",
+          leads: listingSoldCount,
+          revenue: listingCommission,
+          spend: 0,
+          cac: 0,
+          roi: 0
+        });
+      }
       const conversionByPeriodResult = await client.query(`
         SELECT
           TO_CHAR(created_at, 'YYYY-MM') as period,
@@ -34456,7 +34723,7 @@ var AnalyticsRepository = class extends BaseRepository {
             )
             ELSE 0
           END::int AS close_rate,
-          -- Revenue: sum of the latest APPROVED proposal price \xD7 commission rate per WON lead
+          -- Revenue: proposal commissions from WON leads + SOLD listing commissions
           COALESCE((
             SELECT SUM(latest_p.final_price * $2)
             FROM leads won_l
@@ -34471,6 +34738,18 @@ var AnalyticsRepository = class extends BaseRepository {
             WHERE won_l.assigned_to = $1
               AND won_l.stage = 'WON'
               AND won_l.${TENANT_FILTER}
+          ), 0)::numeric
+          +
+          COALESCE((
+            SELECT SUM(
+              CASE WHEN li.commission_unit = 'PERCENT' THEN li.price * li.commission / 100
+                   ELSE li.commission END
+            )
+            FROM listings li
+            WHERE (li.assigned_to = $1 OR li.created_by = $1)
+              AND li.status = 'SOLD'
+              AND li.commission IS NOT NULL AND li.commission > 0
+              AND li.${TENANT_FILTER}
           ), 0)::numeric AS revenue,
           -- Avg response: seconds from first INBOUND to first OUTBOUND per lead
           (
@@ -34501,9 +34780,18 @@ var AnalyticsRepository = class extends BaseRepository {
       const lost = row.lost ?? 0;
       const inProgress = row.in_progress ?? 0;
       const total = row.total ?? 0;
-      const closeRate = row.close_rate ?? 0;
       const revenue = parseFloat(row.revenue) || 0;
       const avgMins = row.avg_response_minutes != null ? Number(row.avg_response_minutes) : null;
+      const soldListingsRes = await client.query(`
+        SELECT COUNT(*)::int AS cnt
+        FROM listings
+        WHERE (assigned_to = $1 OR created_by = $1)
+          AND status = 'SOLD'
+          AND ${TENANT_FILTER}
+      `, [userId]);
+      const soldListings = soldListingsRes.rows[0]?.cnt ?? 0;
+      const deals = won + soldListings;
+      const closeRate = deals + lost > 0 ? Math.round(deals / (deals + lost) * 100) : 0;
       const responseBonus = avgMins == null ? 0 : avgMins <= 10 ? 30 : avgMins <= 30 ? 20 : avgMins <= 60 ? 10 : 0;
       const slaScore = Math.min(100, Math.round(closeRate * 0.7 + responseBonus));
       const activeRes = await client.query(`
@@ -34542,7 +34830,7 @@ var AnalyticsRepository = class extends BaseRepository {
       const completedThisMonth = monthRes.rows[0]?.cnt ?? 0;
       const workloadScore = activeTasks * 1 + overdueTasks * 2;
       return {
-        deals: won,
+        deals,
         lost,
         totalLeads: total,
         inProgress,
@@ -53033,22 +53321,23 @@ init_db();
 var TaskStatuses = ["todo", "in_progress", "review", "done", "cancelled"];
 var TaskPriorities = ["low", "medium", "high", "urgent"];
 var TaskCategories = ["sales", "legal", "marketing", "site_visit", "customer_care", "finance", "construction", "admin", "other"];
+var UUID_SHAPE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 var createTaskSchema = external_exports.object({
   title: external_exports.string().min(5, "Ti\xEAu \u0111\u1EC1 ph\u1EA3i t\u1EEB 5 k\xFD t\u1EF1").max(500, "Ti\xEAu \u0111\u1EC1 t\u1ED1i \u0111a 500 k\xFD t\u1EF1"),
   description: external_exports.string().max(5e3).optional(),
-  project_id: external_exports.string().uuid().optional().nullable(),
-  department_id: external_exports.string().uuid().optional().nullable(),
+  project_id: external_exports.string().regex(UUID_SHAPE, "D\u1EF1 \xE1n kh\xF4ng h\u1EE3p l\u1EC7").optional().nullable(),
+  department_id: external_exports.string().regex(UUID_SHAPE, "Ph\xF2ng ban kh\xF4ng h\u1EE3p l\u1EC7").optional().nullable(),
   category: external_exports.enum(TaskCategories).optional().nullable(),
   priority: external_exports.enum(TaskPriorities).default("medium"),
   deadline: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   estimated_hours: external_exports.number().positive().optional().nullable(),
-  assignee_ids: external_exports.array(external_exports.string().uuid()).optional()
+  assignee_ids: external_exports.array(external_exports.string().regex(UUID_SHAPE, "ID ng\u01B0\u1EDDi d\xF9ng kh\xF4ng h\u1EE3p l\u1EC7")).optional()
 });
 var updateTaskSchema = external_exports.object({
   title: external_exports.string().min(5).max(500).optional(),
   description: external_exports.string().max(5e3).optional().nullable(),
-  project_id: external_exports.string().uuid().optional().nullable(),
-  department_id: external_exports.string().uuid().optional().nullable(),
+  project_id: external_exports.string().regex(UUID_SHAPE, "D\u1EF1 \xE1n kh\xF4ng h\u1EE3p l\u1EC7").optional().nullable(),
+  department_id: external_exports.string().regex(UUID_SHAPE, "Ph\xF2ng ban kh\xF4ng h\u1EE3p l\u1EC7").optional().nullable(),
   category: external_exports.enum(TaskCategories).optional().nullable(),
   priority: external_exports.enum(TaskPriorities).optional(),
   deadline: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
@@ -53237,6 +53526,8 @@ function createTaskRoutes(authenticateToken) {
       const tenantId = user.tenantId;
       const parsed = createTaskSchema.safeParse(req.body);
       if (!parsed.success) {
+        const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
+        console.warn("[taskRoutes] createTask validation failed:", issues.join(" | "), "| body keys:", Object.keys(req.body));
         const msg = parsed.error.issues[0]?.message || "D\u1EEF li\u1EC7u kh\xF4ng h\u1EE3p l\u1EC7";
         return res.status(400).json({ error: true, code: "VALIDATION", message: msg });
       }
@@ -53925,10 +54216,11 @@ function createDepartmentRoutes(authenticateToken) {
 // server/routes/taskReportRoutes.ts
 import { Router as Router25 } from "express";
 init_db();
+var UUID_SHAPE2 = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 var dateRangeQuerySchema = external_exports.object({
   from: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/, "from ph\u1EA3i l\xE0 ng\xE0y YYYY-MM-DD").optional(),
   to: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/, "to ph\u1EA3i l\xE0 ng\xE0y YYYY-MM-DD").optional(),
-  department_id: external_exports.string().uuid().optional(),
+  department_id: external_exports.string().regex(UUID_SHAPE2, "Ph\xF2ng ban kh\xF4ng h\u1EE3p l\u1EC7").optional(),
   user_id: external_exports.string().uuid().optional()
 }).refine((data) => {
   if (data.from && data.to) return new Date(data.from) <= new Date(data.to);
@@ -57637,6 +57929,7 @@ var DICTIONARY = {
     "source.ZALO": "Zalo",
     "source.REFERRAL": "Gi\u1EDBi thi\u1EC7u",
     "source.DIRECT": "Tr\u1EF1c ti\u1EBFp",
+    "source.DIRECT_SALE": "B\xE1n tr\u1EF1c ti\u1EBFp",
     "source.EVENT": "S\u1EF1 ki\u1EC7n",
     "source.TIKTOK": "TikTok",
     "source.GOOGLE": "Google",
@@ -57673,7 +57966,7 @@ var DICTIONARY = {
     "dash.chart_new_leads": "Kh\xE1ch M\u1EDBi",
     "dash.chart_trend": "Xu H\u01B0\u1EDBng",
     "dash.revenue_title": "Doanh Thu Hoa H\u1ED3ng",
-    "dash.commission_2_percent": "Hoa h\u1ED3ng 2% tr\xEAn deal ch\u1ED1t",
+    "dash.revenue_subtitle": "T\u1EEB deal ch\u1ED1t & s\u1EA3n ph\u1EA9m \u0111\xE3 b\xE1n",
     "dash.pipeline_value": "Gi\xE1 Tr\u1ECB Pipeline",
     "dash.win_probability": "X\xE1c su\u1EA5t ch\u1ED1t TB",
     "dash.ai_deflection_rate": "T\u1EF7 L\u1EC7 T\u1EF1 \u0110\u1ED9ng H\xF3a AI",
@@ -57996,6 +58289,7 @@ var DICTIONARY = {
     "inventory.label_owner_name": "T\xEAn ch\u1EE7 nh\xE0",
     "inventory.label_owner_phone": "S\u0110T ch\u1EE7 nh\xE0",
     "inventory.label_commission": "Hoa h\u1ED3ng",
+    "inventory.label_commission_hint": "\u0110i\u1EC1n t\u1EF7 l\u1EC7 hoa h\u1ED3ng \u0111\u1EC3 ghi nh\u1EADn doanh thu khi b\xE1n",
     "inventory.label_lat": "V\u0129 \u0111\u1ED9 (Lat)",
     "inventory.label_lng": "Kinh \u0111\u1ED9 (Lng)",
     "inventory.coordinates_hint": "Tu\u1EF3 ch\u1ECDn \u2014 nh\u1EADp to\u1EA1 \u0111\u1ED9 Google Maps \u0111\u1EC3 pin hi\u1EC3n th\u1ECB ch\xEDnh x\xE1c tr\xEAn b\u1EA3n \u0111\u1ED3",
@@ -58975,6 +59269,10 @@ var DICTIONARY = {
     "livechat.start_chat": "B\u1EAFt \u0111\u1EA7u Chat",
     "livechat.support_online": "H\u1ED7 tr\u1EE3 tr\u1EF1c tuy\u1EBFn",
     "livechat.we_are_online": "Ch\xFAng t\xF4i \u0111ang online",
+    "livechat.agent_assisting": "T\u01B0 v\u1EA5n vi\xEAn \u0111ang h\u1ED7 tr\u1EE3",
+    "livechat.ai_assisting": "Tr\u1EE3 l\xFD AI \u0111ang tr\u1EF1c",
+    "livechat.agent_takeover_notice": "T\u01B0 v\u1EA5n vi\xEAn \u0111\xE3 ti\u1EBFp nh\u1EADn cu\u1ED9c tr\xF2 chuy\u1EC7n",
+    "livechat.ai_resume_notice": "Tr\u1EE3 l\xFD AI \u0111\xE3 s\u1EB5n s\xE0ng h\u1ED7 tr\u1EE3 b\u1EA1n",
     "livechat.end_chat": "K\u1EBFt th\xFAc",
     "livechat.replying": "\u0110ang tr\u1EA3 l\u1EDDi...",
     "livechat.input_placeholder": "Nh\u1EADp tin nh\u1EAFn...",
@@ -59016,6 +59314,13 @@ var DICTIONARY = {
     "inbox.widget_title_placeholder": "VD: SGS Land H\u1ED7 Tr\u1EE3",
     "inbox.widget_desc_label": "M\xF4 t\u1EA3 / L\u1EDDi ch\xE0o",
     "inbox.widget_desc_placeholder": "VD: Ch\xFAng t\xF4i s\u1EB5n s\xE0ng h\u1ED7 tr\u1EE3 b\u1EA1n 24/7",
+    "inbox.widget_short_valid": "Hi\u1EC7u l\u1EF1c 30 ng\xE0y",
+    "inbox.widget_short_generating": "\u0110ang t\u1EA1o link r\xFAt g\u1ECDn...",
+    "inbox.widget_refresh_link": "L\xE0m m\u1EDBi link",
+    "inbox.widget_open_link": "M\u1EDF th\u1EED link",
+    "inbox.widget_channel_link": "Link chung",
+    "inbox.widget_channel_qr": "QR chung",
+    "inbox.widget_channel_embed": "Web embed",
     "inbox.attach": "\u0110\xEDnh k\xE8m file",
     "inbox.send": "G\u1EEDi",
     "inbox.play_audio": "Ph\xE1t tin nh\u1EAFn tho\u1EA1i",
@@ -59783,6 +60088,7 @@ var DICTIONARY = {
     "source.ZALO": "Zalo",
     "source.REFERRAL": "Referral",
     "source.DIRECT": "Direct",
+    "source.DIRECT_SALE": "Direct Sale",
     "source.EVENT": "Event",
     "source.TIKTOK": "TikTok",
     "source.GOOGLE": "Google",
@@ -59819,7 +60125,7 @@ var DICTIONARY = {
     "dash.chart_new_leads": "New Customers",
     "dash.chart_trend": "Trend",
     "dash.revenue_title": "Commission Revenue",
-    "dash.commission_2_percent": "2% commission on closed deals",
+    "dash.revenue_subtitle": "From closed deals & sold listings",
     "dash.pipeline_value": "Pipeline Value",
     "dash.win_probability": "Avg Win Prob.",
     "dash.ai_deflection_rate": "AI Deflection Rate",
@@ -60142,6 +60448,7 @@ var DICTIONARY = {
     "inventory.label_owner_name": "Owner Name",
     "inventory.label_owner_phone": "Owner Phone",
     "inventory.label_commission": "Commission",
+    "inventory.label_commission_hint": "Set commission rate to track revenue when sold",
     "inventory.label_lat": "Latitude (Lat)",
     "inventory.label_lng": "Longitude (Lng)",
     "inventory.coordinates_hint": "Optional \u2014 enter Google Maps coordinates to show an accurate pin on the map",
@@ -61121,6 +61428,10 @@ var DICTIONARY = {
     "livechat.start_chat": "Start Chat",
     "livechat.support_online": "Online Support",
     "livechat.we_are_online": "We are online",
+    "livechat.agent_assisting": "Agent is assisting",
+    "livechat.ai_assisting": "AI assistant is online",
+    "livechat.agent_takeover_notice": "An agent has taken over the conversation",
+    "livechat.ai_resume_notice": "AI assistant is ready to help you",
     "livechat.end_chat": "End Chat",
     "livechat.replying": "Replying...",
     "livechat.input_placeholder": "Type a message...",
@@ -61162,6 +61473,13 @@ var DICTIONARY = {
     "inbox.widget_title_placeholder": "E.g: SGS Land Support",
     "inbox.widget_desc_label": "Description / Greeting",
     "inbox.widget_desc_placeholder": "E.g: We are ready to support you 24/7",
+    "inbox.widget_short_valid": "Valid for 30 days",
+    "inbox.widget_short_generating": "Generating short link...",
+    "inbox.widget_refresh_link": "Refresh link",
+    "inbox.widget_open_link": "Open link",
+    "inbox.widget_channel_link": "General link",
+    "inbox.widget_channel_qr": "General QR",
+    "inbox.widget_channel_embed": "Web embed",
     "inbox.attach": "Attach file",
     "inbox.send": "Send",
     "inbox.play_audio": "Play voice message",
@@ -61993,9 +62311,25 @@ async function startServer() {
     try {
       const { lead, userMessage, history, lang } = req.body;
       const tenantId = req.tenantId;
+      const userId = req.user?.id;
       const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
       const t = serverT(lang || "vn");
-      const result = await aiService2.processMessage(lead, userMessage, history, t, tenantId, lang || "vn");
+      let userFavorites = [];
+      if (userId) {
+        try {
+          const favRaw = await listingRepository.getFavorites(tenantId, userId);
+          userFavorites = favRaw.map((f) => ({
+            id: f.id,
+            title: f.title,
+            address: f.address,
+            price: f.price,
+            area: f.area,
+            propertyType: f.propertyType || f.property_type
+          }));
+        } catch {
+        }
+      }
+      const result = await aiService2.processMessage(lead, userMessage, history, t, tenantId, lang || "vn", userFavorites);
       if (result.escalated && lead?.id) {
         broadcastIo?.to(`tenant:${tenantId}`).emit("escalate_to_human", { leadId: lead.id });
       }
@@ -62423,7 +62757,7 @@ async function startServer() {
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: "Phi\xEAn chat kh\xF4ng t\u1ED3n t\u1EA1i" });
       const messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
-      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null } });
+      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null, threadStatus: lead.thread_status || "AI_ACTIVE" } });
     } catch (error48) {
       console.error("Public livechat get messages error:", error48);
       res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA3i l\u1ECBch s\u1EED chat" });
@@ -62463,6 +62797,10 @@ async function startServer() {
       const msgContent = String(message2).trim().slice(0, 2e3);
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: "Lead not found" });
+      const threadStatus = lead.thread_status || "AI_ACTIVE";
+      if (threadStatus === "HUMAN_TAKEOVER") {
+        return res.json({ noReply: true });
+      }
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
       const historyWithLatest = history;
       const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
@@ -62474,7 +62812,7 @@ async function startServer() {
         direction: "OUTBOUND",
         type: "TEXT",
         content: result.content,
-        metadata: { isAgent: true }
+        metadata: { isAgent: true, ...result.isSysMsg ? { isSysMsg: true } : {} }
       });
       broadcastIo?.to(leadId).emit("receive_message", { room: leadId, message: aiReply });
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit("new_inbound_message", { leadId, message: aiReply });
@@ -62950,6 +63288,41 @@ async function startServer() {
       res.status(500).json({ error: "Failed to delete SEO override" });
     }
   });
+  function genShortCode() {
+    return Math.random().toString(36).slice(2, 9);
+  }
+  app.post("/api/links/shorten", apiRateLimit, authenticateToken, async (req, res) => {
+    const { url: url2 } = req.body;
+    if (!url2 || typeof url2 !== "string" || url2.length > 2048) {
+      return res.status(400).json({ error: "URL kh\xF4ng h\u1EE3p l\u1EC7" });
+    }
+    try {
+      const parsed = new URL(url2);
+      if (!parsed.pathname.startsWith("/livechat")) {
+        return res.status(400).json({ error: "Ch\u1EC9 h\u1ED7 tr\u1EE3 r\xFAt g\u1ECDn link livechat" });
+      }
+    } catch {
+      return res.status(400).json({ error: "URL kh\xF4ng h\u1EE3p l\u1EC7" });
+    }
+    const code = genShortCode();
+    const redisKey = `sl:${code}`;
+    const TTL_SECS = 30 * 24 * 3600;
+    try {
+      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        const { Redis: Redis3 } = await Promise.resolve().then(() => (init_nodejs(), nodejs_exports));
+        const redis = new Redis3({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+        await redis.set(redisKey, url2, { ex: TTL_SECS });
+      } else {
+        global.__shortLinks = global.__shortLinks || {};
+        global.__shortLinks[code] = { url: url2, exp: Date.now() + TTL_SECS * 1e3 };
+      }
+    } catch (err4) {
+      logger.error("[ShortLink] Redis error:", err4);
+      return res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA1o link r\xFAt g\u1ECDn" });
+    }
+    const origin = `${req.protocol}://${req.get("host")}`;
+    res.json({ shortUrl: `${origin}/c/${code}`, code, ttlDays: 30 });
+  });
   app.get("/api/admin/price-history", apiRateLimit, authenticateToken, async (req, res) => {
     const user = req.user;
     if (!user || user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
@@ -62993,11 +63366,11 @@ async function startServer() {
     );
     res.json({ message: "\u0110ang ch\u1EA1y hi\u1EC7u ch\u1EC9nh gi\xE1 trong n\u1EC1n \u2014 ki\u1EC3m tra log \u0111\u1EC3 theo d\xF5i." });
   });
-  app.use("/api/leads", apiRateLimit, createLeadRoutes(authenticateToken));
+  app.use("/api/leads", apiRateLimit, createLeadRoutes(authenticateToken, () => broadcastIo));
   app.use("/api/listings", apiRateLimit, createListingRoutes(authenticateToken));
   app.use("/api/proposals", apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
   app.use("/api/contracts", apiRateLimit, createContractRoutes(authenticateToken));
-  app.use("/api/inbox", apiRateLimit, createInteractionRoutes(authenticateToken));
+  app.use("/api/inbox", apiRateLimit, createInteractionRoutes(authenticateToken, () => broadcastIo));
   app.use("/api/users", apiRateLimit, createUserRoutes(authenticateToken, JWT_SECRET));
   app.use("/api/analytics", apiRateLimit, createAnalyticsRoutes(authenticateToken));
   app.use("/api/scoring", apiRateLimit, createScoringRoutes(authenticateToken));
@@ -63451,6 +63824,12 @@ async function startServer() {
       socket.join(room);
       logger.debug(`User ${socket.id} joined room ${room}`);
     });
+    socket.on("join_livechat_room", (leadId) => {
+      if (!leadId || typeof leadId !== "string") return;
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leadId)) return;
+      socket.join(leadId);
+      logger.debug(`LiveChat guest ${socket.id} joined room ${leadId}`);
+    });
     const requireAuth = (handler) => {
       return (...args) => {
         if (!socket.data.authUser) return;
@@ -63636,6 +64015,28 @@ ${urls}
       res.status(500).send("Internal server error");
     }
   });
+  app.get("/c/:code", async (req, res) => {
+    const code = String(req.params.code).replace(/[^a-z0-9]/gi, "");
+    if (!code || code.length > 20) return res.status(404).send("Link kh\xF4ng t\u1ED3n t\u1EA1i");
+    try {
+      let targetUrl = null;
+      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        const { Redis: Redis3 } = await Promise.resolve().then(() => (init_nodejs(), nodejs_exports));
+        const redis = new Redis3({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+        targetUrl = await redis.get(`sl:${code}`);
+      } else {
+        const mem = global.__shortLinks?.[code];
+        if (mem && mem.exp > Date.now()) targetUrl = mem.url;
+      }
+      if (!targetUrl) {
+        return res.status(404).send("Link kh\xF4ng t\u1ED3n t\u1EA1i ho\u1EB7c \u0111\xE3 h\u1EBFt h\u1EA1n");
+      }
+      return res.redirect(302, targetUrl);
+    } catch (err4) {
+      logger.error("[ShortLink] Redirect error:", err4);
+      return res.status(500).send("L\u1ED7i server");
+    }
+  });
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
@@ -63669,6 +64070,28 @@ ${urls}
         sendMeta(res, buildListingMeta2(listing));
       } catch {
         next();
+      }
+    });
+    app.get("/c/:code", async (req, res) => {
+      const code = String(req.params.code).replace(/[^a-z0-9]/gi, "");
+      if (!code || code.length > 20) return res.status(404).send("Link kh\xF4ng t\u1ED3n t\u1EA1i");
+      try {
+        let targetUrl = null;
+        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+          const { Redis: Redis3 } = await Promise.resolve().then(() => (init_nodejs(), nodejs_exports));
+          const redis = new Redis3({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+          targetUrl = await redis.get(`sl:${code}`);
+        } else {
+          const mem = global.__shortLinks?.[code];
+          if (mem && mem.exp > Date.now()) targetUrl = mem.url;
+        }
+        if (!targetUrl) {
+          return res.status(404).send("Link kh\xF4ng t\u1ED3n t\u1EA1i ho\u1EB7c \u0111\xE3 h\u1EBFt h\u1EA1n");
+        }
+        return res.redirect(302, targetUrl);
+      } catch (err4) {
+        logger.error("[ShortLink] Redirect error:", err4);
+        return res.status(500).send("L\u1ED7i server");
       }
     });
     const UUID_RE2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
