@@ -26601,41 +26601,115 @@ reasoning ph\u1EA3i b\u1EB1ng ${lang === "en" ? "English" : "Ti\u1EBFng Vi\u1EC7
       }
       async summarizeLead(lead, logs, lang = "vn", tenantId = "default") {
         try {
-          const budgetFmt = lead.preferences?.budgetMax ? `${(lead.preferences.budgetMax / 1e9).toFixed(2)} T\u1EF7 VN\u0110` : "Ch\u01B0a r\xF5";
-          const scoreFmt = lead.score?.score != null ? `${lead.score.score} \u0111i\u1EC3m (${lead.score.grade || "?"}) \u2014 ${lead.score.reasoning || ""}` : "Ch\u01B0a ch\u1EA5m \u0111i\u1EC3m";
-          const formattedLogs = logs.map((log) => {
-            const ts = log.timestamp ? new Date(log.timestamp).toLocaleString("vi-VN") : "";
-            const who = log.direction === "INBOUND" ? "Kh\xE1ch" : "Sale";
-            return `[${ts}] ${who}: ${log.content}`;
-          }).join("\n") || "(Ch\u01B0a c\xF3 l\u1ECBch s\u1EED t\u01B0\u01A1ng t\xE1c)";
-          const prompt = `Ng\xF4n ng\u1EEF: ${lang === "en" ? "English" : "Ti\u1EBFng Vi\u1EC7t"}
+          const isVN = lang !== "en";
+          const now = Date.now();
+          const daysSinceCreated = lead.createdAt ? Math.floor((now - new Date(lead.createdAt).getTime()) / 864e5) : null;
+          const sortedLogs = [...logs].sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+          const lastContactDate = sortedLogs[0]?.timestamp ? new Date(sortedLogs[0].timestamp) : null;
+          const daysSinceLastContact = lastContactDate ? Math.floor((now - lastContactDate.getTime()) / 864e5) : null;
+          const fmtBudget = (val) => val ? `${(val / 1e9).toFixed(2)} t\u1EF7 VN\u0110` : null;
+          const budgetMin = fmtBudget(lead.preferences?.budgetMin);
+          const budgetMax = fmtBudget(lead.preferences?.budgetMax);
+          const budgetFmt = budgetMin && budgetMax ? `${budgetMin} \u2013 ${budgetMax}` : budgetMax || budgetMin || (isVN ? "Ch\u01B0a r\xF5" : "Unknown");
+          const scoreFmt = lead.score?.score != null ? `${lead.score.score}/100 (${lead.score.grade || "?"}) \u2014 ${lead.score.reasoning || ""}` : isVN ? "Ch\u01B0a ch\u1EA5m \u0111i\u1EC3m" : "Not scored";
+          const pref = lead.preferences || {};
+          const areaParts = isVN ? [
+            pref.areaMin != null ? `t\u1EEB ${pref.areaMin}m\xB2` : null,
+            pref.areaMax != null ? `\u0111\u1EBFn ${pref.areaMax}m\xB2` : null
+          ].filter(Boolean) : [
+            pref.areaMin != null ? `from ${pref.areaMin}m\xB2` : null,
+            pref.areaMax != null ? `to ${pref.areaMax}m\xB2` : null
+          ].filter(Boolean);
+          const formattedLogs = sortedLogs.slice(0, 20).map((log) => {
+            const ts = log.timestamp ? new Date(log.timestamp).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "";
+            const who = log.direction === "INBOUND" ? isVN ? "Kh\xE1ch" : "Lead" : isVN ? "Sale" : "Agent";
+            const content = String(log.content || "").slice(0, 400);
+            return `[${ts}] ${who}: ${content}`;
+          }).join("\n") || (isVN ? "(Ch\u01B0a c\xF3 l\u1ECBch s\u1EED t\u01B0\u01A1ng t\xE1c)" : "(No interaction history)");
+          const slaFmt = lead.slaBreached ? isVN ? "BREACH \u2014 c\u1EA7n li\xEAn h\u1EC7 ngay h\xF4m nay" : "BREACHED \u2014 contact immediately" : isVN ? "B\xECnh th\u01B0\u1EDDng" : "OK";
+          if (isVN) {
+            const prompt = `Ng\xF4n ng\u1EEF \u0111\u1EA7u ra: Ti\u1EBFng Vi\u1EC7t
 
-KH\xC1CH H\xC0NG: ${lead.name} | Ngu\u1ED3n: ${lead.source || "Ch\u01B0a r\xF5"} | CRM: ${lead.stage || "Ch\u01B0a r\xF5"} | \u0110i\u1EC3m: ${scoreFmt}
-Ng\xE2n s\xE1ch: ${budgetFmt} | Lo\u1EA1i: ${lead.preferences?.propertyTypes?.join(", ") || "Ch\u01B0a r\xF5"} | Khu v\u1EF1c: ${lead.preferences?.regions?.join(", ") || "Ch\u01B0a r\xF5"}
-Ghi ch\xFA: ${lead.notes || "Kh\xF4ng c\xF3"}
+=== H\u1ED2 S\u01A0 KH\xC1CH H\xC0NG ===
+T\xEAn: ${lead.name} | Giai \u0111o\u1EA1n CRM: ${lead.stage || "Ch\u01B0a r\xF5"} | \u0110i\u1EC3m AI: ${scoreFmt}
+Ngu\u1ED3n ti\u1EBFp c\u1EADn: ${lead.source || "Ch\u01B0a r\xF5"} | Ph\u1EE5 tr\xE1ch: ${lead.assignedToName || "Ch\u01B0a ph\xE2n c\xF4ng"}
+Th\u1EDDi gian trong pipeline: ${daysSinceCreated != null ? `${daysSinceCreated} ng\xE0y` : "Kh\xF4ng r\xF5"} | Li\xEAn h\u1EC7 g\u1EA7n nh\u1EA5t: ${daysSinceLastContact != null ? `${daysSinceLastContact} ng\xE0y tr\u01B0\u1EDBc` : "Ch\u01B0a li\xEAn h\u1EC7"}
+SLA: ${slaFmt}
+Tags: ${lead.tags?.length ? lead.tags.join(", ") : "Kh\xF4ng c\xF3"}
+Ghi ch\xFA nh\xE2n vi\xEAn: ${lead.notes || "Kh\xF4ng c\xF3"}
 
-L\u1ECACH S\u1EEC T\u01AF\u01A0NG T\xC1C (${logs.length} tin nh\u1EAFn):
+=== NHU C\u1EA6U & NG\xC2N S\xC1CH ===
+Ng\xE2n s\xE1ch: ${budgetFmt}
+Lo\u1EA1i B\u0110S: ${pref.propertyTypes?.join(", ") || "Ch\u01B0a r\xF5"}
+Khu v\u1EF1c: ${pref.regions?.join(", ") || "Ch\u01B0a r\xF5"}
+Di\u1EC7n t\xEDch: ${areaParts.length ? areaParts.join(" ") : "Ch\u01B0a r\xF5"}
+H\u01B0\u1EDBng: ${pref.directions?.join(", ") || "Ch\u01B0a r\xF5"}
+
+=== L\u1ECACH S\u1EEC T\u01AF\u01A0NG T\xC1C (${logs.length} tin nh\u1EAFn) ===
 ${formattedLogs}
 
-PH\xC2N T\xCDCH (chuy\xEAn nghi\u1EC7p, s\xFAc t\xEDch):
-1. Nhu c\u1EA7u c\u1ED1t l\xF5i v\xE0 \u0111\u1ED9ng l\u1EF1c mua th\u1EF1c s\u1EF1.
-2. T\xE2m tr\u1EA1ng, thi\u1EC7n ch\xED v\xE0 xu h\u01B0\u1EDBng h\xE0nh vi.
-3. \u0110\xE1nh gi\xE1 r\u1EE7i ro ch\u1ED1t deal (n\u1EBFu c\xF3).
-4. Chi\u1EBFn l\u01B0\u1EE3c ti\u1EBFp c\u1EADn t\u1ED1i \u01B0u \u2014 h\xE0nh \u0111\u1ED9ng c\u1EE5 th\u1EC3 ngay.`;
-          const summarizeModel = await getGovernanceModel(tenantId);
-          const response = await getAiClient2().models.generateContent({
-            model: summarizeModel,
-            contents: prompt,
-            config: {
-              systemInstruction: "B\u1EA1n l\xE0 m\u1ED9t chuy\xEAn gia t\u01B0 v\u1EA5n B\u0110S k\u1EF3 c\u1EF1u v\u1EDBi kh\u1EA3 n\u0103ng th\u1EA5u c\u1EA3m kh\xE1ch h\xE0ng c\u1EF1c t\u1ED1t."
-            }
-          });
-          return response.text || (lang === "en" ? "Unable to analyze lead at this time." : "Kh\xF4ng th\u1EC3 ph\xE2n t\xEDch kh\xE1ch h\xE0ng v\xE0o l\xFAc n\xE0y.");
+=== Y\xCAU C\u1EA6U PH\xC2N T\xCDCH ===
+Vi\u1EBFt ph\xE2n t\xEDch ch\xE2n dung kh\xE1ch h\xE0ng theo 4 \u0111i\u1EC3m sau. M\u1ED7i \u0111i\u1EC3m 2-3 c\xE2u, ng\u1EAFn g\u1ECDn, th\u1EF1c chi\u1EBFn. D\xF9ng v\u0103n xu\xF4i \u0111\xE1nh s\u1ED1, KH\xD4NG d\xF9ng markdown hay k\xFD t\u1EF1 \u0111\u1EB7c bi\u1EC7t.
+
+1. CH\xC2N DUNG: \u0110\xE2y l\xE0 lo\u1EA1i kh\xE1ch h\xE0ng n\xE0o (mua \u1EDF th\u1EF1c, \u0111\u1EA7u t\u01B0, l\u01B0\u1EDBt s\xF3ng, t\xECm hi\u1EC3u th\u1ECB tr\u01B0\u1EDDng)? M\u1EE9c \u0111\u1ED9 nghi\xEAm t\xFAc v\xE0 kh\u1EA3 n\u0103ng ra quy\u1EBFt \u0111\u1ECBnh.
+2. NHU C\u1EA6U C\u1ED0T L\xD5I: \u0110\u1ED9ng l\u1EF1c mua th\u1EF1c s\u1EF1 \u2014 \u0111i\u1EC1u h\u1ECD th\u1EF1c s\u1EF1 c\u1EA7n (c\xF3 th\u1EC3 kh\xE1c v\u1EDBi \u0111i\u1EC1u h\u1ECD n\xF3i). \xC1p l\u1EF1c ho\u1EB7c k\u1EF3 v\u1ECDng \u1EA9n.
+3. R\u1EE6I RO & R\xC0O C\u1EA2N: T\xE2m tr\u1EA1ng hi\u1EC7n t\u1EA1i, lo ng\u1EA1i ch\xEDnh, nguy c\u01A1 m\u1EA5t deal ho\u1EB7c k\xE9o d\xE0i pipeline b\u1EA5t th\u01B0\u1EDDng.
+4. H\xC0NH \u0110\u1ED8NG TI\u1EBEP THEO: 1-2 b\u01B0\u1EDBc c\u1EE5 th\u1EC3 v\xE0 kh\u1EA3 thi nh\u1EA5t cho sale th\u1EF1c hi\u1EC7n trong 24-48h t\u1EDBi \u0111\u1EC3 \u0111\u1EA9y deal ti\u1EBFn l\xEAn.`;
+            const summarizeModel = await getGovernanceModel(tenantId);
+            const response = await getAiClient2().models.generateContent({
+              model: summarizeModel,
+              contents: prompt,
+              config: {
+                systemInstruction: "B\u1EA1n l\xE0 chuy\xEAn gia ph\xE2n t\xEDch t\xE2m l\xFD v\xE0 h\xE0nh vi kh\xE1ch h\xE0ng b\u1EA5t \u0111\u1ED9ng s\u1EA3n h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, v\u1EDBi 15+ n\u0103m kinh nghi\u1EC7m th\u1EF1c chi\u1EBFn t\u01B0 v\u1EA5n v\xE0 ch\u1ED1t deal. Nhi\u1EC7m v\u1EE5: Vi\u1EBFt b\u1EA3n ph\xE2n t\xEDch ch\xE2n dung kh\xE1ch h\xE0ng ng\u1EAFn g\u1ECDn, s\u1EAFc b\xE9n v\xE0 c\xF3 t\xEDnh h\xE0nh \u0111\u1ED9ng cao cho nh\xE2n vi\xEAn sale B\u0110S. Nguy\xEAn t\u1EAFc: Ch\u1EC9 k\u1EBFt lu\u1EADn t\u1EEB d\u1EEF li\u1EC7u th\u1EF1c t\u1EBF trong h\u1ED3 s\u01A1. Kh\xF4ng suy di\u1EC5n v\xF4 c\u0103n c\u1EE9. \u01AFu ti\xEAn insight actionable h\u01A1n nh\u1EADn x\xE9t chung chung. V\u0103n phong: Chuy\xEAn nghi\u1EC7p, s\xFAc t\xEDch, nh\u01B0 b\xE1o c\xE1o c\u1EE7a chuy\xEAn gia t\u01B0 v\u1EA5n cao c\u1EA5p. \u0110\u1ECBnh d\u1EA1ng: V\u0103n xu\xF4i \u0111\xE1nh s\u1ED1 1-4, KH\xD4NG d\xF9ng markdown, KH\xD4NG d\xF9ng k\xFD t\u1EF1 **, #, -, \u2022."
+              }
+            });
+            return response.text || "Kh\xF4ng th\u1EC3 ph\xE2n t\xEDch kh\xE1ch h\xE0ng v\xE0o l\xFAc n\xE0y.";
+          } else {
+            const prompt = `Output language: English
+
+=== LEAD PROFILE ===
+Name: ${lead.name} | CRM Stage: ${lead.stage || "Unknown"} | AI Score: ${scoreFmt}
+Source: ${lead.source || "Unknown"} | Assigned to: ${lead.assignedToName || "Unassigned"}
+Days in pipeline: ${daysSinceCreated != null ? `${daysSinceCreated} days` : "Unknown"} | Last contact: ${daysSinceLastContact != null ? `${daysSinceLastContact} days ago` : "No contact yet"}
+SLA: ${slaFmt}
+Tags: ${lead.tags?.length ? lead.tags.join(", ") : "None"}
+Agent notes: ${lead.notes || "None"}
+
+=== PREFERENCES & BUDGET ===
+Budget: ${budgetFmt}
+Property types: ${pref.propertyTypes?.join(", ") || "Unknown"}
+Regions: ${pref.regions?.join(", ") || "Unknown"}
+Area: ${areaParts.length ? areaParts.join(" ") : "Unknown"}
+Directions: ${pref.directions?.join(", ") || "Unknown"}
+
+=== INTERACTION HISTORY (${logs.length} messages) ===
+${formattedLogs}
+
+=== ANALYSIS REQUIRED ===
+Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise and actionable. Plain numbered prose, NO markdown, NO special characters.
+
+1. PERSONA: What type of buyer is this (end-user, investor, speculator, market researcher)? Seriousness and decision-making capability.
+2. CORE NEED: Real buying motivation \u2014 what they truly need (may differ from what they say). Hidden pressures or expectations.
+3. RISKS & BLOCKERS: Current mindset, main concerns, risk of losing the deal or abnormal pipeline stall.
+4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.`;
+            const summarizeModel = await getGovernanceModel(tenantId);
+            const response = await getAiClient2().models.generateContent({
+              model: summarizeModel,
+              contents: prompt,
+              config: {
+                systemInstruction: "You are a top real estate customer psychology and behavior analyst in Vietnam, with 15+ years of hands-on deal closing experience. Task: Write a concise, sharp, high-action customer persona analysis for real estate sales agents. Principle: Only draw conclusions from actual data in the profile. No unfounded speculation. Prioritize actionable insights over generic observations. Tone: Professional, concise, like a senior consultant's briefing note. Format: Numbered prose 1-4, NO markdown, NO **, #, -, \u2022 characters."
+              }
+            });
+            return response.text || "Unable to analyze lead at this time.";
+          }
         } catch (e) {
           const msg = e?.message || String(e);
           const isQuota = msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("429");
           logger.error("AI Summarization Error:", e);
-          return isQuota ? lang === "en" ? "AI analysis unavailable \u2014 system busy. Please try again in a few minutes." : "H\u1EC7 th\u1ED1ng AI \u0111ang b\u1EADn, vui l\xF2ng th\u1EED l\u1EA1i sau \xEDt ph\xFAt." : lang === "en" ? "AI analysis temporarily unavailable." : "Ph\xE2n t\xEDch AI t\u1EA1m th\u1EDDi kh\xF4ng kh\u1EA3 d\u1EE5ng.";
+          const isVN = lang !== "en";
+          return isQuota ? isVN ? "H\u1EC7 th\u1ED1ng AI \u0111ang b\u1EADn, vui l\xF2ng th\u1EED l\u1EA1i sau \xEDt ph\xFAt." : "AI analysis unavailable \u2014 system busy. Please try again in a few minutes." : isVN ? "Ph\xE2n t\xEDch AI t\u1EA1m th\u1EDDi kh\xF4ng kh\u1EA3 d\u1EE5ng." : "AI analysis temporarily unavailable.";
         }
       }
       async getRealtimeValuation(address, area, roadWidth, legal, propertyType, tenantId, advanced) {
