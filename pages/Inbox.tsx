@@ -164,9 +164,9 @@ export const Inbox: React.FC = () => {
     });
     const [shortLink, setShortLink] = useState<string | null>(null);
     const [isGeneratingShortLink, setIsGeneratingShortLink] = useState(false);
-    const [linkChannel, setLinkChannel] = useState<'LINK' | 'ZALO' | 'FACEBOOK' | 'SMS'>('LINK');
-    const [qrChannel, setQrChannel] = useState<'QR' | 'ZALO' | 'FACEBOOK' | 'SMS'>('QR');
-    const [embedChannel, setEmbedChannel] = useState<'EMBED' | 'ZALO' | 'FACEBOOK' | 'SMS'>('EMBED');
+    const [linkChannel, setLinkChannel] = useState<'LINK' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('LINK');
+    const [qrChannel, setQrChannel] = useState<'QR' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('QR');
+    const [embedChannel, setEmbedChannel] = useState<'EMBED' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('EMBED');
     
     // --- SUPERVISOR STATE ---
     const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread
@@ -191,6 +191,7 @@ export const Inbox: React.FC = () => {
             WEB: t('inbox.channel_web'),
             WEBHOOK: 'Webhook',
             VOICE: t('inbox.channel_voice'),
+            TIKTOK: 'TikTok',
         };
         return map[ch] ?? ch;
     }, [t]);
@@ -1149,17 +1150,18 @@ export const Inbox: React.FC = () => {
                                             )}
                                         </div>
                                         {/* Channel selector — choose platform to share link */}
-                                        <div className="flex gap-2 mb-2">
+                                        <div className="flex flex-wrap gap-1.5 mb-2">
                                             {([
                                                 { key: 'LINK' as const, label: t('inbox.widget_channel_link'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
+                                                { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
                                                 { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
                                                     onClick={() => setLinkChannel(key)}
-                                                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                    className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         linkChannel === key
                                                             ? activeClass
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
@@ -1218,17 +1220,18 @@ export const Inbox: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_embed_label')}</label>
                                         {/* Embed channel selector */}
-                                        <div className="flex gap-2 mb-2">
+                                        <div className="flex flex-wrap gap-1.5 mb-2">
                                             {([
                                                 { key: 'EMBED' as const, label: t('inbox.widget_channel_embed'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
+                                                { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
                                                 { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
                                                     onClick={() => setEmbedChannel(key)}
-                                                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                    className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         embedChannel === key
                                                             ? activeClass
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
@@ -1265,17 +1268,18 @@ export const Inbox: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_qr_label')}</label>
                                         {/* QR channel selector */}
-                                        <div className="flex gap-2 mb-3">
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
                                             {([
                                                 { key: 'QR' as const, label: t('inbox.widget_channel_qr'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
+                                                { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
                                                 { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
                                                     onClick={() => setQrChannel(key)}
-                                                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                    className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         qrChannel === key
                                                             ? activeClass
                                                             : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
