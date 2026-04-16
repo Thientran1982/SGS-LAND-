@@ -9,6 +9,7 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from './Dropdown';
 import { ContractModal } from './ContractModal';
 import { useSocket } from '../services/websocket';
+import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from './AiCreditBadge';
 
 const stripMarkdown = (text: string): string =>
     text
@@ -20,7 +21,7 @@ const stripMarkdown = (text: string): string =>
         .replace(/`(.+?)`/g, '$1')
         .trim();
 
-const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
+const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: any) => (
     <div className="bg-white p-5 rounded-2xl mb-8 border border-indigo-100 shadow-sm animate-enter relative group overflow-hidden">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -34,15 +35,24 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
                     <p className="text-2xs text-indigo-500 font-semibold uppercase tracking-tighter">{t('detail.ai_badge')}</p>
                 </div>
             </div>
-            <button
-                onClick={onRefresh}
-                disabled={loading}
-                className="p-2 text-indigo-500 hover:text-indigo-700 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all shadow-sm disabled:opacity-50"
-                title={t('common.refresh')}
-            >
-                <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-            </button>
+            <AiQuotaGate quota={quota} featureLabel="ARIA" onUpgradeClick={onUpgrade}>
+                <button
+                    onClick={onRefresh}
+                    disabled={loading}
+                    className="p-2 text-indigo-500 hover:text-indigo-700 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all shadow-sm disabled:opacity-50"
+                    title={t('common.refresh')}
+                >
+                    <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                </button>
+            </AiQuotaGate>
         </div>
+
+        {/* Credit badge — only shown when quota is limited and not unlimited */}
+        {quota && !quota.isUnlimited && (
+            <div className="mb-3 relative z-10">
+                <AiCreditBadge quota={quota} featureLabel="Phân tích ARIA" onUpgradeClick={onUpgrade} />
+            </div>
+        )}
 
         {loading ? (
             <div className="space-y-2.5 py-1 relative z-10">
@@ -50,6 +60,10 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
                 <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-5/6"></div>
                 <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-2/3"></div>
             </div>
+        ) : quota && !quota.isUnlimited && quota.remaining <= 0 && !summary ? (
+            <AiQuotaGate quota={quota} featureLabel="phân tích ARIA" onUpgradeClick={onUpgrade}>
+                <span />
+            </AiQuotaGate>
         ) : (
             <div className="relative z-10">
                 <p className="text-sm text-slate-700 leading-relaxed font-medium">
@@ -137,6 +151,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const [isScoring, setIsScoring] = useState(false);
     const [isThinking, setIsThinking] = useState(false);
     const [aiSummary, setAiSummary] = useState("");
+    const [ariaQuota, setAriaQuota] = useState<QuotaInfo | null>(null);
     const [interactions, setInteractions] = useState<Interaction[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [activeChannel, setActiveChannel] = useState<Channel>(Channel.ZALO);
@@ -164,8 +179,9 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         setIsThinking(true);
         try {
             const history = await db.getInteractions(lead.id);
-            const analysis = await aiService.summarizeLead(lead, history, language);
-            setAiSummary(stripMarkdown(analysis));
+            const { summary, quota } = await aiService.summarizeLead(lead, history, language);
+            setAiSummary(stripMarkdown(summary));
+            if (quota) setAriaQuota(quota as QuotaInfo);
         } catch (e) {
             setAiSummary(t('detail.ai_unavailable'));
         } finally {
@@ -375,7 +391,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
 
             {/* Scrollable Body */}
             <div className={`p-4 md:p-6 bg-[var(--glass-surface)]/30 ${!isModal ? 'flex-1 min-h-0 overflow-y-auto no-scrollbar' : ''}`}>
-                    <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} />
+                    <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} quota={ariaQuota} onUpgrade={() => window.open('/pricing', '_blank')} />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-8">
                         <DetailField label={t('leads.phone')}>

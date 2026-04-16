@@ -52,15 +52,28 @@ class AiApiClient {
         return this.fetchApi('/api/ai/score-lead', { leadData, messageContent, weights, lang });
     }
 
-    async summarizeLead(lead: Lead, logs: unknown[], lang: string): Promise<string> {
+    async summarizeLead(lead: Lead, logs: unknown[], lang: string): Promise<{ summary: string; quota: any | null }> {
         try {
             const result = await this.fetchApi('/api/ai/summarize-lead', { lead, logs, lang });
-            return result.summary || (lang === 'vn' ? `Khách hàng ${lead.name} đang được hệ thống AI phân tích chuyên sâu.` : `Lead ${lead.name} is undergoing deep AI analysis.`);
+            return {
+                summary: result.summary || (lang === 'vn' ? `Khách hàng ${lead.name} đang được hệ thống AI phân tích chuyên sâu.` : `Lead ${lead.name} is undergoing deep AI analysis.`),
+                quota: result.quota || null,
+            };
         } catch (e: any) {
             console.warn("Summarize Lead Error:", e?.message);
             const msg = e?.message || '';
-            if (msg && !msg.includes('API request failed')) return msg;
-            return lang === 'vn' ? AI_QUOTA_MESSAGE_VN : AI_QUOTA_MESSAGE_EN;
+            const summaryMsg = (msg && !msg.includes('API request failed')) ? msg : (lang === 'vn' ? AI_QUOTA_MESSAGE_VN : AI_QUOTA_MESSAGE_EN);
+            return { summary: summaryMsg, quota: null };
+        }
+    }
+
+    async getAiQuota(): Promise<{ valuation: any; aria: any } | null> {
+        try {
+            const response = await fetch('/api/ai/quota', { credentials: 'include' });
+            if (!response.ok) return null;
+            return await response.json();
+        } catch {
+            return null;
         }
     }
 

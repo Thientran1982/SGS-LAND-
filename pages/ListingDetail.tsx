@@ -17,6 +17,7 @@ import { copyToClipboard } from '../utils/clipboard';
 import { ListingForm } from '../components/ListingForm';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Lock, Plus, Edit2, Trash2, Download, Upload, Sparkles, MoreVertical } from 'lucide-react';
+import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from '../components/AiCreditBadge';
 
 // Icons with pointer-events-none to prevent click hijacking
 const ICONS = {
@@ -1208,6 +1209,7 @@ export const ListingDetail: React.FC = () => {
     const [bookingOpen, setBookingOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const [valuation, setValuation] = useState<any>(null);
+    const [valuationQuota, setValuationQuota] = useState<QuotaInfo | null>(null);
     const [isValuating, setIsValuating] = useState(false);
     const [teaserData, setTeaserData] = useState<{
         found: boolean;
@@ -1536,6 +1538,7 @@ export const ListingDetail: React.FC = () => {
                 factors: result.factors || [],
                 isRealtime: result.isRealtime,
             });
+            if (result.quota) setValuationQuota(result.quota as QuotaInfo);
 
             notify("Thẩm định AI hoàn tất", 'success');
         } catch (error: any) {
@@ -1860,14 +1863,19 @@ export const ListingDetail: React.FC = () => {
                                                     <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
                                                         Phân tích AI chuyên sâu — 7 hệ số thị trường, tài sản so sánh, dự báo xu hướng.
                                                     </p>
-                                                    <button
-                                                        onClick={handleAiValuation}
-                                                        disabled={isValuating}
-                                                        className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
-                                                    >
-                                                        <Sparkles className="w-4 h-4" />
-                                                        {isValuating ? 'Đang phân tích...' : 'Bắt đầu thẩm định AI'}
-                                                    </button>
+                                                    {valuationQuota && !valuationQuota.isUnlimited && (
+                                                        <AiCreditBadge quota={valuationQuota} featureLabel="Thẩm định AI" onUpgradeClick={() => window.open('/pricing', '_blank')} />
+                                                    )}
+                                                    <AiQuotaGate quota={valuationQuota} featureLabel="thẩm định AI" onUpgradeClick={() => window.open('/pricing', '_blank')}>
+                                                        <button
+                                                            onClick={handleAiValuation}
+                                                            disabled={isValuating}
+                                                            className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
+                                                        >
+                                                            <Sparkles className="w-4 h-4" />
+                                                            {isValuating ? 'Đang phân tích...' : 'Bắt đầu thẩm định AI'}
+                                                        </button>
+                                                    </AiQuotaGate>
                                                 </div>
                                             )}
 
@@ -1943,14 +1951,21 @@ export const ListingDetail: React.FC = () => {
                                                         </div>
                                                     )}
 
+                                                    {/* Credit badge in result view */}
+                                                    {valuationQuota && !valuationQuota.isUnlimited && (
+                                                        <AiCreditBadge quota={valuationQuota} featureLabel="Thẩm định AI" onUpgradeClick={() => window.open('/pricing', '_blank')} />
+                                                    )}
+
                                                     {/* Re-run button */}
-                                                    <button
-                                                        onClick={() => { setValuation(null); setTimeout(handleAiValuation, 50); }}
-                                                        className="w-full py-2 rounded-xl text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5"
-                                                    >
-                                                        <Sparkles className="w-3 h-3" />
-                                                        Thẩm định lại
-                                                    </button>
+                                                    <AiQuotaGate quota={valuationQuota} featureLabel="thẩm định AI" onUpgradeClick={() => window.open('/pricing', '_blank')}>
+                                                        <button
+                                                            onClick={() => { setValuation(null); setTimeout(handleAiValuation, 50); }}
+                                                            className="w-full py-2 rounded-xl text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5"
+                                                        >
+                                                            <Sparkles className="w-3 h-3" />
+                                                            Thẩm định lại
+                                                        </button>
+                                                    </AiQuotaGate>
                                                 </div>
                                             )}
                                         </div>
