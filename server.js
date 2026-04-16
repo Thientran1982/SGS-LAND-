@@ -28744,6 +28744,8 @@ function getBankRatesHtml(ugcRates = []) {
   <link rel="alternate" hreflang="x-default" href="${CANONICAL}"/>
   ${buildSchema(ugcRates.length)}
   <link rel="stylesheet" href="/bank-rates.css"/>
+  <!-- Microsoft Clarity -->
+  <script src="/clarity-init.js"></script>
 </head>
 <body>
 
@@ -56689,7 +56691,7 @@ function securityHeaders(req, res, next) {
   if (isProduction) {
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org; frame-src https://maps.google.com https://www.google.com; frame-ancestors 'none';"
+      "default-src 'self'; script-src 'self' https://www.clarity.ms; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms https://w.clarity.ms; frame-src https://maps.google.com https://www.google.com; frame-ancestors 'none';"
     );
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   } else {

@@ -18,11 +18,11 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self'; " +
+      "script-src 'self' https://www.clarity.ms; " +
       "style-src 'self' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org; " +
+      "connect-src 'self' wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms https://w.clarity.ms; " +
       "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';"
     );
