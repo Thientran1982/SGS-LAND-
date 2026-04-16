@@ -91,6 +91,7 @@ class AiApiClient {
             monthlyRent?: number;
             buildingAge?: number;
             bedrooms?: number;
+            listingId?: string;
         }
     ): Promise<any> {
         return this.fetchApi('/api/ai/valuation', {
