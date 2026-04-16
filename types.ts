@@ -909,6 +909,7 @@ export interface AgentTraceResponse {
     confidence: number;
     sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'ANGRY';
     escalated?: boolean;
+    isSysMsg?: boolean;
     intent?: string;
     userMessage?: string;
 }
