@@ -211,6 +211,40 @@ export class AnalyticsRepository extends BaseRepository {
           `, [commissionRate])
         : { rows: [{ revenue: '0' }] };
 
+      // ── SOLD listing commission (stored directly on listing, not via proposals) ──
+      // commission_unit = 'PERCENT': revenue = price * commission / 100
+      // commission_unit = 'FIXED' or other: revenue = commission (fixed amount)
+      const listingUserFilter = isSalesScope && safeUserId
+        ? `AND (l.assigned_to = '${safeUserId}'::uuid OR l.created_by = '${safeUserId}'::uuid)`
+        : '';
+      const listingRevenueResult = await client.query(`
+        SELECT COALESCE(SUM(
+          CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+               ELSE l.commission END
+        ), 0)::numeric as revenue
+        FROM listings l
+        WHERE l.${TENANT_FILTER}
+          AND l.status = 'SOLD'
+          AND l.commission IS NOT NULL AND l.commission > 0
+          ${listingUserFilter}
+          ${useTimeFilter ? `AND l.updated_at >= NOW() - INTERVAL '${days} days'` : ''}
+      `);
+      const prevListingRevenueResult = useTimeFilter
+        ? await client.query(`
+            SELECT COALESCE(SUM(
+              CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+                   ELSE l.commission END
+            ), 0)::numeric as revenue
+            FROM listings l
+            WHERE l.${TENANT_FILTER}
+              AND l.status = 'SOLD'
+              AND l.commission IS NOT NULL AND l.commission > 0
+              ${listingUserFilter}
+              AND l.updated_at >= NOW() - INTERVAL '${days * 2} days'
+              AND l.updated_at < NOW() - INTERVAL '${days} days'
+          `)
+        : { rows: [{ revenue: '0' }] };
+
       // Pipeline value: total expected value of currently open deals, weighted by AI grade probability.
       // Apply the same period filter as other metrics so the delta compares equal windows
       // (new pipeline created this period vs new pipeline created last period).
@@ -419,6 +453,24 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 12
       `, [commissionRate]);
 
+      // SOLD listing commission by month (merged into revenueByMonth below)
+      const listingRevenueByMonthResult = await client.query(`
+        SELECT
+          TO_CHAR(l.updated_at, 'YYYY-MM') as month,
+          SUM(
+            CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
+                 ELSE l.commission END
+          )::numeric as revenue
+        FROM listings l
+        WHERE l.${TENANT_FILTER}
+          AND l.status = 'SOLD'
+          AND l.commission IS NOT NULL AND l.commission > 0
+          ${listingUserFilter}
+        GROUP BY TO_CHAR(l.updated_at, 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT 12
+      `);
+
       // ── Compute aggregates ────────────────────────────────────────────────
       let pipelineValue = 0;
       let weightedProbSum = 0;
@@ -460,8 +512,10 @@ export class AnalyticsRepository extends BaseRepository {
       const proposalStats = proposalsResult.rows[0];
       const contractStats = contractsResult.rows[0];
 
-      const revenue = parseFloat(revenueResult.rows[0].revenue) || 0;
-      const prevRevenue = parseFloat(prevRevenueResult.rows[0].revenue) || 0;
+      const revenue = (parseFloat(revenueResult.rows[0].revenue) || 0)
+                    + (parseFloat(listingRevenueResult.rows[0].revenue) || 0);
+      const prevRevenue = (parseFloat(prevRevenueResult.rows[0].revenue) || 0)
+                        + (parseFloat(prevListingRevenueResult.rows[0].revenue) || 0);
 
       const salesVelocity = Math.round(parseFloat(salesVelocityResult.rows[0].avg_days) || 0);
       const prevSalesVelocity = Math.round(parseFloat(prevSalesVelocityResult.rows[0].avg_days) || 0);
@@ -553,10 +607,20 @@ export class AnalyticsRepository extends BaseRepository {
         totalLeadsDelta: calcDelta(leadStats.total, prevLeadTotal),
         leadsByStage,
         leadsBySource,
-        revenueByMonth: revenueByMonthResult.rows.map((r: any) => ({
-          month: r.month,
-          revenue: parseFloat(r.revenue) || 0,
-        })),
+        revenueByMonth: (() => {
+          // Merge proposal revenue + SOLD listing commission by month
+          const map = new Map<string, number>();
+          for (const r of revenueByMonthResult.rows) {
+            map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
+          }
+          for (const r of listingRevenueByMonthResult.rows) {
+            map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
+          }
+          return Array.from(map.entries())
+            .map(([month, revenue]) => ({ month, revenue }))
+            .sort((a, b) => b.month.localeCompare(a.month))
+            .slice(0, 12);
+        })(),
         leadsTrend: leadsTrendResult.rows.map((r: any) => ({
           date: r.date,
           count: r.count,
@@ -885,7 +949,7 @@ export class AnalyticsRepository extends BaseRepository {
             )
             ELSE 0
           END::int AS close_rate,
-          -- Revenue: sum of the latest APPROVED proposal price × commission rate per WON lead
+          -- Revenue: proposal commissions from WON leads + SOLD listing commissions
           COALESCE((
             SELECT SUM(latest_p.final_price * $2)
             FROM leads won_l
@@ -900,6 +964,18 @@ export class AnalyticsRepository extends BaseRepository {
             WHERE won_l.assigned_to = $1
               AND won_l.stage = 'WON'
               AND won_l.${TENANT_FILTER}
+          ), 0)::numeric
+          +
+          COALESCE((
+            SELECT SUM(
+              CASE WHEN li.commission_unit = 'PERCENT' THEN li.price * li.commission / 100
+                   ELSE li.commission END
+            )
+            FROM listings li
+            WHERE (li.assigned_to = $1 OR li.created_by = $1)
+              AND li.status = 'SOLD'
+              AND li.commission IS NOT NULL AND li.commission > 0
+              AND li.${TENANT_FILTER}
           ), 0)::numeric AS revenue,
           -- Avg response: seconds from first INBOUND to first OUTBOUND per lead
           (
