@@ -798,6 +798,38 @@ export class AnalyticsRepository extends BaseRepository {
         };
       });
 
+      // ── SOLD listing commission: add as "DIRECT_SALE" attribution row ────────
+      // Listings sold directly (without a lead/proposal) have their own commission
+      // field. They don't come from any marketing channel, so they appear separately.
+      const listingUserFilterBi = isSalesScope && safeUserId
+        ? `AND (li.assigned_to = '${safeUserId}'::uuid OR li.created_by = '${safeUserId}'::uuid)`
+        : '';
+      const listingCommissionResult = await client.query(`
+        SELECT COALESCE(SUM(
+          CASE WHEN li.commission_unit = 'PERCENT' THEN li.price * li.commission / 100
+               ELSE li.commission END
+        ), 0)::numeric as revenue,
+        COUNT(*)::int as sold_count
+        FROM listings li
+        WHERE li.${TENANT_FILTER}
+          AND li.status = 'SOLD'
+          AND li.commission IS NOT NULL AND li.commission > 0
+          ${listingUserFilterBi}
+          ${useTimeFilter ? `AND li.updated_at >= NOW() - INTERVAL '${days} days'` : ''}
+      `);
+      const listingCommission = parseFloat(listingCommissionResult.rows[0]?.revenue) || 0;
+      const listingSoldCount = listingCommissionResult.rows[0]?.sold_count || 0;
+      if (listingCommission > 0) {
+        attribution.push({
+          channel: 'DIRECT_SALE',
+          leads: listingSoldCount,
+          revenue: listingCommission,
+          spend: 0,
+          cac: 0,
+          roi: 0,
+        });
+      }
+
       const conversionByPeriodResult = await client.query(`
         SELECT
           TO_CHAR(created_at, 'YYYY-MM') as period,
