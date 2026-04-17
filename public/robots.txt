@@ -76,12 +76,32 @@ Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
 
+User-agent: OAI-SearchBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
 User-agent: Claude-Web
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
 
 User-agent: Anthropic-AI
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Claude-SearchBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt

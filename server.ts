@@ -1881,9 +1881,11 @@ async function startServer() {
       const botList = [
         { name: 'OpenAI GPTBot',         userAgent: 'GPTBot' },
         { name: 'OpenAI SearchBot',      userAgent: 'OAI-SearchBot' },
-        { name: 'Anthropic Claude',      userAgent: 'Claude-Web' },
+        { name: 'OpenAI ChatGPT-User',   userAgent: 'ChatGPT-User' },
+        { name: 'Anthropic Claude-Web',  userAgent: 'Claude-Web' },
         { name: 'Anthropic (Anthropic-AI)', userAgent: 'Anthropic-AI' },
         { name: 'Anthropic ClaudeBot',   userAgent: 'ClaudeBot' },
+        { name: 'Anthropic Claude-SearchBot', userAgent: 'Claude-SearchBot' },
         { name: 'Google Gemini',         userAgent: 'Gemini-WebFetch' },
         { name: 'Google-Extended',       userAgent: 'Google-Extended' },
         { name: 'Perplexity',            userAgent: 'PerplexityBot' },
