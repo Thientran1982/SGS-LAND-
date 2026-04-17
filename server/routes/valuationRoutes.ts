@@ -22,6 +22,7 @@ import {
   getMonthlyReport,
   getCostAlertConfig,
   setCostAlertConfig,
+  checkHardCap,
   reportToCsv,
   currentPeriod,
   COST_CONSTANTS,
@@ -216,6 +217,36 @@ export function createValuationRoutes(
   router.post(
     '/advanced',
     optionalAuth,
+    // Hard-cap guard runs BEFORE quota middleware so blocked requests do not
+    // consume the user's monthly quota counter. Guests have no tenantId and
+    // skip the check (the cap protects a tenant budget).
+    async (req: Request, res: Response, next: any) => {
+      try {
+        const user = (req as any).user;
+        if (user?.tenantId) {
+          const cap = await checkHardCap(user.tenantId);
+          if (cap) {
+            logger.warn(
+              `[Valuation] Hard cap reached for tenant=${user.tenantId} ` +
+              `($${cap.spentUsd.toFixed(2)} ≥ $${cap.thresholdUsd.toFixed(2)}, period=${cap.period})`
+            );
+            return res.status(429).json({
+              error: 'AI_COST_HARD_CAP',
+              message:
+                `Đã tạm dừng định giá AI: chi phí ước tính tháng ${cap.period} ` +
+                `($${cap.spentUsd.toFixed(2)}) đã chạm ngưỡng giới hạn ($${cap.thresholdUsd.toFixed(2)}). ` +
+                `Liên hệ quản trị viên để nâng ngưỡng hoặc tắt chế độ tự động chặn.`,
+              spentUsd: cap.spentUsd,
+              thresholdUsd: cap.thresholdUsd,
+              period: cap.period,
+            });
+          }
+        }
+      } catch (err: any) {
+        logger.warn('[Valuation] hard-cap check failed (continuing):', err?.message);
+      }
+      return next();
+    },
     (req: Request, res: Response, next: any) => {
       // Auth users → monthlyValuationQuota; guests → guestValuationRateLimit
       if ((req as any).user) {
@@ -226,6 +257,7 @@ export function createValuationRoutes(
     async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+
       const {
         address,
         area,
@@ -928,10 +960,12 @@ export function createValuationRoutes(
     const user = (req as any).user;
     if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
     try {
-      const { thresholdUsd, alertEmail } = req.body || {};
+      const { thresholdUsd, alertEmail, warnPercent, hardCapEnabled } = req.body || {};
       const cfg = await setCostAlertConfig(user.tenantId, {
         thresholdUsd: Number(thresholdUsd) || 0,
         alertEmail: alertEmail ? String(alertEmail).slice(0, 255) : null,
+        warnPercent: warnPercent !== undefined ? Number(warnPercent) : undefined,
+        hardCapEnabled: !!hardCapEnabled,
       });
       return res.json(cfg);
     } catch (err: any) {

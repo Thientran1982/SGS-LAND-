@@ -262,43 +262,105 @@ export interface CostAlertConfig {
   thresholdUsd: number;
   alertEmail: string | null;
   lastAlertedPeriod: string | null;
+  warnPercent: number;             // early-warning threshold (e.g. 80 = 80%)
+  hardCapEnabled: boolean;         // if true, block AI calls once spending ≥ thresholdUsd
+  lastWarnAlertedPeriod: string | null;
 }
+
+const DEFAULT_WARN_PERCENT = 80;
 
 export async function getCostAlertConfig(tenantId: string): Promise<CostAlertConfig> {
   try {
     const r = await pool.query(
-      `SELECT threshold_usd, alert_email, last_alerted_period
+      `SELECT threshold_usd, alert_email, last_alerted_period,
+              warn_percent, hard_cap_enabled, last_warn_alerted_period
          FROM valuation_cost_alerts WHERE tenant_id = $1`,
       [tenantId],
     );
     const row = r.rows[0];
-    if (!row) return { thresholdUsd: 0, alertEmail: null, lastAlertedPeriod: null };
+    if (!row) {
+      return {
+        thresholdUsd: 0,
+        alertEmail: null,
+        lastAlertedPeriod: null,
+        warnPercent: DEFAULT_WARN_PERCENT,
+        hardCapEnabled: false,
+        lastWarnAlertedPeriod: null,
+      };
+    }
     return {
       thresholdUsd: Number(row.threshold_usd ?? 0),
       alertEmail: row.alert_email || null,
       lastAlertedPeriod: row.last_alerted_period || null,
+      warnPercent: Number(row.warn_percent ?? DEFAULT_WARN_PERCENT),
+      hardCapEnabled: !!row.hard_cap_enabled,
+      lastWarnAlertedPeriod: row.last_warn_alerted_period || null,
     };
   } catch {
-    return { thresholdUsd: 0, alertEmail: null, lastAlertedPeriod: null };
+    return {
+      thresholdUsd: 0,
+      alertEmail: null,
+      lastAlertedPeriod: null,
+      warnPercent: DEFAULT_WARN_PERCENT,
+      hardCapEnabled: false,
+      lastWarnAlertedPeriod: null,
+    };
   }
 }
 
 export async function setCostAlertConfig(
   tenantId: string,
-  cfg: { thresholdUsd: number; alertEmail: string | null },
+  cfg: {
+    thresholdUsd: number;
+    alertEmail: string | null;
+    warnPercent?: number;
+    hardCapEnabled?: boolean;
+  },
 ): Promise<CostAlertConfig> {
   const threshold = Math.max(0, Number(cfg.thresholdUsd) || 0);
   const email = cfg.alertEmail && cfg.alertEmail.trim() ? cfg.alertEmail.trim() : null;
+  const warnPct = (() => {
+    const v = Math.round(Number(cfg.warnPercent));
+    if (!Number.isFinite(v) || v <= 0) return DEFAULT_WARN_PERCENT;
+    // Clamp 1-100; warn must be ≤ 100% (can equal 100 to disable early-warning effectively)
+    return Math.max(1, Math.min(100, v));
+  })();
+  const hardCap = !!cfg.hardCapEnabled;
   await pool.query(
-    `INSERT INTO valuation_cost_alerts (tenant_id, threshold_usd, alert_email, updated_at)
-     VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+    `INSERT INTO valuation_cost_alerts
+       (tenant_id, threshold_usd, alert_email, warn_percent, hard_cap_enabled, updated_at)
+     VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
      ON CONFLICT (tenant_id) DO UPDATE
-       SET threshold_usd = EXCLUDED.threshold_usd,
-           alert_email   = EXCLUDED.alert_email,
-           updated_at    = CURRENT_TIMESTAMP`,
-    [tenantId, threshold, email],
+       SET threshold_usd     = EXCLUDED.threshold_usd,
+           alert_email       = EXCLUDED.alert_email,
+           warn_percent      = EXCLUDED.warn_percent,
+           hard_cap_enabled  = EXCLUDED.hard_cap_enabled,
+           updated_at        = CURRENT_TIMESTAMP`,
+    [tenantId, threshold, email, warnPct, hardCap],
   );
   return getCostAlertConfig(tenantId);
+}
+
+/**
+ * Check whether AI valuation requests for this tenant must be blocked because
+ * the configured monthly hard cap (thresholdUsd) has been reached.
+ *
+ * Returns null when not capped, otherwise returns the relevant numbers so the
+ * caller can build a friendly error response.
+ */
+export async function checkHardCap(
+  tenantId: string,
+): Promise<{ thresholdUsd: number; spentUsd: number; period: string } | null> {
+  try {
+    const cfg = await getCostAlertConfig(tenantId);
+    if (!cfg.hardCapEnabled || !cfg.thresholdUsd || cfg.thresholdUsd <= 0) return null;
+    const period = currentPeriod();
+    const totals = await totalsForPeriod(period, tenantId);
+    if (totals.cost < cfg.thresholdUsd) return null;
+    return { thresholdUsd: cfg.thresholdUsd, spentUsd: totals.cost, period };
+  } catch {
+    return null;
+  }
 }
 
 async function maybeSendThresholdAlert(tenantId: string): Promise<void> {
@@ -307,33 +369,108 @@ async function maybeSendThresholdAlert(tenantId: string): Promise<void> {
   if (!cfg.alertEmail) return;
 
   const period = currentPeriod();
-  if (cfg.lastAlertedPeriod === period) return; // already alerted this month
-
   const totals = await totalsForPeriod(period, tenantId);
-  if (totals.cost < cfg.thresholdUsd) return;
+  const warnAt = cfg.thresholdUsd * (cfg.warnPercent / 100);
 
-  // Mark as alerted FIRST to avoid duplicate sends if email is slow
-  await pool.query(
-    `UPDATE valuation_cost_alerts SET last_alerted_period = $2, updated_at = CURRENT_TIMESTAMP
-     WHERE tenant_id = $1`,
-    [tenantId, period],
-  );
+  // Hard threshold breach (≥ 100% of cap) — send/upgrade alert if not yet sent this month
+  if (totals.cost >= cfg.thresholdUsd && cfg.lastAlertedPeriod !== period) {
+    await pool.query(
+      `UPDATE valuation_cost_alerts
+          SET last_alerted_period = $2,
+              last_warn_alerted_period = COALESCE(last_warn_alerted_period, $2),
+              updated_at = CURRENT_TIMESTAMP
+        WHERE tenant_id = $1`,
+      [tenantId, period],
+    );
+    await sendCostAlertEmail({
+      tenantId,
+      to: cfg.alertEmail,
+      period,
+      spentUsd: totals.cost,
+      thresholdUsd: cfg.thresholdUsd,
+      totalValuations: totals.total,
+      severity: 'over',
+      warnPercent: cfg.warnPercent,
+      hardCapEnabled: cfg.hardCapEnabled,
+    });
+    return;
+  }
 
+  // Early-warning breach (≥ warn_percent of cap) — separate one-shot per month
+  if (
+    cfg.warnPercent > 0 &&
+    cfg.warnPercent < 100 &&
+    totals.cost >= warnAt &&
+    totals.cost < cfg.thresholdUsd &&
+    cfg.lastWarnAlertedPeriod !== period
+  ) {
+    await pool.query(
+      `UPDATE valuation_cost_alerts
+          SET last_warn_alerted_period = $2, updated_at = CURRENT_TIMESTAMP
+        WHERE tenant_id = $1`,
+      [tenantId, period],
+    );
+    await sendCostAlertEmail({
+      tenantId,
+      to: cfg.alertEmail,
+      period,
+      spentUsd: totals.cost,
+      thresholdUsd: cfg.thresholdUsd,
+      totalValuations: totals.total,
+      severity: 'warn',
+      warnPercent: cfg.warnPercent,
+      hardCapEnabled: cfg.hardCapEnabled,
+    });
+  }
+}
+
+async function sendCostAlertEmail(args: {
+  tenantId: string;
+  to: string;
+  period: string;
+  spentUsd: number;
+  thresholdUsd: number;
+  totalValuations: number;
+  severity: 'warn' | 'over';
+  warnPercent: number;
+  hardCapEnabled: boolean;
+}): Promise<void> {
+  const pctOfCap = args.thresholdUsd > 0 ? (args.spentUsd / args.thresholdUsd) * 100 : 0;
+  const subject =
+    args.severity === 'warn'
+      ? `[SGS Land] Cảnh báo sớm: chi phí AI định giá đã đạt ${pctOfCap.toFixed(0)}% ngưỡng — tháng ${args.period}`
+      : `[SGS Land] Chi phí AI định giá vượt ngưỡng — tháng ${args.period}`;
+  const headline =
+    args.severity === 'warn'
+      ? `Chi phí AI định giá đã đạt <strong>${pctOfCap.toFixed(1)}%</strong> ngưỡng cảnh báo (${args.warnPercent}% sớm).`
+      : `Chi phí AI định giá đã <strong>vượt ngưỡng</strong>.`;
+  const capNote = args.hardCapEnabled && args.severity === 'over'
+    ? `<p><strong>Chế độ tự động chặn đang bật:</strong> các yêu cầu định giá AI mới sẽ bị tạm dừng cho đến khi sang tháng hoặc nâng ngưỡng.</p>`
+    : '';
+  const body = `
+    <p>Xin chào,</p>
+    <p>${headline}</p>
+    <p>Chi phí ước tính tháng <strong>${args.period}</strong>:
+       <strong>$${args.spentUsd.toFixed(2)} USD</strong>
+       / ngưỡng <strong>$${args.thresholdUsd.toFixed(2)} USD</strong>.</p>
+    <p>Tổng số lượt định giá: <strong>${args.totalValuations}</strong>.</p>
+    ${capNote}
+    <p>Vào trang quản trị "Chi phí AI" để xem chi tiết.</p>
+  `;
   try {
     const { emailService } = await import('./emailService');
-    const subject = `[SGS Land] Chi phí AI định giá vượt ngưỡng — tháng ${period}`;
-    const body = `
-      <p>Xin chào,</p>
-      <p>Chi phí AI định giá ước tính trong tháng <strong>${period}</strong> đã đạt
-         <strong>$${totals.cost.toFixed(2)} USD</strong>, vượt ngưỡng cảnh báo
-         <strong>$${cfg.thresholdUsd.toFixed(2)} USD</strong>.</p>
-      <p>Tổng số lượt định giá: <strong>${totals.total}</strong>.</p>
-      <p>Vào trang quản trị "Chi phí AI" để xem chi tiết.</p>
-    `;
-    await emailService.sendEmail(tenantId, { to: cfg.alertEmail, subject, html: body, text: body.replace(/<[^>]+>/g, '') });
-    logger.info(`[valuationUsage] Threshold alert sent to ${cfg.alertEmail} (tenant=${tenantId}, $${totals.cost.toFixed(2)})`);
+    await emailService.sendEmail(args.tenantId, {
+      to: args.to,
+      subject,
+      html: body,
+      text: body.replace(/<[^>]+>/g, ''),
+    });
+    logger.info(
+      `[valuationUsage] ${args.severity === 'warn' ? 'Early-warning' : 'Threshold'} alert sent to ${args.to} ` +
+      `(tenant=${args.tenantId}, $${args.spentUsd.toFixed(2)} / $${args.thresholdUsd.toFixed(2)})`
+    );
   } catch (err: any) {
-    logger.warn('[valuationUsage] Failed to send threshold alert email:', err.message);
+    logger.warn('[valuationUsage] Failed to send cost alert email:', err.message);
   }
 }
 
