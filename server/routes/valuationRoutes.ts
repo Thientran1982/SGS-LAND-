@@ -16,7 +16,7 @@ import { priceCalibrationService } from '../services/priceCalibrationService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
 import { pool } from '../db';
-import { getMonthlyQuotaStatus, monthlyValuationQuota, VALUATION_PLAN_LIMITS } from '../middleware/rateLimiter';
+import { getMonthlyQuotaStatus, monthlyValuationQuota, VALUATION_PLAN_LIMITS, getUserPlan } from '../middleware/rateLimiter';
 import {
   recordValuationUsage,
   getMonthlyReport,
@@ -26,6 +26,10 @@ import {
   reportToCsv,
   currentPeriod,
   COST_CONSTANTS,
+  getPlanQuotas,
+  setPlanQuota,
+  checkPlanQuota,
+  DEFAULT_PLAN_QUOTAS_USD,
 } from '../services/valuationUsageService';
 import { getFeatureBreakdown } from '../services/aiUsageService';
 
@@ -240,6 +244,31 @@ export function createValuationRoutes(
               spentUsd: cap.spentUsd,
               thresholdUsd: cap.thresholdUsd,
               period: cap.period,
+            });
+          }
+
+          // Per-plan cost quota check — blocks plans that have hit their
+          // tenant-configured monthly USD limit (e.g. FREE users).
+          const planId = await getUserPlan(user.tenantId);
+          (req as any).resolvedPlanId = planId;
+          const planCap = await checkPlanQuota(user.tenantId, planId);
+          if (planCap) {
+            logger.warn(
+              `[Valuation] Plan quota reached: tenant=${user.tenantId} plan=${planCap.planId} ` +
+              `($${planCap.spentUsd.toFixed(2)} ≥ $${planCap.limitUsd.toFixed(2)}, period=${planCap.period})`
+            );
+            return res.status(429).json({
+              error: 'AI_COST_PLAN_QUOTA_EXCEEDED',
+              message:
+                `Gói ${planCap.planLabel} đã dùng hết hạn mức chi phí AI tháng ${planCap.period} ` +
+                `($${planCap.spentUsd.toFixed(2)} / $${planCap.limitUsd.toFixed(2)} USD). ` +
+                `Vui lòng nâng cấp gói thuê bao để tiếp tục sử dụng định giá AI.`,
+              planId: planCap.planId,
+              planLabel: planCap.planLabel,
+              spentUsd: planCap.spentUsd,
+              limitUsd: planCap.limitUsd,
+              period: planCap.period,
+              upgradeHint: 'Nâng cấp lên gói cao hơn (TEAM hoặc ENTERPRISE) để có hạn mức AI lớn hơn.',
             });
           }
         }
@@ -912,9 +941,11 @@ export function createValuationRoutes(
       const report = await getMonthlyReport(period, { tenantId: user.tenantId, topUsersLimit: 10 });
       const alertConfig = await getCostAlertConfig(user.tenantId);
       const featureBreakdown = await getFeatureBreakdown(period, { tenantId: user.tenantId });
+      const planQuotas = await getPlanQuotas(user.tenantId, period);
       return res.json({
         report,
         alertConfig,
+        planQuotas,
         scope: 'tenant',
         pricing: COST_CONSTANTS,
         featureBreakdown,
@@ -973,6 +1004,44 @@ export function createValuationRoutes(
       return res.json(cfg);
     } catch (err: any) {
       return res.status(500).json({ error: 'Failed to save', detail: err.message });
+    }
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ADMIN: Per-plan AI cost quotas
+  // ──────────────────────────────────────────────────────────────────────────
+  router.get('/admin/plan-quotas', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    try {
+      const period = (req.query.month as string) || currentPeriod();
+      if (!/^\d{4}-\d{2}$/.test(period)) {
+        return res.status(400).json({ error: 'month must be YYYY-MM' });
+      }
+      const planQuotas = await getPlanQuotas(user.tenantId, period);
+      return res.json({ period, planQuotas, defaults: DEFAULT_PLAN_QUOTAS_USD });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to load plan quotas', detail: err.message });
+    }
+  });
+
+  router.put('/admin/plan-quotas', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    try {
+      const { planId, monthlyCostLimitUsd } = req.body || {};
+      if (!planId || typeof planId !== 'string') {
+        return res.status(400).json({ error: 'planId is required' });
+      }
+      const limit = Number(monthlyCostLimitUsd);
+      if (!Number.isFinite(limit) || limit < 0) {
+        return res.status(400).json({ error: 'monthlyCostLimitUsd must be a non-negative number' });
+      }
+      await setPlanQuota(user.tenantId, planId, limit);
+      const planQuotas = await getPlanQuotas(user.tenantId);
+      return res.json({ planQuotas });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to save plan quota', detail: err.message });
     }
   });
 

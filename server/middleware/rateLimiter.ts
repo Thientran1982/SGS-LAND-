@@ -218,7 +218,7 @@ function monthlyResetTs(): number {
   return d.getTime();
 }
 
-async function getUserPlan(tenantId: string): Promise<string> {
+export async function getUserPlan(tenantId: string): Promise<string> {
   try {
     const { pool } = await import('../db');
     const result = await pool.query(

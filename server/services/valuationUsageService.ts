@@ -474,6 +474,155 @@ async function sendCostAlertEmail(args: {
   }
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// Per-plan AI cost quotas
+// Each tenant can configure a monthly USD limit for each subscription plan.
+// When the cumulative monthly spend by users on plan X reaches the limit, new
+// AI valuation requests from plan X users are blocked with a clear upgrade
+// hint. limitUsd = 0 means unlimited (no enforcement).
+// ───────────────────────────────────────────────────────────────────────────
+
+export const DEFAULT_PLAN_QUOTAS_USD: Record<string, number> = {
+  INDIVIDUAL: 2,
+  TEAM: 20,
+  ENTERPRISE: 0,
+};
+
+export const PLAN_LABELS_VI: Record<string, string> = {
+  INDIVIDUAL: 'Miễn phí',
+  TEAM: 'Team',
+  ENTERPRISE: 'Enterprise',
+  GUEST: 'Khách',
+};
+
+export interface PlanQuotaRow {
+  planId: string;
+  planLabel: string;
+  limitUsd: number;
+  spentUsd: number;
+  percentUsed: number;
+  isUnlimited: boolean;
+  exceeded: boolean;
+}
+
+async function spendByPlanForPeriod(
+  period: string,
+  tenantId: string,
+): Promise<Map<string, number>> {
+  const { start, end } = periodBounds(period);
+  const r = await pool.query(
+    `SELECT COALESCE(plan_id, 'GUEST') AS plan_id,
+            COALESCE(SUM(cost_usd), 0)::float AS cost
+       FROM valuation_usage_log
+      WHERE created_at >= $1 AND created_at < $2 AND tenant_id = $3
+      GROUP BY 1`,
+    [start, end, tenantId],
+  );
+  const map = new Map<string, number>();
+  for (const row of r.rows) {
+    map.set(row.plan_id, Number(row.cost) || 0);
+  }
+  return map;
+}
+
+export async function getPlanQuotas(
+  tenantId: string,
+  period?: string,
+): Promise<PlanQuotaRow[]> {
+  const p = period || currentPeriod();
+  // Configured rows
+  let configured: Record<string, number> = {};
+  try {
+    const r = await pool.query(
+      `SELECT plan_id, monthly_cost_limit_usd
+         FROM ai_cost_plan_quotas WHERE tenant_id = $1`,
+      [tenantId],
+    );
+    for (const row of r.rows) {
+      configured[row.plan_id] = Number(row.monthly_cost_limit_usd) || 0;
+    }
+  } catch {
+    /* table may not exist yet — fall back to defaults */
+  }
+
+  // Merge with defaults so every known plan tier shows up
+  const merged: Record<string, number> = { ...DEFAULT_PLAN_QUOTAS_USD, ...configured };
+  const spend = await spendByPlanForPeriod(p, tenantId).catch(() => new Map());
+
+  const result: PlanQuotaRow[] = [];
+  for (const planId of Object.keys(merged)) {
+    const limitUsd = merged[planId];
+    const spentUsd = spend.get(planId) ?? 0;
+    const isUnlimited = limitUsd <= 0;
+    const percentUsed = isUnlimited ? 0 : (limitUsd > 0 ? (spentUsd / limitUsd) * 100 : 0);
+    result.push({
+      planId,
+      planLabel: PLAN_LABELS_VI[planId] || planId,
+      limitUsd,
+      spentUsd,
+      percentUsed,
+      isUnlimited,
+      exceeded: !isUnlimited && spentUsd >= limitUsd,
+    });
+  }
+  // Stable order: known tiers first, then alphabetical
+  const order = ['INDIVIDUAL', 'TEAM', 'ENTERPRISE', 'GUEST'];
+  result.sort((a, b) => {
+    const ai = order.indexOf(a.planId);
+    const bi = order.indexOf(b.planId);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.planId.localeCompare(b.planId);
+  });
+  return result;
+}
+
+export async function setPlanQuota(
+  tenantId: string,
+  planId: string,
+  monthlyCostLimitUsd: number,
+): Promise<void> {
+  const limit = Math.max(0, Number(monthlyCostLimitUsd) || 0);
+  const safePlan = String(planId || '').trim().toUpperCase().slice(0, 50);
+  if (!safePlan) throw new Error('planId is required');
+  await pool.query(
+    `INSERT INTO ai_cost_plan_quotas
+       (tenant_id, plan_id, monthly_cost_limit_usd, updated_at)
+     VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+     ON CONFLICT (tenant_id, plan_id) DO UPDATE
+       SET monthly_cost_limit_usd = EXCLUDED.monthly_cost_limit_usd,
+           updated_at             = CURRENT_TIMESTAMP`,
+    [tenantId, safePlan, limit],
+  );
+}
+
+/**
+ * Returns null if not exceeded. Otherwise returns the relevant numbers so
+ * the caller can build a friendly upgrade-prompt error response.
+ */
+export async function checkPlanQuota(
+  tenantId: string,
+  planId: string,
+): Promise<{ planId: string; planLabel: string; limitUsd: number; spentUsd: number; period: string } | null> {
+  try {
+    if (!tenantId || !planId) return null;
+    const quotas = await getPlanQuotas(tenantId);
+    const row = quotas.find((q) => q.planId === planId);
+    if (!row || row.isUnlimited) return null;
+    if (row.spentUsd < row.limitUsd) return null;
+    return {
+      planId: row.planId,
+      planLabel: row.planLabel,
+      limitUsd: row.limitUsd,
+      spentUsd: row.spentUsd,
+      period: currentPeriod(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 // CSV export
 export function reportToCsv(report: MonthlyReport): string {
   const rows: string[] = [];

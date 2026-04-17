@@ -49,9 +49,20 @@ interface FeatureBreakdown {
   totalAiCalls: number;
 }
 
+interface PlanQuotaRow {
+  planId: string;
+  planLabel: string;
+  limitUsd: number;
+  spentUsd: number;
+  percentUsed: number;
+  isUnlimited: boolean;
+  exceeded: boolean;
+}
+
 interface ReportResponse {
   report: CostReport;
   alertConfig: AlertConfig;
+  planQuotas: PlanQuotaRow[];
   scope: 'tenant' | 'global';
   pricing: CostReport['pricing'];
   featureBreakdown?: FeatureBreakdown;
@@ -115,6 +126,8 @@ const AdminAiCost: React.FC = () => {
     hardCapEnabled: false,
   });
   const [toast, setToast] = useState<string | null>(null);
+  const [quotaDrafts, setQuotaDrafts] = useState<Record<string, string>>({});
+  const [savingQuotaPlan, setSavingQuotaPlan] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,6 +146,11 @@ const AdminAiCost: React.FC = () => {
         warnPercent: String(res.alertConfig.warnPercent ?? 80),
         hardCapEnabled: !!res.alertConfig.hardCapEnabled,
       });
+      const drafts: Record<string, string> = {};
+      for (const q of (res.planQuotas || [])) {
+        drafts[q.planId] = q.limitUsd > 0 ? String(q.limitUsd) : '';
+      }
+      setQuotaDrafts(drafts);
     } catch (err: any) {
       setToast(err.message || 'Lỗi tải báo cáo');
     } finally {
@@ -165,6 +183,30 @@ const AdminAiCost: React.FC = () => {
       setSavingAlert(false);
     }
   }, [alertDraft]);
+
+  const saveQuota = useCallback(async (planId: string) => {
+    setSavingQuotaPlan(planId);
+    try {
+      const raw = quotaDrafts[planId] ?? '';
+      const limit = raw === '' ? 0 : Number(raw);
+      if (!Number.isFinite(limit) || limit < 0) {
+        setToast('Hạn mức phải là số không âm');
+        setTimeout(() => setToast(null), 2500);
+        return;
+      }
+      const res = await api.put<{ planQuotas: PlanQuotaRow[] }>(
+        '/api/valuation/admin/plan-quotas',
+        { planId, monthlyCostLimitUsd: limit },
+      );
+      setData((d) => d ? { ...d, planQuotas: res.planQuotas } : d);
+      setToast(`Đã lưu hạn mức cho gói ${planId}`);
+      setTimeout(() => setToast(null), 2500);
+    } catch (err: any) {
+      setToast(err.message || 'Lưu hạn mức thất bại');
+    } finally {
+      setSavingQuotaPlan(null);
+    }
+  }, [quotaDrafts]);
 
   if (loading && !data) {
     return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">Đang tải báo cáo…</div>;
@@ -304,16 +346,35 @@ const AdminAiCost: React.FC = () => {
           ) : (
             <table className="w-full text-sm">
               <thead className="text-xs text-[var(--text-tertiary)] uppercase tracking-wide">
-                <tr><th className="text-left py-2">Gói</th><th className="text-right py-2">Lượt</th><th className="text-right py-2">USD</th></tr>
+                <tr>
+                  <th className="text-left py-2">Gói</th>
+                  <th className="text-right py-2">Lượt</th>
+                  <th className="text-right py-2">USD</th>
+                  <th className="text-right py-2">% hạn mức</th>
+                </tr>
               </thead>
               <tbody>
-                {r.byPlan.map((p) => (
-                  <tr key={p.planId} className="border-t border-[var(--glass-border)]">
-                    <td className="py-2 font-bold text-[var(--text-primary)]">{p.planId}</td>
-                    <td className="py-2 text-right">{p.valuations.toLocaleString()}</td>
-                    <td className="py-2 text-right font-mono">{fmtUsd(p.costUsd)}</td>
-                  </tr>
-                ))}
+                {r.byPlan.map((p) => {
+                  const q = (data.planQuotas || []).find((x) => x.planId === p.planId);
+                  const pctText = !q || q.isUnlimited
+                    ? '—'
+                    : `${Math.min(999, Math.round(q.percentUsed))}%`;
+                  const pctTone = !q || q.isUnlimited
+                    ? 'text-[var(--text-tertiary)]'
+                    : q.percentUsed >= 100
+                      ? 'text-rose-700 font-bold'
+                      : q.percentUsed >= 80
+                        ? 'text-amber-700 font-bold'
+                        : 'text-emerald-700';
+                  return (
+                    <tr key={p.planId} className="border-t border-[var(--glass-border)]">
+                      <td className="py-2 font-bold text-[var(--text-primary)]">{p.planId}</td>
+                      <td className="py-2 text-right">{p.valuations.toLocaleString()}</td>
+                      <td className="py-2 text-right font-mono">{fmtUsd(p.costUsd)}</td>
+                      <td className={`py-2 text-right font-mono ${pctTone}`}>{pctText}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -407,6 +468,92 @@ const AdminAiCost: React.FC = () => {
             })}
           </div>
         )}
+      </Panel>
+
+      {/* Per-plan AI cost quotas */}
+      <Panel title="Hạn mức chi phí AI theo gói thuê bao">
+        <p className="text-xs text-[var(--text-tertiary)] mb-3">
+          Đặt ngưỡng chi tiêu AI hàng tháng (USD) cho từng gói. Khi tổng chi phí AI của
+          các user thuộc gói đó chạm hạn mức, các yêu cầu định giá AI mới sẽ bị từ chối
+          kèm gợi ý nâng cấp gói. Đặt giá trị <span className="font-mono">0</span> hoặc bỏ trống
+          để gói đó <strong>không giới hạn</strong>.
+        </p>
+        <div className="space-y-3">
+          {(data.planQuotas || []).map((q) => {
+            const widthPct = q.isUnlimited ? 0 : Math.min(100, q.percentUsed);
+            const barTone = q.isUnlimited
+              ? 'bg-slate-300'
+              : q.percentUsed >= 100
+                ? 'bg-rose-500'
+                : q.percentUsed >= 80
+                  ? 'bg-amber-500'
+                  : 'bg-emerald-500';
+            return (
+              <div
+                key={q.planId}
+                className={`p-3 rounded-xl border ${
+                  q.exceeded
+                    ? 'bg-rose-50 border-rose-200'
+                    : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="font-bold text-sm text-[var(--text-primary)]">
+                      {q.planLabel}
+                      <span className="ml-2 text-xs font-mono text-[var(--text-tertiary)]">
+                        {q.planId}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                      Đã dùng {fmtUsd(q.spentUsd)} {q.isUnlimited
+                        ? '— không giới hạn'
+                        : `/ ${fmtUsd(q.limitUsd)} (${Math.round(q.percentUsed)}%)`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">
+                        Hạn mức (USD)
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={quotaDrafts[q.planId] ?? ''}
+                        onChange={(e) =>
+                          setQuotaDrafts((d) => ({ ...d, [q.planId]: e.target.value }))
+                        }
+                        placeholder="0 = không giới hạn"
+                        className="w-36 px-3 py-1.5 text-sm rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                      />
+                    </div>
+                    <button
+                      onClick={() => saveQuota(q.planId)}
+                      disabled={savingQuotaPlan === q.planId}
+                      className="self-end px-4 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {savingQuotaPlan === q.planId ? 'Đang lưu…' : 'Lưu'}
+                    </button>
+                  </div>
+                </div>
+                {!q.isUnlimited && (
+                  <div className="mt-2 h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${barTone} transition-all`}
+                      style={{ width: `${widthPct}%` }}
+                    />
+                  </div>
+                )}
+                {q.exceeded && (
+                  <div className="mt-2 text-xs text-rose-700 font-bold">
+                    ⛔ Gói này đã vượt hạn mức — các yêu cầu định giá AI mới của user gói {q.planId} đang bị chặn.
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </Panel>
 
       {/* Top users */}
