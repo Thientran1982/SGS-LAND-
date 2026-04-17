@@ -7,8 +7,15 @@ dotenv.config();
 types.setTypeParser(1700, (val: string) => parseFloat(val));
 types.setTypeParser(20, (val: string) => parseInt(val, 10));
 
+// Prefer the user-managed Neon URL when present, fall back to runtime-managed DATABASE_URL.
+// This lets us migrate to a customer Neon project without touching the runtime-managed Helium DB var.
+const DB_CONNECTION_STRING = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+if (process.env.NEON_DATABASE_URL) {
+  console.log('[DB] Using NEON_DATABASE_URL (customer Neon project)');
+}
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DB_CONNECTION_STRING,
   max: 10,
   idleTimeoutMillis: 240000,     // 4 min — evict idle connections before Neon's 5-min hard timeout
   connectionTimeoutMillis: 15000,
