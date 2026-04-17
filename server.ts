@@ -37,6 +37,7 @@ import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessi
 import { createActivityRoutes } from "./server/routes/activityRoutes";
 import { createNotificationRoutes } from "./server/routes/notificationRoutes";
 import { createBillingRoutes } from "./server/routes/billingRoutes";
+import { createBillingWebhookRouter } from "./server/routes/billingWebhookRoutes";
 import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uploadRoutes";
 import { createScimRoutes } from "./server/routes/scimRoutes";
 import { createValuationRoutes } from "./server/routes/valuationRoutes";
@@ -91,6 +92,9 @@ async function startServer() {
   }));
   app.use(securityHeaders);
   app.use(corsMiddleware);
+  // Stripe webhook MUST be mounted before the global JSON parser so the raw
+  // body is available for signature verification.
+  app.use('/api/billing/webhook', createBillingWebhookRouter());
   app.use('/api/webhooks', express.json({
     limit: '1mb',
     verify: (req: any, _res, buf) => { req.rawBody = buf; }

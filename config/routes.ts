@@ -49,6 +49,7 @@ export const ROUTES = {
     ENTERPRISE_SETTINGS: 'enterprise-settings',
     ADMIN_AI_COST: 'admin-ai-cost',
     BILLING: 'billing',
+    CHECKOUT: 'checkout',
     INBOX: 'inbox',
     SEQUENCES: 'sequences',
     KNOWLEDGE: 'knowledge',

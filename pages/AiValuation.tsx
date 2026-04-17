@@ -2746,15 +2746,29 @@ export const AiValuation: React.FC = () => {
                     </ul>
 
                     <div className="flex flex-col gap-2.5 w-full">
-                        <a
-                            href="mailto:info@sgsland.vn?subject=Nâng cấp gói định giá AI"
-                            className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-400 active:scale-95 transition-all shadow-lg shadow-amber-500/20 text-center block"
+                        <button
+                            onClick={() => {
+                                const target = `/${ROUTES.CHECKOUT}?plan=TEAM`;
+                                window.history.pushState(null, '', target);
+                                window.dispatchEvent(new PopStateEvent('popstate'));
+                            }}
+                            className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-400 active:scale-95 transition-all shadow-lg shadow-amber-500/20 text-center"
                         >
-                            Liên hệ nâng cấp →
-                        </a>
+                            Nâng cấp ngay — Team $49/tháng →
+                        </button>
+                        <button
+                            onClick={() => {
+                                const target = `/${ROUTES.CHECKOUT}?plan=ENTERPRISE`;
+                                window.history.pushState(null, '', target);
+                                window.dispatchEvent(new PopStateEvent('popstate'));
+                            }}
+                            className="w-full py-2.5 bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-600 transition-colors"
+                        >
+                            Hoặc Enterprise — không giới hạn $199/tháng
+                        </button>
                         <button
                             onClick={() => setShowQuotaGate(false)}
-                            className="w-full py-2.5 bg-slate-700/50 text-slate-400 text-sm rounded-xl hover:bg-slate-700 transition-colors"
+                            className="w-full py-2 bg-transparent text-slate-400 text-xs rounded-xl hover:text-slate-200 transition-colors"
                         >
                             Đóng — đợi reset tháng sau
                         </button>
