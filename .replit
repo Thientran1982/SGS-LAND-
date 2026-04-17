@@ -70,6 +70,7 @@ BREVO_FROM_EMAIL = "noreply@sgsland.vn"
 BREVO_FROM_NAME = "SGS LAND"
 EMAIL_WEBHOOK_TOKEN = "sgs-test-2026"
 INITIAL_ADMIN_PASSWORD_HASH = "$2b$12$rMWDtnPG8BdssWxA1kTgC.z563nD/musE8Hs1qeMck20jLYa4z0Ue"
+ALLOWED_ORIGINS = "https://sgsland.vn,https://www.sgsland.vn"
 
 [userenv.development]
 NODE_ENV = "development"
