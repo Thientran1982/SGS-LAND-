@@ -1915,6 +1915,193 @@ async function startServer() {
     }
   });
 
+  // Audit a public URL on this site — fetches HTML server-side, parses with cheerio,
+  // returns the same checklist items as the client-side DOM checker (but for a real public page)
+  app.post('/api/seo/audit-url', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
+    const rawPath = String((req.body || {}).path || '/').trim();
+    // Strict input: only relative paths starting with "/" — no absolute URLs from client (reduces SSRF surface)
+    if (rawPath.length > 2048) return res.status(400).json({ error: 'Path quá dài (>2KB)' }) as any;
+    if (!rawPath.startsWith('/')) return res.status(400).json({ error: 'Chỉ chấp nhận đường dẫn tương đối bắt đầu bằng "/"' }) as any;
+    if (rawPath.startsWith('//')) return res.status(400).json({ error: 'Đường dẫn không hợp lệ (protocol-relative)' }) as any;
+    const APP = (process.env.APP_URL || 'https://sgsland.vn').replace(/\/$/, '');
+    const appUrl = new URL(APP);
+    const appHost = appUrl.host;
+    let target: string;
+    try {
+      const u = new URL(rawPath, APP);
+      if (u.host !== appHost) return res.status(400).json({ error: 'Chỉ được phép kiểm tra URL trên ' + appHost }) as any;
+      target = u.toString();
+    } catch {
+      return res.status(400).json({ error: 'URL không hợp lệ' }) as any;
+    }
+    const MAX_BYTES = 2 * 1024 * 1024; // 2MB cap
+    const MAX_HOPS = 3;
+    try {
+      // Manual redirect handling — re-validate host + protocol on every hop
+      let currentUrl = target;
+      let fetchRes: Response | null = null;
+      for (let hop = 0; hop <= MAX_HOPS; hop++) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 12000);
+        const r = await fetch(currentUrl, {
+          headers: { 'User-Agent': 'SGS-LAND-SEO-Auditor/1.0 (+https://sgsland.vn)', 'Accept': 'text/html,application/xhtml+xml' },
+          signal: ctrl.signal,
+          redirect: 'manual',
+        }).finally(() => clearTimeout(timer));
+        if (r.status >= 300 && r.status < 400) {
+          if (hop === MAX_HOPS) return res.status(502).json({ error: 'Quá nhiều redirect', target }) as any;
+          const loc = r.headers.get('location');
+          if (!loc) return res.status(502).json({ error: 'Redirect thiếu Location header', target }) as any;
+          let next: URL;
+          try { next = new URL(loc, currentUrl); } catch { return res.status(502).json({ error: 'Redirect URL không hợp lệ', target }) as any; }
+          if (next.protocol !== 'https:' && next.protocol !== 'http:') return res.status(400).json({ error: 'Redirect đến protocol không hỗ trợ', target }) as any;
+          if (next.host !== appHost) return res.status(400).json({ error: `Redirect đến host khác (${next.host}) bị chặn`, target }) as any;
+          currentUrl = next.toString();
+          continue;
+        }
+        fetchRes = r;
+        break;
+      }
+      if (!fetchRes) return res.status(502).json({ error: 'Không nhận được response cuối cùng', target }) as any;
+      if (!fetchRes.ok) return res.status(502).json({ error: `Trang trả HTTP ${fetchRes.status}`, target }) as any;
+      const ct = (fetchRes.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {
+        return res.status(415).json({ error: `Content-type không phải HTML (${ct || 'không khai báo'})`, target }) as any;
+      }
+      const cl = Number(fetchRes.headers.get('content-length') || 0);
+      if (cl && cl > MAX_BYTES) return res.status(413).json({ error: `Trang quá lớn (${cl} bytes > ${MAX_BYTES})`, target }) as any;
+      // Stream-cap body size (defense in depth — content-length may lie or be missing)
+      const reader = fetchRes.body?.getReader();
+      if (!reader) return res.status(502).json({ error: 'Không đọc được body', target }) as any;
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          received += value.length;
+          if (received > MAX_BYTES) {
+            try { await reader.cancel(); } catch { /* noop */ }
+            return res.status(413).json({ error: `Trang quá lớn khi stream (>${MAX_BYTES} bytes)`, target }) as any;
+          }
+          chunks.push(value);
+        }
+      }
+      const html = Buffer.concat(chunks.map((c) => Buffer.from(c))).toString('utf-8');
+      const cheerio = await import('cheerio');
+      const $ = cheerio.load(html);
+
+      type CheckItem = { id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string; tip?: string };
+      const items: CheckItem[] = [];
+
+      const desc = $('meta[name="description"]').attr('content') || '';
+      items.push({
+        id: 'desc-len', label: 'Meta description giàu thông tin (140-200 ký tự)',
+        status: desc.length >= 140 && desc.length <= 200 ? 'pass' : (desc.length > 0 ? 'warn' : 'fail'),
+        detail: `${desc.length} ký tự`,
+        tip: 'LLM trích description nguyên văn cho 1 số snippet.',
+      });
+
+      const title = $('title').first().text() || '';
+      items.push({
+        id: 'title-len', label: 'Title 30-65 ký tự, có thương hiệu SGS LAND',
+        status: title.length >= 30 && title.length <= 65 && /SGS\s*LAND/i.test(title) ? 'pass' : 'warn',
+        detail: `${title.length} ký tự — ${title || '(trống)'}`,
+      });
+
+      const ogImg = $('meta[property="og:image"]').attr('content') || '';
+      items.push({
+        id: 'og-image', label: 'Có Open Graph image',
+        status: ogImg ? 'pass' : 'fail',
+        detail: ogImg || 'Chưa khai báo',
+        tip: 'AI Overview của Google + Perplexity hay đính kèm ảnh OG.',
+      });
+
+      const canonical = $('link[rel="canonical"]').attr('href') || '';
+      items.push({
+        id: 'canonical', label: 'Có canonical URL',
+        status: canonical ? 'pass' : 'fail',
+        detail: canonical || 'Chưa khai báo',
+      });
+
+      const jsonLdNodes = $('script[type="application/ld+json"]').toArray();
+      items.push({
+        id: 'jsonld-count', label: 'Có ≥ 3 JSON-LD schema',
+        status: jsonLdNodes.length >= 3 ? 'pass' : (jsonLdNodes.length >= 1 ? 'warn' : 'fail'),
+        detail: `${jsonLdNodes.length} schema`,
+      });
+
+      const types: string[] = [];
+      for (const node of jsonLdNodes) {
+        try {
+          const txt = $(node).text() || '{}';
+          const parsed = JSON.parse(txt);
+          const arr = Array.isArray(parsed) ? parsed : (parsed['@graph'] || [parsed]);
+          for (const obj of arr) {
+            const t = obj && obj['@type'];
+            if (Array.isArray(t)) types.push(...t.map(String));
+            else if (t) types.push(String(t));
+          }
+        } catch { /* skip malformed */ }
+      }
+      const hasFaq = types.some((t) => t.includes('FAQPage'));
+      items.push({
+        id: 'faq', label: 'Có FAQPage schema (LLM rất ưu tiên trích dẫn FAQ)',
+        status: hasFaq ? 'pass' : 'warn',
+        detail: hasFaq ? 'Đã có' : 'Khuyên thêm cho landing dự án và help-center',
+      });
+      const hasOrg = types.some((t) => t.includes('Organization') || t.includes('LocalBusiness'));
+      items.push({
+        id: 'org', label: 'Có Organization / LocalBusiness schema',
+        status: hasOrg ? 'pass' : 'fail',
+        detail: hasOrg ? 'Đã có' : 'Bắt buộc cho Knowledge Graph',
+      });
+      const hasBreadcrumb = types.some((t) => t.includes('BreadcrumbList'));
+      items.push({
+        id: 'breadcrumb', label: 'Có BreadcrumbList schema',
+        status: hasBreadcrumb ? 'pass' : 'warn',
+        detail: hasBreadcrumb ? 'Đã có' : 'Giúp Google hiển thị breadcrumb trong SERP',
+      });
+
+      const author = $('meta[name="author"]').attr('content') || '';
+      items.push({
+        id: 'author', label: 'Có meta author (E-E-A-T)',
+        status: author ? 'pass' : 'warn', detail: author || 'Chưa khai báo',
+      });
+
+      const articleModified = $('meta[property="article:modified_time"]').attr('content') || '';
+      items.push({
+        id: 'modified', label: 'Có article:modified_time (giúp AI biết tin mới)',
+        status: articleModified ? 'pass' : 'warn', detail: articleModified || 'Chưa khai báo',
+      });
+
+      // Word count: strip script/style, count words in main visible text
+      $('script, style, noscript').remove();
+      const bodyText = ($('body').text() || '').replace(/\s+/g, ' ').trim();
+      const wordCount = bodyText ? bodyText.split(/\s+/).length : 0;
+      items.push({
+        id: 'word-count', label: 'Nội dung ≥ 800 từ (LLM ưu tiên nội dung sâu)',
+        status: wordCount >= 800 ? 'pass' : (wordCount >= 400 ? 'warn' : 'fail'),
+        detail: `${wordCount.toLocaleString()} từ`,
+      });
+
+      const mentionsBrand = (bodyText.match(/SGS\s*LAND/gi) || []).length;
+      items.push({
+        id: 'brand-anchors', label: 'Có "SGS LAND" xuất hiện ≥ 3 lần (citation anchor)',
+        status: mentionsBrand >= 3 ? 'pass' : 'warn',
+        detail: `${mentionsBrand} lần`,
+        tip: 'Mỗi đoạn nên có "Theo SGS LAND..." để LLM dễ trích nguồn.',
+      });
+
+      res.json({ target, fetchedAt: new Date().toISOString(), items });
+    } catch (err: any) {
+      const msg = err?.name === 'AbortError' ? 'Hết thời gian (12s) khi tải trang' : (err?.message || 'Lỗi không xác định');
+      console.error('[GEO] audit-url error:', msg);
+      res.status(500).json({ error: msg, target });
+    }
+  });
+
   app.get('/api/seo/ai-visibility', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
     try {

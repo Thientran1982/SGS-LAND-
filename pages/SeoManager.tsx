@@ -894,6 +894,11 @@ const GeoAiSearch: React.FC = () => {
     const [keywords, setKeywords] = useState<TargetKeyword[]>([]);
     const [kwLoading, setKwLoading] = useState(true);
     const [seeding, setSeeding] = useState(false);
+    // URL audit: when set, checklist shows server-side audit of a public URL instead of local DOM
+    const [auditPath, setAuditPath] = useState<string>('/du-an/aqua-city');
+    const [auditing, setAuditing] = useState(false);
+    const [auditResult, setAuditResult] = useState<{ target: string; fetchedAt: string; items: any[] } | null>(null);
+    const [auditError, setAuditError] = useState<string | null>(null);
 
     const [draft, setDraft] = useState({ keyword: '', targetUrl: '', currentPosition: '', targetPosition: '3', searchVolume: '', notes: '' });
     const [saving, setSaving] = useState(false);
@@ -1263,36 +1268,84 @@ const GeoAiSearch: React.FC = () => {
             </section>
 
             {/* ── 3. AI Citation Checklist ───────────────────────────────── */}
-            <section>
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)]">3. Checklist Sẵn Sàng Cho AI Trích Dẫn ({passCount}/{totalCount})</h3>
-                    <button onClick={runChecklist} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Chạy lại</button>
-                </div>
-                <div className="p-3 mb-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-900/15 text-2xs text-amber-900 dark:text-amber-200">
-                    <div className="font-bold mb-1">⚠️ Lưu ý quan trọng</div>
-                    Checklist này đọc DOM của <strong>chính trang Quản Lý SEO này</strong>, KHÔNG phải landing page hay trang dự án. Kết quả chỉ mang tính tham khảo cho khung sườn meta của ứng dụng. Để kiểm tra một URL cụ thể (vd: <code>/du-an/aqua-city</code>), hãy mở URL đó ở tab công khai và dùng công cụ ngoài (Lighthouse, Schema.org Validator, Rich Results Test) — hoặc tab "Sức Khoẻ SEO" để xem chỉ số toàn site.
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {checklist.map((c) => (
-                        <div key={c.id} className={`p-2.5 rounded-lg border text-xs ${
-                            c.status === 'pass' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10'
-                            : c.status === 'warn' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-900/10'
-                            : 'border-rose-200 bg-rose-50/50 dark:bg-rose-900/10'
-                        }`}>
-                            <div className="flex items-start gap-2">
-                                <span className={`mt-0.5 ${c.status === 'pass' ? 'text-emerald-600' : c.status === 'warn' ? 'text-amber-600' : 'text-rose-600'}`}>
-                                    {c.status === 'pass' ? ICONS.CHECK : c.status === 'warn' ? ICONS.WARN : ICONS.ERROR}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                    <div className="font-bold text-[var(--text-primary)]">{c.label}</div>
-                                    <div className="text-2xs text-[var(--text-tertiary)] mt-0.5 break-all">{c.detail}</div>
-                                    {c.tip && <div className="text-2xs text-indigo-600 mt-1">💡 {c.tip}</div>}
-                                </div>
-                            </div>
+            {(() => {
+                const displayItems: any[] = auditResult ? auditResult.items : checklist;
+                const dPass = displayItems.filter((c) => c.status === 'pass').length;
+                const dTotal = displayItems.length;
+                return (
+                    <section>
+                        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                            <h3 className="text-sm font-bold text-[var(--text-primary)]">3. Checklist Sẵn Sàng Cho AI Trích Dẫn ({dPass}/{dTotal})</h3>
+                            <button onClick={() => { setAuditResult(null); setAuditError(null); runChecklist(); }} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Chạy lại / Quay về DOM admin</button>
                         </div>
-                    ))}
-                </div>
-            </section>
+
+                        {/* URL Audit input — kiểm tra trang công khai bất kỳ */}
+                        <div className="p-3 mb-3 rounded-lg border border-indigo-300 bg-indigo-50/70 dark:bg-indigo-900/15">
+                            <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200 mb-2">🔎 Kiểm tra trang công khai (server-side fetch + parse HTML thật)</div>
+                            <div className="flex flex-wrap gap-2 items-center">
+                                <input
+                                    type="text"
+                                    value={auditPath}
+                                    onChange={(e) => setAuditPath(e.target.value)}
+                                    placeholder="/du-an/aqua-city"
+                                    className="flex-1 min-w-[240px] px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]"
+                                />
+                                <button
+                                    disabled={auditing || !auditPath.trim()}
+                                    onClick={async () => {
+                                        setAuditing(true); setAuditError(null); setAuditResult(null);
+                                        try {
+                                            const r = await seoApi.auditUrl(auditPath.trim());
+                                            setAuditResult(r);
+                                        } catch (err: any) {
+                                            setAuditError(err?.message || 'Lỗi không xác định');
+                                        } finally { setAuditing(false); }
+                                    }}
+                                    className="px-3 py-1.5 text-xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60">
+                                    {auditing ? 'Đang kiểm tra...' : 'Kiểm tra URL này'}
+                                </button>
+                            </div>
+                            <div className="text-2xs text-indigo-800 dark:text-indigo-300 mt-1.5 opacity-90">
+                                Gợi ý: <code>/du-an/vinhomes-can-gio</code>, <code>/du-an/sala</code>, <code>/du-an/van-phuc-city</code>, <code>/bat-dong-san-long-thanh</code>, <code>/ai-valuation</code>
+                            </div>
+                            {auditError && <div className="text-2xs text-rose-700 mt-1.5 font-bold">❌ {auditError}</div>}
+                            {auditResult && (
+                                <div className="text-2xs text-emerald-800 dark:text-emerald-300 mt-1.5">
+                                    ✓ Đã kiểm tra: <strong className="break-all">{auditResult.target}</strong> — {new Date(auditResult.fetchedAt).toLocaleString('vi-VN')}
+                                </div>
+                            )}
+                        </div>
+
+                        {!auditResult && (
+                            <div className="p-3 mb-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-900/15 text-2xs text-amber-900 dark:text-amber-200">
+                                <div className="font-bold mb-1">⚠️ Đang xem: DOM của trang admin này</div>
+                                Checklist dưới đang chấm DOM của <strong>chính trang Quản Lý SEO</strong>. Để chấm SEO của trang công khai (vd dự án Aqua City), nhập đường dẫn ở ô bên trên rồi bấm <strong>Kiểm tra URL này</strong>.
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {displayItems.map((c: any) => (
+                                <div key={c.id} className={`p-2.5 rounded-lg border text-xs ${
+                                    c.status === 'pass' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                    : c.status === 'warn' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-900/10'
+                                    : 'border-rose-200 bg-rose-50/50 dark:bg-rose-900/10'
+                                }`}>
+                                    <div className="flex items-start gap-2">
+                                        <span className={`mt-0.5 ${c.status === 'pass' ? 'text-emerald-600' : c.status === 'warn' ? 'text-amber-600' : 'text-rose-600'}`}>
+                                            {c.status === 'pass' ? ICONS.CHECK : c.status === 'warn' ? ICONS.WARN : ICONS.ERROR}
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-bold text-[var(--text-primary)]">{c.label}</div>
+                                            <div className="text-2xs text-[var(--text-tertiary)] mt-0.5 break-all">{c.detail}</div>
+                                            {c.tip && <div className="text-2xs text-indigo-600 mt-1">💡 {c.tip}</div>}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                );
+            })()}
         </div>
     );
 };
