@@ -440,7 +440,27 @@ export const AiValuation: React.FC = () => {
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
     
     // Workflow State
-    const [step, setStep] = useState<'ADDRESS' | 'DETAILS' | 'ANALYZING' | 'RESULT'>('ADDRESS');
+    const [step, setStep] = useState<'ADDRESS' | 'DETAILS' | 'TEASER' | 'ANALYZING' | 'RESULT'>('ADDRESS');
+    // Teaser (free, zero-AI-quota) preview shown after DETAILS, before user opts into deep AI analysis
+    const [teaserError, setTeaserError] = useState<string>('');
+    const [teaser, setTeaser] = useState<{
+        locationDisplay: string;
+        pricePerM2: number;
+        priceMin: number;
+        priceMax: number;
+        totalMin: number;
+        totalMid: number;
+        totalMax: number;
+        totalMinDisplay: string;
+        totalMidDisplay: string;
+        totalMaxDisplay: string;
+        confidence: number;
+        trendText: string;
+        dataSource: string;
+        dataAge: string;
+        found: boolean;
+    } | null>(null);
+    const [teaserLoading, setTeaserLoading] = useState(false);
     
     // Input State
     const [address, setAddress] = useState('');
@@ -613,8 +633,44 @@ export const AiValuation: React.FC = () => {
         return () => { if (twTimerRef.current) clearTimeout(twTimerRef.current); };
     }, []);
 
-    // --- LOGIC: SIMULATE AVM CALCULATION ---
+    // --- STEP 1 (free): Fetch teaser price-range from regional/cache table.
+    // Zero AI quota usage. User reviews this preview, then decides whether
+    // to spend a quota point on the deep AI analysis (runAdvancedAnalysis).
     const runCalculation = async () => {
+        const areaNum = parseFloat(area) || 0;
+        if (!address || areaNum <= 0) return;
+
+        setTeaser(null);
+        setTeaserError('');
+        setTeaserLoading(true);
+        setStep('TEASER');
+
+        try {
+            const params = new URLSearchParams({
+                location: address,
+                area: String(areaNum),
+                type: propertyType || 'townhouse_center',
+            });
+            const res = await fetch(`/api/valuation/teaser?${params.toString()}`, {
+                credentials: 'include',
+            });
+            if (!res.ok) throw new Error(`Teaser HTTP ${res.status}`);
+            const data = await res.json();
+            setTeaser(data);
+        } catch {
+            // Do NOT auto-trigger paid AI analysis on teaser failure.
+            // Surface an error in the TEASER step so the user must explicitly
+            // choose whether to retry the teaser or spend a quota on AI.
+            setTeaser(null);
+            setTeaserError('Không lấy được giá sơ bộ. Vui lòng thử lại hoặc tiếp tục phân tích AI.');
+        }
+        setTeaserLoading(false);
+    };
+
+    // --- STEP 2 (paid): Full multi-source AVM + AI valuation.
+    // Consumes 1 quota point for authenticated users (or 1 daily slot for guests).
+    // Triggered when the user clicks "Phân tích AI chuyên sâu" on the TEASER step.
+    const runAdvancedAnalysis = async () => {
         // Guest quota gate — check BEFORE switching to ANALYZING step
         if (!currentUser) {
             const v = readGuestVal();
@@ -918,6 +974,9 @@ export const AiValuation: React.FC = () => {
         setAreaError('');
         setValuation(null);
         setValuationId(null);
+        setTeaser(null);
+        setTeaserError('');
+        setTeaserLoading(false);
         setFeedbackSent(false);
         setFeedbackRating(null);
         setActualPriceInput('');
@@ -989,11 +1048,12 @@ export const AiValuation: React.FC = () => {
                 {step !== 'RESULT' && (
                     <div className="flex items-center justify-center gap-2 mb-10">
                         {[
-                            { key: 'ADDRESS',   label: 'Địa chỉ',  num: 1 },
-                            { key: 'DETAILS',   label: 'Chi tiết', num: 2 },
-                            { key: 'ANALYZING', label: 'Phân tích',num: 3 },
+                            { key: 'ADDRESS',   label: 'Địa chỉ',   num: 1 },
+                            { key: 'DETAILS',   label: 'Chi tiết',  num: 2 },
+                            { key: 'TEASER',    label: 'Sơ bộ',     num: 3 },
+                            { key: 'ANALYZING', label: 'Phân tích AI', num: 4 },
                         ].map(({ key, label, num }, i, arr) => {
-                            const stepOrder: Record<string, number> = { ADDRESS: 1, DETAILS: 2, ANALYZING: 3, RESULT: 4 };
+                            const stepOrder: Record<string, number> = { ADDRESS: 1, DETAILS: 2, TEASER: 3, ANALYZING: 4, RESULT: 5 };
                             const currentNum = stepOrder[step] ?? 1;
                             const isDone    = currentNum > num;
                             const isActive  = currentNum === num;
@@ -1746,6 +1806,137 @@ export const AiValuation: React.FC = () => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* STEP 2.5: TEASER — Free preview from regional/cache table (zero AI quota) */}
+                {step === 'TEASER' && (
+                    <div className="max-w-xl mx-auto pt-4 animate-enter">
+                        {teaserLoading ? (
+                            <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-10 shadow-2xl text-center">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Đang lấy giá thị trường tham chiếu
+                                </div>
+                                <div className="text-slate-400 text-sm">Tra cứu dữ liệu khu vực — không tốn lượt AI</div>
+                            </div>
+                        ) : teaserError ? (
+                            <div className="bg-slate-800 rounded-[32px] border border-rose-500/30 p-7 md:p-8 shadow-2xl">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[11px] font-bold uppercase tracking-widest mb-4">
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                                    Không lấy được giá sơ bộ
+                                </div>
+                                <div className="text-slate-300 text-sm mb-5">{teaserError}</div>
+                                <div className="space-y-2">
+                                    <button
+                                        onClick={runCalculation}
+                                        className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 text-sm"
+                                    >
+                                        Thử lại lấy giá sơ bộ (miễn phí)
+                                    </button>
+                                    <button
+                                        onClick={runAdvancedAnalysis}
+                                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-3 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+                                    >
+                                        <span>Vẫn phân tích AI chuyên sâu</span>
+                                        <span className="text-xs font-bold rounded-full px-2 py-0.5 bg-white/20 text-white/90">−1 lượt</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setStep('DETAILS')}
+                                        className="w-full text-xs text-slate-500 hover:text-slate-300 py-2 transition-colors"
+                                    >
+                                        ← Quay lại điều chỉnh thông tin
+                                    </button>
+                                </div>
+                            </div>
+                        ) : !teaser ? null : (
+                            <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-7 md:p-8 shadow-2xl">
+                                <div className="flex items-start justify-between gap-3 mb-1">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-widest">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        Giá sơ bộ — Miễn phí
+                                    </div>
+                                    <button
+                                        onClick={() => setStep('DETAILS')}
+                                        className="text-xs font-bold text-slate-400 hover:text-emerald-400 transition-colors shrink-0"
+                                    >
+                                        ← Sửa thông tin
+                                    </button>
+                                </div>
+                                <div className="text-slate-400 text-sm mt-3 mb-1 truncate" title={teaser.locationDisplay}>
+                                    {teaser.locationDisplay}
+                                </div>
+                                <div className="text-xs text-slate-500 mb-3">
+                                    {parseFloat(area) || 0}m² · {PROPERTY_TYPE_LABELS[propertyType] || propertyType}
+                                </div>
+                                {!teaser.found && (
+                                    <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-3 py-2.5 text-xs text-yellow-300 mb-4">
+                                        <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
+                                        <span>Khu vực này chưa có dữ liệu giao dịch riêng — đang dùng giá tham chiếu vùng. Phân tích AI sẽ cho kết quả chính xác hơn.</span>
+                                    </div>
+                                )}
+
+                                {/* Price range card */}
+                                <div className="bg-slate-900/60 border border-slate-700/60 rounded-2xl p-5 mb-5">
+                                    <div className="text-slate-400 text-xs uppercase font-bold tracking-widest mb-2">
+                                        Khoảng giá thị trường ước tính
+                                    </div>
+                                    <div className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300 tracking-tight">
+                                        {teaser.totalMinDisplay} — {teaser.totalMaxDisplay}
+                                        <span className="text-base text-emerald-500 ml-2">VNĐ</span>
+                                    </div>
+                                    <div className="text-slate-400 text-sm mt-2">
+                                        Trung bình: <b className="text-white">{teaser.totalMidDisplay}</b>
+                                        {' '}·{' '}
+                                        <span className="text-slate-500">{(teaser.pricePerM2 / 1_000_000).toFixed(0)} tr/m²</span>
+                                    </div>
+                                </div>
+
+                                {/* Source meta */}
+                                <div className="grid grid-cols-3 gap-2 mb-5">
+                                    <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Tin cậy</div>
+                                        <div className={`text-sm font-bold ${teaser.confidence >= 75 ? 'text-emerald-400' : teaser.confidence >= 60 ? 'text-yellow-400' : 'text-slate-300'}`}>{teaser.confidence}%</div>
+                                    </div>
+                                    <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Xu hướng</div>
+                                        <div className="text-sm font-bold text-white truncate" title={teaser.trendText}>{teaser.trendText}</div>
+                                    </div>
+                                    <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Nguồn</div>
+                                        <div className="text-[11px] font-bold text-slate-300 leading-tight">{teaser.dataSource}</div>
+                                    </div>
+                                </div>
+
+                                {/* CTA: upgrade to deep AI analysis */}
+                                <div className="bg-gradient-to-br from-emerald-900/30 to-cyan-900/20 border border-emerald-500/30 rounded-2xl p-4 mb-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="text-2xl shrink-0">🤖</div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-white text-sm mb-1">Cần phân tích chính xác hơn?</div>
+                                            <div className="text-xs text-slate-400 leading-relaxed">
+                                                AI sẽ tổng hợp 7 hệ số định giá, so sánh giao dịch nội bộ, tính phương pháp thu nhập
+                                                và đưa ra biên độ ±5–12% — tốn <b className="text-emerald-400">1 lượt</b>.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={runAdvancedAnalysis}
+                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 text-base flex items-center justify-center gap-2"
+                                >
+                                    <span>Phân tích AI chuyên sâu</span>
+                                    <span className="text-xs font-bold rounded-full px-2.5 py-0.5 bg-white/20 text-white/90">−1 lượt</span>
+                                </button>
+                                <button
+                                    onClick={() => setStep('DETAILS')}
+                                    className="w-full mt-2 text-xs text-slate-500 hover:text-slate-300 py-2 transition-colors"
+                                >
+                                    Không cần — quay lại điều chỉnh thông tin
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
