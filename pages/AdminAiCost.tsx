@@ -229,9 +229,12 @@ const AdminAiCost: React.FC = () => {
 
   // Compute threshold banner state for the CURRENT period only — historical
   // months would be misleading because the cap is monthly.
+  // Banner uses *combined* AI spend (all features) so it matches what the
+  // alert email evaluates, not just the valuation slice.
   const isCurrentPeriod = period === currentPeriod();
+  const combinedSpendUsd = data.featureBreakdown?.totalCostUsd ?? r.estimatedCostUsd;
   const pctOfCap = (isCurrentPeriod && cfg.thresholdUsd > 0)
-    ? (r.estimatedCostUsd / cfg.thresholdUsd) * 100
+    ? (combinedSpendUsd / cfg.thresholdUsd) * 100
     : 0;
   const warnPct = cfg.warnPercent || 80;
   let banner: { tone: 'over' | 'warn'; text: string } | null = null;
@@ -240,13 +243,13 @@ const AdminAiCost: React.FC = () => {
       banner = {
         tone: 'over',
         text: cfg.hardCapEnabled
-          ? `Đã vượt ngưỡng (${pctOfCap.toFixed(0)}% của $${cfg.thresholdUsd.toFixed(2)}). Tự động chặn AI đang BẬT — các yêu cầu định giá AI mới đang bị tạm dừng.`
-          : `Đã vượt ngưỡng (${pctOfCap.toFixed(0)}% của $${cfg.thresholdUsd.toFixed(2)}). Hãy bật "Tự động chặn" hoặc nâng ngưỡng để tránh phát sinh chi phí.`,
+          ? `Tổng chi phí AI (định giá + chatbot ARIA + lead scoring + …) đã vượt ngưỡng (${pctOfCap.toFixed(0)}% của $${cfg.thresholdUsd.toFixed(2)}). Tự động chặn AI đang BẬT — các yêu cầu định giá AI mới đang bị tạm dừng.`
+          : `Tổng chi phí AI (định giá + chatbot ARIA + lead scoring + …) đã vượt ngưỡng (${pctOfCap.toFixed(0)}% của $${cfg.thresholdUsd.toFixed(2)}). Hãy bật "Tự động chặn" hoặc nâng ngưỡng để tránh phát sinh chi phí.`,
       };
     } else if (pctOfCap >= warnPct) {
       banner = {
         tone: 'warn',
-        text: `Cảnh báo sớm: chi phí đã đạt ${pctOfCap.toFixed(0)}% của ngưỡng $${cfg.thresholdUsd.toFixed(2)} (giới hạn cảnh báo sớm: ${warnPct}%).`,
+        text: `Cảnh báo sớm: tổng chi phí AI (mọi tính năng) đã đạt ${pctOfCap.toFixed(0)}% của ngưỡng $${cfg.thresholdUsd.toFixed(2)} (giới hạn cảnh báo sớm: ${warnPct}%).`,
       };
     }
   }
@@ -590,9 +593,16 @@ const AdminAiCost: React.FC = () => {
       {/* Alert config */}
       <Panel title="Cảnh báo chi phí qua email">
         <p className="text-xs text-[var(--text-tertiary)] mb-3">
-          Đặt ngưỡng chi phí AI hàng tháng. Hệ thống sẽ gửi email cảnh báo sớm khi đạt
-          mức cảnh báo (mặc định 80% ngưỡng), và gửi email cảnh báo vượt ngưỡng khi chạm 100%.
-          Mỗi loại cảnh báo gửi tối đa 1 lần / tháng. Đặt ngưỡng = 0 hoặc bỏ trống email để tắt.
+          Đặt ngưỡng chi phí AI hàng tháng. Ngưỡng này áp cho{' '}
+          <strong>tổng chi phí mọi tính năng dùng Gemini</strong> trong tenant —
+          gồm định giá AI, chatbot ARIA (router/writer/các agent), chấm điểm và
+          tóm tắt lead, v.v. — không chỉ riêng định giá. Hệ thống sẽ gửi email
+          cảnh báo sớm khi đạt mức cảnh báo (mặc định 80% ngưỡng), và gửi email
+          cảnh báo vượt ngưỡng khi chạm 100%. Email liệt kê thêm 3–5 tính năng
+          tốn chi phí nhất để admin biết phần nào đang đẩy chi phí lên. Mỗi loại
+          cảnh báo gửi tối đa 1 lần / tháng. Đặt ngưỡng = 0 hoặc bỏ trống email
+          để tắt. Lưu ý: tuỳ chọn "Tự động chặn" bên dưới chỉ chặn AI định giá;
+          các tính năng AI khác vẫn chạy nhưng vẫn được tính vào chi phí tháng.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <label className="flex flex-col gap-1">
