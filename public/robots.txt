@@ -32,6 +32,9 @@ Allow: /du-an/masterise-homes
 Allow: /du-an/the-global-city
 Allow: /du-an/nha-pho-trung-tam
 Allow: /du-an/manhattan
+Allow: /du-an/vinhomes-can-gio
+Allow: /du-an/van-phuc-city
+Allow: /du-an/sala
 Allow: /llms.txt
 Allow: /llms-full.txt
 

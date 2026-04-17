@@ -367,6 +367,119 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
     },
   },
 
+  'du-an/vinhomes-can-gio': {
+    title: 'Vinhomes Cần Giờ (Green Paradise) | Siêu Đô Thị Lấn Biển 2.870ha — SGS LAND',
+    description: 'Vinhomes Cần Giờ / Vinhomes Green Paradise: dự án siêu đô thị lấn biển 2.870ha lớn nhất Việt Nam tại Cần Giờ, TP.HCM. Tiến độ, pháp lý, giá dự kiến, đặt chỗ ưu tiên tại SGS LAND.',
+    h1: 'Vinhomes Cần Giờ — Vinhomes Green Paradise',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Vinhomes Cần Giờ', item: `${APP_URL}/du-an/vinhomes-can-gio` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Vinhomes Cần Giờ là dự án gì?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Cần Giờ (tên thương mại Vinhomes Green Paradise / Vinhomes Long Beach) là siêu đô thị du lịch nghỉ dưỡng lấn biển 2.870ha do Vinhomes phát triển tại huyện Cần Giờ, TP.HCM — quy mô lớn nhất Việt Nam.' } },
+            { '@type': 'Question', name: 'Vinhomes Cần Giờ khi nào mở bán?', acceptedAnswer: { '@type': 'Answer', text: 'Dự án đã khởi công 2025, dự kiến mở bán phân kỳ từ 2026 và bàn giao từ 2027-2030. SGS LAND cập nhật lịch mở bán từng phân khu — đăng ký để được ưu tiên đặt chỗ.' } },
+            { '@type': 'Question', name: 'Vinhomes Cần Giờ pháp lý đến đâu?', acceptedAnswer: { '@type': 'Answer', text: 'Đã được Thủ tướng phê duyệt chủ trương đầu tư, quy hoạch 1/500 đang triển khai. SGS LAND kiểm tra pháp lý từng giai đoạn miễn phí.' } },
+            { '@type': 'Question', name: 'Cầu Cần Giờ khi nào hoàn thành?', acceptedAnswer: { '@type': 'Answer', text: 'Cầu Cần Giờ vốn 11.000 tỷ đồng, khởi công 2025, dự kiến hoàn thành 2028. Khi đó, thời gian từ trung tâm TP.HCM đến Vinhomes Cần Giờ chỉ còn 30-45 phút.' } },
+            { '@type': 'Question', name: 'Loại hình sản phẩm Vinhomes Cần Giờ?', acceptedAnswer: { '@type': 'Answer', text: 'Biệt thự biển, shophouse biển, căn hộ resort, tòa cao tầng, condotel; tích hợp Vinwonders, sân golf 18 lỗ, marina, bến tàu cao tốc Sài Gòn – Cần Giờ.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/vinhomes-can-gio#project`,
+          name: 'Vinhomes Cần Giờ (Green Paradise)',
+          description: 'Siêu đô thị du lịch nghỉ dưỡng lấn biển 2.870ha của Vinhomes tại Cần Giờ, TP.HCM',
+          url: `${APP_URL}/du-an/vinhomes-can-gio`,
+          address: { '@type': 'PostalAddress', addressLocality: 'Cần Giờ', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 2870, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+  'du-an/van-phuc-city': {
+    title: 'Vạn Phúc City | Khu Đô Thị 198ha Ven Sông Sài Gòn, Thủ Đức — SGS LAND',
+    description: 'Vạn Phúc City Đại Phúc: khu đô thị 198ha ven sông Sài Gòn tại TP Thủ Đức. Bảng giá nhà phố, biệt thự, shophouse cập nhật, sổ hồng riêng. Tư vấn miễn phí tại SGS LAND.',
+    h1: 'Vạn Phúc City — Khu Đô Thị Ven Sông Đại Phúc',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Vạn Phúc City', item: `${APP_URL}/du-an/van-phuc-city` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Vạn Phúc City do ai làm chủ đầu tư?', acceptedAnswer: { '@type': 'Answer', text: 'Vạn Phúc City do Tập đoàn Đại Phúc (Đại Phúc Group) phát triển — chủ đầu tư có hơn 20 năm kinh nghiệm BĐS, sở hữu chuỗi Van Phuc Mall, EMASI và bệnh viện Hạnh Phúc.' } },
+            { '@type': 'Question', name: 'Giá nhà phố Vạn Phúc City bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Nhà phố từ 18-35 tỷ; biệt thự đơn lập 40-120 tỷ; shophouse mặt đại lộ 25-60 tỷ. Giá secondary tăng ổn định 10-15%/năm. Liên hệ SGS LAND để nhận bảng giá realtime.' } },
+            { '@type': 'Question', name: 'Pháp lý Vạn Phúc City có an toàn không?', acceptedAnswer: { '@type': 'Answer', text: 'Phần lớn phân khu đã có sổ hồng riêng từng căn, đã bàn giao và vào ở. SGS LAND kiểm tra sổ cụ thể trước khi đặt cọc miễn phí.' } },
+            { '@type': 'Question', name: 'Vạn Phúc City có những tiện ích gì nổi bật?', acceptedAnswer: { '@type': 'Answer', text: '3,4km bờ sông Sài Gòn, quảng trường nhạc nước Van Phuc Symphony, Van Phuc Mall, trường quốc tế EMASI, bệnh viện Hạnh Phúc, công viên ven sông, chuỗi tiện ích nội khu hoàn thiện.' } },
+            { '@type': 'Question', name: 'Vạn Phúc City cách trung tâm TP.HCM bao xa?', acceptedAnswer: { '@type': 'Answer', text: 'Cách Q1 khoảng 12km qua quốc lộ 13. Gần ga Metro số 1 Tân Cảng, cầu Bình Triệu, cao tốc TP.HCM – Long Thành – Dầu Giây.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/van-phuc-city#project`,
+          name: 'Vạn Phúc City',
+          description: 'Khu đô thị 198ha ven sông Sài Gòn của Đại Phúc Group tại TP Thủ Đức',
+          url: `${APP_URL}/du-an/van-phuc-city`,
+          address: { '@type': 'PostalAddress', addressLocality: 'TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 198, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+  'du-an/sala': {
+    title: 'Sala Đại Quang Minh | Khu Đô Thị Sala Thủ Thiêm 257ha — SGS LAND',
+    description: 'Khu đô thị Sala Đại Quang Minh tại Thủ Thiêm: căn hộ Sarica, Sarimi, Sadora, Sapphire; nhà phố, biệt thự cao cấp. Bảng giá, pháp lý, định giá AI miễn phí tại SGS LAND.',
+    h1: 'Khu Đô Thị Sala Đại Quang Minh — Thủ Thiêm',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Sala Đại Quang Minh', item: `${APP_URL}/du-an/sala` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Khu đô thị Sala là dự án gì?', acceptedAnswer: { '@type': 'Answer', text: 'Sala là khu đô thị 257ha do Đại Quang Minh phát triển tại Khu chức năng số 6 Khu Đô Thị mới Thủ Thiêm, đối diện Quận 1 qua sông Sài Gòn. Giai đoạn 1 đã hoàn thiện và bàn giao từ 2017.' } },
+            { '@type': 'Question', name: 'Các phân khu căn hộ Sala gồm những gì?', acceptedAnswer: { '@type': 'Answer', text: 'Sala có các phân khu căn hộ hạng sang Sarica, Sarimi, Sadora, Sapphire — cùng nhà phố thương mại, biệt thự, shophouse Sala. Tất cả đều đã có sổ hồng riêng.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Sala bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ Sala 75-150 triệu/m² (3-12 tỷ tùy diện tích); nhà phố Sala 35-90 tỷ; biệt thự đơn lập 80-250 tỷ. SGS LAND có dữ liệu giao dịch secondary cập nhật hàng tuần.' } },
+            { '@type': 'Question', name: 'Sala đi vào trung tâm Q1 bao xa?', acceptedAnswer: { '@type': 'Answer', text: 'Sala cách Q1 khoảng 5 phút qua hầm Thủ Thiêm. Gần cầu Ba Son, cầu Thủ Thiêm 2 và ga Metro số 1 Ba Son.' } },
+            { '@type': 'Question', name: 'Tiềm năng tăng giá Sala?', acceptedAnswer: { '@type': 'Answer', text: 'Sala nằm trong vùng lõi Trung Tâm Tài Chính tương lai TP.HCM (Thủ Thiêm). Giá tăng ổn định 8-15%/năm; cho thuê đạt 3-5%/năm với khách thuê quốc tế.' } },
+            { '@type': 'Question', name: 'Đại Quang Minh có uy tín không?', acceptedAnswer: { '@type': 'Answer', text: 'Đại Quang Minh là chủ đầu tư BĐS lớn, được giao thực hiện 4 tuyến đường chính Thủ Thiêm theo BT, hợp tác chiến lược với THACO Group. Track record bàn giao Sala đúng tiến độ và chất lượng cao.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/sala#project`,
+          name: 'Khu Đô Thị Sala Đại Quang Minh',
+          description: 'Khu đô thị 257ha tại Khu Đô Thị mới Thủ Thiêm, TP Thủ Đức — bao gồm các phân khu căn hộ Sarica, Sarimi, Sadora, Sapphire',
+          url: `${APP_URL}/du-an/sala`,
+          address: { '@type': 'PostalAddress', addressLocality: 'Thủ Thiêm, TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 257, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+
   // ─── New Location Landing Pages ─────────────────────────────────────────────
   'bat-dong-san-thu-duc': {
     title: 'Bất Động Sản TP Thủ Đức | Căn Hộ, Đất Nền — SGS LAND',

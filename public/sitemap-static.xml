@@ -288,6 +288,30 @@
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/manhattan" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/manhattan" />
   </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/vinhomes-can-gio</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.88</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/vinhomes-can-gio" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/vinhomes-can-gio" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/van-phuc-city</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/van-phuc-city" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/van-phuc-city" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/sala</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/sala" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/sala" />
+  </url>
 
   <!-- ══ CHÍNH SÁCH PHÁP LÝ ══ -->
   <url>

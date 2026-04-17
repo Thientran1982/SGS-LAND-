@@ -67,6 +67,10 @@ const seoApi = {
   async aiVisibilityStatus(): Promise<AiVisibilityStatus> {
     return api.get('/api/seo/ai-visibility');
   },
+
+  async seedDefaultKeywords(): Promise<{ success: boolean; inserted: number; skipped: number; total: number }> {
+    return api.post('/api/seo/target-keywords/seed-defaults', {});
+  },
 };
 
 export default seoApi;
