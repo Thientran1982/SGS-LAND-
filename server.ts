@@ -78,6 +78,12 @@ const serverT = (lang: string = 'vn') => (key: string): string => {
 
 async function startServer() {
   const app = express();
+
+  // CRITICAL: behind Cloudflare + Replit's reverse proxy.
+  // Without trust proxy: req.ip = proxy IP (rate limiter bans every user from same edge),
+  // req.secure = false (Secure cookie may not be set), and X-Forwarded-* headers ignored.
+  // Trust 2 hops: Cloudflare → Replit edge → app.
+  app.set('trust proxy', 2);
   const PORT = parseInt(process.env.PORT || '5000', 10);
 
   // Gzip compression — reduces JS/CSS/JSON payload by ~70-80%
