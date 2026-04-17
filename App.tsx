@@ -91,6 +91,7 @@ const AdminUsers = lazyLoad(() => import('./pages/AdminUsers'), 'AdminUsers');
 const EnterpriseSettings = lazyLoad(() => import('./pages/EnterpriseSettings'), 'EnterpriseSettings');
 const AdminAiCost = lazyLoad(() => import('./pages/AdminAiCost'), 'AdminAiCost');
 const Billing = lazyLoad(() => import('./pages/Billing'), 'Billing');
+const Checkout = lazyLoad(() => import('./pages/Checkout'), 'Checkout');
 const Marketplace = lazyLoad(() => import('./pages/Marketplace'), 'Marketplace');
 const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatform');
 const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 'SecurityCompliance');
@@ -121,6 +122,7 @@ registerPrefetch(ROUTES.ADMIN_USERS,         () => import('./pages/AdminUsers'))
 registerPrefetch(ROUTES.ENTERPRISE_SETTINGS, () => import('./pages/EnterpriseSettings'));
 registerPrefetch(ROUTES.ADMIN_AI_COST,       () => import('./pages/AdminAiCost'));
 registerPrefetch(ROUTES.BILLING,            () => import('./pages/Billing'));
+registerPrefetch(ROUTES.CHECKOUT,           () => import('./pages/Checkout'));
 registerPrefetch(ROUTES.MARKETPLACE,         () => import('./pages/Marketplace'));
 registerPrefetch(ROUTES.DATA_PLATFORM,       () => import('./pages/DataPlatform'));
 registerPrefetch(ROUTES.SECURITY,           () => import('./pages/SecurityCompliance'));
@@ -211,6 +213,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.ENTERPRISE_SETTINGS]: EnterpriseSettings,
     [ROUTES.ADMIN_AI_COST]: AdminAiCost,
     [ROUTES.BILLING]: Billing,
+    [ROUTES.CHECKOUT]: Checkout,
     [ROUTES.MARKETPLACE]: Marketplace,
     [ROUTES.DATA_PLATFORM]: DataPlatform,
     [ROUTES.SECURITY]: SecurityCompliance,

@@ -7,3 +7,4 @@ export { inboxApi } from './inboxApi';
 export { userApi } from './userApi';
 export { analyticsApi } from './analyticsApi';
 export { knowledgeApi } from './knowledgeApi';
+export { billingApi } from './billingApi';

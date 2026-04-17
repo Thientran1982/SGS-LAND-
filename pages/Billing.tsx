@@ -2,9 +2,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { db, PLANS } from '../services/dbApi';
+import { billingApi } from '../services/api/billingApi';
 import { useTranslation } from '../services/i18n';
 import { PlanTier, Subscription, Invoice, UsageMetrics, Plan } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { ROUTES } from '../config/routes';
 
 const ICONS = {
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
@@ -52,13 +54,24 @@ export const Billing: React.FC = () => {
 
     const handleUpgrade = async () => {
         if (!upgradeConfirmPlan) return;
-        setProcessingPlan(upgradeConfirmPlan);
+        const plan = upgradeConfirmPlan;
+        setProcessingPlan(plan);
         setUpgradeConfirmPlan(null);
         try {
-            await db.upgradeSubscription(upgradeConfirmPlan);
-            const sub = await db.getSubscription();
-            setSubscription(sub);
-            notify(t('billing.upgrade_success'), 'success');
+            // Free tier downgrade keeps the legacy direct path (admin-only).
+            if (plan === PlanTier.INDIVIDUAL) {
+                await db.upgradeSubscription(plan);
+                const sub = await db.getSubscription();
+                setSubscription(sub);
+                notify(t('billing.upgrade_success'), 'success');
+                return;
+            }
+            // Paid tiers go through the checkout flow so the payment gateway can
+            // collect funds before the plan is activated.
+            const session = await billingApi.createCheckout(plan as 'TEAM' | 'ENTERPRISE');
+            const target = `/${ROUTES.CHECKOUT}?session=${session.sessionId}`;
+            window.history.pushState(null, '', target);
+            window.dispatchEvent(new PopStateEvent('popstate'));
         } catch (e: any) {
             notify(e.message, 'error');
         } finally {
