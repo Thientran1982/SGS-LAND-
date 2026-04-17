@@ -82,4 +82,8 @@ APP_URL = "https://sgsland.vn"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
 # JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions
