@@ -89,6 +89,7 @@ const TaskReports = lazyLoad(() => import('./pages/TaskReports'), 'TaskReports')
 const SystemStatus = lazyLoad(() => import('./pages/SystemStatus'), 'SystemStatus');
 const AdminUsers = lazyLoad(() => import('./pages/AdminUsers'), 'AdminUsers');
 const EnterpriseSettings = lazyLoad(() => import('./pages/EnterpriseSettings'), 'EnterpriseSettings');
+const AdminAiCost = lazyLoad(() => import('./pages/AdminAiCost'), 'AdminAiCost');
 const Billing = lazyLoad(() => import('./pages/Billing'), 'Billing');
 const Marketplace = lazyLoad(() => import('./pages/Marketplace'), 'Marketplace');
 const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatform');
@@ -118,6 +119,7 @@ registerPrefetch(ROUTES.KNOWLEDGE,           () => import('./pages/KnowledgeBase
 registerPrefetch(ROUTES.SYSTEM,             () => import('./pages/SystemStatus'));
 registerPrefetch(ROUTES.ADMIN_USERS,         () => import('./pages/AdminUsers'));
 registerPrefetch(ROUTES.ENTERPRISE_SETTINGS, () => import('./pages/EnterpriseSettings'));
+registerPrefetch(ROUTES.ADMIN_AI_COST,       () => import('./pages/AdminAiCost'));
 registerPrefetch(ROUTES.BILLING,            () => import('./pages/Billing'));
 registerPrefetch(ROUTES.MARKETPLACE,         () => import('./pages/Marketplace'));
 registerPrefetch(ROUTES.DATA_PLATFORM,       () => import('./pages/DataPlatform'));
@@ -207,6 +209,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.SYSTEM]: SystemStatus,
     [ROUTES.ADMIN_USERS]: AdminUsers,
     [ROUTES.ENTERPRISE_SETTINGS]: EnterpriseSettings,
+    [ROUTES.ADMIN_AI_COST]: AdminAiCost,
     [ROUTES.BILLING]: Billing,
     [ROUTES.MARKETPLACE]: Marketplace,
     [ROUTES.DATA_PLATFORM]: DataPlatform,

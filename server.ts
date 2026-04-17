@@ -738,6 +738,23 @@ async function startServer() {
         marketDataService.getMarketData(address).catch(() => null),
       ]);
 
+      // Track usage for admin cost report (fire-and-forget)
+      try {
+        const { recordValuationUsage } = await import('./server/services/valuationUsageService');
+        const u = (req as any).user;
+        recordValuationUsage({
+          tenantId: (req as any).tenantId || u?.tenantId || null,
+          userId: u?.id || u?.userId || null,
+          planId: (req as any).quotaInfo?.plan || (u ? null : 'GUEST'),
+          endpoint: 'realtime',
+          source: 'AI_LIVE',
+          aiCalls: 2,
+          isGuest: !u,
+          ipAddress: req.ip,
+          addressHint: typeof address === 'string' ? address.slice(0, 120) : null,
+        }).catch(() => {});
+      } catch { /* ignore */ }
+
       res.json(result);
     } catch (error) {
       sendAiError(res, error, 'valuation');
