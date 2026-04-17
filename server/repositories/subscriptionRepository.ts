@@ -140,31 +140,29 @@ class SubscriptionRepository extends BaseRepository {
   async getInvoices(tenantId: string): Promise<any[]> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT s.id, s.plan_id, s.current_period_start as period_start, s.current_period_end as period_end,
-                s.status, s.created_at
-         FROM ${this.tableName} s
-         ORDER BY s.created_at DESC
-         LIMIT 12`
+        `SELECT id, plan_id, plan_name, amount_cents, currency,
+                status, provider, provider_payment_id,
+                created_at, paid_at, cancelled_at
+         FROM payment_transactions
+         WHERE tenant_id = $1
+         ORDER BY created_at DESC
+         LIMIT 24`,
+        [tenantId]
       );
-      return result.rows.map((row, index) => ({
+      return result.rows.map((row) => ({
         id: row.id,
         planId: row.plan_id,
-        periodStart: row.period_start,
-        periodEnd: row.period_end,
-        status: row.status === 'ACTIVE' ? 'PAID' : row.status,
-        amount: this.getPlanPrice(row.plan_id),
+        planName: row.plan_name,
+        amount: Math.round(Number(row.amount_cents)) / 100,
+        currency: row.currency,
+        status: row.status,
+        provider: row.provider,
+        providerPaymentId: row.provider_payment_id,
         createdAt: row.created_at,
+        paidAt: row.paid_at,
+        cancelledAt: row.cancelled_at,
       }));
     });
-  }
-
-  private getPlanPrice(planId: string): number {
-    const prices: Record<string, number> = {
-      'INDIVIDUAL': 0,
-      'TEAM': 49,
-      'ENTERPRISE': 199,
-    };
-    return prices[planId] || 0;
   }
 }
 
