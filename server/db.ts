@@ -14,8 +14,12 @@ function sanitiseConnectionString(raw: string | undefined): string | undefined {
   if (!raw) return raw;
   return raw.replace(/[?&]channel_binding=[^&]*/g, (m) => (m.startsWith('?') ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
 }
-const DB_CONNECTION_STRING = sanitiseConnectionString(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL);
-if (process.env.NEON_DATABASE_URL) {
+const DB_CONNECTION_STRING = sanitiseConnectionString(
+  process.env.PROD_DATABASE_URL || process.env.NEON_DATABASE_URL || process.env.DATABASE_URL
+);
+if (process.env.PROD_DATABASE_URL) {
+  console.log('[DB] Using PROD_DATABASE_URL (shared production Neon — same DB for dev & prod)');
+} else if (process.env.NEON_DATABASE_URL) {
   console.log('[DB] Using NEON_DATABASE_URL (customer Neon project)');
 }
 
