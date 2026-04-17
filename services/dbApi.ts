@@ -840,6 +840,85 @@ class DatabaseApiClient {
     return true;
   }
 
+  // ── Campaigns (Chiến dịch tự động) ─────────────────────────────────────────
+  async getCampaigns() {
+    const r = await fetch('/api/campaigns', { credentials: 'include' });
+    if (!r.ok) throw new Error('Failed to fetch campaigns');
+    const j = await r.json();
+    return j.data || [];
+  }
+
+  async getCampaign(id: string) {
+    const r = await fetch(`/api/campaigns/${id}`, { credentials: 'include' });
+    if (!r.ok) throw new Error('Failed to fetch campaign');
+    return r.json();
+  }
+
+  async createCampaign(data: any) {
+    const r = await fetch('/api/campaigns', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Failed to create campaign');
+    return r.json();
+  }
+
+  async updateCampaign(id: string, data: any) {
+    const r = await fetch(`/api/campaigns/${id}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Failed to update campaign');
+    return r.json();
+  }
+
+  async deleteCampaign(id: string) {
+    const r = await fetch(`/api/campaigns/${id}`, { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Failed to delete campaign');
+    return true;
+  }
+
+  async activateCampaign(id: string) {
+    const r = await fetch(`/api/campaigns/${id}/activate`, { method: 'POST', credentials: 'include' });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Failed to activate');
+    return r.json();
+  }
+
+  async pauseCampaign(id: string) {
+    const r = await fetch(`/api/campaigns/${id}/pause`, { method: 'POST', credentials: 'include' });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Failed to pause');
+    return r.json();
+  }
+
+  async runCampaignNow(id: string) {
+    const r = await fetch(`/api/campaigns/${id}/run-now`, { method: 'POST', credentials: 'include' });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Failed to run');
+    return r.json();
+  }
+
+  async previewCampaignAudience(audience: any) {
+    const r = await fetch('/api/campaigns/preview-audience', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audience }),
+    });
+    if (!r.ok) throw new Error('Failed to preview audience');
+    const j = await r.json();
+    return j.count || 0;
+  }
+
+  async getCampaignRecipients(id: string) {
+    const r = await fetch(`/api/campaigns/${id}/recipients`, { credentials: 'include' });
+    if (!r.ok) throw new Error('Failed to fetch recipients');
+    const j = await r.json();
+    return j.data || [];
+  }
+
   async getTemplates() {
     try {
       const result = await fetch('/api/templates', { credentials: 'include' });
@@ -1317,6 +1396,7 @@ class DatabaseApiClient {
       { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
       { id: 'routing', labelKey: 'menu.routing-rules', route: ROUTES.ROUTING_RULES, iconKey: ROUTES.ROUTING_RULES },
       { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
+      { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
       { id: 'scoring', labelKey: 'menu.scoring-rules', route: ROUTES.SCORING_RULES, iconKey: ROUTES.SCORING_RULES },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
