@@ -9,7 +9,12 @@ types.setTypeParser(20, (val: string) => parseInt(val, 10));
 
 // Prefer the user-managed Neon URL when present, fall back to runtime-managed DATABASE_URL.
 // This lets us migrate to a customer Neon project without touching the runtime-managed Helium DB var.
-const DB_CONNECTION_STRING = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+// Strip libpq-only params (e.g. channel_binding) that node-pg does not recognise.
+function sanitiseConnectionString(raw: string | undefined): string | undefined {
+  if (!raw) return raw;
+  return raw.replace(/[?&]channel_binding=[^&]*/g, (m) => (m.startsWith('?') ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
+}
+const DB_CONNECTION_STRING = sanitiseConnectionString(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL);
 if (process.env.NEON_DATABASE_URL) {
   console.log('[DB] Using NEON_DATABASE_URL (customer Neon project)');
 }
