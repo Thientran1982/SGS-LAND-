@@ -71,6 +71,10 @@ const seoApi = {
   async seedDefaultKeywords(): Promise<{ success: boolean; inserted: number; skipped: number; total: number }> {
     return api.post('/api/seo/target-keywords/seed-defaults', {});
   },
+
+  async auditUrl(path: string): Promise<{ target: string; fetchedAt: string; items: Array<{ id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string; tip?: string }> }> {
+    return api.post('/api/seo/audit-url', { path });
+  },
 };
 
 export default seoApi;
