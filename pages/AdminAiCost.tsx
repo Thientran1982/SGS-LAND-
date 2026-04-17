@@ -31,6 +31,9 @@ interface AlertConfig {
   thresholdUsd: number;
   alertEmail: string | null;
   lastAlertedPeriod: string | null;
+  warnPercent: number;
+  hardCapEnabled: boolean;
+  lastWarnAlertedPeriod: string | null;
 }
 
 interface ReportResponse {
@@ -66,9 +69,16 @@ const AdminAiCost: React.FC = () => {
   const [data, setData] = useState<ReportResponse | null>(null);
   const [period, setPeriod] = useState<string>(currentPeriod());
   const [savingAlert, setSavingAlert] = useState(false);
-  const [alertDraft, setAlertDraft] = useState<{ thresholdUsd: string; alertEmail: string }>({
+  const [alertDraft, setAlertDraft] = useState<{
+    thresholdUsd: string;
+    alertEmail: string;
+    warnPercent: string;
+    hardCapEnabled: boolean;
+  }>({
     thresholdUsd: '',
     alertEmail: '',
+    warnPercent: '80',
+    hardCapEnabled: false,
   });
   const [toast, setToast] = useState<string | null>(null);
 
@@ -86,6 +96,8 @@ const AdminAiCost: React.FC = () => {
       setAlertDraft({
         thresholdUsd: res.alertConfig.thresholdUsd ? String(res.alertConfig.thresholdUsd) : '',
         alertEmail: res.alertConfig.alertEmail || '',
+        warnPercent: String(res.alertConfig.warnPercent ?? 80),
+        hardCapEnabled: !!res.alertConfig.hardCapEnabled,
       });
     } catch (err: any) {
       setToast(err.message || 'Lỗi tải báo cáo');
@@ -107,6 +119,8 @@ const AdminAiCost: React.FC = () => {
       const res = await api.put<AlertConfig>('/api/valuation/admin/cost-alert-config', {
         thresholdUsd: Number(alertDraft.thresholdUsd) || 0,
         alertEmail: alertDraft.alertEmail || null,
+        warnPercent: Number(alertDraft.warnPercent) || 80,
+        hardCapEnabled: alertDraft.hardCapEnabled,
       });
       setData((d) => d ? { ...d, alertConfig: res } : d);
       setToast('Đã lưu cấu hình cảnh báo');
@@ -132,9 +146,34 @@ const AdminAiCost: React.FC = () => {
   if (!data) return null;
 
   const r = data.report;
+  const cfg = data.alertConfig;
   const trendCount = pct(r.totalValuations, r.prevTotalValuations);
   const trendCost = pct(r.estimatedCostUsd, r.prevEstimatedCostUsd);
   const maxDaily = Math.max(1, ...r.dailyTrend.map((d) => d.valuations));
+
+  // Compute threshold banner state for the CURRENT period only — historical
+  // months would be misleading because the cap is monthly.
+  const isCurrentPeriod = period === currentPeriod();
+  const pctOfCap = (isCurrentPeriod && cfg.thresholdUsd > 0)
+    ? (r.estimatedCostUsd / cfg.thresholdUsd) * 100
+    : 0;
+  const warnPct = cfg.warnPercent || 80;
+  let banner: { tone: 'over' | 'warn'; text: string } | null = null;
+  if (isCurrentPeriod && cfg.thresholdUsd > 0) {
+    if (pctOfCap >= 100) {
+      banner = {
+        tone: 'over',
+        text: cfg.hardCapEnabled
+          ? `Đã vượt ngưỡng (${pctOfCap.toFixed(0)}% của $${cfg.thresholdUsd.toFixed(2)}). Tự động chặn AI đang BẬT — các yêu cầu định giá AI mới đang bị tạm dừng.`
+          : `Đã vượt ngưỡng (${pctOfCap.toFixed(0)}% của $${cfg.thresholdUsd.toFixed(2)}). Hãy bật "Tự động chặn" hoặc nâng ngưỡng để tránh phát sinh chi phí.`,
+      };
+    } else if (pctOfCap >= warnPct) {
+      banner = {
+        tone: 'warn',
+        text: `Cảnh báo sớm: chi phí đã đạt ${pctOfCap.toFixed(0)}% của ngưỡng $${cfg.thresholdUsd.toFixed(2)} (giới hạn cảnh báo sớm: ${warnPct}%).`,
+      };
+    }
+  }
 
   return (
     <div className="p-4 sm:p-6 space-y-6 animate-enter pb-20">
@@ -172,6 +211,28 @@ const AdminAiCost: React.FC = () => {
           >Export CSV</button>
         </div>
       </div>
+
+      {/* Threshold banner (current period only) */}
+      {banner && (
+        <div
+          role="alert"
+          className={`p-4 rounded-2xl border shadow-sm flex items-start gap-3 ${
+            banner.tone === 'over'
+              ? 'bg-rose-50 border-rose-300 text-rose-900'
+              : 'bg-amber-50 border-amber-300 text-amber-900'
+          }`}
+        >
+          <span className="text-2xl leading-none mt-0.5">
+            {banner.tone === 'over' ? '⛔' : '⚠️'}
+          </span>
+          <div className="flex-1">
+            <div className="font-bold text-sm">
+              {banner.tone === 'over' ? 'Đã vượt ngưỡng chi phí AI' : 'Sắp đạt ngưỡng chi phí AI'}
+            </div>
+            <div className="text-sm mt-1">{banner.text}</div>
+          </div>
+        </div>
+      )}
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -306,12 +367,13 @@ const AdminAiCost: React.FC = () => {
       {/* Alert config */}
       <Panel title="Cảnh báo chi phí qua email">
         <p className="text-xs text-[var(--text-tertiary)] mb-3">
-          Khi chi phí ước tính trong tháng vượt ngưỡng, hệ thống sẽ gửi email cảnh báo (mỗi tháng tối đa 1 lần).
-          Đặt ngưỡng = 0 hoặc bỏ trống email để tắt.
+          Đặt ngưỡng chi phí AI hàng tháng. Hệ thống sẽ gửi email cảnh báo sớm khi đạt
+          mức cảnh báo (mặc định 80% ngưỡng), và gửi email cảnh báo vượt ngưỡng khi chạm 100%.
+          Mỗi loại cảnh báo gửi tối đa 1 lần / tháng. Đặt ngưỡng = 0 hoặc bỏ trống email để tắt.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-[var(--text-secondary)]">Ngưỡng (USD)</span>
+            <span className="text-xs font-bold text-[var(--text-secondary)]">Ngưỡng (USD / tháng)</span>
             <input
               type="number"
               min={0}
@@ -322,7 +384,20 @@ const AdminAiCost: React.FC = () => {
               className="px-3 py-2 text-sm rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
             />
           </label>
-          <label className="flex flex-col gap-1 sm:col-span-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-bold text-[var(--text-secondary)]">Cảnh báo sớm (% ngưỡng)</span>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              step="1"
+              value={alertDraft.warnPercent}
+              onChange={(e) => setAlertDraft((d) => ({ ...d, warnPercent: e.target.value }))}
+              placeholder="80"
+              className="px-3 py-2 text-sm rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
             <span className="text-xs font-bold text-[var(--text-secondary)]">Email nhận cảnh báo</span>
             <input
               type="email"
@@ -333,7 +408,25 @@ const AdminAiCost: React.FC = () => {
             />
           </label>
         </div>
-        <div className="mt-3 flex items-center gap-3">
+        <label className="mt-4 flex items-start gap-3 p-3 rounded-lg bg-rose-50 border border-rose-200 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={alertDraft.hardCapEnabled}
+            onChange={(e) => setAlertDraft((d) => ({ ...d, hardCapEnabled: e.target.checked }))}
+            className="mt-0.5 h-4 w-4 accent-rose-600"
+          />
+          <span className="flex-1">
+            <span className="block text-sm font-bold text-rose-900">
+              Tự động chặn yêu cầu AI khi vượt ngưỡng (hard cap)
+            </span>
+            <span className="block text-xs text-rose-800/80 mt-0.5">
+              Khi bật, mọi yêu cầu định giá AI mới sẽ bị từ chối ngay khi chi phí ước tính trong
+              tháng đạt ngưỡng. Người dùng sẽ thấy thông báo lỗi đến khi sang tháng mới hoặc bạn
+              nâng ngưỡng / tắt chế độ này.
+            </span>
+          </span>
+        </label>
+        <div className="mt-3 flex items-center gap-4 flex-wrap">
           <button
             onClick={saveAlert}
             disabled={savingAlert}
@@ -341,9 +434,14 @@ const AdminAiCost: React.FC = () => {
           >
             {savingAlert ? 'Đang lưu…' : 'Lưu cấu hình'}
           </button>
+          {data.alertConfig.lastWarnAlertedPeriod && (
+            <span className="text-xs text-[var(--text-tertiary)]">
+              Cảnh báo sớm gần nhất: <span className="font-mono">{data.alertConfig.lastWarnAlertedPeriod}</span>
+            </span>
+          )}
           {data.alertConfig.lastAlertedPeriod && (
             <span className="text-xs text-[var(--text-tertiary)]">
-              Đã gửi cảnh báo gần nhất: <span className="font-mono">{data.alertConfig.lastAlertedPeriod}</span>
+              Cảnh báo vượt ngưỡng gần nhất: <span className="font-mono">{data.alertConfig.lastAlertedPeriod}</span>
             </span>
           )}
         </div>
