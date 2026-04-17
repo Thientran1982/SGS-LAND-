@@ -74,6 +74,47 @@ export async function recordAiUsage(params: RecordAiUsageParams): Promise<void> 
     );
   } catch (err: any) {
     logger.warn('[aiUsage] recordAiUsage failed:', err?.message || err);
+    return;
+  }
+
+  if (params.tenantId) {
+    setImmediate(() => {
+      import('./valuationUsageService')
+        .then((m) => m.maybeSendCombinedThresholdAlert(params.tenantId!))
+        .catch(() => {});
+    });
+  }
+}
+
+export async function getTotalAiSpend(
+  period: string,
+  tenantId?: string | null,
+): Promise<{ totalCostUsd: number; totalAiCalls: number; calls: number }> {
+  const { start, end } = periodBounds(period);
+  const params: any[] = [start, end];
+  let where = `created_at >= $1 AND created_at < $2`;
+  if (tenantId) {
+    params.push(tenantId);
+    where += ` AND tenant_id = $${params.length}`;
+  }
+  try {
+    const r = await pool.query(
+      `SELECT COUNT(*)::int                    AS calls,
+              COALESCE(SUM(ai_calls),0)::int   AS ai_calls,
+              COALESCE(SUM(cost_usd),0)::float AS cost
+         FROM ai_usage_log
+        WHERE ${where}`,
+      params,
+    );
+    const row = r.rows[0] || { calls: 0, ai_calls: 0, cost: 0 };
+    return {
+      totalCostUsd: Number(row.cost ?? 0),
+      totalAiCalls: row.ai_calls ?? 0,
+      calls: row.calls ?? 0,
+    };
+  } catch (err: any) {
+    logger.warn('[aiUsage] getTotalAiSpend failed:', err?.message || err);
+    return { totalCostUsd: 0, totalAiCalls: 0, calls: 0 };
   }
 }
 

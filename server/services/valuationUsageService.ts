@@ -10,6 +10,29 @@
 
 import { pool } from '../db';
 import { logger } from '../middleware/logger';
+import { getTotalAiSpend, getFeatureBreakdown } from './aiUsageService';
+
+// Friendly Vietnamese labels for known AI feature codes (used in alert emails).
+const FEATURE_LABELS_VI: Record<string, string> = {
+  VALUATION_SEARCH: 'Định giá – Tìm kiếm so sánh',
+  VALUATION_EXTRACT: 'Định giá – Trích xuất dữ liệu',
+  VALUATION_VERIFY: 'Định giá – Xác minh kết quả',
+  CHAT_ROUTER: 'Chatbot ARIA – Điều phối',
+  CHAT_WRITER: 'Chatbot ARIA – Soạn trả lời',
+  CHAT_INVENTORY_AGENT: 'Chatbot ARIA – Tồn kho BĐS',
+  CHAT_FINANCE_AGENT: 'Chatbot ARIA – Tài chính',
+  CHAT_LEGAL_AGENT: 'Chatbot ARIA – Pháp lý',
+  CHAT_SALES_AGENT: 'Chatbot ARIA – Bán hàng',
+  CHAT_MARKETING_AGENT: 'Chatbot ARIA – Marketing',
+  CHAT_CONTRACT_AGENT: 'Chatbot ARIA – Hợp đồng',
+  CHAT_LEAD_ANALYSIS: 'Chatbot ARIA – Phân tích lead',
+  LEAD_SCORING: 'Chấm điểm lead',
+  LEAD_SUMMARY: 'Tóm tắt lead',
+};
+
+function featureLabel(code: string): string {
+  return FEATURE_LABELS_VI[code] || code;
+}
 
 const PRICE_PER_CALL_USD = (() => {
   const v = parseFloat(process.env.GEMINI_PRICE_PER_CALL_USD || '');
@@ -73,7 +96,7 @@ export async function recordValuationUsage(params: RecordParams): Promise<void> 
 
   // Fire-and-forget: check threshold after insert
   if (params.tenantId) {
-    setImmediate(() => maybeSendThresholdAlert(params.tenantId!).catch(() => {}));
+    setImmediate(() => maybeSendCombinedThresholdAlert(params.tenantId!).catch(() => {}));
   }
 }
 
@@ -355,25 +378,55 @@ export async function checkHardCap(
     const cfg = await getCostAlertConfig(tenantId);
     if (!cfg.hardCapEnabled || !cfg.thresholdUsd || cfg.thresholdUsd <= 0) return null;
     const period = currentPeriod();
-    const totals = await totalsForPeriod(period, tenantId);
-    if (totals.cost < cfg.thresholdUsd) return null;
-    return { thresholdUsd: cfg.thresholdUsd, spentUsd: totals.cost, period };
+    const totals = await getTotalAiSpend(period, tenantId);
+    if (totals.totalCostUsd < cfg.thresholdUsd) return null;
+    return { thresholdUsd: cfg.thresholdUsd, spentUsd: totals.totalCostUsd, period };
   } catch {
     return null;
   }
 }
 
-async function maybeSendThresholdAlert(tenantId: string): Promise<void> {
+/**
+ * Evaluates the per-tenant monthly cost cap against the *combined* AI spend
+ * recorded in `ai_usage_log` (covers all Gemini-backed features: valuation,
+ * chatbot agents, lead scoring, lead summaries, …) — not just valuations.
+ *
+ * Triggered fire-and-forget after every recorded usage row.
+ */
+export async function maybeSendCombinedThresholdAlert(tenantId: string): Promise<void> {
   const cfg = await getCostAlertConfig(tenantId);
   if (!cfg.thresholdUsd || cfg.thresholdUsd <= 0) return;
   if (!cfg.alertEmail) return;
 
   const period = currentPeriod();
-  const totals = await totalsForPeriod(period, tenantId);
+  const totals = await getTotalAiSpend(period, tenantId);
+  const spent = totals.totalCostUsd;
   const warnAt = cfg.thresholdUsd * (cfg.warnPercent / 100);
 
-  // Hard threshold breach (≥ 100% of cap) — send/upgrade alert if not yet sent this month
-  if (totals.cost >= cfg.thresholdUsd && cfg.lastAlertedPeriod !== period) {
+  const needOver =
+    spent >= cfg.thresholdUsd && cfg.lastAlertedPeriod !== period;
+  const needWarn =
+    !needOver &&
+    cfg.warnPercent > 0 &&
+    cfg.warnPercent < 100 &&
+    spent >= warnAt &&
+    spent < cfg.thresholdUsd &&
+    cfg.lastWarnAlertedPeriod !== period;
+
+  if (!needOver && !needWarn) return;
+
+  // Fetch top features driving cost (best-effort)
+  let topFeatures: Array<{ feature: string; costUsd: number }> = [];
+  try {
+    const fb = await getFeatureBreakdown(period, { tenantId });
+    topFeatures = fb.rows
+      .slice(0, 5)
+      .map((r) => ({ feature: r.feature, costUsd: r.costUsd }));
+  } catch {
+    /* best-effort */
+  }
+
+  if (needOver) {
     await pool.query(
       `UPDATE valuation_cost_alerts
           SET last_alerted_period = $2,
@@ -386,42 +439,35 @@ async function maybeSendThresholdAlert(tenantId: string): Promise<void> {
       tenantId,
       to: cfg.alertEmail,
       period,
-      spentUsd: totals.cost,
+      spentUsd: spent,
       thresholdUsd: cfg.thresholdUsd,
-      totalValuations: totals.total,
+      totalAiCalls: totals.totalAiCalls,
       severity: 'over',
       warnPercent: cfg.warnPercent,
       hardCapEnabled: cfg.hardCapEnabled,
+      topFeatures,
     });
     return;
   }
 
-  // Early-warning breach (≥ warn_percent of cap) — separate one-shot per month
-  if (
-    cfg.warnPercent > 0 &&
-    cfg.warnPercent < 100 &&
-    totals.cost >= warnAt &&
-    totals.cost < cfg.thresholdUsd &&
-    cfg.lastWarnAlertedPeriod !== period
-  ) {
-    await pool.query(
-      `UPDATE valuation_cost_alerts
-          SET last_warn_alerted_period = $2, updated_at = CURRENT_TIMESTAMP
-        WHERE tenant_id = $1`,
-      [tenantId, period],
-    );
-    await sendCostAlertEmail({
-      tenantId,
-      to: cfg.alertEmail,
-      period,
-      spentUsd: totals.cost,
-      thresholdUsd: cfg.thresholdUsd,
-      totalValuations: totals.total,
-      severity: 'warn',
-      warnPercent: cfg.warnPercent,
-      hardCapEnabled: cfg.hardCapEnabled,
-    });
-  }
+  await pool.query(
+    `UPDATE valuation_cost_alerts
+        SET last_warn_alerted_period = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE tenant_id = $1`,
+    [tenantId, period],
+  );
+  await sendCostAlertEmail({
+    tenantId,
+    to: cfg.alertEmail,
+    period,
+    spentUsd: spent,
+    thresholdUsd: cfg.thresholdUsd,
+    totalAiCalls: totals.totalAiCalls,
+    severity: 'warn',
+    warnPercent: cfg.warnPercent,
+    hardCapEnabled: cfg.hardCapEnabled,
+    topFeatures,
+  });
 }
 
 async function sendCostAlertEmail(args: {
@@ -430,32 +476,48 @@ async function sendCostAlertEmail(args: {
   period: string;
   spentUsd: number;
   thresholdUsd: number;
-  totalValuations: number;
+  totalAiCalls: number;
   severity: 'warn' | 'over';
   warnPercent: number;
   hardCapEnabled: boolean;
+  topFeatures: Array<{ feature: string; costUsd: number }>;
 }): Promise<void> {
   const pctOfCap = args.thresholdUsd > 0 ? (args.spentUsd / args.thresholdUsd) * 100 : 0;
   const subject =
     args.severity === 'warn'
-      ? `[SGS Land] Cảnh báo sớm: chi phí AI định giá đã đạt ${pctOfCap.toFixed(0)}% ngưỡng — tháng ${args.period}`
-      : `[SGS Land] Chi phí AI định giá vượt ngưỡng — tháng ${args.period}`;
+      ? `[SGS Land] Cảnh báo sớm: chi phí AI đã đạt ${pctOfCap.toFixed(0)}% ngưỡng — tháng ${args.period}`
+      : `[SGS Land] Chi phí AI vượt ngưỡng — tháng ${args.period}`;
   const headline =
     args.severity === 'warn'
-      ? `Chi phí AI định giá đã đạt <strong>${pctOfCap.toFixed(1)}%</strong> ngưỡng cảnh báo (${args.warnPercent}% sớm).`
-      : `Chi phí AI định giá đã <strong>vượt ngưỡng</strong>.`;
-  const capNote = args.hardCapEnabled && args.severity === 'over'
-    ? `<p><strong>Chế độ tự động chặn đang bật:</strong> các yêu cầu định giá AI mới sẽ bị tạm dừng cho đến khi sang tháng hoặc nâng ngưỡng.</p>`
+      ? `Tổng chi phí AI (định giá, chatbot ARIA, lead scoring, …) đã đạt <strong>${pctOfCap.toFixed(1)}%</strong> ngưỡng cảnh báo sớm (${args.warnPercent}%).`
+      : `Tổng chi phí AI (định giá, chatbot ARIA, lead scoring, …) đã <strong>vượt ngưỡng</strong>.`;
+  const capNote =
+    args.hardCapEnabled && args.severity === 'over'
+      ? `<p><strong>Chế độ tự động chặn đang bật:</strong> các yêu cầu định giá AI mới sẽ bị tạm dừng cho đến khi sang tháng hoặc nâng ngưỡng. (Lưu ý: hard-cap chỉ chặn AI định giá; các tính năng AI khác vẫn chạy nhưng vẫn được tính vào chi phí tháng.)</p>`
+      : '';
+
+  const featuresBlock = args.topFeatures.length
+    ? `<p style="margin:12px 0 4px 0"><strong>Top tính năng tốn chi phí trong tháng:</strong></p>
+       <ol style="margin:0 0 12px 20px;padding:0">
+         ${args.topFeatures
+           .map(
+             (f) =>
+               `<li>${featureLabel(f.feature)} — <strong>$${f.costUsd.toFixed(4)} USD</strong></li>`,
+           )
+           .join('')}
+       </ol>`
     : '';
+
   const body = `
     <p>Xin chào,</p>
     <p>${headline}</p>
-    <p>Chi phí ước tính tháng <strong>${args.period}</strong>:
+    <p>Chi phí AI ước tính tháng <strong>${args.period}</strong>:
        <strong>$${args.spentUsd.toFixed(2)} USD</strong>
        / ngưỡng <strong>$${args.thresholdUsd.toFixed(2)} USD</strong>.</p>
-    <p>Tổng số lượt định giá: <strong>${args.totalValuations}</strong>.</p>
+    <p>Tổng số lệnh gọi AI ghi nhận: <strong>${args.totalAiCalls.toLocaleString('vi-VN')}</strong>.</p>
+    ${featuresBlock}
     ${capNote}
-    <p>Vào trang quản trị "Chi phí AI" để xem chi tiết.</p>
+    <p>Vào trang quản trị "Chi phí AI" để xem chi tiết theo từng tính năng.</p>
   `;
   try {
     const { emailService } = await import('./emailService');
