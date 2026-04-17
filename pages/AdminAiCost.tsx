@@ -36,11 +36,45 @@ interface AlertConfig {
   lastWarnAlertedPeriod: string | null;
 }
 
+interface FeatureCostRow {
+  feature: string;
+  calls: number;
+  aiCalls: number;
+  costUsd: number;
+}
+
+interface FeatureBreakdown {
+  rows: FeatureCostRow[];
+  totalCostUsd: number;
+  totalAiCalls: number;
+}
+
 interface ReportResponse {
   report: CostReport;
   alertConfig: AlertConfig;
   scope: 'tenant' | 'global';
   pricing: CostReport['pricing'];
+  featureBreakdown?: FeatureBreakdown;
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  VALUATION_SEARCH: 'Định giá — tìm kiếm thị trường',
+  VALUATION_EXTRACT: 'Định giá — trích xuất kết quả',
+  VALUATION_VERIFY: 'Định giá — xác thực giá',
+  LEAD_SCORING: 'Chấm điểm lead',
+  LEAD_SUMMARY: 'Tóm tắt lead (ARIA)',
+  CHAT_ROUTER: 'Chatbot — định tuyến',
+  CHAT_INVENTORY_AGENT: 'Chatbot — kho hàng',
+  CHAT_FINANCE_AGENT: 'Chatbot — tài chính',
+  CHAT_LEGAL_AGENT: 'Chatbot — pháp lý',
+  CHAT_SALES_AGENT: 'Chatbot — đặt lịch',
+  CHAT_MARKETING_AGENT: 'Chatbot — marketing',
+  CHAT_CONTRACT_AGENT: 'Chatbot — hợp đồng',
+  CHAT_LEAD_ANALYSIS: 'Chatbot — phân tích lead',
+  CHAT_WRITER: 'Chatbot — soạn phản hồi',
+};
+function featureLabel(f: string): string {
+  return FEATURE_LABELS[f] || f;
 }
 
 function fmtUsd(n: number): string {
@@ -309,6 +343,48 @@ const AdminAiCost: React.FC = () => {
           )}
         </Panel>
       </div>
+
+      {/* Per-feature breakdown (all Gemini features, not just valuation) */}
+      <Panel title="Chi phí theo tính năng AI">
+        <p className="text-xs text-[var(--text-tertiary)] mb-3">
+          Bao gồm tất cả các lệnh Gemini trong tháng (định giá, chấm điểm lead, tóm tắt, các agent chatbot…).
+          {data.featureBreakdown && (
+            <> Tổng theo tính năng: <span className="font-mono font-bold text-[var(--text-primary)]">{fmtUsd(data.featureBreakdown.totalCostUsd)}</span> ({data.featureBreakdown.totalAiCalls.toLocaleString()} lệnh).</>
+          )}
+        </p>
+        {!data.featureBreakdown || data.featureBreakdown.rows.length === 0 ? (
+          <EmptyRow text="Chưa có dữ liệu sử dụng AI trong tháng này." />
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="text-xs text-[var(--text-tertiary)] uppercase tracking-wide">
+              <tr>
+                <th className="text-left py-2">Tính năng</th>
+                <th className="text-right py-2">Lệnh gọi</th>
+                <th className="text-right py-2">USD</th>
+                <th className="text-right py-2">% chi phí</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.featureBreakdown.rows.map((row) => {
+                const pctCost = data.featureBreakdown!.totalCostUsd
+                  ? (row.costUsd / data.featureBreakdown!.totalCostUsd) * 100
+                  : 0;
+                return (
+                  <tr key={row.feature} className="border-t border-[var(--glass-border)]">
+                    <td className="py-2">
+                      <div className="font-bold text-[var(--text-primary)]">{featureLabel(row.feature)}</div>
+                      <div className="text-[10px] text-[var(--text-tertiary)] font-mono">{row.feature}</div>
+                    </td>
+                    <td className="py-2 text-right">{row.calls.toLocaleString()}</td>
+                    <td className="py-2 text-right font-mono">{fmtUsd(row.costUsd)}</td>
+                    <td className="py-2 text-right">{pctCost.toFixed(1)}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Panel>
 
       {/* Daily trend */}
       <Panel title="Xu hướng theo ngày">
