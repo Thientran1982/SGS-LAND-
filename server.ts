@@ -1760,6 +1760,165 @@ async function startServer() {
     }
   });
 
+  // ── GEO / AI Search: Target Keywords + AI Visibility ──────────────────────
+  const isAdminOrLead = (req: express.Request) => {
+    const u = (req as any).user;
+    return !!u && (u.role === 'ADMIN' || u.role === 'SUPER_ADMIN' || u.role === 'TEAM_LEAD');
+  };
+  const seoTenantId = (req: express.Request): string =>
+    (req as any).tenantId || (req as any).user?.tenantId || '00000000-0000-0000-0000-000000000001';
+
+  const mapKw = (r: any) => ({
+    id: r.id,
+    keyword: r.keyword,
+    targetUrl: r.target_url,
+    currentPosition: r.current_position,
+    targetPosition: r.target_position,
+    searchVolume: r.search_volume,
+    notes: r.notes,
+    lastCheckedAt: r.last_checked_at,
+    aiVisibility: r.ai_visibility || {},
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  });
+
+  app.get('/api/seo/target-keywords', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
+    try {
+      const r = await pool.query(
+        `SELECT id, keyword, target_url, current_position, target_position, search_volume,
+                notes, last_checked_at, ai_visibility, created_at, updated_at
+           FROM seo_target_keywords WHERE tenant_id = $1
+          ORDER BY COALESCE(current_position, 999), updated_at DESC`,
+        [seoTenantId(req)],
+      );
+      res.json(r.rows.map(mapKw));
+    } catch (err) {
+      console.error('[GEO] list keywords error:', err);
+      res.status(500).json({ error: 'Failed to list keywords' });
+    }
+  });
+
+  app.post('/api/seo/target-keywords', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
+    const b = req.body || {};
+    const keyword = String(b.keyword || '').trim();
+    if (!keyword || keyword.length > 300) return res.status(400).json({ error: 'keyword required (≤300 chars)' }) as any;
+    const targetUrl = b.targetUrl ? String(b.targetUrl).slice(0, 2000) : null;
+    const currentPosition = b.currentPosition === null || b.currentPosition === undefined || b.currentPosition === ''
+      ? null : Math.max(1, Math.min(100, Number(b.currentPosition) | 0));
+    const targetPosition = Math.max(1, Math.min(100, Number(b.targetPosition || 3) | 0));
+    const searchVolume = b.searchVolume === null || b.searchVolume === undefined || b.searchVolume === ''
+      ? null : Math.max(0, Number(b.searchVolume) | 0);
+    const notes = b.notes ? String(b.notes).slice(0, 2000) : null;
+    const aiViz = b.aiVisibility && typeof b.aiVisibility === 'object' ? b.aiVisibility : {};
+    const allowedAi = ['chatgpt', 'gemini', 'claude', 'perplexity'] as const;
+    const cleanAi: Record<string, boolean | null> = {};
+    for (const k of allowedAi) {
+      if (k in aiViz) cleanAi[k] = aiViz[k] === null ? null : Boolean(aiViz[k]);
+    }
+    const tenantId = seoTenantId(req);
+    const userId = (req as any).user?.id || null;
+    try {
+      const r = await pool.query(
+        `INSERT INTO seo_target_keywords
+            (tenant_id, keyword, target_url, current_position, target_position, search_volume, notes,
+             last_checked_at, ai_visibility, created_by, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8::jsonb, $9, NOW())
+         ON CONFLICT (tenant_id, lower(keyword)) DO UPDATE SET
+            target_url = EXCLUDED.target_url,
+            current_position = EXCLUDED.current_position,
+            target_position = EXCLUDED.target_position,
+            search_volume = EXCLUDED.search_volume,
+            notes = EXCLUDED.notes,
+            last_checked_at = NOW(),
+            ai_visibility = EXCLUDED.ai_visibility,
+            updated_at = NOW()
+         RETURNING id, keyword, target_url, current_position, target_position, search_volume,
+                   notes, last_checked_at, ai_visibility, created_at, updated_at`,
+        [tenantId, keyword, targetUrl, currentPosition, targetPosition, searchVolume, notes,
+         JSON.stringify(cleanAi), userId],
+      );
+      res.json(mapKw(r.rows[0]));
+    } catch (err) {
+      console.error('[GEO] upsert keyword error:', err);
+      res.status(500).json({ error: 'Failed to save keyword' });
+    }
+  });
+
+  app.delete('/api/seo/target-keywords/:id', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
+    const id = String(req.params.id || '');
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'invalid id' }) as any;
+    try {
+      await pool.query('DELETE FROM seo_target_keywords WHERE id = $1 AND tenant_id = $2',
+        [id, seoTenantId(req)]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[GEO] delete keyword error:', err);
+      res.status(500).json({ error: 'Failed to delete keyword' });
+    }
+  });
+
+  app.get('/api/seo/ai-visibility', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
+    try {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const pubDir = path.resolve(process.cwd(), 'public');
+
+      const fileStat = async (name: string) => {
+        try {
+          const buf = await fs.readFile(path.join(pubDir, name));
+          return { ok: true, status: 200, bytes: buf.byteLength };
+        } catch {
+          return { ok: false, status: 404, bytes: 0 };
+        }
+      };
+
+      let robotsTxt = '';
+      try { robotsTxt = await fs.readFile(path.join(pubDir, 'robots.txt'), 'utf8'); } catch { /* ignore */ }
+      const botList = [
+        { name: 'OpenAI GPTBot',         userAgent: 'GPTBot' },
+        { name: 'OpenAI SearchBot',      userAgent: 'OAI-SearchBot' },
+        { name: 'Anthropic Claude',      userAgent: 'Claude-Web' },
+        { name: 'Anthropic (Anthropic-AI)', userAgent: 'Anthropic-AI' },
+        { name: 'Anthropic ClaudeBot',   userAgent: 'ClaudeBot' },
+        { name: 'Google Gemini',         userAgent: 'Gemini-WebFetch' },
+        { name: 'Google-Extended',       userAgent: 'Google-Extended' },
+        { name: 'Perplexity',            userAgent: 'PerplexityBot' },
+        { name: 'You.com',               userAgent: 'YouBot' },
+        { name: 'Common Crawl',          userAgent: 'CCBot' },
+      ];
+      const bots = botList.map((b) => {
+        const re = new RegExp(`User-agent:\\s*${b.userAgent}\\b`, 'i');
+        return { ...b, allowed: re.test(robotsTxt) };
+      });
+
+      const [llmsTxt, llmsFullTxt, sitemap, sitemapStatic, sitemapImages] = await Promise.all([
+        fileStat('llms.txt'),
+        fileStat('llms-full.txt'),
+        fileStat('sitemap.xml'),
+        fileStat('sitemap-static.xml'),
+        fileStat('sitemap-images.xml'),
+      ]);
+
+      res.json({
+        llmsTxt,
+        llmsFullTxt,
+        bots,
+        sitemaps: [
+          { url: '/sitemap.xml', ok: sitemap.ok, status: sitemap.status },
+          { url: '/sitemap-static.xml', ok: sitemapStatic.ok, status: sitemapStatic.status },
+          { url: '/sitemap-images.xml', ok: sitemapImages.ok, status: sitemapImages.status },
+        ],
+      });
+    } catch (err) {
+      console.error('[GEO] ai-visibility error:', err);
+      res.status(500).json({ error: 'Failed to read AI visibility' });
+    }
+  });
+
   // ── Price Self-Learning: Admin API ────────────────────────────────────────
   // GET  /api/admin/price-history?location=...&days=90  → lịch sử giá theo địa điểm
   // GET  /api/admin/price-calibration                   → danh sách calibrated entries

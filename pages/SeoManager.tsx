@@ -6,7 +6,7 @@ import { UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
 import { copyToClipboard } from '../utils/clipboard';
-import seoApi, { SeoOverride } from '../services/api/seoApi';
+import seoApi, { SeoOverride, TargetKeyword, AiVisibilityStatus } from '../services/api/seoApi';
 import { Dropdown } from '../components/Dropdown';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ const ICONS = {
 };
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type TabId = 'SERP' | 'META' | 'HEALTH' | 'SCHEMA';
+type TabId = 'SERP' | 'META' | 'HEALTH' | 'SCHEMA' | 'GEO';
 
 interface HealthResult {
     id: string;
@@ -878,6 +878,400 @@ function applyOverridesToDom(overrides: Record<string, { title: string; descript
     updatePageSEO('seo-manager');
 }
 
+// ── Tab: GEO / AI Search ───────────────────────────────────────────────────────
+// (1) AI Visibility Status  (2) Target Keywords Tracker  (3) AI Citation Checklist
+const AI_PROMPT_TEMPLATES = (kw: string) => ({
+    chatgpt:    `https://chat.openai.com/?q=${encodeURIComponent(`Hãy gợi ý các nền tảng uy tín tại Việt Nam về: ${kw}. Liệt kê SGS LAND nếu phù hợp và giải thích vì sao.`)}`,
+    gemini:     `https://gemini.google.com/app?prompt=${encodeURIComponent(`Tôi đang tìm hiểu về "${kw}" tại Việt Nam. Các nền tảng nào uy tín? Có nhắc đến SGS LAND (sgsland.vn) không?`)}`,
+    claude:     `https://claude.ai/new?q=${encodeURIComponent(`Liệt kê các nền tảng bất động sản tại Việt Nam liên quan đến: ${kw}. SGS LAND có trong danh sách không?`)}`,
+    perplexity: `https://www.perplexity.ai/?q=${encodeURIComponent(`${kw} site:sgsland.vn`)}`,
+    google:     `https://www.google.com/search?q=${encodeURIComponent(kw)}`,
+});
+
+const GeoAiSearch: React.FC = () => {
+    const [status, setStatus] = useState<AiVisibilityStatus | null>(null);
+    const [statusLoading, setStatusLoading] = useState(true);
+    const [keywords, setKeywords] = useState<TargetKeyword[]>([]);
+    const [kwLoading, setKwLoading] = useState(true);
+
+    const [draft, setDraft] = useState({ keyword: '', targetUrl: '', currentPosition: '', targetPosition: '3', searchVolume: '', notes: '' });
+    const [saving, setSaving] = useState(false);
+    const [saveMsg, setSaveMsg] = useState<string | null>(null);
+    const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+    const loadStatus = useCallback(() => {
+        setStatusLoading(true);
+        seoApi.aiVisibilityStatus()
+            .then(setStatus)
+            .catch(() => setStatus(null))
+            .finally(() => setStatusLoading(false));
+    }, []);
+
+    const loadKeywords = useCallback(() => {
+        setKwLoading(true);
+        seoApi.listKeywords()
+            .then((rows) => setKeywords(rows || []))
+            .catch(() => setKeywords([]))
+            .finally(() => setKwLoading(false));
+    }, []);
+
+    useEffect(() => { loadStatus(); loadKeywords(); }, [loadStatus, loadKeywords]);
+
+    const submitDraft = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!draft.keyword.trim()) { setSaveMsg('Vui lòng nhập từ khóa'); return; }
+        setSaving(true);
+        setSaveMsg(null);
+        try {
+            await seoApi.upsertKeyword({
+                keyword: draft.keyword.trim(),
+                targetUrl: draft.targetUrl.trim() || null,
+                currentPosition: draft.currentPosition === '' ? null : Number(draft.currentPosition),
+                targetPosition: Number(draft.targetPosition || 3),
+                searchVolume: draft.searchVolume === '' ? null : Number(draft.searchVolume),
+                notes: draft.notes.trim() || null,
+            });
+            setDraft({ keyword: '', targetUrl: '', currentPosition: '', targetPosition: '3', searchVolume: '', notes: '' });
+            setSaveMsg('Đã lưu');
+            loadKeywords();
+        } catch {
+            setSaveMsg('Lỗi khi lưu');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setSaveMsg(null), 2500);
+        }
+    };
+
+    const updateAiFlag = async (kw: TargetKeyword, engine: 'chatgpt' | 'gemini' | 'claude' | 'perplexity', value: boolean | null) => {
+        if (updatingId) return;
+        setUpdatingId(kw.id);
+        try {
+            const updated = { ...kw.aiVisibility, [engine]: value };
+            await seoApi.upsertKeyword({
+                keyword: kw.keyword,
+                targetUrl: kw.targetUrl,
+                currentPosition: kw.currentPosition,
+                targetPosition: kw.targetPosition,
+                searchVolume: kw.searchVolume,
+                notes: kw.notes,
+                aiVisibility: updated,
+            });
+            await loadKeywords();
+        } catch { /* noop */ }
+        finally { setUpdatingId(null); }
+    };
+
+    const removeKeyword = async (id: string) => {
+        if (!confirm('Xoá từ khóa này?')) return;
+        try { await seoApi.deleteKeyword(id); loadKeywords(); } catch { /* noop */ }
+    };
+
+    // ── AI Citation Checklist (client-side, runs against current DOM) ────────
+    type CheckItem = { id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string; tip?: string };
+    const [checklist, setChecklist] = useState<CheckItem[]>([]);
+    const runChecklist = useCallback(() => {
+        const items: CheckItem[] = [];
+        const head = document.head;
+
+        const desc = head.querySelector<HTMLMetaElement>('meta[name="description"]')?.content || '';
+        items.push({
+            id: 'desc-len', label: 'Meta description giàu thông tin (140-200 ký tự)',
+            status: desc.length >= 140 && desc.length <= 200 ? 'pass' : (desc.length > 0 ? 'warn' : 'fail'),
+            detail: `${desc.length} ký tự`,
+            tip: 'LLM trích description nguyên văn cho 1 số snippet.',
+        });
+
+        const title = document.title || '';
+        items.push({
+            id: 'title-len', label: 'Title 30-65 ký tự, có thương hiệu SGS LAND',
+            status: title.length >= 30 && title.length <= 65 && /SGS\s*LAND/i.test(title) ? 'pass' : 'warn',
+            detail: `${title.length} ký tự — ${title || '(trống)'}`,
+        });
+
+        const ogImg = head.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content || '';
+        items.push({
+            id: 'og-image', label: 'Có Open Graph image',
+            status: ogImg ? 'pass' : 'fail',
+            detail: ogImg || 'Chưa khai báo',
+            tip: 'AI Overview của Google + Perplexity hay đính kèm ảnh OG.',
+        });
+
+        const canonical = head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href || '';
+        items.push({
+            id: 'canonical', label: 'Có canonical URL',
+            status: canonical ? 'pass' : 'fail',
+            detail: canonical || 'Chưa khai báo',
+        });
+
+        const jsonLds = Array.from(head.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]'));
+        items.push({
+            id: 'jsonld-count', label: 'Có ≥ 3 JSON-LD schema',
+            status: jsonLds.length >= 3 ? 'pass' : (jsonLds.length >= 1 ? 'warn' : 'fail'),
+            detail: `${jsonLds.length} schema`,
+        });
+
+        const types = jsonLds.map((s) => { try { return JSON.parse(s.textContent || '{}')['@type']; } catch { return null; } }).filter(Boolean);
+        const hasFaq = types.some((t) => String(t).includes('FAQPage'));
+        items.push({
+            id: 'faq', label: 'Có FAQPage schema (LLM rất ưu tiên trích dẫn FAQ)',
+            status: hasFaq ? 'pass' : 'warn',
+            detail: hasFaq ? 'Đã có' : 'Khuyên thêm cho landing dự án và help-center',
+        });
+        const hasOrg = types.some((t) => String(t).includes('Organization') || String(t).includes('LocalBusiness'));
+        items.push({
+            id: 'org', label: 'Có Organization / LocalBusiness schema',
+            status: hasOrg ? 'pass' : 'fail',
+            detail: hasOrg ? 'Đã có' : 'Bắt buộc cho Knowledge Graph',
+        });
+        const hasBreadcrumb = types.some((t) => String(t).includes('BreadcrumbList'));
+        items.push({
+            id: 'breadcrumb', label: 'Có BreadcrumbList schema',
+            status: hasBreadcrumb ? 'pass' : 'warn',
+            detail: hasBreadcrumb ? 'Đã có' : 'Giúp Google hiển thị breadcrumb trong SERP',
+        });
+
+        const author = head.querySelector<HTMLMetaElement>('meta[name="author"]')?.content || '';
+        items.push({
+            id: 'author', label: 'Có meta author (E-E-A-T)',
+            status: author ? 'pass' : 'warn', detail: author || 'Chưa khai báo',
+        });
+
+        const articleModified = head.querySelector<HTMLMetaElement>('meta[property="article:modified_time"]')?.content || '';
+        items.push({
+            id: 'modified', label: 'Có article:modified_time (giúp AI biết tin mới)',
+            status: articleModified ? 'pass' : 'warn', detail: articleModified || 'Chưa khai báo',
+        });
+
+        const bodyText = document.body.innerText || '';
+        const wordCount = bodyText.trim().split(/\s+/).length;
+        items.push({
+            id: 'word-count', label: 'Nội dung ≥ 800 từ (LLM ưu tiên nội dung sâu)',
+            status: wordCount >= 800 ? 'pass' : (wordCount >= 400 ? 'warn' : 'fail'),
+            detail: `${wordCount.toLocaleString()} từ`,
+        });
+
+        const mentionsBrand = (bodyText.match(/SGS\s*LAND/gi) || []).length;
+        items.push({
+            id: 'brand-anchors', label: 'Có "SGS LAND" xuất hiện ≥ 3 lần (citation anchor)',
+            status: mentionsBrand >= 3 ? 'pass' : 'warn',
+            detail: `${mentionsBrand} lần`,
+            tip: 'Mỗi đoạn nên có "Theo SGS LAND..." để LLM dễ trích nguồn.',
+        });
+
+        setChecklist(items);
+    }, []);
+    useEffect(() => { runChecklist(); }, [runChecklist]);
+
+    // ── Render helpers ───────────────────────────────────────────────────────
+    const StatusBadge: React.FC<{ ok: boolean; label?: string }> = ({ ok, label }) => (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold ${
+            ok ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+               : 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300'
+        }`}>{ok ? ICONS.CHECK : ICONS.ERROR}{label ?? (ok ? 'OK' : 'Thiếu')}</span>
+    );
+
+    const passCount = checklist.filter((c) => c.status === 'pass').length;
+    const totalCount = checklist.length;
+
+    return (
+        <div className="space-y-6">
+            {/* ── 1. AI Visibility Status ─────────────────────────────────── */}
+            <section>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">1. Trạng Thái AI Visibility</h3>
+                    <button onClick={loadStatus} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Tải lại</button>
+                </div>
+                {statusLoading ? (
+                    <div className="text-xs text-[var(--text-tertiary)] animate-pulse">Đang kiểm tra...</div>
+                ) : !status ? (
+                    <div className="text-xs text-rose-600">Không tải được trạng thái</div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">File hướng dẫn cho AI crawler</div>
+                            <div className="space-y-1.5 text-xs">
+                                <div className="flex items-center justify-between gap-2">
+                                    <a href="/llms.txt" target="_blank" rel="noopener" className="text-indigo-600 hover:underline font-mono">/llms.txt</a>
+                                    <span className="text-[var(--text-tertiary)]">{(status.llmsTxt.bytes / 1024).toFixed(1)} KB</span>
+                                    <StatusBadge ok={status.llmsTxt.ok} />
+                                </div>
+                                <div className="flex items-center justify-between gap-2">
+                                    <a href="/llms-full.txt" target="_blank" rel="noopener" className="text-indigo-600 hover:underline font-mono">/llms-full.txt</a>
+                                    <span className="text-[var(--text-tertiary)]">{(status.llmsFullTxt.bytes / 1024).toFixed(1)} KB</span>
+                                    <StatusBadge ok={status.llmsFullTxt.ok} />
+                                </div>
+                                {status.sitemaps.map((s) => (
+                                    <div key={s.url} className="flex items-center justify-between gap-2">
+                                        <a href={s.url} target="_blank" rel="noopener" className="text-indigo-600 hover:underline font-mono">{s.url}</a>
+                                        <StatusBadge ok={s.ok} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">Bot AI được phép crawl ({status.bots.filter(b=>b.allowed).length}/{status.bots.length})</div>
+                            <div className="space-y-1 text-xs">
+                                {status.bots.map((b) => (
+                                    <div key={b.userAgent} className="flex items-center justify-between gap-2">
+                                        <span className="truncate"><span className="font-bold">{b.name}</span> <span className="text-[var(--text-tertiary)] font-mono text-2xs">{b.userAgent}</span></span>
+                                        <StatusBadge ok={b.allowed} label={b.allowed ? 'Allow' : 'Chưa khai báo'} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </section>
+
+            {/* ── 2. Target Keywords Tracker ─────────────────────────────── */}
+            <section>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">2. Theo Dõi Từ Khóa Mục Tiêu (Top 3)</h3>
+                    <span className="text-2xs text-[var(--text-tertiary)]">{keywords.length} từ khóa</span>
+                </div>
+
+                <form onSubmit={submitDraft} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mb-4 p-3 rounded-xl bg-[var(--glass-surface-hover)] border border-[var(--glass-border)]">
+                    <input type="text" value={draft.keyword} onChange={(e) => setDraft({ ...draft, keyword: e.target.value })}
+                        placeholder="Từ khóa (vd: căn hộ Aqua City)" maxLength={300}
+                        className="lg:col-span-2 px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]" />
+                    <input type="text" value={draft.targetUrl} onChange={(e) => setDraft({ ...draft, targetUrl: e.target.value })}
+                        placeholder="URL đích (tuỳ chọn)" className="lg:col-span-2 px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]" />
+                    <input type="number" value={draft.currentPosition} onChange={(e) => setDraft({ ...draft, currentPosition: e.target.value })}
+                        placeholder="Hạng hiện tại" min={1} max={100}
+                        className="px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]" />
+                    <input type="number" value={draft.targetPosition} onChange={(e) => setDraft({ ...draft, targetPosition: e.target.value })}
+                        placeholder="Mục tiêu (3)" min={1} max={100}
+                        className="px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]" />
+                    <input type="number" value={draft.searchVolume} onChange={(e) => setDraft({ ...draft, searchVolume: e.target.value })}
+                        placeholder="Volume/tháng" min={0}
+                        className="px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]" />
+                    <input type="text" value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+                        placeholder="Ghi chú" maxLength={500}
+                        className="lg:col-span-4 px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]" />
+                    <button type="submit" disabled={saving}
+                        className="lg:col-span-2 px-3 py-1.5 text-xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
+                        {saving ? 'Đang lưu...' : (saveMsg || 'Thêm / Cập nhật')}
+                    </button>
+                </form>
+
+                {kwLoading ? (
+                    <div className="text-xs text-[var(--text-tertiary)] animate-pulse">Đang tải...</div>
+                ) : keywords.length === 0 ? (
+                    <div className="text-xs text-[var(--text-tertiary)] py-6 text-center border border-dashed border-[var(--glass-border)] rounded-xl">
+                        Chưa có từ khóa nào. Thêm từ khóa đầu tiên để bắt đầu theo dõi top 3 và mức độ AI trích dẫn.
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto -mx-1">
+                        <table className="w-full text-xs">
+                            <thead>
+                                <tr className="text-[var(--text-tertiary)] text-2xs uppercase border-b border-[var(--glass-border)]">
+                                    <th className="text-left py-2 px-2">Từ khóa</th>
+                                    <th className="text-center py-2 px-2">Hạng</th>
+                                    <th className="text-center py-2 px-2">Mục tiêu</th>
+                                    <th className="text-center py-2 px-2" title="Volume/tháng ước tính">Vol/th</th>
+                                    <th className="text-center py-2 px-2">Có trên AI</th>
+                                    <th className="text-center py-2 px-2">Test</th>
+                                    <th className="text-right py-2 px-2"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {keywords.map((kw) => {
+                                    const links = AI_PROMPT_TEMPLATES(kw.keyword);
+                                    const reachedTop = kw.currentPosition !== null && kw.currentPosition <= kw.targetPosition;
+                                    const aiCount = (['chatgpt','gemini','claude','perplexity'] as const).filter(e => kw.aiVisibility[e] === true).length;
+                                    return (
+                                        <tr key={kw.id} className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]">
+                                            <td className="py-2 px-2">
+                                                <div className="font-bold text-[var(--text-primary)]">{kw.keyword}</div>
+                                                {kw.targetUrl && <a href={kw.targetUrl} target="_blank" rel="noopener" className="text-2xs text-indigo-600 hover:underline truncate block max-w-[280px]">{kw.targetUrl}</a>}
+                                                {kw.notes && <div className="text-2xs text-[var(--text-tertiary)] mt-0.5">{kw.notes}</div>}
+                                            </td>
+                                            <td className="text-center px-2">
+                                                <span className={`inline-block px-2 py-0.5 rounded font-bold ${
+                                                    kw.currentPosition === null ? 'bg-gray-100 text-gray-500'
+                                                    : reachedTop ? 'bg-emerald-100 text-emerald-700'
+                                                    : kw.currentPosition <= 10 ? 'bg-amber-100 text-amber-700'
+                                                    : 'bg-rose-100 text-rose-700'
+                                                }`}>{kw.currentPosition ?? '—'}</span>
+                                            </td>
+                                            <td className="text-center px-2 text-[var(--text-tertiary)]">{kw.targetPosition}</td>
+                                            <td className="text-center px-2 text-[var(--text-tertiary)]">{kw.searchVolume?.toLocaleString() ?? '—'}</td>
+                                            <td className="text-center px-2">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    {(['chatgpt', 'gemini', 'claude', 'perplexity'] as const).map((engine) => {
+                                                        const v = kw.aiVisibility[engine];
+                                                        const label = engine[0].toUpperCase();
+                                                        const cls = v === true ? 'bg-emerald-500 text-white'
+                                                                  : v === false ? 'bg-rose-300 text-rose-900'
+                                                                  : 'bg-gray-200 text-gray-500';
+                                                        const busy = updatingId === kw.id;
+                                                        return (
+                                                            <button key={engine}
+                                                                disabled={busy}
+                                                                onClick={() => updateAiFlag(kw, engine, v === true ? false : v === false ? null : true)}
+                                                                title={`${engine}: ${v === true ? 'Có' : v === false ? 'Không' : 'Chưa kiểm tra'} (click để đổi)`}
+                                                                className={`w-6 h-6 rounded text-2xs font-bold ${cls} ${busy ? 'opacity-50 cursor-wait' : ''}`}>{label}</button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div className="text-2xs text-[var(--text-tertiary)] mt-0.5">{aiCount}/4</div>
+                                            </td>
+                                            <td className="text-center px-2">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <a href={links.chatgpt}    target="_blank" rel="noopener" className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[#10a37f] text-white hover:opacity-90" title="Test trên ChatGPT">GPT</a>
+                                                    <a href={links.gemini}     target="_blank" rel="noopener" className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[#4285f4] text-white hover:opacity-90" title="Test trên Gemini">GMN</a>
+                                                    <a href={links.claude}     target="_blank" rel="noopener" className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[#cc785c] text-white hover:opacity-90" title="Test trên Claude">CLD</a>
+                                                    <a href={links.perplexity} target="_blank" rel="noopener" className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[#1f6feb] text-white hover:opacity-90" title="Test trên Perplexity">PPX</a>
+                                                    <a href={links.google}     target="_blank" rel="noopener" className="px-1.5 py-0.5 rounded text-2xs font-bold bg-gray-200 text-gray-700 hover:bg-gray-300" title="Test trên Google">G</a>
+                                                </div>
+                                            </td>
+                                            <td className="text-right px-2">
+                                                <button onClick={() => removeKeyword(kw.id)} className="text-rose-500 hover:text-rose-700 text-2xs font-bold">Xoá</button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
+
+            {/* ── 3. AI Citation Checklist ───────────────────────────────── */}
+            <section>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">3. Checklist Sẵn Sàng Cho AI Trích Dẫn ({passCount}/{totalCount})</h3>
+                    <button onClick={runChecklist} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Chạy lại</button>
+                </div>
+                <div className="p-3 mb-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-900/15 text-2xs text-amber-900 dark:text-amber-200">
+                    <div className="font-bold mb-1">⚠️ Lưu ý quan trọng</div>
+                    Checklist này đọc DOM của <strong>chính trang Quản Lý SEO này</strong>, KHÔNG phải landing page hay trang dự án. Kết quả chỉ mang tính tham khảo cho khung sườn meta của ứng dụng. Để kiểm tra một URL cụ thể (vd: <code>/du-an/aqua-city</code>), hãy mở URL đó ở tab công khai và dùng công cụ ngoài (Lighthouse, Schema.org Validator, Rich Results Test) — hoặc tab "Sức Khoẻ SEO" để xem chỉ số toàn site.
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {checklist.map((c) => (
+                        <div key={c.id} className={`p-2.5 rounded-lg border text-xs ${
+                            c.status === 'pass' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10'
+                            : c.status === 'warn' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-900/10'
+                            : 'border-rose-200 bg-rose-50/50 dark:bg-rose-900/10'
+                        }`}>
+                            <div className="flex items-start gap-2">
+                                <span className={`mt-0.5 ${c.status === 'pass' ? 'text-emerald-600' : c.status === 'warn' ? 'text-amber-600' : 'text-rose-600'}`}>
+                                    {c.status === 'pass' ? ICONS.CHECK : c.status === 'warn' ? ICONS.WARN : ICONS.ERROR}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <div className="font-bold text-[var(--text-primary)]">{c.label}</div>
+                                    <div className="text-2xs text-[var(--text-tertiary)] mt-0.5 break-all">{c.detail}</div>
+                                    {c.tip && <div className="text-2xs text-indigo-600 mt-1">💡 {c.tip}</div>}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+        </div>
+    );
+};
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 export const SeoManager: React.FC = () => {
     const { t } = useTranslation();
@@ -926,6 +1320,7 @@ export const SeoManager: React.FC = () => {
         { id: 'META',   label: 'Chỉnh Sửa Meta' },
         { id: 'HEALTH', label: 'Sức Khoẻ SEO' },
         { id: 'SCHEMA', label: 'Dữ Liệu Cấu Trúc' },
+        { id: 'GEO',    label: 'GEO / AI Search' },
     ];
 
     if (loading) return (
@@ -1013,6 +1408,7 @@ export const SeoManager: React.FC = () => {
                 }} onAfterSave={setSerpSelectedKey} />}
                 {activeTab === 'HEALTH' && <HealthChecklist />}
                 {activeTab === 'SCHEMA' && <StructuredData key={schemaVersion} />}
+                {activeTab === 'GEO'    && <GeoAiSearch />}
             </div>
 
         </div>
