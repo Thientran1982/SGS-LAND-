@@ -54,6 +54,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.SYSTEM]: <Activity size={20} strokeWidth={2} />,
     [ROUTES.ADMIN_USERS]: <Users size={20} strokeWidth={2} />,
     [ROUTES.ENTERPRISE_SETTINGS]: <Settings size={20} strokeWidth={2} />,
+    [ROUTES.ADMIN_AI_COST]: <PieChart size={20} strokeWidth={2} />,
     [ROUTES.BILLING]: <CreditCard size={20} strokeWidth={2} />,
     [ROUTES.SECURITY]: <Lock size={20} strokeWidth={2} />,
     [ROUTES.SEO_MANAGER]: <Globe size={20} strokeWidth={2} />,

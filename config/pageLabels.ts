@@ -22,6 +22,7 @@ export const PAGE_LABELS: Record<string, string> = {
   [ROUTES.SYSTEM]: 'Trạng Thái Hệ Thống',
   [ROUTES.ADMIN_USERS]: 'Quản Lý Người Dùng',
   [ROUTES.ENTERPRISE_SETTINGS]: 'Cài Đặt Doanh Nghiệp',
+  [ROUTES.ADMIN_AI_COST]: 'Chi Phí AI',
   [ROUTES.BILLING]: 'Thanh Toán',
   [ROUTES.MARKETPLACE]: 'Marketplace',
   [ROUTES.DATA_PLATFORM]: 'Nền Tảng Dữ Liệu',

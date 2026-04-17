@@ -1330,6 +1330,7 @@ class DatabaseApiClient {
     const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: [
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
+      { id: 'ai-cost', labelKey: 'menu.admin-ai-cost', route: ROUTES.ADMIN_AI_COST, iconKey: ROUTES.ADMIN_AI_COST },
       { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
       { id: 'security', labelKey: 'menu.security', route: ROUTES.SECURITY, iconKey: ROUTES.SECURITY },
       { id: 'ai-gov', labelKey: 'menu.ai-governance', route: ROUTES.AI_GOVERNANCE, iconKey: ROUTES.AI_GOVERNANCE },

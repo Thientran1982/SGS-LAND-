@@ -17,6 +17,15 @@ import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
 import { pool } from '../db';
 import { getMonthlyQuotaStatus, monthlyValuationQuota, VALUATION_PLAN_LIMITS } from '../middleware/rateLimiter';
+import {
+  recordValuationUsage,
+  getMonthlyReport,
+  getCostAlertConfig,
+  setCostAlertConfig,
+  reportToCsv,
+  currentPeriod,
+  COST_CONSTANTS,
+} from '../services/valuationUsageService';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
@@ -486,6 +495,22 @@ export function createValuationRoutes(
       const finalRangeMax   = applyRlhf(avmResult.rangeMax);
       const finalCompsPrice = avmResult.compsPrice ? applyRlhf(avmResult.compsPrice) : undefined;
 
+      // ── Record usage for cost report (fire-and-forget) ────────────────────
+      try {
+        const aiCalls = marketDataSource === 'AI_LIVE' ? 2 : (cacheEntry ? 0 : 1);
+        recordValuationUsage({
+          tenantId: user?.tenantId || null,
+          userId: user?.id || user?.userId || null,
+          planId: (req as any).quotaInfo?.plan || (user ? null : 'GUEST'),
+          endpoint: 'advanced',
+          source: marketDataSource,
+          aiCalls,
+          isGuest: !user,
+          ipAddress: req.ip,
+          addressHint: addressClean.slice(0, 120),
+        }).catch(() => {});
+      } catch { /* never fail the response */ }
+
       // ── Response ──────────────────────────────────────────────────────────
       const interactionId = crypto.randomUUID();
       res.json({
@@ -836,6 +861,82 @@ export function createValuationRoutes(
         isFresh: new Date(e.expiresAt) > new Date(),
       })),
     });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ADMIN: Monthly AI cost report (GET /admin/cost-report?month=YYYY-MM)
+  // ──────────────────────────────────────────────────────────────────────────
+  router.get('/admin/cost-report', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    try {
+      const period = (req.query.month as string) || currentPeriod();
+      if (!/^\d{4}-\d{2}$/.test(period)) {
+        return res.status(400).json({ error: 'month must be YYYY-MM' });
+      }
+      const report = await getMonthlyReport(period, { tenantId: user.tenantId, topUsersLimit: 10 });
+      const alertConfig = await getCostAlertConfig(user.tenantId);
+      return res.json({
+        report,
+        alertConfig,
+        scope: 'tenant',
+        pricing: COST_CONSTANTS,
+      });
+    } catch (err: any) {
+      logger.error('[Valuation cost-report] error', err);
+      return res.status(500).json({ error: 'Failed to load cost report', detail: err.message });
+    }
+  });
+
+  router.get('/admin/cost-report.csv', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    try {
+      const period = (req.query.month as string) || currentPeriod();
+      if (!/^\d{4}-\d{2}$/.test(period)) {
+        return res.status(400).json({ error: 'month must be YYYY-MM' });
+      }
+      const report = await getMonthlyReport(period, { tenantId: user.tenantId, topUsersLimit: 50 });
+      const csv = reportToCsv(report);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="valuation-cost-${period}.csv"`,
+      );
+      return res.send('\uFEFF' + csv); // BOM for Excel UTF-8
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to export CSV', detail: err.message });
+    }
+  });
+
+  router.get('/admin/cost-alert-config', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    try {
+      const cfg = await getCostAlertConfig(user.tenantId);
+      return res.json(cfg);
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed', detail: err.message });
+    }
+  });
+
+  router.put('/admin/cost-alert-config', authenticateToken, async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    try {
+      const { thresholdUsd, alertEmail } = req.body || {};
+      const cfg = await setCostAlertConfig(user.tenantId, {
+        thresholdUsd: Number(thresholdUsd) || 0,
+        alertEmail: alertEmail ? String(alertEmail).slice(0, 255) : null,
+      });
+      return res.json(cfg);
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to save', detail: err.message });
+    }
   });
 
   return router;

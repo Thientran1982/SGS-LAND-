@@ -47,6 +47,7 @@ export const ROUTES = {
     ADMIN_USERS: 'admin-users',
     ROUTING_RULES: 'routing-rules',
     ENTERPRISE_SETTINGS: 'enterprise-settings',
+    ADMIN_AI_COST: 'admin-ai-cost',
     BILLING: 'billing',
     INBOX: 'inbox',
     SEQUENCES: 'sequences',

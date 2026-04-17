@@ -80,6 +80,7 @@ import m058 from './058_seed_departments_all_tenants';
 import m059 from './059_fix_department_uuid';
 import m060 from './060_ai_agents';
 import m061 from './061_valuation_agent';
+import m062 from './062_valuation_usage_log';
 
 dotenv.config();
 
@@ -156,6 +157,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '059_fix_department_uuid.ts': m059,
   '060_ai_agents.ts': m060,
   '061_valuation_agent.ts': m061,
+  '062_valuation_usage_log.ts': m062,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
