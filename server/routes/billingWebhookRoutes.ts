@@ -10,13 +10,14 @@ import {
   markPaid,
   getPlanInfo,
 } from '../services/checkoutService';
+import { emailService } from '../services/emailService';
 
 async function notifyTenantAdmins(tenantId: string, payload: {
   type: string; title: string; body: string; metadata: Record<string, any>;
-}) {
+}): Promise<Array<{ id: string; email: string; name: string | null }>> {
   try {
     const admins = await pool.query(
-      `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('ADMIN','TEAM_LEAD') AND status = 'ACTIVE'`,
+      `SELECT id, email, name FROM users WHERE tenant_id = $1 AND role IN ('ADMIN','TEAM_LEAD') AND status = 'ACTIVE'`,
       [tenantId]
     );
     for (const row of admins.rows) {
@@ -29,9 +30,69 @@ async function notifyTenantAdmins(tenantId: string, payload: {
         metadata: payload.metadata,
       });
     }
+    return admins.rows.map((r: any) => ({ id: r.id, email: r.email, name: r.name }));
   } catch (err) {
     console.error('Failed to notify admins:', err);
+    return [];
   }
+}
+
+function resolveBillingUrl(): string {
+  const base = process.env.PUBLIC_APP_URL
+    || process.env.APP_URL
+    || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0].trim()}` : 'https://sgsland.vn');
+  return `${base.replace(/\/+$/, '')}/billing`;
+}
+
+async function dispatchBillingEmails(args: {
+  tenantId: string;
+  payerEmail: string | null;
+  payerName?: string | null;
+  planName: string;
+  amount: number;
+  currency: string;
+  sessionId: string;
+  admins: Array<{ id: string; email: string; name: string | null }>;
+}) {
+  const billingUrl = resolveBillingUrl();
+  const paidAt = new Date();
+  const tasks: Promise<unknown>[] = [];
+
+  if (args.payerEmail) {
+    tasks.push(
+      emailService.sendBillingReceiptEmail(args.tenantId, args.payerEmail, {
+        planName: args.planName,
+        amount: args.amount,
+        currency: args.currency,
+        sessionId: args.sessionId,
+        paidAt,
+        billingUrl,
+      }).catch(err => console.error('Failed to send billing receipt:', err)),
+    );
+  }
+
+  const seen = new Set<string>();
+  for (const admin of args.admins) {
+    if (!admin.email) continue;
+    const key = admin.email.toLowerCase();
+    if (args.payerEmail && key === args.payerEmail.toLowerCase()) continue;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tasks.push(
+      emailService.sendBillingAdminAlertEmail(args.tenantId, admin.email, {
+        payerEmail: args.payerEmail || 'unknown',
+        payerName: args.payerName || null,
+        planName: args.planName,
+        amount: args.amount,
+        currency: args.currency,
+        sessionId: args.sessionId,
+        paidAt,
+        billingUrl,
+      }).catch(err => console.error('Failed to send admin alert:', err)),
+    );
+  }
+
+  await Promise.all(tasks);
 }
 
 // Mounted at /api/billing/webhook BEFORE the global JSON parser so the raw
@@ -88,7 +149,7 @@ export function createBillingWebhookRouter() {
                 stripeSessionId: session.id,
               },
             );
-            await notifyTenantAdmins(tx.tenantId, {
+            const admins = await notifyTenantAdmins(tx.tenantId, {
               type: 'BILLING_PAYMENT',
               title: `Đã nâng cấp gói ${planInfo?.name || tx.planId}`,
               body: `${tx.userEmail} vừa thanh toán $${tx.amount}/tháng cho gói ${planInfo?.name || tx.planId}.`,
@@ -102,6 +163,26 @@ export function createBillingWebhookRouter() {
                 stripeSessionId: session.id,
                 source: 'stripe_webhook',
               },
+            });
+            let payerName: string | null = null;
+            try {
+              const payerRow = await pool.query(
+                `SELECT name FROM users WHERE id = $1 LIMIT 1`,
+                [tx.userId],
+              );
+              payerName = payerRow.rows[0]?.name || null;
+            } catch (err) {
+              console.error('Failed to lookup payer name:', err);
+            }
+            await dispatchBillingEmails({
+              tenantId: tx.tenantId,
+              payerEmail: tx.userEmail,
+              payerName,
+              planName: planInfo?.name || tx.planId,
+              amount: tx.amount,
+              currency: tx.currency,
+              sessionId: tx.id,
+              admins,
             });
           }
         }

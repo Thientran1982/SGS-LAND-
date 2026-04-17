@@ -896,6 +896,254 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
   });
 }
 
+// ── Billing emails ────────────────────────────────────────────────────────────
+
+type BillingLocale = 'vi' | 'en';
+
+interface BillingReceiptArgs {
+  planName: string;
+  amount: number;
+  currency: string;
+  sessionId: string;
+  paidAt: string | Date;
+  billingUrl: string;
+  locale?: BillingLocale;
+}
+
+const BILLING_I18N = {
+  vi: {
+    receipt: {
+      subject: (plan: string) => `SGS LAND – Biên lai thanh toán gói ${plan}`,
+      title: 'Thanh Toán Thành Công',
+      lead: 'Cảm ơn bạn đã nâng cấp gói SGS LAND',
+      body: 'Chúng tôi đã ghi nhận thanh toán của bạn. Dưới đây là thông tin biên lai để bạn lưu trữ.',
+      labelPlan: 'Gói dịch vụ',
+      labelAmount: 'Số tiền',
+      labelDate: 'Ngày thanh toán',
+      labelSession: 'Mã giao dịch',
+      cta: 'Xem Lịch Sử Thanh Toán',
+      footer: 'Cần xuất hóa đơn VAT hay có thắc mắc? Liên hệ',
+      autoFooter: 'Email này được gửi tự động, vui lòng không trả lời.',
+      textIntro: 'Cảm ơn bạn đã thanh toán cho SGS LAND.',
+    },
+    admin: {
+      subject: (payer: string) => `SGS LAND – Có giao dịch mới từ ${payer}`,
+      title: 'Có Giao Dịch Mới',
+      lead: 'Workspace của bạn vừa nhận một thanh toán',
+      body: (payerName: string, payerEmailLink: string, plan: string) =>
+        `<strong>${payerName}</strong> (${payerEmailLink}) vừa thanh toán gói <strong>${plan}</strong> cho workspace của bạn.`,
+      labelPayer: 'Người thanh toán',
+      labelPlan: 'Gói dịch vụ',
+      labelAmount: 'Số tiền',
+      labelDate: 'Thời gian',
+      labelSession: 'Mã giao dịch',
+      cta: 'Vào Trang Billing',
+      footerNote: 'Bạn nhận email này vì là quản trị viên của workspace.',
+      textIntro: 'Có giao dịch mới trên workspace SGS LAND.',
+      textPayer: 'Người thanh toán',
+      textPlan: 'Gói',
+      textAmount: 'Số tiền',
+      textDate: 'Thời gian',
+      textSession: 'Mã giao dịch',
+      textCta: 'Vào trang Billing',
+    },
+  },
+  en: {
+    receipt: {
+      subject: (plan: string) => `SGS LAND – Payment receipt for ${plan} plan`,
+      title: 'Payment Successful',
+      lead: 'Thank you for upgrading your SGS LAND plan',
+      body: 'We have recorded your payment. Below are the receipt details for your records.',
+      labelPlan: 'Plan',
+      labelAmount: 'Amount',
+      labelDate: 'Payment date',
+      labelSession: 'Transaction ID',
+      cta: 'View Billing History',
+      footer: 'Need a VAT invoice or have questions? Contact',
+      autoFooter: 'This email was sent automatically — please do not reply.',
+      textIntro: 'Thank you for your payment to SGS LAND.',
+    },
+    admin: {
+      subject: (payer: string) => `SGS LAND – New payment from ${payer}`,
+      title: 'New Payment Received',
+      lead: 'Your workspace just received a payment',
+      body: (payerName: string, payerEmailLink: string, plan: string) =>
+        `<strong>${payerName}</strong> (${payerEmailLink}) has just paid for the <strong>${plan}</strong> plan on your workspace.`,
+      labelPayer: 'Paid by',
+      labelPlan: 'Plan',
+      labelAmount: 'Amount',
+      labelDate: 'Time',
+      labelSession: 'Transaction ID',
+      cta: 'Open Billing Page',
+      footerNote: 'You received this email because you are an admin of the workspace.',
+      textIntro: 'A new payment was made on your SGS LAND workspace.',
+      textPayer: 'Paid by',
+      textPlan: 'Plan',
+      textAmount: 'Amount',
+      textDate: 'Time',
+      textSession: 'Transaction ID',
+      textCta: 'Open Billing',
+    },
+  },
+} as const;
+
+function pickBillingLocale(locale?: BillingLocale): BillingLocale {
+  return locale === 'en' ? 'en' : 'vi';
+}
+
+function formatMoney(amount: number, currency: string): string {
+  const safeCurrency = (currency || 'USD').toUpperCase();
+  if (safeCurrency === 'USD') return `$${amount.toFixed(2)}`;
+  if (safeCurrency === 'VND') {
+    return `${Math.round(amount).toLocaleString('vi-VN')} ₫`;
+  }
+  return `${amount.toFixed(2)} ${safeCurrency}`;
+}
+
+function formatPaidAt(value: string | Date): string {
+  try {
+    const d = typeof value === 'string' ? new Date(value) : value;
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+  } catch {}
+  return String(value);
+}
+
+async function sendBillingReceiptEmail(
+  tenantId: string,
+  to: string,
+  args: BillingReceiptArgs,
+): Promise<EmailResult> {
+  const t = BILLING_I18N[pickBillingLocale(args.locale)].receipt;
+  const safePlan = escapeHtml(args.planName);
+  const safeAmount = escapeHtml(formatMoney(args.amount, args.currency));
+  const safeDate = escapeHtml(formatPaidAt(args.paidAt));
+  const safeSession = escapeHtml(args.sessionId);
+  const safeUrl = escapeHtml(args.billingUrl);
+
+  const detailRow = (label: string, value: string) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${label}</td>
+      <td align="right" style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;font-family:Arial,sans-serif;">${value}</td>
+    </tr>`;
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#ECFDF5', '&#10004;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">${t.title}</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${t.lead}</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      ${t.body}
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;">
+      <tr><td style="padding:8px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          ${detailRow(t.labelPlan, safePlan)}
+          ${detailRow(t.labelAmount, safeAmount)}
+          ${detailRow(t.labelDate, safeDate)}
+          ${detailRow(t.labelSession, safeSession)}
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(28)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(safeUrl, t.cta)}</td></tr>
+    </table>
+    ${spacer(20)}
+    <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
+      ${t.footer} <a href="mailto:billing@sgsland.vn" style="color:#4F46E5;text-decoration:none;">billing@sgsland.vn</a>.
+    </p>
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: t.subject(args.planName),
+    html: emailBase(content, t.autoFooter),
+    text: `${t.textIntro}\n\n${t.labelPlan}: ${args.planName}\n${t.labelAmount}: ${formatMoney(args.amount, args.currency)}\n${t.labelDate}: ${formatPaidAt(args.paidAt)}\n${t.labelSession}: ${args.sessionId}\n\n${t.cta}: ${args.billingUrl}\n\n— SGS LAND`,
+  });
+}
+
+interface BillingAdminAlertArgs {
+  payerEmail: string;
+  payerName?: string | null;
+  planName: string;
+  amount: number;
+  currency: string;
+  sessionId: string;
+  paidAt: string | Date;
+  billingUrl: string;
+  locale?: BillingLocale;
+}
+
+async function sendBillingAdminAlertEmail(
+  tenantId: string,
+  to: string,
+  args: BillingAdminAlertArgs,
+): Promise<EmailResult> {
+  const t = BILLING_I18N[pickBillingLocale(args.locale)].admin;
+  const safePayer = escapeHtml(args.payerEmail);
+  const safePayerName = escapeHtml(args.payerName || args.payerEmail);
+  const safePlan = escapeHtml(args.planName);
+  const safeAmount = escapeHtml(formatMoney(args.amount, args.currency));
+  const safeDate = escapeHtml(formatPaidAt(args.paidAt));
+  const safeSession = escapeHtml(args.sessionId);
+  const safeUrl = escapeHtml(args.billingUrl);
+  const payerEmailLink = `<a href="mailto:${safePayer}" style="color:#4F46E5;text-decoration:none;">${safePayer}</a>`;
+
+  const detailRow = (label: string, value: string) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${label}</td>
+      <td align="right" style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;font-family:Arial,sans-serif;">${value}</td>
+    </tr>`;
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#EEF2FF', '&#128176;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">${t.title}</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${t.lead}</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      ${t.body(safePayerName, payerEmailLink, safePlan)}
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;">
+      <tr><td style="padding:8px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          ${detailRow(t.labelPayer, safePayer)}
+          ${detailRow(t.labelPlan, safePlan)}
+          ${detailRow(t.labelAmount, safeAmount)}
+          ${detailRow(t.labelDate, safeDate)}
+          ${detailRow(t.labelSession, safeSession)}
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(28)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(safeUrl, t.cta)}</td></tr>
+    </table>
+    ${spacer(24)}
+    ${linkBox(safeUrl)}
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: t.subject(args.payerEmail),
+    html: emailBase(content, t.footerNote),
+    text: `${t.textIntro}\n\n${t.textPayer}: ${args.payerName ? `${args.payerName} <${args.payerEmail}>` : args.payerEmail}\n${t.textPlan}: ${args.planName}\n${t.textAmount}: ${formatMoney(args.amount, args.currency)}\n${t.textDate}: ${formatPaidAt(args.paidAt)}\n${t.textSession}: ${args.sessionId}\n\n${t.textCta}: ${args.billingUrl}\n\n— SGS LAND`,
+  });
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export const emailService = {
@@ -910,6 +1158,8 @@ export const emailService = {
   sendNudgeA,
   sendNudgeB,
   sendNudgeC,
+  sendBillingReceiptEmail,
+  sendBillingAdminAlertEmail,
   testSmtpConnection,
   getSmtpConfig,
 };

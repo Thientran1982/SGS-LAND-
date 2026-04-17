@@ -13,6 +13,7 @@ import {
   isStripeConfigured,
   getStripeClient,
 } from '../services/checkoutService';
+import { emailService } from '../services/emailService';
 
 const SELF_UPGRADEABLE_PLANS = ['TEAM', 'ENTERPRISE'];
 
@@ -36,10 +37,10 @@ async function notifyTenantAdmins(tenantId: string, payload: {
   title: string;
   body: string;
   metadata: Record<string, any>;
-}) {
+}): Promise<Array<{ id: string; email: string; name: string | null }>> {
   try {
     const admins = await pool.query(
-      `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('ADMIN','TEAM_LEAD') AND status = 'ACTIVE'`,
+      `SELECT id, email, name FROM users WHERE tenant_id = $1 AND role IN ('ADMIN','TEAM_LEAD') AND status = 'ACTIVE'`,
       [tenantId]
     );
     for (const row of admins.rows) {
@@ -52,20 +53,74 @@ async function notifyTenantAdmins(tenantId: string, payload: {
         metadata: payload.metadata,
       });
     }
+    return admins.rows.map((r: any) => ({ id: r.id, email: r.email, name: r.name }));
   } catch (err) {
     console.error('Failed to notify admins:', err);
+    return [];
   }
+}
+
+async function sendBillingPaymentEmails(args: {
+  tenantId: string;
+  payerEmail: string | null;
+  payerName?: string | null;
+  planName: string;
+  amount: number;
+  currency: string;
+  sessionId: string;
+  paidAt: string | Date;
+  billingUrl: string;
+  admins: Array<{ id: string; email: string; name: string | null }>;
+}) {
+  const tasks: Promise<unknown>[] = [];
+
+  if (args.payerEmail) {
+    tasks.push(
+      emailService.sendBillingReceiptEmail(args.tenantId, args.payerEmail, {
+        planName: args.planName,
+        amount: args.amount,
+        currency: args.currency,
+        sessionId: args.sessionId,
+        paidAt: args.paidAt,
+        billingUrl: args.billingUrl,
+      }).catch(err => console.error('Failed to send billing receipt:', err)),
+    );
+  }
+
+  const adminEmails = new Set<string>();
+  for (const admin of args.admins) {
+    if (!admin.email) continue;
+    if (args.payerEmail && admin.email.toLowerCase() === args.payerEmail.toLowerCase()) continue;
+    if (adminEmails.has(admin.email.toLowerCase())) continue;
+    adminEmails.add(admin.email.toLowerCase());
+    tasks.push(
+      emailService.sendBillingAdminAlertEmail(args.tenantId, admin.email, {
+        payerEmail: args.payerEmail || 'unknown',
+        payerName: args.payerName || null,
+        planName: args.planName,
+        amount: args.amount,
+        currency: args.currency,
+        sessionId: args.sessionId,
+        paidAt: args.paidAt,
+        billingUrl: args.billingUrl,
+      }).catch(err => console.error('Failed to send admin alert:', err)),
+    );
+  }
+
+  await Promise.all(tasks);
 }
 
 async function applyPaidUpgrade(args: {
   tenantId: string;
   actorUserId: string | null;
   actorEmail: string | null;
+  actorName?: string | null;
   planId: string;
   amount: number;
   sessionId: string;
   ipAddress?: string;
   source: 'mock' | 'stripe_webhook' | 'stripe_redirect';
+  origin?: string;
 }) {
   const planInfo = getPlanInfo(args.planId);
   if (!planInfo) throw new Error('Invalid plan');
@@ -87,7 +142,7 @@ async function applyPaidUpgrade(args: {
     args.ipAddress,
   );
 
-  await notifyTenantAdmins(args.tenantId, {
+  const admins = await notifyTenantAdmins(args.tenantId, {
     type: 'BILLING_PAYMENT',
     title: `Đã nâng cấp gói ${planInfo.name}`,
     body: `${args.actorEmail || 'Một thành viên'} vừa thanh toán $${planInfo.price}/tháng cho gói ${planInfo.name}.`,
@@ -100,6 +155,20 @@ async function applyPaidUpgrade(args: {
       sessionId: args.sessionId,
       source: args.source,
     },
+  });
+
+  const billingUrl = `${(args.origin || '').replace(/\/+$/, '') || 'https://sgsland.vn'}/billing`;
+  await sendBillingPaymentEmails({
+    tenantId: args.tenantId,
+    payerEmail: args.actorEmail,
+    payerName: args.actorName || null,
+    planName: planInfo.name,
+    amount: args.amount,
+    currency: 'USD',
+    sessionId: args.sessionId,
+    paidAt: new Date(),
+    billingUrl,
+    admins,
   });
 
   return subscription;
@@ -270,11 +339,13 @@ export function createBillingRoutes(authenticateToken: any) {
         tenantId: user.tenantId,
         actorUserId: user.id,
         actorEmail: user.email,
+        actorName: user.name || null,
         planId: tx.planId,
         amount: tx.amount,
         sessionId: tx.id,
         ipAddress: req.ip,
         source: 'mock',
+        origin: resolveAppOrigin(req),
       });
 
       res.json({
@@ -345,6 +416,7 @@ export function createBillingRoutes(authenticateToken: any) {
             sessionId: tx.id,
             ipAddress: req.ip,
             source: 'stripe_redirect',
+            origin: resolveAppOrigin(req),
           });
         }
         return res.json({ sessionId: tx.id, status: 'PAID' });
