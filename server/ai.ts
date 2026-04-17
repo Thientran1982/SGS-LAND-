@@ -9,6 +9,7 @@ import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepos
 import { leadRepository } from './repositories/leadRepository';
 import { feedbackRepository } from './repositories/feedbackRepository';
 import { agentRepository } from './repositories/agentRepository';
+import { recordAiUsage, estimateAiCostUsd } from './services/aiUsageService';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -176,6 +177,37 @@ async function getGovernanceModel(tenantId: string): Promise<string> {
         return model;
     } catch {
         return GENAI_CONFIG.MODELS.WRITER;
+    }
+}
+
+/**
+ * Fire-and-forget cost tracker for any individual Gemini call.
+ * Writes a row to ai_usage_log labelled with `feature` so the admin
+ * cost report can break down spend per feature.
+ */
+function trackAiUsage(
+    feature: string,
+    model: string,
+    latencyMs: number,
+    promptStr: string,
+    responseStr: string,
+    ctx?: { tenantId?: string | null; userId?: string | null; source?: string | null; aiCalls?: number },
+): void {
+    try {
+        const aiCalls = Math.max(1, ctx?.aiCalls ?? 1);
+        const costUsd = estimateAiCostUsd(model, promptStr?.length || 0, responseStr?.length || 0, aiCalls);
+        recordAiUsage({
+            tenantId: ctx?.tenantId || null,
+            userId: ctx?.userId || null,
+            feature,
+            model,
+            aiCalls,
+            costUsd,
+            latencyMs,
+            source: ctx?.source || null,
+        }).catch(() => {});
+    } catch {
+        // never throw from a tracking helper
     }
 }
 
@@ -954,6 +986,7 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
 - Nghỉ dưỡng: Đà Nẵng, Nha Trang, Phú Quốc, Đà Lạt, Hội An`;
 
             const routerInstruction = await getRouterInstruction(state.tenantId);
+            const _routerStart = Date.now();
             const routerRes = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.ROUTER,
                 contents: routerPrompt,
@@ -963,6 +996,7 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
                     responseSchema: ROUTER_SCHEMA
                 }
             });
+            trackAiUsage('CHAT_ROUTER', GENAI_CONFIG.MODELS.ROUTER, Date.now() - _routerStart, routerPrompt, routerRes.text || '', { tenantId: state.tenantId });
 
             const plan = JSON.parse(routerRes.text || '{}');
             const ext = plan.extraction || {};
@@ -1110,12 +1144,14 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
             const invObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, 'INVENTORY_AGENT').catch(() => '');
 
             const inventorySystemInstruction = await getInventoryInstruction(state.tenantId);
+            const _invStart = Date.now();
             const inventoryAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: inventoryAnalysisPrompt + invRlhf.fewShotSection + invRlhf.negativeRulesSection + invObsInsights,
                 config: { systemInstruction: inventorySystemInstruction }
             });
             const inventoryAnalysisText = inventoryAI.text || '';
+            trackAiUsage('CHAT_INVENTORY_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _invStart, inventoryAnalysisPrompt, inventoryAnalysisText, { tenantId: state.tenantId });
             const firstLine = searchRes.split('\n')[0];
             this.updateTrace(state.trace, firstLine || 'Kho hàng đã được tra cứu.', GENAI_CONFIG.MODELS.EXTRACTOR);
 
@@ -1228,12 +1264,14 @@ PHÂN TÍCH TÀI CHÍNH — KỊCH BẢN: ${loanScenario} (bullet point, max 180
             const finObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, 'FINANCE_AGENT').catch(() => '');
 
             const financeSystemInstruction = await getFinanceInstruction(state.tenantId);
+            const _finStart = Date.now();
             const financeAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: financeAdvisoryPrompt + finRlhf.fewShotSection + finRlhf.negativeRulesSection + finObsInsights,
                 config: { systemInstruction: financeSystemInstruction }
             });
             const financeAdvisoryText = financeAI.text || '';
+            trackAiUsage('CHAT_FINANCE_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _finStart, financeAdvisoryPrompt, financeAdvisoryText, { tenantId: state.tenantId });
 
             this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/${years}năm → ${monthlyFmt}đ/tháng | ${loanScenario}`, GENAI_CONFIG.MODELS.EXTRACTOR);
 
@@ -1300,12 +1338,14 @@ Viết tiếng Việt, bullet point, tối đa 180 từ. Tuyệt đối không t
             const legalObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, 'LEGAL_AGENT').catch(() => '');
 
             const legalSystemInstruction = await getLegalInstruction(state.tenantId);
+            const _legalStart = Date.now();
             const legalAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: legalAnalysisPrompt + legalRlhf.fewShotSection + legalRlhf.negativeRulesSection + legalObsInsights,
                 config: { systemInstruction: legalSystemInstruction }
             });
             const legalAnalysisText = legalAI.text || '';
+            trackAiUsage('CHAT_LEGAL_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _legalStart, legalAnalysisPrompt, legalAnalysisText, { tenantId: state.tenantId });
 
             const legalSnippet = legalInfo.slice(0, 80) + (legalInfo.length > 80 ? '...' : '');
             this.updateTrace(state.trace, `Pháp lý [${term}] | ${legalScenario}: ${legalSnippet}`, GENAI_CONFIG.MODELS.EXTRACTOR);
@@ -1403,12 +1443,14 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 150 từ. Đây là 
             const salesObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, 'SALES_AGENT').catch(() => '');
 
             const salesSystemInstruction = await getSalesInstruction(state.tenantId);
+            const _salesStart = Date.now();
             const bookingAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: bookingPersonalizerPrompt + salesRlhf.fewShotSection + salesRlhf.negativeRulesSection + salesObsInsights,
                 config: { systemInstruction: salesSystemInstruction }
             });
             const bookingBriefText = bookingAI.text || '';
+            trackAiUsage('CHAT_SALES_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _salesStart, bookingPersonalizerPrompt, bookingBriefText, { tenantId: state.tenantId });
 
             this.updateTrace(state.trace, `Lịch xem nhà: ${timeFmt} tại ${location} | ${visitorProfile}`, GENAI_CONFIG.MODELS.EXTRACTOR);
 
@@ -1472,12 +1514,14 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 160 từ.`;
             const mktObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, 'MARKETING_AGENT').catch(() => '');
 
             const marketingSystemInstruction = await getMarketingInstruction(state.tenantId);
+            const _mktStart = Date.now();
             const marketingAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: marketingAnalysisPrompt + mktRlhf.fewShotSection + mktRlhf.negativeRulesSection + mktObsInsights,
                 config: { systemInstruction: marketingSystemInstruction }
             });
             const marketingAnalysisText = marketingAI.text || '';
+            trackAiUsage('CHAT_MARKETING_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _mktStart, marketingAnalysisPrompt, marketingAnalysisText, { tenantId: state.tenantId });
 
             const campaignCount = (marketingInfo.match(/\n- /g) || []).length;
             this.updateTrace(state.trace,
@@ -1543,12 +1587,14 @@ PHÂN TÍCH HỢP ĐỒNG ${contractType} — KỊCH BẢN ${contractScenario} (
             const contractObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, 'CONTRACT_AGENT').catch(() => '');
 
             const contractSystemInstruction = await getContractInstruction(state.tenantId);
+            const _contractStart = Date.now();
             const contractAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: contractAnalysisPrompt + contractRlhf.fewShotSection + contractRlhf.negativeRulesSection + contractObsInsights,
                 config: { systemInstruction: contractSystemInstruction }
             });
             const contractAnalysisText = contractAI.text || '';
+            trackAiUsage('CHAT_CONTRACT_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _contractStart, contractAnalysisPrompt, contractAnalysisText, { tenantId: state.tenantId });
 
             const contractSnippet = contractInfo.slice(0, 80) + (contractInfo.length > 80 ? '...' : '');
             this.updateTrace(state.trace, `Hợp đồng [${contractType}] | ${contractScenario}: ${contractSnippet}`, GENAI_CONFIG.MODELS.EXTRACTOR);
@@ -1608,6 +1654,7 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             const enrichedAnalysisPrompt = analysisPrompt + leadRlhf.fewShotSection + leadRlhf.negativeRulesSection;
 
             const leadAnalystSystemInstruction = await getLeadAnalystInstruction(state.tenantId);
+            const _analysisStart = Date.now();
             const analysisRes = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: enrichedAnalysisPrompt,
@@ -1617,6 +1664,7 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             });
 
             const analysisText = analysisRes.text || '';
+            trackAiUsage('CHAT_LEAD_ANALYSIS', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _analysisStart, enrichedAnalysisPrompt, analysisText, { tenantId: state.tenantId });
             const analysisSnippet = analysisText.slice(0, 100).replace(/\n/g, ' ');
             this.updateTrace(state.trace, `Phân tích: ${analysisSnippet}${analysisSnippet.length >= 100 ? '...' : ''}`, GENAI_CONFIG.MODELS.EXTRACTOR);
 
@@ -1949,11 +1997,13 @@ YÊU CẦU VIẾT PHẢN HỒI:
 
             const writerModel = await getGovernanceModel(state.tenantId);
             const writerInstruction = await getAgentSystemInstruction(state.tenantId);
+            const _writerStart = Date.now();
             const writerRes = await getAiClient().models.generateContent({
                 model: writerModel,
                 contents: writerPrompt + rlhfPromptAddition,
                 config: { systemInstruction: writerInstruction }
             });
+            trackAiUsage('CHAT_WRITER', writerModel, Date.now() - _writerStart, writerPrompt, writerRes.text || '', { tenantId: state.tenantId });
 
             const preview = (writerRes.text || '').slice(0, 80).replace(/\n/g, ' ');
             this.updateTrace(state.trace, preview || 'Đã tạo phản hồi.', writerModel);
@@ -2460,6 +2510,7 @@ reasoning phải bằng ${lang === 'en' ? 'English' : 'Tiếng Việt'}, cụ th
             };
 
             const scoreModel = await getGovernanceModel(tenantId);
+            const _scoreStart = Date.now();
             const response = await getAiClient().models.generateContent({
                 model: scoreModel,
                 contents: prompt,
@@ -2469,6 +2520,7 @@ reasoning phải bằng ${lang === 'en' ? 'English' : 'Tiếng Việt'}, cụ th
                     responseSchema: schema
                 }
             });
+            trackAiUsage('LEAD_SCORING', scoreModel, Date.now() - _scoreStart, prompt, response.text || '', { tenantId });
 
             const result = JSON.parse(response.text || '{}');
             return {
@@ -2621,12 +2673,14 @@ Viết phân tích chân dung khách hàng theo 4 điểm sau. Mỗi điểm 2-3
 3. RỦI RO & RÀO CẢN: Tâm trạng hiện tại, lo ngại chính, nguy cơ mất deal hoặc kéo dài pipeline bất thường.
 4. HÀNH ĐỘNG TIẾP THEO: 1-2 bước cụ thể và khả thi nhất cho sale thực hiện trong 24-48h tới để đẩy deal tiến lên.${previousMemories.length > 0 ? '\n5. TIẾN TRIỂN: So với lần phân tích trước, tình hình đã thay đổi ra sao? Deal đang tốt lên hay xấu đi?' : ''}`;
 
+                const _sumStart = Date.now();
                 const response = await getAiClient().models.generateContent({
                     model: summarizeModel,
                     contents: prompt,
                     config: { systemInstruction }
                 });
                 const result = response.text || 'Không thể phân tích khách hàng vào lúc này.';
+                trackAiUsage('LEAD_SUMMARY', summarizeModel, Date.now() - _sumStart, prompt, result, { tenantId });
 
                 // ── Save to ARIA's memory ─────────────────────────────────────────
                 if (aria && lead.id) {
@@ -2665,12 +2719,14 @@ Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise
 3. RISKS & BLOCKERS: Current mindset, main concerns, risk of losing the deal or abnormal pipeline stall.
 4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.${previousMemories.length > 0 ? '\n5. PROGRESS: Compared to previous analysis, how has the situation changed? Is the deal progressing or regressing?' : ''}`;
 
+                const _sumStartEn = Date.now();
                 const response = await getAiClient().models.generateContent({
                     model: summarizeModel,
                     contents: prompt,
                     config: { systemInstruction }
                 });
                 const result = response.text || 'Unable to analyze lead at this time.';
+                trackAiUsage('LEAD_SUMMARY', summarizeModel, Date.now() - _sumStartEn, prompt, result, { tenantId });
 
                 // ── Save to ARIA's memory ─────────────────────────────────────────
                 if (aria && lead.id) {
@@ -2985,6 +3041,7 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 : governanceValModel;
 
             // Run both searches in parallel — STEP 1 (Google Search grounding)
+            const _valSearchStart = Date.now();
             const [saleSearchRes, rentalSearchRes] = await Promise.all([
                 getAiClient().models.generateContent({
                     model: GENAI_CONFIG.MODELS.WRITER,
@@ -3007,6 +3064,9 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     }
                 })
             ]);
+            const _valSearchLatency = Date.now() - _valSearchStart;
+            trackAiUsage('VALUATION_SEARCH', GENAI_CONFIG.MODELS.WRITER, _valSearchLatency, saleSearchPrompt, saleSearchRes.text || '', { tenantId: tid, source: 'sale' });
+            trackAiUsage('VALUATION_SEARCH', GENAI_CONFIG.MODELS.WRITER, _valSearchLatency, rentalSearchPrompt, rentalSearchRes.text || '', { tenantId: tid, source: 'rental' });
 
             const saleContext   = saleSearchRes.text   || '';
             const rentalContext = rentalSearchRes.text || '';
@@ -3167,6 +3227,7 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
                 let extractAttempts = 0;
                 while (true) {
                     try {
+                        const _extractStart = Date.now();
                         const resp = await getAiClient().models.generateContent({
                             model: extractionModel,
                             contents: extractPrompt,
@@ -3180,6 +3241,7 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
                             }
                         });
                         extractText = resp.text || '{}';
+                        trackAiUsage('VALUATION_EXTRACT', extractionModel, Date.now() - _extractStart, extractPrompt, extractText, { tenantId: tid });
                         break;
                     } catch (retryErr: any) {
                         extractAttempts++;
@@ -3376,6 +3438,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
 - BẮT BUỘC có ít nhất 1 con số giá (triệu/m²) từ nguồn cụ thể, không phải ước tính chung.
 - Nếu không có dữ liệu tại "${address}", lấy dữ liệu cùng quận/phường tương đương.`;
 
+                    const _verifyStart = Date.now();
                     const verifyRes = await getAiClient().models.generateContent({
                         model: GENAI_CONFIG.MODELS.WRITER,
                         contents: verifyPrompt,
@@ -3388,6 +3451,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                     });
 
                     const verifyText = verifyRes.text || '';
+                    trackAiUsage('VALUATION_VERIFY', GENAI_CONFIG.MODELS.WRITER, Date.now() - _verifyStart, verifyPrompt, verifyText, { tenantId: tid });
 
                     // Extract price from verification text using regex — no AI call needed
                     // Matches: "120 triệu/m²", "1.2 tỷ/m²", "120,000,000 VNĐ/m²"

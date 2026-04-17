@@ -27,6 +27,7 @@ import {
   currentPeriod,
   COST_CONSTANTS,
 } from '../services/valuationUsageService';
+import { getFeatureBreakdown } from '../services/aiUsageService';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
@@ -910,11 +911,13 @@ export function createValuationRoutes(
       }
       const report = await getMonthlyReport(period, { tenantId: user.tenantId, topUsersLimit: 10 });
       const alertConfig = await getCostAlertConfig(user.tenantId);
+      const featureBreakdown = await getFeatureBreakdown(period, { tenantId: user.tenantId });
       return res.json({
         report,
         alertConfig,
         scope: 'tenant',
         pricing: COST_CONSTANTS,
+        featureBreakdown,
       });
     } catch (err: any) {
       logger.error('[Valuation cost-report] error', err);
