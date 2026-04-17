@@ -1860,6 +1860,61 @@ async function startServer() {
     }
   });
 
+  // Seed default strategic keywords (idempotent — only inserts, never overwrites)
+  app.post('/api/seo/target-keywords/seed-defaults', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
+    const tenantId = seoTenantId(req);
+    const userId = (req as any).user?.id || null;
+    const defaults: { keyword: string; targetUrl: string; notes: string; searchVolume: number }[] = [
+      // Tổng quát
+      { keyword: 'bất động sản TP.HCM',          targetUrl: '/marketplace',                notes: 'Từ khoá chủ đạo — thị trường lớn nhất',           searchVolume: 60500 },
+      { keyword: 'bất động sản Đồng Nai',         targetUrl: '/bat-dong-san-dong-nai',     notes: 'Long Thành – Nhơn Trạch – Biên Hòa',              searchVolume: 27100 },
+      { keyword: 'bất động sản Long Thành',       targetUrl: '/bat-dong-san-long-thanh',   notes: 'Hưởng lợi sân bay Long Thành',                    searchVolume: 18100 },
+      { keyword: 'bất động sản Bình Dương',       targetUrl: '/bat-dong-san-binh-duong',   notes: 'KCN, căn hộ chuyên gia',                          searchVolume: 22200 },
+      { keyword: 'bất động sản Thủ Đức',          targetUrl: '/bat-dong-san-thu-duc',      notes: 'Metro số 1, Thủ Thiêm',                           searchVolume: 14800 },
+      { keyword: 'định giá bất động sản',         targetUrl: '/ai-valuation',              notes: 'Công cụ AI miễn phí, sai số ±5%',                searchVolume: 9900 },
+      { keyword: 'sàn bất động sản uy tín',       targetUrl: '/',                          notes: 'Định vị thương hiệu — top of funnel',             searchVolume: 4400 },
+      { keyword: 'giá nhà đất TP.HCM',            targetUrl: '/marketplace',               notes: 'Dữ liệu giá giao dịch thực tế',                   searchVolume: 12100 },
+      // Dự án
+      { keyword: 'Aqua City Novaland',           targetUrl: '/du-an/aqua-city',           notes: 'Đại đô thị 1.000ha Đồng Nai',                     searchVolume: 18100 },
+      { keyword: 'Izumi City Nam Long',          targetUrl: '/du-an/izumi-city',          notes: 'Chuẩn Nhật, Biên Hòa',                            searchVolume: 8100 },
+      { keyword: 'Vinhomes Grand Park',          targetUrl: '/du-an/vinhomes-grand-park', notes: 'Siêu đô thị 271ha Q9',                            searchVolume: 27100 },
+      { keyword: 'Vinhomes Cần Giờ',             targetUrl: '/du-an/vinhomes-can-gio',    notes: 'Siêu đô thị lấn biển 2.870ha — keyword nóng nhất 2025-2026', searchVolume: 49500 },
+      { keyword: 'Vinhomes Central Park',        targetUrl: '/du-an/vinhomes-central-park', notes: 'Landmark 81, Bình Thạnh',                       searchVolume: 22200 },
+      { keyword: 'The Global City Masterise',    targetUrl: '/du-an/the-global-city',     notes: '117ha An Phú',                                    searchVolume: 14800 },
+      { keyword: 'Masterise Homes',              targetUrl: '/du-an/masterise-homes',     notes: 'Hạng sang TP.HCM',                                searchVolume: 9900 },
+      { keyword: 'Vạn Phúc City',                targetUrl: '/du-an/van-phuc-city',       notes: 'KĐT 198ha ven sông Sài Gòn',                      searchVolume: 12100 },
+      { keyword: 'Sala Đại Quang Minh',          targetUrl: '/du-an/sala',                notes: 'KĐT Sala Thủ Thiêm 257ha',                        searchVolume: 8100 },
+      { keyword: 'Khu đô thị Thủ Thiêm',         targetUrl: '/du-an/thu-thiem',           notes: 'Trung tâm tài chính tương lai',                   searchVolume: 6600 },
+      { keyword: 'Grand Manhattan Novaland',     targetUrl: '/du-an/manhattan',           notes: 'Hạng sang nội đô',                                searchVolume: 2900 },
+      { keyword: 'Sơn Kim Land',                 targetUrl: '/du-an/son-kim-land',        notes: 'BĐS thương mại cao cấp',                          searchVolume: 1900 },
+    ];
+    // Single atomic bulk INSERT — all-or-nothing, idempotent via ON CONFLICT
+    const params: any[] = [tenantId, userId];
+    const tuples: string[] = [];
+    defaults.forEach((d, i) => {
+      const o = 2 + i * 4;
+      params.push(d.keyword, d.targetUrl, d.searchVolume, d.notes);
+      tuples.push(`($1, $${o + 1}, $${o + 2}, NULL, 3, $${o + 3}, $${o + 4}, NOW(), '{}'::jsonb, $2, NOW())`);
+    });
+    const sql = `
+      INSERT INTO seo_target_keywords
+        (tenant_id, keyword, target_url, current_position, target_position, search_volume, notes,
+         last_checked_at, ai_visibility, created_by, updated_at)
+      VALUES ${tuples.join(', ')}
+      ON CONFLICT (tenant_id, lower(keyword)) DO NOTHING
+      RETURNING keyword
+    `;
+    try {
+      const r = await pool.query(sql, params);
+      const inserted = r.rowCount || 0;
+      res.json({ success: true, inserted, skipped: defaults.length - inserted, total: defaults.length });
+    } catch (err) {
+      console.error('[GEO] seed defaults error:', err);
+      res.status(500).json({ error: 'Failed to seed defaults' });
+    }
+  });
+
   app.get('/api/seo/ai-visibility', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     if (!isAdminOrLead(req)) return res.status(403).json({ error: 'Forbidden' }) as any;
     try {

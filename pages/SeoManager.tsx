@@ -893,6 +893,7 @@ const GeoAiSearch: React.FC = () => {
     const [statusLoading, setStatusLoading] = useState(true);
     const [keywords, setKeywords] = useState<TargetKeyword[]>([]);
     const [kwLoading, setKwLoading] = useState(true);
+    const [seeding, setSeeding] = useState(false);
 
     const [draft, setDraft] = useState({ keyword: '', targetUrl: '', currentPosition: '', targetPosition: '3', searchVolume: '', notes: '' });
     const [saving, setSaving] = useState(false);
@@ -1129,6 +1130,30 @@ const GeoAiSearch: React.FC = () => {
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">2. Theo Dõi Từ Khóa Mục Tiêu (Top 3)</h3>
                     <span className="text-2xs text-[var(--text-tertiary)]">{keywords.length} từ khóa</span>
                 </div>
+
+                {keywords.length === 0 && !kwLoading && (
+                    <div className="mb-3 p-3 rounded-xl border border-indigo-300 bg-indigo-50/70 dark:bg-indigo-900/15 flex items-start gap-3">
+                        <div className="flex-1 text-xs text-indigo-900 dark:text-indigo-200">
+                            <div className="font-bold mb-0.5">💡 Bắt đầu nhanh — Nạp bộ 20 từ khoá chiến lược</div>
+                            <div className="text-2xs opacity-90">Bao gồm: BĐS TP.HCM/Đồng Nai/Long Thành/Bình Dương, định giá BĐS, Aqua City, Izumi, Vinhomes Grand Park/Central Park/<strong>Cần Giờ</strong>, Global City, Masterise, <strong>Vạn Phúc City</strong>, <strong>Sala Đại Quang Minh</strong>, Thủ Thiêm, Grand Manhattan, Sơn Kim. Chỉ thêm nếu chưa có (an toàn để bấm nhiều lần).</div>
+                        </div>
+                        <button
+                            disabled={seeding}
+                            onClick={async () => {
+                                if (seeding) return;
+                                setSeeding(true);
+                                try {
+                                    const r = await seoApi.seedDefaultKeywords();
+                                    await loadKeywords();
+                                    alert(`Đã nạp: ${r.inserted} từ khoá mới (bỏ qua ${r.skipped} đã tồn tại)`);
+                                } catch { alert('Lỗi khi nạp bộ mặc định'); }
+                                finally { setSeeding(false); }
+                            }}
+                            className="shrink-0 px-3 py-1.5 text-xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-wait">
+                            {seeding ? 'Đang nạp...' : 'Nạp 20 từ khoá'}
+                        </button>
+                    </div>
+                )}
 
                 <form onSubmit={submitDraft} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mb-4 p-3 rounded-xl bg-[var(--glass-surface-hover)] border border-[var(--glass-border)]">
                     <input type="text" value={draft.keyword} onChange={(e) => setDraft({ ...draft, keyword: e.target.value })}
