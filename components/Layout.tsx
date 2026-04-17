@@ -22,7 +22,7 @@ import {
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
     Database, Activity, Settings, CreditCard, Lock, Smartphone,
     User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home, Globe,
-    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2
+    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail
 } from 'lucide-react';
 
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
@@ -39,6 +39,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.FAVORITES]: <Star size={20} strokeWidth={2} />,
     [ROUTES.APPROVALS]: <CheckSquare size={20} strokeWidth={2} />,
     [ROUTES.SEQUENCES]: <GitMerge size={20} strokeWidth={2} />,
+    [ROUTES.CAMPAIGNS]: <Mail size={20} strokeWidth={2} />,
     [ROUTES.SCORING_RULES]: <Target size={20} strokeWidth={2} />,
     [ROUTES.ROUTING_RULES]: <Share2 size={20} strokeWidth={2} />,
     [ROUTES.KNOWLEDGE]: <BookOpen size={20} strokeWidth={2} />,

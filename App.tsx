@@ -74,6 +74,7 @@ const Reports = lazyLoad(() => import('./pages/Reports'), 'Reports');
 const ApprovalInbox = lazyLoad(() => import('./pages/ApprovalInbox'), 'ApprovalInbox');
 const RoutingRules = lazyLoad(() => import('./pages/RoutingRules'), 'RoutingRules');
 const Sequences = lazyLoad(() => import('./pages/Sequences'), 'Sequences');
+const Campaigns = lazyLoad(() => import('./pages/Campaigns'), 'Campaigns');
 const ScoringRules = lazyLoad(() => import('./pages/ScoringRules'), 'ScoringRules');
 const KnowledgeBase = lazyLoad(() => import('./pages/KnowledgeBase'), 'KnowledgeBase');
 
@@ -115,6 +116,7 @@ registerPrefetch(ROUTES.REPORTS,            () => import('./pages/Reports'));
 registerPrefetch(ROUTES.APPROVALS,           () => import('./pages/ApprovalInbox'));
 registerPrefetch(ROUTES.ROUTING_RULES,       () => import('./pages/RoutingRules'));
 registerPrefetch(ROUTES.SEQUENCES,           () => import('./pages/Sequences'));
+registerPrefetch(ROUTES.CAMPAIGNS,           () => import('./pages/Campaigns'));
 registerPrefetch(ROUTES.SCORING_RULES,       () => import('./pages/ScoringRules'));
 registerPrefetch(ROUTES.KNOWLEDGE,           () => import('./pages/KnowledgeBase'));
 registerPrefetch(ROUTES.SYSTEM,             () => import('./pages/SystemStatus'));
@@ -206,6 +208,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.APPROVALS]: ApprovalInbox,
     [ROUTES.ROUTING_RULES]: RoutingRules,
     [ROUTES.SEQUENCES]: Sequences,
+    [ROUTES.CAMPAIGNS]: Campaigns,
     [ROUTES.SCORING_RULES]: ScoringRules,
     [ROUTES.KNOWLEDGE]: KnowledgeBase,
     [ROUTES.SYSTEM]: SystemStatus,

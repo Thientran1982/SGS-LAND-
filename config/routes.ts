@@ -67,6 +67,7 @@ export const ROUTES = {
     VERIFY_EMAIL: 'verify-email',
 
     SCRAPER: 'scraper',
+    CAMPAIGNS: 'campaigns',
 
     // Task Management Module
     TASK_DASHBOARD: 'task-dashboard',

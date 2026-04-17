@@ -51,6 +51,7 @@ import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
 import { createEngagementCronRouter } from "./server/routes/engagementCronRoutes";
 import { createBackupRouter } from "./server/routes/backupRoutes";
+import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { priceCalibrationService } from "./server/services/priceCalibrationService";
@@ -2393,6 +2394,11 @@ async function startServer() {
       '';
     app.use(createBackupRouter(backupSecret, authenticateToken));
   }
+
+  // ---------------------------------------------------------------------------
+  // Module Chiến dịch tự động — Campaigns
+  // ---------------------------------------------------------------------------
+  app.use(createCampaignRouter(pool, authenticateToken));
 
   // Facebook Webhook Verification
   app.get("/api/webhooks/facebook", (req, res) => {
