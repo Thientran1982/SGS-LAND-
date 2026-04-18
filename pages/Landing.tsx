@@ -7,7 +7,7 @@ import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { ListingCard } from '../components/ListingCard'; 
 import { Hero3D } from '../components/Hero3D';
-import { ArrowRight, Search, Sparkles, BarChart3, Globe2, Zap, Sun, Moon, ChevronRight, X } from 'lucide-react';
+import { ArrowRight, Search, Sparkles, BarChart3, Globe2, Zap, Sun, Moon, ChevronRight, X, Phone, MapPin, Scale, Building2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 // -----------------------------------------------------------------------------
@@ -15,7 +15,114 @@ import { motion } from 'motion/react';
 // -----------------------------------------------------------------------------
 
 const PARTNERS = [
-    "VINHOMES", "MASTERISE HOMES", "KEPPEL LAND", "CAPITALAND", "GAMUDA LAND", "SONKIM LAND", "HUNG THINH", "NOVALAND"
+    "AQUA CITY NOVALAND", "THE GLOBAL CITY MASTERISE", "IZUMI CITY NAM LONG",
+    "VINHOMES CẦN GIỜ", "VINHOMES GRAND PARK", "MASTERISE HOMES",
+    "GRAND MARINA SAIGON", "WATERPOINT NAM LONG", "THE PRIVIA KHANG ĐIỀN",
+    "VINHOMES CENTRAL PARK", "SƠN KIM LAND",
+];
+
+const FEATURED_PROJECTS = [
+    {
+        slug: 'aqua-city',
+        name: 'Aqua City Novaland',
+        dev: 'Novaland',
+        loc: 'Nhơn Trạch, Đồng Nai',
+        scale: '1.000 ha',
+        priceFrom: 'Từ 3 tỷ',
+        type: 'Đại Đô Thị Sinh Thái',
+        badge: 'Đang bàn giao',
+        badgeColor: 'emerald',
+    },
+    {
+        slug: 'the-global-city',
+        name: 'The Global City',
+        dev: 'Masterise Homes',
+        loc: 'An Phú, TP Thủ Đức',
+        scale: '117 ha',
+        priceFrom: 'Từ 15 tỷ',
+        type: 'Đại Đô Thị Thương Mại',
+        badge: 'Đang mở bán',
+        badgeColor: 'indigo',
+    },
+    {
+        slug: 'izumi-city',
+        name: 'Izumi City Nam Long',
+        dev: 'Nam Long Group',
+        loc: 'Biên Hòa, Đồng Nai',
+        scale: '170 ha',
+        priceFrom: 'Từ 2 tỷ',
+        type: 'Đô Thị Chuẩn Nhật',
+        badge: 'Đang mở bán',
+        badgeColor: 'indigo',
+    },
+    {
+        slug: 'vinhomes-can-gio',
+        name: 'Vinhomes Cần Giờ',
+        dev: 'Vinhomes',
+        loc: 'Cần Giờ, TP.HCM',
+        scale: '2.870 ha',
+        priceFrom: 'Mở bán 2026',
+        type: 'Siêu Đô Thị Lấn Biển',
+        badge: 'Sắp mở bán',
+        badgeColor: 'amber',
+    },
+    {
+        slug: 'masterise-homes',
+        name: 'Masterise Homes',
+        dev: 'Masterise Group',
+        loc: 'TP.HCM (Quận 1, Q.2, Bình Thạnh)',
+        scale: 'Hệ Sinh Thái Branded',
+        priceFrom: 'Từ 60 tr/m²',
+        type: 'Branded Residence',
+        badge: 'Đang bán',
+        badgeColor: 'emerald',
+    },
+    {
+        slug: 'vinhomes-grand-park',
+        name: 'Vinhomes Grand Park',
+        dev: 'Vinhomes',
+        loc: 'TP Thủ Đức, TP.HCM',
+        scale: '271 ha',
+        priceFrom: 'Từ 2,5 tỷ',
+        type: 'Siêu Đô Thị Tích Hợp',
+        badge: 'Đang bàn giao',
+        badgeColor: 'emerald',
+    },
+] as const;
+
+const HOME_FAQ = [
+    {
+        q: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?',
+        a: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Nhơn Trạch, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.',
+    },
+    {
+        q: 'Mua bất động sản qua SGS LAND có mất phí môi giới không?',
+        a: 'Không. SGS LAND không thu phí môi giới từ người mua. Doanh thu của SGS LAND đến từ hoa hồng do chủ đầu tư trả theo hợp đồng phân phối. Khách hàng được tư vấn pháp lý, kiểm tra hợp đồng và hỗ trợ hồ sơ vay vốn hoàn toàn miễn phí.',
+    },
+    {
+        q: 'Công cụ định giá AI của SGS LAND hoạt động như thế nào?',
+        a: 'Hệ thống định giá AI (AVM) của SGS LAND phân tích dữ liệu giao dịch thực tế, quy hoạch đô thị, hạ tầng và xu hướng thị trường để cho ra giá ước tính với sai số ±5%. Người dùng nhập địa chỉ, diện tích và loại hình tài sản — hệ thống trả kết quả trong vài giây, không cần đăng nhập.',
+    },
+    {
+        q: 'Dự án nào đang mở bán và có thể đặt chỗ ưu tiên qua SGS LAND?',
+        a: 'Tính đến tháng 4/2026: Aqua City Novaland đang bàn giao nhiều phân khu, có sổ hồng riêng. Izumi City Nam Long mở giai đoạn mới từ 2 tỷ. The Global City Masterise đang nhận đặt cọc từ 15 tỷ. Vinhomes Cần Giờ dự kiến mở bán trong năm 2026. Liên hệ 0971 132 378 để nhận bảng giá và tiến độ mới nhất.',
+    },
+    {
+        q: 'SGS LAND hỗ trợ vay vốn ngân hàng như thế nào?',
+        a: 'SGS LAND kết nối khách hàng với các ngân hàng đối tác: Vietcombank, BIDV, Techcombank, VPBank — hỗ trợ vay tối đa 70% giá trị căn, kỳ hạn 20–25 năm, lãi suất ưu đãi 12–24 tháng đầu. Đội ngũ pháp lý kiểm tra hợp đồng mua bán và hồ sơ vay miễn phí trước khi ký.',
+    },
+    {
+        q: 'Bất động sản Đồng Nai có tiềm năng đầu tư không?',
+        a: 'Theo CBRE Vietnam và Savills Vietnam, bất động sản vùng ven TP.HCM — đặc biệt Đồng Nai (Nhơn Trạch, Biên Hòa) — tăng giá trung bình 12–18%/năm trong giai đoạn 2022–2024 nhờ hạ tầng Vành đai 3, cầu Nhơn Trạch và sân bay Long Thành. Aqua City Novaland và Izumi City Nam Long là hai dự án quy mô lớn SGS LAND đang phân phối tại khu vực này.',
+    },
+    {
+        q: 'Giá bất động sản TP.HCM năm 2026 như thế nào?',
+        a: 'Giá tham khảo năm 2026 tại TP.HCM: căn hộ trung cấp TP Thủ Đức 50–80 triệu/m², nhà phố Bình Thạnh 150–300 triệu/m², biệt thự ven đô Nhơn Trạch 20–50 triệu/m². SGS LAND cung cấp công cụ định giá AI miễn phí tại sgsland.vn/ai-valuation — dữ liệu cập nhật hàng ngày từ giao dịch thực tế.',
+    },
+    {
+        q: 'Chủ đầu tư muốn tìm đơn vị phân phối dự án, SGS LAND có hỗ trợ không?',
+        a: 'Có. SGS LAND hợp tác phân phối với các chủ đầu tư tại TP.HCM, Đồng Nai, Bình Dương và Long An. Mạng lưới của SGS LAND hỗ trợ CRM tracking real-time, chiến dịch marketing digital và team pháp lý chuyên trách. Liên hệ info@sgsland.vn để nhận đề xuất hợp tác.',
+    },
 ];
 
 const ICONS = {
@@ -138,6 +245,86 @@ const FeatureBento = ({ title, desc, icon, className = "", iconBg = "bg-[var(--g
         </div>
     </motion.div>
 );
+
+type FeaturedProject = {
+    slug: string;
+    name: string;
+    dev: string;
+    loc: string;
+    scale: string;
+    priceFrom: string;
+    type: string;
+    badge: string;
+    badgeColor: string;
+};
+
+const badgeStyles: Record<string, string> = {
+    emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800',
+    indigo:  'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800',
+    amber:   'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800',
+};
+
+const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: () => void }) => (
+    <motion.article
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ duration: 0.4 }}
+        onClick={onClick}
+        className="relative p-6 rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 bg-[var(--bg-surface)] dark:bg-slate-800 hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 flex flex-col"
+    >
+        <div className="flex justify-between items-start gap-3 mb-4">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 leading-none">
+                {project.type}
+            </span>
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border whitespace-nowrap leading-none ${badgeStyles[project.badgeColor] ?? badgeStyles.indigo}`}>
+                {project.badge}
+            </span>
+        </div>
+        <h3 className="text-xl font-bold text-[var(--text-primary)] dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-snug">
+            {project.name}
+        </h3>
+        <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 mb-3">{project.dev} &middot; {project.loc}</p>
+        <div className="flex items-center gap-3 text-sm mb-4">
+            <span className="flex items-center gap-1 text-[var(--text-secondary)] dark:text-slate-300">
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+                <span className="font-medium">{project.scale}</span>
+            </span>
+        </div>
+        <div className="mt-auto pt-4 border-t border-[var(--glass-border)] dark:border-slate-700 flex items-center justify-between">
+            <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{project.priceFrom}</span>
+            <span className="flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 opacity-60 group-hover:opacity-100 transition-opacity">
+                Xem bảng giá <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </span>
+        </div>
+    </motion.article>
+);
+
+const HomeFAQAccordion = ({ items }: { items: { q: string; a: string }[] }) => {
+    const [open, setOpen] = useState<number | null>(0);
+    return (
+        <div className="space-y-3">
+            {items.map((item, i) => (
+                <div key={i} className="border border-[var(--glass-border)] dark:border-slate-700 rounded-2xl overflow-hidden bg-[var(--bg-surface)] dark:bg-slate-800">
+                    <button
+                        type="button"
+                        onClick={() => setOpen(open === i ? null : i)}
+                        className="w-full flex items-center justify-between gap-4 p-5 text-left font-bold text-[var(--text-primary)] dark:text-white text-sm md:text-base leading-snug hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        aria-expanded={open === i}
+                    >
+                        <span role="heading" aria-level={3}>{item.q}</span>
+                        <ChevronRight className={`w-4 h-4 shrink-0 transition-transform duration-200 ${open === i ? 'rotate-90' : ''}`} />
+                    </button>
+                    {open === i && (
+                        <p className="px-5 pb-5 text-sm md:text-base text-[var(--text-secondary)] dark:text-slate-300 leading-relaxed border-t border-[var(--glass-border)] dark:border-slate-700 pt-4">
+                            {item.a}
+                        </p>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 export const Landing: React.FC = () => {
     const { formatCurrency, language, setLanguage, t } = useTranslation();
@@ -409,10 +596,50 @@ export const Landing: React.FC = () => {
             <section className="py-16 md:py-20 px-6 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 border-y border-[var(--glass-border)] dark:border-slate-800 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        <StatCard label={t('landing.stat_value_label')} value={2.5} prefix="$" suffix="B+" trend={t('landing.trend_ytd')} />
-                        <StatCard label={t('landing.stat_data_label')} value={50} suffix="M+" trend={t('landing.trend_daily')} />
-                        <StatCard label={t('landing.stat_latency_label')} value={48} suffix="ms" trend={t('landing.trend_multi_region')} />
-                        <StatCard label={t('landing.stat_uptime_label')} value={99.99} suffix="%" trend={t('landing.trend_enterprise')} />
+                        <StatCard label={t('landing.stat_value_label')} value={11} suffix="+" trend={t('landing.trend_ytd')} />
+                        <StatCard label={t('landing.stat_data_label')} value={95} suffix="%" trend={t('landing.trend_daily')} />
+                        <StatCard label={t('landing.stat_latency_label')} value={5} suffix=" Tỉnh" trend={t('landing.trend_multi_region')} />
+                        <StatCard label={t('landing.stat_uptime_label')} value={24} suffix="/7" trend={t('landing.trend_enterprise')} />
+                    </div>
+                </div>
+            </section>
+
+            {/* FEATURED PROJECTS */}
+            <section className="py-20 md:py-32 px-6 bg-[var(--bg-surface)] dark:bg-slate-900">
+                <div className="max-w-7xl mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="mb-12 md:mb-16"
+                    >
+                        <span className="text-xs font-bold tracking-[0.25em] uppercase text-indigo-600 dark:text-indigo-400 mb-3 block">11+ DỰ ÁN LỚN</span>
+                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-[var(--text-primary)] dark:text-white mb-4 tracking-tight">
+                            Dự Án SGS LAND <br className="hidden md:block" /><span className="text-indigo-600 dark:text-indigo-400">Đang Phân Phối</span>
+                        </h2>
+                        <p className="text-lg md:text-xl text-[var(--text-tertiary)] dark:text-slate-400 max-w-2xl leading-relaxed">
+                            SGS LAND phân phối các dự án quy mô lớn tại TP.HCM, Đồng Nai và Bình Dương — tổng diện tích hơn 4.500ha, giá từ 2 tỷ đến hàng trăm tỷ đồng/căn.
+                        </p>
+                    </motion.div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {(FEATURED_PROJECTS as unknown as FeaturedProject[]).map((p) => (
+                            <ProjectCard
+                                key={p.slug}
+                                project={p}
+                                onClick={() => navigateTo(`/du-an/${p.slug}`)}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="mt-12 text-center">
+                        <button
+                            onClick={() => navigateTo(ROUTES.SEARCH)}
+                            className="group inline-flex items-center gap-2 text-[var(--text-primary)] dark:text-white font-bold border-b-2 border-[var(--glass-border)] dark:border-slate-700 pb-1 hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all text-sm md:text-base"
+                        >
+                            Xem tất cả sản phẩm đang rao bán
+                            <span className="group-hover:translate-x-1 transition-transform">{ICONS.ARROW_RIGHT}</span>
+                        </button>
                     </div>
                 </div>
             </section>
@@ -558,6 +785,33 @@ export const Landing: React.FC = () => {
                 </div>
             </section>
 
+            {/* GEO FAQ */}
+            <section className="py-20 md:py-32 px-6 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 border-t border-[var(--glass-border)] dark:border-slate-800">
+                <div className="max-w-4xl mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="mb-12 md:mb-16"
+                    >
+                        <span className="text-xs font-bold tracking-[0.25em] uppercase text-indigo-600 dark:text-indigo-400 mb-3 block">HỎI & ĐÁP</span>
+                        <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)] dark:text-white mb-4 tracking-tight">
+                            Câu Hỏi <span className="text-indigo-600 dark:text-indigo-400">Thường Gặp</span>
+                        </h2>
+                        <p className="text-lg text-[var(--text-tertiary)] dark:text-slate-400 max-w-2xl leading-relaxed">
+                            Giải đáp thắc mắc về bất động sản TP.HCM, các dự án lớn và dịch vụ của SGS LAND.
+                        </p>
+                    </motion.div>
+
+                    <HomeFAQAccordion items={HOME_FAQ} />
+
+                    <p className="text-xs text-[var(--text-muted)] dark:text-slate-500 mt-8 text-center">
+                        Nội dung được biên soạn bởi đội ngũ chuyên gia SGS LAND. Cập nhật lần cuối:{' '}
+                        <time dateTime="2026-04-18">04/2026</time>. Tham khảo: CBRE Vietnam, Savills Vietnam, Bộ Xây Dựng.
+                    </p>
+                </div>
+            </section>
+
             {/* CTA */}
             <section className="py-20 md:py-32 px-6 text-center relative overflow-hidden bg-slate-900">
                 <motion.div 
@@ -592,15 +846,57 @@ export const Landing: React.FC = () => {
                                 {t('landing.cta_btn_register')}
                             </button>
                         )}
-                        <button onClick={() => navigateTo(ROUTES.CONTACT)} className="px-8 md:px-10 py-3 md:py-4 bg-transparent border border-white/20 text-white rounded-full font-bold text-base md:text-lg hover:bg-[var(--bg-surface)]/10 transition-colors backdrop-blur-sm">
+                        <a
+                            href="tel:+84971132378"
+                            className="px-8 md:px-10 py-3 md:py-4 bg-transparent border border-white/20 text-white rounded-full font-bold text-base md:text-lg hover:bg-white/10 transition-colors backdrop-blur-sm inline-flex items-center gap-2"
+                        >
+                            <Phone className="w-4 h-4" />
                             {t('landing.cta_btn_sales')}
-                        </button>
+                        </a>
                     </div>
                 </motion.div>
             </section>
 
+            {/* ZALO FLOAT — all screens */}
+            <a
+                href="https://zalo.me/0971132378"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat Zalo với SGS LAND"
+                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 bg-[#0068FF] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform select-none"
+            >
+                <span className="text-xl font-black leading-none">Z</span>
+            </a>
+
+            {/* STICKY MOBILE BOTTOM BAR — md:hidden */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-[var(--glass-border)] dark:border-slate-800 px-3 py-2 flex gap-2 shadow-2xl">
+                <a
+                    href="tel:+84971132378"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
+                >
+                    <Phone className="w-4 h-4 shrink-0" />
+                    <span>Gọi ngay</span>
+                </a>
+                <a
+                    href="https://zalo.me/0971132378"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#0068FF] hover:bg-[#0057d6] active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
+                >
+                    <span className="text-base font-black leading-none">Z</span>
+                    <span>Zalo</span>
+                </a>
+                <button
+                    onClick={() => navigateTo(ROUTES.CONTACT)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[var(--glass-surface-hover)] dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 text-[var(--text-primary)] dark:text-white rounded-xl text-sm font-bold border border-[var(--glass-border)] dark:border-slate-600 transition-all"
+                >
+                    <Scale className="w-4 h-4 shrink-0" />
+                    <span>Tư vấn</span>
+                </button>
+            </div>
+
             {/* FOOTER */}
-            <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800 pb-safe-footer">
+            <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800 pb-safe-footer pb-28 md:pb-20">
                 <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-8 md:gap-12">
                     <div className="col-span-2">
                         <div className="flex items-center gap-2 mb-4 md:mb-6">
