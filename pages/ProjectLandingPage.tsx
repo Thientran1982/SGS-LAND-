@@ -81,18 +81,18 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         slug: 'aqua-city',
         name: 'Aqua City Novaland',
         developer: 'Novaland Group',
-        location: 'Nhơn Trạch, Đồng Nai',
+        location: 'Biên Hòa, Đồng Nai',
         locationSlug: 'bat-dong-san-dong-nai',
         heroDescription:
-            'Aqua City là đại đô thị sinh thái quy mô 1.000ha do Novaland phát triển tại Nhơn Trạch, Đồng Nai. Với vị trí cách trung tâm TP.HCM chỉ 30 phút qua cầu Nhơn Trạch, Aqua City đang trở thành lựa chọn hàng đầu cho cư dân TP.HCM tìm kiếm không gian sống xanh, tiện nghi và đầu tư dài hạn. SGS LAND hỗ trợ tư vấn và giao dịch Aqua City chuyên nghiệp.',
+            'Aqua City là đại đô thị sinh thái quy mô 1.000ha do Novaland phát triển tại Long Hưng, Biên Hòa, Đồng Nai. Với vị trí cách trung tâm TP.HCM chỉ 30 phút, Aqua City đang trở thành lựa chọn hàng đầu cho cư dân TP.HCM tìm kiếm không gian sống xanh, tiện nghi và đầu tư dài hạn. SGS LAND hỗ trợ tư vấn và giao dịch Aqua City chuyên nghiệp.',
         priceRange: 'Từ 6,5 tỷ đồng',
         projectType: 'Đại Đô Thị Sinh Thái',
         scale: '1.000 ha',
         details: [
             { label: 'Chủ đầu tư', value: 'Novaland Group' },
             { label: 'Quy mô', value: '1.000 ha' },
-            { label: 'Vị trí', value: 'Nhơn Trạch, Đồng Nai' },
-            { label: 'Khoảng cách TP.HCM', value: '~30 phút (cầu Nhơn Trạch)' },
+            { label: 'Vị trí', value: 'Long Hưng, Biên Hòa, Đồng Nai' },
+            { label: 'Khoảng cách TP.HCM', value: '~30 phút qua cầu Nhơn Trạch' },
             { label: 'Loại hình', value: 'Căn hộ, Nhà phố, Biệt thự, Shophouse' },
             { label: 'Mức giá tham khảo', value: 'Nhà phố từ 6,5 tỷ — Biệt thự từ 20+ tỷ đồng' },
             { label: 'Pháp lý', value: 'Sổ hồng riêng' },
@@ -134,7 +134,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Aqua City cách TP.HCM bao xa?',
-                a: 'Aqua City tọa lạc tại Nhơn Trạch, Đồng Nai, cách trung tâm TP.HCM khoảng 35-40km. Khi cầu Nhơn Trạch hoàn thành và đưa vào sử dụng, thời gian di chuyển đến quận 2 (TP Thủ Đức) chỉ còn khoảng 20-25 phút. Hiện tại qua phà Bình Khánh mất khoảng 45-60 phút.',
+                a: 'Aqua City tọa lạc tại Long Hưng, Biên Hòa, Đồng Nai, cách trung tâm TP.HCM khoảng 35-40km. Khi cầu Nhơn Trạch hoàn thành và đưa vào sử dụng, thời gian di chuyển đến quận 2 (TP Thủ Đức) chỉ còn khoảng 20-25 phút.',
             },
             {
                 q: 'Pháp lý Aqua City có an toàn không?',
@@ -146,7 +146,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Aqua City đã có sổ hồng riêng chưa?',
-                a: 'Một số phân khu Aqua City đã được cấp sổ hồng riêng từng căn, đây là điểm cộng lớn so với nhiều dự án tại Nhơn Trạch. Tuy nhiên, tình trạng pháp lý từng phân khu khác nhau — SGS LAND hỗ trợ tra cứu và xác minh sổ hồng cụ thể theo từng căn trước khi bạn đặt cọc.',
+                a: 'Một số phân khu Aqua City đã được cấp sổ hồng riêng từng căn, đây là điểm cộng lớn so với nhiều dự án tại Biên Hòa. Tuy nhiên, tình trạng pháp lý từng phân khu khác nhau — SGS LAND hỗ trợ tra cứu và xác minh sổ hồng cụ thể theo từng căn trước khi bạn đặt cọc.',
             },
             {
                 q: 'Novaland có còn tài chính ổn định không sau tái cơ cấu?',
@@ -154,7 +154,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'So sánh Aqua City và Izumi City — nên chọn dự án nào?',
-                a: 'Aqua City (1.000ha, Nhơn Trạch): quy mô lớn hơn, tiện ích nhiều hơn (golf, marina, bệnh viện), giá biệt thự cao hơn, cách TP.HCM 35-40km. Izumi City (170ha, Biên Hòa): chuẩn Nhật Bản, Fuji Mart, Nam Long có track record bàn giao tốt, giá nhà phố thấp hơn, gần TP.HCM hơn (30 phút). Chọn Aqua City nếu ưu tiên quy mô và tiện ích; Izumi City nếu ưu tiên uy tín chủ đầu tư và vị trí gần.',
+                a: 'Aqua City (1.000ha, Long Hưng – Biên Hòa): quy mô lớn hơn, tiện ích nhiều hơn (golf, marina, bệnh viện), giá biệt thự cao hơn, cách TP.HCM 35-40km. Izumi City (170ha, Biên Hòa): chuẩn Nhật Bản, Fuji Mart, Nam Long có track record bàn giao tốt, giá nhà phố thấp hơn. Chọn Aqua City nếu ưu tiên quy mô và tiện ích; Izumi City nếu ưu tiên uy tín chủ đầu tư.',
             },
             {
                 q: 'Cho thuê căn hộ/nhà phố Aqua City được bao nhiêu tiền?',

@@ -34,7 +34,7 @@ const ALL_PROJECTS: DuAnProject[] = [
         slug: 'aqua-city',
         name: 'Aqua City Novaland',
         developer: 'Novaland Group',
-        location: 'Nhơn Trạch, Đồng Nai',
+        location: 'Biên Hòa, Đồng Nai',
         province: 'Đồng Nai',
         scale: '1.000 ha',
         priceRange: 'Từ 6,5 tỷ đồng',
@@ -43,7 +43,7 @@ const ALL_PROJECTS: DuAnProject[] = [
         status: 'Đang bàn giao',
         statusColor: 'emerald',
         img: '/images/projects/aqua-city.png',
-        description: 'Đại đô thị sinh thái 1.000ha với hơn 100.000m² mặt nước, sân golf 18 lỗ, marina cao cấp. Cách TP.HCM 30 phút qua cầu Nhơn Trạch.',
+        description: 'Đại đô thị sinh thái 1.000ha với hơn 100.000m² mặt nước, sân golf 18 lỗ, marina cao cấp. Tọa lạc Long Hưng, Biên Hòa — cách TP.HCM 30 phút.',
     },
     {
         slug: 'the-global-city',
