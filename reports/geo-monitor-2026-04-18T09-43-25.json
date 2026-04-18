@@ -1,0 +1,776 @@
+{
+  "timestamp": "2026-04-18T09:43:26.465Z",
+  "target": "https://sgsland.vn",
+  "score": {
+    "total": 56,
+    "breakdown": {
+      "ai_mentions": {
+        "score": 30,
+        "max": 30
+      },
+      "eeat": {
+        "score": 10,
+        "max": 20
+      },
+      "structured": {
+        "score": 16,
+        "max": 20
+      },
+      "entity": {
+        "score": 0,
+        "max": 15
+      },
+      "indexability": {
+        "score": 0,
+        "max": 15
+      }
+    }
+  },
+  "eeat": {
+    "score": 5,
+    "max": 10,
+    "checks": [
+      {
+        "id": "founder_team",
+        "label": "Tên/ảnh nhà sáng lập hoặc đội ngũ",
+        "pass": true
+      },
+      {
+        "id": "years_in_business",
+        "label": "Số năm hoạt động",
+        "pass": false
+      },
+      {
+        "id": "transactions_count",
+        "label": "Số dự án / giao dịch đã thực hiện",
+        "pass": false
+      },
+      {
+        "id": "awards",
+        "label": "Giải thưởng / chứng nhận",
+        "pass": false
+      },
+      {
+        "id": "press_mentions",
+        "label": "Báo chí / truyền thông nhắc đến",
+        "pass": false
+      },
+      {
+        "id": "physical_address",
+        "label": "Địa chỉ trụ sở",
+        "pass": true
+      },
+      {
+        "id": "phone_prominent",
+        "label": "Số điện thoại nổi bật",
+        "pass": true
+      },
+      {
+        "id": "reviews_testimonials",
+        "label": "Đánh giá / lời chứng thực có tên thật",
+        "pass": false
+      },
+      {
+        "id": "linkedin_links",
+        "label": "LinkedIn của nhân sự chủ chốt",
+        "pass": true
+      },
+      {
+        "id": "organization_schema",
+        "label": "Schema Organization (JSON-LD)",
+        "pass": true
+      }
+    ]
+  },
+  "entity": {
+    "variants": {
+      "SGS Land": 0,
+      "SGSLand": 0,
+      "sgs land": 0,
+      "Sgs Land": 0,
+      "sgsland.vn": 1
+    },
+    "consistent": true,
+    "projectsFound": [],
+    "projectsMissing": [
+      "Aqua City",
+      "The Global City",
+      "Izumi City",
+      "Vinhomes Grand Park",
+      "Vinhomes Cần Giờ",
+      "Masterise Homes",
+      "Lumiere"
+    ]
+  },
+  "technical": {
+    "hasRobots": true,
+    "hasSitemap": true,
+    "hasLlmsTxt": true,
+    "hasLlmsFull": true,
+    "blockedAiBots": [
+      "gptbot",
+      "claudebot",
+      "google-extended"
+    ]
+  },
+  "structured": {
+    "totalBlocks": 6,
+    "types": [
+      "WebSite",
+      "SearchAction",
+      "EntryPoint",
+      "Organization",
+      "ImageObject",
+      "Country",
+      "PostalAddress",
+      "ContactPoint",
+      "SoftwareApplication",
+      "Offer",
+      "Service",
+      "OfferCatalog",
+      "FAQPage",
+      "Question",
+      "Answer",
+      "BreadcrumbList",
+      "ListItem"
+    ],
+    "wanted": [
+      "Organization",
+      "LocalBusiness",
+      "RealEstateAgent",
+      "WebSite",
+      "BreadcrumbList",
+      "FAQPage"
+    ],
+    "present": [
+      "Organization",
+      "WebSite",
+      "BreadcrumbList",
+      "FAQPage"
+    ]
+  },
+  "aiResults": [
+    {
+      "engine": "gemini",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:aqua-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:aqua-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "The Global City Masterise mua ở đâu?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "The Global City Masterise mua ở đâu?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "The Global City Masterise mua ở đâu?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "The Global City Masterise mua ở đâu?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "The Global City Masterise mua ở đâu?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:global-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:izumi-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:vinhomes-can-gio",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "developer:masterise",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:trust-hcm"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:east-hcm"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:trust-hcm",
+          "freshness:2025"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:luxury-hcm"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "comparison:aqua-vs-global"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "comparison:novaland-vs-vinhomes"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "SGS Land là công ty gì?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "SGS Land là công ty gì?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "SGS Land là công ty gì?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "SGS Land là công ty gì?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "SGS Land là công ty gì?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "brand:about"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "sgsland.vn bán những dự án nào?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "sgsland.vn bán những dự án nào?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "sgsland.vn bán những dự án nào?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "sgsland.vn bán những dự án nào?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "sgsland.vn bán những dự án nào?",
+      "response": "coverage=0.5, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "brand:projects"
+        ],
+        "coverageRatio": 0.5,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "SGS Land có uy tín không?",
+      "skipped": "GEMINI_API_KEY not set"
+    },
+    {
+      "engine": "openai",
+      "query": "SGS Land có uy tín không?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "SGS Land có uy tín không?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "SGS Land có uy tín không?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "SGS Land có uy tín không?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "brand:trust"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    }
+  ],
+  "gaps": {
+    "Aqua City Novaland mua ở đâu uy tín?": [
+      "Tạo landing page “Đại lý phân phối aqua-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Đại lý phân phối Aqua City chính thức là ai?": [
+      "Tạo landing page “Đại lý phân phối aqua-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "The Global City Masterise mua ở đâu?": [
+      "Tạo landing page “Đại lý phân phối global-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Izumi City Bình Dương đại lý bán hàng nào uy tín?": [
+      "Tạo landing page “Đại lý phân phối izumi-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Vinhomes Cần Giờ đặt cọc ở đâu?": [
+      "Tạo landing page “Đại lý phân phối vinhomes-can-gio chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Masterise Homes phân phối qua đơn vị nào?": [
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Công ty bất động sản uy tín TP.HCM": [
+      "Tạo guide “Công ty bất động sản uy tín TP.HCM” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ."
+    ],
+    "Đơn vị phân phối bất động sản Khu Đông TP.HCM": [
+      "Tạo guide “Đơn vị phân phối bất động sản Khu Đông TP.HCM” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ."
+    ],
+    "Sàn bất động sản uy tín TP.HCM 2025": [
+      "Tạo guide “Sàn bất động sản uy tín TP.HCM 2025” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ.",
+      "Thêm dấu freshness “Cập nhật T01/2026” + bảng số liệu Q1/2026 để vượt nội dung cũ của đối thủ trong AI Overviews."
+    ],
+    "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?": [
+      "Tạo guide “Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ."
+    ],
+    "So sánh Aqua City và Global City nên mua cái nào?": [
+      "Tạo bài so sánh dạng bảng (comparison table) cho “So sánh Aqua City và Global City nên mua cái nào?” với 8-10 tiêu chí: vị trí, pháp lý, giá/m², tiến độ, tiện ích, mật độ, dòng tiền cho thuê, phù hợp ai. Format dạng list/bảng được trích dẫn 74% nhiều hơn."
+    ],
+    "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?": [
+      "Tạo bài so sánh dạng bảng (comparison table) cho “Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?” với 8-10 tiêu chí: vị trí, pháp lý, giá/m², tiến độ, tiện ích, mật độ, dòng tiền cho thuê, phù hợp ai. Format dạng list/bảng được trích dẫn 74% nhiều hơn."
+    ],
+    "SGS Land là công ty gì?": [
+      "Cập nhật trang Giới thiệu / About với: năm thành lập, số dự án phân phối, đội ngũ key có ảnh + LinkedIn, giải thưởng, báo chí — boost E-E-A-T để brand query được trả lời chuẩn."
+    ],
+    "sgsland.vn bán những dự án nào?": [
+      "Cập nhật trang Giới thiệu / About với: năm thành lập, số dự án phân phối, đội ngũ key có ảnh + LinkedIn, giải thưởng, báo chí — boost E-E-A-T để brand query được trả lời chuẩn."
+    ],
+    "SGS Land có uy tín không?": [
+      "Cập nhật trang Giới thiệu / About với: năm thành lập, số dự án phân phối, đội ngũ key có ảnh + LinkedIn, giải thưởng, báo chí — boost E-E-A-T để brand query được trả lời chuẩn."
+    ]
+  },
+  "snapshotUrls": [
+    {
+      "url": "https://sgsland.vn/",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/about",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/gioi-thieu",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/llms.txt",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/llms-full.txt",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/robots.txt",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/sitemap.xml",
+      "ok": true,
+      "status": 200
+    }
+  ]
+}

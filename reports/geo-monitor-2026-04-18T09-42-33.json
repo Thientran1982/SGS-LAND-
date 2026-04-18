@@ -1,0 +1,797 @@
+{
+  "timestamp": "2026-04-18T09:44:11.954Z",
+  "target": "https://sgsland.vn",
+  "score": {
+    "total": 56,
+    "breakdown": {
+      "ai_mentions": {
+        "score": 30,
+        "max": 30
+      },
+      "eeat": {
+        "score": 10,
+        "max": 20
+      },
+      "structured": {
+        "score": 16,
+        "max": 20
+      },
+      "entity": {
+        "score": 0,
+        "max": 15
+      },
+      "indexability": {
+        "score": 0,
+        "max": 15
+      }
+    }
+  },
+  "eeat": {
+    "score": 5,
+    "max": 10,
+    "checks": [
+      {
+        "id": "founder_team",
+        "label": "Tên/ảnh nhà sáng lập hoặc đội ngũ",
+        "pass": true
+      },
+      {
+        "id": "years_in_business",
+        "label": "Số năm hoạt động",
+        "pass": false
+      },
+      {
+        "id": "transactions_count",
+        "label": "Số dự án / giao dịch đã thực hiện",
+        "pass": false
+      },
+      {
+        "id": "awards",
+        "label": "Giải thưởng / chứng nhận",
+        "pass": false
+      },
+      {
+        "id": "press_mentions",
+        "label": "Báo chí / truyền thông nhắc đến",
+        "pass": false
+      },
+      {
+        "id": "physical_address",
+        "label": "Địa chỉ trụ sở",
+        "pass": true
+      },
+      {
+        "id": "phone_prominent",
+        "label": "Số điện thoại nổi bật",
+        "pass": true
+      },
+      {
+        "id": "reviews_testimonials",
+        "label": "Đánh giá / lời chứng thực có tên thật",
+        "pass": false
+      },
+      {
+        "id": "linkedin_links",
+        "label": "LinkedIn của nhân sự chủ chốt",
+        "pass": true
+      },
+      {
+        "id": "organization_schema",
+        "label": "Schema Organization (JSON-LD)",
+        "pass": true
+      }
+    ]
+  },
+  "entity": {
+    "variants": {
+      "SGS Land": 0,
+      "SGSLand": 0,
+      "sgs land": 0,
+      "Sgs Land": 0,
+      "sgsland.vn": 1
+    },
+    "consistent": true,
+    "projectsFound": [],
+    "projectsMissing": [
+      "Aqua City",
+      "The Global City",
+      "Izumi City",
+      "Vinhomes Grand Park",
+      "Vinhomes Cần Giờ",
+      "Masterise Homes",
+      "Lumiere"
+    ]
+  },
+  "technical": {
+    "hasRobots": true,
+    "hasSitemap": true,
+    "hasLlmsTxt": true,
+    "hasLlmsFull": true,
+    "blockedAiBots": [
+      "gptbot",
+      "claudebot",
+      "google-extended"
+    ]
+  },
+  "structured": {
+    "totalBlocks": 6,
+    "types": [
+      "WebSite",
+      "SearchAction",
+      "EntryPoint",
+      "Organization",
+      "ImageObject",
+      "Country",
+      "PostalAddress",
+      "ContactPoint",
+      "SoftwareApplication",
+      "Offer",
+      "Service",
+      "OfferCatalog",
+      "FAQPage",
+      "Question",
+      "Answer",
+      "BreadcrumbList",
+      "ListItem"
+    ],
+    "wanted": [
+      "Organization",
+      "LocalBusiness",
+      "RealEstateAgent",
+      "WebSite",
+      "BreadcrumbList",
+      "FAQPage"
+    ],
+    "present": [
+      "Organization",
+      "WebSite",
+      "BreadcrumbList",
+      "FAQPage"
+    ]
+  },
+  "aiResults": [
+    {
+      "engine": "gemini",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "response": "Để mua Aqua City của Novaland một cách uy tín, bạn có thể liên hệ trực tiếp với Tập đoàn Novaland hoặc thông qua các đại lý phân phối chính thức của họ.\n\n**Các kênh mua uy tín:**\n\n*   **Trực tiếp từ Novaland:**\n    *   Bạn có thể liên hệ qua tổng đài chăm sóc khách hàng của Novaland: **1900 63 6666**.\n    *   Đến trực tiếp các sàn giao dịch bất động sản của Novaland tại TP.HCM hoặc Hà Nội. Một số địa chỉ có thể tham khảo bao gồm:\n        *   Novaland Gallery tại 2Bis Nguyễn Thị Minh Khai, P.Đa Kao, Q.1, TP.HCM.\n        *   Novaland Gallery 25 Ngọc Khánh, P.Giảng Võ, Q.Ba Đình, TP.Hà Nội.\n        *   Các sàn giao dịch khác của Novaland tại 65 Nguyễn Du, P.Bến Nghé, Q.1 hoặc 74 Nguyễn Văn Trỗi, P.8, Q.Phú Nhuận, TP.HCM.\n    *   Bạn cũng có thể đến trực tiếp khu đô thị Aqua City tại xã Long Hưng, TP.Biên Hòa, Tỉnh Đồng Nai để tìm hiểu thông tin và tham quan dự án.\n\n*   **Thông qua các đại lý phân phối chính thức:**\n    Novaland thường hợp tác với các đơn vị phân phối uy tín. Một số đại lý đã từng phân phối dự án Aqua City bao gồm:\n    *   **Smartland:** Từng là đại lý phân phối chính thức dự án Aqua City.\n    *   **Vietnamland** (trước đây là Bất động sản Express): Đã từng hợp tác và phân phối dự án Aqua City.\n    *   **HTLand:** Là đơn vị phân phối dự án Aqua City Novaland.\n\nKhi giao dịch, bạn nên kiểm tra kỹ thông tin dự án, hợp đồng mua bán, và pháp lý để đảm bảo quyền lợi của mình. Novaland đã và đang tập trung tháo gỡ các vướng mắc pháp lý, cam kết bàn giao sổ hồng cho các cư dân tại Aqua City.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Aqua City Novaland mua ở đâu uy tín?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:aqua-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "response": "Hiện tại, không có một \"đại lý phân phối Aqua City chính thức\" duy nhất cho toàn bộ dự án được công bố. Thay vào đó, Tập đoàn Novaland (chủ đầu tư dự án Aqua City) đã hợp tác với nhiều đại lý và tổng đại lý để phân phối các phân khu của dự án.\n\nCác đơn vị phân phối được đề cập bao gồm:\n\n*   **WeEstate**: Là tổng đại lý phân phối phân khu River Park 1 của Aqua City.\n*   **Vietnamland (Bất động sản Express)**: Được biết đến là đại lý phân phối F1 của dự án Aqua City.\n*   **Các đại lý phân phối phân khu River Park 1 (đối tác của WeEstate)**:\n    *   **Tại khu vực phía Nam**: Hoàng Gia Sài Gòn, Fastland, MLAND Miền Nam, Newstar Land, TT Realty & Phúc Hưng Group, IQI, Cali Homes, Ngọc Phương Đông.\n    *   **Tại khu vực phía Bắc**: MHG, Trust Real, MGLand Việt Nam, Tân Thời Đại, VHG.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Đại lý phân phối Aqua City chính thức là ai?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:aqua-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "The Global City Masterise mua ở đâu?",
+      "response": "The Global City là một dự án khu đô thị phức hợp do Masterise Homes phát triển. Dự án này tọa lạc tại phường An Phú, TP. Thủ Đức, TP. Hồ Chí Minh.\n\nCụ thể, dự án nằm ở vị trí kim cương của phường An Phú, kết nối với trung tâm TP. Hồ Chí Minh và cao tốc Long Thành - Dầu Giây. Địa chỉ của dự án là mặt tiền đường Đỗ Xuân Hợp – Cao tốc TP. Hồ Chí Minh – Long Thành, Phường An Phú, TP. Hồ Chí Minh.\n\nNếu bạn muốn tham quan nhà mẫu, The Global City Sales Gallery nằm trong khu đô thị, cạnh khu kênh đào trung tâm.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "The Global City Masterise mua ở đâu?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "The Global City Masterise mua ở đâu?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "The Global City Masterise mua ở đâu?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "The Global City Masterise mua ở đâu?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:global-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "response": "Dự án Izumi City được phát triển bởi Tập đoàn Nam Long Group phối hợp với Hankyu Hanshin Properties Corp (Nhật Bản). Dự án này tọa lạc tại Biên Hòa, Đồng Nai, gần Bình Dương.\n\nTheo thông tin tìm kiếm được, **Khải Điền Group** được nêu là đơn vị phân phối chính thức của dự án Izumi City.\n\nĐể có thông tin chi tiết và đảm bảo uy tín, bạn nên liên hệ trực tiếp với chủ đầu tư Nam Long Group hoặc các đối tác phân phối chính thức của họ. Một số trang web liên quan đến dự án cũng cung cấp hotline tư vấn bán hàng.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:izumi-city",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "response": "Để đặt cọc (booking) cho dự án Vinhomes Cần Giờ (hay Vinhomes Green Paradise), bạn có thể thực hiện theo các cách sau:\n\n*   **Liên hệ Phòng Kinh doanh Vinhomes Cần Giờ:** Bạn có thể liên hệ trực tiếp với phòng kinh doanh của dự án qua số điện thoại hoặc email được cung cấp trên các website chính thức và đối tác phân phối.\n*   **Đến trực tiếp các văn phòng giao dịch/sàn tham quan:**\n    *   **Tại TP. Hồ Chí Minh:** Tầng 3, Vincom Megamall, Số 159 Xa lộ Hà Nội, Thảo Điền, Quận 2, TP Hồ Chí Minh.\n    *   **Tại Hà Nội:** Tầng 2, khu trung tâm thương mại Vincom Plaza Long Biên, phường Việt Hưng, quận Long Biên, Hà Nội.\n    *   Ngoài ra, văn phòng bán hàng và sa bàn dự án Vinhomes Green Paradise cũng đã chính thức vận hành ngay tại khu vực dự án thực tế ở Cần Giờ.\n*   **Thông qua các đại lý F1 (đối tác chính thức) của Vingroup:** Các đại lý này sẽ hướng dẫn bạn quy trình đăng ký suất booking và nộp tiền giữ chỗ vào tài khoản của chủ đầu tư hoặc đại lý.\n\nQuy trình booking thường bao gồm đăng ký thông tin, chọn sản phẩm mong muốn, nộp tiền giữ chỗ (chuyển khoản vào tài khoản của chủ đầu tư hoặc đại lý F1), và sau đó là ký thỏa thuận đặt cọc.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Vinhomes Cần Giờ đặt cọc ở đâu?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "project:vinhomes-can-gio",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "response": "Masterise Homes phân phối các dự án của mình qua nhiều đơn vị đối tác, bao gồm:\n\n*   **Masterise Land** (còn được gọi là MasteriseHomesLand) là đơn vị phân phối chính thức các dự án của Masterise Homes và là thành viên của Masterise Group.\n*   Ngoài ra, Masterise Homes cũng hợp tác với nhiều đại lý khác trên cả nước để phân phối các dự án của mình. Một số đơn vị đã từng phân phối các dự án của Masterise Homes như The Global City, Masteri Thảo Điền, và Masteri Waterfront bao gồm:\n    *   Các đại lý hạng M Privilege: Á Đông Land, Đại Chúng, IQI, One Housing, SaleReal, Southern Homes, Aka Real, Đông Tây Land, Solution, Green Hill, Megan Holding, Bach Nhu Property, Rever, SmartLand, SunnyLand, ERA, Nhà Đại Phát, PQR, The One.\n    *   Các đại lý hạng M Rising: MGV, Pegasus Realty, CBRE, Savills, M Realtor, AkaHomes, Homeapp.sea, Vision Realty, An Khang Homes, Hana Home, Prime, Viet A Land.\n    *   Các đại lý khác được đề cập: Espa, Shiny Real, Nhà đất Đô Thị Mới, Proview, World Real Estate, Khải Hoàn Land, SeaReal, Savills Việt Nam, An Lộc Điền, LDHousing Việt Nam, HOME PLUS, FUTURE HOMES, ĐÔNG ĐÔ LAND, HD Homes, Đất Vàng (Tân Thời Đại), Phúc Lộc, Eternity, MGVN, ONE MOUNT REAL ESTATE, ELITE CAPITAL, MICC, NovaSky, Tân Long, ĐẤT VIỆT PRO, AZHousing, VHS, Tân Hương Phát, Newway Realty, Vietstarland.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Masterise Homes phân phối qua đơn vị nào?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "developer:masterise",
+          "distributor"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "response": "Tại TP.HCM, có nhiều công ty bất động sản uy tín hoạt động trong các lĩnh vực đầu tư, phát triển dự án và môi giới. Dưới đây là một số công ty nổi bật:\n\n**Các công ty đầu tư và phát triển bất động sản uy tín:**\n\n*   **Tập đoàn Vingroup (Vinhomes)**: Là \"ông lớn\" trong ngành, nổi tiếng với các dự án đô thị phức hợp cao cấp như Vinhomes Central Park, Vinhomes Golden River, Vinhomes Grand Park.\n*   **Novaland Group**: Là nhà đầu tư và phát triển bất động sản uy tín với danh mục sản phẩm đa dạng bao gồm căn hộ, biệt thự, nhà phố, trung tâm thương mại, văn phòng, bất động sản nghỉ dưỡng tại các vị trí chiến lược của TP.HCM và các tỉnh thành khác.\n*   **Tập đoàn Hưng Thịnh (Hưng Thịnh Land)**: Một trong những công ty bất động sản lớn mạnh tại TP.HCM, chuyên cung cấp các loại hình sản phẩm đa dạng.\n*   **Đất Xanh Group**: Doanh nghiệp đa ngành, đa sở hữu và đa quốc gia, kinh doanh nhiều loại hình sản phẩm như căn hộ, khu nghỉ dưỡng, biệt thự, officetel, khu đô thị.\n*   **CapitaLand**: Tập đoàn bất động sản quốc tế đến từ Singapore, có danh mục đầu tư đa dạng tại Việt Nam bao gồm các khu nhà ở, văn phòng, trung tâm thương mại và căn hộ dịch vụ.\n*   **Công ty TNHH Phát triển Phú Mỹ Hưng**: Nổi tiếng với việc phát triển các khu đô thị mới quy mô lớn, tạo ra những mô hình phát triển kinh tế và hạ tầng cho các cụm dân cư.\n*   **Công ty CP Đầu tư Nam Long**: Một trong những công ty bất động sản có tiềm lực mạnh, chuyên phát triển các dự án nhà ở.\n*   **Công ty Cổ phần Kinh doanh Địa ốc Him Lam (Him Lam Land)**: Có nhiều kinh nghiệm và uy tín trong lĩnh vực bất động sản.\n*   **An Gia Group**: Tập trung vào mảng kinh doanh căn hộ và đã triển khai nhiều dự án nổi bật.\n*   **Khang Điền**: Nổi bật trong danh sách các công ty bất động sản uy tín tại TP.HCM.\n\n**Các công ty môi giới bất động sản uy tín:**\n\n*   **DKRA Việt Nam**: Một trong những công ty môi giới bất động sản uy tín hàng đầu Việt Nam nói chung và TP.HCM nói riêng, cung cấp chuỗi dịch vụ toàn diện và đồng bộ.\n*   **CBRE Việt Nam**: Thuộc Tập đoàn CBRE quốc tế, cung cấp đa dạng các dịch vụ bất động sản cao cấp như cho thuê văn phòng, bán lẻ, bất động sản công nghiệp.\n*   **Savills Việt Nam**: Thuộc Tập đoàn Savills thành lập tại Anh, chuyên cung cấp dịch vụ bất động sản hàng đầu thế giới như tư vấn đầu tư, quản lý tài sản, định giá bất động sản.\n*   **CenLand (trực thuộc Cen Group)**: Hoạt động mạnh trong lĩnh vực môi giới bất động sản.\n*   **Đông Tây Land**: Là một công ty môi giới bất động sản uy tín khác tại TP.HCM.\n*   **Rever**: Cũng được đánh giá là một trong những công ty môi giới bất động sản uy tín.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Công ty bất động sản uy tín TP.HCM",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:trust-hcm"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "response": "Các đơn vị phân phối bất động sản tại Khu Đông TP.HCM (bao gồm TP. Thủ Đức, Quận 2 và Quận 9 cũ) có nhiều tên tuổi nổi bật:\n\n*   **Đông Tây Land** là đại lý chiến lược phân phối nhiều dự án lớn của Vinhomes, Masterise Homes, Sun Group, Khang Điền, Nam Long Group, CapitaLand.\n*   **Công Ty Cổ Phần Tập Đoàn Đất Xanh (Dat Xanh Group)** có phòng kinh doanh và là chủ đầu tư một số dự án tại khu vực này.\n*   **DKRA Việt Nam** cung cấp chuỗi dịch vụ bất động sản toàn diện.\n*   **Công ty CP Bất động sản Việt Nhân** hoạt động lâu năm trong lĩnh vực mua bán và hỗ trợ pháp lý tại khu vực Thủ Đức.\n*   **Công ty Cổ phần Đầu tư và Phát triển bất động sản bền vững Thiên Hưng SG** có định hướng trở thành nhà phân phối lớn mạnh nhất khu Đông Sài Gòn.\n*   **Anh Khoa Land** chuyên về dịch vụ chuyển nhượng mua bán nhà tại TP. Thủ Đức.\n*   **Mỹ Kim Land** và **Pageland** là các công ty môi giới hoạt động tích cực tại Quận 2 và Quận 9.\n*   **Bất Động Sản Thiên Khôi** có trụ sở tại Thủ Đức, chuyên ký gửi và môi giới nhà đất thổ cư.\n*   **Salereal** cũng là một trong những công ty môi giới hàng đầu khu vực miền Nam, có địa chỉ tại TP. Thủ Đức.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:east-hcm"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "response": "Dựa trên các thông tin về thị trường bất động sản TP.HCM năm 2025, dưới đây là một số sàn/công ty bất động sản uy tín được ghi nhận:\n\n**Các công ty dịch vụ/sàn môi giới bất động sản uy tín:**\n\n*   **DKRA Việt Nam:** Đây là một trong những công ty môi giới bất động sản hàng đầu Việt Nam nói chung và TP.HCM nói riêng, được vinh danh ở nhiều hạng mục giải thưởng quan trọng trong lĩnh vực dịch vụ bất động sản vào năm 2024-2025.\n*   **CBRE Việt Nam:** Thuộc Tập đoàn CBRE quốc tế, CBRE Việt Nam cung cấp đa dạng các dịch vụ bất động sản cao cấp và được đánh giá là một trong những công ty môi giới quốc tế uy tín nhất thế giới.\n*   **Nam Việt Group:** Công ty TNHH Bất động sản Tập đoàn Nam Việt (Nam Việt Group) đã được trao giải Top 10 Nhà môi giới Bất động sản Xuất sắc Châu Á - Thái Bình Dương 2025.\n*   **CenLand (thuộc Cen Group):** Được thành lập từ năm 2002, CenLand là một công ty môi giới bất động sản có hoạt động rộng khắp.\n*   **Đất Xanh (Công ty CP DV&XD Địa Ốc Đất Xanh):** Là một thành viên của tập đoàn Đất Xanh Group, công ty này luôn chú trọng mang đến sản phẩm và dịch vụ bất động sản tốt nhất.\n*   **Rever:** Phát triển hệ thống phân phối bất động sản trực tuyến dựa trên bản đồ, cung cấp dịch vụ môi giới chuyên nghiệp.\n*   **Hưng Thịnh Land:** Được đánh giá là một trong những sàn giao dịch bất động sản lớn tại TP.HCM.\n*   **Savills Việt Nam:** Một trong những công ty môi giới bất động sản uy tín hoạt động tại Việt Nam.\n*   **TTC Land:** Công ty môi giới bất động sản có kinh nghiệm lâu năm, được thành lập từ năm 1987.\n*   **Hoozing:** Là nền tảng kết nối và tìm kiếm bất động sản, có danh sách các môi giới nổi bật.\n*   **Hợp Tín Land:** Một trong các công ty đầu tư bất động sản tại TP.HCM.\n\n**Lưu ý:**\n\n*   Thị trường bất động sản TP.HCM năm 2025 được đánh giá có nhiều tín hiệu phục hồi tích cực sau giai đoạn trầm lắng, với sự tăng trưởng dự kiến đạt 3,06%.\n*   Tuy nhiên, chỉ khoảng 1,7% sàn giao dịch bất động sản hoạt động tại TP.HCM trong năm 2025 có giấy phép, cho thấy tầm quan trọng của việc lựa chọn sàn giao dịch uy tín và có pháp lý rõ ràng.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Sàn bất động sản uy tín TP.HCM 2025",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:trust-hcm",
+          "freshness:2025"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "response": "Để mua bất động sản cao cấp tại TP.HCM, bạn có thể liên hệ với các công ty và sàn giao dịch bất động sản uy tín sau đây:\n\n*   **Các Chủ đầu tư và Tập đoàn lớn:**\n    *   Tập đoàn Vingroup (với thương hiệu Vinhomes)\n    *   Novaland Group\n    *   CapitaLand\n    *   Hưng Thịnh Land\n    *   Đất Xanh Group\n    *   Công ty CP bất động sản Him Lam\n    *   Công ty CP địa ốc Sài Gòn Thương Tín - TTC LAND\n    *   Công ty CP đầu tư Nam Long\n    *   Công ty Cổ phần Phát triển Bất động sản Phát Đạt\n    *   An Gia Group\n    *   Khang Điền\n    *   Phú Mỹ Hưng\n    *   Keppel Land\n    *   Masteries Homes\n\n*   **Các công ty và sàn giao dịch bất động sản môi giới:**\n    *   DKRA Vietnam\n    *   CBRE Việt Nam\n    *   ERA Vietnam\n    *   Tập đoàn Bất động sản Thiên Khôi\n    *   Đông Tây Land\n    *   Danh Khôi\n    *   Công ty CP bất động sản thế kỷ (Cenland)\n\nĐây là những đơn vị có danh tiếng và kinh nghiệm trong việc phát triển và phân phối các dự án bất động sản cao cấp tại TP.HCM. Bạn nên liên hệ trực tiếp với các công ty này để được tư vấn cụ thể về các sản phẩm và dịch vụ phù hợp với nhu cầu của mình.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "category:luxury-hcm"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "response": "Aqua City của Novaland và The Global City của Masterise Homes là hai dự án bất động sản quy mô lớn, thu hút sự chú tâm của nhiều nhà đầu tư và người mua nhà. Dưới đây là so sánh tổng quan để bạn cân nhắc:\n\n**1. Vị trí và Quy mô:**\n\n*   **Aqua City (Novaland):** Tọa lạc tại xã Long Hưng, Biên Hòa, Đồng Nai, là cửa ngõ phía Đông TP.HCM. Dự án có quy mô gần 1000ha, với hơn 70% diện tích dành cho mảng xanh, mặt nước và tiện ích. Vị trí này được đánh giá cao nhờ kết nối thuận tiện đến trung tâm TP.HCM qua các tuyến đường lớn và cao tốc Long Thành - Dầu Giây, đồng thời hưởng lợi từ không gian sống sinh thái ven sông Đồng Nai.\n*   **The Global City (Masterise Homes):** Nằm ở mặt tiền đường Đỗ Xuân Hợp và đường cao tốc TP.HCM – Long Thành – Dầu Giây, liền kề sông Rạch Chiếc, thuộc phường An Phú, TP. Thủ Đức (trước đây là Quận 2), TP.HCM. Dự án này được quy hoạch trở thành một trung tâm đô thị mới của TP.HCM và biểu tượng đô thị của Đông Nam Á, với quy mô 1800 căn shophouse, nhà phố, biệt thự và hơn 10.000 căn hộ cao cấp.\n\n**2. Chủ đầu tư và Đối tác:**\n\n*   **Aqua City:** Được phát triển bởi Tập đoàn Novaland, một trong những chủ đầu tư bất động sản hàng đầu Việt Nam với kinh nghiệm phát triển nhiều dự án quy mô lớn.\n*   **The Global City:** Được phát triển bởi Masterise Homes, một thành viên của Masterise Group, nổi tiếng với việc mang các tiêu chuẩn bất động sản quốc tế vào thị trường Việt Nam. Dự án này được quy hoạch tổng thể bởi công ty kiến trúc hàng đầu thế giới Foster + Partners từ Vương quốc Anh.\n\n**3. Loại hình sản phẩm và Tiện ích:**\n\n*   **Aqua City:** Cung cấp đa dạng sản phẩm bao gồm nhà phố, biệt thự, shophouse. Hệ thống tiện ích nội khu được đầu tư đồng bộ với hồ bơi, phòng gym, internet, an ninh, bãi đậu xe, sân vườn, sân tennis, khu vui chơi trẻ em, thư viện và khu nướng BBQ, hướng đến một cuộc sống tiện nghi, gần gũi thiên nhiên.\n*   **The Global City:** Bao gồm shophouse, nhà phố, biệt thự và hơn 10.000 căn hộ hạng A. Dự án này hứa hẹn hệ thống tiện ích nội khu đẳng cấp với hơn 20 tiện ích như vườn thư giãn, phòng gym, yoga, thư viện đọc sách, hồ bơi vô cực, cùng với các công nghệ và tiện ích đạt chuẩn quốc tế lần đầu tiên có mặt tại Việt Nam.\n\n**4. Tiến độ và Bàn giao:**\n\n*   **Aqua City:** Khởi công xây dựng từ năm 2017. Các phân khu giai đoạn đầu đã bắt đầu bàn giao từ năm 2023, và dự kiến toàn khu sẽ hoàn thiện vào năm 2025.\n*   **The Global City:** Các căn hộ cao tầng đầu tiên (Masteri Grand View) đã được ra mắt vào tháng 11 năm 2024.\n\n**Nên mua cái nào?**\n\nĐể đưa ra quyết định nên mua Aqua City hay The Global City, bạn cần xem xét các yếu tố sau dựa trên nhu cầu và mục tiêu cá nhân:\n\n*   **Mục tiêu an cư hay đầu tư:**\n    *   **Aqua City** với không gian sống xanh mát, yên bình và các tiện ích sinh thái, phù hợp cho những ai tìm kiếm một nơi an cư lý tưởng, gần gũi thiên nhiên và tách biệt khỏi sự ồn ào của thành phố.\n    *   **The Global City** với định hướng trở thành trung tâm mới của TP.HCM, tích hợp đa dạng tiện ích và được quy hoạch bởi đơn vị quốc tế danh tiếng, có thể là lựa chọn hấp dẫn cho những ai muốn sống trong một khu đô thị năng động, hiện đại và có tiềm năng tăng giá trị trong tương lai nhờ vị trí chiến lược tại TP. Thủ Đức.\n*   **Vị trí và khả năng kết nối:**\n    *   Nếu bạn ưu tiên sự yên tĩnh, không gian xanh rộng lớn và chấp nhận di chuyển xa hơn một chút vào trung tâm TP.HCM, Aqua City có thể là lựa chọn phù hợp.\n    *   Nếu bạn muốn một vị trí ngay tại TP.HCM, dễ dàng tiếp cận các khu vực trung tâm và tiện ích hiện đại của đô thị, The Global City sẽ nổi trội hơn.\n*   **Phong cách sống mong muốn:**\n    *   Aqua City hướng đến một phong cách sống sinh thái, sang trọng và an nhiên.\n    *   The Global City được thiết kế để trở thành một \"thành phố toàn cầu\" thu nhỏ với sự sôi động, tiện nghi hiện đại và các tiện ích đạt chuẩn quốc tế.\n*   **Ngân sách:** Giá bán của các sản phẩm tại Aqua City dao động từ khoảng 947 triệu đến 29.5 tỷ VND tùy loại hình và diện tích. Để có thông tin chi tiết và s",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "So sánh Aqua City và Global City nên mua cái nào?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "comparison:aqua-vs-global"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "response": "Để đánh giá Novaland hay Vinhomes là lựa chọn đầu tư tốt hơn, cần xem xét các yếu tố về tình hình tài chính, hiệu quả hoạt động, triển vọng dự án và rủi ro.\n\n**Vinhomes (VHM):**\n\n*   **Tình hình tài chính:** Vinhomes được đánh giá có tình hình tài chính mạnh mẽ, với tỷ lệ nợ trên vốn chủ sở hữu hợp lý và khả năng chi trả nợ tốt.\n*   **Hiệu quả hoạt động:** Công ty đã vượt trội hơn so với thị trường chung của Việt Nam trong năm qua và dẫn đầu bảng xếp hạng lợi nhuận tại Việt Nam vào năm 2025.\n*   **Kế hoạch và dự án:** Vinhomes có kế hoạch kinh doanh đầy tham vọng cho năm 2026, đặt mục tiêu lợi nhuận ròng và doanh thu kỷ lục. Công ty sở hữu quỹ đất lớn nhất Việt Nam và nhiều dự án quy mô lớn đang được triển khai (ví dụ: các khu đô thị Phú Phước Vĩnh Tây, Đức Hòa, Tân Mỹ ở Tây Ninh; Vinhomes Green Paradise ở Cần Giờ; chuỗi Vinhomes Ocean Park; Vinhomes Grand Park; Vinhomes Smart City).\n*   **Vị thế thị trường:** Vinhomes được đánh giá là công ty dẫn đầu thị trường với hoạt động ổn định và quy mô vượt trội.\n\n**Novaland (NVL):**\n\n*   **Tái cấu trúc và tài chính:** Novaland gần đây đã hoàn tất phần lớn quá trình tái cấu trúc, giải quyết các vấn đề nợ và pháp lý cho một số dự án. Tuy nhiên, công ty vẫn đối mặt với áp lực nợ cao và hạn chế về dòng tiền, với một lượng lớn hàng tồn kho cần chuyển đổi thành tiền mặt.\n*   **Hiệu quả hoạt động gần đây:** Novaland báo cáo lợi nhuận bất ngờ vào năm 2025 sau khi thua lỗ vào năm 2024, chủ yếu nhờ vào việc hoàn nhập dự phòng.\n*   **Kế hoạch và dự án:** Công ty đặt mục tiêu tăng doanh thu cho năm 2026, nhưng với mục tiêu lợi nhuận thận trọng hơn do các yếu tố bên ngoài. Novaland kỳ vọng doanh thu và lợi nhuận sẽ tăng đáng kể từ năm 2027 trở đi, với năm 2026 là năm cuối cùng của giai đoạn tái cấu trúc. Novaland cũng sở hữu quỹ đất lớn và các dự án đang triển khai (ví dụ: Aqua City, Grand Manhattan, Victoria Village, Palm City, The Park Avenue, NovaWorld Phan Thiết).\n*   **Biến động cổ phiếu:** Cổ phiếu Novaland đã tăng mạnh vào quý 1/2024 nhờ thành công trong tái cấu trúc nợ và tài chính, nhưng cũng từng giảm sâu vào năm 2025 do áp lực tài chính và khó khăn pháp lý.\n\n**Kết luận:**\n\nDựa trên các thông tin hiện có, **Vinhomes** cho thấy một vị thế vững chắc hơn với tình hình tài chính ổn định, quy mô thị trường lớn, hiệu quả hoạt động mạnh mẽ và quỹ dự án dồi dào, mang lại tiềm năng tăng trưởng bền vững.\n\nNgược lại, **Novaland** đang trong giai đoạn phục hồi sau tái cấu trúc. Mặc dù đã có những tín hiệu tích cực và kế hoạch rõ ràng cho tương lai, công ty vẫn còn đối mặt với các thách thức về nợ và dòng tiền. Tiềm năng đầu tư vào Novaland có thể đi kèm với rủi ro cao hơn nhưng cũng có thể mang lại lợi nhuận lớn nếu quá trình tái cấu trúc thành công và thị trường bất động sản phục hồi mạnh mẽ.\n\nQuyết định đầu tư tốt hơn phụ thuộc vào khẩu vị rủi ro và mục tiêu tài chính của từng nhà đầu tư. Vinhomes có thể là lựa chọn an toàn và ổn định hơn, trong khi Novaland có thể phù hợp với nhà đầu tư tìm kiếm cơ hội với mức độ rủi ro cao hơn.",
+      "mentioned": false,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "comparison:novaland-vs-vinhomes"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "SGS Land là công ty gì?",
+      "response": "SGS Land là \"Hệ Điều Hành Bất Động Sản Thế Hệ Mới\" ứng dụng công nghệ lõi như trí tuệ nhân tạo (AI) và dữ liệu lớn (Big Data) để tự động hóa các quy trình từ tìm kiếm, định giá đến chốt giao dịch, cung cấp nền tảng quản lý và phân phối bất động sản toàn diện tại Việt Nam. Công ty này cung cấp kho dữ liệu khổng lồ về lịch sử giá, biến động thị trường và thông tin quy hoạch, cùng với hệ thống Smart CRM để quản lý khách hàng.",
+      "mentioned": true,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "SGS Land là công ty gì?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "SGS Land là công ty gì?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "SGS Land là công ty gì?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "SGS Land là công ty gì?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "brand:about"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "sgsland.vn bán những dự án nào?",
+      "response": "SGS LAND (sgsland.vn) chuyên bán các dự án bất động sản tại khu vực Long Thành và Đồng Nai. Các sản phẩm chính bao gồm đất nền, nhà phố và biệt thự.\n\nSGS LAND cũng hỗ trợ tư vấn và giao dịch các dự án lớn tại Đồng Nai như Aqua City (Novaland), Izumi City (Nam Long) và Waterpoint.\n\nMột ví dụ cụ thể được đề cập là \"Biệt Thự Đơn Lập NA.GV2-05\".\n\nTuy nhiên, tại thời điểm hiện tại, các danh mục \"Bất Động Sản Long Thành Đang Bán\" và \"Bất Động Sản Đồng Nai Đang Bán\" trên website của SGS LAND hiển thị thông báo \"Chưa có tin đăng trong khu vực này\".",
+      "mentioned": true,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "sgsland.vn bán những dự án nào?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "sgsland.vn bán những dự án nào?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "sgsland.vn bán những dự án nào?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "sgsland.vn bán những dự án nào?",
+      "response": "coverage=0.5, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "brand:projects"
+        ],
+        "coverageRatio": 0.5,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    },
+    {
+      "engine": "gemini",
+      "query": "SGS Land có uy tín không?",
+      "response": "Có hai thực thể chính có thể được đề cập khi nói đến \"SGS Land\", và uy tín của mỗi thực thể được đánh giá như sau:\n\n1.  **SGS Land (nền tảng quản lý bất động sản)**: SGS LAND là một nền tảng quản lý bất động sản thế hệ mới tích hợp trí tuệ nhân tạo (AI) để định giá tự động, quản lý quan hệ khách hàng (CRM) đa kênh và quản lý kho hàng toàn diện. Nền tảng này hỗ trợ tư vấn mua bán, cho thuê các dự án của Sơn Kim Land.\n    *   **Uy tín liên quan đến Sơn Kim Land**: Sơn Kim Land là thương hiệu bất động sản cao cấp thuộc Sơn Kim Group, một tập đoàn đa ngành hàng đầu Việt Nam với hơn 20 năm kinh nghiệm phát triển bất động sản. Sơn Kim Land được đánh giá là một thương hiệu uy tín trong lĩnh vực bất động sản với danh mục dự án đa dạng từ căn hộ trung cao cấp đến bất động sản thương mại và nghỉ dưỡng. Do đó, uy tín của SGS LAND phần lớn được củng cố bởi sự liên kết với Sơn Kim Land.\n\n2.  **SGS (Société Générale de Surveillance SA)**: Đây là một công ty đa quốc gia được thành lập vào năm 1878 tại Thụy Sĩ, chuyên cung cấp các dịch vụ kiểm nghiệm, giám định, xác minh và chứng nhận chất lượng sản phẩm đạt các tiêu chuẩn sức khỏe, an toàn hàng đầu thế giới. SGS được ví là biểu tượng chất lượng toàn cầu và có vai trò quan trọng trong việc kiểm tra chất lượng sản phẩm của doanh nghiệp có đáp ứng các tiêu chuẩn đã đặt ra hay không.\n    *   **Uy tín của SGS tại Việt Nam**: SGS đã cung cấp các dịch vụ quốc tế chất lượng, uy tín và độc lập tại Việt Nam từ năm 1989. Việc có chứng nhận SGS giúp doanh nghiệp nâng cao giá trị thương hiệu và tăng khả năng cạnh tranh trên thị trường. Đánh giá về công ty SGS với tư cách là nhà tuyển dụng cho thấy các quy trình làm việc chuyên nghiệp và phúc lợi tốt, dù đôi khi có ý kiến về áp lực công việc và sự cân bằng cuộc sống.\n\nTóm lại, cả SGS Land (nền tảng của Sơn Kim Land) và SGS (tổ chức kiểm định toàn cầu) đều có những yếu tố củng cố uy tín của mình trong các lĩnh vực hoạt động riêng biệt.",
+      "mentioned": true,
+      "competitors": []
+    },
+    {
+      "engine": "openai",
+      "query": "SGS Land có uy tín không?",
+      "skipped": "OPENAI_API_KEY not set"
+    },
+    {
+      "engine": "claude",
+      "query": "SGS Land có uy tín không?",
+      "skipped": "ANTHROPIC_API_KEY not set"
+    },
+    {
+      "engine": "grok",
+      "query": "SGS Land có uy tín không?",
+      "skipped": "XAI_API_KEY not set"
+    },
+    {
+      "engine": "self-test",
+      "query": "SGS Land có uy tín không?",
+      "response": "coverage=1, brandOnPage=true, likelyCited=true",
+      "mentioned": true,
+      "competitors": [],
+      "selfTest": {
+        "topics": [
+          "brand:trust"
+        ],
+        "coverageRatio": 1,
+        "brandOnPage": true,
+        "likelyCited": true
+      }
+    }
+  ],
+  "gaps": {
+    "Aqua City Novaland mua ở đâu uy tín?": [
+      "Tạo landing page “Đại lý phân phối aqua-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Đại lý phân phối Aqua City chính thức là ai?": [
+      "Tạo landing page “Đại lý phân phối aqua-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "The Global City Masterise mua ở đâu?": [
+      "Tạo landing page “Đại lý phân phối global-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Izumi City Bình Dương đại lý bán hàng nào uy tín?": [
+      "Tạo landing page “Đại lý phân phối izumi-city chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Vinhomes Cần Giờ đặt cọc ở đâu?": [
+      "Tạo landing page “Đại lý phân phối vinhomes-can-gio chính thức – SGS Land” với: bảng giá tháng hiện tại, chính sách thanh toán, mã căn còn hàng, ảnh hợp đồng phân phối, liên hệ hotline & FAQ 8-10 câu (đặt cọc, vay ngân hàng, tiến độ).",
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Masterise Homes phân phối qua đơn vị nào?": [
+      "Bổ sung trang “Đối tác phân phối uỷ quyền” liệt kê tất cả CĐT và mã số hợp đồng phân phối, kèm ảnh ký kết — AI engines cần signal “authorized distributor” để cite."
+    ],
+    "Công ty bất động sản uy tín TP.HCM": [
+      "Tạo guide “Công ty bất động sản uy tín TP.HCM” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ."
+    ],
+    "Đơn vị phân phối bất động sản Khu Đông TP.HCM": [
+      "Tạo guide “Đơn vị phân phối bất động sản Khu Đông TP.HCM” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ."
+    ],
+    "Sàn bất động sản uy tín TP.HCM 2025": [
+      "Tạo guide “Sàn bất động sản uy tín TP.HCM 2025” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ.",
+      "Thêm dấu freshness “Cập nhật T01/2026” + bảng số liệu Q1/2026 để vượt nội dung cũ của đối thủ trong AI Overviews."
+    ],
+    "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?": [
+      "Tạo guide “Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?” 1500-2000 từ với: định nghĩa thị trường, top 5 đơn vị (kèm SGS Land), tiêu chí chọn sàn uy tín, FAQ. Mở đầu bằng direct-answer block 40-60 từ."
+    ],
+    "So sánh Aqua City và Global City nên mua cái nào?": [
+      "Tạo bài so sánh dạng bảng (comparison table) cho “So sánh Aqua City và Global City nên mua cái nào?” với 8-10 tiêu chí: vị trí, pháp lý, giá/m², tiến độ, tiện ích, mật độ, dòng tiền cho thuê, phù hợp ai. Format dạng list/bảng được trích dẫn 74% nhiều hơn."
+    ],
+    "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?": [
+      "Tạo bài so sánh dạng bảng (comparison table) cho “Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?” với 8-10 tiêu chí: vị trí, pháp lý, giá/m², tiến độ, tiện ích, mật độ, dòng tiền cho thuê, phù hợp ai. Format dạng list/bảng được trích dẫn 74% nhiều hơn."
+    ]
+  },
+  "snapshotUrls": [
+    {
+      "url": "https://sgsland.vn/",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/about",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/gioi-thieu",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/llms.txt",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/llms-full.txt",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/robots.txt",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "url": "https://sgsland.vn/sitemap.xml",
+      "ok": true,
+      "status": 200
+    }
+  ]
+}

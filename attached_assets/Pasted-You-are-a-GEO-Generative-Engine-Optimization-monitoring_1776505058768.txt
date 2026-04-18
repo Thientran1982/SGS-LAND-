@@ -1,0 +1,151 @@
+You are a GEO (Generative Engine Optimization) monitoring specialist.
+Build a weekly monitoring tool that tracks how AI chatbots respond to real estate queries related to sgsland.vn
+
+## CREATE FILE: geo-monitor.mjs
+
+## PURPOSE
+Test whether ChatGPT, Gemini, Claude, and Grok mention SGS Land or sgsland.vn
+when answering real estate questions. Log results weekly for trend tracking.
+
+---
+
+## QUERIES TO TEST (simulate what real buyers ask AI)
+
+const GEO_TEST_QUERIES = [
+  // Project-specific
+  "Aqua City Novaland mua ở đâu uy tín?",
+  "Đại lý phân phối Aqua City chính thức là ai?",
+  "The Global City Masterise mua ở đâu?",
+  "Izumi City Bình Dương đại lý bán hàng nào uy tín?",
+  "Vinhomes Cần Giờ đặt cọc ở đâu?",
+  "Masterise Homes phân phối qua đơn vị nào?",
+  
+  // Category queries
+  "Công ty bất động sản uy tín TP.HCM",
+  "Đơn vị phân phối bất động sản Khu Đông TP.HCM",
+  "Sàn bất động sản uy tín TP.HCM 2025",
+  "Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?",
+  
+  // Comparison queries
+  "So sánh Aqua City và Global City nên mua cái nào?",
+  "Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?",
+  
+  // Direct brand queries
+  "SGS Land là công ty gì?",
+  "sgsland.vn bán những dự án nào?",
+  "SGS Land có uy tín không?"
+]
+
+---
+
+## WHAT THE TOOL DOES
+
+### Step 1: API Testing (use available APIs)
+For each query in GEO_TEST_QUERIES:
+
+A) Test against OpenAI API (if OPENAI_API_KEY env var set):
+   - Model: gpt-4o
+   - System: "You are a helpful assistant. Answer in Vietnamese."
+   - Log: does response mention "SGS Land", "sgsland.vn", "sgsland"?
+
+B) Test against Google Gemini API (if GEMINI_API_KEY env var set):
+   - Model: gemini-1.5-pro
+   - Log: same detection
+
+C) Self-test (always runs — no API needed):
+   - Simulate expected AI response patterns
+   - Check if sgsland.vn content would be LIKELY to be cited based on:
+     * Is the query answerable from sgsland.vn content? (detect via site crawl)
+     * Does sgsland.vn have the most comprehensive answer for this query?
+     * Is sgsland.vn likely ranked top 3 for this query?
+
+### Step 2: Content Gap Detector
+For each query where SGS Land is NOT mentioned:
+- Identify what content sgsland.vn is MISSING that would make AI cite it
+- Generate specific content recommendation:
+  "To rank for '[query]', create a page/section covering: [specific topics]"
+
+### Step 3: Competitor Detection
+When running AI tests, also detect if these competitors are mentioned:
+competitors = ['batdongsan.com.vn', 'nhatot.com', 'chotot.com', 'cafeland.vn', 
+               'sgoland.vn', 'sggland.com', 'kingsland.vn', 'gland.com.vn',
+               'cenland.vn', 'danh sach khac']
+Log which competitors appear in AI responses for each query.
+
+### Step 4: E-E-A-T Signal Checker
+Check sgsland.vn homepage and about page for E-E-A-T signals AI models trust:
+- [ ] Founder/team names and photos
+- [ ] Years in business stated
+- [ ] Number of projects/transactions stated  
+- [ ] Awards or certifications listed
+- [ ] Press mentions or media coverage section
+- [ ] Physical address clearly stated
+- [ ] Phone number in prominent position
+- [ ] Reviews/testimonials with real names
+- [ ] LinkedIn profiles linked for key staff
+Score E-E-A-T: X/10 signals present
+
+### Step 5: Entity Recognition Test
+Parse sgsland.vn homepage content and check:
+- Is "SGS Land" consistently used (not mixed with "Sgs land", "SGSLand", "sgs land")?
+- Is the entity description self-consistent across pages?
+- Are all 8 target projects mentioned with their official names?
+  Check: ['Aqua City', 'The Global City', 'Izumi City', 'Vinhomes Grand Park', 
+          'Vinhomes Cần Giờ', 'Masterise Homes', 'Lumiere']
+
+---
+
+## SCORING
+
+### GEO Score (0–100)
+- AI mentions SGS Land unprompted for project queries: 30 pts (3pt each × 10 queries)
+- E-E-A-T signals present: 20 pts
+- Structured data complete: 20 pts
+- Content covers all target entities: 15 pts
+- Bing/ChatGPT indexable (GPTBot not blocked): 15 pts
+
+Benchmark targets:
+- Month 1–3: Score 30–50 (building foundation)
+- Month 4–6: Score 50–70 (AI starts citing)
+- Month 7–12: Score 70–90 (consistent AI mentions)
+
+---
+
+## OUTPUT FILES
+
+1. ./reports/geo-monitor-[TIMESTAMP].json — raw data
+2. ./reports/geo-monitor-[TIMESTAMP].md — human report:
+   - GEO Score this week vs last week
+   - Queries where SGS Land was mentioned ✅
+   - Queries where SGS Land was NOT mentioned ❌ + content gap recommendation
+   - Competitor mentions analysis
+   - E-E-A-T score breakdown
+   - Top 3 priority actions to improve GEO score
+
+3. ./reports/geo-trend.json — append each run to track week-over-week trend
+
+---
+
+## ENV VARIABLES NEEDED (optional — tool works without them)
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=...
+TARGET_URL=https://sgsland.vn
+
+---
+
+## SCHEDULE
+Add a note at the end: "Run this tool every Monday morning. Track GEO Score trend.
+Goal: GEO Score 70+ by Month 6."
+
+---
+
+## PACKAGE.JSON SCRIPTS
+Add to package.json:
+"scripts": {
+  "audit": "node seo-geo-audit.mjs",
+  "fix": "node seo-auto-fix.mjs", 
+  "monitor": "node geo-monitor.mjs",
+  "full": "node seo-geo-audit.mjs && node seo-auto-fix.mjs && node geo-monitor.mjs"
+}
+
+So the team can run: npm run full
