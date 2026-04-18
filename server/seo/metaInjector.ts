@@ -1578,21 +1578,59 @@ export function buildArticleMeta(article: any): MetaData {
   const image = article.coverImage || article.cover_image || DEFAULT_IMAGE;
   const url = article.slug ? `${APP_URL}/news/${article.slug}` : `${APP_URL}/news/${article.id}`;
 
+  const datePublished = article.publishedAt || article.published_at || undefined;
+  const dateModified = article.updatedAt || article.updated_at || datePublished;
+  const authorName = article.author || 'Đội ngũ Biên tập SGS LAND';
+  const articleSection = article.category || article.section || 'Tin tức Bất động sản';
+  const keywords = article.keywords || article.tags ||
+    'bất động sản, BĐS Việt Nam, BĐS TP.HCM, đầu tư BĐS, dự án BĐS, SGS LAND';
+
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
+    '@id': `${url}#article`,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     inLanguage: 'vi',
     headline: article.title || '',
     description,
-    image,
+    image: {
+      '@type': 'ImageObject',
+      url: image,
+      caption: article.title || '',
+      creditText: 'SGS LAND',
+      copyrightNotice: `© ${new Date().getFullYear()} SGS LAND`,
+      license: `${APP_URL}/terms-of-service`,
+      acquireLicensePage: `${APP_URL}/contact`,
+    },
     url,
-    datePublished: article.publishedAt || article.published_at || undefined,
-    dateModified: article.updatedAt || article.updated_at || undefined,
-    author: { '@type': 'Person', name: article.author || 'SGS LAND' },
+    datePublished,
+    dateModified,
+    articleSection,
+    keywords,
+    isAccessibleForFree: true,
+    copyrightYear: datePublished ? new Date(datePublished).getFullYear() : new Date().getFullYear(),
+    copyrightHolder: { '@id': `${APP_URL}/#org` },
+    author: {
+      '@type': 'Person',
+      name: authorName,
+      url: `${APP_URL}/about-us`,
+      worksFor: { '@id': `${APP_URL}/#org` },
+    },
     publisher: {
       '@type': 'Organization',
+      '@id': `${APP_URL}/#org`,
       name: 'SGS LAND',
-      logo: { '@type': 'ImageObject', url: `${APP_URL}/apple-touch-icon.png` },
+      url: APP_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${APP_URL}/apple-touch-icon.png`,
+        width: 180,
+        height: 180,
+      },
+    },
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['h1', 'h2', '.article-summary', '.article-body p'],
     },
   };
 
