@@ -1105,6 +1105,8 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     [/swan\s*park/i, 'nhơn trạch'],
     [/\bizumi\b/i, 'biên hòa'],
     [/waterpoint/i, 'bến lức'],
+    // Long Hưng là xã thuộc Long Thành, Đồng Nai (Aqua City, Izumi City đều ở đây)
+    [/long\s*hưng|long\s*hung/i, 'long thành'],
     // ── Resort / Nghỉ dưỡng ──────────────────────────────────────────────────
     [/la\s*mer|phu quoc\s*marina|premier\s*village.*phú\s*quốc|vinpearl.*phú\s*quốc|sun\s*grand.*phú\s*quốc/i, 'phú quốc'],
     [/novaworld\s*phan\s*thiet|novabeach|nova\s*phan\s*thiet|the\s*regal/i, 'phan thiết'],
@@ -1121,6 +1123,110 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     if (regex.test(addr) && !addr.includes(district)) {
       enrichedAddr = `${addr}, ${district}`;
       break;
+    }
+  }
+
+  // ══ Cross-province collision guard ════════════════════════════════════════
+  // Nhiều quận của TP-TTW có TÊN trùng với tên đường phổ biến (đặt theo tên
+  // vua/anh hùng dân tộc): Ngô Quyền, Hồng Bàng, Lê Chân, Hai Bà Trưng,
+  // Hoàn Kiếm, Ba Đình, Đống Đa... Khi địa chỉ có ghi rõ một tỉnh/TP khác,
+  // ta MASK các cụm này khỏi enrichedAddr để regex bên dưới không match nhầm.
+  // Ví dụ: "đường Ngô Quyền, Long Hưng, Đồng Nai" KHÔNG được trả về Hải Phòng.
+  // Bảng đầy đủ 63 tỉnh/thành VN; mỗi tỉnh detect bằng regex Unicode-safe.
+  // Lưu ý: KHÔNG dùng `\b` vì boundary của \b không hoạt động ổn với chữ tiếng Việt
+  // có dấu (đặc biệt "đ"). Dùng lookaround Unicode `(?<![\p{L}\p{M}])...(?![\p{L}\p{M}])`.
+  const noBound = (s: string) => `(?<![\\p{L}\\p{M}])(?:${s})(?![\\p{L}\\p{M}])`;
+  const PROVINCE_PATTERNS: Array<[RegExp, string]> = ([
+    ['đồng nai|dong nai', 'đồng nai'],
+    ['đồng tháp|dong thap', 'đồng tháp'],
+    ['bình dương|binh duong', 'bình dương'],
+    ['bình định|binh dinh', 'bình định'],
+    ['bình thuận|binh thuan|phan thiết|phan thiet', 'bình thuận'],
+    ['bình phước|binh phuoc', 'bình phước'],
+    ['long an', 'long an'],
+    ['bà rịa.?vũng tàu|ba ria.?vung tau|bà rịa|ba ria|brvt|br.?vt|vũng tàu|vung tau', 'brvt'],
+    ['hải phòng|hai phong', 'hải phòng'],
+    ['hải dương|hai duong', 'hải dương'],
+    ['đà nẵng|da nang', 'đà nẵng'],
+    ['cần thơ|can tho', 'cần thơ'],
+    ['khánh hòa|khanh hoa|nha trang', 'khánh hòa'],
+    ['lâm đồng|lam dong|đà lạt|da lat|bảo lộc|bao loc', 'lâm đồng'],
+    ['hà nội|ha noi|hanoi', 'hà nội'],
+    ['hà nam|ha nam', 'hà nam'],
+    ['hà tĩnh|ha tinh', 'hà tĩnh'],
+    ['hà giang|ha giang', 'hà giang'],
+    ['hcm|sài gòn|saigon|sai gon|tp\\.?\\s*hcm|hồ chí minh|ho chi minh', 'hcm'],
+    ['quảng ninh|quang ninh|hạ long|ha long', 'quảng ninh'],
+    ['quảng nam|quang nam', 'quảng nam'],
+    ['quảng ngãi|quang ngai', 'quảng ngãi'],
+    ['quảng bình|quang binh', 'quảng bình'],
+    ['quảng trị|quang tri', 'quảng trị'],
+    ['ninh thuận|ninh thuan', 'ninh thuận'],
+    ['ninh bình|ninh binh', 'ninh bình'],
+    ['phú yên|phu yen', 'phú yên'],
+    ['phú thọ|phu tho', 'phú thọ'],
+    ['phú quốc|phu quoc|kiên giang|kien giang', 'kiên giang'],
+    ['nghệ an|nghe an', 'nghệ an'],
+    ['thanh hóa|thanh hoa', 'thanh hóa'],
+    ['thái bình|thai binh', 'thái bình'],
+    ['thái nguyên|thai nguyen', 'thái nguyên'],
+    ['huế|hue|thừa thiên|thua thien', 'thừa thiên huế'],
+    ['tây ninh|tay ninh', 'tây ninh'],
+    ['hưng yên|hung yen', 'hưng yên'],
+    ['nam định|nam dinh', 'nam định'],
+    ['vĩnh phúc|vinh phuc', 'vĩnh phúc'],
+    ['vĩnh long|vinh long', 'vĩnh long'],
+    ['bắc ninh|bac ninh', 'bắc ninh'],
+    ['bắc giang|bac giang', 'bắc giang'],
+    ['bắc kạn|bac kan', 'bắc kạn'],
+    ['lạng sơn|lang son', 'lạng sơn'],
+    ['lào cai|lao cai', 'lào cai'],
+    ['lai châu|lai chau', 'lai châu'],
+    ['điện biên|dien bien', 'điện biên'],
+    ['sơn la|son la', 'sơn la'],
+    ['hòa bình|hoa binh', 'hòa bình'],
+    ['yên bái|yen bai', 'yên bái'],
+    ['tuyên quang|tuyen quang', 'tuyên quang'],
+    ['cao bằng|cao bang', 'cao bằng'],
+    ['gia lai', 'gia lai'],
+    ['kon tum', 'kon tum'],
+    ['đắk lắk|dak lak|đak lak', 'đắk lắk'],
+    ['đắk nông|dak nong|đak nong', 'đắk nông'],
+    ['an giang', 'an giang'],
+    ['bến tre|ben tre', 'bến tre'],
+    ['cà mau|ca mau', 'cà mau'],
+    ['tiền giang|tien giang', 'tiền giang'],
+    ['trà vinh|tra vinh', 'trà vinh'],
+    ['sóc trăng|soc trang', 'sóc trăng'],
+    ['bạc liêu|bac lieu', 'bạc liêu'],
+    ['hậu giang|hau giang', 'hậu giang'],
+  ] as Array<[string, string]>).map(([src, name]) => [new RegExp(noBound(src), 'iu'), name]);
+
+  // Detect explicit province — ưu tiên token cuối địa chỉ (sau dấu phẩy cuối cùng)
+  // vì người Việt viết theo thứ tự đường, phường, quận, tỉnh.
+  const detectProvinceIn = (text: string): string | null => {
+    for (const [rx, name] of PROVINCE_PATTERNS) {
+      if (rx.test(text)) return name;
+    }
+    return null;
+  };
+  const tail = enrichedAddr.split(',').slice(-2).join(',').trim();
+  let explicitProvince: string | null = detectProvinceIn(tail) || detectProvinceIn(enrichedAddr);
+
+  // District names that double as common street names → need their owning province in scope
+  const COLLISION_DISTRICTS: Array<{ src: string; province: string }> = [
+    // Hà Nội — tên các quận lõi cũng là tên đường phổ biến cả nước
+    { src: 'hoàn kiếm|hoan kiem|ba đình|ba dinh|đống đa|dong da|hai bà trưng|hai ba trung', province: 'hà nội' },
+    // Hải Phòng — Ngô Quyền/Hồng Bàng/Lê Chân là tên vua → đường phổ biến
+    { src: 'ngô quyền|ngo quyen|hồng bàng|hong bang|lê chân|le chan|hải an|hai an', province: 'hải phòng' },
+    // Đà Nẵng — tên quận đôi khi trùng tên phường/đường nơi khác
+    { src: 'hải châu|hai chau|thanh khê|thanh khe|sơn trà|son tra|liên chiểu|lien chieu', province: 'đà nẵng' },
+  ];
+  if (explicitProvince) {
+    for (const { src, province } of COLLISION_DISTRICTS) {
+      if (province !== explicitProvince) {
+        enrichedAddr = enrichedAddr.replace(new RegExp(noBound(src), 'giu'), ' ');
+      }
     }
   }
 
