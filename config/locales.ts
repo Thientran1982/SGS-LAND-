@@ -1827,7 +1827,7 @@ export const DICTIONARY = {
         "landing.category_unit": "Nhà & Đất",
         "landing.cta_title": "Tìm BĐS Phù Hợp Với Bạn",
         "landing.cta_desc": "Đội ngũ chuyên gia SGS LAND tư vấn miễn phí: pháp lý, vay vốn, tiến độ và bảng giá 11+ dự án lớn tại TP.HCM, Đồng Nai, Bình Dương.",
-        "landing.cta_btn_register": "Xem Bảng Giá Miễn Phí",
+        "landing.cta_btn_register": "Đăng Ký Miễn Phí",
         "landing.cta_btn_sales": "Gọi 0971 132 378",
 
         "footer.brand_desc": "Hệ điều hành Bất động sản tích hợp AI Agent, CRM đa kênh và Tự động hóa quy trình dành cho doanh nghiệp.",

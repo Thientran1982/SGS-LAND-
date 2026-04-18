@@ -66,8 +66,8 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         scale: '2.870 ha',
         priceFrom: 'Từ 12 tỷ',
         type: 'Siêu Đô Thị Lấn Biển',
-        badge: 'Sắp mở bán',
-        badgeColor: 'amber',
+        badge: 'Đang bán',
+        badgeColor: 'indigo',
         img: '/images/projects/vinhomes-can-gio.png',
     },
     {
