@@ -63,11 +63,21 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
     - Hero: H1 "BẤT ĐỘNG SẢN" typewriter, badge "Đại Lý BĐS + AI Định Giá", entity-rich description (Aqua City 1.000ha, The Global City 117ha, Izumi City 170ha, Vinhomes Cần Giờ 2.870ha), hotline 0971 132 378.
     - Metrics bar (4 real BĐS stats): 11+ Dự Án, 95% Chính Xác AI, 5 Tỉnh, 24/7 Hỗ Trợ.
     - Partners ticker: 11 real project names (Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Cần Giờ, Vinhomes Grand Park, etc.).
-    - Featured Projects section: 6 static project cards (FEATURED_PROJECTS const) with verified data — links to /du-an/{slug}.
+    - Featured Projects section: 6 project cards (FEATURED_PROJECTS const) with AI-rendered project images (16:9 aspect ratio, lazy load, hover zoom), badge overlay, links to /du-an/{slug}. Images at `public/images/projects/*.png`.
     - GEO FAQ section: 8 Q&A pairs optimized for AI citation (HOME_FAQ const), accordion UI, E-E-A-T byline with source citations (CBRE Vietnam, Savills Vietnam, Bộ Xây Dựng).
     - CTA section: buyer/investor focused, phone button `tel:+84971132378`, "Xem Bảng Giá Miễn Phí".
     - Zalo float button: fixed bottom-right (all viewports), `href=https://zalo.me/0971132378`.
     - Sticky mobile bottom bar: fixed bottom-0 (md:hidden) — phone + Zalo + tư vấn buttons.
+- **Project Directory (`pages/ProjectDirectory.tsx`)**: `/du-an` index page.
+    - Hero with H1, entity tags (Aqua City 1.000ha, The Global City 117ha, Izumi City 170ha, Vinhomes Cần Giờ 2.870ha), 11-project count.
+    - Sticky filter bar: text search + khu vực (TP.HCM/Đồng Nai) + loại hình (3 types) + trạng thái (6 states). Mobile-responsive collapse.
+    - 11 project cards with real AI-generated images, province/status badges, developer info, price range, description snippet.
+    - Filters: useMemo for reactive filtering with badge count.
+    - CTA section + E-E-A-T disclaimer + footer.
+    - Rendered by `ProjectLandingPage` when no slug (fallback from "not found" to directory).
+- **Server-side JSON-LD expanded (`server/seo/metaInjector.ts`)**:
+    - Homepage (`''` and `'home'` routes): Added `FAQPage` (8 Q&As matching HOME_FAQ) + `ItemList` (6 FEATURED_PROJECTS) to @graph. Updated title/desc to reflect distributor identity.
+    - New `'du-an'` route: `BreadcrumbList` + `ItemList` (11 projects) + `RealEstateAgent`. Route lookup: `/du-an` → fullKey `'du-an'` → exact match in STATIC_PAGE_META.
 
 ## External Dependencies
 
