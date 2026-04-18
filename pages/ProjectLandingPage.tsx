@@ -85,7 +85,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         locationSlug: 'bat-dong-san-dong-nai',
         heroDescription:
             'Aqua City là đại đô thị sinh thái quy mô 1.000ha do Novaland phát triển tại Nhơn Trạch, Đồng Nai. Với vị trí cách trung tâm TP.HCM chỉ 30 phút qua cầu Nhơn Trạch, Aqua City đang trở thành lựa chọn hàng đầu cho cư dân TP.HCM tìm kiếm không gian sống xanh, tiện nghi và đầu tư dài hạn. SGS LAND hỗ trợ tư vấn và giao dịch Aqua City chuyên nghiệp.',
-        priceRange: 'Từ 3 tỷ — 50 tỷ đồng',
+        priceRange: 'Từ 6,5 tỷ đồng',
         projectType: 'Đại Đô Thị Sinh Thái',
         scale: '1.000 ha',
         details: [
@@ -94,7 +94,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Vị trí', value: 'Nhơn Trạch, Đồng Nai' },
             { label: 'Khoảng cách TP.HCM', value: '~30 phút (cầu Nhơn Trạch)' },
             { label: 'Loại hình', value: 'Căn hộ, Nhà phố, Biệt thự, Shophouse' },
-            { label: 'Mức giá tham khảo', value: 'Từ 3 tỷ — 50+ tỷ đồng' },
+            { label: 'Mức giá tham khảo', value: 'Nhà phố từ 6,5 tỷ — Biệt thự từ 20+ tỷ đồng' },
             { label: 'Pháp lý', value: 'Sổ hồng riêng' },
             { label: 'Tiến độ', value: 'Đang bàn giao nhiều phân khu' },
         ],
@@ -130,7 +130,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Giá căn hộ Aqua City hiện nay là bao nhiêu?',
-                a: 'Giá căn hộ Aqua City tham khảo: căn hộ 1-2 phòng ngủ từ 3-5 tỷ; nhà phố liền kề từ 6-12 tỷ; biệt thự đơn lập từ 15-50 tỷ. Giá thực tế phụ thuộc vào phân khu, tầng, view và thời điểm giao dịch. Liên hệ SGS LAND để nhận bảng giá cập nhật nhất.',
+                a: 'Giá Aqua City tham khảo: nhà phố liền kề từ 6,5-12 tỷ; nhà phố thương mại shophouse từ 9-18 tỷ; biệt thự song lập từ 12-25 tỷ; biệt thự đơn lập từ 20-50 tỷ. Giá thực tế phụ thuộc vào phân khu, tầng, view và thời điểm giao dịch. Liên hệ SGS LAND để nhận bảng giá cập nhật nhất.',
             },
             {
                 q: 'Aqua City cách TP.HCM bao xa?',
@@ -273,7 +273,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         locationSlug: 'bat-dong-san-dong-nai',
         heroDescription:
             'Izumi City là đô thị tích hợp chuẩn Nhật Bản quy mô 170ha tại Biên Hòa, Đồng Nai, do Nam Long Group hợp tác cùng tập đoàn Hankyu Hanshin Properties (Nhật Bản) phát triển. Với tiêu chuẩn sống đẳng cấp, hệ thống tiện ích 4 tầng và vị trí chiến lược cách TP.HCM 30 phút, Izumi City là lựa chọn sống xanh hàng đầu khu vực miền Đông. SGS LAND hỗ trợ tư vấn và giao dịch Izumi City chuyên nghiệp.',
-        priceRange: 'Nhà phố từ 5 tỷ — Biệt thự từ 10 tỷ',
+        priceRange: 'Nhà phố từ 8,4 tỷ',
         projectType: 'Đô Thị Tích Hợp Chuẩn Nhật',
         scale: '170 ha',
         details: [
@@ -282,7 +282,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Quy mô', value: '170 ha' },
             { label: 'Khoảng cách TP.HCM', value: '~30 phút (cao tốc)' },
             { label: 'Loại hình', value: 'Nhà phố, biệt thự, căn hộ Akari' },
-            { label: 'Mức giá tham khảo', value: 'Nhà phố 5-12 tỷ; biệt thự 10-25 tỷ' },
+            { label: 'Mức giá tham khảo', value: 'Nhà phố 8,4-15 tỷ; biệt thự 15-30 tỷ' },
             { label: 'Pháp lý', value: 'Sổ hồng riêng từng căn' },
             { label: 'Tiến độ', value: 'Nhiều phân khu đã bàn giao' },
         ],
@@ -318,7 +318,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Giá nhà phố và biệt thự Izumi City là bao nhiêu?',
-                a: 'Nhà phố liền kề Izumi City từ 5-12 tỷ tùy diện tích và vị trí trong dự án. Biệt thự song lập từ 10-18 tỷ; biệt thự đơn lập từ 15-25 tỷ. Căn hộ Akari (phân khu căn hộ trong Izumi) từ 2-5 tỷ. Liên hệ SGS LAND để nhận bảng giá cập nhật và chính sách ưu đãi.',
+                a: 'Nhà phố liền kề Izumi City từ 8,4-15 tỷ tùy diện tích và vị trí trong dự án. Biệt thự song lập từ 15-25 tỷ; biệt thự đơn lập từ 25-40 tỷ. Liên hệ SGS LAND để nhận bảng giá cập nhật và chính sách ưu đãi.',
             },
             {
                 q: 'Izumi City cách TP.HCM bao xa và đi như thế nào?',
@@ -367,7 +367,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         locationSlug: 'bat-dong-san-thu-duc',
         heroDescription:
             'Vinhomes Grand Park là siêu đô thị 271ha tại Quận 9 (nay là TP Thủ Đức), TP.HCM — một trong những dự án bất động sản quy mô lớn nhất và được tìm kiếm nhiều nhất Việt Nam. Với 44 tòa tháp căn hộ, công viên trung tâm 36ha, hệ thống tiện ích Vinschool, Vinmec, Vinhome và kết nối Metro số 1, Grand Park là trung tâm đô thị năng động của TP Thủ Đức. SGS LAND hỗ trợ tư vấn và giao dịch mua bán Vinhomes Grand Park.',
-        priceRange: 'Căn hộ từ 2,5 tỷ — Shophouse từ 10 tỷ',
+        priceRange: 'Từ 3 tỷ đồng',
         projectType: 'Siêu Đô Thị',
         scale: '271 ha',
         details: [
@@ -376,7 +376,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Quy mô', value: '271 ha' },
             { label: 'Số tòa tháp', value: '44 tòa cao tầng' },
             { label: 'Loại hình', value: 'Căn hộ, shophouse, biệt thự' },
-            { label: 'Mức giá tham khảo', value: 'Căn hộ 2,5-6 tỷ; shophouse 10 tỷ+' },
+            { label: 'Mức giá tham khảo', value: 'Căn hộ từ 3-6 tỷ; shophouse từ 10 tỷ+' },
             { label: 'Kết nối Metro', value: 'Metro số 1 Bến Thành – Suối Tiên' },
             { label: 'Pháp lý', value: 'Sổ hồng riêng' },
         ],
@@ -743,14 +743,14 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         locationSlug: 'bat-dong-san-thu-duc',
         heroDescription:
             'Masterise Homes là thương hiệu bất động sản hạng sang – ultra luxury hàng đầu Việt Nam thuộc Masterise Group. Danh mục dự án bao gồm Masteri Thảo Điền, Masteri An Phú, Masteri Centre Point, Lumière Boulevard, Lumière Riverside và Grand Marina Saigon — đều thiết kế bởi kiến trúc sư quốc tế, vận hành bởi chuỗi khách sạn 5 sao. SGS LAND hỗ trợ tư vấn và giao dịch Masterise Homes chuyên nghiệp.',
-        priceRange: 'Từ 60 triệu/m² — Penthouse 300+ triệu/m²',
+        priceRange: 'Từ 7,5 tỷ đồng',
         projectType: 'Bất Động Sản Hạng Sang & Ultra Luxury',
         scale: 'Nhiều dự án tại TP.HCM, Hà Nội, Phú Quốc',
         details: [
             { label: 'Chủ đầu tư', value: 'Masterise Homes (Masterise Group)' },
             { label: 'Phân khúc', value: 'Hạng sang đến ultra-luxury' },
             { label: 'Dự án tiêu biểu', value: 'Masteri Thảo Điền, Lumière, Grand Marina' },
-            { label: 'Mức giá', value: '60-300 triệu/m²' },
+            { label: 'Mức giá', value: 'Masteri từ 7,5 tỷ; Lumière từ 12 tỷ; Grand Marina từ 130 triệu/m²' },
             { label: 'Vận hành', value: 'Chuỗi khách sạn 5 sao quốc tế' },
             { label: 'Thiết kế', value: 'Kiến trúc sư & interior designer quốc tế' },
             { label: 'Thị trường', value: 'TP.HCM, Hà Nội, Phú Quốc, Nha Trang' },

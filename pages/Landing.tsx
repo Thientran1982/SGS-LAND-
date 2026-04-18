@@ -79,7 +79,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         priceFrom: 'Từ 7,5 tỷ',
         type: 'Branded Residence',
         badge: 'Đang bán',
-        badgeColor: 'emerald',
+        badgeColor: 'indigo',
         img: '/images/projects/masterise-homes.png',
     },
     {
