@@ -1,0 +1,130 @@
+<!--
+SGS LAND — Sitemap Reference Template
+Generated: 2026-04-18
+
+Production sitemaps already live at:
+  https://sgsland.vn/sitemap.xml         (root)
+  https://sgsland.vn/sitemap-static.xml  (static pages)
+  https://sgsland.vn/sitemap-images.xml  (images)
+
+This template demonstrates the IDEAL structure: sitemap-index → 4 child sitemaps.
+Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
+-->
+
+<!-- ============== sitemap-index.xml ============== -->
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-static.xml</loc>
+    <lastmod>2026-04-18</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-projects.xml</loc>
+    <lastmod>2026-04-18</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-blog.xml</loc>
+    <lastmod>2026-04-18</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-images.xml</loc>
+    <lastmod>2026-04-18</lastmod>
+  </sitemap>
+</sitemapindex>
+
+<!-- ============== sitemap-projects.xml ============== -->
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://sgsland.vn/du-an/aqua-city</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-aqua-city.jpg</image:loc>
+      <image:title>Aqua City Novaland</image:title>
+      <image:caption>Đại đô thị sinh thái 1.000ha, marina, golf</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/the-global-city</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-the-global-city.jpg</image:loc>
+      <image:title>The Global City</image:title>
+      <image:caption>Đại đô thị thương mại chuẩn Singapore, cạnh Metro số 1</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/izumi-city</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-izumi-city.jpg</image:loc>
+      <image:title>Izumi City Nam Long</image:title>
+      <image:caption>Đô thị tích hợp chuẩn Nhật, Fuji Mart, trường Nhật</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/vinhomes-can-gio</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-vinhomes-can-gio.jpg</image:loc>
+      <image:title>Vinhomes Cần Giờ — Green Paradise</image:title>
+      <image:caption>Siêu đô thị du lịch lấn biển lớn nhất Việt Nam</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/masterise-homes</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-masterise-homes.jpg</image:loc>
+      <image:title>Masterise Homes</image:title>
+      <image:caption>Branded residence Marriott/IHG, Masteri, Lumière, Grand Marina</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/vinhomes-grand-park</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-vinhomes-grand-park.jpg</image:loc>
+      <image:title>Vinhomes Grand Park</image:title>
+      <image:caption>Siêu đô thị 271ha, Metro số 1, công viên 36ha</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/vinhomes-central-park</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-vinhomes-central-park.jpg</image:loc>
+      <image:title>Vinhomes Central Park</image:title>
+      <image:caption>44 tòa cao tầng + Landmark 81 ven sông Sài Gòn</image:caption>
+    </image:image>
+  </url>
+</urlset>
+
+<!-- ============== sitemap-blog.xml (template) ============== -->
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://sgsland.vn/news/slug-cua-bai-viet</loc>
+    <lastmod>2026-04-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>
+
+<!-- ============== sitemap-images.xml (existing) ============== -->
+<!-- Already live at https://sgsland.vn/sitemap-images.xml — see public/sitemap-images.xml -->

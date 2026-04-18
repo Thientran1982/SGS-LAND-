@@ -1,0 +1,85 @@
+# SGS LAND — Reference robots.txt
+# Generated: 2026-04-18
+# CRITICAL: Production robots.txt is at public/robots.txt (already correct).
+# The REAL block on prod comes from Cloudflare "Block AI Crawlers" toggle —
+# you MUST disable that in Cloudflare dashboard → Bots → AI Audit.
+# This file is a REFERENCE for what an optimal robots.txt should look like.
+
+User-agent: *
+Allow: /
+
+# Block private SPA routes (login/dashboard/inventory/etc)
+Disallow: /login
+Disallow: /dashboard
+Disallow: /inventory
+Disallow: /leads
+Disallow: /contracts
+Disallow: /inbox
+Disallow: /approvals
+Disallow: /admin-users
+Disallow: /billing
+Disallow: /settings
+Disallow: /enterprise-settings
+Disallow: /security
+Disallow: /ai-governance
+Disallow: /seo-manager
+Disallow: /favorites
+Disallow: /api/
+
+# Search & filter URLs (avoid duplicate content)
+Disallow: /*?s=
+Disallow: /search
+
+# ── AI Crawlers — EXPLICITLY ALLOWED for GEO visibility ─────────────────────
+# Do NOT block any of these — they're how ChatGPT/Claude/Gemini cite you.
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+# ── Sitemaps ────────────────────────────────────────────────────────────────
+Sitemap: https://sgsland.vn/sitemap.xml
+Sitemap: https://sgsland.vn/sitemap-static.xml
+Sitemap: https://sgsland.vn/sitemap-images.xml
+
+# ── LLM context files ───────────────────────────────────────────────────────
+# llms.txt + llms-full.txt provide structured E-E-A-T context for AI crawlers.
+# Reference: https://llmstxt.org

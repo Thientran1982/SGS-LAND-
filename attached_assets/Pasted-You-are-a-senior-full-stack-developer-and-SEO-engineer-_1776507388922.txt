@@ -1,0 +1,177 @@
+You are a senior full-stack developer and SEO engineer.
+Based on the audit results in ./reports/FIXES-TODO.md, build an automated fix generator.
+
+## CREATE FILE: seo-auto-fix.mjs
+
+### TASK: Generate ready-to-use fix files for sgsland.vn
+
+Read FIXES-TODO.md and for each P0 and P1 issue, generate the actual fix.
+
+---
+
+### FIX 1 — STRUCTURED DATA INJECTOR
+Generate complete JSON-LD schema blocks for sgsland.vn.
+Create file: ./fixes/schema-blocks.html
+
+Include ALL of the following:
+
+#### Organization Schema
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "SGS Land",
+  "url": "https://sgsland.vn",
+  "logo": "https://sgsland.vn/logo.png",
+  "description": "SGS Land là đơn vị phân phối bất động sản chiến lược F1 tại TP.HCM, chuyên phân phối các dự án Aqua City, Global City, Izumi, Vinhomes Cần Giờ, Masterise.",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+84-XXX-XXX-XXXX",
+    "contactType": "sales",
+    "availableLanguage": "Vietnamese"
+  },
+  "sameAs": [
+    "https://www.facebook.com/sgsland",
+    "https://www.youtube.com/@sgsland",
+    "https://www.linkedin.com/company/sgsland"
+  ]
+}
+
+#### LocalBusiness Schema (fill with real address from website)
+Include: name, address (streetAddress, addressLocality, addressRegion, postalCode, addressCountry), telephone, openingHoursSpecification, geo (latitude/longitude), priceRange, hasMap
+
+#### FAQPage Schema — generate FAQ blocks for each project:
+Generate 10 Q&A pairs per project for:
+- Aqua City (Novaland): vị trí, giá, bàn giao, tiện ích, pháp lý, diện tích, đặt cọc, so sánh, đầu tư, liên hệ
+- Global City (Masterise): tương tự
+- Izumi City: tương tự
+- Vinhomes Cần Giờ: tương tự
+
+Use natural Vietnamese questions that real buyers ask on Google and to AI chatbots.
+Example format:
+Q: "Aqua City Novaland bao giờ bàn giao nhà?"
+A: "Aqua City Novaland dự kiến bàn giao các phân khu theo tiến độ từ năm 2024 đến 2026. SGS Land cập nhật tiến độ mới nhất tại sgsland.vn/du-an/aqua-city."
+
+#### RealEstateListing Schema — generate for each project
+Include: name, description, url, image, numberOfRooms range, floorSize range, offers (price range), address, geo
+
+#### BreadcrumbList Schema — generate for all page types
+- Homepage
+- Project category page
+- Individual project pages
+- Blog category
+- Individual blog posts
+
+#### VideoObject Schema template (for future YouTube embeds)
+
+---
+
+### FIX 2 — META TAG OPTIMIZER
+Generate optimized <head> meta blocks for each key page.
+Create file: ./fixes/meta-tags-optimized.html
+
+For each page, generate:
+<title> — 50–60 chars, keyword first, brand last
+<meta name="description"> — 140–160 chars, includes CTA
+<meta property="og:title">
+<meta property="og:description">
+<meta property="og:image"> (1200x630px recommendation noted)
+<meta property="og:url">
+<meta name="twitter:card">
+<link rel="canonical">
+
+Target pages + suggested optimized tags:
+1. Homepage: keyword = "bất động sản TP.HCM | phân phối F1 Aqua City, Global City"
+2. /du-an/aqua-city: keyword = "Aqua City Novaland"
+3. /du-an/global-city: keyword = "The Global City Masterise"
+4. /du-an/izumi-city: keyword = "Izumi City"
+5. /du-an/vinhomes-can-gio: keyword = "Vinhomes Cần Giờ"
+6. /gioi-thieu: keyword = "SGS Land - Đơn vị phân phối BĐS uy tín"
+
+---
+
+### FIX 3 — ROBOTS.TXT OPTIMIZER
+Generate optimal robots.txt for sgsland.vn
+Create file: ./fixes/robots.txt
+
+Rules:
+- Allow all crawlers to all public content
+- Block: /wp-admin/, /wp-login, /wp-json/, /cart, /checkout, /my-account, /?s=, /search
+- Add Sitemap declaration
+- Add Bing-specific: User-agent: Bingbot (allow all)
+- Add GPTBot: User-agent: GPTBot (ALLOW all — critical for ChatGPT indexing)
+- Add GoogleOther: User-agent: GoogleOther (allow)
+- Add CCBot, Claude-Web, anthropic-ai: Allow (for AI training/browsing)
+
+IMPORTANT: Do NOT block any AI crawlers — this is required for GEO visibility.
+
+---
+
+### FIX 4 — SITEMAP GENERATOR
+Generate XML sitemap template.
+Create file: ./fixes/sitemap-template.xml
+
+Structure:
+- /sitemap-index.xml (master index)
+  - /sitemap-pages.xml (static pages)
+  - /sitemap-projects.xml (all project pages)
+  - /sitemap-blog.xml (blog posts)
+  - /sitemap-images.xml (image sitemap for project photos)
+
+For /sitemap-projects.xml include:
+- Priority 1.0 for main project pages
+- changefreq: weekly (prices change often)
+- lastmod: today's date
+
+---
+
+### FIX 5 — GEO CONTENT TEMPLATE
+Generate AI-optimized content templates for each project page.
+Create file: ./fixes/geo-content-templates.md
+
+For each project (Aqua City, Global City, Izumi, Vinhomes Cần Giờ, Masterise), generate:
+
+SECTION TEMPLATE:
+1. Opening paragraph (2–3 sentences, factual, entity-rich, citable)
+   - Must include: project name, developer, location, scale (ha/units), price range, launch date
+   
+2. Quick facts table (for AI to parse easily):
+   | Thông tin | Chi tiết |
+   |-----------|----------|
+   | Chủ đầu tư | ... |
+   | Quy mô | ... ha |
+   | Vị trí | ... |
+   | Loại hình | ... |
+   | Giá từ | ... |
+   | Pháp lý | ... |
+   | Bàn giao | ... |
+   | Đơn vị phân phối | SGS Land (sgsland.vn) |
+
+3. FAQ block (10 questions in natural Vietnamese)
+4. Author attribution block:
+   "Bài viết được tổng hợp và xác minh bởi [Tên chuyên viên], chuyên viên tư vấn BĐS với X năm kinh nghiệm tại SGS Land. Cập nhật lần cuối: [tháng/năm]."
+
+---
+
+### FIX 6 — HEADING STRUCTURE FIXER
+Analyze heading hierarchy issues found in audit.
+Generate corrected heading structure for each project page.
+Create file: ./fixes/heading-structure.md
+
+Required structure for project pages:
+<h1>: [Tên dự án] — [USP ngắn] (60–70 chars)
+<h2>: Tổng quan dự án
+<h2>: Vị trí và kết nối
+<h2>: Mặt bằng và căn hộ
+<h2>: Tiện ích nội khu
+<h2>: Pháp lý và tiến độ
+<h2>: Bảng giá [Tên dự án] [năm]
+<h2>: Chính sách bán hàng
+<h2>: Câu hỏi thường gặp
+<h3>: (sub-questions within FAQ)
+<h2>: Tại sao chọn SGS Land
+
+---
+
+## OUTPUT
+All fix files saved to ./fixes/ directory.
+Print summary: "Generated X fix files. Estimated SEO impact: [score improvement]"
