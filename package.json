@@ -17,6 +17,7 @@
     "audit:security": "npm audit --audit-level=high",
     "audit": "node seo-geo-audit.mjs",
     "monitor": "node geo-monitor.mjs",
+    "autofix": "node seo-auto-fix.mjs",
     "full": "node seo-geo-audit.mjs && node geo-monitor.mjs"
   },
   "dependencies": {

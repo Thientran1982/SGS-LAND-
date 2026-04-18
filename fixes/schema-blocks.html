@@ -1,0 +1,739 @@
+<!--
+SGS LAND — JSON-LD Schema Reference Blocks
+Generated: 2026-04-18
+For: https://sgsland.vn
+
+These blocks document the IDEAL structured data for each schema type.
+Most are ALREADY LIVE via server/seo/metaInjector.ts (per-route injection).
+Use this file as reference / for code review / for new project porting.
+-->
+
+<!-- 1. Organization (live on every page via metaInjector + index.html) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://sgsland.vn/#org",
+  "name": "SGS LAND",
+  "legalName": "Công ty Cổ phần SGS Land",
+  "url": "https://sgsland.vn",
+  "logo": "https://sgsland.vn/apple-touch-icon.png",
+  "foundingDate": "2024",
+  "description": "SGS LAND là đại lý phân phối bất động sản chiến lược F1 tại TP.HCM, chuyên Aqua City, The Global City, Izumi City, Vinhomes Cần Giờ, Masterise Homes.",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+84 971 132 378",
+    "contactType": "sales",
+    "areaServed": "VN",
+    "availableLanguage": [
+      "Vietnamese",
+      "English"
+    ]
+  },
+  "sameAs": [
+    "https://www.facebook.com/sgslandvn",
+    "https://www.linkedin.com/company/sgsland",
+    "https://www.youtube.com/@sgsland",
+    "https://zalo.me/sgsland"
+  ]
+}
+</script>
+
+<!-- 2. LocalBusiness + RealEstateAgent (live on homepage via metaInjector) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "LocalBusiness",
+    "RealEstateAgent"
+  ],
+  "@id": "https://sgsland.vn/#agent",
+  "name": "SGS LAND",
+  "url": "https://sgsland.vn",
+  "image": "https://sgsland.vn/apple-touch-icon.png",
+  "telephone": "+84 971 132 378",
+  "email": "info@sgsland.vn",
+  "priceRange": "2.500.000.000 - 300.000.000.000 VND",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "TP. Hồ Chí Minh",
+    "addressRegion": "TP.HCM",
+    "addressCountry": "VN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 10.7769,
+    "longitude": 106.7009
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ],
+      "opens": "08:00",
+      "closes": "18:00"
+    }
+  ],
+  "hasMap": "https://www.google.com/maps/search/?api=1&query=10.7769,106.7009",
+  "areaServed": [
+    "TP.HCM",
+    "Đồng Nai",
+    "Bình Dương",
+    "Long An"
+  ]
+}
+</script>
+
+<!-- 3. FAQPage per project (live per /du-an/{slug} via metaInjector) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "name": "FAQ Aqua City Novaland",
+  "url": "https://sgsland.vn/du-an/aqua-city",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Aqua City Novaland có vị trí ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aqua City Novaland tọa lạc tại Nhơn Trạch, Đồng Nai, do Novaland phát triển. Quy mô tổng thể 1.000ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/aqua-city."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Giá Aqua City Novaland hiện nay bao nhiêu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Giá khởi điểm Aqua City Novaland từ 3 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/aqua-city. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Aqua City Novaland bao giờ bàn giao nhà?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tiến độ bàn giao Aqua City Novaland: 2024-2026. SGS LAND cập nhật tiến độ từng phân khu theo tuần."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Pháp lý Aqua City Novaland như thế nào?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aqua City Novaland có tình trạng pháp lý: Sổ hồng từng căn (đã cấp một số phân khu). SGS LAND hỗ trợ kiểm tra pháp lý độc lập miễn phí trước khi đặt cọc."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Aqua City Novaland có gì nổi bật so với dự án khác?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Đại đô thị sinh thái 1.000ha, marina, golf. Đây là USP chính khiến Aqua City Novaland được nhà đầu tư và người mua ở thực quan tâm."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Aqua City Novaland cách trung tâm TP.HCM bao xa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vị trí Nhơn Trạch, Đồng Nai cách trung tâm TP.HCM khác nhau tùy phân khu — chi tiết khoảng cách và thời gian di chuyển bằng xe/Metro tại https://sgsland.vn/du-an/aqua-city."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Đặt cọc Aqua City Novaland cần chuẩn bị gì?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Đặt cọc giữ chỗ Aqua City Novaland thường từ 50-100 triệu/căn, hoàn lại nếu không ký hợp đồng. SGS LAND tư vấn miễn phí thủ tục, kiểm tra hợp đồng và phí giao dịch ẩn."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Aqua City Novaland có hỗ trợ vay ngân hàng không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Novaland liên kết với các ngân hàng lớn (Vietcombank, BIDV, Techcombank, VPBank) hỗ trợ vay tới 70% giá trị, kỳ hạn 20-25 năm, ưu đãi lãi 18-24 tháng đầu. SGS LAND hỗ trợ hồ sơ vay miễn phí."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Aqua City Novaland có phù hợp đầu tư không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aqua City Novaland phù hợp đầu tư trung-dài hạn nhờ uy tín Novaland, vị trí Nhơn Trạch, Đồng Nai và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Liên hệ tư vấn Aqua City Novaland ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Liên hệ SGS LAND — đại lý phân phối uỷ quyền Novaland: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/aqua-city."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "name": "FAQ The Global City",
+  "url": "https://sgsland.vn/du-an/the-global-city",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "The Global City có vị trí ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Global City tọa lạc tại An Phú, TP Thủ Đức, do Masterise Homes phát triển. Quy mô tổng thể 117ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/the-global-city."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Giá The Global City hiện nay bao nhiêu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Giá khởi điểm The Global City từ 15 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/the-global-city. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "The Global City bao giờ bàn giao nhà?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tiến độ bàn giao The Global City: 2025-2027. SGS LAND cập nhật tiến độ từng phân khu theo tuần."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Pháp lý The Global City như thế nào?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Global City có tình trạng pháp lý: Sổ hồng riêng. SGS LAND hỗ trợ kiểm tra pháp lý độc lập miễn phí trước khi đặt cọc."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "The Global City có gì nổi bật so với dự án khác?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Đại đô thị thương mại chuẩn Singapore, cạnh Metro số 1. Đây là USP chính khiến The Global City được nhà đầu tư và người mua ở thực quan tâm."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "The Global City cách trung tâm TP.HCM bao xa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vị trí An Phú, TP Thủ Đức cách trung tâm TP.HCM khác nhau tùy phân khu — chi tiết khoảng cách và thời gian di chuyển bằng xe/Metro tại https://sgsland.vn/du-an/the-global-city."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Đặt cọc The Global City cần chuẩn bị gì?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Đặt cọc giữ chỗ The Global City thường từ 50-100 triệu/căn, hoàn lại nếu không ký hợp đồng. SGS LAND tư vấn miễn phí thủ tục, kiểm tra hợp đồng và phí giao dịch ẩn."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "The Global City có hỗ trợ vay ngân hàng không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Masterise Homes liên kết với các ngân hàng lớn (Vietcombank, BIDV, Techcombank, VPBank) hỗ trợ vay tới 70% giá trị, kỳ hạn 20-25 năm, ưu đãi lãi 18-24 tháng đầu. SGS LAND hỗ trợ hồ sơ vay miễn phí."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "The Global City có phù hợp đầu tư không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Global City phù hợp đầu tư trung-dài hạn nhờ uy tín Masterise Homes, vị trí An Phú, TP Thủ Đức và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Liên hệ tư vấn The Global City ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Liên hệ SGS LAND — đại lý phân phối uỷ quyền Masterise Homes: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/the-global-city."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "name": "FAQ Izumi City Nam Long",
+  "url": "https://sgsland.vn/du-an/izumi-city",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Izumi City Nam Long có vị trí ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Izumi City Nam Long tọa lạc tại Biên Hòa, Đồng Nai, do Nam Long phát triển. Quy mô tổng thể 170ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/izumi-city."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Giá Izumi City Nam Long hiện nay bao nhiêu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Giá khởi điểm Izumi City Nam Long từ 2 tỷ. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/izumi-city. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Izumi City Nam Long bao giờ bàn giao nhà?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tiến độ bàn giao Izumi City Nam Long: 2024-2027. SGS LAND cập nhật tiến độ từng phân khu theo tuần."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Pháp lý Izumi City Nam Long như thế nào?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Izumi City Nam Long có tình trạng pháp lý: Sổ hồng riêng. SGS LAND hỗ trợ kiểm tra pháp lý độc lập miễn phí trước khi đặt cọc."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Izumi City Nam Long có gì nổi bật so với dự án khác?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Đô thị tích hợp chuẩn Nhật, Fuji Mart, trường Nhật. Đây là USP chính khiến Izumi City Nam Long được nhà đầu tư và người mua ở thực quan tâm."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Izumi City Nam Long cách trung tâm TP.HCM bao xa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vị trí Biên Hòa, Đồng Nai cách trung tâm TP.HCM khác nhau tùy phân khu — chi tiết khoảng cách và thời gian di chuyển bằng xe/Metro tại https://sgsland.vn/du-an/izumi-city."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Đặt cọc Izumi City Nam Long cần chuẩn bị gì?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Đặt cọc giữ chỗ Izumi City Nam Long thường từ 50-100 triệu/căn, hoàn lại nếu không ký hợp đồng. SGS LAND tư vấn miễn phí thủ tục, kiểm tra hợp đồng và phí giao dịch ẩn."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Izumi City Nam Long có hỗ trợ vay ngân hàng không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nam Long liên kết với các ngân hàng lớn (Vietcombank, BIDV, Techcombank, VPBank) hỗ trợ vay tới 70% giá trị, kỳ hạn 20-25 năm, ưu đãi lãi 18-24 tháng đầu. SGS LAND hỗ trợ hồ sơ vay miễn phí."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Izumi City Nam Long có phù hợp đầu tư không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Izumi City Nam Long phù hợp đầu tư trung-dài hạn nhờ uy tín Nam Long, vị trí Biên Hòa, Đồng Nai và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Liên hệ tư vấn Izumi City Nam Long ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Liên hệ SGS LAND — đại lý phân phối uỷ quyền Nam Long: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/izumi-city."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "name": "FAQ Vinhomes Cần Giờ — Green Paradise",
+  "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Vinhomes Cần Giờ — Green Paradise có vị trí ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vinhomes Cần Giờ — Green Paradise tọa lạc tại Cần Giờ, TP.HCM, do Vinhomes phát triển. Quy mô tổng thể 2.870ha. Xem chi tiết vị trí tại https://sgsland.vn/du-an/vinhomes-can-gio."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Giá Vinhomes Cần Giờ — Green Paradise hiện nay bao nhiêu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Giá khởi điểm Vinhomes Cần Giờ — Green Paradise từ Mở bán 2026. Bảng giá chi tiết theo phân khu và loại sản phẩm cập nhật tại https://sgsland.vn/du-an/vinhomes-can-gio. Liên hệ SGS LAND +84 971 132 378 để nhận bảng giá mới nhất."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Vinhomes Cần Giờ — Green Paradise bao giờ bàn giao nhà?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tiến độ bàn giao Vinhomes Cần Giờ — Green Paradise: 2027-2030. SGS LAND cập nhật tiến độ từng phân khu theo tuần."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Pháp lý Vinhomes Cần Giờ — Green Paradise như thế nào?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vinhomes Cần Giờ — Green Paradise có tình trạng pháp lý: Đang hoàn thiện pháp lý. SGS LAND hỗ trợ kiểm tra pháp lý độc lập miễn phí trước khi đặt cọc."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Vinhomes Cần Giờ — Green Paradise có gì nổi bật so với dự án khác?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Siêu đô thị du lịch lấn biển lớn nhất Việt Nam. Đây là USP chính khiến Vinhomes Cần Giờ — Green Paradise được nhà đầu tư và người mua ở thực quan tâm."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Vinhomes Cần Giờ — Green Paradise cách trung tâm TP.HCM bao xa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vị trí Cần Giờ, TP.HCM cách trung tâm TP.HCM khác nhau tùy phân khu — chi tiết khoảng cách và thời gian di chuyển bằng xe/Metro tại https://sgsland.vn/du-an/vinhomes-can-gio."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Đặt cọc Vinhomes Cần Giờ — Green Paradise cần chuẩn bị gì?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Đặt cọc giữ chỗ Vinhomes Cần Giờ — Green Paradise thường từ 50-100 triệu/căn, hoàn lại nếu không ký hợp đồng. SGS LAND tư vấn miễn phí thủ tục, kiểm tra hợp đồng và phí giao dịch ẩn."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Vinhomes Cần Giờ — Green Paradise có hỗ trợ vay ngân hàng không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vinhomes liên kết với các ngân hàng lớn (Vietcombank, BIDV, Techcombank, VPBank) hỗ trợ vay tới 70% giá trị, kỳ hạn 20-25 năm, ưu đãi lãi 18-24 tháng đầu. SGS LAND hỗ trợ hồ sơ vay miễn phí."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Vinhomes Cần Giờ — Green Paradise có phù hợp đầu tư không?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vinhomes Cần Giờ — Green Paradise phù hợp đầu tư trung-dài hạn nhờ uy tín Vinhomes, vị trí Cần Giờ, TP.HCM và tiềm năng tăng giá khu vực. SGS LAND có báo cáo phân tích đầu tư riêng cho từng phân khu."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Liên hệ tư vấn Vinhomes Cần Giờ — Green Paradise ở đâu?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Liên hệ SGS LAND — đại lý phân phối uỷ quyền Vinhomes: hotline +84 971 132 378, email info@sgsland.vn, hoặc xem chi tiết tại https://sgsland.vn/du-an/vinhomes-can-gio."
+      }
+    }
+  ]
+}
+</script>
+
+<!-- 4. RealEstateListing + ApartmentComplex per project (live via metaInjector) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "RealEstateListing",
+    "ApartmentComplex"
+  ],
+  "@id": "https://sgsland.vn/du-an/aqua-city#project",
+  "name": "Aqua City Novaland",
+  "description": "Đại đô thị sinh thái 1.000ha, marina, golf. Chủ đầu tư Novaland. Quy mô 1.000ha tại Nhơn Trạch, Đồng Nai.",
+  "url": "https://sgsland.vn/du-an/aqua-city",
+  "image": [
+    "https://sgsland.vn/og-image.jpg"
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Nhơn Trạch",
+    "addressRegion": "Đồng Nai",
+    "addressCountry": "VN"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "3 tỷ",
+    "priceCurrency": "VND",
+    "availability": "https://schema.org/InStock"
+  },
+  "numberOfRooms": "1-5",
+  "floorSize": {
+    "@type": "QuantitativeValue",
+    "value": "1.000",
+    "unitText": "ha"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "RealEstateListing",
+    "ApartmentComplex"
+  ],
+  "@id": "https://sgsland.vn/du-an/the-global-city#project",
+  "name": "The Global City",
+  "description": "Đại đô thị thương mại chuẩn Singapore, cạnh Metro số 1. Chủ đầu tư Masterise Homes. Quy mô 117ha tại An Phú, TP Thủ Đức.",
+  "url": "https://sgsland.vn/du-an/the-global-city",
+  "image": [
+    "https://sgsland.vn/og-image.jpg"
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "An Phú",
+    "addressRegion": "TP Thủ Đức",
+    "addressCountry": "VN"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "15 tỷ",
+    "priceCurrency": "VND",
+    "availability": "https://schema.org/InStock"
+  },
+  "numberOfRooms": "1-5",
+  "floorSize": {
+    "@type": "QuantitativeValue",
+    "value": "117",
+    "unitText": "ha"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "RealEstateListing",
+    "ApartmentComplex"
+  ],
+  "@id": "https://sgsland.vn/du-an/izumi-city#project",
+  "name": "Izumi City Nam Long",
+  "description": "Đô thị tích hợp chuẩn Nhật, Fuji Mart, trường Nhật. Chủ đầu tư Nam Long. Quy mô 170ha tại Biên Hòa, Đồng Nai.",
+  "url": "https://sgsland.vn/du-an/izumi-city",
+  "image": [
+    "https://sgsland.vn/og-image.jpg"
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Biên Hòa",
+    "addressRegion": "Đồng Nai",
+    "addressCountry": "VN"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "2 tỷ",
+    "priceCurrency": "VND",
+    "availability": "https://schema.org/InStock"
+  },
+  "numberOfRooms": "1-5",
+  "floorSize": {
+    "@type": "QuantitativeValue",
+    "value": "170",
+    "unitText": "ha"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "RealEstateListing",
+    "ApartmentComplex"
+  ],
+  "@id": "https://sgsland.vn/du-an/vinhomes-can-gio#project",
+  "name": "Vinhomes Cần Giờ — Green Paradise",
+  "description": "Siêu đô thị du lịch lấn biển lớn nhất Việt Nam. Chủ đầu tư Vinhomes. Quy mô 2.870ha tại Cần Giờ, TP.HCM.",
+  "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
+  "image": [
+    "https://sgsland.vn/og-image.jpg"
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Cần Giờ",
+    "addressRegion": "TP.HCM",
+    "addressCountry": "VN"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "Mở bán 2026",
+    "priceCurrency": "VND",
+    "availability": "https://schema.org/InStock"
+  },
+  "numberOfRooms": "1-5",
+  "floorSize": {
+    "@type": "QuantitativeValue",
+    "value": "2.870",
+    "unitText": "ha"
+  }
+}
+</script>
+
+<!-- 5. BreadcrumbList — one example per page type -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "name": "Breadcrumb — Homepage",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Trang Chủ",
+      "item": "https://sgsland.vn/"
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "name": "Breadcrumb — Marketplace",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Trang Chủ",
+      "item": "https://sgsland.vn/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Mua Bán BĐS",
+      "item": "https://sgsland.vn/marketplace"
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "name": "Breadcrumb — Project",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Trang Chủ",
+      "item": "https://sgsland.vn/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Dự Án",
+      "item": "https://sgsland.vn/marketplace"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Aqua City Novaland",
+      "item": "https://sgsland.vn/du-an/aqua-city"
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "name": "Breadcrumb — Blog list",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Trang Chủ",
+      "item": "https://sgsland.vn/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Tin Tức",
+      "item": "https://sgsland.vn/news"
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "name": "Breadcrumb — Blog post",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Trang Chủ",
+      "item": "https://sgsland.vn/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Tin Tức",
+      "item": "https://sgsland.vn/news"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Tựa bài viết",
+      "item": "https://sgsland.vn/news/slug-bai-viet"
+    }
+  ]
+}
+</script>
+
+<!-- 6. VideoObject template — fill in [VIDEO_ID] when embedding YouTube tour videos -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  "name": "[Tên video — VD: Tổng quan Aqua City Novaland 4K Drone]",
+  "description": "[Mô tả 100-200 ký tự về nội dung video, mention rõ tên dự án và CĐT]",
+  "thumbnailUrl": [
+    "https://i.ytimg.com/vi/[VIDEO_ID]/maxresdefault.jpg"
+  ],
+  "uploadDate": "2026-01-15",
+  "duration": "PT3M45S",
+  "contentUrl": "https://www.youtube.com/watch?v=[VIDEO_ID]",
+  "embedUrl": "https://www.youtube.com/embed/[VIDEO_ID]",
+  "publisher": {
+    "@type": "Organization",
+    "name": "SGS LAND",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://sgsland.vn/apple-touch-icon.png"
+    }
+  }
+}
+</script>
