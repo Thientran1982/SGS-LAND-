@@ -7,7 +7,7 @@ import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { ListingCard } from '../components/ListingCard'; 
 import { Hero3D } from '../components/Hero3D';
-import { ArrowRight, Search, Sparkles, BarChart3, Globe2, Zap, Sun, Moon, ChevronRight, X, Phone, MapPin, Scale, Building2 } from 'lucide-react';
+import { ArrowRight, Search, Sparkles, BarChart3, Globe2, Zap, Sun, Moon, ChevronRight, X, Phone, MapPin, Scale, Building2, Bot } from 'lucide-react';
 import { motion } from 'motion/react';
 
 // -----------------------------------------------------------------------------
@@ -874,16 +874,15 @@ export const Landing: React.FC = () => {
                 </motion.div>
             </section>
 
-            {/* ZALO FLOAT — all screens */}
-            <a
-                href="https://zalo.me/0971132378"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Chat Zalo với SGS LAND"
-                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 bg-[#0068FF] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform select-none"
+            {/* AI ASSISTANT FLOAT — all screens */}
+            <button
+                onClick={() => navigateTo(ROUTES.AI_VALUATION)}
+                aria-label="Mở trợ lý AI tư vấn bất động sản"
+                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform select-none"
+                style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
             >
-                <span className="text-xl font-black leading-none">Z</span>
-            </a>
+                <Bot className="w-6 h-6 text-white" />
+            </button>
 
             {/* STICKY MOBILE BOTTOM BAR — md:hidden */}
             <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-[var(--glass-border)] dark:border-slate-800 px-3 py-2 flex gap-2 shadow-2xl">
@@ -894,15 +893,14 @@ export const Landing: React.FC = () => {
                     <Phone className="w-4 h-4 shrink-0" />
                     <span>Gọi ngay</span>
                 </a>
-                <a
-                    href="https://zalo.me/0971132378"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#0068FF] hover:bg-[#0057d6] active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
+                <button
+                    onClick={() => navigateTo(ROUTES.AI_VALUATION)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
+                    style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                 >
-                    <span className="text-base font-black leading-none">Z</span>
-                    <span>Zalo</span>
-                </a>
+                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <span>Hỏi AI</span>
+                </button>
                 <button
                     onClick={() => navigateTo(ROUTES.CONTACT)}
                     className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[var(--glass-surface-hover)] dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 text-[var(--text-primary)] dark:text-white rounded-xl text-sm font-bold border border-[var(--glass-border)] dark:border-slate-600 transition-all"
