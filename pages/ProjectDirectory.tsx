@@ -116,7 +116,7 @@ const ALL_PROJECTS: DuAnProject[] = [
         projectType: 'Branded Residence',
         typeGroup: 'Căn hộ cao cấp',
         status: 'Đang bán',
-        statusColor: 'emerald',
+        statusColor: 'indigo',
         img: '/images/projects/masterise-homes.png',
         description: 'Grand Marina Saigon (JW Marriott, Q1), Masteri Thảo Điền, Lumière Boulevard. Ultra-luxury branded residence chuẩn 5 sao quốc tế.',
     },
@@ -161,7 +161,7 @@ const ALL_PROJECTS: DuAnProject[] = [
         projectType: 'BĐS Thương Mại',
         typeGroup: 'Biệt thự & nhà phố',
         status: 'Đang bán',
-        statusColor: 'emerald',
+        statusColor: 'indigo',
         img: '/images/projects/the-global-city.png',
         description: 'Sơn Kim Land: Gem Riverside Q4, Metropole Thủ Thiêm, Seasons Avenue Hà Nội. GEM Center, chuỗi GS25. BĐS thương mại cao cấp.',
     },
@@ -193,7 +193,7 @@ const ALL_PROJECTS: DuAnProject[] = [
         status: 'Đang bán',
         statusColor: 'indigo',
         img: '/images/projects/vinhomes-can-gio.png',
-        description: 'Siêu đô thị lấn biển 2.870ha lớn nhất TP.HCM, bãi biển nhân tạo, marina, resort 5 sao, sân golf. Dự kiến mở bán 2026.',
+        description: 'Siêu đô thị lấn biển 2.870ha lớn nhất Việt Nam tại Cần Giờ, TP.HCM. Bãi biển nhân tạo 7km, Vinwonders, marina, resort 5 sao, sân golf 18 lỗ.',
     },
 ];
 
