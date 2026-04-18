@@ -28,7 +28,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         dev: 'Novaland',
         loc: 'Nhơn Trạch, Đồng Nai',
         scale: '1.000 ha',
-        priceFrom: 'Từ 3 tỷ',
+        priceFrom: 'Từ 6,5 tỷ',
         type: 'Đại Đô Thị Sinh Thái',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
@@ -52,7 +52,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         dev: 'Nam Long Group',
         loc: 'Biên Hòa, Đồng Nai',
         scale: '170 ha',
-        priceFrom: 'Từ 2 tỷ',
+        priceFrom: 'Từ 8,4 tỷ',
         type: 'Đô Thị Chuẩn Nhật',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
@@ -64,7 +64,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         dev: 'Vinhomes',
         loc: 'Cần Giờ, TP.HCM',
         scale: '2.870 ha',
-        priceFrom: 'Mở bán 2026',
+        priceFrom: 'Từ 12 tỷ',
         type: 'Siêu Đô Thị Lấn Biển',
         badge: 'Sắp mở bán',
         badgeColor: 'amber',
@@ -76,7 +76,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         dev: 'Masterise Group',
         loc: 'TP.HCM (Quận 1, Q.2, Bình Thạnh)',
         scale: 'Hệ Sinh Thái Branded',
-        priceFrom: 'Từ 60 tr/m²',
+        priceFrom: 'Từ 7,5 tỷ',
         type: 'Branded Residence',
         badge: 'Đang bán',
         badgeColor: 'emerald',
@@ -88,7 +88,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         dev: 'Vinhomes',
         loc: 'TP Thủ Đức, TP.HCM',
         scale: '271 ha',
-        priceFrom: 'Từ 2,5 tỷ',
+        priceFrom: 'Từ 3 tỷ',
         type: 'Siêu Đô Thị Tích Hợp',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
@@ -111,7 +111,7 @@ const HOME_FAQ = [
     },
     {
         q: 'Dự án nào đang mở bán và có thể đặt chỗ ưu tiên qua SGS LAND?',
-        a: 'Tính đến tháng 4/2026: Aqua City Novaland đang bàn giao nhiều phân khu, có sổ hồng riêng. Izumi City Nam Long mở giai đoạn mới từ 2 tỷ. The Global City Masterise đang nhận đặt cọc từ 15 tỷ. Vinhomes Cần Giờ dự kiến mở bán trong năm 2026. Liên hệ 0971 132 378 để nhận bảng giá và tiến độ mới nhất.',
+        a: 'Tính đến tháng 4/2026: Aqua City Novaland đang bàn giao nhiều phân khu, có sổ hồng riêng, giá từ 6,5 tỷ. Izumi City Nam Long mở giai đoạn mới từ 8,4 tỷ. The Global City Masterise đang nhận đặt cọc từ 15 tỷ. Vinhomes Cần Giờ đã mở bán từ 12 tỷ. Liên hệ 0971 132 378 để nhận bảng giá và tiến độ mới nhất.',
     },
     {
         q: 'SGS LAND hỗ trợ vay vốn ngân hàng như thế nào?',
@@ -310,7 +310,7 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
             <div className="mt-auto pt-4 border-t border-[var(--glass-border)] dark:border-slate-700 flex items-center justify-between">
                 <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{project.priceFrom}</span>
                 <span className="flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 opacity-60 group-hover:opacity-100 transition-opacity">
-                    Xem bảng giá <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    Xem thông tin dự án <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </span>
             </div>
         </div>
