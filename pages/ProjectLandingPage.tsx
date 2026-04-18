@@ -45,6 +45,10 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
         title: 'Nhà Phố Trung Tâm TP.HCM | Mặt Tiền, Nhà Hẻm, Shophouse - SGS LAND',
         description: 'Mua bán nhà phố trung tâm TP.HCM: mặt tiền Q1 từ 500 triệu/m², nhà hẻm Q3 từ 100 triệu/m². Định giá AI miễn phí, kiểm tra pháp lý độc lập tại SGS LAND.',
     },
+    'vinhomes-can-gio': {
+        title: 'Vinhomes Cần Giờ 2.870ha | Siêu Đô Thị Biển Lớn Nhất VN — SGS LAND',
+        description: 'Vinhomes Cần Giờ (Green Paradise): siêu đô thị lấn biển 2.870ha tại TP.HCM, bãi biển 7km, Vinwonders, golf, marina. Từ 12 tỷ. Đặt chỗ ưu tiên miễn phí tại SGS LAND.',
+    },
 };
 
 // E-E-A-T: last content review date (bump when project data is updated)
@@ -1013,6 +1017,107 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         relatedProjects: [
             { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
             { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+            { name: 'The Global City', slug: 'the-global-city' },
+        ],
+    },
+    'vinhomes-can-gio': {
+        slug: 'vinhomes-can-gio',
+        name: 'Vinhomes Cần Giờ',
+        developer: 'Vinhomes (Tập Đoàn Vingroup)',
+        location: 'Huyện Cần Giờ, TP.HCM',
+        locationSlug: 'marketplace',
+        heroDescription:
+            'Vinhomes Cần Giờ — còn gọi là Vinhomes Green Paradise — là siêu đô thị du lịch nghỉ dưỡng lấn biển quy mô 2.870ha do Vinhomes (Vingroup) phát triển tại huyện Cần Giờ, TP.HCM. Đây là dự án bất động sản lớn nhất Việt Nam từ trước đến nay, nằm kế Khu dự trữ sinh quyển thế giới Cần Giờ — UNESCO công nhận năm 2000. Với cầu Cần Giờ vốn 11.000 tỷ đồng dự kiến hoàn thành 2028, thời gian từ trung tâm TP.HCM đến dự án rút xuống còn 30-40 phút. SGS LAND là đại lý phân phối chính thức, hỗ trợ đặt chỗ ưu tiên và tư vấn đầu tư miễn phí.',
+        priceRange: 'Từ 12 tỷ đồng',
+        projectType: 'Siêu Đô Thị Lấn Biển',
+        scale: '2.870 ha',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Vinhomes (Tập đoàn Vingroup)' },
+            { label: 'Quy mô', value: '2.870 ha — lớn nhất Việt Nam' },
+            { label: 'Vị trí', value: 'Huyện Cần Giờ, TP.HCM' },
+            { label: 'Khoảng cách TP.HCM', value: '~30-40 phút (sau cầu Cần Giờ 2028)' },
+            { label: 'Loại hình', value: 'Biệt thự biển, shophouse biển, căn hộ resort, condotel, cao tầng' },
+            { label: 'Mức giá tham khảo', value: 'Từ 12 tỷ (căn hộ) — biệt thự biển 50-200 tỷ' },
+            { label: 'Pháp lý', value: 'Thủ tướng phê duyệt chủ trương; quy hoạch 1/500 theo từng phân kỳ' },
+            { label: 'Tiến độ', value: 'Khởi công 2025 — mở bán phân kỳ 2026 — bàn giao từ 2028' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích nghỉ dưỡng đẳng cấp quốc tế',
+                items: [
+                    'Bãi biển nhân tạo dài 7km — lớn nhất Việt Nam',
+                    'Vinwonders Cần Giờ — công viên giải trí đại dương',
+                    'Sân golf 18 lỗ chuẩn quốc tế ven biển',
+                    'Marina & bến du thuyền — cảng tàu cao tốc Sài Gòn – Cần Giờ 30 phút',
+                    'Chuỗi resort & khách sạn 5 sao (Vinpearl, Marriott, Intercontinental)',
+                    'Trung tâm hội nghị & MICE quốc tế',
+                    'Bệnh viện Vinmec đa khoa trong khuôn viên',
+                    'Trường học Vinschool liên cấp quốc tế',
+                    'Vincom Mega Mall — trung tâm thương mại tích hợp',
+                    'Công viên sinh thái rừng ngập mặn UNESCO',
+                ],
+            },
+            {
+                title: 'Hạ tầng kết nối chiến lược',
+                items: [
+                    'Cầu Cần Giờ: vốn 11.000 tỷ, khởi công 2025, hoàn thành 2028',
+                    'Tuyến tàu cao tốc Sài Gòn – Cần Giờ (25-30 phút)',
+                    'Đường Rừng Sác – Cần Giờ đang nâng cấp 4 làn xe',
+                    'Phà Bình Khánh kết nối hiện tại (45-60 phút từ Q4)',
+                    'Cao tốc Bến Lức – Long Thành kết nối vùng kinh tế phía Nam',
+                    'Sân bay Long Thành (30 phút) — cửa ngõ quốc tế Đông Nam Bộ',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Vinhomes Cần Giờ là dự án gì và quy mô như thế nào?',
+                a: 'Vinhomes Cần Giờ (tên thương mại Vinhomes Green Paradise) là siêu đô thị du lịch nghỉ dưỡng lấn biển 2.870ha do Vinhomes – Vingroup phát triển tại huyện Cần Giờ, TP.HCM. Đây là dự án bất động sản có quy mô lớn nhất Việt Nam từ trước đến nay, tích hợp nhà ở, nghỉ dưỡng, thương mại, giải trí và dịch vụ đẳng cấp quốc tế trong một đô thị biển hoàn chỉnh.',
+            },
+            {
+                q: 'Giá bán Vinhomes Cần Giờ bao nhiêu tiền năm 2026?',
+                a: 'Giá tham khảo Vinhomes Cần Giờ năm 2026: căn hộ resort từ 12-25 tỷ; shophouse biển từ 20-50 tỷ; biệt thự song lập từ 30-80 tỷ; biệt thự đơn lập mặt biển từ 80-200 tỷ; condotel từ 8-15 tỷ. Đây là giá mở bán phân kỳ đầu — kỳ vọng tăng 20-40% sau khi cầu Cần Giờ hoàn thành (2028). Liên hệ SGS LAND để đặt chỗ ưu tiên phân kỳ 1.',
+            },
+            {
+                q: 'Vinhomes Cần Giờ cách trung tâm TP.HCM bao xa và đi bằng cách nào?',
+                a: 'Hiện tại: cách Q1 khoảng 50km, qua phà Bình Khánh mất 45-60 phút. Sau 2028 khi cầu Cần Giờ hoàn thành: chỉ còn 30-40 phút qua cầu dài 3,2km vốn 11.000 tỷ đồng. Ngoài ra, tuyến tàu cao tốc Sài Gòn – Cần Giờ đang được quy hoạch rút ngắn xuống 25-30 phút. Hạ tầng kết nối là yếu tố then chốt làm tăng giá trị dự án.',
+            },
+            {
+                q: 'Cầu Cần Giờ khi nào hoàn thành và ảnh hưởng thế nào đến giá BĐS?',
+                a: 'Cầu Cần Giờ có tổng vốn đầu tư 11.000 tỷ đồng, chính thức khởi công năm 2025 và dự kiến hoàn thành vào năm 2028. Cầu dài 3,2km nối huyện Nhà Bè và Cần Giờ, rút ngắn thời gian di chuyển xuống còn 15-20 phút. Lịch sử tại Nhơn Trạch và Long An cho thấy BĐS tăng 30-60% trong vòng 2 năm sau khi hạ tầng hoàn chỉnh.',
+            },
+            {
+                q: 'Vinhomes Cần Giờ có những loại sản phẩm bất động sản nào?',
+                a: 'Vinhomes Cần Giờ cung cấp đa dạng sản phẩm: (1) Căn hộ resort view biển từ 12 tỷ; (2) Condotel vận hành bởi chuỗi Vinpearl/Marriott; (3) Shophouse biển mặt tiền đại lộ từ 20 tỷ; (4) Biệt thự song lập/đơn lập ven biển từ 30 tỷ; (5) Villa mặt biển ultra-luxury từ 80 tỷ; (6) Tổ hợp căn hộ cao tầng view toàn cảnh. Mỗi phân kỳ mở bán một phân khúc sản phẩm riêng.',
+            },
+            {
+                q: 'Pháp lý Vinhomes Cần Giờ đến đâu rồi và có an toàn để đầu tư?',
+                a: 'Vinhomes Cần Giờ đã được Thủ tướng Chính phủ phê duyệt chủ trương đầu tư. Quy hoạch 1/500 đang được hoàn thiện và phê duyệt theo từng phân kỳ. Vinhomes (Vingroup) là tập đoàn BĐS số 1 Việt Nam với lịch sử pháp lý sạch, bàn giao đúng tiến độ. SGS LAND kiểm tra pháp lý từng phân kỳ miễn phí trước khi khách đặt cọc.',
+            },
+            {
+                q: 'Tại sao Vinhomes Cần Giờ được gọi là siêu dự án lớn nhất Việt Nam?',
+                a: 'Vinhomes Cần Giờ 2.870ha vượt xa bất kỳ dự án BĐS nào tại Việt Nam về quy mô — gấp 10 lần Vinhomes Grand Park (271ha), gấp 24 lần The Global City (117ha). Dự án tích hợp bãi biển nhân tạo 7km, Vinwonders, sân golf 18 lỗ, marina và chuỗi resort 5 sao — tạo nên đô thị biển hoàn chỉnh và lớn nhất chưa từng có tại Việt Nam.',
+            },
+            {
+                q: 'Đầu tư Vinhomes Cần Giờ có tiềm năng sinh lời không?',
+                a: 'Ba yếu tố tạo tiềm năng sinh lời: (1) Hạ tầng: cầu Cần Giờ 2028 + tàu cao tốc — kết nối rút ngắn kéo giá tăng 30-60%; (2) Scarcity: đất biển TP.HCM ngày càng hiếm, không thể tái tạo; (3) Vinhomes brand: dự án Vinhomes thường tăng 15-30% từ lúc mở bán đến bàn giao. Kỳ vọng tăng giá 3-5 năm: 40-80% từ mức giá mở bán phân kỳ đầu.',
+            },
+            {
+                q: 'Vinhomes Cần Giờ có ảnh hưởng đến sinh quyển UNESCO Cần Giờ không?',
+                a: 'Vinhomes Cần Giờ được phát triển theo đúng quy hoạch của TP.HCM, trong vùng phát triển đô thị được phê duyệt — không xâm phạm vùng lõi và vùng đệm bảo vệ nghiêm ngặt của Khu dự trữ sinh quyển thế giới Cần Giờ (UNESCO 2000). Dự án lấn biển ra ngoài đất liền, bảo tồn nguyên vẹn hệ sinh thái rừng ngập mặn đặc trưng.',
+            },
+            {
+                q: 'SGS LAND hỗ trợ khách hàng mua Vinhomes Cần Giờ như thế nào?',
+                a: 'SGS LAND là đại lý phân phối chính thức Vinhomes Cần Giờ — hỗ trợ toàn diện: (1) Đặt chỗ ưu tiên phân kỳ đầu trước khi mở bán rộng rãi; (2) Tư vấn chiến lược đầu tư theo ngân sách và mục tiêu; (3) Kiểm tra pháp lý từng phân khu miễn phí; (4) Kết nối vay ngân hàng lãi suất tốt (VCB, BIDV, TCB, VPBank) tối đa 70%; (5) Không thu phí từ người mua — hoa hồng do Vinhomes trả. Hotline 0971 132 378.',
+            },
+            {
+                q: 'So sánh Vinhomes Cần Giờ và Vinhomes Grand Park — đâu nên mua năm 2026?',
+                a: 'Vinhomes Grand Park (271ha, Thủ Đức): đã bàn giao, sổ hồng đầy đủ, Metro số 1, từ 3 tỷ — phù hợp ở thực, an toàn, thanh khoản cao. Vinhomes Cần Giờ (2.870ha, Cần Giờ): mở bán từ 12 tỷ, tiềm năng tăng 40-80% trong 3-5 năm, nghỉ dưỡng-đầu tư cao cấp. Chọn Grand Park nếu ưu tiên ở thực an toàn; chọn Cần Giờ nếu ưu tiên đầu tư biên lợi nhuận cao.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
             { name: 'The Global City', slug: 'the-global-city' },
         ],
     },
