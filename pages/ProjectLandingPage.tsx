@@ -46,6 +46,15 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
     },
 };
 
+// E-E-A-T: last content review date (bump when project data is updated)
+const LAST_UPDATED_ISO = '2026-04-18';
+const LAST_UPDATED_DISPLAY = new Date(LAST_UPDATED_ISO).toLocaleDateString('vi-VN', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+});
+const HOTLINE_DISPLAY = '+84 971 132 378';
+const HOTLINE_TEL = '+84971132378';
+const SUPPORT_EMAIL = 'info@sgsland.vn';
+
 interface ProjectConfig {
     slug: string;
     name: string;
@@ -1141,18 +1150,25 @@ export default function ProjectLandingPage() {
             {/* ── Project Details ── */}
             <section className="py-12 px-4 bg-[var(--bg-surface)]">
                 <div className="max-w-6xl mx-auto">
-                    <h2 className="text-2xl font-bold mb-6 text-[var(--text-primary)]">Thông Tin Dự Án {cfg.name}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <h2 className="text-2xl font-bold mb-2 text-[var(--text-primary)]">Thông Tin Dự Án {cfg.name}</h2>
+                    <p className="text-sm text-[var(--text-secondary)] mb-6">
+                        Bảng dữ liệu chính thức của <strong className="text-[var(--text-primary)]">{cfg.name}</strong> — chủ đầu tư{' '}
+                        <strong className="text-[var(--text-primary)]">{cfg.developer}</strong>, vị trí{' '}
+                        <strong className="text-[var(--text-primary)]">{cfg.location}</strong>, quy mô{' '}
+                        <strong className="text-[var(--text-primary)]">{cfg.scale}</strong>, mức giá{' '}
+                        <strong className="text-[var(--text-primary)]">{cfg.priceRange}</strong>.
+                    </p>
+                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {cfg.details.map((d, i) => (
                             <div key={i} className="flex items-start gap-3 bg-[var(--bg-app)] border border-[var(--glass-border)] rounded-2xl p-4">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary-600)] mt-2 flex-shrink-0" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary-600)] mt-2 flex-shrink-0" aria-hidden="true" />
                                 <div>
-                                    <span className="text-xs text-[var(--text-secondary)] block">{d.label}</span>
-                                    <span className="font-semibold text-sm text-[var(--text-primary)]">{d.value}</span>
+                                    <dt className="text-xs text-[var(--text-secondary)] block">{d.label}</dt>
+                                    <dd className="font-semibold text-sm text-[var(--text-primary)] m-0">{d.value}</dd>
                                 </div>
                             </div>
                         ))}
-                    </div>
+                    </dl>
                 </div>
             </section>
 
@@ -1187,6 +1203,35 @@ export default function ProjectLandingPage() {
                     <h2 className="text-2xl font-bold mb-2 text-[var(--text-primary)]">Câu Hỏi Thường Gặp — {cfg.name}</h2>
                     <p className="text-sm text-[var(--text-secondary)] mb-8">Giải đáp các thắc mắc phổ biến về dự án {cfg.name}.</p>
                     <FAQAccordion items={cfg.faqs} />
+
+                    {/* ── E-E-A-T author byline ── */}
+                    <aside
+                        className="mt-10 p-5 bg-[var(--bg-app)] border border-[var(--glass-border)] rounded-2xl text-sm text-[var(--text-secondary)] leading-relaxed"
+                        aria-label="Thông tin tác giả và kiểm chứng"
+                    >
+                        <p className="mb-2">
+                            <strong className="text-[var(--text-primary)]">Tác giả &amp; kiểm chứng:</strong>{' '}
+                            Đội ngũ tư vấn <strong className="text-[var(--text-primary)]">SGS LAND</strong> — đại lý phân phối uỷ quyền{' '}
+                            <strong className="text-[var(--text-primary)]">{cfg.developer}</strong>. Thông tin pháp lý, bảng giá và tiến độ được kiểm tra chéo với hồ sơ chính thức từ chủ đầu tư trước khi xuất bản.
+                        </p>
+                        <p className="mb-2">
+                            Cập nhật lần cuối:{' '}
+                            <time dateTime={LAST_UPDATED_ISO} className="font-semibold text-[var(--text-primary)]">
+                                {LAST_UPDATED_DISPLAY}
+                            </time>
+                            . Bài viết tuân thủ nguyên tắc E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) của Google.
+                        </p>
+                        <p className="m-0">
+                            Liên hệ trực tiếp:{' '}
+                            <a href={`tel:${HOTLINE_TEL}`} className="text-[var(--primary-600)] font-semibold hover:underline">
+                                {HOTLINE_DISPLAY}
+                            </a>
+                            {' · '}
+                            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-[var(--primary-600)] font-semibold hover:underline">
+                                {SUPPORT_EMAIL}
+                            </a>
+                        </p>
+                    </aside>
                 </div>
             </section>
 
@@ -1229,6 +1274,17 @@ export default function ProjectLandingPage() {
                             Định Giá AI Ngay
                         </button>
                     </div>
+                    <p className="mt-6 text-sm opacity-95">
+                        Hotline:{' '}
+                        <a href={`tel:${HOTLINE_TEL}`} className="font-bold underline hover:no-underline">
+                            {HOTLINE_DISPLAY}
+                        </a>
+                        {' · '}
+                        Email:{' '}
+                        <a href={`mailto:${SUPPORT_EMAIL}`} className="font-bold underline hover:no-underline">
+                            {SUPPORT_EMAIL}
+                        </a>
+                    </p>
                 </div>
             </section>
 
@@ -1266,8 +1322,9 @@ function FAQAccordion({ items }: { items: { q: string; a: string }[] }) {
                         onClick={() => setOpen(open === i ? null : i)}
                         className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 font-semibold text-sm text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
                         aria-expanded={open === i}
+                        id={`faq-q-${i}`}
                     >
-                        <span>{item.q}</span>
+                        <span role="heading" aria-level={3}>{item.q}</span>
                         <svg
                             className={`w-5 h-5 flex-shrink-0 text-[var(--primary-600)] transition-transform ${open === i ? 'rotate-180' : ''}`}
                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
