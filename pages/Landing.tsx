@@ -7,6 +7,7 @@ import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { ListingCard } from '../components/ListingCard'; 
 import { Hero3D } from '../components/Hero3D';
+import { AiChatWidget } from '../components/AiChatWidget';
 import { ArrowRight, Search, Sparkles, BarChart3, Globe2, Zap, Sun, Moon, ChevronRight, X, Phone, MapPin, Scale, Building2, Bot } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -353,6 +354,7 @@ export const Landing: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
+    const [chatOpen, setChatOpen] = useState(false);
     
     // Typewriter effect
     const [text, setText] = useState('');
@@ -874,14 +876,20 @@ export const Landing: React.FC = () => {
                 </motion.div>
             </section>
 
+            {/* AI CHAT WIDGET */}
+            <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+
             {/* AI ASSISTANT FLOAT — all screens */}
             <button
-                onClick={() => navigateTo(ROUTES.AI_VALUATION)}
+                onClick={() => setChatOpen(prev => !prev)}
                 aria-label="Mở trợ lý AI tư vấn bất động sản"
                 className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform select-none"
                 style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
             >
-                <Bot className="w-6 h-6 text-white" />
+                {chatOpen
+                    ? <X className="w-6 h-6 text-white" />
+                    : <Bot className="w-6 h-6 text-white" />
+                }
             </button>
 
             {/* STICKY MOBILE BOTTOM BAR — md:hidden */}
@@ -894,12 +902,15 @@ export const Landing: React.FC = () => {
                     <span>Gọi ngay</span>
                 </a>
                 <button
-                    onClick={() => navigateTo(ROUTES.AI_VALUATION)}
+                    onClick={() => setChatOpen(prev => !prev)}
                     className="flex-1 flex items-center justify-center gap-1.5 py-3 active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
                     style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                 >
-                    <Sparkles className="w-4 h-4 shrink-0" />
-                    <span>Hỏi AI</span>
+                    {chatOpen
+                        ? <X className="w-4 h-4 shrink-0" />
+                        : <Sparkles className="w-4 h-4 shrink-0" />
+                    }
+                    <span>{chatOpen ? 'Đóng' : 'Hỏi AI'}</span>
                 </button>
                 <button
                     onClick={() => navigateTo(ROUTES.CONTACT)}
