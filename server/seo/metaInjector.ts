@@ -368,7 +368,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   },
 
   'du-an/vinhomes-can-gio': {
-    title: 'Vinhomes Cần Giờ (Green Paradise) | Siêu Đô Thị Lấn Biển 2.870ha — SGS LAND',
+    title: 'Vinhomes Cần Giờ — Siêu Đô Thị Lấn Biển 2.870ha | SGS LAND',
     description: 'Vinhomes Cần Giờ / Vinhomes Green Paradise: dự án siêu đô thị lấn biển 2.870ha lớn nhất Việt Nam tại Cần Giờ, TP.HCM. Tiến độ, pháp lý, giá dự kiến, đặt chỗ ưu tiên tại SGS LAND.',
     h1: 'Vinhomes Cần Giờ — Vinhomes Green Paradise',
     structuredData: {
@@ -822,7 +822,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
     },
   },
   'du-an/masterise-homes': {
-    title: 'Masterise Homes | Căn Hộ Hạng Sang Masteri, Lumière, Grand Marina - SGS LAND',
+    title: 'Masterise Homes | Masteri, Lumière, Grand Marina — SGS LAND',
     description: 'Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.',
     h1: 'Masterise Homes',
     structuredData: {
@@ -1069,6 +1069,116 @@ export function buildStaticPageMeta(
   };
 }
 
+/**
+ * Walk a JSON-LD @graph (or single object) and collect entries where @type matches.
+ * Used to extract project facts + FAQ items for noscript content injection.
+ */
+function findSchemaNodes(structuredData: any, typeMatcher: (t: string) => boolean): any[] {
+  const out: any[] = [];
+  const walk = (o: any) => {
+    if (!o || typeof o !== 'object') return;
+    if (Array.isArray(o)) return o.forEach(walk);
+    const t = o['@type'];
+    if (t && (Array.isArray(t) ? t : [t]).some(x => typeof x === 'string' && typeMatcher(x))) {
+      out.push(o);
+    }
+    Object.values(o).forEach(v => { if (v && typeof v === 'object') walk(v); });
+  };
+  walk(structuredData);
+  return out;
+}
+
+/**
+ * Build per-route noscript HTML for project landing pages so bots that don't
+ * execute JavaScript (most LLM crawlers + some legacy SEO bots) see real,
+ * project-specific text content — not the generic homepage fallback.
+ *
+ * Returns the inner HTML for `<div class="noscript-wrapper">…</div>`.
+ * Returns null when the route has no project-like structured data.
+ */
+function buildProjectNoscriptHtml(structuredData: any, h1: string | undefined, url: string): string | null {
+  const projectNodes = findSchemaNodes(structuredData,
+    t => /^(ApartmentComplex|RealEstateListing|Place|LodgingBusiness|Residence)$/i.test(t));
+  if (projectNodes.length === 0) return null;
+
+  const project = projectNodes[0];
+  const faqNodes = findSchemaNodes(structuredData, t => /^FAQPage$/i.test(t));
+  const breadcrumbs = findSchemaNodes(structuredData, t => /^BreadcrumbList$/i.test(t))[0];
+
+  const lines: string[] = [];
+  lines.push(`<h1>${esc(h1 || project.name || 'Dự án bất động sản')}</h1>`);
+
+  // Lead paragraph from description
+  if (project.description) {
+    lines.push(`<p><strong>${esc(project.name || h1 || '')}</strong> — ${esc(project.description)}.</p>`);
+  }
+
+  // Breadcrumbs as schema-friendly nav links
+  if (breadcrumbs?.itemListElement?.length) {
+    const crumbs = breadcrumbs.itemListElement
+      .map((it: any) => it.name && it.item ? `<a href="${esc(it.item)}">${esc(it.name)}</a>` : null)
+      .filter(Boolean)
+      .join(' › ');
+    if (crumbs) lines.push(`<p style="text-align:left; color:#475569; font-size:14px;">${crumbs}</p>`);
+  }
+
+  // Key facts table — extracted from project schema
+  const facts: { label: string; value: string }[] = [];
+  if (project.address) {
+    const a = project.address;
+    const parts = [a.streetAddress, a.addressLocality, a.addressRegion].filter(Boolean);
+    if (parts.length) facts.push({ label: 'Vị trí', value: parts.join(', ') });
+  }
+  if (project.floorSize?.value) {
+    facts.push({ label: 'Quy mô', value: `${project.floorSize.value} ${project.floorSize.unitText || project.floorSize.unitCode || ''}`.trim() });
+  }
+  if (project.numberOfRooms) {
+    facts.push({ label: 'Số phòng ngủ', value: String(project.numberOfRooms) });
+  }
+  if (project.priceRange) {
+    facts.push({ label: 'Khoảng giá', value: String(project.priceRange) });
+  }
+  if (project.offers?.price) {
+    const cur = project.offers.priceCurrency || 'VND';
+    const unit = project.offers.unitText ? ` / ${project.offers.unitText}` : '';
+    facts.push({ label: 'Giá từ', value: `${project.offers.price} ${cur}${unit}` });
+  }
+  if (Array.isArray(project.amenityFeature) && project.amenityFeature.length) {
+    facts.push({ label: 'Tiện ích nổi bật', value: project.amenityFeature.slice(0, 6).map(String).join(', ') });
+  }
+  if (facts.length) {
+    lines.push('<h2>Thông tin dự án</h2>');
+    lines.push('<ul style="text-align:left; color:#475569;">');
+    for (const f of facts) lines.push(`  <li><strong>${esc(f.label)}:</strong> ${esc(f.value)}</li>`);
+    lines.push('</ul>');
+  }
+
+  // FAQ — top 6 Q&A pairs surfaced as readable text (separate from JSON-LD)
+  const faqItems = faqNodes.flatMap(n => Array.isArray(n.mainEntity) ? n.mainEntity : []);
+  if (faqItems.length) {
+    lines.push('<h2>Câu hỏi thường gặp</h2>');
+    for (const q of faqItems.slice(0, 6)) {
+      const qText = q?.name;
+      const aText = q?.acceptedAnswer?.text;
+      if (!qText || !aText) continue;
+      lines.push(`<h3 style="text-align:left; color:#1E293B; margin-top:16px;">${esc(qText)}</h3>`);
+      lines.push(`<p style="text-align:left; color:#475569;">${esc(aText)}</p>`);
+    }
+  }
+
+  // Authority + brand footer (E-E-A-T signal carried into every project page)
+  lines.push('<h2>Về SGS LAND</h2>');
+  lines.push('<p style="text-align:left; color:#475569;"><strong>SGS LAND</strong> (sgsland.vn) — đại lý phân phối uỷ quyền của Novaland, Masterise Homes, Nam Long, Vinhomes, Sơn Kim Land. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch xử lý qua nền tảng. Định giá theo chuẩn TĐGVN/IVS, tuân thủ Luật Đất Đai 2024 và Nghị định 13/2023.</p>');
+  lines.push('<ul style="text-align:left; color:#475569;">');
+  lines.push('  <li>📞 Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>');
+  lines.push('  <li>✉️ Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a></li>');
+  lines.push(`  <li>🌐 Trang dự án: <a href="${esc(url)}">${esc(url)}</a></li>`);
+  lines.push('</ul>');
+
+  lines.push('<p style="margin-top:24px;">Vui lòng bật JavaScript để xem đầy đủ tiện ích, mặt bằng và bảng giá realtime. <a href="' + esc(url) + '">Tải lại trang</a></p>');
+  return lines.join('\n        ');
+}
+
 export function injectMeta(baseHtml: string, meta: MetaData): string {
   const m = { ...DEFAULT_META, ...meta };
   const t = esc(m.title!);
@@ -1078,6 +1188,19 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
   const type = m.type || 'website';
 
   let html = baseHtml;
+
+  // Per-route noscript content for project landing pages.
+  // Replace homepage-generic noscript wrapper content with project-specific
+  // facts + FAQ so non-JS bots see ≥300 words of real, citation-worthy data.
+  if (m.structuredData) {
+    const projectNoscript = buildProjectNoscriptHtml(m.structuredData, m.h1, u);
+    if (projectNoscript) {
+      html = html.replace(
+        /(<div class="noscript-wrapper">)[\s\S]*?(<\/div>\s*<\/noscript>)/,
+        `$1\n        ${projectNoscript}\n      $2`
+      );
+    }
+  }
 
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${t}</title>`);
   html = html.replace(/(<meta\s+name="description"\s+content=")[^"]*(")/i, `$1${d}$2`);
