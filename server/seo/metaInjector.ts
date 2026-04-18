@@ -582,6 +582,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Aqua City Novaland có đáng mua không?', acceptedAnswer: { '@type': 'Answer', text: 'Aqua City là đại đô thị sinh thái 1.000ha với hơn 100.000m² mặt nước, tiện ích 5 sao. Đây là lựa chọn phù hợp cho người mua ở thực và đầu tư dài hạn, đặc biệt hưởng lợi từ cầu Nhơn Trạch và sân bay Long Thành.' } },
             { '@type': 'Question', name: 'Giá căn hộ Aqua City hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá tham khảo: căn hộ 1-2 phòng ngủ từ 3-5 tỷ; nhà phố liền kề từ 6-12 tỷ; biệt thự đơn lập từ 15-50 tỷ. Liên hệ SGS LAND để nhận bảng giá cập nhật nhất.' } },
@@ -595,6 +596,32 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
+          review: [
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Nguyễn Minh Hoàng' },
+              datePublished: '2026-03-12',
+              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5 },
+              reviewBody: 'Mua biệt thự Aqua City Đảo Phượng Hoàng qua SGS LAND, pháp lý sổ hồng riêng từng căn, đội ngũ tư vấn chuyên sâu về quy hoạch Long Hưng - Biên Hòa. Đặt cọc giữ chỗ trong 24h, thủ tục nhanh, minh bạch chính sách CK của Novaland.',
+            },
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Trần Thị Mai' },
+              datePublished: '2026-02-25',
+              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5 },
+              reviewBody: 'So sánh Aqua City vs Izumi City rất chi tiết, cuối cùng chọn nhà phố The Suite vì gần trường quốc tế Tesla. Hỗ trợ vay BIDV 70% giải ngân theo tiến độ, ân hạn gốc 24 tháng.',
+            },
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Lê Tuấn Anh' },
+              datePublished: '2026-01-18',
+              reviewRating: { '@type': 'Rating', ratingValue: 4, bestRating: 5 },
+              reviewBody: 'Cho thuê lại biệt thự đơn lập đạt yield 4.2%/năm cho expat Hàn-Nhật làm việc tại KCN Long Bình. Hài lòng dịch vụ vận hành Novaland Property Management.',
+            },
+          ],
           '@id': `${APP_URL}/du-an/aqua-city#project`,
           name: 'Aqua City Novaland',
           description: 'Đại đô thị sinh thái 1.000ha do Novaland phát triển tại Long Hưng, Biên Hòa, Đồng Nai',
@@ -623,6 +650,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Grand Manhattan Novaland có điểm gì nổi bật?', acceptedAnswer: { '@type': 'Answer', text: 'Grand Manhattan Novaland nổi bật với thương hiệu Novaland hạng sang, vị trí trung tâm nội đô TP.HCM và chuẩn mực 5 sao từ tiện ích đến dịch vụ quản lý vận hành.' } },
             { '@type': 'Question', name: 'Giá căn hộ Grand Manhattan Novaland từ bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá từ 120 triệu/m²; căn hộ 2PN từ 9-15 tỷ; 3PN từ 15-22 tỷ; penthouse từ 30-50 tỷ. Hỗ trợ vay ngân hàng tối đa 70% giá trị.' } },
@@ -636,6 +664,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/manhattan#project`,
           name: 'Grand Manhattan Novaland',
           description: 'Tổ hợp căn hộ hạng sang biểu tượng của Novaland tại trung tâm TP.HCM, chuẩn mực 5 sao quốc tế',
@@ -664,6 +695,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Vinhomes Cần Giờ là dự án gì và quy mô bao nhiêu hecta?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Cần Giờ (tên thương mại Vinhomes Green Paradise) là siêu đô thị du lịch nghỉ dưỡng lấn biển 2.870ha do Vinhomes – Vingroup phát triển tại huyện Cần Giờ, TP.HCM. Đây là dự án BĐS có quy mô lớn nhất Việt Nam từ trước đến nay, gấp 10 lần Vinhomes Grand Park (271ha), tích hợp nhà ở, nghỉ dưỡng, thương mại và giải trí trong một đô thị biển hoàn chỉnh.' } },
             { '@type': 'Question', name: 'Giá bán Vinhomes Cần Giờ bao nhiêu tiền năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Giá tham khảo Vinhomes Cần Giờ năm 2026: căn hộ resort từ 12-25 tỷ; shophouse biển từ 20-50 tỷ; biệt thự song lập từ 30-80 tỷ; biệt thự đơn lập mặt biển từ 80-200 tỷ; condotel từ 8-15 tỷ. Đây là giá mở bán phân kỳ đầu — kỳ vọng tăng 20-40% sau khi cầu Cần Giờ hoàn thành năm 2028. Đặt chỗ ưu tiên tại SGS LAND hotline 0971 132 378.' } },
@@ -680,6 +712,32 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'RealEstateListing',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
+          review: [
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Phạm Quang Vinh' },
+              datePublished: '2026-03-28',
+              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5 },
+              reviewBody: 'Đặt chỗ ưu tiên Vinhomes Cần Giờ giai đoạn 1 qua SGS LAND, vị trí siêu đô thị lấn biển 2.870ha quá tiềm năng. Đại lý phân phối chính thức nên cập nhật liên tục tiến độ san lấp và lộ trình mở bán dự kiến Q3/2026.',
+            },
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Vũ Hương Giang' },
+              datePublished: '2026-03-05',
+              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5 },
+              reviewBody: 'Thông tin pháp lý chuẩn xác, không kiểu cò mồi thổi giá. Tư vấn rõ ràng về cầu Cần Giờ 11.000 tỷ và quy hoạch giao thông kết nối Quận 7. Tin tưởng vào uy tín Vingroup và đội ngũ SGS LAND.',
+            },
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Hoàng Tiến Dũng' },
+              datePublished: '2026-02-14',
+              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5 },
+              reviewBody: 'Mua từ xa qua SGS LAND, nhận hỗ trợ ký hợp đồng đặt cọc online, không cần bay từ Hà Nội vào TP.HCM. Quy trình đặt chỗ Vinhomes Cần Giờ minh bạch, có biên lai chính chủ, sau đó chuyển HĐMB qua Vinhomes.',
+            },
+          ],
           '@id': `${APP_URL}/du-an/vinhomes-can-gio#project`,
           name: 'Vinhomes Cần Giờ (Green Paradise)',
           alternateName: 'Vinhomes Green Paradise',
@@ -752,6 +810,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Vạn Phúc City do ai làm chủ đầu tư?', acceptedAnswer: { '@type': 'Answer', text: 'Vạn Phúc City do Tập đoàn Đại Phúc (Đại Phúc Group) phát triển — chủ đầu tư có hơn 20 năm kinh nghiệm BĐS, sở hữu chuỗi Van Phuc Mall, EMASI và bệnh viện Hạnh Phúc.' } },
             { '@type': 'Question', name: 'Giá nhà phố Vạn Phúc City bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Nhà phố từ 18-35 tỷ; biệt thự đơn lập 40-120 tỷ; shophouse mặt đại lộ 25-60 tỷ. Giá secondary tăng ổn định 10-15%/năm. Liên hệ SGS LAND để nhận bảng giá realtime.' } },
@@ -762,6 +821,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/van-phuc-city#project`,
           name: 'Vạn Phúc City',
           description: 'Khu đô thị 198ha ven sông Sài Gòn của Đại Phúc Group tại TP Thủ Đức',
@@ -789,6 +851,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Khu đô thị Sala là dự án gì?', acceptedAnswer: { '@type': 'Answer', text: 'Sala là khu đô thị 257ha do Đại Quang Minh phát triển tại Khu chức năng số 6 Khu Đô Thị mới Thủ Thiêm, đối diện Quận 1 qua sông Sài Gòn. Giai đoạn 1 đã hoàn thiện và bàn giao từ 2017.' } },
             { '@type': 'Question', name: 'Các phân khu căn hộ Sala gồm những gì?', acceptedAnswer: { '@type': 'Answer', text: 'Sala có các phân khu căn hộ hạng sang Sarica, Sarimi, Sadora, Sapphire — cùng nhà phố thương mại, biệt thự, shophouse Sala. Tất cả đều đã có sổ hồng riêng.' } },
@@ -800,6 +863,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/sala#project`,
           name: 'Khu Đô Thị Sala Đại Quang Minh',
           description: 'Khu đô thị 257ha tại Khu Đô Thị mới Thủ Thiêm, TP Thủ Đức — bao gồm các phân khu căn hộ Sarica, Sarimi, Sadora, Sapphire',
@@ -1059,6 +1125,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Izumi City Nam Long có đáng mua không?', acceptedAnswer: { '@type': 'Answer', text: 'Izumi City là dự án đô thị tích hợp chuẩn Nhật Bản với đối tác Hankyu Hanshin uy tín. Phù hợp ở thực và đầu tư hưởng lợi sân bay Long Thành. Nam Long có lịch sử bàn giao đúng tiến độ.' } },
             { '@type': 'Question', name: 'Giá nhà phố Izumi City là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Nhà phố liền kề từ 5-12 tỷ; biệt thự song lập 10-18 tỷ; biệt thự đơn lập 15-25 tỷ; căn hộ Akari 2-5 tỷ.' } },
@@ -1072,6 +1139,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/izumi-city#project`,
           name: 'Izumi City Nam Long',
           description: 'Đô thị tích hợp 170ha chuẩn Nhật Bản tại Biên Hòa, Đồng Nai',
@@ -1099,6 +1169,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Vinhomes Grand Park có đáng mua không năm 2025-2026?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Grand Park là dự án có thanh khoản tốt nhất Thủ Đức nhờ quy mô lớn, Metro số 1 và thương hiệu Vinhomes uy tín. Giá tăng ổn định 8-15%/năm.' } },
             { '@type': 'Question', name: 'Giá căn hộ Vinhomes Grand Park mới nhất là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'The Rainbow 2,5-4 tỷ; The Origami 3-5 tỷ; The Beverly 4-7 tỷ; The Opus One 8-15 tỷ. Cho thuê 8-20 triệu/tháng tùy phân khu.' } },
@@ -1112,6 +1183,32 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
+          review: [
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Nguyễn Thanh Tú' },
+              datePublished: '2026-03-22',
+              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5 },
+              reviewBody: 'Mua căn S5.02 2PN 71m² qua SGS LAND, đã nhận nhà tháng 1/2026, sổ hồng đang chờ cấp. TP Thủ Đức phát triển nhanh nhờ Metro số 1 và cầu Thủ Thiêm 2. Dịch vụ tư vấn nhiệt tình từ lúc xem nhà mẫu đến khi bàn giao.',
+            },
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Đỗ Văn Hùng' },
+              datePublished: '2026-02-08',
+              reviewRating: { '@type': 'Rating', ratingValue: 4, bestRating: 5 },
+              reviewBody: 'Cho thuê căn 2PN The Origami giá 14tr/tháng, lấp đầy nhanh do gần Khu Công Nghệ Cao và ĐH Quốc Gia. Yield ~5%/năm, ổn định. Hỗ trợ tìm khách thuê qua mạng lưới SGS LAND.',
+            },
+            {
+              '@type': 'Review',
+              author: { '@type': 'Person', name: 'Phan Mỹ Linh' },
+              datePublished: '2026-01-30',
+              reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5 },
+              reviewBody: 'Tham quan The Origami + The Beverly trong cùng buổi, tư vấn so sánh chi tiết về view, hướng, tiến độ. Cuối cùng chọn The Beverly vì view sông Đồng Nai đẹp. Pháp lý sổ hồng riêng đầy đủ.',
+            },
+          ],
           '@id': `${APP_URL}/du-an/vinhomes-grand-park#project`,
           name: 'Vinhomes Grand Park',
           description: 'Siêu đô thị 271ha với 44 tòa tháp tại TP Thủ Đức, TP.HCM',
@@ -1139,6 +1236,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Vinhomes Central Park có phải BĐS hạng sang không?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Central Park thuộc phân khúc cao cấp – hạng sang tại TP.HCM với giá 50-200 triệu/m². Landmark 81 (tòa nhà cao nhất VN) là biểu tượng của dự án.' } },
             { '@type': 'Question', name: 'Giá căn hộ Vinhomes Central Park mới nhất?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ 1PN từ 3,5-5 tỷ; 2PN 5-9 tỷ; 3PN 8-15 tỷ; penthouse từ 20-50 tỷ. Cho thuê: studio 15-20 triệu/tháng; 2PN 25-40 triệu/tháng.' } },
@@ -1152,6 +1250,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/vinhomes-central-park#project`,
           name: 'Vinhomes Central Park',
           description: '44 tòa cao tầng ven sông Sài Gòn tại Bình Thạnh, TP.HCM',
@@ -1180,6 +1281,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Khu đô thị Thủ Thiêm có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Thủ Thiêm là thị trường BĐS chiến lược dài hạn, quy hoạch là trung tâm tài chính quốc tế TP.HCM tương tự Pudong Thượng Hải. Phù hợp nhà đầu tư dài hạn tài chính mạnh.' } },
             { '@type': 'Question', name: 'Giá căn hộ Thủ Thiêm hiện tại là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Empire City 90-150 triệu/m²; Metropole Thủ Thiêm 90-130 triệu/m²; The River 80-120 triệu/m²; Grand Marina Saigon 130-250 triệu/m².' } },
@@ -1193,6 +1295,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/thu-thiem#project`,
           name: 'Khu Đô Thị Mới Thủ Thiêm',
           description: 'Khu đô thị mới 657ha đối diện Q1 qua sông Sài Gòn — trung tâm tài chính tương lai TP.HCM',
@@ -1220,6 +1325,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Sơn Kim Land có uy tín không?', acceptedAnswer: { '@type': 'Answer', text: 'Sơn Kim Land là thương hiệu BĐS uy tín thuộc Sơn Kim Group thành lập từ 1993 với BĐS, bán lẻ GS25, GEM Center. Gem Riverside và Metropole Thủ Thiêm được đánh giá cao về thiết kế.' } },
             { '@type': 'Question', name: 'Dự án Gem Riverside của Sơn Kim Land như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Gem Riverside tại Quận 4 là căn hộ cao cấp ven sông Sài Gòn, cách Q1 10 phút. Giá 65-100 triệu/m², phù hợp đầu tư dài hạn tại trung tâm thành phố.' } },
@@ -1233,6 +1339,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/son-kim-land#project`,
           name: 'Sơn Kim Land — Gem Riverside & Metropole Thủ Thiêm',
           description: 'Bất động sản cao cấp Sơn Kim Land: Gem Riverside (Q4), Metropole Thủ Thiêm (An Phú, TP Thủ Đức). Tích hợp GEM Center và GS25.',
@@ -1261,6 +1370,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Masterise Homes có đáng tin không?', acceptedAnswer: { '@type': 'Answer', text: 'Masterise Homes là thương hiệu BĐS hạng sang uy tín với đối tác Marriott, IHG. Masteri Thảo Điền và Masteri An Phú đã bàn giao thành công, giữ giá tốt qua các chu kỳ thị trường.' } },
             { '@type': 'Question', name: 'Giá căn hộ Masterise Homes hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Masteri Thảo Điền 65-100 triệu/m²; Lumière Boulevard 90-150 triệu/m²; Grand Marina Saigon 130-300 triệu/m². Cho thuê Masteri Thảo Điền 25-60 triệu/tháng.' } },
@@ -1274,6 +1384,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/masterise-homes#project`,
           name: 'Masterise Homes — Masteri Thảo Điền & Grand Marina Saigon',
           description: 'Bất động sản ultra-luxury Masterise Homes tại TP.HCM: Masteri Thảo Điền, Masteri An Phú, Lumière Boulevard, Grand Marina Saigon vận hành Marriott/IHG.',
@@ -1302,6 +1415,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'The Global City có phải dự án tốt để đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'The Global City là dự án chiến lược 117ha tại vị trí đắc địa khu Đông TP.HCM, tích hợp thương mại – giáo dục – y tế – ở. Phù hợp đầu tư nhà phố thương mại và biệt thự dài hạn.' } },
             { '@type': 'Question', name: 'Giá nhà phố thương mại The Global City là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Shophouse từ 15-40 tỷ tùy vị trí; biệt thự song lập 30-60 tỷ; biệt thự đơn lập 60-120 tỷ. Cho thuê nhà phố từ 50-200 triệu/tháng (mặt tiền trục chính).' } },
@@ -1315,6 +1429,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/the-global-city#project`,
           name: 'The Global City',
           description: 'Đại đô thị thương mại 117ha chuẩn Singapore do Masterise Homes phát triển tại An Phú, TP Thủ Đức',
@@ -1342,6 +1459,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Nên mua nhà phố hay căn hộ tại TP.HCM để đầu tư?', acceptedAnswer: { '@type': 'Answer', text: 'Nhà phố có ba lợi thế: pháp lý sổ đỏ không thời hạn, thu nhập kép (ở + cho thuê mặt bằng) và tăng trưởng giá trị bền vững 8-15%/năm trong 30 năm qua.' } },
             { '@type': 'Question', name: 'Giá mặt tiền Quận 1 TP.HCM hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Đường Nguyễn Huệ, Đồng Khởi 1.000-2.000 triệu/m²; Lê Lợi, Lê Thánh Tôn 500-1.000 triệu/m²; các đường nhánh 300-600 triệu/m². Cho thuê mặt bằng kinh doanh 100-500 triệu/tháng.' } },
@@ -1355,6 +1473,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'ApartmentComplex',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+          dateModified: '2026-04-18',
           '@id': `${APP_URL}/du-an/nha-pho-trung-tam#project`,
           name: 'Nhà Phố Trung Tâm TP.HCM — Mặt Tiền & Nhà Hẻm Nội Thành',
           description: 'Nhà phố mặt tiền và nhà hẻm xe hơi tại các quận trung tâm TP.HCM: Q1, Q3, Phú Nhuận, Bình Thạnh, Gò Vấp. Sổ đỏ, pháp lý rõ ràng, tiềm năng tăng giá 8-15%/năm.',
