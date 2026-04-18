@@ -1,0 +1,176 @@
+You are a senior SEO and GEO (Generative Engine Optimization) engineer.
+Build a complete Node.js audit tool for https://sgsland.vn
+
+## TECH STACK
+- Node.js 20+ with ES modules
+- cheerio (HTML parsing)
+- axios (HTTP requests)
+- lighthouse (Core Web Vitals)
+- sitemap-parser
+- schema-dts (structured data validation)
+- chalk (colored terminal output)
+- fs/promises (report writing)
+
+## INSTALL
+Run: npm install axios cheerio lighthouse chrome-launcher schema-dts chalk node-fetch sitemap xml2js
+
+---
+
+## WHAT TO BUILD
+
+Create a file: seo-geo-audit.mjs
+
+### 1. TECHNICAL SEO CHECKS
+Crawl https://sgsland.vn and for each page found:
+- [ ] HTTP status code (200, 301, 302, 404, 500)
+- [ ] Response time (TTFB in ms) — flag if > 600ms
+- [ ] Page title: exists? length 50–60 chars? contains target keyword?
+- [ ] Meta description: exists? length 140–160 chars?
+- [ ] H1: exactly one? contains keyword?
+- [ ] H2–H6: proper hierarchy?
+- [ ] Canonical tag: exists? self-referencing or pointing elsewhere?
+- [ ] robots meta tag: noindex present? (flag as CRITICAL if yes)
+- [ ] Open Graph tags: og:title, og:description, og:image present?
+- [ ] Twitter Card tags present?
+- [ ] Hreflang tags (check if vi/en versions exist)
+- [ ] Broken internal links (4xx)
+- [ ] Image alt text: count images missing alt
+- [ ] Image size: flag images > 150KB (check Content-Length)
+- [ ] Structured data: detect JSON-LD blocks, validate type exists
+  - Required types for real estate: Organization, RealEstateListing, FAQPage, BreadcrumbList, LocalBusiness
+- [ ] Word count per page (flag if < 300 words for project pages, < 1500 for blog)
+- [ ] Keyword density for target terms: ['aqua city', 'global city', 'izumi', 'vinhomes can gio', 'masterise', 'bat dong san', 'sgs land', 'sgsland']
+
+### 2. CORE WEB VITALS (Lighthouse)
+Run Lighthouse headless for homepage and 3 key project pages:
+- LCP (Largest Contentful Paint) — pass: < 2500ms, warn: < 4000ms, fail: >= 4000ms
+- CLS (Cumulative Layout Shift) — pass: < 0.1, warn: < 0.25, fail: >= 0.25
+- INP (Interaction to Next Paint) — pass: < 200ms, warn: < 500ms, fail: >= 500ms
+- FCP (First Contentful Paint) — pass: < 1800ms
+- TTFB — pass: < 600ms
+- Performance Score overall
+- SEO Score from Lighthouse
+- Accessibility Score
+
+### 3. SITEMAP & ROBOTS.TXT AUDIT
+- Fetch https://sgsland.vn/sitemap.xml — does it exist?
+- Fetch https://sgsland.vn/robots.txt — does it exist?
+- Parse sitemap: count URLs, detect missing pages
+- Check robots.txt: is Googlebot blocked? Is sitemap declared?
+- Check if sitemap is submitted (can't verify directly — flag as manual check)
+
+### 4. SCHEMA / STRUCTURED DATA AUDIT
+For each JSON-LD block found:
+- Detect @type
+- Check required fields per type:
+  - Organization: name, url, logo, contactPoint, sameAs
+  - LocalBusiness: name, address, telephone, openingHours, geo
+  - RealEstateListing: name, description, url, image, offers
+  - FAQPage: mainEntity array with Question + acceptedAnswer
+  - BreadcrumbList: itemListElement with position, name, item
+- Flag missing fields as CRITICAL, WARN, or INFO
+
+### 5. GEO READINESS CHECKS
+Check each crawled page for:
+- [ ] Author byline present (name + bio snippet) — important for E-E-A-T
+- [ ] Publication date + last modified date visible
+- [ ] Specific factual data present: numbers, prices, dates, measurements
+  - Regex: detect patterns like "từ X tỷ", "X ha", "X căn", "bàn giao năm XXXX"
+- [ ] FAQ section present (detect <details>, accordion pattern, or FAQ heading)
+- [ ] Self-contained paragraphs: avg sentence per paragraph < 4 (AI-friendly)
+- [ ] Citation-worthy claims: detect if prices/specs are sourced or attributed
+- [ ] Entity mentions: count mentions of ['Novaland', 'Masterise', 'Vinhomes', 'Vingroup', 'Aqua City', 'Global City', 'Izumi', 'Khu Đông', 'TP.HCM', 'SGS Land']
+- [ ] Bing indexing readiness: check for Bing-specific meta tags
+- [ ] Google Business Profile signals: check for LocalBusiness schema with geo coordinates
+- [ ] Video content: detect YouTube embeds (VideoObject schema check)
+
+### 6. BACKLINK & AUTHORITY SIGNALS (on-page proxies)
+Since we can't check external links directly, check:
+- [ ] External outbound links to high-authority domains (.gov.vn, known news sites)
+- [ ] Social media profile links in footer/header (Facebook, YouTube, LinkedIn, TikTok, X/Twitter)
+- [ ] Press/media mention section exists on About page?
+- [ ] Awards/certifications section exists?
+- [ ] Partner logos section exists?
+
+### 7. MOBILE & ACCESSIBILITY
+- [ ] Viewport meta tag present
+- [ ] Font size >= 14px (check inline styles and detect <12px)
+- [ ] Touch targets >= 44px (flag buttons/links that might be too small)
+- [ ] lang attribute on <html> tag
+
+---
+
+## SCORING SYSTEM
+
+Create a weighted score (0–100) per page:
+- Technical SEO: 30 points
+- Content Quality: 25 points
+- Structured Data: 20 points
+- GEO Readiness: 15 points
+- Performance: 10 points
+
+Thresholds:
+- 90–100: EXCELLENT (green)
+- 70–89: GOOD (yellow)
+- 50–69: NEEDS WORK (orange)
+- 0–49: CRITICAL (red)
+
+---
+
+## OUTPUT
+
+1. Print colored terminal report using chalk:
+   - 🔴 CRITICAL issues (fix immediately)
+   - 🟠 WARNINGS (fix within 2 weeks)
+   - 🟡 INFO (improvements)
+   - 🟢 PASSING checks
+
+2. Write full JSON report to: ./reports/sgsland-audit-[TIMESTAMP].json
+
+3. Write human-readable markdown report to: ./reports/sgsland-audit-[TIMESTAMP].md
+   With sections:
+   - Executive Summary (score, top 5 issues)
+   - Technical SEO Findings
+   - Core Web Vitals Results
+   - Structured Data Report
+   - GEO Readiness Report
+   - Keyword Coverage
+   - Priority Action Plan (sorted by impact × effort)
+
+4. Write a prioritized fix list to: ./reports/FIXES-TODO.md
+   Each fix must include:
+   - Priority: P0 / P1 / P2
+   - Issue description
+   - Exact file or URL affected
+   - Recommended fix code snippet or instruction
+   - Estimated impact (High/Medium/Low)
+
+---
+
+## CRAWLING RULES
+- Respect robots.txt
+- Max 50 pages per crawl run
+- Delay 500ms between requests (polite crawling)
+- User-Agent: "SGSLandAuditBot/1.0 (SEO Audit; contact@sgsland.vn)"
+- Follow internal links only (same domain)
+- Skip: /wp-admin, /cart, /checkout, *.pdf, *.jpg, *.png
+
+---
+
+## ENTRY POINT
+const TARGET_URLS = [
+  'https://sgsland.vn',
+  'https://sgsland.vn/du-an/aqua-city',
+  'https://sgsland.vn/du-an/global-city',
+  'https://sgsland.vn/du-an/izumi-city',
+  'https://sgsland.vn/du-an/vinhomes-can-gio',
+  'https://sgsland.vn/du-an/masterise',
+  'https://sgsland.vn/gioi-thieu',
+  'https://sgsland.vn/blog',
+  'https://sgsland.vn/sitemap.xml',
+  'https://sgsland.vn/robots.txt'
+]
+
+Run audit on all TARGET_URLS first, then crawl discovered internal links up to 50 pages total.
+
+Start building now. Make the code production-ready with proper error handling, async/await, and clear console progress indicators.
