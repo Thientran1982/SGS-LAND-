@@ -1,0 +1,14 @@
+SecurityError: Failed to execute 'replaceState' on 'History': A history state object with URL 'https://du-an/izumi-city' cannot be created in a document with origin 'https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev' and URL 'https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/home#//du-an/izumi-city'.
+
+STACK:
+SecurityError: Failed to execute 'replaceState' on 'History': A history state object with URL 'https://du-an/izumi-city' cannot be created in a document with origin 'https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev' and URL 'https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/home#//du-an/izumi-city'.
+    at Object.apply (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/__replco/static/devtools/injected.js:265:22)
+    at https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/App.tsx?t=1776541975830:488:22
+    at commitHookEffectListMount (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:16963:34)
+    at invokePassiveEffectMountInDEV (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:18374:19)
+    at invokeEffectsInDev (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:19754:19)
+    at commitDoubleInvokeEffectsInDEV (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:19739:15)
+    at flushPassiveEffectsImpl (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:19556:13)
+    at flushPassiveEffects (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:19500:22)
+    at commitRootImpl (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:19469:13)
+    at commitRoot (https://bc72de0b-fc4e-4e50-bcce-71b9685b0ab7-00-srgpeliovbek.worf.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=623d5815:19330:13)

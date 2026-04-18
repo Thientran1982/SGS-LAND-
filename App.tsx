@@ -377,7 +377,7 @@ const useRouter = () => {
         const hash = window.location.hash;
         const pathname = window.location.pathname;
         if (hash && hash.startsWith('#/')) {
-            const after = hash.slice(2); // 'home?foo=1' or 'home'
+            const after = hash.slice(2).replace(/^\/+/, ''); // strip any extra leading slashes
             const sepIdx = after.indexOf('?');
             const pathPart = sepIdx >= 0 ? after.slice(0, sepIdx) : after;
             const queryPart = sepIdx >= 0 ? after.slice(sepIdx) : '';
@@ -394,7 +394,7 @@ const useRouter = () => {
         const handleHashChange = () => {
             const hash = window.location.hash;
             if (hash && hash.startsWith('#/')) {
-                const after = hash.slice(2);
+                const after = hash.slice(2).replace(/^\/+/, ''); // strip any extra leading slashes
                 const sepIdx = after.indexOf('?');
                 const pathPart = sepIdx >= 0 ? after.slice(0, sepIdx) : after;
                 const queryPart = sepIdx >= 0 ? after.slice(sepIdx) : '';
