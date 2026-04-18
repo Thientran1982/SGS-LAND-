@@ -26,7 +26,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         slug: 'aqua-city',
         name: 'Aqua City Novaland',
         dev: 'Novaland',
-        loc: 'Nhơn Trạch, Đồng Nai',
+        loc: 'Biên Hòa, Đồng Nai',
         scale: '1.000 ha',
         priceFrom: 'Từ 6,5 tỷ',
         type: 'Đại Đô Thị Sinh Thái',
@@ -99,7 +99,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
 const HOME_FAQ = [
     {
         q: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?',
-        a: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Nhơn Trạch, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.',
+        a: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Biên Hòa, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.',
     },
     {
         q: 'Mua bất động sản qua SGS LAND có mất phí môi giới không?',
@@ -111,7 +111,7 @@ const HOME_FAQ = [
     },
     {
         q: 'Dự án nào đang mở bán và có thể đặt chỗ ưu tiên qua SGS LAND?',
-        a: 'Tính đến tháng 4/2026: Aqua City Novaland đang bàn giao nhiều phân khu, có sổ hồng riêng, giá từ 6,5 tỷ. Izumi City Nam Long mở giai đoạn mới từ 8,4 tỷ. The Global City Masterise đang nhận đặt cọc từ 15 tỷ. Vinhomes Cần Giờ đã mở bán từ 12 tỷ. Liên hệ 0971 132 378 để nhận bảng giá và tiến độ mới nhất.',
+        a: 'Tính đến tháng 4/2026: Aqua City Novaland (Biên Hòa, Đồng Nai) đang bàn giao nhiều phân khu, có sổ hồng riêng, giá từ 6,5 tỷ. Izumi City Nam Long mở giai đoạn mới từ 8,4 tỷ. The Global City Masterise đang nhận đặt cọc từ 15 tỷ. Vinhomes Cần Giờ đã mở bán từ 12 tỷ. Liên hệ 0971 132 378 để nhận bảng giá và tiến độ mới nhất.',
     },
     {
         q: 'SGS LAND hỗ trợ vay vốn ngân hàng như thế nào?',
@@ -914,7 +914,7 @@ export const Landing: React.FC = () => {
 
             {/* FOOTER */}
             <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800 pb-safe-footer pb-28 md:pb-20">
-                <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-8 md:gap-12">
+                <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-8 md:gap-12">
                     <div className="col-span-2">
                         <div className="flex items-center gap-2 mb-4 md:mb-6">
                             <Logo className="w-5 h-5 md:w-6 md:h-6 text-[var(--text-primary)] dark:text-white" />
@@ -945,16 +945,21 @@ export const Landing: React.FC = () => {
                             <li><a href={`/${ROUTES.BDS_BINH_DUONG}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Bình Dương</a></li>
                             <li><a href={`/${ROUTES.BDS_QUAN_7}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Quận 7</a></li>
                             <li><a href={`/${ROUTES.BDS_PHU_NHUAN}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Phú Nhuận</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">Dự Án</h4>
+                        <ul className="space-y-3 md:space-y-4 font-medium text-xs md:text-sm">
                             <li><a href={`/${ROUTES.DU_AN}/aqua-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_aqua_city')}</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/vinhomes-grand-park`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Grand Park</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}/the-global-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">The Global City</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/izumi-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Izumi City</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}/vinhomes-can-gio`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Cần Giờ</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}/masterise-homes`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Masterise Homes</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}/vinhomes-grand-park`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Grand Park</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/vinhomes-central-park`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Central Park</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/son-kim-land`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Sơn Kim Land</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/masterise-homes`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Masterise Homes</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/the-global-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">The Global City</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/thu-thiem`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Khu Đô Thị Thủ Thiêm</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/nha-pho-trung-tam`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Nhà Phố Trung Tâm</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/manhattan`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_manhattan')}</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Xem tất cả →</a></li>
                         </ul>
                     </div>
 
