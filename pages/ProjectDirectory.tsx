@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Logo } from '../components/Logo';
 import { motion } from 'motion/react';
-import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity } from 'lucide-react';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -197,9 +197,34 @@ const ALL_PROJECTS: DuAnProject[] = [
     },
 ];
 
-const PROVINCES = ['Tất cả', 'TP.HCM', 'Đồng Nai'];
-const TYPE_GROUPS = ['Tất cả', 'Đô thị tổng hợp', 'Căn hộ cao cấp', 'Biệt thự & nhà phố'];
-const STATUSES = ['Tất cả', 'Đang bàn giao', 'Đang mở bán', 'Đang bán', 'Thứ cấp', 'Sắp mở bán', 'Đang phát triển'];
+interface FilterOption {
+    value: string;
+    label: string;
+    dot?: string;
+}
+
+const PROVINCE_OPTIONS: FilterOption[] = [
+    { value: 'Tất cả', label: 'Tất cả khu vực' },
+    { value: 'TP.HCM', label: 'TP. Hồ Chí Minh' },
+    { value: 'Đồng Nai', label: 'Đồng Nai' },
+];
+
+const TYPE_OPTIONS: FilterOption[] = [
+    { value: 'Tất cả', label: 'Tất cả loại hình' },
+    { value: 'Đô thị tổng hợp', label: 'Đô thị tổng hợp' },
+    { value: 'Căn hộ cao cấp', label: 'Căn hộ cao cấp' },
+    { value: 'Biệt thự & nhà phố', label: 'Biệt thự & nhà phố' },
+];
+
+const STATUS_OPTIONS: FilterOption[] = [
+    { value: 'Tất cả', label: 'Tất cả trạng thái' },
+    { value: 'Đang bàn giao', label: 'Đang bàn giao', dot: 'bg-emerald-500' },
+    { value: 'Đang mở bán', label: 'Đang mở bán', dot: 'bg-indigo-500' },
+    { value: 'Đang bán', label: 'Đang bán', dot: 'bg-indigo-500' },
+    { value: 'Thứ cấp', label: 'Thứ cấp (đã bàn giao)', dot: 'bg-emerald-400' },
+    { value: 'Sắp mở bán', label: 'Sắp mở bán', dot: 'bg-amber-500' },
+    { value: 'Đang phát triển', label: 'Đang phát triển', dot: 'bg-amber-400' },
+];
 
 const STATUS_BADGE: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -354,13 +379,13 @@ export default function ProjectDirectory() {
                         </button>
                         {/* Desktop filters */}
                         <div className="hidden sm:flex items-center gap-2 flex-wrap">
-                            <FilterSelect label="Khu vực" options={PROVINCES} value={province} onChange={setProvince} />
-                            <FilterSelect label="Loại hình" options={TYPE_GROUPS} value={typeGroup} onChange={setTypeGroup} />
-                            <FilterSelect label="Trạng thái" options={STATUSES} value={statusFilter} onChange={setStatusFilter} />
+                            <FilterDropdown label="Khu vực" icon={<MapPinned className="w-3.5 h-3.5" />} options={PROVINCE_OPTIONS} value={province} onChange={setProvince} />
+                            <FilterDropdown label="Loại hình" icon={<LayoutGrid className="w-3.5 h-3.5" />} options={TYPE_OPTIONS} value={typeGroup} onChange={setTypeGroup} />
+                            <FilterDropdown label="Trạng thái" icon={<Activity className="w-3.5 h-3.5" />} options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
                             {hasActiveFilters && (
                                 <button
                                     onClick={() => { setProvince('Tất cả'); setTypeGroup('Tất cả'); setStatusFilter('Tất cả'); }}
-                                    className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                    className="px-3 py-1.5 text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors"
                                 >
                                     Xóa lọc
                                 </button>
@@ -370,13 +395,13 @@ export default function ProjectDirectory() {
                     {/* Mobile filter panel */}
                     {showFilters && (
                         <div className="sm:hidden mt-3 pt-3 border-t border-[var(--glass-border)] flex flex-col gap-2">
-                            <FilterSelect label="Khu vực" options={PROVINCES} value={province} onChange={setProvince} />
-                            <FilterSelect label="Loại hình" options={TYPE_GROUPS} value={typeGroup} onChange={setTypeGroup} />
-                            <FilterSelect label="Trạng thái" options={STATUSES} value={statusFilter} onChange={setStatusFilter} />
+                            <FilterDropdown label="Khu vực" icon={<MapPinned className="w-3.5 h-3.5" />} options={PROVINCE_OPTIONS} value={province} onChange={setProvince} fullWidth />
+                            <FilterDropdown label="Loại hình" icon={<LayoutGrid className="w-3.5 h-3.5" />} options={TYPE_OPTIONS} value={typeGroup} onChange={setTypeGroup} fullWidth />
+                            <FilterDropdown label="Trạng thái" icon={<Activity className="w-3.5 h-3.5" />} options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} fullWidth />
                             {hasActiveFilters && (
                                 <button
                                     onClick={() => { setProvince('Tất cả'); setTypeGroup('Tất cả'); setStatusFilter('Tất cả'); }}
-                                    className="text-xs font-semibold text-indigo-600 text-left"
+                                    className="text-xs font-semibold text-rose-500 text-left"
                                 >
                                     Xóa bộ lọc
                                 </button>
@@ -473,29 +498,113 @@ export default function ProjectDirectory() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function FilterSelect({
-    label, options, value, onChange
+function FilterDropdown({
+    label,
+    icon,
+    options,
+    value,
+    onChange,
+    fullWidth = false,
 }: {
     label: string;
-    options: string[];
+    icon: React.ReactNode;
+    options: FilterOption[];
     value: string;
     onChange: (v: string) => void;
+    fullWidth?: boolean;
 }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    const selected = options.find(o => o.value === value) ?? options[0];
+    const isActive = value !== 'Tất cả';
+
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        const keyHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', handler);
+        document.addEventListener('keydown', keyHandler);
+        return () => {
+            document.removeEventListener('mousedown', handler);
+            document.removeEventListener('keydown', keyHandler);
+        };
+    }, [open]);
+
     return (
-        <div className="relative">
-            <select
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                className={`pr-8 pl-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 ${value !== 'Tất cả'
-                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
-                    : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)]'
-                    }`}
+        <div ref={ref} className={`relative ${fullWidth ? 'w-full' : ''}`}>
+            {/* Trigger button */}
+            <button
+                type="button"
+                onClick={() => setOpen(v => !v)}
+                className={`${fullWidth ? 'w-full' : ''} flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap select-none
+                    ${isActive
+                        ? 'border-indigo-500 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-600'
+                        : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)] hover:border-indigo-300 hover:text-indigo-600'
+                    } ${open ? 'ring-2 ring-indigo-400/30' : ''}`}
             >
-                {options.map(o => (
-                    <option key={o} value={o}>{o === 'Tất cả' ? `${label}: Tất cả` : o}</option>
-                ))}
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-[var(--text-tertiary)]" />
+                <span className={`${isActive ? 'text-indigo-500' : 'text-[var(--text-tertiary)]'}`}>
+                    {icon}
+                </span>
+                <span className="text-[var(--text-tertiary)] font-medium shrink-0">{label}:</span>
+                <span className="flex items-center gap-1.5 flex-1 min-w-0">
+                    {selected.dot && isActive && (
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${selected.dot}`} />
+                    )}
+                    <span className="truncate">{isActive ? selected.label : 'Tất cả'}</span>
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown panel */}
+            {open && (
+                <div className={`absolute top-full mt-1.5 z-50 ${fullWidth ? 'left-0 right-0' : 'left-0 min-w-[200px]'} bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden`}
+                    style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
+                >
+                    <div className="px-3 pt-3 pb-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] flex items-center gap-1.5">
+                            {icon}
+                            {label}
+                        </p>
+                    </div>
+                    <div className="py-1">
+                        {options.map((opt, i) => {
+                            const isSelected = value === opt.value;
+                            const isAll = opt.value === 'Tất cả';
+                            return (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => { onChange(opt.value); setOpen(false); }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs text-left transition-colors
+                                        ${isSelected
+                                            ? 'bg-indigo-50 text-indigo-700 font-bold dark:bg-indigo-950/60 dark:text-indigo-300'
+                                            : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] font-medium'
+                                        }
+                                        ${i === 1 && !isAll ? 'mt-0.5' : ''}
+                                    `}
+                                >
+                                    {/* Dot indicator */}
+                                    {opt.dot ? (
+                                        <span className={`w-2 h-2 rounded-full shrink-0 ${opt.dot} ${isSelected ? 'opacity-100' : 'opacity-40'}`} />
+                                    ) : isAll ? (
+                                        <span className="w-2 h-2 rounded-full border border-[var(--glass-border)] shrink-0" />
+                                    ) : (
+                                        <span className="w-2 h-2 rounded-sm bg-slate-200 dark:bg-slate-700 shrink-0" />
+                                    )}
+                                    <span className="flex-1">{opt.label}</span>
+                                    {isSelected && (
+                                        <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className="h-1" />
+                </div>
+            )}
         </div>
     );
 }
