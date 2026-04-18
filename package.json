@@ -15,7 +15,9 @@
     "migrate:rollback": "tsx server/migrations/runner.ts --rollback",
     "test:e2e": "playwright test",
     "audit:security": "npm audit --audit-level=high",
-    "monitor": "node geo-monitor.mjs"
+    "audit": "node seo-geo-audit.mjs",
+    "monitor": "node geo-monitor.mjs",
+    "full": "node seo-geo-audit.mjs && node geo-monitor.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

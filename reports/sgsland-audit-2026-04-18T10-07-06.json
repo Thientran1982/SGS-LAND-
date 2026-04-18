@@ -1,0 +1,1237 @@
+{
+  "timestamp": "2026-04-18T10:07:12.909Z",
+  "target": "https://sgsland.vn",
+  "overall": {
+    "avg": 65,
+    "label": "NEEDS WORK",
+    "counts": {
+      "CRITICAL": 8,
+      "WARN": 17,
+      "INFO": 24
+    },
+    "best": {
+      "url": "https://sgsland.vn/du-an/aqua-city",
+      "score": 66
+    },
+    "worst": {
+      "url": "https://sgsland.vn/du-an/masterise-homes",
+      "score": 64
+    }
+  },
+  "robots": {
+    "issues": [
+      {
+        "level": "WARN",
+        "code": "robots_no_sitemap",
+        "message": "robots.txt không khai báo Sitemap:"
+      }
+    ],
+    "facts": {
+      "bytes": 634,
+      "hasSitemapDeclaration": false,
+      "blockedAiBots": []
+    }
+  },
+  "sitemap": {
+    "urlCount": 0,
+    "sample": []
+  },
+  "lighthouse": {
+    "skipped": "lighthouse / chrome-launcher chưa cài (npm install lighthouse chrome-launcher để chạy CWV)"
+  },
+  "perPage": [
+    {
+      "url": "https://sgsland.vn/",
+      "status": 200,
+      "ttfb": 156,
+      "issues": [
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        },
+        {
+          "level": "WARN",
+          "code": "no_local_biz_schema",
+          "message": "Homepage thiếu LocalBusiness/RealEstateAgent schema"
+        }
+      ],
+      "facts": {
+        "ttfb": 156,
+        "status": 200,
+        "title": "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
+        "titleLength": 57,
+        "metaDescription": "SGS LAND - Nền tảng BĐS AI: định giá tự động, CRM đa kênh, quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.",
+        "metaDescriptionLength": 156,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
+          "description": "Nền tảng quản lý bất động sản thế hệ mới với AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Tin dùng bởi Vinhomes, Masterise, Keppel, Gamuda.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "en",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "BreadcrumbList",
+          "ListItem"
+        ],
+        "jsonLdBlockCount": 6,
+        "wordCount": 148,
+        "keywordHits": {
+          "aqua city": 0,
+          "global city": 0,
+          "izumi": 0,
+          "vinhomes can gio": 0,
+          "masterise": 0,
+          "bat dong san": 0,
+          "sgs land": 2,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 0,
+          "Masterise": 0,
+          "Vinhomes": 0,
+          "Vingroup": 0,
+          "Aqua City": 0,
+          "Global City": 0,
+          "Izumi": 0,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 2
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 65,
+        "breakdown": {
+          "tech": 22,
+          "content": 13,
+          "schema": 16,
+          "geo": 4,
+          "perf": 10
+        }
+      }
+    },
+    {
+      "url": "https://sgsland.vn/du-an/aqua-city",
+      "status": 200,
+      "ttfb": 177,
+      "issues": [
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "WARN",
+          "code": "thin_content_project",
+          "message": "Trang dự án mỏng: 140 từ (nên >=300)"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        }
+      ],
+      "facts": {
+        "ttfb": 177,
+        "status": 200,
+        "title": "Aqua City Novaland | Căn Hộ, Biệt Thự Đồng Nai - SGS LAND",
+        "titleLength": 57,
+        "metaDescription": "Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.",
+        "metaDescriptionLength": 143,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/du-an/aqua-city",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "Aqua City Novaland | Căn Hộ, Biệt Thự Đồng Nai - SGS LAND",
+          "description": "Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "BreadcrumbList",
+          "ListItem",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "ApartmentComplex",
+          "QuantitativeValue"
+        ],
+        "jsonLdBlockCount": 5,
+        "wordCount": 140,
+        "keywordHits": {
+          "aqua city": 1,
+          "global city": 0,
+          "izumi": 0,
+          "vinhomes can gio": 0,
+          "masterise": 0,
+          "bat dong san": 0,
+          "sgs land": 1,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 1,
+          "Masterise": 0,
+          "Vinhomes": 0,
+          "Vingroup": 0,
+          "Aqua City": 1,
+          "Global City": 0,
+          "Izumi": 0,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 1
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 66,
+        "breakdown": {
+          "tech": 22,
+          "content": 13,
+          "schema": 16,
+          "geo": 5,
+          "perf": 10
+        }
+      }
+    },
+    {
+      "url": "https://sgsland.vn/du-an/the-global-city",
+      "status": 200,
+      "ttfb": 161,
+      "issues": [
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "WARN",
+          "code": "thin_content_project",
+          "message": "Trang dự án mỏng: 140 từ (nên >=300)"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        }
+      ],
+      "facts": {
+        "ttfb": 161,
+        "status": 200,
+        "title": "The Global City Masterise | Đại Đô Thị 117ha An Phú Thủ Đức - SGS LAND",
+        "titleLength": 70,
+        "metaDescription": "The Global City Masterise Homes An Phú Thủ Đức: đại đô thị 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Tư vấn tại SGS LAND.",
+        "metaDescriptionLength": 156,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/du-an/the-global-city",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "The Global City Masterise | Đại Đô Thị 117ha An Phú Thủ Đức - SGS LAND",
+          "description": "The Global City Masterise Homes An Phú Thủ Đức: đại đô thị 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Tư vấn tại SGS LAND.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "BreadcrumbList",
+          "ListItem",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "ApartmentComplex",
+          "QuantitativeValue"
+        ],
+        "jsonLdBlockCount": 5,
+        "wordCount": 140,
+        "keywordHits": {
+          "aqua city": 0,
+          "global city": 1,
+          "izumi": 0,
+          "vinhomes can gio": 0,
+          "masterise": 0,
+          "bat dong san": 0,
+          "sgs land": 1,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 0,
+          "Masterise": 0,
+          "Vinhomes": 0,
+          "Vingroup": 0,
+          "Aqua City": 0,
+          "Global City": 1,
+          "Izumi": 0,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 1
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 66,
+        "breakdown": {
+          "tech": 22,
+          "content": 13,
+          "schema": 16,
+          "geo": 5,
+          "perf": 10
+        }
+      }
+    },
+    {
+      "url": "https://sgsland.vn/du-an/izumi-city",
+      "status": 200,
+      "ttfb": 75,
+      "issues": [
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "WARN",
+          "code": "thin_content_project",
+          "message": "Trang dự án mỏng: 141 từ (nên >=300)"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        }
+      ],
+      "facts": {
+        "ttfb": 75,
+        "status": 200,
+        "title": "Izumi City Nam Long | Đô Thị Chuẩn Nhật Bản Đồng Nai - SGS LAND",
+        "titleLength": 63,
+        "metaDescription": "Izumi City Nam Long Biên Hòa: đô thị tích hợp 170ha chuẩn Nhật Bản, siêu thị Fuji Mart, trường học Nhật. Bảng giá nhà phố, biệt thự và tư vấn tại SGS LAND.",
+        "metaDescriptionLength": 155,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/du-an/izumi-city",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "Izumi City Nam Long | Đô Thị Chuẩn Nhật Bản Đồng Nai - SGS LAND",
+          "description": "Izumi City Nam Long Biên Hòa: đô thị tích hợp 170ha chuẩn Nhật Bản, siêu thị Fuji Mart, trường học Nhật. Bảng giá nhà phố, biệt thự và tư vấn tại SGS LAND.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "BreadcrumbList",
+          "ListItem",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "ApartmentComplex",
+          "QuantitativeValue"
+        ],
+        "jsonLdBlockCount": 5,
+        "wordCount": 141,
+        "keywordHits": {
+          "aqua city": 0,
+          "global city": 0,
+          "izumi": 1,
+          "vinhomes can gio": 0,
+          "masterise": 0,
+          "bat dong san": 0,
+          "sgs land": 1,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 0,
+          "Masterise": 0,
+          "Vinhomes": 0,
+          "Vingroup": 0,
+          "Aqua City": 0,
+          "Global City": 0,
+          "Izumi": 1,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 1
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 66,
+        "breakdown": {
+          "tech": 22,
+          "content": 13,
+          "schema": 16,
+          "geo": 5,
+          "perf": 10
+        }
+      }
+    },
+    {
+      "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
+      "status": 200,
+      "ttfb": 70,
+      "issues": [
+        {
+          "level": "WARN",
+          "code": "title_long",
+          "message": "Title quá dài (75 ký tự, nên 50-60)"
+        },
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "WARN",
+          "code": "thin_content_project",
+          "message": "Trang dự án mỏng: 144 từ (nên >=300)"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        }
+      ],
+      "facts": {
+        "ttfb": 70,
+        "status": 200,
+        "title": "Vinhomes Cần Giờ (Green Paradise) | Siêu Đô Thị Lấn Biển 2.870ha — SGS LAND",
+        "titleLength": 75,
+        "metaDescription": "Vinhomes Cần Giờ / Vinhomes Green Paradise: dự án siêu đô thị lấn biển 2.870ha lớn nhất Việt Nam tại Cần Giờ, TP.HCM. Tiến độ, pháp lý, giá dự kiến, đặt chỗ ưu tiên tại SGS LAND.",
+        "metaDescriptionLength": 178,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/du-an/vinhomes-can-gio",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "Vinhomes Cần Giờ (Green Paradise) | Siêu Đô Thị Lấn Biển 2.870ha — SGS LAND",
+          "description": "Vinhomes Cần Giờ / Vinhomes Green Paradise: dự án siêu đô thị lấn biển 2.870ha lớn nhất Việt Nam tại Cần Giờ, TP.HCM. Tiến độ, pháp lý, giá dự kiến, đặt chỗ ưu tiên tại SGS LAND.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "BreadcrumbList",
+          "ListItem",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "ApartmentComplex",
+          "QuantitativeValue"
+        ],
+        "jsonLdBlockCount": 5,
+        "wordCount": 144,
+        "keywordHits": {
+          "aqua city": 0,
+          "global city": 0,
+          "izumi": 0,
+          "vinhomes can gio": 0,
+          "masterise": 0,
+          "bat dong san": 0,
+          "sgs land": 1,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 0,
+          "Masterise": 0,
+          "Vinhomes": 2,
+          "Vingroup": 0,
+          "Aqua City": 0,
+          "Global City": 0,
+          "Izumi": 0,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 1
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 64,
+        "breakdown": {
+          "tech": 20,
+          "content": 13,
+          "schema": 16,
+          "geo": 5,
+          "perf": 10
+        }
+      }
+    },
+    {
+      "url": "https://sgsland.vn/du-an/masterise-homes",
+      "status": 200,
+      "ttfb": 70,
+      "issues": [
+        {
+          "level": "WARN",
+          "code": "title_long",
+          "message": "Title quá dài (76 ký tự, nên 50-60)"
+        },
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "WARN",
+          "code": "thin_content_project",
+          "message": "Trang dự án mỏng: 139 từ (nên >=300)"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        }
+      ],
+      "facts": {
+        "ttfb": 70,
+        "status": 200,
+        "title": "Masterise Homes | Căn Hộ Hạng Sang Masteri, Lumière, Grand Marina - SGS LAND",
+        "titleLength": 76,
+        "metaDescription": "Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.",
+        "metaDescriptionLength": 174,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/du-an/masterise-homes",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "Masterise Homes | Căn Hộ Hạng Sang Masteri, Lumière, Grand Marina - SGS LAND",
+          "description": "Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "BreadcrumbList",
+          "ListItem",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "ApartmentComplex"
+        ],
+        "jsonLdBlockCount": 5,
+        "wordCount": 139,
+        "keywordHits": {
+          "aqua city": 0,
+          "global city": 0,
+          "izumi": 0,
+          "vinhomes can gio": 0,
+          "masterise": 1,
+          "bat dong san": 0,
+          "sgs land": 1,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 0,
+          "Masterise": 1,
+          "Vinhomes": 0,
+          "Vingroup": 0,
+          "Aqua City": 0,
+          "Global City": 0,
+          "Izumi": 0,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 1
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 64,
+        "breakdown": {
+          "tech": 20,
+          "content": 13,
+          "schema": 16,
+          "geo": 5,
+          "perf": 10
+        }
+      }
+    },
+    {
+      "url": "https://sgsland.vn/about-us",
+      "status": 200,
+      "ttfb": 408,
+      "issues": [
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        }
+      ],
+      "facts": {
+        "ttfb": 408,
+        "status": 200,
+        "title": "Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn",
+        "titleLength": 44,
+        "metaDescription": "SGS LAND - Công ty công nghệ bất động sản hàng đầu Việt Nam. Tìm hiểu về tầm nhìn, sứ mệnh và giá trị cốt lõi của chúng tôi.",
+        "metaDescriptionLength": 124,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/about-us",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn",
+          "description": "SGS LAND - Công ty công nghệ bất động sản hàng đầu Việt Nam. Tìm hiểu về tầm nhìn, sứ mệnh và giá trị cốt lõi của chúng tôi.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "BreadcrumbList",
+          "ListItem"
+        ],
+        "jsonLdBlockCount": 6,
+        "wordCount": 140,
+        "keywordHits": {
+          "aqua city": 0,
+          "global city": 0,
+          "izumi": 0,
+          "vinhomes can gio": 0,
+          "masterise": 0,
+          "bat dong san": 0,
+          "sgs land": 2,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 0,
+          "Masterise": 0,
+          "Vinhomes": 0,
+          "Vingroup": 0,
+          "Aqua City": 0,
+          "Global City": 0,
+          "Izumi": 0,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 2
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 65,
+        "breakdown": {
+          "tech": 22,
+          "content": 13,
+          "schema": 16,
+          "geo": 4,
+          "perf": 10
+        }
+      }
+    },
+    {
+      "url": "https://sgsland.vn/news",
+      "status": 200,
+      "ttfb": 216,
+      "issues": [
+        {
+          "level": "CRITICAL",
+          "code": "no_h1",
+          "message": "Thiếu thẻ <h1>"
+        },
+        {
+          "level": "INFO",
+          "code": "no_authority_outlinks",
+          "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal"
+        },
+        {
+          "level": "WARN",
+          "code": "thin_content_blog",
+          "message": "Trang blog mỏng: 144 từ (nên >=1500)"
+        },
+        {
+          "level": "INFO",
+          "code": "no_author",
+          "message": "Không có author byline — giảm E-E-A-T"
+        },
+        {
+          "level": "INFO",
+          "code": "no_pub_date",
+          "message": "Không có publication / last-modified date hiển thị"
+        },
+        {
+          "level": "WARN",
+          "code": "no_factual_data",
+          "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite"
+        }
+      ],
+      "facts": {
+        "ttfb": 216,
+        "status": 200,
+        "title": "Tin Tức Bất Động Sản | Thị Trường BĐS Cập Nhật - SGS LAND",
+        "titleLength": 57,
+        "metaDescription": "Cập nhật tin tức bất động sản mới nhất, phân tích thị trường, xu hướng giá và các chính sách pháp luật liên quan đến bất động sản Việt Nam.",
+        "metaDescriptionLength": 139,
+        "h1Count": 0,
+        "h1": [],
+        "headingHierarchyOk": true,
+        "canonical": "https://sgsland.vn/news",
+        "robotsMeta": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        "openGraph": {
+          "title": "Tin Tức Bất Động Sản | Thị Trường BĐS Cập Nhật - SGS LAND",
+          "description": "Cập nhật tin tức bất động sản mới nhất, phân tích thị trường, xu hướng giá và các chính sách pháp luật liên quan đến bất động sản Việt Nam.",
+          "image": "https://sgsland.vn/og-image.jpg",
+          "type": "website"
+        },
+        "twitterCard": "summary_large_image",
+        "hreflangs": [
+          "vi",
+          "x-default"
+        ],
+        "imageCount": 0,
+        "imagesMissingAlt": 0,
+        "internalLinks": [],
+        "externalAuthorityLinks": [],
+        "socialLinks": {
+          "facebook": false,
+          "youtube": false,
+          "linkedin": false,
+          "tiktok": false,
+          "twitter": false
+        },
+        "schemaTypes": [
+          "WebSite",
+          "SearchAction",
+          "EntryPoint",
+          "Organization",
+          "ImageObject",
+          "Country",
+          "PostalAddress",
+          "ContactPoint",
+          "SoftwareApplication",
+          "Offer",
+          "Service",
+          "OfferCatalog",
+          "FAQPage",
+          "Question",
+          "Answer",
+          "BreadcrumbList",
+          "ListItem"
+        ],
+        "jsonLdBlockCount": 6,
+        "wordCount": 144,
+        "keywordHits": {
+          "aqua city": 0,
+          "global city": 0,
+          "izumi": 0,
+          "vinhomes can gio": 0,
+          "masterise": 0,
+          "bat dong san": 0,
+          "sgs land": 1,
+          "sgsland": 1
+        },
+        "entityHits": {
+          "Novaland": 0,
+          "Masterise": 0,
+          "Vinhomes": 0,
+          "Vingroup": 0,
+          "Aqua City": 0,
+          "Global City": 0,
+          "Izumi": 0,
+          "Khu Đông": 0,
+          "TP.HCM": 0,
+          "SGS Land": 1
+        },
+        "hasAuthorByline": false,
+        "hasPublicationDate": false,
+        "hasFactualData": false,
+        "hasFaq": true,
+        "hasVideoEmbed": false,
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover",
+        "htmlLang": "vi",
+        "hasBingVerification": false,
+        "hasLocalBusinessSchema": false
+      },
+      "score": {
+        "total": 65,
+        "breakdown": {
+          "tech": 22,
+          "content": 13,
+          "schema": 16,
+          "geo": 4,
+          "perf": 10
+        }
+      }
+    }
+  ],
+  "topIssues": [
+    {
+      "code": "no_h1",
+      "level": "CRITICAL",
+      "message": "Thiếu thẻ <h1>",
+      "affected": 8
+    },
+    {
+      "code": "no_factual_data",
+      "level": "WARN",
+      "message": "Trang thiếu số liệu cụ thể (giá, m², ha, căn, năm bàn giao) — AI khó cite",
+      "affected": 8
+    },
+    {
+      "code": "thin_content_project",
+      "level": "WARN",
+      "message": "Trang dự án mỏng: 140 từ (nên >=300)",
+      "affected": 5
+    },
+    {
+      "code": "title_long",
+      "level": "WARN",
+      "message": "Title quá dài (75 ký tự, nên 50-60)",
+      "affected": 2
+    },
+    {
+      "code": "no_local_biz_schema",
+      "level": "WARN",
+      "message": "Homepage thiếu LocalBusiness/RealEstateAgent schema",
+      "affected": 1
+    },
+    {
+      "code": "thin_content_blog",
+      "level": "WARN",
+      "message": "Trang blog mỏng: 144 từ (nên >=1500)",
+      "affected": 1
+    },
+    {
+      "code": "no_authority_outlinks",
+      "level": "INFO",
+      "message": "Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal",
+      "affected": 8
+    },
+    {
+      "code": "no_author",
+      "level": "INFO",
+      "message": "Không có author byline — giảm E-E-A-T",
+      "affected": 8
+    },
+    {
+      "code": "no_pub_date",
+      "level": "INFO",
+      "message": "Không có publication / last-modified date hiển thị",
+      "affected": 8
+    }
+  ],
+  "pagesCrawled": [
+    {
+      "url": "https://sgsland.vn/",
+      "status": 200,
+      "ttfb": 156,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://sgsland.vn/du-an/aqua-city",
+      "status": 200,
+      "ttfb": 177,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://sgsland.vn/du-an/the-global-city",
+      "status": 200,
+      "ttfb": 161,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://sgsland.vn/du-an/izumi-city",
+      "status": 200,
+      "ttfb": 75,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
+      "status": 200,
+      "ttfb": 70,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://sgsland.vn/du-an/masterise-homes",
+      "status": 200,
+      "ttfb": 70,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://sgsland.vn/about-us",
+      "status": 200,
+      "ttfb": 408,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "url": "https://sgsland.vn/news",
+      "status": 200,
+      "ttfb": 216,
+      "contentType": "text/html; charset=utf-8"
+    }
+  ]
+}
