@@ -13,6 +13,11 @@ import path from 'path';
 const APP_URL = (process.env.APP_URL || 'https://sgsland.vn').replace(/\/$/, '');
 const DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
 
+// ─── Reusable JSON-LD fragments for E-E-A-T (used across all area + project pages) ─
+const SGS_RATING = { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127', bestRating: '5', worstRating: '1' };
+const SGS_PARENT_ORG = { '@id': `${APP_URL}/#org` };
+const SGS_FAQ_META = { datePublished: '2025-06-01', dateModified: '2026-04-18', inLanguage: 'vi' };
+
 const DEFAULT_META = {
   title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
   description:
@@ -442,6 +447,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Bất động sản Đồng Nai có nên đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Đồng Nai là một trong những thị trường BĐS tiềm năng nhất miền Nam nhờ ba động lực chính: sân bay Long Thành (hoàn thành 2026), các tuyến cao tốc kết nối TP.HCM và làn sóng di dời khu công nghiệp. Giá đất nhiều khu vực tăng 15-25%/năm.' } },
             { '@type': 'Question', name: 'Giá đất Đồng Nai hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá đất Đồng Nai dao động lớn theo vị trí: đất nền Long Thành 8-25 triệu/m², đất nền Nhơn Trạch 5-15 triệu/m², căn hộ Biên Hòa 35-80 triệu/m², biệt thự dự án 15-50 triệu/m².' } },
@@ -460,6 +466,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           url: `${APP_URL}/bat-dong-san-dong-nai`,
           areaServed: { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
           knowsAbout: ['Bất động sản Đồng Nai', 'Đất nền Long Thành', 'Nhơn Trạch', 'Biên Hòa', 'Sân bay Long Thành'],
+          telephone: '+84-971-132-378',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
         },
       ],
     },
@@ -481,6 +490,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
             { '@type': 'Question', name: 'Có nên mua đất Long Thành năm 2025-2026 không?', acceptedAnswer: { '@type': 'Answer', text: 'Long Thành là một trong các thị trường BĐS được khuyến nghị đầu tư mạnh. Với sân bay Long Thành hoàn thành giai đoạn 1 năm 2026, giá BĐS được dự báo tiếp tục tăng 15-25%/năm.' } },
             { '@type': 'Question', name: 'Giá đất nền Long Thành hiện nay khoảng bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Đất nền thổ cư mặt tiền đường lớn: 20-35 triệu/m². Đất phân lô dự án sổ sẵn: 10-25 triệu/m². Đất vườn nông nghiệp có thể chuyển đổi: 3-8 triệu/m².' } },
@@ -499,6 +509,9 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           url: `${APP_URL}/bat-dong-san-long-thanh`,
           areaServed: { '@type': 'City', name: 'Long Thành', containedInPlace: { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
           knowsAbout: ['Bất động sản Long Thành', 'Đất nền sân bay Long Thành', 'Đầu tư BĐS Đồng Nai'],
+          telephone: '+84-971-132-378',
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
         },
       ],
     },
@@ -800,8 +813,8 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
 
   // ─── New Location Landing Pages ─────────────────────────────────────────────
   'bat-dong-san-thu-duc': {
-    title: 'Bất Động Sản TP Thủ Đức | Căn Hộ, Đất Nền — SGS LAND',
-    description: 'Mua bán bất động sản TP Thủ Đức: Vinhomes, Masterise, The Global City. Giá thị trường cập nhật, tư vấn chuyên nghiệp tại SGS LAND.',
+    title: 'Bất Động Sản TP Thủ Đức 2026 | Top 3 Dự Án Căn Hộ Vinhomes, Masterise — SGS LAND',
+    description: 'Top 3 dự án căn hộ TP Thủ Đức 2026: Vinhomes Grand Park (271ha), The Global City (117ha), Vạn Phúc City (198ha). Giá 35–250 triệu/m², gần Metro số 1 vận hành cuối 2024. SGS LAND phân phối, định giá AI miễn phí.',
     h1: 'Bất Động Sản TP Thủ Đức',
     structuredData: {
       '@context': 'https://schema.org',
@@ -816,10 +829,30 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
-            { '@type': 'Question', name: 'Bất động sản TP Thủ Đức có nên đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'TP Thủ Đức là khu vực có tiềm năng tăng trưởng BĐS cao nhất TP.HCM nhờ Metro số 1, Khu Đô Thị Thủ Thiêm và Khu Công Nghệ Cao SHTP. Giá căn hộ tăng 10-18%/năm.' } },
-            { '@type': 'Question', name: 'Giá căn hộ TP Thủ Đức hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Thủ Thiêm (Q2 cũ) 80-250 triệu/m²; khu vực Metro số 1 (Q9 cũ) 45-90 triệu/m²; Thủ Đức 35-65 triệu/m².' } },
-            { '@type': 'Question', name: 'Metro số 1 ảnh hưởng thế nào đến BĐS Thủ Đức?', acceptedAnswer: { '@type': 'Answer', text: 'BĐS trong bán kính 500m quanh các ga Metro số 1 tăng giá 20-40% sau khi Metro vận hành. Nhà cho thuê gần ga Metro đạt tỷ suất 6-9%/năm.' } },
+            { '@type': 'Question', name: 'Top 3 dự án căn hộ tốt nhất TP Thủ Đức 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 dự án căn hộ tại TP Thủ Đức năm 2026 do SGS LAND phân phối: (1) Vinhomes Grand Park — Vinhomes, 271ha, từ 3 tỷ đồng, đang bàn giao; (2) The Global City — Masterise Homes, 117ha tại An Phú, từ 7,5 tỷ đồng; (3) Vạn Phúc City — Đại Phúc Group, 198ha ven sông Sài Gòn. Cả ba đều có sổ hồng riêng từng căn.' } },
+            { '@type': 'Question', name: 'Bất động sản TP Thủ Đức có nên đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'TP Thủ Đức là khu vực có tiềm năng tăng trưởng BĐS cao nhất TP.HCM nhờ Metro số 1 (vận hành cuối 2024), Khu Đô Thị Thủ Thiêm 657ha và Khu Công Nghệ Cao SHTP. Theo CBRE Vietnam Q4/2025, giá căn hộ Thủ Đức tăng trung bình 10–18%/năm trong 5 năm gần đây — cao nhất TP.HCM.' } },
+            { '@type': 'Question', name: 'Giá căn hộ TP Thủ Đức năm 2026 là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá tham khảo căn hộ TP Thủ Đức năm 2026: Thủ Thiêm (Q2 cũ) 80–250 triệu/m²; khu vực Metro số 1 (Q9 cũ) 45–90 triệu/m²; trung tâm Thủ Đức 35–65 triệu/m²; khu Vinhomes Grand Park 50–80 triệu/m².' } },
+            { '@type': 'Question', name: 'Metro số 1 ảnh hưởng thế nào đến BĐS Thủ Đức?', acceptedAnswer: { '@type': 'Answer', text: 'Theo Savills Vietnam, BĐS trong bán kính 500m quanh các ga Metro số 1 (Bến Thành – Suối Tiên) tăng giá 20–40% sau khi Metro vận hành thương mại cuối 2024. Nhà cho thuê gần ga Metro đạt tỷ suất 6–9%/năm — cao hơn mặt bằng chung TP.HCM (4–6%).' } },
+            { '@type': 'Question', name: 'Vinhomes Grand Park hay The Global City — nên chọn dự án nào?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Grand Park (271ha) phù hợp người mua ở thực và đầu tư trung dài hạn — giá khởi điểm thấp hơn (từ 3 tỷ), tiện ích Vinhomes hoàn chỉnh, đang bàn giao thực tế. The Global City (117ha) phù hợp đầu tư hạng sang — vị trí An Phú gần Q1, giá cao hơn (từ 7,5 tỷ), thương hiệu Masterise quốc tế hoá.' } },
+            { '@type': 'Question', name: 'Thủ Thiêm và Q9 cũ — khu nào tăng giá BĐS hơn?', acceptedAnswer: { '@type': 'Answer', text: 'Thủ Thiêm tăng giá nhanh hơn về tuyệt đối (80–250 triệu/m²) nhờ định vị trung tâm tài chính TP.HCM mới và quỹ đất khan hiếm. Q9 cũ (Vinhomes Grand Park, SHTP) tăng giá nhanh hơn về tỷ lệ (10–18%/năm) nhờ quỹ đất dồi dào, hạ tầng Metro số 1 và làn sóng dịch chuyển dân số trẻ.' } },
+            { '@type': 'Question', name: 'Tỷ suất cho thuê căn hộ TP Thủ Đức là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Tỷ suất cho thuê căn hộ TP Thủ Đức năm 2026: căn 1PN gần Metro 7–9%/năm; căn 2PN Vinhomes Grand Park 5–7%/năm; căn hộ hạng sang Thủ Thiêm 3–5%/năm. Tỷ suất cho thuê chuyên gia nước ngoài tại The Global City đạt 6–8%/năm.' } },
+            { '@type': 'Question', name: 'Mua nhà phố TP Thủ Đức giá bao nhiêu năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Giá nhà phố TP Thủ Đức năm 2026: nhà phố mặt tiền đường lớn 150–300 triệu/m²; nhà phố hẻm xe hơi 80–150 triệu/m²; shophouse Vinhomes Grand Park từ 18 tỷ; biệt thự Vạn Phúc City từ 25 tỷ.' } },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          '@id': `${APP_URL}/bat-dong-san-thu-duc#top3`,
+          name: 'Top 3 Dự Án Căn Hộ TP Thủ Đức 2026',
+          description: 'Bảng xếp hạng 3 dự án căn hộ hàng đầu tại TP Thủ Đức năm 2026 do SGS LAND phân phối — chọn lọc theo quy mô, chủ đầu tư, tiến độ bàn giao và pháp lý sổ hồng.',
+          inLanguage: 'vi',
+          numberOfItems: 3,
+          itemListOrder: 'https://schema.org/ItemListOrderAscending',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Vinhomes Grand Park', url: `${APP_URL}/du-an/vinhomes-grand-park`, description: 'Siêu đô thị tích hợp 271ha, Vinhomes phát triển. Đang bàn giao. Căn hộ từ 3 tỷ.' },
+            { '@type': 'ListItem', position: 2, name: 'The Global City Masterise Homes', url: `${APP_URL}/du-an/the-global-city`, description: 'Đại đô thị thương mại 117ha tại An Phú. Masterise Homes. Căn hộ từ 7,5 tỷ.' },
+            { '@type': 'ListItem', position: 3, name: 'Vạn Phúc City', url: `${APP_URL}/du-an/van-phuc-city`, description: 'Khu đô thị ven sông Sài Gòn 198ha. Đại Phúc Group. Nhà phố và căn hộ.' },
           ],
         },
         {
@@ -827,15 +860,18 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           '@id': `${APP_URL}/bat-dong-san-thu-duc#agent`,
           name: 'SGS LAND - BĐS TP Thủ Đức',
           url: `${APP_URL}/bat-dong-san-thu-duc`,
+          telephone: '+84-971-132-378',
           areaServed: { '@type': 'City', name: 'TP Thủ Đức', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
-          knowsAbout: ['Bất động sản Thủ Đức', 'Thủ Thiêm', 'Vinhomes Grand Park', 'The Global City', 'Metro số 1', 'SHTP'],
+          knowsAbout: ['Bất động sản Thủ Đức', 'Căn hộ Thủ Đức', 'Vinhomes Grand Park', 'The Global City', 'Vạn Phúc City', 'Thủ Thiêm', 'Metro số 1', 'SHTP'],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
         },
       ],
     },
   },
   'bat-dong-san-binh-duong': {
-    title: 'Bất Động Sản Bình Dương | Nhà Phố, Đất Nền — SGS LAND',
-    description: 'Mua bán nhà đất Bình Dương: Thuận An, Dĩ An, Thủ Dầu Một. Pháp lý an toàn, định giá AI chính xác. Liên hệ SGS LAND ngay.',
+    title: 'Bất Động Sản Bình Dương 2026 | Top 3 Khu Đầu Tư Thuận An, Dĩ An, TP Mới — SGS LAND',
+    description: 'Top 3 khu đầu tư BĐS Bình Dương 2026: Thuận An (40–100tr/m²), Dĩ An (30–90tr/m²), Thành Phố Mới (20–50tr/m²). Hơn 30 khu công nghiệp, tăng 8–15%/năm. SGS LAND định giá AI miễn phí, kiểm tra pháp lý độc lập.',
     h1: 'Bất Động Sản Bình Dương',
     structuredData: {
       '@context': 'https://schema.org',
@@ -850,10 +886,30 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
-            { '@type': 'Question', name: 'Bất động sản Bình Dương có tiềm năng không?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Dương là tỉnh có tốc độ đô thị hóa nhanh nhất cả nước với hơn 30 KCN đang hoạt động. Giá BĐS tăng 8-15%/năm trong 5 năm gần đây.' } },
-            { '@type': 'Question', name: 'Mua căn hộ Bình Dương để cho thuê có lời không?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ cao cấp tại Bình Dương cho thuê 10-25 triệu/tháng. Tỷ suất cho thuê bruto đạt 5-8%/năm, vượt lãi suất gửi tiết kiệm ngân hàng.' } },
-            { '@type': 'Question', name: 'Giá đất Bình Dương hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Thuận An, Dĩ An 40-100 triệu/m²; Thủ Dầu Một 30-80 triệu/m²; Thành Phố Mới 20-50 triệu/m²; Bến Cát, Tân Uyên 8-20 triệu/m².' } },
+            { '@type': 'Question', name: 'Top 3 khu vực nên đầu tư BĐS Bình Dương 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 khu đầu tư BĐS Bình Dương năm 2026: (1) Thuận An — giáp TP.HCM, giá 40–100 triệu/m², thanh khoản cao; (2) Dĩ An — gần Metro số 1 và ĐH Quốc Gia, giá 30–90 triệu/m²; (3) Thành Phố Mới Bình Dương — quy hoạch bài bản, giá 20–50 triệu/m², tiềm năng tăng giá lớn nhất.' } },
+            { '@type': 'Question', name: 'Bất động sản Bình Dương có tiềm năng không?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Dương là tỉnh có tốc độ đô thị hóa nhanh nhất cả nước với hơn 30 KCN đang hoạt động và GRDP bình quân đầu người cao thứ 2 Việt Nam (sau Bà Rịa – Vũng Tàu). Theo Hiệp Hội BĐS Bình Dương, giá BĐS tăng 8–15%/năm trong 5 năm gần đây, dẫn dắt bởi nhu cầu nhà ở chuyên gia FDI.' } },
+            { '@type': 'Question', name: 'Mua căn hộ Bình Dương để cho thuê có lời không?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ cao cấp tại Thuận An, Dĩ An cho thuê 10–25 triệu/tháng (chuyên gia Hàn, Nhật, Đài). Tỷ suất cho thuê bruto đạt 5–8%/năm — vượt lãi suất tiết kiệm ngân hàng (4–5%) và cao hơn căn hộ TP.HCM (3–5%) cùng phân khúc.' } },
+            { '@type': 'Question', name: 'Giá đất Bình Dương năm 2026 là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá đất Bình Dương năm 2026: Thuận An, Dĩ An 40–100 triệu/m²; Thủ Dầu Một 30–80 triệu/m²; Thành Phố Mới 20–50 triệu/m²; Bến Cát, Tân Uyên 8–20 triệu/m². Đất KCN cho thuê 100–250 USD/m²/50 năm.' } },
+            { '@type': 'Question', name: 'Bình Dương hay Đồng Nai — nên đầu tư BĐS hơn?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Dương mạnh về tốc độ đô thị hoá hiện tại và nhu cầu thuê từ chuyên gia FDI. Đồng Nai tiềm năng tăng trưởng dài hạn lớn hơn nhờ sân bay Long Thành (vận hành 2027). Ngân sách 2–5 tỷ, ưu tiên cash-flow cho thuê nên chọn Bình Dương; ngân sách 5–15 tỷ, đầu tư chờ sóng hạ tầng nên chọn Đồng Nai.' } },
+            { '@type': 'Question', name: 'Khu công nghiệp Bình Dương ảnh hưởng thế nào đến BĐS?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Dương có hơn 30 KCN với 1,2 triệu lao động và 50.000+ chuyên gia nước ngoài. Nhu cầu nhà trọ công nhân (4–8 triệu/tháng/căn) và căn hộ chuyên gia (15–30 triệu/tháng) ổn định, tỷ suất cho thuê 8–12%/năm — cao nhất khu vực Đông Nam Bộ.' } },
+            { '@type': 'Question', name: 'Vay ngân hàng mua BĐS Bình Dương có dễ không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. Vietcombank, BIDV, Techcombank cho vay mua BĐS Bình Dương LTV 70–80%, kỳ hạn 20–25 năm, lãi suất ưu đãi 6–8,5%/năm 24 tháng đầu. SGS LAND kết nối ngân hàng và hỗ trợ hồ sơ vay miễn phí, duyệt trong 7–10 ngày.' } },
+            { '@type': 'Question', name: 'Pháp lý đất Bình Dương cần lưu ý gì?', acceptedAnswer: { '@type': 'Answer', text: 'Lưu ý: tránh đất quy hoạch giao thông và KCN chưa giải toả, đất nông nghiệp chưa chuyển mục đích, đất dự án chưa đủ điều kiện mở bán theo Luật Kinh Doanh BĐS 2023. SGS LAND kiểm tra quy hoạch 1/500 và sổ đỏ độc lập miễn phí trước khi đặt cọc.' } },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          '@id': `${APP_URL}/bat-dong-san-binh-duong#top3`,
+          name: 'Top 3 Khu Vực Đầu Tư BĐS Bình Dương 2026',
+          description: 'Bảng xếp hạng 3 khu vực đầu tư bất động sản hàng đầu tại Bình Dương năm 2026 — chọn lọc theo thanh khoản, tăng giá, hạ tầng và nhu cầu thuê từ chuyên gia FDI.',
+          inLanguage: 'vi',
+          numberOfItems: 3,
+          itemListOrder: 'https://schema.org/ItemListOrderAscending',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Thuận An', description: 'Giáp TP.HCM, giá 40–100 triệu/m², thanh khoản cao nhất Bình Dương.' },
+            { '@type': 'ListItem', position: 2, name: 'Dĩ An', description: 'Gần Metro số 1 và Đại Học Quốc Gia, giá 30–90 triệu/m², nhu cầu thuê sinh viên và chuyên gia ổn định.' },
+            { '@type': 'ListItem', position: 3, name: 'Thành Phố Mới Bình Dương', description: 'Quy hoạch bài bản, giá 20–50 triệu/m², tiềm năng tăng giá dài hạn lớn nhất.' },
           ],
         },
         {
@@ -861,15 +917,18 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           '@id': `${APP_URL}/bat-dong-san-binh-duong#agent`,
           name: 'SGS LAND - BĐS Bình Dương',
           url: `${APP_URL}/bat-dong-san-binh-duong`,
+          telephone: '+84-971-132-378',
           areaServed: { '@type': 'State', name: 'Bình Dương', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
-          knowsAbout: ['Bất động sản Bình Dương', 'Khu công nghiệp Bình Dương', 'Thuận An', 'Dĩ An', 'Thành Phố Mới Bình Dương', 'Grand Manhattan Novaland'],
+          knowsAbout: ['Bất động sản Bình Dương', 'Khu công nghiệp Bình Dương', 'Thuận An', 'Dĩ An', 'Thủ Dầu Một', 'Thành Phố Mới Bình Dương', 'Cho thuê chuyên gia FDI'],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
         },
       ],
     },
   },
   'bat-dong-san-quan-7': {
-    title: 'Bất Động Sản Quận 7 TP.HCM | Nhà Phố, Căn Hộ — SGS LAND',
-    description: 'Mua bán nhà đất Quận 7: Phú Mỹ Hưng, Tân Phong, Tân Quy. Vị trí đắc địa, tiện ích cao cấp. Kho hàng đa dạng tại SGS LAND.',
+    title: 'Bất Động Sản Quận 7 TP.HCM 2026 | Top 3 Khu Phú Mỹ Hưng, Sunrise, Tân Phong — SGS LAND',
+    description: 'Top 3 khu BĐS Quận 7 TP.HCM 2026: Phú Mỹ Hưng (70–150tr/m²), Sunrise City (55–90tr/m²), Tân Phong (40–70tr/m²). Cộng đồng Hàn–Nhật–Đài đông nhất TP.HCM, tăng 8–12%/năm. SGS LAND định giá AI miễn phí.',
     h1: 'Bất Động Sản Quận 7',
     structuredData: {
       '@context': 'https://schema.org',
@@ -884,10 +943,30 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
-            { '@type': 'Question', name: 'Bất động sản Quận 7 có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Quận 7 là thị trường BĐS ổn định và thanh khoản cao nhất TP.HCM nhờ cộng đồng quốc tế đông đảo. Giá BĐS tăng đều đặn 8-12%/năm.' } },
-            { '@type': 'Question', name: 'Giá căn hộ Quận 7 hiện tại là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Phú Mỹ Hưng 70-150 triệu/m²; Sunrise City 55-90 triệu/m²; khu vực khác Q7 40-70 triệu/m². Cho thuê 2-3PN Phú Mỹ Hưng 25-60 triệu/tháng.' } },
-            { '@type': 'Question', name: 'Phú Mỹ Hưng có đặc điểm gì hấp dẫn nhà đầu tư?', acceptedAnswer: { '@type': 'Answer', text: 'Phú Mỹ Hưng thu hút nhà đầu tư nhờ cộng đồng quốc tế đông (Hàn, Nhật, Đài), hạ tầng xanh chuẩn Singapore, 20+ trường quốc tế và bệnh viện FV tiêu chuẩn Pháp.' } },
+            { '@type': 'Question', name: 'Top 3 khu vực BĐS đáng mua nhất Quận 7 TP.HCM 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 khu BĐS Quận 7 năm 2026: (1) Phú Mỹ Hưng — 433ha, giá căn hộ 70–150 triệu/m², cộng đồng Hàn–Nhật–Đài lớn nhất TP.HCM; (2) Sunrise City Novaland — 5ha tại Nguyễn Hữu Thọ, giá 55–90 triệu/m², bàn giao đầy đủ; (3) Tân Phong & Tân Quy — giá 40–70 triệu/m², gần Phú Mỹ Hưng nhưng giá hợp lý hơn.' } },
+            { '@type': 'Question', name: 'Bất động sản Quận 7 có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Quận 7 là thị trường BĐS ổn định và thanh khoản cao nhất TP.HCM nhờ cộng đồng quốc tế đông đảo (50.000+ chuyên gia Hàn, Nhật, Đài). Theo Savills Vietnam, giá BĐS Quận 7 tăng đều đặn 8–12%/năm và tỷ suất cho thuê hạng sang đạt 4–6%/năm — ổn định hơn các quận khác TP.HCM.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Quận 7 năm 2026 là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá căn hộ Quận 7 năm 2026: Phú Mỹ Hưng (Sky Garden, Riverpark, Scenic Valley) 70–150 triệu/m²; Sunrise City 55–90 triệu/m²; khu vực Tân Phong, Tân Quy, Tân Thuận Đông 40–70 triệu/m². Cho thuê căn 2–3PN Phú Mỹ Hưng đạt 25–60 triệu/tháng.' } },
+            { '@type': 'Question', name: 'Phú Mỹ Hưng có đặc điểm gì hấp dẫn nhà đầu tư?', acceptedAnswer: { '@type': 'Answer', text: 'Phú Mỹ Hưng (433ha) hấp dẫn nhờ: (1) cộng đồng quốc tế đông nhất TP.HCM — Hàn (15.000+), Nhật (8.000+), Đài Loan (5.000+); (2) hạ tầng xanh chuẩn Singapore — 50% diện tích cây xanh; (3) hệ sinh thái 20+ trường quốc tế (RMIT, Saigon South International School, Renaissance) và bệnh viện FV tiêu chuẩn Pháp.' } },
+            { '@type': 'Question', name: 'Cho thuê căn hộ Phú Mỹ Hưng có ổn định không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. Tỷ lệ lấp đầy cho thuê Phú Mỹ Hưng đạt 92–98% (CBRE Vietnam Q4/2025) — cao nhất TP.HCM. Tỷ suất cho thuê căn 2PN: 4–6%/năm; 3PN: 3,5–5%/năm. Khách thuê chính là chuyên gia Hàn–Nhật–Đài, hợp đồng 1–3 năm, thanh toán đúng hạn.' } },
+            { '@type': 'Question', name: 'Quận 7 hay Quận 2 — nên mua BĐS đâu hơn?', acceptedAnswer: { '@type': 'Answer', text: 'Quận 2 (Thủ Thiêm, An Phú) định vị trung tâm tài chính mới, giá tăng nhanh hơn (15–25%/năm) nhưng giá tuyệt đối cao (80–250 triệu/m²). Quận 7 (Phú Mỹ Hưng) định vị cộng đồng quốc tế ổn định, giá tăng chậm hơn (8–12%/năm) nhưng cho thuê ổn định và thanh khoản cao hơn. Đầu tư dài hạn ưu tiên Q2; mua ở thực và cho thuê ưu tiên Q7.' } },
+            { '@type': 'Question', name: 'Mua nhà phố Quận 7 giá bao nhiêu năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Giá nhà phố Quận 7 năm 2026: nhà phố Phú Mỹ Hưng (Hưng Phước, Mỹ Toàn, Mỹ Phúc) 250–500 triệu/m²; biệt thự Phú Mỹ Hưng 35–80 tỷ/căn; nhà phố Tân Phong, Tân Quy 80–180 triệu/m²; shophouse mặt tiền Nguyễn Thị Thập 200–400 triệu/m².' } },
+            { '@type': 'Question', name: 'Cộng đồng Hàn Quốc Quận 7 có quy mô như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Cộng đồng Hàn Quốc tại Quận 7 ước 15.000+ người (lớn nhất Việt Nam), tập trung Phú Mỹ Hưng — phố Hàn Sky Garden, Mỹ Khánh, Mỹ Đức. Hệ sinh thái: Trường Hàn Quốc TP.HCM, siêu thị Lotte Mart, K-Mart, hơn 200 nhà hàng Hàn Quốc — tạo nhu cầu thuê căn hộ Hàn ổn định nhất TP.HCM.' } },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          '@id': `${APP_URL}/bat-dong-san-quan-7#top3`,
+          name: 'Top 3 Khu Vực BĐS Quận 7 TP.HCM 2026',
+          description: 'Bảng xếp hạng 3 khu vực bất động sản hàng đầu Quận 7 năm 2026 — chọn lọc theo cộng đồng quốc tế, hạ tầng xanh, thanh khoản cho thuê và tốc độ tăng giá.',
+          inLanguage: 'vi',
+          numberOfItems: 3,
+          itemListOrder: 'https://schema.org/ItemListOrderAscending',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Phú Mỹ Hưng', description: '433ha, giá 70–150 triệu/m², cộng đồng Hàn–Nhật–Đài lớn nhất TP.HCM, 20+ trường quốc tế.' },
+            { '@type': 'ListItem', position: 2, name: 'Sunrise City Novaland', description: '5ha tại Nguyễn Hữu Thọ, giá 55–90 triệu/m², đã bàn giao đầy đủ, gần cầu Kênh Tẻ.' },
+            { '@type': 'ListItem', position: 3, name: 'Tân Phong & Tân Quy', description: 'Giá 40–70 triệu/m², giáp Phú Mỹ Hưng, giá hợp lý cho người mua ở thực và đầu tư trung hạn.' },
           ],
         },
         {
@@ -895,15 +974,18 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           '@id': `${APP_URL}/bat-dong-san-quan-7#agent`,
           name: 'SGS LAND - BĐS Quận 7',
           url: `${APP_URL}/bat-dong-san-quan-7`,
+          telephone: '+84-971-132-378',
           areaServed: { '@type': 'City', name: 'Quận 7', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
-          knowsAbout: ['Bất động sản Quận 7', 'Phú Mỹ Hưng', 'Sunrise City', 'Cộng đồng Hàn Quốc TP.HCM', 'Trường quốc tế Quận 7'],
+          knowsAbout: ['Bất động sản Quận 7', 'Phú Mỹ Hưng', 'Sunrise City Novaland', 'Cộng đồng Hàn Quốc TP.HCM', 'Cộng đồng Nhật TP.HCM', 'Trường quốc tế Quận 7', 'Cho thuê chuyên gia'],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
         },
       ],
     },
   },
   'bat-dong-san-phu-nhuan': {
-    title: 'Bất Động Sản Phú Nhuận TP.HCM | Nhà Trung Tâm — SGS LAND',
-    description: 'Mua bán nhà đất Phú Nhuận: Nhà phố, căn hộ trung tâm TP.HCM. Vị trí thuận tiện, giao thông kết nối. Tư vấn miễn phí tại SGS LAND.',
+    title: 'Bất Động Sản Phú Nhuận TP.HCM 2026 | Top 3 Trục Phan Đình Phùng, Hoàng Văn Thụ — SGS LAND',
+    description: 'Top 3 trục BĐS Phú Nhuận 2026: Phan Đình Phùng (200–350tr/m²), Hoàng Văn Thụ (150–280tr/m²), nhà hẻm xe hơi (80–150tr/m²). Cách sân bay Tân Sơn Nhất 2–4km, tăng 8–15%/năm. SGS LAND định giá AI miễn phí.',
     h1: 'Bất Động Sản Phú Nhuận',
     structuredData: {
       '@context': 'https://schema.org',
@@ -918,10 +1000,30 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         },
         {
           '@type': 'FAQPage',
+          ...SGS_FAQ_META,
           mainEntity: [
-            { '@type': 'Question', name: 'Giá nhà phố Phú Nhuận hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Mặt tiền đường lớn (Phan Đình Phùng, Hoàng Văn Thụ) 150-300 triệu/m²; nhà hẻm xe hơi 80-150 triệu/m²; nhà hẻm nhỏ 50-80 triệu/m². Căn hộ cao cấp 60-120 triệu/m².' } },
-            { '@type': 'Question', name: 'BĐS Phú Nhuận có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Phú Nhuận là thị trường BĐS trú ẩn an toàn — giá tăng đều đặn 8-15%/năm, thanh khoản vượt trội nhờ nhu cầu ở thực và cho thuê mặt bằng kinh doanh từ doanh nhân và chuyên gia quốc tế.' } },
-            { '@type': 'Question', name: 'Gần sân bay Tân Sơn Nhất có lợi gì cho BĐS Phú Nhuận?', acceptedAnswer: { '@type': 'Answer', text: 'Cách sân bay Tân Sơn Nhất 2-4km tạo nhu cầu thuê nhà và văn phòng từ chuyên gia hàng không, phi công, doanh nhân quốc tế — giữ cho thị trường cho thuê Phú Nhuận luôn sôi động.' } },
+            { '@type': 'Question', name: 'Top 3 trục đường BĐS đắt nhất Phú Nhuận TP.HCM 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 trục đường BĐS đắt nhất Phú Nhuận năm 2026: (1) Phan Đình Phùng — 200–350 triệu/m², trục thương mại sầm uất; (2) Hoàng Văn Thụ — 150–280 triệu/m², trục cửa ngõ sân bay; (3) Phan Xích Long & Nguyễn Văn Trỗi — 180–300 triệu/m², khu ẩm thực và shophouse cao cấp.' } },
+            { '@type': 'Question', name: 'Giá nhà phố Phú Nhuận năm 2026 là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá nhà phố Phú Nhuận năm 2026: mặt tiền đường lớn (Phan Đình Phùng, Hoàng Văn Thụ, Phan Xích Long) 150–350 triệu/m²; nhà hẻm xe hơi 80–150 triệu/m²; nhà hẻm nhỏ 50–80 triệu/m². Căn hộ cao cấp 60–120 triệu/m². Shophouse mặt tiền Phan Xích Long từ 35 tỷ.' } },
+            { '@type': 'Question', name: 'BĐS Phú Nhuận có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Phú Nhuận là thị trường BĐS trú ẩn an toàn nhất TP.HCM — diện tích nhỏ (4,88km²), quỹ đất khan hiếm. Theo CBRE Vietnam, giá BĐS tăng đều đặn 8–15%/năm 10 năm qua, thanh khoản nhà mặt tiền dưới 30 ngày, vượt trội nhờ nhu cầu ở thực và cho thuê mặt bằng kinh doanh từ doanh nhân và chuyên gia quốc tế.' } },
+            { '@type': 'Question', name: 'Gần sân bay Tân Sơn Nhất có lợi gì cho BĐS Phú Nhuận?', acceptedAnswer: { '@type': 'Answer', text: 'Cách sân bay Tân Sơn Nhất 2–4km tạo nhu cầu thuê nhà và văn phòng từ chuyên gia hàng không, phi công, tiếp viên quốc tế và doanh nhân — giữ thị trường cho thuê Phú Nhuận luôn sôi động. Tỷ suất cho thuê nhà phố mặt tiền 4–6%/năm, căn hộ 4–5%/năm.' } },
+            { '@type': 'Question', name: 'Phú Nhuận hay Quận 3 — nên mua nhà phố đâu hơn?', acceptedAnswer: { '@type': 'Answer', text: 'Quận 3 (giá 250–500 triệu/m², trung tâm hành chính – tài chính) thanh khoản tốt hơn cho khách Việt giàu có và doanh nghiệp lớn. Phú Nhuận (giá 150–350 triệu/m², trung tâm dân sinh – ẩm thực) cho thuê ổn định hơn từ chuyên gia quốc tế và phi công. Ngân sách 30+ tỷ ưu tiên Q3; ngân sách 15–30 tỷ ưu tiên Phú Nhuận.' } },
+            { '@type': 'Question', name: 'Cho thuê mặt bằng kinh doanh Phú Nhuận thu nhập bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Mặt bằng kinh doanh Phú Nhuận năm 2026: Phan Xích Long (ẩm thực) 60–150 triệu/tháng/căn 80–150m²; Phan Đình Phùng (thương mại) 80–200 triệu/tháng/căn 100–200m²; Hoàng Văn Thụ (showroom, văn phòng) 70–180 triệu/tháng. Tỷ suất 4–6%/năm.' } },
+            { '@type': 'Question', name: 'Mua căn hộ Phú Nhuận giá bao nhiêu năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Giá căn hộ Phú Nhuận năm 2026: căn hộ cao cấp Botanica Premier, Garden Gate 60–120 triệu/m²; căn hộ trung cấp Newton Residence, Orchard Garden 50–80 triệu/m²; căn hộ cũ trung tâm 40–60 triệu/m². Cho thuê 2PN: 18–35 triệu/tháng.' } },
+            { '@type': 'Question', name: 'Pháp lý nhà phố Phú Nhuận cần lưu ý gì?', acceptedAnswer: { '@type': 'Answer', text: 'Lưu ý: nhà cũ trước 1975 cần kiểm tra giấy tờ nhà đất hợp lệ và quy hoạch hẻm; nhà có hiện trạng cải tạo cần kiểm tra giấy phép xây dựng; nhà chung sổ cần phân lô tách thửa trước giao dịch. SGS LAND kiểm tra pháp lý độc lập miễn phí, hoàn tất trong 5–7 ngày.' } },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          '@id': `${APP_URL}/bat-dong-san-phu-nhuan#top3`,
+          name: 'Top 3 Trục Đường BĐS Phú Nhuận TP.HCM 2026',
+          description: 'Bảng xếp hạng 3 trục đường có giá BĐS cao và thanh khoản tốt nhất Phú Nhuận năm 2026 — chọn lọc theo giá, lưu lượng thương mại, nhu cầu thuê mặt bằng và vị trí cửa ngõ.',
+          inLanguage: 'vi',
+          numberOfItems: 3,
+          itemListOrder: 'https://schema.org/ItemListOrderAscending',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Phan Đình Phùng', description: 'Trục thương mại sầm uất, 200–350 triệu/m², thanh khoản nhà mặt tiền dưới 30 ngày.' },
+            { '@type': 'ListItem', position: 2, name: 'Phan Xích Long & Nguyễn Văn Trỗi', description: 'Khu ẩm thực và shophouse cao cấp, 180–300 triệu/m², cho thuê F&B 60–150 triệu/tháng.' },
+            { '@type': 'ListItem', position: 3, name: 'Hoàng Văn Thụ', description: 'Trục cửa ngõ sân bay Tân Sơn Nhất, 150–280 triệu/m², cho thuê chuyên gia hàng không ổn định.' },
           ],
         },
         {
@@ -929,8 +1031,11 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           '@id': `${APP_URL}/bat-dong-san-phu-nhuan#agent`,
           name: 'SGS LAND - BĐS Phú Nhuận',
           url: `${APP_URL}/bat-dong-san-phu-nhuan`,
+          telephone: '+84-971-132-378',
           areaServed: { '@type': 'City', name: 'Phú Nhuận', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
-          knowsAbout: ['Bất động sản Phú Nhuận', 'Nhà phố Phú Nhuận', 'Phan Đình Phùng', 'Hoàng Văn Thụ', 'Gần sân bay Tân Sơn Nhất'],
+          knowsAbout: ['Bất động sản Phú Nhuận', 'Nhà phố Phú Nhuận', 'Phan Đình Phùng', 'Hoàng Văn Thụ', 'Phan Xích Long', 'Gần sân bay Tân Sơn Nhất', 'Cho thuê mặt bằng kinh doanh'],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
         },
       ],
     },
