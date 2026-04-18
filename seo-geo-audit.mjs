@@ -121,7 +121,8 @@ function analyzeHtml(pageRes) {
   const issues = [];
   const facts = {};
   const html = pageRes.body || '';
-  const $ = cheerio.load(html || '<html></html>');
+  // scriptingEnabled:false → cheerio parses <noscript> content as DOM (bot's view)
+  const $ = cheerio.load(html || '<html></html>', { scriptingEnabled: false });
 
   // HTTP / TTFB
   if (pageRes.status >= 500) issues.push({ level: 'CRITICAL', code: 'http_5xx', message: `HTTP ${pageRes.status}` });
