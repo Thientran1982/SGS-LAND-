@@ -3599,7 +3599,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                 roadWidth,
                 legal: legal as LegalStatus,
                 confidence: regional.confidence,
-                marketTrend: `Ước tính theo khu vực ${regional.region} — không có dữ liệu realtime`,
+                marketTrend: `Ước tính theo khu vực ${address.replace(/\s+/g, ' ').trim().slice(0, 80)} — không có dữ liệu realtime`,
                 propertyType: resolvedPropertyType,
                 monthlyRent: fallbackRent,
                 // Advanced AVM coefficients from user input

@@ -34,7 +34,82 @@ import {
 import { getFeatureBreakdown } from '../services/aiUsageService';
 
 function normalizeAddrKey(addr: string): string {
-  return addr.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+  return addr.toLowerCase()
+    .replace(/đ/g, 'd')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+const VN_PROVINCE_TOKENS: Array<{ token: string; rx: RegExp }> = [
+  { token: 'ha noi',      rx: /\b(ha noi|hanoi)\b/ },
+  { token: 'ho chi minh', rx: /\b(ho chi minh|hcm|saigon|sai gon|tphcm|tp hcm)\b/ },
+  { token: 'hai phong',   rx: /\bhai phong\b/ },
+  { token: 'da nang',     rx: /\bda nang\b/ },
+  { token: 'can tho',     rx: /\bcan tho\b/ },
+  { token: 'dong nai',    rx: /\bdong nai\b/ },
+  { token: 'binh duong',  rx: /\bbinh duong\b/ },
+  { token: 'ba ria vung tau', rx: /\b(ba ria vung tau|vung tau|ba ria)\b/ },
+  { token: 'long an',     rx: /\blong an\b/ },
+  { token: 'tien giang',  rx: /\btien giang\b/ },
+  { token: 'ben tre',     rx: /\bben tre\b/ },
+  { token: 'tay ninh',    rx: /\btay ninh\b/ },
+  { token: 'binh phuoc',  rx: /\bbinh phuoc\b/ },
+  { token: 'lam dong',    rx: /\blam dong\b/ },
+  { token: 'khanh hoa',   rx: /\bkhanh hoa\b/ },
+  { token: 'ninh thuan',  rx: /\bninh thuan\b/ },
+  { token: 'binh thuan',  rx: /\bbinh thuan\b/ },
+  { token: 'phu yen',     rx: /\bphu yen\b/ },
+  { token: 'binh dinh',   rx: /\bbinh dinh\b/ },
+  { token: 'quang ngai',  rx: /\bquang ngai\b/ },
+  { token: 'quang nam',   rx: /\bquang nam\b/ },
+  { token: 'thua thien hue', rx: /\b(thua thien hue|hue)\b/ },
+  { token: 'quang tri',   rx: /\bquang tri\b/ },
+  { token: 'quang binh',  rx: /\bquang binh\b/ },
+  { token: 'ha tinh',     rx: /\bha tinh\b/ },
+  { token: 'nghe an',     rx: /\bnghe an\b/ },
+  { token: 'thanh hoa',   rx: /\bthanh hoa\b/ },
+  { token: 'ninh binh',   rx: /\bninh binh\b/ },
+  { token: 'nam dinh',    rx: /\bnam dinh\b/ },
+  { token: 'thai binh',   rx: /\bthai binh\b/ },
+  { token: 'ha nam',      rx: /\bha nam\b/ },
+  { token: 'hung yen',    rx: /\bhung yen\b/ },
+  { token: 'hai duong',   rx: /\bhai duong\b/ },
+  { token: 'bac ninh',    rx: /\bbac ninh\b/ },
+  { token: 'bac giang',   rx: /\bbac giang\b/ },
+  { token: 'vinh phuc',   rx: /\bvinh phuc\b/ },
+  { token: 'phu tho',     rx: /\bphu tho\b/ },
+  { token: 'thai nguyen', rx: /\bthai nguyen\b/ },
+  { token: 'lang son',    rx: /\blang son\b/ },
+  { token: 'cao bang',    rx: /\bcao bang\b/ },
+  { token: 'bac kan',     rx: /\bbac kan\b/ },
+  { token: 'tuyen quang', rx: /\btuyen quang\b/ },
+  { token: 'ha giang',    rx: /\bha giang\b/ },
+  { token: 'lao cai',     rx: /\blao cai\b/ },
+  { token: 'yen bai',     rx: /\byen bai\b/ },
+  { token: 'son la',      rx: /\bson la\b/ },
+  { token: 'dien bien',   rx: /\bdien bien\b/ },
+  { token: 'lai chau',    rx: /\blai chau\b/ },
+  { token: 'hoa binh',    rx: /\bhoa binh\b/ },
+  { token: 'kon tum',     rx: /\bkon tum\b/ },
+  { token: 'gia lai',     rx: /\bgia lai\b/ },
+  { token: 'dak lak',     rx: /\bdak lak\b/ },
+  { token: 'dak nong',    rx: /\bdak nong\b/ },
+  { token: 'an giang',    rx: /\ban giang\b/ },
+  { token: 'kien giang',  rx: /\bkien giang\b/ },
+  { token: 'ca mau',      rx: /\bca mau\b/ },
+  { token: 'bac lieu',    rx: /\bbac lieu\b/ },
+  { token: 'soc trang',   rx: /\bsoc trang\b/ },
+  { token: 'tra vinh',    rx: /\btra vinh\b/ },
+  { token: 'vinh long',   rx: /\bvinh long\b/ },
+  { token: 'hau giang',   rx: /\bhau giang\b/ },
+  { token: 'dong thap',   rx: /\bdong thap\b/ },
+];
+
+function detectProvinceToken(normKey: string): string | null {
+  for (const { token, rx } of VN_PROVINCE_TOKENS) {
+    if (rx.test(normKey)) return token;
+  }
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -777,6 +852,7 @@ export function createValuationRoutes(
 
     try {
       const normalKey = normalizeAddrKey(location);
+      const inputProvince = detectProvinceToken(normalKey);
 
       // ── 1. Look up market_price_history (regional_table rows preferred) ──
       const histResult = await pool.query<{
@@ -831,14 +907,34 @@ export function createValuationRoutes(
       let dataAge: string;
       let foundMatch = false;
 
-      if (histResult.rows.length > 0) {
-        const row = histResult.rows[0];
+      // Cross-province collision guard: drop rows whose location_key references
+      // a different VN province than the input address. Prevents Hai Phong's
+      // "Ngô Quyền" district (also a common street name nationwide) from
+      // bleeding into Đồng Nai/HCM addresses.
+      const safeRows = inputProvince
+        ? histResult.rows.filter(r => {
+            const rowProvince = detectProvinceToken(r.location_display ? normalizeAddrKey(r.location_display) : '')
+              || detectProvinceToken((r as any).location_key || '');
+            return !rowProvince || rowProvince === inputProvince;
+          })
+        : histResult.rows;
+
+      if (safeRows.length > 0) {
+        const row = safeRows[0];
         pricePerM2     = parseInt(row.price_per_m2, 10);
         priceMin       = row.price_min ? parseInt(row.price_min, 10) : Math.round(pricePerM2 * 0.85);
         priceMax       = row.price_max ? parseInt(row.price_max, 10) : Math.round(pricePerM2 * 1.15);
-        locationDisplay = row.location_display;
+        // Always prefer the user's input as the display label so the UI mirrors
+        // the listing address exactly (no surprise district/province swap).
+        locationDisplay = location;
         confidence      = row.confidence ?? 65;
-        trendText       = row.trend_text ?? 'Ổn định';
+        // Rebuild trend text from the input address — never echo the stored
+        // trend_text directly because legacy rows may carry a stale region
+        // label from a prior buggy regional inference.
+        const cleanLoc  = location.replace(/\s+/g, ' ').trim().slice(0, 80);
+        trendText       = row.source === 'regional_table'
+          ? `Tham chiếu khu vực ${cleanLoc} — bảng giá cập nhật định kỳ`
+          : `Ước tính thị trường tại ${cleanLoc}`;
         dataSource      = row.source === 'regional_table' ? 'Dữ liệu thị trường Q1/2025' : 'Dữ liệu thị trường';
         const recordedAt = new Date(row.recorded_at);
         const ageMs      = Date.now() - recordedAt.getTime();
@@ -853,7 +949,8 @@ export function createValuationRoutes(
         priceMax       = Math.round(fallbackResult.price * 1.25);
         locationDisplay = location;
         confidence      = fallbackResult.confidence;
-        trendText       = 'Ổn định';
+        const cleanLoc2 = location.replace(/\s+/g, ' ').trim().slice(0, 80);
+        trendText       = `Tham chiếu khu vực ${cleanLoc2}`;
         dataSource      = 'Bảng giá tham chiếu';
         dataAge         = 'Dữ liệu tham chiếu';
       }
