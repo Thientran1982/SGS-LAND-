@@ -21,7 +21,7 @@ const PARTNERS = [
     "VINHOMES CENTRAL PARK", "SƠN KIM LAND",
 ];
 
-const FEATURED_PROJECTS = [
+const FEATURED_PROJECTS: FeaturedProject[] = [
     {
         slug: 'aqua-city',
         name: 'Aqua City Novaland',
@@ -32,6 +32,7 @@ const FEATURED_PROJECTS = [
         type: 'Đại Đô Thị Sinh Thái',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
+        img: '/images/projects/aqua-city.png',
     },
     {
         slug: 'the-global-city',
@@ -43,6 +44,7 @@ const FEATURED_PROJECTS = [
         type: 'Đại Đô Thị Thương Mại',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
+        img: '/images/projects/the-global-city.png',
     },
     {
         slug: 'izumi-city',
@@ -54,6 +56,7 @@ const FEATURED_PROJECTS = [
         type: 'Đô Thị Chuẩn Nhật',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
+        img: '/images/projects/izumi-city.png',
     },
     {
         slug: 'vinhomes-can-gio',
@@ -65,6 +68,7 @@ const FEATURED_PROJECTS = [
         type: 'Siêu Đô Thị Lấn Biển',
         badge: 'Sắp mở bán',
         badgeColor: 'amber',
+        img: '/images/projects/vinhomes-can-gio.png',
     },
     {
         slug: 'masterise-homes',
@@ -76,6 +80,7 @@ const FEATURED_PROJECTS = [
         type: 'Branded Residence',
         badge: 'Đang bán',
         badgeColor: 'emerald',
+        img: '/images/projects/masterise-homes.png',
     },
     {
         slug: 'vinhomes-grand-park',
@@ -87,8 +92,9 @@ const FEATURED_PROJECTS = [
         type: 'Siêu Đô Thị Tích Hợp',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
+        img: '/images/projects/vinhomes-grand-park.png',
     },
-] as const;
+];
 
 const HOME_FAQ = [
     {
@@ -256,6 +262,7 @@ type FeaturedProject = {
     type: string;
     badge: string;
     badgeColor: string;
+    img: string;
 };
 
 const badgeStyles: Record<string, string> = {
@@ -271,31 +278,41 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
         viewport={{ once: true, margin: '-50px' }}
         transition={{ duration: 0.4 }}
         onClick={onClick}
-        className="relative p-6 rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 bg-[var(--bg-surface)] dark:bg-slate-800 hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 flex flex-col"
+        className="relative rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 bg-[var(--bg-surface)] dark:bg-slate-800 hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 flex flex-col overflow-hidden"
     >
-        <div className="flex justify-between items-start gap-3 mb-4">
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 leading-none">
-                {project.type}
-            </span>
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border whitespace-nowrap leading-none ${badgeStyles[project.badgeColor] ?? badgeStyles.indigo}`}>
+        {/* Project image */}
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-slate-700">
+            <img
+                src={project.img}
+                alt={`${project.name} - ${project.type} ${project.loc}`}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+            <span className={`absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full border whitespace-nowrap leading-none backdrop-blur-sm ${badgeStyles[project.badgeColor] ?? badgeStyles.indigo}`}>
                 {project.badge}
             </span>
         </div>
-        <h3 className="text-xl font-bold text-[var(--text-primary)] dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-snug">
-            {project.name}
-        </h3>
-        <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 mb-3">{project.dev} &middot; {project.loc}</p>
-        <div className="flex items-center gap-3 text-sm mb-4">
-            <span className="flex items-center gap-1 text-[var(--text-secondary)] dark:text-slate-300">
+        {/* Card body */}
+        <div className="p-5 flex flex-col flex-1">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 leading-none mb-3 self-start">
+                {project.type}
+            </span>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-snug">
+                {project.name}
+            </h3>
+            <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 mb-3">{project.dev} &middot; {project.loc}</p>
+            <div className="flex items-center gap-1 text-sm mb-4">
                 <MapPin className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
-                <span className="font-medium">{project.scale}</span>
-            </span>
-        </div>
-        <div className="mt-auto pt-4 border-t border-[var(--glass-border)] dark:border-slate-700 flex items-center justify-between">
-            <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{project.priceFrom}</span>
-            <span className="flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 opacity-60 group-hover:opacity-100 transition-opacity">
-                Xem bảng giá <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </span>
+                <span className="font-medium text-[var(--text-secondary)] dark:text-slate-300">{project.scale}</span>
+            </div>
+            <div className="mt-auto pt-4 border-t border-[var(--glass-border)] dark:border-slate-700 flex items-center justify-between">
+                <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{project.priceFrom}</span>
+                <span className="flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 opacity-60 group-hover:opacity-100 transition-opacity">
+                    Xem bảng giá <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
+            </div>
         </div>
     </motion.article>
 );

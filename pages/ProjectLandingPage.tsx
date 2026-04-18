@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
+import ProjectDirectory from './ProjectDirectory';
 
 const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
     'aqua-city': {
@@ -1025,22 +1026,15 @@ function navigate(path: string) {
 export default function ProjectLandingPage() {
     const parts = window.location.pathname.replace(/^\//, '').split('/');
     const projectSlug = parts[1] || '';
+
+    if (!projectSlug) {
+        return <ProjectDirectory />;
+    }
+
     const cfg = PROJECT_CONFIG[projectSlug];
 
     if (!cfg) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)]">
-                <div className="text-center">
-                    <p className="text-[var(--text-secondary)] mb-4">Dự án không tìm thấy.</p>
-                    <button
-                        onClick={() => navigate('/marketplace')}
-                        className="px-6 py-2.5 bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm"
-                    >
-                        Xem Tất Cả Dự Án
-                    </button>
-                </div>
-            </div>
-        );
+        return <ProjectDirectory />;
     }
 
     const seoMeta = PROJECT_SEO_META[projectSlug] ?? {
