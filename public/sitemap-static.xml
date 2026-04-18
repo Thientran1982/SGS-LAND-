@@ -7,7 +7,7 @@
   <!-- ══ TRANG CHỦ ══ -->
   <url>
     <loc>https://sgsland.vn/</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/" />
@@ -23,7 +23,7 @@
   <!-- ══ TÌM KIẾM BĐS ══ -->
   <url>
     <loc>https://sgsland.vn/marketplace</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.95</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/marketplace" />
@@ -34,7 +34,7 @@
   <!-- ══ ĐỊNH GIÁ AI ══ -->
   <url>
     <loc>https://sgsland.vn/ai-valuation</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/ai-valuation" />
@@ -45,7 +45,7 @@
   <!-- ══ NỀN TẢNG CRM ══ -->
   <url>
     <loc>https://sgsland.vn/crm-platform</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.88</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/crm-platform" />
@@ -56,7 +56,7 @@
   <!-- ══ TIN TỨC BĐS ══ -->
   <url>
     <loc>https://sgsland.vn/news</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/news" />
@@ -67,7 +67,7 @@
   <!-- ══ VỀ CHÚNG TÔI ══ -->
   <url>
     <loc>https://sgsland.vn/about-us</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/about-us" />
@@ -78,7 +78,7 @@
   <!-- ══ LIÊN HỆ ══ -->
   <url>
     <loc>https://sgsland.vn/contact</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.72</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/contact" />
@@ -88,7 +88,7 @@
   <!-- ══ TUYỂN DỤNG ══ -->
   <url>
     <loc>https://sgsland.vn/careers</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.68</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/careers" />
@@ -98,7 +98,7 @@
   <!-- ══ TRUNG TÂM TRỢ GIÚP ══ -->
   <url>
     <loc>https://sgsland.vn/help-center</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.65</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/help-center" />
@@ -109,7 +109,7 @@
   <!-- ══ LIVE CHAT / HỖ TRỢ TRỰC TUYẾN ══ -->
   <url>
     <loc>https://sgsland.vn/livechat</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.55</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/livechat" />
@@ -129,7 +129,7 @@
   <!-- ══ KÝ GỬI BẤT ĐỘNG SẢN ══ -->
   <url>
     <loc>https://sgsland.vn/ky-gui-bat-dong-san</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/ky-gui-bat-dong-san" />
@@ -139,7 +139,7 @@
   <!-- ══ TÀI LIỆU API / DEVELOPERS ══ -->
   <url>
     <loc>https://sgsland.vn/developers</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/developers" />
@@ -150,7 +150,7 @@
   <!-- ══ TRẠNG THÁI HỆ THỐNG ══ -->
   <url>
     <loc>https://sgsland.vn/status</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.45</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/status" />
@@ -316,13 +316,13 @@
   <!-- ══ CHÍNH SÁCH PHÁP LÝ ══ -->
   <url>
     <loc>https://sgsland.vn/privacy-policy</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.40</priority>
   </url>
   <url>
     <loc>https://sgsland.vn/terms-of-service</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.40</priority>
   </url>

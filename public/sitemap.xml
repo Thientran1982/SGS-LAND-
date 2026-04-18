@@ -4,19 +4,19 @@
   <!-- Sitemap tĩnh: các trang công khai cố định -->
   <sitemap>
     <loc>https://sgsland.vn/sitemap-static.xml</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
   </sitemap>
 
   <!-- Sitemap động: bất động sản (generated tại runtime) -->
   <sitemap>
     <loc>https://sgsland.vn/sitemap-listings.xml</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
   </sitemap>
 
   <!-- Sitemap động: tin tức (generated tại runtime) -->
   <sitemap>
     <loc>https://sgsland.vn/sitemap-news.xml</loc>
-    <lastmod>2026-04-04</lastmod>
+    <lastmod>2026-04-18</lastmod>
   </sitemap>
 
 </sitemapindex>
