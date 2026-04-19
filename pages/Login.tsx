@@ -280,11 +280,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       // Login Validation
       if (view === 'LOGIN' && !isSsoMode && !password) errors.password = t('auth.error_password_required');
 
-      // Registration Validation (B2B vendor onboarding — company bắt buộc)
+      // Registration Validation
       if (view === 'REGISTER') {
           if (!name.trim()) errors.name = t('auth.error_name_required');
-          if (!company.trim()) errors.company = t('auth.error_company_required');
-          else if (company.trim().length < 2) errors.company = t('auth.error_company_required');
+          if (company.trim() && company.trim().length < 2) errors.company = t('auth.error_company_required');
           if (!password) errors.password = t('auth.error_password_required');
           else if (calculatePasswordStrength(password) < 2) errors.password = t('auth.error_password_weak');
       }
@@ -639,10 +638,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             {fieldErrors.name && <p id="err-name" className="text-xs2 text-rose-400 ml-1">{fieldErrors.name}</p>}
                         </div>
                         <div className="space-y-1.5 group">
-                            <label htmlFor="auth-company" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_company')}</label>
+                            <label htmlFor="auth-company" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">
+                                {t('auth.label_company')} <span className="text-gray-500 normal-case font-normal">{t('auth.optional')}</span>
+                            </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></span>
-                                <input id="auth-company" value={company} onChange={e => setCompany(e.target.value)} className={getInputClass(!!fieldErrors.company)} placeholder={t('auth.placeholder_company')} aria-describedby={fieldErrors.company ? 'err-company' : undefined} />
+                                <input id="auth-company" value={company} onChange={e => setCompany(e.target.value)} className={getInputClass(!!fieldErrors.company)} placeholder={t('auth.placeholder_company_optional')} aria-describedby={fieldErrors.company ? 'err-company' : undefined} />
                             </div>
                             {fieldErrors.company && <p id="err-company" className="text-xs2 text-rose-400 ml-1">{fieldErrors.company}</p>}
                         </div>
