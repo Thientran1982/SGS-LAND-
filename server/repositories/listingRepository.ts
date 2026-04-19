@@ -103,15 +103,16 @@ export class ListingRepository extends BaseRepository {
     pagination: PaginationParams,
     filters?: ListingFilters
   ): Promise<PaginatedResult<any>> {
-    const { pool } = await import('../db');
+    const { withRlsBypass } = await import('../db');
 
     const empty: PaginatedResult<any> = {
       data: [], total: 0, page: pagination.page, pageSize: pagination.pageSize, totalPages: 0,
       stats: { availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, totalCount: 0 },
     };
 
-    // Resolve accessible project IDs (cross-tenant — no RLS context needed)
-    const accessResult = await pool.query(
+    return withRlsBypass(async (client) => {
+    // Resolve accessible project IDs (cross-tenant qua project_access)
+    const accessResult = await client.query(
       `SELECT pa.project_id
        FROM project_access pa
        JOIN projects p ON p.id = pa.project_id
@@ -154,13 +155,13 @@ export class ListingRepository extends BaseRepository {
     const allValues = [...baseValues, ...filterValues];
     const whereClause = `WHERE ${allConditions.join(' AND ')}`;
 
-    const countResult = await pool.query(
+    const countResult = await client.query(
       `SELECT COUNT(*)::int AS total FROM listings ${whereClause}`,
       allValues
     );
     const total = countResult.rows[0].total;
 
-    const dataResult = await pool.query(
+    const dataResult = await client.query(
       `SELECT id, tenant_id, code, title, location, price, currency, area, bedrooms, bathrooms,
               type, status, transaction, attributes, images, project_code, project_id,
               contact_phone, coordinates, is_verified, view_count, booking_count,
@@ -189,6 +190,7 @@ export class ListingRepository extends BaseRepository {
       totalPages: Math.ceil(total / pagination.pageSize),
       stats: this.computeStats(dataResult.rows),
     };
+    });
   }
 
   /**
@@ -196,9 +198,9 @@ export class ListingRepository extends BaseRepository {
    * Returns null if listing has no project_id or the partner has no active grant for that project.
    */
   async findByIdForPartner(partnerTenantId: string, listingId: string): Promise<any | null> {
-    const { pool } = await import('../db');
+    const { withRlsBypass } = await import('../db');
 
-    const result = await pool.query(
+    const result = await withRlsBypass(async (client) => client.query(
       `SELECT l.id, l.tenant_id, l.code, l.title, l.location, l.price, l.currency,
               l.area, l.bedrooms, l.bathrooms, l.type, l.status, l.transaction,
               l.attributes, l.images, l.project_code, l.project_id,
@@ -212,7 +214,7 @@ export class ListingRepository extends BaseRepository {
          AND pa.status = 'ACTIVE'
          AND (pa.expires_at IS NULL OR pa.expires_at > NOW())`,
       [listingId, partnerTenantId]
-    );
+    ));
 
     if (!result.rows[0]) return null;
 

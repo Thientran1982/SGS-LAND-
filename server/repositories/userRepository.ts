@@ -47,11 +47,13 @@ export class UserRepository extends BaseRepository {
         return result.rows[0] ? this.rowToEntity<UserRow>(result.rows[0]) : null;
       });
     }
-    // Fallback: dùng findById qua withTenant với DEFAULT_TENANT_ID không được gọi ở production.
-    // Chỉ dùng cho context nội bộ đã xác thực (VD: /me route truyền tenantId từ JWT).
-    const { pool } = await import('../db');
-    const result = await pool.query(`SELECT * FROM users WHERE id = $1`, [id]);
-    return result.rows[0] ? this.rowToEntity<UserRow>(result.rows[0]) : null;
+    // Fallback: tra cứu user theo PRIMARY KEY khi không có tenant context (vd: refresh JWT,
+    // worker nội bộ). Dùng RLS bypass có kiểm soát — luôn ràng buộc bằng id để tránh dò tenant.
+    const { withRlsBypass } = await import('../db');
+    return withRlsBypass(async (client) => {
+      const result = await client.query(`SELECT * FROM users WHERE id = $1`, [id]);
+      return result.rows[0] ? this.rowToEntity<UserRow>(result.rows[0]) : null;
+    });
   }
 
   async authenticate(tenantId: string, email: string, password: string): Promise<UserRow | null> {

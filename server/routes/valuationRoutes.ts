@@ -830,10 +830,11 @@ export function createValuationRoutes(
       const listingId = parseInt(listingIdParam, 10);
       if (!isNaN(listingId)) {
         try {
-          const lRow = await pool.query(
+          const { withRlsBypass } = await import('../db');
+          const lRow = await withRlsBypass((client) => client.query(
             `SELECT address, area, property_type FROM listings WHERE id = $1 LIMIT 1`,
             [listingId]
-          );
+          ));
           if (lRow.rows.length > 0) {
             const l = lRow.rows[0];
             if (!location && l.address) location = l.address;

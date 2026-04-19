@@ -3,7 +3,7 @@ import express from 'express';
 import { subscriptionRepository } from '../repositories/subscriptionRepository';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { writeAuditLog } from '../middleware/auditLog';
-import { pool } from '../db';
+import { pool, withTenantContext, withRlsBypass } from '../db';
 import {
   getStripeClient,
   findByProviderSessionId,
@@ -16,10 +16,10 @@ async function notifyTenantAdmins(tenantId: string, payload: {
   type: string; title: string; body: string; metadata: Record<string, any>;
 }): Promise<Array<{ id: string; email: string; name: string | null }>> {
   try {
-    const admins = await pool.query(
+    const admins = await withTenantContext(tenantId, (client) => client.query(
       `SELECT id, email, name FROM users WHERE tenant_id = $1 AND role IN ('ADMIN','TEAM_LEAD') AND status = 'ACTIVE'`,
       [tenantId]
-    );
+    ));
     for (const row of admins.rows) {
       await notificationRepository.create({
         tenantId,
@@ -166,10 +166,10 @@ export function createBillingWebhookRouter() {
             });
             let payerName: string | null = null;
             try {
-              const payerRow = await pool.query(
+              const payerRow = await withRlsBypass((client) => client.query(
                 `SELECT name FROM users WHERE id = $1 LIMIT 1`,
                 [tx.userId],
-              );
+              ));
               payerName = payerRow.rows[0]?.name || null;
             } catch (err) {
               console.error('Failed to lookup payer name:', err);
