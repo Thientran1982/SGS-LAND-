@@ -539,7 +539,10 @@ export class ListingRepository extends BaseRepository {
                : 'l.created_at DESC, l.id DESC'}
              LIMIT $${paramIndex}
            ) sub
-           LEFT JOIN users u ON u.id = sub.assigned_to`,
+           LEFT JOIN users u ON u.id = sub.assigned_to
+           ORDER BY ${isPopular
+             ? 'sub.view_count DESC, sub.created_at DESC, sub.id DESC'
+             : 'sub.created_at DESC, sub.id DESC'}`,
           [...dataValues, limit]
         ),
       ]);

@@ -1352,7 +1352,7 @@ async function startServer() {
       if (req.query.location) filters.location_contains = req.query.location as string;
       if (req.query.isVerified === 'true') filters.isVerified = true;
       let result: any;
-      if (req.query.cursor !== undefined) {
+      if (req.query.cursor !== undefined || req.query.cursorMode === 'true') {
         const cursor = (req.query.cursor as string) || undefined;
         result = await listingRepository.findListingsCursor(PUBLIC_TENANT, {
           pageSize,
