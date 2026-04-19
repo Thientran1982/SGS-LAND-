@@ -430,6 +430,7 @@ export class ListingRepository extends BaseRepository {
       filters?: ListingFilters;
       userId?: string;
       userRole?: string;
+      sortBy?: 'recent' | 'popular';
     }
   ): Promise<{
     data: any[];
@@ -469,15 +470,18 @@ export class ListingRepository extends BaseRepository {
       paramIndex = nextIndex;
 
       // ── Phase 2: decode cursor → extra keyset condition for data query only ──
+      const isPopular = params.sortBy === 'popular';
       let cursorTs: string | null = null;
       let cursorId: string | null = null;
+      let cursorVc: number | null = null;
       if (params.cursor) {
         try {
           const decoded = JSON.parse(
             Buffer.from(params.cursor, 'base64').toString('utf8')
-          ) as { ts: string; id: string };
+          ) as { ts: string; id: string; vc?: number };
           cursorTs = decoded.ts;
           cursorId = decoded.id;
+          cursorVc = decoded.vc ?? null;
         } catch { /* invalid cursor → treat as first page */ }
       }
 
@@ -487,7 +491,15 @@ export class ListingRepository extends BaseRepository {
       // Data WHERE adds the keyset condition
       const dataConditions = [...baseConditions];
       const dataValues     = [...baseValues];
-      if (cursorTs && cursorId) {
+      if (isPopular && cursorVc !== null && cursorTs && cursorId) {
+        dataConditions.push(
+          `(l.view_count < $${paramIndex}::int OR ` +
+          `(l.view_count = $${paramIndex}::int AND (l.created_at < $${paramIndex + 1}::timestamptz OR ` +
+          `(l.created_at = $${paramIndex + 1}::timestamptz AND l.id::text < $${paramIndex + 2}))))`
+        );
+        dataValues.push(cursorVc, cursorTs, cursorId);
+        paramIndex += 3;
+      } else if (!isPopular && cursorTs && cursorId) {
         dataConditions.push(
           `(l.created_at < $${paramIndex}::timestamptz OR ` +
           `(l.created_at = $${paramIndex}::timestamptz AND l.id::text < $${paramIndex + 1}))`
@@ -522,7 +534,9 @@ export class ListingRepository extends BaseRepository {
                   u.role   AS assigned_to_role
            FROM (
              SELECT * FROM listings l ${dataWhere}
-             ORDER BY l.created_at DESC, l.id DESC
+             ORDER BY ${isPopular
+               ? 'l.view_count DESC, l.created_at DESC, l.id DESC'
+               : 'l.created_at DESC, l.id DESC'}
              LIMIT $${paramIndex}
            ) sub
            LEFT JOIN users u ON u.id = sub.assigned_to`,
@@ -539,10 +553,12 @@ export class ListingRepository extends BaseRepository {
       let nextCursor: string | null = null;
       if (hasNext && pageRows.length > 0) {
         const last = pageRows[pageRows.length - 1];
-        nextCursor = Buffer.from(JSON.stringify({
+        const cursorPayload: any = {
           ts: last.created_at instanceof Date ? last.created_at.toISOString() : String(last.created_at),
           id: last.id,
-        })).toString('base64');
+        };
+        if (isPopular) cursorPayload.vc = last.view_count ?? 0;
+        nextCursor = Buffer.from(JSON.stringify(cursorPayload)).toString('base64');
       }
 
       return {

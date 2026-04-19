@@ -1358,6 +1358,7 @@ async function startServer() {
           pageSize,
           cursor: cursor || undefined,
           filters,
+          sortBy: 'popular',
         });
       } else {
         result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
