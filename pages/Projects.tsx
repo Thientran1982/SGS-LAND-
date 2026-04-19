@@ -427,6 +427,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
         ? listings.filter(l => l.title?.toLowerCase().includes(search.toLowerCase()) || l.code?.toLowerCase().includes(search.toLowerCase()))
         : listings;
 
+    const isApartmentProject = listings.some(l => l.type === 'Apartment' || l.type === 'Penthouse');
+
     // ── Checkbox helpers ──────────────────────────────────────────────────────
     const allFilteredIds = filtered.map(l => l.id);
     const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
@@ -647,7 +649,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             t('project.listing_col_type'),
                                             t('project.listing_col_status'),
                                             t('project.listing_col_area'),
-                                            t('project.listing_col_built_area'),
+                                            isApartmentProject ? t('project.listing_col_clear_area') : t('project.listing_col_built_area'),
+                                            ...(isApartmentProject ? [
+                                                t('project.listing_col_tower'),
+                                                t('project.listing_col_floor'),
+                                                t('project.listing_col_view'),
+                                            ] : []),
                                             t('project.listing_col_direction'),
                                             t('project.listing_col_unit_price'),
                                             t('project.listing_col_price'),
@@ -705,9 +712,38 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
                                                 {l.area ? <span>{l.area} <span className="text-[var(--text-tertiary)]">m²</span></span> : <span className="text-[var(--text-muted)]">—</span>}
                                             </td>
-                                            <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                                                {l.builtArea ? <span>{l.builtArea} <span className="text-[var(--text-tertiary)]">m²</span></span> : <span className="text-[var(--text-muted)]">—</span>}
-                                            </td>
+                                            {/* DT thông thủy (căn hộ) hoặc DT xây dựng (nhà đất) */}
+                                            {isApartmentProject ? (
+                                                <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                                                    {l.attributes?.clearArea
+                                                        ? <span>{l.attributes.clearArea} <span className="text-[var(--text-tertiary)]">m²</span></span>
+                                                        : <span className="text-[var(--text-muted)]">—</span>}
+                                                </td>
+                                            ) : (
+                                                <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                                                    {l.builtArea ? <span>{l.builtArea} <span className="text-[var(--text-tertiary)]">m²</span></span> : <span className="text-[var(--text-muted)]">—</span>}
+                                                </td>
+                                            )}
+                                            {/* Toà | Tầng | View — chỉ hiện cho dự án căn hộ/penthouse */}
+                                            {isApartmentProject && (
+                                                <>
+                                                    <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                                                        {l.attributes?.tower
+                                                            ? <span className="font-medium">{l.attributes.tower}</span>
+                                                            : <span className="text-[var(--text-muted)]">—</span>}
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                                                        {l.attributes?.floor
+                                                            ? <span className="font-medium">{l.attributes.floor}</span>
+                                                            : <span className="text-[var(--text-muted)]">—</span>}
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap max-w-[120px] truncate">
+                                                        {l.attributes?.view
+                                                            ? <span className="font-medium">{l.attributes.view}</span>
+                                                            : <span className="text-[var(--text-muted)]">—</span>}
+                                                    </td>
+                                                </>
+                                            )}
                                             <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
                                                 {l.attributes?.direction
                                                     ? <span className="font-medium">{t(`direction.${l.attributes.direction}`) || l.attributes.direction}</span>
