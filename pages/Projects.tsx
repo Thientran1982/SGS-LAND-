@@ -355,6 +355,14 @@ function fmtPrice(p: number) {
     return p.toLocaleString('vi-VN');
 }
 
+function fmtUnitPrice(price: number, area: number) {
+    if (!price || !area) return '—';
+    const up = price / area;
+    if (up >= 1_000_000_000) return (up / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '') + ' tỷ/m²';
+    if (up >= 1_000_000) return (up / 1_000_000).toFixed(0) + ' tr/m²';
+    return up.toLocaleString('vi-VN') + '/m²';
+}
+
 interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
@@ -593,6 +601,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             t('project.listing_col_status'),
                                             t('project.listing_col_area'),
                                             t('project.listing_col_built_area'),
+                                            t('project.listing_col_direction'),
+                                            t('project.listing_col_unit_price'),
                                             t('project.listing_col_price'),
                                         ].map(h => (
                                             <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{h}</th>
@@ -637,6 +647,14 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             </td>
                                             <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
                                                 {l.builtArea ? <span>{l.builtArea} <span className="text-[var(--text-tertiary)]">m²</span></span> : <span className="text-[var(--text-muted)]">—</span>}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                                                {l.attributes?.direction
+                                                    ? <span className="font-medium">{t(`direction.${l.attributes.direction}`) || l.attributes.direction}</span>
+                                                    : <span className="text-[var(--text-muted)]">—</span>}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap font-mono">
+                                                {fmtUnitPrice(l.price, l.area)}
                                             </td>
                                             <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
                                             {isAdmin && (
