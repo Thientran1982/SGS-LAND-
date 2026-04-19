@@ -779,13 +779,21 @@ async function startServer() {
 
       writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
       await uniformDelay();
-      // Uniform response regardless of whether user exists or email was sent.
-      // No devToken exposed — reset link is always delivered via email only.
       if (emailResult.status === 'queued_no_smtp' || emailResult.status === 'failed') {
         logger.warn(`[ForgotPassword] Email not delivered for ${email} — status: ${emailResult.status}. Check BREVO_FROM_EMAIL / SMTP config.`);
       }
+      // Trong môi trường dev (non-production), trả về devResetUrl + devResetToken
+      // để developer có thể test flow mà không cần email thực sự vào hộp thư
+      // (link dev domain Replit trông đáng ngờ → spam). Trong production
+      // (APP_URL set hoặc REPLIT_DOMAINS có domain production), không expose.
+      const isDevMode = !isProduction;
       res.json({
         message: 'If an account exists, a reset link has been sent.',
+        ...(isDevMode && {
+          devResetToken: rawToken,
+          devResetUrl: resetUrl,
+          _devNote: 'Dev mode only — not present in production',
+        }),
       });
     } catch (error) {
       console.error('Forgot password error:', error);
