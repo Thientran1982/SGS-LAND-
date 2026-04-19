@@ -1133,7 +1133,7 @@ class DatabaseApiClient {
    * Trả về { needsVerification, email, tenantId, tenantDomain, plan, trialDays, ...devVerifyToken? }.
    */
   async onboardVendor(
-    company: string,
+    company: string | undefined,
     name: string,
     email: string,
     password: string,

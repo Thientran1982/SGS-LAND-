@@ -492,9 +492,9 @@ async function startServer() {
           phone?: string;
         };
 
-        const trimmedCompany = company.trim();
-        const trimmedEmail = email.trim().toLowerCase();
         const trimmedName = name.trim();
+        const trimmedCompany = (company || trimmedName).trim();
+        const trimmedEmail = email.trim().toLowerCase();
 
         // 1) Sinh slug domain duy nhất từ tên công ty (loại dấu tiếng Việt)
         const baseSlug =
