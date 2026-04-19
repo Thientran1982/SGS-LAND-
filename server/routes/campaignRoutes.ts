@@ -30,7 +30,7 @@ const ALLOWED_SCHEDULE = new Set(['NOW', 'SCHEDULED']);
 
 function requireAdminOrLead(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
-  if (!user || !['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+  if (!user || !['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
     return res.status(403).json({ error: 'Cần quyền ADMIN hoặc TEAM_LEAD' });
   }
   next();
