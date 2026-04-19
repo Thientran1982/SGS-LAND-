@@ -1589,7 +1589,7 @@ export const ListingDetail: React.FC = () => {
         if (type === PropertyType.FACTORY || type === PropertyType.COMMERCIAL) {
             return [
                 { label: t('pub.area'), value: `${listing.area} m²` },
-                ...(listing.builtArea ? [{ label: t('inventory.label_built_area'), value: `${listing.builtArea} m²` }] : []),
+                { label: t('inventory.label_built_area'), value: listing.builtArea ? `${listing.builtArea} m²` : '--' },
                 { label: t('inventory.label_frontage'), value: attrs.frontage ? `${attrs.frontage}m` : '--' },
                 { label: t('inventory.label_road_width'), value: attrs.roadWidth ? `${attrs.roadWidth}m` : '--' },
                 { label: t('inventory.label_legal'), value: attrs.legalStatus ? t(`legal.${attrs.legalStatus}`) : '--' },
@@ -1599,7 +1599,7 @@ export const ListingDetail: React.FC = () => {
         if (type === PropertyType.TOWNHOUSE || type === PropertyType.VILLA || type === PropertyType.HOUSE) {
             return [
                 { label: t('pub.area'), value: `${listing.area} m²` },
-                ...(listing.builtArea ? [{ label: t('inventory.label_built_area'), value: `${listing.builtArea} m²` }] : []),
+                { label: t('inventory.label_built_area'), value: listing.builtArea ? `${listing.builtArea} m²` : '--' },
                 { label: t('inventory.label_frontage'), value: attrs.frontage ? `${attrs.frontage}m` : '--' },
                 { label: t('inventory.label_road_width'), value: attrs.roadWidth ? `${attrs.roadWidth}m` : '--' },
                 { label: t('pub.direction'), value: attrs.direction ? t(`direction.${attrs.direction}`) : '--' },
@@ -1610,7 +1610,7 @@ export const ListingDetail: React.FC = () => {
         if (type === PropertyType.OFFICE) {
             return [
                 { label: t('pub.area'), value: `${listing.area} m²` },
-                ...(listing.builtArea ? [{ label: t('inventory.label_built_area'), value: `${listing.builtArea} m²` }] : []),
+                { label: t('inventory.label_built_area'), value: listing.builtArea ? `${listing.builtArea} m²` : '--' },
                 { label: t('pub.direction'), value: attrs.direction ? t(`direction.${attrs.direction}`) : '--' },
                 { label: t('inventory.label_legal'), value: attrs.legalStatus ? t(`legal.${attrs.legalStatus}`) : '--' },
                 { label: t('pub.type'), value: t(`property.${listing.type.toUpperCase()}`) },
