@@ -96,7 +96,7 @@ export const Billing: React.FC = () => {
             [t('billing.csv_date'), dateStr],
             [t('billing.csv_plan'), planLabel],
             [t('billing.csv_status'), isPaid ? t('billing.status_paid') : t('billing.status_unpaid')],
-            [t('billing.csv_amount'), `$${anyInv.amount ?? 0}`],
+            [t('billing.csv_amount'), formatCurrency(anyInv.amount ?? 0)],
         ];
         const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -192,7 +192,7 @@ export const Billing: React.FC = () => {
                                     {isCurrent && <div className="text-indigo-600 bg-[var(--bg-surface)] p-1 rounded-full shadow-sm">{ICONS.CHECK}</div>}
                                 </div>
                                 <div className="text-2xl font-extrabold text-[var(--text-primary)] mb-1">
-                                    ${plan.price}
+                                    {formatCurrency(plan.price)}
                                     <span className="text-sm font-medium text-[var(--text-secondary)]">{t('billing.per_month')}</span>
                                 </div>
                                 <div className="text-xs text-[var(--text-secondary)] mb-6">{t('billing.billed_annually')}</div>

@@ -91,3 +91,7 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - **Text Extraction**: pdf-parse, mammoth (for PDF and DOCX)
 - **Redis**: Optional, for job queues and multi-instance scaling
 - **Social Media Integration**: Facebook Webhooks, Zalo OA Webhooks
+## B2B Page Audit (April 19, 2026)
+- Verified 4 deployed B2B private pages: `/dashboard`, `/inventory`, `/leads`, `/billing`. All render correctly with Vietnamese UI labels (sidebar: Trang Chủ, Tổng Quan, Sàn Giao Dịch, Khách Hàng (CRM), Hợp Đồng, Kho Bất Động Sản, Hộp Thư Đa Kênh, BĐS Quan Tâm, Phê Duyệt, Luật Phân Bổ Lead, Đăng xuất). No undefined/NaN, no English literals, no untranslated strings. All pages use `useTranslation` (40–130 calls per page).
+- Fixed Billing currency bug: plan price and CSV invoice amount now use `formatCurrency(...)` (renders VND) instead of hard-coded `$` symbol (`pages/Billing.tsx` lines 102, 198).
+- **Orphaned file**: `pages/Projects.tsx` exists in the repo but is **NOT registered** in `PAGE_REGISTRY` / `config/routes.ts` and is not imported anywhere. Visiting `/projects` shows a blank shell. Decide: either wire it up (add `PROJECTS: 'projects'` to `ROUTES` and `[ROUTES.PROJECTS]: Projects` to `PAGE_REGISTRY`) or delete the file.
