@@ -45,18 +45,13 @@ const inHCMCBBox = (lat: number, lng: number): boolean =>
 
 /**
  * Returns true only when stored coordinates are trustworthy.
- * If the listing address says non-HCMC (e.g. Đồng Nai) but stored coords
- * fall inside the HCMC bounding box, the coords were geocoded incorrectly
- * by the old bounded=1 logic and must be re-geocoded.
+ * Trusts any non-zero lat/lng stored by the server-side province-aware geocoder.
+ * The old bbox rejection (non-HCMC address + coords inside HCMC bbox) was removed
+ * because Đồng Nai / Nhơn Trạch genuinely falls inside the HCMC bounding box,
+ * causing correct coordinates to be wrongly rejected and falling back to fallback
+ * points that could match unrelated district names (e.g. "Ngô Quyền" street → Hải Phòng).
  */
-const hasTrustedCoords = (listing: any): boolean => {
-    if (!hasRealCoords(listing)) return false;
-    const { lat, lng } = listing.coordinates;
-    if (listing.location && isNonHCMCAddress(listing.location) && inHCMCBBox(lat, lng)) {
-        return false; // wrong HCMC coords for an out-of-HCMC address → re-geocode
-    }
-    return true;
-};
+const hasTrustedCoords = (listing: any): boolean => hasRealCoords(listing);
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 

@@ -1082,7 +1082,13 @@ const _HCMC_MARKERS_LOWER = [
  * its approximate centre coordinates.  Returns null when nothing matches.
  */
 export function getProvinceFallback(address: string): { coords: [number, number]; label: string } | null {
-    const lower = address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // Only scan the last 2 comma-separated segments (district + province) so that
+    // street names that share a name with a district (e.g. "đường Ngô Quyền" → Hải Phòng)
+    // are not matched when they appear at the START of the address.
+    // Vietnamese addresses: "street, ward/commune, district, province" → we only need tail.
+    const segments = address.split(',').map(s => s.trim()).filter(Boolean);
+    const tail = segments.length > 2 ? segments.slice(-2).join(',') : address;
+    const lower = tail.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     for (const { re, coords, label } of _PROVINCE_COMPILED) {
         if (re.test(lower)) return { coords, label };
     }
