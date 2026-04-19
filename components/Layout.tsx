@@ -22,7 +22,7 @@ import {
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
     Database, Activity, Settings, CreditCard, Lock, Smartphone,
     User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home, Globe,
-    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail
+    ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase
 } from 'lucide-react';
 
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
@@ -33,6 +33,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.LEADS]: <Users size={20} strokeWidth={2} />,
     [ROUTES.CONTRACTS]: <FileText size={20} strokeWidth={2} />,
     [ROUTES.INVENTORY]: <Package size={20} strokeWidth={2} />,
+    [ROUTES.PROJECTS]: <Briefcase size={20} strokeWidth={2} />,
     [ROUTES.INBOX]: <Inbox size={20} strokeWidth={2} />,
     
     // Ops

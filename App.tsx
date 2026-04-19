@@ -66,6 +66,7 @@ const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
 const Leads = lazyLoad(() => import('./pages/Leads'), 'Leads');
 const Contracts = lazyLoad(() => import('./pages/Contracts'), 'Contracts');
 const Inventory = lazyLoad(() => import('./pages/Inventory'), 'Inventory');
+const Projects = lazyLoad(() => import('./pages/Projects'), 'Projects');
 const Favorites = lazyLoad(() => import('./pages/Favorites'), 'Favorites');
 const Inbox = lazyLoad(() => import('./pages/Inbox'), 'Inbox');
 const Reports = lazyLoad(() => import('./pages/Reports'), 'Reports');
@@ -110,6 +111,7 @@ registerPrefetch(ROUTES.DASHBOARD,            () => import('./pages/Dashboard'))
 registerPrefetch(ROUTES.LEADS,               () => import('./pages/Leads'));
 registerPrefetch(ROUTES.CONTRACTS,           () => import('./pages/Contracts'));
 registerPrefetch(ROUTES.INVENTORY,           () => import('./pages/Inventory'));
+registerPrefetch(ROUTES.PROJECTS,           () => import('./pages/Projects'));
 registerPrefetch(ROUTES.INBOX,              () => import('./pages/Inbox'));
 registerPrefetch(ROUTES.FAVORITES,           () => import('./pages/Favorites'));
 registerPrefetch(ROUTES.REPORTS,            () => import('./pages/Reports'));
@@ -202,6 +204,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.LEADS]: Leads,
     [ROUTES.CONTRACTS]: Contracts,
     [ROUTES.INVENTORY]: Inventory,
+    [ROUTES.PROJECTS]: Projects,
     [ROUTES.FAVORITES]: Favorites,
     [ROUTES.INBOX]: Inbox,
     [ROUTES.REPORTS]: Reports,
@@ -451,6 +454,10 @@ const ADMIN_ONLY_ROUTES: Set<string> = new Set([
 
 const ADMIN_ROLES = new Set(['ADMIN', 'TEAM_LEAD']);
 
+// Routes mà chỉ vendor managers (ADMIN/TEAM_LEAD) + partners (cross-tenant access)
+// được vào. SALES/MARKETING/VIEWER không quản lý dự án — họ làm việc với leads/listings.
+const PROJECT_ALLOWED_ROLES = new Set(['ADMIN', 'TEAM_LEAD', 'PARTNER_ADMIN', 'PARTNER_AGENT']);
+
 const AppShell: React.FC = () => {
     const { route, navigate } = useRouter();
     const { t } = useTranslation();
@@ -604,6 +611,12 @@ const AppShell: React.FC = () => {
 
         // RBAC: redirect non-admin roles away from admin-only routes
         if (authState === 'AUTH' && ADMIN_ONLY_ROUTES.has(route.base) && currentUser && !ADMIN_ROLES.has(currentUser.role)) {
+            navigate(ROUTES.DASHBOARD);
+            setAccessDenied(true);
+        }
+
+        // RBAC: chặn các role không thuộc {ADMIN, TEAM_LEAD, PARTNER_*} khỏi trang Projects
+        if (authState === 'AUTH' && route.base === ROUTES.PROJECTS && currentUser && !PROJECT_ALLOWED_ROLES.has(currentUser.role)) {
             navigate(ROUTES.DASHBOARD);
             setAccessDenied(true);
         }
