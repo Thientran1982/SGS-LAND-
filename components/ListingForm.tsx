@@ -371,6 +371,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     // --- DYNAMIC FIELDS LOGIC ---
     const isProject = formData.type === PropertyType.PROJECT;
     const isLand = [PropertyType.LAND, PropertyType.FACTORY, PropertyType.COMMERCIAL, PropertyType.TOWNHOUSE, PropertyType.VILLA].includes(formData.type as PropertyType);
+    const BUILT_AREA_TYPES = [PropertyType.TOWNHOUSE, PropertyType.VILLA, PropertyType.HOUSE, PropertyType.OFFICE, PropertyType.FACTORY, PropertyType.COMMERCIAL];
+    const hasBuiltArea = BUILT_AREA_TYPES.includes(formData.type as PropertyType);
 
     const renderDynamicFields = () => {
         if (isProject) {
@@ -712,6 +714,23 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         {errors.area && <p className="text-xs2 text-rose-500 mt-1">{errors.area}</p>}
                                     </div>
                                 </div>
+
+                                {/* BUILT AREA — chỉ hiển thị cho: Nhà phố, Biệt thự, Nhà riêng, Văn phòng, Nhà xưởng, Thương mại */}
+                                {hasBuiltArea && (
+                                <div>
+                                    <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_built_area')}</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={formData.builtArea || ''}
+                                            onChange={e => setFormData({...formData, builtArea: e.target.value ? Number(e.target.value) : undefined})}
+                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8"
+                                            placeholder="0"
+                                        />
+                                        <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
+                                    </div>
+                                </div>
+                                )}
 
                                 {/* DESCRIPTION — hidden for project units */}
                                 {!isProjectUnit && (
