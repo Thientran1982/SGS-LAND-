@@ -1427,7 +1427,16 @@ class DatabaseApiClient {
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
 
+    // SALES: chỉ tài liệu + báo cáo (không cần công cụ marketing)
     const opsBasic = { id: 'ops', labelKey: 'menu.operations', items: [
+      { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
+      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
+    ]};
+
+    // MARKETING: thêm Campaigns + Sequences (email/zalo marketing tools)
+    const opsMarketing = { id: 'ops', labelKey: 'menu.operations', items: [
+      { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
+      { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
@@ -1469,9 +1478,12 @@ class DatabaseApiClient {
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
       return [core, ops, taskMgmt, sys];
-    } else if (role === UserRole.SALES || role === UserRole.MARKETING) {
+    } else if (role === UserRole.MARKETING) {
+      return [core, opsMarketing, taskMgmtBasic];
+    } else if (role === UserRole.SALES) {
       return [core, opsBasic, taskMgmtBasic];
     }
+    // VIEWER + bất kỳ role không xác định: chỉ core + task kanban cơ bản (read-only UX)
     return [core, taskMgmtBasic];
   }
 

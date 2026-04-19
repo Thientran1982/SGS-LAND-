@@ -202,6 +202,31 @@ async function startServer() {
       if (err) return res.status(403).json({ error: 'Forbidden' });
       (req as any).user = user;
       if (user?.tenantId) (req as any).tenantId = user.tenantId;
+
+      // ── VIEWER Guard ────────────────────────────────────────────────────────
+      // VIEWER chỉ được đọc (GET/HEAD/OPTIONS). Các method ghi bị chặn trừ
+      // whitelist: tự logout, đổi password bản thân, tracking UX, notifications.
+      if (user?.role === 'VIEWER') {
+        const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+        if (WRITE_METHODS.has(req.method)) {
+          const VIEWER_WRITE_WHITELIST = [
+            '/api/auth/logout',
+            '/api/auth/change-password',
+            '/api/activity/',
+            '/api/notifications/',
+          ];
+          const isAllowed = VIEWER_WRITE_WHITELIST.some((p) => req.path.startsWith(p));
+          if (!isAllowed) {
+            return res.status(403).json({
+              error: 'Tài khoản VIEWER chỉ có quyền đọc. Liên hệ Admin để nâng cấp quyền.',
+              code: 'VIEWER_WRITE_FORBIDDEN',
+              role: 'VIEWER',
+            });
+          }
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       next();
     });
   };
@@ -1915,7 +1940,7 @@ async function startServer() {
   app.delete('/api/bank-rates/:id', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     try {
       const user = (req as any).user;
-      if (!user || !['ADMIN', 'TEAM_LEAD', 'SUPER_ADMIN'].includes(user.role)) {
+      if (!user || !['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ Admin và Trưởng nhóm mới có thể xóa' }) as any;
       }
       const rateId = parseInt(req.params.id as string, 10);
@@ -1962,7 +1987,7 @@ async function startServer() {
 
   app.post('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+    if (!user || (user.role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể cập nhật SEO' }) as any;
     }
     const routeKey = req.params.key;
@@ -1993,7 +2018,7 @@ async function startServer() {
 
   app.delete('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+    if (!user || (user.role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xóa SEO override' }) as any;
     }
     try {
@@ -2008,7 +2033,7 @@ async function startServer() {
   // ── GEO / AI Search: Target Keywords + AI Visibility ──────────────────────
   const isAdminOrLead = (req: express.Request) => {
     const u = (req as any).user;
-    return !!u && (u.role === 'ADMIN' || u.role === 'SUPER_ADMIN' || u.role === 'TEAM_LEAD');
+    return !!u && (u.role === 'ADMIN' || u.role === 'TEAM_LEAD');
   };
   const seoTenantId = (req: express.Request): string =>
     (req as any).tenantId || (req as any).user?.tenantId || '00000000-0000-0000-0000-000000000001';
@@ -2461,7 +2486,7 @@ async function startServer() {
 
   app.get('/api/admin/price-history', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+    if (!user || (user.role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xem lịch sử giá' }) as any;
     }
     const locationKey = (req.query.location as string || '').slice(0, 120);
@@ -2473,7 +2498,7 @@ async function startServer() {
 
   app.get('/api/admin/price-calibration', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+    if (!user || (user.role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xem calibration' }) as any;
     }
     try {
@@ -2496,7 +2521,7 @@ async function startServer() {
 
   app.post('/api/admin/price-calibration/recalibrate', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+    if (!user || (user.role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể chạy hiệu chỉnh' }) as any;
     }
     // Run in background — returns immediately
