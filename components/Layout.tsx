@@ -364,7 +364,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
             const u = await db.getCurrentUser();
             setUser(u);
             if (u) {
-                db.getUserMenu(u.role).then(setMenuGroups);
+                db.getUserMenu(u.role, u.tenantId).then(setMenuGroups);
                 // Fetch notifications immediately when user confirmed
                 fetchNotifications();
                 // Then poll every 60s for badge accuracy even if socket drops
