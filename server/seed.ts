@@ -33,7 +33,7 @@ async function seed() {
     const defaultHash = await bcrypt.hash(seedPassword, SALT_ROUNDS);
 
     const users = [
-      { name: 'Admin SGS', email: 'admin@sgs.vn', hash: defaultHash, role: 'ADMIN', avatar: '' },
+      { name: 'Admin SGS', email: 'admin@sgs.vn', hash: defaultHash, role: 'SUPER_ADMIN', avatar: '' },
       { name: 'Nguyen Van Hieu', email: 'hieu@sgs.vn', hash: defaultHash, role: 'TEAM_LEAD', avatar: '' },
       { name: 'Tran Thi Mai', email: 'mai@sgs.vn', hash: defaultHash, role: 'SALES', avatar: '' },
       { name: 'Le Van Tuan', email: 'tuan@sgs.vn', hash: defaultHash, role: 'SALES', avatar: '' },

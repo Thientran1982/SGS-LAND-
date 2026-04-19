@@ -445,7 +445,6 @@ const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
 const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.SYSTEM,
     ROUTES.ADMIN_USERS,
-    ROUTES.VENDOR_MANAGEMENT,
     ROUTES.ENTERPRISE_SETTINGS,
     ROUTES.BILLING,
     ROUTES.DATA_PLATFORM,
@@ -455,7 +454,12 @@ const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.ERROR_MONITOR,
 ]);
 
-const ADMIN_ROLES = new Set(['ADMIN', 'TEAM_LEAD']);
+// Routes chỉ dành riêng cho SUPER_ADMIN (quản trị viên cấp cao nhất)
+const SUPER_ADMIN_ONLY_ROUTES: Set<string> = new Set([
+    ROUTES.VENDOR_MANAGEMENT,
+]);
+
+const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 
 // Routes mà chỉ vendor managers (ADMIN/TEAM_LEAD) + partners (cross-tenant access)
 // được vào. SALES/MARKETING/VIEWER không quản lý dự án — họ làm việc với leads/listings.
@@ -614,6 +618,12 @@ const AppShell: React.FC = () => {
 
         // RBAC: redirect non-admin roles away from admin-only routes
         if (authState === 'AUTH' && ADMIN_ONLY_ROUTES.has(route.base) && currentUser && !ADMIN_ROLES.has(currentUser.role)) {
+            navigate(ROUTES.DASHBOARD);
+            setAccessDenied(true);
+        }
+
+        // RBAC: SUPER_ADMIN exclusive routes (e.g. vendor management)
+        if (authState === 'AUTH' && SUPER_ADMIN_ONLY_ROUTES.has(route.base) && currentUser && currentUser.role !== 'SUPER_ADMIN') {
             navigate(ROUTES.DASHBOARD);
             setAccessDenied(true);
         }

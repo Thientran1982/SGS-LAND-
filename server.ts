@@ -2007,7 +2007,7 @@ async function startServer() {
   app.delete('/api/bank-rates/:id', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     try {
       const user = (req as any).user;
-      if (!user || !['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (!user || !['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ Admin và Trưởng nhóm mới có thể xóa' }) as any;
       }
       const rateId = parseInt(req.params.id as string, 10);
@@ -2054,7 +2054,7 @@ async function startServer() {
 
   app.post('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể cập nhật SEO' }) as any;
     }
     const routeKey = req.params.key;
@@ -2085,7 +2085,7 @@ async function startServer() {
 
   app.delete('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xóa SEO override' }) as any;
     }
     try {
@@ -2100,7 +2100,7 @@ async function startServer() {
   // ── GEO / AI Search: Target Keywords + AI Visibility ──────────────────────
   const isAdminOrLead = (req: express.Request) => {
     const u = (req as any).user;
-    return !!u && (u.role === 'ADMIN' || u.role === 'TEAM_LEAD');
+    return !!u && (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN' || u.role === 'TEAM_LEAD');
   };
   const seoTenantId = (req: express.Request): string =>
     (req as any).tenantId || (req as any).user?.tenantId || '00000000-0000-0000-0000-000000000001';
@@ -2501,12 +2501,12 @@ async function startServer() {
   });
 
   // ── Vendor Management API (Platform Owner / SGSLand ADMIN only) ─────────────
-  // Chỉ ADMIN trong host tenant (DEFAULT_TENANT_ID) được phép dùng các endpoint này.
+  // Chỉ SUPER_ADMIN trong host tenant (DEFAULT_TENANT_ID) được phép dùng các endpoint này.
 
   const requirePlatformAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const user = (req as any).user;
-    if (!user || user.role !== 'ADMIN' || user.tenantId !== DEFAULT_TENANT_ID) {
-      return res.status(403).json({ error: 'Platform admin only' });
+    if (!user || user.role !== 'SUPER_ADMIN' || user.tenantId !== DEFAULT_TENANT_ID) {
+      return res.status(403).json({ error: 'Super admin only' });
     }
     next();
   };
@@ -2753,7 +2753,7 @@ async function startServer() {
 
   app.get('/api/admin/price-history', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xem lịch sử giá' }) as any;
     }
     const locationKey = (req.query.location as string || '').slice(0, 120);
@@ -2765,7 +2765,7 @@ async function startServer() {
 
   app.get('/api/admin/price-calibration', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xem calibration' }) as any;
     }
     try {
@@ -2788,7 +2788,7 @@ async function startServer() {
 
   app.post('/api/admin/price-calibration/recalibrate', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
       return res.status(403).json({ error: 'Chỉ ADMIN mới có thể chạy hiệu chỉnh' }) as any;
     }
     // Run in background — returns immediately

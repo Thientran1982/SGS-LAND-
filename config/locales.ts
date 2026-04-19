@@ -106,6 +106,7 @@ export const DICTIONARY = {
 
         "error.unexpected": "Đã xảy ra lỗi không mong muốn.",
 
+        "role.SUPER_ADMIN": "Quản Trị Viên Cấp Cao",
         "role.ADMIN": "Quản Trị Viên",
         "role.SALES": "Chuyên Viên Kinh Doanh",
         "role.TEAM_LEAD": "Trưởng Nhóm",
@@ -2340,6 +2341,7 @@ export const DICTIONARY = {
 
         "error.unexpected": "An unexpected error has occurred.",
 
+        "role.SUPER_ADMIN": "Super Admin",
         "role.ADMIN": "Administrator",
         "role.SALES": "Sales Agent",
         "role.TEAM_LEAD": "Team Leader",

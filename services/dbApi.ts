@@ -1441,8 +1441,7 @@ class DatabaseApiClient {
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
 
-    const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: [
-      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
+    const sysBaseItems = [
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
       { id: 'ai-cost', labelKey: 'menu.admin-ai-cost', route: ROUTES.ADMIN_AI_COST, iconKey: ROUTES.ADMIN_AI_COST },
@@ -1454,6 +1453,11 @@ class DatabaseApiClient {
       { id: 'scraper', labelKey: 'menu.scraper', route: ROUTES.SCRAPER, iconKey: ROUTES.SCRAPER },
       { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
       { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
+    ];
+    const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: sysBaseItems };
+    const sysSuperAdmin = { id: 'sys', labelKey: 'menu.ecosystem', items: [
+      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
+      ...sysBaseItems,
     ]};
 
     const taskMgmt = { id: 'task', labelKey: 'menu.task_management', items: [
@@ -1476,6 +1480,9 @@ class DatabaseApiClient {
 
     if (role === 'PARTNER_ADMIN' || role === 'PARTNER_AGENT') {
       return [partnerCore];
+    }
+    if (role === UserRole.SUPER_ADMIN) {
+      return [core, ops, taskMgmt, sysSuperAdmin];
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
       return [core, ops, taskMgmt, sys];
