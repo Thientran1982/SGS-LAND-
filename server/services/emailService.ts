@@ -1,8 +1,10 @@
+import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { DEFAULT_TENANT_ID } from '../constants';
 import { isBrevoConfigured, brevoSendEmail } from './brevoService';
 import { logger } from '../middleware/logger';
+import { withRlsBypass } from '../db';
 
 function escapeHtml(str: string): string {
   return str
@@ -30,13 +32,155 @@ interface EmailOptions {
   subject: string;
   text?: string;
   html?: string;
+  /** Tên template để phân loại trong email_log (vd: 'verification', 'campaign'). */
+  template?: string;
+  /**
+   * Khoá dedupe: nếu cùng (tenant_id, dedupe_key) đã được gửi thành công trong
+   * `dedupeWindowMinutes` gần nhất → bỏ qua (trả về status='deduped').
+   * Mặc định: tự sinh từ {to + subject + template}.
+   */
+  dedupeKey?: string;
+  /** Cửa sổ dedupe (phút). Mặc định 10 phút. Đặt 0 để tắt dedupe. */
+  dedupeWindowMinutes?: number;
+  /**
+   * Bỏ qua kiểm tra quota — dùng cho email tối quan trọng (xác minh tài khoản,
+   * đặt lại mật khẩu, biên lai thanh toán) phải gửi bằng mọi giá.
+   */
+  skipQuota?: boolean;
+  /** Brevo tags (vd: ['campaign:abc', 'variant:A']) — chuyển thẳng xuống provider. */
+  tags?: string[];
 }
+
+type EmailStatus =
+  | 'sent'
+  | 'queued_no_smtp'
+  | 'failed'
+  | 'deduped'
+  | 'quota_exceeded';
 
 interface EmailResult {
   success: boolean;
-  status: 'sent' | 'queued_no_smtp' | 'failed';
+  status: EmailStatus;
   messageId?: string;
   error?: string;
+}
+
+// ── Quota & dedupe helpers ────────────────────────────────────────────────────
+
+// Hạn mức email/30 ngày theo gói cước (per tenant). Có thể override qua env.
+const PLAN_EMAIL_QUOTA: Record<string, number> = {
+  TRIAL: 100,
+  INDIVIDUAL: 500,
+  TEAM: 2000,
+  ENTERPRISE: 20000,
+};
+const DEFAULT_PLAN_QUOTA = 500;
+
+function makeDedupeKey(tenantId: string, opts: EmailOptions): string {
+  if (opts.dedupeKey) return opts.dedupeKey;
+  const raw = `${tenantId}|${opts.to.toLowerCase().trim()}|${opts.template || ''}|${opts.subject}`;
+  return crypto.createHash('sha1').update(raw).digest('hex');
+}
+
+/**
+ * Lấy quota email/30 ngày của tenant theo gói cước hiện tại trong subscriptions.
+ * Nếu tenant chưa có subscription, dùng mức TRIAL.
+ */
+async function getMonthlyEmailQuota(tenantId: string): Promise<number> {
+  try {
+    return await withRlsBypass(async (client) => {
+      const r = await client.query(
+        `SELECT plan_id FROM subscriptions
+          WHERE tenant_id = $1::uuid
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [tenantId],
+      );
+      const planId = (r.rows[0]?.plan_id || 'TRIAL').toString().toUpperCase();
+      return PLAN_EMAIL_QUOTA[planId] ?? DEFAULT_PLAN_QUOTA;
+    });
+  } catch (err: any) {
+    logger.warn(
+      `[EmailService] getMonthlyEmailQuota failed for tenant ${tenantId}, dùng default ${DEFAULT_PLAN_QUOTA}: ${err.message}`,
+    );
+    return DEFAULT_PLAN_QUOTA;
+  }
+}
+
+async function findRecentDedupe(
+  tenantId: string,
+  dedupeKey: string,
+  windowMinutes: number,
+): Promise<boolean> {
+  try {
+    return await withRlsBypass(async (client) => {
+      const r = await client.query(
+        `SELECT 1 FROM email_log
+          WHERE tenant_id = $1::uuid
+            AND dedupe_key = $2
+            AND status IN ('sent','queued_no_smtp')
+            AND sent_at > NOW() - ($3 || ' minutes')::interval
+          LIMIT 1`,
+        [tenantId, dedupeKey, String(windowMinutes)],
+      );
+      return (r.rowCount ?? 0) > 0;
+    });
+  } catch (err: any) {
+    logger.warn(`[EmailService] dedupe lookup failed: ${err.message}`);
+    return false; // fail-open: thà gửi lặp còn hơn nuốt mất email quan trọng
+  }
+}
+
+async function countSentLast30Days(tenantId: string): Promise<number> {
+  try {
+    return await withRlsBypass(async (client) => {
+      const r = await client.query(
+        `SELECT COUNT(*)::int AS n FROM email_log
+          WHERE tenant_id = $1::uuid
+            AND status IN ('sent','queued_no_smtp')
+            AND sent_at > NOW() - INTERVAL '30 days'`,
+        [tenantId],
+      );
+      return Number(r.rows[0]?.n || 0);
+    });
+  } catch {
+    return 0;
+  }
+}
+
+async function logEmail(args: {
+  tenantId: string;
+  recipient: string;
+  subject: string;
+  template?: string;
+  dedupeKey: string;
+  status: EmailStatus;
+  provider?: string;
+  messageId?: string;
+  error?: string;
+}): Promise<void> {
+  try {
+    await withRlsBypass(async (client) => {
+      await client.query(
+        `INSERT INTO email_log
+           (tenant_id, recipient, subject, template, dedupe_key, status, provider, message_id, error)
+         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          args.tenantId,
+          args.recipient,
+          args.subject,
+          args.template || null,
+          args.dedupeKey,
+          args.status,
+          args.provider || null,
+          args.messageId || null,
+          args.error || null,
+        ],
+      );
+    });
+  } catch (err: any) {
+    logger.warn(`[EmailService] logEmail failed (non-fatal): ${err.message}`);
+  }
 }
 
 // ── Shared email base layout ──────────────────────────────────────────────────
@@ -219,16 +363,27 @@ function buildFromAddress(smtp: SmtpConfig): string {
 
 // ── Core sendEmail ────────────────────────────────────────────────────────────
 
-async function sendEmail(tenantId: string, options: EmailOptions): Promise<EmailResult> {
+/**
+ * Lớp gửi thực sự — gọi Brevo (ưu tiên) rồi fallback SMTP.
+ * KHÔNG kiểm tra quota / dedupe — đó là việc của `sendEmail` ở wrapper bên ngoài.
+ */
+async function deliverEmail(
+  tenantId: string,
+  options: EmailOptions,
+): Promise<{ result: EmailResult; provider: string }> {
   if (isBrevoConfigured()) {
     const result = await brevoSendEmail({
       to: options.to,
       subject: options.subject,
       html: options.html,
       text: options.text,
+      tags: options.tags,
     });
     if (result.success) {
-      return { success: true, status: 'sent', messageId: result.messageId };
+      return {
+        result: { success: true, status: 'sent', messageId: result.messageId },
+        provider: 'brevo',
+      };
     }
     console.warn(`[EmailService] Brevo failed (${result.error}), attempting SMTP fallback.`);
   }
@@ -236,8 +391,13 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
   const smtp = await getSmtpConfig(tenantId);
 
   if (!smtp.enabled || !smtp.host || !smtp.user) {
-    logger.warn(`[EmailService] No email provider configured for tenant ${tenantId}. Email queued (not sent). To: ${options.to}, Subject: ${options.subject}`);
-    return { success: true, status: 'queued_no_smtp', messageId: `queued-${Date.now()}` };
+    logger.warn(
+      `[EmailService] No email provider configured for tenant ${tenantId}. Email queued (not sent). To: ${options.to}, Subject: ${options.subject}`,
+    );
+    return {
+      result: { success: true, status: 'queued_no_smtp', messageId: `queued-${Date.now()}` },
+      provider: 'none',
+    };
   }
 
   try {
@@ -251,11 +411,94 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
       html: options.html,
     });
     logger.info(`[EmailService] Email sent via SMTP: ${info.messageId}`);
-    return { success: true, status: 'sent', messageId: info.messageId };
+    return {
+      result: { success: true, status: 'sent', messageId: info.messageId },
+      provider: 'smtp',
+    };
   } catch (error: any) {
     console.error(`[EmailService] SMTP send failed:`, error.message);
-    return { success: false, status: 'failed', error: error.message };
+    return {
+      result: { success: false, status: 'failed', error: error.message },
+      provider: 'smtp',
+    };
   }
+}
+
+/**
+ * Entry point chính cho mọi email gửi đi:
+ *   1) Dedupe — bỏ qua nếu cùng (tenant, dedupeKey) đã được gửi trong cửa sổ X phút.
+ *   2) Quota — chặn nếu tenant đã vượt hạn mức 30 ngày của gói cước
+ *      (trừ khi caller đặt `skipQuota: true` cho email tối quan trọng).
+ *   3) Gọi `deliverEmail` (Brevo → fallback SMTP).
+ *   4) Ghi `email_log` để phục vụ audit, dedupe lần sau, và đếm quota.
+ */
+async function sendEmail(tenantId: string, options: EmailOptions): Promise<EmailResult> {
+  const dedupeKey = makeDedupeKey(tenantId, options);
+  const dedupeWindow = options.dedupeWindowMinutes ?? 10;
+
+  // 1) Dedupe
+  if (dedupeWindow > 0) {
+    const isDup = await findRecentDedupe(tenantId, dedupeKey, dedupeWindow);
+    if (isDup) {
+      logger.info(
+        `[EmailService] Dedupe hit — bỏ qua gửi lại "${options.subject}" cho ${options.to} (tenant=${tenantId})`,
+      );
+      await logEmail({
+        tenantId,
+        recipient: options.to,
+        subject: options.subject,
+        template: options.template,
+        dedupeKey,
+        status: 'deduped',
+      });
+      return { success: true, status: 'deduped' };
+    }
+  }
+
+  // 2) Quota
+  if (!options.skipQuota) {
+    const [quota, sent] = await Promise.all([
+      getMonthlyEmailQuota(tenantId),
+      countSentLast30Days(tenantId),
+    ]);
+    if (sent >= quota) {
+      logger.warn(
+        `[EmailService] Quota vượt — tenant ${tenantId} đã gửi ${sent}/${quota} email trong 30 ngày. Bỏ qua "${options.subject}" cho ${options.to}.`,
+      );
+      await logEmail({
+        tenantId,
+        recipient: options.to,
+        subject: options.subject,
+        template: options.template,
+        dedupeKey,
+        status: 'quota_exceeded',
+        error: `Quota ${sent}/${quota} per 30 days`,
+      });
+      return {
+        success: false,
+        status: 'quota_exceeded',
+        error: `Email quota exceeded (${sent}/${quota} in last 30 days)`,
+      };
+    }
+  }
+
+  // 3) Gửi
+  const { result, provider } = await deliverEmail(tenantId, options);
+
+  // 4) Log
+  await logEmail({
+    tenantId,
+    recipient: options.to,
+    subject: options.subject,
+    template: options.template,
+    dedupeKey,
+    status: result.status,
+    provider,
+    messageId: result.messageId,
+    error: result.error,
+  });
+
+  return result;
 }
 
 async function testSmtpConnection(tenantId: string): Promise<EmailResult> {
@@ -309,6 +552,10 @@ async function sendVerificationEmail(tenantId: string, to: string, userName: str
     subject: 'SGS LAND – Xác minh địa chỉ email của bạn',
     html: emailBase(content, 'Email này được gửi tự động, vui lòng không trả lời.'),
     text: `Xin chào ${userName},\n\nXác minh email của bạn tại:\n${verifyUrl}\n\nLink hết hạn sau 24 giờ.\n\n— SGS LAND`,
+    template: 'verification',
+    skipQuota: true,
+    // Mỗi link verify khác nhau → ép dedupe theo URL để cho phép resend hợp lệ
+    dedupeKey: `verification:${to.toLowerCase()}:${verifyUrl}`,
   });
 }
 
@@ -346,6 +593,9 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
     subject: 'SGS LAND – Yêu cầu đặt lại mật khẩu',
     html: emailBase(content, 'Email này được gửi tự động, vui lòng không trả lời.'),
     text: `Xin chào ${userName || to.split('@')[0]},\n\nĐặt lại mật khẩu tại:\n${resetUrl}\n\nLink hết hạn sau 1 giờ. Nếu không phải bạn yêu cầu, bỏ qua email này.\n\n— SGS LAND`,
+    template: 'password_reset',
+    skipQuota: true,
+    dedupeKey: `password_reset:${to.toLowerCase()}:${resetUrl}`,
   });
 }
 
@@ -448,6 +698,9 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
     subject: `SGS LAND – Bạn được mời với vai trò ${roleDisplay}`,
     html: emailBase(content, 'Email này được gửi tự động, vui lòng không trả lời.'),
     text: `Xin chào ${userName}!\n\nBạn được mời tham gia SGS LAND với vai trò ${roleDisplay}.\n\nKích hoạt tài khoản tại:\n${loginUrl}\n\n— SGS LAND`,
+    template: 'invite',
+    skipQuota: true,
+    dedupeKey: `invite:${to.toLowerCase()}:${loginUrl}`,
   });
 }
 
@@ -1067,6 +1320,9 @@ async function sendBillingReceiptEmail(
     subject: t.subject(args.planName),
     html: emailBase(content, t.autoFooter),
     text: `${t.textIntro}\n\n${t.labelPlan}: ${args.planName}\n${t.labelAmount}: ${formatMoney(args.amount, args.currency)}\n${t.labelDate}: ${formatPaidAt(args.paidAt)}\n${t.labelSession}: ${args.sessionId}\n\n${t.cta}: ${args.billingUrl}\n\n— SGS LAND`,
+    template: 'billing_receipt',
+    skipQuota: true,
+    dedupeKey: `billing_receipt:${args.sessionId}`,
   });
 }
 
@@ -1141,6 +1397,9 @@ async function sendBillingAdminAlertEmail(
     subject: t.subject(args.payerEmail),
     html: emailBase(content, t.footerNote),
     text: `${t.textIntro}\n\n${t.textPayer}: ${args.payerName ? `${args.payerName} <${args.payerEmail}>` : args.payerEmail}\n${t.textPlan}: ${args.planName}\n${t.textAmount}: ${formatMoney(args.amount, args.currency)}\n${t.textDate}: ${formatPaidAt(args.paidAt)}\n${t.textSession}: ${args.sessionId}\n\n${t.textCta}: ${args.billingUrl}\n\n— SGS LAND`,
+    template: 'billing_admin_alert',
+    skipQuota: true,
+    dedupeKey: `billing_admin_alert:${args.sessionId}:${to.toLowerCase()}`,
   });
 }
 
