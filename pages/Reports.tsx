@@ -542,7 +542,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const canUpdateCosts = currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD';
+    const canUpdateCosts = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '');
 
     const handleUpdate = async () => {
         if (!editingCost) return;

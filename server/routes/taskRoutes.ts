@@ -321,7 +321,7 @@ export function createTaskRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const tenantId = user.tenantId;
 
-      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Chỉ admin mới có thể xóa task hàng loạt' });
       }
 
@@ -446,7 +446,7 @@ export function createTaskRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const tenantId = user.tenantId;
 
-      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Chỉ admin mới có thể xóa task' });
       }
 
@@ -484,7 +484,7 @@ export function createTaskRoutes(authenticateToken: any) {
         const allowed = VALID_TRANSITIONS[currentStatus] || [];
 
         if (!allowed.includes(status)) {
-          if (status === 'done' && currentStatus === 'done' && ['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+          if (status === 'done' && currentStatus === 'done' && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
             // Admin can re-modify done tasks
           } else {
             throw Object.assign(new Error('INVALID_TRANSITION'), { code: 'INVALID_TRANSITION', from: currentStatus, to: status, allowed });

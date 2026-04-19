@@ -648,7 +648,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         const checkAuth = async () => {
             const user = await db.getCurrentUser();
             setIsAuth(!!user);
-            const isManager = !!user && (user.role === 'ADMIN' || user.role === 'TEAM_LEAD');
+            const isManager = !!user && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role);
             setCanManageUnits(isManager);
             if (user) {
                 setCurrentUserId(user.id);

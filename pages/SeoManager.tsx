@@ -1373,7 +1373,7 @@ export const SeoManager: React.FC = () => {
             db.getCurrentUser().catch(() => null),
             seoApi.getAll().catch((): Record<string, SeoOverride> | null => null),
         ]).then(([u, serverOverrides]) => {
-            setIsAdmin(u?.role === UserRole.ADMIN || u?.role === UserRole.TEAM_LEAD);
+            setIsAdmin(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(u?.role ?? ''));
 
             const local = getSEOOverrides();
             const merged: Record<string, { title: string; description: string }> = { ...local };

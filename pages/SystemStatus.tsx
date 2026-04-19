@@ -211,7 +211,7 @@ export const SystemStatus: React.FC = () => {
     useEffect(() => {
         const init = async () => {
             const user = await db.getCurrentUser();
-            setIsAdmin(user?.role === UserRole.ADMIN);
+            setIsAdmin(['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? ''));
             
             const h = await systemService.checkHealth();
             setHealth(h);

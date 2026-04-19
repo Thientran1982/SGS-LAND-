@@ -40,7 +40,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Bạn không có quyền thực hiện thao tác này' });
       }
 
@@ -89,7 +89,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể tạo người dùng' });
       }
 
@@ -126,7 +126,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.post('/invite', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ quản trị viên hoặc trưởng nhóm mới có thể mời người dùng' });
       }
 
@@ -177,16 +177,16 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
+      if (user.id !== String(req.params.id) && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Bạn chỉ có thể cập nhật hồ sơ của chính mình hoặc phải là quản trị viên' });
       }
 
-      // BUG FIX: Prevent privilege escalation — only ADMIN can change roles
-      if (req.body.role !== undefined && user.role !== 'ADMIN') {
+      // BUG FIX: Prevent privilege escalation — only ADMIN/SUPER_ADMIN can change roles
+      if (req.body.role !== undefined && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể thay đổi vai trò người dùng' });
       }
       // Validate role value is from allowed enum
-      const VALID_ROLES = ['ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER', 'PARTNER_ADMIN', 'PARTNER_AGENT'];
+      const VALID_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER', 'PARTNER_ADMIN', 'PARTNER_AGENT'];
       if (req.body.role !== undefined && !VALID_ROLES.includes(req.body.role)) {
         return res.status(400).json({ error: `Vai trò không hợp lệ. Các vai trò cho phép: ${VALID_ROLES.join(', ')}` });
       }
@@ -219,7 +219,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.post('/:id/resend-invite', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ quản trị viên hoặc trưởng nhóm mới có thể gửi lại lời mời' });
       }
 
@@ -268,7 +268,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.post('/:id/email', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
+      if (user.id !== String(req.params.id) && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ có thể thay đổi email của chính mình hoặc phải là admin' });
       }
 
@@ -346,7 +346,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.post('/:id/password', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
+      if (user.id !== String(req.params.id) && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Bạn chỉ có thể đổi mật khẩu của chính mình hoặc phải là quản trị viên' });
       }
 
@@ -379,7 +379,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể xóa người dùng' });
       }
 
@@ -414,7 +414,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
       const targetId = req.params.id;
 
       // Users can view their own workload; admins/team leads can view anyone's
-      if (user.id !== targetId && !['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (user.id !== targetId && !['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Không có quyền xem thông tin này' });
       }
 

@@ -838,7 +838,7 @@ export const Inbox: React.FC = () => {
                                     </div>
                                     
                                     {/* Hover Delete Button */}
-                                    {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
+                                    {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '')) && (
                                         <button 
                                             onClick={(e) => requestDelete(e, thread.lead.id)}
                                             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[var(--bg-surface)] shadow-sm border border-[var(--glass-border)] rounded-full text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-200 opacity-0 group-hover:opacity-100 transition-all z-10"
@@ -885,7 +885,7 @@ export const Inbox: React.FC = () => {
                         
                         <div className="flex items-center gap-1 shrink-0">
                             {/* Assign Dropdown */}
-                            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
+                            {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '')) && (
                                 <div className="relative" ref={assignDropdownRef}>
                                     <button
                                         onClick={() => setIsAssignOpen(!isAssignOpen)}
@@ -945,7 +945,7 @@ export const Inbox: React.FC = () => {
                             </button>
 
                             {/* Delete */}
-                            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
+                            {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '')) && (
                                 <button
                                     onClick={(e) => requestDelete(e, selectedThread.lead.id)}
                                     aria-label={t('inbox.menu_delete')}

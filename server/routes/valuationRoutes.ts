@@ -745,7 +745,7 @@ export function createValuationRoutes(
   // ──────────────────────────────────────────────────────────────────────────
   router.post('/market-index/refresh', authenticateToken, aiRateLimit, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+    if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
       return res.status(403).json({ error: 'Only admins can force refresh market data' });
     }
 
@@ -1005,7 +1005,7 @@ export function createValuationRoutes(
   // ──────────────────────────────────────────────────────────────────────────
   router.get('/cache-status', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN') {
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
       return res.status(403).json({ error: 'Admin only' });
     }
     const snapshot = marketDataService.getCacheSnapshot();
@@ -1028,7 +1028,7 @@ export function createValuationRoutes(
   // ──────────────────────────────────────────────────────────────────────────
   router.get('/admin/cost-report', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN') {
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
       return res.status(403).json({ error: 'Admin only' });
     }
     try {
@@ -1056,7 +1056,7 @@ export function createValuationRoutes(
 
   router.get('/admin/cost-report.csv', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN') {
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
       return res.status(403).json({ error: 'Admin only' });
     }
     try {
@@ -1079,7 +1079,7 @@ export function createValuationRoutes(
 
   router.get('/admin/cost-alert-config', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Admin only' });
     try {
       const cfg = await getCostAlertConfig(user.tenantId);
       return res.json(cfg);
@@ -1090,7 +1090,7 @@ export function createValuationRoutes(
 
   router.put('/admin/cost-alert-config', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Admin only' });
     try {
       const { thresholdUsd, alertEmail, warnPercent, hardCapEnabled } = req.body || {};
       const cfg = await setCostAlertConfig(user.tenantId, {
@@ -1110,7 +1110,7 @@ export function createValuationRoutes(
   // ──────────────────────────────────────────────────────────────────────────
   router.get('/admin/plan-quotas', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Admin only' });
     try {
       const period = (req.query.month as string) || currentPeriod();
       if (!/^\d{4}-\d{2}$/.test(period)) {
@@ -1125,7 +1125,7 @@ export function createValuationRoutes(
 
   router.put('/admin/plan-quotas', authenticateToken, async (req: Request, res: Response) => {
     const user = (req as any).user;
-    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Admin only' });
     try {
       const { planId, monthlyCostLimitUsd } = req.body || {};
       if (!planId || typeof planId !== 'string') {

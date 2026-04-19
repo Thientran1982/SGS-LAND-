@@ -19,7 +19,7 @@ export function createRoutingRuleRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can create routing rules' });
       }
 
@@ -41,7 +41,7 @@ export function createRoutingRuleRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can update routing rules' });
       }
 
@@ -57,7 +57,7 @@ export function createRoutingRuleRoutes(authenticateToken: any) {
   router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can delete routing rules' });
       }
 

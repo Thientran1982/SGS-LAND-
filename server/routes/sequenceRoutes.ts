@@ -20,7 +20,7 @@ export function createSequenceRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can create sequences' });
       }
 
@@ -42,7 +42,7 @@ export function createSequenceRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can update sequences' });
       }
 
@@ -58,7 +58,7 @@ export function createSequenceRoutes(authenticateToken: any) {
   router.post('/:id/execute', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can execute sequences' });
       }
       const sequence = await sequenceRepository.findById(user.tenantId, req.params.id as string);
@@ -107,7 +107,7 @@ export function createSequenceRoutes(authenticateToken: any) {
   router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can delete sequences' });
       }
 

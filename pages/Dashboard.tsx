@@ -911,14 +911,14 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* TIER 4: Geolocation Table (Admin & Team Lead Only) */}
-                {(analytics.user?.role === 'ADMIN' || analytics.user?.role === 'TEAM_LEAD') && (
+                {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
                     <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                         <GeoLocationTable t={t} />
                     </div>
                 )}
 
                 {/* TIER 4: Realtime Traffic (Admin & Team Lead Only) */}
-                {(analytics.user?.role === 'ADMIN' || analytics.user?.role === 'TEAM_LEAD') && (
+                {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
                     <div className="md:col-span-2 lg:col-span-2 h-[400px]">
                         <RealtimeTrafficWidget t={t} theme={chartTheme} />
                     </div>

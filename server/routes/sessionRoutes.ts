@@ -49,7 +49,7 @@ export function createTemplateRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can create templates' });
       }
 
@@ -71,7 +71,7 @@ export function createTemplateRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can update templates' });
       }
 
@@ -87,7 +87,7 @@ export function createTemplateRoutes(authenticateToken: any) {
   router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can delete templates' });
       }
 

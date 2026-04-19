@@ -1098,7 +1098,7 @@ export function Projects() {
     const [deleting, setDeleting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
-    const isAdmin = user?.role === UserRole.ADMIN || user?.role === 'ADMIN';
+    const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '');
     const isPartner = user?.role === 'PARTNER_ADMIN' || user?.role === 'PARTNER_AGENT';
 
     const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {

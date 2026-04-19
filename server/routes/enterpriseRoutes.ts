@@ -16,7 +16,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.get('/config', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can view enterprise config' });
       }
       const config = await enterpriseConfigRepository.getConfig(user.tenantId);
@@ -30,7 +30,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.put('/config', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can update enterprise config' });
       }
       const updated = await enterpriseConfigRepository.upsertConfig(user.tenantId, req.body);
@@ -100,7 +100,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.put('/theme', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can update theme config' });
       }
       const validated = mergeThemeDefaults(req.body);
@@ -117,7 +117,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.delete('/theme', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can reset theme config' });
       }
       await enterpriseConfigRepository.saveThemeConfig(user.tenantId, {});
@@ -136,7 +136,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.get('/audit-logs', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can view audit logs' });
       }
 
@@ -163,7 +163,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/verify-sso', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can verify SSO configuration' });
       }
 
@@ -225,7 +225,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/test-smtp', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can test SMTP' });
       }
       const result = await emailService.testSmtpConnection(user.tenantId);
@@ -243,7 +243,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/send-test-email', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can send test emails' });
       }
       const { to } = req.body;
@@ -276,7 +276,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.get('/zalo/status', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Forbidden' });
       }
       const baseUrl = process.env.PUBLIC_URL
@@ -299,7 +299,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/zalo/connect', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can connect Zalo OA' });
       }
 
@@ -351,7 +351,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.patch('/zalo/token', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can update Zalo token' });
       }
 
@@ -397,7 +397,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/zalo/disconnect', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can disconnect Zalo OA' });
       }
 
@@ -432,7 +432,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.get('/facebook/status', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Forbidden' });
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
       const baseUrl = process.env.PUBLIC_URL
         || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get('host')}`);
       res.json({
@@ -452,7 +452,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/facebook/connect', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can connect Facebook Pages' });
       }
 
@@ -505,7 +505,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.delete('/facebook/disconnect/:pageId', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can disconnect Facebook Pages' });
       }
 
@@ -539,7 +539,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/domains', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can manage domains' });
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Only admins can manage domains' });
 
       const { domain } = req.body;
       if (!domain || typeof domain !== 'string') return res.status(400).json({ error: 'Domain name is required' });
@@ -586,7 +586,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.delete('/domains/:domain', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can manage domains' });
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Only admins can manage domains' });
 
       const domainName = decodeURIComponent(String(req.params.domain));
       const config = await enterpriseConfigRepository.getConfig(user.tenantId);
@@ -617,7 +617,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   router.post('/domains/:domain/verify', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can verify domains' });
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) return res.status(403).json({ error: 'Only admins can verify domains' });
 
       const domainName = decodeURIComponent(String(req.params.domain));
       const config = await enterpriseConfigRepository.getConfig(user.tenantId);

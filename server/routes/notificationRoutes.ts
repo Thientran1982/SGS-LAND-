@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { validateUUIDParam } from '../middleware/validation';
 
-const ADMIN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 
 export function createNotificationRoutes(authenticateToken: any) {
   const router = Router();
