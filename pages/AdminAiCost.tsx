@@ -134,7 +134,7 @@ const AdminAiCost: React.FC = () => {
     try {
       const user = await db.getCurrentUser();
       setMe(user);
-      if (user?.role !== UserRole.ADMIN) {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '')) {
         setLoading(false);
         return;
       }
@@ -211,7 +211,7 @@ const AdminAiCost: React.FC = () => {
   if (loading && !data) {
     return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">Đang tải báo cáo…</div>;
   }
-  if (me && me.role !== UserRole.ADMIN) {
+  if (me && !['SUPER_ADMIN', 'ADMIN'].includes(me.role)) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
         <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Chỉ dành cho Admin</h2>

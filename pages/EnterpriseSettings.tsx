@@ -1133,7 +1133,7 @@ export const EnterpriseSettings: React.FC = () => {
             const me = await db.getCurrentUser();
             setCurrentUser(me);
             
-            if (me?.role !== UserRole.ADMIN) {
+            if (!['SUPER_ADMIN', 'ADMIN'].includes(me?.role ?? '')) {
                 setLoading(false);
                 return;
             }
@@ -1150,7 +1150,7 @@ export const EnterpriseSettings: React.FC = () => {
 
     useEffect(() => { loadConfig(); }, [loadConfig]);
 
-    if (!loading && currentUser && currentUser.role !== UserRole.ADMIN) {
+    if (!loading && currentUser && !['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role)) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-enter">
                 <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
