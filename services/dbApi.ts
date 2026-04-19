@@ -1404,17 +1404,26 @@ class DatabaseApiClient {
     }
   }
 
-  async getUserMenu(role?: string) {
-    const core = { id: 'core', labelKey: 'menu.core', items: [
+  async getUserMenu(role?: string, tenantId?: string) {
+    // Vendor tenants (không phải host) không nên thấy public marketplace trong sidebar —
+    // họ chỉ nên quản lý sản phẩm của chính mình qua ROUTES.INVENTORY.
+    const isHostTenant = !tenantId || tenantId === DEFAULT_TENANT_ID;
+
+    const coreItems: any[] = [
       { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
       { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
-      { id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH },
+    ];
+    if (isHostTenant) {
+      coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });
+    }
+    coreItems.push(
       { id: 'leads', labelKey: 'menu.leads', route: ROUTES.LEADS, iconKey: ROUTES.LEADS },
       { id: 'contracts', labelKey: 'menu.contracts', route: ROUTES.CONTRACTS, iconKey: ROUTES.CONTRACTS },
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
       { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
       { id: 'fav', labelKey: 'menu.favorites', route: ROUTES.FAVORITES, iconKey: ROUTES.FAVORITES }
-    ]};
+    );
+    const core = { id: 'core', labelKey: 'menu.core', items: coreItems };
 
     const ops = { id: 'ops', labelKey: 'menu.operations', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
