@@ -131,6 +131,18 @@ async function geocodeVN(location: string): Promise<{ lat: number; lng: number }
   return null;
 }
 
+/**
+ * True only when coordinates represent a real Vietnamese location.
+ * Rejects null, zero, and near-zero values (0.000001, 0.000001) that end up
+ * at the Gulf of Guinea / Africa — a common geocoding failure placeholder.
+ * Valid VN coordinates: lat 8–24, lng 102–110.
+ */
+function hasValidCoords(c: any): boolean {
+  if (c?.lat == null || c?.lng == null) return false;
+  if (Math.abs(c.lat) < 1 && Math.abs(c.lng) < 1) return false;
+  return true;
+}
+
 /** Fire-and-forget: geocode and patch coordinates in DB without blocking the response */
 export function scheduleGeocode(tenantId: string, listingId: string, location: string) {
   (async () => {
@@ -267,7 +279,7 @@ export function createListingRoutes(authenticateToken: any) {
         res.json(redactSensitiveFields(listing));
         listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {});
         const pl = listing as any;
-        const pcMissing = !pl.coordinates?.lat || !pl.coordinates?.lng || (pl.coordinates.lat === 0 && pl.coordinates.lng === 0);
+        const pcMissing = !hasValidCoords(pl.coordinates);
         if (pcMissing && pl.location) scheduleGeocode(user.tenantId, String(req.params.id), pl.location);
         return;
       }
@@ -293,10 +305,7 @@ export function createListingRoutes(authenticateToken: any) {
       // Auto-geocode: nếu listing thiếu coordinates (ví dụ PROJECT vừa tạo), tự bổ sung để
       // lần load tiếp theo có tọa độ thật trên bản đồ.
       const anyListing = listing as any;
-      const missingCoords =
-        !anyListing.coordinates?.lat ||
-        !anyListing.coordinates?.lng ||
-        (anyListing.coordinates.lat === 0 && anyListing.coordinates.lng === 0);
+      const missingCoords = !hasValidCoords(anyListing.coordinates);
       if (missingCoords && anyListing.location) {
         scheduleGeocode(user.tenantId, String(req.params.id), anyListing.location);
       }
@@ -341,9 +350,7 @@ export function createListingRoutes(authenticateToken: any) {
       });
 
       // If no coordinates were provided, geocode the address in the background
-      const coords = req.body.coordinates;
-      const hasCoords = coords?.lat != null && coords?.lng != null && (coords.lat !== 0 || coords.lng !== 0);
-      if (!hasCoords && location) {
+      if (!hasValidCoords(req.body.coordinates) && location) {
         scheduleGeocode(user.tenantId, listing.id, location);
       }
 
@@ -470,11 +477,8 @@ export function createListingRoutes(authenticateToken: any) {
         ipAddress: req.ip,
       });
 
-      // If coordinates are missing or zeroed after update, geocode the address in the background
-      const updatedCoords = listing.coordinates as any;
-      const hasUpdatedCoords = updatedCoords?.lat != null && updatedCoords?.lng != null &&
-        (updatedCoords.lat !== 0 || updatedCoords.lng !== 0);
-      if (!hasUpdatedCoords && listing.location) {
+      // If coordinates are missing or invalid after update, geocode the address in the background
+      if (!hasValidCoords(listing.coordinates) && listing.location) {
         scheduleGeocode(user.tenantId, String(req.params.id), listing.location);
       }
 
