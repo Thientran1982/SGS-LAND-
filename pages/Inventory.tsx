@@ -723,9 +723,9 @@ export const Inventory: React.FC = () => {
     // Handlers
     const canViewInternalInfo = useMemo(() => {
         if (!currentUser) return false;
-        // Allow ADMIN, TEAM_LEAD, and SALES to see the columns. 
+        // Allow SUPER_ADMIN, ADMIN, TEAM_LEAD, and SALES to see the columns.
         // Data masking is handled at the DB level (mockDb.ts) for SALES.
-        return [UserRole.ADMIN, UserRole.TEAM_LEAD, UserRole.SALES].includes(currentUser.role);
+        return [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.TEAM_LEAD, UserRole.SALES].includes(currentUser.role);
     }, [currentUser]);
 
     const handleToggleFavorite = async (id: string) => {
