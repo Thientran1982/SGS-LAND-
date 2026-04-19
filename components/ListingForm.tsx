@@ -371,6 +371,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     // --- DYNAMIC FIELDS LOGIC ---
     const isProject = formData.type === PropertyType.PROJECT;
     const isLand = [PropertyType.LAND, PropertyType.FACTORY, PropertyType.COMMERCIAL, PropertyType.TOWNHOUSE, PropertyType.VILLA].includes(formData.type as PropertyType);
+    const isApartmentLike = [PropertyType.APARTMENT, PropertyType.PENTHOUSE].includes(formData.type as PropertyType);
     const BUILT_AREA_TYPES = [PropertyType.TOWNHOUSE, PropertyType.VILLA, PropertyType.HOUSE, PropertyType.OFFICE, PropertyType.FACTORY, PropertyType.COMMERCIAL];
     const hasBuiltArea = BUILT_AREA_TYPES.includes(formData.type as PropertyType);
 
@@ -441,22 +442,81 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             );
         }
 
-        // Default: Apartment
+        // Apartment / Penthouse — full 9-field 3×3 grid
+        if (isApartmentLike) {
+            return (
+                <div className="grid grid-cols-3 gap-4">
+                    {/* Row 1: PN | WC | Toà */}
+                    <div>
+                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bed')}</label>
+                        <input type="number" min={0} value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bath')}</label>
+                        <input type="number" min={0} value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_tower')}</label>
+                        <input type="text" value={(formData.attributes?.tower as string) || ''} onChange={e => updateAttribute('tower', e.target.value)} placeholder="A, B, T1..." className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    </div>
+                    {/* Row 2: Tầng | Hướng | View */}
+                    <div>
+                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_floor')}</label>
+                        <input type="number" min={1} value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    </div>
+                    <div>
+                        <Dropdown
+                            label={t('inventory.label_direction')}
+                            value={(formData.attributes?.direction as string) || ''}
+                            onChange={v => updateAttribute('direction', v)}
+                            options={directionOptions}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_view')}</label>
+                        <input type="text" value={(formData.attributes?.view as string) || ''} onChange={e => updateAttribute('view', e.target.value)} placeholder="Sông, Hồ bơi, Nội khu..." className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    </div>
+                    {/* Row 3: DT thông thủy | Nội thất | Pháp lý */}
+                    <div>
+                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_clear_area')} (m²)</label>
+                        <input type="number" min={0} value={(formData.attributes?.clearArea as number) || ''} onChange={e => updateAttribute('clearArea', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    </div>
+                    <div>
+                        <Dropdown
+                            label={t('inventory.label_furniture')}
+                            value={(formData.attributes?.furniture as string) || 'BASIC'}
+                            onChange={v => updateAttribute('furniture', v)}
+                            options={furnitureOptions}
+                        />
+                    </div>
+                    <div>
+                        <Dropdown
+                            label={t('inventory.label_legal')}
+                            value={(formData.attributes?.legalStatus as string) || ''}
+                            onChange={v => updateAttribute('legalStatus', v)}
+                            options={legalOptions}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        // Default: House / Office (bedrooms, bathrooms, floor, direction, furniture, legal)
         return (
             <div className="grid grid-cols-3 gap-4">
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bed')}</label>
-                    <input type="number" value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" min={0} value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
                 </div>
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bath')}</label>
-                    <input type="number" value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" min={0} value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
                 </div>
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_floors')}</label>
-                    <input type="number" value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" min={1} value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
                 </div>
-                <div className="col-span-1">
+                <div>
                     <Dropdown
                         label={t('inventory.label_direction')}
                         value={(formData.attributes?.direction as string) || ''}
@@ -464,7 +524,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                         options={directionOptions}
                     />
                 </div>
-                <div className="col-span-1">
+                <div>
                     <Dropdown
                         label={t('inventory.label_furniture')}
                         value={(formData.attributes?.furniture as string) || 'BASIC'}
@@ -472,7 +532,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                         options={furnitureOptions}
                     />
                 </div>
-                <div className="col-span-1">
+                <div>
                     <Dropdown
                         label={t('inventory.label_legal')}
                         value={(formData.attributes?.legalStatus as string) || ''}

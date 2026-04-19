@@ -681,7 +681,17 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                                     {l.code}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-2.5 font-semibold text-[var(--text-primary)] text-sm max-w-[200px] truncate">{l.title}</td>
+                                            <td className="px-4 py-2.5 max-w-[220px]">
+                                                <span className="font-semibold text-[var(--text-primary)] text-sm block truncate">{l.title}</span>
+                                                {(l.type === 'Apartment' || l.type === 'Penthouse') && (l.attributes?.tower || l.attributes?.floor) && (
+                                                    <span className="text-xs text-[var(--text-tertiary)] mt-0.5 block">
+                                                        {[
+                                                            l.attributes?.tower && `${t('inventory.label_tower')} ${l.attributes.tower}`,
+                                                            l.attributes?.floor && `${t('inventory.label_floor')} ${l.attributes.floor}`
+                                                        ].filter(Boolean).join(' · ')}
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-2.5">
                                                 <span className="text-xs font-semibold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)] px-2 py-0.5 rounded whitespace-nowrap">
                                                     {t(`property.${l.type?.toUpperCase()}`) || l.type}
