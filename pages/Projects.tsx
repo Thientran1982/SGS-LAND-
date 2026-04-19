@@ -5,6 +5,12 @@ import { Project, ProjectAccess, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ListingForm } from '../components/ListingForm';
+import {
+    exportListingsToExcel,
+    parseListingsFromExcel,
+    downloadImportTemplate,
+    type ImportResult,
+} from '../utils/listingExcel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icons
@@ -21,6 +27,9 @@ const IC = {
     HOME: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
     LOCK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>,
     CHECK_ALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>,
+    DOWNLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>,
+    UPLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>,
+    TEMPLATE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -397,6 +406,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
     const [editTarget, setEditTarget] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
+    // Import / Export
+    const importFileRef = useRef<HTMLInputElement | null>(null);
+    const [importing, setImporting] = useState(false);
+    const [importPreview, setImportPreview] = useState<ImportResult | null>(null);
+    const [importUploading, setImportUploading] = useState(false);
+    const [importDone, setImportDone] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -425,6 +440,50 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
         if (stats) setStats((s: any) => ({ ...s, availableCount: (s.availableCount || 0) + 1, totalCount: (s.totalCount || 0) + 1 }));
         setShowCreate(false);
         onListingCreated?.();
+    };
+
+    // ── Export ────────────────────────────────────────────────────────────────
+    const handleExport = () => {
+        exportListingsToExcel(listings, project.name);
+    };
+
+    // ── Import: step 1 — parse file ───────────────────────────────────────────
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        setImporting(true);
+        try {
+            const result = await parseListingsFromExcel(file);
+            setImportPreview(result);
+        } catch (err) {
+            alert('Không thể đọc file. Vui lòng dùng đúng định dạng .xlsx');
+        } finally {
+            setImporting(false);
+        }
+    };
+
+    // ── Import: step 2 — upload to server ────────────────────────────────────
+    const handleImportConfirm = async () => {
+        if (!importPreview || importPreview.valid.length === 0) return;
+        setImportUploading(true);
+        try {
+            const payload = importPreview.valid.map(r => ({
+                ...r.data,
+                _row: r.row,
+                projectCode: project.code,
+                projectId: project.id,
+                currency: 'VND',
+            }));
+            const result = await db.bulkCreateListings(payload as Record<string, unknown>[]);
+            setImportPreview(null);
+            setImportDone(result);
+            load();
+        } catch (err: any) {
+            alert(err?.message ?? 'Lỗi nhập dữ liệu');
+        } finally {
+            setImportUploading(false);
+        }
     };
 
     const filtered = search
@@ -541,7 +600,45 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                     )}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                                {/* Export */}
+                                {listings.length > 0 && (
+                                    <button type="button" onClick={handleExport}
+                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-sky-600 text-white text-sm font-bold hover:bg-sky-700 transition-colors"
+                                        title="Xuất Excel">
+                                        {IC.DOWNLOAD} <span className="hidden sm:inline">Xuất Excel</span>
+                                    </button>
+                                )}
+                                {/* Import */}
+                                {canCreate && (
+                                    <>
+                                        <input
+                                            ref={importFileRef}
+                                            type="file"
+                                            accept=".xlsx,.xls"
+                                            className="hidden"
+                                            onChange={handleImportFile}
+                                        />
+                                        <div className="relative group">
+                                            <button type="button"
+                                                onClick={() => importFileRef.current?.click()}
+                                                disabled={importing}
+                                                className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-60 transition-colors"
+                                                title="Nhập từ Excel">
+                                                {importing ? (
+                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : IC.UPLOAD}
+                                                <span className="hidden sm:inline">Nhập Excel</span>
+                                            </button>
+                                        </div>
+                                        <button type="button" onClick={downloadImportTemplate}
+                                            className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                            title="Tải mẫu nhập Excel">
+                                            {IC.TEMPLATE} <span className="hidden md:inline text-xs">Mẫu</span>
+                                        </button>
+                                    </>
+                                )}
+                                {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
                                         className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
@@ -900,6 +997,107 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                     onClose={() => setAccessListings(null)}
                     t={t}
                 />
+            )}
+
+            {/* ── Import Preview Modal ── */}
+            {importPreview && createPortal(
+                <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-6 max-w-lg w-full space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 shrink-0">
+                                {IC.UPLOAD}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-[var(--text-primary)]">Xác nhận nhập dữ liệu</h3>
+                                <p className="text-sm text-[var(--text-secondary)] mt-0.5">Kiểm tra trước khi tạo sản phẩm</p>
+                            </div>
+                        </div>
+
+                        {/* Summary */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-center">
+                                <div className="text-2xl font-extrabold text-emerald-700">{importPreview.valid.length}</div>
+                                <div className="text-xs text-emerald-600 font-semibold mt-0.5">Hợp lệ — sẽ được tạo</div>
+                            </div>
+                            <div className={`rounded-xl px-4 py-3 text-center ${importPreview.errors.length > 0 ? 'bg-rose-50 dark:bg-rose-900/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
+                                <div className={`text-2xl font-extrabold ${importPreview.errors.length > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{importPreview.errors.length}</div>
+                                <div className={`text-xs font-semibold mt-0.5 ${importPreview.errors.length > 0 ? 'text-rose-500' : 'text-slate-400'}`}>Lỗi — sẽ bỏ qua</div>
+                            </div>
+                        </div>
+
+                        {/* Error list */}
+                        {importPreview.errors.length > 0 && (
+                            <div className="max-h-40 overflow-y-auto thin-scrollbar rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/10 p-3 space-y-1">
+                                {importPreview.errors.map((e, i) => (
+                                    <p key={i} className="text-xs text-rose-700">
+                                        <span className="font-bold">Dòng {e.row}:</span> {e.error}
+                                    </p>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => setImportPreview(null)}
+                                disabled={importUploading}
+                                className="flex-1 px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)] transition-colors"
+                            >
+                                Huỷ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleImportConfirm}
+                                disabled={importUploading || importPreview.valid.length === 0}
+                                className="flex-1 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors disabled:opacity-60"
+                            >
+                                {importUploading
+                                    ? 'Đang nhập...'
+                                    : `Nhập ${importPreview.valid.length} sản phẩm`}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* ── Import Done Modal ── */}
+            {importDone && createPortal(
+                <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-6 max-w-sm w-full space-y-4">
+                        <div className="text-center">
+                            <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 mx-auto mb-3">
+                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <h3 className="font-bold text-[var(--text-primary)] text-lg">Nhập hoàn tất</h3>
+                            <p className="text-sm text-[var(--text-secondary)] mt-1">
+                                Đã tạo thành công <span className="font-bold text-emerald-700">{importDone.created}</span> sản phẩm
+                                {importDone.errors.length > 0 && (
+                                    <>, <span className="font-bold text-rose-600">{importDone.errors.length}</span> lỗi bỏ qua</>
+                                )}
+                            </p>
+                        </div>
+
+                        {importDone.errors.length > 0 && (
+                            <div className="max-h-40 overflow-y-auto thin-scrollbar rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/10 p-3 space-y-1">
+                                {importDone.errors.map((e, i) => (
+                                    <p key={i} className="text-xs text-rose-700">
+                                        <span className="font-bold">Dòng {e.row}:</span> {e.error}
+                                    </p>
+                                ))}
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => setImportDone(null)}
+                            className="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                </div>,
+                document.body
             )}
         </>
     );

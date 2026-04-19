@@ -35,4 +35,7 @@ export const listingApi = {
 
   getStats: (): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; totalCount: number }> =>
     api.get('/api/listings/stats'),
+
+  bulkCreateListings: (listings: Record<string, unknown>[]): Promise<{ created: number; errors: { row: number; error: string }[] }> =>
+    api.post('/api/listings/bulk', { listings }),
 };
