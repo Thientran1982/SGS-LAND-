@@ -722,8 +722,23 @@ async function startServer() {
       const email = req.body.email?.trim();
       if (!email) return res.status(400).json({ error: 'Email is required' });
 
-      const tenantId = DEFAULT_TENANT_ID;
-      const user = await userRepository.findByEmail(tenantId, email);
+      // Cross-tenant lookup: vendor accounts live in their own tenant, not DEFAULT_TENANT_ID.
+      // Try host tenant first; if not found, search all other tenants (same pattern as login).
+      let tenantId = DEFAULT_TENANT_ID;
+      let user = await userRepository.findByEmail(tenantId, email);
+      if (!user) {
+        const candidates = await withRlsBypass(async (client) => {
+          const r = await client.query(
+            `SELECT tenant_id FROM users WHERE LOWER(email) = LOWER($1) AND tenant_id <> $2 LIMIT 10`,
+            [email, DEFAULT_TENANT_ID]
+          );
+          return r.rows as { tenant_id: string }[];
+        });
+        for (const cand of candidates) {
+          const u = await userRepository.findByEmail(cand.tenant_id, email).catch(() => null);
+          if (u) { user = u; tenantId = cand.tenant_id; break; }
+        }
+      }
 
       // Always respond the same to prevent email enumeration
       if (!user || user.emailVerified) {
@@ -739,7 +754,7 @@ async function startServer() {
       await withTenantContext(tenantId, async (client) => {
         await client.query(
           `UPDATE users SET email_verification_token = $1, email_verification_expires = $2 WHERE id = $3`,
-          [tokenHash, tokenExpires, user.id]
+          [tokenHash, tokenExpires, user!.id]
         );
       });
 
@@ -768,8 +783,23 @@ async function startServer() {
       const email = req.body.email?.trim();
       if (!email) return res.status(400).json({ error: 'Email is required' });
 
-      const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
-      const user = await userRepository.findByEmail(tenantId, email);
+      // Cross-tenant lookup: vendor accounts live in their own tenant, not DEFAULT_TENANT_ID.
+      // When not logged in, req.tenantId = DEFAULT_TENANT_ID — must search all tenants.
+      let tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
+      let user = await userRepository.findByEmail(tenantId, email);
+      if (!user && tenantId === DEFAULT_TENANT_ID) {
+        const candidates = await withRlsBypass(async (client) => {
+          const r = await client.query(
+            `SELECT tenant_id FROM users WHERE LOWER(email) = LOWER($1) AND tenant_id <> $2 LIMIT 10`,
+            [email, DEFAULT_TENANT_ID]
+          );
+          return r.rows as { tenant_id: string }[];
+        });
+        for (const cand of candidates) {
+          const u = await userRepository.findByEmail(cand.tenant_id, email).catch(() => null);
+          if (u) { user = u; tenantId = cand.tenant_id; break; }
+        }
+      }
 
       if (!user) {
         await uniformDelay();
