@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
+import { Dropdown } from '../components/Dropdown';
 
 interface VendorAdmin {
   id: string;
@@ -29,18 +30,20 @@ interface Vendor {
   subscription: VendorSubscription;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  PENDING_APPROVAL: { label: 'Chờ duyệt', className: 'bg-amber-100 text-amber-800 border border-amber-200' },
-  APPROVED:         { label: 'Đã duyệt',  className: 'bg-emerald-100 text-emerald-800 border border-emerald-200' },
-  REJECTED:         { label: 'Từ chối',   className: 'bg-rose-100 text-rose-800 border border-rose-200' },
-  SUSPENDED:        { label: 'Tạm ngừng', className: 'bg-slate-100 text-slate-700 border border-slate-200' },
+const STATUS_CLASSNAMES: Record<string, string> = {
+  PENDING_APPROVAL: 'bg-amber-100 text-amber-800 border border-amber-200',
+  APPROVED:         'bg-emerald-100 text-emerald-800 border border-emerald-200',
+  REJECTED:         'bg-rose-100 text-rose-800 border border-rose-200',
+  SUSPENDED:        'bg-slate-100 text-slate-700 border border-slate-200',
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] || { label: status, className: 'bg-gray-100 text-gray-700' };
+  const { t } = useTranslation();
+  const className = STATUS_CLASSNAMES[status] || 'bg-gray-100 text-gray-700';
+  const label = t(`vendor.status_${status}` as any) || status;
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.className}`}>
-      {cfg.label}
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${className}`}>
+      {label}
     </span>
   );
 }
@@ -166,8 +169,15 @@ function SuspendModal({
   );
 }
 
+const VENDOR_STATUSES = ['PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
+
 export default function VendorManagement() {
   const { t } = useTranslation();
+
+  const statusOptions = [
+    { value: '', label: t('vendor.status_all' as any) },
+    ...VENDOR_STATUSES.map(s => ({ value: s, label: t(`vendor.status_${s}` as any) })),
+  ];
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -273,8 +283,7 @@ export default function VendorManagement() {
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-5">
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {(['PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const).map(s => {
-            const cfg = STATUS_CONFIG[s];
+          {VENDOR_STATUSES.map(s => {
             return (
               <button
                 key={s}
@@ -304,17 +313,14 @@ export default function VendorManagement() {
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
             />
           </div>
-          <select
+          <Dropdown
             value={filterStatus}
-            onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">Tất cả trạng thái ({total})</option>
-            <option value="PENDING_APPROVAL">Chờ duyệt</option>
-            <option value="APPROVED">Đã duyệt</option>
-            <option value="REJECTED">Từ chối</option>
-            <option value="SUSPENDED">Tạm ngừng</option>
-          </select>
+            onChange={(v: string) => { setFilterStatus(v); setPage(1); }}
+            options={statusOptions.map(o =>
+              o.value === '' ? { ...o, label: `${o.label} (${total})` } : o
+            )}
+            className="sm:w-56"
+          />
         </div>
 
         {/* Messages */}
