@@ -345,7 +345,8 @@ class DatabaseApiClient {
     total: number;
   }> {
     try {
-      const params: any = { cursor: cursor ?? '', pageSize };
+      const params: any = { cursorMode: 'true', pageSize };
+      if (cursor) params.cursor = cursor;
       if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
       if (filters?.transaction && filters.transaction !== 'ALL') params.transaction = filters.transaction;
       if (filters?.search) params.search = filters.search;
