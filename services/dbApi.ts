@@ -1442,6 +1442,7 @@ class DatabaseApiClient {
     ]};
 
     const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: [
+      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
       { id: 'ai-cost', labelKey: 'menu.admin-ai-cost', route: ROUTES.ADMIN_AI_COST, iconKey: ROUTES.ADMIN_AI_COST },
@@ -1926,6 +1927,60 @@ class DatabaseApiClient {
 
   async dismissOnboarding() {
     return true;
+  }
+
+  // ── Vendor Management (Platform Admin) ────────────────────────────────────
+
+  async getVendors(params?: { status?: string; search?: string; page?: number; limit?: number }) {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.search) qs.set('search', params.search);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const res = await fetch(`/api/vendors?${qs.toString()}`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch vendors');
+    return res.json();
+  }
+
+  async approveVendor(tenantId: string) {
+    const res = await fetch(`/api/vendors/${tenantId}/approve`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as any).error || 'Approval failed');
+    }
+    return res.json();
+  }
+
+  async rejectVendor(tenantId: string, reason: string) {
+    const res = await fetch(`/api/vendors/${tenantId}/reject`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as any).error || 'Rejection failed');
+    }
+    return res.json();
+  }
+
+  async suspendVendor(tenantId: string, reason?: string) {
+    const res = await fetch(`/api/vendors/${tenantId}/suspend`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as any).error || 'Suspend failed');
+    }
+    return res.json();
   }
 
 }

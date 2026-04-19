@@ -288,15 +288,30 @@ async function startServer() {
       }
 
       // Block login when email not yet verified.
-      // Áp dụng cho mọi đường tự đăng ký (REGISTER + SELF_SIGNUP_VENDOR) cũng như
-      // mọi tài khoản đang ở trạng thái PENDING — không phụ thuộc duy nhất vào source
-      // để tránh bypass khi thêm flow mới.
       const requiresVerification =
         dbUser.source === 'REGISTER' ||
         dbUser.source === 'SELF_SIGNUP_VENDOR' ||
         dbUser.status === 'PENDING';
       if (!dbUser.emailVerified && requiresVerification) {
         return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED', email: dbUser.email });
+      }
+
+      // Block login when tenant is pending approval (gated B2B vendor onboarding).
+      // Only applies to vendor tenants (not the host tenant) with SELF_SIGNUP_VENDOR source.
+      if (dbUser.source === 'SELF_SIGNUP_VENDOR' && tenantId !== DEFAULT_TENANT_ID) {
+        const tenantRow = await withRlsBypass(async (client) => {
+          const r = await client.query(
+            `SELECT approval_status FROM tenants WHERE id = $1 LIMIT 1`,
+            [tenantId]
+          );
+          return r.rows[0];
+        });
+        if (tenantRow?.approval_status === 'PENDING_APPROVAL') {
+          return res.status(403).json({ error: 'TENANT_PENDING_APPROVAL', email: dbUser.email });
+        }
+        if (tenantRow?.approval_status === 'REJECTED') {
+          return res.status(403).json({ error: 'TENANT_REJECTED', email: dbUser.email });
+        }
       }
 
       const jwtPayload = {
@@ -685,7 +700,12 @@ async function startServer() {
 
       const tenantId = user.tenantId as string;
 
-      // Mark email as verified and activate the account TRONG ĐÚNG TENANT CỦA USER
+      // Mark email as verified. For SELF_SIGNUP_VENDOR accounts, activate the user but
+      // set the tenant to PENDING_APPROVAL — they must wait for SGSLand platform owner to
+      // review and approve before they can log in. For regular host-tenant accounts, activate
+      // immediately as before.
+      const isVendorSignup = user.source === 'SELF_SIGNUP_VENDOR' && tenantId !== DEFAULT_TENANT_ID;
+
       await withTenantContext(tenantId, async (client) => {
         await client.query(
           `UPDATE users SET email_verified = TRUE, status = 'ACTIVE', email_verification_token = NULL, email_verification_expires = NULL WHERE id = $1`,
@@ -693,7 +713,25 @@ async function startServer() {
         );
       });
 
-      // Issue JWT so user is immediately logged in
+      if (isVendorSignup) {
+        // Set tenant approval_status to PENDING_APPROVAL (uses RLS bypass since column has no tenant context)
+        await withRlsBypass(async (client) => {
+          await client.query(
+            `UPDATE tenants SET approval_status = 'PENDING_APPROVAL', config = config || '{"awaitingApproval": true}'::jsonb WHERE id = $1`,
+            [tenantId]
+          );
+        });
+
+        writeAuditLog(tenantId, user.id, 'EMAIL_VERIFIED', 'auth', user.id, { email: user.email, pendingApproval: true }, req.ip);
+
+        return res.json({
+          message: 'Email verified successfully. Your workspace is now pending approval.',
+          needsApproval: true,
+          email: user.email,
+        });
+      }
+
+      // Regular account (host tenant) — log in immediately
       const jwtPayload = { id: user.id, email: user.email, name: user.name, role: user.role, tenantId };
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
@@ -701,7 +739,6 @@ async function startServer() {
       await userRepository.updateLastLogin(tenantId, user.id);
       writeAuditLog(tenantId, user.id, 'EMAIL_VERIFIED', 'auth', user.id, { email: user.email }, req.ip);
 
-      // Send welcome email now that verification is complete
       emailService.sendWelcomeEmail(tenantId, user.email, user.name).catch(() => {});
 
       res.json({
@@ -2460,6 +2497,206 @@ async function startServer() {
     } catch (err) {
       console.error('[GEO] ai-visibility error:', err);
       res.status(500).json({ error: 'Failed to read AI visibility' });
+    }
+  });
+
+  // ── Vendor Management API (Platform Owner / SGSLand ADMIN only) ─────────────
+  // Chỉ ADMIN trong host tenant (DEFAULT_TENANT_ID) được phép dùng các endpoint này.
+
+  const requirePlatformAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const user = (req as any).user;
+    if (!user || user.role !== 'ADMIN' || user.tenantId !== DEFAULT_TENANT_ID) {
+      return res.status(403).json({ error: 'Platform admin only' });
+    }
+    next();
+  };
+
+  // GET /api/vendors — Danh sách tất cả vendor tenants + trạng thái duyệt
+  app.get('/api/vendors', apiRateLimit, authenticateToken, requirePlatformAdmin, async (req: express.Request, res: express.Response) => {
+    try {
+      const { status, search, page = '1', limit = '50' } = req.query as Record<string, string>;
+      const pageNum = Math.max(1, parseInt(page, 10));
+      const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10)));
+      const offset = (pageNum - 1) * pageSize;
+
+      const conditions: string[] = [`t.id <> '${DEFAULT_TENANT_ID}'`];
+      const params: any[] = [];
+
+      if (status) {
+        params.push(status);
+        conditions.push(`t.approval_status = $${params.length}`);
+      }
+      if (search) {
+        params.push(`%${search}%`);
+        conditions.push(`(t.name ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      const rows = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `SELECT
+             t.id, t.name, t.domain, t.approval_status, t.approved_at, t.approved_by,
+             t.rejection_reason, t.created_at, t.config,
+             u.id AS admin_id, u.email AS admin_email, u.name AS admin_name,
+             u.status AS user_status, u.email_verified,
+             s.plan_id, s.status AS sub_status, s.trial_ends_at,
+             COUNT(*) OVER() AS total_count
+           FROM tenants t
+           LEFT JOIN users u ON u.tenant_id = t.id AND u.role = 'ADMIN'
+           LEFT JOIN subscriptions s ON s.tenant_id = t.id
+           ${where}
+           ORDER BY t.created_at DESC
+           LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+          [...params, pageSize, offset]
+        );
+        return r.rows;
+      });
+
+      const total = rows[0]?.total_count ? parseInt(rows[0].total_count, 10) : 0;
+      res.json({
+        vendors: rows.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          domain: r.domain,
+          approvalStatus: r.approval_status,
+          approvedAt: r.approved_at,
+          approvedBy: r.approved_by,
+          rejectionReason: r.rejection_reason,
+          createdAt: r.created_at,
+          config: r.config,
+          admin: r.admin_id ? {
+            id: r.admin_id,
+            email: r.admin_email,
+            name: r.admin_name,
+            status: r.user_status,
+            emailVerified: r.email_verified,
+          } : null,
+          subscription: {
+            planId: r.plan_id,
+            status: r.sub_status,
+            trialEndsAt: r.trial_ends_at,
+          },
+        })),
+        pagination: { page: pageNum, limit: pageSize, total, totalPages: Math.ceil(total / pageSize) },
+      });
+    } catch (error) {
+      logger.error('GET /api/vendors error:', error);
+      res.status(500).json({ error: 'Failed to fetch vendors' });
+    }
+  });
+
+  // POST /api/vendors/:id/approve — Duyệt vendor, gửi email thông báo
+  app.post('/api/vendors/:id/approve', apiRateLimit, authenticateToken, requirePlatformAdmin, async (req: express.Request, res: express.Response) => {
+    try {
+      const id = req.params.id as string;
+      const approvedBy = (req as any).user?.email || 'admin';
+      const baseUrl = resolveBaseUrl(req);
+
+      const result = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `UPDATE tenants SET approval_status = 'APPROVED', approved_at = NOW(), approved_by = $1,
+             config = config - 'awaitingApproval' || '{"approvedAt": "${new Date().toISOString()}"}'::jsonb
+           WHERE id = $2 AND id <> '${DEFAULT_TENANT_ID}'
+           RETURNING id, name`,
+          [approvedBy, id]
+        );
+        if (r.rowCount === 0) return null;
+        const tenant = r.rows[0];
+
+        // Get admin user for email
+        const userRow = await client.query(
+          `SELECT u.id, u.email, u.name FROM users u WHERE u.tenant_id = $1 AND u.role = 'ADMIN' LIMIT 1`,
+          [id]
+        );
+        return { tenant, user: userRow.rows[0] || null };
+      });
+
+      if (!result) {
+        return res.status(404).json({ error: 'Vendor not found' });
+      }
+
+      writeAuditLog(DEFAULT_TENANT_ID, (req as any).user?.id, 'VENDOR_APPROVED', 'tenant', id, { tenantId: id, name: result.tenant.name, approvedBy }, req.ip);
+
+      if (result.user) {
+        emailService.sendVendorApprovedEmail(id, result.user.email, result.user.name, result.tenant.name, baseUrl).catch((err) => {
+          logger.error(`[vendor-approve] Failed to send approval email to ${result.user.email}: ${err.message}`);
+        });
+      }
+
+      res.json({ message: 'Vendor approved successfully', tenantId: id, name: result.tenant.name });
+    } catch (error) {
+      logger.error('POST /api/vendors/:id/approve error:', error);
+      res.status(500).json({ error: 'Failed to approve vendor' });
+    }
+  });
+
+  // POST /api/vendors/:id/reject — Từ chối vendor, gửi email thông báo lý do
+  app.post('/api/vendors/:id/reject', apiRateLimit, authenticateToken, requirePlatformAdmin, async (req: express.Request, res: express.Response) => {
+    try {
+      const id = req.params.id as string;
+      const { reason } = req.body;
+      if (!reason?.trim()) return res.status(400).json({ error: 'Rejection reason is required' });
+
+      const approvedBy = (req as any).user?.email || 'admin';
+
+      const result = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `UPDATE tenants SET approval_status = 'REJECTED', approved_by = $1, rejection_reason = $2
+           WHERE id = $3 AND id <> '${DEFAULT_TENANT_ID}'
+           RETURNING id, name`,
+          [approvedBy, reason.trim(), id]
+        );
+        if (r.rowCount === 0) return null;
+        const tenant = r.rows[0];
+
+        const userRow = await client.query(
+          `SELECT u.id, u.email, u.name FROM users u WHERE u.tenant_id = $1 AND u.role = 'ADMIN' LIMIT 1`,
+          [id]
+        );
+        return { tenant, user: userRow.rows[0] || null };
+      });
+
+      if (!result) {
+        return res.status(404).json({ error: 'Vendor not found' });
+      }
+
+      writeAuditLog(DEFAULT_TENANT_ID, (req as any).user?.id, 'VENDOR_REJECTED', 'tenant', id, { tenantId: id, name: result.tenant.name, reason: reason.trim() }, req.ip);
+
+      if (result.user) {
+        emailService.sendVendorRejectedEmail(id, result.user.email, result.user.name, result.tenant.name, reason.trim()).catch((err) => {
+          logger.error(`[vendor-reject] Failed to send rejection email to ${result.user.email}: ${err.message}`);
+        });
+      }
+
+      res.json({ message: 'Vendor rejected', tenantId: id, name: result.tenant.name });
+    } catch (error) {
+      logger.error('POST /api/vendors/:id/reject error:', error);
+      res.status(500).json({ error: 'Failed to reject vendor' });
+    }
+  });
+
+  // POST /api/vendors/:id/suspend — Tạm ngừng vendor (APPROVED → SUSPENDED)
+  app.post('/api/vendors/:id/suspend', apiRateLimit, authenticateToken, requirePlatformAdmin, async (req: express.Request, res: express.Response) => {
+    try {
+      const id = req.params.id as string;
+      const { reason } = req.body;
+
+      const result = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `UPDATE tenants SET approval_status = 'SUSPENDED', rejection_reason = $1 WHERE id = $2 AND id <> '${DEFAULT_TENANT_ID}' RETURNING id, name`,
+          [reason?.trim() || 'Suspended by platform admin', id]
+        );
+        return r.rows[0] || null;
+      });
+
+      if (!result) return res.status(404).json({ error: 'Vendor not found' });
+
+      writeAuditLog(DEFAULT_TENANT_ID, (req as any).user?.id, 'VENDOR_SUSPENDED', 'tenant', id, { tenantId: id }, req.ip);
+      res.json({ message: 'Vendor suspended', tenantId: id });
+    } catch (error) {
+      logger.error('POST /api/vendors/:id/suspend error:', error);
+      res.status(500).json({ error: 'Failed to suspend vendor' });
     }
   });
 

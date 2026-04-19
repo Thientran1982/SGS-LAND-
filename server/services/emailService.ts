@@ -1403,6 +1403,105 @@ async function sendBillingAdminAlertEmail(
   });
 }
 
+async function sendVendorApprovedEmail(
+  tenantId: string,
+  to: string,
+  userName: string,
+  companyName: string,
+  loginUrl: string
+): Promise<EmailResult> {
+  const safeName    = escapeHtml(userName);
+  const safeCompany = escapeHtml(companyName);
+  const safeUrl     = escapeHtml(loginUrl);
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#ECFDF5', '&#10003;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Tài Khoản Đã Được Phê Duyệt!</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Workspace của bạn đã sẵn sàng</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin chào <strong>${safeName}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      Chúc mừng! Tài khoản workspace <strong>${safeCompany}</strong> của bạn trên <strong>SGS LAND</strong> đã được phê duyệt thành công.
+      Bạn có thể đăng nhập và bắt đầu sử dụng toàn bộ tính năng ngay bây giờ.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0FDF4" style="border:1px solid #BBF7D0;border-radius:8px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;Quản lý bất động sản và danh sách cho thuê/bán</td></tr>
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;Hệ thống CRM theo dõi khách hàng tiềm năng</td></tr>
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;AI hỗ trợ định giá và tư vấn tự động</td></tr>
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;Báo cáo doanh thu và phân tích thị trường</td></tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(28)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(safeUrl, 'Đăng Nhập Ngay')}</td></tr>
+    </table>
+    ${spacer(16)}
+    ${linkBox(safeUrl)}
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND – Tài khoản của bạn đã được phê duyệt',
+    html: emailBase(content, 'Cần hỗ trợ? Liên hệ support@sgsland.vn'),
+    text: `Chào ${userName},\n\nTài khoản workspace ${companyName} đã được phê duyệt. Đăng nhập tại: ${loginUrl}\n\n— SGS LAND`,
+    template: 'vendor_approved',
+    skipQuota: true,
+  });
+}
+
+async function sendVendorRejectedEmail(
+  tenantId: string,
+  to: string,
+  userName: string,
+  companyName: string,
+  reason: string
+): Promise<EmailResult> {
+  const safeName    = escapeHtml(userName);
+  const safeCompany = escapeHtml(companyName);
+  const safeReason  = escapeHtml(reason);
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#FFF1F2', '&#10007;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Đăng Ký Chưa Được Chấp Thuận</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Liên hệ với chúng tôi để được hỗ trợ</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin chào <strong>${safeName}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      Rất tiếc, đăng ký workspace <strong>${safeCompany}</strong> của bạn chưa được chấp thuận vào thời điểm này.
+    </p>
+    ${warningBox('Lý do từ chối:', safeReason)}
+    ${spacer(20)}
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">
+      Nếu bạn muốn khiếu nại hoặc cần thêm thông tin, vui lòng liên hệ với chúng tôi qua email 
+      <a href="mailto:support@sgsland.vn" style="color:#4F46E5;">support@sgsland.vn</a>.
+    </p>
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND – Đăng ký workspace chưa được chấp thuận',
+    html: emailBase(content, 'Câu hỏi? Liên hệ support@sgsland.vn'),
+    text: `Chào ${userName},\n\nĐăng ký workspace ${companyName} chưa được chấp thuận.\n\nLý do: ${reason}\n\nLiên hệ: support@sgsland.vn\n\n— SGS LAND`,
+    template: 'vendor_rejected',
+    skipQuota: true,
+  });
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export const emailService = {
@@ -1419,6 +1518,8 @@ export const emailService = {
   sendNudgeC,
   sendBillingReceiptEmail,
   sendBillingAdminAlertEmail,
+  sendVendorApprovedEmail,
+  sendVendorRejectedEmail,
   testSmtpConnection,
   getSmtpConfig,
 };

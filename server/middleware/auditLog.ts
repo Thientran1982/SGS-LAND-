@@ -12,7 +12,8 @@ export type AuditAction =
   | 'REGISTER' | 'EMAIL_VERIFIED' | 'ONBOARD_VENDOR'
   | 'PASSWORD_RESET_REQUEST' | 'PASSWORD_RESET_COMPLETE'
   | 'INTERACTION_SEND'
-  | 'SETTINGS_UPDATE';
+  | 'SETTINGS_UPDATE'
+  | 'VENDOR_APPROVED' | 'VENDOR_REJECTED' | 'VENDOR_SUSPENDED' | 'VENDOR_REACTIVATED';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function toUUID(v?: string): string | null {
