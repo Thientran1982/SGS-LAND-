@@ -112,6 +112,22 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - **Defense-in-depth còn lại (chấp nhận tạm thời)**: một số raw `pool.query` ở `server.ts` (password reset tokens, listings DISTINCT location, bank_rates), `notificationRepository`, `enterpriseConfigRepository`, `projectRepository.checkPartnerAccess`/`listTenants` chạy như owner (không SET ROLE) nên vẫn bypass RLS. Tất cả đều có WHERE thủ công bằng `tenant_id`/PK hoặc đụng bảng không nhạy cảm — vẫn an toàn ở thời điểm hiện tại nhưng nên dần chuyển qua `withTenantContext` ở các bước sau.
 - **Bảng còn `tenant_id` chưa được bảo vệ RLS** (follow-up cho bước sau): `audit_logs`, `uploaded_files`, `ai_feedback`, `valuation_usage_log`, `team_members`, `notifications`, `tasks`, `user_page_views`, … Các bảng này hiện chỉ dựa vào WHERE thủ công.
 
+## Bước 4 — Wire Internal Projects Page (April 19, 2026)
+
+`pages/Projects.tsx` (1352 dòng — quản lý dự án nội bộ cho vendor: CRUD project + cấp quyền partner_access cross-tenant + quản lý listings của project) trước đây không có route.
+
+**Thay đổi**:
+- `config/routes.ts` — thêm `PROJECTS: 'projects'` (tách biệt với `DU_AN: 'du-an'` là route public SEO landing cho end-buyer).
+- `App.tsx` — lazyLoad + registerPrefetch + đăng ký vào `PAGE_REGISTRY[ROUTES.PROJECTS]`.
+- `services/dbApi.ts` `getUserMenu()` — đặt mục "Dự Án" vào group `ops` (chỉ ADMIN/TEAM_LEAD thấy) + group `partner-core` (PARTNER_ADMIN/PARTNER_AGENT). KHÔNG đặt vào group `core` để tránh lộ cho SALES/MARKETING/VIEWER vốn không quản lý dự án.
+- `App.tsx` — thêm `PROJECT_ALLOWED_ROLES = {ADMIN, TEAM_LEAD, PARTNER_ADMIN, PARTNER_AGENT}` và route guard redirect sang DASHBOARD + accessDenied banner cho role khác (defense-in-depth nếu user gõ trực tiếp `/projects`).
+- `components/Layout.tsx` — thêm icon `Briefcase` cho `ROUTES.PROJECTS`.
+- i18n keys (`menu.projects`, `menu.partner_core`) đã sẵn (vn+en).
+
+**E2E verified**: typecheck pass; login vendor ADMIN → `GET /api/projects` 200 (empty list cho tenant mới — đúng).
+
+**Code review feedback đã fix**: architect cảnh báo over-permissive khi đặt projects vào group `core`. Đã chuyển sang group `ops` + thêm UI route guard. Backend mutations đã được bảo vệ ở `projectRoutes.ts` (chỉ ADMIN); GET vẫn mở trong tenant — chấp nhận vì nếu user là SALES/MARKETING gõ URL trực tiếp vẫn bị UI redirect.
+
 ## Bước 3 — B2B Vendor Self-Signup (April 19, 2026)
 
 **Endpoint**: `POST /api/auth/onboard-vendor` — tạo workspace SaaS độc lập cho mỗi sàn / chủ đầu tư.

@@ -1417,6 +1417,7 @@ class DatabaseApiClient {
     ]};
 
     const ops = { id: 'ops', labelKey: 'menu.operations', items: [
+      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
       { id: 'routing', labelKey: 'menu.routing-rules', route: ROUTES.ROUTING_RULES, iconKey: ROUTES.ROUTING_RULES },
       { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
@@ -1459,6 +1460,7 @@ class DatabaseApiClient {
     ]};
 
     const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
+      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
     ]};
 
