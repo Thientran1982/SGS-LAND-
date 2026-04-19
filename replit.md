@@ -112,6 +112,45 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - **Defense-in-depth còn lại (chấp nhận tạm thời)**: một số raw `pool.query` ở `server.ts` (password reset tokens, listings DISTINCT location, bank_rates), `notificationRepository`, `enterpriseConfigRepository`, `projectRepository.checkPartnerAccess`/`listTenants` chạy như owner (không SET ROLE) nên vẫn bypass RLS. Tất cả đều có WHERE thủ công bằng `tenant_id`/PK hoặc đụng bảng không nhạy cảm — vẫn an toàn ở thời điểm hiện tại nhưng nên dần chuyển qua `withTenantContext` ở các bước sau.
 - **Bảng còn `tenant_id` chưa được bảo vệ RLS** (follow-up cho bước sau): `audit_logs`, `uploaded_files`, `ai_feedback`, `valuation_usage_log`, `team_members`, `notifications`, `tasks`, `user_page_views`, … Các bảng này hiện chỉ dựa vào WHERE thủ công.
 
+## Bước 3 — B2B Vendor Self-Signup (April 19, 2026)
+
+**Endpoint**: `POST /api/auth/onboard-vendor` — tạo workspace SaaS độc lập cho mỗi sàn / chủ đầu tư.
+
+**Flow atomic** (1 transaction, 1 client, BEGIN/COMMIT):
+1. Sinh slug domain từ tên công ty (loại dấu Việt, NFD + đ→d, slugify, fallback `vendor`).
+2. Bypass RLS (SET LOCAL ROLE sgs_app + app.bypass_rls=on) → INSERT tenants + INSERT subscriptions.
+3. SET LOCAL app.current_tenant_id = newTenantId → INSERT users (ADMIN, PENDING, email_verified=false).
+4. Commit. Rollback toàn bộ nếu fail; retry tối đa 5 lần khi đụng UNIQUE constraint trên tenants_domain_key.
+
+**Subscription mặc định**: `INDIVIDUAL` plan, `TRIAL` status, trial_ends_at = NOW() + 14 days, seats_used=1.
+
+**Email verification CROSS-TENANT**:
+- `/api/auth/verify-email` đã refactor: lookup user theo tokenHash bằng `withRlsBypass` (token sha256 32-byte → đủ collision-safe), sau đó UPDATE bằng `withTenantContext(user.tenantId)`. Không còn hardcode DEFAULT_TENANT_ID.
+
+**Login CROSS-TENANT**:
+- `/api/auth/login` thử tenant hiện tại (mặc định DEFAULT_TENANT_ID) trước; nếu fail và đang ở host tenant, quét users khác qua `withRlsBypass` (LIMIT 10) và thử bcrypt.compare từng cái — match đầu tiên thắng. Cho phép vendor login mà không cần subdomain routing.
+
+**Login enforcement**:
+- Block khi `!email_verified` cho cả `source='REGISTER'`, `source='SELF_SIGNUP_VENDOR'`, hoặc `status='PENDING'` (không còn chỉ phụ thuộc source).
+
+**Frontend** (`pages/Login.tsx`):
+- REGISTER view: company REQUIRED + validation error nếu trống. Hint card B2B (workspace riêng + trial 14 ngày).
+- Submit gọi `db.onboardVendor()` (services/dbApi.ts) thay vì `db.register()`.
+
+**i18n keys mới**: `auth.vendor_onboard_hint` (vn+en).
+
+**AuditAction mới**: `ONBOARD_VENDOR`.
+
+**Files chính**:
+- `server.ts` (~lines 235-310 login, ~415-595 onboard-vendor, ~615-680 verify-email)
+- `server/middleware/validation.ts` (`schemas.onboardVendor`)
+- `server/middleware/auditLog.ts` (added action)
+- `services/dbApi.ts` (`db.onboardVendor`)
+- `pages/Login.tsx` (REGISTER branch + hint UI)
+- `config/locales.ts` (vendor_onboard_hint)
+
+**E2E verified**: onboard 201 → login pre-verify 403 EMAIL_NOT_VERIFIED → verify-email 200 (cross-tenant) → login post-verify 200 với tenantId đúng trong JWT. Validation: short password 400, missing company 400, duplicate company+email 409.
+
 ## Bước 2 — Seed 11 dự án phân phối + backfill listings.project_id (migration 071)
 
 - Bảng `projects` trước đây rỗng → tính năng B2B2C cross-tenant share (qua bảng `project_access`) không có dữ liệu.

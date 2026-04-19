@@ -137,6 +137,13 @@ export const schemas = {
     password: { required: true, type: 'string' as const, minLength: 8 },
     name: { required: false, type: 'string' as const, maxLength: 200 },
   },
+  onboardVendor: {
+    company: { required: true, type: 'string' as const, minLength: 2, maxLength: 200 },
+    name: { required: true, type: 'string' as const, minLength: 1, maxLength: 200 },
+    email: { required: true, type: 'email' as const },
+    password: { required: true, type: 'string' as const, minLength: 8 },
+    phone: { required: false, type: 'string' as const, maxLength: 30 },
+  },
   createLead: {
     name: { required: true, type: 'string' as const, minLength: 1, maxLength: 200 },
     phone: { required: false, type: 'string' as const, maxLength: 20 },
