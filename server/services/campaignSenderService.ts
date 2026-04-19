@@ -8,7 +8,8 @@
 import { Pool } from 'pg';
 import { createHmac } from 'crypto';
 import { logger } from '../middleware/logger';
-import { isBrevoConfigured, brevoSendEmail } from './brevoService';
+import { isBrevoConfigured } from './brevoService';
+import { emailService } from './emailService';
 
 export function signTrackingUrl(recipientId: string, url: string): string {
   const secret = process.env.JWT_SECRET || 'dev-secret';
@@ -244,24 +245,38 @@ export async function runCampaign(
     const decorated = decorateBody(personalised, rec.id, publicBaseUrl);
 
     try {
-      const result = await brevoSendEmail({
+      // Đi qua emailService.sendEmail để cùng được kiểm tra dedupe + quota
+      // (theo gói cước tenant) và ghi nhận vào email_log như mọi email khác.
+      const result = await emailService.sendEmail(c.tenant_id, {
         to: rec.email,
         subject,
         html: decorated,
+        template: 'campaign',
+        // Mỗi (campaign, recipient_row) là duy nhất ⇒ dedupe ngăn gửi lặp do retry
+        dedupeKey: `campaign:${campaignId}:${rec.id}`,
+        // Cửa sổ rộng (24h) — campaign không nên gửi lại cùng người trong ngày
+        dedupeWindowMinutes: 60 * 24,
         tags: [`campaign:${campaignId}`, `variant:${rec.variant}`],
       });
 
-      if (result.success) {
+      if (result.success && result.status !== 'quota_exceeded') {
         sent++;
         await pool.query(
-          `UPDATE campaign_recipients SET status='SENT', sent_at=NOW() WHERE id=$1`,
-          [rec.id],
+          `UPDATE campaign_recipients
+              SET status = CASE WHEN $2 = 'deduped' THEN 'SENT' ELSE 'SENT' END,
+                  sent_at = NOW()
+            WHERE id = $1`,
+          [rec.id, result.status],
         );
       } else {
         failed++;
+        const errMsg =
+          result.status === 'quota_exceeded'
+            ? `Quota vượt: ${result.error || 'tenant đã hết hạn mức email/30 ngày'}`
+            : (result.error || 'unknown');
         await pool.query(
           `UPDATE campaign_recipients SET status='FAILED', error=$2 WHERE id=$1`,
-          [rec.id, result.error || 'unknown'],
+          [rec.id, errMsg],
         );
       }
     } catch (err: any) {
