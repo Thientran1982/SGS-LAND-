@@ -528,16 +528,16 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                     <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl whitespace-nowrap">
                                         {selected.size} {t('project.bulk_selected_suffix')}
                                     </span>
-                                    <select
-                                        value={bulkStatus}
-                                        onChange={e => setBulkStatus(e.target.value)}
-                                        className="border border-[var(--glass-border)] rounded-xl px-3 py-1.5 h-[36px] bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                    >
-                                        <option value="">{t('project.bulk_status_placeholder')}</option>
-                                        {['AVAILABLE','HOLD','INACTIVE','OPENING','BOOKING'].map(s => (
-                                            <option key={s} value={s}>{s}</option>
-                                        ))}
-                                    </select>
+                                    <Dropdown
+                                        value={bulkStatus as string}
+                                        onChange={v => setBulkStatus(v as string)}
+                                        placeholder={t('project.bulk_status_placeholder')}
+                                        className="h-[36px] min-w-[160px]"
+                                        options={['AVAILABLE','HOLD','INACTIVE','OPENING','BOOKING'].map(s => ({
+                                            value: s,
+                                            label: t(`status.${s}`) || s,
+                                        }))}
+                                    />
                                     <button type="button" onClick={handleBulkStatus} disabled={!bulkStatus || bulkWorking}
                                         className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 disabled:opacity-40 transition-colors">
                                         {IC.CHECK_ALL} {bulkWorking ? '...' : t('project.bulk_apply')}
@@ -623,7 +623,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             <td className="px-4 py-2.5 font-semibold text-[var(--text-primary)] text-sm max-w-[200px] truncate">{l.title}</td>
                                             <td className="px-4 py-2.5">
                                                 <span className="text-xs font-semibold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)] px-2 py-0.5 rounded whitespace-nowrap">
-                                                    {l.type}
+                                                    {t(`property.${l.type?.toUpperCase()}`) || l.type}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-2.5">
