@@ -627,7 +627,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 )}
                             </div>
                         ) : (
-                            <table className="w-full text-sm">
+                            <div className="overflow-x-auto">
+                            <table className="w-full text-sm min-w-max">
                                 <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] z-10">
                                     <tr>
                                         {isAdmin && (
@@ -736,6 +737,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
                         )}
                     </div>
 
