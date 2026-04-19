@@ -111,3 +111,12 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - **Verified end-to-end**: with `SET LOCAL ROLE sgs_app` + wrong tenant id → `0` rows on all 6 tables; correct tenant → real counts (31 leads, 66 listings, 35 users, 1 subscription); INSERT with mismatched `tenant_id` blocked by `WITH CHECK`; partner cross-tenant read correctly returns 0 listings (no `project_access` rows seeded yet — pending Step 2 backfill).
 - **Defense-in-depth còn lại (chấp nhận tạm thời)**: một số raw `pool.query` ở `server.ts` (password reset tokens, listings DISTINCT location, bank_rates), `notificationRepository`, `enterpriseConfigRepository`, `projectRepository.checkPartnerAccess`/`listTenants` chạy như owner (không SET ROLE) nên vẫn bypass RLS. Tất cả đều có WHERE thủ công bằng `tenant_id`/PK hoặc đụng bảng không nhạy cảm — vẫn an toàn ở thời điểm hiện tại nhưng nên dần chuyển qua `withTenantContext` ở các bước sau.
 - **Bảng còn `tenant_id` chưa được bảo vệ RLS** (follow-up cho bước sau): `audit_logs`, `uploaded_files`, `ai_feedback`, `valuation_usage_log`, `team_members`, `notifications`, `tasks`, `user_page_views`, … Các bảng này hiện chỉ dựa vào WHERE thủ công.
+
+## Bước 2 — Seed 11 dự án phân phối + backfill listings.project_id (migration 071)
+
+- Bảng `projects` trước đây rỗng → tính năng B2B2C cross-tenant share (qua bảng `project_access`) không có dữ liệu.
+- Đã seed 11 dự án featured (đồng bộ với `PARTNERS` ở `pages/Landing.tsx`): AQUA-CITY, GLOBAL-CITY, IZUMI-CITY, VINHOMES-CAN-GIO, VINHOMES-GRAND-PARK, MASTERISE-HOMES, GRAND-MARINA-SAIGON, WATERPOINT, PRIVIA, VINHOMES-CENTRAL-PARK, SON-KIM-LAND. Mỗi project có `metadata.source = 'migration_071_featured_partners'` để truy vết nguồn seed và để `down()` reverse được chính xác.
+- Backfill `listings.project_id` qua heuristic match title/location → 62/66 listings được link (Aqua City: 59, Vinhomes Central Park: 3). 4 listings còn lại (đất nền Long Đức/Vĩnh Thạnh, Eco Retreat Tây Ninh, La Villa Green Long An) đúng logic không thuộc 11 dự án phân phối nên giữ `project_id = NULL`.
+- Idempotent (upsert theo cặp `tenant_id + code`); rerun không tạo duplicate.
+- `up()` throw nếu host tenant chưa tồn tại (không soft-skip để tránh runner đánh dấu "applied" nhầm).
+- `down()` clear cả `project_id` và `project_code` rồi delete projects do chính migration này tạo.
