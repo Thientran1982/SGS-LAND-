@@ -31,9 +31,16 @@ function pinTokens(transaction?: string, propertyType?: string) {
 
 // ── Geo utilities ────────────────────────────────────────────────────────────
 
-const hasRealCoords = (listing: any): boolean =>
-    listing.coordinates?.lat != null && listing.coordinates?.lng != null &&
-    (listing.coordinates.lat !== 0 || listing.coordinates.lng !== 0);
+const hasRealCoords = (listing: any): boolean => {
+    const lat = listing.coordinates?.lat;
+    const lng = listing.coordinates?.lng;
+    if (lat == null || lng == null) return false;
+    // Reject near-zero coordinates — likely a geocoding failure stored as 0.000001
+    // (intersection of equator + prime meridian = Gulf of Guinea, Africa).
+    // Valid VN coordinates: lat 8–24, lng 102–110.
+    if (Math.abs(lat) < 1 && Math.abs(lng) < 1) return false;
+    return true;
+};
 
 // HCMC bounding box: lat 10.60–11.20, lng 106.40–107.00
 const HCMC_LAT_MIN = 10.60, HCMC_LAT_MAX = 11.20;
