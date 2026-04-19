@@ -327,6 +327,8 @@ export interface ListingAttributes {
     direction?: 'North' | 'South' | 'East' | 'West' | 'NorthEast' | 'NorthWest' | 'SouthEast' | 'SouthWest' | string;
     floor?: number;
     view?: string;
+    tower?: string;       // Toà / Block (Apartment/Penthouse)
+    clearArea?: number;   // DT thông thủy m² (Apartment/Penthouse)
     legalStatus?: 'PinkBook' | 'Contract' | 'Waiting' | string;
     furniture?: 'FULL' | 'BASIC' | 'NONE';
     
