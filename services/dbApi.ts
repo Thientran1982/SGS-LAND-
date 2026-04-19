@@ -413,6 +413,12 @@ class DatabaseApiClient {
     return result;
   }
 
+  async bulkCreateListings(listings: Record<string, unknown>[]) {
+    const result = await listingApi.bulkCreateListings(listings);
+    _cache.invalidate('listings:');
+    return result;
+  }
+
   async assignListing(id: string, userId: string | null) {
     const result = await listingApi.assignListing(id, userId);
     _cache.invalidate('listings:');

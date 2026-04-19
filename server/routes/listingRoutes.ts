@@ -354,6 +354,51 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  // ── POST /api/listings/bulk ─────────────────────────────────────────────────
+  // Import nhiều listing từ Excel (tối đa 500 dòng)
+  router.post('/bulk', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (['PARTNER_OWNER', 'PARTNER_AGENT', 'PARTNER_VIEWER', 'VIEWER'].includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền tạo listing' });
+      }
+
+      const { listings } = req.body as { listings: Record<string, unknown>[] };
+      if (!Array.isArray(listings) || listings.length === 0) {
+        return res.status(400).json({ error: 'Danh sách listing rỗng' });
+      }
+      if (listings.length > 500) {
+        return res.status(400).json({ error: 'Tối đa 500 dòng mỗi lần nhập' });
+      }
+
+      const created: unknown[] = [];
+      const errors: { row: number; error: string }[] = [];
+
+      for (let i = 0; i < listings.length; i++) {
+        const item = listings[i];
+        const rowNum = (item._row as number) ?? (i + 2);
+        try {
+          const { _row, ...data } = item;
+          const listing = await listingRepository.create(user.tenantId, {
+            ...data,
+            createdBy: user.id,
+          });
+          created.push(listing);
+        } catch (err: any) {
+          const msg = err?.message?.includes('duplicate') || err?.message?.includes('unique')
+            ? `Mã sản phẩm "${item.code}" đã tồn tại`
+            : (err?.message ?? 'Lỗi không xác định');
+          errors.push({ row: rowNum, error: msg });
+        }
+      }
+
+      res.json({ created: created.length, errors });
+    } catch (error) {
+      console.error('Error bulk-creating listings:', error);
+      res.status(500).json({ error: 'Lỗi nhập danh sách' });
+    }
+  });
+
   // ── PUT /api/listings/:id ────────────────────────────────────────────────────
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
