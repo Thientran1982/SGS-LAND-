@@ -507,14 +507,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             
             <div className="space-y-2 mb-8">
                 <h1 className="text-3xl font-bold tracking-tight text-white animate-enter">
-                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : view === 'PENDING_APPROVAL' ? 'SGS Land' : view === 'TENANT_REJECTED' ? 'SGS Land' : t('auth.welcome')}
+                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : view === 'PENDING_APPROVAL' ? t('auth.pending_approval_title') : view === 'TENANT_REJECTED' ? t('auth.rejected_title') : t('auth.welcome')}
                 </h1>
                 <p className="text-gray-400 text-sm leading-relaxed max-w-sm animate-enter" style={{animationDelay: '0.1s'}}>
                     {view === 'REGISTER' ? t('auth.register_subtitle') : 
                      view === 'FORGOT_VERIFY' && !tokenFromUrl ? (t('auth.check_email_subtitle') || 'Chúng tôi đã gửi link tới hộp thư của bạn.') :
                      view === 'FORGOT_VERIFY' && tokenFromUrl ? (t('auth.new_pass_subtitle') || 'Đặt mật khẩu mới cho tài khoản của bạn.') :
                      view === 'FORGOT_REQUEST' ? t('auth.reset_subtitle') :
-                     view === 'VERIFY_EMAIL' ? t('auth.verify_email_subtitle') : t('auth.login_subtitle')}
+                     view === 'VERIFY_EMAIL' ? t('auth.verify_email_subtitle') :
+                     view === 'PENDING_APPROVAL' ? t('auth.pending_approval_subtitle') :
+                     view === 'TENANT_REJECTED' ? t('auth.rejected_subtitle') : t('auth.login_subtitle')}
                 </p>
             </div>
 
@@ -562,20 +564,17 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
                     <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 text-center">
                         <div className="text-5xl mb-4">⏳</div>
-                        <h3 className="text-white font-bold text-lg mb-2">Đang Chờ Phê Duyệt</h3>
-                        <p className="text-sm text-gray-400 mb-2">Email đã xác minh thành công.</p>
+                        <h3 className="text-white font-bold text-lg mb-2">{t('auth.pending_approval_heading')}</h3>
+                        <p className="text-sm text-gray-400 mb-2">{t('auth.pending_approval_email_verified')}</p>
                         <p className="text-amber-300 font-semibold text-sm break-all mb-3">{registeredEmail}</p>
-                        <p className="text-xs text-gray-400 leading-relaxed">
-                            Workspace của bạn đang chờ SGS Land xem xét và phê duyệt.
-                            Bạn sẽ nhận được email thông báo khi được chấp thuận.
-                        </p>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('auth.pending_approval_desc')}</p>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-gray-400 leading-relaxed">
-                        <p className="font-semibold text-white/60 mb-1">Quá trình xét duyệt:</p>
+                        <p className="font-semibold text-white/60 mb-1">{t('auth.pending_approval_process')}</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li>Đội ngũ SGS Land sẽ xem xét thông tin đăng ký</li>
-                            <li>Thời gian xét duyệt thường trong vòng 1-2 ngày làm việc</li>
-                            <li>Bạn sẽ nhận email thông báo kết quả</li>
+                            <li>{t('auth.pending_approval_step1')}</li>
+                            <li>{t('auth.pending_approval_step2')}</li>
+                            <li>{t('auth.pending_approval_step3')}</li>
                         </ul>
                     </div>
                     <button
@@ -583,7 +582,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         onClick={() => { setView('LOGIN'); setGlobalError(''); setPassword(''); }}
                         className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all"
                     >
-                        Quay lại đăng nhập
+                        {t('auth.btn_back_login')}
                     </button>
                 </div>
             )}
@@ -593,13 +592,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
                     <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 text-center">
                         <div className="text-5xl mb-4">❌</div>
-                        <h3 className="text-white font-bold text-lg mb-2">Đăng Ký Không Được Chấp Thuận</h3>
-                        <p className="text-sm text-gray-400 mb-2">Tài khoản:</p>
+                        <h3 className="text-white font-bold text-lg mb-2">{t('auth.rejected_heading')}</h3>
+                        <p className="text-sm text-gray-400 mb-2">{t('auth.rejected_account_label')}</p>
                         <p className="text-rose-300 font-semibold text-sm break-all mb-3">{registeredEmail}</p>
                         <p className="text-xs text-gray-400 leading-relaxed">
-                            Workspace của bạn chưa được chấp thuận. Vui lòng kiểm tra email để biết lý do và liên hệ{' '}
+                            {t('auth.rejected_desc_before')}{' '}
                             <a href="mailto:support@sgsland.vn" className="text-indigo-400 hover:underline">support@sgsland.vn</a>{' '}
-                            để được hỗ trợ thêm.
+                            {t('auth.rejected_desc_after')}
                         </p>
                     </div>
                     <button
@@ -607,7 +606,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         onClick={() => { setView('LOGIN'); setGlobalError(''); setPassword(''); }}
                         className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all"
                     >
-                        Quay lại đăng nhập
+                        {t('auth.btn_back_login')}
                     </button>
                 </div>
             )}
