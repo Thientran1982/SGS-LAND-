@@ -94,6 +94,7 @@ export enum DataResidency {
 // =============================================================================
 
 export enum UserRole {
+    SUPER_ADMIN = 'SUPER_ADMIN',      // Quản trị viên cấp cao nhất (SGSLand platform owner)
     ADMIN = 'ADMIN',
     SALES = 'SALES',
     TEAM_LEAD = 'TEAM_LEAD',

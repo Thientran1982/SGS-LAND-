@@ -302,11 +302,12 @@ interface InviteModalProps {
     onClose: () => void;
     onConfirm: (data: InviteFormData) => Promise<void>;
     t: any;
+    callerRole?: string;
 }
 
 const VN_PHONE_RE = /^(03|05|07|08|09)\d{8}$/;
 
-const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfirm, t }) => {
+const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfirm, t, callerRole }) => {
     const [name, setName]   = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
@@ -346,8 +347,10 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     };
 
     const roleOptions = useMemo(() =>
-        Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) }))
-    , [t]);
+        Object.values(UserRole)
+            .filter(r => callerRole === UserRole.SUPER_ADMIN || r !== UserRole.SUPER_ADMIN)
+            .map(r => ({ value: r, label: t(`role.${r}`) }))
+    , [t, callerRole]);
 
     if (!isOpen) return null;
 
@@ -527,8 +530,8 @@ export const AdminUsers: React.FC = () => {
             const me = await db.getCurrentUser();
             setCurrentUser(me);
             
-            // If not admin or team_lead, don't fetch users
-            if (me?.role !== UserRole.ADMIN && me?.role !== UserRole.TEAM_LEAD) {
+            // If not super_admin, admin, or team_lead, don't fetch users
+            if (me?.role !== UserRole.SUPER_ADMIN && me?.role !== UserRole.ADMIN && me?.role !== UserRole.TEAM_LEAD) {
                 setLoading(false);
                 return;
             }
@@ -654,7 +657,11 @@ export const AdminUsers: React.FC = () => {
         { value: CommonStatus.ARCHIVED, label: t('admin.users.status_archived') },
     ], [t]);
 
-    const userRoleOptions = useMemo(() => Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) })), [t]);
+    const userRoleOptions = useMemo(() =>
+        Object.values(UserRole)
+            .filter(r => currentUser?.role === UserRole.SUPER_ADMIN || r !== UserRole.SUPER_ADMIN)
+            .map(r => ({ value: r, label: t(`role.${r}`) }))
+    , [t, currentUser?.role]);
 
     // Header Helper
     const SortableHeader = ({ field, label, className = "" }: { field: string, label: string, className?: string }) => (
@@ -673,7 +680,7 @@ export const AdminUsers: React.FC = () => {
         </th>
     );
 
-    if (!loading && currentUser && currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.TEAM_LEAD) {
+    if (!loading && currentUser && currentUser.role !== UserRole.SUPER_ADMIN && currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.TEAM_LEAD) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-enter">
                 <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
@@ -858,7 +865,7 @@ export const AdminUsers: React.FC = () => {
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-1 sm:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {/* View Performance — only for non-pending users with lead-bearing roles */}
-                                                {!isPending && [UserRole.SALES, UserRole.TEAM_LEAD, UserRole.ADMIN].includes(user.role) && (
+                                                {!isPending && [UserRole.SALES, UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) && (
                                                     <button
                                                         onClick={() => setPerfUser(user)}
                                                         className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
@@ -926,7 +933,8 @@ export const AdminUsers: React.FC = () => {
                 isOpen={isInviteOpen} 
                 onClose={() => setIsInviteOpen(false)} 
                 onConfirm={handleInviteConfirm}
-                t={t} 
+                t={t}
+                callerRole={currentUser?.role}
             />
 
             {/* Delete Confirmation Modal */}
