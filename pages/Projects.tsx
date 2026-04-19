@@ -348,19 +348,23 @@ const STATUS_LISTING_COLOR: Record<string, string> = {
     INACTIVE:  'bg-rose-100 text-rose-500',
 };
 
+function fmtNum(v: number, maxDec = 2) {
+    return v.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: maxDec });
+}
+
 function fmtPrice(p: number) {
     if (!p) return '—';
-    if (p >= 1_000_000_000) return (p / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '') + ' tỷ';
-    if (p >= 1_000_000) return (p / 1_000_000).toFixed(0) + ' tr';
-    return p.toLocaleString('vi-VN');
+    if (p >= 1_000_000_000) return fmtNum(p / 1_000_000_000) + ' tỷ';
+    if (p >= 1_000_000) return fmtNum(p / 1_000_000, 0) + ' tr';
+    return fmtNum(p, 0) + ' đ';
 }
 
 function fmtUnitPrice(price: number, area: number) {
     if (!price || !area) return '—';
     const up = price / area;
-    if (up >= 1_000_000_000) return (up / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '') + ' tỷ/m²';
-    if (up >= 1_000_000) return (up / 1_000_000).toFixed(0) + ' tr/m²';
-    return up.toLocaleString('vi-VN') + '/m²';
+    if (up >= 1_000_000_000) return fmtNum(up / 1_000_000_000) + ' tỷ/m²';
+    if (up >= 1_000_000) return fmtNum(up / 1_000_000, 0) + ' tr/m²';
+    return fmtNum(up, 0) + ' đ/m²';
 }
 
 interface ProjectListingsPanelProps {
