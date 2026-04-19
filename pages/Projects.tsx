@@ -611,7 +611,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                     </div>
 
                     {/* ── Table ── */}
-                    <div className="flex-1 overflow-y-auto no-scrollbar">
+                    <div className="flex-1 overflow-auto">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -627,7 +627,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 )}
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
                             <table className="w-full text-sm min-w-max">
                                 <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] z-10">
                                     <tr>
@@ -737,7 +736,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                     ))}
                                 </tbody>
                             </table>
-                            </div>
                         )}
                     </div>
 
