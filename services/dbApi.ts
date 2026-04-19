@@ -1128,6 +1128,30 @@ class DatabaseApiClient {
     return res.json();
   }
 
+  /**
+   * B2B vendor self-signup: tạo tenant mới + ADMIN user + subscription INDIVIDUAL trial 14 ngày.
+   * Trả về { needsVerification, email, tenantId, tenantDomain, plan, trialDays, ...devVerifyToken? }.
+   */
+  async onboardVendor(
+    company: string,
+    name: string,
+    email: string,
+    password: string,
+    phone?: string
+  ) {
+    const res = await fetch('/api/auth/onboard-vendor', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company, name, email, password, phone }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Onboarding failed' }));
+      throw new Error(err.error || 'Onboarding failed');
+    }
+    return res.json();
+  }
+
   async verifyEmail(token: string) {
     const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
       credentials: 'include',

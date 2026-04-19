@@ -8,7 +8,8 @@ import jwt from "jsonwebtoken";
 import { WebSocketServer } from "ws";
 // @ts-ignore
 import { setupWSConnection } from "y-websocket/bin/utils";
-import { pool, withTenantContext } from "./server/db";
+import { pool, withTenantContext, withRlsBypass } from "./server/db";
+import bcrypt from "bcrypt";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
 import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled } from "./server/queue";
@@ -232,17 +233,44 @@ async function startServer() {
     try {
       let { email, password } = req.body;
       email = email?.trim();
-      const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
+      const explicitTenantId = (req as any).tenantId as string | undefined;
+      const lookupTenantId = explicitTenantId || DEFAULT_TENANT_ID;
 
-      let dbUser = await userRepository.authenticate(tenantId, email, password);
+      let dbUser = await userRepository.authenticate(lookupTenantId, email, password);
+      let tenantId = lookupTenantId;
+
+      // Cross-tenant fallback: B2B vendor admins được tạo trong tenant riêng (không phải host).
+      // Middleware luôn set req.tenantId = DEFAULT_TENANT_ID khi không có JWT bound; do đó
+      // ta chỉ kích hoạt fallback khi vẫn đang ở host tenant (= user chưa đăng nhập). Khi đã
+      // có JWT của một workspace khác, login sẽ chỉ thử trong tenant đó.
+      if (!dbUser && lookupTenantId === DEFAULT_TENANT_ID && email) {
+        const candidates = await withRlsBypass(async (client) => {
+          const r = await client.query(
+            `SELECT tenant_id FROM users WHERE LOWER(email) = LOWER($1) AND tenant_id <> $2 LIMIT 10`,
+            [email, DEFAULT_TENANT_ID]
+          );
+          return r.rows as { tenant_id: string }[];
+        });
+        for (const cand of candidates) {
+          const u = await userRepository.authenticate(cand.tenant_id, email, password).catch(() => null);
+          if (u) { dbUser = u; tenantId = cand.tenant_id; break; }
+        }
+      }
 
       if (!dbUser) {
-        writeAuditLog(tenantId, email, 'LOGIN_FAILED', 'auth', undefined, { email }, req.ip);
+        writeAuditLog(lookupTenantId, email, 'LOGIN_FAILED', 'auth', undefined, { email }, req.ip);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      // Block login if email not yet verified (only for self-registered users)
-      if (!dbUser.emailVerified && dbUser.source === 'REGISTER') {
+      // Block login when email not yet verified.
+      // Áp dụng cho mọi đường tự đăng ký (REGISTER + SELF_SIGNUP_VENDOR) cũng như
+      // mọi tài khoản đang ở trạng thái PENDING — không phụ thuộc duy nhất vào source
+      // để tránh bypass khi thêm flow mới.
+      const requiresVerification =
+        dbUser.source === 'REGISTER' ||
+        dbUser.source === 'SELF_SIGNUP_VENDOR' ||
+        dbUser.status === 'PENDING';
+      if (!dbUser.emailVerified && requiresVerification) {
         return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED', email: dbUser.email });
       }
 
@@ -400,6 +428,211 @@ async function startServer() {
     }
   });
 
+  // ── Onboard Vendor (B2B Self-Signup) ────────────────────────────────────────
+  // Tạo MỘT tenant MỚI hoàn toàn (không gắn vào host tenant) + ADMIN user là
+  // chủ tài khoản + subscription INDIVIDUAL trial 14 ngày. Đây là entry point
+  // self-service cho các sàn BĐS / chủ đầu tư muốn dùng SGS Land làm CRM riêng.
+  //
+  // Khác biệt với /api/auth/register:
+  //   - /register: thêm user vào host tenant (DEFAULT_TENANT_ID) — dành cho
+  //     nhân sự nội bộ SGS Land hoặc khi chưa có B2B onboarding flow.
+  //   - /onboard-vendor: tạo workspace độc lập với RLS isolation đầy đủ. Email
+  //     có thể đã tồn tại ở tenant khác (mỗi vendor một tài khoản riêng).
+  app.post(
+    "/api/auth/onboard-vendor",
+    authRateLimit,
+    validateBody(schemas.onboardVendor),
+    async (req, res) => {
+      try {
+        const { company, name, email, password, phone } = req.body as {
+          company: string;
+          name: string;
+          email: string;
+          password: string;
+          phone?: string;
+        };
+
+        const trimmedCompany = company.trim();
+        const trimmedEmail = email.trim().toLowerCase();
+        const trimmedName = name.trim();
+
+        // 1) Sinh slug domain duy nhất từ tên công ty (loại dấu tiếng Việt)
+        const baseSlug =
+          trimmedCompany
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/gi, 'd')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 40) || 'vendor';
+
+        // 2) Sinh email-verify token TRƯỚC khi vào transaction (idempotent — không cần rollback)
+        const cryptoMod = await import('crypto');
+        const rawToken = cryptoMod.randomBytes(32).toString('hex');
+        const tokenHash = cryptoMod.createHash('sha256').update(rawToken).digest('hex');
+        const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+        const passwordHash = await bcrypt.hash(password, 12);
+
+        // 3) ATOMIC: tenant + subscription + ADMIN user trong MỘT transaction (1 client, 1 BEGIN/COMMIT).
+        //    Nếu bất kỳ bước nào fail, toàn bộ rollback — không có nguy cơ orphan tenant.
+        //    Slug collision được retry tối đa 5 lần khi gặp lỗi unique 23505 trên tenants_domain_key.
+        const created = await (async () => {
+          const APP_DB_ROLE = (process.env.APP_DB_ROLE || 'sgs_app').replace(/[^a-z0-9_]/gi, '');
+          for (let attempt = 0; attempt < 5; attempt++) {
+            const client = await pool.connect();
+            try {
+              await client.query('BEGIN');
+              await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
+              await client.query("SET LOCAL app.bypass_rls = 'on'");
+
+              // 3a) Chặn tạo trùng (cùng tên công ty + cùng email admin) — phòng double-submit
+              const dup = await client.query(
+                `SELECT t.id FROM tenants t
+                   JOIN users u ON u.tenant_id = t.id AND u.role = 'ADMIN'
+                  WHERE LOWER(t.name) = LOWER($1) AND LOWER(u.email) = $2 LIMIT 1`,
+                [trimmedCompany, trimmedEmail]
+              );
+              if ((dup.rowCount ?? 0) > 0) {
+                await client.query('ROLLBACK');
+                throw Object.assign(new Error('DUPLICATE_VENDOR'), {
+                  statusCode: 409,
+                  userMsg: 'Workspace này đã được đăng ký bằng email này.',
+                });
+              }
+
+              // 3b) Slug: thử base, base-2, base-3 … (best-effort; UNIQUE constraint là chốt cuối)
+              let domainSlug = baseSlug;
+              for (let suffix = 2; suffix <= 50; suffix++) {
+                const exists = await client.query(
+                  `SELECT 1 FROM tenants WHERE domain = $1 LIMIT 1`,
+                  [domainSlug]
+                );
+                if (exists.rowCount === 0) break;
+                domainSlug = `${baseSlug}-${suffix}`;
+              }
+
+              // 3c) INSERT tenant
+              const tenantInsert = await client.query(
+                `INSERT INTO tenants (name, domain, config)
+                 VALUES ($1, $2, $3::jsonb)
+                 RETURNING id`,
+                [
+                  trimmedCompany,
+                  domainSlug,
+                  JSON.stringify({
+                    source: 'self_signup_vendor',
+                    plan: 'INDIVIDUAL',
+                    status: 'TRIAL',
+                    vendorAdminEmail: trimmedEmail,
+                    onboardedAt: new Date().toISOString(),
+                  }),
+                ]
+              );
+              const newTenantId = tenantInsert.rows[0].id as string;
+
+              // 3d) INSERT subscription INDIVIDUAL trial 14 ngày
+              const trialEnds = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+              await client.query(
+                `INSERT INTO subscriptions
+                   (tenant_id, plan_id, status, seats_used, trial_ends_at,
+                    current_period_start, current_period_end, metadata)
+                 VALUES ($1, 'INDIVIDUAL', 'TRIAL', 1, $2, NOW(), $2, $3::jsonb)`,
+                [newTenantId, trialEnds, JSON.stringify({ source: 'self_signup_vendor', trialDays: 14 })]
+              );
+
+              // 3e) INSERT ADMIN user (cùng transaction → atomic). Set tenant context để
+              //     RLS policy đánh giá đúng + cột tenant_id lấy từ current_setting.
+              await client.query(`SET LOCAL app.current_tenant_id = '${newTenantId}'`);
+              const userInsert = await client.query(
+                `INSERT INTO users
+                   (tenant_id, name, email, password_hash, role, phone, source, status,
+                    email_verified, email_verification_token, email_verification_expires)
+                 VALUES (current_setting('app.current_tenant_id', true)::uuid,
+                         $1, $2, $3, 'ADMIN', $4, 'SELF_SIGNUP_VENDOR', 'PENDING',
+                         FALSE, $5, $6)
+                 RETURNING id, name, email`,
+                [trimmedName, trimmedEmail, passwordHash, phone?.trim() || null, tokenHash, tokenExpires]
+              );
+
+              await client.query('COMMIT');
+              return {
+                tenantId: newTenantId,
+                domainSlug,
+                userId: userInsert.rows[0].id as string,
+                userName: userInsert.rows[0].name as string,
+                userEmail: userInsert.rows[0].email as string,
+              };
+            } catch (err: any) {
+              await client.query('ROLLBACK').catch(() => {});
+              // Slug đụng giữa 2 request đồng thời → retry với suffix mới (best effort)
+              if (err?.code === '23505' && /tenants_domain_key/.test(err.constraint || err.detail || '')) {
+                if (attempt < 4) continue;
+              }
+              throw err;
+            } finally {
+              client.release();
+            }
+          }
+          throw new Error('Failed to allocate workspace domain after retries');
+        })();
+
+        const adminUser = {
+          id: created.userId,
+          name: created.userName,
+          email: created.userEmail,
+        };
+
+        // 4) Gửi email verify (không block kết quả nếu SMTP fail)
+        const baseUrl = resolveBaseUrl(req);
+        const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
+        const verifyResult = await emailService
+          .sendVerificationEmail(created.tenantId, trimmedEmail, adminUser.name, verifyUrl)
+          .catch((err) => {
+            logger.error(
+              `[onboard-vendor] Failed to send verify email to ${trimmedEmail}: ${err.message}`
+            );
+            return { success: false, status: 'failed' as const, error: err.message };
+          });
+
+        writeAuditLog(
+          created.tenantId,
+          adminUser.id,
+          'ONBOARD_VENDOR',
+          'tenant',
+          created.tenantId,
+          {
+            company: trimmedCompany,
+            domain: created.domainSlug,
+            email: trimmedEmail,
+            emailSent: verifyResult.success,
+          },
+          req.ip
+        );
+
+        const isDevMode = !isProduction && verifyResult.status === 'queued_no_smtp';
+        res.status(201).json({
+          message:
+            'Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt workspace của bạn.',
+          needsVerification: true,
+          email: adminUser.email,
+          tenantId: created.tenantId,
+          tenantDomain: created.domainSlug,
+          plan: 'INDIVIDUAL',
+          trialDays: 14,
+          emailStatus: verifyResult.status,
+          ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
+        });
+      } catch (error: any) {
+        if (error?.statusCode === 409) {
+          return res.status(409).json({ error: error.userMsg || 'Workspace already exists' });
+        }
+        console.error('[onboard-vendor] error:', error);
+        res.status(500).json({ error: 'Onboarding failed' });
+      }
+    }
+  );
+
   // ── Email Verification ──────────────────────────────────────────────────────
   app.get("/api/auth/verify-email", authRateLimit, async (req, res) => {
     try {
@@ -408,12 +641,14 @@ async function startServer() {
 
       const crypto = await import('crypto');
       const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-      const tenantId = DEFAULT_TENANT_ID;
 
-      // Look up user by verification token
-      const user = await withTenantContext(tenantId, async (client) => {
+      // Look up user by token CROSS-TENANT (vendor onboarding tạo user trong tenant mới,
+      // không phải DEFAULT_TENANT_ID). Token là sha256(32-byte random) → đủ collision-safe
+      // để dùng làm cross-tenant lookup; bypass RLS chỉ để tìm bản ghi, sau đó activate
+      // user trong đúng tenant của họ.
+      const user = await withRlsBypass(async (client) => {
         const r = await client.query(
-          `SELECT * FROM users WHERE email_verification_token = $1 AND email_verification_expires > NOW()`,
+          `SELECT * FROM users WHERE email_verification_token = $1 AND email_verification_expires > NOW() LIMIT 1`,
           [tokenHash]
         );
         return r.rows[0] ? userRepository['rowToEntity']<any>(r.rows[0]) : null;
@@ -423,7 +658,9 @@ async function startServer() {
         return res.status(400).json({ error: 'Invalid or expired verification token' });
       }
 
-      // Mark email as verified and activate the account
+      const tenantId = user.tenantId as string;
+
+      // Mark email as verified and activate the account TRONG ĐÚNG TENANT CỦA USER
       await withTenantContext(tenantId, async (client) => {
         await client.query(
           `UPDATE users SET email_verified = TRUE, status = 'ACTIVE', email_verification_token = NULL, email_verification_expires = NULL WHERE id = $1`,
