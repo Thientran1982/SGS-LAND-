@@ -843,14 +843,14 @@ class DatabaseApiClient {
   // ── Campaigns (Chiến dịch tự động) ─────────────────────────────────────────
   async getCampaigns() {
     const r = await fetch('/api/campaigns', { credentials: 'include' });
-    if (!r.ok) throw new Error('Failed to fetch campaigns');
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Không tải được danh sách chiến dịch');
     const j = await r.json();
     return j.data || [];
   }
 
   async getCampaign(id: string) {
     const r = await fetch(`/api/campaigns/${id}`, { credentials: 'include' });
-    if (!r.ok) throw new Error('Failed to fetch campaign');
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Không tải được chiến dịch');
     return r.json();
   }
 
@@ -907,14 +907,14 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ audience }),
     });
-    if (!r.ok) throw new Error('Failed to preview audience');
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Không thể xem trước đối tượng');
     const j = await r.json();
     return j.count || 0;
   }
 
   async getCampaignRecipients(id: string) {
     const r = await fetch(`/api/campaigns/${id}/recipients`, { credentials: 'include' });
-    if (!r.ok) throw new Error('Failed to fetch recipients');
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Không tải được danh sách người nhận');
     const j = await r.json();
     return j.data || [];
   }

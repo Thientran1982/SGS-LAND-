@@ -9,9 +9,25 @@ class ScoringConfigRepository extends BaseRepository {
   }
 
   private async ensureVersionColumn(client: any): Promise<void> {
-    await client.query(
-      `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1`
-    );
+    try {
+      const { rows } = await client.query(
+        `SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = 'version' LIMIT 1`,
+        [this.tableName]
+      );
+      if (rows.length > 0) return; // column already exists
+      await client.query('SAVEPOINT pre_version_col');
+      try {
+        await client.query(
+          `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1`
+        );
+        await client.query('RELEASE SAVEPOINT pre_version_col');
+      } catch {
+        await client.query('ROLLBACK TO SAVEPOINT pre_version_col');
+        // insufficient privilege — column will default to null-safe reads
+      }
+    } catch {
+      // information_schema query failed or other issue — safe to continue
+    }
   }
 
   async getByTenant(tenantId: string): Promise<any | null> {
