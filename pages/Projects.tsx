@@ -678,6 +678,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                 onClose={() => setShowCreate(false)}
                 onSubmit={handleListingSubmit}
                 initialData={{ projectCode: project.code, location: project.location } as any}
+                isProjectUnit={true}
                 t={t}
             />
 
