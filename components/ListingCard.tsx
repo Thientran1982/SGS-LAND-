@@ -84,10 +84,12 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                         </div>
                     )}
                     
-                    <div className="flex items-center gap-1.5 bg-black/60 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
-                        {LISTING_ICONS.EYE}
-                        <span>{viewCount || 0}</span>
-                    </div>
+                    {(viewCount || 0) > 0 && (
+                        <div className="flex items-center gap-1.5 bg-black/60 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
+                            {LISTING_ICONS.EYE}
+                            <span>{viewCount}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -125,12 +127,10 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     )}
                 </>
             ) : (
-                <img
-                    src={NO_IMAGE_URL}
-                    alt={title}
-                    className="w-full h-full object-cover"
-                    aria-hidden="true"
-                />
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800">
+                    {LISTING_ICONS.IMAGE_PLACEHOLDER}
+                    <span className="text-xs text-[var(--text-tertiary)] dark:text-slate-500">Chưa có ảnh</span>
+                </div>
             )}
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 pointer-events-none z-10"></div>
