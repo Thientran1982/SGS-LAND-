@@ -323,11 +323,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       (async () => {
         try {
           const { notificationRepository } = await import('./repositories/notificationRepository');
-          const { pool } = await import('./db');
-          const admins = await pool.query(
+          const { withTenantContext } = await import('./db');
+          const admins = await withTenantContext(tenantId, (client) => client.query(
             `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('ADMIN', 'TEAM_LEAD') LIMIT 5`,
             [tenantId]
-          );
+          ));
           const followerName = sender?.display_name || `Zalo User ${senderId.slice(-6)}`;
           for (const admin of admins.rows) {
             await notificationRepository.create({
@@ -400,11 +400,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             });
           } else {
             // Chưa có agent — thông báo cho tất cả ADMIN trong tenant
-            const { pool } = await import('./db');
-            const admins = await pool.query(
+            const { withTenantContext } = await import('./db');
+            const admins = await withTenantContext(tenantId, (client) => client.query(
               `SELECT id FROM users WHERE tenant_id = $1 AND role = 'ADMIN' LIMIT 5`,
               [tenantId]
-            );
+            ));
             for (const admin of admins.rows) {
               await notificationRepository.create({
                 tenantId,

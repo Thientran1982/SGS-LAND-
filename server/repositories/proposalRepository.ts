@@ -165,10 +165,11 @@ export class ProposalRepository extends BaseRepository {
     });
   }
 
-  // Public token lookup: bypasses RLS — the token itself is the auth credential.
-  // Do NOT expose tenant-controlled data beyond what the token authorises.
+  // Public token lookup: token chính là credential xác thực.
+  // Dùng withRlsBypass để JOIN cross-tenant trên leads/listings; ràng buộc bằng p.token.
   async findByTokenGlobal(token: string): Promise<any | null> {
-    const result = await pool.query(
+    const { withRlsBypass } = await import('../db');
+    const result = await withRlsBypass((client) => client.query(
       `SELECT p.*,
               l.name as lead_name,
               li.title as listing_title,
@@ -184,7 +185,7 @@ export class ProposalRepository extends BaseRepository {
        WHERE p.token = $1
        LIMIT 1`,
       [token]
-    );
+    ));
     return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
   }
 }

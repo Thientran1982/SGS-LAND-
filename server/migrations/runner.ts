@@ -86,6 +86,8 @@ import m065 from './065_ai_usage_log';
 import m066 from './066_ai_cost_plan_quotas';
 import m067 from './067_campaigns';
 import m068 from './068_seo_target_keywords';
+import m069 from './069_force_rls';
+import m070 from './070_app_role_and_safe_policy';
 
 dotenv.config();
 
@@ -168,6 +170,8 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '066_ai_cost_plan_quotas.ts': m066,
   '067_campaigns.ts': m067,
   '068_seo_target_keywords.ts': m068,
+  '069_force_rls.ts': m069,
+  '070_app_role_and_safe_policy.ts': m070,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

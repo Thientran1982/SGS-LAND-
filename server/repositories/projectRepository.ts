@@ -55,24 +55,26 @@ export class ProjectRepository extends BaseRepository {
         });
     }
 
-    // Find projects accessible by a partner tenant (via project_access)
-    // Uses pool directly to bypass RLS — developer projects have different tenant_id
+    // Find projects accessible by a partner tenant (via project_access).
+    // Cross-tenant đọc hợp pháp: dùng RLS bypass có kiểm soát, ràng buộc bằng partner_tenant_id.
     async findAccessibleProjects(partnerTenantId: string): Promise<any[]> {
-        const { pool } = await import('../db');
-        const result = await pool.query(
-            `SELECT p.*, pa.granted_at, pa.expires_at, pa.note as access_note,
-                    t.name as developer_name
-             FROM project_access pa
-             JOIN projects p ON p.id = pa.project_id
-             JOIN tenants t ON t.id = p.tenant_id
-             WHERE pa.partner_tenant_id = $1
-               AND pa.status = 'ACTIVE'
-               AND (pa.expires_at IS NULL OR pa.expires_at > NOW())
-               AND p.status = 'ACTIVE'
-             ORDER BY p.name ASC`,
-            [partnerTenantId]
-        );
-        return result.rows;
+        const { withRlsBypass } = await import('../db');
+        return withRlsBypass(async (client) => {
+            const result = await client.query(
+                `SELECT p.*, pa.granted_at, pa.expires_at, pa.note as access_note,
+                        t.name as developer_name
+                 FROM project_access pa
+                 JOIN projects p ON p.id = pa.project_id
+                 JOIN tenants t ON t.id = p.tenant_id
+                 WHERE pa.partner_tenant_id = $1
+                   AND pa.status = 'ACTIVE'
+                   AND (pa.expires_at IS NULL OR pa.expires_at > NOW())
+                   AND p.status = 'ACTIVE'
+                 ORDER BY p.name ASC`,
+                [partnerTenantId]
+            );
+            return result.rows;
+        });
     }
 
     async findById(tenantId: string, id: string): Promise<any | null> {

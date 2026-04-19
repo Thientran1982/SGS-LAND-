@@ -51,6 +51,12 @@ export async function initializeDatabase(): Promise<void> {
   await runPendingMigrations(pool);
 }
 
+/**
+ * Tên role runtime — KHÔNG có BYPASSRLS — để Postgres thực thi RLS thay vì owner bỏ qua.
+ * Tạo bởi migration 070. Có thể override qua APP_DB_ROLE nếu cần.
+ */
+const APP_DB_ROLE = (process.env.APP_DB_ROLE || 'sgs_app').replace(/[^a-z0-9_]/gi, '');
+
 export async function withTenantContext<T>(
   tenantId: string,
   queryFn: (client: PoolClient) => Promise<T>
@@ -62,6 +68,9 @@ export async function withTenantContext<T>(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // SET LOCAL ROLE: chuyển sang role NOBYPASSRLS để Postgres thực thi policy RLS.
+    // Phải SET ROLE TRƯỚC khi đặt app.current_tenant_id để policy đánh giá đúng.
+    await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
     await client.query(`SET LOCAL app.current_tenant_id = '${sanitized}'`);
     const result = await queryFn(client);
     await client.query('COMMIT');
@@ -80,6 +89,38 @@ export async function withTransaction<T>(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const result = await queryFn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * RLS bypass channel — sử dụng cho các truy vấn cross-tenant hợp pháp:
+ *   • B2B2C partner đọc inventory của developer (project_access JOIN).
+ *   • Webhook hệ thống không có user/tenant context (Stripe, Zalo OA…).
+ *   • Tra cứu nội bộ bằng PRIMARY KEY khi đã xác thực ngoài (vd: token public, JWT).
+ *
+ * Đặt biến phiên `app.bypass_rls = 'on'` chỉ trong phạm vi transaction (SET LOCAL),
+ * tự động xóa khi connection trở lại pool. Các policy `tenant_isolation_v2`
+ * sẽ cho phép đọc/ghi vượt tenant khi biến này bật.
+ *
+ * QUAN TRỌNG: Code gọi withRlsBypass PHẢI tự ràng buộc dữ liệu bằng WHERE
+ * (id, token, partner_tenant_id, …) — bypass không thay thế kiểm tra logic.
+ */
+export async function withRlsBypass<T>(
+  queryFn: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
+    await client.query("SET LOCAL app.bypass_rls = 'on'");
     const result = await queryFn(client);
     await client.query('COMMIT');
     return result;
