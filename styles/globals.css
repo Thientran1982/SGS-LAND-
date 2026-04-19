@@ -43,6 +43,12 @@ html.dark {
   scrollbar-width: none;
 }
 
+/* Touch scroll — enables momentum scrolling on iOS for overflow containers */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 /* Thin scrollbar — overrides global hide for dropdown menus */
 .thin-scrollbar {
   -ms-overflow-style: auto;
