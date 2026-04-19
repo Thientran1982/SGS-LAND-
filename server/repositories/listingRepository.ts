@@ -273,7 +273,7 @@ export class ListingRepository extends BaseRepository {
     userRole?: string
   ): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; totalCount: number }> {
     return this.withTenant(tenantId, async (client) => {
-      const conditions: string[] = [`(project_code IS NULL OR project_code = '' OR type = 'Project')`];
+      const conditions: string[] = [];
       const values: any[] = [];
       let paramIndex = 1;
 
@@ -284,7 +284,7 @@ export class ListingRepository extends BaseRepository {
         paramIndex++;
       }
 
-      const whereClause = `WHERE ${conditions.join(' AND ')}`;
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       const sr = (await client.query(
         `SELECT
