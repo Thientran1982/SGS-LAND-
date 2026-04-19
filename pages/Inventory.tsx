@@ -1127,12 +1127,11 @@ export const Inventory: React.FC = () => {
                                 t={t}
                                 language={language}
                             />
+                            {/* Non-blocking loading chip — map stays interactive while full dataset loads */}
                             {boardLoading && (
-                                <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-                                        <p className="text-xs font-bold text-slate-600">{t('common.loading')}</p>
-                                    </div>
+                                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-full px-4 py-2 pointer-events-none">
+                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin flex-shrink-0" />
+                                    <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">{t('common.loading')}</span>
                                 </div>
                             )}
                         </div>
