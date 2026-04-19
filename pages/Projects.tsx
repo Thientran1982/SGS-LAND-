@@ -386,8 +386,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
     // Listing access modal
     const [accessListings, setAccessListings] = useState<any[] | null>(null);
     const [tenants, setTenants] = useState<any[]>([]);
-    // Row actions: edit / delete
-    const [activeRow, setActiveRow] = useState<string | null>(null);
+    // Row actions: 3-dot menu + edit / delete
+    const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const menuRef = useRef<HTMLDivElement | null>(null);
     const [editTarget, setEditTarget] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -463,13 +465,29 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
 
     const selectedListings = filtered.filter(l => selected.has(l.id));
 
+    // ── 3-dot row menu ───────────────────────────────────────────────────────
+    const openRowMenu = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        setMenuOpenId(prev => prev === id ? null : id);
+    };
+
+    useEffect(() => {
+        if (!menuOpenId) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node)) setMenuOpenId(null);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpenId]);
+
     // ── Row edit ──────────────────────────────────────────────────────────────
     const handleEditSubmit = async (data: any) => {
         if (!editTarget) return;
         const updated = await db.updateListing(editTarget.id, data);
         setListings(prev => prev.map(l => l.id === editTarget.id ? { ...l, ...updated } : l));
         setEditTarget(null);
-        setActiveRow(null);
     };
 
     // ── Row delete ────────────────────────────────────────────────────────────
@@ -482,7 +500,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
             setSelected(prev => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
             if (stats) setStats((s: any) => ({ ...s, totalCount: Math.max(0, (s.totalCount || 0) - 1) }));
             setDeleteTarget(null);
-            setActiveRow(null);
         } finally {
             setDeleting(false);
         }
@@ -648,10 +665,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 <tbody className="divide-y divide-[var(--glass-border)]">
                                     {filtered.map(l => (
                                         <tr key={l.id}
-                                            onClick={() => setActiveRow(prev => prev === l.id ? null : l.id)}
-                                            className={`cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors ${activeRow === l.id ? 'bg-blue-50 dark:bg-blue-900/10 ring-1 ring-inset ring-blue-200 dark:ring-blue-700' : ''} ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
+                                            className={`hover:bg-[var(--glass-surface-hover)] transition-colors ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
                                             {isAdmin && (
-                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
+                                                <td className="px-4 py-2.5">
                                                     <input
                                                         type="checkbox"
                                                         checked={selected.has(l.id)}
@@ -692,27 +708,17 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             </td>
                                             <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
                                             {canCreate && (
-                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
-                                                    {activeRow === l.id ? (
-                                                        <div className="flex items-center gap-1.5">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setEditTarget(l)}
-                                                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:bg-blue-50 border border-blue-200 transition-colors whitespace-nowrap"
-                                                            >
-                                                                {IC.EDIT} {t('common.edit')}
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeleteTarget(l)}
-                                                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors whitespace-nowrap"
-                                                            >
-                                                                {IC.TRASH} {t('common.delete')}
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-[var(--text-muted)] text-xs">—</span>
-                                                    )}
+                                                <td className="px-4 py-2.5 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={e => openRowMenu(e, l.id)}
+                                                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${menuOpenId === l.id ? 'bg-[var(--glass-surface-hover)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                                        title={t('common.actions')}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                                                        </svg>
+                                                    </button>
                                                 </td>
                                             )}
                                             {isAdmin && (
@@ -764,12 +770,42 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
 
             <ListingForm
                 isOpen={!!editTarget}
-                onClose={() => { setEditTarget(null); setActiveRow(null); }}
+                onClose={() => setEditTarget(null)}
                 onSubmit={handleEditSubmit}
                 initialData={editTarget || undefined}
                 isProjectUnit={true}
                 t={t}
             />
+
+            {menuOpenId && (() => {
+                const menuListing = filtered.find(l => l.id === menuOpenId);
+                if (!menuListing) return null;
+                return createPortal(
+                    <div
+                        ref={menuRef}
+                        onClick={e => e.stopPropagation()}
+                        style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 10002 }}
+                        className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
+                    >
+                        <button
+                            type="button"
+                            onClick={() => { setMenuOpenId(null); setEditTarget(menuListing); }}
+                            className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
+                        >
+                            {IC.EDIT} {t('common.edit')}
+                        </button>
+                        <div className="border-t border-[var(--glass-border)] my-1" />
+                        <button
+                            type="button"
+                            onClick={() => { setMenuOpenId(null); setDeleteTarget(menuListing); }}
+                            className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                        >
+                            {IC.TRASH} {t('common.delete')}
+                        </button>
+                    </div>,
+                    document.body
+                );
+            })()}
 
             {deleteTarget && createPortal(
                 <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
