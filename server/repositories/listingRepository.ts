@@ -162,7 +162,7 @@ export class ListingRepository extends BaseRepository {
     const total = countResult.rows[0].total;
 
     const dataResult = await client.query(
-      `SELECT id, tenant_id, code, title, location, price, currency, area, bedrooms, bathrooms,
+      `SELECT id, tenant_id, code, title, location, price, currency, area, built_area, bedrooms, bathrooms,
               type, status, transaction, attributes, images, project_code, project_id,
               contact_phone, coordinates, is_verified, view_count, booking_count,
               total_units, available_units, hold_expires_at, created_by, authorized_agents,
@@ -202,7 +202,7 @@ export class ListingRepository extends BaseRepository {
 
     const result = await withRlsBypass(async (client) => client.query(
       `SELECT l.id, l.tenant_id, l.code, l.title, l.location, l.price, l.currency,
-              l.area, l.bedrooms, l.bathrooms, l.type, l.status, l.transaction,
+              l.area, l.built_area, l.bedrooms, l.bathrooms, l.type, l.status, l.transaction,
               l.attributes, l.images, l.project_code, l.project_id,
               l.contact_phone, l.coordinates, l.is_verified, l.view_count, l.booking_count,
               l.total_units, l.available_units, l.hold_expires_at, l.created_by, l.authorized_agents,
@@ -568,20 +568,20 @@ export class ListingRepository extends BaseRepository {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
         `INSERT INTO listings (
-          tenant_id, code, title, location, price, currency, area, bedrooms, bathrooms,
+          tenant_id, code, title, location, price, currency, area, built_area, bedrooms, bathrooms,
           type, status, transaction, attributes, images, project_code, contact_phone,
           coordinates, is_verified, owner_name, owner_phone, commission, commission_unit,
           created_by, authorized_agents, total_units, available_units
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8,
-          $9, $10, $11, $12, $13, $14, $15,
-          $16, $17, $18, $19, $20, $21,
-          $22, $23, $24, $25
+          $1, $2, $3, $4, $5, $6, $7, $8, $9,
+          $10, $11, $12, $13, $14, $15, $16,
+          $17, $18, $19, $20, $21, $22,
+          $23, $24, $25, $26
         ) RETURNING *`,
         [
           data.code, data.title, data.location, data.price, data.currency || 'VND',
-          data.area, data.bedrooms || null, data.bathrooms || null,
+          data.area, data.builtArea || null, data.bedrooms || null, data.bathrooms || null,
           data.type, data.status || 'AVAILABLE', data.transaction || 'SALE',
           JSON.stringify(data.attributes || {}), JSON.stringify(data.images || []),
           data.projectCode || null, data.contactPhone || null,
@@ -603,7 +603,7 @@ export class ListingRepository extends BaseRepository {
       let paramIndex = 2;
 
       const directFields = [
-        'code', 'title', 'location', 'price', 'currency', 'area', 'bedrooms', 'bathrooms',
+        'code', 'title', 'location', 'price', 'currency', 'area', 'builtArea', 'bedrooms', 'bathrooms',
         'type', 'status', 'transaction', 'projectCode', 'contactPhone', 'isVerified',
         'ownerName', 'ownerPhone', 'commission', 'commissionUnit', 'totalUnits', 'availableUnits',
         'viewCount', 'bookingCount',

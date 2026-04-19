@@ -92,6 +92,7 @@ import m071 from './071_seed_featured_projects_and_backfill_listings';
 import m072 from './072_email_log_and_extended_rls';
 import m073 from './073_tenant_approval_status';
 import m074 from './074_super_admin_role';
+import m075 from './075_listings_built_area';
 
 dotenv.config();
 
@@ -180,6 +181,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '072_email_log_and_extended_rls.ts': m072,
   '073_tenant_approval_status.ts': m073,
   '074_super_admin_role.ts': m074,
+  '075_listings_built_area.ts': m075,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

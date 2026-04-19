@@ -354,7 +354,8 @@ export interface Listing {
     location: string;
     price: number;
     currency: 'VND' | 'USD';
-    area: number; // m2
+    area: number; // m2 (Diện tích đất / sàn)
+    builtArea?: number; // m2 (DT xây dựng — Townhouse/Villa/House/Office/Factory/Commercial)
     bedrooms?: number; 
     bathrooms?: number;
     type: PropertyType;
