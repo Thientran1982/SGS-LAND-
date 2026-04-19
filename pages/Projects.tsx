@@ -386,6 +386,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
     // Listing access modal
     const [accessListings, setAccessListings] = useState<any[] | null>(null);
     const [tenants, setTenants] = useState<any[]>([]);
+    // Row actions: edit / delete
+    const [activeRow, setActiveRow] = useState<string | null>(null);
+    const [editTarget, setEditTarget] = useState<any | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -457,6 +462,31 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
     };
 
     const selectedListings = filtered.filter(l => selected.has(l.id));
+
+    // ── Row edit ──────────────────────────────────────────────────────────────
+    const handleEditSubmit = async (data: any) => {
+        if (!editTarget) return;
+        const updated = await db.updateListing(editTarget.id, data);
+        setListings(prev => prev.map(l => l.id === editTarget.id ? { ...l, ...updated } : l));
+        setEditTarget(null);
+        setActiveRow(null);
+    };
+
+    // ── Row delete ────────────────────────────────────────────────────────────
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            await db.deleteListing(deleteTarget.id);
+            setListings(prev => prev.filter(l => l.id !== deleteTarget.id));
+            setSelected(prev => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
+            if (stats) setStats((s: any) => ({ ...s, totalCount: Math.max(0, (s.totalCount || 0) - 1) }));
+            setDeleteTarget(null);
+            setActiveRow(null);
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     return (
         <>
@@ -607,6 +637,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                         ].map(h => (
                                             <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                                         ))}
+                                        {canCreate && (
+                                            <th className="px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_col_actions')}</th>
+                                        )}
                                         {isAdmin && (
                                             <th className="px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_access_col_header')}</th>
                                         )}
@@ -615,9 +648,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 <tbody className="divide-y divide-[var(--glass-border)]">
                                     {filtered.map(l => (
                                         <tr key={l.id}
-                                            className={`hover:bg-[var(--glass-surface-hover)] transition-colors ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
+                                            onClick={() => setActiveRow(prev => prev === l.id ? null : l.id)}
+                                            className={`cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors ${activeRow === l.id ? 'bg-blue-50 dark:bg-blue-900/10 ring-1 ring-inset ring-blue-200 dark:ring-blue-700' : ''} ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
                                             {isAdmin && (
-                                                <td className="px-4 py-2.5">
+                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                                                     <input
                                                         type="checkbox"
                                                         checked={selected.has(l.id)}
@@ -657,8 +691,32 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                                 {fmtUnitPrice(l.price, l.area)}
                                             </td>
                                             <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
+                                            {canCreate && (
+                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
+                                                    {activeRow === l.id ? (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditTarget(l)}
+                                                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:bg-blue-50 border border-blue-200 transition-colors whitespace-nowrap"
+                                                            >
+                                                                {IC.EDIT} {t('common.edit')}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDeleteTarget(l)}
+                                                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors whitespace-nowrap"
+                                                            >
+                                                                {IC.TRASH} {t('common.delete')}
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[var(--text-muted)] text-xs">—</span>
+                                                    )}
+                                                </td>
+                                            )}
                                             {isAdmin && (
-                                                <td className="px-4 py-2.5">
+                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         type="button"
                                                         onClick={() => setAccessListings([l])}
@@ -703,6 +761,51 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                 isProjectUnit={true}
                 t={t}
             />
+
+            <ListingForm
+                isOpen={!!editTarget}
+                onClose={() => { setEditTarget(null); setActiveRow(null); }}
+                onSubmit={handleEditSubmit}
+                initialData={editTarget || undefined}
+                isProjectUnit={true}
+                t={t}
+            />
+
+            {deleteTarget && createPortal(
+                <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-6 max-w-sm w-full space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 shrink-0">
+                                {IC.TRASH}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-[var(--text-primary)]">{t('common.delete')}</h3>
+                                <p className="text-sm text-[var(--text-secondary)] mt-0.5">{deleteTarget.title || deleteTarget.code}</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-[var(--text-secondary)]">{t('project.listing_delete_confirm')}</p>
+                        <div className="flex gap-2 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteTarget(null)}
+                                disabled={deleting}
+                                className="flex-1 px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)] transition-colors"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteConfirm}
+                                disabled={deleting}
+                                className="flex-1 px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-bold hover:bg-rose-700 transition-colors disabled:opacity-60"
+                            >
+                                {deleting ? '...' : t('common.delete')}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
 
             {accessListings && (
                 <ListingAccessPanel
