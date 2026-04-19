@@ -138,7 +138,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
 //  MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY' | 'VERIFY_EMAIL'>('LOGIN');
+  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY' | 'VERIFY_EMAIL' | 'PENDING_APPROVAL' | 'TENANT_REJECTED'>('LOGIN');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -201,9 +201,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           setLoading(true);
           setGlobalError('');
           db.verifyEmail(token)
-              .then(() => {
-                  setSuccessMsg(t('auth.verify_email_success'));
-                  setTimeout(() => onLoginSuccess(), 1000);
+              .then((result: any) => {
+                  if (result?.needsApproval) {
+                      setRegisteredEmail(result.email || '');
+                      setView('PENDING_APPROVAL');
+                      setLoading(false);
+                  } else {
+                      setSuccessMsg(t('auth.verify_email_success'));
+                      setTimeout(() => onLoginSuccess(), 1000);
+                  }
               })
               .catch(() => {
                   setGlobalError(t('auth.verify_email_invalid'));
@@ -419,6 +425,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         setLoading(false);
         return;
       }
+      // Gated B2B: vendor workspace chờ SGSLand duyệt
+      if (err?.code === 'TENANT_PENDING_APPROVAL') {
+        setRegisteredEmail(err.email || email.trim());
+        setView('PENDING_APPROVAL');
+        setLoading(false);
+        return;
+      }
+      // Gated B2B: vendor workspace bị từ chối
+      if (err?.code === 'TENANT_REJECTED') {
+        setRegisteredEmail(err.email || email.trim());
+        setView('TENANT_REJECTED');
+        setLoading(false);
+        return;
+      }
       const msg = localizeServerError(err.message || '');
       setGlobalError(msg);
       triggerShake();
@@ -488,7 +508,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             
             <div className="space-y-2 mb-8">
                 <h1 className="text-3xl font-bold tracking-tight text-white animate-enter">
-                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : t('auth.welcome')}
+                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : view === 'PENDING_APPROVAL' ? 'SGS Land' : view === 'TENANT_REJECTED' ? 'SGS Land' : t('auth.welcome')}
                 </h1>
                 <p className="text-gray-400 text-sm leading-relaxed max-w-sm animate-enter" style={{animationDelay: '0.1s'}}>
                     {view === 'REGISTER' ? t('auth.register_subtitle') : 
@@ -538,8 +558,63 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </div>
             )}
 
+            {/* ── PENDING APPROVAL VIEW ─────────────────────── */}
+            {view === 'PENDING_APPROVAL' && (
+                <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 text-center">
+                        <div className="text-5xl mb-4">⏳</div>
+                        <h3 className="text-white font-bold text-lg mb-2">Đang Chờ Phê Duyệt</h3>
+                        <p className="text-sm text-gray-400 mb-2">Email đã xác minh thành công.</p>
+                        <p className="text-amber-300 font-semibold text-sm break-all mb-3">{registeredEmail}</p>
+                        <p className="text-xs text-gray-400 leading-relaxed">
+                            Workspace của bạn đang chờ SGS Land xem xét và phê duyệt.
+                            Bạn sẽ nhận được email thông báo khi được chấp thuận.
+                        </p>
+                    </div>
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-gray-400 leading-relaxed">
+                        <p className="font-semibold text-white/60 mb-1">Quá trình xét duyệt:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                            <li>Đội ngũ SGS Land sẽ xem xét thông tin đăng ký</li>
+                            <li>Thời gian xét duyệt thường trong vòng 1-2 ngày làm việc</li>
+                            <li>Bạn sẽ nhận email thông báo kết quả</li>
+                        </ul>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => { setView('LOGIN'); setGlobalError(''); setPassword(''); }}
+                        className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all"
+                    >
+                        Quay lại đăng nhập
+                    </button>
+                </div>
+            )}
+
+            {/* ── TENANT REJECTED VIEW ──────────────────────── */}
+            {view === 'TENANT_REJECTED' && (
+                <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
+                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 text-center">
+                        <div className="text-5xl mb-4">❌</div>
+                        <h3 className="text-white font-bold text-lg mb-2">Đăng Ký Không Được Chấp Thuận</h3>
+                        <p className="text-sm text-gray-400 mb-2">Tài khoản:</p>
+                        <p className="text-rose-300 font-semibold text-sm break-all mb-3">{registeredEmail}</p>
+                        <p className="text-xs text-gray-400 leading-relaxed">
+                            Workspace của bạn chưa được chấp thuận. Vui lòng kiểm tra email để biết lý do và liên hệ{' '}
+                            <a href="mailto:support@sgsland.vn" className="text-indigo-400 hover:underline">support@sgsland.vn</a>{' '}
+                            để được hỗ trợ thêm.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => { setView('LOGIN'); setGlobalError(''); setPassword(''); }}
+                        className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all"
+                    >
+                        Quay lại đăng nhập
+                    </button>
+                </div>
+            )}
+
             {/* ── AUTH FORMS (all other views) ──────────────── */}
-            <form onSubmit={handleSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''} ${view === 'VERIFY_EMAIL' ? 'hidden' : ''}`} style={{animationDelay: '0.2s'}}>
+            <form onSubmit={handleSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''} ${(view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? 'hidden' : ''}`} style={{animationDelay: '0.2s'}}>
                 {/* Global Feedback */}
                 {globalError && (
                     <div className="text-rose-200 text-xs font-medium bg-rose-500/10 p-4 rounded-xl border border-rose-500/20 flex items-start animate-pulse" role="alert">
@@ -779,9 +854,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             )}
 
             <div className="mt-auto py-8 text-center text-sm font-medium text-gray-500 animate-enter">
-                {view === 'REGISTER' ? t('auth.has_account') : (view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') ? '' : t('auth.no_account')}
+                {view === 'REGISTER' ? t('auth.has_account') : (view.startsWith('FORGOT') || view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? '' : t('auth.no_account')}
                 
-                {!view.startsWith('FORGOT') && view !== 'VERIFY_EMAIL' && (
+                {!view.startsWith('FORGOT') && view !== 'VERIFY_EMAIL' && view !== 'PENDING_APPROVAL' && view !== 'TENANT_REJECTED' && (
                     <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         {view === 'REGISTER' ? t('auth.login_link') : t('auth.register_link')}
                     </button>

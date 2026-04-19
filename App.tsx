@@ -88,6 +88,7 @@ const Employees = lazyLoad(() => import('./pages/Employees'), 'Employees');
 const TaskReports = lazyLoad(() => import('./pages/TaskReports'), 'TaskReports');
 
 // Private Pages - Enterprise
+const VendorManagement = lazyLoad(() => import('./pages/VendorManagement'), 'VendorManagement');
 const SystemStatus = lazyLoad(() => import('./pages/SystemStatus'), 'SystemStatus');
 const AdminUsers = lazyLoad(() => import('./pages/AdminUsers'), 'AdminUsers');
 const EnterpriseSettings = lazyLoad(() => import('./pages/EnterpriseSettings'), 'EnterpriseSettings');
@@ -214,6 +215,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.CAMPAIGNS]: Campaigns,
     [ROUTES.SCORING_RULES]: ScoringRules,
     [ROUTES.KNOWLEDGE]: KnowledgeBase,
+    [ROUTES.VENDOR_MANAGEMENT]: VendorManagement,
     [ROUTES.SYSTEM]: SystemStatus,
     [ROUTES.ADMIN_USERS]: AdminUsers,
     [ROUTES.ENTERPRISE_SETTINGS]: EnterpriseSettings,
@@ -443,6 +445,7 @@ const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
 const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.SYSTEM,
     ROUTES.ADMIN_USERS,
+    ROUTES.VENDOR_MANAGEMENT,
     ROUTES.ENTERPRISE_SETTINGS,
     ROUTES.BILLING,
     ROUTES.DATA_PLATFORM,

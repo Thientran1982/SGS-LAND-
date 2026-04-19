@@ -69,6 +69,7 @@ export const ROUTES = {
 
     SCRAPER: 'scraper',
     CAMPAIGNS: 'campaigns',
+    VENDOR_MANAGEMENT: 'vendor-management',
 
     // Task Management Module
     TASK_DASHBOARD: 'task-dashboard',
