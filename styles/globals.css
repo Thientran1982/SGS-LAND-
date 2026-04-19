@@ -58,6 +58,7 @@ html.dark {
 .thin-scrollbar::-webkit-scrollbar {
   display: block;
   width: 4px;
+  height: 4px; /* horizontal scrollbar */
 }
 .thin-scrollbar::-webkit-scrollbar-track {
   background: transparent;
