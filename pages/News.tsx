@@ -645,7 +645,7 @@ export const News: React.FC = () => {
                     <ArticleDetail 
                         article={article} 
                         onBack={() => setSelectedArticleId(null)} 
-                        isAdmin={currentUser?.role === UserRole.ADMIN}
+                        isAdmin={['SUPER_ADMIN', 'ADMIN'].includes(currentUser?.role ?? '')}
                         onEdit={(a) => {
                             setEditingArticle(a);
                             setSelectedArticleId(null);

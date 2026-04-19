@@ -53,7 +53,7 @@ export function createInteractionRoutes(authenticateToken: any, getBroadcast?: (
   router.delete('/threads/:leadId', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can delete conversations' });
       }
       const deleted = await interactionRepository.deleteConversation(user.tenantId, String(req.params.leadId));

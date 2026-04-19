@@ -20,7 +20,7 @@ export function createConnectorRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const { tenantId, role } = (req as any).user;
-      if (role !== 'ADMIN' && role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(role)) {
         return res.status(403).json({ error: 'Only admins can create connectors' });
       }
       const { type, name, config } = req.body;
@@ -39,7 +39,7 @@ export function createConnectorRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const { tenantId, role } = (req as any).user;
-      if (role !== 'ADMIN' && role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(role)) {
         return res.status(403).json({ error: 'Only admins can update connectors' });
       }
       const updated = await connectorRepository.update(tenantId, req.params.id as string, req.body);
@@ -55,7 +55,7 @@ export function createConnectorRoutes(authenticateToken: any) {
   router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const { tenantId, role } = (req as any).user;
-      if (role !== 'ADMIN' && role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(role)) {
         return res.status(403).json({ error: 'Only admins can delete connectors' });
       }
       const deleted = await connectorRepository.delete(tenantId, req.params.id as string);

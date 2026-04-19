@@ -82,7 +82,7 @@ export const KnowledgeBase: React.FC = () => {
         ? docs.filter(d => normalizeString(d.title || '').includes(normalizeString(debouncedSearch)))
         : docs;
 
-    const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD';
+    const canManage = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '');
 
     const processFile = async (file: File): Promise<boolean> => {
         const validTypes = ['.pdf', '.docx', '.doc', '.txt'];

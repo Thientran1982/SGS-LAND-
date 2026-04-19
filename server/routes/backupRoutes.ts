@@ -14,7 +14,7 @@ import { runBackup, listBackups, getBackupFilePath } from '../services/backupSer
 
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
     return res.status(403).json({ error: 'Admin only' });
   }
   next();

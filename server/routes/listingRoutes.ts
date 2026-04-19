@@ -378,7 +378,7 @@ export function createListingRoutes(authenticateToken: any) {
         if (!isOwnerOrAssignee) {
           return res.status(403).json({ error: 'You can only edit listings you created or are assigned to' });
         }
-      } else if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      } else if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         // VIEWER and unknown internal roles: read-only
         return res.status(403).json({ error: 'Insufficient permissions to edit listings' });
       }
@@ -446,7 +446,7 @@ export function createListingRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
 
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only ADMIN or TEAM_LEAD can assign listings' });
       }
 
@@ -518,7 +518,7 @@ export function createListingRoutes(authenticateToken: any) {
         if (!isOwnerOrAssignee) {
           return res.status(403).json({ error: 'You can only delete listings you created or are assigned to' });
         }
-      } else if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      } else if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         // VIEWER and unknown internal roles: read-only
         return res.status(403).json({ error: 'Insufficient permissions to delete listings' });
       }

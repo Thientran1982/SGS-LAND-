@@ -197,7 +197,7 @@ export function createBillingRoutes(authenticateToken: any) {
   router.post('/upgrade', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins can upgrade the subscription plan directly. Use checkout instead.' });
       }
       const { planId } = req.body;
@@ -370,7 +370,7 @@ export function createBillingRoutes(authenticateToken: any) {
       const existing = await getTransaction(String(req.params.sessionId), user.tenantId);
       if (!existing) return res.status(404).json({ error: 'Session not found' });
       const isOwner = existing.userId === user.id;
-      const isAdmin = user.role === 'ADMIN' || user.role === 'TEAM_LEAD';
+      const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role);
       if (!isOwner && !isAdmin) {
         return res.status(403).json({ error: 'Only the user who started this checkout (or a tenant admin) can cancel it.' });
       }

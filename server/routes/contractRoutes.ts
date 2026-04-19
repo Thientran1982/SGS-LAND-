@@ -58,7 +58,7 @@ export function createContractRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Thiếu thông tin bắt buộc: loại hợp đồng' });
       }
 
-      const ASSIGN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+      const ASSIGN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
       const body = { ...req.body };
       if (!ASSIGN_ROLES.includes(user.role)) {
         delete body.assignedToId;
@@ -108,7 +108,7 @@ export function createContractRoutes(authenticateToken: any) {
       }
 
       // Validate status transitions only for ADMIN/MANAGER — CRM admins need flexibility
-      const isAdmin = ['ADMIN', 'MANAGER'].includes(user.role);
+      const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user.role);
       if (req.body.status && !isAdmin) {
         const currentStatus = ((current as any).status || 'DRAFT').toUpperCase();
         const newStatus = String(req.body.status).toUpperCase();
@@ -128,7 +128,7 @@ export function createContractRoutes(authenticateToken: any) {
       }
 
       // Only ADMIN/TEAM_LEAD can change assignedToId
-      const ASSIGN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+      const ASSIGN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
       if (!ASSIGN_ROLES.includes(user.role)) {
         delete updateData.assignedToId;
       }
@@ -159,7 +159,7 @@ export function createContractRoutes(authenticateToken: any) {
       const contract = await contractRepository.findById(user.tenantId, String(req.params.id));
       if (!contract) return res.status(404).json({ error: 'Không tìm thấy hợp đồng' });
 
-      const isAdmin = ['ADMIN', 'MANAGER'].includes(user.role);
+      const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user.role);
       const isOwner = (contract as any).createdById === user.id;
       if (!isAdmin && !isOwner) {
         return res.status(403).json({ error: 'Bạn chỉ có thể xóa hợp đồng do mình tạo' });

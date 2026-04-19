@@ -54,7 +54,7 @@ export function createAnalyticsRoutes(authenticateToken: any) {
   router.post('/campaign-costs', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can create campaign costs' });
       }
       const { campaignName, source, cost, period } = req.body;
@@ -81,7 +81,7 @@ export function createAnalyticsRoutes(authenticateToken: any) {
   router.delete('/campaign-costs/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can delete campaign costs' });
       }
       const { id: _id } = req.params; const id = String(_id);
@@ -96,7 +96,7 @@ export function createAnalyticsRoutes(authenticateToken: any) {
   router.put('/campaign-costs/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Only admins and team leads can update campaign costs' });
       }
       const { id: _id } = req.params; const id = String(_id);
@@ -123,7 +123,7 @@ export function createAnalyticsRoutes(authenticateToken: any) {
       if (PARTNER_ROLES.includes(caller.role)) {
         return res.status(403).json({ error: 'Không có quyền truy cập' });
       }
-      if (caller.id !== targetId && !['ADMIN', 'TEAM_LEAD'].includes(caller.role)) {
+      if (caller.id !== targetId && !['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(caller.role)) {
         return res.status(403).json({ error: 'Không có quyền xem số liệu của người dùng khác' });
       }
 

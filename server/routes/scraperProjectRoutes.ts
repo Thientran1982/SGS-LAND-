@@ -1666,7 +1666,7 @@ export function createScraperProjectRoutes(authenticateToken: any) {
   router.post('/leads/run', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể chạy scraper' });
       }
 
@@ -1700,7 +1700,7 @@ export function createScraperProjectRoutes(authenticateToken: any) {
   router.post('/leads/import', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['ADMIN', 'TEAM_LEAD', 'SALES'].includes(user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES'].includes(user.role)) {
         return res.status(403).json({ error: 'Không có quyền import lead' });
       }
 
@@ -1760,7 +1760,7 @@ export function createScraperProjectRoutes(authenticateToken: any) {
   router.post('/leads/import-bulk', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể import hàng loạt' });
       }
 
@@ -1814,7 +1814,7 @@ export function createScraperProjectRoutes(authenticateToken: any) {
   router.post('/leads/chotot', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể chạy scraper' });
       }
       if (!process.env.SCRAPERAPI_KEY) {
@@ -1831,7 +1831,7 @@ export function createScraperProjectRoutes(authenticateToken: any) {
   router.post('/leads/social', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể chạy scraper' });
       }
       const { source, fbToken, fbPage, ttToken, ttAdv, zlToken } = req.body as {
