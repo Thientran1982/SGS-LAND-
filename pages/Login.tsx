@@ -160,6 +160,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [tokenFromUrl, setTokenFromUrl] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [devVerifyInfo, setDevVerifyInfo] = useState<{token: string; url: string} | null>(null);
+  const [devResetInfo, setDevResetInfo] = useState<{token: string; url: string} | null>(null);
   const [resending, setResending] = useState(false);
   const [resentSuccess, setResentSuccess] = useState('');
   const [resendingReset, setResendingReset] = useState(false);
@@ -297,7 +298,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setResendingReset(true);
       setResentResetMsg('');
       try {
-          await db.requestPasswordReset(email.trim());
+          const resendRes = await db.requestPasswordReset(email.trim());
+          if ((resendRes as any)?.devResetToken) {
+              setDevResetInfo({ token: (resendRes as any).devResetToken, url: (resendRes as any).devResetUrl });
+          }
           setResentResetMsg(t('auth.resend_reset_sent'));
       } catch {
           setResentResetMsg(t('auth.error_generic'));
@@ -324,7 +328,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     try {
       const trimmedEmail = email.trim();
       if (view === 'FORGOT_REQUEST') {
-          await db.requestPasswordReset(trimmedEmail);
+          const resetRes = await db.requestPasswordReset(trimmedEmail);
+          // Dev mode: backend trả devResetToken + devResetUrl khi không có email thật
+          if ((resetRes as any)?.devResetToken) {
+              setDevResetInfo({
+                  token: (resetRes as any).devResetToken,
+                  url: (resetRes as any).devResetUrl,
+              });
+          } else {
+              setDevResetInfo(null);
+          }
           setSuccessMsg(t('auth.success_reset'));
           setView('FORGOT_VERIFY');
           setLoading(false);
@@ -604,6 +617,26 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                     {t('auth.check_email_instruction')}
                                 </p>
                                 <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam')}</p>
+
+                                {/* Dev mode: hiện link reset trực tiếp khi email không thật */}
+                                {devResetInfo && (
+                                    <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/30 text-left">
+                                        <p className="text-xs2 font-bold text-amber-400 uppercase tracking-wider mb-2">[DEV] Link đặt lại mật khẩu:</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setOtp(devResetInfo.token);
+                                                setTokenFromUrl(true);
+                                                setSuccessMsg('');
+                                            }}
+                                            className="text-xs text-amber-200 break-all font-mono hover:underline text-left w-full"
+                                        >
+                                            {devResetInfo.url}
+                                        </button>
+                                        <p className="text-xs2 text-amber-400/60 mt-1">↑ Click để điền token vào form</p>
+                                    </div>
+                                )}
+
                                 {resentResetMsg ? (
                                     <p className={`text-xs2 font-semibold ${resentResetMsg === t('auth.resend_reset_sent') ? 'text-emerald-400' : 'text-rose-400'}`}>{resentResetMsg}</p>
                                 ) : (
@@ -755,7 +788,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 )}
                 
                 {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
-                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         ← {t('auth.verify_email_back_login')}
                     </button>
                 )}
