@@ -71,6 +71,10 @@ export async function withTenantContext<T>(
     // SET LOCAL ROLE: chuyển sang role NOBYPASSRLS để Postgres thực thi policy RLS.
     // Phải SET ROLE TRƯỚC khi đặt app.current_tenant_id để policy đánh giá đúng.
     await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
+    // CRITICAL: neondb_owner có row_security=off mặc định (do BYPASSRLS).
+    // Sau khi SET LOCAL ROLE sgs_app (không có BYPASSRLS), phải bật lại row_security=on
+    // để PostgreSQL thực thi RLS policy đúng cách thay vì throw "query would be affected".
+    await client.query('SET LOCAL row_security = on');
     await client.query(`SET LOCAL app.current_tenant_id = '${sanitized}'`);
     const result = await queryFn(client);
     await client.query('COMMIT');
@@ -120,6 +124,9 @@ export async function withRlsBypass<T>(
   try {
     await client.query('BEGIN');
     await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
+    // Bật lại row_security=on cho sgs_app (session default của neondb_owner là off).
+    // bypass được xử lý bằng app.bypass_rls='on' trong RLS policy, không phải row_security=off.
+    await client.query('SET LOCAL row_security = on');
     await client.query("SET LOCAL app.bypass_rls = 'on'");
     const result = await queryFn(client);
     await client.query('COMMIT');
