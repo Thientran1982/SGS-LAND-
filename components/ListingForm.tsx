@@ -759,7 +759,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             const rawVal = (isNaN(parseFloat(priceShort)) ? 0 : parseFloat(priceShort)) * priceUnit;
                                             return rawVal > 0 ? (
                                                 <div className="text-xs font-semibold text-indigo-600 font-mono mt-1 text-right">
-                                                    = {Math.round(rawVal).toLocaleString('vi-VN')} ₫
+                                                    = {Math.round(rawVal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ₫
                                                 </div>
                                             ) : null;
                                         })()}
