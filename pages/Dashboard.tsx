@@ -121,7 +121,11 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
                 </div>
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_price')}:</span>
-                    <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.price} {t('dash.scatter_price_unit')}</span>
+                    <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">
+                        {typeof data.price === 'number'
+                            ? data.price.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
+                            : data.price} {t('dash.scatter_price_unit')}
+                    </span>
                 </div>
                 {data.pricePerM2 > 0 && (
                     <div className="flex items-center justify-between gap-4 mb-1">
@@ -846,7 +850,7 @@ export const Dashboard: React.FC = () => {
                                             <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
                                                 <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
-                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
+                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v: number) => v.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} />
                                                 <ZAxis type="number" dataKey="interest" range={[100, 1000]} name={t('dash.scatter_interest')} />
                                                 <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
                                                 <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.7}>
