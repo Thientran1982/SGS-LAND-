@@ -645,8 +645,10 @@ export const AdminUsers: React.FC = () => {
 
     const roleOptions = useMemo(() => [
         { value: 'ALL', label: t('admin.users.all_roles') },
-        ...Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) }))
-    ], [t]);
+        ...Object.values(UserRole)
+            .filter(r => currentUser?.role === UserRole.SUPER_ADMIN || r !== UserRole.SUPER_ADMIN)
+            .map(r => ({ value: r, label: t(`role.${r}`) }))
+    ], [t, currentUser?.role]);
 
     const statusOptions = useMemo(() => [
         { value: 'ALL', label: t('admin.users.all_statuses') },
