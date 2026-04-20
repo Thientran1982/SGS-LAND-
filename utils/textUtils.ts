@@ -156,18 +156,25 @@ export const parseCurrencyString = (raw: string, config: CurrencyConfig = DEFAUL
  * Smartly formats large numbers into Tỷ/Triệu (Billion/Million) for Vietnamese market
  * or compact notation for English.
  */
+const fmtDecimalDot = (n: number, maxFractions: number): string => {
+    const rounded = parseFloat(n.toFixed(maxFractions));
+    const [intPart, decPart] = rounded.toString().split('.');
+    const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return decPart ? `${intFormatted}.${decPart}` : intFormatted;
+};
+
 export const formatSmartPrice = (price: number, t?: (key: string) => string): string => {
     if (!price) return '0';
     const billionLabel = t ? t('format.billion') : 'Tỷ';
     const millionLabel = t ? t('format.million') : 'Tr';
     
     if (price >= 1_000_000_000) {
-        return `${(price / 1_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${billionLabel}`;
+        return `${fmtDecimalDot(price / 1_000_000_000, 2)} ${billionLabel}`;
     }
     if (price >= 1_000_000) {
-        return `${(price / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })} ${millionLabel}`;
+        return `${fmtDecimalDot(price / 1_000_000, 1)} ${millionLabel}`;
     }
-    return price.toLocaleString('en-US');
+    return Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 /**
@@ -183,14 +190,14 @@ export const formatUnitPrice = (price: number, area: number, t?: (key: string) =
     
     // Billion/m2 (Rare, but for prime land)
     if (unit >= 1_000_000_000) {
-        return `${(unit / 1_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })} ${billionLabel}/m²`;
+        return `${fmtDecimalDot(unit / 1_000_000_000, 1)} ${billionLabel}/m²`;
     }
     // Million/m2 (Standard)
     if (unit >= 1_000_000) {
-        return `${(unit / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })} ${millionLabel}/m²`;
+        return `${fmtDecimalDot(unit / 1_000_000, 1)} ${millionLabel}/m²`;
     }
     // Standard VND (For cheap rent)
-    return `${unit.toLocaleString('en-US', { maximumFractionDigits: 0 })} đ/m²`;
+    return `${Math.round(unit).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ/m²`;
 };
 
 // -----------------------------------------------------------------------------
