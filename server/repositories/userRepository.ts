@@ -254,6 +254,12 @@ export class UserRepository extends BaseRepository {
 
   toPublicUser(user: UserRow): Omit<UserRow, 'passwordHash'> {
     const { passwordHash, ...publicUser } = user;
+    // Normalize permissions: DB may return string (TEXT col) or object — ensure array
+    let perms = publicUser.permissions;
+    if (typeof perms === 'string') {
+      try { perms = JSON.parse(perms); } catch { perms = []; }
+    }
+    publicUser.permissions = Array.isArray(perms) ? perms : [];
     return publicUser;
   }
 }
