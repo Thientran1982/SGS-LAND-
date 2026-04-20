@@ -445,22 +445,25 @@ async function startServer() {
       const baseUrl = resolveBaseUrl(req);
       const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
 
-      const verifyResult = await emailService.sendVerificationEmail(tenantId, email, dbUser.name, verifyUrl).catch(err => {
-        logger.error(`Failed to send verification email to ${email}: ${err.message}`);
-        return { success: false, status: 'failed' as const, error: err.message };
-      });
-
-      writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: verifyResult.success }, req.ip);
-
-      // In dev mode without SMTP/Brevo, expose the raw token so developer can test
-      const isDevMode = !isProduction && verifyResult.status === 'queued_no_smtp';
-
+      // Respond immediately — don't block on email delivery under high registration load
+      const isDevMode = !isProduction;
       res.json({
         message: 'Registration successful. Please verify your email to continue.',
         needsVerification: true,
         email: dbUser.email,
-        emailStatus: verifyResult.status,
+        emailStatus: 'sending',
         ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
+      });
+
+      // Fire-and-forget email after response is sent
+      emailService.sendVerificationEmail(tenantId, email, dbUser.name, verifyUrl).then((verifyResult) => {
+        writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: verifyResult.success }, req.ip);
+        if (!verifyResult.success) {
+          logger.error(`Failed to send verification email to ${email}: ${verifyResult.error}`);
+        }
+      }).catch(err => {
+        logger.error(`Failed to send verification email to ${email}: ${err.message}`);
+        writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: false }, req.ip);
       });
     } catch (error) {
       console.error('Register error:', error);
@@ -623,34 +626,11 @@ async function startServer() {
           email: created.userEmail,
         };
 
-        // 4) Gửi email verify (không block kết quả nếu SMTP fail)
+        // 4) Respond immediately — don't block on email delivery under high registration load
         const baseUrl = resolveBaseUrl(req);
         const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
-        const verifyResult = await emailService
-          .sendVerificationEmail(created.tenantId, trimmedEmail, adminUser.name, verifyUrl)
-          .catch((err) => {
-            logger.error(
-              `[onboard-vendor] Failed to send verify email to ${trimmedEmail}: ${err.message}`
-            );
-            return { success: false, status: 'failed' as const, error: err.message };
-          });
+        const isDevMode = !isProduction;
 
-        writeAuditLog(
-          created.tenantId,
-          adminUser.id,
-          'ONBOARD_VENDOR',
-          'tenant',
-          created.tenantId,
-          {
-            company: trimmedCompany,
-            domain: created.domainSlug,
-            email: trimmedEmail,
-            emailSent: verifyResult.success,
-          },
-          req.ip
-        );
-
-        const isDevMode = !isProduction && verifyResult.status === 'queued_no_smtp';
         res.status(201).json({
           message:
             'Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt workspace của bạn.',
@@ -660,9 +640,39 @@ async function startServer() {
           tenantDomain: created.domainSlug,
           plan: 'INDIVIDUAL',
           trialDays: 14,
-          emailStatus: verifyResult.status,
+          emailStatus: 'sending',
           ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
         });
+
+        // Fire-and-forget email + audit after response is sent
+        emailService
+          .sendVerificationEmail(created.tenantId, trimmedEmail, adminUser.name, verifyUrl)
+          .then((verifyResult) => {
+            writeAuditLog(
+              created.tenantId,
+              adminUser.id,
+              'ONBOARD_VENDOR',
+              'tenant',
+              created.tenantId,
+              { company: trimmedCompany, domain: created.domainSlug, email: trimmedEmail, emailSent: verifyResult.success },
+              req.ip
+            );
+            if (!verifyResult.success) {
+              logger.error(`[onboard-vendor] Failed to send verify email to ${trimmedEmail}: ${verifyResult.error}`);
+            }
+          })
+          .catch((err) => {
+            logger.error(`[onboard-vendor] Failed to send verify email to ${trimmedEmail}: ${err.message}`);
+            writeAuditLog(
+              created.tenantId,
+              adminUser.id,
+              'ONBOARD_VENDOR',
+              'tenant',
+              created.tenantId,
+              { company: trimmedCompany, domain: created.domainSlug, email: trimmedEmail, emailSent: false },
+              req.ip
+            );
+          });
       } catch (error: any) {
         if (error?.statusCode === 409) {
           return res.status(409).json({ error: error.userMsg || 'Workspace already exists' });
@@ -914,27 +924,38 @@ async function startServer() {
       }
 
       const userId = result.rows[0].user_id;
-      const tenantId = DEFAULT_TENANT_ID;
 
+      // Cross-tenant lookup: vendor users live in their own tenant (not DEFAULT_TENANT_ID).
+      // Find the real tenant from the users table before calling updatePassword.
+      const userTenantRow = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `SELECT tenant_id, email, status FROM users WHERE id = $1 LIMIT 1`,
+          [userId]
+        );
+        return r.rows[0] as { tenant_id: string; email: string; status: string } | undefined;
+      });
+
+      if (!userTenantRow) {
+        return res.status(400).json({ error: 'Invalid or expired reset token' });
+      }
+
+      const tenantId = userTenantRow.tenant_id;
       const pwUpdated = await userRepository.updatePassword(tenantId, userId, newPassword);
       if (!pwUpdated) {
         return res.status(500).json({ error: 'Failed to update password' });
       }
 
-      // Activate invited users who are still PENDING — they've now set their password
-      await withTenantContext(tenantId, async (client) => {
-        await client.query(
-          `UPDATE users SET status = 'ACTIVE' WHERE id = $1 AND status = 'PENDING'`,
-          [userId]
-        );
-      });
+      // Activate invited/pending users — they've now set their password via the link
+      if (userTenantRow.status === 'PENDING') {
+        await withTenantContext(tenantId, async (client) => {
+          await client.query(
+            `UPDATE users SET status = 'ACTIVE' WHERE id = $1 AND status = 'PENDING'`,
+            [userId]
+          );
+        });
+      }
 
-      const userRow = await pool.query(
-        `SELECT email FROM users WHERE id = $1 AND tenant_id = $2`,
-        [userId, tenantId]
-      );
-      const userEmail = userRow.rows[0]?.email || '';
-
+      const userEmail = userTenantRow.email;
       writeAuditLog(tenantId, userId, 'PASSWORD_RESET_COMPLETE', 'auth', userId, undefined, req.ip);
       res.json({ message: 'Password has been reset successfully', email: userEmail });
     } catch (error) {

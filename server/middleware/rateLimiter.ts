@@ -147,9 +147,9 @@ export const aiRateLimit = rateLimit({
 export const authRateLimit = rateLimit({
   name: 'auth',
   windowMs: 15 * 60_000,
-  maxRequests: 15,
+  maxRequests: 20,
   keyFn: (req) => req.ip || 'anonymous',
-  message: 'Too many login attempts. Please try again later.',
+  message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau 15 phút.',
 });
 
 export const apiRateLimit = rateLimit({
