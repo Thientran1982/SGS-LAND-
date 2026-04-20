@@ -201,7 +201,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         const MAX_SIZE = 10 * 1024 * 1024;
         const oversized = imageFiles.find(f => f.size > MAX_SIZE);
         if (oversized) {
-            setUploadError(t('profile.error_file_size'));
+            setUploadError(t('inventory.upload_error_size'));
             return;
         }
 
@@ -212,7 +212,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             const urls = result.files.map(f => f.url);
             setImages(prev => [...prev, ...urls]);
         } catch (err: any) {
-            setUploadError(err.message || t('common.error'));
+            setUploadError(t('inventory.upload_failed'));
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
