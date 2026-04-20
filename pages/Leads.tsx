@@ -1478,7 +1478,7 @@ export const Leads: React.FC = () => {
                                                 <div className="font-bold text-[var(--text-primary)] text-sm">{lead.name}</div>
                                                 <div className="text-xs2 text-[var(--text-secondary)] font-medium flex items-center gap-1">
                                                     {getSourceIcon(lead.source)}
-                                                    {lead.source} • {formatDate(lead.createdAt)}
+                                                    {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source} • {formatDate(lead.createdAt)}
                                                 </div>
                                                 {lead.tags && lead.tags.length > 0 && (
                                                     <div className="flex flex-wrap gap-1 mt-1">
