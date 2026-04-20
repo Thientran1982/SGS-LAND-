@@ -419,7 +419,19 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         </div>
                                         <div>
                                             <label className={labelClass}>{t('contracts.total_area')}</label>
-                                            <input type="number" min={0} value={formData.propertyArea || ''} onChange={e => handleChange('propertyArea', Number(e.target.value))} className={inputClass} placeholder="65.5" />
+                                            <input
+                                                type="text"
+                                                inputMode="decimal"
+                                                value={formData.propertyArea || ''}
+                                                onChange={e => {
+                                                    const raw = e.target.value.replace(',', '.');
+                                                    if (raw === '' || raw === '.') { handleChange('propertyArea', 0); return; }
+                                                    const n = parseFloat(raw);
+                                                    if (!isNaN(n)) handleChange('propertyArea', n);
+                                                }}
+                                                className={inputClass}
+                                                placeholder="65.5 hoặc 65,5"
+                                            />
                                         </div>
                                     </div>
                                     <CurrencyInput
@@ -651,15 +663,52 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     <div>
                                         <label className={labelClass}>{t('contracts.land_area')}</label>
-                                        <input type="number" value={formData.propertyLandArea || ''} onChange={e => handleChange('propertyLandArea', Number(e.target.value))} className={inputClass} />
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            value={formData.propertyLandArea || ''}
+                                            onChange={e => {
+                                                const raw = e.target.value.replace(',', '.');
+                                                if (raw === '' || raw === '.') { handleChange('propertyLandArea', 0); return; }
+                                                const n = parseFloat(raw);
+                                                if (!isNaN(n)) handleChange('propertyLandArea', n);
+                                            }}
+                                            className={inputClass}
+                                            placeholder="VD: 100 hoặc 100,5"
+                                        />
                                     </div>
                                     <div>
                                         <label className={labelClass}>{t('contracts.construction_area')}</label>
-                                        <input type="number" value={formData.propertyConstructionArea || ''} onChange={e => handleChange('propertyConstructionArea', Number(e.target.value))} className={inputClass} />
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            value={formData.propertyConstructionArea || ''}
+                                            onChange={e => {
+                                                const raw = e.target.value.replace(',', '.');
+                                                if (raw === '' || raw === '.') { handleChange('propertyConstructionArea', 0); return; }
+                                                const n = parseFloat(raw);
+                                                if (!isNaN(n)) handleChange('propertyConstructionArea', n);
+                                            }}
+                                            className={inputClass}
+                                            placeholder="VD: 80 hoặc 80,5"
+                                        />
                                     </div>
                                     <div>
                                         <label className={labelClass}>{t('contracts.total_area')}</label>
-                                        <input type="number" required value={formData.propertyArea || ''} onChange={e => handleChange('propertyArea', Number(e.target.value))} className={inputClass} />
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            required
+                                            value={formData.propertyArea || ''}
+                                            onChange={e => {
+                                                const raw = e.target.value.replace(',', '.');
+                                                if (raw === '' || raw === '.') { handleChange('propertyArea', 0); return; }
+                                                const n = parseFloat(raw);
+                                                if (!isNaN(n)) handleChange('propertyArea', n);
+                                            }}
+                                            className={inputClass}
+                                            placeholder="VD: 65 hoặc 65,5"
+                                        />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
