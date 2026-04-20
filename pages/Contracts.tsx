@@ -335,6 +335,7 @@ const Contracts: React.FC = () => {
                             onChange={(val) => { setTypeFilter(val as any); setPage(1); }}
                             options={[
                                 { value: 'ALL', label: t('contracts.all_types') },
+                                { value: ContractType.RESERVATION, label: t('contracts.type_RESERVATION') },
                                 { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
                                 { value: ContractType.SALES, label: t('contracts.type_SALES') }
                             ]}
@@ -401,11 +402,20 @@ const Contracts: React.FC = () => {
                                             className="cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors group focus-visible:outline-none focus-visible:bg-indigo-50/50"
                                         >
                                             <td className="p-4">
-                                                <div className="font-medium text-sm text-[var(--text-primary)]">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold mb-1 ${
+                                                    c.type === ContractType.RESERVATION
+                                                        ? 'bg-violet-100 text-violet-700'
+                                                        : c.type === ContractType.DEPOSIT
+                                                            ? 'bg-indigo-100 text-indigo-700'
+                                                            : 'bg-emerald-100 text-emerald-700'
+                                                }`}>
+                                                    {c.type === ContractType.RESERVATION && (
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                                    )}
                                                     {t(`contracts.type_${c.type}`)}
-                                                </div>
+                                                </span>
                                                 <div
-                                                    className="text-xs font-mono text-[var(--text-secondary)] mt-0.5 cursor-pointer hover:text-indigo-500 transition-colors"
+                                                    className="text-xs font-mono text-[var(--text-secondary)] cursor-pointer hover:text-indigo-500 transition-colors"
                                                     title={c.id}
                                                     onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(c.id).catch(() => {}); }}
                                                 >
@@ -421,9 +431,11 @@ const Contracts: React.FC = () => {
                                             </td>
                                             <td className="p-4">
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">{formatCurrency(c.propertyPrice || 0)}</div>
-                                                {c.type === ContractType.DEPOSIT && (
-                                                    <div className="text-xs text-indigo-500 mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount || 0)}</div>
-                                                )}
+                                                {c.type === ContractType.DEPOSIT && c.depositAmount ? (
+                                                    <div className="text-xs text-indigo-500 mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount)}</div>
+                                                ) : c.type === ContractType.RESERVATION && c.depositAmount ? (
+                                                    <div className="text-xs text-violet-500 mt-0.5 font-medium">{t('contracts.reservation_fee').replace(' (VNĐ)', '')}: {formatCurrency(c.depositAmount)}</div>
+                                                ) : null}
                                             </td>
                                             <td className="p-4 min-w-[140px]">
                                                 {c.paymentSchedule && c.paymentSchedule.length > 0 ? (() => {
@@ -464,7 +476,12 @@ const Contracts: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="p-4 text-sm text-[var(--text-secondary)]">
-                                                {c.status === ContractStatus.SIGNED && (c as any).signedAt ? (
+                                                {c.type === ContractType.RESERVATION && (c as any).handoverDate ? (
+                                                    <div>
+                                                        <div className="font-medium text-violet-600">{formatDate((c as any).handoverDate)}</div>
+                                                        <div className="text-xs text-[var(--text-tertiary)]">{t('contracts.reservation_expiry')}</div>
+                                                    </div>
+                                                ) : c.status === ContractStatus.SIGNED && (c as any).signedAt ? (
                                                     <div>
                                                         <div className="font-medium text-emerald-600">{formatDate((c as any).signedAt)}</div>
                                                         <div className="text-xs text-[var(--text-tertiary)]">{t('contracts.signed_date_label')}</div>

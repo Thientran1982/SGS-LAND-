@@ -258,7 +258,11 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 <div className="flex items-start justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-[var(--glass-border)] shrink-0 gap-3">
                     <div className="flex flex-col min-w-0 flex-1">
                         <h2 id="contract-modal-title" className="text-base sm:text-xl font-bold text-[var(--text-primary)] leading-tight">
-                            {contract ? t('contracts.modal_edit_title') : t('contracts.modal_create_title')}
+                            {contract
+                                ? t('contracts.modal_edit_title')
+                                : formData.type === ContractType.RESERVATION
+                                    ? t('contracts.modal_create_reservation_title')
+                                    : t('contracts.modal_create_title')}
                         </h2>
                         <div className="flex flex-wrap items-center gap-2 mt-1.5">
                             <Dropdown
@@ -266,6 +270,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 value={formData.type as string}
                                 onChange={val => handleChange('type', val)}
                                 options={[
+                                    { value: ContractType.RESERVATION, label: t('contracts.type_RESERVATION') },
                                     { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
                                     { value: ContractType.SALES, label: t('contracts.type_SALES') }
                                 ]}
@@ -290,7 +295,8 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                     </button>
                 </div>
 
-                {/* Tab Bar */}
+                {/* Tab Bar — hidden for Reservation type */}
+                {formData.type !== ContractType.RESERVATION && (
                 <div className="border-b border-[var(--glass-border)] shrink-0">
                     <div className="flex overflow-x-auto no-scrollbar">
                         {TABS.map(tab => (
@@ -321,6 +327,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         <span className="text-[var(--text-muted)]">({TABS.findIndex(tab => tab.id === activeTab) + 1}/{TABS.length})</span>
                     </div>
                 </div>
+                )}
 
                 {/* Content — swipeable on touch devices */}
                 <div
@@ -336,8 +343,173 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         </div>
                     )}
                     <form id="contract-form" onSubmit={handleSubmit}>
+
+                        {/* ═══════════════════════════════════════════════
+                            FORM: PHIẾU GIỮ CHỖ (RESERVATION)
+                            ─ Hiển thị thay thế hoàn toàn tab-based form
+                            ═══════════════════════════════════════════════ */}
+                        {formData.type === ContractType.RESERVATION && (
+                            <div className="space-y-6">
+                                {canAssign && (
+                                <div className="p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
+                                    <label className={labelClass}>{t('contracts.assigned_to')}</label>
+                                    <Dropdown
+                                        value={(formData as any).assignedToId || ''}
+                                        onChange={val => handleChange('assignedToId' as any, val || null)}
+                                        options={members}
+                                        className="w-full"
+                                    />
+                                </div>
+                                )}
+
+                                {/* SECTION 1: KHÁCH HÀNG */}
+                                <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
+                                    <h3 className="font-bold text-violet-600 flex items-center gap-2 text-sm border-b border-violet-100 pb-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        {t('contracts.reservation_customer_title')}
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.party_b_name')} <span className="text-rose-500">*</span></label>
+                                            <input required value={formData.partyBName || ''} onChange={e => handleChange('partyBName', e.target.value)} className={inputClass} placeholder="Nguyễn Văn A" />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.phone_number')} <span className="text-rose-500">*</span></label>
+                                            <input required type="tel" value={formData.partyBPhone || ''} onChange={e => handleChange('partyBPhone', e.target.value)} className={inputClass} placeholder="0912 345 678" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.id_number_b')} <span className="text-rose-500">*</span></label>
+                                            <input required value={formData.partyBIdNumber || ''} onChange={e => handleChange('partyBIdNumber', e.target.value)} className={inputClass} placeholder="079xxxxxxxx" />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.issue_date')}</label>
+                                            <input type="date" value={formData.partyBIdDate || ''} onChange={e => handleChange('partyBIdDate', e.target.value)} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.issue_place')}</label>
+                                            <input value={formData.partyBIdPlace || ''} onChange={e => handleChange('partyBIdPlace', e.target.value)} className={inputClass} placeholder="Cục CS QLHC TTXH" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>{t('contracts.permanent_address')}</label>
+                                        <input value={formData.partyBAddress || ''} onChange={e => handleChange('partyBAddress', e.target.value)} className={inputClass} placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
+                                    </div>
+                                </div>
+
+                                {/* SECTION 2: BĐS GIỮ CHỖ */}
+                                <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
+                                    <h3 className="font-bold text-amber-600 flex items-center gap-2 text-sm border-b border-amber-100 pb-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                        {t('contracts.reservation_property_title')}
+                                    </h3>
+                                    <div>
+                                        <label className={labelClass}>{t('contracts.reservation_project')} <span className="text-rose-500">*</span></label>
+                                        <input required value={formData.propertyAddress || ''} onChange={e => handleChange('propertyAddress', e.target.value)} className={inputClass} placeholder="VD: Dự án The Manor / Đất lô A12 KDC Tân Phú" />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.unit_code')}</label>
+                                            <input value={formData.propertyUnitCode || ''} onChange={e => handleChange('propertyUnitCode', e.target.value)} className={inputClass} placeholder={t('contracts.unit_code_placeholder')} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.floor_number')}</label>
+                                            <input value={formData.propertyFloorNumber || ''} onChange={e => handleChange('propertyFloorNumber', e.target.value)} className={inputClass} placeholder={t('contracts.floor_number_placeholder')} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.total_area')}</label>
+                                            <input type="number" min={0} value={formData.propertyArea || ''} onChange={e => handleChange('propertyArea', Number(e.target.value))} className={inputClass} placeholder="65.5" />
+                                        </div>
+                                    </div>
+                                    <CurrencyInput
+                                        label={t('contracts.reservation_price')}
+                                        value={formData.propertyPrice}
+                                        onChange={val => handleChange('propertyPrice', val)}
+                                        inputClass={inputClass}
+                                        labelClass={labelClass}
+                                    />
+                                </div>
+
+                                {/* SECTION 3: ĐIỀU KHOẢN GIỮ CHỖ */}
+                                <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
+                                    <h3 className="font-bold text-rose-600 flex items-center gap-2 text-sm border-b border-rose-100 pb-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        {t('contracts.reservation_terms_title')}
+                                    </h3>
+                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 flex items-start gap-2">
+                                        <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <span>{t('contracts.vnd_input_hint')}</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.reservation_date')}</label>
+                                            <input type="date" value={formData.contractDate || ''} onChange={e => handleChange('contractDate', e.target.value)} className={inputClass} />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className={labelClass}>{t('contracts.signed_place')}</label>
+                                            <input value={formData.signedPlace || ''} onChange={e => handleChange('signedPlace', e.target.value)} className={inputClass} placeholder={t('contracts.signed_place_placeholder')} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <CurrencyInput
+                                            label={`${t('contracts.reservation_fee')} *`}
+                                            value={formData.depositAmount}
+                                            onChange={val => handleChange('depositAmount', val)}
+                                            required
+                                            inputClass={inputClass}
+                                            labelClass={labelClass}
+                                        />
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.reservation_expiry')} <span className="text-rose-500">*</span></label>
+                                            <input required type="date" value={formData.handoverDate || ''} onChange={e => handleChange('handoverDate', e.target.value)} className={inputClass} />
+                                            <p className="mt-1 text-xs text-[var(--text-tertiary)]">{t('contracts.reservation_expiry_placeholder')}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>{t('contracts.reservation_note')}</label>
+                                        <textarea
+                                            value={formData.paymentTerms || ''}
+                                            onChange={e => handleChange('paymentTerms', e.target.value)}
+                                            rows={4}
+                                            className={`${inputClass} resize-none`}
+                                            placeholder={t('contracts.reservation_note_placeholder')}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* BÊN A (Bên bán / Chủ đầu tư) — gọn */}
+                                <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
+                                    <h3 className="font-bold text-indigo-600 flex items-center gap-2 text-sm border-b border-indigo-100 pb-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        {t('contracts.party_a_title')}
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.party_a_name')} <span className="text-rose-500">*</span></label>
+                                            <input required value={formData.partyAName || ''} onChange={e => handleChange('partyAName', e.target.value)} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.phone_number')}</label>
+                                            <input value={formData.partyAPhone || ''} onChange={e => handleChange('partyAPhone', e.target.value)} className={inputClass} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.representative')}</label>
+                                            <input value={formData.partyARepresentative || ''} onChange={e => handleChange('partyARepresentative', e.target.value)} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('contracts.address')}</label>
+                                            <input value={formData.partyAAddress || ''} onChange={e => handleChange('partyAAddress', e.target.value)} className={inputClass} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* TAB: PARTIES */}
-                        {activeTab === 'parties' && (
+                        {formData.type !== ContractType.RESERVATION && activeTab === 'parties' && (
                             <div className="space-y-6">
                             {canAssign && (
                             <div className="p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
@@ -449,7 +621,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         )}
 
                         {/* TAB: PROPERTY */}
-                        {activeTab === 'property' && (
+                        {formData.type !== ContractType.RESERVATION && activeTab === 'property' && (
                             <div className="space-y-6">
                                 <h3 className="font-bold text-amber-600 border-b border-amber-100 pb-2">{t('contracts.property_info_title')}</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -508,7 +680,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         )}
 
                         {/* TAB: TERMS */}
-                        {activeTab === 'terms' && (
+                        {formData.type !== ContractType.RESERVATION && activeTab === 'terms' && (
                             <div className="space-y-6">
 
                                 {/* ── PHẦN 1: THÔNG TIN KÝ KẾT ── */}
@@ -606,7 +778,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         )}
 
                         {/* TAB: PAYMENT SCHEDULE */}
-                        {activeTab === 'schedule' && (
+                        {formData.type !== ContractType.RESERVATION && activeTab === 'schedule' && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-bold text-emerald-600 border-b border-emerald-100 pb-2 flex items-center gap-2 flex-1">
@@ -675,7 +847,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 ) : (
                 <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-[var(--glass-border)] flex items-center justify-between gap-3 bg-[var(--glass-surface)] rounded-b-2xl shrink-0">
                     <div className="flex items-center gap-2">
-                        {TABS.map((tab, i) => (
+                        {formData.type !== ContractType.RESERVATION && TABS.map((tab) => (
                             <button
                                 key={tab.id}
                                 type="button"
@@ -685,6 +857,12 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 aria-label={t(tab.labelKey)}
                             />
                         ))}
+                        {formData.type === ContractType.RESERVATION && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-bold">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                                {t('contracts.type_RESERVATION')}
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-3">
                         <button type="button" onClick={onClose} className="px-6 py-2.5 min-h-[44px] rounded-xl font-bold text-sm text-[var(--text-secondary)] hover:bg-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">

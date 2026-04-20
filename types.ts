@@ -1158,8 +1158,9 @@ export interface MarketMetrics {
 }
 
 export enum ContractType {
-    DEPOSIT = 'DEPOSIT', // Thoả thuận đặt cọc
-    SALES = 'SALES'      // Hợp đồng mua bán
+    RESERVATION = 'RESERVATION', // Phiếu giữ chỗ
+    DEPOSIT = 'DEPOSIT',          // Thoả thuận đặt cọc
+    SALES = 'SALES'               // Hợp đồng mua bán
 }
 
 export enum ContractStatus {
