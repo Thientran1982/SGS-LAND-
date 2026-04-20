@@ -420,6 +420,23 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
 
 // --- MAIN DASHBOARD ---
 
+/**
+ * Read the current user's tenantId from the JWT cookie without an extra API call.
+ * Returns null if the cookie is absent or the token is malformed.
+ * Used only to namespace the React Query cache key — prevents tenant A's cached
+ * analytics from bleeding into tenant B's session after a same-browser login switch.
+ */
+function getTenantIdFromCookie(): string | null {
+    try {
+        const match = document.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+        if (!match) return null;
+        const payload = JSON.parse(atob(match[1].split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return (payload.tenantId as string) ?? null;
+    } catch {
+        return null;
+    }
+}
+
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const [isExporting, setIsExporting] = useState(false);
@@ -432,6 +449,10 @@ export const Dashboard: React.FC = () => {
     const dashboardRef = useRef<HTMLDivElement>(null);
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
+
+    // Namespaces the React Query cache by tenant so that switching between
+    // admin accounts in the same browser never shows a stale tenant's data.
+    const cacheTenantId = useMemo(() => getTenantIdFromCookie(), []);
 
     const handleExport = async () => {
         if (!dashboardRef.current) return;
@@ -477,7 +498,7 @@ export const Dashboard: React.FC = () => {
 
     // Use React Query for data fetching, caching, and auto-refresh
     const { data: analytics, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
-        queryKey: ['dashboardAnalytics', timeRange, language],
+        queryKey: ['dashboardAnalytics', timeRange, language, cacheTenantId],
         queryFn: async () => {
             const [data, user] = await Promise.all([
                 db.getAnalytics(timeRange, language),
