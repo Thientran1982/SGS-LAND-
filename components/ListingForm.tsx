@@ -734,10 +734,13 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         </label>
                                         <div className="flex gap-2">
                                             <input 
-                                                type="number"
-                                                step="0.1"
+                                                type="text"
+                                                inputMode="decimal"
                                                 value={priceShort} 
-                                                onChange={e => setPriceShort(e.target.value)} 
+                                                onChange={e => {
+                                                    const raw = e.target.value.replace(',', '.');
+                                                    if (/^(\d+\.?\d*)?$/.test(raw)) setPriceShort(raw);
+                                                }}
                                                 className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] focus:border-indigo-500 outline-none ${errors.price ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                                 placeholder="5.5"
                                             />
