@@ -428,6 +428,17 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
         }
     }, [project.code]);
 
+    // Silent server stats sync — accurate even when > 200 listings are in a project.
+    // The server COUNT query (used for stats) always covers ALL listings regardless of pageSize.
+    const syncStats = useCallback(() => {
+        db.getListings(1, 1, { projectCode: project.code })
+            .then(result => {
+                const srv = (result as any).stats;
+                if (srv) setStats(srv);
+            })
+            .catch(() => {});
+    }, [project.code]);
+
     useEffect(() => { load(); }, [load]);
 
     // Preload tenants for access panel (admin only)
@@ -447,6 +458,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
         });
         setShowCreate(false);
         onListingCreated?.();
+        syncStats();
     };
 
     // ── Export ────────────────────────────────────────────────────────────────
@@ -534,6 +546,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
             });
             setSelected(new Set());
             setBulkStatus('');
+            syncStats();
         } finally {
             setBulkWorking(false);
         }
@@ -589,6 +602,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                 return next;
             });
             setEditTarget(null);
+            syncStats();
         } catch (e: any) {
             const msg = e?.data?.error || e.message || t('common.error_generic');
             setPanelToast({ msg, type: 'error' });
@@ -609,6 +623,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
             });
             setSelected(prev => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
             setDeleteTarget(null);
+            syncStats();
         } finally {
             setDeleting(false);
         }
