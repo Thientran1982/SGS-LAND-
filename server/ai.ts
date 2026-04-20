@@ -53,8 +53,8 @@ function getAiClient(): GoogleGenAI {
 // Governance model cache: 5-min TTL, never invalidated mid-request
 const modelCache: Map<string, { model: string; expiresAt: number }> = new Map();
 
-// Valuation result cache: 1-hour TTL (market data doesn't change per-minute)
-const valuationCache: Map<string, { result: any; expiresAt: number }> = new Map();
+// Valuation result cache: 30-min TTL (giảm từ 1h để tăng độ tươi dữ liệu)
+const valuationCache: Map<string, { result: any; expiresAt: number; fetchedAt: number }> = new Map();
 
 // Tool data cache: 5-min TTL for enterprise config (legal/marketing/contract rarely change)
 const toolDataCache: Map<string, { value: any; expiresAt: number }> = new Map();
@@ -1166,11 +1166,13 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
                 areaMin: extraction.area_min || null,
             }).catch(() => {});
 
+            const inventoryFetchedAt = new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
             return {
                 systemContext: state.systemContext
                     + `\n\n[INVENTORY DATA]:\n${searchRes}`
                     + `\n\n[PHÂN TÍCH KHO HÀNG]:\n${inventoryAnalysisText}`
                     + `\n[BUYER_PROFILE]: ${buyerProfile} | Khẩn_cấp: ${isUrgent ? 'CÓ' : 'KHÔNG'} | Ngân_sách: ${budgetTier}`
+                    + `\n[DATA_FRESHNESS]: Dữ liệu kho hàng vừa được lấy từ cơ sở dữ liệu lúc ${inventoryFetchedAt} (real-time)`
             };
         });
 
@@ -1741,9 +1743,42 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
         graph.addNode('WRITER', async (state) => {
             state.trace.push({ id: 'WRITER', node: 'WRITER', status: 'RUNNING', timestamp: Date.now() });
 
-            const conversationHistory = state.history.slice(-12)
-                .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN VIÊN'}: ${h.content}`)
-                .join('\n');
+            // ── Adaptive history window theo độ phức tạp intent ──────────────────
+            // Intent đơn giản (hỏi làm rõ, booking, marketing) → ít history, giảm noise
+            // Intent phức tạp (định giá, pháp lý, tài chính, hợp đồng) → nhiều history hơn
+            const intentForHistory = state.plan?.next_step || 'DIRECT_ANSWER';
+            const SIMPLE_INTENTS = new Set(['CLARIFY', 'DIRECT_ANSWER', 'DRAFT_BOOKING', 'EXPLAIN_MARKETING', 'ESCALATE_TO_HUMAN']);
+            const COMPLEX_INTENTS = new Set(['ESTIMATE_VALUATION', 'EXPLAIN_LEGAL', 'CALCULATE_LOAN', 'DRAFT_CONTRACT', 'ANALYZE_LEAD']);
+            const historyWindow = SIMPLE_INTENTS.has(intentForHistory) ? 6
+                : COMPLEX_INTENTS.has(intentForHistory) ? 20
+                : 12; // SEARCH_INVENTORY + default
+
+            // Build memoryDigest khi lịch sử bị cắt (phiên dài)
+            const needsDigest = state.history.length > historyWindow;
+            let writerMemoryDigest = '';
+            if (needsDigest) {
+                const olderSlice = state.history.slice(0, -historyWindow);
+                const topics = new Set<string>();
+                const locMentions: string[] = [];
+                for (const msg of olderSlice) {
+                    const t = (msg.content || '').toLowerCase();
+                    if (t.includes('giá') || t.includes('tỷ') || t.includes('triệu')) topics.add('giá cả');
+                    if (t.includes('pháp lý') || t.includes('sổ')) topics.add('pháp lý');
+                    if (t.includes('vay') || t.includes('lãi')) topics.add('tài chính/vay');
+                    if (t.includes('hợp đồng') || t.includes('đặt cọc')) topics.add('hợp đồng');
+                    const locM = t.match(/(quận \d+|q\d+|thủ đức|bình thạnh|nhà bè|gò vấp|tân bình|bình chánh|hà nội|đà nẵng|vinhomes|masteri)/i);
+                    if (locM) locMentions.push(locM[1]);
+                }
+                const parts: string[] = [];
+                if (topics.size > 0) parts.push(`Đã hỏi về: ${[...topics].join(', ')}`);
+                if (locMentions.length > 0) parts.push(`Khu vực: ${[...new Set(locMentions)].join(', ')}`);
+                if (parts.length > 0) writerMemoryDigest = `[TÓM TẮT ${olderSlice.length} TIN NHẮN CŨ]: ${parts.join(' | ')}\n`;
+            }
+
+            const conversationHistory = (writerMemoryDigest ? writerMemoryDigest : '')
+                + state.history.slice(-historyWindow)
+                    .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN VIÊN'}: ${h.content}`)
+                    .join('\n');
 
             const leadAnalysisSection = state.leadAnalysis
                 ? `\n[LEAD ANALYSIS]:\n${state.leadAnalysis}`
@@ -1774,7 +1809,7 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
 
             // ── Per-intent WRITER prompt — 9 branches ─────────────────────────────
             const _ctx  = `CONTEXT (dữ liệu đã được phân tích thực tế):\n${state.systemContext}${leadAnalysisSection}`;
-            const _hist = `LỊCH SỬ HỘI THOẠI (12 tin nhắn gần nhất):\n${conversationHistory || '(Chưa có lịch sử)'}`;
+            const _hist = `LỊCH SỬ HỘI THOẠI (${historyWindow} tin nhắn gần nhất):\n${conversationHistory || '(Chưa có lịch sử)'}`;
             const _msg  = `TIN NHẮN KHÁCH: "${state.userMessage}"`;
 
 
@@ -1815,7 +1850,8 @@ YÊU CẦU — Viết báo cáo định giá (150-250 từ) theo bố cục:
 5. **CÂU HỎI**: Hỏi thêm 1 thông tin cụ thể để cải thiện độ chính xác (tầng? nội thất? tuổi nhà? mặt tiền?)
 
 NGÔN NGỮ & XƯNG HÔ: ${langInstruction}
-QUAN TRỌNG: Dùng số liệu CHÍNH XÁC từ [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — không bịa đặt. Giá: "X,XX Tỷ VNĐ" | Đơn giá: "XX Triệu/m²"`;
+QUAN TRỌNG: Dùng số liệu CHÍNH XÁC từ [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — không bịa đặt. Giá: "X,XX Tỷ VNĐ" | Đơn giá: "XX Triệu/m²"
+DATA_FRESHNESS: Nếu [DATA_FRESHNESS] cho biết dữ liệu từ cache, ghi chú tự nhiên "(số liệu cập nhật X phút trước)" sau phần KẾT QUẢ`;
                     }
 
                     // ── 2. TÌM BĐS ───────────────────────────────────────────────────────
@@ -1836,7 +1872,8 @@ YÊU CẦU VIẾT PHẢN HỒI (120-200 từ):
 - Nếu [BUYER_PROFILE] = Ở_THỰC_LẦN_ĐẦU: nhấn mạnh pháp lý sạch, vay được ngân hàng, gần tiện ích
 - Nếu Khẩn_cấp: CÓ — đề cập ngay bước xem nhà và đặt giữ chỗ trước khi hết
 - Kết thúc bằng câu hỏi thu hẹp: "Anh/chị ưu tiên diện tích hay vị trí hơn ạ?" hoặc "Căn nào em giới thiệu thêm chi tiết?"
-- Giọng điệu: nhiệt tình như người quen tư vấn — không đọc catalogue`;
+- Giọng điệu: nhiệt tình như người quen tư vấn — không đọc catalogue
+- [DATA_FRESHNESS] đã có trong CONTEXT — KHÔNG cần đề cập đến người dùng (real-time data)`;
 
                     // ── 3. TÀI CHÍNH VAY ─────────────────────────────────────────────────
                     case 'CALCULATE_LOAN':
@@ -2151,8 +2188,10 @@ YÊU CẦU VIẾT PHẢN HỒI:
 
                 const cacheKey = `${state.tenantId}|${address}|${area}|${roadWidth}|${legal}|${direction || ''}|${floorLevel || ''}|${frontageWidth || ''}|${furnishing || ''}|${buildingAge || ''}|${resolvedPTypeFromExt}`;
                 const cached = valuationCache.get(cacheKey);
-                const valResult = (cached && Date.now() < cached.expiresAt)
-                    ? cached.result
+                const isFromCache = !!(cached && Date.now() < cached.expiresAt);
+                const valFetchedAt = isFromCache ? cached!.fetchedAt : Date.now();
+                const valResult = isFromCache
+                    ? cached!.result
                     : await (async () => {
                         // ── Use shared marketDataService cache (same source as the form) ──
                         // This ensures chat and form return CONSISTENT prices for the same location.
@@ -2219,7 +2258,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
                                 internalCompsCount,
                             });
                         }
-                        valuationCache.set(cacheKey, { result: r, expiresAt: Date.now() + 3_600_000 });
+                        valuationCache.set(cacheKey, { result: r, expiresAt: Date.now() + 1_800_000, fetchedAt: Date.now() });
                         return r;
                     })();
 
@@ -2241,13 +2280,19 @@ YÊU CẦU VIẾT PHẢN HỒI:
                 if (buildingAge) extraParams.push(`Tuổi nhà: ${buildingAge} năm`);
                 const extraParamsStr = extraParams.length > 0 ? ` | ${extraParams.join(' | ')}` : '';
 
+                const valAgeMinutes = Math.round((Date.now() - valFetchedAt) / 60_000);
+                const dataFreshnessNote = isFromCache
+                    ? `[DATA_FRESHNESS]: Dữ liệu định giá được lấy ${valAgeMinutes} phút trước (cache 30 phút)`
+                    : `[DATA_FRESHNESS]: Dữ liệu định giá vừa được tra cứu thời gian thực (${new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })})`;
+
                 const valuationSummary = `[ĐỊNH GIÁ BẤT ĐỘNG SẢN]:
 Địa chỉ: ${address} | ${area}m² | Loại: ${resolvedPTypeFromExt} | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}${direction ? ` | Hướng: ${direction}` : ''}${extraParamsStr}
 Giá thị trường: ${totalFmt} Tỷ VNĐ (${perM2Fmt} Triệu/m²)
 Khoảng giá: ${rangeMin} – ${rangeMax} Tỷ VNĐ (${valResult.confidenceLevel || ''} ±${valResult.confidenceInterval || ''})
 Xu hướng: ${valResult.marketTrend} | Độ tin cậy: ${valResult.confidence}%${compsNote}
 Công thức: ${formulaLine}
-${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slice(0, 4).map((f: any) => `${f.label} (${f.isPositive ? '+' : '-'}${f.impact}%)`).join(', ')}`;
+${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slice(0, 4).map((f: any) => `${f.label} (${f.isPositive ? '+' : '-'}${f.impact}%)`).join(', ')}
+${dataFreshnessNote}`;
 
                 this.updateTrace(state.trace, `Định giá ${address}: ${totalFmt} Tỷ (${rangeMin}–${rangeMax}) | ${valResult.marketTrend} | Conf: ${valResult.confidence}%${compsNote}`, GENAI_CONFIG.MODELS.WRITER);
                 return { systemContext: state.systemContext + '\n\n' + valuationSummary };
