@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { projectRepository } from '../repositories/projectRepository';
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
-const ADMIN_ROLES = ['ADMIN'];
+const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 
 export function createProjectRoutes(authenticateToken: any) {
   const router = Router();
@@ -208,12 +208,12 @@ export function createProjectRoutes(authenticateToken: any) {
   router.get('/listings/:listingId/access', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
       const accesses = await projectRepository.getListingAccess(req.params.listingId as string);
       res.json(accesses);
     } catch (error) {
       console.error('Error fetching listing access:', error);
-      res.status(500).json({ error: 'Failed to fetch listing access' });
+      res.status(500).json({ error: 'Không thể tải danh sách quyền truy cập sản phẩm' });
     }
   });
 
@@ -221,10 +221,10 @@ export function createProjectRoutes(authenticateToken: any) {
   router.post('/listings/:listingId/access', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const { partnerTenantId, expiresAt, note } = req.body;
-      if (!partnerTenantId) return res.status(400).json({ error: 'partnerTenantId is required' });
+      if (!partnerTenantId) return res.status(400).json({ error: 'Vui lòng chọn đối tác' });
 
       const access = await projectRepository.grantListingAccess({
         listingId: req.params.listingId as string,
@@ -236,7 +236,7 @@ export function createProjectRoutes(authenticateToken: any) {
       res.status(201).json(access);
     } catch (error: any) {
       console.error('Error granting listing access:', error);
-      const msg = error?.message?.includes('not found') ? error.message : 'Failed to grant listing access';
+      const msg = error?.message?.includes('not found') ? 'Không tìm thấy sản phẩm hoặc đối tác' : 'Không thể cấp quyền truy cập sản phẩm';
       res.status(error?.message?.includes('not found') ? 404 : 500).json({ error: msg });
     }
   });
@@ -245,17 +245,17 @@ export function createProjectRoutes(authenticateToken: any) {
   router.delete('/listings/:listingId/access/:partnerTenantId', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const revoked = await projectRepository.revokeListingAccess(
         req.params.listingId as string,
         req.params.partnerTenantId as string
       );
-      if (!revoked) return res.status(404).json({ error: 'Listing access record not found' });
+      if (!revoked) return res.status(404).json({ error: 'Không tìm thấy bản ghi quyền truy cập sản phẩm' });
       res.json({ success: true });
     } catch (error) {
       console.error('Error revoking listing access:', error);
-      res.status(500).json({ error: 'Failed to revoke listing access' });
+      res.status(500).json({ error: 'Không thể thu hồi quyền truy cập sản phẩm' });
     }
   });
 
