@@ -18,18 +18,27 @@ function isChunkLoadError(error: unknown): boolean {
     );
 }
 
-/** sessionStorage key used to prevent infinite reload loops on true chunk errors. */
-const CHUNK_RELOAD_KEY = '__sgs_chunk_reload__';
+/**
+ * sessionStorage key storing the timestamp (ms) of the last chunk-error reload.
+ * Using a timestamp instead of a boolean prevents old guards from blocking
+ * reloads triggered by subsequent deployments in the same session.
+ */
+const CHUNK_RELOAD_KEY = '__sgs_chunk_reload_ts__';
+
+/** Guard window: allow at most one reload every 45 seconds to prevent infinite loops. */
+const CHUNK_RELOAD_DEBOUNCE_MS = 45_000;
 
 /**
  * Force a hard page reload after a chunk-load failure.
- * Uses sessionStorage to prevent looping: if we already reloaded once for this session,
- * fall through to the normal error flow so the ErrorBoundary can display the error.
+ * Uses a timestamp-based guard so the lock expires after 45 s:
+ *   • Two rapid back-to-back chunk errors (e.g. slow network) → only one reload.
+ *   • A second deployment in the same browser session → new reload allowed after 45 s.
  */
 function reloadOnceForChunkError(): boolean {
-    const already = sessionStorage.getItem(CHUNK_RELOAD_KEY);
-    if (already) return false;
-    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+    const lastReload = parseInt(sessionStorage.getItem(CHUNK_RELOAD_KEY) || '0', 10);
+    const now = Date.now();
+    if (now - lastReload < CHUNK_RELOAD_DEBOUNCE_MS) return false;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
     window.location.reload();
     return true;
 }
