@@ -3537,16 +3537,13 @@ async function startServer() {
   const TODAY = new Date().toISOString().split('T')[0];
 
   app.get('/sitemap-listings.xml', async (_req: express.Request, res: express.Response) => {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-      await client.query('SET LOCAL row_security = off');
-      const result = await client.query(
+      // neondb_owner có BYPASSRLS + row_security=off mặc định → query thẳng pool không cần transaction/role switch
+      const result = await pool.query(
         `SELECT id, updated_at FROM listings
          WHERE status = 'ACTIVE'
          ORDER BY updated_at DESC LIMIT 50000`
       );
-      await client.query('COMMIT');
       const urls = result.rows.map((r: any) => {
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
         return `  <url>\n    <loc>${APP_SITEMAP_URL}/listing/${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>`;
@@ -3556,25 +3553,19 @@ async function startServer() {
       res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       res.send(xml);
     } catch (err) {
-      await client.query('ROLLBACK').catch(() => {});
       logger.error('[Sitemap] listings error:', err);
       res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
-    } finally {
-      client.release();
     }
   });
 
   app.get('/sitemap-news.xml', async (_req: express.Request, res: express.Response) => {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-      await client.query('SET LOCAL row_security = off');
-      const result = await client.query(
+      // neondb_owner có BYPASSRLS + row_security=off mặc định → query thẳng pool
+      const result = await pool.query(
         `SELECT id, slug, title, updated_at, published_at FROM articles
          WHERE status = 'PUBLISHED'
          ORDER BY published_at DESC LIMIT 50000`
       );
-      await client.query('COMMIT');
       const urls = result.rows.map((r: any) => {
         const slug = r.slug || r.id;
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
@@ -3587,11 +3578,8 @@ async function startServer() {
       res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       res.send(xml);
     } catch (err) {
-      await client.query('ROLLBACK').catch(() => {});
       logger.error('[Sitemap] news error:', err);
       res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
-    } finally {
-      client.release();
     }
   });
 
