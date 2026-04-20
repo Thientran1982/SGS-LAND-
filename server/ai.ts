@@ -59,6 +59,9 @@ const valuationCache: Map<string, { result: any; expiresAt: number; fetchedAt: n
 // Tool data cache: 5-min TTL for enterprise config (legal/marketing/contract rarely change)
 const toolDataCache: Map<string, { value: any; expiresAt: number }> = new Map();
 
+// Bank rates cache: 10-min TTL — lãi suất thay đổi theo tuần/tháng, không cần real-time từng giây
+const bankRatesCache: Map<'rates', { data: string; fetchedAt: number }> = new Map();
+
 function getCachedToolData<T>(key: string): T | null {
     const entry = toolDataCache.get(key);
     if (entry && Date.now() < entry.expiresAt) return entry.value as T;
@@ -106,6 +109,37 @@ async function buildRlhfContext(tenantId: string, intent: string): Promise<RlhfC
         return result;
     } catch {
         return { fewShotSection: '', negativeRulesSection: '' };
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Real-time bank lending rates via Gemini Google Search grounding
+// Cache TTL: 10 min — rates change weekly at most, no need per-request fetch
+// ---------------------------------------------------------------------------
+async function fetchCurrentBankRates(): Promise<string> {
+    const cached = bankRatesCache.get('rates');
+    if (cached && Date.now() - cached.fetchedAt < 10 * 60 * 1000) {
+        return cached.data;
+    }
+    try {
+        const now = new Date();
+        const monthYear = `tháng ${now.getMonth() + 1}/${now.getFullYear()}`;
+        const searchRes = await getAiClient().models.generateContent({
+            model: 'gemini-2.0-flash',   // Flash for fast grounding — no deep reasoning needed
+            contents: `Lãi suất vay mua nhà ${monthYear} tại Việt Nam. Cho tôi bảng lãi suất ưu đãi và thả nổi hiện tại của: Vietcombank, BIDV, Agribank, VietinBank, MB Bank, Techcombank, VIB, Sacombank, ACB, TPBank, VPBank. Định dạng: [NH]: ưu đãi X%/năm (X tháng đầu), thả nổi ~Y%/năm. Thêm nhận xét: ngân hàng nào đang có gói tốt nhất cho người mua nhà lần đầu?`,
+            config: {
+                tools: [{ googleSearch: {} }],
+                maxOutputTokens: 400,
+            }
+        });
+        const ratesText = (searchRes.text || '').trim();
+        if (ratesText.length > 80) {
+            bankRatesCache.set('rates', { data: ratesText, fetchedAt: Date.now() });
+            return ratesText;
+        }
+        return '';
+    } catch {
+        return '';   // silent fallback — FINANCE_AGENT uses hardcoded knowledge from system prompt
     }
 }
 
@@ -554,16 +588,44 @@ Quy tắc phân biệt đơn vị:
 • Nếu giá có vẻ quá thấp (< 3 triệu/m²) hoặc quá cao (> 2 tỷ/m²) → kiểm tra lại đơn vị.
 • Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.
 
-KIẾN THỨC GIÁ THỊ TRƯỜNG THAM CHIẾU (2024–2025, để calibrate kết quả):
-• Căn hộ cao cấp Q1, Q3 HCM: 80–200 triệu/m² sàn.
-• Căn hộ TP Thủ Đức (Vinhomes Grand Park): 45–80 triệu/m² sàn.
-• Nhà phố mặt tiền Q1, Q3 HCM: 400–1.500 tỷ/m² đất (đặc biệt Q1 phố cổ cao hơn).
-• Nhà phố Bình Thạnh, Tân Bình: 120–250 triệu/m² đất.
-• Đất nền Bình Dương (gần Lái Thiêu): 25–60 triệu/m² đất thổ cư.
-• Đất nền Long An (giáp HCM): 15–40 triệu/m² đất thổ cư.
-• Hà Nội phố cổ (Hoàn Kiếm): 600–2.000 triệu/m² đất. Cầu Giấy, Đống Đa: 150–400 triệu/m² đất.
-• Đà Nẵng mặt biển Mỹ Khê: 100–250 triệu/m² đất. Nội đô: 30–80 triệu/m².
-• Phú Quốc (An Thới, Dương Đông): 50–150 triệu/m² đất thổ cư ven biển.
+KIẾN THỨC GIÁ THỊ TRƯỜNG THAM CHIẾU (Q1–Q2/2026, để calibrate kết quả):
+
+TP. HỒ CHÍ MINH:
+• Căn hộ cao cấp Q1, Q3 (Vinhomes Golden River, Masteri Millennium, The One): 90–220 triệu/m² sàn.
+• Căn hộ Bình Thạnh (Vinhomes Central Park, Masteri Thảo Điền): 55–100 triệu/m² sàn.
+• Căn hộ TP Thủ Đức (Vinhomes Grand Park, Masteri Waterfront): 48–90 triệu/m² sàn.
+• Nhà phố mặt tiền Q1, Q3: 450–2.000 triệu VNĐ/m² đất.
+• Nhà phố hẻm Q1, Q3: 200–600 triệu VNĐ/m² đất.
+• Nhà phố Bình Thạnh, Tân Bình (hẻm ≥4m): 130–280 triệu VNĐ/m² đất.
+• Đất nền TP Thủ Đức (đã có sổ): 80–200 triệu VNĐ/m².
+• Đất nền Bình Dương (Thuận An, Dĩ An gần HCM): 30–75 triệu VNĐ/m² thổ cư.
+• Đất nền Long An (Bến Lức, Đức Hòa giáp HCM): 18–45 triệu VNĐ/m² thổ cư.
+• Đất nền Đồng Nai (Trảng Bom, Long Thành): 20–55 triệu VNĐ/m² thổ cư.
+
+HÀ NỘI:
+• Phố cổ Hoàn Kiếm: 700–2.500 triệu VNĐ/m² đất.
+• Tây Hồ, Ba Đình, Đống Đa (nội đô): 200–500 triệu VNĐ/m² đất.
+• Cầu Giấy, Nam Từ Liêm, Hoàng Mai: 100–250 triệu VNĐ/m² đất.
+• Căn hộ cao cấp nội đô (Vinhomes Metropolis, Sunwah Pearl): 70–150 triệu/m² sàn.
+• Căn hộ Gia Lâm, Long Biên (Vinhomes Ocean Park, Ecopark): 30–65 triệu/m² sàn.
+• Đất nền Hưng Yên, Bắc Ninh (giáp Hà Nội): 15–40 triệu VNĐ/m² thổ cư.
+
+MIỀN TRUNG & NGHỈ DƯỠNG:
+• Đà Nẵng mặt biển Mỹ Khê: 120–300 triệu VNĐ/m² đất.
+• Đà Nẵng nội đô (Hải Châu, Thanh Khê): 35–90 triệu VNĐ/m² đất.
+• Nha Trang (Khánh Hòa) ven biển: 60–180 triệu VNĐ/m² đất.
+• Phú Quốc (An Thới, Dương Đông) ven biển: 60–180 triệu VNĐ/m² đất thổ cư.
+• Đà Lạt (Lâm Đồng): 30–120 triệu VNĐ/m² đất tùy vị trí.
+• Hội An (Quảng Nam): 50–200 triệu VNĐ/m² đất ven phố cổ.
+• Quy Nhơn (Bình Định): 25–80 triệu VNĐ/m² đất.
+• Phan Thiết - Mũi Né (Bình Thuận): 15–70 triệu VNĐ/m² đất.
+• Quảng Ninh (Hạ Long): 30–150 triệu VNĐ/m² đất ven vịnh.
+
+TỈNH THÀNH KHÁC:
+• Cần Thơ (ĐBSCL): 15–60 triệu VNĐ/m² đất nội đô.
+• Hải Phòng nội đô: 30–100 triệu VNĐ/m² đất.
+• Thanh Hóa, Nghệ An: 8–30 triệu VNĐ/m² đất.
+• Tây Nguyên (Buôn Ma Thuột, Gia Lai): 5–25 triệu VNĐ/m² đất.
 
 PREMIUM MICRO-LOCATION (chỉ để ghi vào analysisNotes — AVM xử lý Kmf riêng):
 • Mặt hồ / mặt sông: premium 10–30% so với trong hẻm cùng khu vực.
@@ -1224,10 +1286,39 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
 - Định giá + hỏi mua → ESTIMATE_VALUATION nếu nhắc "nhà tôi" / "đất của tôi" / "muốn bán"
 - Đặt lịch + hỏi giá → DRAFT_BOOKING (muốn xem nhà)
 
-ĐỊA DANH VIỆT NAM chuẩn → location_keyword:
-- TP.HCM: Thủ Đức, Quận 1, Q7, Q2, Bình Thạnh, Gò Vấp, Tân Bình, Bình Dương, Long An, Đồng Nai
-- Hà Nội: Cầu Giấy, Nam Từ Liêm, Hoàng Mai, Đống Đa, Long Biên, Ecopark, Vinhomes Ocean Park
-- Nghỉ dưỡng: Đà Nẵng, Nha Trang, Phú Quốc, Đà Lạt, Hội An`;
+ĐỊA DANH VIỆT NAM — 63 tỉnh/thành phố → chuẩn hoá location_keyword:
+MIỀN NAM: TP. Hồ Chí Minh (Q.1, Q.3, Q.7, Bình Thạnh, Gò Vấp, Tân Bình, Tân Phú, Phú Nhuận, Bình Tân, Hóc Môn, Củ Chi, Nhà Bè, Cần Giờ, TP Thủ Đức) | Bình Dương (Thuận An, Dĩ An, Bến Cát, Tân Uyên, Phú Giáo, TP Thủ Dầu Một) | Đồng Nai (Biên Hòa, Long Thành, Nhơn Trạch, Trảng Bom) | Bà Rịa - Vũng Tàu | Long An (Bến Lức, Đức Hòa, Cần Giuộc) | Tây Ninh | Bình Phước | An Giang | Kiên Giang (Phú Quốc) | Cần Thơ | Đồng Tháp | Tiền Giang | Vĩnh Long | Bến Tre | Trà Vinh | Sóc Trăng | Hậu Giang | Bạc Liêu | Cà Mau
+MIỀN TRUNG: Đà Nẵng (Hải Châu, Sơn Trà, Ngũ Hành Sơn, Liên Chiểu, Cẩm Lệ) | Thừa Thiên Huế (TP Huế) | Quảng Nam (Hội An, Tam Kỳ) | Quảng Ngãi | Bình Định (Quy Nhơn) | Phú Yên (Tuy Hòa) | Khánh Hòa (Nha Trang, Cam Ranh) | Ninh Thuận (Phan Rang) | Bình Thuận (Phan Thiết, Mũi Né, Lagi) | Quảng Bình | Quảng Trị | Hà Tĩnh | Nghệ An (Vinh)
+TÂY NGUYÊN: Lâm Đồng (Đà Lạt, Bảo Lộc) | Đắk Lắk (Buôn Ma Thuột) | Đắk Nông | Gia Lai (Pleiku) | Kon Tum
+MIỀN BẮC: Hà Nội (Hoàn Kiếm, Ba Đình, Đống Đa, Hai Bà Trưng, Cầu Giấy, Nam Từ Liêm, Bắc Từ Liêm, Tây Hồ, Hoàng Mai, Thanh Xuân, Long Biên, Gia Lâm, Đông Anh, Sóc Sơn) | Hải Phòng | Quảng Ninh (Hạ Long, Cẩm Phả, Vân Đồn) | Hải Dương | Hưng Yên | Bắc Ninh (Từ Sơn) | Vĩnh Phúc (Vĩnh Yên) | Hà Nam | Nam Định | Ninh Bình | Thái Bình | Phú Thọ (Việt Trì) | Bắc Giang | Thái Nguyên | Lạng Sơn | Cao Bằng | Bắc Kạn | Tuyên Quang | Hà Giang | Lào Cai (Sa Pa) | Yên Bái | Sơn La | Điện Biên | Lai Châu | Hòa Bình | Thanh Hóa | Hà Tĩnh
+
+LOẠI HÌNH BĐS → property_type (chuẩn hoá):
+- Căn hộ chung cư / Apartment: "căn hộ", "chung cư", "apartment", "flat"
+- Căn hộ studio: "studio"
+- Officetel (văn phòng kết hợp ở): "officetel", "office-hotel"
+- Condotel (căn hộ khách sạn): "condotel", "resort apartment"
+- Penthouse (căn đỉnh tháp): "penthouse", "căn hộ penthouse"
+- Duplex (căn hộ 2 tầng): "duplex", "căn hộ duplex"
+- Nhà phố / Townhouse: "nhà phố", "nhà liền kề", "townhouse", "nhà riêng"
+- Nhà mặt tiền (mặt phố): "nhà mặt tiền", "nhà mặt phố", "nhà mặt đường"
+- Shophouse (nhà phố thương mại dự án): "shophouse", "nhà phố thương mại"
+- Biệt thự đơn lập: "biệt thự", "villa", "biệt thự đơn lập"
+- Biệt thự song lập (semi-detached): "biệt thự song lập", "semi-detached"
+- Biệt thự liền kề dự án: "biệt thự liền kề", "terrace villa"
+- Biệt thự nghỉ dưỡng / Resort villa: "biệt thự nghỉ dưỡng", "resort villa", "beach villa"
+- Nhà vườn / Garden house: "nhà vườn", "garden house"
+- Đất nền thổ cư (trong khu dân cư): "đất nền", "đất thổ cư", "lô đất"
+- Đất nền dự án (đã có quy hoạch 1/500): "đất nền dự án", "đất phân lô"
+- Đất nông nghiệp: "đất nông nghiệp", "đất vườn", "đất ruộng"
+- Đất công nghiệp / KCN: "đất công nghiệp", "đất KCN", "đất nhà máy"
+- Văn phòng cho thuê: "văn phòng", "office", "mặt bằng văn phòng"
+- Mặt bằng thương mại: "mặt bằng", "mặt bằng kinh doanh", "retail"
+- Kho xưởng / Warehouse: "kho xưởng", "nhà xưởng", "kho", "warehouse", "factory"
+- Nhà ở xã hội (NHXH): "nhà ở xã hội", "nhà xã hội", "NHXH", "affordable housing"
+- Nhà ở công nhân: "nhà ở công nhân", "nhà công nhân"
+- Khách sạn / Hotel: "khách sạn", "hotel", "mini hotel"
+- Homestay / Nhà nghỉ: "homestay", "nhà nghỉ", "guesthouse"
+- BĐS công nghiệp (nhà xưởng KCN): "BĐS công nghiệp", "industrial property"`;
 
             const routerInstruction = await getRouterInstruction(state.tenantId);
             const _routerStart = Date.now();
@@ -1490,15 +1581,19 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
             const totalRepayFmt    = (totalRepay    / 1e9).toFixed(2);
             const defaultNote      = isDefaultAmount ? ' (ví dụ minh họa — chưa có số tiền vay cụ thể)' : '';
 
+            // ── Fetch real-time bank rates (Google Search grounding, 10-min cache) ──
+            const marketRatesText = await fetchCurrentBankRates().catch(() => '');
+
             // ── Gemini financial advisory ──────────────────────────────────────────
             const financeAdvisoryPrompt = `Dữ liệu tính toán vay mua BĐS:
 Số tiền vay: ${(principal / 1e9).toFixed(2)} Tỷ VNĐ${defaultNote}
-Lãi suất: ${rate}%/năm (ưu đãi ban đầu — thả nổi sau thường 9-11%/năm)
+Lãi suất tính toán: ${rate}%/năm${extraction.loan_rate ? ' (do khách chỉ định)' : ' (ví dụ — xem lãi suất thực tế bên dưới)'}
 Kỳ hạn: ${years} năm
 Trả hàng tháng: ${monthlyFmt} VNĐ
 Tổng lãi phải trả: ${totalInterestFmt} Tỷ VNĐ
 Tổng trả gốc + lãi: ${totalRepayFmt} Tỷ VNĐ
 ${altContext}
+${marketRatesText ? `\n[LÃI SUẤT THỊ TRƯỜNG THỰC TẾ — vừa tra cứu qua Google Search]:\n${marketRatesText}\n⚠️ Dùng lãi suất này để tư vấn cụ thể ngân hàng tốt nhất cho khách — thay vì kiến thức cũ.` : '[LÃI SUẤT THỊ TRƯỜNG]: Không tra cứu được — dùng kiến thức nền trong system prompt.'}
 
 KỊCH BẢN KHÁCH: ${loanScenario}
 HỒ SƠ KHÁCH: ${state.lead ? `Tên: ${state.lead.name} | Ngân sách: ${state.lead.preferences?.budgetMax ? (state.lead.preferences.budgetMax / 1e9).toFixed(2) + ' Tỷ' : 'Chưa rõ'} | Giai đoạn: ${state.lead.stage || 'Chưa rõ'}` : 'Chưa có hồ sơ'}
@@ -1508,7 +1603,7 @@ PHÂN TÍCH TÀI CHÍNH — KỊCH BẢN: ${loanScenario} (bullet point, max 180
 1. Thu nhập tối thiểu cần có (quy tắc 40%): ${monthlyFmt} ÷ 40% = bao nhiêu triệu/tháng?
 2. ${loanScenario === 'SO_SÁNH_KỲ_HẠN' ? 'So sánh 2 kỳ hạn bằng số: trả/tháng & tổng lãi chênh nhau bao nhiêu — kỳ hạn nào tối ưu?' : loanScenario === 'ĐẦU_TƯ' ? 'Dòng tiền đầu tư: nếu cho thuê X triệu/tháng → bao lâu hoà vốn? Tỷ suất thực sau trả nợ?' : loanScenario === 'ĐÁNH_GIÁ_KHẢ_NĂNG' ? 'Thẳng thắn: có vay được không? Điều kiện hồ sơ & vốn tự có tối thiểu cần chuẩn bị' : loanScenario === 'TÁI_CƠ_CẤU' ? 'Chi phí & điều kiện tái cơ cấu — có thực sự tiết kiệm so với giữ nguyên?' : 'Rủi ro & tối ưu: kỳ hạn nào nên chọn, ngân hàng nào thường lãi tốt nhất?'}
 3. Vốn tự có cần có (NH cho vay 70-80% BĐS): tối thiểu bao nhiêu? Gợi ý nếu chưa đủ
-4. Cảnh báo lãi suất thả nổi sau ưu đãi: kịch bản xấu nhất trả ${Math.round(loanData.monthly * 1.25).toLocaleString('vi-VN')} VNĐ/tháng (+25%)
+4. ${marketRatesText ? 'Đề xuất 2-3 ngân hàng cụ thể phù hợp kịch bản này dựa trên [LÃI SUẤT THỊ TRƯỜNG] vừa tra cứu — nêu tên NH + lãi suất + ưu điểm ngắn gọn.' : 'Cảnh báo lãi suất thả nổi sau ưu đãi: kịch bản xấu nhất trả ' + Math.round(loanData.monthly * 1.25).toLocaleString('vi-VN') + ' VNĐ/tháng (+25%)'}
 5. 1 gợi ý tối ưu hoá cụ thể phù hợp kịch bản này`;
 
             // ── RLHF + observation insights (self-learning) ───────────────────────
@@ -2147,8 +2242,10 @@ YÊU CẦU VIẾT PHẢN HỒI (120-200 từ):
   • MUA_LẦN_ĐẦU → ưu tiên an toàn, cần bao nhiêu vốn tự có, gói vay phù hợp
   • SO_SÁNH_KỲ_HẠN → so sánh bằng con số cụ thể: tháng X triệu, tổng lãi Y tỷ
   • ĐÁNH_GIÁ_KHẢ_NĂNG → trả lời thẳng thắn có vay được không, điều kiện cụ thể
-- Con số chính nêu NGAY đầu phản hồi
+- Con số chính nêu NGAY đầu phản hồi (số tiền trả/tháng, thu nhập tối thiểu cần có)
+- Nếu [LÃI SUẤT THỊ TRƯỜNG THỰC TẾ] có trong CONTEXT → đề cập 1-2 ngân hàng CỤ THỂ + lãi suất vừa tra cứu — đây là USP lớn so với chatbot khác
 - Cảnh báo lãi suất thả nổi sau ưu đãi — nêu kịch bản xấu nhất trả bao nhiêu
+- Cấu trúc bài viết: ① Kết quả tính toán chính → ② Phân tích kịch bản → ③ Đề xuất NH + hành động tiếp theo
 - Kết thúc: câu hỏi liên quan đến kịch bản cụ thể của khách (không hỏi chung)
 - TRÁNH: copy bảng số, dùng "amortization", "principal", thuật ngữ kỹ thuật tài chính`;
 
@@ -2273,8 +2370,77 @@ YÊU CẦU (20-40 từ):
 - Giọng thân thiện, tự nhiên — KHÔNG hỏi nhiều câu, KHÔNG giải thích dài dòng
 - KHÔNG đoán hoặc trả lời nội dung khi chưa rõ yêu cầu`;
 
-                    // ── 10. DIRECT / ESCALATE / DEFAULT ──────────────────────────────────
-                    default:
+                    // ── 10. CHUYỂN NHÂN VIÊN ─────────────────────────────────────────────
+                    case 'ESCALATE_TO_HUMAN': {
+                        const _escalateMsg = state.userMessage.toLowerCase();
+                        const isComplaint = /khiếu nại|tức|không hài|thất vọng|tệ|kém|sai|lừa|gian lận|kiện/.test(_escalateMsg);
+                        return `NHIỆM VỤ: CHUYỂN KHÁCH SANG NHÂN VIÊN TƯ VẤN — Cầu nối nhanh, không mất khách
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (40-80 từ):
+- ${langInstruction}
+- Thừa nhận yêu cầu cụ thể của khách — KHÔNG nói chung chung "em sẽ hỗ trợ"
+- ${isComplaint ? 'Tông giọng: xin lỗi chân thành trước, sau đó hứa hành động cụ thể (không phòng thủ)' : 'Tông giọng: ấm áp, nhanh nhẹn — khách đang cần người thật'}
+- Nêu rõ: (1) Nhân viên sẽ liên hệ trong vòng bao lâu? (2) Khách cần cung cấp thêm thông tin gì không?
+- Gợi ý cách liên hệ thay thế (Zalo/điện thoại) nếu có trong CONTEXT
+- KHÔNG: "Hệ thống đang ghi nhận", "Cảm ơn bạn đã liên hệ", ngôn ngữ robot`;
+                    }
+
+                    // ── 11. DIRECT_ANSWER & DEFAULT — phân nhánh theo sub-type ───────────
+                    default: {
+                        const _rawMsg = state.userMessage.toLowerCase();
+                        const isGreeting   = /^(xin chào|chào|hello|hi|hey|alo|helo|chào buổi|chào mừng|good morning|good afternoon|good evening|hôm nay|chào anh|chào chị|chào em|thế nào|bạn ơi|xin hỏi|cho hỏi|ơi)\b/.test(_rawMsg) && _rawMsg.length < 60;
+                        const isProjectInfo = /tiến độ|tiến trình|dự án|chủ đầu tư|bàn giao|pháp lý dự án|giờ mở cửa|địa chỉ showroom|văn phòng|liên hệ|hotline|số điện thoại|email/.test(_rawMsg);
+                        const isThankYou   = /^(cảm ơn|thanks|thank you|ok|oke|oki|okk|được rồi|vâng|dạ|nhận rồi|hiểu rồi|tuyệt|hay quá|tốt|giỏi|tuyệt vời)/.test(_rawMsg) && _rawMsg.length < 50;
+
+                        if (isGreeting) {
+                            return `NHIỆM VỤ: CHÀO HỎI — Phản hồi lời chào của khách, nhanh → khai thác nhu cầu
+
+${state.leadAnalysis ? `[LEAD ANALYSIS]: ${state.leadAnalysis}` : ''}
+${_hist}
+${_msg}
+
+YÊU CẦU (30-60 từ):
+- ${langInstruction}
+- Cấu trúc: Chào lại → giới thiệu bản thân 1 câu → hỏi ngay khách đang quan tâm điều gì (tìm nhà / tính vay / định giá / pháp lý?)
+- Nếu khách đã từng hỏi (có lịch sử hội thoại): không cần giới thiệu lại — hỏi tiếp nhu cầu còn lại
+- Giọng điệu: thân thiện như người bạn trong ngành — không cứng nhắc, không "Kính gửi Quý Khách"
+- KHÔNG: giới thiệu dài dòng, liệt kê tính năng chatbot`;
+                        }
+
+                        if (isThankYou) {
+                            return `NHIỆM VỤ: PHẢN HỒI LỜI CẢM ƠN — Tiếp tục giữ kết nối, mở cơ hội tiếp theo
+
+${_hist}
+${_msg}
+
+YÊU CẦU (20-50 từ):
+- ${langInstruction}
+- Phản hồi chân thành, ngắn gọn — KHÔNG "Dạ không có gì ạ" máy móc
+- Kết thúc bằng 1 câu mở: nhắc nhẹ mình luôn sẵn sàng hỗ trợ, hoặc hỏi thêm 1 nhu cầu khác có thể có
+- Giọng điệu: ấm áp, tự nhiên như đồng nghiệp — không phục vụ robot`;
+                        }
+
+                        if (isProjectInfo) {
+                            return `NHIỆM VỤ: THÔNG TIN DỰ ÁN / LIÊN HỆ — Cung cấp thông tin cụ thể, hành động ngay
+
+${_ctx}
+${_hist}
+${_msg}
+
+YÊU CẦU (60-120 từ):
+- ${langInstruction}
+- Lấy thông tin trực tiếp từ CONTEXT (tiến độ, chủ đầu tư, địa chỉ, hotline) — KHÔNG bịa đặt
+- Nếu CONTEXT không có thông tin → báo thẳng và đề xuất cách khách tra thêm (website CĐT, hotline)
+- Cấu trúc: Thông tin chính xác → 1 điểm nổi bật cập nhật → gợi ý hành động tiếp (đặt lịch xem/gọi ngay)
+- Giá BĐS: "Tỷ" / "Triệu VNĐ". KHÔNG dùng nhãn kỹ thuật [CONTEXT], [INVENTORY DATA]
+- Kết thúc: câu hỏi liên quan (anh/chị muốn đặt lịch tham quan không ạ?)`;
+                        }
+
+                        // Generic DIRECT_ANSWER (quick query, FAQ, mixed intent)
                         return `${intentHint ? intentHint + '\n\n' : ''}${_ctx}
 
 ${_hist}
@@ -2283,12 +2449,14 @@ ${_msg}
 
 YÊU CẦU VIẾT PHẢN HỒI:
 - ${langInstruction}
-- Độ dài: 3-5 câu cho câu hỏi đơn giản. Dùng bullet point khi trình bày nhiều thông tin.
+- Cấu trúc: ① Câu trả lời cốt lõi ngay đầu → ② Thêm 1-2 thông tin bổ sung hữu ích → ③ Câu hỏi ngược cụ thể
+- Độ dài: 3-5 câu cho câu hỏi đơn giản. Dùng bullet point khi trình bày ≥3 điểm.
 - Tích hợp dữ liệu từ CONTEXT tự nhiên — KHÔNG copy nguyên văn, KHÔNG lặp nhãn kỹ thuật.
 - Giá BĐS: "Tỷ" / "Triệu VNĐ". Lãi suất: "%/năm". Diện tích: "m²".
 - KHÔNG lặp lại câu hỏi của khách. KHÔNG bịa đặt số liệu không có trong CONTEXT.
 - Kết thúc bằng 1 câu hỏi ngược tự nhiên, liên quan đến nhu cầu cụ thể của khách.
 - Giọng điệu: tự tin, thấu cảm, cá nhân hoá theo Lead Analysis (nếu có).`;
+                    }
                 }
             })();
 
