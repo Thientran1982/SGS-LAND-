@@ -1247,7 +1247,7 @@ export const ListingDetail: React.FC = () => {
         if (listing.createdBy === currentUser.id) return true;
         
         // Specific permission
-        if (currentUser.permissions?.includes('VIEW_SENSITIVE_INFO')) return true;
+        if (Array.isArray(currentUser.permissions) && currentUser.permissions.includes('VIEW_SENSITIVE_INFO')) return true;
         
         // Explicitly authorized
         if (listing.authorizedAgents?.includes(currentUser.id)) return true;
