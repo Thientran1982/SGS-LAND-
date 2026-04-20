@@ -410,6 +410,10 @@ export class AnalyticsRepository extends BaseRepository {
         WHERE li.${TENANT_FILTER}
           AND li.status = 'AVAILABLE'
           AND li.price > 0
+          -- Sanity cap: exclude clear data-entry errors (> 100,000 tỷ = 10^14 VND).
+          -- Corrupted prices (e.g. price entered in tỷ then multiplied by 10^9 again)
+          -- would otherwise collapse the Y-axis and make the chart unreadable.
+          AND li.price < 100000000000000
           AND COALESCE(li.area, (li.attributes->>'area')::numeric) > 0
         GROUP BY li.id, li.area, li.attributes, li.price, li.created_at
         ORDER BY li.created_at DESC
