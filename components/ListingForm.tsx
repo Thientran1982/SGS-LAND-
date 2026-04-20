@@ -728,7 +728,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 )}
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Smart Price Input */}
-                                    <div className="col-span-2 sm:col-span-1">
+                                    <div className="col-span-2">
                                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">
                                             {isProject ? t('inventory.min_price') : t('inventory.label_price')} <span className="text-rose-500">*</span>
                                         </label>
@@ -741,7 +741,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] focus:border-indigo-500 outline-none ${errors.price ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                                 placeholder="5.5"
                                             />
-                                            <div className="w-24 shrink-0">
+                                            <div className="w-28 shrink-0">
                                                 <Dropdown
                                                     value={priceUnit}
                                                     onChange={v => setPriceUnit(Number(v))}
@@ -752,9 +752,14 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         </div>
                                         {/* Real-time Raw Value Preview */}
                                         {errors.price && <p className="text-xs2 text-rose-500 mt-1">{errors.price}</p>}
-                                        <div className="text-xs2 text-[var(--text-secondary)] font-mono mt-1 text-right truncate">
-                                            = {formatCurrency((isNaN(parseFloat(priceShort)) ? 0 : parseFloat(priceShort)) * priceUnit)}
-                                        </div>
+                                        {(() => {
+                                            const rawVal = (isNaN(parseFloat(priceShort)) ? 0 : parseFloat(priceShort)) * priceUnit;
+                                            return rawVal > 0 ? (
+                                                <div className="text-xs font-semibold text-indigo-600 font-mono mt-1 text-right">
+                                                    = {Math.round(rawVal).toLocaleString('vi-VN')} ₫
+                                                </div>
+                                            ) : null;
+                                        })()}
                                     </div>
                                     <div className="col-span-2 sm:col-span-1">
                                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_area')} <span className="text-rose-500">*</span></label>
