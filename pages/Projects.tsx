@@ -1191,11 +1191,24 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                         listingId: contractTarget.id,
                         type: ContractType.DEPOSIT,
                         status: ContractStatus.DRAFT,
+                        // ── Mã căn / loại ─────────────────────────────────────────
                         propertyUnitCode: contractTarget.code,
-                        propertyType: contractTarget.type,
+                        // Translate enum ('Apartment') → localised label ('Căn hộ')
+                        propertyType: t(`property.${(contractTarget.type || '').toUpperCase()}`) || contractTarget.type || '',
+                        // ── Địa chỉ — dùng `location` (không có field `address` riêng) ─
+                        propertyAddress: contractTarget.location ?? '',
+                        // ── Diện tích ─────────────────────────────────────────────
                         propertyArea: contractTarget.area ?? 0,
+                        // DT xây dựng: clearArea cho căn hộ/penthouse; builtArea cho loại khác
+                        propertyConstructionArea: (['Apartment', 'Penthouse'].includes(contractTarget.type)
+                            ? Number(contractTarget.attributes?.clearArea ?? 0)
+                            : (contractTarget.builtArea ?? 0)),
+                        // ── Số tầng ───────────────────────────────────────────────
+                        propertyFloorNumber: contractTarget.attributes?.floor
+                            ? String(contractTarget.attributes.floor)
+                            : '',
+                        // ── Giá ──────────────────────────────────────────────────
                         propertyPrice: contractTarget.price ?? 0,
-                        propertyAddress: contractTarget.address ?? '',
                     }}
                     onClose={() => setContractTarget(null)}
                     onSuccess={() => {
