@@ -293,17 +293,22 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
         // Auto-reload once when a chunk-load failure occurs after a production redeploy.
-        // Guard against infinite loops: only reload if we haven't already done so this session.
+        // Uses the same timestamp-based guard as reactUtils.lazyLoad (45 s debounce)
+        // so that multiple consecutive deployments in the same browser session each
+        // trigger their own reload instead of being blocked by a stale boolean flag.
         const isChunk =
             error.message?.includes('Failed to fetch dynamically imported module') ||
             error.message?.includes('Importing a module script failed') ||
             error.message?.includes('dynamically imported module') ||
             (error as any).name === 'ChunkLoadError';
         if (isChunk) {
-            const RELOAD_KEY = '__sgs_chunk_reload__';
-            if (!sessionStorage.getItem(RELOAD_KEY)) {
-                sessionStorage.setItem(RELOAD_KEY, '1');
+            const RELOAD_KEY = '__sgs_chunk_reload_ts__';
+            const DEBOUNCE_MS = 45_000;
+            const lastReload = parseInt(sessionStorage.getItem(RELOAD_KEY) || '0', 10);
+            if (Date.now() - lastReload >= DEBOUNCE_MS) {
+                sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
                 window.location.reload();
+                return; // page is reloading — skip error logging
             }
         }
         // Report to error monitoring (non-blocking)
