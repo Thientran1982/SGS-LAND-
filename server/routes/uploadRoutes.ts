@@ -125,7 +125,7 @@ const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterC
   if (ALL_ALLOWED.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`File type ${file.mimetype} is not allowed`));
+    cb(new Error(`Định dạng file không được hỗ trợ: ${file.mimetype}`));
   }
 };
 
@@ -138,14 +138,14 @@ const upload = multer({
 function handleMulterError(err: any, _req: Request, res: Response, next: NextFunction) {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ error: 'File too large (max 10MB cho ảnh, 100MB cho video)' });
+      return res.status(413).json({ error: 'File quá lớn (tối đa 10MB cho ảnh, 100MB cho video)' });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({ error: 'Too many files (max 10)' });
+      return res.status(400).json({ error: 'Số lượng file vượt giới hạn (tối đa 10 file)' });
     }
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: 'Lỗi tải file. Vui lòng thử lại.' });
   }
-  if (err?.message?.includes('File type')) {
+  if (err?.message?.includes('Định dạng file')) {
     return res.status(415).json({ error: err.message });
   }
   next(err);
@@ -179,7 +179,7 @@ export function createUploadRoutes(authenticateToken: any) {
     try {
       const files = req.files as Express.Multer.File[];
       if (!files || files.length === 0) {
-        return res.status(400).json({ error: 'No files uploaded' });
+        return res.status(400).json({ error: 'Chưa có file nào được chọn để tải lên' });
       }
 
       const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
@@ -230,19 +230,19 @@ export function createUploadRoutes(authenticateToken: any) {
 
       if (uploaded.length === 0) {
         return res.status(415).json({
-          error: 'All files were rejected: file content does not match an allowed type.',
+          error: 'Định dạng file không hợp lệ. Chỉ chấp nhận ảnh JPEG, PNG, WebP, HEIC và tài liệu PDF.',
           rejected,
         });
       }
 
       if (rejected.length > 0) {
-        return res.json({ files: uploaded, warnings: [`${rejected.length} file(s) rejected — content did not match declared type: ${rejected.join(', ')}`] });
+        return res.json({ files: uploaded, warnings: [`${rejected.length} file bị từ chối do định dạng không hợp lệ: ${rejected.join(', ')}`] });
       }
 
       res.json({ files: uploaded });
     } catch (error) {
       console.error('Upload error:', error);
-      res.status(500).json({ error: 'Upload failed' });
+      res.status(500).json({ error: 'Tải ảnh thất bại. Vui lòng thử lại.' });
     }
   });
 
