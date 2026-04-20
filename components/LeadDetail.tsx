@@ -512,28 +512,39 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                                 {effectiveValue ? ` · ${effectiveValue.toLocaleString('vi-VN')} đ` : ''}
                                             </p>
                                         </div>
-                                        <button
-                                            disabled={loadingEditContract}
-                                            onClick={async () => {
-                                                setLoadingEditContract(true);
-                                                try {
-                                                    const full = await contractApi.getContractById(effectiveContractId!);
-                                                    setEditingContractInitialTab('schedule');
-                                                    setEditingContract(full);
-                                                } catch (e) {
-                                                    console.error('Failed to load contract', e);
-                                                } finally {
-                                                    setLoadingEditContract(false);
+                                        <div className="flex items-center gap-1.5 flex-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => window.open(`/p/contract_${effectiveContractId}`, '_blank')}
+                                                title={t('contracts.btn_preview_print') || 'Xem trước & In'}
+                                                className="px-3 py-1.5 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm active:scale-95"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                                {t('contracts.btn_print_short') || 'In / PDF'}
+                                            </button>
+                                            <button
+                                                disabled={loadingEditContract}
+                                                onClick={async () => {
+                                                    setLoadingEditContract(true);
+                                                    try {
+                                                        const full = await contractApi.getContractById(effectiveContractId!);
+                                                        setEditingContractInitialTab('schedule');
+                                                        setEditingContract(full);
+                                                    } catch (e) {
+                                                        console.error('Failed to load contract', e);
+                                                    } finally {
+                                                        setLoadingEditContract(false);
+                                                    }
+                                                }}
+                                                className="px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-60"
+                                            >
+                                                {loadingEditContract
+                                                    ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    : <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                 }
-                                            }}
-                                            className="flex-none px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-60"
-                                        >
-                                            {loadingEditContract
-                                                ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                : <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                            }
-                                            {t('common.edit') || 'Sửa'}
-                                        </button>
+                                                {t('common.edit') || 'Sửa'}
+                                            </button>
+                                        </div>
                                     </div>
                                     {schedule.length > 0 ? (
                                         <div>
@@ -630,15 +641,31 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             </div>
 
             <div className={`p-4 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] flex gap-3 ${isModal ? 'sticky bottom-0 z-20' : 'flex-none relative z-20'}`}>
-                <button
-                    type="button"
-                    onClick={handleCreateContract}
-                    disabled={formData.stage === LeadStage.WON}
-                    className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {t('detail.create_contract')}
-                </button>
+                {(() => {
+                    const existingContractId = localContractInfo?.contractId ?? lead.contractId;
+                    if (existingContractId) {
+                        return (
+                            <button
+                                type="button"
+                                onClick={() => window.open(`/p/contract_${existingContractId}`, '_blank')}
+                                className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                {t('contracts.btn_preview_print') || 'Xem trước & In hợp đồng'}
+                            </button>
+                        );
+                    }
+                    return (
+                        <button
+                            type="button"
+                            onClick={handleCreateContract}
+                            className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            {t('detail.create_contract')}
+                        </button>
+                    );
+                })()}
                 <button onClick={handleSave} disabled={isSaving} className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]">
                     {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                     {t('common.save')}
