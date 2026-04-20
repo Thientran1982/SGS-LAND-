@@ -10,7 +10,7 @@ const migration: Migration = {
     await client.query(`
       UPDATE users
         SET role = 'SUPER_ADMIN'
-        WHERE email = 'admin@sgs.vn'
+        WHERE email = 'info@sgsland.vn'
           AND tenant_id = '00000000-0000-0000-0000-000000000001';
     `);
   },
