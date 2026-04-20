@@ -714,10 +714,17 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 {([
                                     { key: 'totalCount',     label: t('project.stat_total'),    cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
                                     { key: 'availableCount', label: t('project.stat_available'), cls: 'bg-emerald-100 text-emerald-700' },
+                                    { key: 'openingCount',   label: t('project.stat_opening'),   cls: 'bg-indigo-100 text-indigo-700' },
                                     { key: 'bookingCount',   label: t('project.stat_booking'),   cls: 'bg-sky-100 text-sky-700' },
                                     { key: 'holdCount',      label: t('project.stat_hold'),      cls: 'bg-amber-100 text-amber-700' },
                                     { key: 'soldCount',      label: t('project.stat_sold'),      cls: 'bg-slate-100 text-slate-500' },
-                                ] as const).filter(({ key }) => stats[key] != null).map(({ key, label, cls }) => (
+                                    { key: 'rentedCount',    label: t('project.stat_rented'),    cls: 'bg-violet-100 text-violet-700' },
+                                    { key: 'inactiveCount',  label: t('project.stat_inactive'),  cls: 'bg-rose-50 text-rose-500 border border-rose-200' },
+                                ] as const).filter(({ key }) =>
+                                    key === 'totalCount'
+                                        ? stats[key] != null
+                                        : stats[key] != null && (stats[key] as number) > 0
+                                ).map(({ key, label, cls }) => (
                                     <span key={key} className={`shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cls}`}>
                                         <span className="font-extrabold">{stats[key]}</span>
                                         {label}
