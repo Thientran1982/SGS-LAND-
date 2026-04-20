@@ -2602,7 +2602,7 @@ async function startServer() {
       });
     } catch (error) {
       logger.error('GET /api/vendors error:', error);
-      res.status(500).json({ error: 'Failed to fetch vendors' });
+      res.status(500).json({ error: 'Không thể tải danh sách vendor' });
     }
   });
 
@@ -2633,7 +2633,7 @@ async function startServer() {
       });
 
       if (!result) {
-        return res.status(404).json({ error: 'Vendor not found' });
+        return res.status(404).json({ error: 'Không tìm thấy vendor' });
       }
 
       writeAuditLog(DEFAULT_TENANT_ID, (req as any).user?.id, 'VENDOR_APPROVED', 'tenant', id, { tenantId: id, name: result.tenant.name, approvedBy }, req.ip);
@@ -2644,10 +2644,10 @@ async function startServer() {
         });
       }
 
-      res.json({ message: 'Vendor approved successfully', tenantId: id, name: result.tenant.name });
+      res.json({ message: 'Vendor đã được phê duyệt', tenantId: id, name: result.tenant.name });
     } catch (error) {
       logger.error('POST /api/vendors/:id/approve error:', error);
-      res.status(500).json({ error: 'Failed to approve vendor' });
+      res.status(500).json({ error: 'Không thể phê duyệt vendor' });
     }
   });
 
@@ -2656,7 +2656,7 @@ async function startServer() {
     try {
       const id = req.params.id as string;
       const { reason } = req.body;
-      if (!reason?.trim()) return res.status(400).json({ error: 'Rejection reason is required' });
+      if (!reason?.trim()) return res.status(400).json({ error: 'Vui lòng nhập lý do từ chối' });
 
       const approvedBy = (req as any).user?.email || 'admin';
 
@@ -2678,7 +2678,7 @@ async function startServer() {
       });
 
       if (!result) {
-        return res.status(404).json({ error: 'Vendor not found' });
+        return res.status(404).json({ error: 'Không tìm thấy vendor' });
       }
 
       writeAuditLog(DEFAULT_TENANT_ID, (req as any).user?.id, 'VENDOR_REJECTED', 'tenant', id, { tenantId: id, name: result.tenant.name, reason: reason.trim() }, req.ip);
@@ -2689,10 +2689,10 @@ async function startServer() {
         });
       }
 
-      res.json({ message: 'Vendor rejected', tenantId: id, name: result.tenant.name });
+      res.json({ message: 'Vendor đã bị từ chối', tenantId: id, name: result.tenant.name });
     } catch (error) {
       logger.error('POST /api/vendors/:id/reject error:', error);
-      res.status(500).json({ error: 'Failed to reject vendor' });
+      res.status(500).json({ error: 'Không thể từ chối vendor' });
     }
   });
 
@@ -2710,13 +2710,13 @@ async function startServer() {
         return r.rows[0] || null;
       });
 
-      if (!result) return res.status(404).json({ error: 'Vendor not found' });
+      if (!result) return res.status(404).json({ error: 'Không tìm thấy vendor' });
 
       writeAuditLog(DEFAULT_TENANT_ID, (req as any).user?.id, 'VENDOR_SUSPENDED', 'tenant', id, { tenantId: id }, req.ip);
-      res.json({ message: 'Vendor suspended', tenantId: id });
+      res.json({ message: 'Vendor đã bị tạm ngừng', tenantId: id });
     } catch (error) {
       logger.error('POST /api/vendors/:id/suspend error:', error);
-      res.status(500).json({ error: 'Failed to suspend vendor' });
+      res.status(500).json({ error: 'Không thể tạm ngừng vendor' });
     }
   });
 

@@ -1961,7 +1961,7 @@ class DatabaseApiClient {
     if (params?.page) qs.set('page', String(params.page));
     if (params?.limit) qs.set('limit', String(params.limit));
     const res = await fetch(`/api/vendors?${qs.toString()}`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Failed to fetch vendors');
+    if (!res.ok) throw new Error('Không thể tải danh sách vendor');
     return res.json();
   }
 
@@ -1973,7 +1973,7 @@ class DatabaseApiClient {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error((err as any).error || 'Approval failed');
+      throw new Error((err as any).error || 'Không thể phê duyệt vendor');
     }
     return res.json();
   }
@@ -1987,7 +1987,7 @@ class DatabaseApiClient {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error((err as any).error || 'Rejection failed');
+      throw new Error((err as any).error || 'Không thể từ chối vendor');
     }
     return res.json();
   }
@@ -2001,7 +2001,7 @@ class DatabaseApiClient {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error((err as any).error || 'Suspend failed');
+      throw new Error((err as any).error || 'Không thể tạm ngừng vendor');
     }
     return res.json();
   }
