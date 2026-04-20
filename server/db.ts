@@ -25,7 +25,7 @@ if (process.env.PROD_DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: DB_CONNECTION_STRING,
-  max: 10,
+  max: 20,                       // 20 connections — supports 1000+ concurrent users (Neon allows 25-100 depending on plan)
   idleTimeoutMillis: 240000,     // 4 min — evict idle connections before Neon's 5-min hard timeout
   connectionTimeoutMillis: 15000,
   statement_timeout: 30000,
