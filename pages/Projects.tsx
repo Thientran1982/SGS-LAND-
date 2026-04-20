@@ -440,8 +440,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
             ...data,
             projectCode: project.code || data.projectCode,
         });
-        setListings(prev => [listing, ...prev]);
-        if (stats) setStats((s: any) => ({ ...s, availableCount: (s.availableCount || 0) + 1, totalCount: (s.totalCount || 0) + 1 }));
+        setListings(prev => {
+            const next = [listing, ...prev];
+            recomputeStats(next);
+            return next;
+        });
         setShowCreate(false);
         onListingCreated?.();
     };
@@ -524,7 +527,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
         try {
             const ids = [...selected];
             await Promise.all(ids.map(id => db.updateListing(id, { status: bulkStatus })));
-            setListings(prev => prev.map(l => selected.has(l.id) ? { ...l, status: bulkStatus } : l));
+            setListings(prev => {
+                const next = prev.map(l => selected.has(l.id) ? { ...l, status: bulkStatus } : l);
+                recomputeStats(next);
+                return next;
+            });
             setSelected(new Set());
             setBulkStatus('');
         } finally {
@@ -551,32 +558,37 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
         return () => document.removeEventListener('mousedown', handler);
     }, [menuOpenId]);
 
+    // ── Stats recompute from listings array ───────────────────────────────────
+    const recomputeStats = useCallback((updatedListings: any[]) => {
+        const c = { AVAILABLE: 0, HOLD: 0, BOOKING: 0, SOLD: 0, OPENING: 0, RENTED: 0, INACTIVE: 0 };
+        for (const l of updatedListings) {
+            const s = (l.status || '').toUpperCase() as keyof typeof c;
+            if (s in c) c[s]++;
+        }
+        setStats((prev: any) => prev ? {
+            ...prev,
+            availableCount: c.AVAILABLE,
+            holdCount:      c.HOLD,
+            bookingCount:   c.BOOKING,
+            soldCount:      c.SOLD,
+            openingCount:   c.OPENING,
+            rentedCount:    c.RENTED,
+            inactiveCount:  c.INACTIVE,
+            totalCount:     updatedListings.length,
+        } : prev);
+    }, []);
+
     // ── Row edit ──────────────────────────────────────────────────────────────
     const handleEditSubmit = async (data: any) => {
         if (!editTarget) return;
         try {
             const updated = await db.updateListing(editTarget.id, data);
-            setListings(prev => prev.map(l => l.id === editTarget.id ? { ...l, ...updated } : l));
+            setListings(prev => {
+                const next = prev.map(l => l.id === editTarget.id ? { ...l, ...updated } : l);
+                recomputeStats(next);
+                return next;
+            });
             setEditTarget(null);
-            // Update stats pills when status changes
-            const oldStatus = editTarget.status;
-            const newStatus = data.status ?? oldStatus;
-            if (stats && oldStatus !== newStatus) {
-                const STATUS_KEY: Record<string, string> = {
-                    AVAILABLE: 'availableCount',
-                    HOLD: 'holdCount',
-                    BOOKING: 'bookingCount',
-                    SOLD: 'soldCount',
-                };
-                setStats((s: any) => {
-                    const next = { ...s };
-                    const oldKey = STATUS_KEY[oldStatus];
-                    const newKey = STATUS_KEY[newStatus];
-                    if (oldKey) next[oldKey] = Math.max(0, (next[oldKey] || 0) - 1);
-                    if (newKey) next[newKey] = (next[newKey] || 0) + 1;
-                    return next;
-                });
-            }
         } catch (e: any) {
             const msg = e?.data?.error || e.message || t('common.error_generic');
             setPanelToast({ msg, type: 'error' });
@@ -590,9 +602,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
         setDeleting(true);
         try {
             await db.deleteListing(deleteTarget.id);
-            setListings(prev => prev.filter(l => l.id !== deleteTarget.id));
+            setListings(prev => {
+                const next = prev.filter(l => l.id !== deleteTarget.id);
+                recomputeStats(next);
+                return next;
+            });
             setSelected(prev => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
-            if (stats) setStats((s: any) => ({ ...s, totalCount: Math.max(0, (s.totalCount || 0) - 1) }));
             setDeleteTarget(null);
         } finally {
             setDeleting(false);
