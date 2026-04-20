@@ -34,7 +34,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     try {
       const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role)) {
+      if (!['SUPER_ADMIN'].includes(user?.role)) {
         return res.status(403).json({ error: 'Only admins can create prompt templates' });
       }
       const template = await aiGovernanceRepository.createPromptTemplate(tenantId, req.body);
@@ -49,7 +49,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     try {
       const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role)) {
+      if (!['SUPER_ADMIN'].includes(user?.role)) {
         return res.status(403).json({ error: 'Only admins can update prompt templates' });
       }
       const template = await aiGovernanceRepository.updatePromptTemplate(tenantId, req.params.id as string, req.body);
@@ -65,7 +65,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     try {
       const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role)) {
+      if (!['SUPER_ADMIN'].includes(user?.role)) {
         return res.status(403).json({ error: 'Only admins can delete prompt templates' });
       }
       const deleted = await aiGovernanceRepository.deletePromptTemplate(tenantId, req.params.id as string);
@@ -92,7 +92,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     try {
       const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role)) {
+      if (!['SUPER_ADMIN'].includes(user?.role)) {
         return res.status(403).json({ error: 'Only admins can update AI config' });
       }
       const config = await aiGovernanceRepository.upsertAiConfig(tenantId, req.body);
@@ -211,7 +211,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     try {
       const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user?.role)) {
+      if (!['SUPER_ADMIN'].includes(user?.role)) {
         return res.status(403).json({ error: 'Only admins can trigger recompute' });
       }
       const intents = ['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'DRAFT_BOOKING', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION', 'DIRECT_ANSWER'];

@@ -350,7 +350,7 @@ function isCacheValid(): boolean {
 
 export function createScraperRoutes(authenticateToken: any) {
   const router      = Router();
-  const ADMIN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+  const ADMIN_ROLES = ['SUPER_ADMIN'];
   const hasScraperApiKey = () => !!process.env.SCRAPERAPI_KEY;
 
   // GET /api/scraper/status

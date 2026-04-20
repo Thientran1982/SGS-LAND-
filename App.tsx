@@ -447,22 +447,24 @@ const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
     return 'LOADING';
 };
 
+// Routes yêu cầu ít nhất ADMIN (bao gồm SUPER_ADMIN)
 const ADMIN_ONLY_ROUTES: Set<string> = new Set([
-    ROUTES.SYSTEM,
     ROUTES.ADMIN_USERS,
     ROUTES.ENTERPRISE_SETTINGS,
-    ROUTES.ADMIN_AI_COST,
-    ROUTES.BILLING,
-    ROUTES.DATA_PLATFORM,
-    ROUTES.SECURITY,
-    ROUTES.AI_GOVERNANCE,
-    ROUTES.SEO_MANAGER,
-    ROUTES.ERROR_MONITOR,
 ]);
 
 // Routes chỉ dành riêng cho SUPER_ADMIN (quản trị viên cấp cao nhất)
 const SUPER_ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.VENDOR_MANAGEMENT,
+    ROUTES.ADMIN_AI_COST,
+    ROUTES.BILLING,
+    ROUTES.SECURITY,
+    ROUTES.AI_GOVERNANCE,
+    ROUTES.SEO_MANAGER,
+    ROUTES.ERROR_MONITOR,
+    ROUTES.SCRAPER,
+    ROUTES.DATA_PLATFORM,
+    ROUTES.SYSTEM,
 ]);
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);

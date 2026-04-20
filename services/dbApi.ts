@@ -1457,7 +1457,14 @@ class DatabaseApiClient {
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
 
-    const sysBaseItems = [
+    // Các công cụ ADMIN thấy: quản lý người dùng + cài đặt doanh nghiệp
+    const sysAdminItems = [
+      { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
+      { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
+    ];
+    // Các công cụ chỉ SUPER_ADMIN thấy: hệ thống, chi phí, bảo mật, hạ tầng, v.v.
+    const sysSuperAdminItems = [
+      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
       { id: 'ai-cost', labelKey: 'menu.admin-ai-cost', route: ROUTES.ADMIN_AI_COST, iconKey: ROUTES.ADMIN_AI_COST },
@@ -1470,11 +1477,10 @@ class DatabaseApiClient {
       { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
       { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
     ];
-    const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: sysBaseItems };
-    const sysSuperAdmin = { id: 'sys', labelKey: 'menu.ecosystem', items: [
-      { id: 'vendors', labelKey: 'menu.vendor-management', route: ROUTES.VENDOR_MANAGEMENT, iconKey: ROUTES.VENDOR_MANAGEMENT },
-      ...sysBaseItems,
-    ]};
+    // ADMIN/TEAM_LEAD: chỉ thấy người dùng + cài đặt doanh nghiệp
+    const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: sysAdminItems };
+    // SUPER_ADMIN: thấy toàn bộ hệ thống (vendor management + tất cả công cụ)
+    const sysSuperAdmin = { id: 'sys', labelKey: 'menu.ecosystem', items: sysSuperAdminItems };
 
     const taskMgmt = { id: 'task', labelKey: 'menu.task_management', items: [
       { id: 'task-dashboard', labelKey: 'menu.task-dashboard', route: ROUTES.TASK_DASHBOARD, iconKey: ROUTES.TASK_DASHBOARD },
