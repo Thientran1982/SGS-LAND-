@@ -275,6 +275,7 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
     );
 
     const isDeposit = contract.type === ContractType.DEPOSIT;
+    const isReservation = contract.type === ContractType.RESERVATION;
     const schedule: PaymentMilestone[] = contract.paymentSchedule || [];
     const now = new Date();
     const isSigned = contract.status === ContractStatus.SIGNED;
@@ -286,6 +287,196 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
     // signedPlace: địa điểm ký hợp đồng
     const signedPlace = contract.signedPlace || null;
     const contractNum = `HĐ-${contract.id.slice(0, 8).toUpperCase()}`;
+
+    /* ── RESERVATION SLIP (Phiếu Giữ Chỗ) — render riêng ── */
+    if (isReservation) {
+        const slipNum = `PGC-${contract.id.slice(0, 8).toUpperCase()}`;
+        const expiryDate = contract.handoverDate || null;
+        const reservationFee = contract.depositAmount ?? null;
+        const expectedPrice = contract.propertyPrice ?? null;
+        const notes = contract.paymentTerms || null;
+
+        return (
+            <div style={{ minHeight: '100vh', background: '#e8e8e8', padding: '32px 16px', fontFamily: FONT_SANS }} className="public-contract-page">
+                {/* TOOLBAR */}
+                <div className="no-print" style={{ maxWidth: '860px', margin: '0 auto 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <button
+                        onClick={() => { window.location.hash = localStorage.getItem('sgs_token') ? '#/contracts' : '#/'; }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#374151', background: '#fff', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontFamily: FONT_SANS, fontSize: '13px', fontWeight: 600 }}
+                    >
+                        ← Quay lại
+                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={handlePrint} style={{ padding: '8px 18px', background: '#fff', border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: FONT_SANS }}>
+                            🖨 In / Lưu PDF
+                        </button>
+                        <button onClick={handleExportPDF} disabled={exporting} style={{ padding: '8px 18px', background: '#1e3a8a', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: FONT_SANS, opacity: exporting ? 0.7 : 1 }}>
+                            {exporting ? 'Đang xuất...' : '⬇ Xuất PDF'}
+                        </button>
+                    </div>
+                </div>
+
+                {/* DOCUMENT */}
+                <div ref={contractRef} style={{ ...pageStyle, padding: '48px 64px', boxShadow: '0 2px 24px rgba(0,0,0,0.15)' }} className="contract-document">
+                    {/* QUỐC HIỆU */}
+                    <div style={{ ...center, marginBottom: '20px' }}>
+                        <p style={{ ...bold, fontSize: '13pt', margin: 0 }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                        <p style={{ ...bold, fontSize: '13pt', margin: '2px 0 0' }}>
+                            <span style={{ display: 'inline-block', borderBottom: '1.5px solid #000', paddingBottom: '2px' }}>Độc lập – Tự do – Hạnh phúc</span>
+                        </p>
+                    </div>
+
+                    {/* TIÊU ĐỀ */}
+                    <div style={{ ...center, margin: '0 0 20px' }}>
+                        <p style={{ ...bold, fontSize: '15pt', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, lineHeight: 1.6 }}>
+                            Phiếu Giữ Chỗ
+                        </p>
+                        <p style={{ fontSize: '11pt', margin: '4px 0 0', color: GRAY, fontStyle: 'italic' }}>
+                            (Reservation Slip — Không có giá trị thay thế hợp đồng đặt cọc hoặc hợp đồng mua bán)
+                        </p>
+                        <p style={{ ...bold, fontSize: '12pt', margin: '8px 0 0' }}>Số: {slipNum}</p>
+                        {isSigned && (
+                            <p style={{ fontSize: '11pt', margin: '4px 0 0', color: '#166534' }}>✓ Đã xác nhận {fmtDate(signDate)}</p>
+                        )}
+                    </div>
+
+                    <Divider className="contract-divider" style={{ margin: '16px 0' }} />
+
+                    {/* MỞ ĐẦU */}
+                    <p style={{ margin: '0 0 16px' }}>
+                        Hôm nay, {fmtDate(contractDate ?? contract.createdAt)},
+                        {signedPlace ? <> tại <strong>{signedPlace}</strong>,</> : null}{' '}
+                        chúng tôi gồm các bên dưới đây cùng thỏa thuận về việc giữ chỗ bất động sản như sau:
+                    </p>
+
+                    {/* BÊN A */}
+                    <div style={{ marginBottom: '16px' }}>
+                        <p style={{ ...bold, margin: '0 0 6px', fontSize: '13pt', borderBottom: '1px solid #ccc', paddingBottom: '4px' }}>BÊN A — BÊN BÁN / CHỦ ĐẦU TƯ:</p>
+                        <Line label="Tên cá nhân / tổ chức" value={contract.partyAName} />
+                        {contract.partyARepresentative && <Line label="Người đại diện" value={contract.partyARepresentative} />}
+                        {contract.partyAPhone && <Line label="Số điện thoại" value={contract.partyAPhone} />}
+                        {contract.partyAAddress && <Line label="Địa chỉ" value={contract.partyAAddress} />}
+                        {contract.partyATaxCode && <Line label="Mã số thuế" value={contract.partyATaxCode} />}
+                        <p style={{ margin: '4px 0 0', paddingLeft: '16px', fontStyle: 'italic' }}>(Sau đây gọi là "<strong>Bên A</strong>")</p>
+                    </div>
+
+                    {/* KHÁCH HÀNG */}
+                    <div style={{ marginBottom: '16px' }}>
+                        <p style={{ ...bold, margin: '0 0 6px', fontSize: '13pt', borderBottom: '1px solid #ccc', paddingBottom: '4px' }}>BÊN B — KHÁCH HÀNG ĐẶT GIỮ CHỖ:</p>
+                        <Line label="Họ và tên" value={contract.partyBName} />
+                        {contract.partyBPhone && <Line label="Số điện thoại" value={contract.partyBPhone} />}
+                        {contract.partyBIdNumber && (
+                            <Line label="CMND / CCCD số" value={[
+                                contract.partyBIdNumber,
+                                contract.partyBIdDate ? `cấp ngày ${fmtShortDate(contract.partyBIdDate)}` : null,
+                                contract.partyBIdPlace ? `tại ${contract.partyBIdPlace}` : null,
+                            ].filter(Boolean).join(', ')} />
+                        )}
+                        {contract.partyBAddress && <Line label="Địa chỉ thường trú" value={contract.partyBAddress} />}
+                        <p style={{ margin: '4px 0 0', paddingLeft: '16px', fontStyle: 'italic' }}>(Sau đây gọi là "<strong>Bên B</strong>")</p>
+                    </div>
+
+                    {/* BẤT ĐỘNG SẢN */}
+                    <div style={{ margin: '16px 0', padding: '14px 18px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                        <p style={{ ...bold, margin: '0 0 10px', fontSize: '13pt' }}>THÔNG TIN BẤT ĐỘNG SẢN GIỮ CHỖ:</p>
+                        <Line label="Dự án / Tên bất động sản" value={contract.propertyAddress} />
+                        {contract.propertyUnitCode && <Line label="Mã căn" value={contract.propertyUnitCode} />}
+                        {contract.propertyFloorNumber && <Line label="Số tầng" value={contract.propertyFloorNumber} />}
+                        {contract.propertyArea != null && contract.propertyArea > 0 && <Line label="Diện tích" value={`${contract.propertyArea} m²`} />}
+                        {expectedPrice != null && expectedPrice > 0 && (
+                            <Line label="Giá bán dự kiến" value={`${fmtMoney(expectedPrice)} (Bằng chữ: ${fmtVND(expectedPrice)})`} />
+                        )}
+                    </div>
+
+                    {/* ĐIỀU KHOẢN GIỮ CHỖ */}
+                    <div style={{ margin: '16px 0', padding: '14px 18px', background: '#fdf4ff', border: '1px solid #e9d5ff', borderRadius: '6px' }}>
+                        <p style={{ ...bold, margin: '0 0 10px', fontSize: '13pt' }}>ĐIỀU KHOẢN GIỮ CHỖ:</p>
+                        {reservationFee != null && reservationFee > 0 ? (
+                            <p style={{ margin: '4px 0' }}>
+                                <strong>- Phí giữ chỗ: </strong>
+                                {fmtMoney(reservationFee)}
+                                {` (Bằng chữ: ${fmtVND(reservationFee)})`}
+                            </p>
+                        ) : (
+                            <p style={{ margin: '4px 0' }}><strong>- Phí giữ chỗ: </strong><span style={{ color: '#999', fontStyle: 'italic' }}>Theo thỏa thuận</span></p>
+                        )}
+                        <p style={{ margin: '4px 0' }}>
+                            <strong>- Hiệu lực phiếu giữ chỗ đến hết ngày: </strong>
+                            {expiryDate
+                                ? <strong style={{ color: '#7c3aed' }}>{fmtShortDate(expiryDate)}</strong>
+                                : <span style={{ color: '#999', fontStyle: 'italic' }}>Theo thỏa thuận</span>
+                            }
+                        </p>
+                        <p style={{ margin: '6px 0 2px' }}>
+                            <strong>- Điều khoản và cam kết: </strong>
+                        </p>
+                        <div style={{ paddingLeft: '16px' }}>
+                            <p style={{ margin: '2px 0' }}>1. Bên A cam kết giữ bất động sản nêu trên cho Bên B trong thời hạn hiệu lực của phiếu.</p>
+                            <p style={{ margin: '2px 0' }}>2. Trong thời hạn hiệu lực, Bên B có quyền ưu tiên ký hợp đồng đặt cọc chính thức.</p>
+                            <p style={{ margin: '2px 0' }}>3. Phiếu giữ chỗ không có giá trị thay thế hợp đồng đặt cọc hoặc hợp đồng mua bán.</p>
+                            <p style={{ margin: '2px 0' }}>4. Sau khi hết hạn mà không có hợp đồng chính thức, phiếu giữ chỗ tự động hết hiệu lực.</p>
+                            {notes && <p style={{ margin: '8px 0 2px' }}><strong>Ghi chú thêm: </strong>{notes}</p>}
+                        </div>
+                    </div>
+
+                    {/* CHỮ KÝ */}
+                    <div style={{ marginTop: '40px' }}>
+                        <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
+                            {signedPlace ? <span>{signedPlace}</span> : EMPTY_PLACEHOLDER}
+                            , {fmtDate(contractDate ?? contract.createdAt)}
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '16px' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <p style={{ ...bold, textTransform: 'uppercase', fontSize: '12pt', margin: '0 0 4px' }}>Bên A<br />(Bên Bán / Chủ Đầu Tư)</p>
+                                <p style={{ fontStyle: 'italic', fontSize: '11pt', color: GRAY, margin: '0 0 64px' }}>(Ký, ghi rõ họ tên{contract.partyATaxCode ? ', đóng dấu' : ''})</p>
+                                <Divider className="contract-divider" />
+                                <p style={{ ...bold, margin: '6px 0 2px', fontSize: '12pt' }}>{blank(contract.partyARepresentative || contract.partyAName)}</p>
+                                {contract.partyARepresentative && contract.partyAName && (
+                                    <p style={{ margin: 0, fontSize: '11pt', color: GRAY }}>{contract.partyAName}</p>
+                                )}
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                                <p style={{ ...bold, textTransform: 'uppercase', fontSize: '12pt', margin: '0 0 4px' }}>Bên B<br />(Khách Hàng)</p>
+                                <p style={{ fontStyle: 'italic', fontSize: '11pt', color: GRAY, margin: '0 0 64px' }}>(Ký và ghi rõ họ tên)</p>
+                                <Divider className="contract-divider" />
+                                <p style={{ ...bold, margin: '6px 0 2px', fontSize: '12pt' }}>{blank(contract.partyBName)}</p>
+                                {contract.partyBIdNumber && (
+                                    <p style={{ margin: 0, fontSize: '11pt', color: GRAY }}>CCCD: {contract.partyBIdNumber}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* FOOTER */}
+                    <div style={{ marginTop: '32px', paddingTop: '12px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
+                        <p style={{ fontSize: '10pt', color: '#888', fontFamily: FONT_SANS, margin: 0 }}>
+                            Số phiếu: <strong>{slipNum}</strong> · Hệ thống quản lý: <strong>SGS LAND</strong> · Ngày tạo: {fmtShortDate(contract.createdAt)}
+                        </p>
+                    </div>
+                </div>
+
+                {errorMsg && (
+                    <div className="no-print" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 100, padding: '12px 20px', borderRadius: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', background: '#7f1d1d', color: '#fff', fontSize: '13px', fontFamily: FONT_SANS }}>
+                        {errorMsg}
+                    </div>
+                )}
+                <style>{`
+                    @media print {
+                        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        body { margin: 0; background: #fff !important; }
+                        .no-print { display: none !important; }
+                        .blank-field-border { border-bottom: none !important; }
+                        .contract-divider { display: none !important; }
+                        .public-contract-page { padding: 0 !important; background: #fff !important; min-height: unset !important; }
+                        .contract-document { max-width: 100% !important; box-shadow: none !important; border-radius: 0 !important; }
+                        @page { size: A4 portrait; margin: 0; }
+                        body { padding: 12mm 10mm !important; }
+                    }
+                `}</style>
+            </div>
+        );
+    }
+    /* ── END RESERVATION ── */
 
     const legalRefs = isDeposit
         ? ['Bộ Luật Dân sự năm 2015;', 'Luật Kinh doanh Bất động sản năm 2023;', 'Nhu cầu và sự thỏa thuận của hai bên.']
