@@ -140,12 +140,15 @@ const EmptyChartState = ({ t, message }: { t: any, message: string }) => (
     </div>
 );
 
-const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme }: any) => {
+const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme, t }: any) => {
     if (active && Array.isArray(payload) && payload.length && theme && theme.colors) {
+        const translatedLabel = t
+            ? (t(`source.${label}`) !== `source.${label}` ? t(`source.${label}`) : label)
+            : label;
         return (
             <div className="p-3 rounded-xl border shadow-xl text-xs backdrop-blur-md transition-all z-50" 
                  style={{ backgroundColor: theme.colors.tooltipBg, borderColor: theme.colors.grid }}>
-                <p className="font-bold mb-2 text-[var(--text-primary)] dark:text-white">{label}</p>
+                <p className="font-bold mb-2 text-[var(--text-primary)] dark:text-white">{translatedLabel}</p>
                 {payload.map((p: any, i: number) => (
                     <div key={i} className="flex items-center gap-2 mb-1">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></div>
@@ -229,7 +232,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                         tick={{fill: colors.text, fontSize: 11}}
                                         unit="%"
                                     />
-                                    <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} theme={chartTheme} />} cursor={{ fill: 'transparent' }} />
+                                    <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} theme={chartTheme} t={t} />} cursor={{ fill: 'transparent' }} />
                                     <Bar 
                                         yAxisId="left"
                                         dataKey="revenue" 
