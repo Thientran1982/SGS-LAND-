@@ -467,9 +467,9 @@ const SUPER_ADMIN_ONLY_ROUTES: Set<string> = new Set([
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
 
-// Routes mà chỉ vendor managers (ADMIN/TEAM_LEAD) + partners (cross-tenant access)
+// Routes mà chỉ vendor managers (SUPER_ADMIN/ADMIN/TEAM_LEAD) + partners (cross-tenant access)
 // được vào. SALES/MARKETING/VIEWER không quản lý dự án — họ làm việc với leads/listings.
-const PROJECT_ALLOWED_ROLES = new Set(['ADMIN', 'TEAM_LEAD', 'PARTNER_ADMIN', 'PARTNER_AGENT']);
+const PROJECT_ALLOWED_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'PARTNER_ADMIN', 'PARTNER_AGENT']);
 
 const AppShell: React.FC = () => {
     const { route, navigate } = useRouter();
