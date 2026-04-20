@@ -165,6 +165,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
     }, [loading, onClose]);
 
     const [error, setError] = useState<string | null>(null);
+    const [savedContractId, setSavedContractId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Contract>>(contract || {
         type: ContractType.DEPOSIT,
         status: ContractStatus.DRAFT,
@@ -220,10 +221,16 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
         try {
             if (contract?.id) {
                 await db.updateContract(contract.id, formData);
+                onSuccess();
             } else {
-                await db.createContract(formData);
+                const saved = await db.createContract(formData);
+                const newId = saved?.id ?? saved?.data?.id ?? null;
+                if (newId) {
+                    setSavedContractId(newId);
+                } else {
+                    onSuccess();
+                }
             }
-            onSuccess();
         } catch (err: any) {
             console.error(err);
             const msg = err?.data?.error || err?.message || t('common.error_generic');
@@ -634,6 +641,38 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 </div>
 
                 {/* Footer */}
+                {savedContractId ? (
+                    <div className="px-4 sm:px-6 py-4 border-t border-[var(--glass-border)] bg-emerald-50 rounded-b-2xl shrink-0">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                                    <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-emerald-800">{t('contracts.saved_success_title') || 'Đã lưu hợp đồng nháp'}</p>
+                                    <p className="text-xs text-emerald-600">{t('contracts.saved_success_desc') || 'Xem trước và in hoặc xuất PDF để gửi cho khách hàng.'}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => { window.open(`/p/contract_${savedContractId}`, '_blank'); }}
+                                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 transition-colors shadow-sm active:scale-95"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    {t('contracts.btn_preview_print') || 'Xem trước & In'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { onSuccess(); }}
+                                    className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2.5 min-h-[44px] bg-slate-900 text-white font-bold text-sm rounded-xl hover:bg-slate-800 transition-colors shadow-sm active:scale-95"
+                                >
+                                    {t('common.close') || 'Đóng'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
                 <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-[var(--glass-border)] flex items-center justify-between gap-3 bg-[var(--glass-surface)] rounded-b-2xl shrink-0">
                     <div className="flex items-center gap-2">
                         {TABS.map((tab, i) => (
@@ -657,6 +696,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         </button>
                     </div>
                 </div>
+                )}
             </div>
         </div>,
         document.body
