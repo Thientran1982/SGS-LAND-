@@ -761,7 +761,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             ) : null;
                                         })()}
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1">
+                                    <div className={isApartmentLike ? 'col-span-1' : 'col-span-2 sm:col-span-1'}>
                                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_area')} <span className="text-rose-500">*</span></label>
                                         <div className="relative">
                                             <input 
@@ -774,6 +774,24 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         </div>
                                         {errors.area && <p className="text-xs2 text-rose-500 mt-1">{errors.area}</p>}
                                     </div>
+
+                                    {/* CLEAR AREA (DT thông thủy) — cùng hàng với Diện tích, chỉ hiển thị cho Căn hộ / Penthouse */}
+                                    {isApartmentLike && (
+                                    <div className="col-span-1">
+                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_clear_area')} (m²)</label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                value={(formData.attributes?.clearArea as number) || ''}
+                                                onChange={e => updateAttribute('clearArea', e.target.value ? Number(e.target.value) : undefined)}
+                                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8"
+                                                placeholder="0"
+                                            />
+                                            <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
+                                        </div>
+                                    </div>
+                                    )}
                                 </div>
 
                                 {/* BUILT AREA — chỉ hiển thị cho: Nhà phố, Biệt thự, Nhà riêng, Văn phòng, Nhà xưởng, Thương mại */}
@@ -785,24 +803,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             type="number"
                                             value={formData.builtArea || ''}
                                             onChange={e => setFormData({...formData, builtArea: e.target.value ? Number(e.target.value) : undefined})}
-                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8"
-                                            placeholder="0"
-                                        />
-                                        <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
-                                    </div>
-                                </div>
-                                )}
-
-                                {/* CLEAR AREA (DT thông thủy) — chỉ hiển thị cho Căn hộ / Penthouse */}
-                                {isApartmentLike && (
-                                <div>
-                                    <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_clear_area')} (m²)</label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            value={(formData.attributes?.clearArea as number) || ''}
-                                            onChange={e => updateAttribute('clearArea', e.target.value ? Number(e.target.value) : undefined)}
                                             className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8"
                                             placeholder="0"
                                         />
