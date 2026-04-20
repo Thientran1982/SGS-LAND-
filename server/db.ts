@@ -7,20 +7,20 @@ dotenv.config();
 types.setTypeParser(1700, (val: string) => parseFloat(val));
 types.setTypeParser(20, (val: string) => parseInt(val, 10));
 
-// Prefer the user-managed Neon URL when present, fall back to runtime-managed DATABASE_URL.
-// This lets us migrate to a customer Neon project without touching the runtime-managed Helium DB var.
+// NEON_DATABASE_URL là nguồn dữ liệu duy nhất (đã đồng bộ đầy đủ từ PROD 20/04/2026).
+// Ưu tiên NEON_DATABASE_URL → PROD_DATABASE_URL (backup) → DATABASE_URL (runtime).
 // Strip libpq-only params (e.g. channel_binding) that node-pg does not recognise.
 function sanitiseConnectionString(raw: string | undefined): string | undefined {
   if (!raw) return raw;
   return raw.replace(/[?&]channel_binding=[^&]*/g, (m) => (m.startsWith('?') ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
 }
 const DB_CONNECTION_STRING = sanitiseConnectionString(
-  process.env.PROD_DATABASE_URL || process.env.NEON_DATABASE_URL || process.env.DATABASE_URL
+  process.env.NEON_DATABASE_URL || process.env.PROD_DATABASE_URL || process.env.DATABASE_URL
 );
-if (process.env.PROD_DATABASE_URL) {
-  console.log('[DB] Using PROD_DATABASE_URL (shared production Neon — same DB for dev & prod)');
-} else if (process.env.NEON_DATABASE_URL) {
-  console.log('[DB] Using NEON_DATABASE_URL (customer Neon project)');
+if (process.env.NEON_DATABASE_URL) {
+  console.log('[DB] Using NEON_DATABASE_URL — nguồn dữ liệu chính thức duy nhất');
+} else if (process.env.PROD_DATABASE_URL) {
+  console.log('[DB] Using PROD_DATABASE_URL (fallback)');
 }
 
 export const pool = new Pool({
