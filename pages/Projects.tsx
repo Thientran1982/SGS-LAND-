@@ -1184,8 +1184,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                 document.body
             )}
 
-            {/* ── Contract Modal from listing row ── */}
-            {contractTarget && (
+            {/* ── Contract Modal from listing row — rendered via portal so it sits above the listing panel's stacking context ── */}
+            {contractTarget && createPortal(
                 <ContractModal
                     initialData={{
                         listingId: contractTarget.id,
@@ -1203,7 +1203,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                         setPanelToast({ msg: 'Đã lưu hợp đồng thành công', type: 'success' });
                         setTimeout(() => setPanelToast(null), 3500);
                     }}
-                />
+                />,
+                document.body
             )}
         </>
     );
