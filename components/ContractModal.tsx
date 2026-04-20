@@ -6,9 +6,10 @@ import { db } from '../services/dbApi';
 import { Dropdown } from './Dropdown';
 import { PaymentScheduleEditor } from './PaymentScheduleEditor';
 
+const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const formatVNDFull = (n: number): string => {
     if (!n || n === 0) return '';
-    const formatted = n.toLocaleString('vi-VN') + ' đ';
+    const formatted = fmtDots(n) + ' đ';
     if (n >= 1_000_000_000) {
         const ty = (n / 1_000_000_000);
         const tyStr = ty % 1 === 0 ? ty.toFixed(0) : ty.toFixed(2);
@@ -836,7 +837,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     </h3>
                                     {formData.propertyPrice ? (
                                         <span className="text-xs text-[var(--text-tertiary)] ml-4 shrink-0">
-                                            {t('contracts.transfer_price')}: <strong className="text-[var(--text-primary)]">{(formData.propertyPrice || 0).toLocaleString('vi-VN')} đ</strong>
+                                            {t('contracts.transfer_price')}: <strong className="text-[var(--text-primary)]">{fmtDots(formData.propertyPrice || 0)} đ</strong>
                                         </span>
                                     ) : null}
                                 </div>

@@ -11,6 +11,8 @@ import { ContractModal } from './ContractModal';
 import { useSocket } from '../services/websocket';
 import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from './AiCreditBadge';
 
+const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
 const stripMarkdown = (text: string): string =>
     text
         .replace(/\*\*(.+?)\*\*/g, '$1')
@@ -509,7 +511,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                             </div>
                                             <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                                                 {effectiveType ? (t(`contract_type.${effectiveType}`) || effectiveType) : ''}
-                                                {effectiveValue ? ` · ${effectiveValue.toLocaleString('vi-VN')} đ` : ''}
+                                                {effectiveValue ? ` · ${fmtDots(effectiveValue)} đ` : ''}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-none">
@@ -583,7 +585,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                                             <span className="flex-1 text-[var(--text-secondary)] truncate">{m.name || `Đợt ${idx + 1}`}</span>
                                                             <span className="text-[var(--text-tertiary)] tabular-nums">{m.dueDate ? new Date(m.dueDate).toLocaleDateString('vi-VN') : ''}</span>
                                                             {m.percentage > 0 && <span className="text-[var(--text-tertiary)] text-[10px]">{m.percentage}%</span>}
-                                                            <span className={`font-bold tabular-nums ${amtCls}`}>{m.amount ? m.amount.toLocaleString('vi-VN') + ' đ' : ''}</span>
+                                                            <span className={`font-bold tabular-nums ${amtCls}`}>{m.amount ? fmtDots(m.amount) + ' đ' : ''}</span>
                                                         </div>
                                                     );
                                                 })}
@@ -591,7 +593,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                             {totalScheduledAmt > 0 && (
                                                 <div className="mt-2 pt-2 border-t border-[var(--glass-border)] flex justify-between text-xs">
                                                     <span className="text-[var(--text-tertiary)]">{t('payment.total_paid') || 'Đã thanh toán'}</span>
-                                                    <span className="font-bold text-emerald-600">{totalPaidAmt.toLocaleString('vi-VN')} đ / {totalScheduledAmt.toLocaleString('vi-VN')} đ</span>
+                                                    <span className="font-bold text-emerald-600">{fmtDots(totalPaidAmt)} đ / {fmtDots(totalScheduledAmt)} đ</span>
                                                 </div>
                                             )}
                                         </div>

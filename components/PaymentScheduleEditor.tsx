@@ -18,11 +18,12 @@ const STATUS_CONFIG: Record<PaymentStatus, { label_key: string; color: string; b
 
 const generateId = () => `ms_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
+const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const formatVND = (n: number) => {
     if (!n) return '0';
     if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Tỷ`;
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} Tr`;
-    return n.toLocaleString('vi-VN');
+    return fmtDots(n);
 };
 
 export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({

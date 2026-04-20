@@ -88,41 +88,41 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const formatCurrency = useCallback((amount: number, currencyCode?: string) => {
         try {
-            // Default to VND if in VN mode, otherwise USD
             const currency = currencyCode || (language === 'vn' ? 'VND' : 'USD');
-            
-            return new Intl.NumberFormat(locale, {
+            if (currency === 'VND') {
+                // Manual format: dot as thousands separator, no locale dependency
+                return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ₫';
+            }
+            return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: currency,
-                // VND usually doesn't use decimals, USD does
-                maximumFractionDigits: currency === 'VND' ? 0 : 2 
+                maximumFractionDigits: 2
             }).format(amount);
         } catch { return String(amount); }
-    }, [locale, language]);
+    }, [language]);
 
     const formatCompactNumber = useCallback((amount: number) => {
         if (!amount) return '0';
         try {
-            // Specialized VN formatting for Billion (Tỷ) and Million (Triệu)
-            // Uses dictionary keys instead of hardcoded strings
             if (language === 'vn') {
                 if (amount >= 1_000_000_000) {
-                    return `${(amount / 1_000_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('format.billion')}`;
+                    // Manual: 1 decimal max, comma as decimal separator (VN convention)
+                    const val = Math.round((amount / 1_000_000_000) * 10) / 10;
+                    return `${val.toString().replace('.', ',')} ${t('format.billion')}`;
                 }
                 if (amount >= 1_000_000) {
-                    return `${(amount / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('format.million')}`;
+                    const val = Math.round((amount / 1_000_000) * 10) / 10;
+                    return `${val.toString().replace('.', ',')} ${t('format.million')}`;
                 }
             }
-            
-            // Standard compact notation for English or smaller numbers
-            return new Intl.NumberFormat(locale, { 
+            return new Intl.NumberFormat('en-US', { 
                 notation: "compact", 
                 compactDisplay: "short" 
             }).format(amount);
         } catch {
             return String(amount);
         }
-    }, [locale, language, t]);
+    }, [language, t]);
 
     const formatTime = useCallback((dateStr: string) => {
         if (!dateStr) return '';
