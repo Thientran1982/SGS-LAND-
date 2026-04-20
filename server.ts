@@ -2074,8 +2074,8 @@ async function startServer() {
 
   app.post('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
-      return res.status(403).json({ error: 'Chỉ ADMIN mới có thể cập nhật SEO' }) as any;
+    if (!user || user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Chỉ SUPER_ADMIN mới có thể cập nhật SEO' }) as any;
     }
     const routeKey = req.params.key;
     const { title, description, ogImage } = req.body;
@@ -2105,8 +2105,8 @@ async function startServer() {
 
   app.delete('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
-      return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xóa SEO override' }) as any;
+    if (!user || user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Chỉ SUPER_ADMIN mới có thể xóa SEO override' }) as any;
     }
     try {
       await pool.query('DELETE FROM seo_overrides WHERE route_key = $1', [req.params.key]);
@@ -2120,7 +2120,7 @@ async function startServer() {
   // ── GEO / AI Search: Target Keywords + AI Visibility ──────────────────────
   const isAdminOrLead = (req: express.Request) => {
     const u = (req as any).user;
-    return !!u && (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN' || u.role === 'TEAM_LEAD');
+    return !!u && u.role === 'SUPER_ADMIN';
   };
   const seoTenantId = (req: express.Request): string =>
     (req as any).tenantId || (req as any).user?.tenantId || '00000000-0000-0000-0000-000000000001';
@@ -2921,8 +2921,12 @@ async function startServer() {
     }
   });
 
-  // Real server-side traffic metrics (requires authentication)
-  app.get("/api/system/metrics", authenticateToken, async (_req, res) => {
+  // Real server-side traffic metrics (SUPER_ADMIN only)
+  app.get("/api/system/metrics", authenticateToken, async (req: express.Request, res) => {
+    const user = (req as any).user;
+    if (!user || user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Chỉ SUPER_ADMIN mới có quyền xem system metrics' });
+    }
     try {
       const now = Date.now();
       const window60s = requestSamples.filter(s => s.ts >= now - 60_000);

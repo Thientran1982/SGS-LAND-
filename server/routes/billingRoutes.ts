@@ -197,8 +197,8 @@ export function createBillingRoutes(authenticateToken: any) {
   router.post('/upgrade', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
-        return res.status(403).json({ error: 'Only admins can upgrade the subscription plan directly. Use checkout instead.' });
+      if (user.role !== 'SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Only SUPER_ADMIN can upgrade the subscription plan directly.' });
       }
       const { planId } = req.body;
       const validPlans = ['INDIVIDUAL', 'TEAM', 'ENTERPRISE'];
