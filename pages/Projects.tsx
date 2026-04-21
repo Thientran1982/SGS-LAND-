@@ -62,8 +62,23 @@ interface ProjectFormProps {
     t: (k: string) => string;
 }
 
+// Chấp nhận link Google Drive / Docs / Sheets / Slides / Forms (kể cả tên miền a/<email>/...)
+const GDRIVE_HOST_RE = /^https:\/\/(?:drive|docs)\.google\.com\//i;
+const isValidDriveUrl = (url: string): boolean => {
+    const s = url.trim();
+    if (!s) return true; // optional
+    try {
+        const u = new URL(s);
+        if (u.protocol !== 'https:') return false;
+        return GDRIVE_HOST_RE.test(s);
+    } catch {
+        return false;
+    }
+};
+
 function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
     const p = project as any;
+    const existingMeta = (p?.metadata && typeof p.metadata === 'object') ? p.metadata : {};
     const [form, setForm] = useState({
         name: p?.name || '',
         code: p?.code || '',
@@ -73,18 +88,40 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         status: p?.status || 'ACTIVE',
         openDate: p?.open_date || p?.openDate || '',
         handoverDate: p?.handover_date || p?.handoverDate || '',
+        driveUrl: existingMeta.drive_url || existingMeta.driveUrl || '',
     });
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
 
     const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
+    const driveUrlTrim = form.driveUrl.trim();
+    const driveUrlValid = isValidDriveUrl(driveUrlTrim);
+
+    const handlePasteDrive = async () => {
+        try {
+            const text = (await navigator.clipboard.readText()).trim();
+            if (text) set('driveUrl', text);
+        } catch {
+            // Clipboard có thể bị chặn (quyền hoặc HTTP) — bỏ qua, người dùng vẫn paste tay được
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.name.trim()) { setErr(t('project.error_name_required')); return; }
+        if (driveUrlTrim && !driveUrlValid) { setErr(t('project.error_drive_url_invalid')); return; }
         setSaving(true);
         setErr('');
         try {
+            // Hợp nhất metadata cũ để không xoá field khác do hệ thống lưu trước đó
+            const nextMeta: Record<string, any> = { ...existingMeta };
+            if (driveUrlTrim) {
+                nextMeta.drive_url = driveUrlTrim;
+            } else {
+                delete nextMeta.drive_url;
+                delete nextMeta.driveUrl;
+            }
             await onSave({
                 name: form.name.trim(),
                 code: form.code.trim() || undefined,
@@ -94,6 +131,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                 status: form.status,
                 openDate: form.openDate || undefined,
                 handoverDate: form.handoverDate || undefined,
+                metadata: nextMeta,
             });
         } catch (e: any) {
             setErr(e.message || t('common.error_generic'));
@@ -143,6 +181,51 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                         <div className="col-span-2">
                             <label htmlFor="pj-desc" className={labelCls}>{t('project.description')}</label>
                             <textarea id="pj-desc" className={inputCls} rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
+                        </div>
+                        <div className="col-span-2">
+                            <label htmlFor="pj-drive" className={labelCls}>{t('project.drive_url')}</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" aria-hidden="true">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                    </span>
+                                    <input
+                                        id="pj-drive"
+                                        type="url"
+                                        inputMode="url"
+                                        autoComplete="off"
+                                        spellCheck={false}
+                                        placeholder="https://drive.google.com/file/d/..."
+                                        className={`${inputCls} pl-9 pr-3 ${driveUrlTrim && !driveUrlValid ? 'border-rose-400 focus:ring-rose-500' : ''}`}
+                                        value={form.driveUrl}
+                                        onChange={e => set('driveUrl', e.target.value)}
+                                        aria-invalid={driveUrlTrim ? !driveUrlValid : undefined}
+                                        aria-describedby="pj-drive-help"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handlePasteDrive}
+                                    className="shrink-0 px-3 py-2 rounded-xl border border-[var(--glass-border)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
+                                    title={t('project.drive_paste')}
+                                >
+                                    {t('project.drive_paste')}
+                                </button>
+                                <a
+                                    href={driveUrlTrim && driveUrlValid ? driveUrlTrim : undefined}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-disabled={!driveUrlTrim || !driveUrlValid}
+                                    onClick={(e) => { if (!driveUrlTrim || !driveUrlValid) e.preventDefault(); }}
+                                    className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1 ${driveUrlTrim && driveUrlValid ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] cursor-not-allowed pointer-events-none opacity-60'}`}
+                                    title={t('project.drive_open')}
+                                >
+                                    {t('project.drive_open')}
+                                </a>
+                            </div>
+                            <p id="pj-drive-help" className={`mt-1 text-xs ${driveUrlTrim && !driveUrlValid ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
+                                {driveUrlTrim && !driveUrlValid ? t('project.error_drive_url_invalid') : t('project.drive_url_help')}
+                            </p>
                         </div>
                         <div>
                             <label className={labelCls}>{t('project.status')}</label>
