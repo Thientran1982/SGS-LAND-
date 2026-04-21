@@ -881,8 +881,8 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
         <ul>
           <li>📍 Huyện Hóc Môn, TP. Hồ Chí Minh</li>
           <li>🏢 Vinhomes JSC — Tập đoàn Vingroup</li>
-          <li>📞 Hotline: <a href="tel:1900xxxx">1900 xxxx</a></li>
-          <li>✉️ <a href="mailto:info@vinhomes-hocmon.info">info@vinhomes-hocmon.info</a></li>
+          <li>📞 Hotline: <a href="tel:0971132378">0971 132 378</a></li>
+          <li>✉️ <a href="mailto:sgsland.vn@gmail.com">sgsland.vn@gmail.com</a></li>
         </ul>
       </div>
       <div>
@@ -901,8 +901,8 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
 
 <!-- ━━━━━━━━━━ FLOATING CTA ━━━━━━━━━━ -->
 <div class="float" aria-label="Liên hệ nhanh">
-  <a href="tel:1900xxxx" aria-label="Gọi điện">📞</a>
-  <a class="zalo" href="#lien-he" aria-label="Chat Zalo">Z</a>
+  <a href="tel:0971132378" aria-label="Gọi hotline 0971 132 378">📞</a>
+  <a class="zalo" href="https://zalo.me/0971132378" target="_blank" rel="noopener noreferrer" aria-label="Chat Zalo">Z</a>
 </div>
 
 <script>
@@ -996,15 +996,58 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
   if (f) {
     f.addEventListener('submit', function(e){
       e.preventDefault();
-      var name = f.querySelector('#lf-name').value.trim();
-      var phone = f.querySelector('#lf-phone').value.trim();
+      var btn = f.querySelector('.btn-submit');
+      var name  = f.querySelector('#lf-name').value.trim();
+      var phone = f.querySelector('#lf-phone').value.trim().replace(/\s+/g,'');
+      var email = f.querySelector('#lf-email').value.trim();
       if (!name || !phone) { alert('Vui lòng nhập Họ tên và Số điện thoại.'); return; }
       if (!/^(0|\+84)\d{9,10}$/.test(phone)) { alert('Số điện thoại chưa đúng định dạng Việt Nam.'); return; }
-      // No backend — just show success
-      f.style.display = 'none';
-      var ok = document.getElementById('formOk');
-      ok.style.display = 'block';
-      ok.scrollIntoView({behavior:'smooth', block:'center'});
+
+      var pickChips = function(group){
+        var vals = [];
+        f.querySelectorAll('.chip.on[data-group="'+group+'"]').forEach(function(c){ vals.push(c.dataset.val); });
+        return vals.join(', ');
+      };
+      var payload = {
+        name: name,
+        phone: phone,
+        email: email,
+        type: pickChips('type'),
+        purpose: pickChips('purpose'),
+        project: 'Vinhomes Hóc Môn',
+        source: 'landing/vinhomes-hoc-mon',
+        pageUrl: location.href
+      };
+
+      var originalLabel = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Đang gửi...';
+
+      fetch('/api/landing-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(r){ return r.json().then(function(j){ return { status:r.status, body:j }; }); })
+      .then(function(res){
+        if (res.status >= 200 && res.status < 300 && res.body && res.body.ok) {
+          f.style.display = 'none';
+          var ok = document.getElementById('formOk');
+          if (res.body.message) ok.textContent = '✓ ' + res.body.message;
+          ok.style.display = 'block';
+          ok.scrollIntoView({behavior:'smooth', block:'center'});
+        } else {
+          var msg = (res.body && res.body.error) ? res.body.error : 'Có lỗi xảy ra. Vui lòng thử lại hoặc gọi hotline 0971 132 378.';
+          alert(msg);
+          btn.disabled = false;
+          btn.textContent = originalLabel;
+        }
+      })
+      .catch(function(){
+        alert('Không kết nối được máy chủ. Vui lòng gọi hotline 0971 132 378 để được hỗ trợ ngay.');
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      });
     });
   }
 })();
