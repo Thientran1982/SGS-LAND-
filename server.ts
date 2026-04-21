@@ -48,6 +48,7 @@ import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
+import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
@@ -2860,6 +2861,7 @@ async function startServer() {
   app.use('/api/reports', apiRateLimit, createTaskReportRoutes(authenticateToken));
   // Public lead capture for static landing pages (no auth)
   app.use('/api/landing-leads', apiRateLimit, createLandingLeadRoutes());
+  app.use('/api/landing-ai', aiRateLimit, createLandingAiRoutes());
 
   // Lightweight health probe for deployment infrastructure (no DB call)
   app.get("/health", (_req, res) => {
