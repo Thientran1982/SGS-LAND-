@@ -113,15 +113,17 @@ export function createProjectRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Số căn phải là số không âm' });
       }
 
+      // Phân biệt rõ "không gửi field" (undefined → giữ nguyên DB) vs
+      // "gửi null/empty" (xoá field). Cho phép user xoá totalUnits → null.
       const updated = await projectRepository.update(user.tenantId, id, {
         name: name?.trim(),
         code: code?.trim(),
         description: description?.trim(),
         location: location?.trim(),
-        totalUnits: totalUnits != null ? Number(totalUnits) : undefined,
+        totalUnits: totalUnits === undefined ? undefined : (totalUnits === null || totalUnits === '' ? null : Number(totalUnits)) as any,
         status,
-        openDate,
-        handoverDate,
+        openDate: openDate === '' ? null : openDate,
+        handoverDate: handoverDate === '' ? null : handoverDate,
         metadata,
       });
       if (!updated) return res.status(404).json({ error: 'Không tìm thấy dự án' });

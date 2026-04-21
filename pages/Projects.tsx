@@ -122,15 +122,19 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                 delete nextMeta.drive_url;
                 delete nextMeta.driveUrl;
             }
+            // Lưu ý: gửi chuỗi rỗng (đã trim) thay vì undefined cho các text
+            // field, và null cho number/date đã xoá. Nếu gửi undefined thì
+            // JSON.stringify sẽ drop key, server bỏ qua, DB giữ giá trị cũ —
+            // khiến UI báo "cập nhật thành công" nhưng thực tế không xoá.
             await onSave({
                 name: form.name.trim(),
-                code: form.code.trim() || undefined,
-                description: form.description.trim() || undefined,
-                location: form.location.trim() || undefined,
-                totalUnits: form.totalUnits ? Number(form.totalUnits) : undefined,
+                code: form.code.trim(),
+                description: form.description.trim(),
+                location: form.location.trim(),
+                totalUnits: form.totalUnits.trim() === '' ? null : Number(form.totalUnits),
                 status: form.status,
-                openDate: form.openDate || undefined,
-                handoverDate: form.handoverDate || undefined,
+                openDate: form.openDate || null,
+                handoverDate: form.handoverDate || null,
                 metadata: nextMeta,
             });
         } catch (e: any) {
