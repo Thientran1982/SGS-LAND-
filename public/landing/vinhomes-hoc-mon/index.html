@@ -419,11 +419,46 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
 
 /* ─────────────────────────  FLOATING CTA  ───────────────────────── */
 .float{position:fixed;right:18px;bottom:18px;z-index:50;display:flex;flex-direction:column;gap:10px}
-.float a{width:54px;height:54px;border-radius:50%;background:var(--green);color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 8px 22px rgba(0,77,44,.35);text-decoration:none;position:relative;transition:transform .2s}
-.float a:hover{transform:scale(1.07);text-decoration:none}
+.float a,.float button{width:54px;height:54px;border-radius:50%;background:var(--green);color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;box-shadow:0 8px 22px rgba(0,77,44,.35);text-decoration:none;position:relative;transition:transform .2s;border:none;cursor:pointer;font-family:inherit}
+.float a:hover,.float button:hover{transform:scale(1.07);text-decoration:none}
 .float a.zalo{background:var(--gold);color:var(--green-deep)}
-.float a::before{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;opacity:0;animation:pulse 2s ease-out infinite}
+.float button.ai-btn{background:linear-gradient(135deg,var(--gold) 0%,#E5C66A 100%);color:var(--green-deep);font-size:11px;line-height:1.1;letter-spacing:.04em;text-align:center;padding:0 4px}
+.float a::before,.float button.ai-btn::before{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;opacity:0;animation:pulse 2s ease-out infinite}
 @keyframes pulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.6);opacity:0}}
+
+/* ─────────────────────────  AI CHAT WIDGET  ───────────────────────── */
+.ai-chat{position:fixed;right:18px;bottom:18px;width:380px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 36px);background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.28);display:none;flex-direction:column;overflow:hidden;z-index:60;border:1px solid var(--line);font-family:inherit}
+.ai-chat.open{display:flex;animation:aiSlide .25s ease-out}
+@keyframes aiSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.ai-head{background:linear-gradient(135deg,var(--green-deep),var(--green));color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ai-head .ai-title{display:flex;align-items:center;gap:10px}
+.ai-head .ai-avatar{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--green-deep);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;letter-spacing:.04em}
+.ai-head h4{margin:0;font-size:15px;color:#fff;line-height:1.2}
+.ai-head .ai-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+.ai-head .ai-close{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1}
+.ai-head .ai-close:hover{background:rgba(255,255,255,.12)}
+.ai-body{flex:1;overflow-y:auto;padding:16px;background:var(--cream);display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.ai-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;animation:aiMsg .2s ease-out}
+@keyframes aiMsg{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ai-msg.bot{background:#fff;border:1px solid var(--line);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.ai-msg.user{background:var(--green-deep);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.ai-msg.error{background:#FEE;border:1px solid #F5B5B5;color:#7A1F1F;align-self:flex-start;font-size:13px}
+.ai-typing{display:flex;gap:4px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:14px;align-self:flex-start;width:fit-content}
+.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--green);opacity:.4;animation:aiDot 1.4s infinite}
+.ai-typing span:nth-child(2){animation-delay:.2s}
+.ai-typing span:nth-child(3){animation-delay:.4s}
+@keyframes aiDot{0%,60%,100%{opacity:.3;transform:scale(.85)}30%{opacity:1;transform:scale(1)}}
+.ai-suggest{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 8px;background:var(--cream)}
+.ai-suggest button{font-family:inherit;background:#fff;border:1px solid var(--line);color:var(--green-deep);padding:6px 12px;border-radius:999px;font-size:12px;cursor:pointer;transition:all .15s}
+.ai-suggest button:hover{background:var(--green-deep);color:#fff;border-color:var(--green-deep)}
+.ai-foot{padding:12px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px;align-items:flex-end}
+.ai-foot textarea{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none;max-height:100px;min-height:42px;outline:none;transition:border-color .15s;background:#fff;color:var(--text)}
+.ai-foot textarea:focus{border-color:var(--gold)}
+.ai-foot .ai-send{background:var(--green-deep);color:var(--gold);border:none;border-radius:12px;width:42px;height:42px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform .15s,opacity .15s;font-weight:700}
+.ai-foot .ai-send:hover{transform:scale(1.05)}
+.ai-foot .ai-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.ai-disclaimer{font-size:10px;color:var(--text-soft);text-align:center;padding:0 12px 8px;background:#fff;font-style:italic}
+@media(max-width:480px){.ai-chat{right:8px;left:8px;bottom:8px;width:auto;max-width:none;height:78vh}}
 
 /* ─────────────────────────  SCROLL REVEAL  ───────────────────────── */
 .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
@@ -903,9 +938,37 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
 
 <!-- ━━━━━━━━━━ FLOATING CTA ━━━━━━━━━━ -->
 <div class="float" aria-label="Liên hệ nhanh">
+  <button type="button" class="ai-btn" id="aiOpenBtn" aria-label="Mở AI tư vấn">AI<br/>Tư vấn</button>
   <a href="tel:0971132378" aria-label="Gọi hotline 0971 132 378">Gọi</a>
   <a class="zalo" href="https://zalo.me/0971132378" target="_blank" rel="noopener noreferrer" aria-label="Chat Zalo">Z</a>
 </div>
+
+<!-- ━━━━━━━━━━ AI CHAT WIDGET ━━━━━━━━━━ -->
+<aside class="ai-chat" id="aiChat" role="dialog" aria-modal="false" aria-labelledby="aiChatTitle" aria-hidden="true">
+  <header class="ai-head">
+    <div class="ai-title">
+      <div class="ai-avatar">AI</div>
+      <div>
+        <h4 id="aiChatTitle">Trợ lý AI Vinhomes Hóc Môn</h4>
+        <div class="ai-sub">Trả lời tự động · SGS Land</div>
+      </div>
+    </div>
+    <button type="button" class="ai-close" id="aiCloseBtn" aria-label="Đóng">×</button>
+  </header>
+  <div class="ai-body" id="aiBody" aria-live="polite"></div>
+  <div class="ai-suggest" id="aiSuggest">
+    <button type="button" data-q="Vinhomes Hóc Môn nằm ở đâu và quy mô bao nhiêu?">Vị trí &amp; quy mô</button>
+    <button type="button" data-q="Khi nào dự án mở bán và bàn giao?">Tiến độ mở bán</button>
+    <button type="button" data-q="Có những loại sản phẩm nào và tiện ích ra sao?">Loại sản phẩm</button>
+    <button type="button" data-q="Pháp lý dự án thế nào, có sổ hồng lâu dài không?">Pháp lý</button>
+    <button type="button" data-q="Kết nối hạ tầng giao thông tới trung tâm TP.HCM ra sao?">Hạ tầng</button>
+  </div>
+  <form class="ai-foot" id="aiForm" autocomplete="off">
+    <textarea id="aiInput" rows="1" placeholder="Hỏi về Vinhomes Hóc Môn..." maxlength="1000" aria-label="Nội dung câu hỏi"></textarea>
+    <button type="submit" class="ai-send" id="aiSendBtn" aria-label="Gửi">▶</button>
+  </form>
+  <div class="ai-disclaimer">Thông tin mang tính tham khảo. Để nhận bảng giá &amp; chính sách chính thức, vui lòng để lại số điện thoại hoặc gọi 0971 132 378.</div>
+</aside>
 
 <script>
 (function(){
@@ -1050,6 +1113,120 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
         btn.disabled = false;
         btn.textContent = originalLabel;
       });
+    });
+  }
+
+  /* ─── AI consultation chat widget ─── */
+  var aiBtn = document.getElementById('aiOpenBtn');
+  var aiChat = document.getElementById('aiChat');
+  var aiClose = document.getElementById('aiCloseBtn');
+  var aiBody = document.getElementById('aiBody');
+  var aiForm = document.getElementById('aiForm');
+  var aiInput = document.getElementById('aiInput');
+  var aiSend = document.getElementById('aiSendBtn');
+  var aiSuggest = document.getElementById('aiSuggest');
+  var aiHistory = []; // [{role, content}]
+  var aiBusy = false;
+  var aiGreeted = false;
+
+  function aiAppend(role, text, opts){
+    opts = opts || {};
+    var div = document.createElement('div');
+    div.className = 'ai-msg ' + (opts.error ? 'error' : (role === 'user' ? 'user' : 'bot'));
+    div.textContent = text;
+    aiBody.appendChild(div);
+    aiBody.scrollTop = aiBody.scrollHeight;
+    return div;
+  }
+  function aiTypingShow(){
+    var t = document.createElement('div');
+    t.className = 'ai-typing';
+    t.id = 'aiTypingEl';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    aiBody.appendChild(t);
+    aiBody.scrollTop = aiBody.scrollHeight;
+  }
+  function aiTypingHide(){
+    var t = document.getElementById('aiTypingEl');
+    if (t) t.remove();
+  }
+  function aiOpen(){
+    aiChat.classList.add('open');
+    aiChat.setAttribute('aria-hidden','false');
+    if (!aiGreeted){
+      aiAppend('bot', 'Xin chào anh/chị! Em là trợ lý AI của SGS Land, sẵn sàng tư vấn về dự án Vinhomes Hóc Môn — vị trí, quy mô, tiến độ, pháp lý, tiện ích và hạ tầng. Anh/chị muốn tìm hiểu điều gì ạ?');
+      aiGreeted = true;
+    }
+    setTimeout(function(){ aiInput.focus(); }, 200);
+  }
+  function aiClose_(){
+    aiChat.classList.remove('open');
+    aiChat.setAttribute('aria-hidden','true');
+  }
+  function aiSendMessage(text){
+    text = (text || '').trim();
+    if (!text || aiBusy) return;
+    aiAppend('user', text);
+    aiHistory.push({ role:'user', content:text });
+    aiInput.value = '';
+    aiInput.style.height = 'auto';
+    aiBusy = true;
+    aiSend.disabled = true;
+    aiTypingShow();
+
+    fetch('/api/landing-ai/consult', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ project:'vinhomes-hoc-mon', messages: aiHistory })
+    })
+    .then(function(r){ return r.json().then(function(j){ return { status:r.status, body:j }; }); })
+    .then(function(res){
+      aiTypingHide();
+      if (res.status >= 200 && res.status < 300 && res.body && res.body.ok){
+        var reply = res.body.reply || '';
+        aiAppend('bot', reply);
+        aiHistory.push({ role:'assistant', content:reply });
+      } else {
+        var msg = (res.body && res.body.error) ? res.body.error : 'Có lỗi xảy ra. Vui lòng gọi hotline 0971 132 378.';
+        aiAppend('bot', msg, { error:true });
+      }
+    })
+    .catch(function(){
+      aiTypingHide();
+      aiAppend('bot', 'Không kết nối được máy chủ. Vui lòng gọi hotline 0971 132 378.', { error:true });
+    })
+    .then(function(){
+      aiBusy = false;
+      aiSend.disabled = false;
+      aiInput.focus();
+    });
+  }
+
+  if (aiBtn && aiChat){
+    aiBtn.addEventListener('click', aiOpen);
+    aiClose.addEventListener('click', aiClose_);
+    aiForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      aiSendMessage(aiInput.value);
+    });
+    aiInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        aiSendMessage(aiInput.value);
+      }
+    });
+    aiInput.addEventListener('input', function(){
+      aiInput.style.height = 'auto';
+      aiInput.style.height = Math.min(aiInput.scrollHeight, 100) + 'px';
+    });
+    aiSuggest.addEventListener('click', function(e){
+      var t = e.target;
+      if (t && t.tagName === 'BUTTON' && t.dataset.q){
+        aiSendMessage(t.dataset.q);
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && aiChat.classList.contains('open')) aiClose_();
     });
   }
 })();
