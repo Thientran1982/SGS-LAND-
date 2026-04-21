@@ -757,24 +757,24 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             href={driveUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors"
+                                            className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
                                             title={t('project.drive_open')}
                                             aria-label={t('project.drive_open')}
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                             </svg>
-                                            <span className="hidden sm:inline">{t('project.drive_open')}</span>
+                                            <span className="hidden md:inline text-xs">{t('project.drive_open')}</span>
                                         </a>
                                     );
                                 })()}
                                 {/* Export — always visible, disabled when empty */}
                                 <button type="button" onClick={handleExport}
                                     disabled={listings.length === 0}
-                                    className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-sky-600 text-white text-sm font-bold hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     title={t('inventory.export_excel')}
                                     aria-label={t('inventory.export_excel')}>
-                                    {IC.DOWNLOAD} <span className="hidden sm:inline">{t('inventory.export_excel')}</span>
+                                    {IC.DOWNLOAD} <span className="hidden md:inline text-xs">{t('inventory.export_excel')}</span>
                                 </button>
                                 {/* Import */}
                                 {canCreate && (
@@ -790,13 +790,13 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             <button type="button"
                                                 onClick={() => importFileRef.current?.click()}
                                                 disabled={importing}
-                                                className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-60 transition-colors"
+                                                className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-60 transition-colors"
                                                 title={t('inventory.import_excel')}
                                                 aria-label={t('inventory.import_excel')}>
                                                 {importing ? (
-                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                                                 ) : IC.UPLOAD}
-                                                <span className="hidden sm:inline">{t('inventory.import_excel')}</span>
+                                                <span className="hidden md:inline text-xs">{t('inventory.import_excel')}</span>
                                             </button>
                                         </div>
                                         <button type="button" onClick={downloadImportTemplate}
