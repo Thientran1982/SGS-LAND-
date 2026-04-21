@@ -1443,14 +1443,16 @@ class DatabaseApiClient {
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
 
-    // SALES: chỉ tài liệu + báo cáo (không cần công cụ marketing)
+    // SALES: dự án (xem rổ hàng), tài liệu, báo cáo
     const opsBasic = { id: 'ops', labelKey: 'menu.operations', items: [
+      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
 
-    // MARKETING: thêm Campaigns + Sequences (email/zalo marketing tools)
+    // MARKETING: dự án + công cụ marketing (campaigns/sequences) + tài liệu + báo cáo
     const opsMarketing = { id: 'ops', labelKey: 'menu.operations', items: [
+      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },
       { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
