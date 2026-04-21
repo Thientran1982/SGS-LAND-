@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
-import { useTranslation } from '../services/i18n';
 import ProjectDirectory from './ProjectDirectory';
 
 const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
@@ -1248,7 +1246,6 @@ function navigate(path: string) {
 }
 
 export default function ProjectLandingPage() {
-    const { language } = useTranslation();
     const parts = window.location.pathname.replace(/^\//, '').split('/');
     const projectSlug = parts[1] || '';
 
@@ -1265,72 +1262,6 @@ export default function ProjectLandingPage() {
     const seoMeta = PROJECT_SEO_META[projectSlug] ?? {
         title: `${cfg.name} | ${cfg.projectType} ${cfg.location} — SGS LAND`,
         description: cfg.heroDescription.slice(0, 155),
-    };
-
-    const isEn = language === 'en';
-    const i18n = {
-        btnExport: isEn ? 'Download Excel' : 'Tải Excel',
-        sheetOverview: isEn ? 'Overview' : 'Tổng quan',
-        sheetDetails: isEn ? 'Project Info' : 'Thông tin dự án',
-        sheetAmenities: isEn ? 'Amenities' : 'Tiện ích',
-        sheetFaqs: isEn ? 'FAQs' : 'Câu hỏi thường gặp',
-        colField: isEn ? 'Field' : 'Hạng mục',
-        colValue: isEn ? 'Value' : 'Nội dung',
-        colGroup: isEn ? 'Amenity Group' : 'Nhóm tiện ích',
-        colItem: isEn ? 'Item' : 'Hạng mục',
-        colQuestion: isEn ? 'Question' : 'Câu hỏi',
-        colAnswer: isEn ? 'Answer' : 'Trả lời',
-        labelName: isEn ? 'Project Name' : 'Tên dự án',
-        labelDeveloper: isEn ? 'Developer' : 'Chủ đầu tư',
-        labelLocation: isEn ? 'Location' : 'Vị trí',
-        labelType: isEn ? 'Type' : 'Loại hình',
-        labelScale: isEn ? 'Scale' : 'Quy mô',
-        labelPrice: isEn ? 'Price Range' : 'Khoảng giá',
-        labelExportedAt: isEn ? 'Exported At' : 'Thời điểm xuất',
-        labelSource: isEn ? 'Source' : 'Nguồn',
-    };
-
-    const exportToExcel = () => {
-        const wb = XLSX.utils.book_new();
-
-        // Sheet 1: Overview
-        const exportedAt = new Date().toLocaleString(isEn ? 'en-US' : 'vi-VN');
-        const overviewRows = [
-            [i18n.colField, i18n.colValue],
-            [i18n.labelName, cfg.name],
-            [i18n.labelDeveloper, cfg.developer],
-            [i18n.labelLocation, cfg.location],
-            [i18n.labelType, cfg.projectType],
-            [i18n.labelScale, cfg.scale],
-            [i18n.labelPrice, cfg.priceRange],
-            [i18n.labelExportedAt, exportedAt],
-            [i18n.labelSource, `SGS LAND — https://sgsland.vn/du-an/${cfg.slug}`],
-        ];
-        const wsOverview = XLSX.utils.aoa_to_sheet(overviewRows);
-        wsOverview['!cols'] = [{ wch: 22 }, { wch: 70 }];
-        XLSX.utils.book_append_sheet(wb, wsOverview, i18n.sheetOverview);
-
-        // Sheet 2: Details
-        const detailRows = [[i18n.colField, i18n.colValue], ...cfg.details.map((d) => [d.label, d.value])];
-        const wsDetails = XLSX.utils.aoa_to_sheet(detailRows);
-        wsDetails['!cols'] = [{ wch: 30 }, { wch: 70 }];
-        XLSX.utils.book_append_sheet(wb, wsDetails, i18n.sheetDetails);
-
-        // Sheet 3: Amenities (flattened)
-        const amenityRows: string[][] = [[i18n.colGroup, i18n.colItem]];
-        cfg.amenities.forEach((g) => g.items.forEach((it) => amenityRows.push([g.title, it])));
-        const wsAmenities = XLSX.utils.aoa_to_sheet(amenityRows);
-        wsAmenities['!cols'] = [{ wch: 35 }, { wch: 70 }];
-        XLSX.utils.book_append_sheet(wb, wsAmenities, i18n.sheetAmenities);
-
-        // Sheet 4: FAQs
-        const faqRows = [[i18n.colQuestion, i18n.colAnswer], ...cfg.faqs.map((f) => [f.q, f.a])];
-        const wsFaqs = XLSX.utils.aoa_to_sheet(faqRows);
-        wsFaqs['!cols'] = [{ wch: 50 }, { wch: 100 }];
-        XLSX.utils.book_append_sheet(wb, wsFaqs, i18n.sheetFaqs);
-
-        const stamp = new Date().toISOString().slice(0, 10);
-        XLSX.writeFile(wb, `SGSLAND-${cfg.slug}-${stamp}.xlsx`);
     };
 
     return (
@@ -1427,17 +1358,6 @@ export default function ProjectLandingPage() {
                             className="px-7 py-3 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-primary)] rounded-2xl font-semibold hover:border-[var(--primary-600)]/40 transition-all"
                         >
                             Định Giá AI Miễn Phí
-                        </button>
-                        <button
-                            onClick={exportToExcel}
-                            className="px-7 py-3 bg-emerald-600 text-white rounded-2xl font-semibold hover:bg-emerald-700 transition-all shadow-md inline-flex items-center gap-2"
-                            aria-label={i18n.btnExport}
-                            title={i18n.btnExport}
-                        >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                            </svg>
-                            {i18n.btnExport}
                         </button>
                     </div>
                 </div>
