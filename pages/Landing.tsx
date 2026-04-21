@@ -95,6 +95,19 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         badgeColor: 'emerald',
         img: '/images/projects/vinhomes-grand-park.png',
     },
+    {
+        slug: 'vinhomes-hoc-mon',
+        name: 'Vinhomes Hóc Môn',
+        dev: 'Vinhomes',
+        loc: 'Huyện Hóc Môn, TP.HCM',
+        scale: '1.080 ha',
+        priceFrom: 'Đang cập nhật',
+        type: 'Siêu Đô Thị Smart City 4.0',
+        badge: 'Sắp mở bán 2025',
+        badgeColor: 'amber',
+        img: '/landing/vinhomes-hoc-mon/hero.jpg',
+        href: '/landing/vinhomes-hoc-mon/',
+    },
 ];
 
 const HOME_FAQ = [
@@ -313,6 +326,7 @@ type FeaturedProject = {
     badge: string;
     badgeColor: string;
     img: string;
+    href?: string;
 };
 
 const badgeStyles: Record<string, string> = {
@@ -695,7 +709,10 @@ export const Landing: React.FC = () => {
                             <ProjectCard
                                 key={p.slug}
                                 project={p}
-                                onClick={() => navigateTo(`/du-an/${p.slug}`)}
+                                onClick={() => {
+                                    if (p.href) window.location.href = p.href;
+                                    else navigateTo(`/du-an/${p.slug}`);
+                                }}
                             />
                         ))}
                     </div>
