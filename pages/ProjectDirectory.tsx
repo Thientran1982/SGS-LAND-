@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { Logo } from '../components/Logo';
 import { motion } from 'motion/react';
-import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity } from 'lucide-react';
+import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity, Download } from 'lucide-react';
+import { useTranslation } from '../services/i18n';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -282,6 +284,7 @@ const ProjectCard = ({ project }: { project: DuAnProject }) => (
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function ProjectDirectory() {
+    const { language } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
     const [province, setProvince] = useState('Tất cả');
     const [typeGroup, setTypeGroup] = useState('Tất cả');
@@ -300,6 +303,47 @@ export default function ProjectDirectory() {
     }, [searchQuery, province, typeGroup, statusFilter]);
 
     const hasActiveFilters = province !== 'Tất cả' || typeGroup !== 'Tất cả' || statusFilter !== 'Tất cả';
+
+    const isEn = language === 'en';
+    const tx = {
+        btnExport: isEn ? 'Download Excel' : 'Tải Excel',
+        sheetName: isEn ? 'Projects' : 'Danh sách dự án',
+        colNo: isEn ? 'No.' : 'STT',
+        colName: isEn ? 'Project Name' : 'Tên dự án',
+        colDeveloper: isEn ? 'Developer' : 'Chủ đầu tư',
+        colLocation: isEn ? 'Location' : 'Vị trí',
+        colProvince: isEn ? 'Province' : 'Tỉnh/Thành',
+        colType: isEn ? 'Type' : 'Loại hình',
+        colTypeGroup: isEn ? 'Category' : 'Phân khúc',
+        colScale: isEn ? 'Scale' : 'Quy mô',
+        colPrice: isEn ? 'Price Range' : 'Khoảng giá',
+        colStatus: isEn ? 'Status' : 'Trạng thái',
+        colDescription: isEn ? 'Description' : 'Mô tả',
+        colUrl: isEn ? 'URL' : 'Liên kết',
+    };
+
+    const exportToExcel = () => {
+        const wb = XLSX.utils.book_new();
+        const header = [
+            tx.colNo, tx.colName, tx.colDeveloper, tx.colLocation, tx.colProvince,
+            tx.colType, tx.colTypeGroup, tx.colScale, tx.colPrice, tx.colStatus,
+            tx.colDescription, tx.colUrl,
+        ];
+        const rows = filtered.map((p, i) => [
+            i + 1, p.name, p.developer, p.location, p.province,
+            p.projectType, p.typeGroup, p.scale, p.priceRange, p.status,
+            p.description, `https://sgsland.vn/du-an/${p.slug}`,
+        ]);
+        const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+        ws['!cols'] = [
+            { wch: 5 }, { wch: 30 }, { wch: 22 }, { wch: 32 }, { wch: 14 },
+            { wch: 26 }, { wch: 20 }, { wch: 16 }, { wch: 22 }, { wch: 18 },
+            { wch: 70 }, { wch: 50 },
+        ];
+        XLSX.utils.book_append_sheet(wb, ws, tx.sheetName);
+        const stamp = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `SGSLAND-${isEn ? 'projects' : 'danh-sach-du-an'}-${stamp}.xlsx`);
+    };
 
     return (
         <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
@@ -413,13 +457,25 @@ export default function ProjectDirectory() {
 
             {/* ── Project grid ── */}
             <main className="max-w-7xl mx-auto px-4 py-10">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                     <p className="text-sm text-[var(--text-secondary)]">
                         Hiển thị <span className="font-bold text-[var(--text-primary)]">{filtered.length}</span> / {ALL_PROJECTS.length} dự án
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-                        <Building2 className="w-3.5 h-3.5" />
-                        Cập nhật tháng 4/2026
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={exportToExcel}
+                            disabled={filtered.length === 0}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            aria-label={tx.btnExport}
+                            title={tx.btnExport}
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            {tx.btnExport}
+                        </button>
+                        <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+                            <Building2 className="w-3.5 h-3.5" />
+                            Cập nhật tháng 4/2026
+                        </div>
                     </div>
                 </div>
 
