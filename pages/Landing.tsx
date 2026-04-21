@@ -108,6 +108,19 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         img: '/landing/vinhomes-hoc-mon/hero.jpg',
         href: '/landing/vinhomes-hoc-mon/',
     },
+    {
+        slug: 'legacy-66',
+        name: 'Legacy 66',
+        dev: 'Tân Thành · Savills · DELTA',
+        loc: '66 Tân Thành, Chợ Lớn, TP.HCM',
+        scale: '3.956,60 m² · 348 căn',
+        priceFrom: 'Đang cập nhật',
+        type: 'Căn hộ cao cấp + Shophouse',
+        badge: 'Bàn giao Q2/2027',
+        badgeColor: 'emerald',
+        img: '/landing/legacy-66/hero.jpg',
+        href: '/landing/legacy-66/',
+    },
 ];
 
 const HOME_FAQ = [
