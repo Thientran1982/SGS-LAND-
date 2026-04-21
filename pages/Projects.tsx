@@ -215,17 +215,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                 >
                                     {t('project.drive_paste')}
                                 </button>
-                                <a
-                                    href={driveUrlTrim && driveUrlValid ? driveUrlTrim : undefined}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-disabled={!driveUrlTrim || !driveUrlValid}
-                                    onClick={(e) => { if (!driveUrlTrim || !driveUrlValid) e.preventDefault(); }}
-                                    className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1 ${driveUrlTrim && driveUrlValid ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] cursor-not-allowed pointer-events-none opacity-60'}`}
-                                    title={t('project.drive_open')}
-                                >
-                                    {t('project.drive_open')}
-                                </a>
+                                {/* Nút "Mở Drive" đã ẩn trong form — dùng nút ngoài header Danh mục sản phẩm để mở. */}
                             </div>
                             <p id="pj-drive-help" className={`mt-1 text-xs ${driveUrlTrim && !driveUrlValid ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
                                 {driveUrlTrim && !driveUrlValid ? t('project.error_drive_url_invalid') : t('project.drive_url_help')}
