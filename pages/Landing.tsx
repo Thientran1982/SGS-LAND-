@@ -72,16 +72,16 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         img: '/images/projects/vinhomes-can-gio.png',
     },
     {
-        slug: 'masterise-homes',
-        name: 'Masterise Homes',
-        dev: 'Masterise Group',
-        loc: 'TP.HCM (Quận 1, Q.2, Bình Thạnh)',
-        scale: 'Hệ Sinh Thái Branded',
-        priceFrom: 'Từ 7,5 tỷ',
-        type: 'Branded Residence',
-        badge: 'Đang bán',
+        slug: 'diamond-sky-van-phuc-city',
+        name: 'Diamond Sky – Vạn Phúc City',
+        dev: 'Tập đoàn Vạn Phúc',
+        loc: 'KĐT Vạn Phúc City, TP Thủ Đức (giáp Thuận An, Bình Dương)',
+        scale: '198 ha tổng khu',
+        priceFrom: 'Từ 2,8 tỷ',
+        type: 'Căn hộ cao tầng view sông',
+        badge: 'Mở bán 2026',
         badgeColor: 'indigo',
-        img: '/images/projects/masterise-homes.png',
+        img: '/images/projects/diamond-sky-van-phuc-city.jpg',
     },
     {
         slug: 'vinhomes-grand-park',
@@ -1085,7 +1085,7 @@ export const Landing: React.FC = () => {
                             <li><a href={`/${ROUTES.DU_AN}/the-global-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">The Global City</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/izumi-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Izumi City</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/vinhomes-can-gio`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Cần Giờ</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/masterise-homes`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Masterise Homes</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}/diamond-sky-van-phuc-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Diamond Sky – Vạn Phúc City</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/vinhomes-grand-park`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Grand Park</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/vinhomes-central-park`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Central Park</a></li>
                             <li><a href={`/${ROUTES.DU_AN}/son-kim-land`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Sơn Kim Land</a></li>
