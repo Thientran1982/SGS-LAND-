@@ -12,14 +12,19 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
 
   if (isProduction) {
-    // Production: strict CSP — no unsafe-inline anywhere.
-    // All styles are in external files (critical.css, Tailwind output via Vite).
-    // All scripts are in external bundles (server.js + Vite-built client chunks).
+    // Static marketing landing pages under /landing/* are hand-written HTML with
+    // inline <style>, inline <script>, and inline JSON-LD schemas. They contain
+    // no user-controlled data (form posts go to a separate API), so we relax
+    // script-src/style-src for that path only — strict CSP elsewhere.
+    const isLandingHtml = req.path.startsWith('/landing/');
+    const scriptInline = isLandingHtml ? "'unsafe-inline' " : '';
+    const styleInline = isLandingHtml ? "'unsafe-inline' " : '';
+
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' https://www.clarity.ms; " +
-      "style-src 'self' https://fonts.googleapis.com; " +
+      `script-src 'self' ${scriptInline}https://www.clarity.ms; ` +
+      `style-src 'self' ${styleInline}https://fonts.googleapis.com; ` +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
       "connect-src 'self' wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms https://w.clarity.ms; " +
