@@ -201,6 +201,9 @@ h2+p.lead{font-size:17px;color:var(--text-soft);max-width:780px;margin-bottom:32
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .3s ease;padding:14px 0}
 .nav.scrolled{background:rgba(0,77,44,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 4px 18px rgba(0,0,0,.18)}
 .nav-inner{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.back-sgs{display:inline-flex;align-items:center;gap:6px;color:#fff;font-size:13px;font-weight:600;padding:7px 12px 7px 10px;border:1px solid rgba(255,255,255,.35);border-radius:999px;text-decoration:none;background:rgba(255,255,255,.08);transition:background .2s,border-color .2s,transform .2s}
+.back-sgs:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.6);text-decoration:none;transform:translateX(-2px)}
+.back-sgs .back-arrow{font-size:16px;line-height:1;color:var(--gold)}
 .logo{font-size:20px;font-weight:700;color:var(--gold);letter-spacing:-.02em}
 .logo .dot{color:#fff}
 .nav-links{display:flex;gap:6px;list-style:none}
@@ -213,6 +216,8 @@ h2+p.lead{font-size:17px;color:var(--text-soft);max-width:780px;margin-bottom:32
   .nav-links{position:fixed;top:64px;left:0;right:0;background:var(--green-deep);flex-direction:column;padding:18px;gap:4px;transform:translateY(-120%);transition:transform .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.2)}
   .nav-links.open{transform:translateY(0)}
   .nav-links a{padding:12px 16px;font-size:15px}
+  .back-sgs{padding:6px 10px;font-size:12px}
+  .back-sgs .back-text{display:none}
   .burger{display:flex}
   .nav-cta{display:none}
 }
@@ -478,6 +483,9 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
 <!-- ━━━━━━━━━━ NAV ━━━━━━━━━━ -->
 <header class="nav" id="nav">
   <div class="wrap nav-inner">
+    <a href="/#du-an" class="back-sgs" aria-label="Quay lại trang dự án SGS Land" title="Quay lại SGS Land">
+      <span class="back-arrow">←</span><span class="back-text">SGS Land</span>
+    </a>
     <a href="#top" class="logo">Vinhomes <span class="dot">•</span> Hóc Môn</a>
     <ul class="nav-links" id="navLinks">
       <li><a href="#tong-quan">Tổng quan</a></li>
