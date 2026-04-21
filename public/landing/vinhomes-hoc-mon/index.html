@@ -339,7 +339,9 @@ h2+p.lead{font-size:17px;color:var(--text-soft);max-width:780px;margin-bottom:32
 .price-policy ul{list-style:none;padding:0}
 .price-policy ul li{padding:10px 0 10px 28px;position:relative;font-size:15px;color:var(--text-soft);border-bottom:1px dashed var(--line)}
 .price-policy ul li:last-child{border-bottom:none}
-.price-policy ul li::before{content:"✓";position:absolute;left:0;top:10px;color:var(--gold);font-weight:700;font-size:16px}
+.price-policy ul li::before{content:"–";position:absolute;left:0;top:10px;color:var(--gold);font-weight:700;font-size:16px}
+/* Hide all decorative emoji icons */
+.zone .ico,.amen-item .ic,.entity-head .em,.disclaimer .em,.form-success .em,.foot-info .em,.float .em,.social .em{display:none!important}
 .disclaimer{font-size:13px;color:var(--text-soft);font-style:italic;margin-top:18px;padding:14px 18px;background:#FFF8E7;border-radius:10px;border-left:3px solid var(--gold)}
 
 /* ─────────────────────────  REASONS  ───────────────────────── */
@@ -497,7 +499,7 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
     </article>
 
     <aside class="entity reveal" aria-label="Thông tin tổng hợp dự án Vinhomes Hóc Môn">
-      <div class="entity-head">📋 THÔNG TIN DỰ ÁN VINHOMES HÓC MÔN</div>
+      <div class="entity-head">THÔNG TIN DỰ ÁN VINHOMES HÓC MÔN</div>
       <table>
         <tbody>
           <tr><td>Tên dự án</td><td>Vinhomes Hóc Môn</td></tr>
@@ -564,12 +566,12 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
     <p style="color:var(--text-soft);font-size:16px;margin-bottom:24px">Với diện tích <strong>1.080 hecta</strong>, <strong>Vinhomes Hóc Môn</strong> được quy hoạch theo mô hình đô thị nén – đô thị xanh, dành tối thiểu 30% quỹ đất cho mảng xanh, hồ điều hòa và không gian công cộng. Dự án được chia thành 6 nhóm phân khu chức năng tích hợp:</p>
 
     <div class="zones reveal">
-      <div class="zone"><div class="ico">🏠</div><h3>Nhà phố thương mại</h3><p>Diện tích 60–90 m², mặt tiền 5 m, cao 3–5 tầng. Vừa ở vừa kinh doanh, phù hợp gia đình trẻ tới các hộ kinh doanh nhỏ.</p></div>
-      <div class="zone"><div class="ico">🌿</div><h3>Biệt thự đơn lập &amp; song lập</h3><p>Diện tích 200–500 m², sân vườn riêng biệt, kiến trúc Á – Âu kết hợp. Phù hợp gia đình đa thế hệ và khách thượng lưu.</p></div>
-      <div class="zone"><div class="ico">🛍️</div><h3>Shophouse mặt tiền</h3><p>Diện tích 70–120 m², 2 mặt tiền kinh doanh. Hệ thống shophouse quanh quảng trường trung tâm và đại lộ kinh doanh.</p></div>
-      <div class="zone"><div class="ico">🏢</div><h3>Chung cư cao tầng (Smart Apartment)</h3><p>Căn 1–3 phòng ngủ, diện tích 36–90 m². Tích hợp smart home, giải pháp tiết kiệm năng lượng và an ninh AI 24/7.</p></div>
-      <div class="zone"><div class="ico">🎓</div><h3>Tiện ích giáo dục – y tế – thương mại</h3><p>Vinschool liên cấp (mầm non đến THPT), bệnh viện Vinmec đa khoa, trung tâm thương mại Vincom Mega Mall ngay trong nội khu.</p></div>
-      <div class="zone"><div class="ico">🌳</div><h3>Công viên &amp; hồ điều hòa</h3><p>Hệ thống công viên 4 mùa, hồ điều hòa trung tâm, đường chạy bộ ven hồ và khu thể thao đa năng phục vụ ~150.000 cư dân.</p></div>
+      <div class="zone"><h3>Nhà phố thương mại</h3><p>Diện tích 60–90 m², mặt tiền 5 m, cao 3–5 tầng. Vừa ở vừa kinh doanh, phù hợp gia đình trẻ tới các hộ kinh doanh nhỏ.</p></div>
+      <div class="zone"><h3>Biệt thự đơn lập &amp; song lập</h3><p>Diện tích 200–500 m², sân vườn riêng biệt, kiến trúc Á – Âu kết hợp. Phù hợp gia đình đa thế hệ và khách thượng lưu.</p></div>
+      <div class="zone"><h3>Shophouse mặt tiền</h3><p>Diện tích 70–120 m², 2 mặt tiền kinh doanh. Hệ thống shophouse quanh quảng trường trung tâm và đại lộ kinh doanh.</p></div>
+      <div class="zone"><h3>Chung cư cao tầng (Smart Apartment)</h3><p>Căn 1–3 phòng ngủ, diện tích 36–90 m². Tích hợp smart home, giải pháp tiết kiệm năng lượng và an ninh AI 24/7.</p></div>
+      <div class="zone"><h3>Tiện ích giáo dục – y tế – thương mại</h3><p>Vinschool liên cấp (mầm non đến THPT), bệnh viện Vinmec đa khoa, trung tâm thương mại Vincom Mega Mall ngay trong nội khu.</p></div>
+      <div class="zone"><h3>Công viên &amp; hồ điều hòa</h3><p>Hệ thống công viên 4 mùa, hồ điều hòa trung tâm, đường chạy bộ ven hồ và khu thể thao đa năng phục vụ ~150.000 cư dân.</p></div>
     </div>
   </div>
 </section>
@@ -581,18 +583,18 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
     <h2 id="h2-tien-ich">Hệ Thống Tiện Ích 5 Sao <span class="ac">Tích Hợp Trong Vinhomes Hóc Môn</span></h2>
     <p class="lead"><strong>Vinhomes Hóc Môn</strong> đưa toàn bộ hệ sinh thái Vingroup vào nội khu, đáp ứng đầy đủ nhu cầu sinh sống – học tập – chăm sóc sức khỏe – mua sắm – giải trí cho cư dân mà không cần ra khỏi dự án. 12 tiện ích hạt nhân sau là chuẩn vận hành Smart City đã được Vinhomes áp dụng thành công tại Vinhomes Grand Park, Ocean Park và Smart City.</p>
     <div class="amen reveal">
-      <div class="amen-item"><span class="ic">🎓</span><div class="tt">Vinschool liên cấp</div></div>
-      <div class="amen-item"><span class="ic">🏥</span><div class="tt">Bệnh viện Vinmec</div></div>
-      <div class="amen-item"><span class="ic">🛍️</span><div class="tt">Vincom Mega Mall</div></div>
-      <div class="amen-item"><span class="ic">🏊</span><div class="tt">Hồ bơi Olympic</div></div>
-      <div class="amen-item"><span class="ic">🌳</span><div class="tt">Công viên 4 mùa</div></div>
-      <div class="amen-item"><span class="ic">🏃</span><div class="tt">Đường chạy bộ ven hồ</div></div>
-      <div class="amen-item"><span class="ic">🏋️</span><div class="tt">Phòng gym hiện đại</div></div>
-      <div class="amen-item"><span class="ic">🎭</span><div class="tt">Nhà văn hóa cộng đồng</div></div>
-      <div class="amen-item"><span class="ic">🚗</span><div class="tt">Bãi đỗ xe thông minh</div></div>
-      <div class="amen-item"><span class="ic">📶</span><div class="tt">Smart home tích hợp</div></div>
-      <div class="amen-item"><span class="ic">🔒</span><div class="tt">An ninh AI 24/7</div></div>
-      <div class="amen-item"><span class="ic">🌿</span><div class="tt">30% diện tích cây xanh</div></div>
+      <div class="amen-item"><div class="tt">Vinschool liên cấp</div></div>
+      <div class="amen-item"><div class="tt">Bệnh viện Vinmec</div></div>
+      <div class="amen-item"><div class="tt">Vincom Mega Mall</div></div>
+      <div class="amen-item"><div class="tt">Hồ bơi Olympic</div></div>
+      <div class="amen-item"><div class="tt">Công viên 4 mùa</div></div>
+      <div class="amen-item"><div class="tt">Đường chạy bộ ven hồ</div></div>
+      <div class="amen-item"><div class="tt">Phòng gym hiện đại</div></div>
+      <div class="amen-item"><div class="tt">Nhà văn hóa cộng đồng</div></div>
+      <div class="amen-item"><div class="tt">Bãi đỗ xe thông minh</div></div>
+      <div class="amen-item"><div class="tt">Smart home tích hợp</div></div>
+      <div class="amen-item"><div class="tt">An ninh AI 24/7</div></div>
+      <div class="amen-item"><div class="tt">30% diện tích cây xanh</div></div>
     </div>
   </div>
 </section>
@@ -694,7 +696,7 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
       </div>
     </div>
 
-    <p class="disclaimer">⚠️ <strong>Lưu ý:</strong> Hiện chưa có mức giá tham khảo chính thức cho Vinhomes Hóc Môn. Bảng giá Vinhomes Hóc Môn 2026 sẽ được Vinhomes JSC công bố khi dự án chính thức ra mắt từng phân khu. Đăng ký để nhận bảng giá sớm nhất khi mở bán.</p>
+    <p class="disclaimer"><strong>Lưu ý:</strong> Hiện chưa có mức giá tham khảo chính thức cho Vinhomes Hóc Môn. Bảng giá Vinhomes Hóc Môn 2026 sẽ được Vinhomes JSC công bố khi dự án chính thức ra mắt từng phân khu. Đăng ký để nhận bảng giá sớm nhất khi mở bán.</p>
 
     <div style="text-align:center;margin-top:24px">
       <a href="#lien-he" class="btn btn-gold">Đăng ký nhận bảng giá khi mở bán</a>
@@ -850,7 +852,7 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
 
       <button type="submit" class="btn-submit">Đăng Ký Nhận Bảng Giá Ngay</button>
       <p class="form-note">Thông tin của bạn được bảo mật tuyệt đối. Chuyên viên tư vấn sẽ liên hệ trong vòng 30 phút.</p>
-      <div class="form-success" id="formOk">✓ Cảm ơn bạn! Chúng tôi đã nhận thông tin và sẽ liên hệ trong vòng 30 phút.</div>
+      <div class="form-success" id="formOk">Cảm ơn bạn! Chúng tôi đã nhận thông tin và sẽ liên hệ trong vòng 30 phút.</div>
     </form>
   </div>
 </section>
@@ -879,10 +881,10 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
       <div>
         <h4>Thông tin dự án</h4>
         <ul>
-          <li>📍 Huyện Hóc Môn, TP. Hồ Chí Minh</li>
-          <li>🏢 Vinhomes JSC — Tập đoàn Vingroup</li>
-          <li>📞 Hotline: <a href="tel:0971132378">0971 132 378</a></li>
-          <li>✉️ <a href="mailto:sgsland.vn@gmail.com">sgsland.vn@gmail.com</a></li>
+          <li>Huyện Hóc Môn, TP. Hồ Chí Minh</li>
+          <li>Vinhomes JSC — Tập đoàn Vingroup</li>
+          <li>Hotline: <a href="tel:0971132378">0971 132 378</a></li>
+          <li><a href="mailto:sgsland.vn@gmail.com">sgsland.vn@gmail.com</a></li>
         </ul>
       </div>
       <div>
@@ -890,8 +892,8 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
         <div class="social">
           <a href="#" aria-label="Facebook" target="_blank" rel="noopener noreferrer">f</a>
           <a href="#" aria-label="Zalo" target="_blank" rel="noopener noreferrer">Z</a>
-          <a href="#" aria-label="YouTube" target="_blank" rel="noopener noreferrer">▶</a>
-          <a href="#" aria-label="TikTok" target="_blank" rel="noopener noreferrer">♪</a>
+          <a href="#" aria-label="YouTube" target="_blank" rel="noopener noreferrer">YT</a>
+          <a href="#" aria-label="TikTok" target="_blank" rel="noopener noreferrer">TT</a>
         </div>
       </div>
     </div>
@@ -901,7 +903,7 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
 
 <!-- ━━━━━━━━━━ FLOATING CTA ━━━━━━━━━━ -->
 <div class="float" aria-label="Liên hệ nhanh">
-  <a href="tel:0971132378" aria-label="Gọi hotline 0971 132 378">📞</a>
+  <a href="tel:0971132378" aria-label="Gọi hotline 0971 132 378">Gọi</a>
   <a class="zalo" href="https://zalo.me/0971132378" target="_blank" rel="noopener noreferrer" aria-label="Chat Zalo">Z</a>
 </div>
 
@@ -1033,7 +1035,7 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
         if (res.status >= 200 && res.status < 300 && res.body && res.body.ok) {
           f.style.display = 'none';
           var ok = document.getElementById('formOk');
-          if (res.body.message) ok.textContent = '✓ ' + res.body.message;
+          if (res.body.message) ok.textContent = res.body.message;
           ok.style.display = 'block';
           ok.scrollIntoView({behavior:'smooth', block:'center'});
         } else {
