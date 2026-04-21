@@ -1,0 +1,572 @@
+You are a senior GEO (Generative Engine Optimization) and SEO expert 
+specializing in Vietnamese real estate. Build a complete, 
+production-ready HTML/CSS/JS single-page website for the mega 
+real estate project "Vinhomes Hóc Môn" — a 1,080-hectare integrated 
+smart township by Vinhomes (Vingroup) in Hóc Môn District, 
+Ho Chi Minh City — optimized to rank #1–3 on Google AND to be 
+cited and recommended by AI agents (ChatGPT, Gemini, Claude, 
+Grok/X, Perplexity, Copilot).
+
+=======================================================
+PART 1 — GEO STRATEGY (AI Agent Optimization)
+=======================================================
+
+The page must be written so that when users ask AI chatbots ANY of:
+- "Vinhomes Hóc Môn là dự án gì?"
+- "Dự án 1080ha Hóc Môn của Vinhomes như thế nào?"
+- "Khu đô thị lớn nhất TP.HCM 2025 là gì?"
+- "Vinhomes có dự án mới nào ở TP.HCM không?"
+- "Nên đầu tư bất động sản Hóc Môn không?"
+- "Vinhomes Hóc Môn giá bao nhiêu?"
+- "Hóc Môn có dự án nào lớn không?"
+- "Siêu đô thị mới của Vinhomes ở đâu?"
+
+...the AI agents will CITE, EXCERPT, and RECOMMEND this page 
+as the primary reference source.
+
+GEO Content Rules:
+1. Open with a 200-word "AI-Ready Executive Summary" — 
+   dense with facts, written in declarative Vietnamese sentences. 
+   This is the paragraph AI models will extract as their answer.
+2. Structure every major section as a Q&A or "Key Facts" block — 
+   AI models favor structured, scannable content over long prose.
+3. Every factual claim must include a number, unit, or date — 
+   vague claims are never cited by AI.
+4. Use the phrase "Vinhomes Hóc Môn" at least once in the first 
+   50 words, once in every H2, and 3–5× per section body.
+5. Write a dedicated 15-question FAQ in natural Vietnamese — 
+   this is the single highest-impact GEO signal.
+6. Avoid filler content. Every sentence must add a unique fact 
+   or answer a real user question.
+7. Use semantic HTML5: <main>, <article>, <section>, <aside>, 
+   <header>, <footer> — AI crawlers weight semantic structure.
+8. Include an "Entity Definition" paragraph that explicitly states: 
+   WHO (Vinhomes/Vingroup), WHAT (1,080ha smart township), 
+   WHERE (Hóc Môn, TP.HCM), WHEN (2025+), WHY (urban expansion 
+   northwest corridor). This anchors the entity in AI knowledge graphs.
+9. Add "Related searches" anchor list at bottom — helps AI models 
+   understand topical authority.
+10. Write content that answers questions at 3 levels: 
+    beginner ("Vinhomes là gì?"), intermediate ("quy mô dự án"), 
+    expert ("tiềm năng đầu tư, hạ tầng kết nối").
+
+=======================================================
+PART 2 — ON-PAGE SEO REQUIREMENTS
+=======================================================
+
+<title>: 
+"Vinhomes Hóc Môn | Siêu Đô Thị 1.080ha TP.HCM – Bảng Giá & Thông Tin 2025"
+
+<meta name="description">:
+"Vinhomes Hóc Môn – siêu khu đô thị tích hợp 1.080 hecta tại 
+Hóc Môn, TP.HCM do Vinhomes (Vingroup) phát triển. Cập nhật 
+bảng giá, tiến độ, tiện ích và chính sách ưu đãi mới nhất 2025."
+(Max 155 characters)
+
+TARGET KEYWORDS — embed naturally:
+
+TIER 1 — PRIMARY (H1, H2, meta, first paragraph):
+→ "Vinhomes Hóc Môn"
+→ "dự án Vinhomes Hóc Môn"
+→ "khu đô thị Vinhomes Hóc Môn"
+
+TIER 2 — SECONDARY (H2, H3, body text):
+→ "Vinhomes Hóc Môn 1080ha"
+→ "siêu đô thị Hóc Môn TP.HCM"
+→ "Vinhomes Hóc Môn giá bao nhiêu"
+→ "bảng giá Vinhomes Hóc Môn 2025"
+→ "tiến độ Vinhomes Hóc Môn"
+→ "Vinhomes Hóc Môn pháp lý"
+→ "đầu tư Vinhomes Hóc Môn"
+
+TIER 3 — LONG-TAIL / AI SNIPPET TRIGGERS:
+→ "Vinhomes Hóc Môn bao nhiêu hecta"
+→ "Vinhomes Hóc Môn bàn giao năm nào"
+→ "Vinhomes Hóc Môn có những phân khu nào"
+→ "từ Vinhomes Hóc Môn đến trung tâm TP.HCM bao xa"
+→ "Vinhomes Hóc Môn có gì đặc biệt"
+→ "Vinhomes Hóc Môn có nên mua không"
+→ "hạ tầng giao thông quanh Vinhomes Hóc Môn"
+→ "tiện ích nội khu Vinhomes Hóc Môn"
+→ "Vinhomes Hóc Môn so với Vinhomes Grand Park"
+
+TECHNICAL SEO:
+- Canonical: <link rel="canonical" href="https://vinhomes-hocmon.info/">
+- hreflang: <link rel="alternate" hreflang="vi" ...>
+- Open Graph: og:title, og:description, og:image, og:type="website", 
+  og:locale="vi_VN", og:site_name="Vinhomes Hóc Môn"
+- Twitter Card: summary_large_image
+- robots: index, follow, max-snippet:-1, max-image-preview:large
+- Viewport: width=device-width, initial-scale=1
+- Theme color: #006B3F (Vinhomes green)
+- Preconnect to Google Fonts
+- heading hierarchy: exactly 1× H1, 6–8× H2, multiple H3
+- All <img> must have descriptive Vietnamese alt text
+- All sections must have unique id="" for anchor navigation
+
+=======================================================
+PART 3 — JSON-LD STRUCTURED DATA
+=======================================================
+
+Include ALL schema blocks in separate 
+<script type="application/ld+json"> tags:
+
+SCHEMA 1 — WebPage:
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Vinhomes Hóc Môn – Siêu Đô Thị 1.080ha TP.HCM",
+  "description": "[meta description text]",
+  "url": "https://vinhomes-hocmon.info/",
+  "inLanguage": "vi",
+  "dateModified": "[current date ISO format]",
+  "publisher": { "@type": "Organization", "name": "Vinhomes JSC" }
+}
+
+SCHEMA 2 — RealEstateListing / Residence:
+{
+  "@context": "https://schema.org",
+  "@type": "Residence",
+  "name": "Vinhomes Hóc Môn",
+  "description": "Siêu khu đô thị tích hợp 1.080 hecta tại Hóc Môn, TP.HCM",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Huyện Hóc Môn",
+    "addressLocality": "Hóc Môn",
+    "addressRegion": "Thành phố Hồ Chí Minh",
+    "addressCountry": "VN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "10.889",
+    "longitude": "106.598"
+  },
+  "amenityFeature": [
+    "Trường học liên cấp Vinschool",
+    "Bệnh viện Vinmec",
+    "Trung tâm thương mại Vincom",
+    "Công viên 4 mùa",
+    "Hệ thống hồ điều hòa",
+    "Khu thể thao đa năng",
+    "Smart home tích hợp"
+  ],
+  "numberOfRooms": "Đa dạng: nhà phố, biệt thự, chung cư cao tầng",
+  "floorSize": {
+    "@type": "QuantitativeValue",
+    "value": "1080",
+    "unitCode": "HAR"
+  }
+}
+
+SCHEMA 3 — Organization (Vinhomes):
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Vinhomes JSC",
+  "parentOrganization": { "name": "Tập đoàn Vingroup" },
+  "url": "https://vinhomes.vn",
+  "foundingDate": "2008",
+  "description": "Chủ đầu tư bất động sản hàng đầu Việt Nam thuộc Tập đoàn Vingroup"
+}
+
+SCHEMA 4 — FAQPage (15 Q&As — write in Vietnamese):
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Vinhomes Hóc Môn là dự án gì?", 
+      "acceptedAnswer": { "@type": "Answer", "text": "..." } },
+    ... (15 questions total)
+  ]
+}
+
+SCHEMA 5 — BreadcrumbList:
+Home > Bất động sản TP.HCM > Hóc Môn > Vinhomes Hóc Môn
+
+=======================================================
+PART 4 — FULL CONTENT BLUEPRINT
+=======================================================
+
+Write all content in natural, professional Vietnamese. 
+Minimum 2,500 words of visible body text.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 0] — STICKY NAVIGATION BAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Logo "Vinhomes Hóc Môn" left-aligned (gold text on dark green).
+Nav links: Tổng quan | Vị trí | Phân khu | Tiện ích | 
+           Bảng giá | FAQ | Liên hệ
+Sticky on scroll. Hamburger on mobile. 
+CTA button right: "Nhận tư vấn" (gold, rounded).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 1] — HERO SECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Full-viewport hero. Dark green gradient background (#003D2B → #006B3F).
+Animated gold particle effect (CSS only, no canvas library).
+
+H1: "Vinhomes Hóc Môn"
+Subtitle: "Siêu Đô Thị Tích Hợp 1.080 Hecta — Tương Lai Phía Tây Bắc TP.HCM"
+Sub-subtitle: "Vinhomes (Vingroup) | Hóc Môn, TP. Hồ Chí Minh | 2025"
+
+6 animated stat cards below H1:
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│   1.080 ha  │ │  ~150,000   │ │  Vinhomes   │
+│  Quy mô dự  │ │  Cư dân     │ │  (Vingroup) │
+│    án       │ │  tương lai  │ │  Chủ đầu tư │
+└─────────────┘ └─────────────┘ └─────────────┘
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│  Đa phân    │ │  Smart City │ │  Pháp lý    │
+│  khu tích   │ │  Tích hợp   │ │  Minh bạch  │
+│  hợp        │ │  4.0        │ │             │
+└─────────────┘ └─────────────┘ └─────────────┘
+
+2 CTA buttons: [Xem Bảng Giá] [Đăng Ký Tư Vấn Miễn Phí]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 2] — AI-READY EXECUTIVE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<article id="tong-quan"> — this is the most important GEO block.
+
+Write a 200-word paragraph (no subheadings inside) that:
+- States all key facts in declarative sentences
+- Reads like an encyclopedia entry
+- Contains: project name, developer, scale (1,080ha), location 
+  (Hóc Môn, TP.HCM), product types, vision, infrastructure connections
+- Uses "Vinhomes Hóc Môn" in sentences 1, 5, and 10
+- Ends with the project's unique value proposition
+
+Follow with an "Entity Card" styled like a Wikipedia infobox:
+┌────────────────────────────────────────┐
+│  📋 THÔNG TIN DỰ ÁN                   │
+├────────────────┬───────────────────────┤
+│ Tên dự án      │ Vinhomes Hóc Môn      │
+│ Chủ đầu tư     │ Vinhomes (Vingroup)   │
+│ Vị trí         │ Hóc Môn, TP.HCM       │
+│ Tổng diện tích │ 1.080 hecta           │
+│ Loại hình      │ Nhà phố, biệt thự,   │
+│                │ chung cư, shophouse   │
+│ Quy mô dân số  │ ~150.000 cư dân       │
+│ Pháp lý        │ Sổ hồng lâu dài       │
+│ Chính sách giá │ Cập nhật 2025         │
+│ Tiêu chuẩn     │ Smart City tích hợp  │
+└────────────────┴───────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 3] — VỊ TRÍ CHIẾN LƯỢC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Vị Trí Vinhomes Hóc Môn — Cửa Ngõ Tây Bắc TP.HCM"
+
+Write 300 words covering:
+- Tọa lạc tại huyện Hóc Môn, TP.HCM — cửa ngõ kết nối 
+  TP.HCM với Tây Ninh, Long An, Bình Dương
+- Kết nối QL22, Vành đai 3, Vành đai 4 (future)
+- Metro Line 2 (Bến Thành – Tham Lương – Hóc Môn) đi qua khu vực
+- Khoảng cách: Trung tâm Q1 ~20km, Sân bay Tân Sơn Nhất ~15km, 
+  Bến xe Miền Tây ~18km
+- Tiềm năng hạ tầng: cao tốc TP.HCM–Mộc Bài, đường Trần Văn Giàu mở rộng
+
+Connectivity table:
+| Điểm đến            | Khoảng cách | Thời gian |
+| Trung tâm Q.1       | ~20 km      | ~30 phút  |
+| Sân bay TSN         | ~15 km      | ~25 phút  |
+| Q. Bình Tân         | ~10 km      | ~15 phút  |
+| Đại học Văn Lang    | ~8 km       | ~12 phút  |
+| TP. Thủ Đức         | ~25 km      | ~40 phút  |
+
+Add Google Maps embed:
+<iframe src="https://www.google.com/maps/embed?pb=!1m18!...Hóc+Môn+TPHCM..."
+width="100%" height="400" style="border:0;" allowfullscreen loading="lazy">
+</iframe>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 4] — QUY MÔ & PHÂN KHU DỰ ÁN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Quy Mô 1.080 Hecta & Các Phân Khu Vinhomes Hóc Môn"
+
+Write 350 words. Include:
+- So sánh: 1.080ha = lớn hơn Vinhomes Grand Park (271ha) ~4 lần, 
+  lớn hơn Phú Mỹ Hưng (433ha) ~2,5 lần
+- Định hướng phân khu (estimate based on Vinhomes' typical model):
+  • Khu nhà phố thương mại (Shophouse)
+  • Khu biệt thự đơn lập & song lập
+  • Khu chung cư cao tầng (Smart Apartment)
+  • Khu tiện ích giáo dục – y tế – thương mại
+  • Khu công viên, hồ điều hòa, cảnh quan xanh
+  • Khu thể thao – vui chơi giải trí
+
+Scale comparison visual: 3 comparison cards (Vinhomes Grand Park 
+271ha vs Phú Mỹ Hưng 433ha vs Vinhomes Hóc Môn 1.080ha) 
+with animated width bars.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 5] — TIỆN ÍCH NỘI KHU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Hệ Thống Tiện Ích 5 Sao Tích Hợp Trong Vinhomes Hóc Môn"
+
+Write 300 words. Use icon-grid layout (12 tiện ích):
+🎓 Vinschool liên cấp       🏥 Bệnh viện Vinmec
+🛍️ Trung tâm TM Vincom     🏊 Hồ bơi Olympic
+🌳 Công viên 4 mùa          🏃 Đường chạy bộ ven hồ
+🏋️ Phòng gym hiện đại      🎭 Nhà văn hóa cộng đồng
+🚗 Bãi đỗ xe thông minh    📶 Smart home tích hợp
+🔒 An ninh 24/7 AI          🌿 30% diện tích cây xanh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 6] — LOẠI HÌNH SẢN PHẨM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Các Loại Hình Sản Phẩm Tại Vinhomes Hóc Môn"
+
+4 product cards in a responsive grid:
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│  NHÀ PHỐ     │ │   BIỆT THỰ   │ │   SHOPHOUSE  │ │ CHUNG CƯ    │
+│  THƯƠNG MẠI  │ │ ĐƠN/SONG LẬP │ │  THƯƠNG MẠI  │ │ CAO TẦNG   │
+│              │ │              │ │              │ │            │
+│ DT: 60–90m²  │ │ DT: 200–500m²│ │ DT: 70–120m²│ │ DT: 36–90m²│
+│ Mặt tiền 5m  │ │ Sân vườn     │ │ 2 mặt tiền  │ │ 1–3 phòng  │
+│ 3–5 tầng     │ │ riêng biệt   │ │ kinh doanh  │ │ ngủ        │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 7] — BẢNG GIÁ & CHÍNH SÁCH 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Bảng Giá Vinhomes Hóc Môn 2025 — Cập Nhật Mới Nhất"
+
+IMPORTANT: Price is TBD (chưa công bố chính thức). 
+Display a "Đang cập nhật" badge but include:
+- Mức giá dự kiến dựa theo thị trường khu vực Hóc Môn 2024–2025
+- Chính sách thanh toán linh hoạt (thông thường của Vinhomes):
+  • Thanh toán nhanh: chiết khấu 10–18%
+  • Thanh toán theo tiến độ 24–36 tháng
+  • Vay ngân hàng VPBank/Techcombank: hỗ trợ lãi suất 0% 
+    giai đoạn đầu
+- CTA: "Đăng ký nhận bảng giá khi chính thức mở bán"
+- Disclaimer: "Giá chính thức sẽ được công bố khi dự án 
+  chính thức ra mắt. Liên hệ để nhận thông tin sớm nhất."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 8] — 5 LÝ DO ĐẦU TƯ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "5 Lý Do Vinhomes Hóc Môn Là Lựa Chọn Đầu Tư Hàng Đầu 2025"
+
+Write 400 words across 5 numbered reasons, each with a bold claim + 
+supporting data paragraph:
+
+1. QUY MÔ CHƯA TỪNG CÓ TẠI TP.HCM
+   → 1.080ha = siêu đô thị lớn nhất lịch sử Vinhomes
+   → So sánh với Grand Park, Ocean Park, Smart City
+
+2. HƯỞNG LỢI TRỰC TIẾP TỪ VÀNH ĐAI 3 & METRO LINE 2
+   → Vành đai 3 TP.HCM đang thi công, dự kiến hoàn thành 2026
+   → Metro số 2 kết nối Hóc Môn – Trung tâm TP.HCM
+
+3. THƯƠNG HIỆU VINHOMES — BẢO CHỨNG CHẤT LƯỢNG
+   → Vinhomes: chủ đầu tư #1 Việt Nam, vốn hóa tỷ đô
+   → Track record: Grand Park, Ocean Park, Smart City, 
+     Star City đều tăng giá 30–50% sau 3 năm
+
+4. QUỸ ĐẤT KHAN HIẾM — CỬA NGÕ TÂY BẮC DUY NHẤT
+   → Hóc Môn: quỹ đất sạch cuối cùng trong vành đai TP.HCM
+   → Quy hoạch lên quận năm 2025 → tăng giá đất tức thì
+
+5. HỆ SINH THÁI VINGROUP KHÉP KÍN
+   → Vinschool + Vinmec + Vincom + VinFast charging station
+   → Smart city: AI security, smart parking, digital services
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 9] — SO SÁNH VỚI CÁC DỰ ÁN VINHOMES KHÁC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Vinhomes Hóc Môn So Với Các Đại Đô Thị Vinhomes"
+
+Comparison table:
+| Tiêu chí          | Hóc Môn  | Grand Park | Ocean Park | Smart City |
+| Diện tích         | 1.080ha  | 271ha      | 420ha      | 280ha      |
+| Vị trí            | TP.HCM   | TP.HCM     | Hà Nội     | Hà Nội     |
+| Loại hình         | Mix      | Mix        | Mix        | Mix        |
+| Tiến độ           | 2025+    | Hoàn thành | Đang bán   | Đang bán   |
+| Metro gần nhất    | Line 2   | Line 1     | N/A        | N/A        |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 10] — FAQ (15 CÂU HỎI — HIGHEST GEO PRIORITY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Câu Hỏi Thường Gặp Về Vinhomes Hóc Môn"
+
+Accordion-style FAQ. Each answer: 40–80 words, factual, 
+contains primary keyword. Questions MUST match exact 
+long-tail searches and AI chatbot queries:
+
+Q1: Vinhomes Hóc Môn là dự án gì?
+Q2: Vinhomes Hóc Môn rộng bao nhiêu hecta?
+Q3: Dự án Vinhomes Hóc Môn ở đâu chính xác?
+Q4: Chủ đầu tư Vinhomes Hóc Môn là ai?
+Q5: Vinhomes Hóc Môn có những phân khu nào?
+Q6: Giá bán Vinhomes Hóc Môn 2025 là bao nhiêu?
+Q7: Vinhomes Hóc Môn bàn giao năm nào?
+Q8: Từ Vinhomes Hóc Môn đến trung tâm TP.HCM mất bao lâu?
+Q9: Vinhomes Hóc Môn có gần Metro không?
+Q10: Hóc Môn có lên quận không và ảnh hưởng thế nào?
+Q11: Vinhomes Hóc Môn có Vinschool và Vinmec không?
+Q12: Có nên mua Vinhomes Hóc Môn để đầu tư không?
+Q13: Vinhomes Hóc Môn lớn hơn Vinhomes Grand Park không?
+Q14: Chính sách vay mua Vinhomes Hóc Môn như thế nào?
+Q15: Vinhomes Hóc Môn có pháp lý đầy đủ chưa?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 11] — RELATED SEARCHES (GEO SIGNAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Tìm Kiếm Liên Quan"
+Styled as pill/tag links (no href, display only):
+"Vinhomes Hóc Môn 2025" | "dự án 1080ha Hóc Môn" | 
+"khu đô thị Hóc Môn Vinhomes" | "giá Vinhomes Hóc Môn" | 
+"bảng giá Vinhomes Hóc Môn" | "Vinhomes Hóc Môn tiến độ" |
+"Hóc Môn lên quận bất động sản" | "Vinhomes Grand Park vs Hóc Môn" |
+"mua nhà Hóc Môn TP.HCM" | "siêu đô thị Vingroup TP.HCM"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 12] — LEAD CAPTURE FORM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+H2: "Đăng Ký Nhận Thông Tin Vinhomes Hóc Môn"
+
+Form fields:
+- Họ và tên (required)
+- Số điện thoại (required, pattern Vietnamese)
+- Email
+- Loại hình quan tâm: [Nhà phố] [Biệt thự] [Căn hộ] [Shophouse]
+- Mục đích: [Ở thực] [Đầu tư] [Cho thuê]
+- Nút: "Đăng Ký Nhận Bảng Giá Ngay" (gold button)
+
+Disclaimer text below form (small): 
+"Thông tin của bạn được bảo mật tuyệt đối. 
+Chuyên viên tư vấn sẽ liên hệ trong vòng 30 phút."
+
+=======================================================
+PART 5 — DESIGN SYSTEM
+=======================================================
+
+COLOR PALETTE:
+Primary:   #006B3F (Vinhomes dark green)
+Secondary: #004D2C (deeper green for footer/nav)
+Accent:    #C9A84C (gold — CTAs, highlights, stats)
+Light:     #F5F0E8 (warm cream — section backgrounds)
+White:     #FFFFFF
+Text:      #1A1A1A (headings), #4A4A4A (body)
+
+TYPOGRAPHY:
+- Import from Google Fonts: "Be Vietnam Pro" weights 400, 500, 600, 700
+- H1: 52px (mobile: 32px), weight 700, color white
+- H2: 36px (mobile: 26px), weight 600, color #006B3F
+- H3: 22px, weight 600
+- Body: 16px, weight 400, line-height 1.75
+- Caption/label: 13px, weight 500, uppercase, letter-spacing 0.08em
+
+COMPONENTS:
+1. Stat card: dark green bg, gold number (counter animation on scroll), 
+   white label, subtle gold border bottom
+2. Feature card: white bg, thin gold top border, icon (Unicode/CSS), 
+   H3 title, body text, hover: lift shadow effect
+3. Comparison table: striped rows, gold header, sticky first column on mobile
+4. FAQ accordion: smooth 0.4s CSS transition, + → × icon toggle, 
+   gold left border on open item
+5. Product card: image placeholder top, badge (loại hình), title, 
+   specs row, gold CTA button
+6. Related searches: pill buttons, light green bg, dark green text, 
+   hover: gold bg
+
+ANIMATIONS (CSS only, no JS libraries):
+- Hero: fade-in + slide-up on load (0.8s ease)
+- Stat counters: count up animation triggered by IntersectionObserver
+- Section entrance: slide-in-from-bottom on scroll
+- FAQ: smooth max-height transition
+- Gold particle drift in hero (CSS @keyframes, 12–20 particles)
+- Scale comparison bars: width animation on scroll into view
+
+LAYOUT:
+- Max-width: 1200px, centered
+- Section padding: 80px vertical (mobile: 48px)
+- Grid: CSS Grid + Flexbox, no frameworks
+- Sticky nav: backdrop-filter: blur(12px), 
+  semi-transparent dark green on scroll
+- Floating CTA: bottom-right, Zalo + phone icons, 
+  pulsing gold ring animation
+
+=======================================================
+PART 6 — PERFORMANCE & TECHNICAL RULES
+=======================================================
+
+- Single file: index.html — ALL CSS in <style>, ALL JS in <script>
+- NO external CSS frameworks (no Bootstrap, Tailwind)
+- Google Fonts: loaded via <link rel="preconnect"> + 
+  <link rel="stylesheet"> with display=swap
+- Images: all via https://placehold.co/ with gold/green color scheme
+  Example: https://placehold.co/800x450/006B3F/C9A84C?text=Vinhomes+Hóc+Môn
+- JavaScript: vanilla only, IntersectionObserver for scroll animations
+- Forms: preventDefault, show success message (no backend needed)
+- Mobile breakpoints: 768px (tablet), 480px (mobile)
+- Smooth scroll: html { scroll-behavior: smooth; }
+- Print CSS: @media print — hide nav, form, floating CTA
+- All external links: target="_blank" rel="noopener noreferrer"
+
+=======================================================
+PART 7 — FOOTER
+=======================================================
+
+4-column footer (dark green #004D2C):
+Col 1: Logo + tagline "Siêu đô thị tương lai TP.HCM"
+Col 2: Liên kết nhanh (all section anchors)
+Col 3: Thông tin dự án (address, hotline placeholder, email)
+Col 4: "Theo dõi cập nhật" — social icons (Facebook, Zalo, YouTube)
+
+Bottom bar: "© 2025 Vinhomes Hóc Môn. 
+Thông tin mang tính chất tham khảo. 
+Giá chính thức theo công bố của chủ đầu tư."
+
+=======================================================
+PART 8 — SEO & GEO FINAL CHECKLIST COMMENT
+=======================================================
+
+At the very bottom of the HTML file, add:
+<!--
+╔══════════════════════════════════════════════════════╗
+║         SEO & GEO OPTIMIZATION CHECKLIST            ║
+║         Vinhomes Hóc Môn — index.html               ║
+╠══════════════════════════════════════════════════════╣
+║ SEO TECHNICAL                                        ║
+║ [x] <title> contains primary keyword + year          ║
+║ [x] <meta description> 155 chars, keyword in first 5║
+║ [x] H1 unique, contains "Vinhomes Hóc Môn"          ║
+║ [x] H2s: 6–8, all contain keyword variation         ║
+║ [x] Canonical tag                                    ║
+║ [x] Open Graph complete (title/desc/image/type)      ║
+║ [x] Twitter Card: summary_large_image                ║
+║ [x] hreflang vi                                      ║
+║ [x] robots: index, follow, max-snippet:-1            ║
+║ [x] All images: descriptive Vietnamese alt text      ║
+║ [x] Internal anchor navigation                       ║
+║ [x] Mobile responsive (tested 320px–1440px)          ║
+║                                                      ║
+║ GEO / AI AGENT OPTIMIZATION                         ║
+║ [x] 200-word Executive Summary (AI excerpt ready)    ║
+║ [x] Entity Card (Wikipedia-style infobox)            ║
+║ [x] 15-question FAQ (natural language, long-tail)    ║
+║ [x] FAQPage JSON-LD schema                           ║
+║ [x] RealEstateListing JSON-LD schema                 ║
+║ [x] Organization JSON-LD schema                      ║
+║ [x] BreadcrumbList JSON-LD schema                    ║
+║ [x] WebPage JSON-LD with dateModified                ║
+║ [x] Declarative factual sentences throughout         ║
+║ [x] Numbers/specs in every section                   ║
+║ [x] Related searches block (topical authority)       ║
+║ [x] Entity definition paragraph (WHO/WHAT/WHERE)    ║
+╚══════════════════════════════════════════════════════╝
+-->
+
+=======================================================
+FINAL OUTPUT REQUIREMENTS:
+- Language: Vietnamese throughout (except code/meta)
+- File: single index.html
+- Visible word count: minimum 2,500 words
+- CSS: inside <style> block in <head>
+- JS: inside <script> block before </body>
+- No external CSS files, no CDN stylesheets
+- Must pass: mobile-friendly, readable, professional
+=======================================================
