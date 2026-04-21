@@ -660,14 +660,14 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                                {/* Export */}
-                                {listings.length > 0 && (
-                                    <button type="button" onClick={handleExport}
-                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-sky-600 text-white text-sm font-bold hover:bg-sky-700 transition-colors"
-                                        title="Xuất Excel">
-                                        {IC.DOWNLOAD} <span className="hidden sm:inline">Xuất Excel</span>
-                                    </button>
-                                )}
+                                {/* Export — always visible, disabled when empty */}
+                                <button type="button" onClick={handleExport}
+                                    disabled={listings.length === 0}
+                                    className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-sky-600 text-white text-sm font-bold hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    title={t('inventory.export_excel')}
+                                    aria-label={t('inventory.export_excel')}>
+                                    {IC.DOWNLOAD} <span className="hidden sm:inline">{t('inventory.export_excel')}</span>
+                                </button>
                                 {/* Import */}
                                 {canCreate && (
                                     <>
@@ -683,17 +683,19 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                                 onClick={() => importFileRef.current?.click()}
                                                 disabled={importing}
                                                 className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-60 transition-colors"
-                                                title="Nhập từ Excel">
+                                                title={t('inventory.import_excel')}
+                                                aria-label={t('inventory.import_excel')}>
                                                 {importing ? (
                                                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                                 ) : IC.UPLOAD}
-                                                <span className="hidden sm:inline">Nhập Excel</span>
+                                                <span className="hidden sm:inline">{t('inventory.import_excel')}</span>
                                             </button>
                                         </div>
                                         <button type="button" onClick={downloadImportTemplate}
                                             className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
-                                            title="Tải mẫu nhập Excel">
-                                            {IC.TEMPLATE} <span className="hidden md:inline text-xs">Mẫu</span>
+                                            title={t('inventory.template')}
+                                            aria-label={t('inventory.template')}>
+                                            {IC.TEMPLATE} <span className="hidden md:inline text-xs">{t('inventory.template')}</span>
                                         </button>
                                     </>
                                 )}
