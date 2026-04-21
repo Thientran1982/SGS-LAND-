@@ -155,20 +155,50 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 const noop = () => '';
-const noopStr = (key: string) => key;
 
 // Stable fallback returned during Vite HMR module-reload transitions.
 // In those brief moments a new I18nContext identity is created before the
-// provider re-mounts, so useContext returns undefined. Returning safe defaults
-// prevents a full React crash; the page auto-refreshes anyway during HMR.
-// In production there is no HMR, so this branch is never taken.
+// provider re-mounts, so useContext returns undefined.
+//
+// Lưu ý quan trọng: KHÔNG được trả về noopStr cho `t` — vì khi đó toàn bộ
+// label trong sidebar sẽ render ra key thô (vd "menu.projects" thay vì
+// "Dự Án"). Thay vào đó, tra cứu trực tiếp từ DICTIONARY đã import (sync,
+// không phụ thuộc Provider) + đọc ngôn ngữ đã lưu trong localStorage để
+// vẫn hiển thị đúng ngữ trong giai đoạn re-mount.
+const getStoredLang = (): Language => {
+    try {
+        const saved = window.localStorage.getItem('sgs_lang');
+        return (saved === 'en' || saved === 'vn') ? saved : 'vn';
+    } catch {
+        return 'vn';
+    }
+};
+
+const fallbackT = (key: string, params?: Record<string, string | number>): string => {
+    const dict = DICTIONARY || {};
+    const lang = getStoredLang();
+    const currentDict = (dict as any)[lang] || (dict as any)['vn'] || {};
+    let text = currentDict[key];
+    if (!text) {
+        const fallbackLang = lang === 'en' ? 'vn' : 'en';
+        text = ((dict as any)[fallbackLang] || {})[key];
+    }
+    if (!text) return key;
+    if (params) {
+        return text.replace(/\{(\w+)\}/g, (_: string, k: string) =>
+            params[k] !== undefined ? String(params[k]) : `{${k}}`
+        );
+    }
+    return text;
+};
+
 const FALLBACK_CONTEXT: I18nContextType = {
     language: 'vn',
     setLanguage: noop as any,
-    t: noopStr,
-    formatDate: noopStr,
-    formatTime: noopStr,
-    formatDateTime: noopStr,
+    t: fallbackT,
+    formatDate: (s: string) => s,
+    formatTime: (s: string) => s,
+    formatDateTime: (s: string) => s,
     formatCurrency: () => '0',
     formatCompactNumber: () => '0',
     loading: true,
