@@ -103,7 +103,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         scale: '1.080 ha',
         priceFrom: 'Đang cập nhật',
         type: 'Siêu Đô Thị Smart City 4.0',
-        badge: 'Sắp mở bán 2025',
+        badge: 'Sắp mở bán 2026',
         badgeColor: 'amber',
         img: '/landing/vinhomes-hoc-mon/hero.jpg',
         href: '/landing/vinhomes-hoc-mon/',
