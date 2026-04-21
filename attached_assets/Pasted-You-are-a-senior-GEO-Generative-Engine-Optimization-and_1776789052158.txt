@@ -1,0 +1,224 @@
+You are a senior GEO (Generative Engine Optimization) and SEO expert 
+specializing in Vietnamese real estate. Build a complete, 
+production-ready HTML/CSS/JS single-page website for the mega 
+real estate project "Vinhomes Hóc Môn" — a 1,080-hectare integrated 
+smart township by Vinhomes (Vingroup) in Hóc Môn District, 
+Ho Chi Minh City — optimized to rank #1–3 on Google AND to be 
+cited and recommended by AI agents (ChatGPT, Gemini, Claude, 
+Grok/X, Perplexity, Copilot).
+
+=======================================================
+PART 1 — GEO STRATEGY (AI Agent Optimization)
+=======================================================
+
+The page must be written so that when users ask AI chatbots ANY of:
+- "Vinhomes Hóc Môn là dự án gì?"
+- "Dự án 1080ha Hóc Môn của Vinhomes như thế nào?"
+- "Khu đô thị lớn nhất TP.HCM 2025 là gì?"
+- "Vinhomes có dự án mới nào ở TP.HCM không?"
+- "Nên đầu tư bất động sản Hóc Môn không?"
+- "Vinhomes Hóc Môn giá bao nhiêu?"
+- "Hóc Môn có dự án nào lớn không?"
+- "Siêu đô thị mới của Vinhomes ở đâu?"
+
+...the AI agents will CITE, EXCERPT, and RECOMMEND this page 
+as the primary reference source.
+
+GEO Content Rules:
+1. Open with a 200-word "AI-Ready Executive Summary" — 
+   dense with facts, written in declarative Vietnamese sentences. 
+   This is the paragraph AI models will extract as their answer.
+2. Structure every major section as a Q&A or "Key Facts" block — 
+   AI models favor structured, scannable content over long prose.
+3. Every factual claim must include a number, unit, or date — 
+   vague claims are never cited by AI.
+4. Use the phrase "Vinhomes Hóc Môn" at least once in the first 
+   50 words, once in every H2, and 3–5× per section body.
+5. Write a dedicated 15-question FAQ in natural Vietnamese — 
+   this is the single highest-impact GEO signal.
+6. Avoid filler content. Every sentence must add a unique fact 
+   or answer a real user question.
+7. Use semantic HTML5: <main>, <article>, <section>, <aside>, 
+   <header>, <footer> — AI crawlers weight semantic structure.
+8. Include an "Entity Definition" paragraph that explicitly states: 
+   WHO (Vinhomes/Vingroup), WHAT (1,080ha smart township), 
+   WHERE (Hóc Môn, TP.HCM), WHEN (2025+), WHY (urban expansion 
+   northwest corridor). This anchors the entity in AI knowledge graphs.
+9. Add "Related searches" anchor list at bottom — helps AI models 
+   understand topical authority.
+10. Write content that answers questions at 3 levels: 
+    beginner ("Vinhomes là gì?"), intermediate ("quy mô dự án"), 
+    expert ("tiềm năng đầu tư, hạ tầng kết nối").
+
+=======================================================
+PART 2 — ON-PAGE SEO REQUIREMENTS
+=======================================================
+
+<title>: 
+"Vinhomes Hóc Môn | Siêu Đô Thị 1.080ha TP.HCM – Bảng Giá & Thông Tin 2025"
+
+<meta name="description">:
+"Vinhomes Hóc Môn – siêu khu đô thị tích hợp 1.080 hecta tại 
+Hóc Môn, TP.HCM do Vinhomes (Vingroup) phát triển. Cập nhật 
+bảng giá, tiến độ, tiện ích và chính sách ưu đãi mới nhất 2025."
+(Max 155 characters)
+
+TARGET KEYWORDS — embed naturally:
+
+TIER 1 — PRIMARY (H1, H2, meta, first paragraph):
+→ "Vinhomes Hóc Môn"
+→ "dự án Vinhomes Hóc Môn"
+→ "khu đô thị Vinhomes Hóc Môn"
+
+TIER 2 — SECONDARY (H2, H3, body text):
+→ "Vinhomes Hóc Môn 1080ha"
+→ "siêu đô thị Hóc Môn TP.HCM"
+→ "Vinhomes Hóc Môn giá bao nhiêu"
+→ "bảng giá Vinhomes Hóc Môn 2025"
+→ "tiến độ Vinhomes Hóc Môn"
+→ "Vinhomes Hóc Môn pháp lý"
+→ "đầu tư Vinhomes Hóc Môn"
+
+TIER 3 — LONG-TAIL / AI SNIPPET TRIGGERS:
+→ "Vinhomes Hóc Môn bao nhiêu hecta"
+→ "Vinhomes Hóc Môn bàn giao năm nào"
+→ "Vinhomes Hóc Môn có những phân khu nào"
+→ "từ Vinhomes Hóc Môn đến trung tâm TP.HCM bao xa"
+→ "Vinhomes Hóc Môn có gì đặc biệt"
+→ "Vinhomes Hóc Môn có nên mua không"
+→ "hạ tầng giao thông quanh Vinhomes Hóc Môn"
+→ "tiện ích nội khu Vinhomes Hóc Môn"
+→ "Vinhomes Hóc Môn so với Vinhomes Grand Park"
+
+TECHNICAL SEO:
+- Canonical: <link rel="canonical" href="https://vinhomes-hocmon.info/">
+- hreflang: <link rel="alternate" hreflang="vi" ...>
+- Open Graph: og:title, og:description, og:image, og:type="website", 
+  og:locale="vi_VN", og:site_name="Vinhomes Hóc Môn"
+- Twitter Card: summary_large_image
+- robots: index, follow, max-snippet:-1, max-image-preview:large
+- Viewport: width=device-width, initial-scale=1
+- Theme color: #006B3F (Vinhomes green)
+- Preconnect to Google Fonts
+- heading hierarchy: exactly 1× H1, 6–8× H2, multiple H3
+- All <img> must have descriptive Vietnamese alt text
+- All sections must have unique id="" for anchor navigation
+
+=======================================================
+PART 3 — JSON-LD STRUCTURED DATA
+=======================================================
+
+Include ALL schema blocks in separate 
+<script type="application/ld+json"> tags:
+
+SCHEMA 1 — WebPage:
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Vinhomes Hóc Môn – Siêu Đô Thị 1.080ha TP.HCM",
+  "description": "[meta description text]",
+  "url": "https://vinhomes-hocmon.info/",
+  "inLanguage": "vi",
+  "dateModified": "[current date ISO format]",
+  "publisher": { "@type": "Organization", "name": "Vinhomes JSC" }
+}
+
+SCHEMA 2 — RealEstateListing / Residence:
+{
+  "@context": "https://schema.org",
+  "@type": "Residence",
+  "name": "Vinhomes Hóc Môn",
+  "description": "Siêu khu đô thị tích hợp 1.080 hecta tại Hóc Môn, TP.HCM",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Huyện Hóc Môn",
+    "addressLocality": "Hóc Môn",
+    "addressRegion": "Thành phố Hồ Chí Minh",
+    "addressCountry": "VN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "10.889",
+    "longitude": "106.598"
+  },
+  "amenityFeature": [
+    "Trường học liên cấp Vinschool",
+    "Bệnh viện Vinmec",
+    "Trung tâm thương mại Vincom",
+    "Công viên 4 mùa",
+    "Hệ thống hồ điều hòa",
+    "Khu thể thao đa năng",
+    "Smart home tích hợp"
+  ],
+  "numberOfRooms": "Đa dạng: nhà phố, biệt thự, chung cư cao tầng",
+  "floorSize": {
+    "@type": "QuantitativeValue",
+    "value": "1080",
+    "unitCode": "HAR"
+  }
+}
+
+SCHEMA 3 — Organization (Vinhomes):
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Vinhomes JSC",
+  "parentOrganization": { "name": "Tập đoàn Vingroup" },
+  "url": "https://vinhomes.vn",
+  "foundingDate": "2008",
+  "description": "Chủ đầu tư bất động sản hàng đầu Việt Nam thuộc Tập đoàn Vingroup"
+}
+
+SCHEMA 4 — FAQPage (15 Q&As — write in Vietnamese):
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Vinhomes Hóc Môn là dự án gì?", 
+      "acceptedAnswer": { "@type": "Answer", "text": "..." } },
+    ... (15 questions total)
+  ]
+}
+
+SCHEMA 5 — BreadcrumbList:
+Home > Bất động sản TP.HCM > Hóc Môn > Vinhomes Hóc Môn
+
+=======================================================
+PART 4 — FULL CONTENT BLUEPRINT
+=======================================================
+
+Write all content in natural, professional Vietnamese. 
+Minimum 2,500 words of visible body text.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 0] — STICKY NAVIGATION BAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Logo "Vinhomes Hóc Môn" left-aligned (gold text on dark green).
+Nav links: Tổng quan | Vị trí | Phân khu | Tiện ích | 
+           Bảng giá | FAQ | Liên hệ
+Sticky on scroll. Hamburger on mobile. 
+CTA button right: "Nhận tư vấn" (gold, rounded).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BLOCK 1] — HERO SECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Full-viewport hero. Dark green gradient background (#003D2B → #006B3F).
+Animated gold particle effect (CSS only, no canvas library).
+
+H1: "Vinhomes Hóc Môn"
+Subtitle: "Siêu Đô Thị Tích Hợp 1.080 Hecta — Tương Lai Phía Tây Bắc TP.HCM"
+Sub-subtitle: "Vinhomes (Vingroup) | Hóc Môn, TP. Hồ Chí Minh | 2025"
+
+6 animated stat cards below H1:
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│   1.080 ha  │ │  ~150,000   │ │  Vinhomes   │
+│  Quy mô dự  │ │  Cư dân     │ │  (Vingroup) │
+│    án       │ │  tương lai  │ │  Chủ đầu tư │
+└─────────────┘ └─────────────┘ └─────────────┘
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│  Đa phân    │ │  Smart City │ │  Pháp lý    │
+│  khu tích   │ │  Tích hợp   │ │  Minh bạch  │
+│  hợp        │ │  4.0        │ │             │
+└─────────────┘ └─────────────┘ └─────────────┘
+
+2 CTA buttons: [Xem Bảng Giá] [Đăng
