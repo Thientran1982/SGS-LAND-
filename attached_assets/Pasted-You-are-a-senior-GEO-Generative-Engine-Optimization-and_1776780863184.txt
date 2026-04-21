@@ -1,0 +1,221 @@
+You are a senior GEO (Generative Engine Optimization) and SEO expert. 
+Build a complete, production-ready HTML/CSS/JS single-page website 
+for the real estate project "Diamond Sky – Vạn Phúc City" that is 
+optimized to rank #1–3 on Google AND to be cited/recommended by 
+AI agents (ChatGPT, Gemini, Claude, Grok/X, Perplexity).
+
+=======================================================
+PART 1 — GEO STRATEGY (AI Agent Optimization)
+=======================================================
+
+The page must be written so that when users ask AI chatbots:
+- "Dự án Diamond Sky Vạn Phúc City là gì?"
+- "Căn hộ cao tầng tốt nhất Bình Dương 2025"
+- "Nên mua căn hộ nào ở Thuận An Bình Dương?"
+- "Diamond Sky có vị trí ở đâu?"
+- "Vạn Phúc City còn dự án nào mới không?"
+
+...the AI agents will CITE and RECOMMEND this page.
+
+GEO requirements:
+1. Write content in clear Q&A format with <section> per question
+2. Use authoritative, factual, citation-ready language
+3. Include an explicit <article> with schema markup (FAQ, Product, RealEstateListing)
+4. Add a "Key Facts" summary box with bullet points (AI models love structured facts)
+5. Every claim must sound verifiable: include numbers, dates, specs
+6. Write a 150-word "Executive Summary" paragraph at the top — 
+   this is what AI models excerpt when answering user queries
+7. Use semantic HTML5 throughout: <main>, <article>, <section>, 
+   <aside>, <header>, <footer>, <nav>
+8. Repeat primary keywords naturally 3–5x per section (not stuffed)
+9. Include a "Frequently Asked Questions" section with 10 Q&As 
+   written in natural conversational Vietnamese — this is the 
+   #1 trigger for AI chatbot citation
+10. Add a <meta name="description"> that reads like an AI answer snippet
+
+=======================================================
+PART 2 — ON-PAGE SEO REQUIREMENTS
+=======================================================
+
+Target keywords to dominate (use in H1, H2, meta, alt text, URL slugs):
+
+PRIMARY:
+- "Diamond Sky Vạn Phúc City"
+- "Diamond Sky Bình Dương"
+- "căn hộ Diamond Sky"
+
+SECONDARY:
+- "Vạn Phúc City Thuận An"
+- "căn hộ cao tầng Bình Dương 2025"
+- "dự án bất động sản Thuận An Bình Dương"
+- "căn hộ view sông Bình Dương"
+- "tiện ích Diamond Sky"
+
+LONG-TAIL (for AI snippet targeting):
+- "Diamond Sky Vạn Phúc City có bao nhiêu tầng"
+- "giá căn hộ Diamond Sky 2025"
+- "Diamond Sky bàn giao năm nào"
+- "vị trí Diamond Sky ở đâu"
+- "Diamond Sky có hồ bơi không"
+
+SEO Technical requirements:
+- <title>: "Diamond Sky Vạn Phúc City | Căn Hộ Cao Tầng Đẳng Cấp Bình Dương 2025"
+- Canonical URL tag
+- Open Graph tags (og:title, og:description, og:image, og:type)
+- Twitter Card meta tags
+- hreflang="vi" for Vietnamese
+- Heading hierarchy: 1× H1, 4–6× H2, multiple H3s
+- All images: descriptive alt="..." in Vietnamese
+- Internal anchor links between sections
+- Page load target: <2s (use inline CSS, no external blocking JS)
+- Mobile-first responsive design
+
+=======================================================
+PART 3 — STRUCTURED DATA (JSON-LD)
+=======================================================
+
+Include ALL of the following schema types in <script type="application/ld+json">:
+
+1. RealEstateListing or Product schema:
+{
+  "@type": "Residence",
+  "name": "Diamond Sky – Vạn Phúc City",
+  "address": { Thuận An, Bình Dương },
+  "numberOfRooms": "1–3 phòng ngủ",
+  "amenityFeature": [ hồ bơi, gym, trường học, bệnh viện, trung tâm thương mại ],
+  "url": "[canonical URL]"
+}
+
+2. FAQPage schema with 10 Q&As (Vietnamese)
+
+3. BreadcrumbList schema
+
+4. Organization schema for Vạn Phúc Group
+
+5. WebPage schema with dateModified = current date
+
+=======================================================
+PART 4 — CONTENT BLUEPRINT (Write ALL sections)
+=======================================================
+
+Write detailed, natural Vietnamese content for each section:
+
+[SECTION 1] — Hero / Executive Summary (150 words)
+Introduce Diamond Sky as the landmark residential tower within 
+Vạn Phúc City — a 198ha integrated township in Thuận An, Bình Dương. 
+Mention: location, scale, developer credibility, and lifestyle promise.
+
+[SECTION 2] — Tổng quan dự án (Project Overview)
+- Tên dự án: Diamond Sky – Vạn Phúc City
+- Chủ đầu tư: Tập đoàn Vạn Phúc
+- Vị trí: Khu đô thị Vạn Phúc City, TP. Thuận An, Bình Dương
+- Quy mô: [số tầng, số căn hộ, diện tích]
+- Loại hình: căn hộ chung cư cao tầng
+- Pháp lý: sổ hồng lâu dài
+- Tiến độ bàn giao: [năm dự kiến]
+
+[SECTION 3] — Vị trí chiến lược
+- Kết nối TP.HCM (Quận 12, Thủ Đức) trong bao nhiêu phút
+- Gần cầu Vĩnh Bình, QL13, Vành đai 3
+- Cạnh sông Sài Gòn (view sông)
+- Hạ tầng giao thông tương lai
+
+[SECTION 4] — Tiện ích nội khu & ngoại khu
+Internal: hồ bơi vô cực, gym, sky garden, clubhouse, BBQ, 
+         trường học liên cấp, bệnh viện quốc tế, TTTM Vạn Phúc
+External: Aeon Mall, BV Becamex, ĐH Quốc tế Miền Đông
+
+[SECTION 5] — Thiết kế & loại hình căn hộ
+- Studio / 1PN / 2PN / 3PN
+- Diện tích từ ... m²
+- Thiết kế tối ưu ánh sáng tự nhiên
+- Vật liệu cao cấp
+
+[SECTION 6] — Bảng giá & chính sách bán hàng 2025
+- Giá dự kiến từ ... triệu/m²
+- Phương thức thanh toán
+- Ưu đãi từ ngân hàng hợp tác
+
+[SECTION 7] — Lý do nên đầu tư Diamond Sky
+Write 5 compelling investment reasons with data:
+1. Vị trí đắc địa trong khu đô thị 198ha
+2. Pháp lý minh bạch, sổ hồng lâu dài
+3. Tiện ích 5 sao tích hợp
+4. Tiềm năng tăng giá từ hạ tầng Vành đai 3
+5. Thương hiệu Vạn Phúc Group uy tín
+
+[SECTION 8] — FAQ (10 câu hỏi thường gặp — Q&A format)
+Questions must include exact long-tail keywords users type into 
+Google AND ask AI chatbots. Examples:
+Q: Diamond Sky Vạn Phúc City ở đâu?
+Q: Giá căn hộ Diamond Sky bao nhiêu tiền?
+Q: Diamond Sky có bao nhiêu tầng?
+Q: Diamond Sky bàn giao năm nào?
+Q: Căn hộ Diamond Sky có sổ hồng không?
+Q: Vạn Phúc City là khu đô thị của ai?
+Q: Diamond Sky có view sông không?
+Q: Diện tích căn hộ Diamond Sky từ bao nhiêu m²?
+Q: Từ Diamond Sky đến trung tâm TP.HCM mất bao lâu?
+Q: Diamond Sky có phù hợp để đầu tư cho thuê không?
+
+[SECTION 9] — Bản đồ vị trí & liên hệ
+Embed a Google Maps iframe for Vạn Phúc City, Thuận An, Bình Dương.
+CTA button: "Đăng ký nhận thông tin" and "Tải bảng giá"
+
+=======================================================
+PART 5 — DESIGN REQUIREMENTS
+=======================================================
+
+Visual style:
+- Color palette: Deep navy #0A1628 + Gold #C9A84C + White #FFFFFF
+- Font: Google Fonts — "Be Vietnam Pro" (headings), "Inter" (body)
+- Hero section: full-width gradient background with project name 
+  overlaid in large gold typography
+- Sticky navigation with smooth scroll to each section
+- "Key Facts" card component: icon + stat + label grid (6 cards)
+- FAQ accordion with smooth open/close animation
+- Floating WhatsApp/Zalo CTA button (bottom right)
+- Mobile-first: hamburger menu, stacked cards on small screens
+- Add a subtle particle or gradient animation in the hero background
+
+=======================================================
+PART 6 — PERFORMANCE & TECHNICAL
+=======================================================
+
+- All CSS inline or in <style> block (no external stylesheet CDN 
+  that could block rendering)
+- Google Fonts loaded with font-display: swap
+- Images: use placeholder via https://placehold.co/ with descriptive 
+  alt text for now
+- No jQuery — vanilla JS only
+- Smooth scroll behavior: CSS scroll-behavior: smooth
+- Add a <link rel="preconnect"> for fonts
+- robots meta: index, follow
+- Add <!-- GEO-OPTIMIZED: Diamond Sky Vạn Phúc City --> comment 
+  at top of <head> for future reference
+
+=======================================================
+PART 7 — FINAL CHECKLIST COMMENT BLOCK
+=======================================================
+
+At the very bottom of the HTML file, add an HTML comment block:
+<!--
+  SEO & GEO CHECKLIST:
+  [x] H1 contains primary keyword
+  [x] Meta description < 160 chars, contains primary keyword
+  [x] FAQ schema (FAQPage JSON-LD)
+  [x] RealEstateListing schema
+  [x] Open Graph tags
+  [x] Mobile responsive
+  [x] Executive summary for AI citation
+  [x] Long-tail keywords in FAQ section
+  [x] Internal anchor links
+  [x] Page speed optimized
+-->
+
+=======================================================
+OUTPUT: One complete index.html file. No separate files.
+All CSS in <style>. All JS in <script>. 
+Vietnamese language throughout content.
+Minimum 2000 words of visible content.
+=======================================================

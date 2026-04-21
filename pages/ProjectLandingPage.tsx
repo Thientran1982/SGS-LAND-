@@ -49,6 +49,10 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
         title: 'Vinhomes Cần Giờ 2.870ha | Siêu Đô Thị Biển Lớn Nhất VN — SGS LAND',
         description: 'Vinhomes Cần Giờ (Green Paradise): siêu đô thị lấn biển 2.870ha tại TP.HCM, bãi biển 7km, Vinwonders, golf, marina. Từ 12 tỷ. Đặt chỗ ưu tiên miễn phí tại SGS LAND.',
     },
+    'diamond-sky-van-phuc-city': {
+        title: 'Diamond Sky Vạn Phúc City | Căn Hộ Cao Tầng View Sông Sài Gòn 2026 — SGS LAND',
+        description: 'Diamond Sky Vạn Phúc City: tháp căn hộ 20 tầng trong KĐT 198ha của Tập đoàn Vạn Phúc, Hiệp Bình Phước TP Thủ Đức (giáp Thuận An, Bình Dương). 1–3PN view sông Sài Gòn, từ 2,8 tỷ, sổ hồng lâu dài. Bảng giá & ưu đãi 2026 tại SGS LAND.',
+    },
 };
 
 // E-E-A-T: last content review date (bump when project data is updated)
@@ -1119,6 +1123,119 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
             { name: 'The Global City', slug: 'the-global-city' },
+        ],
+    },
+    'diamond-sky-van-phuc-city': {
+        slug: 'diamond-sky-van-phuc-city',
+        name: 'Diamond Sky – Vạn Phúc City',
+        developer: 'Tập đoàn Vạn Phúc (Van Phuc Group)',
+        location: 'KĐT Vạn Phúc City, Hiệp Bình Phước, TP Thủ Đức, TP.HCM',
+        locationSlug: 'bat-dong-san-thu-duc',
+        heroDescription:
+            'Diamond Sky là tháp căn hộ cao tầng điểm nhấn 20 tầng nằm trong Khu đô thị Vạn Phúc City — đại đô thị 198ha ven sông Sài Gòn do Tập đoàn Vạn Phúc phát triển tại phường Hiệp Bình Phước, TP Thủ Đức, TP.HCM (giáp ranh Thuận An, Bình Dương). Dự án cung cấp 1–3 phòng ngủ với view sông Sài Gòn, hồ Đại Nhật và kênh Sông Trăng, sổ hồng lâu dài, dự kiến mở bán Q3/2026 và bàn giao 2028. SGS LAND là đại lý phân phối chính thức Diamond Sky.',
+        priceRange: 'Từ 2,8 tỷ (1PN ~ 50m²) – Từ 55 triệu/m²',
+        projectType: 'Căn Hộ Cao Tầng View Sông',
+        scale: '20 tầng (KĐT 198 ha)',
+        details: [
+            { label: 'Tên dự án', value: 'Diamond Sky – Vạn Phúc City' },
+            { label: 'Chủ đầu tư', value: 'Tập đoàn Vạn Phúc (Van Phuc Group)' },
+            { label: 'Vị trí', value: 'Đường số 15 & số 34, Hiệp Bình Phước, TP Thủ Đức, TP.HCM' },
+            { label: 'Quy mô tháp', value: '20 tầng nổi + tầng mái tiện ích, ~520 căn hộ' },
+            { label: 'Quy mô KĐT Vạn Phúc City', value: '198 ha, ven sông Sài Gòn' },
+            { label: 'Loại hình', value: 'Căn hộ chung cư cao tầng (1PN, 2PN, 3PN)' },
+            { label: 'Diện tích căn hộ', value: '50 – 110 m²' },
+            { label: 'Giá tham khảo', value: 'Từ 2,8 tỷ/căn — từ 55 triệu/m²' },
+            { label: 'Pháp lý', value: 'Sổ hồng riêng lâu dài từng căn' },
+            { label: 'Tiến độ dự kiến', value: 'Mở bán Q3/2026 – Bàn giao Q4/2028' },
+            { label: 'Khoảng cách Quận 1', value: '~25 phút qua Phạm Văn Đồng / Quốc lộ 13' },
+            { label: 'Khoảng cách Thuận An, Bình Dương', value: '~10 phút qua cầu Vĩnh Bình / QL13' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích nội khu Diamond Sky',
+                items: [
+                    'Hồ bơi vô cực tầng mái (Rooftop Ban Công Trăng)',
+                    'Vườn BBQ Hoàng Hôn & Vườn BBQ Ánh Sao trên cao',
+                    'Bình Minh Lounge & Vườn Trên Mây panoramic',
+                    'Lối Dạo Bộ Hoa Nắng, Vườn An Nhiên thiền định',
+                    'Phòng gym & yoga tiêu chuẩn quốc tế',
+                    '2 sân tennis + sân bóng rổ tầng đế',
+                    'Hồ bơi người lớn 25m + hồ bơi trẻ em',
+                    'Sảnh lobby đôi, lễ tân 24/7, smart access',
+                    'Hầm xe 2 tầng kết nối thang máy thẳng lên căn hộ',
+                ],
+            },
+            {
+                title: 'Tiện ích Vạn Phúc City 198 ha',
+                items: [
+                    'Hồ Đại Nhật trung tâm 16ha với nhạc nước',
+                    'Kênh Sông Trăng & quảng trường trung tâm',
+                    'TTTM Vạn Phúc Mall, phố thương mại Lakeview',
+                    'Trường liên cấp Western Australia (WASS) trong khu',
+                    'Bệnh viện quốc tế Hạnh Phúc, phòng khám đa khoa',
+                    'Công viên cây xanh hơn 30 ha, đường ven sông 4 km',
+                    'Bến du thuyền, marina sông Sài Gòn',
+                ],
+            },
+            {
+                title: 'Kết nối hạ tầng chiến lược',
+                items: [
+                    'Mặt tiền Quốc lộ 13 mở rộng 60m (đang nâng cấp 2026–2028)',
+                    'Cách Vành đai 3 TP.HCM 4 km — kết nối toàn vùng Đông Nam Bộ',
+                    'Cầu Vĩnh Bình & cầu Bình Triệu nối Bình Dương – TP.HCM',
+                    '~25 phút về Quận 1 qua Phạm Văn Đồng / cầu Bình Lợi',
+                    '~30 phút sân bay Tân Sơn Nhất',
+                    'Tuyến metro số 3B (quy hoạch) chạy dọc QL13',
+                    'Cao tốc TP.HCM – Thủ Dầu Một – Chơn Thành (đang triển khai)',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Diamond Sky Vạn Phúc City ở đâu?',
+                a: 'Diamond Sky tọa lạc trong Khu đô thị Vạn Phúc City — phường Hiệp Bình Phước, TP Thủ Đức, TP.HCM, ven sông Sài Gòn, mặt tiền Quốc lộ 13. Vị trí giáp ranh TP Thuận An (Bình Dương), cách trung tâm Quận 1 khoảng 25 phút và Thuận An khoảng 10 phút di chuyển.',
+            },
+            {
+                q: 'Giá căn hộ Diamond Sky bao nhiêu tiền năm 2026?',
+                a: 'Giá tham khảo Diamond Sky từ 55 triệu/m². Căn 1 phòng ngủ (~50m²) từ 2,8 tỷ; căn 2 phòng ngủ (70–80m²) từ 4,2 – 5,5 tỷ; căn 3 phòng ngủ (95–110m²) từ 6,5 – 8,5 tỷ. Chính sách thanh toán 18 đợt kéo dài 30 tháng, ngân hàng VCB – BIDV – TCB hỗ trợ vay tới 70% và ân hạn gốc 24 tháng.',
+            },
+            {
+                q: 'Diamond Sky có bao nhiêu tầng và bao nhiêu căn hộ?',
+                a: 'Diamond Sky cao 20 tầng nổi cộng 1 tầng mái tiện ích, cung cấp khoảng 520 căn hộ. Tầng 5–19 là tầng căn hộ điển hình với 17 căn/sàn (mã căn A1–A12, B1–B11, C1–C7, P1–P4); tầng 20 là tầng penthouse với 11 căn diện tích lớn; tầng mái dành riêng cho tiện ích cộng đồng (BBQ, lounge, sky garden).',
+            },
+            {
+                q: 'Diamond Sky bàn giao năm nào?',
+                a: 'Theo kế hoạch của Tập đoàn Vạn Phúc, Diamond Sky mở bán chính thức Quý 3/2026, cất nóc Quý 2/2028 và bàn giao căn hộ thô + hoàn thiện cơ bản trong Quý 4/2028. Cư dân chính thức về ở dự kiến đầu năm 2029.',
+            },
+            {
+                q: 'Căn hộ Diamond Sky có sổ hồng không?',
+                a: 'Có. Diamond Sky được cấp sổ hồng riêng (Giấy chứng nhận quyền sở hữu) lâu dài cho từng căn hộ, áp dụng cho cả người mua trong nước và người nước ngoài (theo hạn mức 30% mỗi tòa, 50 năm gia hạn). Tập đoàn Vạn Phúc cam kết bàn giao sổ trong vòng 12 tháng kể từ ngày nhận nhà.',
+            },
+            {
+                q: 'Vạn Phúc City là khu đô thị của ai và có quy mô như thế nào?',
+                a: 'Vạn Phúc City là đại đô thị 198 ha ven sông Sài Gòn do Tập đoàn Vạn Phúc (Van Phuc Group, thành lập 1995) làm chủ đầu tư từ năm 2004. Khu đô thị có hồ Đại Nhật 16ha, hơn 7.000 căn nhà phố – biệt thự đã bàn giao, trường WASS, TTTM Vạn Phúc Mall và bến du thuyền. Diamond Sky là tháp căn hộ cao tầng đầu tiên trong giai đoạn lõi đô thị.',
+            },
+            {
+                q: 'Diamond Sky có view sông Sài Gòn không?',
+                a: 'Có. Diamond Sky nằm trên trục view trực tiếp sông Sài Gòn ở mặt Đông – Đông Nam, view hồ Đại Nhật ở mặt Bắc và view kênh Sông Trăng nội khu ở mặt Tây. Khoảng 60% căn hộ có view sông trực tiếp; 100% căn hộ tầng 10 trở lên đều có view nước (sông hoặc hồ).',
+            },
+            {
+                q: 'Diện tích căn hộ Diamond Sky từ bao nhiêu m²?',
+                a: 'Diện tích thông thuỷ Diamond Sky: 1 phòng ngủ từ 50–55 m²; 2 phòng ngủ từ 68–82 m²; 3 phòng ngủ từ 95–110 m²; penthouse tầng 20 từ 130–180 m². Tỷ lệ căn 2PN chiếm khoảng 55% tổng số căn — phù hợp gia đình trẻ và nhà đầu tư cho thuê.',
+            },
+            {
+                q: 'Từ Diamond Sky đến trung tâm TP.HCM mất bao lâu?',
+                a: 'Từ Diamond Sky về trung tâm Quận 1 mất khoảng 25 phút theo trục Phạm Văn Đồng – cầu Bình Lợi (12 km). Đi sân bay Tân Sơn Nhất khoảng 30 phút, đến Landmark 81 (Bình Thạnh) 15 phút, đến TP Thuận An (Bình Dương) chỉ 10 phút qua cầu Vĩnh Bình.',
+            },
+            {
+                q: 'Diamond Sky có phù hợp để đầu tư cho thuê không?',
+                a: 'Diamond Sky phù hợp cho thuê nhờ ba yếu tố: (1) Trong KĐT Vạn Phúc City đông cư dân, có TTTM, trường quốc tế WASS — tạo nhu cầu thuê ổn định; (2) Mặt tiền QL13 và gần các KCN Bình Dương — thu hút chuyên gia Hàn, Nhật, Trung; (3) Giá thuê tham khảo 1PN 9–12 triệu/tháng, 2PN 14–18 triệu/tháng, 3PN 22–28 triệu/tháng — tỷ suất 4,5–5,5%/năm, cao hơn căn hộ trung tâm.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'The Global City', slug: 'the-global-city' },
+            { name: 'BĐS Thủ Đức', slug: 'bat-dong-san-thu-duc' },
         ],
     },
 };
