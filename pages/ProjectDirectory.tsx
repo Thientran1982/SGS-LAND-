@@ -112,7 +112,7 @@ const ALL_PROJECTS: DuAnProject[] = [
         location: 'KĐT Vạn Phúc City, Hiệp Bình Phước, TP Thủ Đức',
         province: 'TP.HCM',
         scale: '20 tầng (KĐT 198 ha)',
-        priceRange: 'Từ 2,8 tỷ – Từ 55 triệu/m²',
+        priceRange: 'Từ 9,6 tỷ – Từ 192 triệu/m²',
         projectType: 'Căn Hộ Cao Tầng View Sông',
         typeGroup: 'Căn hộ cao cấp',
         status: 'Mở bán 2026',

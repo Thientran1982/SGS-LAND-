@@ -77,7 +77,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         dev: 'Tập đoàn Vạn Phúc',
         loc: 'KĐT Vạn Phúc City, TP Thủ Đức (giáp Thuận An, Bình Dương)',
         scale: '198 ha tổng khu',
-        priceFrom: 'Từ 2,8 tỷ',
+        priceFrom: 'Từ 9,6 tỷ',
         type: 'Căn hộ cao tầng view sông',
         badge: 'Mở bán 2026',
         badgeColor: 'indigo',

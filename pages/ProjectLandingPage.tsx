@@ -51,7 +51,7 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
     },
     'diamond-sky-van-phuc-city': {
         title: 'Diamond Sky Vạn Phúc City | Căn Hộ Cao Tầng View Sông Sài Gòn 2026 — SGS LAND',
-        description: 'Diamond Sky Vạn Phúc City: tháp căn hộ 20 tầng trong KĐT 198ha của Tập đoàn Vạn Phúc, Hiệp Bình Phước TP Thủ Đức (giáp Thuận An, Bình Dương). 1–3PN view sông Sài Gòn, từ 2,8 tỷ, sổ hồng lâu dài. Bảng giá & ưu đãi 2026 tại SGS LAND.',
+        description: 'Diamond Sky Vạn Phúc City: tháp căn hộ hạng sang 20 tầng trong KĐT 198ha của Tập đoàn Vạn Phúc, Hiệp Bình Phước TP Thủ Đức (giáp Thuận An, Bình Dương). 1–3PN view sông Sài Gòn, từ 9,6 tỷ (~192 triệu/m²), sổ hồng lâu dài. Bảng giá & ưu đãi 2026 tại SGS LAND.',
     },
 };
 
@@ -1133,7 +1133,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         locationSlug: 'bat-dong-san-thu-duc',
         heroDescription:
             'Diamond Sky là tháp căn hộ cao tầng điểm nhấn 20 tầng nằm trong Khu đô thị Vạn Phúc City — đại đô thị 198ha ven sông Sài Gòn do Tập đoàn Vạn Phúc phát triển tại phường Hiệp Bình Phước, TP Thủ Đức, TP.HCM (giáp ranh Thuận An, Bình Dương). Dự án cung cấp 1–3 phòng ngủ với view sông Sài Gòn, hồ Đại Nhật và kênh Sông Trăng, sổ hồng lâu dài, dự kiến mở bán Q3/2026 và bàn giao 2028. SGS LAND là đại lý phân phối chính thức Diamond Sky.',
-        priceRange: 'Từ 2,8 tỷ (1PN ~ 50m²) – Từ 55 triệu/m²',
+        priceRange: 'Từ 9,6 tỷ (1PN ~ 50m²) – Từ 192 triệu/m²',
         projectType: 'Căn Hộ Cao Tầng View Sông',
         scale: '20 tầng (KĐT 198 ha)',
         details: [
@@ -1144,7 +1144,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Quy mô KĐT Vạn Phúc City', value: '198 ha, ven sông Sài Gòn' },
             { label: 'Loại hình', value: 'Căn hộ chung cư cao tầng (1PN, 2PN, 3PN)' },
             { label: 'Diện tích căn hộ', value: '50 – 110 m²' },
-            { label: 'Giá tham khảo', value: 'Từ 2,8 tỷ/căn — từ 55 triệu/m²' },
+            { label: 'Giá tham khảo', value: 'Từ 9,6 tỷ/căn — từ 192 triệu/m² (hạng sang)' },
             { label: 'Pháp lý', value: 'Sổ hồng riêng lâu dài từng căn' },
             { label: 'Tiến độ dự kiến', value: 'Mở bán Q3/2026 – Bàn giao Q4/2028' },
             { label: 'Khoảng cách Quận 1', value: '~25 phút qua Phạm Văn Đồng / Quốc lộ 13' },
@@ -1197,7 +1197,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Giá căn hộ Diamond Sky bao nhiêu tiền năm 2026?',
-                a: 'Giá tham khảo Diamond Sky từ 55 triệu/m². Căn 1 phòng ngủ (~50m²) từ 2,8 tỷ; căn 2 phòng ngủ (70–80m²) từ 4,2 – 5,5 tỷ; căn 3 phòng ngủ (95–110m²) từ 6,5 – 8,5 tỷ. Chính sách thanh toán 18 đợt kéo dài 30 tháng, ngân hàng VCB – BIDV – TCB hỗ trợ vay tới 70% và ân hạn gốc 24 tháng.',
+                a: 'Giá tham khảo Diamond Sky từ 192 triệu/m² (phân khúc hạng sang ven sông). Căn 1 phòng ngủ (~50m²) từ 9,6 tỷ; căn 2 phòng ngủ (70–80m²) từ 13,5 – 15,5 tỷ; căn 3 phòng ngủ (95–110m²) từ 18,2 – 21 tỷ; penthouse tầng 20 từ 25 tỷ. Chính sách thanh toán 18 đợt kéo dài 30 tháng, ngân hàng VCB – BIDV – TCB hỗ trợ vay tới 70% và ân hạn gốc 24 tháng.',
             },
             {
                 q: 'Diamond Sky có bao nhiêu tầng và bao nhiêu căn hộ?',
@@ -1229,7 +1229,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Diamond Sky có phù hợp để đầu tư cho thuê không?',
-                a: 'Diamond Sky phù hợp cho thuê nhờ ba yếu tố: (1) Trong KĐT Vạn Phúc City đông cư dân, có TTTM, trường quốc tế WASS — tạo nhu cầu thuê ổn định; (2) Mặt tiền QL13 và gần các KCN Bình Dương — thu hút chuyên gia Hàn, Nhật, Trung; (3) Giá thuê tham khảo 1PN 9–12 triệu/tháng, 2PN 14–18 triệu/tháng, 3PN 22–28 triệu/tháng — tỷ suất 4,5–5,5%/năm, cao hơn căn hộ trung tâm.',
+                a: 'Diamond Sky thuộc phân khúc hạng sang ven sông, phù hợp cho thuê chuyên gia cao cấp và lưu trú dài hạn: (1) Trong KĐT Vạn Phúc City đông cư dân thượng lưu, có TTTM, trường quốc tế WASS — nhu cầu thuê ổn định; (2) Mặt tiền QL13 và gần các KCN Bình Dương — thu hút giám đốc/chuyên gia cấp cao Hàn, Nhật, Singapore; (3) Giá thuê tham khảo 1PN 30–40 triệu/tháng, 2PN 55–75 triệu/tháng, 3PN 90–120 triệu/tháng — tỷ suất 3,5–4,5%/năm, kèm tiềm năng tăng giá vốn 8–12%/năm khi khu trung tâm Vạn Phúc City hoàn thiện 2028.',
             },
         ],
         relatedProjects: [
