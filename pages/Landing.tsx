@@ -75,7 +75,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         slug: 'diamond-sky-van-phuc-city',
         name: 'Diamond Sky – Vạn Phúc City',
         dev: 'Tập đoàn Vạn Phúc',
-        loc: 'KĐT Vạn Phúc City, TP Thủ Đức (giáp Thuận An, Bình Dương)',
+        loc: 'KĐT Vạn Phúc City, TP Thủ Đức',
         scale: '198 ha tổng khu',
         priceFrom: 'Từ 9,6 tỷ',
         type: 'Căn hộ cao tầng view sông',
