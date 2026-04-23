@@ -1,6 +1,31 @@
 import path from 'path';
 import fs from 'fs';
 
+/**
+ * Extract text from a Buffer (file data from PostgreSQL storage).
+ * `ext` must include the dot, e.g. '.pdf', '.docx', '.txt'
+ */
+export async function extractTextFromBuffer(buffer: Buffer, ext: string): Promise<string> {
+  try {
+    if (ext === '.pdf') {
+      return await extractPdfFromBuffer(buffer);
+    }
+    if (ext === '.docx' || ext === '.doc') {
+      return await extractDocxFromBuffer(buffer);
+    }
+    if (ext === '.txt') {
+      return buffer.toString('utf-8');
+    }
+    return '';
+  } catch (error) {
+    console.error(`Text extraction (buffer) failed for ext=${ext}:`, error);
+    return '';
+  }
+}
+
+/**
+ * Extract text from a file path on disk (legacy / dev fallback).
+ */
 export async function extractTextFromFile(filePath: string): Promise<string> {
   const ext = path.extname(filePath).toLowerCase();
   const absolutePath = path.resolve(filePath);
@@ -11,27 +36,25 @@ export async function extractTextFromFile(filePath: string): Promise<string> {
 
   try {
     if (ext === '.pdf') {
-      return await extractPdf(absolutePath);
+      const buffer = fs.readFileSync(absolutePath);
+      return await extractPdfFromBuffer(buffer);
     }
-    if (ext === '.docx') {
-      return await extractDocx(absolutePath);
-    }
-    if (ext === '.doc') {
-      return await extractDocx(absolutePath);
+    if (ext === '.docx' || ext === '.doc') {
+      const buffer = fs.readFileSync(absolutePath);
+      return await extractDocxFromBuffer(buffer);
     }
     if (ext === '.txt') {
       return fs.readFileSync(absolutePath, 'utf-8');
     }
     return '';
   } catch (error) {
-    console.error(`Text extraction failed for ${filePath}:`, error);
+    console.error(`Text extraction (file) failed for ${filePath}:`, error);
     return '';
   }
 }
 
-async function extractPdf(filePath: string): Promise<string> {
+async function extractPdfFromBuffer(buffer: Buffer): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const buffer = fs.readFileSync(filePath);
   const uint8Array = new Uint8Array(buffer);
   const doc = await pdfjsLib.getDocument({ data: uint8Array, useSystemFonts: true }).promise;
 
@@ -51,8 +74,8 @@ async function extractPdf(filePath: string): Promise<string> {
   return textParts.join('\n');
 }
 
-async function extractDocx(filePath: string): Promise<string> {
+async function extractDocxFromBuffer(buffer: Buffer): Promise<string> {
   const mammoth = await import('mammoth');
-  const result = await mammoth.extractRawText({ path: filePath });
+  const result = await mammoth.extractRawText({ buffer });
   return result.value || '';
 }
