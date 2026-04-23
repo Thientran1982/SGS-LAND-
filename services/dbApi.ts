@@ -1150,7 +1150,7 @@ class DatabaseApiClient {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ company, name, email, password, phone }),
+      body: JSON.stringify({ company: company || undefined, name, email, password, phone }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Onboarding failed' }));

@@ -62,7 +62,8 @@ export function validateBody(schema: Record<string, FieldValidator>) {
         continue;
       }
 
-      if (value === undefined || value === null) continue;
+      // Optional fields sent as empty string → treat as absent (skip all further checks)
+      if (value === undefined || value === null || (value === '' && !validator.required)) continue;
 
       if (validator.type === 'string' && typeof value !== 'string') {
         errors.push(`${field} must be a string`);

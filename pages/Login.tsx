@@ -165,6 +165,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resentSuccess, setResentSuccess] = useState('');
   const [resendingReset, setResendingReset] = useState(false);
   const [resentResetMsg, setResentResetMsg] = useState('');
+  const [showManualToken, setShowManualToken] = useState(false);
+  const [manualToken, setManualToken] = useState('');
   
   const { t, language, setLanguage } = useTranslation();
 
@@ -724,6 +726,48 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                         {resendingReset ? t('auth.resend_reset_sending') : t('auth.resend_reset_email')}
                                     </button>
                                 )}
+
+                                {/* Manual token paste — fallback khi email vào spam hoặc không nhận được */}
+                                <div className="pt-2 border-t border-white/10">
+                                    {!showManualToken ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowManualToken(true)}
+                                            className="text-xs2 text-gray-500 hover:text-gray-300 transition-colors underline underline-offset-2"
+                                        >
+                                            {t('auth.paste_token_prompt') || 'Đã có link đặt lại mật khẩu? Dán vào đây'}
+                                        </button>
+                                    ) : (
+                                        <div className="space-y-2 text-left animate-enter">
+                                            <p className="text-xs2 text-gray-400">{t('auth.paste_token_label') || 'Dán link hoặc mã token từ email:'}</p>
+                                            <input
+                                                type="text"
+                                                value={manualToken}
+                                                onChange={e => setManualToken(e.target.value)}
+                                                placeholder="https://...reset-password/abc123... hoặc chỉ token"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 font-mono focus:outline-none focus:border-indigo-500/50"
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={!manualToken.trim()}
+                                                onClick={() => {
+                                                    // Hỗ trợ cả link đầy đủ và bare token
+                                                    const raw = manualToken.trim();
+                                                    const match = raw.match(/reset-password\/([a-f0-9]{40,})/i) || raw.match(/reset_token=([a-f0-9]{40,})/i) || raw.match(/^([a-f0-9]{40,})$/i);
+                                                    const tok = match ? match[1] : raw;
+                                                    setOtp(tok);
+                                                    setTokenFromUrl(true);
+                                                    setSuccessMsg('');
+                                                    setManualToken('');
+                                                    setShowManualToken(false);
+                                                }}
+                                                className="w-full bg-indigo-600 text-white font-semibold rounded-xl py-2 text-xs hover:bg-indigo-500 transition-colors disabled:opacity-40"
+                                            >
+                                                {t('auth.paste_token_confirm') || 'Xác nhận & Đặt mật khẩu mới'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             /* Token from URL — valid link, show new password form */
