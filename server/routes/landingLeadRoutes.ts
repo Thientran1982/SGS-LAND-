@@ -13,13 +13,23 @@ import { logger } from '../middleware/logger';
 
 const HOTLINE = '0971132378';
 const HOTLINE_DISPLAY = '0971 132 378';
-const INTERNAL_INBOX = process.env.LANDING_LEAD_INBOX || 'sgsland.vn@gmail.com';
+const INTERNAL_INBOX = process.env.LANDING_LEAD_INBOX || 'info@sgsland.vn';
+
+const PROJECT_DISPLAY_NAMES: Record<string, string> = {
+  'masteri-cosmo-central': 'Masteri Cosmo Central',
+  'vinhomes-hoc-mon': 'Vinhomes Hóc Môn',
+  'legacy-66': 'Legacy 66',
+  'vinhomes-can-gio': 'Vinhomes Cần Giờ',
+  'vinhomes-grand-park': 'Vinhomes Grand Park',
+  'diamond-city': 'Diamond City',
+};
 
 interface LandingLeadPayload {
   name?: string;
   phone?: string;
   email?: string;
   type?: string;
+  unit?: string;
   purpose?: string;
   project?: string;
   source?: string;
@@ -50,9 +60,10 @@ export function createLandingLeadRoutes(): Router {
       const phoneRaw = (body.phone || '').trim();
       const phone = phoneRaw.replace(/\s+/g, '');
       const email = (body.email || '').trim();
-      const type = (body.type || '').trim();
+      const type = (body.type || body.unit || '').trim();
       const purpose = (body.purpose || '').trim();
-      const project = (body.project || 'Vinhomes Hóc Môn').trim();
+      const projectSlug = (body.project || '').trim().toLowerCase();
+      const project = PROJECT_DISPLAY_NAMES[projectSlug] || projectSlug || 'Dự án SGS Land';
       const source = (body.source || 'landing-page').trim();
       const pageUrl = (body.pageUrl || '').trim();
 
@@ -177,7 +188,7 @@ export function createLandingLeadRoutes(): Router {
       let userEmailSent = false;
       if (email) {
         const userResult = await brevoSendEmail({
-          to: { email, name } as any,
+          to: [{ email, name }],
           subject: `Cảm ơn ${name} — SGS Land sẽ liên hệ về ${project} trong 30 phút`,
           html: userHtml,
           text: userText,
