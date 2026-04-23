@@ -1,12 +1,68 @@
 import { Router, Request, Response } from 'express';
 import path from 'path';
-import fs from 'fs';
 import { documentRepository } from '../repositories/documentRepository';
 import { articleRepository } from '../repositories/articleRepository';
-import { extractTextFromFile } from '../services/textExtractor';
+import { extractTextFromBuffer, extractTextFromFile } from '../services/textExtractor';
+import { getFile } from '../services/storageService';
 
-const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
 const CAN_MANAGE = ['ADMIN', 'TEAM_LEAD'];
+
+/**
+ * Parse a fileUrl like "/uploads/{tenantId}/{filename}" into its parts.
+ * Returns null when the URL does not match this pattern.
+ */
+function parseUploadUrl(fileUrl: string): { tenantId: string; filename: string; ext: string } | null {
+  // Normalise: strip leading slash
+  const rel = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
+  // Expected pattern: uploads/<tenantId>/<filename>
+  const parts = rel.split('/');
+  if (parts.length < 3 || parts[0] !== 'uploads') return null;
+  const tenantId = parts[1];
+  const filename = parts.slice(2).join('/');
+  const ext = path.extname(filename).toLowerCase();
+  return { tenantId, filename, ext };
+}
+
+/**
+ * Extract plain text from a document's fileUrl.
+ * 1. Tries to fetch the file buffer from PostgreSQL (primary path).
+ * 2. Falls back to local disk (dev / legacy files).
+ */
+async function extractContent(fileUrl: string, tenantId: string): Promise<string> {
+  const parsed = parseUploadUrl(fileUrl);
+  if (parsed) {
+    // Primary: fetch from PostgreSQL storage
+    try {
+      const fileResult = await getFile(parsed.tenantId, parsed.filename);
+      if (fileResult) {
+        const text = await extractTextFromBuffer(fileResult.buffer, parsed.ext);
+        if (text.trim()) return text;
+      }
+    } catch (err) {
+      console.warn('[Knowledge] Postgres extraction failed, trying disk fallback:', err);
+    }
+
+    // Fallback: local disk (dev environment)
+    try {
+      const diskPath = path.join(process.cwd(), 'uploads', parsed.tenantId, parsed.filename);
+      const diskText = await extractTextFromFile(diskPath);
+      if (diskText.trim()) return diskText;
+    } catch { /* ignore */ }
+  }
+
+  // Legacy path: fileUrl is a direct filesystem path (shouldn't happen but keep for safety)
+  try {
+    const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
+    const filePath = path.join(process.cwd(), relativePath);
+    const resolved = path.resolve(filePath);
+    const tenantDir = path.resolve(path.join(process.cwd(), 'uploads', tenantId));
+    if (resolved.startsWith(tenantDir + path.sep) || resolved.startsWith(tenantDir + '/')) {
+      return await extractTextFromFile(resolved);
+    }
+  } catch { /* ignore */ }
+
+  return '';
+}
 
 export function createKnowledgeRoutes(authenticateToken: any) {
   const router = Router();
@@ -36,19 +92,13 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       const { title, type, content, status, fileUrl, sizeKb } = req.body;
       if (!title) return res.status(400).json({ error: 'Title is required' });
 
+      // Attempt inline extraction when a fileUrl is provided and no content given yet
       let extractedContent = content || '';
       if (fileUrl && !extractedContent) {
         try {
-          const tenantId = user.tenantId;
-          const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
-          const filePath = path.join(process.cwd(), relativePath);
-          const resolved = path.resolve(filePath);
-          const tenantDir = path.resolve(path.join(process.cwd(), 'uploads', tenantId));
-          if (resolved.startsWith(tenantDir + path.sep) || resolved.startsWith(tenantDir + '/')) {
-            extractedContent = await extractTextFromFile(resolved);
-          }
+          extractedContent = await extractContent(fileUrl, user.tenantId);
         } catch (err) {
-          console.error('Text extraction failed:', err);
+          console.error('[Knowledge] Inline text extraction failed:', err);
         }
       }
 
@@ -63,28 +113,19 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       });
       res.status(201).json(doc);
 
-      // Background extraction: if content not yet available, retry async then update to ACTIVE
+      // Background extraction: retry async when inline extraction returned nothing
       if (initialStatus === 'PROCESSING' && fileUrl) {
         (async () => {
           try {
-            const tenantId = user.tenantId;
-            const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
-            const filePath = path.join(process.cwd(), relativePath);
-            const resolved = path.resolve(filePath);
-            const tenantDir = path.resolve(path.join(process.cwd(), 'uploads', tenantId));
+            let bgContent = await extractContent(fileUrl, user.tenantId);
 
-            let bgContent = '';
-            if (resolved.startsWith(tenantDir + path.sep) || resolved.startsWith(tenantDir + '/')) {
-              try { bgContent = await extractTextFromFile(resolved); } catch { /* ignore */ }
-            }
-
-            // Gemini fallback: if file extraction still empty, use AI to summarize filename as placeholder
+            // Gemini fallback: if extraction is still empty, use a title placeholder
             if (!bgContent && title) {
               bgContent = `[Tài liệu: ${title}]`;
             }
 
             const docId = (doc as any).id as string;
-            await documentRepository.update(tenantId, docId, {
+            await documentRepository.update(user.tenantId, docId, {
               content: bgContent,
               status: 'ACTIVE',
             });
@@ -137,27 +178,22 @@ export function createKnowledgeRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
 
-      // Fetch document first to get file_url for physical deletion
       const doc = await documentRepository.findById(user.tenantId, String(req.params.id));
       if (!doc) return res.status(404).json({ error: 'Document not found' });
 
       const deleted = await documentRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Document not found' });
 
-      // Delete physical file if it exists
+      // Delete physical file from storage
       if (doc.fileUrl) {
         try {
-          const relativePath = doc.fileUrl.startsWith('/') ? doc.fileUrl.slice(1) : doc.fileUrl;
-          const filePath = path.join(process.cwd(), relativePath);
-          const resolved = path.resolve(filePath);
-          const tenantDir = path.resolve(path.join(UPLOAD_BASE, user.tenantId));
-          if (resolved.startsWith(tenantDir + path.sep) || resolved.startsWith(tenantDir + '/')) {
-            if (fs.existsSync(resolved)) {
-              fs.unlinkSync(resolved);
-            }
+          const parsed = parseUploadUrl(doc.fileUrl as string);
+          if (parsed) {
+            const { deleteFile } = await import('../services/storageService');
+            await deleteFile(parsed.tenantId, parsed.filename);
           }
         } catch (fileErr) {
-          console.error('Failed to delete physical file:', fileErr);
+          console.error('[Knowledge] Failed to delete stored file:', fileErr);
         }
       }
 
