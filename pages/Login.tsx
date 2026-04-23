@@ -391,9 +391,14 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (isSsoMode) {
           await db.authenticateViaSSO(trimmedEmail);
       } 
-      // 4. REGISTER (B2B vendor onboarding) — tạo tenant + ADMIN + INDIVIDUAL trial 14 ngày
+      // 4. REGISTER — 2 luồng tuỳ có nhập tên doanh nghiệp hay không:
+      //    • Có công ty  → onboard-vendor (ADMIN, workspace riêng, trial 14 ngày)
+      //    • Không công ty → register thường (SALES, vào host tenant SGS Land)
       else if (view === 'REGISTER') {
-        const result = await db.onboardVendor(company.trim(), name.trim(), trimmedEmail, password);
+        const hasCompany = company.trim().length > 0;
+        const result = hasCompany
+          ? await db.onboardVendor(company.trim(), name.trim(), trimmedEmail, password)
+          : await db.register(name.trim(), trimmedEmail, password);
         if (result?.needsVerification) {
           setRegisteredEmail(trimmedEmail);
           if (result?.devVerifyToken) {
@@ -640,7 +645,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         </div>
                         <div className="space-y-1.5 group">
                             <label htmlFor="auth-company" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">
-                                {t('auth.label_company')} <span className="text-gray-500 normal-case font-normal">{t('auth.optional')}</span>
+                                {t('auth.label_company')}
+                                <span className="ml-1.5 text-gray-600 normal-case font-normal text-xs">
+                                    {company.trim() 
+                                        ? <span className="text-emerald-400 font-semibold">{t('auth.role_vendor_badge') || '→ Vendor / Doanh nghiệp'}</span>
+                                        : <span className="text-amber-400/80 font-semibold">{t('auth.role_sales_badge') || '→ Nhân viên kinh doanh'}</span>
+                                    }
+                                </span>
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></span>
@@ -649,13 +660,22 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             {fieldErrors.company && <p id="err-company" className="text-xs2 text-rose-400 ml-1">{fieldErrors.company}</p>}
                         </div>
 
-                        {/* B2B onboarding hint — workspace riêng + trial 14 ngày */}
-                        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-                            <svg className="w-4 h-4 text-indigo-300 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <p className="text-xs2 text-indigo-200 leading-relaxed">
-                                {t('auth.vendor_onboard_hint')}
-                            </p>
-                        </div>
+                        {/* Hint động: thay đổi theo loại tài khoản (vendor vs nhân viên) */}
+                        {company.trim() ? (
+                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 transition-all">
+                                <svg className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                <p className="text-xs2 text-emerald-200 leading-relaxed">
+                                    {t('auth.vendor_onboard_hint')}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 transition-all">
+                                <svg className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                <p className="text-xs2 text-amber-200 leading-relaxed">
+                                    {t('auth.sales_onboard_hint')}
+                                </p>
+                            </div>
+                        )}
                     </>
                 )}
                 
