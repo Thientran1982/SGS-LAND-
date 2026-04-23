@@ -243,6 +243,9 @@ export const DICTIONARY = {
         "auth.resend_reset_email": "Gửi lại email",
         "auth.resend_reset_sending": "Đang gửi...",
         "auth.resend_reset_sent": "Đã gửi lại! Kiểm tra hộp thư của bạn.",
+        "auth.paste_token_prompt": "Đã có link đặt lại mật khẩu? Dán vào đây",
+        "auth.paste_token_label": "Dán link hoặc mã token từ email:",
+        "auth.paste_token_confirm": "Xác nhận & Đặt mật khẩu mới",
         "auth.valid_reset_link": "Liên kết hợp lệ. Vui lòng nhập mật khẩu mới bên dưới.",
 
         "nav.logo_label": "SGS LAND",
@@ -2542,6 +2545,9 @@ export const DICTIONARY = {
         "auth.resend_reset_email": "Resend email",
         "auth.resend_reset_sending": "Sending...",
         "auth.resend_reset_sent": "Sent! Check your inbox.",
+        "auth.paste_token_prompt": "Already have a reset link? Paste it here",
+        "auth.paste_token_label": "Paste the link or token from your email:",
+        "auth.paste_token_confirm": "Confirm & Set New Password",
         "auth.valid_reset_link": "Link is valid. Please enter your new password below.",
 
         "nav.logo_label": "SGS LAND",
