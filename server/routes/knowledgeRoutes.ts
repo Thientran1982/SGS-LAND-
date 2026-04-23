@@ -5,7 +5,10 @@ import { articleRepository } from '../repositories/articleRepository';
 import { extractTextFromBuffer, extractTextFromFile } from '../services/textExtractor';
 import { getFile } from '../services/storageService';
 
-const CAN_MANAGE = ['ADMIN', 'TEAM_LEAD'];
+// Upload & create: mọi nhân viên nội bộ có thể đóng góp tài liệu huấn luyện
+const CAN_UPLOAD = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING'];
+// Edit & delete: chỉ quản lý cấp cao mới được sửa/xoá
+const CAN_MANAGE = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 
 /**
  * Parse a fileUrl like "/uploads/{tenantId}/{filename}" into its parts.
@@ -85,7 +88,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.post('/documents', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!CAN_MANAGE.includes(user.role)) {
+      if (!CAN_UPLOAD.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
 
@@ -236,7 +239,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.post('/articles', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!CAN_MANAGE.includes(user.role)) {
+      if (!CAN_UPLOAD.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
       const { title, content, excerpt, category, tags, author, coverImage, image, images, videos, featured, status, slug } = req.body;

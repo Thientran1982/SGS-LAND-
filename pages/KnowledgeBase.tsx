@@ -82,6 +82,7 @@ export const KnowledgeBase: React.FC = () => {
         ? docs.filter(d => normalizeString(d.title || '').includes(normalizeString(debouncedSearch)))
         : docs;
 
+    const canUpload = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING'].includes(currentUser?.role ?? '');
     const canManage = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '');
 
     const processFile = async (file: File): Promise<boolean> => {
@@ -210,8 +211,8 @@ export const KnowledgeBase: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Upload button — header shortcut, only for managers */}
-                    {canManage && (
+                    {/* Upload button — header shortcut */}
+                    {canUpload && (
                         <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                             {isUploading
                                 ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -237,8 +238,8 @@ export const KnowledgeBase: React.FC = () => {
                 </div>
             </div>
 
-            {/* ─── Drag & Drop zone — compact strip for managers ─── */}
-            {canManage && (
+            {/* ─── Drag & Drop zone ─── */}
+            {canUpload && (
                 <div
                     className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 border-2 border-dashed rounded-2xl transition-all duration-300 overflow-hidden ${
                         isDragging
