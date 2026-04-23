@@ -363,56 +363,43 @@ export const ProductSearch: React.FC = () => {
             {/* HEADER (Sticky) */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/95 backdrop-blur-xl z-50 border-b border-[var(--glass-border)] shrink-0">
                 <div className="max-w-[1920px] mx-auto">
-                    {/* Top Row: Brand & Search & Login */}
-                    <div className="px-4 md:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex items-center justify-between w-full sm:w-auto gap-2">
-                            {/* Left: Back button */}
-                            <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0">
-                                {ICONS.BACK}
-                            </button>
+                    {/* Top Row: Back | Logo | Search | Login — single row on all screen sizes */}
+                    <div className="px-3 md:px-6 py-2.5 flex items-center gap-2 md:gap-3">
+                        {/* Back button */}
+                        <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0">
+                            {ICONS.BACK}
+                        </button>
 
-                            {/* Center: Logo — centered on mobile, left-aligned on desktop */}
-                            <div onClick={handleHome} className="flex items-center gap-2 cursor-pointer flex-1 justify-center sm:flex-none sm:justify-start">
-                                <Logo className="w-7 h-7 text-indigo-600 shrink-0" />
-                                <span className="font-bold text-lg tracking-tight hidden sm:inline">SGS<span className="text-slate-400">MARKET</span></span>
-                            </div>
-
-                            {/* Right: Login (Mobile only) */}
-                            <div className="shrink-0 flex items-center justify-end sm:hidden">
-                                <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap">
-                                    {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
-                                </button>
-                            </div>
+                        {/* Logo — icon only on mobile, icon+name on desktop */}
+                        <div onClick={handleHome} className="cursor-pointer shrink-0 flex items-center gap-2">
+                            <Logo className="w-6 h-6 md:w-7 md:h-7 text-indigo-600" />
+                            <span className="font-bold text-base tracking-tight hidden md:inline">SGS<span className="text-slate-400">MARKET</span></span>
                         </div>
 
-                            {/* Centered Search Bar */}
-                        <div className="flex-1 w-full max-w-2xl mx-auto relative group flex items-center gap-2">
-                            <div className="relative flex-1 group">
-                                <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                                    {ICONS.SEARCH}
+                        {/* Search bar — flex-1, fills remaining space */}
+                        <div className="flex-1 min-w-0 relative group">
+                            <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                                {ICONS.SEARCH}
+                            </div>
+                            <input
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
+                                className="w-full pl-10 pr-8 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                                placeholder={t('search.placeholder')}
+                            />
+                            {query && (
+                                <div className="absolute right-2 inset-y-0 flex items-center">
+                                    <button onClick={() => setQuery('')} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search')}>
+                                        {ICONS.X}
+                                    </button>
                                 </div>
-                                <input 
-                                    value={query}
-                                    onChange={e => setQuery(e.target.value)}
-                                    className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
-                                    placeholder={t('search.placeholder')}
-                                />
-                                {query && (
-                                    <div className="absolute right-2 inset-y-0 flex items-center">
-                                        <button onClick={() => setQuery('')} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search')}>
-                                            {ICONS.X}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </div>
 
-                        {/* Right: Login (Desktop) */}
-                        <div className="shrink-0 hidden sm:flex items-center justify-end">
-                            <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
-                                {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
-                            </button>
-                        </div>
+                        {/* Login / Dashboard button */}
+                        <button onClick={handleLogin} className="px-3 md:px-5 py-2 min-h-[40px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
+                            {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
+                        </button>
                     </div>
 
                     {/* Bottom Row: Toolbar (Filters & Views) */}
