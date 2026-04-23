@@ -118,7 +118,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Căn hộ All-in-One Cao Cấp',
         badge: 'Ra mắt 15/01/2026',
         badgeColor: 'blue',
-        img: '/landing/masteri-cosmo-central/hero.jpg',
+        img: '/landing/masteri-cosmo-central/hero.jpg?v=3',
         href: '/landing/masteri-cosmo-central/',
     },
     {
