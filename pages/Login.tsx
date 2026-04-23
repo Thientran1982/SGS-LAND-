@@ -144,6 +144,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
+  const [registerMode, setRegisterMode] = useState<'SALES' | 'VENDOR'>('SALES');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
@@ -285,7 +286,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       // Registration Validation
       if (view === 'REGISTER') {
           if (!name.trim()) errors.name = t('auth.error_name_required');
-          if (company.trim() && company.trim().length < 2) errors.company = t('auth.error_company_required');
+          if (registerMode === 'VENDOR') {
+              if (!company.trim()) errors.company = t('auth.error_company_required');
+              else if (company.trim().length < 2) errors.company = t('auth.error_company_required');
+          }
           if (!password) errors.password = t('auth.error_password_required');
           else if (calculatePasswordStrength(password) < 2) errors.password = t('auth.error_password_weak');
       }
@@ -391,12 +395,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (isSsoMode) {
           await db.authenticateViaSSO(trimmedEmail);
       } 
-      // 4. REGISTER — 2 luồng tuỳ có nhập tên doanh nghiệp hay không:
-      //    • Có công ty  → onboard-vendor (ADMIN, workspace riêng, trial 14 ngày)
-      //    • Không công ty → register thường (SALES, vào host tenant SGS Land)
+      // 4. REGISTER — 2 luồng theo registerMode được chọn:
+      //    • VENDOR  → onboard-vendor (ADMIN, workspace riêng, trial 14 ngày)
+      //    • SALES   → register thường (SALES, vào host tenant SGS Land)
       else if (view === 'REGISTER') {
-        const hasCompany = company.trim().length > 0;
-        const result = hasCompany
+        const result = registerMode === 'VENDOR'
           ? await db.onboardVendor(company.trim(), name.trim(), trimmedEmail, password)
           : await db.register(name.trim(), trimmedEmail, password);
         if (result?.needsVerification) {
@@ -635,6 +638,35 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {/* --- REGISTRATION FIELDS --- */}
                 {view === 'REGISTER' && (
                     <>
+                        {/* Tab switcher: Nhân viên kinh doanh | Vendor/Đội nhóm */}
+                        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => { setRegisterMode('SALES'); setCompany(''); setFieldErrors({}); }}
+                                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                                    registerMode === 'SALES'
+                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-300'
+                                }`}
+                            >
+                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                {t('auth.register_tab_sales') || 'Nhân viên KD'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setRegisterMode('VENDOR'); setFieldErrors({}); }}
+                                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                                    registerMode === 'VENDOR'
+                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-300'
+                                }`}
+                            >
+                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                {t('auth.register_tab_vendor') || 'Vendor / Đội nhóm'}
+                            </button>
+                        </div>
+
+                        {/* Họ tên — luôn hiển thị */}
                         <div className="space-y-1.5 group">
                             <label htmlFor="auth-name" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_name')}</label>
                             <div className="relative">
@@ -643,37 +675,29 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </div>
                             {fieldErrors.name && <p id="err-name" className="text-xs2 text-rose-400 ml-1">{fieldErrors.name}</p>}
                         </div>
-                        <div className="space-y-1.5 group">
-                            <label htmlFor="auth-company" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">
-                                {t('auth.label_company')}
-                                <span className="ml-1.5 text-gray-600 normal-case font-normal text-xs">
-                                    {company.trim() 
-                                        ? <span className="text-emerald-400 font-semibold">{t('auth.role_vendor_badge') || '→ Vendor / Doanh nghiệp'}</span>
-                                        : <span className="text-amber-400/80 font-semibold">{t('auth.role_sales_badge') || '→ Nhân viên kinh doanh'}</span>
-                                    }
-                                </span>
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></span>
-                                <input id="auth-company" value={company} onChange={e => setCompany(e.target.value)} className={getInputClass(!!fieldErrors.company)} placeholder={t('auth.placeholder_company_optional')} aria-describedby={fieldErrors.company ? 'err-company' : undefined} />
-                            </div>
-                            {fieldErrors.company && <p id="err-company" className="text-xs2 text-rose-400 ml-1">{fieldErrors.company}</p>}
-                        </div>
 
-                        {/* Hint động: thay đổi theo loại tài khoản (vendor vs nhân viên) */}
-                        {company.trim() ? (
-                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 transition-all">
+                        {/* Tên doanh nghiệp/đội nhóm — chỉ hiển thị khi VENDOR */}
+                        {registerMode === 'VENDOR' && (
+                            <div className="space-y-1.5 group">
+                                <label htmlFor="auth-company" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_company_team') || 'Doanh nghiệp / Đội nhóm'}</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></span>
+                                    <input id="auth-company" value={company} onChange={e => setCompany(e.target.value)} className={getInputClass(!!fieldErrors.company)} placeholder={t('auth.placeholder_company_team') || 'Tên doanh nghiệp hoặc đội nhóm'} aria-describedby={fieldErrors.company ? 'err-company' : undefined} />
+                                </div>
+                                {fieldErrors.company && <p id="err-company" className="text-xs2 text-rose-400 ml-1">{fieldErrors.company}</p>}
+                            </div>
+                        )}
+
+                        {/* Hint theo loại tài khoản */}
+                        {registerMode === 'VENDOR' ? (
+                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                 <svg className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                                <p className="text-xs2 text-emerald-200 leading-relaxed">
-                                    {t('auth.vendor_onboard_hint')}
-                                </p>
+                                <p className="text-xs2 text-emerald-200 leading-relaxed">{t('auth.vendor_onboard_hint')}</p>
                             </div>
                         ) : (
-                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 transition-all">
+                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
                                 <svg className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                <p className="text-xs2 text-amber-200 leading-relaxed">
-                                    {t('auth.sales_onboard_hint')}
-                                </p>
+                                <p className="text-xs2 text-amber-200 leading-relaxed">{t('auth.sales_onboard_hint')}</p>
                             </div>
                         )}
                     </>
