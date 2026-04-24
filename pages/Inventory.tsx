@@ -41,6 +41,7 @@ const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: 
     [ListingStatus.SOLD]: { color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-slate-300' },
     [ListingStatus.RENTED]: { color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
     [ListingStatus.INACTIVE]: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
+    [ListingStatus.BEST_MARKET]: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-300' },
 };
 
 // --- HOOK: DRAGGABLE SCROLL (Unified) ---

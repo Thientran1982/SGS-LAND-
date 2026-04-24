@@ -275,6 +275,42 @@ async function writeSafetyLog(
     }
 }
 
+// ── PLATFORM FEATURES GUIDE — dùng trong NAVIGATE_PLATFORM writer branch ──────
+const PLATFORM_FEATURES_GUIDE = `
+[TÍNH NĂNG NỀN TẢNG SGS LAND — URL & HƯỚNG DẪN SỬ DỤNG]
+
+## QUẢN LÝ KINH DOANH (yêu cầu đăng nhập)
+• Dashboard tổng quan        → /dashboard          — thống kê lead, doanh số, KPI
+• Khách hàng (Lead/CRM)      → /leads              — quản lý, phân loại, follow-up khách
+• Kho hàng / Đăng tin mới    → /inventory          — đăng tin BDS, sửa/xoá tin, quản lý trạng thái
+• Hợp đồng                   → /contracts          — tạo/theo dõi hợp đồng mua bán & đặt cọc
+• Dự án                      → /projects           — quản lý dự án, phân khu, tiến độ
+• Hòm thư (Inbox)            → /inbox              — tin nhắn nội bộ & từ khách
+• Chiến dịch Marketing       → /campaigns          — tạo chiến dịch gửi email/SMS hàng loạt
+• Sequences (kịch bản tự động) → /sequences        — tự động hoá follow-up theo lịch trình
+• Báo cáo & Phân tích        → /reports            — báo cáo doanh số, tỷ lệ chuyển đổi
+• Phê duyệt tin đăng         → /approvals          — duyệt/từ chối tin của sales (quản lý)
+• Task & Công việc           → /task-dashboard     — giao/nhận task, kanban, deadline
+
+## CÔNG CỤ THÔNG TIN (có thể xem không cần đăng nhập)
+• Lãi suất ngân hàng         → /lai-suat-ngan-hang — XEM và ĐĂNG lãi suất vay mua BDS;
+  - Cách đăng lãi suất: vào /lai-suat-ngan-hang → nhấn "Đăng Thông Tin Lãi Suất" (yêu cầu đăng nhập) → điền tên NH, loại vay, lãi suất min/max, kỳ hạn, thông tin liên hệ → nhấn Lưu
+  - Chỉ nhân viên ngân hàng hoặc chuyên gia tài chính đã đăng nhập mới có thể đăng
+• Ký gửi BDS                 → /ky-gui-bat-dong-san — đăng ký ký gửi sản phẩm cho SGS Land phân phối
+• Định giá AI                → /ai-valuation        — định giá tự động bằng AI
+• Tìm kiếm BDS               → /marketplace         — tìm kiếm BDS công khai
+• Hướng dẫn sử dụng         → /huong-dan-su-dung   — tài liệu hướng dẫn chi tiết từng tính năng
+
+## CÀI ĐẶT & QUẢN TRỊ (chỉ admin)
+• Nhân sự / Nhân viên       → /employees           — thêm/sửa tài khoản thành viên
+• Cài đặt doanh nghiệp      → /enterprise-settings — thông tin công ty, logo, cài đặt chung
+• Quy tắc phân lead         → /routing-rules       — phân lead tự động theo điều kiện
+• Quy tắc chấm điểm lead    → /scoring-rules       — tự động chấm điểm tiềm năng khách
+• AI Governance             → /ai-governance        — quản lý prompt AI, giới hạn chi phí
+• Bảo mật & Tuân thủ        → /security            — log đăng nhập, cài đặt 2FA, quyền truy cập
+• Thanh toán & Gói dịch vụ  → /billing             — nâng cấp gói, lịch sử hoá đơn
+`.trim();
+
 // Default system instructions — overridable via admin prompt templates
 const DEFAULT_ROUTER_INSTRUCTION = `Bạn là bộ phân loại ý định (intent router) chuyên biệt cho CRM Bất động sản Việt Nam.
 Nhiệm vụ DUY NHẤT: phân loại TIN NHẮN KHÁCH và trích xuất thực thể quan trọng. Chỉ trả JSON hợp lệ theo schema — KHÔNG giải thích, KHÔNG thêm văn bản ngoài JSON.
@@ -1277,7 +1313,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 7. ANALYZE_LEAD — Yêu cầu: xem hồ sơ khách này, phân tích khách hàng, lead này thế nào, tiềm năng không (dùng nội bộ)
 8. ESTIMATE_VALUATION — Hỏi: nhà/đất của tôi giá bao nhiêu, định giá, ước tính giá trị, giá thị trường nhà tôi, bán được không
    → PHÂN BIỆT: "Nhà tôi ở X → giá?" = ESTIMATE_VALUATION | "Nhà ở X giá bao nhiêu để mua" = SEARCH_INVENTORY
-9. DIRECT_ANSWER — Chào hỏi, cảm ơn, câu hỏi đơn giản không thuộc các loại trên, hỏi tiến độ dự án, giờ mở cửa, thông tin liên hệ
+9. DIRECT_ANSWER — Chào hỏi, cảm ơn, câu hỏi đơn giản, hỏi tiến độ dự án, giờ mở cửa, thông tin liên hệ; HỎI VỀ TÍNH NĂNG/CÁCH SỬ DỤNG NỀN TẢNG như: "đăng lãi suất chỗ nào", "đăng tin ở đâu", "tìm tính năng X ở đâu", "làm sao dùng Y", "hướng dẫn dùng Z"
 10. ESCALATE_TO_HUMAN — Tức giận, phàn nàn nghiêm trọng, yêu cầu gặp nhân viên thật, từ chối AI
 
 QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
@@ -2395,6 +2431,26 @@ YÊU CẦU VIẾT PHẢN HỒI (40-80 từ):
                         const isGreeting   = /^(xin chào|chào|hello|hi|hey|alo|helo|chào buổi|chào mừng|good morning|good afternoon|good evening|hôm nay|chào anh|chào chị|chào em|thế nào|bạn ơi|xin hỏi|cho hỏi|ơi)\b/.test(_rawMsg) && _rawMsg.length < 60;
                         const isProjectInfo = /tiến độ|tiến trình|dự án|chủ đầu tư|bàn giao|pháp lý dự án|giờ mở cửa|địa chỉ showroom|văn phòng|liên hệ|hotline|số điện thoại|email/.test(_rawMsg);
                         const isThankYou   = /^(cảm ơn|thanks|thank you|ok|oke|oki|okk|được rồi|vâng|dạ|nhận rồi|hiểu rồi|tuyệt|hay quá|tốt|giỏi|tuyệt vời)/.test(_rawMsg) && _rawMsg.length < 50;
+                        const isPlatformNav = /đăng lãi suất|đăng lãi|lãi suất.*đăng|đăng.*lãi|chỗ nào đăng|ở đâu đăng|đăng tin.*đâu|kho hàng|inventory|tính năng|hướng dẫn|cách dùng|làm sao|làm thế nào|tìm thấy|truy cập|menu.*đâu|đâu.*menu|trang nào|page nào|mục nào|feature|chức năng|đăng thông tin|bank.?rate|lai.?suat|lai_suat/.test(_rawMsg)
+                            && !/vay bao nhiêu|trả góp|tính vay|lãi suất.*tính|tính.*lãi suất/.test(_rawMsg); // Phân biệt: hỏi cách ĐĂNG lãi suất vs hỏi LÃI SUẤT để vay
+
+                        if (isPlatformNav) {
+                            return `NHIỆM VỤ: HƯỚNG DẪN SỬ DỤNG NỀN TẢNG — Chỉ đúng tính năng/trang, kèm link cụ thể
+
+${PLATFORM_FEATURES_GUIDE}
+
+${_hist}
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (50-120 từ):
+- ${langInstruction}
+- Trả lời THẲNG VÀO VẤN ĐỀ: tên tính năng + đường dẫn cụ thể (ví dụ: /lai-suat-ngan-hang)
+- Nếu hỏi cách đăng lãi suất: hướng dẫn 3 bước: vào trang → nhấn nút → điền form → lưu
+- Nếu hỏi chung về tính năng: liệt kê 2-3 tính năng liên quan kèm URL
+- KHÔNG đề cập các tính năng không liên quan câu hỏi
+- Giọng điệu: đồng nghiệp hướng dẫn nghiệp vụ — ngắn gọn, thực tế, không vòng vo
+- Kết thúc bằng: "Anh/chị cần hỗ trợ thêm tính năng nào không ạ?"`;
+                        }
 
                         if (isGreeting) {
                             return `NHIỆM VỤ: CHÀO HỎI — Phản hồi lời chào của khách, nhanh → khai thác nhu cầu
