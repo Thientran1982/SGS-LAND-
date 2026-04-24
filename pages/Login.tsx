@@ -174,6 +174,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const localizeServerError = (msg: string): string => {
       if (!msg) return t('auth.error_generic');
       const m = msg.toLowerCase();
+      if (m === 'tenant_pending_approval') return t('auth.pending_approval_title');
+      if (m === 'tenant_rejected') return t('auth.rejected_title');
       if (m.includes('too many') || m.includes('rate limit') || m.includes('429')) return t('auth.error_rate_limit');
       if (m.includes('invalid credentials') || m.includes('invalid email or password')) return t('auth.error_invalid_creds');
       if (m.includes('already exists') || m.includes('duplicate') || m.includes('already registered')) return t('auth.error_email_exists');
