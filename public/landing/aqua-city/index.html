@@ -192,38 +192,6 @@
 }
 </script>
 <style>
-/* ─── EMOJI FONT: phải đứng ĐẦU — dùng unicode-range để ép trình duyệt
-       dùng emoji system font TRƯỚC Be Vietnam Pro cho mọi ký tự emoji ─── */
-@font-face {
-  font-family: 'SysEmoji';
-  src: local('Apple Color Emoji'),
-       local('Segoe UI Emoji'),
-       local('Noto Color Emoji'),
-       local('Android Emoji'),
-       local('Segoe UI Symbol');
-  unicode-range:
-    U+00A9, U+00AE, U+203C, U+2049, U+2122, U+2139,
-    U+2194-2199, U+21A9-21AA, U+231A-231B, U+2328, U+23CF,
-    U+23E9-23F3, U+23F8-23FA, U+24C2, U+25AA-25AB, U+25B6, U+25C0,
-    U+25FB-25FE, U+2600-2604, U+260E, U+2611, U+2614-2615, U+2618,
-    U+261D, U+2620, U+2622-2623, U+2626, U+262A, U+262E-262F,
-    U+2638-263A, U+2640, U+2642, U+2648-2653, U+265F-2660, U+2663,
-    U+2665-2666, U+2668, U+267B, U+267E-267F, U+2692-2697, U+2699,
-    U+269B-269C, U+26A0-26A1, U+26A7, U+26AA-26AB, U+26BD-26BE,
-    U+26C4-26C5, U+26CE-26CF, U+26D1, U+26D3-26D4, U+26E9-26EA,
-    U+26F0-26F5, U+26F7-26FA, U+26FD, U+2702, U+2705, U+2708-270D,
-    U+270F, U+2712, U+2714, U+2716, U+271D, U+2721, U+2728,
-    U+2733-2734, U+2744, U+2747, U+274C, U+274E, U+2753-2755,
-    U+2757, U+2763-2764, U+2795-2797, U+27A1, U+27B0, U+27BF,
-    U+2934-2935, U+2B05-2B07, U+2B1B-2B1C, U+2B50, U+2B55,
-    U+3030, U+303D, U+3297, U+3299,
-    U+1F000-1F02F, U+1F0A0-1F0FF, U+1F100-1F1FF,
-    U+1F200-1F2FF, U+1F300-1F64F, U+1F680-1F6FF,
-    U+1F700-1F77F, U+1F780-1F7FF, U+1F800-1F8FF,
-    U+1F900-1F9FF, U+1FA00-1FA6F, U+1FA70-1FAFF,
-    U+FE0F, U+20E3;
-}
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --teal:#0a4c3e; --teal-deep:#072e26; --teal-soft:#e8f4f1;
@@ -236,7 +204,7 @@
   --r:14px; --r-lg:20px;
 }
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{font-family:'SysEmoji','Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--text);line-height:1.75;background:#fff;overflow-x:hidden}
+body{font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--text);line-height:1.75;background:#fff;overflow-x:hidden}
 img{max-width:100%;height:auto;display:block}
 a{color:var(--teal);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -339,7 +307,8 @@ table.dist tbody tr:last-child td{border-bottom:none}
 @media(max-width:540px){.amenity-grid{grid-template-columns:1fr}}
 .amenity{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 20px;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow-sm);transition:transform .25s,border-color .25s}
 .amenity:hover{transform:translateY(-3px);border-color:var(--emerald)}
-.amenity-icon{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--emerald-light);display:flex;align-items:center;justify-content:center;font-size:22px}
+.amenity-icon{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--emerald-light);display:flex;align-items:center;justify-content:center;color:var(--emerald)}
+.amenity-icon svg{width:22px;height:22px;flex-shrink:0}
 .amenity h3{font-size:15px;margin-bottom:4px;color:var(--teal-deep)}
 .amenity p{font-size:13.5px;color:var(--text-soft);line-height:1.6;margin:0}
 
@@ -362,8 +331,8 @@ table.dist tbody tr:last-child td{border-bottom:none}
 .cons h3{color:#d97706;margin-bottom:14px;font-size:17px}
 .pros ul,.cons ul{list-style:none;display:flex;flex-direction:column;gap:10px}
 .pros li,.cons li{display:flex;gap:10px;font-size:14.5px;color:var(--text-soft);line-height:1.6}
-.pros li::before{content:'✅';flex-shrink:0;margin-top:2px;font-family:'SysEmoji','Be Vietnam Pro',system-ui,sans-serif;font-variant-emoji:emoji}
-.cons li::before{content:'⚠️';font-size:13px;flex-shrink:0;margin-top:3px;font-family:'SysEmoji','Be Vietnam Pro',system-ui,sans-serif;font-variant-emoji:emoji}
+.pros li::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;margin-top:7px}
+.cons li::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;background:#f59e0b;flex-shrink:0;margin-top:7px}
 
 /* ── FAQ ── */
 .faq-list{display:flex;flex-direction:column;gap:12px;margin-top:8px}
@@ -410,7 +379,8 @@ footer{background:var(--teal-deep);padding:40px 0 24px}
 
 /* ── ALERT/BADGE LEGAL ── */
 .legal-alert{background:#fef9ec;border:1px solid #f5c842;border-radius:var(--r);padding:18px 22px;display:flex;gap:14px;margin-top:20px}
-.legal-alert .icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.legal-alert .icon{width:28px;height:28px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center}
+.legal-alert .icon svg{width:24px;height:24px}
 .legal-alert p{font-size:14.5px;color:#7a5a00;line-height:1.7;margin:0}
 .legal-alert strong{color:#5a3e00}
 
@@ -427,17 +397,10 @@ footer{background:var(--teal-deep);padding:40px 0 24px}
 
 /* ── INVEST SECTION ── */
 .invest-point{display:flex;gap:16px;padding:20px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);margin-bottom:14px}
-.invest-icon{width:48px;height:48px;flex-shrink:0;background:var(--emerald-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-family:'SysEmoji','Be Vietnam Pro',system-ui,sans-serif}
+.invest-icon{width:48px;height:48px;flex-shrink:0;background:var(--emerald-light);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--emerald)}
+.invest-icon svg{width:24px;height:24px;flex-shrink:0}
 .invest-point h3{font-size:16px;margin-bottom:4px;color:var(--teal-deep)}
 .invest-point p{font-size:14px;color:var(--text-soft);line-height:1.7;margin:0}
-
-/* ── EMOJI FONT EXPLICIT OVERRIDES (backup cho @font-face) ── */
-.amenity-icon,.invest-icon,.legal-alert .icon,.badge,.btn,.card h3,.pros h3,.cons h3{
-  font-family:'SysEmoji','Be Vietnam Pro',system-ui,sans-serif;
-  font-variant-emoji: emoji;
-}
-/* Force emoji presentation globally (Chrome 131+, Firefox 108+) */
-body { font-variant-emoji: emoji; }
 
 /* ── FLOAT BUTTONS ── */
 .float{position:fixed;right:18px;bottom:18px;z-index:50;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
@@ -514,8 +477,8 @@ body { font-variant-emoji: emoji; }
   </div>
   <div class="wrap hero-inner">
     <div class="badge-row" aria-label="Thông tin nhanh">
-      <span class="badge">🌿 Khu Đô Thị Sinh Thái Đảo</span>
-      <span class="badge">📍 Biên Hòa — Đồng Nai</span>
+      <span class="badge">Khu Đô Thị Sinh Thái Đảo</span>
+      <span class="badge">Biên Hòa — Đồng Nai</span>
       <span class="badge">Novaland Group</span>
       <span class="badge">Cập nhật 2025</span>
     </div>
@@ -530,7 +493,7 @@ body { font-variant-emoji: emoji; }
       <div class="stat" role="listitem"><div class="num">30%</div><div class="lbl">Cây xanh & công viên</div></div>
     </div>
     <div class="cta-row">
-      <a href="#lien-he" class="btn btn-gold">📞 Đăng Ký Tư Vấn Miễn Phí</a>
+      <a href="#lien-he" class="btn btn-gold">Đăng Ký Tư Vấn Miễn Phí</a>
       <a href="#tong-quan" class="btn btn-outline">Xem Chi Tiết →</a>
     </div>
   </div>
@@ -595,7 +558,7 @@ body { font-variant-emoji: emoji; }
       </tbody>
     </table>
     <div class="legal-alert" style="margin-top:24px" role="note" aria-label="Lợi thế hạ tầng">
-      <div class="icon">🛫</div>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#d4a843" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2 3.3 6.7l4 3-2 2-4-1-1.5 1.5 4 2 2 4 1.5-1.5-1-4 2-2 3 4z"/></svg></div>
       <p><strong>Lợi thế hạ tầng vượt trội:</strong> Sân bay Quốc tế Long Thành (công suất 25 triệu khách/năm giai đoạn 1, dự kiến hoạt động năm 2026) chỉ cách Aqua City 10–15 km — đây là lợi thế vị trí chiến lược hiếm có trong bán kính sân bay quốc tế. Theo quy hoạch, đường cao tốc Biên Hòa – Vũng Tàu và đường vành đai 3 TP.HCM (đoạn qua Đồng Nai) sẽ tiếp tục rút ngắn thời gian di chuyển sau năm 2026.</p>
     </div>
     <div class="grid-3" style="margin-top:28px">
@@ -626,19 +589,19 @@ body { font-variant-emoji: emoji; }
     <p class="lead">Aqua City được phát triển theo từng giai đoạn, với 44 phân khu mang phong cách kiến trúc và cảnh quan riêng biệt. Dưới đây là các phân khu tiêu biểu thu hút sự quan tâm lớn nhất từ nhà đầu tư và người mua ở thực.</p>
     <div class="grid-2">
       <div class="card">
-        <h3 style="color:var(--teal)">🏡 The Grand Quay</h3>
+        <h3 style="color:var(--teal)">The Grand Quay</h3>
         <p><strong>Loại hình:</strong> Biệt thự đơn lập & song lập ven sông Đồng Nai<br><strong>Đặc điểm:</strong> Tầm nhìn trực diện sông Đồng Nai, đây là phân khu đẳng cấp cao nhất trong toàn dự án. Mỗi biệt thự đều được thiết kế với bãi cỏ riêng và hồ bơi tùy chọn.<br><strong>Diện tích đất:</strong> 250–450m²</p>
       </div>
       <div class="card">
-        <h3 style="color:var(--teal)">🏘 Aqua Village</h3>
+        <h3 style="color:var(--teal)">Aqua Village</h3>
         <p><strong>Loại hình:</strong> Nhà phố dân cư và biệt thự phân lô<br><strong>Đặc điểm:</strong> Phân khu đầu tiên được bàn giao và đang có cư dân thực tế sinh sống. Hạ tầng nội khu hoàn thiện nhất trong toàn Aqua City.<br><strong>Diện tích đất:</strong> 85–150m²</p>
       </div>
       <div class="card">
-        <h3 style="color:var(--teal)">🛍 Phoenix South</h3>
+        <h3 style="color:var(--teal)">Phoenix South</h3>
         <p><strong>Loại hình:</strong> Nhà phố thương mại (shophouse) cao 4–5 tầng<br><strong>Đặc điểm:</strong> Nằm trên trục đường thương mại chính của khu đô thị, thích hợp kinh doanh kết hợp đầu tư dòng tiền từ cho thuê mặt bằng.<br><strong>Diện tích đất:</strong> 90–130m²</p>
       </div>
       <div class="card">
-        <h3 style="color:var(--teal)">🌴 Cardinal Court</h3>
+        <h3 style="color:var(--teal)">Cardinal Court</h3>
         <p><strong>Loại hình:</strong> Biệt thự sinh thái vườn<br><strong>Đặc điểm:</strong> Thiết kế hoà hợp cùng không gian xanh, thích hợp cho gia đình nhiều thế hệ muốn tìm kiếm sự yên tĩnh và trong lành gần TP.HCM.<br><strong>Diện tích đất:</strong> 200–350m²</p>
       </div>
     </div>
@@ -653,63 +616,63 @@ body { font-variant-emoji: emoji; }
     <p class="lead">Aqua City được thiết kế như một đô thị hoàn chỉnh, không phải chỉ là khu dân cư đơn thuần. Với 1.000 ha, dự án tích hợp toàn bộ hệ thống tiện ích từ y tế, giáo dục đến giải trí và thương mại — giảm thiểu hoàn toàn sự phụ thuộc vào trung tâm thành phố.</p>
     <div class="amenity-grid">
       <div class="amenity">
-        <div class="amenity-icon">🏥</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg></div>
         <div>
           <h3>Bệnh Viện Aqua Medical</h3>
           <p>Bệnh viện đa khoa chuẩn quốc tế nội khu, đáp ứng nhu cầu y tế cho toàn bộ 44.000 cư dân. Giảm thiểu thời gian di chuyển ra ngoài khu khi cần chăm sóc sức khỏe khẩn cấp.</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">🏫</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
         <div>
           <h3>Trường Học Liên Cấp</h3>
           <p>Hệ thống trường học từ mầm non đến THPT trong khuôn viên khu đô thị. Phụ huynh không cần đưa đón con đi học ra ngoài khu, tăng chất lượng cuộc sống đáng kể.</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">🛒</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
         <div>
           <h3>Trung Tâm Thương Mại Aqua Mall</h3>
           <p>Trung tâm mua sắm quy mô lớn phục vụ toàn bộ cư dân khu đô thị. Tích hợp siêu thị, khu ẩm thực, điện máy, thời trang và khu vui chơi giải trí.</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">⛵️</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.5H2l3.45-8.05A2 2 0 0 1 7.3 7h9.4a2 2 0 0 1 1.85 1.45L22 16.5z"/><path d="M12 7V3"/><path d="M2 20h20"/></svg></div>
         <div>
           <h3>Cảng Du Thuyền Aqua Marina</h3>
           <p>Cảng du thuyền tư nhân độc đáo trên sông Đồng Nai — điểm nhấn sinh thái hiếm có tại Việt Nam. Cư dân có thể di chuyển bằng đường thủy kết nối với TP.HCM.</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">⛳️</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v14"/><path d="M12 2l5 3.5L12 9"/><path d="M3 20s2.5-1 9-1 9 1 9 1"/></svg></div>
         <div>
           <h3>Sân Golf 18 Lỗ Đẳng Cấp</h3>
           <p>Sân golf 18 lỗ theo tiêu chuẩn quốc tế ngay trong lòng khu đô thị — lợi thế độc quyền dành cho cư dân Aqua City, tạo ra cộng đồng thượng lưu đặc thù.</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">🌳</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-9"/><path d="M12 13L4 7h16z"/><path d="M14 8L8 3h8z"/></svg></div>
         <div>
           <h3>30% Cây Xanh & Công Viên</h3>
           <p>30% diện tích toàn khu dành cho công viên, vườn sinh thái và hành lang cây xanh ven sông — chỉ số xanh vượt gấp 3 lần tiêu chuẩn đô thị Việt Nam hiện hành (10%).</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">🏊️</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-4 7-4 7 4 7 4"/><path d="M14 12s1.5-2 4-2 4 2 4 2"/><circle cx="8" cy="8" r="2"/><path d="M9 10l3 5"/></svg></div>
         <div>
           <h3>Khu Thể Thao Đa Năng</h3>
           <p>Bể bơi tiêu chuẩn Olympic, sân tennis, yoga ngoài trời, đường chạy bộ ven sông và phòng gym hiện đại. Hỗ trợ lối sống năng động cho toàn bộ cư dân.</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">🔒</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg></div>
         <div>
           <h3>An Ninh 24/7 Camera AI</h3>
           <p>Hệ thống giám sát thông minh với camera AI nhận diện khuôn mặt, kiểm soát ra vào bằng thẻ từ và bảo vệ chuyên nghiệp tuần tra liên tục 24 giờ mỗi ngày.</p>
         </div>
       </div>
       <div class="amenity">
-        <div class="amenity-icon">🌊</div>
+        <div class="amenity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11s3-4 6-4 6 4 6 4 3-4 6-4 2 4 2 4"/><path d="M2 17s3-4 6-4 6 4 6 4 3-4 6-4 2 4 2 4"/></svg></div>
         <div>
           <h3>Không Gian Ven Sông Đồng Nai</h3>
           <p>Bờ kè sinh thái ven sông dài hàng kilomet với lối đi dạo, khu vực picnic và điểm ngắm hoàng hôn độc đáo — giá trị cảnh quan không thể tái tạo, chỉ thiên nhiên mới có được.</p>
@@ -768,7 +731,7 @@ body { font-variant-emoji: emoji; }
       </tbody>
     </table>
     <div class="legal-alert" role="note" aria-label="Lưu ý về giá">
-      <div class="icon">💡</div>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#d4a843" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></div>
       <p><strong>Lưu ý quan trọng:</strong> Giá trên là giá tham khảo thị trường thứ cấp tại thời điểm tháng 4/2025. Giá thực tế phụ thuộc vào tình trạng pháp lý từng căn (đã có sổ đỏ hay chưa), phân khu cụ thể và điều kiện thị trường tại thời điểm giao dịch. Vui lòng liên hệ <a href="tel:0971132378" style="color:var(--teal);font-weight:600">0971 132 378</a> để nhận báo giá cập nhật và chính xác nhất.</p>
     </div>
   </div>
@@ -781,16 +744,16 @@ body { font-variant-emoji: emoji; }
     <h2>Pháp Lý Aqua City 2025 — <span class="ac">Sổ Đỏ Hoàn Thiện Theo Lộ Trình</span></h2>
     <p class="lead">Pháp lý là yếu tố được người mua quan tâm hàng đầu tại Aqua City. Dưới đây là thông tin cập nhật và khách quan nhất về tình trạng pháp lý tính đến năm 2025.</p>
     <div class="legal-alert" role="alert" aria-label="Cảnh báo pháp lý quan trọng">
-      <div class="icon">⚠️</div>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="3"/></svg></div>
       <p><strong>Lưu ý quan trọng về pháp lý:</strong> Tính đến tháng 4/2025, một số phân khu tại Aqua City đã được cấp sổ đỏ (Giấy chứng nhận quyền sử dụng đất) trong khi các phân khu còn lại đang tiếp tục hoàn thiện thủ tục pháp lý. <strong>Người mua cần kiểm tra tình trạng pháp lý cụ thể của từng căn/lô trước khi ký hợp đồng và đặt cọc.</strong> Không nên căn cứ vào thông tin chung của toàn dự án để đánh giá pháp lý từng căn riêng lẻ.</p>
     </div>
     <div class="grid-2" style="margin-top:24px">
       <div class="card">
-        <h3 style="color:var(--teal)">📋 Lộ Trình Tháo Gỡ Pháp Lý 2024–2025</h3>
+        <h3 style="color:var(--teal)">Lộ Trình Tháo Gỡ Pháp Lý 2024–2025</h3>
         <p>Từ năm 2024, Novaland Group và UBND tỉnh Đồng Nai đã phối hợp tích cực xử lý các vướng mắc pháp lý tồn đọng. Chính phủ đã ban hành các nghị quyết tháo gỡ khó khăn cho dự án bất động sản, trong đó Aqua City là một trong những dự án được ưu tiên xử lý do quy mô lớn và số lượng người mua đông.</p>
       </div>
       <div class="card">
-        <h3 style="color:var(--teal)">✅ Tiêu Chí Kiểm Tra Trước Khi Mua</h3>
+        <h3 style="color:var(--teal)">Tiêu Chí Kiểm Tra Trước Khi Mua</h3>
         <p>Người mua nên kiểm tra: (1) Quyết định phê duyệt 1/500 của phân khu; (2) Văn bản nghiệm thu công trình; (3) Hợp đồng mua bán có công chứng; (4) Tình trạng thế chấp ngân hàng của dự án/phân khu; (5) Xác nhận sổ đỏ đã cấp hoặc cam kết cấp sổ đỏ có thời hạn cụ thể.</p>
       </div>
     </div>
@@ -805,7 +768,7 @@ body { font-variant-emoji: emoji; }
     <p class="lead">Đánh giá khách quan dựa trên dữ liệu thực tế từ cư dân, nhà đầu tư và chuyên gia thị trường, không phải từ tài liệu marketing của chủ đầu tư.</p>
     <div class="pros-cons">
       <div class="pros">
-        <h3>✅ Điểm Mạnh</h3>
+        <h3>Điểm Mạnh</h3>
         <ul>
           <li>Quy mô 1.000 ha — đủ lớn để tạo nên cộng đồng và hệ sinh thái tiện ích hoàn chỉnh, tự cung tự cấp</li>
           <li>Vị trí chiến lược trong hành lang Đông Bắc — bán kính 15 km từ Sân bay Long Thành (vận hành 2026)</li>
@@ -816,7 +779,7 @@ body { font-variant-emoji: emoji; }
         </ul>
       </div>
       <div class="cons">
-        <h3>⚠️ Điểm Cần Cân Nhắc</h3>
+        <h3>Điểm Cần Cân Nhắc</h3>
         <ul>
           <li>Pháp lý chưa hoàn thiện toàn khu — cần xác minh từng phân khu/lô cụ thể, tránh rủi ro pháp lý khi giao dịch</li>
           <li>Thanh khoản thứ cấp còn hạn chế trong giai đoạn 2023–2025, khó thoát hàng nhanh nếu cần tiền gấp</li>
@@ -837,28 +800,28 @@ body { font-variant-emoji: emoji; }
     <p class="lead">Đây là câu hỏi quan trọng nhất với nhà đầu tư. Dưới đây là phân tích dựa trên dữ liệu thực tế và xu hướng vĩ mô, không phải kịch bản lạc quan một chiều.</p>
 
     <div class="invest-point">
-      <div class="invest-icon">📈</div>
+      <div class="invest-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
       <div>
         <h3>Hành Lang Đông Bắc — Vùng Kinh Tế Trọng Điểm Phía Nam</h3>
         <p>Theo Nghị quyết 24/NQ-TW năm 2022, vùng Đông Nam Bộ (gồm Đồng Nai) được xác định là động lực tăng trưởng kinh tế quốc gia. Biên Hòa là một trong 5 thành phố trực thuộc tỉnh lớn nhất Việt Nam với GDP tỉnh Đồng Nai đứng thứ 4 cả nước năm 2024.</p>
       </div>
     </div>
     <div class="invest-point">
-      <div class="invest-icon">✈️</div>
+      <div class="invest-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2 3.3 6.7l4 3-2 2-4-1-1.5 1.5 4 2 2 4 1.5-1.5-1-4 2-2 3 4z"/></svg></div>
       <div>
         <h3>Đòn Bẩy Sân Bay Long Thành — Hiệu Ứng "Airport Economy"</h3>
         <p>Kinh nghiệm quốc tế cho thấy bất động sản trong bán kính 20–30 km từ sân bay quốc tế lớn tăng giá trung bình 15–30% trong vòng 3–5 năm trước và sau khi sân bay đi vào hoạt động. Sân bay Long Thành giai đoạn 1 dự kiến khai thác năm 2026, Aqua City nằm trong vùng hưởng lợi trực tiếp.</p>
       </div>
     </div>
     <div class="invest-point">
-      <div class="invest-icon">💰</div>
+      <div class="invest-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 6v2M12 16v2"/></svg></div>
       <div>
         <h3>Định Giá Hiện Tại — Đã Qua Giai Đoạn Điều Chỉnh</h3>
         <p>Giá thứ cấp tại Aqua City đã điều chỉnh 25–40% so với đỉnh năm 2021–2022, về gần vùng giá trị nội tại của bất động sản. Với nhà đầu tư dài hạn (5–10 năm), đây là thời điểm tích lũy hợp lý hơn so với chu kỳ trước. Tuy nhiên, thanh khoản ngắn hạn vẫn cần theo dõi chặt chẽ.</p>
       </div>
     </div>
     <div class="invest-point">
-      <div class="invest-icon">⚠️</div>
+      <div class="invest-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="3"/></svg></div>
       <div>
         <h3>Rủi Ro Cần Kiểm Soát — Pháp Lý & Thanh Khoản</h3>
         <p>Hai rủi ro chính cần kiểm soát khi đầu tư Aqua City: (1) Rủi ro pháp lý — chỉ mua căn đã có sổ đỏ hoặc có văn bản cam kết cụ thể từ chủ đầu tư và cơ quan nhà nước có thẩm quyền; (2) Rủi ro thanh khoản — không dùng đòn bẩy vay quá 50% giá trị tài sản vì thị trường thứ cấp có thể kéo dài 12–24 tháng mới tìm được người mua phù hợp.</p>
@@ -866,7 +829,7 @@ body { font-variant-emoji: emoji; }
     </div>
 
     <div class="legal-alert" style="margin-top:8px" role="note">
-      <div class="icon">📊</div>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#d4a843" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="4" height="7"/><rect x="10" y="9" width="4" height="12"/><rect x="17" y="4" width="4" height="17"/></svg></div>
       <p><strong>Kết luận đầu tư:</strong> Aqua City phù hợp với nhà đầu tư dài hạn 5–10 năm có khẩu vị rủi ro trung bình, không cần thanh khoản nhanh và sẵn sàng đi qua giai đoạn hoàn thiện pháp lý. <strong>Không phù hợp với nhà đầu tư ngắn hạn</strong> cần lợi nhuận trong 1–2 năm hoặc người không có kinh nghiệm xử lý bất động sản chưa có sổ đỏ.</p>
     </div>
   </div>
@@ -1046,11 +1009,11 @@ body { font-variant-emoji: emoji; }
             <option value="above-35b">Trên 35 tỷ đồng</option>
           </select>
           <textarea id="note" name="note" placeholder="Ghi chú thêm (ở thực / đầu tư / cho thuê...)" rows="3" aria-label="Ghi chú"></textarea>
-          <button type="submit" class="btn-submit" id="submitBtn" aria-label="Đăng ký nhận tư vấn miễn phí">🏡 Đăng Ký Nhận Tư Vấn Miễn Phí</button>
+          <button type="submit" class="btn-submit" id="submitBtn" aria-label="Đăng ký nhận tư vấn miễn phí">Đăng Ký Nhận Tư Vấn Miễn Phí</button>
           <p class="privacy">Thông tin của bạn được bảo mật tuyệt đối theo <a href="/privacy" style="color:rgba(255,255,255,.65)">Chính sách Bảo mật</a> của SGS Land. Chúng tôi không chia sẻ dữ liệu cho bên thứ ba.</p>
         </form>
         <div id="formSuccess" style="display:none;text-align:center;padding:24px 0">
-          <div style="font-size:48px;margin-bottom:12px">✅</div>
+          <div style="width:56px;height:56px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="30" height="30"><polyline points="20 6 9 17 4 12"/></svg></div>
           <h3 style="color:#fff;font-size:20px;margin-bottom:8px">Đăng Ký Thành Công!</h3>
           <p style="color:rgba(255,255,255,.75);font-size:15px">Chuyên viên SGS Land sẽ liên hệ bạn trong vòng 30 phút (8:00–20:00).<br>Hotline hỗ trợ ngay: <a href="tel:0971132378" style="color:var(--gold);font-weight:700">0971 132 378</a></p>
         </div>
