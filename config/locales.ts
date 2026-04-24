@@ -1552,6 +1552,7 @@ export const DICTIONARY = {
         "status.SOLD": "Đã bán",
         "status.RENTED": "Đã cho thuê",
         "status.INACTIVE": "Ngừng giao dịch",
+        "status.BEST_MARKET": "Tốt nhất thị trường",
 
         "stage.NEW": "Mới",
         "stage.CONTACTED": "Đã liên hệ",
@@ -3861,6 +3862,7 @@ export const DICTIONARY = {
         "status.SOLD": "Sold",
         "status.RENTED": "Rented",
         "status.INACTIVE": "Inactive",
+        "status.BEST_MARKET": "Best in Market",
 
         "stage.NEW": "New",
         "stage.CONTACTED": "Contacted",
