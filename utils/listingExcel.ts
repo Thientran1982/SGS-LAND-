@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import type { Listing } from '../types';
 
 // ─── Mapping tables (VI ↔ API) ───────────────────────────────────────────────
@@ -62,28 +62,66 @@ const LEGAL_FROM_VI = Object.fromEntries(Object.entries(LEGAL_VI).map(([k, v]) =
 // ─── Column definitions ───────────────────────────────────────────────────────
 
 const COLS = [
-    { key: 'code',              header: 'Mã sản phẩm',        required: true  },
-    { key: 'title',             header: 'Tên sản phẩm',       required: true  },
-    { key: 'location',          header: 'Địa chỉ',            required: true  },
-    { key: 'type',              header: 'Loại hình',           required: true  },
-    { key: 'status',            header: 'Trạng thái',          required: true  },
-    { key: 'transaction',       header: 'Loại GD',             required: false },
-    { key: 'area',              header: 'Diện tích (m²)',      required: true  },
-    { key: 'builtArea',         header: 'DT xây dựng (m²)',   required: false },
-    { key: 'clearArea',         header: 'DT thông thủy (m²)', required: false },
-    { key: 'bedrooms',          header: 'Số PN',               required: false },
-    { key: 'bathrooms',         header: 'Số WC',               required: false },
-    { key: 'price',             header: 'Giá (VND)',           required: true  },
-    { key: 'direction',         header: 'Hướng',               required: false },
-    { key: 'tower',             header: 'Toà',                 required: false },
-    { key: 'floor',             header: 'Tầng',                required: false },
-    { key: 'view',              header: 'View',                required: false },
-    { key: 'furniture',         header: 'Nội thất',            required: false },
-    { key: 'legalStatus',       header: 'Pháp lý',             required: false },
-    { key: 'frontage',          header: 'Mặt tiền (m)',        required: false },
-    { key: 'roadWidth',         header: 'Lộ giới (m)',         required: false },
-    { key: 'notes',             header: 'Ghi chú',             required: false },
+    { key: 'code',              header: 'Mã sản phẩm',        required: true,  width: 16 },
+    { key: 'title',             header: 'Tên sản phẩm',       required: true,  width: 30 },
+    { key: 'location',          header: 'Địa chỉ',            required: true,  width: 35 },
+    { key: 'type',              header: 'Loại hình',           required: true,  width: 14 },
+    { key: 'status',            header: 'Trạng thái',          required: true,  width: 14 },
+    { key: 'transaction',       header: 'Loại GD',             required: false, width: 10 },
+    { key: 'area',              header: 'Diện tích (m²)',      required: true,  width: 14 },
+    { key: 'builtArea',         header: 'DT xây dựng (m²)',   required: false, width: 16 },
+    { key: 'clearArea',         header: 'DT thông thủy (m²)', required: false, width: 18 },
+    { key: 'bedrooms',          header: 'Số PN',               required: false, width: 8  },
+    { key: 'bathrooms',         header: 'Số WC',               required: false, width: 8  },
+    { key: 'price',             header: 'Giá (VND)',           required: true,  width: 18 },
+    { key: 'direction',         header: 'Hướng',               required: false, width: 12 },
+    { key: 'tower',             header: 'Toà',                 required: false, width: 8  },
+    { key: 'floor',             header: 'Tầng',                required: false, width: 8  },
+    { key: 'view',              header: 'View',                required: false, width: 16 },
+    { key: 'furniture',         header: 'Nội thất',            required: false, width: 16 },
+    { key: 'legalStatus',       header: 'Pháp lý',             required: false, width: 14 },
+    { key: 'frontage',          header: 'Mặt tiền (m)',        required: false, width: 14 },
+    { key: 'roadWidth',         header: 'Lộ giới (m)',         required: false, width: 12 },
+    { key: 'notes',             header: 'Ghi chú',             required: false, width: 30 },
 ];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function triggerDownload(buffer: ArrayBuffer, filename: string): void {
+    const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function buildMainSheet(wb: ExcelJS.Workbook, rows: (string | number)[][], sheetName = 'Danh mục'): ExcelJS.Worksheet {
+    const ws = wb.addWorksheet(sheetName);
+    ws.addRow(COLS.map(c => c.header));
+    rows.forEach(r => ws.addRow(r));
+    COLS.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
+    return ws;
+}
+
+function buildRefSheet(wb: ExcelJS.Workbook): void {
+    const ws = wb.addWorksheet('Tham chiếu');
+    ws.addRow(['Loại hình', 'Trạng thái', 'Loại GD', 'Hướng', 'Nội thất', 'Pháp lý']);
+    for (let i = 0; i < 9; i++) {
+        ws.addRow([
+            Object.values(TYPE_VI)[i] ?? '',
+            Object.values(STATUS_VI)[i] ?? '',
+            Object.values(TRANSACTION_VI)[i] ?? '',
+            Object.values(DIRECTION_VI)[i] ?? '',
+            Object.values(FURNITURE_VI)[i] ?? '',
+            Object.values(LEGAL_VI)[i] ?? '',
+        ]);
+    }
+    [14, 14, 10, 14, 16, 14].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+}
 
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
 
@@ -114,59 +152,14 @@ function listingToRow(l: Listing): (string | number)[] {
     ];
 }
 
-export function exportListingsToExcel(listings: Listing[], projectName: string): void {
-    const headers = COLS.map(c => c.header);
-    const rows = listings.map(listingToRow);
-    const data = [headers, ...rows];
+export async function exportListingsToExcel(listings: Listing[], projectName: string): Promise<void> {
+    const wb = new ExcelJS.Workbook();
+    buildMainSheet(wb, listings.map(listingToRow));
+    buildRefSheet(wb);
 
-    const ws = XLSX.utils.aoa_to_sheet(data);
-
-    // Column widths
-    ws['!cols'] = [
-        { wch: 16 }, // Mã
-        { wch: 30 }, // Tên
-        { wch: 35 }, // Địa chỉ
-        { wch: 14 }, // Loại hình
-        { wch: 14 }, // Trạng thái
-        { wch: 10 }, // Loại GD
-        { wch: 14 }, // Diện tích
-        { wch: 16 }, // DT XD
-        { wch: 18 }, // DT thông thủy
-        { wch: 8  }, // PN
-        { wch: 8  }, // WC
-        { wch: 18 }, // Giá
-        { wch: 12 }, // Hướng
-        { wch: 8  }, // Toà
-        { wch: 8  }, // Tầng
-        { wch: 16 }, // View
-        { wch: 16 }, // Nội thất
-        { wch: 14 }, // Pháp lý
-        { wch: 14 }, // Mặt tiền
-        { wch: 12 }, // Lộ giới
-        { wch: 30 }, // Ghi chú
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Danh mục');
-
-    // Add a reference sheet with allowed values
-    const refData = [
-        ['Loại hình', 'Trạng thái', 'Loại GD', 'Hướng', 'Nội thất', 'Pháp lý'],
-        ...Array.from({ length: 9 }, (_, i) => [
-            Object.values(TYPE_VI)[i] ?? '',
-            Object.values(STATUS_VI)[i] ?? '',
-            Object.values(TRANSACTION_VI)[i] ?? '',
-            Object.values(DIRECTION_VI)[i] ?? '',
-            Object.values(FURNITURE_VI)[i] ?? '',
-            Object.values(LEGAL_VI)[i] ?? '',
-        ]),
-    ];
-    const wsRef = XLSX.utils.aoa_to_sheet(refData);
-    wsRef['!cols'] = [14, 14, 10, 14, 16, 14].map(wch => ({ wch }));
-    XLSX.utils.book_append_sheet(wb, wsRef, 'Tham chiếu');
-
+    const buffer = await wb.xlsx.writeBuffer();
     const safeProject = projectName.replace(/[\\/:*?"<>|]/g, '_').slice(0, 50);
-    XLSX.writeFile(wb, `DanhMuc_${safeProject}.xlsx`);
+    triggerDownload(buffer as ArrayBuffer, `DanhMuc_${safeProject}.xlsx`);
 }
 
 // ─── IMPORT ───────────────────────────────────────────────────────────────────
@@ -211,47 +204,51 @@ function mapValue(key: string, raw: unknown): unknown {
 
 export async function parseListingsFromExcel(file: File): Promise<ImportResult> {
     const buffer = await file.arrayBuffer();
-    const wb = XLSX.read(buffer, { type: 'array' });
-    const sheetName = wb.SheetNames[0];
-    const ws = wb.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
-        raw: false,
-        defval: '',
-    });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer);
 
+    const ws = wb.worksheets[0];
     const valid: ImportRow[] = [];
     const errors: ImportRow[] = [];
 
-    // Build a header → key mapping (match by header text)
     const headerToKey: Record<string, string> = {};
     COLS.forEach(c => { headerToKey[c.header] = c.key; });
 
-    rows.forEach((row, idx) => {
-        const rowNum = idx + 2; // 1-based, +1 for header row
+    const attrKeys = new Set(['direction', 'tower', 'floor', 'view', 'furniture', 'legalStatus', 'clearArea', 'frontage', 'roadWidth', 'notes']);
+
+    let headers: string[] = [];
+    let firstRow = true;
+
+    ws.eachRow((row, rowNum) => {
+        const values = (row.values as ExcelJS.CellValue[]).slice(1);
+
+        if (firstRow) {
+            headers = values.map(v => String(v ?? '').trim());
+            firstRow = false;
+            return;
+        }
+
         const data: Record<string, unknown> = {};
         const attributes: Record<string, unknown> = {};
-        const attrKeys = new Set(['direction', 'tower', 'floor', 'view', 'furniture', 'legalStatus', 'clearArea', 'frontage', 'roadWidth', 'notes']);
 
-        for (const [header, rawVal] of Object.entries(row)) {
+        headers.forEach((header, i) => {
             const key = headerToKey[header];
-            if (!key) continue;
-            const val = mapValue(key, rawVal);
-            if (val === undefined || val === '') continue;
+            if (!key) return;
+            const val = mapValue(key, values[i]);
+            if (val === undefined || val === '') return;
             if (attrKeys.has(key)) {
                 attributes[key] = val;
             } else {
                 data[key] = val;
             }
-        }
+        });
 
         if (Object.keys(attributes).length > 0) {
             data.attributes = attributes;
         }
 
-        // Default transaction
         if (!data.transaction) data.transaction = 'SALE';
 
-        // Validate required fields
         const missing: string[] = [];
         COLS.filter(c => c.required).forEach(c => {
             const key = attrKeys.has(c.key) ? null : c.key;
@@ -272,16 +269,15 @@ export async function parseListingsFromExcel(file: File): Promise<ImportResult> 
 
 // ─── Download Template ────────────────────────────────────────────────────────
 
-export function downloadImportTemplate(): void {
-    const headers = COLS.map(c => c.header);
-    const example = [
+export async function downloadImportTemplate(): Promise<void> {
+    const example: (string | number)[] = [
         'CH-01', 'Căn 2PN view sông', 'Q7, TP.HCM',
         'Căn hộ', 'Đang bán', 'Bán', 80, '', 72,
         2, 2, 5800000000,
         'Đông Nam', 'A', 15, 'Sông, Thành phố',
         'Cơ bản', 'Sổ hồng', '', '', '',
     ];
-    const note = [
+    const note: string[] = [
         '* Bắt buộc', '* Bắt buộc', '* Bắt buộc',
         'Xem sheet Tham chiếu', 'Xem sheet Tham chiếu', 'Bán / Cho thuê',
         '* m² - Bắt buộc', 'm² (nhà đất)', 'm² (căn hộ)',
@@ -290,28 +286,10 @@ export function downloadImportTemplate(): void {
         'Xem sheet Tham chiếu', 'Xem sheet Tham chiếu', 'mét', 'mét', '',
     ];
 
-    const data = [headers, example, note];
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [16,30,35,14,14,10,14,16,18,8,8,18,12,8,8,16,16,14,14,12,30].map(wch => ({ wch }));
+    const wb = new ExcelJS.Workbook();
+    buildMainSheet(wb, [example, note]);
+    buildRefSheet(wb);
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Danh mục');
-
-    // Reference sheet
-    const refData = [
-        ['Loại hình', 'Trạng thái', 'Loại GD', 'Hướng', 'Nội thất', 'Pháp lý'],
-        ...Array.from({ length: 9 }, (_, i) => [
-            Object.values(TYPE_VI)[i] ?? '',
-            Object.values(STATUS_VI)[i] ?? '',
-            Object.values(TRANSACTION_VI)[i] ?? '',
-            Object.values(DIRECTION_VI)[i] ?? '',
-            Object.values(FURNITURE_VI)[i] ?? '',
-            Object.values(LEGAL_VI)[i] ?? '',
-        ]),
-    ];
-    const wsRef = XLSX.utils.aoa_to_sheet(refData);
-    wsRef['!cols'] = [14,14,10,14,16,14].map(wch => ({ wch }));
-    XLSX.utils.book_append_sheet(wb, wsRef, 'Tham chiếu');
-
-    XLSX.writeFile(wb, 'MauNhapDanhMuc.xlsx');
+    const buffer = await wb.xlsx.writeBuffer();
+    triggerDownload(buffer as ArrayBuffer, 'MauNhapDanhMuc.xlsx');
 }
