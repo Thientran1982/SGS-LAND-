@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
-import { Project, ProjectAccess, UserRole, ContractType, ContractStatus } from '../types';
+import { Project, ProjectAccess, UserRole, ContractType, ContractStatus, Listing } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ListingForm } from '../components/ListingForm';
@@ -456,6 +456,178 @@ function fmtUnitPrice(price: number, area: number) {
     return fmtNum(up, 0) + ' đ/m²';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Listing Detail Panel  (Xem chi tiết sản phẩm)
+// ─────────────────────────────────────────────────────────────────────────────
+interface ListingDetailPanelProps {
+    listing: Listing;
+    canEdit: boolean;
+    onEdit: () => void;
+    onClose: () => void;
+    t: (k: string) => string;
+}
+
+function ListingDetailPanel({ listing, canEdit, onEdit, onClose, t }: ListingDetailPanelProps) {
+    const [activeImg, setActiveImg] = useState(0);
+    const images = listing.images || [];
+    const attrs = listing.attributes || {};
+
+    const DetailRow = ({ label, value }: { label: string; value?: React.ReactNode }) =>
+        value ? (
+            <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide">{label}</span>
+                <span className="text-sm font-medium text-[var(--text-primary)]">{value}</span>
+            </div>
+        ) : null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4"
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+        >
+            <div
+                className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-[var(--glass-border)] overflow-hidden"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--glass-border)] shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shrink-0">
+                            {IC.HOME}
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono text-xs bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded">{listing.code}</span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[listing.status] || 'bg-slate-100 text-slate-600'}`}>
+                                    {t(`status.${listing.status}`) || listing.status}
+                                </span>
+                                {listing.transaction && (
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap">
+                                        {t(`transaction.${listing.transaction}`) || listing.transaction}
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="font-bold text-[var(--text-primary)] text-sm truncate mt-0.5">{listing.title}</h2>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        {canEdit && (
+                            <button
+                                type="button"
+                                onClick={onEdit}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+                            >
+                                {IC.EDIT} {t('common.edit')}
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors"
+                        >
+                            {IC.X}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
+
+                    {/* Image gallery */}
+                    {images.length > 0 ? (
+                        <div className="space-y-2">
+                            <div className="aspect-video w-full rounded-xl overflow-hidden bg-[var(--glass-surface)] border border-[var(--glass-border)]">
+                                <img
+                                    src={images[activeImg]}
+                                    alt={listing.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            {images.length > 1 && (
+                                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                    {images.map((img, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setActiveImg(i)}
+                                            className={`w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${i === activeImg ? 'border-emerald-500 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100 hover:border-[var(--glass-border)]'}`}
+                                        >
+                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="aspect-video w-full rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
+                            <svg className="w-12 h-12 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span className="text-xs">{t('project.detail_no_image')}</span>
+                        </div>
+                    )}
+
+                    {/* Price cards */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-800">
+                            <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
+                            <p className="text-xl font-bold text-emerald-700">{fmtPrice(listing.price)}</p>
+                        </div>
+                        <div className="bg-[var(--glass-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
+                            <p className="text-xs text-[var(--text-tertiary)] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_unit_price')}</p>
+                            <p className="text-base font-bold text-[var(--text-primary)]">{fmtUnitPrice(listing.price, listing.area)}</p>
+                        </div>
+                    </div>
+
+                    {/* Key specs grid */}
+                    <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
+                        <DetailRow label={t('inventory.label_type')} value={t(`property.${listing.type?.toUpperCase()}`) || listing.type} />
+                        <DetailRow label={t('inventory.label_area')} value={listing.area ? `${listing.area} m²` : undefined} />
+                        {listing.builtArea && <DetailRow label={t('inventory.label_built_area')} value={`${listing.builtArea} m²`} />}
+                        {attrs.clearArea && <DetailRow label={t('inventory.label_clear_area')} value={`${attrs.clearArea} m²`} />}
+                        {listing.bedrooms && <DetailRow label={t('inventory.label_bed')} value={listing.bedrooms} />}
+                        {listing.bathrooms && <DetailRow label={t('inventory.label_bath')} value={listing.bathrooms} />}
+                        {attrs.tower && <DetailRow label={t('inventory.label_tower')} value={attrs.tower} />}
+                        {attrs.floor && <DetailRow label={t('inventory.label_floor')} value={attrs.floor} />}
+                        {attrs.direction && <DetailRow label={t('inventory.label_direction')} value={t(`direction.${attrs.direction}`) || attrs.direction} />}
+                        {attrs.view && <DetailRow label={t('inventory.label_view')} value={attrs.view} />}
+                        {attrs.furniture && <DetailRow label={t('inventory.label_furniture')} value={t(`furniture.${attrs.furniture}`) || attrs.furniture} />}
+                        {attrs.legalStatus && <DetailRow label={t('inventory.label_legal')} value={t(`legal.${attrs.legalStatus}`) || attrs.legalStatus} />}
+                        {attrs.frontage && <DetailRow label={t('inventory.label_frontage')} value={`${attrs.frontage} m`} />}
+                        {attrs.roadWidth && <DetailRow label={t('inventory.label_road_width')} value={`${attrs.roadWidth} m`} />}
+                        {listing.location && <DetailRow label={t('inventory.label_location')} value={listing.location} />}
+                        {listing.contactPhone && <DetailRow label={t('inventory.label_owner_phone')} value={listing.contactPhone} />}
+                    </div>
+
+                    {/* Description / notes */}
+                    {attrs.notes && (
+                        <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4">
+                            <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2">{t('inventory.label_notes')}</p>
+                            <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{attrs.notes}</p>
+                        </div>
+                    )}
+
+                    {/* Assigned agent */}
+                    {listing.assignedToName && (
+                        <div className="flex items-center gap-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] px-4 py-3">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm font-bold shrink-0">
+                                {listing.assignedToName[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                                <p className="text-xs text-[var(--text-tertiary)] font-semibold">{t('inventory.label_assignee')}</p>
+                                <p className="text-sm font-semibold text-[var(--text-primary)]">{listing.assignedToName}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
@@ -488,6 +660,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
     const [deleting, setDeleting] = useState(false);
     const [contractTarget, setContractTarget] = useState<any | null>(null);
     const [panelToast, setPanelToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [detailListing, setDetailListing] = useState<Listing | null>(null);
     // Import / Export
     const importFileRef = useRef<HTMLInputElement | null>(null);
     const [importing, setImporting] = useState(false);
@@ -941,9 +1114,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 <tbody className="divide-y divide-[var(--glass-border)]">
                                     {filtered.map(l => (
                                         <tr key={l.id}
-                                            className={`hover:bg-[var(--glass-surface-hover)] transition-colors ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
+                                            onClick={() => setDetailListing(l)}
+                                            className={`cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
                                             {isAdmin && (
-                                                <td className="px-4 py-2.5">
+                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
                                                     <input
                                                         type="checkbox"
                                                         checked={selected.has(l.id)}
@@ -1031,7 +1205,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             </td>
                                             <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
                                             {canCreate && (
-                                                <td className="px-4 py-2.5 text-center">
+                                                <td className="px-4 py-2.5 text-center" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         type="button"
                                                         onClick={e => openRowMenu(e, l.id)}
@@ -1099,6 +1273,16 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                 isProjectUnit={true}
                 t={t}
             />
+
+            {detailListing && (
+                <ListingDetailPanel
+                    listing={detailListing}
+                    canEdit={canCreate}
+                    onEdit={() => { setEditTarget(detailListing); setDetailListing(null); }}
+                    onClose={() => setDetailListing(null)}
+                    t={t}
+                />
+            )}
 
             {menuOpenId && (() => {
                 const menuListing = filtered.find(l => l.id === menuOpenId);
