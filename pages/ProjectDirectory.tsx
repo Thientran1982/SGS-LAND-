@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { Logo } from '../components/Logo';
 import { motion } from 'motion/react';
 import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity, Download } from 'lucide-react';
@@ -322,27 +322,34 @@ export default function ProjectDirectory() {
         colUrl: isEn ? 'URL' : 'Liên kết',
     };
 
-    const exportToExcel = () => {
-        const wb = XLSX.utils.book_new();
+    const exportToExcel = async () => {
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet(tx.sheetName);
         const header = [
             tx.colNo, tx.colName, tx.colDeveloper, tx.colLocation, tx.colProvince,
             tx.colType, tx.colTypeGroup, tx.colScale, tx.colPrice, tx.colStatus,
             tx.colDescription, tx.colUrl,
         ];
-        const rows = filtered.map((p, i) => [
-            i + 1, p.name, p.developer, p.location, p.province,
-            p.projectType, p.typeGroup, p.scale, p.priceRange, p.status,
-            p.description, `https://sgsland.vn/du-an/${p.slug}`,
-        ]);
-        const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-        ws['!cols'] = [
-            { wch: 5 }, { wch: 30 }, { wch: 22 }, { wch: 32 }, { wch: 14 },
-            { wch: 26 }, { wch: 20 }, { wch: 16 }, { wch: 22 }, { wch: 18 },
-            { wch: 70 }, { wch: 50 },
-        ];
-        XLSX.utils.book_append_sheet(wb, ws, tx.sheetName);
+        ws.addRow(header);
+        filtered.forEach((p, i) => {
+            ws.addRow([
+                i + 1, p.name, p.developer, p.location, p.province,
+                p.projectType, p.typeGroup, p.scale, p.priceRange, p.status,
+                p.description, `https://sgsland.vn/du-an/${p.slug}`,
+            ]);
+        });
+        [5, 30, 22, 32, 14, 26, 20, 16, 22, 18, 70, 50].forEach((w, i) => {
+            ws.getColumn(i + 1).width = w;
+        });
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
         const stamp = new Date().toISOString().slice(0, 10);
-        XLSX.writeFile(wb, `SGSLAND-${isEn ? 'projects' : 'danh-sach-du-an'}-${stamp}.xlsx`);
+        a.download = `SGSLAND-${isEn ? 'projects' : 'danh-sach-du-an'}-${stamp}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     return (

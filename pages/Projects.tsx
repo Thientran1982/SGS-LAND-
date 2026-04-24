@@ -775,8 +775,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     };
 
     // ── Export ────────────────────────────────────────────────────────────────
-    const handleExport = () => {
-        exportListingsToExcel(listings, project.name);
+    const handleExport = async () => {
+        await exportListingsToExcel(listings, project.name);
     };
 
     // ── Import: step 1 — parse file ───────────────────────────────────────────
@@ -1025,7 +1025,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 <span className="hidden md:inline text-xs">{t('inventory.import_excel')}</span>
                                             </button>
                                         </div>
-                                        <button type="button" onClick={downloadImportTemplate}
+                                        <button type="button" onClick={() => { void downloadImportTemplate(); }}
                                             className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
                                             title={t('inventory.template')}
                                             aria-label={t('inventory.template')}>
