@@ -319,9 +319,14 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             }
         }
 
+        // Auto-generate code if user left it blank (required by server)
+        const finalCode = formData.code?.trim() ||
+            `SGS-${Date.now().toString(36).toUpperCase()}`;
+
         try {
             await onSubmit({
                 ...formData,
+                code: finalCode,
                 price: finalPrice,
                 images,
                 coordinates,
