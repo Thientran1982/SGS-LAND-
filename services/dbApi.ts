@@ -408,6 +408,12 @@ class DatabaseApiClient {
     return result;
   }
 
+  async updateListingStatus(id: string, status: string) {
+    const result = await listingApi.updateListingStatus(id, status);
+    _cache.invalidate('listings:');
+    return result;
+  }
+
   async deleteListing(id: string) {
     const result = await listingApi.deleteListing(id);
     _cache.invalidate('listings:');
