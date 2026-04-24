@@ -315,7 +315,8 @@ export enum ListingStatus {
     HOLD = 'HOLD',             // Giữ chỗ
     SOLD = 'SOLD',             // Đã bán
     RENTED = 'RENTED',         // Đã thuê
-    INACTIVE = 'INACTIVE'      // Ngưng giao dịch
+    INACTIVE = 'INACTIVE',     // Ngưng giao dịch
+    BEST_MARKET = 'BEST_MARKET' // Tốt nhất thị trường
 }
 
 export enum TransactionType {
