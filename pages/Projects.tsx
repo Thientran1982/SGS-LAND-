@@ -6,6 +6,7 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ListingForm } from '../components/ListingForm';
 import { ContractModal } from '../components/ContractModal';
+import LazyImage from '../components/LazyImage';
 import {
     exportListingsToExcel,
     parseListingsFromExcel,
@@ -910,6 +911,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                                 />
                                             </th>
                                         )}
+                                        <th className="px-3 py-2.5 w-14 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_col_image')}</th>
                                         {[
                                             t('project.listing_col_code'),
                                             t('project.listing_col_title'),
@@ -950,6 +952,14 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                                     />
                                                 </td>
                                             )}
+                                            <td className="px-3 py-2">
+                                                <div className="w-11 h-11 rounded-lg overflow-hidden border border-[var(--glass-border)] bg-[var(--glass-surface-hover)] shrink-0">
+                                                    <LazyImage
+                                                        src={l.images?.[0]}
+                                                        wrapperClassName="w-full h-full"
+                                                    />
+                                                </div>
+                                            </td>
                                             <td className="px-4 py-2.5">
                                                 <span className="font-mono text-xs bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded whitespace-nowrap">
                                                     {l.code}

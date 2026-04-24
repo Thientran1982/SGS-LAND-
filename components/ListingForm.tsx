@@ -886,8 +886,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                             </div>
                             
-                            {/* IMAGES SECTION — hidden for project units */}
-                            {!isProjectUnit && (
+                            {/* IMAGES SECTION */}
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex-1">
                                 <div className="flex justify-between items-center mb-4">
                                     <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.label_images')}</h4>
@@ -940,7 +939,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                                 <input type="file" multiple accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
                             </div>
-                            )}
                         </div>
                     </div>
                 </div>
