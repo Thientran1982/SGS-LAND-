@@ -465,13 +465,35 @@ interface ListingDetailPanelProps {
     canEdit: boolean;
     onEdit: () => void;
     onClose: () => void;
+    onStatusChange?: (newStatus: string) => Promise<void>;
     t: (k: string) => string;
 }
 
-function ListingDetailPanel({ listing, canEdit, onEdit, onClose, t }: ListingDetailPanelProps) {
+const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
+    { value: 'BOOKING',  idle: 'bg-sky-50    text-sky-600    border border-sky-200'   },
+    { value: 'OPENING',  idle: 'bg-indigo-50 text-indigo-600 border border-indigo-200'},
+    { value: 'AVAILABLE',idle: 'bg-emerald-50 text-emerald-600 border border-emerald-200'},
+    { value: 'HOLD',     idle: 'bg-amber-50  text-amber-600  border border-amber-200' },
+    { value: 'SOLD',     idle: 'bg-slate-100 text-slate-500  border border-slate-200' },
+    { value: 'RENTED',   idle: 'bg-violet-50 text-violet-600 border border-violet-200'},
+    { value: 'INACTIVE', idle: 'bg-rose-50   text-rose-500   border border-rose-200'  },
+];
+
+function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange, t }: ListingDetailPanelProps) {
     const [activeImg, setActiveImg] = useState(0);
+    const [changingTo, setChangingTo] = useState<string | null>(null);
     const images = listing.images || [];
     const attrs = listing.attributes || {};
+
+    const handleStatusChange = async (newStatus: string) => {
+        if (!onStatusChange || changingTo || newStatus === listing.status) return;
+        setChangingTo(newStatus);
+        try {
+            await onStatusChange(newStatus);
+        } finally {
+            setChangingTo(null);
+        }
+    };
 
     const DetailRow = ({ label, value }: { label: string; value?: React.ReactNode }) =>
         value ? (
@@ -581,6 +603,42 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, t }: ListingDet
                             <p className="text-base font-bold text-[var(--text-primary)]">{fmtUnitPrice(listing.price, listing.area)}</p>
                         </div>
                     </div>
+
+                    {/* Quick status change */}
+                    {canEdit && onStatusChange && (
+                        <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4">
+                            <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2.5">{t('project.detail_change_status')}</p>
+                            <div className="flex flex-wrap gap-2">
+                                {LISTING_STATUS_OPTIONS.map(s => {
+                                    const isActive = s.value === listing.status;
+                                    const isChanging = changingTo === s.value;
+                                    return (
+                                        <button
+                                            key={s.value}
+                                            type="button"
+                                            disabled={!!changingTo || isActive}
+                                            onClick={() => handleStatusChange(s.value)}
+                                            className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all
+                                                ${isActive
+                                                    ? `${STATUS_LISTING_COLOR[s.value] || s.idle} ring-2 ring-current/30 cursor-default`
+                                                    : `${s.idle} hover:shadow-sm disabled:opacity-40 cursor-pointer`
+                                                }`}
+                                        >
+                                            {isChanging && (
+                                                <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin shrink-0" />
+                                            )}
+                                            {isActive && !isChanging && (
+                                                <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                                                </svg>
+                                            )}
+                                            {t(`status.${s.value}`) || s.value}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Key specs grid */}
                     <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
@@ -1281,6 +1339,22 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                     canEdit={canCreate}
                     onEdit={() => { setEditTarget(detailListing); setDetailListing(null); }}
                     onClose={() => setDetailListing(null)}
+                    onStatusChange={canCreate ? async (newStatus: string) => {
+                        try {
+                            const updated = await db.updateListing(detailListing.id, { status: newStatus });
+                            setDetailListing(updated);
+                            setListings(prev => {
+                                const next = prev.map(l => l.id === updated.id ? updated : l);
+                                recomputeStats(next);
+                                return next;
+                            });
+                            setPanelToast({ msg: `${t('status.' + newStatus) || newStatus} ✓`, type: 'success' });
+                            setTimeout(() => setPanelToast(null), 3000);
+                        } catch {
+                            setPanelToast({ msg: t('common.error') || 'Lỗi', type: 'error' });
+                            setTimeout(() => setPanelToast(null), 4000);
+                        }
+                    } : undefined}
                     t={t}
                 />
             )}
