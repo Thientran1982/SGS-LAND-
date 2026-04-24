@@ -40,6 +40,7 @@ const STATUS_COLOR: Record<string, string> = {
     COMPLETED: 'bg-sky-100 text-sky-700 border-sky-200',
     ON_HOLD: 'bg-amber-100 text-amber-700 border-amber-200',
     SUSPENDED: 'bg-rose-100 text-rose-700 border-rose-200',
+    BOOKING: 'bg-violet-100 text-violet-700 border-violet-200',
 };
 
 const ACCESS_COLOR: Record<string, string> = {
@@ -227,7 +228,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                             <Dropdown
                                 value={form.status}
                                 onChange={v => set('status', v as string)}
-                                options={['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) }))}
+                                options={['ACTIVE','BOOKING','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) }))}
                             />
                         </div>
                         <div>
@@ -2058,7 +2059,7 @@ export function Projects() {
                                 onChange={v => setStatusFilter(v as string)}
                                 options={[
                                     { value: '', label: t('project.status') },
-                                    ...(['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
+                                    ...(['ACTIVE','BOOKING','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
                                 ]}
                                 className="text-sm h-[38px]"
                             />
