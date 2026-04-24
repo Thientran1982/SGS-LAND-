@@ -203,7 +203,7 @@
   --r:14px; --r-lg:20px;
 }
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--text);line-height:1.75;background:#fff;overflow-x:hidden}
+body{font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;color:var(--text);line-height:1.75;background:#fff;overflow-x:hidden}
 img{max-width:100%;height:auto;display:block}
 a{color:var(--teal);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -382,16 +382,9 @@ footer{background:var(--teal-deep);padding:40px 0 24px}
 .legal-alert strong{color:#5a3e00}
 
 /* ── SCROLL BTN ── */
-.scroll-top{position:fixed;bottom:28px;right:28px;width:46px;height:46px;background:var(--teal);color:#fff;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:var(--shadow-md);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:50;text-decoration:none}
+.scroll-top{position:fixed;bottom:80px;left:18px;width:42px;height:42px;background:var(--teal);color:#fff;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--shadow-md);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:50;text-decoration:none}
 .scroll-top.visible{opacity:1;pointer-events:auto}
 .scroll-top:hover{transform:translateY(-3px);text-decoration:none;color:#fff}
-
-/* ── HOTLINE FLOAT ── */
-.hotline-float{position:fixed;bottom:84px;right:28px;z-index:50;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
-.hf-btn{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--teal-deep);font-size:14px;font-weight:700;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(212,168,67,.4);text-decoration:none;transition:transform .2s}
-.hf-btn:hover{transform:translateY(-2px);text-decoration:none;color:var(--teal-deep)}
-.hf-label{font-size:11px;font-weight:400;opacity:.85}
-@media(max-width:640px){.hf-btn{font-size:13px;padding:9px 14px}}
 
 /* ── BREADCRUMB ── */
 .breadcrumb{padding:14px 0;font-size:13.5px;color:var(--text-soft)}
@@ -401,9 +394,57 @@ footer{background:var(--teal-deep);padding:40px 0 24px}
 
 /* ── INVEST SECTION ── */
 .invest-point{display:flex;gap:16px;padding:20px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);margin-bottom:14px}
-.invest-icon{width:48px;height:48px;flex-shrink:0;background:var(--emerald-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.invest-icon{width:48px;height:48px;flex-shrink:0;background:var(--emerald-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
 .invest-point h3{font-size:16px;margin-bottom:4px;color:var(--teal-deep)}
 .invest-point p{font-size:14px;color:var(--text-soft);line-height:1.7;margin:0}
+
+/* ── AMENITY ICON EMOJI ── */
+.amenity-icon{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+.legal-alert .icon{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+
+/* ── FLOAT BUTTONS ── */
+.float{position:fixed;right:18px;bottom:18px;z-index:50;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.float a,.float button.float-btn{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;box-shadow:0 8px 22px rgba(10,76,62,.35);text-decoration:none;position:relative;transition:transform .2s;border:none;cursor:pointer;font-family:inherit}
+.float a:hover,.float button.float-btn:hover{transform:scale(1.07);text-decoration:none}
+.float a.float-call{background:var(--teal);color:#fff}
+.float a.float-zalo{background:var(--emerald);color:#fff}
+.float button.float-ai{background:linear-gradient(135deg,var(--gold) 0%,#e5c66a 100%);color:var(--teal-deep);font-size:11px;line-height:1.1;letter-spacing:.04em;text-align:center;padding:0 4px}
+.float a::before,.float button.float-ai::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;opacity:0;animation:fpulse 2s ease-out infinite}
+@keyframes fpulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.6);opacity:0}}
+
+/* ── AI CHAT WIDGET ── */
+.ai-chat{position:fixed;right:18px;top:80px;width:380px;max-width:calc(100vw - 24px);height:calc(100vh - 100px);max-height:640px;background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.28);display:none;flex-direction:column;overflow:hidden;z-index:60;border:1px solid var(--line)}
+.ai-chat.open{display:flex;animation:aiSlide .25s ease-out}
+@keyframes aiSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.ai-head{background:linear-gradient(135deg,var(--teal-deep),var(--teal));color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ai-title{display:flex;align-items:center;gap:10px}
+.ai-avatar{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--teal-deep);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;letter-spacing:.04em;flex-shrink:0}
+.ai-head h4{margin:0;font-size:15px;color:#fff;line-height:1.2}
+.ai-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+.ai-close-btn{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1}
+.ai-close-btn:hover{background:rgba(255,255,255,.12)}
+.ai-body{flex:1;overflow-y:auto;padding:16px;background:#f5f8f7;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.ai-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;animation:aiMsg .2s ease-out}
+@keyframes aiMsg{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ai-msg.bot{background:#fff;border:1px solid var(--line);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.ai-msg.user{background:var(--teal-deep);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.ai-msg.err{background:#fee;border:1px solid #f5b5b5;color:#7a1f1f;align-self:flex-start;font-size:13px}
+.ai-typing{display:flex;gap:4px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:14px;align-self:flex-start;width:fit-content}
+.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--emerald);opacity:.4;animation:aiDot 1.4s infinite}
+.ai-typing span:nth-child(2){animation-delay:.2s}
+.ai-typing span:nth-child(3){animation-delay:.4s}
+@keyframes aiDot{0%,60%,100%{opacity:.3;transform:scale(.85)}30%{opacity:1;transform:scale(1)}}
+.ai-suggest{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;background:#f5f8f7;border-top:1px solid var(--line)}
+.ai-suggest button{font-family:inherit;background:#fff;border:1px solid var(--line);color:var(--teal-deep);padding:6px 12px;border-radius:999px;font-size:12px;cursor:pointer;transition:all .15s}
+.ai-suggest button:hover{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep)}
+.ai-foot{padding:12px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px;align-items:flex-end}
+.ai-foot textarea{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none;max-height:100px;min-height:42px;outline:none;transition:border-color .15s;background:#fff;color:var(--text)}
+.ai-foot textarea:focus{border-color:var(--gold)}
+.ai-send-btn{background:var(--teal-deep);color:var(--gold);border:none;border-radius:12px;width:42px;height:42px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform .15s,opacity .15s;font-weight:700;flex-shrink:0}
+.ai-send-btn:hover{transform:scale(1.05)}
+.ai-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.ai-disclaimer{font-size:10px;color:var(--text-soft);text-align:center;padding:0 12px 8px;background:#fff;font-style:italic}
+@media(max-width:480px){.ai-chat{right:8px;left:8px;top:72px;width:auto;max-width:none;height:calc(100vh - 84px);max-height:none}}
 </style>
 </head>
 <body>
@@ -1007,73 +1048,197 @@ footer{background:var(--teal-deep);padding:40px 0 24px}
 <!-- Scroll to top -->
 <a href="#hero" class="scroll-top" id="scrollTop" aria-label="Lên đầu trang">↑</a>
 
-<!-- Hotline Float -->
-<div class="hotline-float" aria-label="Liên hệ nhanh">
-  <a href="tel:0971132378" class="hf-btn" aria-label="Gọi hotline 0971 132 378">
-    <span>📞</span>
-    <div>
-      <div>0971 132 378</div>
-      <div class="hf-label">Tư vấn miễn phí</div>
-    </div>
-  </a>
+<!-- Float Buttons -->
+<div class="float" aria-label="Liên hệ nhanh">
+  <button type="button" class="float-btn float-ai" id="aiOpenBtn" aria-label="Mở AI tư vấn Aqua City">AI<br>Tư vấn</button>
+  <a href="tel:0971132378" class="float-call" aria-label="Gọi hotline 0971 132 378">Gọi</a>
+  <a href="https://zalo.me/0971132378" class="float-zalo" target="_blank" rel="noopener noreferrer" aria-label="Chat Zalo SGS Land">Z</a>
 </div>
 
+<!-- AI Chat Widget -->
+<aside class="ai-chat" id="aiChat" role="dialog" aria-modal="false" aria-labelledby="aiChatTitle" aria-hidden="true">
+  <header class="ai-head">
+    <div class="ai-title">
+      <div class="ai-avatar">AI</div>
+      <div>
+        <h4 id="aiChatTitle">Trợ lý AI Aqua City</h4>
+        <div class="ai-sub">Tư vấn tự động · SGS Land</div>
+      </div>
+    </div>
+    <button type="button" class="ai-close-btn" id="aiCloseBtn" aria-label="Đóng hộp chat">×</button>
+  </header>
+  <div class="ai-body" id="aiBody" aria-live="polite"></div>
+  <div class="ai-suggest" id="aiSuggest">
+    <button type="button" data-q="Aqua City nằm ở đâu? Cách TP.HCM bao nhiêu km?">Vị trí</button>
+    <button type="button" data-q="Aqua City có những loại sản phẩm nào? Giá bao nhiêu?">Giá &amp; loại hình</button>
+    <button type="button" data-q="Pháp lý Aqua City 2025 như thế nào? Đã có sổ đỏ chưa?">Pháp lý</button>
+    <button type="button" data-q="Tiện ích nội khu Aqua City có gì nổi bật?">Tiện ích</button>
+    <button type="button" data-q="Aqua City có đáng mua đầu tư không?">Có nên mua?</button>
+  </div>
+  <form class="ai-foot" id="aiForm" autocomplete="off">
+    <textarea id="aiInput" rows="1" placeholder="Hỏi về Aqua City Novaland..." maxlength="1000" aria-label="Nội dung câu hỏi"></textarea>
+    <button type="submit" class="ai-send-btn" id="aiSendBtn" aria-label="Gửi">▶</button>
+  </form>
+  <div class="ai-disclaimer">Thông tin mang tính tham khảo. Để nhận bảng giá &amp; pháp lý chính thức, vui lòng để lại SĐT hoặc gọi 0971 132 378.</div>
+</aside>
+
 <script>
+(function(){
 // Nav scroll effect
-const nav = document.getElementById('nav');
-const scrollTopBtn = document.getElementById('scrollTop');
-window.addEventListener('scroll', () => {
+var nav = document.getElementById('nav');
+var scrollTopBtn = document.getElementById('scrollTop');
+window.addEventListener('scroll', function(){
   if (window.scrollY > 60) { nav.classList.add('scrolled'); scrollTopBtn.classList.add('visible'); }
   else { nav.classList.remove('scrolled'); scrollTopBtn.classList.remove('visible'); }
 }, { passive: true });
 
 // Burger menu
-const burger = document.getElementById('burger');
-const navLinks = document.getElementById('navLinks');
-burger.addEventListener('click', () => {
-  const isOpen = navLinks.classList.toggle('open');
-  burger.setAttribute('aria-expanded', String(isOpen));
+var burger = document.getElementById('burger');
+var navLinks = document.getElementById('navLinks');
+burger.addEventListener('click', function(){
+  var isOpen = navLinks.classList.toggle('open');
+  burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   burger.textContent = isOpen ? '✕' : '☰';
 });
-navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+navLinks.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){
   navLinks.classList.remove('open');
   burger.setAttribute('aria-expanded', 'false');
   burger.textContent = '☰';
-}));
+}); });
 
 // Lead form
-const form = document.getElementById('leadForm');
-const formSuccess = document.getElementById('formSuccess');
-const submitBtn = document.getElementById('submitBtn');
-form.addEventListener('submit', async (e) => {
+var form = document.getElementById('leadForm');
+var formSuccess = document.getElementById('formSuccess');
+var submitBtn = document.getElementById('submitBtn');
+form.addEventListener('submit', function(e){
   e.preventDefault();
-  const name = document.getElementById('name').value.trim();
-  const phone = document.getElementById('phone').value.trim();
+  var name = document.getElementById('name').value.trim();
+  var phone = document.getElementById('phone').value.trim();
   if (!name || !phone) { alert('Vui lòng nhập họ tên và số điện thoại.'); return; }
   submitBtn.disabled = true;
   submitBtn.textContent = 'Đang gửi...';
-  try {
-    await fetch('/api/landing-leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        phone,
-        email: document.getElementById('email').value.trim(),
-        interest: document.getElementById('interest').value,
-        budget: document.getElementById('budget').value,
-        note: document.getElementById('note').value.trim(),
-        project: 'aqua-city',
-        projectName: 'Aqua City Novaland',
-        source: 'landing-aqua-city',
-        unit: document.getElementById('interest').value || 'general',
-        type: 'BUY',
-      })
-    });
-  } catch (_) {}
-  form.style.display = 'none';
-  formSuccess.style.display = 'block';
+  fetch('/api/landing-leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: name,
+      phone: phone,
+      email: document.getElementById('email').value.trim(),
+      interest: document.getElementById('interest').value,
+      budget: document.getElementById('budget').value,
+      note: document.getElementById('note').value.trim(),
+      project: 'aqua-city',
+      projectName: 'Aqua City Novaland',
+      source: 'landing-aqua-city',
+      unit: document.getElementById('interest').value || 'general',
+      type: 'BUY',
+    })
+  }).catch(function(){}).finally(function(){
+    form.style.display = 'none';
+    formSuccess.style.display = 'block';
+  });
 });
+
+// ── AI CHAT WIDGET ──
+var aiOpenBtn = document.getElementById('aiOpenBtn');
+var aiChat = document.getElementById('aiChat');
+var aiCloseBtn = document.getElementById('aiCloseBtn');
+var aiBody = document.getElementById('aiBody');
+var aiForm = document.getElementById('aiForm');
+var aiInput = document.getElementById('aiInput');
+var aiSendBtn = document.getElementById('aiSendBtn');
+var aiSuggest = document.getElementById('aiSuggest');
+var aiHistory = [];
+var aiBusy = false;
+var aiGreeted = false;
+
+function aiAppend(role, text, isErr){
+  var div = document.createElement('div');
+  div.className = 'ai-msg ' + (isErr ? 'err' : role === 'user' ? 'user' : 'bot');
+  div.textContent = text;
+  aiBody.appendChild(div);
+  aiBody.scrollTop = aiBody.scrollHeight;
+}
+function aiTypingShow(){
+  var t = document.createElement('div');
+  t.className = 'ai-typing'; t.id = 'aiTyping';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  aiBody.appendChild(t);
+  aiBody.scrollTop = aiBody.scrollHeight;
+}
+function aiTypingHide(){
+  var t = document.getElementById('aiTyping');
+  if (t) t.remove();
+}
+function aiOpen(){
+  aiChat.classList.add('open');
+  aiChat.setAttribute('aria-hidden', 'false');
+  if (!aiGreeted){
+    aiAppend('bot', 'Xin chào anh/chị! Em là trợ lý AI của SGS Land, sẵn sàng tư vấn về dự án Aqua City Novaland — vị trí, quy mô, tiện ích, bảng giá và pháp lý. Anh/chị muốn tìm hiểu điều gì ạ?');
+    aiGreeted = true;
+  }
+  setTimeout(function(){ aiInput.focus(); }, 200);
+}
+function aiClose(){
+  aiChat.classList.remove('open');
+  aiChat.setAttribute('aria-hidden', 'true');
+}
+function aiSend(text){
+  text = (text || '').trim();
+  if (!text || aiBusy) return;
+  aiAppend('user', text);
+  aiHistory.push({ role: 'user', content: text });
+  aiInput.value = '';
+  aiInput.style.height = 'auto';
+  aiBusy = true;
+  aiSendBtn.disabled = true;
+  aiTypingShow();
+
+  fetch('/api/landing-ai/consult', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project: 'aqua-city', messages: aiHistory })
+  })
+  .then(function(r){ return r.json().then(function(j){ return { s: r.status, b: j }; }); })
+  .then(function(res){
+    aiTypingHide();
+    if (res.s >= 200 && res.s < 300 && res.b && res.b.ok){
+      aiAppend('bot', res.b.reply || '');
+      aiHistory.push({ role: 'assistant', content: res.b.reply || '' });
+    } else {
+      aiAppend('bot', (res.b && res.b.error) ? res.b.error : 'Có lỗi xảy ra. Vui lòng gọi hotline 0971 132 378.', true);
+    }
+  })
+  .catch(function(){
+    aiTypingHide();
+    aiAppend('bot', 'Không kết nối được. Vui lòng gọi hotline 0971 132 378.', true);
+  })
+  .finally(function(){
+    aiBusy = false;
+    aiSendBtn.disabled = false;
+    aiInput.focus();
+  });
+}
+
+aiOpenBtn.addEventListener('click', aiOpen);
+aiCloseBtn.addEventListener('click', aiClose);
+aiForm.addEventListener('submit', function(e){ e.preventDefault(); aiSend(aiInput.value); });
+aiInput.addEventListener('keydown', function(e){
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); aiSend(aiInput.value); }
+});
+aiInput.addEventListener('input', function(){
+  aiInput.style.height = 'auto';
+  aiInput.style.height = Math.min(aiInput.scrollHeight, 100) + 'px';
+});
+aiSuggest.addEventListener('click', function(e){
+  var t = e.target;
+  if (t && t.tagName === 'BUTTON' && t.dataset.q) aiSend(t.dataset.q);
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && aiChat.classList.contains('open')) aiClose();
+});
+
+})();
 </script>
 </body>
 </html>
