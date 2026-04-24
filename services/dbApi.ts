@@ -1110,6 +1110,12 @@ class DatabaseApiClient {
       if (err.error === 'EMAIL_NOT_VERIFIED') {
         error.code = 'EMAIL_NOT_VERIFIED';
         error.email = err.email || email;
+      } else if (err.error === 'TENANT_PENDING_APPROVAL') {
+        error.code = 'TENANT_PENDING_APPROVAL';
+        error.email = err.email || email;
+      } else if (err.error === 'TENANT_REJECTED') {
+        error.code = 'TENANT_REJECTED';
+        error.email = err.email || email;
       }
       throw error;
     }
