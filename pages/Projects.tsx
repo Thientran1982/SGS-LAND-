@@ -1921,6 +1921,8 @@ export function Projects() {
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [dragIdx, setDragIdx] = useState<number | null>(null);
+    const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
     const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '');
     const isPartner = user?.role === 'PARTNER_ADMIN' || user?.role === 'PARTNER_AGENT';
@@ -1952,6 +1954,25 @@ export function Projects() {
     useEffect(() => { db.getCurrentUser().then(setUser); }, []);
     useEffect(() => { if (user) load(); }, [user, load]);
 
+    // Restore saved drag order from localStorage (only when no search/filter active)
+    useEffect(() => {
+        if (loading || !user?.id || projects.length === 0) return;
+        if (debouncedSearch || statusFilter) return;
+        try {
+            const saved = localStorage.getItem(`sgs_proj_order_${user.id}`);
+            if (!saved) return;
+            const ids: string[] = JSON.parse(saved);
+            setProjects(prev => {
+                const ordered = [...prev].sort((a, b) => {
+                    const ai = ids.indexOf(a.id), bi = ids.indexOf(b.id);
+                    return ai === -1 ? 1 : bi === -1 ? -1 : ai - bi;
+                });
+                return ordered;
+            });
+        } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id, loading]);
+
     const handleSave = async (data: any) => {
         if (formTarget === 'new') {
             const created = await db.createProject(data);
@@ -1964,6 +1985,25 @@ export function Projects() {
         }
         setFormTarget(null);
     };
+
+    const handleDragEnd = useCallback(() => {
+        if (dragIdx !== null && dragOverIdx !== null && dragIdx !== dragOverIdx) {
+            setProjects(prev => {
+                const next = [...prev];
+                const [moved] = next.splice(dragIdx, 1);
+                next.splice(dragOverIdx, 0, moved);
+                try {
+                    localStorage.setItem(
+                        `sgs_proj_order_${user?.id}`,
+                        JSON.stringify(next.map((p: any) => p.id))
+                    );
+                } catch {}
+                return next;
+            });
+        }
+        setDragIdx(null);
+        setDragOverIdx(null);
+    }, [dragIdx, dragOverIdx, user?.id]);
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
@@ -2070,18 +2110,42 @@ export function Projects() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {projects.map(project => (
-                            <ProjectCard
+                        {projects.map((project, idx) => (
+                            <div
                                 key={project.id}
-                                project={project}
-                                isAdmin={isAdmin}
-                                isPartner={isPartner}
-                                onEdit={() => setFormTarget(project)}
-                                onDelete={() => setDeleteTarget(project)}
-                                onAccess={() => setAccessTarget(project)}
-                                onListings={() => setListingsTarget(project)}
-                                t={t}
-                            />
+                                draggable={isAdmin}
+                                onDragStart={e => {
+                                    e.dataTransfer.effectAllowed = 'move';
+                                    setDragIdx(idx);
+                                }}
+                                onDragOver={e => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
+                                    if (dragOverIdx !== idx) setDragOverIdx(idx);
+                                }}
+                                onDrop={e => e.preventDefault()}
+                                onDragEnd={handleDragEnd}
+                                onDragLeave={() => { if (dragOverIdx === idx) setDragOverIdx(null); }}
+                                className={[
+                                    'transition-all duration-150',
+                                    isAdmin ? 'cursor-grab active:cursor-grabbing' : '',
+                                    dragIdx === idx ? 'opacity-40 scale-[0.97] shadow-inner' : '',
+                                    dragOverIdx === idx && dragIdx !== idx
+                                        ? 'ring-2 ring-indigo-400 ring-offset-2 rounded-2xl scale-[1.01]'
+                                        : '',
+                                ].join(' ')}
+                            >
+                                <ProjectCard
+                                    project={project}
+                                    isAdmin={isAdmin}
+                                    isPartner={isPartner}
+                                    onEdit={() => setFormTarget(project)}
+                                    onDelete={() => setDeleteTarget(project)}
+                                    onAccess={() => setAccessTarget(project)}
+                                    onListings={() => setListingsTarget(project)}
+                                    t={t}
+                                />
+                            </div>
                         ))}
                     </div>
                 )}
