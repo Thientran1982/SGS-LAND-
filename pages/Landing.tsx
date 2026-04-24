@@ -33,7 +33,8 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đại Đô Thị Sinh Thái',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/images/projects/aqua-city.png',
+        img: '/landing/aqua-city/hero.jpg',
+        href: '/landing/aqua-city/',
     },
     {
         slug: 'the-global-city',
