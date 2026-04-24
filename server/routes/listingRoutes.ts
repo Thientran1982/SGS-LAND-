@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { priceCalibrationService } from '../services/priceCalibrationService';
+import { notificationRepository } from '../repositories/notificationRepository';
 
 // ── Server-side geocoding (Nominatim / OpenStreetMap) ────────────────────────
 // Runs in the background after create/update so the API response is not delayed.
@@ -421,12 +422,14 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
       }
 
+      let prefetchedListing: any = null;
+
       if (WRITABLE_RESTRICTED_ROLES.includes(user.role)) {
-        const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
-        if (!existing) return res.status(404).json({ error: 'Listing not found' });
+        prefetchedListing = await listingRepository.findById(user.tenantId, String(req.params.id));
+        if (!prefetchedListing) return res.status(404).json({ error: 'Listing not found' });
         const isOwnerOrAssignee =
-          existing.createdBy === user.id ||
-          existing.assignedTo === user.id;
+          prefetchedListing.createdBy === user.id ||
+          prefetchedListing.assignedTo === user.id;
         if (!isOwnerOrAssignee) {
           return res.status(403).json({ error: 'You can only edit listings you created or are assigned to' });
         }
@@ -437,6 +440,14 @@ export function createListingRoutes(authenticateToken: any) {
 
       // Strip assignedTo — assignment is exclusively managed via PATCH /:id/assign (ADMIN/TEAM_LEAD only)
       const { assignedTo: _stripped, ...safeBody } = req.body;
+
+      // Capture old status before update (for change notification)
+      let oldStatus: string | undefined;
+      if (safeBody.status) {
+        const prev = prefetchedListing ?? await listingRepository.findById(user.tenantId, String(req.params.id));
+        oldStatus = (prev as any)?.status;
+      }
+
       const listing = await listingRepository.update(user.tenantId, String(req.params.id), safeBody);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
@@ -480,6 +491,39 @@ export function createListingRoutes(authenticateToken: any) {
       // If coordinates are missing or invalid after update, geocode the address in the background
       if (!hasValidCoords(listing.coordinates) && listing.location) {
         scheduleGeocode(user.tenantId, String(req.params.id), listing.location);
+      }
+
+      // ── Notify SUPER_ADMIN / ADMIN / TEAM_LEAD on listing status change ────────
+      if (safeBody.status && oldStatus && oldStatus !== (listing.status as string)) {
+        setImmediate(async () => {
+          try {
+            const { pool } = await import('../db');
+            const admins = await pool.query<{ id: string }>(
+              `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD') AND status = 'ACTIVE'`,
+              [user.tenantId]
+            );
+            const LABEL: Record<string, string> = {
+              BOOKING: 'Nhận Booking', OPENING: 'Đang mở bán', AVAILABLE: 'Đang GD',
+              HOLD: 'Giữ chỗ', SOLD: 'Đã bán', RENTED: 'Đã cho thuê',
+              INACTIVE: 'Ngừng GD', BEST_MARKET: 'Tốt nhất TT',
+            };
+            const fromLabel = LABEL[oldStatus as string] ?? oldStatus;
+            const toLabel   = LABEL[listing.status as string] ?? listing.status;
+            const code      = (listing.code as string) || String(req.params.id).slice(0, 8);
+            await Promise.all(admins.rows.map(a =>
+              notificationRepository.create({
+                tenantId: user.tenantId,
+                userId:   a.id,
+                type:     'LISTING_STATUS_CHANGED',
+                title:    `Đổi trạng thái: ${code}`,
+                body:     `${(listing.title as string) || code}: ${fromLabel} → ${toLabel}. Bởi: ${user.name || user.email}`,
+                metadata: { listingId: String(req.params.id), oldStatus, newStatus: listing.status, changedBy: user.id },
+              })
+            ));
+          } catch (e) {
+            console.error('[listing status notif]', e);
+          }
+        });
       }
 
       res.json(listing);
