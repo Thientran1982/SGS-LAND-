@@ -30,6 +30,9 @@ export const listingApi = {
   getFavorites: (): Promise<any[]> =>
     api.get('/api/listings/favorites'),
 
+  updateListingStatus: (id: string, status: string): Promise<any> =>
+    api.patch(`/api/listings/${id}/status`, { status }),
+
   assignListing: (id: string, userId: string | null): Promise<any> =>
     api.patch(`/api/listings/${id}/assign`, { userId }),
 

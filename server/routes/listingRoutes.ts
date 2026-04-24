@@ -163,6 +163,45 @@ const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
 /** SALES and MARKETING may edit/delete their own or assigned listings; VIEWER is read-only */
 const WRITABLE_RESTRICTED_ROLES = ['SALES', 'MARKETING'];
 
+const STATUS_LABEL: Record<string, string> = {
+  BOOKING: 'Nhận Booking', OPENING: 'Đang mở bán', AVAILABLE: 'Đang GD',
+  HOLD: 'Giữ chỗ', SOLD: 'Đã bán', RENTED: 'Đã cho thuê',
+  INACTIVE: 'Ngừng GD', BEST_MARKET: 'Tốt nhất TT',
+};
+
+/** Fire-and-forget: create LISTING_STATUS_CHANGED notifications for all admins */
+async function notifyStatusChange(
+  tenantId: string,
+  listingId: string,
+  code: string,
+  title: string,
+  oldStatus: string,
+  newStatus: string,
+  actorName: string,
+): Promise<void> {
+  try {
+    const { pool } = await import('../db');
+    const admins = await pool.query<{ id: string }>(
+      `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD') AND status = 'ACTIVE'`,
+      [tenantId]
+    );
+    const fromLabel = STATUS_LABEL[oldStatus] ?? oldStatus;
+    const toLabel   = STATUS_LABEL[newStatus] ?? newStatus;
+    await Promise.all(admins.rows.map(a =>
+      notificationRepository.create({
+        tenantId,
+        userId:   a.id,
+        type:     'LISTING_STATUS_CHANGED',
+        title:    `Đổi trạng thái: ${code}`,
+        body:     `${title || code}: ${fromLabel} → ${toLabel}. Bởi: ${actorName}`,
+        metadata: { listingId, oldStatus, newStatus, changedBy: actorName },
+      })
+    ));
+  } catch (e) {
+    console.error('[listing status notif]', e);
+  }
+}
+
 const SENSITIVE_FIELDS = ['ownerName', 'ownerPhone', 'commission', 'commissionUnit', 'consignorName', 'consignorPhone'];
 
 function redactSensitiveFields(item: any) {
@@ -493,43 +532,78 @@ export function createListingRoutes(authenticateToken: any) {
         scheduleGeocode(user.tenantId, String(req.params.id), listing.location);
       }
 
-      // ── Notify SUPER_ADMIN / ADMIN / TEAM_LEAD on listing status change ────────
+      // ── Notify admins on status change ──────────────────────────────────────
       if (safeBody.status && oldStatus && oldStatus !== (listing.status as string)) {
-        setImmediate(async () => {
-          try {
-            const { pool } = await import('../db');
-            const admins = await pool.query<{ id: string }>(
-              `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD') AND status = 'ACTIVE'`,
-              [user.tenantId]
-            );
-            const LABEL: Record<string, string> = {
-              BOOKING: 'Nhận Booking', OPENING: 'Đang mở bán', AVAILABLE: 'Đang GD',
-              HOLD: 'Giữ chỗ', SOLD: 'Đã bán', RENTED: 'Đã cho thuê',
-              INACTIVE: 'Ngừng GD', BEST_MARKET: 'Tốt nhất TT',
-            };
-            const fromLabel = LABEL[oldStatus as string] ?? oldStatus;
-            const toLabel   = LABEL[listing.status as string] ?? listing.status;
-            const code      = (listing.code as string) || String(req.params.id).slice(0, 8);
-            await Promise.all(admins.rows.map(a =>
-              notificationRepository.create({
-                tenantId: user.tenantId,
-                userId:   a.id,
-                type:     'LISTING_STATUS_CHANGED',
-                title:    `Đổi trạng thái: ${code}`,
-                body:     `${(listing.title as string) || code}: ${fromLabel} → ${toLabel}. Bởi: ${user.name || user.email}`,
-                metadata: { listingId: String(req.params.id), oldStatus, newStatus: listing.status, changedBy: user.id },
-              })
-            ));
-          } catch (e) {
-            console.error('[listing status notif]', e);
-          }
-        });
+        const code = (listing.code as string) || String(req.params.id).slice(0, 8);
+        setImmediate(() => notifyStatusChange(
+          user.tenantId, String(req.params.id), code,
+          (listing.title as string) || code,
+          oldStatus as string, listing.status as string,
+          user.name || user.email,
+        ));
       }
 
       res.json(listing);
     } catch (error) {
       console.error('Error updating listing:', error);
       res.status(500).json({ error: 'Failed to update listing' });
+    }
+  });
+
+  // ── PATCH /api/listings/:id/status ──────────────────────────────────────────
+  // Any active internal user (SALES / MARKETING / TEAM_LEAD / ADMIN / SUPER_ADMIN) may change
+  // the transaction status of any listing in their tenant. External partners and VIEWERs are blocked.
+  router.patch('/:id/status', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const BLOCKED = [...PARTNER_ROLES, 'VIEWER'];
+      if (BLOCKED.includes(user.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions to change listing status' });
+      }
+
+      const { status } = req.body;
+      if (!status || typeof status !== 'string') {
+        return res.status(400).json({ error: 'status is required' });
+      }
+
+      const VALID_STATUSES = ['BOOKING', 'OPENING', 'AVAILABLE', 'HOLD', 'SOLD', 'RENTED', 'INACTIVE', 'BEST_MARKET'];
+      if (!VALID_STATUSES.includes(status)) {
+        return res.status(400).json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` });
+      }
+
+      // Fetch current listing to get old status
+      const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
+      if (!existing) return res.status(404).json({ error: 'Listing not found' });
+      const oldStatus = existing.status as string;
+
+      if (oldStatus === status) {
+        return res.json(existing); // No-op: status unchanged
+      }
+
+      const listing = await listingRepository.update(user.tenantId, String(req.params.id), { status });
+      if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      await auditRepository.log(user.tenantId, {
+        actorId:    user.id,
+        action:     'UPDATE_STATUS',
+        entityType: 'LISTING',
+        entityId:   String(req.params.id),
+        details:    `Status changed: ${oldStatus} → ${status}`,
+        ipAddress:  req.ip,
+      });
+
+      const code = (listing.code as string) || String(req.params.id).slice(0, 8);
+      setImmediate(() => notifyStatusChange(
+        user.tenantId, String(req.params.id), code,
+        (listing.title as string) || code,
+        oldStatus, status,
+        user.name || user.email,
+      ));
+
+      res.json(listing);
+    } catch (error) {
+      console.error('Error changing listing status:', error);
+      res.status(500).json({ error: 'Failed to change listing status' });
     }
   });
 

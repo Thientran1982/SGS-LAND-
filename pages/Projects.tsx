@@ -721,7 +721,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [contractTarget, setContractTarget] = useState<any | null>(null);
-    const [panelToast, setPanelToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [panelToast, setPanelToast] = useState<{ msg: string; type: 'success' | 'error'; celebration?: boolean } | null>(null);
     const [detailListing, setDetailListing] = useState<Listing | null>(null);
     // Import / Export
     const importFileRef = useRef<HTMLInputElement | null>(null);
@@ -1344,17 +1344,22 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     onClose={() => setDetailListing(null)}
                     onStatusChange={canEditOwn ? async (newStatus: string) => {
                         try {
-                            const updated = await db.updateListing(detailListing.id, { status: newStatus });
+                            const updated = await db.updateListingStatus(detailListing.id, newStatus);
                             setDetailListing(updated);
                             setListings(prev => {
                                 const next = prev.map(l => l.id === updated.id ? updated : l);
                                 recomputeStats(next);
                                 return next;
                             });
-                            setPanelToast({ msg: `${t('status.' + newStatus) || newStatus} ✓`, type: 'success' });
-                            setTimeout(() => setPanelToast(null), 3000);
+                            const isCelebration = newStatus === 'SOLD' || newStatus === 'RENTED';
+                            const celebrationMsg = newStatus === 'SOLD'
+                                ? (t('project.congrats_sold') || 'Chúc mừng! Đã bán thành công!').replace('{code}', updated.code || '')
+                                : (t('project.congrats_rented') || 'Chúc mừng! Đã cho thuê thành công!').replace('{code}', updated.code || '');
+                            const regularMsg = `${t('status.' + newStatus) || newStatus} ✓`;
+                            setPanelToast({ msg: isCelebration ? celebrationMsg : regularMsg, type: 'success', celebration: isCelebration });
+                            setTimeout(() => setPanelToast(null), isCelebration ? 6000 : 3000);
                         } catch {
-                            setPanelToast({ msg: t('common.error') || 'Lỗi', type: 'error' });
+                            setPanelToast({ msg: t('common.error') || 'Đã xảy ra lỗi', type: 'error' });
                             setTimeout(() => setPanelToast(null), 4000);
                         }
                     } : undefined}
@@ -1548,10 +1553,20 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             {/* ── Panel toast ── */}
             {panelToast && createPortal(
                 <div
-                    className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[20000] px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white transition-all ${panelToast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`}
-                    style={{ minWidth: 220, textAlign: 'center' }}
+                    className={`fixed z-[20000] transition-all
+                        ${panelToast.celebration
+                            ? 'bottom-8 left-1/2 -translate-x-1/2 px-8 py-5 rounded-3xl shadow-2xl text-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white max-w-xs w-[90vw]'
+                            : `bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white ${panelToast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`
+                        }`}
+                    style={{ textAlign: 'center' }}
                 >
-                    {panelToast.msg}
+                    {panelToast.celebration ? (
+                        <>
+                            <div className="text-3xl mb-1">🎉</div>
+                            <div className="text-base font-extrabold leading-snug">{panelToast.msg}</div>
+                            <div className="text-xs mt-1 opacity-80">{t('project.congrats_sub') || 'Xuất sắc! Tiếp tục phát huy nhé!'}</div>
+                        </>
+                    ) : panelToast.msg}
                 </div>,
                 document.body
             )}
