@@ -16,6 +16,7 @@ const HOTLINE_DISPLAY = '0971 132 378';
 const INTERNAL_INBOX = process.env.LANDING_LEAD_INBOX || 'info@sgsland.vn';
 
 const PROJECT_DISPLAY_NAMES: Record<string, string> = {
+  'aqua-city': 'Aqua City Novaland',
   'masteri-cosmo-central': 'Masteri Cosmo Central',
   'vinhomes-hoc-mon': 'Vinhomes Hóc Môn',
   'legacy-66': 'Legacy 66',

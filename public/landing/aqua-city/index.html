@@ -351,11 +351,20 @@ details.faq[open]{border-color:var(--emerald)}
 .form-section p.lead{color:rgba(255,255,255,.82);font-size:16px;margin-bottom:28px}
 .form-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-lg);padding:36px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:520px}
 @media(max-width:680px){.form-box{padding:24px}}
-.form-box input,.form-box select,.form-box textarea{width:100%;padding:13px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:15px;margin-bottom:14px;outline:none;transition:border-color .2s}
+.form-box input,.form-box textarea{width:100%;padding:13px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:15px;margin-bottom:14px;outline:none;transition:border-color .2s}
 .form-box input::placeholder,.form-box textarea::placeholder{color:rgba(255,255,255,.5)}
-.form-box input:focus,.form-box select:focus,.form-box textarea:focus{border-color:var(--gold)}
-.form-box select{color:rgba(255,255,255,.7);cursor:pointer}
-.form-box select option{color:#1f1f1f;background:#fff}
+.form-box input:focus,.form-box textarea:focus{border-color:var(--gold)}
+/* ── Custom dropdown ── */
+.csel{position:relative;margin-bottom:14px}
+.csel-trigger{width:100%;padding:13px 40px 13px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:rgba(255,255,255,.55);font-family:inherit;font-size:15px;outline:none;cursor:pointer;transition:border-color .2s;text-align:left;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.csel-trigger.has-value{color:#fff}
+.csel.open .csel-trigger,.csel-trigger:focus{border-color:var(--gold)}
+.csel-arrow{flex-shrink:0;transition:transform .2s;opacity:.7}
+.csel.open .csel-arrow{transform:rotate(180deg)}
+.csel-menu{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:#0f2b1f;border:1.5px solid rgba(212,168,67,.35);border-radius:10px;overflow:hidden;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.csel.open .csel-menu{display:block}
+.csel-opt{padding:11px 16px;color:rgba(255,255,255,.72);font-size:14.5px;cursor:pointer;transition:background .12s}
+.csel-opt:hover,.csel-opt.active{background:rgba(212,168,67,.18);color:#fff}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:480px){.form-row{grid-template-columns:1fr}}
 .btn-submit{width:100%;padding:15px;background:var(--gold);color:var(--teal-deep);font-weight:700;font-size:16px;border-radius:999px;cursor:pointer;border:none;font-family:inherit;transition:transform .2s,box-shadow .2s;margin-top:4px}
@@ -991,23 +1000,37 @@ footer{background:var(--teal-deep);padding:40px 0 24px}
             <input type="tel" id="phone" name="phone" placeholder="Số điện thoại *" required autocomplete="tel" aria-label="Số điện thoại" pattern="[0-9]{10,11}" />
           </div>
           <input type="email" id="email" name="email" placeholder="Email (tùy chọn)" autocomplete="email" aria-label="Email" />
-          <select id="interest" name="interest" aria-label="Loại hình quan tâm">
-            <option value="">Loại hình quan tâm</option>
-            <option value="nha-pho">Nhà phố dân cư</option>
-            <option value="shophouse">Shophouse thương mại</option>
-            <option value="biet-thu-song-lap">Biệt thự song lập</option>
-            <option value="biet-thu-don-lap">Biệt thự đơn lập</option>
-            <option value="condotel">Condotel / Căn hộ</option>
-            <option value="tu-van">Cần tư vấn thêm</option>
-          </select>
-          <select id="budget" name="budget" aria-label="Ngân sách dự kiến">
-            <option value="">Ngân sách dự kiến</option>
-            <option value="under-5b">Dưới 5 tỷ đồng</option>
-            <option value="5-10b">5 – 10 tỷ đồng</option>
-            <option value="10-20b">10 – 20 tỷ đồng</option>
-            <option value="20-35b">20 – 35 tỷ đồng</option>
-            <option value="above-35b">Trên 35 tỷ đồng</option>
-          </select>
+          <input type="hidden" id="interest" name="interest" value="">
+          <div class="csel" id="interestSel">
+            <button type="button" class="csel-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Loại hình quan tâm">
+              <span id="interestLbl">Loại hình quan tâm</span>
+              <svg class="csel-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="csel-menu" role="listbox" aria-label="Loại hình quan tâm">
+              <div class="csel-opt" data-val="" role="option">Loại hình quan tâm</div>
+              <div class="csel-opt" data-val="nha-pho" role="option">Nhà phố dân cư</div>
+              <div class="csel-opt" data-val="shophouse" role="option">Shophouse thương mại</div>
+              <div class="csel-opt" data-val="biet-thu-song-lap" role="option">Biệt thự song lập</div>
+              <div class="csel-opt" data-val="biet-thu-don-lap" role="option">Biệt thự đơn lập</div>
+              <div class="csel-opt" data-val="condotel" role="option">Condotel / Căn hộ</div>
+              <div class="csel-opt" data-val="tu-van" role="option">Cần tư vấn thêm</div>
+            </div>
+          </div>
+          <input type="hidden" id="budget" name="budget" value="">
+          <div class="csel" id="budgetSel">
+            <button type="button" class="csel-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Ngân sách dự kiến">
+              <span id="budgetLbl">Ngân sách dự kiến</span>
+              <svg class="csel-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="csel-menu" role="listbox" aria-label="Ngân sách dự kiến">
+              <div class="csel-opt" data-val="" role="option">Ngân sách dự kiến</div>
+              <div class="csel-opt" data-val="under-5b" role="option">Dưới 5 tỷ đồng</div>
+              <div class="csel-opt" data-val="5-10b" role="option">5 – 10 tỷ đồng</div>
+              <div class="csel-opt" data-val="10-20b" role="option">10 – 20 tỷ đồng</div>
+              <div class="csel-opt" data-val="20-35b" role="option">20 – 35 tỷ đồng</div>
+              <div class="csel-opt" data-val="above-35b" role="option">Trên 35 tỷ đồng</div>
+            </div>
+          </div>
           <textarea id="note" name="note" placeholder="Ghi chú thêm (ở thực / đầu tư / cho thuê...)" rows="3" aria-label="Ghi chú"></textarea>
           <button type="submit" class="btn-submit" id="submitBtn" aria-label="Đăng ký nhận tư vấn miễn phí">Đăng Ký Nhận Tư Vấn Miễn Phí</button>
           <p class="privacy">Thông tin của bạn được bảo mật tuyệt đối theo <a href="/privacy" style="color:rgba(255,255,255,.65)">Chính sách Bảo mật</a> của SGS Land. Chúng tôi không chia sẻ dữ liệu cho bên thứ ba.</p>
@@ -1106,7 +1129,40 @@ navLinks.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', 
   burger.textContent = '☰';
 }); });
 
-// Lead form
+// ── Custom dropdowns ──
+(function(){
+  function initCsel(wrapperId, inputId, labelId){
+    var wrapper = document.getElementById(wrapperId);
+    var input   = document.getElementById(inputId);
+    var label   = document.getElementById(labelId);
+    var trigger = wrapper.querySelector('.csel-trigger');
+    var menu    = wrapper.querySelector('.csel-menu');
+    var opts    = menu.querySelectorAll('.csel-opt');
+    function close(){ wrapper.classList.remove('open'); trigger.setAttribute('aria-expanded','false'); }
+    trigger.addEventListener('click', function(e){
+      e.stopPropagation();
+      var opening = !wrapper.classList.contains('open');
+      document.querySelectorAll('.csel.open').forEach(function(el){ el.classList.remove('open'); el.querySelector('.csel-trigger').setAttribute('aria-expanded','false'); });
+      if(opening){ wrapper.classList.add('open'); trigger.setAttribute('aria-expanded','true'); }
+    });
+    opts.forEach(function(opt){
+      opt.addEventListener('click', function(){
+        var val = opt.getAttribute('data-val');
+        input.value = val;
+        label.textContent = opt.textContent;
+        trigger.classList.toggle('has-value', !!val);
+        opts.forEach(function(o){ o.classList.remove('active'); });
+        if(val) opt.classList.add('active');
+        close();
+      });
+    });
+    document.addEventListener('click', function(){ close(); });
+  }
+  initCsel('interestSel','interest','interestLbl');
+  initCsel('budgetSel','budget','budgetLbl');
+})();
+
+// ── Lead form ──
 var form = document.getElementById('leadForm');
 var formSuccess = document.getElementById('formSuccess');
 var submitBtn = document.getElementById('submitBtn');
@@ -1133,9 +1189,12 @@ form.addEventListener('submit', function(e){
       unit: document.getElementById('interest').value || 'general',
       type: 'BUY',
     })
-  }).catch(function(){}).finally(function(){
-    form.style.display = 'none';
-    formSuccess.style.display = 'block';
+  }).then(function(r){ return r.json(); }).then(function(data){
+    if(data.ok){ form.style.display='none'; formSuccess.style.display='block'; }
+    else{ submitBtn.disabled=false; submitBtn.textContent='Đăng Ký Nhận Tư Vấn Miễn Phí'; alert(data.error||'Có lỗi xảy ra. Vui lòng thử lại hoặc gọi 0971 132 378.'); }
+  }).catch(function(){
+    submitBtn.disabled=false; submitBtn.textContent='Đăng Ký Nhận Tư Vấn Miễn Phí';
+    alert('Không thể kết nối máy chủ. Vui lòng gọi hotline 0971 132 378.');
   });
 });
 
