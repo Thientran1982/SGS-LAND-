@@ -691,12 +691,15 @@ interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
     isAdmin: boolean;
+    userRole?: string;
     onClose: () => void;
     onListingCreated?: () => void;
     t: (k: string) => string;
 }
 
-function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingCreated, t }: ProjectListingsPanelProps) {
+function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, onListingCreated, t }: ProjectListingsPanelProps) {
+    /** SALES and MARKETING can edit/change status on their own/assigned listings */
+    const canEditOwn = canCreate || ['SALES', 'MARKETING'].includes(userRole ?? '');
     const [listings, setListings] = useState<any[]>([]);
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -1162,7 +1165,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                         ].map(h => (
                                             <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                                         ))}
-                                        {canCreate && (
+                                        {canEditOwn && (
                                             <th className="px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_col_actions')}</th>
                                         )}
                                         {isAdmin && (
@@ -1263,7 +1266,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                                 {fmtUnitPrice(l.price, l.area)}
                                             </td>
                                             <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
-                                            {canCreate && (
+                                            {canEditOwn && (
                                                 <td className="px-4 py-2.5 text-center" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         type="button"
@@ -1336,10 +1339,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
             {detailListing && (
                 <ListingDetailPanel
                     listing={detailListing}
-                    canEdit={canCreate}
+                    canEdit={canEditOwn}
                     onEdit={() => { setEditTarget(detailListing); setDetailListing(null); }}
                     onClose={() => setDetailListing(null)}
-                    onStatusChange={canCreate ? async (newStatus: string) => {
+                    onStatusChange={canEditOwn ? async (newStatus: string) => {
                         try {
                             const updated = await db.updateListing(detailListing.id, { status: newStatus });
                             setDetailListing(updated);
@@ -2249,6 +2252,7 @@ export function Projects() {
                     project={listingsTarget}
                     canCreate={isAdmin || user?.role === 'TEAM_LEAD'}
                     isAdmin={isAdmin}
+                    userRole={user?.role}
                     onClose={() => setListingsTarget(null)}
                     onListingCreated={() => {
                         setProjects(prev => prev.map(p =>
