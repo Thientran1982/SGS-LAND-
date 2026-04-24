@@ -826,7 +826,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <textarea
                                         value={(formData.attributes?.description as string) || ''}
                                         onChange={e => updateAttribute('description', e.target.value)}
-                                        rows={4}
+                                        rows={8}
                                         className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none resize-none"
                                         placeholder={t('inventory.placeholder_notes')}
                                     />
