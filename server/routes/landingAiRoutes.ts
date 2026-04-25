@@ -255,7 +255,8 @@ export function createLandingAiRoutes(): Router {
         config: {
           systemInstruction: systemContext,
           temperature: 0.4,
-          maxOutputTokens: 600,
+          maxOutputTokens: 1000,
+          thinkingConfig: { thinkingBudget: 0 },
         },
       });
 

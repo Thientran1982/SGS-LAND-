@@ -15,6 +15,10 @@ import { recordAiUsage, estimateAiCostUsd } from './services/aiUsageService';
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
 // -----------------------------------------------------------------------------
 
+// Tắt "thinking" cho gemini-2.5-flash — thinking tokens tính vào maxOutputTokens,
+// dẫn đến response bị cắt giữa chừng. Với chatbot BĐS, thinking không cần thiết.
+const THINKING_OFF = { thinkingBudget: 0 } as const;
+
 const GENAI_CONFIG = {
     MODELS: {
         ROUTER: 'gemini-2.5-flash',
@@ -1364,7 +1368,8 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 config: {
                     systemInstruction: routerInstruction,
                     responseMimeType: 'application/json',
-                    responseSchema: ROUTER_SCHEMA
+                    responseSchema: ROUTER_SCHEMA,
+                    thinkingConfig: THINKING_OFF,
                 }
             });
             trackAiUsage('CHAT_ROUTER', GENAI_CONFIG.MODELS.ROUTER, Date.now() - _routerStart, routerPrompt, routerRes.text || '', { tenantId: state.tenantId });
@@ -1525,7 +1530,7 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
             const inventoryAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: inventoryAnalysisPrompt + invRlhf.fewShotSection + invRlhf.negativeRulesSection + invObsInsights,
-                config: { systemInstruction: inventorySystemInstruction, maxOutputTokens: 350 }
+                config: { systemInstruction: inventorySystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
             });
             const inventoryAnalysisText = inventoryAI.text || '';
             trackAiUsage('CHAT_INVENTORY_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _invStart, inventoryAnalysisPrompt, inventoryAnalysisText, { tenantId: state.tenantId });
@@ -1651,7 +1656,7 @@ PHÂN TÍCH TÀI CHÍNH — KỊCH BẢN: ${loanScenario} (bullet point, max 180
             const financeAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: financeAdvisoryPrompt + finRlhf.fewShotSection + finRlhf.negativeRulesSection + finObsInsights,
-                config: { systemInstruction: financeSystemInstruction, maxOutputTokens: 350 }
+                config: { systemInstruction: financeSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
             });
             const financeAdvisoryText = financeAI.text || '';
             trackAiUsage('CHAT_FINANCE_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _finStart, financeAdvisoryPrompt, financeAdvisoryText, { tenantId: state.tenantId });
@@ -1725,7 +1730,7 @@ Viết tiếng Việt, bullet point, tối đa 180 từ. Tuyệt đối không t
             const legalAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: legalAnalysisPrompt + legalRlhf.fewShotSection + legalRlhf.negativeRulesSection + legalObsInsights,
-                config: { systemInstruction: legalSystemInstruction, maxOutputTokens: 350 }
+                config: { systemInstruction: legalSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
             });
             const legalAnalysisText = legalAI.text || '';
             trackAiUsage('CHAT_LEGAL_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _legalStart, legalAnalysisPrompt, legalAnalysisText, { tenantId: state.tenantId });
@@ -1830,7 +1835,7 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 150 từ. Đây là 
             const bookingAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: bookingPersonalizerPrompt + salesRlhf.fewShotSection + salesRlhf.negativeRulesSection + salesObsInsights,
-                config: { systemInstruction: salesSystemInstruction, maxOutputTokens: 350 }
+                config: { systemInstruction: salesSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
             });
             const bookingBriefText = bookingAI.text || '';
             trackAiUsage('CHAT_SALES_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _salesStart, bookingPersonalizerPrompt, bookingBriefText, { tenantId: state.tenantId });
@@ -1901,7 +1906,7 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 160 từ.`;
             const marketingAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: marketingAnalysisPrompt + mktRlhf.fewShotSection + mktRlhf.negativeRulesSection + mktObsInsights,
-                config: { systemInstruction: marketingSystemInstruction, maxOutputTokens: 350 }
+                config: { systemInstruction: marketingSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
             });
             const marketingAnalysisText = marketingAI.text || '';
             trackAiUsage('CHAT_MARKETING_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _mktStart, marketingAnalysisPrompt, marketingAnalysisText, { tenantId: state.tenantId });
@@ -1974,7 +1979,7 @@ PHÂN TÍCH HỢP ĐỒNG ${contractType} — KỊCH BẢN ${contractScenario} (
             const contractAI = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: contractAnalysisPrompt + contractRlhf.fewShotSection + contractRlhf.negativeRulesSection + contractObsInsights,
-                config: { systemInstruction: contractSystemInstruction, maxOutputTokens: 350 }
+                config: { systemInstruction: contractSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
             });
             const contractAnalysisText = contractAI.text || '';
             trackAiUsage('CHAT_CONTRACT_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _contractStart, contractAnalysisPrompt, contractAnalysisText, { tenantId: state.tenantId });
@@ -2044,6 +2049,7 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                 config: {
                     systemInstruction: leadAnalystSystemInstruction,
                     maxOutputTokens: 350,
+                    thinkingConfig: THINKING_OFF,
                 }
             });
 
@@ -2543,7 +2549,8 @@ YÊU CẦU VIẾT PHẢN HỒI:
                 contents: writerPrompt + rlhfPromptAddition,
                 config: {
                     systemInstruction: writerInstruction,
-                    maxOutputTokens: 512,   // ~350-400 từ tiếng Việt — đủ cho mọi intent
+                    maxOutputTokens: 1024,  // ~700-800 từ tiếng Việt — thinkingBudget:0 nên toàn bộ budget dành cho response
+                    thinkingConfig: THINKING_OFF,
                 }
             });
             trackAiUsage('CHAT_WRITER', writerModel, Date.now() - _writerStart, writerPrompt, writerRes.text || '', { tenantId: state.tenantId });
