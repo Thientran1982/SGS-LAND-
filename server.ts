@@ -54,6 +54,7 @@ import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
 import { createEngagementCronRouter } from "./server/routes/engagementCronRoutes";
 import { createBackupRouter } from "./server/routes/backupRoutes";
+import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
@@ -3496,6 +3497,17 @@ async function startServer() {
   }
 
   // ---------------------------------------------------------------------------
+  // Listing Price Refresh Cron — AI cập nhật giá từng căn (4:00 SA ICT = 21:00 UTC)
+  // ---------------------------------------------------------------------------
+  {
+    const priceRefreshSecret =
+      process.env.PRICE_REFRESH_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createListingPriceRefreshRouter(pool, priceRefreshSecret));
+  }
+
+  // ---------------------------------------------------------------------------
   // Module Chiến dịch tự động — Campaigns
   // ---------------------------------------------------------------------------
   app.use(createCampaignRouter(pool, authenticateToken));
@@ -4039,6 +4051,45 @@ async function startServer() {
         }
       } catch (e: any) {
         logger.warn('[BackupCron] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+
+      // ── Listing Price Refresh — 4:00 SA ICT = 21:00 UTC hàng ngày ────────────
+      try {
+        const priceRefreshSecret =
+          process.env.PRICE_REFRESH_CRON_SECRET ||
+          process.env.JWT_SECRET?.slice(0, 32) ||
+          '';
+        const devDomain4  = process.env.REPLIT_DEV_DOMAIN;
+        const prodDomain4 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
+        const appDomain4  = prodDomain4 || devDomain4;
+
+        if (appDomain4 && priceRefreshSecret) {
+          const prScheduleId  = 'listing-price-refresh-daily';
+          const prScheduleUrl = `https://${appDomain4}/api/internal/listing-price-refresh`;
+          const prQstashEp    = `https://qstash.upstash.io/v2/schedules/${prScheduleId}`;
+          const prBody        = JSON.stringify({ secret: priceRefreshSecret, tenantId: 'all' });
+
+          const prResp = await fetch(prQstashEp, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': prScheduleUrl,
+              'Upstash-Cron': '0 21 * * *', // 4:00 SA ICT = 21:00 UTC
+              'Upstash-Method': 'POST',
+            },
+            body: prBody,
+          });
+
+          if (prResp.ok) {
+            logger.info('[PriceRefresh] Đã đăng ký QStash daily schedule — chạy lúc 4:00 SA ICT');
+          } else {
+            const errText = await prResp.text();
+            logger.warn(`[PriceRefresh] Không thể đăng ký QStash schedule: ${prResp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[PriceRefresh] Lỗi khi đăng ký QStash schedule:', e.message);
       }
     }
   });

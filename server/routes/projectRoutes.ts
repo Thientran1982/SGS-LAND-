@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { projectRepository } from '../repositories/projectRepository';
+import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -258,6 +259,89 @@ export function createProjectRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error revoking listing access:', error);
       res.status(500).json({ error: 'Không thể thu hồi quyền truy cập sản phẩm' });
+    }
+  });
+
+  // ── Price Matrix (Bảng giá tầng/hướng/loại) ──────────────────────────────
+
+  // GET /api/projects/:id/price-matrix
+  router.get('/:id/price-matrix', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const projectId = req.params.id as string;
+      const rows = await projectPriceMatrixRepository.findByProject(user.tenantId, projectId);
+      res.json(rows);
+    } catch (error) {
+      console.error('Error fetching price matrix:', error);
+      res.status(500).json({ error: 'Không thể tải bảng giá' });
+    }
+  });
+
+  // POST /api/projects/:id/price-matrix
+  router.post('/:id/price-matrix', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role) && !['TEAM_LEAD'].includes(user.role))
+        return res.status(403).json({ error: 'Không có quyền thực hiện' });
+      const projectId = req.params.id as string;
+      const row = await projectPriceMatrixRepository.upsertRow(user.tenantId, projectId, {
+        ...req.body,
+        updated_by: user.userId,
+      });
+      res.status(201).json(row);
+    } catch (error: any) {
+      console.error('Error creating price matrix row:', error);
+      res.status(500).json({ error: 'Không thể thêm dòng bảng giá' });
+    }
+  });
+
+  // PUT /api/projects/:id/price-matrix/:rowId
+  router.put('/:id/price-matrix/:rowId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role) && !['TEAM_LEAD'].includes(user.role))
+        return res.status(403).json({ error: 'Không có quyền thực hiện' });
+      const updated = await projectPriceMatrixRepository.updateRow(
+        user.tenantId, req.params.rowId as string, { ...req.body, updated_by: user.userId }
+      );
+      if (!updated) return res.status(404).json({ error: 'Không tìm thấy dòng bảng giá' });
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating price matrix row:', error);
+      res.status(500).json({ error: 'Không thể cập nhật dòng bảng giá' });
+    }
+  });
+
+  // DELETE /api/projects/:id/price-matrix/:rowId
+  router.delete('/:id/price-matrix/:rowId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role) && !['TEAM_LEAD'].includes(user.role))
+        return res.status(403).json({ error: 'Không có quyền thực hiện' });
+      const deleted = await projectPriceMatrixRepository.deleteRow(user.tenantId, req.params.rowId as string);
+      if (!deleted) return res.status(404).json({ error: 'Không tìm thấy dòng bảng giá' });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting price matrix row:', error);
+      res.status(500).json({ error: 'Không thể xóa dòng bảng giá' });
+    }
+  });
+
+  // GET /api/projects/:id/price-matrix/lookup?floor=&direction=&bedroomType=&tower=
+  router.get('/:id/price-matrix/lookup', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const result = await projectPriceMatrixRepository.lookupPrice(user.tenantId, req.params.id as string, {
+        floor:       Number(req.query.floor) || 1,
+        direction:   req.query.direction as string,
+        bedroomType: req.query.bedroomType as string,
+        tower:       req.query.tower as string,
+      });
+      if (!result) return res.status(404).json({ error: 'Không có giá phù hợp' });
+      res.json(result);
+    } catch (error) {
+      console.error('Error looking up price matrix:', error);
+      res.status(500).json({ error: 'Không thể tra giá' });
     }
   });
 
