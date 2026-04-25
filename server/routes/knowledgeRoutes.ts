@@ -4,6 +4,13 @@ import { documentRepository } from '../repositories/documentRepository';
 import { articleRepository } from '../repositories/articleRepository';
 import { extractTextFromBuffer, extractTextFromFile } from '../services/textExtractor';
 import { getFile } from '../services/storageService';
+import {
+  indexDocument,
+  semanticSearch,
+  getIndexStats,
+  deleteSource,
+  buildRagContext,
+} from '../services/ragService';
 
 // Upload & create: mọi nhân viên nội bộ có thể đóng góp tài liệu huấn luyện
 const CAN_UPLOAD = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING'];
@@ -283,6 +290,200 @@ export function createKnowledgeRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error deleting article:', error);
       res.status(500).json({ error: 'Failed to delete article' });
+    }
+  });
+
+  // ── RAG: Indexing endpoints ────────────────────────────────────────────
+
+  /**
+   * POST /api/knowledge/rag/index/document/:id
+   * Embed + store một document cụ thể vào vector store
+   */
+  router.post('/rag/index/document/:id', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) return res.status(403).json({ error: 'Không có quyền' });
+
+      const doc = await documentRepository.findById(user.tenantId, String(req.params.id));
+      if (!doc) return res.status(404).json({ error: 'Tài liệu không tồn tại' });
+
+      const content = (doc as any).content || '';
+      if (!content.trim()) return res.status(422).json({ error: 'Tài liệu chưa có nội dung để index' });
+
+      const count = await indexDocument({
+        tenantId: user.tenantId,
+        sourceType: 'document',
+        sourceId: String((doc as any).id),
+        title: (doc as any).title || '',
+        content,
+        metadata: { type: (doc as any).type, status: (doc as any).status },
+      });
+
+      res.json({ ok: true, chunks: count, message: `Đã index ${count} chunk(s)` });
+    } catch (err: any) {
+      console.error('[RAG] index document error:', err);
+      res.status(500).json({ error: err.message || 'Lỗi khi index tài liệu' });
+    }
+  });
+
+  /**
+   * POST /api/knowledge/rag/index/article/:id
+   * Embed + store một bài viết vào vector store
+   */
+  router.post('/rag/index/article/:id', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) return res.status(403).json({ error: 'Không có quyền' });
+
+      const article = await articleRepository.findById(user.tenantId, String(req.params.id));
+      if (!article) return res.status(404).json({ error: 'Bài viết không tồn tại' });
+
+      const content = [(article as any).title, (article as any).excerpt, (article as any).content]
+        .filter(Boolean).join('\n\n');
+
+      const count = await indexDocument({
+        tenantId: user.tenantId,
+        sourceType: 'article',
+        sourceId: String((article as any).id),
+        title: (article as any).title || '',
+        content,
+        metadata: { category: (article as any).category, slug: (article as any).slug },
+      });
+
+      res.json({ ok: true, chunks: count, message: `Đã index ${count} chunk(s)` });
+    } catch (err: any) {
+      console.error('[RAG] index article error:', err);
+      res.status(500).json({ error: err.message || 'Lỗi khi index bài viết' });
+    }
+  });
+
+  /**
+   * POST /api/knowledge/rag/index-all
+   * Re-index toàn bộ documents + articles của tenant (chạy nền)
+   * Trả về ngay lập tức, indexing diễn ra async
+   */
+  router.post('/rag/index-all', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) return res.status(403).json({ error: 'Không có quyền' });
+
+      res.json({ ok: true, message: 'Đang index nền — kiểm tra /rag/stats sau vài phút' });
+
+      // Async background job
+      (async () => {
+        let indexed = 0;
+        let errors = 0;
+        try {
+          // Index documents
+          const docsResult = await documentRepository.findDocuments(user.tenantId, { page: 1, pageSize: 200 });
+          for (const doc of (docsResult.data || []) as any[]) {
+            if (!doc.content?.trim()) continue;
+            try {
+              await indexDocument({
+                tenantId: user.tenantId,
+                sourceType: 'document',
+                sourceId: String(doc.id),
+                title: doc.title || '',
+                content: doc.content,
+                metadata: { type: doc.type, status: doc.status },
+              });
+              indexed++;
+            } catch { errors++; }
+          }
+          // Index articles
+          const articlesResult = await articleRepository.findArticles(user.tenantId, { page: 1, pageSize: 200 });
+          for (const art of (articlesResult.data || []) as any[]) {
+            const content = [art.title, art.excerpt, art.content].filter(Boolean).join('\n\n');
+            if (!content.trim()) continue;
+            try {
+              await indexDocument({
+                tenantId: user.tenantId,
+                sourceType: 'article',
+                sourceId: String(art.id),
+                title: art.title || '',
+                content,
+                metadata: { category: art.category, slug: art.slug },
+              });
+              indexed++;
+            } catch { errors++; }
+          }
+          console.log(`[RAG] index-all done: ${indexed} indexed, ${errors} errors (tenant:${user.tenantId.slice(0,8)})`);
+        } catch (bgErr) {
+          console.error('[RAG] index-all background error:', bgErr);
+        }
+      })();
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /**
+   * DELETE /api/knowledge/rag/source
+   * Xóa vector embeddings của một source cụ thể
+   */
+  router.delete('/rag/source', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) return res.status(403).json({ error: 'Không có quyền' });
+
+      const { sourceType, sourceId } = req.body;
+      if (!sourceType || !sourceId) return res.status(400).json({ error: 'sourceType và sourceId là bắt buộc' });
+
+      const deleted = await deleteSource(user.tenantId, sourceType, sourceId);
+      res.json({ ok: true, deleted, message: `Đã xóa ${deleted} chunk(s)` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── RAG: Search & Query endpoints ─────────────────────────────────────
+
+  /**
+   * POST /api/knowledge/rag/search
+   * Semantic search trong knowledge base
+   */
+  router.post('/rag/search', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { query, topK = 5, sourceTypes } = req.body;
+      if (!query?.trim()) return res.status(400).json({ error: 'query là bắt buộc' });
+
+      const results = await semanticSearch(user.tenantId, query.trim(), topK, sourceTypes);
+      res.json({ results, total: results.length });
+    } catch (err: any) {
+      console.error('[RAG] search error:', err);
+      res.status(500).json({ error: err.message || 'Lỗi khi tìm kiếm' });
+    }
+  });
+
+  /**
+   * POST /api/knowledge/rag/context
+   * Lấy context string đã format sẵn để inject vào AI prompt
+   */
+  router.post('/rag/context', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { query, topK = 5 } = req.body;
+      if (!query?.trim()) return res.status(400).json({ error: 'query là bắt buộc' });
+
+      const context = await buildRagContext(user.tenantId, query.trim(), topK);
+      res.json({ context, hasContext: context.length > 0 });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /**
+   * GET /api/knowledge/rag/stats
+   * Thống kê số chunks đã index
+   */
+  router.get('/rag/stats', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const stats = await getIndexStats(user.tenantId);
+      res.json(stats);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   });
 
