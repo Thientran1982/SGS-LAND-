@@ -97,6 +97,7 @@ import m076 from './076_sessions_table';
 import m077 from './077_vn_provinces_and_land_prices';
 import m078 from './078_rag_vector_store';
 import m079 from './079_lead_email_log';
+import m080 from './080_project_price_matrix';
 
 dotenv.config();
 
@@ -190,6 +191,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '077_vn_provinces_and_land_prices.ts': m077,
   '078_rag_vector_store.ts': m078,
   '079_lead_email_log.ts': m079,
+  '080_project_price_matrix.ts': m080,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

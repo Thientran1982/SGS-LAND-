@@ -687,6 +687,251 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
     );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PriceMatrixPanel — Bảng giá theo Tầng / Hướng / Loại phòng
+// ─────────────────────────────────────────────────────────────────────────────
+const DIRECTIONS = ['ALL','N','S','E','W','NE','NW','SE','SW'];
+const BEDROOM_TYPES = ['ALL','Studio','1PN','2PN','3PN','4PN+','Penthouse','Shophouse'];
+
+const DIR_LABEL: Record<string, string> = {
+    ALL:'Tất cả', N:'Bắc', S:'Nam', E:'Đông', W:'Tây',
+    NE:'Đông Bắc', NW:'Tây Bắc', SE:'Đông Nam', SW:'Tây Nam',
+};
+
+function fmtSqm(v: number) {
+    if (!v) return '—';
+    return (v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tr/m²';
+}
+
+const EMPTY_ROW = { tower: '', floor_from: 1, floor_to: 99, direction: 'ALL', bedroom_type: 'ALL', base_price_sqm: '', adjustment_pct: '0', notes: '' };
+
+function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit: boolean; onClose: () => void }) {
+    const [rows, setRows] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [form, setForm] = useState<any | null>(null);
+    const [editId, setEditId] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [deleting, setDeleting] = useState<string | null>(null);
+
+    const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await db.getProjectPriceMatrix(project.id);
+            setRows(data);
+        } catch { setRows([]); }
+        finally { setLoading(false); }
+    }, [project.id]);
+
+    useEffect(() => { load(); }, [load]);
+
+    const handleSave = async () => {
+        if (!form) return;
+        const price = Number(String(form.base_price_sqm).replace(/[^0-9.]/g, '')) * (String(form.base_price_sqm).includes('tr') || Number(form.base_price_sqm) < 10000 ? 1_000_000 : 1);
+        if (!price || price <= 0) { showToast('Vui lòng nhập giá hợp lệ', 'error'); return; }
+        const payload = { ...form, base_price_sqm: price, adjustment_pct: Number(form.adjustment_pct) || 0, floor_from: Number(form.floor_from), floor_to: Number(form.floor_to) };
+        setSaving(true);
+        try {
+            if (editId) {
+                const updated = await db.updatePriceMatrixRow(project.id, editId, payload);
+                setRows(prev => prev.map(r => r.id === editId ? updated : r));
+                showToast('Đã cập nhật dòng bảng giá');
+            } else {
+                const created = await db.createPriceMatrixRow(project.id, payload);
+                setRows(prev => [...prev, created]);
+                showToast('Đã thêm dòng bảng giá');
+            }
+            setForm(null); setEditId(null);
+        } catch (e: any) { showToast(e.message || 'Lỗi lưu bảng giá', 'error'); }
+        finally { setSaving(false); }
+    };
+
+    const handleDelete = async (id: string) => {
+        setDeleting(id);
+        try {
+            await db.deletePriceMatrixRow(project.id, id);
+            setRows(prev => prev.filter(r => r.id !== id));
+            showToast('Đã xóa dòng bảng giá');
+        } catch (e: any) { showToast(e.message || 'Lỗi xóa', 'error'); }
+        finally { setDeleting(null); }
+    };
+
+    const startEdit = (row: any) => {
+        setEditId(row.id);
+        setForm({ ...row, base_price_sqm: (Number(row.base_price_sqm) / 1_000_000).toFixed(2) });
+    };
+
+    return createPortal(
+        <div className="fixed inset-0 z-[9990] flex" onClick={() => { setForm(null); setEditId(null); onClose(); }}>
+            <div className="flex-1 bg-black/40 backdrop-blur-sm" />
+            <div className="w-full max-w-3xl bg-[var(--bg-surface)] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-[var(--glass-border)]">
+                    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-sm font-bold text-[var(--text-primary)] truncate">Bảng Giá — {project.name}</h2>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">Giá theo tầng · hướng · loại phòng</p>
+                    </div>
+                    {canEdit && (
+                        <button type="button" onClick={() => { setForm({ ...EMPTY_ROW }); setEditId(null); }}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
+                            {IC.PLUS} Thêm dòng
+                        </button>
+                    )}
+                    <button type="button" onClick={onClose} className="shrink-0 p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label="Đóng">{IC.X}</button>
+                </div>
+
+                {/* Add / Edit form */}
+                {form && (
+                    <div className="shrink-0 border-b border-[var(--glass-border)] bg-[var(--glass-surface)] px-5 py-4">
+                        <p className="text-xs font-bold text-[var(--text-secondary)] mb-3">{editId ? 'Chỉnh sửa dòng' : 'Thêm dòng mới'}</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tòa / Tower</label>
+                                <input value={form.tower ?? ''} onChange={e => setForm((f: any) => ({ ...f, tower: e.target.value }))}
+                                    placeholder="A, B, C... (bỏ trống = tất cả)"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng từ</label>
+                                <input type="number" min={1} max={200} value={form.floor_from} onChange={e => setForm((f: any) => ({ ...f, floor_from: e.target.value }))}
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng đến</label>
+                                <input type="number" min={1} max={200} value={form.floor_to} onChange={e => setForm((f: any) => ({ ...f, floor_to: e.target.value }))}
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Hướng</label>
+                                <select value={form.direction} onChange={e => setForm((f: any) => ({ ...f, direction: e.target.value }))}
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400">
+                                    {DIRECTIONS.map(d => <option key={d} value={d}>{DIR_LABEL[d] ?? d}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Loại phòng</label>
+                                <select value={form.bedroom_type} onChange={e => setForm((f: any) => ({ ...f, bedroom_type: e.target.value }))}
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400">
+                                    {BEDROOM_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Giá gốc (tr/m²)</label>
+                                <input type="number" min={0} step={0.01} value={form.base_price_sqm} onChange={e => setForm((f: any) => ({ ...f, base_price_sqm: e.target.value }))}
+                                    placeholder="VD: 85.5"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Điều chỉnh (%)</label>
+                                <input type="number" step={0.1} value={form.adjustment_pct} onChange={e => setForm((f: any) => ({ ...f, adjustment_pct: e.target.value }))}
+                                    placeholder="0"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                            <div className="col-span-2 sm:col-span-2">
+                                <label className="block text-xs text-[var(--text-tertiary)] mb-1">Ghi chú</label>
+                                <input value={form.notes ?? ''} onChange={e => setForm((f: any) => ({ ...f, notes: e.target.value }))}
+                                    placeholder="VD: Tầng cao view kênh đào, tăng giá 5%"
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                            </div>
+                        </div>
+                        <div className="flex gap-2 mt-3 justify-end">
+                            <button type="button" onClick={() => { setForm(null); setEditId(null); }} disabled={saving}
+                                className="px-3 py-1.5 text-xs font-semibold border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-50">
+                                Hủy
+                            </button>
+                            <button type="button" onClick={handleSave} disabled={saving}
+                                className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-1.5">
+                                {saving ? <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : null}
+                                {editId ? 'Lưu thay đổi' : 'Thêm dòng'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Table */}
+                <div className="flex-1 overflow-y-auto no-scrollbar">
+                    {loading ? (
+                        <div className="flex items-center justify-center h-32">
+                            <div className="w-6 h-6 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+                        </div>
+                    ) : rows.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-48 text-[var(--text-secondary)]">
+                            <svg className="w-10 h-10 mb-3 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <p className="text-sm font-semibold">Chưa có bảng giá</p>
+                            {canEdit && <p className="text-xs mt-1">Nhấn "Thêm dòng" để bắt đầu nhập giá</p>}
+                        </div>
+                    ) : (
+                        <table className="w-full text-xs min-w-max">
+                            <thead>
+                                <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)]">
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Tòa</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Tầng</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Hướng</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Loại</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Giá gốc</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Điều chỉnh</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-emerald-600">Giá hiệu lực</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Ghi chú</th>
+                                    {canEdit && <th className="px-3 py-2" />}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map(row => {
+                                    const base = Number(row.base_price_sqm);
+                                    const adj  = Number(row.adjustment_pct);
+                                    const eff  = Math.round(base * (1 + adj / 100));
+                                    return (
+                                        <tr key={row.id} className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface)] transition-colors">
+                                            <td className="px-3 py-2 text-[var(--text-secondary)]">{row.tower || <span className="text-[var(--text-tertiary)]">—</span>}</td>
+                                            <td className="px-3 py-2 font-semibold text-[var(--text-primary)]">{row.floor_from}–{row.floor_to}</td>
+                                            <td className="px-3 py-2 text-[var(--text-secondary)]">{DIR_LABEL[row.direction] ?? row.direction}</td>
+                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded font-medium">{row.bedroom_type}</span></td>
+                                            <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmtSqm(base)}</td>
+                                            <td className="px-3 py-2 text-right">
+                                                <span className={adj === 0 ? 'text-[var(--text-tertiary)]' : adj > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
+                                                    {adj >= 0 ? '+' : ''}{adj}%
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-right font-bold text-emerald-700">{fmtSqm(eff)}</td>
+                                            <td className="px-3 py-2 text-[var(--text-tertiary)] max-w-[160px] truncate">{row.notes || '—'}</td>
+                                            {canEdit && (
+                                                <td className="px-3 py-2">
+                                                    <div className="flex items-center gap-1">
+                                                        <button type="button" onClick={() => startEdit(row)} className="p-1 rounded hover:bg-indigo-50 text-indigo-500" title="Sửa">{IC.EDIT}</button>
+                                                        <button type="button" onClick={() => handleDelete(row.id)} disabled={deleting === row.id}
+                                                            className="p-1 rounded hover:bg-rose-50 text-rose-400 disabled:opacity-40" title="Xóa">
+                                                            {deleting === row.id ? <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : IC.TRASH}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
+                {/* Toast */}
+                {toast && createPortal(
+                    <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+                        {toast.msg}
+                    </div>,
+                    document.body
+                )}
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
@@ -1831,10 +2076,11 @@ interface ProjectCardProps {
     onDelete: () => void;
     onAccess: () => void;
     onListings: () => void;
+    onPriceMatrix: () => void;
     t: (k: string) => string;
 }
 
-function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, onListings, t }: ProjectCardProps) {
+function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, onListings, onPriceMatrix, t }: ProjectCardProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
@@ -1948,8 +2194,8 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 </div>
             </div>
 
-            {/* Card footer — primary CTA */}
-            <div className="px-5 pb-4 pt-0">
+            {/* Card footer — CTAs */}
+            <div className="px-5 pb-4 pt-0 flex flex-col gap-2">
                 <button
                     type="button"
                     onClick={onListings}
@@ -1962,6 +2208,14 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                             {project.listing_count}
                         </span>
                     )}
+                </button>
+                <button
+                    type="button"
+                    onClick={onPriceMatrix}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-indigo-50 border border-[var(--glass-border)] hover:border-indigo-300 text-[var(--text-secondary)] hover:text-indigo-700 text-sm font-semibold rounded-xl transition-all"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    Bảng Giá
                 </button>
             </div>
 
@@ -2011,6 +2265,7 @@ export function Projects() {
     const [formTarget, setFormTarget] = useState<Project | null | 'new'>(null);
     const [accessTarget, setAccessTarget] = useState<Project | null>(null);
     const [listingsTarget, setListingsTarget] = useState<any | null>(null);
+    const [priceMatrixTarget, setPriceMatrixTarget] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -2236,6 +2491,7 @@ export function Projects() {
                                     onDelete={() => setDeleteTarget(project)}
                                     onAccess={() => setAccessTarget(project)}
                                     onListings={() => setListingsTarget(project)}
+                                    onPriceMatrix={() => setPriceMatrixTarget(project)}
                                     t={t}
                                 />
                             </div>
@@ -2279,6 +2535,13 @@ export function Projects() {
                     t={t}
                 />,
                 document.body
+            )}
+            {priceMatrixTarget && (
+                <PriceMatrixPanel
+                    project={priceMatrixTarget}
+                    canEdit={isAdmin || user?.role === 'TEAM_LEAD'}
+                    onClose={() => setPriceMatrixTarget(null)}
+                />
             )}
 
             {/* Delete confirmation modal */}

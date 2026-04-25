@@ -1938,6 +1938,53 @@ class DatabaseApiClient {
     return res.json();
   }
 
+  // ── Bảng giá dự án (Price Matrix) ──────────────────────────────────────────
+
+  async getProjectPriceMatrix(projectId: string) {
+    const res = await fetch(`/api/projects/${projectId}/price-matrix`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Không thể tải bảng giá');
+    return res.json();
+  }
+
+  async createPriceMatrixRow(projectId: string, data: any) {
+    const res = await fetch(`/api/projects/${projectId}/price-matrix`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể thêm dòng bảng giá'); }
+    return res.json();
+  }
+
+  async updatePriceMatrixRow(projectId: string, rowId: string, data: any) {
+    const res = await fetch(`/api/projects/${projectId}/price-matrix/${rowId}`, {
+      method: 'PUT', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể cập nhật bảng giá'); }
+    return res.json();
+  }
+
+  async deletePriceMatrixRow(projectId: string, rowId: string) {
+    const res = await fetch(`/api/projects/${projectId}/price-matrix/${rowId}`, {
+      method: 'DELETE', credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Không thể xóa dòng bảng giá');
+    return res.json();
+  }
+
+  async lookupPriceMatrix(projectId: string, params: { floor?: number; direction?: string; bedroomType?: string; tower?: string }) {
+    const q = new URLSearchParams();
+    if (params.floor)       q.set('floor', String(params.floor));
+    if (params.direction)   q.set('direction', params.direction);
+    if (params.bedroomType) q.set('bedroomType', params.bedroomType);
+    if (params.tower)       q.set('tower', params.tower);
+    const res = await fetch(`/api/projects/${projectId}/price-matrix/lookup?${q}`, { credentials: 'include' });
+    if (!res.ok) return null;
+    return res.json();
+  }
+
   async getThemeConfig(): Promise<any> {
     const res = await fetch('/api/enterprise/theme', { credentials: 'include' });
     if (!res.ok) return {};
