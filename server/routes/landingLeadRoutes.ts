@@ -12,6 +12,7 @@ import { Router, Request, Response } from 'express';
 import { brevoSendEmail, isBrevoConfigured } from '../services/brevoService';
 import { logger } from '../middleware/logger';
 import { pool } from '../db';
+import { logLeadCampaignEmail } from '../repositories/campaignRepository';
 
 const HOTLINE = '0971132378';
 const HOTLINE_DISPLAY = '0971 132 378';
@@ -319,6 +320,12 @@ export function createLandingLeadRoutes(): Router {
         userEmailSent = userResult.success;
         if (!userResult.success) {
           logger.warn(`[LandingLead] Auto-reply email failed for ${email}: ${userResult.error}`);
+        } else if (leadId) {
+          try {
+            await logLeadCampaignEmail(pool, DEFAULT_TENANT_ID, leadId, email, 'LEAD_WELCOME');
+          } catch (logErr: any) {
+            logger.warn(`[LandingLead] Failed to log LEAD_WELCOME for lead ${leadId}: ${logErr.message}`);
+          }
         }
       }
 
