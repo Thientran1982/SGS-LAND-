@@ -644,18 +644,18 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
                         <DetailRow label={t('inventory.label_type')} value={t(`property.${listing.type?.toUpperCase()}`) || listing.type} />
                         <DetailRow label={t('inventory.label_area')} value={listing.area ? `${listing.area} m²` : undefined} />
-                        {listing.builtArea && <DetailRow label={t('inventory.label_built_area')} value={`${listing.builtArea} m²`} />}
-                        {attrs.clearArea && <DetailRow label={t('inventory.label_clear_area')} value={`${attrs.clearArea} m²`} />}
-                        {listing.bedrooms && <DetailRow label={t('inventory.label_bed')} value={listing.bedrooms} />}
-                        {listing.bathrooms && <DetailRow label={t('inventory.label_bath')} value={listing.bathrooms} />}
-                        {attrs.tower && <DetailRow label={t('inventory.label_tower')} value={attrs.tower} />}
-                        {attrs.floor && <DetailRow label={t('inventory.label_floor')} value={attrs.floor} />}
-                        {attrs.direction && <DetailRow label={t('inventory.label_direction')} value={t(`direction.${attrs.direction}`) || attrs.direction} />}
-                        {attrs.view && <DetailRow label={t('inventory.label_view')} value={attrs.view} />}
-                        {attrs.furniture && <DetailRow label={t('inventory.label_furniture')} value={t(`furniture.${attrs.furniture}`) || attrs.furniture} />}
-                        {attrs.legalStatus && <DetailRow label={t('inventory.label_legal')} value={t(`legal.${attrs.legalStatus}`) || attrs.legalStatus} />}
-                        {attrs.frontage && <DetailRow label={t('inventory.label_frontage')} value={`${attrs.frontage} m`} />}
-                        {attrs.roadWidth && <DetailRow label={t('inventory.label_road_width')} value={`${attrs.roadWidth} m`} />}
+                        {!!listing.builtArea && <DetailRow label={t('inventory.label_built_area')} value={`${listing.builtArea} m²`} />}
+                        {!!attrs.clearArea && <DetailRow label={t('inventory.label_clear_area')} value={`${attrs.clearArea} m²`} />}
+                        {!!listing.bedrooms && <DetailRow label={t('inventory.label_bed')} value={listing.bedrooms} />}
+                        {!!listing.bathrooms && <DetailRow label={t('inventory.label_bath')} value={listing.bathrooms} />}
+                        {!!attrs.tower && <DetailRow label={t('inventory.label_tower')} value={attrs.tower} />}
+                        {!!attrs.floor && <DetailRow label={t('inventory.label_floor')} value={attrs.floor} />}
+                        {!!attrs.direction && <DetailRow label={t('inventory.label_direction')} value={t(`direction.${attrs.direction}`) || attrs.direction} />}
+                        {!!attrs.view && <DetailRow label={t('inventory.label_view')} value={attrs.view} />}
+                        {!!attrs.furniture && <DetailRow label={t('inventory.label_furniture')} value={t(`furniture.${attrs.furniture}`) || attrs.furniture} />}
+                        {!!attrs.legalStatus && <DetailRow label={t('inventory.label_legal')} value={t(`legal.${attrs.legalStatus}`) || attrs.legalStatus} />}
+                        {!!attrs.frontage && <DetailRow label={t('inventory.label_frontage')} value={`${attrs.frontage} m`} />}
+                        {!!attrs.roadWidth && <DetailRow label={t('inventory.label_road_width')} value={`${attrs.roadWidth} m`} />}
                         {listing.location && <DetailRow label={t('inventory.label_location')} value={listing.location} />}
                         {listing.contactPhone && <DetailRow label={t('inventory.label_owner_phone')} value={listing.contactPhone} />}
                     </div>
