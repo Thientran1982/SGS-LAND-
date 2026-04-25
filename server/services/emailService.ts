@@ -1149,6 +1149,256 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
   });
 }
 
+/**
+ * NUDGE_D — Gửi cho user có ≥ 2 listings, đăng ký ≥ 30 ngày, đăng nhập gần đây.
+ * Khuyến khích nâng cấp lên gói Premium để đẩy tin và mở rộng kinh doanh.
+ */
+async function sendNudgeD(tenantId: string, to: string, userName: string): Promise<EmailResult> {
+  const safeName  = escapeHtml(userName || 'bạn');
+  const upgradeUrl = 'https://sgsland.vn/#/nang-cap';
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#FFF7ED', '&#11088;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          Nâng Cấp Lên Premium — Bán Nhanh Hơn, Kiếm Nhiều Hơn
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin chào <strong>${safeName}</strong>, bạn đang là một trong những môi giới tích cực trên SGS LAND.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Với gói <strong>Premium</strong>, bạn sẽ được hưởng những lợi thế vượt trội so với tài khoản miễn phí:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF7ED" style="border:1px solid #FED7AA;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127381;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Đẩy tin ưu tiên</strong> — Tin của bạn hiển thị top đầu kết quả tìm kiếm
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128202;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Phân tích nâng cao</strong> — Báo cáo lượt xem, tỷ lệ chuyển đổi và đề xuất giá AI
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#129302;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>AI CRM không giới hạn</strong> — Tự động chăm sóc khách hàng 24/7
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127775;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>Huy hiệu "Môi giới Pro"</strong> — Tăng độ tin cậy với khách mua
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(8)}
+    ${primaryButton(upgradeUrl, 'Nâng Cấp Premium Ngay')}
+    ${spacer(16)}
+    <p style="color:#94A3B8;font-size:12px;text-align:center;margin:0;font-family:Arial,sans-serif;">
+      Dùng thử 14 ngày miễn phí — Hủy bất cứ lúc nào.
+    </p>
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND – Nâng cấp Premium để đẩy tin & bán BĐS nhanh hơn',
+    html: emailBase(content, 'Email này được gửi tự động dành cho môi giới tích cực trên SGS LAND.'),
+    text: `Xin chào ${userName},\n\nBạn đang là một trong những môi giới tích cực trên SGS LAND. Hãy nâng cấp lên Premium để tận hưởng tin ưu tiên, AI CRM và phân tích nâng cao:\n${upgradeUrl}\n\nDùng thử 14 ngày miễn phí!\n\n— SGS LAND`,
+  });
+}
+
+/**
+ * NUDGE_E — Gửi cho user đăng ký ≥ 14 ngày, đang hoạt động nhưng chưa khám phá AI.
+ * Giới thiệu tính năng AI: định giá, mô tả, chatbot tư vấn.
+ */
+async function sendNudgeE(tenantId: string, to: string, userName: string): Promise<EmailResult> {
+  const safeName = escapeHtml(userName || 'bạn');
+  const aiUrl    = 'https://sgsland.vn/#/ai-dinh-gia';
+  const listUrl  = 'https://sgsland.vn/#/dang-tin';
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#EFF6FF', '&#129302;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          Bạn Đã Thử AI Bất Động Sản Của SGS LAND Chưa?
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin chào <strong>${safeName}</strong>, chúng tôi muốn giới thiệu công cụ AI giúp bạn làm việc nhanh gấp đôi.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Nền tảng SGS LAND tích hợp AI chuyên biệt cho bất động sản Việt Nam:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EFF6FF" style="border:1px solid #BFDBFE;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128176;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>AI Định Giá</strong> — Nhập địa chỉ, nhận ước tính giá thị trường ngay lập tức
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128221;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>AI Mô Tả Tin Đăng</strong> — Nhập thông tin cơ bản, AI viết mô tả hấp dẫn và chuẩn SEO
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128172;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>AI Chatbot 24/7</strong> — Trả lời tự động câu hỏi của khách mua khi bạn bận
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128269;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>AI Phân Tích Thị Trường</strong> — Xu hướng giá, khu vực tiềm năng, báo cáo tức thì
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(8)}
+    ${primaryButton(aiUrl, 'Khám Phá AI Định Giá — Miễn Phí')}
+    ${spacer(12)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <a href="${listUrl}" style="color:#4F46E5;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+          Hoặc đăng tin với AI mô tả tự động &rarr;
+        </a>
+      </td></tr>
+    </table>
+    ${spacer(20)}
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND – AI định giá, mô tả & chatbot BĐS dành riêng cho bạn',
+    html: emailBase(content, 'Email này được gửi để giới thiệu tính năng AI mới trên SGS LAND.'),
+    text: `Xin chào ${userName},\n\nSGS LAND tích hợp AI chuyên biệt cho BĐS Việt Nam: định giá, mô tả tin đăng, chatbot 24/7 và phân tích thị trường. Khám phá ngay:\n${aiUrl}\n\n— SGS LAND`,
+  });
+}
+
+/**
+ * LEAD_NURTURE — Gửi cho lead từ landing page, sau 3 ngày chưa phản hồi.
+ * Nhắc nhở và cung cấp thêm thông tin dự án, kêu gọi liên hệ tư vấn.
+ */
+async function sendLeadNurture(
+  tenantId: string,
+  to: string,
+  leadName: string,
+  projectName: string,
+): Promise<EmailResult> {
+  const safeName    = escapeHtml(leadName || 'Quý khách');
+  const safeProject = escapeHtml(projectName || 'dự án');
+  const hotline     = '0971132378';
+  const hotlineDisp = '0971 132 378';
+  const contactUrl  = `https://sgsland.vn/#/lien-he`;
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#F0FDF4', '&#127968;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          SGS Land Vẫn Sẵn Sàng Tư Vấn Cho Bạn
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin chào <strong>${safeName}</strong>, cảm ơn bạn đã quan tâm đến <strong>${safeProject}</strong>.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Chúng tôi biết bạn đang cân nhắc nhiều lựa chọn. Để giúp bạn ra quyết định tốt nhất, đội ngũ tư vấn SGS Land có thể cung cấp:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0FDF4" style="border:1px solid #BBF7D0;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128209;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Bảng giá mới nhất</strong> từ chủ đầu tư ${safeProject}
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127963;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Mặt bằng phân khu</strong> và quỹ căn còn lại ưu tiên
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127981;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Chính sách vay ngân hàng</strong> ưu đãi, lãi suất từ 6%/năm
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128204;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>Cập nhật tiến độ pháp lý</strong> và lịch mở bán chính thức
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(8)}
+    ${primaryButton(contactUrl, 'Đặt Lịch Tư Vấn Miễn Phí')}
+    ${spacer(12)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <a href="tel:${hotline}" style="color:#4F46E5;font-size:14px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;">
+          &#128222; Gọi ngay: ${hotlineDisp} (24/7)
+        </a>
+      </td></tr>
+    </table>
+    ${spacer(20)}
+    <p style="color:#94A3B8;font-size:12px;text-align:center;margin:0;font-family:Arial,sans-serif;">
+      Tư vấn hoàn toàn miễn phí — Không ràng buộc.
+    </p>
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: `SGS Land – Thông tin ${safeProject} bạn đang quan tâm`,
+    html: emailBase(content, 'Email này được gửi vì bạn đã đăng ký nhận thông tin dự án tại sgsland.vn.'),
+    text: `Xin chào ${leadName},\n\nCảm ơn bạn đã quan tâm đến ${projectName}. Đội ngũ SGS Land sẵn sàng cung cấp bảng giá, mặt bằng và chính sách vay ưu đãi.\n\nĐặt lịch tư vấn: ${contactUrl}\nHoặc gọi: ${hotlineDisp} (24/7)\n\n— SGS LAND`,
+  });
+}
+
 // ── Billing emails ────────────────────────────────────────────────────────────
 
 type BillingLocale = 'vi' | 'en';
@@ -1516,6 +1766,9 @@ export const emailService = {
   sendNudgeA,
   sendNudgeB,
   sendNudgeC,
+  sendNudgeD,
+  sendNudgeE,
+  sendLeadNurture,
   sendBillingReceiptEmail,
   sendBillingAdminAlertEmail,
   sendVendorApprovedEmail,

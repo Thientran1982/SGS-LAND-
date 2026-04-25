@@ -855,6 +855,12 @@ class DatabaseApiClient {
     return true;
   }
 
+  async getSequenceTemplates() {
+    const result = await fetch('/api/sequences/templates', { credentials: 'include' });
+    if (!result.ok) throw new Error('Failed to load sequence templates');
+    return result.json();
+  }
+
   // ── Campaigns (Chiến dịch tự động) ─────────────────────────────────────────
   async getCampaigns() {
     const r = await fetch('/api/campaigns', { credentials: 'include' });

@@ -7,6 +7,24 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 
+// ── Template types (mirrors server/sequenceTemplates.ts) ──────────────────────
+interface SequenceTemplate {
+    id: string;
+    name: string;
+    description: string;
+    triggerEvent: string;
+    category: 'lead' | 'nurture' | 'closing' | 'retention';
+    icon: string;
+    steps: Array<{
+        id: string;
+        type: 'EMAIL' | 'SMS' | 'ZALO' | 'WAIT' | 'CREATE_TASK';
+        delayHours: number;
+        subject?: string;
+        content?: string;
+        taskTitle?: string;
+    }>;
+}
+
 // -----------------------------------------------------------------------------
 // TYPES
 // -----------------------------------------------------------------------------
@@ -25,6 +43,7 @@ interface Step {
 // -----------------------------------------------------------------------------
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+    TEMPLATE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zm-10 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>,
     EDIT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     EMAIL: <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
@@ -503,6 +522,133 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
 };
 
 // -----------------------------------------------------------------------------
+// TEMPLATE GALLERY
+// -----------------------------------------------------------------------------
+const CATEGORY_LABELS: Record<string, string> = {
+    lead: 'Khách Hàng Mới',
+    nurture: 'Chăm Sóc',
+    closing: 'Chốt Deal',
+    retention: 'Giữ Chân',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+    lead: 'bg-blue-50 text-blue-700 border-blue-100',
+    nurture: 'bg-amber-50 text-amber-700 border-amber-100',
+    closing: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    retention: 'bg-purple-50 text-purple-700 border-purple-100',
+};
+
+interface TemplateGalleryProps {
+    isOpen: boolean;
+    templates: SequenceTemplate[];
+    loading: boolean;
+    onClose: () => void;
+    onUse: (template: SequenceTemplate) => void;
+}
+
+const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, loading, onClose, onUse }) => {
+    const [filter, setFilter] = useState<string>('all');
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
+
+    const categories = ['all', 'lead', 'nurture', 'closing', 'retention'];
+    const filtered = filter === 'all' ? templates : templates.filter(t => t.category === filter);
+
+    return createPortal(
+        <div className="fixed inset-0 z-[120] flex items-start justify-end" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="relative z-10 h-full w-full max-w-2xl bg-[var(--bg-surface)] shadow-2xl border-l border-[var(--glass-border)] flex flex-col animate-slide-left overflow-hidden">
+                {/* Header */}
+                <div className="flex justify-between items-center px-6 py-5 border-b border-[var(--glass-border)] flex-shrink-0">
+                    <div>
+                        <h2 className="text-lg font-bold text-[var(--text-primary)]">Thư Viện Sequence Mẫu</h2>
+                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Chọn mẫu và tùy chỉnh theo nhu cầu</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-[var(--glass-surface-hover)] transition-colors text-[var(--text-secondary)]">
+                        {ICONS.CLOSE}
+                    </button>
+                </div>
+
+                {/* Filter tabs */}
+                <div className="flex gap-2 px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0 overflow-x-auto">
+                    {categories.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setFilter(cat)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
+                                filter === cat
+                                    ? 'bg-slate-900 text-white border-slate-900'
+                                    : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-slate-400'
+                            }`}
+                        >
+                            {cat === 'all' ? 'Tất cả' : CATEGORY_LABELS[cat]}
+                            {cat !== 'all' && (
+                                <span className="ml-1.5 opacity-60">{templates.filter(t => t.category === cat).length}</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Template list */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                    {loading ? (
+                        <div className="text-center py-20 text-[var(--text-secondary)] text-sm animate-pulse">Đang tải mẫu...</div>
+                    ) : filtered.length === 0 ? (
+                        <div className="text-center py-20 text-[var(--text-secondary)] text-sm">Không có mẫu nào</div>
+                    ) : filtered.map(tpl => (
+                        <div
+                            key={tpl.id}
+                            className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 hover:border-indigo-300 hover:shadow-md transition-all group"
+                        >
+                            <div className="flex items-start justify-between gap-3 mb-3">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <span className="text-2xl flex-shrink-0">{tpl.icon}</span>
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors">{tpl.name}</h3>
+                                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5 line-clamp-2">{tpl.description}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => onUse(tpl)}
+                                    className="flex-shrink-0 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-all active:scale-95 shadow-sm"
+                                >
+                                    Dùng Mẫu
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`px-2.5 py-1 text-xs font-bold rounded-lg border ${CATEGORY_COLORS[tpl.category] || 'bg-slate-50 text-slate-600 border-slate-100'}`}>
+                                    {CATEGORY_LABELS[tpl.category] || tpl.category}
+                                </span>
+                                <span className="text-xs text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-2.5 py-1 rounded-lg border border-[var(--glass-border)]">
+                                    {tpl.steps.length} bước
+                                </span>
+                                <span className="text-xs text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-2.5 py-1 rounded-lg border border-[var(--glass-border)]">
+                                    {tpl.steps.filter(s => s.type === 'EMAIL').length} email
+                                </span>
+                                {tpl.steps.filter(s => s.type === 'CREATE_TASK').length > 0 && (
+                                    <span className="text-xs text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+                                        {tpl.steps.filter(s => s.type === 'CREATE_TASK').length} task
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+// -----------------------------------------------------------------------------
 // SEQUENCE CARD
 // -----------------------------------------------------------------------------
 const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Sequence, onClick: () => void, onDelete: () => void, t: TFn }) => (
@@ -563,6 +709,9 @@ export const Sequences: React.FC = () => {
     const [selectedSeq, setSelectedSeq] = useState<Sequence | null>(null);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+    const [showTemplates, setShowTemplates] = useState(false);
+    const [templates, setTemplates] = useState<SequenceTemplate[]>([]);
+    const [templatesLoading, setTemplatesLoading] = useState(false);
     const { t, formatDate } = useTranslation();
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
@@ -583,6 +732,38 @@ export const Sequences: React.FC = () => {
     }, [t, notify]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    const openTemplateGallery = useCallback(async () => {
+        setShowTemplates(true);
+        if (templates.length > 0) return;
+        setTemplatesLoading(true);
+        try {
+            const data = await db.getSequenceTemplates();
+            setTemplates(data || []);
+        } catch {
+            notify('Không thể tải thư viện mẫu', 'error');
+        } finally {
+            setTemplatesLoading(false);
+        }
+    }, [templates.length, notify]);
+
+    const handleUseTemplate = useCallback(async (tpl: SequenceTemplate) => {
+        setShowTemplates(false);
+        try {
+            const steps = tpl.steps.map(s => ({ ...s, id: crypto.randomUUID() }));
+            const newSeq = await db.createSequence({
+                name: tpl.name,
+                triggerEvent: tpl.triggerEvent,
+                steps,
+                isActive: false,
+            });
+            setSequences(prev => [newSeq, ...prev]);
+            setSelectedSeq(newSeq);
+            notify('Đã tạo sequence từ mẫu', 'success');
+        } catch {
+            notify(t('common.error'), 'error');
+        }
+    }, [t, notify]);
 
     const handleDelete = async () => {
         if (!itemToDelete) return;
@@ -627,9 +808,17 @@ export const Sequences: React.FC = () => {
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('seq.title')}</h2>
                     <p className="text-sm text-[var(--text-tertiary)]">{t('seq.subtitle')}</p>
                 </div>
-                <button onClick={handleCreate} className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
-                    {ICONS.ADD} {t('seq.btn_new')}
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={openTemplateGallery}
+                        className="px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-200 hover:bg-indigo-100 transition-all flex items-center gap-2 active:scale-95 text-sm"
+                    >
+                        {ICONS.TEMPLATE} Thư Viện Mẫu
+                    </button>
+                    <button onClick={handleCreate} className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
+                        {ICONS.ADD} {t('seq.btn_new')}
+                    </button>
+                </div>
             </div>
 
             {sequences.length === 0 ? (
@@ -639,12 +828,20 @@ export const Sequences: React.FC = () => {
                     </div>
                     <p className="font-bold text-[var(--text-primary)] mb-2">{t('seq.empty_title')}</p>
                     <p className="text-sm text-[var(--text-tertiary)] mb-6 max-w-sm mx-auto">{t('seq.empty_desc')}</p>
-                    <button
-                        onClick={handleCreate}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 text-sm"
-                    >
-                        {ICONS.ADD} {t('seq.btn_new')}
-                    </button>
+                    <div className="flex items-center justify-center gap-3 flex-wrap">
+                        <button
+                            onClick={openTemplateGallery}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 text-sm"
+                        >
+                            {ICONS.TEMPLATE} Dùng Mẫu Có Sẵn
+                        </button>
+                        <button
+                            onClick={handleCreate}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl transition-all active:scale-95 text-sm border border-[var(--glass-border)]"
+                        >
+                            {ICONS.ADD} Tạo Mới
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -667,6 +864,14 @@ export const Sequences: React.FC = () => {
                 onSaved={handleSaved}
                 t={t}
                 notify={notify}
+            />
+
+            <TemplateGallery
+                isOpen={showTemplates}
+                templates={templates}
+                loading={templatesLoading}
+                onClose={() => setShowTemplates(false)}
+                onUse={handleUseTemplate}
             />
 
             <ConfirmModal

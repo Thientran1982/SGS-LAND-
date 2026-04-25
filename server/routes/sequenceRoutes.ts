@@ -2,9 +2,14 @@ import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { sequenceRepository } from '../repositories/sequenceRepository';
 import { emailService } from '../services/emailService';
+import { SEQUENCE_TEMPLATES } from '../sequenceTemplates';
 
 export function createSequenceRoutes(authenticateToken: any) {
   const router = Router();
+
+  router.get('/templates', authenticateToken, (_req: Request, res: Response) => {
+    res.json(SEQUENCE_TEMPLATES);
+  });
 
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
