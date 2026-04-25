@@ -383,6 +383,8 @@ class DatabaseApiClient {
       if (filters?.priceMin) params.priceMin = filters.priceMin;
       if (filters?.priceMax) params.priceMax = filters.priceMax;
       if (filters?.projectCode) params.projectCode = filters.projectCode;
+      if (filters?.location && filters.location !== 'ALL') params.location = filters.location;
+      if (filters?.isVerified) params.isVerified = 'true';
       const result = await api.get<any>('/api/public/listings', params);
       return {
         data: result.data || [],
