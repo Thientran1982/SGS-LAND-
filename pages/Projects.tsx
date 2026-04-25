@@ -698,6 +698,60 @@ const DIR_LABEL: Record<string, string> = {
     NE:'Đông Bắc', NW:'Tây Bắc', SE:'Đông Nam', SW:'Tây Nam',
 };
 
+const BEDROOM_LABEL: Record<string, string> = {
+    ALL: 'Tất cả loại phòng',
+    Studio: 'Studio',
+    '1PN': '1 phòng ngủ',
+    '2PN': '2 phòng ngủ',
+    '3PN': '3 phòng ngủ',
+    '4PN+': '4+ phòng ngủ',
+    Penthouse: 'Penthouse',
+    Shophouse: 'Shophouse',
+};
+
+function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
+    value: string;
+    onChange: (v: string) => void;
+    options: string[];
+    labelMap: Record<string, string>;
+    placeholder?: string;
+}) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [open]);
+
+    return (
+        <div ref={ref} className="relative">
+            <button type="button" onClick={() => setOpen(o => !o)}
+                className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400 flex items-center justify-between gap-1 hover:border-emerald-400 transition-colors">
+                <span className="truncate">{labelMap[value] ?? value ?? placeholder ?? '—'}</span>
+                <svg className={`w-3.5 h-3.5 shrink-0 text-[var(--text-tertiary)] transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            {open && (
+                <div className="absolute z-[10000] top-full left-0 mt-1 w-full min-w-max bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl overflow-hidden">
+                    {options.map(opt => (
+                        <button key={opt} type="button"
+                            onClick={() => { onChange(opt); setOpen(false); }}
+                            className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-emerald-50 hover:text-emerald-700 ${value === opt ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-[var(--text-primary)]'}`}>
+                            {labelMap[opt] ?? opt}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 function fmtSqm(v: number) {
     if (!v) return '—';
     return (v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tr/m²';
@@ -809,17 +863,21 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Hướng</label>
-                                <select value={form.direction} onChange={e => setForm((f: any) => ({ ...f, direction: e.target.value }))}
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400">
-                                    {DIRECTIONS.map(d => <option key={d} value={d}>{DIR_LABEL[d] ?? d}</option>)}
-                                </select>
+                                <SelectDropdown
+                                    value={form.direction}
+                                    onChange={v => setForm((f: any) => ({ ...f, direction: v }))}
+                                    options={DIRECTIONS}
+                                    labelMap={DIR_LABEL}
+                                />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Loại phòng</label>
-                                <select value={form.bedroom_type} onChange={e => setForm((f: any) => ({ ...f, bedroom_type: e.target.value }))}
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400">
-                                    {BEDROOM_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
-                                </select>
+                                <SelectDropdown
+                                    value={form.bedroom_type}
+                                    onChange={v => setForm((f: any) => ({ ...f, bedroom_type: v }))}
+                                    options={BEDROOM_TYPES}
+                                    labelMap={BEDROOM_LABEL}
+                                />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Giá gốc (tr/m²)</label>
@@ -891,7 +949,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                             <td className="px-3 py-2 text-[var(--text-secondary)]">{row.tower || <span className="text-[var(--text-tertiary)]">—</span>}</td>
                                             <td className="px-3 py-2 font-semibold text-[var(--text-primary)]">{row.floor_from}–{row.floor_to}</td>
                                             <td className="px-3 py-2 text-[var(--text-secondary)]">{DIR_LABEL[row.direction] ?? row.direction}</td>
-                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded font-medium">{row.bedroom_type}</span></td>
+                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded font-medium">{BEDROOM_LABEL[row.bedroom_type] ?? row.bedroom_type}</span></td>
                                             <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmtSqm(base)}</td>
                                             <td className="px-3 py-2 text-right">
                                                 <span className={adj === 0 ? 'text-[var(--text-tertiary)]' : adj > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
