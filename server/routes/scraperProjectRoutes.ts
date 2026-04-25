@@ -1607,7 +1607,7 @@ async function scrapeZaloLeads(zlToken: string): Promise<ProjectLead[]> {
 
 export function createScraperProjectRoutes(authenticateToken: any) {
   const router      = Router();
-  const ADMIN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+  const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'];
 
   // GET /api/scraper/projects/catalog — list all projects
   router.get('/catalog', authenticateToken, (_req: Request, res: Response) => {
