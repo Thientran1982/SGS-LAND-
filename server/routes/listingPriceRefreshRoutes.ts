@@ -119,11 +119,11 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
               marketTrend     = marketEntry.marketTrend;
             } else {
               const regional = getRegionalBasePrice(listing.location, pType);
-              if (!regional || regional.pricePerM2 <= 0) {
+              if (!regional || regional.price <= 0) {
                 stats.skipped_no_market++;
                 return;
               }
-              marketBasePrice = regional.pricePerM2;
+              marketBasePrice = regional.price;
               confidence      = 40;
               marketTrend     = 'stable';
             }
