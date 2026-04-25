@@ -1360,6 +1360,120 @@ async function startServer() {
 
   const PUBLIC_TENANT = DEFAULT_TENANT_ID;
 
+  /** Strip Vietnamese diacritics → lowercase, collapse spaces/dots for map lookups */
+  function vnDeaccent(s: string): string {
+    return s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/[.\-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
+   * Maps deaccented raw location tokens → canonical province/city name.
+   * Covers districts, townships, and common abbreviations.
+   */
+  const VN_PROVINCE_MAP: Record<string, string> = {
+    // TP. Hồ Chí Minh & nội thành/ngoại thành
+    'hcm': 'TP. Hồ Chí Minh', 'tphcm': 'TP. Hồ Chí Minh',
+    'tp hcm': 'TP. Hồ Chí Minh', 'tp.hcm': 'TP. Hồ Chí Minh',
+    'ho chi minh': 'TP. Hồ Chí Minh', 'tp ho chi minh': 'TP. Hồ Chí Minh',
+    'thanh pho ho chi minh': 'TP. Hồ Chí Minh', 'sai gon': 'TP. Hồ Chí Minh',
+    'hoc mon': 'TP. Hồ Chí Minh', 'go vap': 'TP. Hồ Chí Minh',
+    'binh thanh': 'TP. Hồ Chí Minh', 'phu nhuan': 'TP. Hồ Chí Minh',
+    'tan binh': 'TP. Hồ Chí Minh', 'binh tan': 'TP. Hồ Chí Minh',
+    'binh chanh': 'TP. Hồ Chí Minh', 'nha be': 'TP. Hồ Chí Minh',
+    'can gio': 'TP. Hồ Chí Minh', 'cu chi': 'TP. Hồ Chí Minh',
+    'thu duc': 'TP. Hồ Chí Minh',
+    'quan 1': 'TP. Hồ Chí Minh', 'quan 2': 'TP. Hồ Chí Minh',
+    'quan 3': 'TP. Hồ Chí Minh', 'quan 4': 'TP. Hồ Chí Minh',
+    'quan 5': 'TP. Hồ Chí Minh', 'quan 6': 'TP. Hồ Chí Minh',
+    'quan 7': 'TP. Hồ Chí Minh', 'quan 8': 'TP. Hồ Chí Minh',
+    'quan 9': 'TP. Hồ Chí Minh', 'quan 10': 'TP. Hồ Chí Minh',
+    'quan 11': 'TP. Hồ Chí Minh', 'quan 12': 'TP. Hồ Chí Minh',
+    // Đồng Nai & đô thị/huyện
+    'dong nai': 'Đồng Nai', 'tinh dong nai': 'Đồng Nai',
+    'bien hoa': 'Đồng Nai', 'long khanh': 'Đồng Nai',
+    'trang bom': 'Đồng Nai', 'vinh cuu': 'Đồng Nai',
+    'thong nhat': 'Đồng Nai', 'cam my': 'Đồng Nai',
+    'dinh quan': 'Đồng Nai', 'xuan loc': 'Đồng Nai',
+    'nhon trach': 'Đồng Nai', 'long hung dong nai': 'Đồng Nai',
+    'long hung': 'Đồng Nai',
+    // Long An
+    'long an': 'Long An', 'tinh long an': 'Long An', 'tan an': 'Long An',
+    // Hà Nội
+    'ha noi': 'Hà Nội', 'hanoi': 'Hà Nội',
+    // Bình Dương
+    'binh duong': 'Bình Dương', 'thu dau mot': 'Bình Dương',
+    'thuan an': 'Bình Dương', 'di an': 'Bình Dương',
+    // Bà Rịa – Vũng Tàu
+    'ba ria vung tau': 'Bà Rịa - Vũng Tàu', 'vung tau': 'Bà Rịa - Vũng Tàu',
+    'ba ria': 'Bà Rịa - Vũng Tàu', 'brvt': 'Bà Rịa - Vũng Tàu',
+    // Đà Nẵng
+    'da nang': 'Đà Nẵng', 'danang': 'Đà Nẵng',
+    // Cần Thơ
+    'can tho': 'Cần Thơ',
+    // Hải Phòng
+    'hai phong': 'Hải Phòng',
+    // Khánh Hòa
+    'khanh hoa': 'Khánh Hòa', 'nha trang': 'Khánh Hòa',
+    // Lâm Đồng
+    'lam dong': 'Lâm Đồng', 'da lat': 'Lâm Đồng', 'dalat': 'Lâm Đồng',
+    // Kiên Giang
+    'kien giang': 'Kiên Giang', 'phu quoc': 'Kiên Giang',
+    // Tây Ninh
+    'tay ninh': 'Tây Ninh',
+    // Tiền Giang
+    'tien giang': 'Tiền Giang', 'my tho': 'Tiền Giang',
+    // An Giang
+    'an giang': 'An Giang', 'long xuyen': 'An Giang',
+    // vague / skip
+    'viet nam': '', 'vietnam': '',
+  };
+
+  /**
+   * When filtering by canonical province, also search these alias strings in ILIKE.
+   */
+  const VN_PROVINCE_ALIASES: Record<string, string[]> = {
+    'TP. Hồ Chí Minh': [
+      'Hồ Chí Minh', 'HCM', 'TPHCM', 'TP.HCM', 'Sài Gòn', 'Saigon',
+      'Hóc Môn', 'Hoc Mon', 'Bình Chánh', 'Nhà Bè', 'Cần Giờ', 'Củ Chi',
+      'Thủ Đức', 'Thu Duc', 'Gò Vấp', 'Go Vap', 'Bình Thạnh',
+    ],
+    'Đồng Nai': [
+      'Đồng Nai', 'Dong Nai', 'Biên Hòa', 'Bien Hoa', 'Biên Hoà',
+      'Long Khánh', 'Trảng Bom', 'Vĩnh Cửu', 'Thống Nhất',
+      'Long Hưng', 'Nhơn Trạch', 'Long Hung',
+    ],
+    'Long An':            ['Long An', 'Tân An'],
+    'Hà Nội':            ['Hà Nội', 'Ha Noi', 'Hanoi'],
+    'Bình Dương':        ['Bình Dương', 'Binh Duong', 'Thủ Dầu Một', 'Thu Dau Mot', 'Thuận An', 'Dĩ An'],
+    'Bà Rịa - Vũng Tàu': ['Bà Rịa', 'Vũng Tàu', 'Vung Tau', 'BRVT'],
+    'Đà Nẵng':           ['Đà Nẵng', 'Da Nang'],
+    'Khánh Hòa':         ['Khánh Hòa', 'Nha Trang'],
+    'Lâm Đồng':          ['Lâm Đồng', 'Đà Lạt', 'Da Lat', 'Dalat'],
+    'Kiên Giang':        ['Kiên Giang', 'Phú Quốc', 'Phu Quoc'],
+    'Cần Thơ':           ['Cần Thơ', 'Can Tho'],
+    'Hải Phòng':         ['Hải Phòng', 'Hai Phong'],
+    'Tây Ninh':          ['Tây Ninh', 'Tay Ninh'],
+    'Tiền Giang':        ['Tiền Giang', 'Mỹ Tho'],
+    'An Giang':          ['An Giang', 'Long Xuyên'],
+  };
+
+  /** Normalize a raw last-segment location to canonical province; null = skip */
+  function normalizeToProvince(raw: string): string | null {
+    if (!raw || !raw.trim()) return null;
+    const key = vnDeaccent(raw);
+    if (key in VN_PROVINCE_MAP) {
+      const canonical = VN_PROVINCE_MAP[key];
+      return canonical || null;
+    }
+    return raw.trim();
+  }
+
   app.get('/api/public/listings', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -1372,7 +1486,15 @@ async function startServer() {
       if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin as string);
       if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax as string);
       if (req.query.search) filters.search = req.query.search as string;
-      if (req.query.location) filters.location_contains = req.query.location as string;
+      if (req.query.location) {
+        const province = req.query.location as string;
+        const aliases = VN_PROVINCE_ALIASES[province];
+        if (aliases?.length) {
+          filters.location_any = aliases;
+        } else {
+          filters.location_contains = province;
+        }
+      }
       if (req.query.isVerified === 'true') filters.isVerified = true;
       let result: any;
       if (req.query.cursor !== undefined || req.query.cursorMode === 'true') {
@@ -1424,7 +1546,15 @@ async function startServer() {
           [PUBLIC_TENANT]
         );
       });
-      res.json(result.rows.map((r: any) => r.loc).filter(Boolean));
+      const rawLocs: string[] = result.rows.map((r: any) => r.loc).filter(Boolean);
+      const normalized = [
+        ...new Set(
+          rawLocs
+            .map(normalizeToProvince)
+            .filter((v): v is string => Boolean(v))
+        ),
+      ].sort((a, b) => a.localeCompare(b, 'vi'));
+      res.json(normalized);
     } catch {
       res.json([]);
     }
