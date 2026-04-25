@@ -16,6 +16,7 @@ export interface ListingFilters {
   noProjectCode?: boolean;
   isVerified?: boolean;
   location_contains?: string;
+  location_any?: string[];
 }
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
@@ -68,6 +69,11 @@ export class ListingRepository extends BaseRepository {
     if (filters?.location_contains) {
       conditions.push(`location ILIKE $${paramIndex++}`);
       values.push(`%${filters.location_contains}%`);
+    }
+    if (filters?.location_any?.length) {
+      const ph = filters.location_any.map(() => `location ILIKE $${paramIndex++}`).join(' OR ');
+      conditions.push(`(${ph})`);
+      values.push(...filters.location_any.map((a: string) => `%${a}%`));
     }
 
     return { conditions, values, nextIndex: paramIndex };
