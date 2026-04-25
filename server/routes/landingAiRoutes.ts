@@ -14,9 +14,20 @@ interface ChatMessage {
   content: string;
 }
 
+interface VisitorInfo {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  referrer?: string;
+  pageUrl?: string;
+}
+
 interface ConsultPayload {
   project?: string;
   messages?: ChatMessage[];
+  visitorInfo?: VisitorInfo;
 }
 
 const PROJECT_CONTEXTS: Record<string, string> = {
@@ -243,6 +254,17 @@ export function createLandingAiRoutes(): Router {
         });
       }
 
+      // Build visitor context addendum (UTM + referrer) for system prompt
+      const vi = body.visitorInfo || {};
+      const visitorLines: string[] = [];
+      if (vi.utm_source) visitorLines.push(`- Nguồn traffic: ${vi.utm_source}${vi.utm_medium ? ` / ${vi.utm_medium}` : ''}`);
+      if (vi.utm_campaign) visitorLines.push(`- Chiến dịch: ${vi.utm_campaign}`);
+      if (vi.utm_content) visitorLines.push(`- Nội dung quảng cáo: ${vi.utm_content}`);
+      if (vi.referrer && !vi.utm_source) visitorLines.push(`- Referrer: ${vi.referrer}`);
+      const visitorContext = visitorLines.length > 0
+        ? `\n\nCONTEXT KHÁCH HÀNG (dùng để cá nhân hóa, KHÔNG đọc to):\n${visitorLines.join('\n')}`
+        : '';
+
       // Build Gemini contents: alternating user/model turns.
       const contents = cleaned.map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
@@ -253,7 +275,7 @@ export function createLandingAiRoutes(): Router {
         model: 'gemini-2.5-flash',
         contents,
         config: {
-          systemInstruction: systemContext,
+          systemInstruction: systemContext + visitorContext,
           temperature: 0.4,
           maxOutputTokens: 1000,
           thinkingConfig: { thinkingBudget: 0 },
