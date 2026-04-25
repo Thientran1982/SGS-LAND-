@@ -1413,16 +1413,17 @@ async function startServer() {
 
   app.get('/api/public/listings/locations', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const pool = (listingRepository as any).pool as import('pg').Pool;
-      const result = await pool.query(
-        `SELECT DISTINCT TRIM(SPLIT_PART(location, ',', -1)) AS loc
-           FROM listings
-           WHERE tenant_id = $1
-             AND status IN ('AVAILABLE','OPENING','BOOKING')
-             AND location IS NOT NULL AND location <> ''
-           ORDER BY 1`,
-        [PUBLIC_TENANT]
-      );
+      const result = await withRlsBypass(async (client) => {
+        return client.query(
+          `SELECT DISTINCT TRIM(SPLIT_PART(location, ',', -1)) AS loc
+             FROM listings
+             WHERE tenant_id = $1
+               AND status IN ('AVAILABLE','OPENING','BOOKING')
+               AND location IS NOT NULL AND location <> ''
+             ORDER BY 1`,
+          [PUBLIC_TENANT]
+        );
+      });
       res.json(result.rows.map((r: any) => r.loc).filter(Boolean));
     } catch {
       res.json([]);
