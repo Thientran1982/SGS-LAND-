@@ -1064,6 +1064,20 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
     c.addEventListener('click', function(){ c.classList.toggle('on'); });
   });
 
+  /* ─── UTM & Visitor tracking ─── */
+  var _vInfo = (function(){
+    var p = new URLSearchParams(window.location.search);
+    var info = {
+      utm_source: p.get('utm_source')||'', utm_medium: p.get('utm_medium')||'',
+      utm_campaign: p.get('utm_campaign')||'', utm_content: p.get('utm_content')||'',
+      utm_term: p.get('utm_term')||'', referrer: document.referrer||'',
+      pageUrl: window.location.href
+    };
+    if (info.utm_source) { try{ sessionStorage.setItem('_sgs_utm', JSON.stringify(info)); }catch(e){} }
+    else { try{ var s=sessionStorage.getItem('_sgs_utm'); if(s){ var saved=JSON.parse(s); Object.keys(saved).forEach(function(k){ if(!info[k]) info[k]=saved[k]; }); } }catch(e){} }
+    return info;
+  })();
+
   /* ─── lead form ─── */
   var f = document.getElementById('leadForm');
   if (f) {
@@ -1082,14 +1096,12 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
         return vals.join(', ');
       };
       var payload = {
-        name: name,
-        phone: phone,
-        email: email,
-        type: pickChips('type'),
-        purpose: pickChips('purpose'),
-        project: 'Vinhomes Hóc Môn',
-        source: 'landing/vinhomes-hoc-mon',
-        pageUrl: location.href
+        name: name, phone: phone, email: email,
+        type: pickChips('type'), purpose: pickChips('purpose'),
+        project: 'vinhomes-hoc-mon', projectName: 'Vinhomes Hóc Môn',
+        source: _vInfo.utm_source ? 'utm-'+_vInfo.utm_source : 'landing-vinhomes-hoc-mon',
+        channel: 'form', pageUrl: _vInfo.pageUrl, referrer: _vInfo.referrer,
+        utm: { utm_source:_vInfo.utm_source, utm_medium:_vInfo.utm_medium, utm_campaign:_vInfo.utm_campaign, utm_content:_vInfo.utm_content, utm_term:_vInfo.utm_term }
       };
 
       var originalLabel = btn.textContent;
@@ -1136,6 +1148,33 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
   var aiHistory = []; // [{role, content}]
   var aiBusy = false;
   var aiGreeted = false;
+  var _leadCaptured = false;
+
+  function _detectPhone(t){ var m=(t||'').match(/((?:0|\+84)\d[\s\-\.\d]{8,12})/); return m?m[1].replace(/[\s\-\.]/g,''):null; }
+  function _extractName(hist){
+    for(var i=hist.length-1;i>=0;i--){
+      if(hist[i].role!=='user') continue;
+      var c=hist[i].content;
+      var m=c.match(/(?:tên(?:\s+(?:là|em|mình|tôi|anh|chị))?|(?:em|anh|chị|mình|tôi)\s+(?:là|tên))[:\s]+([A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+(?:\s+[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+){0,3})/i);
+      if(m) return m[1].trim();
+      m=c.match(/^([A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+(?:\s+[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+){1,3})$/);
+      if(m) return m[1].trim();
+    }
+    return '';
+  }
+  function _chatTranscript(hist){ return hist.map(function(m){ return (m.role==='user'?'Khách':'Tư vấn AI')+': '+m.content; }).join('\n'); }
+  function _submitChatLead(name, phone){
+    if(_leadCaptured) return; _leadCaptured=true;
+    fetch('/api/landing-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:name||'Khách hàng', phone:phone, project:'vinhomes-hoc-mon', projectName:'Vinhomes Hóc Môn',
+      source:_vInfo.utm_source?'utm-'+_vInfo.utm_source+'-chat':'ai-chat-vinhomes-hoc-mon',
+      channel:'ai_chat', pageUrl:_vInfo.pageUrl, referrer:_vInfo.referrer,
+      utm:{utm_source:_vInfo.utm_source,utm_medium:_vInfo.utm_medium,utm_campaign:_vInfo.utm_campaign,utm_content:_vInfo.utm_content,utm_term:_vInfo.utm_term},
+      chatTranscript:_chatTranscript(aiHistory)
+    })}).then(function(r){return r.json();}).then(function(d){
+      if(d.ok) aiAppend('bot','✅ Em đã lưu thông tin của anh/chị rồi ạ! Chuyên viên SGS Land sẽ gọi lại trong 30 phút. Anh/chị có câu hỏi nào về dự án muốn em tư vấn thêm không ạ?');
+    }).catch(function(){});
+  }
 
   function aiAppend(role, text, opts){
     opts = opts || {};
@@ -1182,10 +1221,19 @@ footer{background:var(--green-deep);color:rgba(255,255,255,.82);padding:56px 0 0
     aiSend.disabled = true;
     aiTypingShow();
 
+    // Detect phone — auto-capture lead
+    if (!_leadCaptured) {
+      var detectedPhone = _detectPhone(text);
+      if (detectedPhone) { _submitChatLead(_extractName(aiHistory), detectedPhone); }
+    }
+
     fetch('/api/landing-ai/consult', {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ project:'vinhomes-hoc-mon', messages: aiHistory })
+      body: JSON.stringify({
+        project:'vinhomes-hoc-mon', messages: aiHistory,
+        visitorInfo:{ utm_source:_vInfo.utm_source, utm_medium:_vInfo.utm_medium, utm_campaign:_vInfo.utm_campaign, utm_content:_vInfo.utm_content, utm_term:_vInfo.utm_term, referrer:_vInfo.referrer, pageUrl:_vInfo.pageUrl }
+      })
     })
     .then(function(r){ return r.json().then(function(j){ return { status:r.status, body:j }; }); })
     .then(function(res){

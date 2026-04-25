@@ -1162,6 +1162,20 @@ navLinks.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', 
   initCsel('budgetSel','budget','budgetLbl');
 })();
 
+// ── UTM & Visitor tracking ──
+var _vInfo = (function(){
+  var p = new URLSearchParams(window.location.search);
+  var info = {
+    utm_source: p.get('utm_source')||'', utm_medium: p.get('utm_medium')||'',
+    utm_campaign: p.get('utm_campaign')||'', utm_content: p.get('utm_content')||'',
+    utm_term: p.get('utm_term')||'', referrer: document.referrer||'',
+    pageUrl: window.location.href
+  };
+  if (info.utm_source) { try{ sessionStorage.setItem('_sgs_utm', JSON.stringify(info)); }catch(e){} }
+  else { try{ var s=sessionStorage.getItem('_sgs_utm'); if(s){ var saved=JSON.parse(s); Object.keys(saved).forEach(function(k){ if(!info[k]) info[k]=saved[k]; }); } }catch(e){} }
+  return info;
+})();
+
 // ── Lead form ──
 var form = document.getElementById('leadForm');
 var formSuccess = document.getElementById('formSuccess');
@@ -1177,17 +1191,15 @@ form.addEventListener('submit', function(e){
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      name: name,
-      phone: phone,
+      name: name, phone: phone,
       email: document.getElementById('email').value.trim(),
       interest: document.getElementById('interest').value,
       budget: document.getElementById('budget').value,
       note: document.getElementById('note').value.trim(),
-      project: 'aqua-city',
-      projectName: 'Aqua City Novaland',
-      source: 'landing-aqua-city',
-      unit: document.getElementById('interest').value || 'general',
-      type: 'BUY',
+      project: 'aqua-city', projectName: 'Aqua City Novaland',
+      source: _vInfo.utm_source ? 'utm-'+_vInfo.utm_source : 'landing-aqua-city',
+      channel: 'form', pageUrl: _vInfo.pageUrl, referrer: _vInfo.referrer,
+      utm: { utm_source:_vInfo.utm_source, utm_medium:_vInfo.utm_medium, utm_campaign:_vInfo.utm_campaign, utm_content:_vInfo.utm_content, utm_term:_vInfo.utm_term }
     })
   }).then(function(r){ return r.json(); }).then(function(data){
     if(data.ok){ form.style.display='none'; formSuccess.style.display='block'; }
@@ -1210,6 +1222,33 @@ var aiSuggest = document.getElementById('aiSuggest');
 var aiHistory = [];
 var aiBusy = false;
 var aiGreeted = false;
+var _leadCaptured = false;
+
+function _detectPhone(t){ var m=(t||'').match(/((?:0|\+84)\d[\s\-\.\d]{8,12})/); return m?m[1].replace(/[\s\-\.]/g,''):null; }
+function _extractName(hist){
+  for(var i=hist.length-1;i>=0;i--){
+    if(hist[i].role!=='user') continue;
+    var c=hist[i].content;
+    var m=c.match(/(?:tên(?:\s+(?:là|em|mình|tôi|anh|chị))?|(?:em|anh|chị|mình|tôi)\s+(?:là|tên))[:\s]+([A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+(?:\s+[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+){0,3})/i);
+    if(m) return m[1].trim();
+    m=c.match(/^([A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+(?:\s+[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ][a-zàáâãèéêìíòóôõùúýăđơưa-z]+){1,3})$/);
+    if(m) return m[1].trim();
+  }
+  return '';
+}
+function _chatTranscript(hist){ return hist.map(function(m){ return (m.role==='user'?'Khách':'Tư vấn AI')+': '+m.content; }).join('\n'); }
+function _submitChatLead(name, phone){
+  if(_leadCaptured) return; _leadCaptured=true;
+  fetch('/api/landing-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    name:name||'Khách hàng', phone:phone, project:'aqua-city', projectName:'Aqua City Novaland',
+    source:_vInfo.utm_source?'utm-'+_vInfo.utm_source+'-chat':'ai-chat-aqua-city',
+    channel:'ai_chat', pageUrl:_vInfo.pageUrl, referrer:_vInfo.referrer,
+    utm:{utm_source:_vInfo.utm_source,utm_medium:_vInfo.utm_medium,utm_campaign:_vInfo.utm_campaign,utm_content:_vInfo.utm_content,utm_term:_vInfo.utm_term},
+    chatTranscript:_chatTranscript(aiHistory)
+  })}).then(function(r){return r.json();}).then(function(d){
+    if(d.ok) aiAppend('bot','✅ Em đã lưu thông tin của anh/chị rồi ạ! Chuyên viên SGS Land sẽ gọi lại trong 30 phút. Anh/chị có câu hỏi nào về dự án muốn em tư vấn thêm không ạ?');
+  }).catch(function(){});
+}
 
 function aiAppend(role, text, isErr){
   var div = document.createElement('div');
@@ -1253,10 +1292,23 @@ function aiSend(text){
   aiSendBtn.disabled = true;
   aiTypingShow();
 
+  // Detect phone number in current message — auto-capture lead
+  if (!_leadCaptured) {
+    var detectedPhone = _detectPhone(text);
+    if (detectedPhone) {
+      var detectedName = _extractName(aiHistory);
+      _submitChatLead(detectedName, detectedPhone);
+    }
+  }
+
   fetch('/api/landing-ai/consult', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ project: 'aqua-city', messages: aiHistory })
+    body: JSON.stringify({
+      project: 'aqua-city',
+      messages: aiHistory,
+      visitorInfo: { utm_source:_vInfo.utm_source, utm_medium:_vInfo.utm_medium, utm_campaign:_vInfo.utm_campaign, utm_content:_vInfo.utm_content, utm_term:_vInfo.utm_term, referrer:_vInfo.referrer, pageUrl:_vInfo.pageUrl }
+    })
   })
   .then(function(r){ return r.json().then(function(j){ return { s: r.status, b: j }; }); })
   .then(function(res){
