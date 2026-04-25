@@ -2190,8 +2190,21 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             // Define currentIntent early (also used in RLHF section below)
             const currentIntent = state.plan?.next_step || 'DIRECT_ANSWER';
 
+            // ── RAG: Lấy context từ knowledge base ────────────────────────────────
+            // Chỉ gọi RAG khi intent phù hợp (không gọi khi định giá vì đã có AVM engine)
+            const RAG_INTENTS = new Set(['DIRECT_ANSWER', 'SEARCH_INVENTORY', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'CLARIFY']);
+            let ragKnowledgeSection = '';
+            if (RAG_INTENTS.has(currentIntent)) {
+                try {
+                    const { buildRagContext: _rag } = await import('./services/ragService');
+                    ragKnowledgeSection = await _rag(state.tenantId, state.userMessage, 4);
+                } catch (_ragErr) {
+                    // RAG lỗi không nên chặn AI — im lặng bỏ qua
+                }
+            }
+
             // ── Per-intent WRITER prompt — 9 branches ─────────────────────────────
-            const _ctx  = `CONTEXT (dữ liệu đã được phân tích thực tế):\n${state.systemContext}${leadAnalysisSection}`;
+            const _ctx  = `CONTEXT (dữ liệu đã được phân tích thực tế):\n${state.systemContext}${leadAnalysisSection}${ragKnowledgeSection}`;
             const _hist = `LỊCH SỬ HỘI THOẠI (${historyWindow} tin nhắn gần nhất):\n${conversationHistory || '(Chưa có lịch sử)'}`;
             const _msg  = `TIN NHẮN KHÁCH: "${state.userMessage}"`;
 
