@@ -160,7 +160,7 @@ const fmtDecimalDot = (n: number, maxFractions: number): string => {
     const rounded = parseFloat(n.toFixed(maxFractions));
     const [intPart, decPart] = rounded.toString().split('.');
     const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return decPart ? `${intFormatted}.${decPart}` : intFormatted;
+    return decPart ? `${intFormatted},${decPart}` : intFormatted;
 };
 
 export const formatSmartPrice = (price: number, t?: (key: string) => string): string => {
