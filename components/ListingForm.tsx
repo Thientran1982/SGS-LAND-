@@ -153,13 +153,13 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 setFormData(JSON.parse(JSON.stringify(initialData)));
                 setImages(initialData.images || []);
                 
-                // Smart Price Reverse Logic
-                const val = initialData.price || 0;
+                // Smart Price Reverse Logic — dùng toFixed(6) rồi parseFloat để loại FP noise
+                const val = Math.round(Number(initialData.price) || 0);
                 if (val >= 1_000_000_000) {
-                    setPriceShort((val / 1_000_000_000).toString());
+                    setPriceShort(parseFloat((val / 1_000_000_000).toFixed(6)).toString());
                     setPriceUnit(UNITS.BILLION.value);
                 } else if (val >= 1_000_000) {
-                    setPriceShort((val / 1_000_000).toString());
+                    setPriceShort(parseFloat((val / 1_000_000).toFixed(6)).toString());
                     setPriceUnit(UNITS.MILLION.value);
                 } else {
                     setPriceShort(val.toString());
@@ -298,8 +298,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         if (!validate()) return;
         setIsSubmitting(true);
 
-        // Calculate final raw price for DB
-        const finalPrice = parseFloat(priceShort) * priceUnit;
+        // Calculate final raw price for DB — Math.round loại bỏ lỗi floating-point
+        const finalPrice = Math.round(parseFloat(priceShort) * priceUnit);
 
         // Auto-geocode if coordinates are missing — this ensures every listing
         // is stored with real coordinates so the map pin is always accurate.
