@@ -746,8 +746,23 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                     const raw = e.target.value.replace(',', '.');
                                                     if (/^(\d+\.?\d*)?$/.test(raw)) setPriceShort(raw);
                                                 }}
+                                                onBlur={() => {
+                                                    const num = parseFloat(priceShort);
+                                                    if (isNaN(num) || num <= 0) return;
+                                                    const rawVal = num * priceUnit;
+                                                    // Nếu tổng VNĐ > 10.000 tỷ → chắc chắn user nhập số VNĐ thô, tự chuyển đơn vị
+                                                    if (rawVal > 1e13) {
+                                                        if (num >= 1_000_000_000) {
+                                                            setPriceUnit(UNITS.BILLION.value);
+                                                            setPriceShort(parseFloat((num / 1_000_000_000).toFixed(6)).toString());
+                                                        } else if (num >= 1_000_000) {
+                                                            setPriceUnit(UNITS.MILLION.value);
+                                                            setPriceShort(parseFloat((num / 1_000_000).toFixed(6)).toString());
+                                                        }
+                                                    }
+                                                }}
                                                 className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] focus:border-indigo-500 outline-none ${errors.price ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
-                                                placeholder="5.5"
+                                                placeholder={priceUnit === UNITS.BILLION.value ? 'VD: 5.5' : priceUnit === UNITS.MILLION.value ? 'VD: 5500' : 'VD: 5500000000'}
                                             />
                                             <div className="w-28 shrink-0">
                                                 <Dropdown
@@ -761,12 +776,27 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         {/* Real-time Raw Value Preview */}
                                         {errors.price && <p className="text-xs2 text-rose-500 mt-1">{errors.price}</p>}
                                         {(() => {
-                                            const rawVal = (isNaN(parseFloat(priceShort)) ? 0 : parseFloat(priceShort)) * priceUnit;
-                                            return rawVal > 0 ? (
+                                            const num = isNaN(parseFloat(priceShort)) ? 0 : parseFloat(priceShort);
+                                            const rawVal = num * priceUnit;
+                                            if (rawVal <= 0) return null;
+                                            if (rawVal > 1e13) {
+                                                const suggestion = num >= 1_000_000_000
+                                                    ? `${parseFloat((num / 1_000_000_000).toFixed(3))} tỷ`
+                                                    : num >= 1_000_000
+                                                    ? `${parseFloat((num / 1_000_000).toFixed(3))} triệu`
+                                                    : null;
+                                                return (
+                                                    <div className="text-xs font-semibold text-amber-600 mt-1 text-right flex items-center justify-end gap-1">
+                                                        <span>⚠ Giá vô lý!</span>
+                                                        {suggestion && <span className="text-indigo-600">Rời ô → tự chỉnh thành <strong>{suggestion}</strong></span>}
+                                                    </div>
+                                                );
+                                            }
+                                            return (
                                                 <div className="text-xs font-semibold text-indigo-600 font-mono mt-1 text-right">
                                                     = {Math.round(rawVal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ₫
                                                 </div>
-                                            ) : null;
+                                            );
                                         })()}
                                     </div>
                                     <div className={isApartmentLike ? 'col-span-1' : 'col-span-2 sm:col-span-1'}>
