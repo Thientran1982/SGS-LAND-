@@ -444,16 +444,16 @@ function fmtNum(v: number, maxDec = 2) {
 
 function fmtPrice(p: number) {
     if (!p) return '—';
-    if (p >= 1_000_000_000) return fmtNum(p / 1_000_000_000) + ' tỷ';
-    if (p >= 1_000_000) return fmtNum(p / 1_000_000, 0) + ' tr';
+    if (p >= 1_000_000_000) return fmtNum(p / 1_000_000_000, 3) + ' tỷ';
+    if (p >= 1_000_000) return fmtNum(p / 1_000_000, 2) + ' tr';
     return fmtNum(p, 0) + ' đ';
 }
 
 function fmtUnitPrice(price: number, area: number) {
     if (!price || !area) return '—';
     const up = price / area;
-    if (up >= 1_000_000_000) return fmtNum(up / 1_000_000_000) + ' tỷ/m²';
-    if (up >= 1_000_000) return fmtNum(up / 1_000_000, 0) + ' tr/m²';
+    if (up >= 1_000_000_000) return fmtNum(up / 1_000_000_000, 3) + ' tỷ/m²';
+    if (up >= 1_000_000) return fmtNum(up / 1_000_000, 1) + ' tr/m²';
     return fmtNum(up, 0) + ' đ/m²';
 }
 
