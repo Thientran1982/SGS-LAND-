@@ -1248,7 +1248,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     return (
         <>
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4" role="dialog" aria-modal="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl border border-[var(--glass-border)] flex flex-col h-[92vh] overflow-hidden">
+                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl border border-[var(--glass-border)] grid h-[92vh] overflow-hidden" style={{ gridTemplateRows: 'auto 1fr auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
@@ -1419,7 +1419,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── Table ── */}
-                    <div className="flex-1 overflow-auto min-h-0 scroll-touch thin-scrollbar">
+                    <div className="overflow-auto min-h-0 scroll-touch thin-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
