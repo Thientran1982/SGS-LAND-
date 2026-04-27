@@ -169,10 +169,10 @@ export const formatSmartPrice = (price: number, t?: (key: string) => string): st
     const millionLabel = t ? t('format.million') : 'Tr';
     
     if (price >= 1_000_000_000) {
-        return `${fmtDecimalDot(price / 1_000_000_000, 2)} ${billionLabel}`;
+        return `${fmtDecimalDot(price / 1_000_000_000, 3)} ${billionLabel}`;
     }
     if (price >= 1_000_000) {
-        return `${fmtDecimalDot(price / 1_000_000, 1)} ${millionLabel}`;
+        return `${fmtDecimalDot(price / 1_000_000, 2)} ${millionLabel}`;
     }
     return Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
