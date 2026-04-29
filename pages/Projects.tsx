@@ -1468,7 +1468,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── Table ── */}
-                    <div data-plp-table className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar" style={{ outline: '3px solid #22c55e' }}>
+                    <div data-plp-table className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar" style={{ outline: '3px solid #22c55e', minHeight: 300, background: 'rgba(255, 200, 200, 0.15)' }}>
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
