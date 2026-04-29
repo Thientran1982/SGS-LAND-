@@ -1077,35 +1077,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         if (isAdmin) db.listTenants().then(setTenants).catch(() => {});
     }, [isAdmin]);
 
-    // [PLP-DEBUG] Measure real container + tbody dims after every render settles.
-    // Logs are captured by Replit browser logger so we can diagnose remotely.
-    useEffect(() => {
-        const id = window.setTimeout(() => {
-            const cont = document.querySelector('[data-plp-table]') as HTMLElement | null;
-            const tbody = document.querySelector('[data-plp-table] tbody') as HTMLElement | null;
-            const thead = document.querySelector('[data-plp-table] thead') as HTMLElement | null;
-            const trCount = tbody?.querySelectorAll('tr').length || 0;
-            const cRect = cont?.getBoundingClientRect();
-            const tbRect = tbody?.getBoundingClientRect();
-            const thRect = thead?.getBoundingClientRect();
-            // eslint-disable-next-line no-console
-            console.warn('[PLP-DEBUG]', {
-                code: project.code,
-                loading,
-                listings: listings.length,
-                filtered: filtered.length,
-                container: cRect ? `${Math.round(cRect.width)}x${Math.round(cRect.height)}` : 'null',
-                thead: thRect ? `${Math.round(thRect.width)}x${Math.round(thRect.height)}` : 'null',
-                tbody: tbRect ? `${Math.round(tbRect.width)}x${Math.round(tbRect.height)}` : 'null',
-                trCount,
-                cssDisplay: tbody ? getComputedStyle(tbody).display : 'n/a',
-                cssVisibility: tbody ? getComputedStyle(tbody).visibility : 'n/a',
-                cssOpacity: tbody ? getComputedStyle(tbody).opacity : 'n/a',
-            });
-        }, 600);
-        return () => window.clearTimeout(id);
-    });
-
     const handleListingSubmit = async (data: any) => {
         const listing = await db.createListing({
             ...data,
@@ -1292,7 +1263,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     return (
         <>
             <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4" role="dialog" aria-modal="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden flex flex-col min-h-0" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)' }}>
+                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
@@ -1462,28 +1433,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         </div>
                     </div>
 
-                    {/* [PLP-DEBUG] Visible state badge — REMOVE after fix */}
-                    <div style={{ background: '#fef08a', color: '#000', padding: '4px 10px', fontSize: 11, fontFamily: 'monospace', borderBottom: '2px solid #ef4444' }} className="shrink-0">
-                        DEBUG | code={project.code} | loading={String(loading)} | listings={listings.length} | filtered={filtered.length}
-                    </div>
-
                     {/* ── Table ── */}
-                    <div data-plp-table className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar" style={{ outline: '3px solid #22c55e', minHeight: 300, background: 'rgba(255, 200, 200, 0.15)' }}>
-                        {/* [PLP-DEBUG] Always-visible diagnostic banner — does this stay visible after loading? */}
-                        <div style={{ background: '#dc2626', color: 'white', padding: '8px 12px', fontSize: 13, fontWeight: 'bold', position: 'sticky', top: 0, zIndex: 50 }}>
-                            ⚠ DEBUG BANNER — listings={listings.length} filtered={filtered.length} loading={String(loading)}
-                        </div>
-                        {/* [PLP-DEBUG] Simple div-based list (no &lt;table&gt;) — render first 3 to test if rows can show at all */}
-                        {!loading && filtered.length > 0 && (
-                            <div style={{ background: '#fef3c7', padding: 8, borderBottom: '2px solid #f59e0b' }}>
-                                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>SIMPLE DIV LIST (first 3):</div>
-                                {filtered.slice(0, 3).map(l => (
-                                    <div key={`debug-${l.id}`} style={{ padding: '4px 0', borderBottom: '1px dashed #999', fontSize: 12 }}>
-                                        {l.code} — {l.title} — {l.price}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    <div className="overflow-auto scroll-touch thin-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
