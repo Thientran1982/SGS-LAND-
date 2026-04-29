@@ -2213,40 +2213,40 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
 
                 {/* Metadata grid */}
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3">
-                    {project.total_units != null && (
+                    {project.totalUnits != null && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
-                                <span className="font-semibold text-[var(--text-secondary)]">{project.total_units}</span> {t('project.total_units')}
+                                <span className="font-semibold text-[var(--text-secondary)]">{project.totalUnits}</span> {t('project.total_units')}
                             </span>
                         </div>
                     )}
-                    {project.listing_count != null && (
+                    {project.listingCount != null && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
-                                <span className="font-semibold text-[var(--text-secondary)]">{project.listing_count}</span> {t('project.listing_count')}
+                                <span className="font-semibold text-[var(--text-secondary)]">{project.listingCount}</span> {t('project.listing_count')}
                             </span>
                         </div>
                     )}
-                    {!isPartner && project.partner_count != null && (
+                    {!isPartner && project.partnerCount != null && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
-                                <span className="font-semibold text-[var(--text-secondary)]">{project.partner_count}</span> {t('project.partner_count')}
+                                <span className="font-semibold text-[var(--text-secondary)]">{project.partnerCount}</span> {t('project.partner_count')}
                             </span>
                         </div>
                     )}
-                    {project.open_date && (
+                    {project.openDate && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                            <span className="text-xs text-[var(--text-tertiary)] truncate">{t('project.open_date')}: <span className="font-semibold text-[var(--text-secondary)]">{fmtDate(project.open_date)}</span></span>
+                            <span className="text-xs text-[var(--text-tertiary)] truncate">{t('project.open_date')}: <span className="font-semibold text-[var(--text-secondary)]">{fmtDate(project.openDate)}</span></span>
                         </div>
                     )}
-                    {project.handover_date && (
+                    {project.handoverDate && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
-                            <span className="text-xs text-[var(--text-tertiary)] truncate">{t('project.handover_date')}: <span className="font-semibold text-[var(--text-secondary)]">{fmtDate(project.handover_date)}</span></span>
+                            <span className="text-xs text-[var(--text-tertiary)] truncate">{t('project.handover_date')}: <span className="font-semibold text-[var(--text-secondary)]">{fmtDate(project.handoverDate)}</span></span>
                         </div>
                     )}
                 </div>
@@ -2261,9 +2261,9 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                     {t('project.view_listings')}
-                    {project.listing_count > 0 && (
+                    {(project.listingCount || 0) > 0 && (
                         <span className="ml-auto px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
-                            {project.listing_count}
+                            {project.listingCount}
                         </span>
                     )}
                 </button>
@@ -2586,7 +2586,7 @@ export function Projects() {
                     onListingCreated={() => {
                         setProjects(prev => prev.map(p =>
                             p.id === listingsTarget.id
-                                ? { ...p, listing_count: (p.listing_count || 0) + 1 }
+                                ? { ...p, listingCount: (p.listingCount || 0) + 1 }
                                 : p
                         ));
                     }}
