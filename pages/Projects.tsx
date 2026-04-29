@@ -2444,6 +2444,43 @@ export function Projects() {
     useEffect(() => { db.getCurrentUser().then(setUser); }, []);
     useEffect(() => { if (user) load(); }, [user, load]);
 
+    // Persist `listingsTarget` across remounts/HMR/reloads so the modal
+    // does not silently disappear when the dev preview iframe reconnects
+    // (or when the chunk-load ErrorBoundary triggers a reload). We store
+    // the project id only (scoped per user) and resolve it back to a
+    // project once the list has loaded.
+    const LISTINGS_TARGET_KEY = user?.id ? `sgs_listings_target_pid:${user.id}` : '';
+    const restoreAttemptedRef = useRef(false);
+
+    // Step 1 — restore once, after projects loaded and user known.
+    useEffect(() => {
+        if (!user?.id || loading || projects.length === 0) return;
+        if (restoreAttemptedRef.current) return;
+        restoreAttemptedRef.current = true;
+        try {
+            const pid = sessionStorage.getItem(LISTINGS_TARGET_KEY);
+            if (!pid) return;
+            const found = projects.find(p => p.id === pid);
+            if (found && !listingsTarget) setListingsTarget(found);
+            else if (!found) sessionStorage.removeItem(LISTINGS_TARGET_KEY);
+        } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id, loading, projects.length]);
+
+    // Step 2 — persist only AFTER restore attempt has completed, so the
+    // initial null state cannot wipe a freshly-saved id before we read it.
+    useEffect(() => {
+        if (!user?.id || !restoreAttemptedRef.current) return;
+        try {
+            if (listingsTarget?.id) {
+                sessionStorage.setItem(LISTINGS_TARGET_KEY, listingsTarget.id);
+            } else {
+                sessionStorage.removeItem(LISTINGS_TARGET_KEY);
+            }
+        } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id, listingsTarget?.id]);
+
     // Restore saved drag order from localStorage (only when no search/filter active)
     useEffect(() => {
         if (loading || !user?.id || projects.length === 0) return;
@@ -2501,6 +2538,11 @@ export function Projects() {
         try {
             await db.deleteProject(deleteTarget.id);
             setProjects(prev => prev.filter(p => p.id !== deleteTarget.id));
+            // If the deleted project is currently open in the listings panel,
+            // close the panel and clear persisted state to avoid auto-reopen.
+            if (listingsTarget?.id === deleteTarget.id) {
+                setListingsTarget(null);
+            }
             showToast(t('project.delete_success'));
             setDeleteTarget(null);
         } catch (e: any) {
