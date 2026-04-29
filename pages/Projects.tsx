@@ -1009,6 +1009,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [search, setSearch] = useState('');
+    // Panel layout — ResizeObserver measures real header+footer heights so
+    // the table container gets an explicit pixel height that never collapses.
+    const panelRef  = useRef<HTMLDivElement>(null);
+    const headerRef = useRef<HTMLDivElement>(null);
+    const footerRef = useRef<HTMLDivElement>(null);
+    const [tableH, setTableH] = useState<number>(200);
     // Checkbox selection
     const [selected, setSelected] = useState<Set<string>>(new Set());
     // Bulk status
@@ -1071,6 +1077,25 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             })
             .catch(() => {});
     }, [project.code]);
+
+    // Measure real header + footer heights via ResizeObserver, then assign an
+    // explicit pixel height to the table container so it can NEVER collapse to 0.
+    useEffect(() => {
+        const update = () => {
+            if (!panelRef.current || !headerRef.current || !footerRef.current) return;
+            const panelH  = panelRef.current.offsetHeight;
+            const headerH = headerRef.current.offsetHeight;
+            const footerH = footerRef.current.offsetHeight;
+            setTableH(Math.max(200, panelH - headerH - footerH));
+        };
+        update();
+        const ro = new ResizeObserver(update);
+        if (panelRef.current)  ro.observe(panelRef.current);
+        if (headerRef.current) ro.observe(headerRef.current);
+        if (footerRef.current) ro.observe(footerRef.current);
+        window.addEventListener('resize', update);
+        return () => { ro.disconnect(); window.removeEventListener('resize', update); };
+    }, []);
 
     // Preload tenants for access panel (admin only)
     useEffect(() => {
@@ -1263,10 +1288,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     return (
         <>
             <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4" role="dialog" aria-modal="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(120px, 1fr) auto' }}>
+                <div ref={panelRef} className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
-                    <div className="shrink-0 border-b border-[var(--glass-border)]">
+                    <div ref={headerRef} className="shrink-0 border-b border-[var(--glass-border)]">
                         {/* Top row */}
                         <div className="flex items-center justify-between gap-3 px-5 py-3.5">
                             <div className="flex items-center gap-3 min-w-0">
@@ -1434,7 +1459,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── Table ── */}
-                    <div className="overflow-auto scroll-touch thin-scrollbar">
+                    <div className="overflow-auto scroll-touch thin-scrollbar" style={{ height: tableH, minHeight: 200, flexShrink: 0 }}>
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -1617,7 +1642,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── Footer ── */}
-                    <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between shrink-0">
+                    <div ref={footerRef} className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
                             <span>
                                 <span className="font-bold text-[var(--text-secondary)]">{filtered.length}</span> {t('project.listing_count')}
