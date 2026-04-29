@@ -1021,6 +1021,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
     const menuRef = useRef<HTMLDivElement | null>(null);
+    // Tracks the last project code whose listings were successfully loaded.
+    // Prevents React StrictMode's second effect invocation from flashing the
+    // loading spinner when data for this project code is already displayed.
+    const lastLoadedCodeRef = useRef<string | null>(null);
     const [editTarget, setEditTarget] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -1046,14 +1050,21 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             .finally(() => setLoading(false));
     }, [project.code]);
 
-    // Initial auto-load with cleanup flag — prevents Strict Mode double-invoke from
-    // causing a second loading flash after data is already displayed.
+    // Initial auto-load.
+    // lastLoadedCodeRef tracks the last project code whose data was successfully
+    // received. When React StrictMode fires this effect a second time for the
+    // same project.code, we skip setLoading(true) so the already-visible table
+    // doesn't disappear behind the spinner. On a genuine project-code change
+    // (lastLoadedCodeRef !== project.code) we DO show the spinner.
     useEffect(() => {
         let cancelled = false;
-        setLoading(true);
+        if (lastLoadedCodeRef.current !== project.code) {
+            setLoading(true);
+        }
         listingApi.getListings(1, 200, { projectCode: project.code })
             .then((result: any) => {
                 if (cancelled) return;
+                lastLoadedCodeRef.current = project.code;
                 setListings(result.data || []);
                 setStats(result.stats || null);
             })
