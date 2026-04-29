@@ -16,7 +16,11 @@ interface ErrorReport {
 
 const ENDPOINT = '/api/error-logs';
 const MAX_QUEUE = 20;
-const DEBOUNCE_MS = 2000;
+// Short debounce so the first crash gets reported quickly. Critically, if a
+// crash triggers a page reload (chunk failures, blank-screen recovery, etc.)
+// the error is lost unless we flush before unload — see the `pagehide`
+// listener below which uses `navigator.sendBeacon` for guaranteed delivery.
+const DEBOUNCE_MS = 500;
 const DEDUP_WINDOW_MS = 30_000;
 
 // Deduplicate: track last-seen messages to avoid flooding same error
@@ -47,6 +51,26 @@ function scheduleFlush() {
   _flushTimer = setTimeout(flush, DEBOUNCE_MS);
 }
 
+function buildPayload(report: ErrorReport) {
+  return JSON.stringify({
+    ...report,
+    path: report.path ?? window.location.pathname,
+  });
+}
+
+// Best-effort delivery during page unload. `sendBeacon` is queued by the
+// browser even after the document is destroyed, so it survives a reload
+// triggered by the very crash we're trying to report.
+function sendBeacon(report: ErrorReport): boolean {
+  try {
+    if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false;
+    const blob = new Blob([buildPayload(report)], { type: 'application/json' });
+    return navigator.sendBeacon(ENDPOINT, blob);
+  } catch {
+    return false;
+  }
+}
+
 async function flush() {
   _flushTimer = null;
   if (_queue.length === 0) return;
@@ -57,14 +81,47 @@ async function flush() {
       await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...report,
-          path: report.path ?? window.location.pathname,
-        }),
+        body: buildPayload(report),
         credentials: 'include',
+        // `keepalive` lets the request survive a page navigation/reload that
+        // happens immediately after the error (e.g. ChunkLoadError → reload).
+        keepalive: true,
       });
     } catch {
       // Network error — silently discard, don't retry to avoid loops
+    }
+  }
+}
+
+// Synchronous, fire-and-forget flush used during `pagehide`/`beforeunload`.
+// Uses `sendBeacon` first (most reliable during unload), falls back to a
+// keepalive fetch if beacon refused (e.g. payload too large).
+// Exported as `flushErrorsSync` so chunk-reload paths can guarantee
+// delivery of the failing error report just before triggering a reload.
+export function flushErrorsSync() {
+  flushSync();
+}
+
+function flushSync() {
+  if (_flushTimer) {
+    clearTimeout(_flushTimer);
+    _flushTimer = null;
+  }
+  if (_queue.length === 0) return;
+  const batch = _queue.splice(0, MAX_QUEUE);
+  for (const report of batch) {
+    if (sendBeacon(report)) continue;
+    try {
+      // Best-effort fallback. Cannot await — page is unloading.
+      fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: buildPayload(report),
+        credentials: 'include',
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      // ignore
     }
   }
 }
@@ -130,4 +187,12 @@ export function initErrorMonitor() {
       stack: reason instanceof Error ? reason.stack : undefined,
     });
   });
+
+  // Flush any queued errors on unload. `pagehide` fires more reliably than
+  // `beforeunload` on mobile and during back/forward navigation. This is
+  // essential for catching the "table renders → blank page" bug, where a
+  // chunk-load reload happens within the debounce window and would otherwise
+  // drop the report before it reaches the server.
+  window.addEventListener('pagehide', flushSync);
+  window.addEventListener('beforeunload', flushSync);
 }
