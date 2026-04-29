@@ -1433,8 +1433,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         </div>
                     </div>
 
-                    {/* ── Table ── */}
-                    <div className="overflow-auto scroll-touch thin-scrollbar">
+                    {/* ── List (div-based, no <table>) ── */}
+                    <div className="overflow-auto scroll-touch thin-scrollbar" style={{ background: '#FFFFFF' }}>
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -1450,169 +1450,156 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 )}
                             </div>
                         ) : (
-                            <table className="w-full text-sm min-w-max">
-                                <thead className="bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
-                                    <tr>
+                            <div role="table" aria-label={t('project.listings_table') || 'Danh mục sản phẩm'} style={{ minWidth: '100%' }}>
+                                {/* Header row */}
+                                <div role="row" className="flex items-center px-4 py-2.5 border-b text-xs font-semibold uppercase tracking-wide whitespace-nowrap" style={{ background: '#F8FAFC', borderColor: '#D5DDE8', color: '#8B9BB2', minWidth: 'max-content' }}>
+                                    {isAdmin && (
+                                        <div className="w-10 shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                checked={allSelected}
+                                                ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                                                onChange={toggleAll}
+                                                className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="w-14 shrink-0">{t('project.listing_col_image')}</div>
+                                    <div className="w-24 shrink-0">{t('project.listing_col_code')}</div>
+                                    <div className="w-56 shrink-0">{t('project.listing_col_title')}</div>
+                                    <div className="w-28 shrink-0">{t('project.listing_col_type')}</div>
+                                    <div className="w-28 shrink-0">{t('project.listing_col_status')}</div>
+                                    <div className="w-20 shrink-0">{t('project.listing_col_area')}</div>
+                                    <div className="w-20 shrink-0">{isApartmentProject ? t('project.listing_col_clear_area') : t('project.listing_col_built_area')}</div>
+                                    {isApartmentProject && (
+                                        <>
+                                            <div className="w-20 shrink-0">{t('project.listing_col_tower')}</div>
+                                            <div className="w-16 shrink-0">{t('project.listing_col_floor')}</div>
+                                            <div className="w-32 shrink-0">{t('project.listing_col_view')}</div>
+                                        </>
+                                    )}
+                                    <div className="w-24 shrink-0">{t('project.listing_col_direction')}</div>
+                                    <div className="w-28 shrink-0">{t('project.listing_col_unit_price')}</div>
+                                    <div className="w-32 shrink-0">{t('project.listing_col_price')}</div>
+                                    {canEditOwn && <div className="w-16 shrink-0 text-center">{t('project.listing_col_actions')}</div>}
+                                    {isAdmin && <div className="w-32 shrink-0">{t('project.listing_access_col_header')}</div>}
+                                </div>
+                                {/* Data rows */}
+                                {filtered.map((l, idx) => (
+                                    <div
+                                        key={l.id}
+                                        role="row"
+                                        onClick={() => setDetailListing(l)}
+                                        className="flex items-center px-4 py-2 border-b cursor-pointer transition-colors hover:bg-slate-50"
+                                        style={{
+                                            background: selected.has(l.id) ? '#ECFDF5' : (idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC'),
+                                            borderColor: '#E5E7EB',
+                                            color: '#0D1526',
+                                            minWidth: 'max-content',
+                                        }}
+                                    >
                                         {isAdmin && (
-                                            <th className="px-4 py-2.5 w-10">
+                                            <div className="w-10 shrink-0" onClick={e => e.stopPropagation()}>
                                                 <input
                                                     type="checkbox"
-                                                    checked={allSelected}
-                                                    ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
-                                                    onChange={toggleAll}
+                                                    checked={selected.has(l.id)}
+                                                    onChange={() => toggleOne(l.id)}
                                                     className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
                                                 />
-                                            </th>
+                                            </div>
                                         )}
-                                        <th className="px-3 py-2.5 w-14 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_col_image')}</th>
-                                        {[
-                                            t('project.listing_col_code'),
-                                            t('project.listing_col_title'),
-                                            t('project.listing_col_type'),
-                                            t('project.listing_col_status'),
-                                            t('project.listing_col_area'),
-                                            isApartmentProject ? t('project.listing_col_clear_area') : t('project.listing_col_built_area'),
-                                            ...(isApartmentProject ? [
-                                                t('project.listing_col_tower'),
-                                                t('project.listing_col_floor'),
-                                                t('project.listing_col_view'),
-                                            ] : []),
-                                            t('project.listing_col_direction'),
-                                            t('project.listing_col_unit_price'),
-                                            t('project.listing_col_price'),
-                                        ].map(h => (
-                                            <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{h}</th>
-                                        ))}
+                                        <div className="w-14 shrink-0">
+                                            <div className="w-11 h-11 rounded-lg overflow-hidden border bg-slate-100" style={{ borderColor: '#D5DDE8' }}>
+                                                <LazyImage src={l.images?.[0]} wrapperClassName="w-full h-full" />
+                                            </div>
+                                        </div>
+                                        <div className="w-24 shrink-0">
+                                            <span className="font-mono text-xs px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: '#F1F5F9', color: '#44556B' }}>
+                                                {l.code}
+                                            </span>
+                                        </div>
+                                        <div className="w-56 shrink-0 pr-2">
+                                            <div className="font-semibold text-sm truncate" style={{ color: '#0D1526' }}>{l.title}</div>
+                                            {(l.type === 'Apartment' || l.type === 'Penthouse') && (l.attributes?.tower || l.attributes?.floor) && (
+                                                <div className="text-xs mt-0.5 truncate" style={{ color: '#8B9BB2' }}>
+                                                    {[
+                                                        l.attributes?.tower && `${t('inventory.label_tower')} ${l.attributes.tower}`,
+                                                        l.attributes?.floor && `${t('inventory.label_floor')} ${l.attributes.floor}`,
+                                                    ].filter(Boolean).join(' · ')}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="w-28 shrink-0">
+                                            <span className="text-xs font-semibold border px-2 py-0.5 rounded whitespace-nowrap" style={{ background: '#F1F5F9', color: '#44556B', borderColor: '#D5DDE8' }}>
+                                                {t(`property.${l.type?.toUpperCase()}`) || l.type}
+                                            </span>
+                                        </div>
+                                        <div className="w-28 shrink-0">
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
+                                                {t(`status.${l.status}`) || l.status}
+                                            </span>
+                                        </div>
+                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
+                                            {l.area ? <>{l.area} <span style={{ color: '#8B9BB2' }}>m²</span></> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                        </div>
+                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
+                                            {isApartmentProject
+                                                ? (l.attributes?.clearArea ? <>{l.attributes.clearArea} <span style={{ color: '#8B9BB2' }}>m²</span></> : <span style={{ color: '#C4CDD9' }}>—</span>)
+                                                : (l.builtArea ? <>{l.builtArea} <span style={{ color: '#8B9BB2' }}>m²</span></> : <span style={{ color: '#C4CDD9' }}>—</span>)
+                                            }
+                                        </div>
+                                        {isApartmentProject && (
+                                            <>
+                                                <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
+                                                    {l.attributes?.tower ? <span className="font-medium">{l.attributes.tower}</span> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                                </div>
+                                                <div className="w-16 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
+                                                    {l.attributes?.floor ? <span className="font-medium">{l.attributes.floor}</span> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                                </div>
+                                                <div className="w-32 shrink-0 text-xs whitespace-nowrap truncate pr-2" style={{ color: '#44556B' }}>
+                                                    {l.attributes?.view ? <span className="font-medium">{l.attributes.view}</span> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                                </div>
+                                            </>
+                                        )}
+                                        <div className="w-24 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
+                                            {l.attributes?.direction
+                                                ? <span className="font-medium">{t(`direction.${l.attributes.direction}`) || l.attributes.direction}</span>
+                                                : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                        </div>
+                                        <div className="w-28 shrink-0 text-xs font-mono whitespace-nowrap" style={{ color: '#44556B' }}>
+                                            {fmtUnitPrice(l.price, l.area)}
+                                        </div>
+                                        <div className="w-32 shrink-0 font-bold whitespace-nowrap" style={{ color: '#047857' }}>{fmtPrice(l.price)}</div>
                                         {canEditOwn && (
-                                            <th className="px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_col_actions')}</th>
+                                            <div className="w-16 shrink-0 text-center" onClick={e => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    onClick={e => openRowMenu(e, l.id)}
+                                                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-slate-100"
+                                                    style={{ color: menuOpenId === l.id ? '#0D1526' : '#8B9BB2' }}
+                                                    title={t('common.actions')}
+                                                >
+                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         )}
                                         {isAdmin && (
-                                            <th className="px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_access_col_header')}</th>
+                                            <div className="w-32 shrink-0" onClick={e => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAccessListings([l])}
+                                                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border whitespace-nowrap hover:bg-violet-50"
+                                                    style={{ color: '#7C3AED', borderColor: '#DDD6FE' }}
+                                                >
+                                                    {IC.LOCK} {t('project.listing_access_single_btn')}
+                                                </button>
+                                            </div>
                                         )}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-[var(--glass-border)]">
-                                    {filtered.map(l => (
-                                        <tr key={l.id}
-                                            onClick={() => setDetailListing(l)}
-                                            className={`cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
-                                            {isAdmin && (
-                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selected.has(l.id)}
-                                                        onChange={() => toggleOne(l.id)}
-                                                        className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
-                                                    />
-                                                </td>
-                                            )}
-                                            <td className="px-3 py-2">
-                                                <div className="w-11 h-11 rounded-lg overflow-hidden border border-[var(--glass-border)] bg-[var(--glass-surface-hover)] shrink-0">
-                                                    <LazyImage
-                                                        src={l.images?.[0]}
-                                                        wrapperClassName="w-full h-full"
-                                                    />
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-2.5">
-                                                <span className="font-mono text-xs bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded whitespace-nowrap">
-                                                    {l.code}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2.5 max-w-[220px]">
-                                                <span className="font-semibold text-[var(--text-primary)] text-sm block truncate">{l.title}</span>
-                                                {(l.type === 'Apartment' || l.type === 'Penthouse') && (l.attributes?.tower || l.attributes?.floor) && (
-                                                    <span className="text-xs text-[var(--text-tertiary)] mt-0.5 block">
-                                                        {[
-                                                            l.attributes?.tower && `${t('inventory.label_tower')} ${l.attributes.tower}`,
-                                                            l.attributes?.floor && `${t('inventory.label_floor')} ${l.attributes.floor}`
-                                                        ].filter(Boolean).join(' · ')}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-2.5">
-                                                <span className="text-xs font-semibold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)] px-2 py-0.5 rounded whitespace-nowrap">
-                                                    {t(`property.${l.type?.toUpperCase()}`) || l.type}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2.5">
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
-                                                    {t(`status.${l.status}`) || l.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                                                {l.area ? <span>{l.area} <span className="text-[var(--text-tertiary)]">m²</span></span> : <span className="text-[var(--text-muted)]">—</span>}
-                                            </td>
-                                            {/* DT thông thủy (căn hộ) hoặc DT xây dựng (nhà đất) */}
-                                            {isApartmentProject ? (
-                                                <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                                                    {l.attributes?.clearArea
-                                                        ? <span>{l.attributes.clearArea} <span className="text-[var(--text-tertiary)]">m²</span></span>
-                                                        : <span className="text-[var(--text-muted)]">—</span>}
-                                                </td>
-                                            ) : (
-                                                <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                                                    {l.builtArea ? <span>{l.builtArea} <span className="text-[var(--text-tertiary)]">m²</span></span> : <span className="text-[var(--text-muted)]">—</span>}
-                                                </td>
-                                            )}
-                                            {/* Toà | Tầng | View — chỉ hiện cho dự án căn hộ/penthouse */}
-                                            {isApartmentProject && (
-                                                <>
-                                                    <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                                                        {l.attributes?.tower
-                                                            ? <span className="font-medium">{l.attributes.tower}</span>
-                                                            : <span className="text-[var(--text-muted)]">—</span>}
-                                                    </td>
-                                                    <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                                                        {l.attributes?.floor
-                                                            ? <span className="font-medium">{l.attributes.floor}</span>
-                                                            : <span className="text-[var(--text-muted)]">—</span>}
-                                                    </td>
-                                                    <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap max-w-[120px] truncate">
-                                                        {l.attributes?.view
-                                                            ? <span className="font-medium">{l.attributes.view}</span>
-                                                            : <span className="text-[var(--text-muted)]">—</span>}
-                                                    </td>
-                                                </>
-                                            )}
-                                            <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                                                {l.attributes?.direction
-                                                    ? <span className="font-medium">{t(`direction.${l.attributes.direction}`) || l.attributes.direction}</span>
-                                                    : <span className="text-[var(--text-muted)]">—</span>}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap font-mono">
-                                                {fmtUnitPrice(l.price, l.area)}
-                                            </td>
-                                            <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
-                                            {canEditOwn && (
-                                                <td className="px-4 py-2.5 text-center" onClick={e => e.stopPropagation()}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={e => openRowMenu(e, l.id)}
-                                                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${menuOpenId === l.id ? 'bg-[var(--glass-surface-hover)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'}`}
-                                                        title={t('common.actions')}
-                                                    >
-                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            )}
-                                            {isAdmin && (
-                                                <td className="px-4 py-2.5" onClick={e => e.stopPropagation()}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setAccessListings([l])}
-                                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-violet-600 hover:bg-violet-50 border border-violet-200 transition-colors whitespace-nowrap"
-                                                    >
-                                                        {IC.LOCK} {t('project.listing_access_single_btn')}
-                                                    </button>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
 
