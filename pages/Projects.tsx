@@ -1091,26 +1091,32 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         parentNode: el.parentElement?.tagName + (el.parentElement?.id ? '#' + el.parentElement.id : '') + (el.parentElement?.className ? '.' + String(el.parentElement.className).replace(/\s+/g, '.').slice(0, 80) : ''),
                     };
                 };
-                const allDialogs = Array.from(document.querySelectorAll('[role="dialog"]')) as HTMLElement[];
-                console.log('[MCC-DEBUG]', JSON.stringify({
-                    listingsCount: listings.length,
+                console.log('[MCC1] overlay', JSON.stringify(dump('overlay', overlay)));
+                console.log('[MCC2] panel', JSON.stringify(dump('panel', panel)));
+                console.log('[MCC3] table', JSON.stringify(dump('table', tableEl)));
+                console.log('[MCC4] firstRow', JSON.stringify(dump('firstRow', firstRow)));
+                console.log('[MCC5] counts', JSON.stringify({
+                    listings: listings.length,
                     viewport: { w: window.innerWidth, h: window.innerHeight },
-                    bodyChildCount: document.body.children.length,
-                    allDialogsCount: allDialogs.length,
-                    allDialogsInfo: allDialogs.map((d, i) => ({
-                        i,
-                        rect: d.getBoundingClientRect(),
-                        display: getComputedStyle(d).display,
-                        zIndex: getComputedStyle(d).zIndex,
-                        classes: String(d.className).slice(0, 100),
-                    })),
-                    globalRoleTableCount: document.querySelectorAll('[role="table"]').length,
-                    globalRoleRowCount: document.querySelectorAll('[role="row"]').length,
-                    overlay: dump('overlay', overlay),
-                    panel: dump('panel', panel),
-                    table: dump('table', tableEl),
-                    firstRow: dump('firstRow', firstRow),
+                    rowsInOverlay: overlay?.querySelectorAll('[role="row"]').length ?? 0,
+                    tablesInOverlay: overlay?.querySelectorAll('[role="table"]').length ?? 0,
+                    overlayChildren: overlay?.children.length ?? 0,
+                    panelChildren: panel?.children.length ?? 0,
                 }));
+                // Log second/third row separately
+                if (overlay) {
+                    const rows = overlay.querySelectorAll('[role="row"]');
+                    if (rows.length > 0) {
+                        const last = rows[rows.length - 1] as HTMLElement;
+                        const r = last.getBoundingClientRect();
+                        const cs = getComputedStyle(last);
+                        console.log('[MCC6] lastRow', JSON.stringify({
+                            rect: { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x), y: Math.round(r.y) },
+                            bg: cs.backgroundColor, color: cs.color, display: cs.display, opacity: cs.opacity,
+                            innerText: last.textContent?.slice(0, 120),
+                        }));
+                    }
+                }
             } catch (e) {
                 console.log('[MCC-DEBUG] error', String(e));
             }
