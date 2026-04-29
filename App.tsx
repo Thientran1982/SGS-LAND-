@@ -583,6 +583,126 @@ const AppShell: React.FC = () => {
         };
     }, []);
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Blank-page watchdog
+    // Detects when the rendered DOM goes effectively empty (e.g. WebGL context
+    // loss, async crash outside React, memory pressure) while React itself is
+    // still alive. Reports a snapshot to the server then triggers a one-time
+    // reload (debounced) so the user is never stranded on a permanent white
+    // screen. Combined with the sessionStorage modal-restore in pages/Projects,
+    // the listings panel will auto-reopen after the reload.
+    // ─────────────────────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (authState !== 'AUTH') return;
+        const RELOAD_COUNT_KEY = '__sgs_blank_watchdog_reload_count__';
+        const RELOAD_WINDOW_KEY = '__sgs_blank_watchdog_window_ts__';
+        const RELOAD_WINDOW_MS = 5 * 60 * 1000; // 5 min retry window
+        const RELOAD_DEBOUNCE_MS = 30_000;
+        const RELOAD_KEY = '__sgs_blank_watchdog_reload_ts__';
+        const MAX_RELOADS_PER_WINDOW = 2;
+        const CHECK_INTERVAL_MS = 2_000;
+        const CONSEC_BLANK_THRESHOLD = 3; // 3 × 2 s = 6 s of consecutive blank
+        const TEXT_LEN_BLANK_THRESHOLD = 30;
+        // Suppress watchdog during initial mount, route transitions, and HMR
+        const POST_NAV_GRACE_MS = 8_000;
+        let lastNavTs = Date.now();
+        let consecutiveBlank = 0;
+        let reported = false;
+
+        // Track route changes via popstate/pushState to extend grace window
+        const onNav = () => { lastNavTs = Date.now(); consecutiveBlank = 0; reported = false; };
+        window.addEventListener('popstate', onNav);
+        // Patch pushState/replaceState (idempotent — restore on cleanup)
+        const origPush = history.pushState;
+        const origReplace = history.replaceState;
+        history.pushState = function (...args) { const r = origPush.apply(this, args as any); onNav(); return r; };
+        history.replaceState = function (...args) { const r = origReplace.apply(this, args as any); onNav(); return r; };
+
+        const isLoaderVisible = (): boolean => {
+            // Skip watchdog when a legitimate loading UI is on screen.
+            // Covers SmallSpinner / PageSkeleton (animate-pulse, animate-spin) and
+            // any element with role=status, aria-busy="true", or .skeleton class.
+            return !!(
+                document.querySelector('.animate-spin, .animate-pulse, [role="status"], [aria-busy="true"], .skeleton')
+            );
+        };
+
+        const tick = () => {
+            try {
+                if (document.hidden) { consecutiveBlank = 0; return; }
+                if (Date.now() - lastNavTs < POST_NAV_GRACE_MS) { consecutiveBlank = 0; return; }
+                const root = document.getElementById('root');
+                if (!root) return;
+                if (isLoaderVisible()) { consecutiveBlank = 0; return; }
+                const text = (document.body?.innerText || '').replace(/\s+/g, ' ').trim();
+                // True-blank requires BOTH near-empty text AND structural emptiness
+                // (root has at most 1 wrapper child with no inner content).
+                const rootDescendants = root.querySelectorAll('*').length;
+                const isBlank = text.length < TEXT_LEN_BLANK_THRESHOLD && rootDescendants < 5;
+                if (!isBlank) { consecutiveBlank = 0; reported = false; return; }
+                consecutiveBlank++;
+                if (consecutiveBlank < CONSEC_BLANK_THRESHOLD || reported) return;
+                reported = true;
+                const now = Date.now();
+                const lastReload = parseInt(sessionStorage.getItem(RELOAD_KEY) || '0', 10);
+                const windowStart = parseInt(sessionStorage.getItem(RELOAD_WINDOW_KEY) || '0', 10);
+                let count = parseInt(sessionStorage.getItem(RELOAD_COUNT_KEY) || '0', 10);
+                if (now - windowStart >= RELOAD_WINDOW_MS) {
+                    // New window — reset
+                    sessionStorage.setItem(RELOAD_WINDOW_KEY, String(now));
+                    sessionStorage.setItem(RELOAD_COUNT_KEY, '0');
+                    count = 0;
+                }
+                const debounced = (now - lastReload) < RELOAD_DEBOUNCE_MS;
+                const exhausted = count >= MAX_RELOADS_PER_WINDOW;
+                const canReload = !debounced && !exhausted;
+                const snapshot = {
+                    rootChildCount: root.children.length,
+                    rootDescendants,
+                    rootFirstClass: (root.firstElementChild as HTMLElement | null)?.className?.slice(0, 200) || null,
+                    bodyChildCount: document.body.children.length,
+                    portalCount: Math.max(0, document.body.children.length - 1),
+                    reloadCountInWindow: count,
+                    pendingListingsTargetPid:
+                        sessionStorage.getItem(`sgs_listings_target_pid:${currentUser?.id || ''}`) || null,
+                };
+                fetch('/api/_client_error', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        where: 'blank-watchdog',
+                        message: `Blank DOM (text=${text.length}, descendants=${rootDescendants}); reload=${canReload ? 'YES' : (exhausted ? 'NO/exhausted' : 'NO/debounced')}`,
+                        stack: JSON.stringify(snapshot),
+                        href: window.location.href,
+                        ua: navigator.userAgent,
+                        ts: now,
+                    }),
+                    keepalive: true,
+                }).catch(() => {});
+                if (canReload) {
+                    sessionStorage.setItem(RELOAD_KEY, String(now));
+                    sessionStorage.setItem(RELOAD_COUNT_KEY, String(count + 1));
+                    setTimeout(() => { try { window.location.reload(); } catch {} }, 250);
+                }
+            } catch { /* watchdog must never throw */ }
+        };
+
+        // Wait POST_NAV_GRACE_MS after mount before first sample
+        const startTimer = setTimeout(() => {
+            const id = setInterval(tick, CHECK_INTERVAL_MS);
+            (startTimer as any)._intervalId = id;
+        }, POST_NAV_GRACE_MS);
+
+        return () => {
+            const id = (startTimer as any)._intervalId;
+            if (id) clearInterval(id);
+            clearTimeout(startTimer);
+            window.removeEventListener('popstate', onNav);
+            history.pushState = origPush;
+            history.replaceState = origReplace;
+        };
+    }, [authState, currentUser?.id]);
+
     // Listen for real-time proposal approval notifications
     useEffect(() => {
         if (authState !== 'AUTH') return;
