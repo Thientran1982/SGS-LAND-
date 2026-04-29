@@ -1325,7 +1325,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     return (
         <>
             <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true" data-mcc-overlay="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
+                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto auto minmax(0, 1fr) auto' }}>
+                    {/* DIAGNOSTIC BANNER — verify this version is loaded */}
+                    <div style={{ background: '#DC2626', color: '#FFFFFF', padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.5px' }}>
+                        ✓ PANEL v9 — 48 sản phẩm đã tải · {new Date().toLocaleTimeString('vi-VN')}
+                    </div>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
