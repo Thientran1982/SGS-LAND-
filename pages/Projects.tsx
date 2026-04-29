@@ -1077,6 +1077,35 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         if (isAdmin) db.listTenants().then(setTenants).catch(() => {});
     }, [isAdmin]);
 
+    // [PLP-DEBUG] Measure real container + tbody dims after every render settles.
+    // Logs are captured by Replit browser logger so we can diagnose remotely.
+    useEffect(() => {
+        const id = window.setTimeout(() => {
+            const cont = document.querySelector('[data-plp-table]') as HTMLElement | null;
+            const tbody = document.querySelector('[data-plp-table] tbody') as HTMLElement | null;
+            const thead = document.querySelector('[data-plp-table] thead') as HTMLElement | null;
+            const trCount = tbody?.querySelectorAll('tr').length || 0;
+            const cRect = cont?.getBoundingClientRect();
+            const tbRect = tbody?.getBoundingClientRect();
+            const thRect = thead?.getBoundingClientRect();
+            // eslint-disable-next-line no-console
+            console.warn('[PLP-DEBUG]', {
+                code: project.code,
+                loading,
+                listings: listings.length,
+                filtered: filtered.length,
+                container: cRect ? `${Math.round(cRect.width)}x${Math.round(cRect.height)}` : 'null',
+                thead: thRect ? `${Math.round(thRect.width)}x${Math.round(thRect.height)}` : 'null',
+                tbody: tbRect ? `${Math.round(tbRect.width)}x${Math.round(tbRect.height)}` : 'null',
+                trCount,
+                cssDisplay: tbody ? getComputedStyle(tbody).display : 'n/a',
+                cssVisibility: tbody ? getComputedStyle(tbody).visibility : 'n/a',
+                cssOpacity: tbody ? getComputedStyle(tbody).opacity : 'n/a',
+            });
+        }, 600);
+        return () => window.clearTimeout(id);
+    });
+
     const handleListingSubmit = async (data: any) => {
         const listing = await db.createListing({
             ...data,
@@ -1433,8 +1462,13 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         </div>
                     </div>
 
+                    {/* [PLP-DEBUG] Visible state badge — REMOVE after fix */}
+                    <div style={{ background: '#fef08a', color: '#000', padding: '4px 10px', fontSize: 11, fontFamily: 'monospace', borderBottom: '2px solid #ef4444' }} className="shrink-0">
+                        DEBUG | code={project.code} | loading={String(loading)} | listings={listings.length} | filtered={filtered.length}
+                    </div>
+
                     {/* ── Table ── */}
-                    <div className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar">
+                    <div data-plp-table className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar" style={{ outline: '3px solid #22c55e' }}>
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
