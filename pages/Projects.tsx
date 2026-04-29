@@ -1034,25 +1034,35 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [importUploading, setImportUploading] = useState(false);
     const [importDone, setImportDone] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
 
-    // Guard against React StrictMode double-invoke: only one concurrent load at a time.
-    const loadingInFlight = useRef(false);
-
-    const load = useCallback(async () => {
-        if (loadingInFlight.current) return;
-        loadingInFlight.current = true;
+    // Manual reload (called after CRUD operations).
+    const load = useCallback(() => {
         setLoading(true);
-        try {
-            const result = await listingApi.getListings(1, 200, { projectCode: project.code });
-            setListings((result as any).data || []);
-            setStats((result as any).stats || null);
-        } finally {
-            setLoading(false);
-            loadingInFlight.current = false;
-        }
+        listingApi.getListings(1, 200, { projectCode: project.code })
+            .then((result: any) => {
+                setListings(result.data || []);
+                setStats(result.stats || null);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, [project.code]);
+
+    // Initial auto-load with cleanup flag — prevents Strict Mode double-invoke from
+    // causing a second loading flash after data is already displayed.
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        listingApi.getListings(1, 200, { projectCode: project.code })
+            .then((result: any) => {
+                if (cancelled) return;
+                setListings(result.data || []);
+                setStats(result.stats || null);
+            })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
     }, [project.code]);
 
     // Silent server stats sync — accurate even when > 200 listings are in a project.
-    // The server COUNT query (used for stats) always covers ALL listings regardless of pageSize.
     const syncStats = useCallback(() => {
         listingApi.getListings(1, 1, { projectCode: project.code })
             .then((result: any) => {
@@ -1061,8 +1071,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             })
             .catch(() => {});
     }, [project.code]);
-
-    useEffect(() => { load(); }, [load]);
 
     // Preload tenants for access panel (admin only)
     useEffect(() => {
@@ -1426,7 +1434,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── Table ── */}
-                    <div className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar">
+                    <div className="flex-1 min-h-0 relative">
+                    <div className="absolute inset-0 overflow-auto scroll-touch thin-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -1606,6 +1615,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 </tbody>
                             </table>
                         )}
+                    </div>
                     </div>
 
                     {/* ── Footer ── */}
