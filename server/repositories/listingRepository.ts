@@ -56,10 +56,12 @@ export class ListingRepository extends BaseRepository {
     if (filters?.area_lte !== undefined) { conditions.push(`area <= $${paramIndex++}`); values.push(filters.area_lte); }
     if (filters?.bedrooms_gte !== undefined) { conditions.push(`bedrooms >= $${paramIndex++}`); values.push(filters.bedrooms_gte); }
     if (filters?.projectCode) { conditions.push(`project_code = $${paramIndex++}`); values.push(filters.projectCode); }
-    // noProjectCode: exclude unit-level listings that belong to a project (they have a
-    // project_code pointing to their parent), but always show PROJECT master listings
-    // themselves even though they also carry a project_code.
-    if (filters?.noProjectCode) { conditions.push(`(project_code IS NULL OR project_code = '' OR type = 'Project')`); }
+    // noProjectCode: exclude unit-level listings that are linked to a project catalog
+    // (project_id IS NOT NULL = explicitly assigned to a project via the Projects module).
+    // Listings that merely carry a project_code tag but have no project_id are public
+    // listings (e.g. scraped AQUA-CITY, VINHOMES-*) and must remain visible.
+    // Always keep type='Project' master listings regardless.
+    if (filters?.noProjectCode) { conditions.push(`(project_id IS NULL OR type = 'Project')`); }
     if (filters?.isVerified !== undefined) { conditions.push(`is_verified = $${paramIndex++}`); values.push(filters.isVerified); }
     if (filters?.search) {
       conditions.push(`(title ILIKE $${paramIndex} OR location ILIKE $${paramIndex} OR code ILIKE $${paramIndex})`);
@@ -291,7 +293,8 @@ export class ListingRepository extends BaseRepository {
       }
       // Always exclude project catalog units from global stats — they are managed
       // via the Projects module, not the Inventory page.
-      conditions.push(`(l.project_code IS NULL OR l.project_code = '' OR l.type = 'Project')`);
+      // project_id IS NOT NULL = linked to a project catalog; project_id IS NULL = public listing.
+      conditions.push(`(l.project_id IS NULL OR l.type = 'Project')`);
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
