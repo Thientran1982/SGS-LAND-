@@ -1062,6 +1062,49 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         return () => { cancelled = true; };
     }, [project.code]);
 
+    // ── DIAGNOSTIC: log actual rendered dimensions/styles after data loads ──
+    useEffect(() => {
+        if (loading || listings.length === 0) return;
+        const timer = setTimeout(() => {
+            try {
+                const overlay = document.querySelector('[role="dialog"][aria-modal="true"]') as HTMLElement | null;
+                const panel = overlay?.firstElementChild as HTMLElement | null;
+                const tableEl = overlay?.querySelector('[role="table"]') as HTMLElement | null;
+                const firstRow = overlay?.querySelectorAll('[role="row"]')[1] as HTMLElement | null;
+                const dump = (label: string, el: HTMLElement | null) => {
+                    if (!el) return { label, missing: true };
+                    const r = el.getBoundingClientRect();
+                    const cs = getComputedStyle(el);
+                    return {
+                        label,
+                        rect: { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x), y: Math.round(r.y) },
+                        bg: cs.backgroundColor,
+                        color: cs.color,
+                        opacity: cs.opacity,
+                        visibility: cs.visibility,
+                        display: cs.display,
+                        position: cs.position,
+                        zIndex: cs.zIndex,
+                        overflow: cs.overflow,
+                        transform: cs.transform,
+                    };
+                };
+                console.log('[MCC-DEBUG]', JSON.stringify({
+                    listingsCount: listings.length,
+                    viewport: { w: window.innerWidth, h: window.innerHeight },
+                    overlay: dump('overlay', overlay),
+                    panel: dump('panel', panel),
+                    table: dump('table', tableEl),
+                    firstRow: dump('firstRow', firstRow),
+                    rowCount: overlay?.querySelectorAll('[role="row"]').length ?? 0,
+                }));
+            } catch (e) {
+                console.log('[MCC-DEBUG] error', e);
+            }
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [loading, listings.length]);
+
     // Silent server stats sync — accurate even when > 200 listings are in a project.
     const syncStats = useCallback(() => {
         listingApi.getListings(1, 1, { projectCode: project.code })
