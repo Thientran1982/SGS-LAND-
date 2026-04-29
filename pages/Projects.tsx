@@ -1062,104 +1062,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         return () => { cancelled = true; };
     }, [project.code]);
 
-    // ── DIAGNOSTIC: log actual rendered dimensions/styles after data loads ──
     const overlayRef = useRef<HTMLDivElement | null>(null);
-
-    // MOUNT/UNMOUNT TRACKER — find out exactly when the panel mounts and unmounts
-    useEffect(() => {
-        const t0 = performance.now();
-        console.log('[MCC-MOUNT] ProjectListingsPanel MOUNTED at', t0.toFixed(0), 'ms — project=', project.code);
-        return () => {
-            const t1 = performance.now();
-            console.log('[MCC-UNMOUNT] ProjectListingsPanel UNMOUNTED at', t1.toFixed(0), 'ms — lifetime=', (t1 - t0).toFixed(0), 'ms — project=', project.code);
-            try {
-                console.trace('[MCC-UNMOUNT] stack trace');
-            } catch {}
-        };
-    }, [project.code]);
-
-    // PERIODIC DOM MONITOR — check overlay presence every 500ms
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const overlay = overlayRef.current;
-            const inDom = overlay && document.body.contains(overlay);
-            const rect = overlay?.getBoundingClientRect();
-            const cs = overlay ? getComputedStyle(overlay) : null;
-            console.log('[MCC-MONITOR]', JSON.stringify({
-                t: performance.now().toFixed(0),
-                refExists: !!overlay,
-                inDom,
-                rect: rect ? { w: Math.round(rect.width), h: Math.round(rect.height) } : null,
-                display: cs?.display,
-                visibility: cs?.visibility,
-                opacity: cs?.opacity,
-                bodyPortalCount: document.querySelectorAll('[data-mcc-overlay="true"]').length,
-                loading,
-                listingsLen: listings.length,
-            }));
-        }, 500);
-        return () => clearInterval(interval);
-    }, [loading, listings.length]);
-
-    useEffect(() => {
-        if (loading || listings.length === 0) return;
-        const timer = setTimeout(() => {
-            try {
-                const overlay = overlayRef.current;
-                const panel = overlay?.firstElementChild as HTMLElement | null;
-                const tableEl = overlay?.querySelector('[role="table"]') as HTMLElement | null;
-                const firstRow = overlay?.querySelectorAll('[role="row"]')[1] as HTMLElement | null;
-                const dump = (label: string, el: HTMLElement | null) => {
-                    if (!el) return { label, missing: true };
-                    const r = el.getBoundingClientRect();
-                    const cs = getComputedStyle(el);
-                    return {
-                        label,
-                        rect: { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x), y: Math.round(r.y) },
-                        bg: cs.backgroundColor,
-                        color: cs.color,
-                        opacity: cs.opacity,
-                        visibility: cs.visibility,
-                        display: cs.display,
-                        position: cs.position,
-                        zIndex: cs.zIndex,
-                        overflow: cs.overflow,
-                        transform: cs.transform,
-                        parentNode: el.parentElement?.tagName + (el.parentElement?.id ? '#' + el.parentElement.id : '') + (el.parentElement?.className ? '.' + String(el.parentElement.className).replace(/\s+/g, '.').slice(0, 80) : ''),
-                    };
-                };
-                console.log('[MCC1] overlay', JSON.stringify(dump('overlay', overlay)));
-                console.log('[MCC2] panel', JSON.stringify(dump('panel', panel)));
-                console.log('[MCC3] table', JSON.stringify(dump('table', tableEl)));
-                console.log('[MCC4] firstRow', JSON.stringify(dump('firstRow', firstRow)));
-                console.log('[MCC5] counts', JSON.stringify({
-                    listings: listings.length,
-                    viewport: { w: window.innerWidth, h: window.innerHeight },
-                    rowsInOverlay: overlay?.querySelectorAll('[role="row"]').length ?? 0,
-                    tablesInOverlay: overlay?.querySelectorAll('[role="table"]').length ?? 0,
-                    overlayChildren: overlay?.children.length ?? 0,
-                    panelChildren: panel?.children.length ?? 0,
-                }));
-                // Log second/third row separately
-                if (overlay) {
-                    const rows = overlay.querySelectorAll('[role="row"]');
-                    if (rows.length > 0) {
-                        const last = rows[rows.length - 1] as HTMLElement;
-                        const r = last.getBoundingClientRect();
-                        const cs = getComputedStyle(last);
-                        console.log('[MCC6] lastRow', JSON.stringify({
-                            rect: { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x), y: Math.round(r.y) },
-                            bg: cs.backgroundColor, color: cs.color, display: cs.display, opacity: cs.opacity,
-                            innerText: last.textContent?.slice(0, 120),
-                        }));
-                    }
-                }
-            } catch (e) {
-                console.log('[MCC-DEBUG] error', String(e));
-            }
-        }, 600);
-        return () => clearTimeout(timer);
-    }, [loading, listings.length]);
 
     // Silent server stats sync — accurate even when > 200 listings are in a project.
     const syncStats = useCallback(() => {
@@ -1362,11 +1265,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     return (
         <>
             <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true" data-mcc-overlay="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto auto minmax(0, 1fr) auto' }}>
-                    {/* DIAGNOSTIC BANNER — verify this version is loaded */}
-                    <div style={{ background: '#DC2626', color: '#FFFFFF', padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.5px' }}>
-                        ✓ PANEL v9 — 48 sản phẩm đã tải · {new Date().toLocaleTimeString('vi-VN')}
-                    </div>
+                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
