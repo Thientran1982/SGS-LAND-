@@ -1063,11 +1063,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     }, [project.code]);
 
     // ── DIAGNOSTIC: log actual rendered dimensions/styles after data loads ──
+    const overlayRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
         if (loading || listings.length === 0) return;
         const timer = setTimeout(() => {
             try {
-                const overlay = document.querySelector('[role="dialog"][aria-modal="true"]') as HTMLElement | null;
+                const overlay = overlayRef.current;
                 const panel = overlay?.firstElementChild as HTMLElement | null;
                 const tableEl = overlay?.querySelector('[role="table"]') as HTMLElement | null;
                 const firstRow = overlay?.querySelectorAll('[role="row"]')[1] as HTMLElement | null;
@@ -1087,19 +1088,31 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         zIndex: cs.zIndex,
                         overflow: cs.overflow,
                         transform: cs.transform,
+                        parentNode: el.parentElement?.tagName + (el.parentElement?.id ? '#' + el.parentElement.id : '') + (el.parentElement?.className ? '.' + String(el.parentElement.className).replace(/\s+/g, '.').slice(0, 80) : ''),
                     };
                 };
+                const allDialogs = Array.from(document.querySelectorAll('[role="dialog"]')) as HTMLElement[];
                 console.log('[MCC-DEBUG]', JSON.stringify({
                     listingsCount: listings.length,
                     viewport: { w: window.innerWidth, h: window.innerHeight },
+                    bodyChildCount: document.body.children.length,
+                    allDialogsCount: allDialogs.length,
+                    allDialogsInfo: allDialogs.map((d, i) => ({
+                        i,
+                        rect: d.getBoundingClientRect(),
+                        display: getComputedStyle(d).display,
+                        zIndex: getComputedStyle(d).zIndex,
+                        classes: String(d.className).slice(0, 100),
+                    })),
+                    globalRoleTableCount: document.querySelectorAll('[role="table"]').length,
+                    globalRoleRowCount: document.querySelectorAll('[role="row"]').length,
                     overlay: dump('overlay', overlay),
                     panel: dump('panel', panel),
                     table: dump('table', tableEl),
                     firstRow: dump('firstRow', firstRow),
-                    rowCount: overlay?.querySelectorAll('[role="row"]').length ?? 0,
                 }));
             } catch (e) {
-                console.log('[MCC-DEBUG] error', e);
+                console.log('[MCC-DEBUG] error', String(e));
             }
         }, 600);
         return () => clearTimeout(timer);
@@ -1305,7 +1318,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
     return (
         <>
-            <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true">
+            <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true" data-mcc-overlay="true">
                 <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
