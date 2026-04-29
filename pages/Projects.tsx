@@ -1469,6 +1469,21 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
                     {/* ── Table ── */}
                     <div data-plp-table className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar" style={{ outline: '3px solid #22c55e', minHeight: 300, background: 'rgba(255, 200, 200, 0.15)' }}>
+                        {/* [PLP-DEBUG] Always-visible diagnostic banner — does this stay visible after loading? */}
+                        <div style={{ background: '#dc2626', color: 'white', padding: '8px 12px', fontSize: 13, fontWeight: 'bold', position: 'sticky', top: 0, zIndex: 50 }}>
+                            ⚠ DEBUG BANNER — listings={listings.length} filtered={filtered.length} loading={String(loading)}
+                        </div>
+                        {/* [PLP-DEBUG] Simple div-based list (no &lt;table&gt;) — render first 3 to test if rows can show at all */}
+                        {!loading && filtered.length > 0 && (
+                            <div style={{ background: '#fef3c7', padding: 8, borderBottom: '2px solid #f59e0b' }}>
+                                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>SIMPLE DIV LIST (first 3):</div>
+                                {filtered.slice(0, 3).map(l => (
+                                    <div key={`debug-${l.id}`} style={{ padding: '4px 0', borderBottom: '1px dashed #999', fontSize: 12 }}>
+                                        {l.code} — {l.title} — {l.price}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
