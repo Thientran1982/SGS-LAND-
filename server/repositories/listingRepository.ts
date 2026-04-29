@@ -56,12 +56,19 @@ export class ListingRepository extends BaseRepository {
     if (filters?.area_lte !== undefined) { conditions.push(`area <= $${paramIndex++}`); values.push(filters.area_lte); }
     if (filters?.bedrooms_gte !== undefined) { conditions.push(`bedrooms >= $${paramIndex++}`); values.push(filters.bedrooms_gte); }
     if (filters?.projectCode) { conditions.push(`project_code = $${paramIndex++}`); values.push(filters.projectCode); }
-    // noProjectCode: exclude unit-level listings that are linked to a project catalog
-    // (project_id IS NOT NULL = explicitly assigned to a project via the Projects module).
-    // Listings that merely carry a project_code tag but have no project_id are public
-    // listings (e.g. scraped AQUA-CITY, VINHOMES-*) and must remain visible.
-    // Always keep type='Project' master listings regardless.
-    if (filters?.noProjectCode) { conditions.push(`(project_id IS NULL OR type = 'Project')`); }
+    // noProjectCode: exclude unit-level listings that belong to a project catalog.
+    // Double-check strategy (both must pass to exclude):
+    //   1. project_id IS NOT NULL  → explicitly linked to a project via Projects module
+    //   2. project_code IN (SELECT code FROM projects)  → safety net if project_id wasn't set
+    // Public listings that carry a project_code tag (e.g. scraped AQUA-CITY, VINHOMES-*)
+    // are NOT in the projects table → will always be shown.
+    // type='Project' master listings are always kept regardless.
+    if (filters?.noProjectCode) {
+      conditions.push(`(
+        (project_id IS NULL AND (project_code IS NULL OR project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')))
+        OR type = 'Project'
+      )`);
+    }
     if (filters?.isVerified !== undefined) { conditions.push(`is_verified = $${paramIndex++}`); values.push(filters.isVerified); }
     if (filters?.search) {
       conditions.push(`(title ILIKE $${paramIndex} OR location ILIKE $${paramIndex} OR code ILIKE $${paramIndex})`);
@@ -293,8 +300,11 @@ export class ListingRepository extends BaseRepository {
       }
       // Always exclude project catalog units from global stats — they are managed
       // via the Projects module, not the Inventory page.
-      // project_id IS NOT NULL = linked to a project catalog; project_id IS NULL = public listing.
-      conditions.push(`(l.project_id IS NULL OR l.type = 'Project')`);
+      // Same double-check logic as buildFilterConditions noProjectCode.
+      conditions.push(`(
+        (l.project_id IS NULL AND (l.project_code IS NULL OR l.project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')))
+        OR l.type = 'Project'
+      )`);
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
