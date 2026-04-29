@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { usePageTracker } from './services/pageTracker';
 import { socket } from './services/websocket';
 import { copyToClipboard } from './utils/clipboard';
-import { initErrorMonitor, captureException } from './utils/errorMonitor';
+import { initErrorMonitor, captureException, flushErrorsSync } from './utils/errorMonitor';
 
 // Khởi tạo ngay khi module load — bắt lỗi toàn cục từ sớm nhất có thể
 initErrorMonitor();
@@ -308,9 +308,20 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
             const DEBOUNCE_MS = 45_000;
             const lastReload = parseInt(sessionStorage.getItem(RELOAD_KEY) || '0', 10);
             if (Date.now() - lastReload >= DEBOUNCE_MS) {
+                // Capture + sync-flush the chunk error BEFORE reloading,
+                // otherwise the report is lost and we have no diagnostic data
+                // to debug recurring blank-page bugs after the reload.
+                captureException(error, {
+                    component: errorInfo.componentStack?.trim().split('\n')[1]?.trim() ?? 'ChunkLoad',
+                    metadata: {
+                        componentStack: errorInfo.componentStack?.slice(0, 1000),
+                        reloadTriggered: true,
+                    },
+                });
+                flushErrorsSync();
                 sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
                 window.location.reload();
-                return; // page is reloading — skip error logging
+                return; // page is reloading
             }
         }
         // Report to error monitoring (non-blocking)
@@ -885,7 +896,14 @@ const AppShell: React.FC = () => {
     // 3. Authenticated App Layout (Private Pages)
     if (authState === 'AUTH') {
         const hasKnownPage = !!PAGE_REGISTRY[route.base];
+        // Outer ErrorBoundary catches crashes that occur OUTSIDE the inner
+        // page-level boundary — e.g. inside Layout itself, the notification
+        // banners above, or App-level effects. Without this, an uncaught
+        // render error blanks the whole screen ("trắng trang") with no
+        // fallback. Inner boundaries (one per page mount, line ~1004)
+        // continue to catch page-specific errors first.
         return (
+            <ErrorBoundary>
             <Layout activePage={route.base} onNavigate={navigate} onLogout={handleLogout}>
                 {/* Proposal approved real-time notification banner */}
                 <AnimatePresence>
@@ -1008,6 +1026,7 @@ const AppShell: React.FC = () => {
                     {!hasKnownPage && mountedPrivateRoutes.size > 0 && <NotFound />}
                 </div>
             </Layout>
+            </ErrorBoundary>
         );
     }
 

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { captureException, flushErrorsSync } from './errorMonitor';
 
 /**
  * Detect whether an error is a Vite/webpack chunk-load failure (e.g. after redeploy).
@@ -34,10 +35,20 @@ const CHUNK_RELOAD_DEBOUNCE_MS = 45_000;
  *   • Two rapid back-to-back chunk errors (e.g. slow network) → only one reload.
  *   • A second deployment in the same browser session → new reload allowed after 45 s.
  */
-function reloadOnceForChunkError(): boolean {
+function reloadOnceForChunkError(error?: unknown, componentName?: string): boolean {
     const lastReload = parseInt(sessionStorage.getItem(CHUNK_RELOAD_KEY) || '0', 10);
     const now = Date.now();
     if (now - lastReload < CHUNK_RELOAD_DEBOUNCE_MS) return false;
+    // Capture + sync-flush the chunk error before reloading so the report
+    // survives the page transition and we have data to debug recurring
+    // blank-page bugs after the reload completes.
+    if (error) {
+        captureException(error, {
+            component: componentName ? `lazyLoad:${componentName}` : 'lazyLoad',
+            metadata: { reloadTriggered: true },
+        });
+        flushErrorsSync();
+    }
     sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
     window.location.reload();
     return true;
@@ -75,7 +86,7 @@ export const lazyLoad = <T extends React.ComponentType<any>>(
                             setTimeout(() => tryImport(attemptsLeft - 1), interval);
                         } else if (isChunkLoadError(error)) {
                             // After all retries, if this is a chunk hash mismatch, reload once.
-                            if (!reloadOnceForChunkError()) {
+                            if (!reloadOnceForChunkError(error, componentName)) {
                                 reject(error);
                             }
                             // If reload was triggered, Promise hangs — the page will reload anyway.
