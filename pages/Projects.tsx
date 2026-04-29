@@ -1064,6 +1064,43 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
     // ── DIAGNOSTIC: log actual rendered dimensions/styles after data loads ──
     const overlayRef = useRef<HTMLDivElement | null>(null);
+
+    // MOUNT/UNMOUNT TRACKER — find out exactly when the panel mounts and unmounts
+    useEffect(() => {
+        const t0 = performance.now();
+        console.log('[MCC-MOUNT] ProjectListingsPanel MOUNTED at', t0.toFixed(0), 'ms — project=', project.code);
+        return () => {
+            const t1 = performance.now();
+            console.log('[MCC-UNMOUNT] ProjectListingsPanel UNMOUNTED at', t1.toFixed(0), 'ms — lifetime=', (t1 - t0).toFixed(0), 'ms — project=', project.code);
+            try {
+                console.trace('[MCC-UNMOUNT] stack trace');
+            } catch {}
+        };
+    }, [project.code]);
+
+    // PERIODIC DOM MONITOR — check overlay presence every 500ms
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const overlay = overlayRef.current;
+            const inDom = overlay && document.body.contains(overlay);
+            const rect = overlay?.getBoundingClientRect();
+            const cs = overlay ? getComputedStyle(overlay) : null;
+            console.log('[MCC-MONITOR]', JSON.stringify({
+                t: performance.now().toFixed(0),
+                refExists: !!overlay,
+                inDom,
+                rect: rect ? { w: Math.round(rect.width), h: Math.round(rect.height) } : null,
+                display: cs?.display,
+                visibility: cs?.visibility,
+                opacity: cs?.opacity,
+                bodyPortalCount: document.querySelectorAll('[data-mcc-overlay="true"]').length,
+                loading,
+                listingsLen: listings.length,
+            }));
+        }, 500);
+        return () => clearInterval(interval);
+    }, [loading, listings.length]);
+
     useEffect(() => {
         if (loading || listings.length === 0) return;
         const timer = setTimeout(() => {
