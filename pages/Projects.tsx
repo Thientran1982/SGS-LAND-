@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
+import { listingApi } from '../services/api/listingApi';
 import { Project, ProjectAccess, UserRole, ContractType, ContractStatus, Listing } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
@@ -1036,8 +1037,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const result = await db.getListings(1, 500, { projectCode: project.code });
-            setListings(result.data || []);
+            const result = await listingApi.getListings(1, 200, { projectCode: project.code });
+            setListings((result as any).data || []);
             setStats((result as any).stats || null);
         } finally {
             setLoading(false);
@@ -1047,9 +1048,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     // Silent server stats sync — accurate even when > 200 listings are in a project.
     // The server COUNT query (used for stats) always covers ALL listings regardless of pageSize.
     const syncStats = useCallback(() => {
-        db.getListings(1, 1, { projectCode: project.code })
-            .then(result => {
-                const srv = (result as any).stats;
+        listingApi.getListings(1, 1, { projectCode: project.code })
+            .then((result: any) => {
+                const srv = result.stats;
                 if (srv) setStats(srv);
             })
             .catch(() => {});
