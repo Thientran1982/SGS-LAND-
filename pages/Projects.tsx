@@ -1264,7 +1264,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
     return (
         <>
-            <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true" data-mcc-overlay="true">
+            <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true">
                 <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
