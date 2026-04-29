@@ -289,6 +289,9 @@ export class ListingRepository extends BaseRepository {
         values.push(userId);
         paramIndex++;
       }
+      // Always exclude project catalog units from global stats — they are managed
+      // via the Projects module, not the Inventory page.
+      conditions.push(`(l.project_code IS NULL OR l.project_code = '' OR l.type = 'Project')`);
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 

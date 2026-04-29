@@ -651,7 +651,7 @@ export const Inventory: React.FC = () => {
     const fetchListings = useCallback(async () => {
         setLoading(true);
         try {
-            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
+            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: true };
             const [res, favs] = await Promise.all([
                 db.getListingsCursor(pageSize, currentCursor, filters),
                 db.getFavorites(1, 1000),
@@ -674,7 +674,7 @@ export const Inventory: React.FC = () => {
         if (viewMode !== 'BOARD' && viewMode !== 'MAP') { setAllFilteredListings([]); return; }
         setBoardLoading(true);
         try {
-            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
+            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: true };
             const allRes = await db.getListings(1, 500, filters);
             setAllFilteredListings(allRes.data || []);
         } catch (e) {
