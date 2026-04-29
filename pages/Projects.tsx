@@ -1249,7 +1249,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     return (
         <>
             <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4" role="dialog" aria-modal="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden" style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: 'calc(100svh - 32px)', maxHeight: 'calc(100svh - 32px)' }}>
+                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
@@ -1420,7 +1420,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── Table ── */}
-                    <div className="overflow-auto scroll-touch thin-scrollbar" style={{ minHeight: 0 }}>
+                    <div className="flex-1 min-h-0 overflow-auto scroll-touch thin-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
