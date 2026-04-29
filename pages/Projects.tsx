@@ -1262,7 +1262,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
     return (
         <>
-            <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4" role="dialog" aria-modal="true">
+            <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true">
                 <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
@@ -1451,7 +1451,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                             </div>
                         ) : (
                             <table className="w-full text-sm min-w-max">
-                                <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] z-10">
+                                <thead className="bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
                                     <tr>
                                         {isAdmin && (
                                             <th className="px-4 py-2.5 w-10">
