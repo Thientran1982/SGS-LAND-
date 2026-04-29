@@ -152,6 +152,33 @@ async function startServer() {
     next();
   });
 
+  // Lightweight client-side error sink — receives error reports from React
+  // ErrorBoundaries (e.g. ProjectListingsPanel) and writes them to server logs
+  // so we can diagnose UI crashes that the user reports.
+  // Rate-limited + size-capped + truncated to prevent log amplification abuse.
+  app.post('/api/_client_error', apiRateLimit, express.json({ limit: '32kb' }), (req, res) => {
+    try {
+      const body = (req.body && typeof req.body === 'object') ? req.body : {};
+      const trunc = (v: unknown, max: number): string | null => {
+        if (v == null) return null;
+        const s = String(v);
+        return s.length > max ? s.slice(0, max) + '…[truncated]' : s;
+      };
+      logger.error('[client-error]', {
+        where: trunc(body.where, 80),
+        message: trunc(body.message, 500),
+        stack: trunc(body.stack, 4000),
+        componentStack: trunc(body.componentStack, 4000),
+        href: trunc(body.href, 300),
+        ua: trunc(body.ua, 300),
+        ts: typeof body.ts === 'number' ? body.ts : Date.now(),
+      });
+    } catch {
+      // Swallow — never fail the client over an error report.
+    }
+    res.status(204).end();
+  });
+
   const isProduction = process.env.NODE_ENV === 'production';
   if (!process.env.JWT_SECRET) {
     if (isProduction) {

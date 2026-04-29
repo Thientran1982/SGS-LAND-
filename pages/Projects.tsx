@@ -991,6 +991,86 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
     );
 }
 
+// Local error boundary so a render error inside ProjectListingsPanel
+// shows an inline message instead of unmounting the modal and leaving
+// a blank page behind it.
+class ListingsPanelErrorBoundary extends React.Component<
+    { onClose: () => void; t: (k: string) => string; children: React.ReactNode },
+    { error: Error | null }
+> {
+    state = { error: null as Error | null };
+    static getDerivedStateFromError(error: Error) {
+        return { error };
+    }
+    componentDidCatch(error: Error, info: React.ErrorInfo) {
+        // eslint-disable-next-line no-console
+        console.error('[ProjectListingsPanel] render error:', error, info?.componentStack);
+        try {
+            fetch('/api/_client_error', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    where: 'ProjectListingsPanel',
+                    message: error?.message ?? String(error),
+                    stack: error?.stack ?? null,
+                    componentStack: info?.componentStack ?? null,
+                    href: typeof window !== 'undefined' ? window.location.href : null,
+                    ua: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+                    ts: Date.now(),
+                }),
+                keepalive: true,
+            }).catch(() => {});
+        } catch {}
+    }
+    render() {
+        if (this.state.error) {
+            const msg = this.state.error?.message || String(this.state.error);
+            return (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-rose-200 overflow-hidden">
+                        <div className="px-5 py-4 bg-rose-50 border-b border-rose-200 flex items-center justify-between">
+                            <h3 className="text-rose-700 font-bold">Đã xảy ra lỗi khi mở danh mục sản phẩm</h3>
+                            <button
+                                type="button"
+                                onClick={this.props.onClose}
+                                className="text-rose-700 hover:text-rose-900 font-bold text-lg leading-none"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="p-5 space-y-3">
+                            <p className="text-sm text-slate-700">
+                                Vui lòng chụp màn hình thông báo bên dưới và gửi cho đội kỹ thuật:
+                            </p>
+                            <pre className="text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 overflow-auto max-h-60 whitespace-pre-wrap break-words text-slate-800">
+{msg}
+                            </pre>
+                            <div className="flex justify-end gap-2 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => window.location.reload()}
+                                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold text-slate-700"
+                                >
+                                    Tải lại trang
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={this.props.onClose}
+                                    className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-sm font-semibold text-white"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
 interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
@@ -2581,21 +2661,23 @@ export function Projects() {
                 document.body
             )}
             {listingsTarget && createPortal(
-                <ProjectListingsPanel
-                    project={listingsTarget}
-                    canCreate={isAdmin || user?.role === 'TEAM_LEAD'}
-                    isAdmin={isAdmin}
-                    userRole={user?.role}
-                    onClose={() => setListingsTarget(null)}
-                    onListingCreated={() => {
-                        setProjects(prev => prev.map(p =>
-                            p.id === listingsTarget.id
-                                ? { ...p, listingCount: (p.listingCount || 0) + 1 }
-                                : p
-                        ));
-                    }}
-                    t={t}
-                />,
+                <ListingsPanelErrorBoundary key={listingsTarget.id} onClose={() => setListingsTarget(null)} t={t}>
+                    <ProjectListingsPanel
+                        project={listingsTarget}
+                        canCreate={isAdmin || user?.role === 'TEAM_LEAD'}
+                        isAdmin={isAdmin}
+                        userRole={user?.role}
+                        onClose={() => setListingsTarget(null)}
+                        onListingCreated={() => {
+                            setProjects(prev => prev.map(p =>
+                                p.id === listingsTarget.id
+                                    ? { ...p, listingCount: (p.listingCount || 0) + 1 }
+                                    : p
+                            ));
+                        }}
+                        t={t}
+                    />
+                </ListingsPanelErrorBoundary>,
                 document.body
             )}
             {priceMatrixTarget && (
