@@ -1021,10 +1021,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
     const menuRef = useRef<HTMLDivElement | null>(null);
-    // Tracks the last project code whose listings were successfully loaded.
-    // Prevents React StrictMode's second effect invocation from flashing the
-    // loading spinner when data for this project code is already displayed.
-    const lastLoadedCodeRef = useRef<string | null>(null);
     const [editTarget, setEditTarget] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -1050,21 +1046,14 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             .finally(() => setLoading(false));
     }, [project.code]);
 
-    // Initial auto-load.
-    // lastLoadedCodeRef tracks the last project code whose data was successfully
-    // received. When React StrictMode fires this effect a second time for the
-    // same project.code, we skip setLoading(true) so the already-visible table
-    // doesn't disappear behind the spinner. On a genuine project-code change
-    // (lastLoadedCodeRef !== project.code) we DO show the spinner.
+    // Initial auto-load with cleanup flag — prevents Strict Mode double-invoke from
+    // causing a second loading flash after data is already displayed.
     useEffect(() => {
         let cancelled = false;
-        if (lastLoadedCodeRef.current !== project.code) {
-            setLoading(true);
-        }
+        setLoading(true);
         listingApi.getListings(1, 200, { projectCode: project.code })
             .then((result: any) => {
                 if (cancelled) return;
-                lastLoadedCodeRef.current = project.code;
                 setListings(result.data || []);
                 setStats(result.stats || null);
             })
@@ -1445,7 +1434,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── Table ── */}
-                    <div className="flex-1 overflow-auto scroll-touch thin-scrollbar" style={{ minHeight: '200px' }}>
+                    <div className="flex-1 min-h-0 relative">
+                    <div className="absolute inset-0 overflow-auto scroll-touch thin-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -1625,6 +1615,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 </tbody>
                             </table>
                         )}
+                    </div>
                     </div>
 
                     {/* ── Footer ── */}
