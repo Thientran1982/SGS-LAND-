@@ -1034,7 +1034,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [importUploading, setImportUploading] = useState(false);
     const [importDone, setImportDone] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
 
+    // Guard against React StrictMode double-invoke: only one concurrent load at a time.
+    const loadingInFlight = useRef(false);
+
     const load = useCallback(async () => {
+        if (loadingInFlight.current) return;
+        loadingInFlight.current = true;
         setLoading(true);
         try {
             const result = await listingApi.getListings(1, 200, { projectCode: project.code });
@@ -1042,6 +1047,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setStats((result as any).stats || null);
         } finally {
             setLoading(false);
+            loadingInFlight.current = false;
         }
     }, [project.code]);
 
