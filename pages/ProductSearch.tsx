@@ -456,6 +456,7 @@ export const ProductSearch: React.FC = () => {
                     { label: 'BĐS Bình Dương', href: `/${ROUTES.BDS_BINH_DUONG}` },
                     { label: 'BĐS Quận 7', href: `/${ROUTES.BDS_QUAN_7}` },
                     { label: 'BĐS Phú Nhuận', href: `/${ROUTES.BDS_PHU_NHUAN}` },
+                    { label: 'BĐS Bình Chánh', href: `/${ROUTES.BDS_BINH_CHANH}` },
                     { label: 'Aqua City', href: `/${ROUTES.DU_AN}/aqua-city` },
                     { label: 'Vinhomes Grand Park', href: `/${ROUTES.DU_AN}/vinhomes-grand-park` },
                     { label: 'Izumi City', href: `/${ROUTES.DU_AN}/izumi-city` },

@@ -1274,6 +1274,62 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
       ],
     },
   },
+  'bat-dong-san-binh-chanh': {
+    title: 'Bất Động Sản Bình Chánh TP.HCM 2026 | Top 3 Khu Bình Hưng, Tân Kiên, Vĩnh Lộc — SGS LAND',
+    description: 'Top 3 khu BĐS Bình Chánh 2026: Bình Hưng – Phong Phú (60–100tr/m²), Tân Kiên gần Metro 3a (25–50tr/m²), Vĩnh Lộc A/B ven Vành đai 3 (20–40tr/m²). Tăng giá 12–20%/năm, cửa ngõ Tây Nam TP.HCM. SGS LAND định giá AI miễn phí.',
+    h1: 'Bất Động Sản Bình Chánh',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS Bình Chánh', item: `${APP_URL}/bat-dong-san-binh-chanh` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'Top 3 khu BĐS đáng đầu tư nhất Bình Chánh TP.HCM 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 khu BĐS Bình Chánh năm 2026: (1) Bình Hưng – Phong Phú giáp Q8 — 60–100 triệu/m², đô thị hóa nhanh, gần trung tâm 15–20 phút; (2) Tân Kiên gần ga Metro số 3a tương lai — 25–50 triệu/m², dư địa tăng giá lớn; (3) Vĩnh Lộc A/B ven Vành đai 3 — 20–40 triệu/m², hưởng lợi trực tiếp khi Vành đai 3 thông xe 2026.' } },
+            { '@type': 'Question', name: 'Giá đất nền và nhà phố Bình Chánh năm 2026 là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá đất nền Bình Chánh năm 2026: Bình Hưng – Phong Phú 60–100 triệu/m²; Tân Túc thị trấn 40–70 triệu/m²; Tân Kiên 25–50 triệu/m²; Vĩnh Lộc A/B 20–40 triệu/m²; Lê Minh Xuân – Bình Lợi 15–30 triệu/m². Nhà phố dự án Khang Điền, T&T, Nam Long 4–12 tỷ; nhà phố hẻm 2,5–6 tỷ.' } },
+            { '@type': 'Question', name: 'BĐS Bình Chánh có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. Bình Chánh hội tụ ba yếu tố tăng trưởng dài hạn: (1) Vành đai 3 thông xe 2026 và Vành đai 4 đang quy hoạch; (2) Đề án nâng Bình Chánh lên thành phố vệ tinh trực thuộc TP.HCM cùng Hóc Môn, Củ Chi; (3) Quỹ đất rộng còn rẻ so với nội đô. Tốc độ tăng giá trung bình 12–20%/năm trong 5 năm qua.' } },
+            { '@type': 'Question', name: 'Vành đai 3 đi qua Bình Chánh ảnh hưởng giá BĐS thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Vành đai 3 đoạn qua Bình Chánh dài 16km, có 4 nút giao chính: Tân Vạn, Tân Kiên, Bình Chánh và Mỹ Yên. BĐS bán kính 1–3km quanh nút giao đã tăng 30–50% từ khi khởi công 2023; khi thông xe 2026 dự báo tăng tiếp 30–40% nhờ rút ngắn thời gian về Q1 còn 20–25 phút.' } },
+            { '@type': 'Question', name: 'Khi nào Bình Chánh lên thành phố vệ tinh?', acceptedAnswer: { '@type': 'Answer', text: 'Đề án nâng Bình Chánh, Hóc Môn, Củ Chi lên thành phố trực thuộc TP.HCM đang được TP.HCM lập hồ sơ trình Quốc hội, lộ trình dự kiến 2026–2030. Khi được phê duyệt, kịch bản tương tự TP Thủ Đức (giá BĐS tăng 80–150% sau khi thành lập 2021).' } },
+            { '@type': 'Question', name: 'Bình Chánh hay Long An nên đầu tư đất nền?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Chánh: thuộc TP.HCM, hạ tầng tốt hơn, thanh khoản cao hơn, giá 25–80 triệu/m², gần Q1 hơn (15–25 phút). Long An giáp Bình Chánh: rẻ hơn 30–50%, tiềm năng dài hạn khi Vành đai 4 hoàn thành. Ngân sách dưới 1,5 tỷ → Long An; trên 2 tỷ → ưu tiên Bình Chánh.' } },
+            { '@type': 'Question', name: 'Pháp lý BĐS Bình Chánh cần lưu ý gì?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Chánh có nhiều loại đất hỗn hợp (nông nghiệp, ở nông thôn, ở đô thị) — cần kiểm tra kỹ quy hoạch 1/500 và mục đích sử dụng đất. Tránh đất nông nghiệp chưa chuyển mục đích, đất nằm trong quy hoạch lộ giới Vành đai. SGS LAND kiểm tra quy hoạch, sổ đỏ, lịch sử giao dịch và tranh chấp miễn phí trong 5–7 ngày.' } },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          '@id': `${APP_URL}/bat-dong-san-binh-chanh#top3`,
+          name: 'Top 3 Khu BĐS Bình Chánh TP.HCM 2026',
+          description: 'Bảng xếp hạng 3 khu vực BĐS đáng đầu tư nhất Bình Chánh năm 2026 — chọn lọc theo hạ tầng kết nối, dư địa tăng giá, pháp lý và thanh khoản.',
+          inLanguage: 'vi',
+          numberOfItems: 3,
+          itemListOrder: 'https://schema.org/ItemListOrderAscending',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Bình Hưng – Phong Phú', description: 'Giáp Q8, đô thị hóa nhanh, 60–100 triệu/m², về Q1 chỉ 15–20 phút.' },
+            { '@type': 'ListItem', position: 2, name: 'Tân Kiên', description: 'Gần ga Metro số 3a tương lai, 25–50 triệu/m², dư địa tăng giá lớn.' },
+            { '@type': 'ListItem', position: 3, name: 'Vĩnh Lộc A/B', description: 'Ven Vành đai 3, 20–40 triệu/m², hưởng lợi trực tiếp khi Vành đai 3 thông xe 2026.' },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-binh-chanh#agent`,
+          name: 'SGS LAND - BĐS Bình Chánh',
+          url: `${APP_URL}/bat-dong-san-binh-chanh`,
+          telephone: '+84-971-132-378',
+          areaServed: { '@type': 'City', name: 'Bình Chánh', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
+          knowsAbout: ['Bất động sản Bình Chánh', 'Đất nền Bình Chánh', 'Vành đai 3', 'Bình Hưng', 'Tân Kiên', 'Vĩnh Lộc', 'Khu công nghiệp Lê Minh Xuân', 'Cửa ngõ Tây Nam TP.HCM'],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+        },
+      ],
+    },
+  },
 
   // ─── New Project Landing Pages ───────────────────────────────────────────────
   'du-an/izumi-city': {

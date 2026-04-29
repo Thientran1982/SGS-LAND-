@@ -29,6 +29,10 @@ const LOCATION_SEO_META: Record<string, { title: string; description: string }> 
         title: 'Bất Động Sản Phú Nhuận TP.HCM | Nhà Trung Tâm — SGS LAND',
         description: 'Mua bán nhà đất Phú Nhuận: Nhà phố, căn hộ trung tâm TP.HCM. Vị trí thuận tiện, giao thông kết nối. Tư vấn miễn phí tại SGS LAND.',
     },
+    'bat-dong-san-binh-chanh': {
+        title: 'Bất Động Sản Bình Chánh TP.HCM | Đất Nền, Nhà Phố — SGS LAND',
+        description: 'Mua bán bất động sản Bình Chánh: đất nền, nhà phố, dự án ven Vành đai 3. Cửa ngõ Tây Nam TP.HCM, tiềm năng tăng giá cao. SGS LAND tư vấn miễn phí.',
+    },
 };
 
 interface LocationConfig {
@@ -546,6 +550,89 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         relatedProjects: [
             { name: 'Grand Manhattan Novaland', slug: 'manhattan' },
             { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+        ],
+    },
+    'bat-dong-san-binh-chanh': {
+        slug: 'bat-dong-san-binh-chanh',
+        name: 'Bình Chánh',
+        province: 'TP.HCM',
+        searchQuery: 'Bình Chánh',
+        heroDescription:
+            'Bất động sản Bình Chánh — cửa ngõ phía Tây Nam TP.HCM, hưởng lợi trực tiếp từ Vành đai 3, Vành đai 4, Metro số 3a và quy hoạch lên thành phố vệ tinh. Quỹ đất rộng, giá còn hợp lý so với nội đô, hạ tầng giao thông kết nối nhanh về Quận 1 (15-25 phút) và miền Tây. SGS LAND tư vấn mua bán đất nền, nhà phố, dự án Bình Chánh chuyên sâu.',
+        stats: [
+            { label: 'Diện tích', value: '252 km²' },
+            { label: 'Dân số', value: '740.000+' },
+            { label: 'Giá đất nền', value: '25-80 tr/m²' },
+            { label: 'Tốc độ tăng giá/năm', value: '12-20%' },
+        ],
+        highlights: [
+            {
+                title: 'Hưởng Lợi Trực Tiếp Từ Vành Đai 3 & 4',
+                desc: 'Vành đai 3 đoạn qua Bình Chánh (dài 16km, dự kiến hoàn thành 2026) và Vành đai 4 trong tương lai biến Bình Chánh thành điểm trung chuyển chính của vùng kinh tế trọng điểm phía Nam. BĐS dọc hai trục này được dự báo tăng 30-50% khi thông xe.',
+            },
+            {
+                title: 'Cửa Ngõ Tây Nam — Kết Nối Miền Tây',
+                desc: 'Bình Chánh là cửa ngõ TP.HCM về 13 tỉnh miền Tây qua QL1A, QL50 và cao tốc TP.HCM – Trung Lương. Vị trí chiến lược cho logistics, kho bãi, khu công nghiệp và thương mại liên vùng — nguồn cầu BĐS bền vững.',
+            },
+            {
+                title: 'Quỹ Đất Lớn — Giá Còn Hợp Lý',
+                desc: 'Diện tích 252 km² (gấp 50 lần Q1) với quỹ đất nông nghiệp lớn đang chuyển đổi sang đô thị. Đất nền Bình Chánh 25-80 triệu/m² (rẻ hơn TP Thủ Đức 50-70%), nhà phố dự án 4-12 tỷ — hợp với nhà đầu tư tích lũy dài hạn và gia đình trẻ.',
+            },
+            {
+                title: 'Quy Hoạch Lên Thành Phố Vệ Tinh',
+                desc: 'Đề án nâng Bình Chánh từ huyện lên thành phố trực thuộc TP.HCM (cùng với Hóc Môn, Củ Chi) đang được TP triển khai. Khi thành lập, hạ tầng, dịch vụ công và giá BĐS Bình Chánh sẽ tăng tốc rõ rệt — như đã thấy với TP Thủ Đức (tăng 80-150% sau khi thành lập).',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Bất động sản Bình Chánh có đáng đầu tư không?',
+                a: 'Có. Bình Chánh hội tụ ba yếu tố tăng trưởng dài hạn: (1) Vành đai 3 thông xe 2026 và Vành đai 4 đang quy hoạch; (2) Quy hoạch lên thành phố vệ tinh trực thuộc TP.HCM; (3) Quỹ đất lớn còn rẻ so với nội đô. Tốc độ tăng giá trung bình 12-20%/năm trong 5 năm qua, dự báo tiếp tục mạnh khi hạ tầng hoàn thiện.',
+            },
+            {
+                q: 'Giá đất nền và nhà phố Bình Chánh hiện nay là bao nhiêu?',
+                a: 'Đất nền Bình Chánh theo khu vực: Bình Hưng – Phong Phú (gần Q8) 60-100 triệu/m²; Tân Túc – thị trấn 40-70 triệu/m²; Tân Kiên – Vĩnh Lộc A/B 25-50 triệu/m²; Lê Minh Xuân – Bình Lợi 15-30 triệu/m². Nhà phố dự án (Khang Điền, T&T, Nam Long) 4-12 tỷ; nhà phố hẻm 2,5-6 tỷ.',
+            },
+            {
+                q: 'Khu vực nào của Bình Chánh có tiềm năng đầu tư tốt nhất?',
+                a: 'Ba khu nổi bật: (1) Bình Hưng – Phong Phú (giáp Q8): đô thị hóa nhanh, gần trung tâm 15-20 phút, giá 60-100 triệu/m²; (2) Tân Kiên – gần ga Metro số 3a tương lai, giá còn hợp lý 25-50 triệu/m²; (3) Vĩnh Lộc A/B – ven Vành đai 3, đất nền giá 20-40 triệu/m², tiềm năng tăng mạnh khi Vành đai thông xe.',
+            },
+            {
+                q: 'Vành đai 3 đi qua Bình Chánh ảnh hưởng giá BĐS thế nào?',
+                a: 'Vành đai 3 đoạn qua Bình Chánh dài 16km, có 4 nút giao chính: Tân Vạn, Tân Kiên, Bình Chánh và Mỹ Yên. BĐS bán kính 1-3km quanh các nút giao đã tăng 30-50% từ khi khởi công 2023. Khi thông xe 2026, dự báo tăng tiếp 30-40% nhờ rút ngắn thời gian về Q1 còn 20-25 phút.',
+            },
+            {
+                q: 'Khi nào Bình Chánh lên thành phố vệ tinh?',
+                a: 'Đề án nâng Bình Chánh, Hóc Môn, Củ Chi lên thành phố trực thuộc TP.HCM đang được TP HCM lập hồ sơ trình Quốc hội. Lộ trình dự kiến 2026-2030. Khi được phê duyệt, Bình Chánh sẽ có cấp ngân sách đô thị riêng, hạ tầng được đầu tư mạnh — kịch bản tương tự TP Thủ Đức (giá BĐS tăng 80-150% sau khi thành lập 2021).',
+            },
+            {
+                q: 'Bình Chánh hay Long An nên đầu tư đất nền?',
+                a: 'Bình Chánh: thuộc TP.HCM, hạ tầng tốt hơn, thanh khoản cao hơn, giá 25-80 triệu/m², gần Q1 hơn (15-25 phút). Long An giáp Bình Chánh: rẻ hơn 30-50%, tiềm năng dài hạn khi Vành đai 4 hoàn thành. Ngân sách dưới 1,5 tỷ → Long An; trên 2 tỷ → ưu tiên Bình Chánh để đảm bảo thanh khoản và pháp lý TP.HCM.',
+            },
+            {
+                q: 'Pháp lý BĐS Bình Chánh có rủi ro gì cần lưu ý?',
+                a: 'Bình Chánh có nhiều loại đất hỗn hợp (nông nghiệp, ở nông thôn, ở đô thị) — cần kiểm tra kỹ quy hoạch 1/500 và mục đích sử dụng đất trước khi mua. Tránh đất nông nghiệp chưa chuyển mục đích, đất nằm trong quy hoạch lộ giới Vành đai. SGS LAND kiểm tra quy hoạch, sổ đỏ, lịch sử giao dịch và tình trạng tranh chấp miễn phí trước khi tư vấn.',
+            },
+            {
+                q: 'Khu công nghiệp Bình Chánh ảnh hưởng thế nào đến BĐS?',
+                a: 'Bình Chánh có 4 KCN lớn: Lê Minh Xuân, Vĩnh Lộc, Tân Tạo và An Hạ — thu hút 80.000+ lao động và chuyên gia, tạo nhu cầu nhà cho thuê và mua ổn định. BĐS bán kính 3-5km KCN luôn có thanh khoản tốt cho phân khúc giá 1,5-3,5 tỷ (đối tượng công nhân, kỹ sư, quản lý KCN).',
+            },
+            {
+                q: 'Cho thuê nhà trọ Bình Chánh thu nhập bao nhiêu?',
+                a: 'Nhà trọ phục vụ KCN: phòng đơn 1,5-2,5 triệu/tháng; phòng đôi 2,5-4 triệu. Dãy 10 phòng đầu tư 2-3,5 tỷ cho thu nhập 20-35 triệu/tháng (gross yield 8-12%/năm). Nhà phố cho thuê nguyên căn ở khu Bình Hưng – Phong Phú 8-18 triệu/tháng. Nhu cầu thuê ổn định nhờ KCN và dân nhập cư từ miền Tây.',
+            },
+            {
+                q: 'SGS LAND có dự án nào tại Bình Chánh không?',
+                a: 'SGS LAND phân phối các dự án nổi bật tại Bình Chánh: Khu đô thị Nam Long Bình Chánh, Khang Điền Bình Chánh, T&T Bình Chánh, các khu compound nhà phố ven Vành đai 3. Ngoài ra cập nhật hàng ngày kho đất nền sổ đỏ Bình Hưng, Tân Túc, Tân Kiên với pháp lý đã kiểm tra. Liên hệ để nhận danh sách miễn phí.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS Quận 7', slug: 'bat-dong-san-quan-7' },
+            { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
+            { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'The Global City', slug: 'the-global-city' },
         ],
     },
 };
