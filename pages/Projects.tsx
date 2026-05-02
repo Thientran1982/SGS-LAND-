@@ -9,6 +9,7 @@ import { ListingForm } from '../components/ListingForm';
 import { ContractModal } from '../components/ContractModal';
 import FloorPlanRenderer from '../components/FloorPlanRenderer';
 import FloorPlanManagerModal from '../components/FloorPlanManagerModal';
+import ProjectCommissionPanel from '../components/ProjectCommissionPanel';
 import { floorPlanApi, FloorPlanSummary } from '../services/api/floorPlanApi';
 import LazyImage from '../components/LazyImage';
 import { NO_IMAGE_URL } from '../utils/constants';
@@ -1660,6 +1661,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [importDone, setImportDone] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
     // Bulk image upload
     const [showBulkImages, setShowBulkImages] = useState(false);
+    // Hoa hồng & doanh số
+    const [showCommissions, setShowCommissions] = useState(false);
 
     const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -2169,6 +2172,17 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         <span className="hidden md:inline text-xs">{t('floorplan.manage_btn') || 'Sa bàn'}</span>
                                     </button>
                                 )}
+                                {/* Hoa hồng & doanh số */}
+                                <button type="button"
+                                    onClick={() => setShowCommissions(true)}
+                                    className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                    title="Hoa hồng & doanh số"
+                                    aria-label="Hoa hồng & doanh số">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v2m9-9a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="hidden md:inline text-xs">Hoa hồng</span>
+                                </button>
                                 {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
@@ -2552,6 +2566,15 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 onChanged={() => { setFloorPlansLoaded(false); loadFloorPlans(); }}
                 t={t}
             />
+
+            {showCommissions && (
+                <ProjectCommissionPanel
+                    projectId={project.id as string}
+                    projectName={project.name}
+                    isAdmin={isAdmin}
+                    onClose={() => setShowCommissions(false)}
+                />
+            )}
 
             {showBulkImages && (
                 <BulkImageUploadModal

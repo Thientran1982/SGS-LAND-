@@ -3,6 +3,7 @@ import { projectRepository } from '../repositories/projectRepository';
 import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
 import { evictPublicProjectCache } from '../services/publicProjectCache';
 import { registerFloorPlanRoutes } from './projectFloorPlanRoutes';
+import { registerCommissionPolicyRoutes } from './commissionRoutes';
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -393,6 +394,9 @@ export function createProjectRoutes(authenticateToken: any) {
 
   // ── Floor plans (Sa bàn tương tác) ─────────────────────────────────────────
   registerFloorPlanRoutes(router, authenticateToken);
+
+  // ── Commission policies (Engine hoa hồng v1) ───────────────────────────────
+  registerCommissionPolicyRoutes(router, authenticateToken);
 
   return router;
 }

@@ -8,3 +8,4 @@ export { userApi } from './userApi';
 export { analyticsApi } from './analyticsApi';
 export { knowledgeApi } from './knowledgeApi';
 export { billingApi } from './billingApi';
+export { commissionApi } from './commissionApi';
