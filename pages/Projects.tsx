@@ -1696,11 +1696,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         try {
             const found = listings.find(l => l.id === listingId);
             if (found) {
-                setDetailListing(found as any);
+                setDetailListing(found);
                 return;
             }
             const fetched = await db.getListingById(listingId);
-            if (fetched) setDetailListing(fetched as any);
+            if (fetched) setDetailListing(fetched);
         } catch (e) {
             console.error('Failed to load listing from floor plan:', e);
         }

@@ -180,8 +180,10 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       el.setAttribute('fill-opacity', listingId ? '0.7' : '0.35');
       el.setAttribute('stroke', stroke);
       el.setAttribute('stroke-width', '1');
-      (el.style as any).cursor = listingId ? 'pointer' : 'not-allowed';
-      (el.style as any).transition = 'fill-opacity 120ms ease';
+      // `el` is an SVGElement (from querySelectorAll<SVGElement>); .style
+      // is typed as CSSStyleDeclaration in lib.dom.d.ts.
+      el.style.cursor = listingId ? 'pointer' : 'not-allowed';
+      el.style.transition = 'fill-opacity 120ms ease';
 
       // Tooltip via <title> child (only set once)
       if (!el.querySelector('title')) {

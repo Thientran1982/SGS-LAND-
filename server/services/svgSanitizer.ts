@@ -23,8 +23,10 @@
 import { JSDOM } from 'jsdom';
 import createDOMPurify from 'dompurify';
 
-const window = new JSDOM('').window as unknown as Window;
-const DOMPurify = createDOMPurify(window as any);
+// jsdom's DOMWindow is structurally compatible with the browser Window that
+// DOMPurify expects; keep the cast scoped to this single statement.
+const jsdomWindow = new JSDOM('').window;
+const DOMPurify = createDOMPurify(jsdomWindow as unknown as Window & typeof globalThis);
 
 // Force the SVG profile + tighten the allow-list further.
 // We KEEP `data-*` attributes (we need `data-code`).
@@ -157,7 +159,7 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
   // Re-parse the sanitized output so we (a) extract data-codes from the
   // bytes we will actually serve, and (b) can scrub <style> blocks and any
   // dangerous-looking style attribute values DOMPurify may have allowed.
-  const doc = new (window as any).DOMParser().parseFromString(sanitized, 'image/svg+xml');
+  const doc = new jsdomWindow.DOMParser().parseFromString(sanitized, 'image/svg+xml');
   const root = doc.documentElement;
   if (!root || root.nodeName.toLowerCase() === 'parsererror') {
     throw new Error('SVG_INVALID_ROOT');
@@ -176,8 +178,8 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
   const all = doc.getElementsByTagName('*');
   const codeSet = new Set<string>();
   for (let i = 0; i < all.length; i++) {
-    const el = all[i] as any;
-    const styleVal = el.getAttribute && el.getAttribute('style');
+    const el: Element = all[i];
+    const styleVal = el.getAttribute('style');
     if (styleVal && DANGEROUS_CSS_RE.test(styleVal)) {
       el.removeAttribute('style');
       removedAttrs += 1;
@@ -186,7 +188,7 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
     // tree as well — if anything external slipped past the DOMPurify hook
     // (e.g. via a future config change), strip it here too.
     for (const refAttr of ['href', 'xlink:href']) {
-      const rv = el.getAttribute && el.getAttribute(refAttr);
+      const rv = el.getAttribute(refAttr);
       if (typeof rv === 'string') {
         const t = rv.trim();
         if (!t.startsWith('#') || t.length < 2) {
@@ -195,14 +197,14 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
         }
       }
     }
-    const code = el.getAttribute && el.getAttribute('data-code');
+    const code = el.getAttribute('data-code');
     if (typeof code === 'string') {
       const norm = code.trim().toUpperCase();
       if (norm.length > 0 && norm.length <= 64) codeSet.add(norm);
     }
   }
 
-  const finalSvg = new (window as any).XMLSerializer().serializeToString(root);
+  const finalSvg = new jsdomWindow.XMLSerializer().serializeToString(root);
 
   return {
     svg: finalSvg,
