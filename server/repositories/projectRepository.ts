@@ -151,6 +151,14 @@ export class ProjectRepository extends BaseRepository {
             // sending `{ key: null }` removes that key, omitted keys stay intact,
             // and present keys overwrite. Avoids clobbering fields written by
             // parallel flows (e.g. cover-image upload vs Drive URL edit).
+            //
+            // ⚠ SEMANTIC CHANGE (was: full replace) — callers that previously
+            // relied on `update({ metadata: {...} })` to wipe all unrelated
+            // metadata keys must now send explicit `null` for each key they
+            // want removed. All current call-sites already follow the
+            // patch-with-explicit-nulls convention (Projects.tsx
+            // ProjectFormModal sends `{ coverImage, cover_image: null,
+            // driveUrl: null, ... }`).
             if (data.metadata !== undefined) {
                 sets.push(`metadata = jsonb_strip_nulls(COALESCE(metadata, '{}'::jsonb) || $${i++}::jsonb)`);
                 values.push(JSON.stringify(data.metadata));
