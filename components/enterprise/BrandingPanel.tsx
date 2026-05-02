@@ -11,12 +11,18 @@
  * Backed by `tenantApi`. ADMIN/SUPER_ADMIN of tenant only — backend cũng enforce RBAC.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   tenantApi,
   type TenantBrandingFields,
   type TenantBrandingResponse,
 } from '../../services/api/tenantApi';
+
+interface MicrositeProject {
+  id: string;
+  code: string;
+  name: string;
+}
 
 interface Props {
   notify: (msg: string, type?: 'success' | 'error') => void;
@@ -61,6 +67,16 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const logoInputRef    = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
 
+  // Live mini-site preview (task #36) — chọn 1 dự án public-microsite của tenant
+  // và nhúng iframe `/p/<code>?preview=1`. Khi user sửa form (màu/displayName/...),
+  // gửi postMessage `sgs:branding-preview` để iframe overlay mà không cần lưu DB.
+  const [micrositeProjects, setMicrositeProjects] = useState<MicrositeProject[] | null>(null);
+  const [previewCode, setPreviewCode] = useState<string>('');
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [iframeKey, setIframeKey] = useState(0); // tăng để force reload iframe
+  const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const previewReadyRef  = useRef(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -77,6 +93,83 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   }, [notify]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Tải danh sách dự án public-microsite của tenant để CĐT chọn dự án preview.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+        const res = await fetch('/api/projects?pageSize=100', {
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error('Không tải được danh sách dự án');
+        const body = await res.json();
+        const rows: any[] = Array.isArray(body?.data) ? body.data : [];
+        const eligible: MicrositeProject[] = rows
+          .filter((p) => p?.code && p?.metadata?.public_microsite === true)
+          .map((p) => ({ id: String(p.id), code: String(p.code), name: String(p.name || p.code) }));
+        if (cancelled) return;
+        setMicrositeProjects(eligible);
+        if (eligible.length > 0) setPreviewCode((c) => c || eligible[0].code);
+        else setPreviewError('Chưa có dự án nào bật mini-site công khai. Vào tab Dự án bật "Mini-site công khai" để dùng tính năng xem trước.');
+      } catch (err: any) {
+        if (!cancelled) {
+          setMicrositeProjects([]);
+          setPreviewError(err?.message || 'Không tải được danh sách dự án');
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Snapshot branding hiện trên form (gồm cả thay đổi chưa lưu) để gửi sang iframe.
+  const previewBrandingSnapshot = useMemo(() => ({
+    logoUrl:      form.logoUrl ?? null,
+    faviconUrl:   form.faviconUrl ?? null,
+    primaryColor: (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : null,
+    displayName:  form.displayName ?? null,
+    messenger:    form.messenger ?? null,
+  }), [form.logoUrl, form.faviconUrl, form.primaryColor, form.displayName, form.messenger]);
+
+  // Lắng nghe `sgs:preview-ready` từ iframe để biết lúc nào nó sẵn sàng nhận
+  // postMessage. Sau khi ready, push snapshot ngay.
+  useEffect(() => {
+    const onMessage = (ev: MessageEvent) => {
+      if (ev.origin !== window.location.origin) return;
+      const msg: any = ev.data;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type !== 'sgs:preview-ready') return;
+      previewReadyRef.current = true;
+      try {
+        previewIframeRef.current?.contentWindow?.postMessage(
+          { type: 'sgs:branding-preview', branding: previewBrandingSnapshot },
+          window.location.origin
+        );
+      } catch { /* noop */ }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [previewBrandingSnapshot]);
+
+  // Reset ready flag khi đổi dự án hoặc reload iframe.
+  useEffect(() => { previewReadyRef.current = false; }, [previewCode, iframeKey]);
+
+  // Debounce: khi form thay đổi, gửi snapshot sang iframe (nếu đã ready).
+  useEffect(() => {
+    if (!previewCode) return;
+    const t = setTimeout(() => {
+      if (!previewReadyRef.current) return;
+      try {
+        previewIframeRef.current?.contentWindow?.postMessage(
+          { type: 'sgs:branding-preview', branding: previewBrandingSnapshot },
+          window.location.origin
+        );
+      } catch { /* noop */ }
+    }, 200);
+    return () => clearTimeout(t);
+  }, [previewBrandingSnapshot, previewCode]);
 
   const updateField = (key: keyof TenantBrandingFields, value: string) => {
     setForm((f) => ({ ...f, [key]: value.trim() === '' ? null : value }));
@@ -234,6 +327,74 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
 
   return (
     <div className="space-y-6">
+      {/* ── LIVE MINI-SITE PREVIEW (task #36) ─────────────────────────── */}
+      <section className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm">
+        <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">Xem trước mini-site</h3>
+            <p className="text-xs text-[var(--text-tertiary)] mt-1">
+              Khi sửa logo, màu thương hiệu, tên hiển thị hoặc Messenger ở dưới, khung xem trước sẽ
+              cập nhật tức thì (không cần lưu). Chọn một dự án đã bật mini-site để xem.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {micrositeProjects && micrositeProjects.length > 0 && (
+              <select
+                value={previewCode}
+                onChange={(e) => setPreviewCode(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[260px]"
+                aria-label="Chọn dự án xem trước"
+              >
+                {micrositeProjects.map((p) => (
+                  <option key={p.id} value={p.code}>{p.name} ({p.code})</option>
+                ))}
+              </select>
+            )}
+            {previewCode && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIframeKey((k) => k + 1)}
+                  className="px-3 py-2 rounded-lg border border-[var(--glass-border)] text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
+                  title="Tải lại khung xem trước"
+                >
+                  ↻ Tải lại
+                </button>
+                <a
+                  href={`/p/${previewCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-lg border border-[var(--glass-border)] text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
+                >
+                  Mở tab mới ↗
+                </a>
+              </>
+            )}
+          </div>
+        </header>
+
+        {micrositeProjects === null ? (
+          <div className="h-[480px] flex items-center justify-center text-sm text-[var(--text-tertiary)] font-mono animate-pulse border border-dashed border-[var(--glass-border)] rounded-xl">
+            Đang tìm dự án mini-site…
+          </div>
+        ) : previewCode ? (
+          <div className="rounded-xl overflow-hidden border border-[var(--glass-border)] bg-white">
+            <iframe
+              key={`${previewCode}-${iframeKey}`}
+              ref={previewIframeRef}
+              src={`/p/${encodeURIComponent(previewCode)}?preview=1`}
+              title={`Xem trước mini-site ${previewCode}`}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              className="w-full h-[640px] block bg-white"
+            />
+          </div>
+        ) : (
+          <div className="p-6 rounded-xl border border-dashed border-amber-300 bg-amber-50 text-amber-800 text-sm">
+            {previewError || 'Chưa có dự án mini-site công khai để xem trước.'}
+          </div>
+        )}
+      </section>
+
       {/* ── BRANDING FIELDS ───────────────────────────────────────────── */}
       <section className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm">
         <header className="mb-4">
