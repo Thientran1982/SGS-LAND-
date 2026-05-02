@@ -1,0 +1,115 @@
+import { pool } from '../db';
+
+export interface FloorPlanRow {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  tower: string;
+  floor: string;
+  svg_url: string;
+  svg_filename: string;
+  parsed_codes: string[];
+  notes?: string | null;
+  uploaded_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FloorPlanInput {
+  tower: string;
+  floor: string;
+  svgUrl: string;
+  svgFilename: string;
+  parsedCodes: string[];
+  notes?: string | null;
+  uploadedBy?: string | null;
+}
+
+function normTower(v: string | null | undefined): string {
+  const s = (v ?? '').toString().trim();
+  return s.length === 0 ? 'ALL' : s.slice(0, 50);
+}
+function normFloor(v: string | null | undefined): string {
+  const s = (v ?? '').toString().trim();
+  return s.length === 0 ? 'ALL' : s.slice(0, 20);
+}
+
+export const projectFloorPlanRepository = {
+  normTower,
+  normFloor,
+
+  async findByProject(tenantId: string, projectId: string): Promise<FloorPlanRow[]> {
+    const { rows } = await pool.query(
+      `SELECT * FROM project_floor_plans
+       WHERE tenant_id = $1 AND project_id = $2
+       ORDER BY tower ASC, floor ASC`,
+      [tenantId, projectId],
+    );
+    return rows;
+  },
+
+  async findById(tenantId: string, id: string): Promise<FloorPlanRow | null> {
+    const { rows } = await pool.query(
+      `SELECT * FROM project_floor_plans
+       WHERE tenant_id = $1 AND id = $2`,
+      [tenantId, id],
+    );
+    return rows[0] ?? null;
+  },
+
+  async findByTowerFloor(
+    tenantId: string,
+    projectId: string,
+    tower: string,
+    floor: string,
+  ): Promise<FloorPlanRow | null> {
+    const { rows } = await pool.query(
+      `SELECT * FROM project_floor_plans
+       WHERE tenant_id = $1 AND project_id = $2 AND tower = $3 AND floor = $4`,
+      [tenantId, projectId, normTower(tower), normFloor(floor)],
+    );
+    return rows[0] ?? null;
+  },
+
+  async upsert(
+    tenantId: string,
+    projectId: string,
+    input: FloorPlanInput,
+  ): Promise<FloorPlanRow> {
+    const tower = normTower(input.tower);
+    const floor = normFloor(input.floor);
+    const { rows } = await pool.query(
+      `INSERT INTO project_floor_plans
+         (tenant_id, project_id, tower, floor, svg_url, svg_filename, parsed_codes, notes, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9)
+       ON CONFLICT (project_id, tower, floor) DO UPDATE SET
+         svg_url       = EXCLUDED.svg_url,
+         svg_filename  = EXCLUDED.svg_filename,
+         parsed_codes  = EXCLUDED.parsed_codes,
+         notes         = EXCLUDED.notes,
+         uploaded_by   = EXCLUDED.uploaded_by,
+         updated_at    = NOW()
+       RETURNING *`,
+      [
+        tenantId,
+        projectId,
+        tower,
+        floor,
+        input.svgUrl,
+        input.svgFilename,
+        JSON.stringify(input.parsedCodes ?? []),
+        input.notes ?? null,
+        input.uploadedBy ?? null,
+      ],
+    );
+    return rows[0];
+  },
+
+  async deleteById(tenantId: string, id: string): Promise<boolean> {
+    const { rowCount } = await pool.query(
+      `DELETE FROM project_floor_plans WHERE tenant_id = $1 AND id = $2`,
+      [tenantId, id],
+    );
+    return (rowCount ?? 0) > 0;
+  },
+};
