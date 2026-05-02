@@ -2290,10 +2290,45 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         </div>
                     </div>
 
-                    {/* ── List (div-based, no <table>) ── */}
-                    {/* Inner list area uses Tailwind hardcoded colors (no CSS var)
+                    {/* ── Body: list view OR interactive floor plan view ── */}
+                    {viewMode === 'floorplan' ? (
+                        <div className="overflow-hidden bg-white dark:bg-slate-900 flex flex-col">
+                            {!floorPlansLoaded ? (
+                                <div className="flex items-center justify-center h-40">
+                                    <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+                                </div>
+                            ) : floorPlans.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-60 text-[var(--text-secondary)] text-center px-6">
+                                    <p className="font-semibold mb-1">{t('floorplan.empty') || 'Chưa có sa bàn nào cho dự án này'}</p>
+                                    {isAdmin ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowFloorPlanManager(true)}
+                                            className="mt-3 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700"
+                                        >
+                                            {t('floorplan.upload_btn') || 'Tải lên SVG'}
+                                        </button>
+                                    ) : (
+                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">
+                                            {t('floorplan.contact_admin') || 'Liên hệ quản trị viên để được tải lên sa bàn.'}
+                                        </p>
+                                    )}
+                                </div>
+                            ) : selectedPlanId ? (
+                                <FloorPlanRenderer
+                                    projectId={project.id as string}
+                                    planId={selectedPlanId}
+                                    onSelectListing={handleFloorPlanSelect}
+                                    height="100%"
+                                    t={t}
+                                />
+                            ) : null}
+                        </div>
+                    ) : (
+                    /* ── List (div-based, no <table>) ── */
+                    /* Inner list area uses Tailwind hardcoded colors (no CSS var)
                        so it's guaranteed visible regardless of any tenant custom
-                       theme override of --bg-surface. See "trắng trang" bug fix. */}
+                       theme override of --bg-surface. See "trắng trang" bug fix. */
                     <div className="overflow-auto scroll-touch thin-scrollbar bg-white dark:bg-slate-900">
                         {loadError && (
                             <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3" role="alert">
@@ -2477,6 +2512,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                             </div>
                         )}
                     </div>
+                    )}
 
                     {/* ── Footer ── */}
                     <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between shrink-0">
@@ -2504,6 +2540,16 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 onSubmit={handleListingSubmit}
                 initialData={{ projectCode: project.code, location: project.location } as any}
                 isProjectUnit={true}
+                t={t}
+            />
+
+            {/* Sa bàn admin manager — upload/replace/delete floor plans for this project. */}
+            <FloorPlanManagerModal
+                projectId={project.id as string}
+                projectName={project.name}
+                isOpen={showFloorPlanManager}
+                onClose={() => setShowFloorPlanManager(false)}
+                onChanged={() => { setFloorPlansLoaded(false); loadFloorPlans(); }}
                 t={t}
             />
 
