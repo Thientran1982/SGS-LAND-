@@ -326,7 +326,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                 {coverErr || t('project.cover_image_hint')}
                             </p>
                         </div>
-                        {/* Mini-site công khai (/p/<code>) — chỉ ADMIN/SUPER_ADMIN có quyền lưu (server enforce). */}
+                        {/* Mini-site công khai (/p/<code>) — ADMIN/SUPER_ADMIN/TEAM_LEAD của tenant chủ có quyền bật/tắt (server enforce). */}
                         <div className="col-span-2">
                             <label className={`${labelCls} mb-2`}>Mini-site công khai</label>
                             <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
