@@ -20,7 +20,30 @@ import { DEFAULT_TENANT_ID } from '../constants';
 
 // Domain gốc cho subdomain wildcard. Có thể override qua env nếu deploy domain
 // khác (vd staging dùng `<slug>.staging.sgsland.vn`).
-const APEX_DOMAIN = (process.env.WHITELABEL_APEX_DOMAIN || 'sgsland.vn').toLowerCase();
+export const APEX_DOMAIN = (process.env.WHITELABEL_APEX_DOMAIN || 'sgsland.vn').toLowerCase();
+
+/**
+ * Tính địa chỉ email gửi đi cho 1 tenant theo white-label rule:
+ * - Custom domain đã verify  → `noreply@<customDomain>`
+ * - Subdomain riêng           → `noreply@<slug>.<apex>`
+ * - Không có gì hợp lệ        → BREVO_FROM_EMAIL (mặc định `no-reply@sgsland.vn`)
+ *
+ * Lưu ý vận hành: để Brevo deliverability tốt khi dùng custom domain, CĐT
+ * cần thêm SPF/DKIM cho Brevo trên DNS của họ. Trường hợp DNS chưa cấu hình
+ * Brevo có thể vẫn nhận nhưng spam folder — đây là trách nhiệm của CĐT, không
+ * phải lỗi hệ thống.
+ */
+export function resolveTenantSenderEmail(binding: TenantHostBinding | null): string {
+  const fallback = process.env.BREVO_FROM_EMAIL || 'no-reply@sgsland.vn';
+  if (!binding) return fallback;
+  if (binding.customDomain && binding.customDomainVerifiedAt) {
+    return `noreply@${binding.customDomain.toLowerCase()}`;
+  }
+  if (binding.subdomainSlug) {
+    return `noreply@${binding.subdomainSlug.toLowerCase()}.${APEX_DOMAIN}`;
+  }
+  return fallback;
+}
 
 // Reserved subdomains — không được phép đăng ký (tránh conflict hệ thống).
 const RESERVED_SLUGS = new Set([
