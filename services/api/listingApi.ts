@@ -41,4 +41,31 @@ export const listingApi = {
 
   bulkCreateListings: (listings: Record<string, unknown>[]): Promise<{ created: number; errors: { row: number; error: string }[] }> =>
     api.post('/api/listings/bulk', { listings }),
+
+  /**
+   * Bulk-upload listing images for a project. Filenames are matched to
+   * `listing.code` (case/accent-insensitive, with optional `-N` numeric suffix).
+   * `mapping` lets the caller override matches manually for individual files.
+   * Use XHR via `bulkUploadImagesByCodeWithProgress` if you need upload progress.
+   */
+  bulkUploadImagesByCode: async (
+    projectCode: string,
+    files: File[],
+    mapping?: Record<string, string>
+  ): Promise<{ summary: any; results: any[] }> => {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f, f.name);
+    if (mapping && Object.keys(mapping).length > 0) {
+      fd.append('mapping', JSON.stringify(mapping));
+    }
+    const res = await fetch(
+      `/api/listings/by-project/${encodeURIComponent(projectCode)}/bulk-images`,
+      { method: 'POST', body: fd, credentials: 'include' }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      throw new Error(err.error || 'Tải ảnh hàng loạt thất bại');
+    }
+    return res.json();
+  },
 };

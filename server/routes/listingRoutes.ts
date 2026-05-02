@@ -1,9 +1,86 @@
 import { validateUUIDParam } from '../middleware/validation';
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
+import crypto from 'crypto';
+import { fileTypeFromBuffer } from 'file-type';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { priceCalibrationService } from '../services/priceCalibrationService';
 import { notificationRepository } from '../repositories/notificationRepository';
+import { storeFile } from '../services/storageService';
+
+// Lazy-load sharp so a missing/broken native build never crashes the route module
+let _sharpBulk: typeof import('sharp') | null = null;
+(async () => {
+  try { _sharpBulk = (await import('sharp')).default as unknown as typeof import('sharp'); }
+  catch { console.warn('[listingRoutes] sharp not available — bulk images will be stored as-is'); }
+})();
+
+const BULK_IMG_MAX_FILES = 50;
+const BULK_IMG_MAX_BYTES = 10 * 1024 * 1024; // 10MB per image
+const BULK_IMG_ALLOWED_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const MIME_TO_EXT_BULK: Record<string, string> = {
+  'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif',
+};
+const MAX_IMAGES_PER_LISTING = 10;
+
+const bulkImgUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: BULK_IMG_MAX_BYTES, files: BULK_IMG_MAX_FILES },
+  fileFilter: (_req, file, cb) => {
+    if (BULK_IMG_ALLOWED_MIMES.has(file.mimetype)) cb(null, true);
+    else cb(new Error(`Định dạng ảnh không hỗ trợ: ${file.mimetype}`));
+  },
+});
+
+function bulkImgErrorHandler(err: any, _req: Request, res: Response, next: NextFunction) {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE')  return res.status(413).json({ error: 'Một hoặc nhiều ảnh vượt giới hạn 10MB' });
+    if (err.code === 'LIMIT_FILE_COUNT') return res.status(400).json({ error: `Tối đa ${BULK_IMG_MAX_FILES} ảnh mỗi lần tải` });
+    return res.status(400).json({ error: 'Lỗi tải ảnh, vui lòng thử lại' });
+  }
+  if (err?.message?.includes('Định dạng ảnh không hỗ trợ')) {
+    return res.status(415).json({ error: err.message });
+  }
+  next(err);
+}
+
+async function compressBulkImage(buf: Buffer, mime: string): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+  if (!_sharpBulk || mime === 'image/gif') {
+    return { buffer: buf, contentType: mime, ext: MIME_TO_EXT_BULK[mime] || '.jpg' };
+  }
+  try {
+    const s = (_sharpBulk as any)(buf);
+    const meta = await s.metadata();
+    let pipeline = s;
+    if ((meta.width || 0) > 1920 || (meta.height || 0) > 1920) {
+      pipeline = pipeline.resize(1920, 1920, { fit: 'inside', withoutEnlargement: true });
+    }
+    const compressed: Buffer = await pipeline.webp({ quality: 82 }).toBuffer();
+    return { buffer: compressed, contentType: 'image/webp', ext: '.webp' };
+  } catch (e) {
+    console.warn('[bulk-images] sharp compression failed, storing original:', e);
+    return { buffer: buf, contentType: mime, ext: MIME_TO_EXT_BULK[mime] || '.jpg' };
+  }
+}
+
+/** Normalize a code/filename token for case-insensitive, accent-insensitive matching */
+function normalizeCodeKey(s: string): string {
+  return s.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Derive candidate listing codes from a filename.
+ * Strategy: try the basename first, then strip trailing `-N` / `_N` numeric suffix
+ * (so `A-12.01-2.jpg` matches code `A-12.01` for the 2nd photo of the same unit).
+ */
+function deriveCodeCandidates(filename: string): string[] {
+  const base = filename.replace(/\.[^.]+$/, '');
+  const out = [base];
+  const m = base.match(/^(.+)[-_](\d+)$/);
+  if (m) out.push(m[1]);
+  return out.map(normalizeCodeKey);
+}
 
 // ── Server-side geocoding (Nominatim / OpenStreetMap) ────────────────────────
 // Runs in the background after create/update so the API response is not delayed.
@@ -445,6 +522,170 @@ export function createListingRoutes(authenticateToken: any) {
       res.status(500).json({ error: 'Lỗi nhập danh sách' });
     }
   });
+
+  // ── POST /api/listings/by-project/:projectCode/bulk-images ──────────────────
+  // Tải nhiều ảnh sản phẩm cùng lúc, tự động khớp filename → listing.code
+  // trong phạm vi dự án (tối đa 50 ảnh/lần, 10MB/ảnh, ≤10 ảnh/listing).
+  router.post(
+    '/by-project/:projectCode/bulk-images',
+    authenticateToken,
+    bulkImgUpload.array('files', BULK_IMG_MAX_FILES),
+    bulkImgErrorHandler,
+    async (req: Request, res: Response) => {
+      try {
+        const user = (req as any).user;
+
+        // Quyền: PARTNER read-only; VIEWER không upload
+        if (PARTNER_ROLES.includes(user.role)) {
+          return res.status(403).json({ error: 'Sàn đối tác không được tải ảnh sản phẩm' });
+        }
+        if (!['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING'].includes(user.role)) {
+          return res.status(403).json({ error: 'Không có quyền tải ảnh sản phẩm' });
+        }
+
+        const projectCode = String(req.params.projectCode || '').trim();
+        if (!projectCode) return res.status(400).json({ error: 'Thiếu mã dự án' });
+
+        const files = (req.files as Express.Multer.File[]) || [];
+        if (files.length === 0) return res.status(400).json({ error: 'Chưa có ảnh nào được chọn' });
+
+        // Optional manual mapping from client: { "[filename]": "[listingCode]" }
+        let manualMap: Record<string, string> = {};
+        try {
+          if (typeof req.body?.mapping === 'string' && req.body.mapping.trim()) {
+            const parsed = JSON.parse(req.body.mapping);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) manualMap = parsed;
+          }
+        } catch { /* malformed mapping → ignore, fall back to filename match */ }
+
+        // Lấy toàn bộ listing trong dự án (RLS-bound by tenant)
+        const projectListings = await listingRepository.findAllByProjectCode(user.tenantId, projectCode);
+        if (projectListings.length === 0) {
+          return res.status(404).json({ error: `Dự án "${projectCode}" chưa có sản phẩm nào để gán ảnh` });
+        }
+
+        const codeMap = new Map<string, any>();
+        for (const l of projectListings) {
+          if (l.code) codeMap.set(normalizeCodeKey(String(l.code)), l);
+        }
+
+        const restricted = WRITABLE_RESTRICTED_ROLES.includes(user.role);
+
+        type ResultStatus =
+          | 'uploaded' | 'skipped_no_match' | 'skipped_max_images'
+          | 'skipped_invalid' | 'skipped_no_permission' | 'error';
+        type ResultRow = {
+          filename: string; status: ResultStatus;
+          matchedCode?: string; listingId?: string; url?: string; error?: string;
+        };
+        const results: ResultRow[] = [];
+        // listingId → mutable working copy of images array
+        const updatedImages = new Map<string, string[]>();
+
+        for (const f of files) {
+          try {
+            // 1) Verify real MIME from magic bytes (defence in depth)
+            const detected = await fileTypeFromBuffer(f.buffer);
+            if (!detected || !BULK_IMG_ALLOWED_MIMES.has(detected.mime)) {
+              results.push({ filename: f.originalname, status: 'skipped_invalid', error: 'Định dạng không hợp lệ' });
+              continue;
+            }
+            if (f.buffer.length > BULK_IMG_MAX_BYTES) {
+              results.push({ filename: f.originalname, status: 'skipped_invalid', error: 'Vượt giới hạn 10MB' });
+              continue;
+            }
+
+            // 2) Resolve listing — manual override wins, else filename heuristic
+            let listing: any = null;
+            const overrideCode = manualMap[f.originalname];
+            if (overrideCode) {
+              listing = codeMap.get(normalizeCodeKey(String(overrideCode))) ?? null;
+            }
+            if (!listing) {
+              for (const cand of deriveCodeCandidates(f.originalname)) {
+                listing = codeMap.get(cand);
+                if (listing) break;
+              }
+            }
+            if (!listing) {
+              results.push({ filename: f.originalname, status: 'skipped_no_match' });
+              continue;
+            }
+
+            // 3) Restricted roles: only own/assigned listings
+            if (restricted) {
+              if (listing.createdBy !== user.id && listing.assignedTo !== user.id) {
+                results.push({
+                  filename: f.originalname, status: 'skipped_no_permission',
+                  matchedCode: String(listing.code),
+                });
+                continue;
+              }
+            }
+
+            // 4) Per-listing 10-image cap (use working copy so we count this batch too)
+            const working = updatedImages.get(listing.id)
+              ?? [...(Array.isArray(listing.images) ? listing.images : [])];
+            if (working.length >= MAX_IMAGES_PER_LISTING) {
+              results.push({
+                filename: f.originalname, status: 'skipped_max_images',
+                matchedCode: String(listing.code),
+              });
+              continue;
+            }
+
+            // 5) Compress + persist to PostgreSQL bytea via storeFile()
+            const { buffer, contentType, ext } = await compressBulkImage(f.buffer, detected.mime);
+            const storedName = `${Date.now()}-${crypto.randomBytes(16).toString('hex')}${ext}`;
+            const url = await storeFile(user.tenantId, storedName, buffer, contentType);
+
+            working.push(url);
+            updatedImages.set(listing.id, working);
+            results.push({
+              filename: f.originalname, status: 'uploaded',
+              matchedCode: String(listing.code), listingId: listing.id, url,
+            });
+          } catch (err: any) {
+            console.error('[bulk-images] file error', f.originalname, err);
+            results.push({
+              filename: f.originalname, status: 'error',
+              error: err?.message || 'Lỗi không xác định',
+            });
+          }
+        }
+
+        // 6) Persist updated image arrays + audit log per listing
+        for (const [listingId, images] of updatedImages) {
+          await listingRepository.update(user.tenantId, listingId, { images });
+          const original = projectListings.find(l => l.id === listingId);
+          const before = Array.isArray(original?.images) ? original!.images.length : 0;
+          await auditRepository.log(user.tenantId, {
+            actorId: user.id,
+            action: 'BULK_UPLOAD_IMAGES',
+            entityType: 'LISTING',
+            entityId: listingId,
+            details: `Bulk upload: +${images.length - before} ảnh (tổng ${images.length}/${MAX_IMAGES_PER_LISTING})`,
+            ipAddress: req.ip,
+          });
+        }
+
+        const summary = {
+          total:                  files.length,
+          uploaded:               results.filter(r => r.status === 'uploaded').length,
+          skippedNoMatch:         results.filter(r => r.status === 'skipped_no_match').length,
+          skippedMaxImages:       results.filter(r => r.status === 'skipped_max_images').length,
+          skippedInvalid:         results.filter(r => r.status === 'skipped_invalid').length,
+          skippedNoPermission:    results.filter(r => r.status === 'skipped_no_permission').length,
+          errors:                 results.filter(r => r.status === 'error').length,
+          listingsUpdated:        updatedImages.size,
+        };
+        res.json({ summary, results });
+      } catch (error) {
+        console.error('Error in bulk image upload:', error);
+        res.status(500).json({ error: 'Tải ảnh hàng loạt thất bại' });
+      }
+    }
+  );
 
   // ── PUT /api/listings/:id ────────────────────────────────────────────────────
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {

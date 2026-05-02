@@ -93,8 +93,32 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         handoverDate: p?.handover_date || p?.handoverDate || '',
         driveUrl: existingMeta.drive_url || existingMeta.driveUrl || '',
     });
+    const [coverImage, setCoverImage] = useState<string>(existingMeta.coverImage || existingMeta.cover_image || '');
+    const [coverUploading, setCoverUploading] = useState(false);
+    const [coverErr, setCoverErr] = useState('');
+    const coverInputRef = useRef<HTMLInputElement | null>(null);
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
+
+    const handleCoverPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (e.target) e.target.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { setCoverErr(t('project.cover_image_error')); return; }
+        if (file.size > 10 * 1024 * 1024) { setCoverErr(t('inventory.upload_error_size')); return; }
+        setCoverErr('');
+        setCoverUploading(true);
+        try {
+            const out = await db.uploadFiles([file]);
+            const url = out?.files?.[0]?.url;
+            if (url) setCoverImage(url);
+            else setCoverErr(t('project.cover_image_error'));
+        } catch (uploadErr: any) {
+            setCoverErr(uploadErr?.message || t('project.cover_image_error'));
+        } finally {
+            setCoverUploading(false);
+        }
+    };
 
     const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -125,6 +149,13 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                 delete nextMeta.drive_url;
                 delete nextMeta.driveUrl;
             }
+            // Cover image: persist canonical `coverImage` field; clear legacy snake_case alias
+            if (coverImage) {
+                nextMeta.coverImage = coverImage;
+            } else {
+                delete nextMeta.coverImage;
+            }
+            delete nextMeta.cover_image;
             // Lưu ý: gửi chuỗi rỗng (đã trim) thay vì undefined cho các text
             // field, và null cho number/date đã xoá. Nếu gửi undefined thì
             // JSON.stringify sẽ drop key, server bỏ qua, DB giữ giá trị cũ —
@@ -240,10 +271,67 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                             <label htmlFor="pj-handover" className={labelCls}>{t('project.handover_date')}</label>
                             <input id="pj-handover" type="date" className={inputCls} value={form.handoverDate} onChange={e => set('handoverDate', e.target.value)} />
                         </div>
+                        {/* Cover image — single 16:9 hero photo for the project card */}
+                        <div className="col-span-2">
+                            <label className={labelCls}>{t('project.cover_image')}</label>
+                            <input
+                                ref={coverInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleCoverPick}
+                            />
+                            {coverImage ? (
+                                <div className="relative rounded-xl overflow-hidden border border-[var(--glass-border)] aspect-[16/9] bg-[var(--bg-app)]">
+                                    <LazyImage
+                                        src={coverImage}
+                                        alt={form.name || 'cover'}
+                                        wrapperClassName="absolute inset-0"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute top-2 right-2 flex gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => coverInputRef.current?.click()}
+                                            disabled={coverUploading}
+                                            className="px-2.5 py-1 rounded-lg bg-black/60 text-white text-xs font-semibold backdrop-blur-sm hover:bg-black/70 disabled:opacity-60"
+                                        >
+                                            {coverUploading ? t('project.cover_image_uploading') : t('project.cover_image_change')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setCoverImage(''); setCoverErr(''); }}
+                                            disabled={coverUploading}
+                                            className="px-2.5 py-1 rounded-lg bg-rose-600/85 text-white text-xs font-semibold backdrop-blur-sm hover:bg-rose-700 disabled:opacity-60"
+                                            title={t('project.cover_image_remove')}
+                                        >
+                                            {IC.X}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => coverInputRef.current?.click()}
+                                    disabled={coverUploading}
+                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-indigo-400 bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-indigo-600 transition-colors disabled:opacity-60"
+                                >
+                                    {coverUploading ? (
+                                        <span className="w-6 h-6 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                    ) : IC.UPLOAD}
+                                    <span className="text-xs font-semibold">
+                                        {coverUploading ? t('project.cover_image_uploading') : t('project.cover_image_change')}
+                                    </span>
+                                </button>
+                            )}
+                            <p className={`mt-1 text-xs ${coverErr ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
+                                {coverErr || t('project.cover_image_hint')}
+                            </p>
+                        </div>
                     </div>
                     <div className="flex gap-3 justify-end pt-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">{t('common.cancel')}</button>
-                        <button type="submit" disabled={saving} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">{saving ? t('common.loading') : t('common.save')}</button>
+                        <button type="submit" disabled={saving || coverUploading} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">{saving ? t('common.loading') : t('common.save')}</button>
                     </div>
                 </form>
             </div>
@@ -1084,6 +1172,400 @@ interface ProjectListingsPanelProps {
     t: (k: string) => string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk Image Upload Modal
+// Multi-image upload that auto-matches filenames → listing.code within a project.
+// Naming convention: `<CODE>.jpg` or `<CODE>-N.jpg` (additional photos for the
+// same unit). Manual override available per file when no match is found.
+// ─────────────────────────────────────────────────────────────────────────────
+type BulkFileItem = {
+    id: string;
+    file: File;
+    preview: string;
+    matchedCode: string | null;
+    manualCode: string;
+};
+
+function normalizeBulkCode(s: string): string {
+    return s.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function deriveCodeCandidatesClient(filename: string): string[] {
+    const base = filename.replace(/\.[^.]+$/, '');
+    const out = [base];
+    const m = base.match(/^(.+)[-_](\d+)$/);
+    if (m) out.push(m[1]);
+    return out.map(normalizeBulkCode);
+}
+
+function BulkImageUploadModal({
+    project, onClose, onCompleted, t,
+}: {
+    project: any;
+    onClose: () => void;
+    onCompleted: () => void;
+    t: (k: string) => string;
+}) {
+    const [items, setItems] = useState<BulkFileItem[]>([]);
+    const [listingCodes, setListingCodes] = useState<string[]>([]);
+    const [codesLoading, setCodesLoading] = useState(true);
+    const [codesError, setCodesError] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [result, setResult] = useState<{ summary: any; results: any[] } | null>(null);
+    const [topError, setTopError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [dragOver, setDragOver] = useState(false);
+    const projectCode = project?.code || '';
+
+    // Build a normalized → original-case lookup so the dropdown still shows
+    // the original casing while matching is accent/case-insensitive.
+    const codeLookup = React.useMemo(() => {
+        const m = new Map<string, string>();
+        for (const c of listingCodes) m.set(normalizeBulkCode(c), c);
+        return m;
+    }, [listingCodes]);
+
+    const matchFile = useCallback((filename: string): string | null => {
+        for (const cand of deriveCodeCandidatesClient(filename)) {
+            const orig = codeLookup.get(cand);
+            if (orig) return orig;
+        }
+        return null;
+    }, [codeLookup]);
+
+    // Load all listing codes for this project (used both for auto-match and for
+    // the manual-override dropdown). Cap = 5000 to match the server-side
+    // bulk-images endpoint cap, so the dropdown never shows fewer codes than
+    // the server can match against.
+    useEffect(() => {
+        if (!projectCode) { setCodesLoading(false); return; }
+        let cancelled = false;
+        setCodesLoading(true);
+        listingApi.getListings(1, 5000, { projectCode })
+            .then((data: any) => {
+                if (cancelled) return;
+                const codes = (data?.data || [])
+                    .map((l: any) => l?.code)
+                    .filter((c: any): c is string => typeof c === 'string' && c.trim() !== '');
+                setListingCodes(codes);
+            })
+            .catch((e: any) => {
+                if (!cancelled) setCodesError(e?.message || 'Không tải được mã sản phẩm');
+            })
+            .finally(() => { if (!cancelled) setCodesLoading(false); });
+        return () => { cancelled = true; };
+    }, [projectCode]);
+
+    // Re-run auto-match once codes finish loading (in case user dropped files first)
+    useEffect(() => {
+        if (codesLoading) return;
+        setItems(prev => prev.map(it => ({
+            ...it,
+            matchedCode: it.matchedCode ?? matchFile(it.file.name),
+        })));
+    }, [codesLoading, matchFile]);
+
+    // Revoke object URLs on unmount to avoid leaks
+    useEffect(() => () => { items.forEach(it => URL.revokeObjectURL(it.preview)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const addFiles = useCallback((picked: FileList | File[]) => {
+        const arr = Array.from(picked);
+        setTopError(null);
+        setItems(prev => {
+            const remaining = 50 - prev.length;
+            if (remaining <= 0) {
+                setTopError(t('project.bulk_images_max_files'));
+                return prev;
+            }
+            const next: BulkFileItem[] = [];
+            for (const f of arr.slice(0, remaining)) {
+                if (!f.type.startsWith('image/')) continue;
+                if (f.size > 10 * 1024 * 1024) {
+                    next.push({
+                        id: `${f.name}-${f.size}-${Date.now()}-${Math.random()}`,
+                        file: f, preview: URL.createObjectURL(f),
+                        matchedCode: null, manualCode: '',
+                    });
+                    continue;
+                }
+                next.push({
+                    id: `${f.name}-${f.size}-${Date.now()}-${Math.random()}`,
+                    file: f,
+                    preview: URL.createObjectURL(f),
+                    matchedCode: matchFile(f.name),
+                    manualCode: '',
+                });
+            }
+            return [...prev, ...next];
+        });
+    }, [matchFile, t]);
+
+    const removeItem = (id: string) => {
+        setItems(prev => {
+            const target = prev.find(it => it.id === id);
+            if (target) URL.revokeObjectURL(target.preview);
+            return prev.filter(it => it.id !== id);
+        });
+    };
+
+    const setManual = (id: string, code: string) => {
+        setItems(prev => prev.map(it => it.id === id ? { ...it, manualCode: code } : it));
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault(); setDragOver(false);
+        if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+    };
+
+    const submit = async () => {
+        if (!projectCode) { setTopError(t('project.bulk_images_no_project_code')); return; }
+        if (items.length === 0) return;
+        const oversized = items.filter(it => it.file.size > 10 * 1024 * 1024);
+        if (oversized.length > 0) {
+            setTopError(t('inventory.upload_error_size'));
+            return;
+        }
+        setSubmitting(true); setProgress(0); setTopError(null);
+        try {
+            const fd = new FormData();
+            const mapping: Record<string, string> = {};
+            for (const it of items) {
+                fd.append('files', it.file, it.file.name);
+                const code = (it.manualCode || it.matchedCode || '').trim();
+                if (code) mapping[it.file.name] = code;
+            }
+            fd.append('mapping', JSON.stringify(mapping));
+
+            const data = await new Promise<{ summary: any; results: any[] }>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.upload.onprogress = ev => {
+                    if (ev.lengthComputable) setProgress(Math.round((ev.loaded / ev.total) * 100));
+                };
+                xhr.onload = () => {
+                    let parsed: any = null;
+                    try { parsed = JSON.parse(xhr.responseText); } catch { /* ignore */ }
+                    if (xhr.status >= 200 && xhr.status < 300 && parsed?.summary) {
+                        resolve(parsed);
+                    } else {
+                        reject(new Error(parsed?.error || `HTTP ${xhr.status}`));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('Lỗi mạng. Vui lòng thử lại.'));
+                xhr.open('POST', `/api/listings/by-project/${encodeURIComponent(projectCode)}/bulk-images`);
+                xhr.withCredentials = true;
+                xhr.send(fd);
+            });
+
+            setResult(data);
+            // Always refresh the listings panel so newly-uploaded images are
+            // visible even when uploaded count is 0 (e.g. all skipped due to
+            // permission/full/invalid — caller may still want fresh data).
+            onCompleted();
+        } catch (e: any) {
+            setTopError(e?.message || t('common.error_generic'));
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const matchedCount = items.filter(it => it.matchedCode || it.manualCode).length;
+    const summary = result?.summary;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-3xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
+                    <div className="flex items-center gap-2 text-indigo-600">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <h2 className="text-base font-bold">{t('project.bulk_images_title')}</h2>
+                    </div>
+                    <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
+                </div>
+
+                {/* Body — scrollable */}
+                <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4">
+                    <p className="text-sm text-[var(--text-secondary)]">{t('project.bulk_images_desc')}</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">{t('project.bulk_images_max_files')}</p>
+
+                    {!projectCode && (
+                        <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+                            {t('project.bulk_images_no_project_code')}
+                        </div>
+                    )}
+                    {topError && (
+                        <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">
+                            {topError}
+                        </div>
+                    )}
+                    {codesError && (
+                        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">{codesError}</div>
+                    )}
+
+                    {/* Drop zone */}
+                    {!result && (
+                        <>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                                onDragLeave={() => setDragOver(false)}
+                                onDrop={handleDrop}
+                                disabled={!projectCode || submitting}
+                                className={`w-full rounded-xl border-2 border-dashed transition-colors px-4 py-8 flex flex-col items-center justify-center gap-2 ${
+                                    dragOver
+                                        ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700'
+                                        : 'border-[var(--glass-border)] hover:border-indigo-400 text-[var(--text-secondary)] hover:text-indigo-600'
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                <span className="text-sm font-semibold">{t('project.bulk_images_drop')}</span>
+                            </button>
+                        </>
+                    )}
+
+                    {/* File list */}
+                    {!result && items.length > 0 && (
+                        <div className="space-y-2">
+                            <div className="text-xs font-semibold text-[var(--text-secondary)]">
+                                {items.length} / 50 · {t('project.bulk_images_match_auto')}: {matchedCount}/{items.length}
+                            </div>
+                            <ul className="divide-y divide-[var(--glass-border)] border border-[var(--glass-border)] rounded-xl overflow-hidden">
+                                {items.map(it => {
+                                    const oversized = it.file.size > 10 * 1024 * 1024;
+                                    const effectiveCode = it.manualCode || it.matchedCode;
+                                    return (
+                                        <li key={it.id} className="flex items-center gap-3 p-2.5 bg-[var(--bg-surface)]">
+                                            <img src={it.preview} alt="" className="w-14 h-14 object-cover rounded-lg shrink-0 border border-[var(--glass-border)]" />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-xs font-mono text-[var(--text-primary)] truncate" title={it.file.name}>{it.file.name}</div>
+                                                <div className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+                                                    {(it.file.size / 1024 / 1024).toFixed(2)} MB
+                                                    {oversized && <span className="ml-1.5 text-rose-600 font-semibold">· {t('inventory.upload_error_size')}</span>}
+                                                </div>
+                                            </div>
+                                            <div className="shrink-0 w-44">
+                                                {effectiveCode ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-mono border border-emerald-200 max-w-full truncate" title={effectiveCode}>
+                                                        <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                                                        <span className="truncate">{effectiveCode}</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-amber-600 font-semibold">{t('project.bulk_images_no_match')}</span>
+                                                )}
+                                                <select
+                                                    value={it.manualCode}
+                                                    onChange={e => setManual(it.id, e.target.value)}
+                                                    disabled={submitting || codesLoading || listingCodes.length === 0}
+                                                    className="mt-1 w-full text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                >
+                                                    <option value="">{t('project.bulk_images_pick_listing')}</option>
+                                                    {listingCodes.map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeItem(it.id)}
+                                                disabled={submitting}
+                                                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-rose-500 hover:bg-rose-50 disabled:opacity-50"
+                                                title={t('project.bulk_images_remove_file')}
+                                                aria-label={t('project.bulk_images_remove_file')}
+                                            >
+                                                {IC.X}
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Progress */}
+                    {submitting && (
+                        <div>
+                            <div className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
+                                {t('project.bulk_images_uploading').replace('{p}', String(progress))}
+                            </div>
+                            <div className="w-full h-2 bg-[var(--glass-surface)] rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-500 transition-all" style={{ width: `${progress}%` }} />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Result */}
+                    {result && summary && (
+                        <div className="space-y-3">
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                <div className="text-sm font-bold text-emerald-700">
+                                    {t('project.bulk_images_summary')
+                                        .replace('{ok}', String(summary.uploaded))
+                                        .replace('{total}', String(summary.total))
+                                        .replace('{n}', String(summary.listingsUpdated))}
+                                </div>
+                                <div className="text-xs text-emerald-700/80 mt-1">
+                                    {t('project.bulk_images_summary_skipped')
+                                        .replace('{nomatch}', String(summary.skippedNoMatch))
+                                        .replace('{full}', String(summary.skippedMaxImages))
+                                        .replace('{invalid}', String(summary.skippedInvalid))
+                                        .replace('{nopermit}', String(summary.skippedNoPermission))
+                                        .replace('{err}', String(summary.errors))}
+                                </div>
+                            </div>
+                            {/* Per-file failures (only if any) */}
+                            {result.results.some(r => r.status !== 'uploaded') && (
+                                <ul className="max-h-48 overflow-y-auto no-scrollbar text-xs border border-[var(--glass-border)] rounded-xl divide-y divide-[var(--glass-border)]">
+                                    {result.results.filter(r => r.status !== 'uploaded').map((r, i) => (
+                                        <li key={i} className="px-3 py-1.5 flex items-center gap-2">
+                                            <span className="font-mono text-[var(--text-secondary)] truncate flex-1" title={r.filename}>{r.filename}</span>
+                                            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-amber-600">
+                                                {r.status.replace(/_/g, ' ')}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--glass-border)] shrink-0">
+                    {!result ? (
+                        <>
+                            <button type="button" onClick={onClose} disabled={submitting}
+                                className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-60">
+                                {t('common.cancel')}
+                            </button>
+                            <button type="button" onClick={submit}
+                                disabled={submitting || items.length === 0 || !projectCode}
+                                className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">
+                                {submitting
+                                    ? t('common.loading')
+                                    : t('project.bulk_images_submit').replace('{n}', String(items.length))}
+                            </button>
+                        </>
+                    ) : (
+                        <button type="button" onClick={onClose}
+                            className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700">
+                            {t('project.bulk_images_close')}
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, onListingCreated, t }: ProjectListingsPanelProps) {
     /** SALES and MARKETING can edit/change status on their own/assigned listings */
     const canEditOwn = canCreate || ['SALES', 'MARKETING'].includes(userRole ?? '');
@@ -1116,6 +1598,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [importPreview, setImportPreview] = useState<ImportResult | null>(null);
     const [importUploading, setImportUploading] = useState(false);
     const [importDone, setImportDone] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
+    // Bulk image upload
+    const [showBulkImages, setShowBulkImages] = useState(false);
 
     const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -1483,6 +1967,18 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         </button>
                                     </>
                                 )}
+                                {/* Bulk upload images */}
+                                {canCreate && (
+                                    <button type="button"
+                                        onClick={() => setShowBulkImages(true)}
+                                        disabled={!project.code}
+                                        className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        title={project.code ? t('project.bulk_images_btn') : t('project.bulk_images_no_project_code')}
+                                        aria-label={t('project.bulk_images_btn')}>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span className="hidden md:inline text-xs">{t('project.bulk_images_btn')}</span>
+                                    </button>
+                                )}
                                 {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
@@ -1781,6 +2277,15 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 isProjectUnit={true}
                 t={t}
             />
+
+            {showBulkImages && (
+                <BulkImageUploadModal
+                    project={project}
+                    onClose={() => setShowBulkImages(false)}
+                    onCompleted={() => { load(); syncStats(); onListingCreated?.(); }}
+                    t={t}
+                />
+            )}
 
             <ListingForm
                 isOpen={!!editTarget}
@@ -2313,8 +2818,24 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
         return () => document.removeEventListener('mousedown', handler);
     }, [menuOpen]);
 
+    const meta = ((project as any)?.metadata && typeof (project as any).metadata === 'object')
+        ? (project as any).metadata as Record<string, any>
+        : {};
+    const coverImage: string | null = meta.coverImage || meta.cover_image || null;
+
     return (
-        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col">
+        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col overflow-hidden">
+            {/* Cover image — 16:9 hero photo, optional */}
+            {coverImage && (
+                <div className="relative aspect-[16/9] w-full bg-[var(--bg-app)] border-b border-[var(--glass-border)]">
+                    <LazyImage
+                        src={coverImage}
+                        alt={project.name}
+                        wrapperClassName="absolute inset-0"
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+            )}
             {/* Card body */}
             <div className="p-5 flex-1">
                 {/* Top row: name + status + admin menu */}

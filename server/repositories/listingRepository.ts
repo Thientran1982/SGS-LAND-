@@ -637,6 +637,21 @@ export class ListingRepository extends BaseRepository {
     });
   }
 
+  /**
+   * Bulk lookup of all listings under a given project_code.
+   * Used by the bulk-image-upload endpoint to match filenames → listing.code.
+   * Returns up to 5000 listings per project (defensive cap — no real project has more).
+   */
+  async findAllByProjectCode(tenantId: string, projectCode: string): Promise<any[]> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM listings WHERE project_code = $1 LIMIT 5000`,
+        [projectCode]
+      );
+      return this.rowsToEntities(result.rows);
+    });
+  }
+
   async update(tenantId: string, id: string, data: Record<string, any>): Promise<any | null> {
     return this.withTenant(tenantId, async (client) => {
       const updates: string[] = ['updated_at = CURRENT_TIMESTAMP'];
