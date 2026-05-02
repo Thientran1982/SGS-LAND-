@@ -588,21 +588,40 @@ function escapeHtmlSafe(s: string): string {
     .replace(/'/g, '&#x27;');
 }
 
+// In-flight guard: nếu 1 tick chạy lâu hơn interval (DNS chậm + nhiều domain),
+// setInterval sẽ chồng tick mới lên trên → progress `failure_count` sai và admin
+// có thể nhận in-app notification trùng. Guard này đảm bảo tại 1 thời điểm chỉ
+// có 1 tick chạy trong process. Multi-instance: best-effort — production thực sự
+// cần advisory lock (pg_advisory_lock) hoặc Redis lock; hiện tại app chạy single
+// instance nên process-local guard là đủ.
+let cronInFlight = false;
+
+async function runCronTickGuarded(label: string): Promise<void> {
+  if (cronInFlight) {
+    logger.warn(`[TenantBranding] cron ${label} skipped — previous tick still in flight`);
+    return;
+  }
+  cronInFlight = true;
+  try {
+    await tickCustomDomainVerify();
+  } catch (err: any) {
+    logger.warn(`[TenantBranding] cron ${label} failed: ${err?.message || err}`);
+  } finally {
+    cronInFlight = false;
+  }
+}
+
 export function startCustomDomainVerifyCron(opts?: { intervalMs?: number }): void {
   if (cronTimer) return;
   const intervalMs = opts?.intervalMs ?? 5 * 60 * 1000;
   cronTimer = setInterval(() => {
-    tickCustomDomainVerify().catch((err) => {
-      logger.warn(`[TenantBranding] cron tick failed: ${err?.message || err}`);
-    });
+    void runCronTickGuarded('tick');
   }, intervalMs);
   // unref để cron không chặn process exit
   if (typeof (cronTimer as any).unref === 'function') (cronTimer as any).unref();
   // Chạy ngay 1 lần sau 30s startup
   setTimeout(() => {
-    tickCustomDomainVerify().catch((err) => {
-      logger.warn(`[TenantBranding] cron initial tick failed: ${err?.message || err}`);
-    });
+    void runCronTickGuarded('initial');
   }, 30_000).unref?.();
 }
 

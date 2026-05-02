@@ -352,7 +352,7 @@ export function createPublicProjectRoutes(): Router {
       const cached = getPublicProjectCache(code, cacheBucket);
       if (cached) {
         res.setHeader('X-Public-Project-Cache', 'HIT');
-        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+        res.setHeader('Cache-Control', 'public, max-age=25, stale-while-revalidate=30');
         return res.json(cached);
       }
 
