@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { projectRepository } from '../repositories/projectRepository';
 import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
+import { evictPublicProjectCache } from '../services/publicProjectCache';
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -114,6 +115,11 @@ export function createProjectRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Số căn phải là số không âm' });
       }
 
+      // Snapshot mã code trước khi update để evict cache cả mã cũ (khi rename)
+      // — nếu không, trang public cũ vẫn hit cache TTL 5 phút sau khi đổi mã.
+      const before = await projectRepository.findById(user.tenantId, id);
+      const oldCode = before?.code ? String(before.code) : null;
+
       // Phân biệt rõ "không gửi field" (undefined → giữ nguyên DB) vs
       // "gửi null/empty" (xoá field). Cho phép user xoá totalUnits → null.
       const updated = await projectRepository.update(user.tenantId, id, {
@@ -128,6 +134,13 @@ export function createProjectRoutes(authenticateToken: any) {
         metadata,
       });
       if (!updated) return res.status(404).json({ error: 'Không tìm thấy dự án' });
+
+      // Invalidate public mini-site cache khi project được sửa (kể cả khi
+      // metadata.public_microsite được toggle on/off — lần fetch tiếp theo
+      // sẽ đọc lại và trả 404 nếu đã off). Evict cả mã cũ lẫn mã mới khi rename.
+      if (oldCode) evictPublicProjectCache(oldCode);
+      if (updated.code && updated.code !== oldCode) evictPublicProjectCache(String(updated.code));
+
       res.json(updated);
     } catch (error) {
       console.error('Error updating project:', error);
@@ -141,8 +154,11 @@ export function createProjectRoutes(authenticateToken: any) {
       const user = (req as any).user;
       if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
+      // Lookup code trước khi xoá để invalidate cache sau xoá
+      const existing = await projectRepository.findById(user.tenantId, req.params.id as string);
       const deleted = await projectRepository.delete(user.tenantId, req.params.id as string);
       if (!deleted) return res.status(404).json({ error: 'Không tìm thấy dự án' });
+      if (existing?.code) evictPublicProjectCache(String(existing.code));
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting project:', error);

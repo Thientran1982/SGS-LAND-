@@ -94,6 +94,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         handoverDate: p?.handover_date || p?.handoverDate || '',
         driveUrl: existingMeta.drive_url || existingMeta.driveUrl || '',
     });
+    const [publicMicrosite, setPublicMicrosite] = useState<boolean>(existingMeta.public_microsite === true || existingMeta.public_microsite === 'true');
     const [coverImage, setCoverImage] = useState<string>(existingMeta.coverImage || existingMeta.cover_image || '');
     const [coverUploading, setCoverUploading] = useState(false);
     const [coverErr, setCoverErr] = useState('');
@@ -151,6 +152,8 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             nextMeta.driveUrl = null; // legacy camelCase alias — always strip
             nextMeta.coverImage = coverImage ? coverImage : null;
             nextMeta.cover_image = null; // legacy snake_case alias — always strip
+            // Mini-site công khai (Task #25) — gửi true/false để bật/tắt /p/<code>
+            nextMeta.public_microsite = publicMicrosite ? true : null;
             // Lưu ý: gửi chuỗi rỗng (đã trim) thay vì undefined cho các text
             // field, và null cho number/date đã xoá. Nếu gửi undefined thì
             // JSON.stringify sẽ drop key, server bỏ qua, DB giữ giá trị cũ —
@@ -322,6 +325,30 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                             <p className={`mt-1 text-xs ${coverErr ? 'text-rose-600' : 'text-[var(--text-secondary)]'}`}>
                                 {coverErr || t('project.cover_image_hint')}
                             </p>
+                        </div>
+                        {/* Mini-site công khai (/p/<code>) — chỉ ADMIN/SUPER_ADMIN có quyền lưu (server enforce). */}
+                        <div className="col-span-2">
+                            <label className={`${labelCls} mb-2`}>Mini-site công khai</label>
+                            <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={publicMicrosite}
+                                    onChange={(e) => setPublicMicrosite(e.target.checked)}
+                                    className="mt-0.5 w-4 h-4 accent-indigo-600"
+                                />
+                                <span className="flex-1">
+                                    <span className="block text-sm font-semibold text-[var(--text-primary)]">
+                                        Bật trang công khai cho dự án
+                                    </span>
+                                    <span className="block text-xs text-[var(--text-secondary)] mt-0.5">
+                                        URL: <span className="font-mono">{window.location.origin}/p/{(form.code || 'MA-DU-AN').toUpperCase()}</span>
+                                        {!form.code && <span className="text-rose-600 ml-1">(cần điền Mã dự án)</span>}
+                                    </span>
+                                    <span className="block text-xs text-[var(--text-secondary)] mt-1">
+                                        Chỉ liệt kê sản phẩm trạng thái Còn hàng / Booking / Mở bán. Ẩn thông tin chủ nhà, hoa hồng. Có form thu lead 5/h.
+                                    </span>
+                                </span>
+                            </label>
                         </div>
                     </div>
                     <div className="flex gap-3 justify-end pt-2">
@@ -1937,6 +1964,78 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                                {/* Mini-site công khai — Mở /p/<code> + tải QR. Chỉ hiển thị
+                                    khi metadata.public_microsite === true và project.code có giá trị. */}
+                                {(() => {
+                                    const meta = (project?.metadata && typeof project.metadata === 'object') ? project.metadata : {};
+                                    const enabled = meta.public_microsite === true || meta.public_microsite === 'true';
+                                    const code: string = (project?.code || '').toString().trim().toUpperCase();
+                                    if (!enabled || !code) return null;
+                                    const url = `${window.location.origin}/p/${code}`;
+                                    const downloadQR = async () => {
+                                        // Sử dụng Google Chart API client-side fallback — không cần thêm dep
+                                        // vì pages/PublicProjectMicrosite render QR riêng. Ở đây chỉ cần
+                                        // render PNG nhanh, dùng canvas vẽ qrcode.react thoáng qua.
+                                        try {
+                                            const { QRCodeCanvas } = await import('qrcode.react');
+                                            const React = (await import('react'));
+                                            const ReactDOMClient = (await import('react-dom/client'));
+                                            const host = document.createElement('div');
+                                            host.style.position = 'fixed';
+                                            host.style.left = '-9999px';
+                                            document.body.appendChild(host);
+                                            const root = ReactDOMClient.createRoot(host);
+                                            root.render(React.createElement(QRCodeCanvas, { value: url, size: 512, level: 'M', includeMargin: true }));
+                                            // Đợi 1 frame cho React mount canvas
+                                            await new Promise(r => requestAnimationFrame(() => r(null)));
+                                            await new Promise(r => requestAnimationFrame(() => r(null)));
+                                            const canvas = host.querySelector('canvas') as HTMLCanvasElement | null;
+                                            if (canvas) {
+                                                const dataUrl = canvas.toDataURL('image/png');
+                                                const a = document.createElement('a');
+                                                a.href = dataUrl;
+                                                a.download = `qr-${code}.png`;
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                document.body.removeChild(a);
+                                            }
+                                            root.unmount();
+                                            host.remove();
+                                        } catch (e) {
+                                            console.error('QR download failed', e);
+                                        }
+                                    };
+                                    return (
+                                        <>
+                                            <a
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-emerald-300 text-emerald-700 dark:text-emerald-300 dark:border-emerald-700 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                                                title={`Mở mini-site: ${url}`}
+                                                aria-label="Mở mini-site công khai"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3a16 16 0 010 18M3 12h18" />
+                                                </svg>
+                                                <span className="hidden md:inline text-xs font-semibold">Mini-site</span>
+                                            </a>
+                                            <button
+                                                type="button"
+                                                onClick={() => { void downloadQR(); }}
+                                                className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                                title={`Tải QR code mini-site (${url})`}
+                                                aria-label="Tải QR code mini-site"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z" />
+                                                </svg>
+                                                <span className="hidden md:inline text-xs">QR</span>
+                                            </button>
+                                        </>
+                                    );
+                                })()}
                                 {/* Mở Google Drive của dự án — chỉ hiện khi đã cấu hình drive_url trong form Dự án */}
                                 {(() => {
                                     const meta = (project?.metadata && typeof project.metadata === 'object') ? project.metadata : {};

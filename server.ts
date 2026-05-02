@@ -49,6 +49,7 @@ import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
 import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
+import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
@@ -3024,6 +3025,11 @@ async function startServer() {
   // B2B2C: project management + partner access control
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
   app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));
+
+  // ─── PUBLIC mini-site cho từng dự án (no auth, server-side cache 5min) ────
+  // Không bọc apiRateLimit chung — endpoint này có rate limit riêng
+  // (publicMicrositeLeadRateLimit) cho POST /leads. GET /:code chỉ đọc cache.
+  app.use('/api/public/projects', createPublicProjectRoutes());
   // Task Management module
   app.use('/api/tasks', apiRateLimit, createTaskRoutes(authenticateToken));
   app.use('/api/departments', apiRateLimit, createDepartmentRoutes(authenticateToken));
@@ -3748,6 +3754,32 @@ async function startServer() {
     }
   });
 
+  app.get('/sitemap-projects.xml', async (_req: express.Request, res: express.Response) => {
+    try {
+      // Chỉ liệt kê các project đã bật mini-site công khai
+      // (metadata.public_microsite = 'true').
+      const result = await pool.query(
+        `SELECT code, updated_at FROM projects
+         WHERE code IS NOT NULL
+           AND code <> ''
+           AND metadata->>'public_microsite' = 'true'
+         ORDER BY updated_at DESC LIMIT 10000`
+      );
+      const urls = result.rows.map((r: any) => {
+        const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
+        const code = String(r.code).replace(/[^A-Za-z0-9_-]/g, '');
+        return `  <url>\n    <loc>${APP_SITEMAP_URL}/p/${code}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>`;
+      }).join('\n');
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      res.send(xml);
+    } catch (err) {
+      logger.error('[Sitemap] projects error:', err);
+      res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    }
+  });
+
   app.get('/sitemap-news.xml', async (_req: express.Request, res: express.Response) => {
     try {
       // neondb_owner có BYPASSRLS + row_security=off mặc định → query thẳng pool
@@ -3936,6 +3968,55 @@ async function startServer() {
     app.get('/du-an/:projectSlug', (req: express.Request, res: express.Response) => {
       const pagePath = `/du-an/${req.params.projectSlug}`;
       sendMeta(res, buildStaticPageMeta(null, null, null, pagePath));
+    });
+
+    // /p/:code → SSR meta cho mini-site công khai (Facebook/Zalo/Twitter crawler).
+    // Tokens (proposal/contract) không inject project meta — fall through để
+    // SPA xử lý. Chỉ xử lý khi token match pattern PROJECT CODE (uppercase).
+    app.get('/p/:code', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const raw = String(req.params.code || '');
+      // Project codes: uppercase + digits + dashes/underscores. Proposal/contract
+      // tokens là UUID/lowercase hoặc có prefix `contract_` → skip để SPA xử lý.
+      if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(raw)) return next();
+      try {
+        const result = await pool.query(
+          `SELECT name, code, description, location, metadata
+             FROM projects
+             WHERE code = $1
+               AND metadata->>'public_microsite' = 'true'
+             LIMIT 1`,
+          [raw]
+        );
+        const row = result.rows[0];
+        if (!row) {
+          // Project không công khai → vẫn render SPA (sẽ hiển thị trang 404 thân thiện)
+          return next();
+        }
+        const meta = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+        const cover = meta.coverImage || meta.cover_image || null;
+        const desc = (row.description ? String(row.description).replace(/\s+/g, ' ').slice(0, 240)
+          : `${row.name} — bảng giá, mặt bằng, sản phẩm và tư vấn miễn phí từ SGS Land.`);
+        sendMeta(res, {
+          title: `${row.name} — Mini-site dự án | SGS LAND`,
+          description: desc,
+          h1: row.name,
+          image: cover || undefined,
+          url: `${APP_SITEMAP_URL}/p/${row.code}`,
+          type: 'website',
+          structuredData: {
+            '@context': 'https://schema.org',
+            '@type': 'Place',
+            name: row.name,
+            description: desc,
+            url: `${APP_SITEMAP_URL}/p/${row.code}`,
+            ...(cover ? { image: cover } : {}),
+            ...(row.location ? { address: { '@type': 'PostalAddress', streetAddress: row.location, addressCountry: 'VN' } } : {}),
+          },
+        });
+      } catch (err) {
+        logger.error('[PublicProject SSR] meta fetch failed:', err);
+        next();
+      }
     });
 
     // All other SPA routes → inject admin-saved override or fallback to defaults

@@ -19,4 +19,10 @@
     <lastmod>2026-04-18</lastmod>
   </sitemap>
 
+  <!-- Sitemap động: mini-site dự án (chỉ liệt kê dự án đã bật public_microsite) -->
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-projects.xml</loc>
+    <lastmod>2026-05-02</lastmod>
+  </sitemap>
+
 </sitemapindex>
