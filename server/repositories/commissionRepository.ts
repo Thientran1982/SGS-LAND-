@@ -338,13 +338,18 @@ export const commissionLedgerRepository = {
     });
   },
 
-  /** Aggregate cho widget project tab: tổng theo status. */
+  /** Aggregate cho widget project tab: tổng theo status + due-soon/overdue. */
   async aggregateByProject(
     tenantId: string,
     projectId: string,
-  ): Promise<{ totalCount: number; pending: number; due: number; paid: number; grossPending: number; grossPaid: number }> {
+  ): Promise<{
+    totalCount: number; pending: number; due: number; paid: number;
+    grossPending: number; grossPaid: number;
+    dueSoonCount: number; overdueCount: number;
+    grossDueSoon: number; grossOverdue: number;
+  }> {
     return withTenantContext(tenantId, async (c: PoolClient) => {
-      const { rows } = await c.query(
+      const baseRes = await c.query(
         `SELECT
            COUNT(*)::int AS total_count,
            COUNT(*) FILTER (WHERE status = 'PENDING')::int AS pending,
@@ -356,7 +361,28 @@ export const commissionLedgerRepository = {
          WHERE tenant_id = $1 AND project_id = $2`,
         [tenantId, projectId],
       );
-      const r = rows[0] || {};
+      const r = baseRes.rows[0] || {};
+
+      // Walk milestones jsonb để tính sắp đến hạn (≤ 7 ngày) + quá hạn,
+      // chỉ xét các slice còn PENDING (unpaid) thuộc bút toán chưa CANCELLED/PAID.
+      const msRes = await c.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN (m->>'dueDate')::date <  CURRENT_DATE THEN COALESCE((m->>'amount')::numeric,0) ELSE 0 END), 0) AS overdue_amt,
+           COALESCE(SUM(CASE WHEN (m->>'dueDate')::date >= CURRENT_DATE
+                              AND (m->>'dueDate')::date <= (CURRENT_DATE + INTERVAL '7 days')
+                             THEN COALESCE((m->>'amount')::numeric,0) ELSE 0 END), 0) AS duesoon_amt,
+           COUNT(DISTINCT cl.id) FILTER (WHERE (m->>'dueDate')::date <  CURRENT_DATE)::int AS overdue_cnt,
+           COUNT(DISTINCT cl.id) FILTER (WHERE (m->>'dueDate')::date >= CURRENT_DATE
+                                          AND (m->>'dueDate')::date <= (CURRENT_DATE + INTERVAL '7 days'))::int AS duesoon_cnt
+         FROM commission_ledger cl
+         CROSS JOIN LATERAL jsonb_array_elements(COALESCE(cl.milestones, '[]'::jsonb)) AS m
+         WHERE cl.tenant_id = $1 AND cl.project_id = $2
+           AND cl.status NOT IN ('PAID','CANCELLED')
+           AND COALESCE(m->>'status','PENDING') <> 'PAID'`,
+        [tenantId, projectId],
+      );
+      const ms = msRes.rows[0] || {};
+
       return {
         totalCount: r.total_count ?? 0,
         pending: r.pending ?? 0,
@@ -364,7 +390,30 @@ export const commissionLedgerRepository = {
         paid: r.paid ?? 0,
         grossPending: Number(r.gross_pending ?? 0),
         grossPaid: Number(r.gross_paid ?? 0),
+        dueSoonCount: ms.duesoon_cnt ?? 0,
+        overdueCount: ms.overdue_cnt ?? 0,
+        grossDueSoon: Number(ms.duesoon_amt ?? 0),
+        grossOverdue: Number(ms.overdue_amt ?? 0),
       };
+    });
+  },
+
+  /** Bulk mark-paid: chỉ cập nhật rows thuộc tenantId, bỏ qua các id không hợp lệ. */
+  async markManyPaid(
+    tenantId: string,
+    ids: string[],
+    data: { paidNote?: string | null; paidBy: string },
+  ): Promise<LedgerRow[]> {
+    if (ids.length === 0) return [];
+    return withTenantContext(tenantId, async (c: PoolClient) => {
+      const { rows } = await c.query(
+        `UPDATE commission_ledger
+         SET status = 'PAID', paid_at = NOW(), paid_note = $1, paid_by = $2, updated_at = NOW()
+         WHERE tenant_id = $3 AND id = ANY($4::uuid[]) AND status NOT IN ('PAID','CANCELLED')
+         RETURNING *`,
+        [data.paidNote || null, data.paidBy, tenantId, ids],
+      );
+      return rows as LedgerRow[];
     });
   },
 

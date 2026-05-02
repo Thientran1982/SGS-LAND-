@@ -65,11 +65,13 @@ export async function generateLedgerOnSold(input: SoldHookInput): Promise<SoldHo
   const partnerTenantId = await resolvePartnerTenantId(input.listing.id);
 
   // TIERED: cần đếm số căn đã SOLD trong tháng cho partner này
+  // (cộng thêm 1 vì chính giao dịch hiện tại là căn thứ N+1 của tháng).
   let unitsThisMonth = 0;
   if (policy.type === 'TIERED') {
-    unitsThisMonth = await commissionLedgerRepository.countMonthlyUnitsForPartner(
+    const prior = await commissionLedgerRepository.countMonthlyUnitsForPartner(
       input.tenantId, partnerTenantId, saleDateIso, projectId,
     );
+    unitsThisMonth = prior + 1;
   }
 
   const calc = calculateCommission(

@@ -66,6 +66,10 @@ export interface ProjectCommissionSummary {
   paid: number;
   grossPending: number;
   grossPaid: number;
+  dueSoonCount: number;
+  overdueCount: number;
+  grossDueSoon: number;
+  grossOverdue: number;
   leaderboard: {
     partners: Array<{ partner_tenant_id: string | null; partner_name: string | null; units: number; gross: string | number }>;
     sales:    Array<{ sales_user_id: string | null; sales_name: string | null; units: number; gross: string | number }>;
@@ -96,6 +100,9 @@ export const commissionApi = {
 
   markPaid: (id: string, note?: string): Promise<LedgerItem> =>
     api.patch(`/api/commissions/${id}/mark-paid`, { note: note || null }),
+
+  markPaidBulk: (ids: string[], note?: string): Promise<{ updated: number; requested: number; ids: string[] }> =>
+    api.post(`/api/commissions/mark-paid-bulk`, { ids, note: note || null }),
 
   exportXlsxUrl: (params: Record<string, string | undefined> = {}): string => {
     const q = new URLSearchParams();
