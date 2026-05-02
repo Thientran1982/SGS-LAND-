@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "AI0vw3VAOaKAdlbmjeWXb"
@@ -42,3 +41,9 @@ id = "H8f13tRvPVBlcO2M84EPe"
 uri = "file://public/images/projects/vinhomes-grand-park.png"
 type = "image"
 title = "vinhomes grand park super city thu duc"
+
+[[outputs]]
+id = "R8S80l1cgy_yqkIYZ_ab4"
+uri = "file://attached_assets/screenshots/no-image-placeholder.svg"
+type = "image"
+title = "Placeholder khi listing chưa có ảnh (kích thước gốc 400×300)"
