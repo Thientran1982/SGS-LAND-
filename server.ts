@@ -3833,6 +3833,42 @@ async function startServer() {
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
+  // ─── White-label short URL (task #28) ──────────────────────────────────────
+  // Trên `<slug>.sgsland.vn` hoặc custom domain đã verify, request `/<code>`
+  // (vd `https://abc.sgsland.vn/MCC`) phải serve mini-site dự án MCC.
+  // Strategy: 302 redirect tới canonical `/p/<code>` trên cùng host — giữ
+  // SSR meta + SPA route hoạt động không thay đổi, đồng thời route gốc `/p/`
+  // vẫn là URL chuẩn cho SEO/crawler.
+  // Loại trừ: paths đã được handle riêng (api, uploads, p, assets phổ biến,
+  // sitemap/robots, file có extension), GUEST landing trên apex.
+  const SHORT_URL_RESERVED = new Set([
+    'api', 'uploads', 'p', 'scim', 'health', 'sitemap.xml', 'robots.txt',
+    'favicon.ico', 'public', 'dist', 'assets', 'static', 'images', 'landing',
+    'lai-suat-vay-ngan-hang', '_next', 'sw.js',
+  ]);
+  const SHORT_URL_CODE_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+  app.use(async (req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    const path = req.path;
+    // Chỉ xử lý đúng 1 segment, không có extension (vd `/MCC`, không phải `/foo.js`)
+    const m = /^\/([^/]+)\/?$/.exec(path);
+    if (!m) return next();
+    const seg = m[1];
+    if (seg.includes('.')) return next();
+    if (SHORT_URL_RESERVED.has(seg.toLowerCase())) return next();
+    if (!SHORT_URL_CODE_RE.test(seg)) return next();
+    // UUID (proposal token) → để SPA xử lý qua /p/:token routing thông thường
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg)) return next();
+    try {
+      const binding = await resolveTenantByHost(req.headers.host as string | undefined);
+      if (!binding) return next(); // Apex `sgsland.vn` → không phải tenant subdomain → bỏ qua
+      const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+      return res.redirect(302, `/p/${seg}${qs}`);
+    } catch {
+      return next();
+    }
+  });
+
   // ─── Bank Rates SSR Page (all environments) ────────────────────────────────
   // Returns a COMPLETE HTML document (not the SPA shell) — fully crawlable by
   // Googlebot and AI chatbots (ChatGPT, Gemini, Claude) without JavaScript.

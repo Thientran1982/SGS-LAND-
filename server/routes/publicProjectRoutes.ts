@@ -32,6 +32,7 @@ import { rateLimit } from '../middleware/rateLimiter';
 import {
   brandingFromConfig,
   getTenantBinding,
+  resolveTenantSenderEmail,
   type TenantBranding,
   type TenantHostBinding,
 } from '../services/tenantBrandingService';
@@ -507,7 +508,8 @@ export function createPublicProjectRoutes(): Router {
       // From-name được override bằng tên CĐT (white-label task #28).
       const tenantBindingForEmail = await getTenantBinding(found.tenantId).catch(() => null);
       const fromName = tenantBindingForEmail?.branding.displayName || tenantBindingForEmail?.name || 'SGS Land';
-      const fromEmail = process.env.BREVO_FROM_EMAIL || 'no-reply@sgsland.vn';
+      // White-label sender: ưu tiên custom domain đã verify → subdomain → fallback
+      const fromEmail = resolveTenantSenderEmail(tenantBindingForEmail);
       try {
         const subject = `[Mini-site] ${found.project.name} — ${name} (${phone})`;
         const htmlBody = `
