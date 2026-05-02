@@ -30,10 +30,78 @@ import {
 } from '../services/publicProjectCache';
 import { rateLimit } from '../middleware/rateLimiter';
 
-const HOTLINE = '0971132378';
-const HOTLINE_DISPLAY = '0971 132 378';
-const ZALO_URL = 'https://zalo.me/0971132378';
+// Fallback platform-wide contact (chỉ dùng khi tenant chưa cấu hình public_brand)
+const FALLBACK_HOTLINE         = '0971132378';
+const FALLBACK_HOTLINE_DISPLAY = '0971 132 378';
+const FALLBACK_ZALO_URL        = 'https://zalo.me/0971132378';
 const INTERNAL_INBOX = process.env.LANDING_LEAD_INBOX || 'info@sgsland.vn';
+
+// Cloudflare Turnstile — chỉ enforce khi env `TURNSTILE_SECRET_KEY` được cấu hình
+// (theo task spec: "verify reCAPTCHA hoặc Cloudflare Turnstile (token sẵn nếu có)").
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || '';
+const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
+async function verifyTurnstileToken(token: string, ip: string | undefined): Promise<boolean> {
+  if (!TURNSTILE_SECRET) return true; // soft mode — chưa bật captcha
+  if (!token) return false;
+  try {
+    const body = new URLSearchParams({ secret: TURNSTILE_SECRET, response: token });
+    if (ip) body.append('remoteip', ip);
+    const r = await fetch(TURNSTILE_VERIFY_URL, { method: 'POST', body });
+    if (!r.ok) return false;
+    const j: any = await r.json();
+    return !!j?.success;
+  } catch (err: any) {
+    logger.warn(`[PublicProject] Turnstile verify error: ${err?.message || err}`);
+    return false; // fail closed khi đã bật captcha
+  }
+}
+
+interface TenantContact {
+  brandName: string;
+  hotline: string;
+  hotlineDisplay: string;
+  zalo: string;
+}
+
+/**
+ * Build tenantContact từ tenants.name + enterprise_config['public_brand']
+ * { hotline, hotlineDisplay, zalo, brandName? }. Fallback platform-wide chỉ
+ * khi tenant chưa cấu hình.
+ */
+async function loadTenantContact(tenantId: string, defaultBrand: string): Promise<TenantContact> {
+  try {
+    const r = await pool.query(
+      `SELECT t.name AS tenant_name, ec.config_value AS brand
+         FROM tenants t
+         LEFT JOIN enterprise_config ec
+           ON ec.tenant_id = t.id AND ec.config_key = 'public_brand'
+         WHERE t.id = $1
+         LIMIT 1`,
+      [tenantId]
+    );
+    const row = r.rows[0] || {};
+    const brand = (row.brand && typeof row.brand === 'object') ? row.brand : {};
+    const hotlineRaw = String(brand.hotline || '').trim();
+    const hotline = hotlineRaw.replace(/\D/g, '') || FALLBACK_HOTLINE;
+    const hotlineDisplay = String(brand.hotlineDisplay || '').trim() ||
+      (hotlineRaw ? hotlineRaw : FALLBACK_HOTLINE_DISPLAY);
+    const zaloRaw = String(brand.zalo || '').trim();
+    const zalo = zaloRaw
+      ? (zaloRaw.startsWith('http') ? zaloRaw : `https://zalo.me/${zaloRaw.replace(/\D/g, '')}`)
+      : (hotlineRaw ? `https://zalo.me/${hotline}` : FALLBACK_ZALO_URL);
+    const brandName = String(brand.brandName || row.tenant_name || defaultBrand || 'SGS Land').trim();
+    return { brandName, hotline, hotlineDisplay, zalo };
+  } catch (err: any) {
+    logger.warn(`[PublicProject] loadTenantContact failed: ${err?.message || err}`);
+    return {
+      brandName: defaultBrand || 'SGS Land',
+      hotline: FALLBACK_HOTLINE,
+      hotlineDisplay: FALLBACK_HOTLINE_DISPLAY,
+      zalo: FALLBACK_ZALO_URL,
+    };
+  }
+}
 
 // Listing statuses cho phép hiển thị công khai (không lộ HOLD/SOLD/INACTIVE)
 const PUBLIC_LISTING_STATUSES = new Set(['AVAILABLE', 'BOOKING', 'OPENING']);
@@ -158,11 +226,13 @@ function pickPublicProject(row: any) {
  * `metadata.public_microsite=true`.
  */
 async function findPublicProjectByCode(code: string): Promise<{ project: any; tenantId: string } | null> {
+  // `code` đã được normalize uppercase ở route handler — query case-insensitive
+  // bằng UPPER() để khớp được cả khi DB lưu lowercase/mixed case.
   return withRlsBypass(async (client) => {
     const result = await client.query(
       `SELECT *
          FROM projects
-         WHERE code = $1
+         WHERE UPPER(code) = $1
            AND metadata->>'public_microsite' = 'true'
          LIMIT 1`,
       [code]
@@ -180,7 +250,7 @@ async function findPublicListingsByProject(tenantId: string, code: string): Prom
               images, attributes
          FROM listings
          WHERE tenant_id = $1
-           AND project_code = $2
+           AND UPPER(project_code) = $2
            AND status = ANY($3::text[])
          ORDER BY
            CASE status
@@ -204,7 +274,7 @@ async function checkDuplicateLead(tenantId: string, phone: string, code: string)
       `SELECT id FROM leads
          WHERE tenant_id = $1
            AND phone = $2
-           AND metadata->>'project_code' = $3
+           AND UPPER(metadata->>'project_code') = $3
            AND created_at > NOW() - INTERVAL '24 hours'
          LIMIT 1`,
       [tenantId, phone, code]
@@ -242,17 +312,17 @@ export function createPublicProjectRoutes(): Router {
       const listingsRaw = await findPublicListingsByProject(found.tenantId, code);
       const listings = listingsRaw.map(pickPublicListing);
       const project = pickPublicProject(found.project);
+      const tenantContact = await loadTenantContact(found.tenantId, project.metadata.developer || project.name);
 
       const payload = {
         ok: true,
         project,
         listings,
         listingCount: listings.length,
-        tenantContact: {
-          hotline: HOTLINE,
-          hotlineDisplay: HOTLINE_DISPLAY,
-          zalo: ZALO_URL,
-        },
+        tenantContact,
+        captcha: TURNSTILE_SECRET
+          ? { provider: 'turnstile', siteKey: process.env.TURNSTILE_SITE_KEY || '' }
+          : null,
         cachedAt: new Date().toISOString(),
       };
 
@@ -293,6 +363,18 @@ export function createPublicProjectRoutes(): Router {
           ok: false,
           error: 'Số điện thoại không hợp lệ. Vui lòng nhập số Việt Nam (10-11 chữ số).',
         });
+      }
+
+      // Captcha verification (chỉ enforce khi env TURNSTILE_SECRET_KEY được set)
+      if (TURNSTILE_SECRET) {
+        const captchaToken = String(body.captchaToken || body['cf-turnstile-response'] || '').trim();
+        const captchaOk = await verifyTurnstileToken(captchaToken, req.ip);
+        if (!captchaOk) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Vui lòng xác nhận bạn không phải robot rồi gửi lại.',
+          });
+        }
       }
 
       // Resolve project (must be public) → lấy tenantId để lưu lead đúng tenant
@@ -338,7 +420,7 @@ export function createPublicProjectRoutes(): Router {
             name,
             phone,
             email || null,
-            `microsite-${code}`,
+            'microsite',
             notes,
             JSON.stringify(tags),
             JSON.stringify(metadata),
@@ -379,14 +461,17 @@ export function createPublicProjectRoutes(): Router {
 
       logger.info(`[PublicProject] Lead captured: ${name}/${phone} → ${found.project.name} (${code})`);
 
+      // Hotline trong response — đọc từ tenant để khách thấy đúng số tenant chủ
+      const contact = await loadTenantContact(found.tenantId, found.project.name);
+
       return res.json({
         ok: true,
         leadId,
-        message: `Cảm ơn ${name}! Chuyên viên sẽ liên hệ trong vòng 30 phút. Hotline: ${HOTLINE_DISPLAY}.`,
+        message: `Cảm ơn ${name}! Chuyên viên sẽ liên hệ trong vòng 30 phút. Hotline: ${contact.hotlineDisplay}.`,
       });
     } catch (err: any) {
       logger.error(`[PublicProject] POST /${code}/leads failed: ${err?.message || err}`);
-      res.status(500).json({ ok: false, error: 'Có lỗi xảy ra. Vui lòng gọi hotline 0971 132 378.' });
+      res.status(500).json({ ok: false, error: 'Có lỗi xảy ra. Vui lòng thử lại sau ít phút.' });
     }
   });
 

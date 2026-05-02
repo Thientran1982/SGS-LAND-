@@ -3975,17 +3975,20 @@ async function startServer() {
     // SPA xử lý. Chỉ xử lý khi token match pattern PROJECT CODE (uppercase).
     app.get('/p/:code', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       const raw = String(req.params.code || '');
-      // Project codes: uppercase + digits + dashes/underscores. Proposal/contract
-      // tokens là UUID/lowercase hoặc có prefix `contract_` → skip để SPA xử lý.
-      if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(raw)) return next();
+      // Project codes: alphanumeric + dashes/underscores (case insensitive),
+      // KHÔNG phải UUID (proposal) và KHÔNG có prefix `contract_` → skip để SPA xử lý.
+      if (raw.startsWith('contract_')) return next();
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(raw)) return next();
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) return next();
+      const codeUpper = raw.toUpperCase();
       try {
         const result = await pool.query(
           `SELECT name, code, description, location, metadata
              FROM projects
-             WHERE code = $1
+             WHERE UPPER(code) = $1
                AND metadata->>'public_microsite' = 'true'
              LIMIT 1`,
-          [raw]
+          [codeUpper]
         );
         const row = result.rows[0];
         if (!row) {

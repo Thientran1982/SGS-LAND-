@@ -50,10 +50,13 @@ export interface PublicProjectPayload {
   listings: PublicListing[];
   listingCount: number;
   tenantContact: {
+    brandName: string;
     hotline: string;
     hotlineDisplay: string;
     zalo: string;
   };
+  /** Captcha config — server chỉ trả khi env `TURNSTILE_SECRET_KEY` được set. */
+  captcha: { provider: 'turnstile'; siteKey: string } | null;
   cachedAt: string;
 }
 
@@ -65,6 +68,8 @@ export interface PublicLeadInput {
   interest?: string;
   pageUrl?: string;
   referrer?: string;
+  /** Cloudflare Turnstile token (chỉ cần khi server bật TURNSTILE_SECRET_KEY). */
+  captchaToken?: string;
 }
 
 export interface PublicLeadResponse {
