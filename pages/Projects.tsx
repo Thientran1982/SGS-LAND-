@@ -512,7 +512,10 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
             aria-modal="true"
         >
             <div
-                className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-[var(--glass-border)] overflow-hidden"
+                /* Hardcoded bg-white/dark:bg-slate-900 — see ProjectListingsPanel
+                   for the same fix; CSS variable can be overridden by tenant
+                   custom theme and end up matching the dark backdrop. */
+                className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -1181,6 +1184,105 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     }, [project.code]);
 
     const overlayRef = useRef<HTMLDivElement | null>(null);
+    const panelRef = useRef<HTMLDivElement | null>(null);
+
+    // One-shot visibility diagnostic — captures the panel's actual computed
+    // style + bounding rect once after mount and posts it to /api/_client_error.
+    // This is the only way to get ground truth from a user reporting "trắng
+    // trang" because the bug is purely visual (no JS error, data loads OK).
+    // Triggers exactly once per panel open. Safe in prod: ~1 KB JSON, no PII.
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const t1 = window.setTimeout(() => {
+            try {
+                const el = panelRef.current;
+                const overlay = overlayRef.current;
+                if (!el) {
+                    fetch('/api/_client_error', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            where: 'ProjectListingsPanel.visibility',
+                            message: 'panel ref is null after mount',
+                            projectCode: project?.code ?? null,
+                            href: window.location.href,
+                            ua: navigator.userAgent,
+                            ts: Date.now(),
+                        }),
+                        keepalive: true,
+                    }).catch(() => {});
+                    return;
+                }
+                const cs = window.getComputedStyle(el);
+                const rect = el.getBoundingClientRect();
+                const overlayCs = overlay ? window.getComputedStyle(overlay) : null;
+                const overlayRect = overlay?.getBoundingClientRect() ?? null;
+                const rootCs = window.getComputedStyle(document.documentElement);
+                const htmlClasses = document.documentElement.className;
+                // Count topmost siblings of the overlay that could be covering us.
+                const portals = Array.from(document.body.children)
+                    .filter(c => {
+                        const s = window.getComputedStyle(c as Element);
+                        const z = parseInt(s.zIndex || '0', 10);
+                        return z >= 9999 && c !== overlay;
+                    })
+                    .slice(0, 5)
+                    .map(c => ({
+                        tag: c.tagName,
+                        cls: (c as HTMLElement).className?.slice?.(0, 120) ?? null,
+                        z: window.getComputedStyle(c as Element).zIndex,
+                    }));
+                fetch('/api/_client_error', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        where: 'ProjectListingsPanel.visibility',
+                        message: 'panel mount visibility snapshot',
+                        projectCode: project?.code ?? null,
+                        href: window.location.href,
+                        ua: navigator.userAgent,
+                        ts: Date.now(),
+                        snapshot: {
+                            htmlClasses,
+                            cssVars: {
+                                bgSurface: rootCs.getPropertyValue('--bg-surface').trim(),
+                                bgApp: rootCs.getPropertyValue('--bg-app').trim(),
+                                textPrimary: rootCs.getPropertyValue('--text-primary').trim(),
+                                glassBorder: rootCs.getPropertyValue('--glass-border').trim(),
+                            },
+                            panel: {
+                                bg: cs.backgroundColor,
+                                color: cs.color,
+                                display: cs.display,
+                                visibility: cs.visibility,
+                                opacity: cs.opacity,
+                                zIndex: cs.zIndex,
+                                position: cs.position,
+                                width: rect.width,
+                                height: rect.height,
+                                top: rect.top,
+                                left: rect.left,
+                                childCount: el.childElementCount,
+                            },
+                            overlay: overlayCs && overlayRect ? {
+                                bg: overlayCs.backgroundColor,
+                                width: overlayRect.width,
+                                height: overlayRect.height,
+                                zIndex: overlayCs.zIndex,
+                                display: overlayCs.display,
+                            } : null,
+                            highZSiblings: portals,
+                            viewportW: window.innerWidth,
+                            viewportH: window.innerHeight,
+                        },
+                    }),
+                    keepalive: true,
+                }).catch(() => {});
+            } catch {}
+        }, 1500);
+        return () => window.clearTimeout(t1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [project?.code]);
 
     // Silent server stats sync — accurate even when > 200 listings are in a project.
     const syncStats = useCallback(() => {
@@ -1383,7 +1485,18 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     return (
         <>
             <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-[var(--glass-border)] overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
+                {/*
+                  Panel surface — DELIBERATELY hardcoded `bg-white dark:bg-slate-900`
+                  instead of `bg-[var(--bg-surface)]`. The CSS variable can be
+                  overridden by tenant custom themes (services/themeConfig.ts →
+                  `:root.light { --bg-surface: ... }`), and a few tenants ended up
+                  with a value that matched the dark backdrop, making the entire
+                  panel look invisible even though all the rows were still
+                  present and clickable. Hardcoding restores guaranteed contrast.
+                  See bug "trắng trang" (Apr 2026) — repro: Quản lý dự án →
+                  Masteri Cosmo Central → Danh mục sản phẩm.
+                */}
+                <div ref={panelRef} className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-slate-200 dark:border-slate-700 overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
@@ -1554,7 +1667,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
 
                     {/* ── List (div-based, no <table>) ── */}
-                    <div className="overflow-auto scroll-touch thin-scrollbar" style={{ background: '#FFFFFF' }}>
+                    {/* Inner list area uses Tailwind hardcoded colors (no CSS var)
+                       so it's guaranteed visible regardless of any tenant custom
+                       theme override of --bg-surface. See "trắng trang" bug fix. */}
+                    <div className="overflow-auto scroll-touch thin-scrollbar bg-white dark:bg-slate-900">
                         {loadError && (
                             <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3" role="alert">
                                 <div className="min-w-0">
