@@ -19,6 +19,7 @@ import { pool, withRlsBypass } from '../db';
 import { logger } from '../middleware/logger';
 import {
   brandingFromConfig,
+  CUSTOM_DOMAIN_FAILURE_THRESHOLD,
   evictHostCacheByTenant,
   EMPTY_BRANDING,
   generateTxtToken,
@@ -71,6 +72,14 @@ interface BindingPayload {
   customDomain: string | null;
   customDomainVerifiedAt: string | null;
   customDomainTxtRecord: { name: string; value: string } | null;
+  /** Số lần verify thất bại liên tiếp (cron 5 phút). 0 nếu lần check gần nhất OK. */
+  customDomainFailureCount: number;
+  /** Lần cron kiểm tra gần nhất — null nếu chưa từng được cron quét. */
+  customDomainLastCheckAt: string | null;
+  /** Thời điểm hệ thống huỷ verified do DNS không còn khớp — null nếu chưa từng. */
+  customDomainUnverifiedAt: string | null;
+  /** Ngưỡng fail để alert (đồng bộ với cron) — frontend dùng để hiển thị tiến trình. */
+  customDomainFailureThreshold: number;
 }
 
 interface BrandingResponse {
@@ -90,9 +99,14 @@ async function loadBrandingResponse(tenantId: string): Promise<BrandingResponse 
       custom_domain: string | null;
       custom_domain_verified_at: string | null;
       custom_domain_txt_token: string | null;
+      custom_domain_failure_count: number | null;
+      custom_domain_last_check_at: string | null;
+      custom_domain_unverified_at: string | null;
     }>(
       `SELECT id, name, config, subdomain_slug, custom_domain,
-              custom_domain_verified_at, custom_domain_txt_token
+              custom_domain_verified_at, custom_domain_txt_token,
+              custom_domain_failure_count, custom_domain_last_check_at,
+              custom_domain_unverified_at
          FROM tenants WHERE id = $1 LIMIT 1`,
       [tenantId]
     );
@@ -109,6 +123,10 @@ async function loadBrandingResponse(tenantId: string): Promise<BrandingResponse 
     customDomainTxtRecord: row.custom_domain && row.custom_domain_txt_token
       ? { name: `_sgsland.${row.custom_domain}`, value: row.custom_domain_txt_token }
       : null,
+    customDomainFailureCount: row.custom_domain_failure_count ?? 0,
+    customDomainLastCheckAt: row.custom_domain_last_check_at,
+    customDomainUnverifiedAt: row.custom_domain_unverified_at,
+    customDomainFailureThreshold: CUSTOM_DOMAIN_FAILURE_THRESHOLD,
   };
   return {
     tenantId: row.id,
@@ -266,7 +284,10 @@ export function createTenantRoutes(authenticateToken: any): Router {
           `UPDATE tenants
               SET custom_domain = $2,
                   custom_domain_txt_token = $3,
-                  custom_domain_verified_at = NULL
+                  custom_domain_verified_at = NULL,
+                  custom_domain_failure_count = 0,
+                  custom_domain_last_check_at = NULL,
+                  custom_domain_unverified_at = NULL
               WHERE id = $1`,
           [u.tenantId, v.hostname, txtToken]
         );
@@ -298,10 +319,15 @@ export function createTenantRoutes(authenticateToken: any): Router {
       }
       const ok = await verifyCustomDomainTxt(row.custom_domain, row.custom_domain_txt_token);
       if (ok) {
+        // Reset cả health (failure_count, unverified_at) — manual verify thắng cron
         await withRlsBypass(async (client) => {
           await client.query(
-            `UPDATE tenants SET custom_domain_verified_at = NOW()
-                WHERE id = $1 AND custom_domain_verified_at IS NULL`,
+            `UPDATE tenants
+                SET custom_domain_verified_at = COALESCE(custom_domain_verified_at, NOW()),
+                    custom_domain_failure_count = 0,
+                    custom_domain_last_check_at = NOW(),
+                    custom_domain_unverified_at = NULL
+                WHERE id = $1`,
             [u.tenantId]
           );
         });
@@ -326,7 +352,10 @@ export function createTenantRoutes(authenticateToken: any): Router {
           `UPDATE tenants
               SET custom_domain = NULL,
                   custom_domain_txt_token = NULL,
-                  custom_domain_verified_at = NULL
+                  custom_domain_verified_at = NULL,
+                  custom_domain_failure_count = 0,
+                  custom_domain_last_check_at = NULL,
+                  custom_domain_unverified_at = NULL
               WHERE id = $1`,
           [u.tenantId]
         );
