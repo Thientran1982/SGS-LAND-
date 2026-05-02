@@ -1114,16 +1114,49 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [importUploading, setImportUploading] = useState(false);
     const [importDone, setImportDone] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
 
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    // Report listings-load failures to the server so we have telemetry the
+    // next time a user reports a blank/empty panel. Previously we silently
+    // swallowed these (`.catch(() => {})`) which is exactly why the
+    // "trắng trang" bug was undiagnosable for so long.
+    const reportLoadError = (err: unknown, where: string) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
+        console.error(`[ProjectListingsPanel:${where}] load failed:`, err);
+        try {
+            fetch('/api/_client_error', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    where: `ProjectListingsPanel.${where}`,
+                    message: msg,
+                    stack: err instanceof Error ? err.stack ?? null : null,
+                    projectCode: project?.code ?? null,
+                    href: typeof window !== 'undefined' ? window.location.href : null,
+                    ua: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+                    ts: Date.now(),
+                }),
+                keepalive: true,
+            }).catch(() => {});
+        } catch {}
+        return msg;
+    };
+
     // Manual reload (called after CRUD operations).
     const load = useCallback(() => {
         setLoading(true);
+        setLoadError(null);
         listingApi.getListings(1, 200, { projectCode: project.code })
             .then((result: any) => {
                 setListings(result.data || []);
                 setStats(result.stats || null);
             })
-            .catch(() => {})
+            .catch((err) => {
+                setLoadError(reportLoadError(err, 'reload'));
+            })
             .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [project.code]);
 
     // Initial auto-load with cleanup flag — prevents Strict Mode double-invoke from
@@ -1131,15 +1164,20 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
+        setLoadError(null);
         listingApi.getListings(1, 200, { projectCode: project.code })
             .then((result: any) => {
                 if (cancelled) return;
                 setListings(result.data || []);
                 setStats(result.stats || null);
             })
-            .catch(() => {})
+            .catch((err) => {
+                if (cancelled) return;
+                setLoadError(reportLoadError(err, 'initial'));
+            })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [project.code]);
 
     const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -1517,6 +1555,21 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
                     {/* ── List (div-based, no <table>) ── */}
                     <div className="overflow-auto scroll-touch thin-scrollbar" style={{ background: '#FFFFFF' }}>
+                        {loadError && (
+                            <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3" role="alert">
+                                <div className="min-w-0">
+                                    <div className="font-bold mb-0.5">Không tải được danh mục sản phẩm</div>
+                                    <div className="text-xs text-rose-600 break-words">{loadError}</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => load()}
+                                    className="shrink-0 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
+                                >
+                                    Thử lại
+                                </button>
+                            </div>
+                        )}
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -2444,12 +2497,19 @@ export function Projects() {
     useEffect(() => { db.getCurrentUser().then(setUser); }, []);
     useEffect(() => { if (user) load(); }, [user, load]);
 
-    // Persist `listingsTarget` across remounts/HMR/reloads so the modal
-    // does not silently disappear when the dev preview iframe reconnects
-    // (or when the chunk-load ErrorBoundary triggers a reload). We store
-    // the project id only (scoped per user) and resolve it back to a
-    // project once the list has loaded.
+    // Persist `listingsTarget` so the modal survives instant remounts
+    // (HMR in dev, the chunk-load ErrorBoundary's window.location.reload
+    // in prod). We store the project id + a wall-clock timestamp scoped
+    // per user, and only restore when the timestamp is fresher than
+    // RESTORE_TTL_MS. Without this TTL, navigating BACK to /projects
+    // (even hours later) would silently auto-open the full-screen
+    // listings modal on top of the project list — perceived by users as
+    // a blank/white page (the modal's loading skeleton + dark backdrop
+    // covers the project cards). Confirmed bug: "đăng nhập → quản lý
+    // dự án → trắng trang, click vào thì hiển thị chi tiết danh mục
+    // sản phẩm như A-08-03".
     const LISTINGS_TARGET_KEY = user?.id ? `sgs_listings_target_pid:${user.id}` : '';
+    const RESTORE_TTL_MS = 10_000; // 10 s is enough for HMR/chunk reload but never long enough to surprise a user navigating back later.
     const restoreAttemptedRef = useRef(false);
 
     // Step 1 — restore once, after projects loaded and user known.
@@ -2458,8 +2518,27 @@ export function Projects() {
         if (restoreAttemptedRef.current) return;
         restoreAttemptedRef.current = true;
         try {
-            const pid = sessionStorage.getItem(LISTINGS_TARGET_KEY);
-            if (!pid) return;
+            const raw = sessionStorage.getItem(LISTINGS_TARGET_KEY);
+            if (!raw) return;
+            // Accept both new TTL format `{pid,ts}` and legacy plain id.
+            // Legacy values are always treated as expired (cleared) so we
+            // never auto-open from stale state left over before this fix.
+            let pid: string | null = null;
+            let ts = 0;
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object' && parsed.pid) {
+                    pid = String(parsed.pid);
+                    ts = Number(parsed.ts) || 0;
+                }
+            } catch {
+                // legacy plain id — treat as expired
+            }
+            const fresh = pid && Date.now() - ts < RESTORE_TTL_MS;
+            if (!fresh) {
+                sessionStorage.removeItem(LISTINGS_TARGET_KEY);
+                return;
+            }
             const found = projects.find(p => p.id === pid);
             if (found && !listingsTarget) setListingsTarget(found);
             else if (!found) sessionStorage.removeItem(LISTINGS_TARGET_KEY);
@@ -2469,15 +2548,36 @@ export function Projects() {
 
     // Step 2 — persist only AFTER restore attempt has completed, so the
     // initial null state cannot wipe a freshly-saved id before we read it.
+    // We write {pid, ts} so the next mount can apply the TTL check above.
     useEffect(() => {
         if (!user?.id || !restoreAttemptedRef.current) return;
         try {
             if (listingsTarget?.id) {
-                sessionStorage.setItem(LISTINGS_TARGET_KEY, listingsTarget.id);
+                sessionStorage.setItem(
+                    LISTINGS_TARGET_KEY,
+                    JSON.stringify({ pid: listingsTarget.id, ts: Date.now() })
+                );
             } else {
                 sessionStorage.removeItem(LISTINGS_TARGET_KEY);
             }
         } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id, listingsTarget?.id]);
+
+    // Refresh the timestamp periodically while the modal is open, so a
+    // brief HMR / chunk reload that takes >10 s still restores correctly.
+    useEffect(() => {
+        if (!user?.id || !listingsTarget?.id) return;
+        const tick = () => {
+            try {
+                sessionStorage.setItem(
+                    LISTINGS_TARGET_KEY,
+                    JSON.stringify({ pid: listingsTarget.id, ts: Date.now() })
+                );
+            } catch {}
+        };
+        const id = window.setInterval(tick, 5_000);
+        return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id, listingsTarget?.id]);
 
