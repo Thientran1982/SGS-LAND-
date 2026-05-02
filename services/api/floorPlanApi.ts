@@ -11,6 +11,15 @@ export interface FloorPlanSummary {
   updatedAt: string;
 }
 
+export interface FloorPlanListingDetail {
+  id: string;
+  code: string;
+  status: string;
+  area: number | null;
+  price: number | null;
+  title: string | null;
+}
+
 export interface FloorPlanDetail {
   plan: FloorPlanSummary;
   codes: string[];
@@ -18,6 +27,8 @@ export interface FloorPlanDetail {
   mapping: Record<string, string>;
   /** listingId → status */
   statuses: Record<string, string>;
+  /** listingId → richer detail used by the hover tooltip (area / price / title) */
+  listings: Record<string, FloorPlanListingDetail>;
   /** codes that have no matching listing in this project (admin-only) */
   unmatchedCodes: string[];
 }

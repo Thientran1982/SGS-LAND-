@@ -2,163 +2,78 @@
  * svgSanitizer.ts
  *
  * Server-side SVG sanitizer + data-code extractor for the Sa bàn (interactive
- * floor plan) feature. Uses cheerio in XML mode (already a project dependency).
+ * floor plan) feature.
  *
- * Sanitization strategy = strict element + attribute whitelist:
- *  - Allowed tags: a hard list of presentational SVG elements only.
- *    Anything else (script, foreignObject, iframe, video, audio, ...) is dropped.
- *  - Allowed attributes: structural + presentational + namespaced (xmlns:*).
- *    `on*` event handlers, `style` declarations containing `expression(`/`url(javascript:)`,
- *    and any attribute whose value starts with `javascript:` or `data:` (except images)
- *    are stripped.
- *  - `<use href|xlink:href>` must reference local fragments (#…) only — external
- *    refs are dropped (prevents SSRF + XXE-like exfil through SVG <use>).
- *  - `data-*` attributes are preserved (we need `data-code` for the mapping).
+ * Implementation: DOMPurify (SVG profile) running on top of a JSDOM window.
+ * DOMPurify is the project standard for HTML/SVG sanitization; using its SVG
+ * profile means we get the same well-audited element/attribute allow-lists
+ * the browser-side sanitization uses, and we benefit from CVE updates without
+ * maintaining a hand-rolled list.
+ *
+ * Hardening on top of DOMPurify:
+ *   - reject empty / oversized input (defense-in-depth — multer also caps).
+ *   - reject DOCTYPE / ENTITY before parsing (XXE).
+ *   - require a root <svg> element.
+ *   - explicitly forbid <foreignObject> and any 'on*' attribute even though
+ *     DOMPurify's SVG profile already does — no harm in saying it twice.
+ *   - extract distinct `data-code` values from the sanitized output (not the
+ *     raw input), guaranteeing what we store matches what we serve.
  */
 
-import * as cheerio from 'cheerio';
+import { JSDOM } from 'jsdom';
+import createDOMPurify from 'dompurify';
 
-// Hard allow-list of SVG elements we accept. Everything else is dropped.
-// Includes the structural + most presentational shape/text/gradient elements.
-// Deliberately excludes: script, foreignObject, iframe, video, audio, animate*,
-// set, switch, image (kept off — disallow embedded raster/external URIs), use
-// is allowed but only with local fragment refs (validated separately).
-const ALLOWED_TAGS = new Set<string>([
-  'svg',
-  'g',
-  'defs',
-  'symbol',
-  'use',
-  'title',
-  'desc',
-  'metadata',
-  'style', // style content is sanitized (CSS only, no @import / expression)
-  'path',
-  'rect',
-  'circle',
-  'ellipse',
-  'line',
-  'polygon',
-  'polyline',
-  'text',
-  'tspan',
-  'textPath',
-  'lineargradient',
-  'radialgradient',
-  'stop',
-  'pattern',
-  'mask',
-  'clippath',
-  'filter',
-  'fegaussianblur',
-  'feoffset',
-  'feblend',
-  'femerge',
-  'femergenode',
-  'fecolormatrix',
-  'fecomposite',
-  'feflood',
-  'marker',
-]);
+const window = new JSDOM('').window as unknown as Window;
+const DOMPurify = createDOMPurify(window as any);
 
-// Attribute allow-list. Anything not in this set is dropped (after lowercasing
-// the attr name). Namespaced xmlns:* attributes are allowed via prefix check.
-const ALLOWED_ATTRS = new Set<string>([
-  // structural
-  'id',
-  'class',
-  'viewbox',
-  'width',
-  'height',
-  'x',
-  'y',
-  'cx',
-  'cy',
-  'r',
-  'rx',
-  'ry',
-  'x1',
-  'y1',
-  'x2',
-  'y2',
-  'd',
-  'points',
-  'preserveaspectratio',
-  'transform',
-  'gradienttransform',
-  'patterntransform',
-  'fx',
-  'fy',
-  'spreadmethod',
-  'gradientunits',
-  'patternunits',
-  'maskunits',
-  'clippathunits',
-  'markerunits',
-  'markerwidth',
-  'markerheight',
-  'orient',
-  'refx',
-  'refy',
-  'href',
-  'xlink:href', // validated separately — must be local fragment
-  // presentational
-  'fill',
-  'fill-opacity',
-  'fill-rule',
-  'stroke',
-  'stroke-width',
-  'stroke-opacity',
-  'stroke-linecap',
-  'stroke-linejoin',
-  'stroke-dasharray',
-  'stroke-dashoffset',
-  'stroke-miterlimit',
-  'opacity',
-  'visibility',
-  'display',
-  'color',
-  'cursor',
-  'pointer-events',
-  'shape-rendering',
-  'text-anchor',
-  'dominant-baseline',
-  'alignment-baseline',
-  'font-family',
-  'font-size',
-  'font-weight',
-  'font-style',
-  'letter-spacing',
-  'word-spacing',
-  'text-decoration',
-  'style',
-  'offset',
-  'stop-color',
-  'stop-opacity',
-  'in',
-  'in2',
-  'result',
-  'mode',
-  'stddeviation',
-  'flood-color',
-  'flood-opacity',
-  'values',
-  'type',
-  // namespacing
-  'version',
-  'xmlns',
-  // accessibility
-  'role',
-  'aria-label',
-  'aria-labelledby',
-  'aria-describedby',
-]);
+// Force the SVG profile + tighten the allow-list further.
+// We KEEP `data-*` attributes (we need `data-code`).
+// We do NOT allow scripts, foreignObject, image, animate*, set, switch — the
+// SVG profile already drops these, but DOMPurify's defaults can be overridden
+// by future config changes; making the deny list explicit guards against that.
+const PURIFY_CONFIG: any = {
+  USE_PROFILES: { svg: true, svgFilters: true },
+  // Explicitly list the tags we forbid even within the SVG profile.
+  FORBID_TAGS: [
+    'foreignObject',
+    'foreignobject',
+    'script',
+    'iframe',
+    'object',
+    'embed',
+    'video',
+    'audio',
+    'image',
+    'animate',
+    'animateMotion',
+    'animateTransform',
+    'set',
+    'handler',
+  ],
+  // Drop event handlers + javascript: URIs.
+  FORBID_ATTR: [
+    'onload',
+    'onclick',
+    'onerror',
+    'onmouseover',
+    'onmouseout',
+    'onmousemove',
+    'onfocus',
+    'onblur',
+    'onkeyup',
+    'onkeydown',
+  ],
+  // Make sure data-* survives the sanitizer.
+  ALLOW_DATA_ATTR: true,
+  // We will inject as inline SVG via dangerouslySetInnerHTML — keep it as XML.
+  RETURN_TRUSTED_TYPE: false,
+};
 
-// CSS-in-style-attr rejection patterns
+// CSS-in-style-attr / <style> rejection patterns (defense-in-depth).
 const DANGEROUS_CSS_RE = /(expression\s*\(|url\s*\(\s*['"]?\s*javascript:|@import|behaviou?r\s*:)/i;
 
 export interface SanitizeResult {
-  /** Sanitized SVG markup (XML serialized). */
+  /** Sanitized SVG markup (XML serialized, includes <svg> root). */
   svg: string;
   /** Distinct `data-code` values found (uppercased + trimmed). */
   codes: string[];
@@ -172,13 +87,13 @@ export interface SanitizeResult {
 
 /**
  * Sanitize SVG markup and extract distinct `data-code` values.
- * Throws if input does not contain a root <svg>.
+ * Throws if input does not contain a root <svg> or violates the structural
+ * pre-checks (empty / too large / DOCTYPE / non-SVG).
  */
 export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
   if (typeof rawSvg !== 'string' || rawSvg.length === 0) {
     throw new Error('SVG_EMPTY');
   }
-  // Cap to 2 MB before parsing (defense-in-depth — multer also caps).
   if (rawSvg.length > 2 * 1024 * 1024) {
     throw new Error('SVG_TOO_LARGE');
   }
@@ -192,98 +107,74 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
     throw new Error('SVG_DOCTYPE_NOT_ALLOWED');
   }
 
-  const $ = cheerio.load(rawSvg, { xmlMode: true });
-
+  // Count what DOMPurify removes for the admin "diff" surface.
   let removedTags = 0;
   let removedAttrs = 0;
   let removedRefs = 0;
+  const onTag = (data: any) => {
+    if (data?.tagName) removedTags += 1;
+  };
+  const onAttr = (data: any) => {
+    if (!data) return;
+    const name = String(data.attrName || '').toLowerCase();
+    if (name === 'href' || name === 'xlink:href') removedRefs += 1;
+    else removedAttrs += 1;
+  };
+  DOMPurify.addHook('uponSanitizeElement', onTag);
+  DOMPurify.addHook('uponSanitizeAttribute', onAttr);
 
-  // Walk every element, drop disallowed tags, sanitize attributes.
-  // Cheerio v1's exported types don't include `Element` directly, but tag
-  // nodes always have `.name` and `.attribs`. We cast to a structural type.
-  type CheerioTagEl = { type: string; name?: string; attribs?: Record<string, string> };
-  $('*').each((_i, el) => {
-    if ((el as CheerioTagEl).type !== 'tag') return;
-    const tagName = String((el as CheerioTagEl).name || '').toLowerCase();
+  let sanitized: string;
+  try {
+    // DOMPurify returns the inner HTML of the sanitized fragment as a string.
+    sanitized = DOMPurify.sanitize(rawSvg, PURIFY_CONFIG) as unknown as string;
+  } finally {
+    DOMPurify.removeHook('uponSanitizeElement');
+    DOMPurify.removeHook('uponSanitizeAttribute');
+  }
 
-    if (!ALLOWED_TAGS.has(tagName)) {
-      $(el).remove();
-      removedTags += 1;
-      return;
-    }
+  if (!sanitized || !sanitized.toLowerCase().includes('<svg')) {
+    throw new Error('SVG_INVALID_ROOT');
+  }
 
-    const attribs = (el as CheerioTagEl).attribs || {};
-    for (const rawName of Object.keys(attribs)) {
-      const name = rawName.toLowerCase();
-      const val = attribs[rawName];
+  // Re-parse the sanitized output so we (a) extract data-codes from the
+  // bytes we will actually serve, and (b) can scrub <style> blocks and any
+  // dangerous-looking style attribute values DOMPurify may have allowed.
+  const doc = new (window as any).DOMParser().parseFromString(sanitized, 'image/svg+xml');
+  const root = doc.documentElement;
+  if (!root || root.nodeName.toLowerCase() === 'parsererror') {
+    throw new Error('SVG_INVALID_ROOT');
+  }
 
-      // Always drop event handlers
-      if (name.startsWith('on')) {
-        $(el).removeAttr(rawName);
-        removedAttrs += 1;
-        continue;
-      }
-      // Allow xmlns:* namespacing
-      if (name.startsWith('xmlns:')) continue;
-      // Preserve data-* (we need data-code, and other data-* are inert).
-      if (name.startsWith('data-')) continue;
-
-      if (!ALLOWED_ATTRS.has(name)) {
-        $(el).removeAttr(rawName);
-        removedAttrs += 1;
-        continue;
-      }
-
-      // href / xlink:href: only allow local fragment refs (#foo)
-      if (name === 'href' || name === 'xlink:href') {
-        const trimmed = (val ?? '').trim();
-        if (!trimmed.startsWith('#')) {
-          $(el).removeAttr(rawName);
-          removedRefs += 1;
-        }
-        continue;
-      }
-
-      // style attribute: reject anything with expression() / javascript: / @import
-      if (name === 'style' && val && DANGEROUS_CSS_RE.test(val)) {
-        $(el).removeAttr(rawName);
-        removedAttrs += 1;
-        continue;
-      }
-
-      // Generic javascript:/vbscript: in any other attribute
-      if (val && /^\s*(javascript|vbscript|data):/i.test(val)) {
-        $(el).removeAttr(rawName);
-        removedAttrs += 1;
-      }
-    }
-  });
-
-  // Sanitize <style> text content
-  $('style').each((_i, el) => {
-    const txt = $(el).text() || '';
-    if (DANGEROUS_CSS_RE.test(txt)) {
-      $(el).text(''); // wipe rather than remove (keeps structure)
+  // Strip dangerous <style> bodies + style="…" attributes (defense-in-depth
+  // for CSS-side XSS like url(javascript:)).
+  const styleNodes = doc.getElementsByTagName('style');
+  for (let i = 0; i < styleNodes.length; i++) {
+    const s = styleNodes[i];
+    if (s.textContent && DANGEROUS_CSS_RE.test(s.textContent)) {
+      s.textContent = '';
       removedAttrs += 1;
     }
-  });
-
-  // Extract distinct data-code values (case-insensitive uniqueness).
+  }
+  const all = doc.getElementsByTagName('*');
   const codeSet = new Set<string>();
-  $('[data-code]').each((_i, el) => {
-    const v = $(el).attr('data-code');
-    if (typeof v === 'string') {
-      const norm = v.trim().toUpperCase();
-      if (norm.length > 0 && norm.length <= 64) {
-        codeSet.add(norm);
-      }
+  for (let i = 0; i < all.length; i++) {
+    const el = all[i] as any;
+    const styleVal = el.getAttribute && el.getAttribute('style');
+    if (styleVal && DANGEROUS_CSS_RE.test(styleVal)) {
+      el.removeAttribute('style');
+      removedAttrs += 1;
     }
-  });
+    const code = el.getAttribute && el.getAttribute('data-code');
+    if (typeof code === 'string') {
+      const norm = code.trim().toUpperCase();
+      if (norm.length > 0 && norm.length <= 64) codeSet.add(norm);
+    }
+  }
 
-  const sanitized = $.xml();
+  const finalSvg = new (window as any).XMLSerializer().serializeToString(root);
 
   return {
-    svg: sanitized,
+    svg: finalSvg,
     codes: Array.from(codeSet).sort(),
     removed: { tags: removedTags, attrs: removedAttrs, refs: removedRefs },
   };

@@ -19,7 +19,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { floorPlanApi, FloorPlanDetail } from '../services/api/floorPlanApi';
+import { floorPlanApi, FloorPlanDetail, FloorPlanListingDetail } from '../services/api/floorPlanApi';
 
 export interface FloorPlanRendererProps {
   projectId: string;
@@ -34,29 +34,41 @@ export interface FloorPlanRendererProps {
   t?: (k: string) => string;
 }
 
-// status → Tailwind-equivalent fill colors. Kept inline so we don't depend on
-// the parent's STATUS_LISTING_COLOR (which uses Tailwind classes that won't
-// apply to inline SVG fill).
+// status → fill colors per Task #26 spec.
+//   AVAILABLE = green, BOOKING = yellow, SOLD = red, OPENING = purple,
+//   INACTIVE = gray. HOLD/RENTED keep amber/violet (consistent with the
+//   listing status pills in Projects.tsx).
 const STATUS_FILL: Record<string, string> = {
-  AVAILABLE: '#10b981', // emerald-500
-  BOOKING:   '#0ea5e9', // sky-500
+  AVAILABLE: '#10b981', // emerald-500 (green)
+  BOOKING:   '#eab308', // yellow-500
   HOLD:      '#f59e0b', // amber-500
-  SOLD:      '#94a3b8', // slate-400
+  SOLD:      '#ef4444', // red-500
   RENTED:    '#a855f7', // violet-500
-  OPENING:   '#6366f1', // indigo-500
-  INACTIVE:  '#f43f5e', // rose-500
+  OPENING:   '#9333ea', // purple-600
+  INACTIVE:  '#94a3b8', // slate-400 (gray)
 };
 const STATUS_STROKE: Record<string, string> = {
   AVAILABLE: '#047857',
-  BOOKING:   '#0369a1',
+  BOOKING:   '#a16207',
   HOLD:      '#b45309',
-  SOLD:      '#475569',
+  SOLD:      '#b91c1c',
   RENTED:    '#7e22ce',
-  OPENING:   '#4338ca',
-  INACTIVE:  '#be123c',
+  OPENING:   '#6b21a8',
+  INACTIVE:  '#475569',
 };
 const UNMAPPED_FILL = '#e2e8f0';
 const UNMAPPED_STROKE = '#94a3b8';
+
+function fmtArea(a: number | null | undefined): string {
+  if (a == null || !isFinite(a) || a <= 0) return '—';
+  return `${a.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} m²`;
+}
+function fmtPriceShort(p: number | null | undefined): string {
+  if (p == null || !isFinite(p) || p <= 0) return '—';
+  if (p >= 1_000_000_000) return `${(p / 1_000_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} tỷ`;
+  if (p >= 1_000_000) return `${(p / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr`;
+  return p.toLocaleString('vi-VN');
+}
 
 const tDefault = (k: string) => k;
 
@@ -72,7 +84,14 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
   const [svgMarkup, setSvgMarkup] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<{ code: string; listingId: string | null; status: string | null } | null>(null);
+  const [hovered, setHovered] = useState<{
+    code: string;
+    listingId: string | null;
+    status: string | null;
+    area: number | null;
+    price: number | null;
+    title: string | null;
+  } | null>(null);
 
   // Pan/zoom transform state
   const [scale, setScale] = useState(1);
@@ -215,7 +234,17 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       const code = (el.getAttribute('data-code') || '').trim().toUpperCase();
       const listingId = detail.mapping[code] || null;
       const status = listingId ? detail.statuses[listingId] : null;
-      setHovered({ code, listingId, status });
+      const lDetail: FloorPlanListingDetail | undefined = listingId
+        ? detail.listings?.[listingId]
+        : undefined;
+      setHovered({
+        code,
+        listingId,
+        status,
+        area: lDetail?.area ?? null,
+        price: lDetail?.price ?? null,
+        title: lDetail?.title ?? null,
+      });
     };
 
     const handleLeave = () => setHovered(null);
@@ -392,15 +421,32 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
           />
         )}
 
-        {/* Hover badge */}
+        {/* Hover badge — code + status + area + price (Task #26 spec) */}
         {hovered && (
-          <div className="pointer-events-none absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-semibold shadow-lg">
-            <span className="font-mono">{hovered.code}</span>
-            {hovered.status && (
-              <span className="ml-2 opacity-80">{t(`status.${hovered.status}`) || hovered.status}</span>
-            )}
-            {!hovered.listingId && (
-              <span className="ml-2 opacity-80">— {t('floorplan.no_listing') || 'chưa có listing'}</span>
+          <div className="pointer-events-none absolute bottom-3 left-3 px-3 py-2 rounded-lg bg-black/85 text-white text-xs font-semibold shadow-lg max-w-[260px]">
+            <div className="flex items-center gap-2">
+              <span className="font-mono">{hovered.code}</span>
+              {hovered.status && (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                  style={{
+                    background: STATUS_FILL[hovered.status] || '#64748b',
+                    color: '#fff',
+                  }}
+                >
+                  {t(`status.${hovered.status}`) || hovered.status}
+                </span>
+              )}
+            </div>
+            {hovered.listingId ? (
+              <div className="mt-1 flex items-center gap-3 text-[11px] opacity-90">
+                <span>{t('floorplan.area') || 'DT'}: <span className="font-bold">{fmtArea(hovered.area)}</span></span>
+                <span>{t('floorplan.price') || 'Giá'}: <span className="font-bold">{fmtPriceShort(hovered.price)}</span></span>
+              </div>
+            ) : (
+              <div className="mt-1 text-[11px] opacity-80">
+                {t('floorplan.no_listing') || 'chưa có listing'}
+              </div>
             )}
           </div>
         )}

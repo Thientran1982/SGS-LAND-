@@ -79,6 +79,9 @@ interface ListingLite {
   status: string;
   tower?: string | null;
   floor?: string | null;
+  area?: number | null;
+  price?: number | null;
+  title?: string | null;
 }
 
 /**
@@ -107,14 +110,26 @@ async function fetchProjectListings(
       { page: 1, pageSize: 5000 },
       filters,
     );
+    // STRICT scoping: only keep rows whose project_id OR project_code matches
+    // this project. (`|| projectCode` is intentionally NOT used — that would
+    // make the predicate always true whenever projectCode is present.)
     return (result.data || [])
-      .filter((l: any) => l.project_id === projectId || l.projectId === projectId || projectCode)
+      .filter((l: any) => {
+        const lProjectId = l.project_id || l.projectId;
+        const lProjectCode = l.project_code || l.projectCode;
+        if (lProjectId && lProjectId === projectId) return true;
+        if (projectCode && lProjectCode && String(lProjectCode) === String(projectCode)) return true;
+        return false;
+      })
       .map((l: any) => ({
         id: l.id,
         code: String(l.code || '').toUpperCase(),
         status: l.status,
         tower: l.attributes?.tower ?? null,
         floor: l.attributes?.floor != null ? String(l.attributes.floor) : null,
+        area: typeof l.area === 'number' ? l.area : (l.area != null ? Number(l.area) : null),
+        price: typeof l.price === 'number' ? l.price : (l.price != null ? Number(l.price) : null),
+        title: l.title ?? null,
       }));
   }
   return projectFloorPlanRepository.findOwnerListingsForProject(user.tenantId, projectId);
@@ -124,12 +139,22 @@ async function fetchProjectListings(
  * Build the data-code → listingId map for a plan.
  * `parsedCodes` are already uppercased + trimmed by the sanitizer.
  */
+interface ListingDetailLite {
+  id: string;
+  code: string;
+  status: string;
+  area: number | null;
+  price: number | null;
+  title: string | null;
+}
+
 function buildMapping(
   parsedCodes: string[],
   listings: ListingLite[],
 ): {
   mapping: Record<string, string>;
   statuses: Record<string, string>;
+  listings: Record<string, ListingDetailLite>;
   unmatchedCodes: string[];
   matchedListingIds: string[];
 } {
@@ -139,6 +164,7 @@ function buildMapping(
   }
   const mapping: Record<string, string> = {};
   const statuses: Record<string, string> = {};
+  const detailMap: Record<string, ListingDetailLite> = {};
   const matchedIds: string[] = [];
   const unmatched: string[] = [];
   for (const code of parsedCodes) {
@@ -146,12 +172,20 @@ function buildMapping(
     if (l) {
       mapping[code] = l.id;
       statuses[l.id] = l.status;
+      detailMap[l.id] = {
+        id: l.id,
+        code: l.code,
+        status: l.status,
+        area: l.area ?? null,
+        price: l.price ?? null,
+        title: l.title ?? null,
+      };
       matchedIds.push(l.id);
     } else {
       unmatched.push(code);
     }
   }
-  return { mapping, statuses, unmatchedCodes: unmatched, matchedListingIds: matchedIds };
+  return { mapping, statuses, listings: detailMap, unmatchedCodes: unmatched, matchedListingIds: matchedIds };
 }
 
 /**
@@ -331,7 +365,7 @@ export function registerFloorPlanRoutes(router: Router, authenticateToken: any) 
 
         const codes = Array.isArray(row.parsed_codes) ? (row.parsed_codes as string[]) : [];
         const listings = await fetchProjectListings(user, projectId, access.isPartner);
-        const { mapping, statuses, unmatchedCodes } = buildMapping(codes, listings);
+        const { mapping, statuses, listings: listingDetail, unmatchedCodes } = buildMapping(codes, listings);
 
         res.json({
           plan: {
@@ -347,6 +381,7 @@ export function registerFloorPlanRoutes(router: Router, authenticateToken: any) 
           codes,
           mapping,
           statuses,
+          listings: listingDetail,
           unmatchedCodes: access.isPartner ? [] : unmatchedCodes,
         });
       } catch (err) {
