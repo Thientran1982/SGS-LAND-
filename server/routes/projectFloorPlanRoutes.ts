@@ -27,7 +27,8 @@ import { projectFloorPlanRepository } from '../repositories/projectFloorPlanRepo
 import { projectRepository } from '../repositories/projectRepository';
 import { listingRepository } from '../repositories/listingRepository';
 import { sanitizeAndParseSvg } from '../services/svgSanitizer';
-import { storeFile, getFileBuffer, deleteFile } from '../services/storageService';
+// listingRepository imported only for partner path (findListingsForPartner).
+import { storeFile, getFile, deleteFile } from '../services/storageService';
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
 const MUTATE_ROLES = [...ADMIN_ROLES, 'TEAM_LEAD'];
@@ -100,19 +101,7 @@ async function fetchProjectListings(
       floor: l.attributes?.floor != null ? String(l.attributes.floor) : null,
     }));
   }
-  const result = await listingRepository.findListings(
-    user.tenantId,
-    { page: 1, pageSize: 5000 },
-    { projectId },
-    { userId: user.userId, userRole: user.role },
-  );
-  return (result.data || []).map((l: any) => ({
-    id: l.id,
-    code: String(l.code || '').toUpperCase(),
-    status: l.status,
-    tower: l.attributes?.tower ?? null,
-    floor: l.attributes?.floor != null ? String(l.attributes.floor) : null,
-  }));
+  return projectFloorPlanRepository.findOwnerListingsForProject(user.tenantId, projectId);
 }
 
 /**
@@ -399,7 +388,7 @@ export function registerFloorPlanRoutes(router: Router, authenticateToken: any) 
         if (!row || row.project_id !== projectId)
           return res.status(404).json({ error: 'Không tìm thấy sa bàn' });
 
-        const fileRow = await getFileBuffer(user.tenantId, row.svg_filename);
+        const fileRow = await getFile(user.tenantId, row.svg_filename);
         if (!fileRow) return res.status(404).json({ error: 'File SVG không tồn tại' });
 
         // Re-sanitize on serve — defense-in-depth in case stored bytes were
