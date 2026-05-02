@@ -1,7 +1,10 @@
 /**
  * In-memory cache cho public project microsite payload.
  *
- * - TTL 5 phút (đáp ứng yêu cầu spec: server-side cache 5min).
+ * - TTL 25s — đáp ứng SLA "branding mới có hiệu lực < 30s" (task #28). Trước
+ *   đây để 5 phút khiến CĐT cập nhật logo/màu xong vẫn thấy bản cũ tới 5 phút
+ *   sau khi cache hết hạn (ngoài evict thủ công). Vì payload nhẹ và cache hit
+ *   rate trong 25s vẫn rất cao, hạ TTL xuống không ảnh hưởng đáng kể tới DB.
  * - Key gồm `${tenantId}|${code}` để tách rõ branding của từng CĐT — không leak
  *   payload tenant này sang tenant khác khi 2 tenant cùng có project trùng code
  *   (ví dụ "MCC"). `tenantId = "*"` là bucket mặc định khi truy cập từ apex
@@ -14,7 +17,7 @@
  *   bằng TTL ngắn + best-effort evict; multi-instance cần Redis-backed cache.
  */
 
-const TTL_MS = 5 * 60 * 1000;
+const TTL_MS = 25 * 1000;
 const MAX_ENTRIES = 500;
 
 interface Entry {
