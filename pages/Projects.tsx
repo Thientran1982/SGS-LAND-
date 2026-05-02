@@ -7,6 +7,9 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ListingForm } from '../components/ListingForm';
 import { ContractModal } from '../components/ContractModal';
+import FloorPlanRenderer from '../components/FloorPlanRenderer';
+import FloorPlanManagerModal from '../components/FloorPlanManagerModal';
+import { floorPlanApi, FloorPlanSummary } from '../services/api/floorPlanApi';
 import LazyImage from '../components/LazyImage';
 import { NO_IMAGE_URL } from '../utils/constants';
 import {
@@ -1660,6 +1663,49 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
     const [loadError, setLoadError] = useState<string | null>(null);
 
+    // ── Sa bàn (interactive floor plan) ──────────────────────────────────────
+    // viewMode toggles between list ('list') and the SVG site map ('floorplan').
+    // floorPlans is loaded lazily on first switch / on admin manager close.
+    const [viewMode, setViewMode] = useState<'list' | 'floorplan'>('list');
+    const [floorPlans, setFloorPlans] = useState<FloorPlanSummary[]>([]);
+    const [floorPlansLoaded, setFloorPlansLoaded] = useState(false);
+    const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+    const [showFloorPlanManager, setShowFloorPlanManager] = useState(false);
+
+    const loadFloorPlans = useCallback(async () => {
+        if (!project?.id) return;
+        try {
+            const list = await floorPlanApi.list(project.id);
+            setFloorPlans(list);
+            setFloorPlansLoaded(true);
+            // Default-select the first plan if none picked yet
+            setSelectedPlanId(prev => prev && list.some(p => p.id === prev) ? prev : (list[0]?.id ?? null));
+        } catch {
+            setFloorPlansLoaded(true);
+        }
+    }, [project?.id]);
+
+    useEffect(() => {
+        // Lazy-load floor plans the first time the user switches to the Sa bàn view.
+        if (viewMode === 'floorplan' && !floorPlansLoaded) loadFloorPlans();
+    }, [viewMode, floorPlansLoaded, loadFloorPlans]);
+
+    // When a floor plan path is clicked, open the same ListingDetailPanel the
+    // list view uses — keeps UX consistent.
+    const handleFloorPlanSelect = useCallback(async (listingId: string) => {
+        try {
+            const found = listings.find(l => l.id === listingId);
+            if (found) {
+                setDetailListing(found as any);
+                return;
+            }
+            const fetched = await db.getListingById(listingId);
+            if (fetched) setDetailListing(fetched as any);
+        } catch (e) {
+            console.error('Failed to load listing from floor plan:', e);
+        }
+    }, [listings]);
+
     // Report listings-load failures to the server so we have telemetry the
     // next time a user reports a blank/empty panel. Previously we silently
     // swallowed these (`.catch(() => {})`) which is exactly why the
@@ -2109,6 +2155,20 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         <span className="hidden md:inline text-xs">{t('project.bulk_images_btn')}</span>
                                     </button>
                                 )}
+                                {/* Sa bàn admin manager — SUPER_ADMIN/ADMIN/TEAM_LEAD only.
+                                    isAdmin in this scope is true for those roles. */}
+                                {isAdmin && (
+                                    <button type="button"
+                                        onClick={() => setShowFloorPlanManager(true)}
+                                        className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                        title={t('floorplan.manage_btn') || 'Quản lý sa bàn'}
+                                        aria-label={t('floorplan.manage_btn') || 'Quản lý sa bàn'}>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.553 2.776A1 1 0 0021 18.882V8.118a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                        <span className="hidden md:inline text-xs">{t('floorplan.manage_btn') || 'Sa bàn'}</span>
+                                    </button>
+                                )}
                                 {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
@@ -2147,6 +2207,45 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 
                         {/* Search + bulk toolbar */}
                         <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
+                            {/* View mode toggle: List vs. Sa bàn (interactive floor plan).
+                                Always rendered so users can preview the SVG without admin perms. */}
+                            <div className="inline-flex items-center rounded-xl border border-[var(--glass-border)] bg-[var(--bg-app)] p-0.5 h-[36px]">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('list')}
+                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                    aria-pressed={viewMode === 'list'}
+                                >
+                                    {t('floorplan.view_list') || 'Danh sách'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('floorplan')}
+                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${viewMode === 'floorplan' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                    aria-pressed={viewMode === 'floorplan'}
+                                    title={t('floorplan.view_floorplan') || 'Sa bàn tương tác'}
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.553 2.776A1 1 0 0021 18.882V8.118a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                    </svg>
+                                    {t('floorplan.view_floorplan') || 'Sa bàn'}
+                                </button>
+                            </div>
+
+                            {/* Plan picker — only when there are multiple plans */}
+                            {viewMode === 'floorplan' && floorPlans.length > 1 && (
+                                <Dropdown
+                                    value={selectedPlanId || ''}
+                                    onChange={v => setSelectedPlanId(v as string)}
+                                    placeholder={t('floorplan.select_plan') || 'Chọn sa bàn'}
+                                    className="h-[36px] min-w-[180px]"
+                                    options={floorPlans.map(p => ({
+                                        value: p.id,
+                                        label: `${(t('inventory.label_tower') || 'Tháp')} ${p.tower} · ${(t('inventory.label_floor') || 'Tầng')} ${p.floor}`,
+                                    }))}
+                                />
+                            )}
+
                             <div className="relative flex-1 min-w-[180px] max-w-sm">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">{IC.SEARCH}</span>
                                 <input
