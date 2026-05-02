@@ -1501,17 +1501,39 @@ function BulkImageUploadModal({
                                         .replace('{err}', String(summary.errors))}
                                 </div>
                             </div>
-                            {/* Per-file failures (only if any) */}
-                            {result.results.some(r => r.status !== 'uploaded') && (
-                                <ul className="max-h-48 overflow-y-auto no-scrollbar text-xs border border-[var(--glass-border)] rounded-xl divide-y divide-[var(--glass-border)]">
-                                    {result.results.filter(r => r.status !== 'uploaded').map((r, i) => (
-                                        <li key={i} className="px-3 py-1.5 flex items-center gap-2">
-                                            <span className="font-mono text-[var(--text-secondary)] truncate flex-1" title={r.filename}>{r.filename}</span>
-                                            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-amber-600">
-                                                {r.status.replace(/_/g, ' ')}
-                                            </span>
-                                        </li>
-                                    ))}
+                            {/* Per-file results — shows every file with status badge,
+                                listing-code (when matched), and error message (when failed). */}
+                            {result.results.length > 0 && (
+                                <ul className="max-h-64 overflow-y-auto no-scrollbar text-xs border border-[var(--glass-border)] rounded-xl divide-y divide-[var(--glass-border)]">
+                                    {result.results.map((r, i) => {
+                                        const ok = r.status === 'uploaded';
+                                        const badgeCls = ok
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : r.status === 'no_match' || r.status === 'no_permission'
+                                                ? 'bg-amber-100 text-amber-700'
+                                                : 'bg-rose-100 text-rose-700';
+                                        return (
+                                            <li key={i} className="px-3 py-1.5 flex flex-col gap-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] ${ok ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                                        {ok ? '✓' : '✗'}
+                                                    </span>
+                                                    <span className="font-mono text-[var(--text-primary)] truncate flex-1" title={r.filename}>{r.filename}</span>
+                                                    {r.listingCode && (
+                                                        <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] font-mono text-[10px]">
+                                                            {r.listingCode}
+                                                        </span>
+                                                    )}
+                                                    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${badgeCls}`}>
+                                                        {String(r.status).replace(/_/g, ' ')}
+                                                    </span>
+                                                </div>
+                                                {r.error && (
+                                                    <div className="pl-6 text-[11px] text-rose-600/90" title={r.error}>{r.error}</div>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             )}
                         </div>
