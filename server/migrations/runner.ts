@@ -102,6 +102,8 @@ import m081 from './081_project_floor_plans';
 import m082 from './082_commission_engine';
 import m083 from './083_tenant_branding';
 import m084 from './084_tenant_custom_domain_health';
+import m085 from './085_departments_dedupe_unique_and_backfill';
+import m086 from './086_task_reminders_cron_columns';
 
 dotenv.config();
 
@@ -200,6 +202,8 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '082_commission_engine.ts': m082,
   '083_tenant_branding.ts': m083,
   '084_tenant_custom_domain_health.ts': m084,
+  '085_departments_dedupe_unique_and_backfill.ts': m085,
+  '086_task_reminders_cron_columns.ts': m086,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

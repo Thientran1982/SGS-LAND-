@@ -58,6 +58,7 @@ import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes
 import { createEngagementCronRouter } from "./server/routes/engagementCronRoutes";
 import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
+import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
@@ -635,6 +636,26 @@ async function startServer() {
                  RETURNING id, name, email`,
                 [trimmedName, trimmedEmail, passwordHash, phone?.trim() || null, tokenHash, tokenExpires]
               );
+
+              // 3f) Seed 6 default departments cho tenant mới — phục vụ Task Management.
+              //     ON CONFLICT (tenant_id, name) DO NOTHING (UNIQUE từ migration 085)
+              //     đảm bảo idempotent nếu retry trong cùng transaction.
+              const DEFAULT_DEPARTMENTS_NEW_TENANT: Array<{ name: string; description: string }> = [
+                { name: 'Kinh doanh',               description: 'Phòng kinh doanh và bán hàng' },
+                { name: 'Pháp lý & Hợp đồng',       description: 'Phòng pháp lý và soạn thảo hợp đồng' },
+                { name: 'Marketing & Truyền thông', description: 'Phòng marketing và truyền thông' },
+                { name: 'Kỹ thuật & Thẩm định',     description: 'Phòng kỹ thuật và thẩm định dự án' },
+                { name: 'Chăm sóc Khách hàng',      description: 'Phòng chăm sóc khách hàng' },
+                { name: 'Ban Giám đốc',             description: 'Ban giám đốc điều hành' },
+              ];
+              for (const dept of DEFAULT_DEPARTMENTS_NEW_TENANT) {
+                await client.query(
+                  `INSERT INTO departments (tenant_id, name, description)
+                   VALUES ($1, $2, $3)
+                   ON CONFLICT (tenant_id, name) DO NOTHING`,
+                  [newTenantId, dept.name, dept.description]
+                );
+              }
 
               await client.query('COMMIT');
               return {
@@ -3577,6 +3598,17 @@ async function startServer() {
   }
 
   // ---------------------------------------------------------------------------
+  // Task Reminder Cron — gọi từ QStash mỗi giờ; gửi notification D-1 / D-DAY / OVERDUE
+  // ---------------------------------------------------------------------------
+  {
+    const taskReminderSecret =
+      process.env.TASK_REMINDER_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createTaskReminderCronRouter(pool, taskReminderSecret));
+  }
+
+  // ---------------------------------------------------------------------------
   // Module Chiến dịch tự động — Campaigns
   // ---------------------------------------------------------------------------
   app.use(createCampaignRouter(pool, authenticateToken));
@@ -4274,6 +4306,45 @@ async function startServer() {
         }
       } catch (e: any) {
         logger.warn('[PriceRefresh] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+
+      // ── Task Reminder Cron — mỗi giờ (phút :05) ───────────────────────────
+      try {
+        const taskReminderSecret =
+          process.env.TASK_REMINDER_CRON_SECRET ||
+          process.env.JWT_SECRET?.slice(0, 32) ||
+          '';
+        const devDomain5  = process.env.REPLIT_DEV_DOMAIN;
+        const prodDomain5 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
+        const appDomain5  = prodDomain5 || devDomain5;
+
+        if (appDomain5 && taskReminderSecret) {
+          const trScheduleId  = 'task-reminder-hourly';
+          const trScheduleUrl = `https://${appDomain5}/api/internal/task-reminder-cron`;
+          const trQstashEp    = `https://qstash.upstash.io/v2/schedules/${trScheduleId}`;
+          const trBody        = JSON.stringify({ secret: taskReminderSecret });
+
+          const trResp = await fetch(trQstashEp, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': trScheduleUrl,
+              'Upstash-Cron': '5 * * * *', // mỗi giờ phút :05
+              'Upstash-Method': 'POST',
+            },
+            body: trBody,
+          });
+
+          if (trResp.ok) {
+            logger.info('[TaskReminderCron] Đã đăng ký QStash hourly schedule — chạy mỗi giờ phút :05');
+          } else {
+            const errText = await trResp.text();
+            logger.warn(`[TaskReminderCron] Không thể đăng ký QStash schedule: ${trResp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[TaskReminderCron] Lỗi khi đăng ký QStash schedule:', e.message);
       }
     }
   });
