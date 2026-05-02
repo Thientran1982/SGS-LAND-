@@ -1186,14 +1186,24 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const overlayRef = useRef<HTMLDivElement | null>(null);
     const panelRef = useRef<HTMLDivElement | null>(null);
 
-    // One-shot visibility diagnostic — captures the panel's actual computed
-    // style + bounding rect once after mount and posts it to /api/_client_error.
-    // This is the only way to get ground truth from a user reporting "trắng
-    // trang" because the bug is purely visual (no JS error, data loads OK).
-    // Triggers exactly once per panel open. Safe in prod: ~1 KB JSON, no PII.
+    // Live state refs — let the diagnostic effect read fresh listings/loading/
+    // loadError values without re-firing on every state change.
+    const listingsRef = useRef(listings);
+    const loadingRef = useRef(loading);
+    const loadErrorRef = useRef(loadError);
+    useEffect(() => { listingsRef.current = listings; }, [listings]);
+    useEffect(() => { loadingRef.current = loading; }, [loading]);
+    useEffect(() => { loadErrorRef.current = loadError; }, [loadError]);
+
+    // Multi-time visibility diagnostic — captures the panel's computed style
+    // + bounding rect + LIST AREA row count at three time points (500ms, 2s,
+    // 5s) after mount and posts each to /api/_client_error. The 5s sample is
+    // the key one for the new "rows appear then disappear" sub-bug: if the
+    // table briefly renders rows then loses them, the 500ms sample shows
+    // them present and the 5s sample shows rowCount=0.
     useEffect(() => {
         if (typeof window === 'undefined') return;
-        const t1 = window.setTimeout(() => {
+        const sample = (label: 'early' | 'settled' | 'late') => {
             try {
                 const el = panelRef.current;
                 const overlay = overlayRef.current;
@@ -1203,7 +1213,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             where: 'ProjectListingsPanel.visibility',
-                            message: 'panel ref is null after mount',
+                            message: `panel ref is null at ${label} sample`,
                             projectCode: project?.code ?? null,
                             href: window.location.href,
                             ua: navigator.userAgent,
@@ -1219,7 +1229,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 const overlayRect = overlay?.getBoundingClientRect() ?? null;
                 const rootCs = window.getComputedStyle(document.documentElement);
                 const htmlClasses = document.documentElement.className;
-                // Count topmost siblings of the overlay that could be covering us.
                 const portals = Array.from(document.body.children)
                     .filter(c => {
                         const s = window.getComputedStyle(c as Element);
@@ -1232,44 +1241,83 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         cls: (c as HTMLElement).className?.slice?.(0, 120) ?? null,
                         z: window.getComputedStyle(c as Element).zIndex,
                     }));
+                // Inspect the LIST AREA (middle grid row) and the table inside.
+                const tableEl = el.querySelector('[role="table"]') as HTMLElement | null;
+                const allRows = el.querySelectorAll('[role="row"]');
+                // Subtract 1 for the header row (only present when filtered.length > 0).
+                const dataRowCount = Math.max(0, allRows.length - (tableEl ? 1 : 0));
+                const listAreaEl = el.children[1] as HTMLElement | undefined; // grid order: header / list / footer
+                const listAreaRect = listAreaEl?.getBoundingClientRect() ?? null;
+                const listAreaCs = listAreaEl ? window.getComputedStyle(listAreaEl) : null;
+                // Inspect first row visibility (proves rows actually paint).
+                const firstRow = tableEl?.querySelector('[role="row"]:nth-of-type(2)') as HTMLElement | null;
+                const firstRowRect = firstRow?.getBoundingClientRect() ?? null;
+                const firstRowCs = firstRow ? window.getComputedStyle(firstRow) : null;
                 fetch('/api/_client_error', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        where: 'ProjectListingsPanel.visibility',
-                        message: 'panel mount visibility snapshot',
+                        where: `ProjectListingsPanel.visibility.${label}`,
+                        message: `panel ${label} sample`,
                         projectCode: project?.code ?? null,
                         href: window.location.href,
                         ua: navigator.userAgent,
                         ts: Date.now(),
                         snapshot: {
+                            sample: label,
                             htmlClasses,
                             cssVars: {
                                 bgSurface: rootCs.getPropertyValue('--bg-surface').trim(),
                                 bgApp: rootCs.getPropertyValue('--bg-app').trim(),
                                 textPrimary: rootCs.getPropertyValue('--text-primary').trim(),
-                                glassBorder: rootCs.getPropertyValue('--glass-border').trim(),
                             },
+                            // React state at sample time.
+                            state: {
+                                loading: loadingRef.current,
+                                listingsLen: listingsRef.current.length,
+                                loadError: loadErrorRef.current ? String(loadErrorRef.current).slice(0, 200) : null,
+                            },
+                            // Outer panel.
                             panel: {
                                 bg: cs.backgroundColor,
-                                color: cs.color,
-                                display: cs.display,
                                 visibility: cs.visibility,
                                 opacity: cs.opacity,
-                                zIndex: cs.zIndex,
-                                position: cs.position,
                                 width: rect.width,
                                 height: rect.height,
                                 top: rect.top,
                                 left: rect.left,
                                 childCount: el.childElementCount,
                             },
+                            // List area (middle grid row) — where rows render.
+                            listArea: listAreaEl && listAreaRect && listAreaCs ? {
+                                bg: listAreaCs.backgroundColor,
+                                visibility: listAreaCs.visibility,
+                                opacity: listAreaCs.opacity,
+                                overflow: listAreaCs.overflow,
+                                display: listAreaCs.display,
+                                width: listAreaRect.width,
+                                height: listAreaRect.height,
+                                scrollHeight: listAreaEl.scrollHeight,
+                                childCount: listAreaEl.childElementCount,
+                                innerText: (listAreaEl.innerText || '').slice(0, 80),
+                            } : null,
+                            // Row count (data rows only, excluding header).
+                            tableExists: !!tableEl,
+                            dataRowCount,
+                            firstRow: firstRow && firstRowRect && firstRowCs ? {
+                                bg: firstRowCs.backgroundColor,
+                                color: firstRowCs.color,
+                                visibility: firstRowCs.visibility,
+                                opacity: firstRowCs.opacity,
+                                display: firstRowCs.display,
+                                width: firstRowRect.width,
+                                height: firstRowRect.height,
+                                top: firstRowRect.top,
+                            } : null,
                             overlay: overlayCs && overlayRect ? {
                                 bg: overlayCs.backgroundColor,
                                 width: overlayRect.width,
                                 height: overlayRect.height,
-                                zIndex: overlayCs.zIndex,
-                                display: overlayCs.display,
                             } : null,
                             highZSiblings: portals,
                             viewportW: window.innerWidth,
@@ -1279,8 +1327,15 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     keepalive: true,
                 }).catch(() => {});
             } catch {}
-        }, 1500);
-        return () => window.clearTimeout(t1);
+        };
+        const tEarly   = window.setTimeout(() => sample('early'),    500);
+        const tSettled = window.setTimeout(() => sample('settled'),  2000);
+        const tLate    = window.setTimeout(() => sample('late'),     5000);
+        return () => {
+            window.clearTimeout(tEarly);
+            window.clearTimeout(tSettled);
+            window.clearTimeout(tLate);
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [project?.code]);
 
