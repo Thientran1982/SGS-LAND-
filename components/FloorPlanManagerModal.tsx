@@ -236,6 +236,23 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
                 <p className="font-bold text-emerald-700 dark:text-emerald-300">
                   ✓ {t('floorplan.upload_ok') || 'Đã lưu sa bàn'} · {uploadResult.codes.length} {t('floorplan.codes_found') || 'mã trong SVG'}
                 </p>
+                {/* Compact X/Y/Z diff summary: matched / unmatched-codes / extra-listings */}
+                <p className="text-xs text-[var(--text-secondary)]">
+                  {t('floorplan.diff_summary') || 'Khớp'}:{' '}
+                  <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                    {Math.max(0, uploadResult.codes.length - uploadResult.unmatchedCodes.length)}
+                  </span>
+                  {' / '}
+                  {t('floorplan.unmatched_short') || 'Thiếu listing'}:{' '}
+                  <span className="font-bold text-amber-700 dark:text-amber-400">
+                    {uploadResult.unmatchedCodes.length}
+                  </span>
+                  {' / '}
+                  {t('floorplan.extra_short') || 'Thiếu vùng'}:{' '}
+                  <span className="font-bold text-slate-700 dark:text-slate-300">
+                    {uploadResult.extraListings.length}
+                  </span>
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1">
