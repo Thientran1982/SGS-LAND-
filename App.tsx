@@ -40,10 +40,12 @@ const PublicProposal = lazyLoad(() => import('./pages/PublicProposal'), 'PublicP
 const PublicContract = lazyLoad(() => import('./pages/PublicContract'), 'PublicContract');
 const PublicProjectMicrosite = lazyLoad(() => import('./pages/PublicProjectMicrosite'), 'PublicProjectMicrosite');
 
-// Project codes (mã dự án — uppercase + digits + dashes/underscores). Proposal
-// tokens là UUID lowercase, contract tokens có prefix `contract_` → unambiguous.
+// Project codes (mã dự án) — alphanumeric + dashes/underscores, không phải UUID.
+// Hỗ trợ cả lowercase (vd `/p/mcc`) lẫn uppercase. Proposal tokens là UUID v4
+// (loại trừ riêng), contract tokens có prefix `contract_` (đã bắt trước đó).
+const UUID_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isProjectCodeToken = (t: string | undefined | null): boolean =>
-    !!t && /^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(t);
+    !!t && /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(t) && !UUID_TOKEN_RE.test(t);
 const Landing = lazyLoad(() => import('./pages/Landing'), 'Landing');
 const ProductSearch = lazyLoad(() => import('./pages/ProductSearch'), 'ProductSearch');
 // Ensure these match file names exactly

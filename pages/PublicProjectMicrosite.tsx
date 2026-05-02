@@ -47,6 +47,9 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const [form, setForm] = useState({ name: '', phone: '', email: '', interest: '', note: '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg]   = useState<{ ok: boolean; text: string } | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetIdRef  = useRef<string | null>(null);
 
   const code = projectCode.trim().toUpperCase();
 
@@ -130,17 +133,28 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       setSubmitMsg({ ok: false, text: 'Vui lòng nhập Họ tên và Số điện thoại.' });
       return;
     }
+    if (data?.captcha && !captchaToken) {
+      setSubmitMsg({ ok: false, text: 'Vui lòng xác nhận captcha trước khi gửi.' });
+      return;
+    }
     setSubmitting(true);
     setSubmitMsg(null);
     try {
       const res = await publicProjectApi.submitLead(code, {
         ...form,
+        captchaToken: captchaToken || undefined,
         pageUrl: typeof window !== 'undefined' ? window.location.href : '',
         referrer: typeof document !== 'undefined' ? document.referrer : '',
       });
       if (res.ok) {
         setSubmitMsg({ ok: true, text: res.message || 'Cảm ơn bạn! Chuyên viên sẽ liên hệ sớm.' });
         setForm({ name: '', phone: '', email: '', interest: '', note: '' });
+        // Reset Turnstile sau submit thành công để user có thể submit lại lần sau
+        try {
+          const w = (window as any).turnstile;
+          if (w && turnstileWidgetIdRef.current) w.reset(turnstileWidgetIdRef.current);
+          setCaptchaToken('');
+        } catch { /* noop */ }
       } else {
         setSubmitMsg({ ok: false, text: res.error || 'Có lỗi xảy ra. Vui lòng thử lại.' });
       }
@@ -150,6 +164,48 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       setSubmitting(false);
     }
   };
+
+  // Turnstile loader (chỉ inject khi server bật captcha)
+  useEffect(() => {
+    if (!data?.captcha?.siteKey) return;
+    const SCRIPT_ID = 'cf-turnstile-script';
+    const render = () => {
+      const w = (window as any).turnstile;
+      if (!w || !turnstileContainerRef.current) return;
+      if (turnstileWidgetIdRef.current) return; // đã render
+      try {
+        turnstileWidgetIdRef.current = w.render(turnstileContainerRef.current, {
+          sitekey: data!.captcha!.siteKey,
+          callback: (token: string) => setCaptchaToken(token),
+          'error-callback': () => setCaptchaToken(''),
+          'expired-callback': () => setCaptchaToken(''),
+          theme: 'light',
+        });
+      } catch { /* noop */ }
+    };
+    if ((window as any).turnstile) {
+      render();
+    } else if (!document.getElementById(SCRIPT_ID)) {
+      const s = document.createElement('script');
+      s.id = SCRIPT_ID;
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true;
+      s.defer = true;
+      s.onload = render;
+      document.head.appendChild(s);
+    } else {
+      // Script đang load → poll nhẹ
+      const t = setInterval(() => { if ((window as any).turnstile) { render(); clearInterval(t); } }, 200);
+      setTimeout(() => clearInterval(t), 8000);
+    }
+    return () => {
+      try {
+        const w = (window as any).turnstile;
+        if (w && turnstileWidgetIdRef.current) w.remove(turnstileWidgetIdRef.current);
+      } catch { /* noop */ }
+      turnstileWidgetIdRef.current = null;
+    };
+  }, [data?.captcha?.siteKey]);
 
   // ─── Loading ────────────────────────────────────────────────────────────
   if (loading) {
@@ -177,9 +233,9 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
               ? 'Mini-site cho dự án này chưa được kích hoạt hoặc đã tạm ẩn. Vui lòng liên hệ hotline để được tư vấn trực tiếp.'
               : error?.message || 'Đã xảy ra lỗi trong quá trình tải.'}
           </p>
-          <a href="tel:0971132378"
+          <a href="/"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition">
-            📞 Gọi 0971 132 378
+            ← Về trang chủ
           </a>
         </div>
       </div>
@@ -399,6 +455,11 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 onChange={(e) => setForm(f => ({ ...f, note: e.target.value }))}
                 placeholder="Ghi chú thêm (không bắt buộc)"
                 className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none" />
+              {data?.captcha && (
+                <div ref={turnstileContainerRef}
+                  className="sm:col-span-2 flex justify-center"
+                  data-testid="turnstile-container" />
+              )}
               {submitMsg && (
                 <div className={`sm:col-span-2 px-3 py-2 rounded-lg text-sm ${submitMsg.ok ? 'bg-emerald-500/20 text-emerald-50 border border-emerald-300/30' : 'bg-rose-500/20 text-rose-50 border border-rose-300/30'}`}>
                   {submitMsg.text}
@@ -420,7 +481,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       <footer className="border-t border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-600">
           <div>
-            © SGS Land — Mini-site dự án <strong>{project.name}</strong>
+            © {tenantContact.brandName} — Mini-site dự án <strong>{project.name}</strong>
           </div>
           <div className="flex items-center gap-3">
             <button type="button" onClick={handleDownloadQR} className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-xs font-semibold">
