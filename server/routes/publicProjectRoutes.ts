@@ -394,7 +394,7 @@ export function createPublicProjectRoutes(): Router {
         cachedAt: new Date().toISOString(),
       };
 
-      setPublicProjectCache(code, payload, cacheBucket);
+      setPublicProjectCache(code, payload, cacheBucket, found.tenantId);
       res.setHeader('X-Public-Project-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
       res.json(payload);
