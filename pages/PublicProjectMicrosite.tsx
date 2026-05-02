@@ -255,7 +255,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     return (
       <div className="min-h-[100dvh] bg-slate-50 flex items-center justify-center p-6">
         <div className="max-w-md text-center bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
-          <div className="text-5xl mb-4">🏗️</div>
           <h1 className="text-xl font-bold text-slate-900 mb-2">
             {error?.status === 404 ? 'Dự án chưa công khai' : 'Không thể tải dự án'}
           </h1>
@@ -323,21 +322,21 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
             <a href={`tel:${tenantContact.hotline}`}
               style={{ backgroundColor: brandPrimary }}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm transition shadow-lg hover:opacity-90">
-              📞 Hotline {tenantContact.hotlineDisplay}
+              Hotline {tenantContact.hotlineDisplay}
             </a>
             <a href={tenantContact.zalo} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
-              💬 Chat Zalo
+              Chat Zalo
             </a>
             {branding?.messenger && (
               <a href={branding.messenger} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
-                💬 Messenger
+                Messenger
               </a>
             )}
             <button type="button" onClick={handleShare}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
-              🔗 Chia sẻ
+              Chia sẻ
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
@@ -472,9 +471,9 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 Để lại thông tin — chuyên viên SGS Land sẽ gửi bảng giá, chính sách và tư vấn 1-1 trong vòng 30 phút.
               </p>
               <ul className="text-sm text-indigo-100 space-y-2 mb-4">
-                <li className="flex items-center gap-2">📞 Hotline: <strong className="text-white">{tenantContact.hotlineDisplay}</strong></li>
-                <li className="flex items-center gap-2">💬 Zalo: <a href={tenantContact.zalo} className="text-white underline">{tenantContact.hotlineDisplay}</a></li>
-                <li className="flex items-center gap-2">🔒 Cam kết bảo mật thông tin theo Nghị định 13/2023</li>
+                <li className="flex items-center gap-2">Hotline: <strong className="text-white">{tenantContact.hotlineDisplay}</strong></li>
+                <li className="flex items-center gap-2">Zalo: <a href={tenantContact.zalo} className="text-white underline">{tenantContact.hotlineDisplay}</a></li>
+                <li className="flex items-center gap-2">Cam kết bảo mật thông tin theo Nghị định 13/2023</li>
               </ul>
             </div>
             <form onSubmit={handleSubmit} className="lg:col-span-3 grid sm:grid-cols-2 gap-3">
@@ -548,7 +547,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
             <a href={`tel:${tenantContact.hotline}`}
               style={{ backgroundColor: brandPrimary }}
               className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90">
-              📞 {tenantContact.hotlineDisplay}
+              {tenantContact.hotlineDisplay}
             </a>
           </div>
         </div>
