@@ -120,8 +120,26 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
     if (name === 'href' || name === 'xlink:href') removedRefs += 1;
     else removedAttrs += 1;
   };
+  // STRICT: any href / xlink:href whose value is NOT a local fragment (#…)
+  // is rejected. The SVG is injected inline into the DOM so the response-
+  // level CSP does not apply — we must scrub external refs at the bytes.
+  // This blocks data:, http(s):, javascript:, and any other absolute URL.
+  const onAttrBeforeAccept = (_node: any, data: any) => {
+    if (!data) return;
+    const name = String(data.attrName || '').toLowerCase();
+    if (name === 'href' || name === 'xlink:href') {
+      const v = String(data.attrValue ?? '').trim();
+      if (!v.startsWith('#') || v.length < 2) {
+        // Force DOMPurify to drop this attribute.
+        data.keepAttr = false;
+        data.forceKeepAttr = false;
+        removedRefs += 1;
+      }
+    }
+  };
   DOMPurify.addHook('uponSanitizeElement', onTag);
   DOMPurify.addHook('uponSanitizeAttribute', onAttr);
+  DOMPurify.addHook('uponSanitizeAttribute', onAttrBeforeAccept);
 
   let sanitized: string;
   try {
@@ -163,6 +181,19 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
     if (styleVal && DANGEROUS_CSS_RE.test(styleVal)) {
       el.removeAttribute('style');
       removedAttrs += 1;
+    }
+    // Belt-and-suspenders: re-validate href / xlink:href on the SERIALIZED
+    // tree as well — if anything external slipped past the DOMPurify hook
+    // (e.g. via a future config change), strip it here too.
+    for (const refAttr of ['href', 'xlink:href']) {
+      const rv = el.getAttribute && el.getAttribute(refAttr);
+      if (typeof rv === 'string') {
+        const t = rv.trim();
+        if (!t.startsWith('#') || t.length < 2) {
+          el.removeAttribute(refAttr);
+          removedRefs += 1;
+        }
+      }
     }
     const code = el.getAttribute && el.getAttribute('data-code');
     if (typeof code === 'string') {
