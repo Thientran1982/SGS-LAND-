@@ -94,6 +94,7 @@ const Tasks = lazyLoad(() => import('./pages/Tasks'), 'Tasks');
 const TaskDetail = lazyLoad(() => import('./pages/TaskDetail'), 'TaskDetail');
 const Employees = lazyLoad(() => import('./pages/Employees'), 'Employees');
 const TaskReports = lazyLoad(() => import('./pages/TaskReports'), 'TaskReports');
+const Commissions = lazyLoad(() => import('./pages/Commissions'), 'Commissions');
 
 // Private Pages - Enterprise
 const VendorManagement = lazyLoad(() => import('./pages/VendorManagement'), 'VendorManagement');
@@ -150,6 +151,7 @@ registerPrefetch(ROUTES.TASKS,              () => import('./pages/Tasks'));
 registerPrefetch(ROUTES.TASK_DETAIL,        () => import('./pages/TaskDetail'));
 registerPrefetch(ROUTES.EMPLOYEES,          () => import('./pages/Employees'));
 registerPrefetch(ROUTES.TASK_REPORTS,       () => import('./pages/TaskReports'));
+registerPrefetch(ROUTES.COMMISSIONS,        () => import('./pages/Commissions'));
 registerPrefetch(ROUTES.SEARCH,             () => import('./pages/ProductSearch'));
 registerPrefetch(ROUTES.LANDING,            () => import('./pages/Landing'));
 
@@ -246,6 +248,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.TASK_DETAIL]: TaskDetail,
     [ROUTES.EMPLOYEES]: Employees,
     [ROUTES.TASK_REPORTS]: TaskReports,
+    [ROUTES.COMMISSIONS]: Commissions,
     // Misc
     [ROUTES.MOBILE_APP]: MobileApp
 };

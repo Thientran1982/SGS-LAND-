@@ -79,6 +79,9 @@ export const ROUTES = {
     TASK_DETAIL: 'task',
     EMPLOYEES: 'employees',
     TASK_REPORTS: 'task-reports',
+
+    // Commission engine v1
+    COMMISSIONS: 'commissions',
 } as const;
 
 export const FULL_HEIGHT_PAGES = new Set([

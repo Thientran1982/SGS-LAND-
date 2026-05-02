@@ -43,6 +43,7 @@ import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uplo
 import { createScimRoutes } from "./server/routes/scimRoutes";
 import { createValuationRoutes } from "./server/routes/valuationRoutes";
 import { createProjectRoutes } from "./server/routes/projectRoutes";
+import { createCommissionRoutes } from "./server/routes/commissionRoutes";
 import { createTenantRoutes } from "./server/routes/tenantRoutes";
 import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
@@ -3024,6 +3025,7 @@ async function startServer() {
   app.use('/api/error-logs', apiRateLimit, createErrorLogRoutes(authenticateToken, pool));
   // B2B2C: project management + partner access control
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
+  app.use('/api/commissions', apiRateLimit, createCommissionRoutes(authenticateToken));
   app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));
 
   // ─── PUBLIC mini-site cho từng dự án (no auth, server-side cache 5min) ────

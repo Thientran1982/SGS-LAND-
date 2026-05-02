@@ -898,6 +898,24 @@ export function createListingRoutes(authenticateToken: any) {
         user.name || user.email,
       ));
 
+      // ── Commission engine v1: auto-sinh ledger entry khi → SOLD ──────────
+      // Idempotent: trùng listing_id sẽ no-op qua UNIQUE constraint.
+      // Best-effort: lỗi không chặn response status update.
+      if (status === 'SOLD' && oldStatus !== 'SOLD') {
+        setImmediate(async () => {
+          try {
+            const { generateLedgerOnSold } = await import('../services/commissionHook');
+            await generateLedgerOnSold({
+              tenantId: user.tenantId,
+              listing: listing as any,
+              actorUserId: user.id,
+            });
+          } catch (e) {
+            console.error('[commission hook] failed:', e);
+          }
+        });
+      }
+
       res.json(listing);
     } catch (error) {
       console.error('Error changing listing status:', error);
