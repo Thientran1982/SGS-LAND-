@@ -168,12 +168,18 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
 
           {/* Summary stats */}
           {isAdmin && summary && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Stat label="Tổng giao dịch" value={String(summary.totalCount)} />
-              <Stat label="Đang chờ chi" value={fmtMoney(summary.grossPending)} />
-              <Stat label="Đã thanh toán" value={fmtMoney(summary.grossPaid)} />
-              <Stat label="Đến hạn" value={String(summary.due)} />
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Stat label="Tổng giao dịch" value={String(summary.totalCount)} />
+                <Stat label="Đang chờ chi" value={fmtMoney(summary.grossPending)} />
+                <Stat label="Đã thanh toán" value={fmtMoney(summary.grossPaid)} />
+                <Stat label="Trạng thái 'Đến hạn'" value={String(summary.due)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Stat label={`Sắp đến hạn (≤7 ngày) — ${summary.dueSoonCount} bút toán`} value={fmtMoney(summary.grossDueSoon)} />
+                <Stat label={`Quá hạn — ${summary.overdueCount} bút toán`} value={fmtMoney(summary.grossOverdue)} />
+              </div>
+            </>
           )}
 
           {/* Leaderboard */}

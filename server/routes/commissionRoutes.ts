@@ -236,5 +236,36 @@ export function createCommissionRoutes(authenticateToken: any) {
     }
   });
 
+  // POST /api/commissions/mark-paid-bulk { ids: string[], note?: string }
+  router.post('/mark-paid-bulk', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role) && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Không có quyền đánh dấu đã trả' });
+      }
+      const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((x: any) => typeof x === 'string' && UUID_RE.test(x)) : [];
+      if (ids.length === 0) return res.status(400).json({ error: 'ids rỗng hoặc không hợp lệ' });
+      if (ids.length > 500) return res.status(400).json({ error: 'Tối đa 500 bút toán mỗi lần' });
+      const note = typeof req.body?.note === 'string' ? String(req.body.note).slice(0, 500) : null;
+
+      const updated = await commissionLedgerRepository.markManyPaid(user.tenantId, ids, { paidNote: note, paidBy: user.id });
+
+      // Ghi audit log gộp 1 dòng để khỏi spam audit
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'UPDATE',
+        entityType: 'COMMISSION_LEDGER',
+        entityId: updated.map(r => r.id).join(',').slice(0, 250) || 'BULK',
+        details: `Đánh dấu đã trả ${updated.length}/${ids.length} bút toán${note ? ` — ${note}` : ''}`,
+        ipAddress: req.ip,
+      });
+
+      res.json({ updated: updated.length, requested: ids.length, ids: updated.map(r => r.id) });
+    } catch (e) {
+      console.error('[commissions] mark-paid-bulk error:', e);
+      res.status(500).json({ error: 'Không thể đánh dấu đã trả hàng loạt' });
+    }
+  });
+
   return router;
 }

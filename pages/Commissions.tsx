@@ -46,7 +46,9 @@ export const Commissions: React.FC = () => {
   const [fTo, setFTo] = useState<string>('');
 
   const [paying, setPaying] = useState<string | null>(null);
+  const [bulkPaying, setBulkPaying] = useState(false);
   const [payNote, setPayNote] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   const isAdmin = !!user && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role);
@@ -93,6 +95,47 @@ export const Commissions: React.FC = () => {
     } finally {
       setPaying(null);
     }
+  };
+
+  const handleBulkPaid = async () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    if (!window.confirm(`Đánh dấu đã trả ${ids.length} bút toán?`)) return;
+    try {
+      setBulkPaying(true);
+      const res = await commissionApi.markPaidBulk(ids, payNote || undefined);
+      setToast({ msg: `Đã đánh dấu ${res.updated}/${res.requested} bút toán`, type: 'success' });
+      setSelected(new Set());
+      setPayNote('');
+      load();
+    } catch (e: any) {
+      setToast({ msg: e?.message || 'Lỗi đánh dấu hàng loạt', type: 'error' });
+    } finally {
+      setBulkPaying(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const eligibleIds = items.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').map(i => i.id);
+  const allEligibleSelected = eligibleIds.length > 0 && eligibleIds.every(id => selected.has(id));
+  const toggleSelectAll = () => {
+    setSelected(prev => {
+      if (allEligibleSelected) {
+        const next = new Set(prev);
+        eligibleIds.forEach(id => next.delete(id));
+        return next;
+      }
+      const next = new Set(prev);
+      eligibleIds.forEach(id => next.add(id));
+      return next;
+    });
   };
 
   const exportUrl = commissionApi.exportXlsxUrl({
@@ -184,6 +227,12 @@ export const Commissions: React.FC = () => {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs uppercase text-[var(--text-tertiary)]">
               <tr>
+                {isAdmin && (
+                  <th className="px-3 py-2 w-8">
+                    <input type="checkbox" checked={allEligibleSelected} onChange={toggleSelectAll}
+                      aria-label="Chọn tất cả" disabled={eligibleIds.length === 0} />
+                  </th>
+                )}
                 <th className="text-left px-3 py-2">Ngày bán</th>
                 <th className="text-left px-3 py-2">Dự án / Sản phẩm</th>
                 <th className="text-left px-3 py-2">Sale / Đối tác</th>
@@ -196,11 +245,19 @@ export const Commissions: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={isAdmin ? 8 : 7} className="text-center py-10 text-[var(--text-tertiary)]">Đang tải…</td></tr>
+                <tr><td colSpan={isAdmin ? 9 : 7} className="text-center py-10 text-[var(--text-tertiary)]">Đang tải…</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={isAdmin ? 8 : 7} className="text-center py-10 text-[var(--text-tertiary)]">Chưa có giao dịch hoa hồng nào.</td></tr>
+                <tr><td colSpan={isAdmin ? 9 : 7} className="text-center py-10 text-[var(--text-tertiary)]">Chưa có giao dịch hoa hồng nào.</td></tr>
               ) : items.map(it => (
                 <tr key={it.id} className="border-t border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]">
+                  {isAdmin && (
+                    <td className="px-3 py-2">
+                      {it.status !== 'PAID' && it.status !== 'CANCELLED' ? (
+                        <input type="checkbox" checked={selected.has(it.id)} onChange={() => toggleSelect(it.id)}
+                          aria-label={`Chọn ${it.id}`} />
+                      ) : null}
+                    </td>
+                  )}
                   <td className="px-3 py-2 whitespace-nowrap">{fmtDate(it.sale_date)}</td>
                   <td className="px-3 py-2">
                     <div className="font-semibold text-[var(--text-primary)]">{it.project_name || '—'}</div>
@@ -260,7 +317,7 @@ export const Commissions: React.FC = () => {
       </div>
 
       {isAdmin && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
           <span>Ghi chú khi đánh dấu thanh toán:</span>
           <input
             type="text"
@@ -269,6 +326,17 @@ export const Commissions: React.FC = () => {
             placeholder="VD: chuyển khoản đợt 1"
             className="h-8 px-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-app)] text-sm flex-1 max-w-[400px]"
           />
+          {selected.size > 0 && (
+            <>
+              <span className="font-bold text-emerald-700">Đã chọn: {selected.size}</span>
+              <button type="button" onClick={handleBulkPaid} disabled={bulkPaying}
+                className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 disabled:opacity-50">
+                {bulkPaying ? 'Đang xử lý…' : `Đánh dấu đã trả (${selected.size})`}
+              </button>
+              <button type="button" onClick={() => setSelected(new Set())}
+                className="px-2 py-1.5 text-rose-600 text-xs hover:underline">Bỏ chọn</button>
+            </>
+          )}
         </div>
       )}
 
