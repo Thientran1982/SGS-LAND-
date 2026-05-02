@@ -95,7 +95,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-y-auto"
+    <div className="fixed inset-0 z-[10002] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-y-auto"
          onClick={onClose}>
       <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4"
            onClick={e => e.stopPropagation()}>
