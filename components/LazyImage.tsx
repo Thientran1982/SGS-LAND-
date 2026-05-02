@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { NO_IMAGE_URL } from '../utils/constants';
+import { optimizedImageUrl } from '../utils/imageUrl';
 
 interface LazyImageProps {
   src: string | null | undefined;
   alt?: string;
   className?: string;
   fallback?: string;
-  /** Width hint — helps browser avoid layout shift */
+  /** Pixel width đích để server resize (`?w=N`). Mặc định 256 — phù hợp
+   *  thumbnail 40-128 CSS px ở 2x DPR. Ảnh ngoài /uploads/ giữ nguyên. */
   width?: number;
   /** Height hint */
   height?: number;
@@ -14,6 +16,8 @@ interface LazyImageProps {
   wrapperClassName?: string;
   /** Root margin for IntersectionObserver — how early to start loading */
   rootMargin?: string;
+  /** Đặt true cho ảnh hero/above-the-fold để bỏ lazy + tăng fetchpriority. */
+  eager?: boolean;
 }
 
 /**
@@ -32,16 +36,19 @@ const LazyImage = memo(({
   alt = '',
   className = 'w-full h-full object-cover',
   fallback = NO_IMAGE_URL,
+  width = 256,
   wrapperClassName,
   rootMargin = '200px',
+  eager = false,
 }: LazyImageProps) => {
   const [loaded, setLoaded]       = useState(false);
   const [error,  setError]        = useState(false);
   const [visible, setVisible]     = useState(false);
   const containerRef              = useRef<HTMLDivElement>(null);
 
-  // Observe when image is near the viewport
+  // Observe when image is near the viewport (bỏ qua nếu eager=true).
   useEffect(() => {
+    if (eager) { setVisible(true); return; }
     const el = containerRef.current;
     if (!el) return;
 
@@ -57,9 +64,10 @@ const LazyImage = memo(({
 
     io.observe(el);
     return () => io.disconnect();
-  }, [rootMargin]);
+  }, [rootMargin, eager]);
 
-  const resolvedSrc = visible ? (error ? fallback : (src || fallback)) : undefined;
+  const rawSrc = error ? fallback : (src || fallback);
+  const resolvedSrc = visible ? optimizedImageUrl(rawSrc, width) : undefined;
 
   // CRITICAL: the wrapper MUST always be `position: relative` so the
   // `absolute inset-0` skeleton below is contained within this 44×44-ish
@@ -91,8 +99,9 @@ const LazyImage = memo(({
           src={resolvedSrc}
           alt={alt}
           className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-          loading="lazy"
+          loading={eager ? 'eager' : 'lazy'}
           decoding="async"
+          {...(eager ? { fetchPriority: 'high' as any } : {})}
           onLoad={() => setLoaded(true)}
           onError={() => { setError(true); setLoaded(true); }}
         />

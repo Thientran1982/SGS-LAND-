@@ -6,6 +6,7 @@ import {
   type PublicProjectPayload,
 } from '../services/api/publicProjectApi';
 import { NO_IMAGE_URL } from '../utils/constants';
+import { optimizedImageUrl } from '../utils/imageUrl';
 
 interface Props {
   projectCode: string;
@@ -343,10 +344,12 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       <section className="relative bg-slate-900 text-white">
         <div className="absolute inset-0 overflow-hidden">
           <img
-            src={gallery[activeImageIdx] || NO_IMAGE_URL}
+            src={optimizedImageUrl(gallery[activeImageIdx] || NO_IMAGE_URL, 1600)}
             alt={project.name}
             className="w-full h-full object-cover opacity-50"
             loading="eager"
+            decoding="async"
+            fetchPriority="high"
             onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900" />
@@ -435,9 +438,11 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 <button key={i} type="button"
                   onClick={() => setActiveImageIdx(i)}
                   className={`shrink-0 rounded-xl overflow-hidden border-2 transition ${i === activeImageIdx ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-transparent hover:border-slate-300'}`}>
-                  <img src={img} alt={`${project.name} ${i + 1}`}
+                  <img src={optimizedImageUrl(img, 256)} alt={`${project.name} ${i + 1}`}
+                    width={128} height={80}
                     className="w-24 h-16 sm:w-32 sm:h-20 object-cover"
                     loading="lazy"
+                    decoding="async"
                     onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                 </button>
               ))}
