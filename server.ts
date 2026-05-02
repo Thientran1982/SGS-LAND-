@@ -172,6 +172,11 @@ async function startServer() {
         href: trunc(body.href, 300),
         ua: trunc(body.ua, 300),
         ts: typeof body.ts === 'number' ? body.ts : Date.now(),
+        // Optional structured diagnostic snapshot — used by the listings panel
+        // visibility probe to capture computed style + bounding rect on mount,
+        // so we can diagnose pure-visual bugs that throw no JS error.
+        projectCode: trunc(body.projectCode, 40),
+        snapshot: body.snapshot ? trunc(JSON.stringify(body.snapshot), 4000) : null,
       });
     } catch {
       // Swallow — never fail the client over an error report.
