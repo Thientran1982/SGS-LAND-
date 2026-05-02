@@ -26,6 +26,14 @@ export interface TenantBindingPayload {
   customDomain: string | null;
   customDomainVerifiedAt: string | null;
   customDomainTxtRecord: { name: string; value: string } | null;
+  /** Số lần cron verify thất bại liên tiếp; 0 nếu OK. */
+  customDomainFailureCount?: number;
+  /** Lần cron 5 phút quét gần nhất (ISO). */
+  customDomainLastCheckAt?: string | null;
+  /** Thời điểm hệ thống huỷ verify do DNS không còn khớp. */
+  customDomainUnverifiedAt?: string | null;
+  /** Ngưỡng fail liên tiếp để hệ thống huỷ verified + alert admin. */
+  customDomainFailureThreshold?: number;
 }
 
 export interface TenantBrandingResponse {

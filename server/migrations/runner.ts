@@ -101,6 +101,7 @@ import m080 from './080_project_price_matrix';
 import m081 from './081_project_floor_plans';
 import m082 from './082_commission_engine';
 import m083 from './083_tenant_branding';
+import m084 from './084_tenant_custom_domain_health';
 
 dotenv.config();
 
@@ -198,6 +199,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '081_project_floor_plans.ts': m081,
   '082_commission_engine.ts': m082,
   '083_tenant_branding.ts': m083,
+  '084_tenant_custom_domain_health.ts': m084,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

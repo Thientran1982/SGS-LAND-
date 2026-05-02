@@ -220,6 +220,18 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const verified = !!data.binding.customDomainVerifiedAt;
   const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : '#4F46E5';
 
+  // ── Custom-domain health (task #34) ─────────────────────────────────────────
+  // Cron 5 phút re-verify cả domain đã verified. Có 2 trạng thái cần cảnh báo:
+  //   • lostVerification: trước đây verified nhưng bản ghi TXT đã biến mất quá
+  //     ngưỡng fail → mini-site qua tên miền này đã tạm dừng.
+  //   • verifiedButFailing: vẫn còn verified nhưng cron đang ghi nhận fail
+  //     liên tiếp → cảnh báo sớm để admin kịp khôi phục TXT trước khi mất verify.
+  const failureCount = data.binding.customDomainFailureCount ?? 0;
+  const failureThreshold = data.binding.customDomainFailureThreshold ?? 3;
+  const lostVerification =
+    !!data.binding.customDomainUnverifiedAt && !verified && !!data.binding.customDomain;
+  const verifiedButFailing = verified && failureCount > 0;
+
   return (
     <div className="space-y-6">
       {/* ── BRANDING FIELDS ───────────────────────────────────────────── */}
@@ -446,8 +458,33 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
           <h3 className="text-lg font-bold text-[var(--text-primary)]">Tên miền riêng (Custom domain)</h3>
           <p className="text-xs text-[var(--text-tertiary)] mt-1">
             Trỏ tên miền của bạn về server SGS Land và xác thực quyền sở hữu qua bản ghi TXT.
+            Hệ thống tự kiểm tra lại bản ghi mỗi 5 phút — nếu bản ghi biến mất, mini-site qua tên miền sẽ tạm dừng để bảo vệ bạn.
           </p>
         </header>
+
+        {lostVerification && (
+          <div className="mb-4 p-4 rounded-xl border-2 border-rose-300 bg-rose-50 text-rose-800">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none">⚠️</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold">Tên miền cần xác thực lại</div>
+                <p className="text-xs mt-1 leading-relaxed">
+                  Hệ thống không còn tìm thấy bản ghi <code className="font-mono">TXT _sgsland.{data.binding.customDomain}</code> sau {failureThreshold} lần kiểm tra liên tiếp.
+                  Mini-site qua tên miền này đã <strong>tạm dừng</strong>. Vui lòng vào trang quản lý DNS, khôi phục bản ghi TXT bên dưới và bấm <em>"Kiểm tra TXT ngay"</em>.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {verifiedButFailing && (
+          <div className="mb-4 p-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-800">
+            <div className="text-sm font-bold">Cảnh báo sớm: bản ghi TXT có thể đã bị xoá</div>
+            <p className="text-xs mt-1">
+              Hệ thống ghi nhận {failureCount}/{failureThreshold} lần kiểm tra DNS thất bại. Nếu tiếp tục fail, mini-site qua <strong>{data.binding.customDomain}</strong> sẽ bị tạm dừng. Hãy kiểm tra lại bản ghi TXT trong trang quản lý DNS.
+            </p>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row items-stretch gap-2">
           <input
             type="text"

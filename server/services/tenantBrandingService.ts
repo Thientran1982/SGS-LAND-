@@ -17,6 +17,16 @@ import { logger } from '../middleware/logger';
 import { promises as dns } from 'node:dns';
 import crypto from 'node:crypto';
 import { DEFAULT_TENANT_ID } from '../constants';
+import { notificationRepository } from '../repositories/notificationRepository';
+import { emailService } from './emailService';
+
+/**
+ * Số lần verify thất bại liên tiếp trước khi huỷ trạng thái verified và gửi
+ * cảnh báo. Cron chạy 5 phút/lần → 3 lần ≈ 15 phút mới alert, đủ tránh false
+ * positive khi DNS provider có hiccup ngắn hạn nhưng vẫn phát hiện sớm khi CĐT
+ * thật sự xoá bản ghi TXT.
+ */
+export const CUSTOM_DOMAIN_FAILURE_THRESHOLD = 3;
 
 // Domain gốc cho subdomain wildcard. Có thể override qua env nếu deploy domain
 // khác (vd staging dùng `<slug>.staging.sgsland.vn`).
@@ -335,55 +345,265 @@ export async function verifyCustomDomainTxt(hostname: string, expectedToken: str
   return records.some(r => r.trim() === expectedToken.trim());
 }
 
-// ── Cron: verify pending custom domains every 5 minutes ──────────────────────
+// ── Cron: verify (& re-verify) custom domains every 5 minutes ────────────────
+//
+// 2 trường hợp xử lý chung 1 vòng:
+//   • Pending (chưa verified): TXT khớp → set verified_at = NOW(); reset
+//     failure_count. TXT chưa có → tăng failure_count nhưng KHÔNG alert
+//     (CĐT vẫn đang setup, chưa từng vận hành).
+//   • Verified: TXT khớp → reset failure_count. TXT mất → tăng failure_count.
+//     Khi vượt CUSTOM_DOMAIN_FAILURE_THRESHOLD lần liên tiếp → huỷ verified
+//     (custom_domain_verified_at = NULL, unverified_at = NOW()) và gửi
+//     notification + email cho tất cả ADMIN/SUPER_ADMIN ACTIVE của tenant.
+//
+// Lý do không huỷ verified ngay từ lần fail đầu: DNS resolver có thể flap, cache
+// upstream hết hạn không đồng bộ, v.v. Đợi 3 tick (~15 phút) loại false positive.
 
 let cronTimer: NodeJS.Timeout | null = null;
 
-export function startCustomDomainVerifyCron(opts?: { intervalMs?: number }): void {
-  if (cronTimer) return;
-  const intervalMs = opts?.intervalMs ?? 5 * 60 * 1000;
-  const tick = async () => {
+interface CustomDomainCronRow {
+  id: string;
+  name: string;
+  custom_domain: string;
+  custom_domain_txt_token: string;
+  custom_domain_verified_at: string | null;
+  custom_domain_failure_count: number;
+}
+
+export async function tickCustomDomainVerify(): Promise<void> {
+  let rows: CustomDomainCronRow[] = [];
+  try {
+    rows = await withRlsBypass(async (client) => {
+      const r = await client.query<CustomDomainCronRow>(
+        `SELECT id, name, custom_domain, custom_domain_txt_token,
+                custom_domain_verified_at, custom_domain_failure_count
+           FROM tenants
+           WHERE custom_domain IS NOT NULL
+             AND custom_domain_txt_token IS NOT NULL
+           LIMIT 200`
+      );
+      return r.rows;
+    });
+  } catch (err: any) {
+    logger.warn(`[TenantBranding] cron list failed: ${err?.message || err}`);
+    return;
+  }
+  if (rows.length === 0) return;
+
+  for (const row of rows) {
     try {
-      const rows = await withRlsBypass(async (client) => {
-        const r = await client.query<{ id: string; custom_domain: string; custom_domain_txt_token: string }>(
-          `SELECT id, custom_domain, custom_domain_txt_token
-             FROM tenants
-             WHERE custom_domain IS NOT NULL
-               AND custom_domain_txt_token IS NOT NULL
-               AND custom_domain_verified_at IS NULL
-             LIMIT 100`
-        );
-        return r.rows;
-      });
-      if (rows.length === 0) return;
-      for (const row of rows) {
-        try {
-          const ok = await verifyCustomDomainTxt(row.custom_domain, row.custom_domain_txt_token);
-          if (!ok) continue;
+      const ok = await verifyCustomDomainTxt(row.custom_domain, row.custom_domain_txt_token);
+      const wasVerified = row.custom_domain_verified_at !== null;
+      const prevFailures = row.custom_domain_failure_count || 0;
+
+      if (ok) {
+        // Trường hợp pending → verify lần đầu
+        if (!wasVerified) {
           await withRlsBypass(async (client) => {
             await client.query(
               `UPDATE tenants
-                  SET custom_domain_verified_at = NOW()
-                  WHERE id = $1
-                    AND custom_domain_verified_at IS NULL`,
+                  SET custom_domain_verified_at = NOW(),
+                      custom_domain_failure_count = 0,
+                      custom_domain_last_check_at = NOW(),
+                      custom_domain_unverified_at = NULL
+                  WHERE id = $1`,
               [row.id]
             );
           });
           evictHostCacheByTenant(row.id);
           logger.info(`[TenantBranding] Custom domain verified: ${row.custom_domain} (tenant ${row.id})`);
-        } catch (err: any) {
-          logger.warn(`[TenantBranding] verify ${row.custom_domain} failed: ${err?.message || err}`);
+        } else {
+          // Đã verify rồi → reset failure_count nếu trước đó đang có lỗi
+          if (prevFailures !== 0) {
+            await withRlsBypass(async (client) => {
+              await client.query(
+                `UPDATE tenants
+                    SET custom_domain_failure_count = 0,
+                        custom_domain_last_check_at = NOW(),
+                        custom_domain_unverified_at = NULL
+                    WHERE id = $1`,
+                [row.id]
+              );
+            });
+            logger.info(`[TenantBranding] Custom domain re-check OK after ${prevFailures} failures: ${row.custom_domain}`);
+          } else {
+            await withRlsBypass(async (client) => {
+              await client.query(
+                `UPDATE tenants SET custom_domain_last_check_at = NOW() WHERE id = $1`,
+                [row.id]
+              );
+            });
+          }
+        }
+        continue;
+      }
+
+      // ── TXT KHÔNG khớp ────────────────────────────────────────────────
+      const newFailures = prevFailures + 1;
+      const shouldUnverify = wasVerified && newFailures >= CUSTOM_DOMAIN_FAILURE_THRESHOLD;
+
+      if (shouldUnverify) {
+        await withRlsBypass(async (client) => {
+          await client.query(
+            `UPDATE tenants
+                SET custom_domain_verified_at = NULL,
+                    custom_domain_unverified_at = NOW(),
+                    custom_domain_failure_count = $2,
+                    custom_domain_last_check_at = NOW()
+                WHERE id = $1`,
+            [row.id, newFailures]
+          );
+        });
+        evictHostCacheByTenant(row.id);
+        logger.warn(`[TenantBranding] Custom domain LOST verification after ${newFailures} failed checks: ${row.custom_domain} (tenant ${row.id})`);
+        // Fire-and-forget: notification/email không được chặn cron tick
+        notifyTenantAdminsCustomDomainLost(row.id, row.name, row.custom_domain).catch((e) => {
+          logger.warn(`[TenantBranding] notify admins failed for tenant ${row.id}: ${e?.message || e}`);
+        });
+      } else {
+        await withRlsBypass(async (client) => {
+          await client.query(
+            `UPDATE tenants
+                SET custom_domain_failure_count = $2,
+                    custom_domain_last_check_at = NOW()
+                WHERE id = $1`,
+            [row.id, newFailures]
+          );
+        });
+        if (wasVerified) {
+          logger.info(`[TenantBranding] Custom domain check failed (${newFailures}/${CUSTOM_DOMAIN_FAILURE_THRESHOLD}): ${row.custom_domain}`);
         }
       }
     } catch (err: any) {
-      logger.warn(`[TenantBranding] cron tick failed: ${err?.message || err}`);
+      logger.warn(`[TenantBranding] verify ${row.custom_domain} failed: ${err?.message || err}`);
     }
-  };
-  cronTimer = setInterval(tick, intervalMs);
+  }
+}
+
+/**
+ * Reset failure tracking cho 1 tenant — gọi khi admin verify thủ công thành
+ * công, hoặc khi gỡ/đổi custom domain.
+ */
+export async function resetCustomDomainHealth(tenantId: string): Promise<void> {
+  await withRlsBypass(async (client) => {
+    await client.query(
+      `UPDATE tenants
+          SET custom_domain_failure_count = 0,
+              custom_domain_unverified_at = NULL,
+              custom_domain_last_check_at = NOW()
+          WHERE id = $1`,
+      [tenantId]
+    );
+  });
+}
+
+/**
+ * Gửi notification + email cho tất cả ADMIN/SUPER_ADMIN ACTIVE của tenant khi
+ * custom domain mất xác thực. Dedupe email theo (tenant + domain) trong 24h để
+ * tránh spam khi DNS down kéo dài.
+ */
+async function notifyTenantAdminsCustomDomainLost(
+  tenantId: string,
+  tenantName: string,
+  hostname: string,
+): Promise<void> {
+  const admins = await withRlsBypass(async (client) => {
+    const r = await client.query<{ id: string; email: string; name: string }>(
+      `SELECT id, email, name
+         FROM users
+         WHERE tenant_id = $1
+           AND role IN ('ADMIN', 'SUPER_ADMIN')
+           AND status = 'ACTIVE'
+         LIMIT 20`,
+      [tenantId]
+    );
+    return r.rows;
+  });
+  if (admins.length === 0) {
+    logger.warn(`[TenantBranding] No active admins to notify for tenant ${tenantId} (domain ${hostname})`);
+    return;
+  }
+
+  const title = `Tên miền ${hostname} cần xác thực lại`;
+  const body =
+    `Hệ thống không tìm thấy bản ghi TXT _sgsland.${hostname} sau ${CUSTOM_DOMAIN_FAILURE_THRESHOLD} lần kiểm tra liên tiếp. ` +
+    `Mini-site qua tên miền này đã tạm dừng cho đến khi bạn khôi phục bản ghi TXT trong trang quản lý DNS.`;
+
+  for (const admin of admins) {
+    try {
+      await notificationRepository.create({
+        tenantId,
+        userId: admin.id,
+        type: 'CUSTOM_DOMAIN_UNVERIFIED',
+        title,
+        body,
+        metadata: { hostname, tenantName },
+      });
+    } catch (e: any) {
+      logger.warn(`[TenantBranding] create notification failed for user ${admin.id}: ${e?.message || e}`);
+    }
+
+    try {
+      const html = `
+        <p>Xin chào <strong>${escapeHtmlSafe(admin.name || admin.email)}</strong>,</p>
+        <p>Hệ thống SGS Land vừa kiểm tra định kỳ tên miền riêng của workspace
+           <strong>${escapeHtmlSafe(tenantName)}</strong> và phát hiện bản ghi xác thực không còn tồn tại:</p>
+        <ul>
+          <li>Tên miền: <strong>${escapeHtmlSafe(hostname)}</strong></li>
+          <li>Bản ghi cần kiểm tra: <code>TXT _sgsland.${escapeHtmlSafe(hostname)}</code></li>
+          <li>Số lần fail liên tiếp: ${CUSTOM_DOMAIN_FAILURE_THRESHOLD}</li>
+        </ul>
+        <p>Mini-site qua tên miền này đã tạm dừng để bảo vệ bạn khỏi rủi ro mất quyền sở hữu tên miền.
+           Vui lòng vào trang quản lý DNS, khôi phục bản ghi TXT theo hướng dẫn trong mục
+           <em>Cài đặt → Thương hiệu → Tên miền riêng</em>, sau đó nhấn "Kiểm tra TXT ngay".</p>
+        <p>Nếu bạn chủ động đổi DNS provider hoặc gỡ tên miền, có thể bỏ qua email này.</p>
+        <p>— SGS Land</p>
+      `;
+      await emailService.sendEmail(tenantId, {
+        to: admin.email,
+        subject: `[SGS Land] Tên miền ${hostname} cần xác thực lại`,
+        html,
+        text:
+          `Hệ thống phát hiện tên miền ${hostname} của workspace ${tenantName} không còn bản ghi TXT xác thực ` +
+          `(_sgsland.${hostname}) sau ${CUSTOM_DOMAIN_FAILURE_THRESHOLD} lần kiểm tra. Vui lòng khôi phục bản ghi và verify lại.`,
+        template: 'custom_domain_unverified',
+        // Dedupe theo domain trong 24h: nếu DNS down kéo dài, không spam admin
+        // mỗi 5 phút.
+        dedupeKey: `custom_domain_unverified:${hostname}:${admin.email}`,
+        dedupeWindowMinutes: 24 * 60,
+        skipQuota: true,
+      });
+    } catch (e: any) {
+      logger.warn(`[TenantBranding] send email failed for ${admin.email}: ${e?.message || e}`);
+    }
+  }
+}
+
+function escapeHtmlSafe(s: string): string {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+export function startCustomDomainVerifyCron(opts?: { intervalMs?: number }): void {
+  if (cronTimer) return;
+  const intervalMs = opts?.intervalMs ?? 5 * 60 * 1000;
+  cronTimer = setInterval(() => {
+    tickCustomDomainVerify().catch((err) => {
+      logger.warn(`[TenantBranding] cron tick failed: ${err?.message || err}`);
+    });
+  }, intervalMs);
   // unref để cron không chặn process exit
   if (typeof (cronTimer as any).unref === 'function') (cronTimer as any).unref();
   // Chạy ngay 1 lần sau 30s startup
-  setTimeout(tick, 30_000).unref?.();
+  setTimeout(() => {
+    tickCustomDomainVerify().catch((err) => {
+      logger.warn(`[TenantBranding] cron initial tick failed: ${err?.message || err}`);
+    });
+  }, 30_000).unref?.();
 }
 
 export function stopCustomDomainVerifyCron(): void {
