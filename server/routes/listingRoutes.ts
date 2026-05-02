@@ -549,7 +549,11 @@ export function createListingRoutes(authenticateToken: any) {
         const files = (req.files as Express.Multer.File[]) || [];
         if (files.length === 0) return res.status(400).json({ error: 'Chưa có ảnh nào được chọn' });
 
-        // Optional manual mapping from client: { "[filename]": "[listingCode]" }
+        // Optional manual mapping from client. Two key shapes are accepted:
+        //   { "[index]": "[listingCode]" }     ← preferred (collision-proof
+        //                                         when batch has duplicate
+        //                                         filenames)
+        //   { "[filename]": "[listingCode]" }  ← legacy fallback
         let manualMap: Record<string, string> = {};
         try {
           if (typeof req.body?.mapping === 'string' && req.body.mapping.trim()) {
@@ -582,7 +586,8 @@ export function createListingRoutes(authenticateToken: any) {
         // listingId → mutable working copy of images array
         const updatedImages = new Map<string, string[]>();
 
-        for (const f of files) {
+        for (let fileIdx = 0; fileIdx < files.length; fileIdx++) {
+          const f = files[fileIdx];
           try {
             // 1) Verify real MIME from magic bytes (defence in depth)
             const detected = await fileTypeFromBuffer(f.buffer);
@@ -595,9 +600,11 @@ export function createListingRoutes(authenticateToken: any) {
               continue;
             }
 
-            // 2) Resolve listing — manual override wins, else filename heuristic
+            // 2) Resolve listing — index-keyed manual override wins (preferred,
+            //    collision-proof), then filename-keyed override (legacy),
+            //    then filename heuristic.
             let listing: any = null;
-            const overrideCode = manualMap[f.originalname];
+            const overrideCode = manualMap[String(fileIdx)] ?? manualMap[f.originalname];
             if (overrideCode) {
               listing = codeMap.get(normalizeCodeKey(String(overrideCode))) ?? null;
             }

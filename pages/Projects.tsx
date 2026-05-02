@@ -1261,8 +1261,12 @@ function BulkImageUploadModal({
         })));
     }, [codesLoading, matchFile]);
 
-    // Revoke object URLs on unmount to avoid leaks
-    useEffect(() => () => { items.forEach(it => URL.revokeObjectURL(it.preview)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // Revoke object URLs on unmount to avoid leaks. Use a ref that mirrors
+    // the latest items so the cleanup sees previews added after mount
+    // (the empty-deps effect would otherwise capture only the initial []).
+    const itemsRef = useRef<BulkFileItem[]>([]);
+    useEffect(() => { itemsRef.current = items; }, [items]);
+    useEffect(() => () => { itemsRef.current.forEach(it => URL.revokeObjectURL(it.preview)); }, []);
 
     const addFiles = useCallback((picked: FileList | File[]) => {
         const arr = Array.from(picked);
@@ -1323,13 +1327,16 @@ function BulkImageUploadModal({
         }
         setSubmitting(true); setProgress(0); setTopError(null);
         try {
+            // Map by stable index (not filename) so duplicate filenames in a
+            // single batch never collide. Server reads `mapping[String(idx)]`
+            // before falling back to the filename heuristic.
             const mapping: Record<string, string> = {};
             const filesToUpload: File[] = [];
-            for (const it of items) {
+            items.forEach((it, idx) => {
                 filesToUpload.push(it.file);
                 const code = (it.manualCode || it.matchedCode || '').trim();
-                if (code) mapping[it.file.name] = code;
-            }
+                if (code) mapping[String(idx)] = code;
+            });
 
             const data = await listingApi.bulkUploadImagesByCode(
                 projectCode,
