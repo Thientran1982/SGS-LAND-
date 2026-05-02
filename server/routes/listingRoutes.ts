@@ -645,6 +645,18 @@ export function createListingRoutes(authenticateToken: any) {
               filename: f.originalname, status: 'uploaded',
               matchedCode: String(listing.code), listingId: listing.id, url,
             });
+
+            // Per-file audit log — one BULK_UPLOAD_IMAGE entry per successfully
+            // stored file, capturing filename, matched listing code/id, stored
+            // URL, and current/cap image count for full traceability.
+            await auditRepository.log(user.tenantId, {
+              actorId: user.id,
+              action: 'BULK_UPLOAD_IMAGE',
+              entityType: 'LISTING',
+              entityId: listing.id,
+              details: `Bulk upload "${f.originalname}" → ${listing.code} (${working.length}/${MAX_IMAGES_PER_LISTING}) :: ${url}`,
+              ipAddress: req.ip,
+            });
           } catch (err: any) {
             console.error('[bulk-images] file error', f.originalname, err);
             results.push({
@@ -654,7 +666,9 @@ export function createListingRoutes(authenticateToken: any) {
           }
         }
 
-        // 6) Persist updated image arrays + audit log per listing
+        // 6) Persist updated image arrays + aggregate audit log per listing
+        // (the per-file logs above provide file-level traceability; this
+        // aggregate entry summarizes the batch impact on each listing).
         for (const [listingId, images] of updatedImages) {
           await listingRepository.update(user.tenantId, listingId, { images });
           const original = projectListings.find(l => l.id === listingId);
