@@ -176,7 +176,7 @@ async function startServer() {
         // visibility probe to capture computed style + bounding rect on mount,
         // so we can diagnose pure-visual bugs that throw no JS error.
         projectCode: trunc(body.projectCode, 40),
-        snapshot: body.snapshot ? trunc(JSON.stringify(body.snapshot), 8000) : null,
+        snapshot: body.snapshot ? trunc(JSON.stringify(body.snapshot), 12000) : null,
       });
     } catch {
       // Swallow — never fail the client over an error report.

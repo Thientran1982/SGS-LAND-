@@ -1253,6 +1253,51 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 const firstRow = tableEl?.querySelector('[role="row"]:nth-of-type(2)') as HTMLElement | null;
                 const firstRowRect = firstRow?.getBoundingClientRect() ?? null;
                 const firstRowCs = firstRow ? window.getComputedStyle(firstRow) : null;
+                // PAINT-TIME TEST: ask browser what's actually drawn at the
+                // panel's center pixel. If it returns the panel or one of its
+                // descendants → user MUST see the panel. If it returns body
+                // or some other element → something is covering it (or the
+                // panel was pushed off-screen by an ancestor transform).
+                const cx = Math.round(rect.left + rect.width / 2);
+                const cy = Math.round(rect.top + rect.height / 2);
+                const topElAtCenter = document.elementFromPoint(cx, cy);
+                const stackAtCenter = (document as any).elementsFromPoint
+                    ? (document as any).elementsFromPoint(cx, cy)
+                        .slice(0, 5)
+                        .map((e: Element) => ({
+                            tag: e.tagName,
+                            id: (e as HTMLElement).id || null,
+                            cls: ((e as HTMLElement).className || '').toString().slice(0, 80),
+                            role: e.getAttribute('role'),
+                        }))
+                    : [];
+                // Walk up from panel to body, recording any ancestor with a
+                // transform / filter / perspective / will-change that would
+                // break position:fixed semantics for the overlay.
+                const fixedBreakers: any[] = [];
+                let cur: HTMLElement | null = el;
+                let depth = 0;
+                while (cur && cur !== document.body && depth < 20) {
+                    const acs = window.getComputedStyle(cur);
+                    if ((acs.transform && acs.transform !== 'none') ||
+                        (acs.filter && acs.filter !== 'none') ||
+                        (acs.perspective && acs.perspective !== 'none') ||
+                        (acs.willChange && /transform|filter/i.test(acs.willChange))) {
+                        fixedBreakers.push({
+                            tag: cur.tagName,
+                            cls: (cur.className || '').toString().slice(0, 80),
+                            transform: acs.transform,
+                            filter: acs.filter,
+                            willChange: acs.willChange,
+                            depth,
+                        });
+                    }
+                    cur = cur.parentElement;
+                    depth++;
+                }
+                // Capture innerHTML of first row (truncated) — proves rows
+                // actually have data content, not just empty cells.
+                const firstRowHtml = firstRow ? (firstRow.innerHTML || '').slice(0, 400) : null;
                 fetch('/api/_client_error', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1313,6 +1358,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 width: firstRowRect.width,
                                 height: firstRowRect.height,
                                 top: firstRowRect.top,
+                                left: firstRowRect.left,
+                                html: firstRowHtml,
                             } : null,
                             overlay: overlayCs && overlayRect ? {
                                 bg: overlayCs.backgroundColor,
@@ -1320,6 +1367,25 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 height: overlayRect.height,
                             } : null,
                             highZSiblings: portals,
+                            // PAINT-TIME ground truth: who actually owns the
+                            // pixel at the panel's center?
+                            paintCheck: {
+                                cx, cy,
+                                topAtCenter: topElAtCenter ? {
+                                    tag: topElAtCenter.tagName,
+                                    cls: ((topElAtCenter as HTMLElement).className || '').toString().slice(0, 100),
+                                    role: topElAtCenter.getAttribute('role'),
+                                    isPanelDescendant: el.contains(topElAtCenter) || topElAtCenter === el,
+                                } : null,
+                                stack: stackAtCenter,
+                            },
+                            // Ancestors that break position:fixed semantics
+                            // (transform/filter/perspective/will-change).
+                            fixedBreakers,
+                            // Document scroll — fixed panels should not move
+                            // with scroll, but capture for completeness.
+                            scrollX: window.scrollX,
+                            scrollY: window.scrollY,
                             viewportW: window.innerWidth,
                             viewportH: window.innerHeight,
                         },
