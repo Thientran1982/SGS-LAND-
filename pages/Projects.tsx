@@ -332,7 +332,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                         </div>
                         {/* Mini-site công khai (/p/<code>) — ADMIN/SUPER_ADMIN/TEAM_LEAD của tenant chủ có quyền bật/tắt (server enforce). */}
                         <div className="col-span-2">
-                            <label className={`${labelCls} mb-2`}>Mini-site công khai</label>
+                            <label className={`${labelCls} mb-2`}>{t('project.microsite_section')}</label>
                             <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
                                 <input
                                     type="checkbox"
@@ -342,14 +342,14 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                 />
                                 <span className="flex-1">
                                     <span className="block text-sm font-semibold text-[var(--text-primary)]">
-                                        Bật trang công khai cho dự án
+                                        {t('project.microsite_toggle')}
                                     </span>
                                     <span className="block text-xs text-[var(--text-secondary)] mt-0.5">
-                                        URL: <span className="font-mono">{window.location.origin}/p/{(form.code || 'MA-DU-AN').toUpperCase()}</span>
-                                        {!form.code && <span className="text-rose-600 ml-1">(cần điền Mã dự án)</span>}
+                                        {t('project.microsite_url_label')}: <span className="font-mono">{window.location.origin}/p/{(form.code || t('project.microsite_code_placeholder')).toUpperCase()}</span>
+                                        {!form.code && <span className="text-rose-600 ml-1">{t('project.microsite_code_required')}</span>}
                                     </span>
                                     <span className="block text-xs text-[var(--text-secondary)] mt-1">
-                                        Chỉ liệt kê sản phẩm trạng thái Còn hàng / Booking / Mở bán. Ẩn thông tin chủ nhà, hoa hồng. Có form thu lead 5/h.
+                                        {t('project.microsite_desc')}
                                     </span>
                                 </span>
                             </label>
