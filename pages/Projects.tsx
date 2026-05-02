@@ -1323,34 +1323,20 @@ function BulkImageUploadModal({
         }
         setSubmitting(true); setProgress(0); setTopError(null);
         try {
-            const fd = new FormData();
             const mapping: Record<string, string> = {};
+            const filesToUpload: File[] = [];
             for (const it of items) {
-                fd.append('files', it.file, it.file.name);
+                filesToUpload.push(it.file);
                 const code = (it.manualCode || it.matchedCode || '').trim();
                 if (code) mapping[it.file.name] = code;
             }
-            fd.append('mapping', JSON.stringify(mapping));
 
-            const data = await new Promise<{ summary: any; results: any[] }>((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.upload.onprogress = ev => {
-                    if (ev.lengthComputable) setProgress(Math.round((ev.loaded / ev.total) * 100));
-                };
-                xhr.onload = () => {
-                    let parsed: any = null;
-                    try { parsed = JSON.parse(xhr.responseText); } catch { /* ignore */ }
-                    if (xhr.status >= 200 && xhr.status < 300 && parsed?.summary) {
-                        resolve(parsed);
-                    } else {
-                        reject(new Error(parsed?.error || `HTTP ${xhr.status}`));
-                    }
-                };
-                xhr.onerror = () => reject(new Error('Lỗi mạng. Vui lòng thử lại.'));
-                xhr.open('POST', `/api/listings/by-project/${encodeURIComponent(projectCode)}/bulk-images`);
-                xhr.withCredentials = true;
-                xhr.send(fd);
-            });
+            const data = await listingApi.bulkUploadImagesByCode(
+                projectCode,
+                filesToUpload,
+                mapping,
+                pct => setProgress(pct),
+            );
 
             setResult(data);
             // Always refresh the listings panel so newly-uploaded images are

@@ -46,22 +46,46 @@ export const listingApi = {
    * Bulk-upload listing images for a project. Filenames are matched to
    * `listing.code` (case/accent-insensitive, with optional `-N` numeric suffix).
    * `mapping` lets the caller override matches manually for individual files.
-   * Use XHR via `bulkUploadImagesByCodeWithProgress` if you need upload progress.
+   * Pass an `onProgress` callback to receive 0-100 upload progress (uses XHR).
    */
   bulkUploadImagesByCode: async (
     projectCode: string,
     files: File[],
-    mapping?: Record<string, string>
+    mapping?: Record<string, string>,
+    /** Optional callback invoked with upload progress as a 0-100 integer. */
+    onProgress?: (percent: number) => void
   ): Promise<{ summary: any; results: any[] }> => {
     const fd = new FormData();
     for (const f of files) fd.append('files', f, f.name);
     if (mapping && Object.keys(mapping).length > 0) {
       fd.append('mapping', JSON.stringify(mapping));
     }
-    const res = await fetch(
-      `/api/listings/by-project/${encodeURIComponent(projectCode)}/bulk-images`,
-      { method: 'POST', body: fd, credentials: 'include' }
-    );
+    const url = `/api/listings/by-project/${encodeURIComponent(projectCode)}/bulk-images`;
+
+    // Use XHR when caller wants progress (fetch lacks an upload progress event).
+    if (onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = ev => {
+          if (ev.lengthComputable) onProgress(Math.round((ev.loaded / ev.total) * 100));
+        };
+        xhr.onload = () => {
+          let parsed: any = null;
+          try { parsed = JSON.parse(xhr.responseText); } catch { /* ignore */ }
+          if (xhr.status >= 200 && xhr.status < 300 && parsed?.summary) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed?.error || `HTTP ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Lỗi mạng. Vui lòng thử lại.'));
+        xhr.open('POST', url);
+        xhr.withCredentials = true;
+        xhr.send(fd);
+      });
+    }
+
+    const res = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
       throw new Error(err.error || 'Tải ảnh hàng loạt thất bại');
