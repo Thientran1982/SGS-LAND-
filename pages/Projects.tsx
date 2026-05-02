@@ -1229,26 +1229,37 @@ function BulkImageUploadModal({
         return null;
     }, [codeLookup]);
 
-    // Load all listing codes for this project (used both for auto-match and for
-    // the manual-override dropdown). Cap = 5000 to match the server-side
-    // bulk-images endpoint cap, so the dropdown never shows fewer codes than
-    // the server can match against.
+    // Load all listing codes for this project (used both for auto-match and
+    // for the manual-override dropdown). The /api/listings endpoint caps
+    // pageSize at 200 server-side, so we page through until exhausted with a
+    // hard safety cap of 50 pages (= 10 000 codes) to avoid runaway loops.
     useEffect(() => {
         if (!projectCode) { setCodesLoading(false); return; }
         let cancelled = false;
         setCodesLoading(true);
-        listingApi.getListings(1, 5000, { projectCode })
-            .then((data: any) => {
-                if (cancelled) return;
-                const codes = (data?.data || [])
-                    .map((l: any) => l?.code)
-                    .filter((c: any): c is string => typeof c === 'string' && c.trim() !== '');
-                setListingCodes(codes);
-            })
-            .catch((e: any) => {
+        (async () => {
+            try {
+                const PAGE_SIZE = 200;
+                const MAX_PAGES = 50;
+                const collected: string[] = [];
+                for (let page = 1; page <= MAX_PAGES; page++) {
+                    if (cancelled) return;
+                    const data: any = await listingApi.getListings(page, PAGE_SIZE, { projectCode });
+                    const rows: any[] = Array.isArray(data?.data) ? data.data : [];
+                    for (const l of rows) {
+                        if (typeof l?.code === 'string' && l.code.trim() !== '') {
+                            collected.push(l.code);
+                        }
+                    }
+                    if (rows.length < PAGE_SIZE) break;
+                }
+                if (!cancelled) setListingCodes(collected);
+            } catch (e: any) {
                 if (!cancelled) setCodesError(e?.message || 'Không tải được mã sản phẩm');
-            })
-            .finally(() => { if (!cancelled) setCodesLoading(false); });
+            } finally {
+                if (!cancelled) setCodesLoading(false);
+            }
+        })();
         return () => { cancelled = true; };
     }, [projectCode]);
 
