@@ -102,11 +102,40 @@ export function createProjectRoutes(authenticateToken: any) {
     }
   });
 
-  // PUT /api/projects/:id — update project (ADMIN only)
+  // PUT /api/projects/:id — update project.
+  // ADMIN/SUPER_ADMIN: full update. TEAM_LEAD: chỉ được toggle metadata.public_microsite
+  // (Task #25 — admin/teamlead của tenant chủ được bật mini-site công khai).
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
+      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const isTeamLead = user.role === 'TEAM_LEAD';
+      if (!isAdmin && !isTeamLead) return res.status(403).json({ error: 'Không có quyền thực hiện' });
+
+      // TEAM_LEAD chỉ được phép thay đổi metadata.public_microsite — chặn các field khác
+      // để tránh leak quyền sửa code/name/status cho tenant chủ.
+      if (!isAdmin) {
+        const allowedKeys = new Set(['metadata']);
+        const sentKeys = Object.keys(req.body || {}).filter(k => req.body[k] !== undefined);
+        const disallowed = sentKeys.filter(k => !allowedKeys.has(k));
+        if (disallowed.length > 0) {
+          return res.status(403).json({ error: `TEAM_LEAD chỉ được bật/tắt mini-site công khai (${disallowed.join(', ')} không được phép)` });
+        }
+        const before = await projectRepository.findById(user.tenantId, req.params.id as string);
+        if (!before) return res.status(404).json({ error: 'Không tìm thấy dự án' });
+        const oldMeta = (before as any).metadata || {};
+        const newMeta = req.body.metadata || {};
+        const allowedMetaKeys = new Set(['public_microsite']);
+        // Merge: chỉ cho phép thay đổi key public_microsite, các key khác phải giữ nguyên
+        const mergedMeta: Record<string, any> = { ...oldMeta };
+        for (const k of Object.keys(newMeta)) {
+          if (!allowedMetaKeys.has(k) && JSON.stringify(newMeta[k]) !== JSON.stringify(oldMeta[k])) {
+            return res.status(403).json({ error: `TEAM_LEAD chỉ được bật/tắt mini-site công khai (metadata.${k} không được phép)` });
+          }
+          mergedMeta[k] = newMeta[k];
+        }
+        req.body.metadata = mergedMeta;
+      }
 
       const id = req.params.id as string;
       const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
