@@ -475,7 +475,8 @@ export const commissionLedgerRepository = {
       const partners = await c.query(
         `SELECT cl.partner_tenant_id, t.name AS partner_name,
                 COUNT(*)::int AS units,
-                COALESCE(SUM(cl.gross_amount),0) AS gross
+                COALESCE(SUM(cl.sale_price),0)   AS gross,
+                COALESCE(SUM(cl.gross_amount),0) AS commission
            FROM commission_ledger cl
            LEFT JOIN tenants t ON t.id = cl.partner_tenant_id
           WHERE cl.tenant_id = $1 AND cl.project_id = $2
