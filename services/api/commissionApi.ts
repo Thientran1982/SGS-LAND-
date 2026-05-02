@@ -96,7 +96,7 @@ export const commissionApi = {
     projectId?: string; partnerTenantId?: string; salesUserId?: string;
     status?: LedgerStatus; fromDate?: string; toDate?: string;
   } = {}): Promise<LedgerListResponse> =>
-    api.get('/api/commissions', params as any),
+    api.get('/api/commissions', { ...params }),
 
   markPaid: (id: string, note?: string): Promise<LedgerItem> =>
     api.patch(`/api/commissions/${id}/mark-paid`, { note: note || null }),

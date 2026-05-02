@@ -4,6 +4,7 @@ import {
   commissionApi,
   type CommissionPolicy,
   type LedgerItem,
+  type LedgerListResponse,
   type PolicyType,
   type ProjectCommissionSummary,
   type TierBand,
@@ -46,9 +47,10 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
     setLoading(true);
     setErr(null);
     try {
+      const emptyLedger: LedgerListResponse = { data: [], total: 0, page: 1, pageSize: 50, totalPages: 0 };
       const [p, l] = await Promise.all([
-        commissionApi.listPolicies(projectId).catch(() => ({ data: [] })),
-        commissionApi.list({ projectId, page: 1, pageSize: 50 }).catch(() => ({ data: [], total: 0, page: 1, pageSize: 50, totalPages: 0 } as any)),
+        commissionApi.listPolicies(projectId).catch(() => ({ data: [] as CommissionPolicy[] })),
+        commissionApi.list({ projectId, page: 1, pageSize: 50 }).catch(() => emptyLedger),
       ]);
       setPolicies(p.data || []);
       setLedger(l.data || []);
