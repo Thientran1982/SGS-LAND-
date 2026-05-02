@@ -32,7 +32,13 @@ export const LISTING_ICONS = {
 
 
 function toThumbnailUrl(src: string, width = 800): string {
-    if (src.startsWith('/uploads/')) return `${src}?w=${width}`;
+    // Làm tròn lên bội số 64 để khớp cache với utils/imageUrl.ts (LazyImage,
+    // optimizedImageUrl) — tránh sinh ra nhiều biến thể gần nhau (vd 800/801/810)
+    // mà server phải resize lại từ đầu.
+    if (src.startsWith('/uploads/') && !src.includes('?')) {
+        const w = Math.max(64, Math.ceil(width / 64) * 64);
+        return `${src}?w=${w}`;
+    }
     return src;
 }
 
