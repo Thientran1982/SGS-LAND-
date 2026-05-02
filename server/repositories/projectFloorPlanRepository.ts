@@ -1,4 +1,29 @@
-import { pool } from '../db';
+import { pool, withRlsBypass } from '../db';
+
+/**
+ * SECURITY NOTE — RLS strategy for project_floor_plans
+ * ----------------------------------------------------
+ * Every row carries `tenant_id`, and EVERY query in this repository
+ * filters by `tenant_id = $1`. Routes always perform an authorization
+ * check (owner: project must exist under user.tenantId; partner:
+ * project_access must grant the partner read on the project) BEFORE
+ * passing a tenantId in here.
+ *
+ * We deliberately use `withRlsBypass` (not `withTenantContext`) for the
+ * read paths because partner users hit floor-plan rows that belong to
+ * the OWNER tenant (not their own); standard RLS would block those
+ * reads. The bypass is safe ONLY because:
+ *   1. Caller has already verified access via projectRepository
+ *      .checkPartnerAccess(...) in projectFloorPlanRoutes.
+ *   2. The WHERE clause in every method pins `tenant_id` to the
+ *      specific owner tenant resolved from the project row.
+ * Mutating routes (upload/delete) are gated to MUTATE_ROLES (no
+ * partners) so the tenantId passed in is always the user's own tenant.
+ *
+ * If you add a new method here, KEEP the explicit `tenant_id = $1`
+ * predicate — the bypass is what makes that filter the only line of
+ * defense.
+ */
 
 export interface FloorPlanRow {
   id: string;
@@ -39,20 +64,26 @@ export const projectFloorPlanRepository = {
   normFloor,
 
   async findByProject(tenantId: string, projectId: string): Promise<FloorPlanRow[]> {
-    const { rows } = await pool.query(
-      `SELECT * FROM project_floor_plans
-       WHERE tenant_id = $1 AND project_id = $2
-       ORDER BY tower ASC, floor ASC`,
-      [tenantId, projectId],
+    // Explicit RLS bypass: route layer already verified access; we pin
+    // tenant_id in the predicate to scope to the resolved owner tenant.
+    const { rows } = await withRlsBypass((c) =>
+      c.query(
+        `SELECT * FROM project_floor_plans
+         WHERE tenant_id = $1 AND project_id = $2
+         ORDER BY tower ASC, floor ASC`,
+        [tenantId, projectId],
+      ),
     );
     return rows;
   },
 
   async findById(tenantId: string, id: string): Promise<FloorPlanRow | null> {
-    const { rows } = await pool.query(
-      `SELECT * FROM project_floor_plans
-       WHERE tenant_id = $1 AND id = $2`,
-      [tenantId, id],
+    const { rows } = await withRlsBypass((c) =>
+      c.query(
+        `SELECT * FROM project_floor_plans
+         WHERE tenant_id = $1 AND id = $2`,
+        [tenantId, id],
+      ),
     );
     return rows[0] ?? null;
   },
@@ -63,10 +94,12 @@ export const projectFloorPlanRepository = {
     tower: string,
     floor: string,
   ): Promise<FloorPlanRow | null> {
-    const { rows } = await pool.query(
-      `SELECT * FROM project_floor_plans
-       WHERE tenant_id = $1 AND project_id = $2 AND tower = $3 AND floor = $4`,
-      [tenantId, projectId, normTower(tower), normFloor(floor)],
+    const { rows } = await withRlsBypass((c) =>
+      c.query(
+        `SELECT * FROM project_floor_plans
+         WHERE tenant_id = $1 AND project_id = $2 AND tower = $3 AND floor = $4`,
+        [tenantId, projectId, normTower(tower), normFloor(floor)],
+      ),
     );
     return rows[0] ?? null;
   },
