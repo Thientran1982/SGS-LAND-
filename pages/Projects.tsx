@@ -8,6 +8,7 @@ import { Dropdown } from '../components/Dropdown';
 import { ListingForm } from '../components/ListingForm';
 import { ContractModal } from '../components/ContractModal';
 import LazyImage from '../components/LazyImage';
+import { NO_IMAGE_URL } from '../utils/constants';
 import {
     exportListingsToExcel,
     parseListingsFromExcel,
@@ -141,21 +142,15 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         setSaving(true);
         setErr('');
         try {
-            // Hợp nhất metadata cũ để không xoá field khác do hệ thống lưu trước đó
-            const nextMeta: Record<string, any> = { ...existingMeta };
-            if (driveUrlTrim) {
-                nextMeta.drive_url = driveUrlTrim;
-            } else {
-                delete nextMeta.drive_url;
-                delete nextMeta.driveUrl;
-            }
-            // Cover image: persist canonical `coverImage` field; clear legacy snake_case alias
-            if (coverImage) {
-                nextMeta.coverImage = coverImage;
-            } else {
-                delete nextMeta.coverImage;
-            }
-            delete nextMeta.cover_image;
+            // Server-side metadata is merged + null-stripped (jsonb merge), so
+            // we send a *patch* — only the keys we want to add/update/remove.
+            // `null` removes the key on the server; omitting a key leaves it
+            // untouched. This avoids clobbering metadata written by other flows.
+            const nextMeta: Record<string, any> = {};
+            nextMeta.drive_url = driveUrlTrim ? driveUrlTrim : null;
+            nextMeta.driveUrl = null; // legacy camelCase alias — always strip
+            nextMeta.coverImage = coverImage ? coverImage : null;
+            nextMeta.cover_image = null; // legacy snake_case alias — always strip
             // Lưu ý: gửi chuỗi rỗng (đã trim) thay vì undefined cho các text
             // field, và null cho number/date đã xoá. Nếu gửi undefined thì
             // JSON.stringify sẽ drop key, server bỏ qua, DB giữ giá trị cũ —
@@ -1967,8 +1962,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         </button>
                                     </>
                                 )}
-                                {/* Bulk upload images */}
-                                {canCreate && (
+                                {/* Bulk upload images — admin/team-lead/sales/marketing
+                                    (server-side gate also enforces). PARTNER blocked. */}
+                                {canEditOwn && (
                                     <button type="button"
                                         onClick={() => setShowBulkImages(true)}
                                         disabled={!project.code}
@@ -2282,7 +2278,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 <BulkImageUploadModal
                     project={project}
                     onClose={() => setShowBulkImages(false)}
-                    onCompleted={() => { load(); syncStats(); onListingCreated?.(); }}
+                    /* Refresh listings + stats only — bulk image upload does NOT
+                       create new listings, so don't invoke onListingCreated
+                       (parent uses it to bump project.listingCount by +1). */
+                    onCompleted={() => { load(); syncStats(); }}
                     t={t}
                 />
             )}
@@ -2825,17 +2824,16 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
 
     return (
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col overflow-hidden">
-            {/* Cover image — 16:9 hero photo, optional */}
-            {coverImage && (
-                <div className="relative aspect-[16/9] w-full bg-[var(--bg-app)] border-b border-[var(--glass-border)]">
-                    <LazyImage
-                        src={coverImage}
-                        alt={project.name}
-                        wrapperClassName="absolute inset-0"
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-            )}
+            {/* Cover image — 16:9 hero photo; falls back to neutral placeholder
+                so every card has a consistent visual height. */}
+            <div className="relative aspect-[16/9] w-full bg-[var(--bg-app)] border-b border-[var(--glass-border)]">
+                <LazyImage
+                    src={coverImage || NO_IMAGE_URL}
+                    alt={project.name}
+                    wrapperClassName="absolute inset-0"
+                    className="w-full h-full object-cover"
+                />
+            </div>
             {/* Card body */}
             <div className="p-5 flex-1">
                 {/* Top row: name + status + admin menu */}
