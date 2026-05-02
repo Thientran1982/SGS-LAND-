@@ -55,9 +55,19 @@ export interface PublicProjectPayload {
     hotlineDisplay: string;
     zalo: string;
   };
+  /** Tenant white-label branding (task #28) — null fields = dùng default UI. */
+  branding?: PublicMicrositeBranding;
   /** Captcha config — server chỉ trả khi env `TURNSTILE_SECRET_KEY` được set. */
   captcha: { provider: 'turnstile'; siteKey: string } | null;
   cachedAt: string;
+}
+
+export interface PublicMicrositeBranding {
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  primaryColor: string | null;
+  displayName: string | null;
+  messenger: string | null;
 }
 
 export interface PublicLeadInput {
