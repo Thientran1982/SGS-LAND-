@@ -61,13 +61,28 @@ const LazyImage = memo(({
 
   const resolvedSrc = visible ? (error ? fallback : (src || fallback)) : undefined;
 
+  // CRITICAL: the wrapper MUST always be `position: relative` so the
+  // `absolute inset-0` skeleton below is contained within this 44×44-ish
+  // image cell. Previously, callers passing `wrapperClassName="w-full h-full"`
+  // would silently drop the default `relative` class — the skeleton then
+  // escaped up the DOM to the nearest positioned ancestor (the listings
+  // panel overlay, `position: fixed inset-0`) and rendered as a FULL-VIEWPORT
+  // shimmer covering the panel content. With 48 listings × 1 LazyImage each,
+  // 48 full-viewport shimmer overlays stacked on top of the table — exactly
+  // the recurring "trắng trang" / "bảng trắng" bug for Masteri Cosmo Central
+  // (48 units). Verified via paint-time `document.elementFromPoint` probe
+  // in pages/Projects.tsx ProjectListingsPanel.visibility diagnostic.
   return (
-    <div ref={containerRef} className={wrapperClassName || 'relative w-full h-full'}>
-      {/* Skeleton shimmer — shown until image loads */}
+    <div
+      ref={containerRef}
+      className={wrapperClassName ? `relative ${wrapperClassName}` : 'relative w-full h-full'}
+    >
+      {/* Skeleton shimmer — shown until image loads.
+          Now safely contained because the wrapper is guaranteed `relative`. */}
       {!loaded && (
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-[var(--glass-surface)] via-[var(--glass-surface-hover)] to-[var(--glass-surface)] bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite] rounded-[inherit]"
+          className="absolute inset-0 bg-gradient-to-r from-[var(--glass-surface)] via-[var(--glass-surface-hover)] to-[var(--glass-surface)] bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite] rounded-[inherit] pointer-events-none"
         />
       )}
 
