@@ -43,6 +43,52 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const qrRef = useRef<HTMLDivElement | null>(null);
 
+  // Live preview overlay (task #36) — nhận postMessage từ BrandingPanel khi
+  // mini-site này đang được nhúng iframe trong tab Branding của CĐT. Chỉ
+  // accept khi `?preview=1` để không ảnh hưởng người dùng cuối, và origin
+  // phải khớp window.location.origin (cùng domain — iframe nội bộ).
+  const [brandingOverride, setBrandingOverride] =
+    useState<Partial<{
+      logoUrl: string | null;
+      faviconUrl: string | null;
+      primaryColor: string | null;
+      displayName: string | null;
+      messenger: string | null;
+    }> | null>(null);
+
+  const isPreviewMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('preview') === '1';
+    } catch { return false; }
+  }, []);
+
+  useEffect(() => {
+    if (!isPreviewMode || typeof window === 'undefined') return;
+    const onMessage = (ev: MessageEvent) => {
+      if (ev.origin !== window.location.origin) return;
+      const msg: any = ev.data;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type !== 'sgs:branding-preview') return;
+      const b = msg.branding && typeof msg.branding === 'object' ? msg.branding : {};
+      const next: Record<string, string | null> = {};
+      const allowed = ['logoUrl', 'faviconUrl', 'primaryColor', 'displayName', 'messenger'] as const;
+      for (const k of allowed) {
+        const v = b[k];
+        if (typeof v === 'string') next[k] = v;
+        else if (v === null) next[k] = null;
+      }
+      setBrandingOverride(next);
+    };
+    window.addEventListener('message', onMessage);
+    // Notify parent ready để parent gửi snapshot ngay sau khi iframe load
+    try {
+      window.parent?.postMessage({ type: 'sgs:preview-ready' }, window.location.origin);
+    } catch { /* noop */ }
+    return () => window.removeEventListener('message', onMessage);
+  }, [isPreviewMode]);
+
   // Lead form state
   const [form, setForm] = useState({ name: '', phone: '', email: '', interest: '', note: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -273,7 +319,17 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   }
 
   const { project, listings, tenantContact } = data;
-  const branding = data.branding ?? null;
+  // Branding overlay (task #36): khi mini-site được nhúng iframe trong
+  // BrandingPanel, parent gửi `sgs:branding-preview` postMessage chứa các
+  // field đang sửa nhưng chưa lưu — overlay lên branding từ server để CĐT
+  // thấy ngay logo/màu/tên thay đổi mà không cần lưu DB.
+  const baseBranding = data.branding ?? {
+    logoUrl: null, faviconUrl: null, primaryColor: null,
+    displayName: null, messenger: null,
+  };
+  const branding = brandingOverride
+    ? { ...baseBranding, ...brandingOverride }
+    : baseBranding;
   const brandPrimary = branding?.primaryColor || '#4F46E5';
   const brandLabel   = branding?.displayName || tenantContact.brandName || 'SGS LAND';
   const brandLogo    = branding?.logoUrl || null;
