@@ -38,6 +38,12 @@ const queryClient = new QueryClient({
 const Login = lazyLoad(() => import('./pages/Login'), 'Login');
 const PublicProposal = lazyLoad(() => import('./pages/PublicProposal'), 'PublicProposal');
 const PublicContract = lazyLoad(() => import('./pages/PublicContract'), 'PublicContract');
+const PublicProjectMicrosite = lazyLoad(() => import('./pages/PublicProjectMicrosite'), 'PublicProjectMicrosite');
+
+// Project codes (mã dự án — uppercase + digits + dashes/underscores). Proposal
+// tokens là UUID lowercase, contract tokens có prefix `contract_` → unambiguous.
+const isProjectCodeToken = (t: string | undefined | null): boolean =>
+    !!t && /^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(t);
 const Landing = lazyLoad(() => import('./pages/Landing'), 'Landing');
 const ProductSearch = lazyLoad(() => import('./pages/ProductSearch'), 'ProductSearch');
 // Ensure these match file names exactly
@@ -760,6 +766,7 @@ const AppShell: React.FC = () => {
                         <ErrorBoundary>
                             <Suspense fallback={SmallSpinner}>
                                 {token?.startsWith('contract_') ? <PublicContract token={token} /> :
+                                 isProjectCodeToken(token) ? <PublicProjectMicrosite projectCode={token!} /> :
                                  token ? <PublicProposal token={token} /> :
                                  <ErrorState message={t('pub.not_found')} />}
                             </Suspense>
@@ -823,7 +830,7 @@ const AppShell: React.FC = () => {
             );
         }
 
-        // Special Case: Public Proposal / Contract
+        // Special Case: Public Proposal / Contract / Project Mini-site
         if (route.base === ROUTES.PUBLIC_PREFIX) {
             const token = route.params[0];
             
@@ -841,6 +848,27 @@ const AppShell: React.FC = () => {
                             <ErrorBoundary>
                                 <Suspense fallback={SmallSpinner}>
                                     <PublicContract token={token} />
+                                </Suspense>
+                            </ErrorBoundary>
+                        </motion.div>
+                    </AnimatePresence>
+                );
+            }
+
+            if (isProjectCodeToken(token)) {
+                return (
+                    <AnimatePresence mode="sync">
+                        <motion.div
+                            key={route.fullPath}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
+                        >
+                            <ErrorBoundary>
+                                <Suspense fallback={SmallSpinner}>
+                                    <PublicProjectMicrosite projectCode={token!} />
                                 </Suspense>
                             </ErrorBoundary>
                         </motion.div>

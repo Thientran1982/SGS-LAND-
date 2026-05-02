@@ -28,6 +28,7 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - Single unified server (`server.ts`) running on port 5000.
 - **Repository Pattern**: Centralized data access logic in `server/repositories/` for CRUD operations on all entities, enforcing PostgreSQL Row Level Security (RLS) for multi-tenancy.
 - **API Routes**: Organized by resource in `server/routes/` (e.g., `/api/leads`, `/api/listings`).
+- **Public (no-auth) endpoints**: Whitelisted, kept on a separate router with strict field allow-lists. Examples: `/api/public/projects/:code` (mini-site dự án — chỉ project có `metadata.public_microsite=true`, listings chỉ AVAILABLE/BOOKING/OPENING, ẩn owner/commission/audit; in-memory TTL 5 phút, evict khi project/listing bị mutate; lead form rate-limited 5/h/IP + dedup phone+code 24h). Frontend route `/p/:code` (PublicProjectMicrosite) + SSR meta injector cho Facebook/Zalo OG + entry trong `sitemap-projects.xml`.
 - **Middleware**: Includes security headers, CORS, input validation, error handling, rate limiting, structured logging, and audit logging.
 - **Services**: `emailService`, `systemService`, `geoService`, `marketDataService`, `priceCalibrationService` for core business logic.
 - **Valuation Engine**: A complex 1,647-line module (`server/valuationEngine.ts`) implementing 9 AVM coefficients, multi-source price blending, an income approach, and regional/project-specific price tables. Includes RLHF price correction.

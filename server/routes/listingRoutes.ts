@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
+import { evictPublicProjectCache } from '../services/publicProjectCache';
 import { priceCalibrationService } from '../services/priceCalibrationService';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { storeFile } from '../services/storageService';
@@ -457,6 +458,12 @@ export function createListingRoutes(authenticateToken: any) {
         createdBy: user.id,
       });
 
+      // Invalidate public mini-site cache cho project_code khi có listing mới
+      try {
+        const code = (listing as any).projectCode || (listing as any).project_code || (req.body as any).projectCode || (req.body as any).project_code;
+        if (code) evictPublicProjectCache(String(code));
+      } catch { /* best-effort */ }
+
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'CREATE',
@@ -497,6 +504,7 @@ export function createListingRoutes(authenticateToken: any) {
 
       const created: unknown[] = [];
       const errors: { row: number; error: string }[] = [];
+      const touchedProjectCodes = new Set<string>();
 
       for (let i = 0; i < listings.length; i++) {
         const item = listings[i];
@@ -508,12 +516,19 @@ export function createListingRoutes(authenticateToken: any) {
             createdBy: user.id,
           });
           created.push(listing);
+          const code = (listing as any).projectCode || (listing as any).project_code || (data as any).projectCode || (data as any).project_code;
+          if (code) touchedProjectCodes.add(String(code));
         } catch (err: any) {
           const msg = err?.message?.includes('duplicate') || err?.message?.includes('unique')
             ? `Mã sản phẩm "${item.code}" đã tồn tại`
             : (err?.message ?? 'Lỗi không xác định');
           errors.push({ row: rowNum, error: msg });
         }
+      }
+
+      // Invalidate public mini-site cache cho mọi project_code có listing mới
+      for (const code of touchedProjectCodes) {
+        try { evictPublicProjectCache(code); } catch { /* best-effort */ }
       }
 
       res.json({ created: created.length, errors });
@@ -676,6 +691,11 @@ export function createListingRoutes(authenticateToken: any) {
         // 6) Persist updated image arrays + aggregate audit log per listing
         // (the per-file logs above provide file-level traceability; this
         // aggregate entry summarizes the batch impact on each listing).
+        // Cache invalidation: bulk-images thuộc 1 dự án duy nhất (param
+        // :projectCode), nên evict 1 lần sau loop là đủ.
+        if (updatedImages.size > 0 && projectCode) {
+          try { evictPublicProjectCache(projectCode); } catch { /* best-effort */ }
+        }
         for (const [listingId, images] of updatedImages) {
           await listingRepository.update(user.tenantId, listingId, { images });
           const original = projectListings.find(l => l.id === listingId);
@@ -751,6 +771,15 @@ export function createListingRoutes(authenticateToken: any) {
 
       const listing = await listingRepository.update(user.tenantId, String(req.params.id), safeBody);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      // Invalidate public mini-site cache cho project_code cũ + mới (handle
+      // trường hợp chuyển dự án — hiếm nhưng cần cover).
+      try {
+        const oldCode = (prefetchedListing as any)?.projectCode || (prefetchedListing as any)?.project_code;
+        const newCode = (listing as any).projectCode || (listing as any).project_code;
+        if (oldCode) evictPublicProjectCache(String(oldCode));
+        if (newCode && newCode !== oldCode) evictPublicProjectCache(String(newCode));
+      } catch { /* best-effort */ }
 
       // ── Self-learning: record ground-truth price when listing is sold ─────
       // A sold transaction is the most accurate price signal — weight 50% in calibration.
@@ -844,6 +873,13 @@ export function createListingRoutes(authenticateToken: any) {
 
       const listing = await listingRepository.update(user.tenantId, String(req.params.id), { status });
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      // Invalidate public mini-site cache khi status đổi (đặc biệt giữa
+      // AVAILABLE/BOOKING/OPENING ↔ HOLD/SOLD — ảnh hưởng filter công khai)
+      try {
+        const code = (listing as any).projectCode || (listing as any).project_code || (existing as any).projectCode || (existing as any).project_code;
+        if (code) evictPublicProjectCache(String(code));
+      } catch { /* best-effort */ }
 
       await auditRepository.log(user.tenantId, {
         actorId:    user.id,
@@ -952,8 +988,14 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Insufficient permissions to delete listings' });
       }
 
+      // Lookup project_code TRƯỚC khi xoá để invalidate cache sau xoá
+      const beforeDelete = await listingRepository.findById(user.tenantId, String(req.params.id));
       const deleted = await listingRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Listing not found' });
+      if (beforeDelete) {
+        const code = (beforeDelete as any).projectCode || (beforeDelete as any).project_code;
+        if (code) evictPublicProjectCache(String(code));
+      }
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
