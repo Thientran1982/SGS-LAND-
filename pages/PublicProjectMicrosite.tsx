@@ -207,6 +207,37 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     };
   }, [data?.captcha?.siteKey]);
 
+  // Inject favicon + document.title cho tab browser CĐT (task #28).
+  // PHẢI đặt trước mọi early-return để giữ thứ tự hooks ổn định giữa các render
+  // (loading → loaded). Các giá trị branding được derive trong effect để không
+  // cần biến cục bộ sống ngoài effect khi data chưa có.
+  useEffect(() => {
+    const branding = data?.branding ?? null;
+    if (!branding) return;
+    const projectName = data?.project?.name || '';
+    const brandLabel  = branding.displayName || data?.tenantContact?.brandName || 'SGS LAND';
+    const prevTitle = document.title;
+    if (brandLabel && projectName) document.title = `${projectName} — ${brandLabel}`;
+
+    let faviconLink: HTMLLinkElement | null = null;
+    let prevFaviconHref: string | null = null;
+    if (branding.faviconUrl) {
+      faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+      if (!faviconLink) {
+        faviconLink = document.createElement('link');
+        faviconLink.rel = 'icon';
+        document.head.appendChild(faviconLink);
+      } else {
+        prevFaviconHref = faviconLink.href;
+      }
+      faviconLink.href = branding.faviconUrl;
+    }
+    return () => {
+      document.title = prevTitle;
+      if (faviconLink && prevFaviconHref !== null) faviconLink.href = prevFaviconHref;
+    };
+  }, [data?.branding, data?.project?.name, data?.tenantContact?.brandName]);
+
   // ─── Loading ────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -247,31 +278,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const brandPrimary = branding?.primaryColor || '#4F46E5';
   const brandLabel   = branding?.displayName || tenantContact.brandName || 'SGS LAND';
   const brandLogo    = branding?.logoUrl || null;
-
-  // Inject favicon + document.title cho tab browser CĐT (task #28)
-  useEffect(() => {
-    if (!branding) return;
-    const prevTitle = document.title;
-    if (brandLabel) document.title = `${project.name} — ${brandLabel}`;
-
-    let faviconLink: HTMLLinkElement | null = null;
-    let prevFaviconHref: string | null = null;
-    if (branding.faviconUrl) {
-      faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
-      if (!faviconLink) {
-        faviconLink = document.createElement('link');
-        faviconLink.rel = 'icon';
-        document.head.appendChild(faviconLink);
-      } else {
-        prevFaviconHref = faviconLink.href;
-      }
-      faviconLink.href = branding.faviconUrl;
-    }
-    return () => {
-      document.title = prevTitle;
-      if (faviconLink && prevFaviconHref !== null) faviconLink.href = prevFaviconHref;
-    };
-  }, [branding, brandLabel, project.name]);
 
   return (
     <div
