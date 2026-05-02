@@ -1664,6 +1664,13 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     // Hoa hồng & doanh số
     const [showCommissions, setShowCommissions] = useState(false);
 
+    // ── Actions menu (gọn lại các nút thứ cấp: Mini-site / QR / Drive /
+    //    Export / Import / Template / Bulk images / Sa bàn / Hoa hồng) ──
+    const [actionsOpen, setActionsOpen] = useState(false);
+    const [actionsPos, setActionsPos] = useState({ top: 0, right: 0 });
+    const actionsRef = useRef<HTMLDivElement | null>(null);
+    const actionsBtnRef = useRef<HTMLButtonElement | null>(null);
+
     const [loadError, setLoadError] = useState<string | null>(null);
 
     // ── Sa bàn (interactive floor plan) ──────────────────────────────────────
@@ -1913,6 +1920,61 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         return () => document.removeEventListener('mousedown', handler);
     }, [menuOpenId]);
 
+    // Close actions menu on outside click / Escape.
+    useEffect(() => {
+        if (!actionsOpen) return;
+        const onDown = (e: MouseEvent) => {
+            const t1 = e.target as Node;
+            if (actionsRef.current?.contains(t1)) return;
+            if (actionsBtnRef.current?.contains(t1)) return;
+            setActionsOpen(false);
+        };
+        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setActionsOpen(false); };
+        document.addEventListener('mousedown', onDown);
+        document.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onDown);
+            document.removeEventListener('keydown', onKey);
+        };
+    }, [actionsOpen]);
+
+    const toggleActionsMenu = () => {
+        if (!actionsBtnRef.current) return;
+        const rect = actionsBtnRef.current.getBoundingClientRect();
+        setActionsPos({ top: rect.bottom + 6, right: Math.max(8, window.innerWidth - rect.right) });
+        setActionsOpen(v => !v);
+    };
+
+    // Render PNG QR code cho mini-site công khai và trigger download. Lazy-load
+    // qrcode.react để tránh phình bundle khi user không bao giờ tải QR.
+    const downloadMicrositeQR = useCallback(async (url: string, code: string) => {
+        try {
+            const { QRCodeCanvas } = await import('qrcode.react');
+            const ReactMod = await import('react');
+            const ReactDOMClient = await import('react-dom/client');
+            const host = document.createElement('div');
+            host.style.position = 'fixed';
+            host.style.left = '-9999px';
+            document.body.appendChild(host);
+            const root = ReactDOMClient.createRoot(host);
+            root.render(ReactMod.createElement(QRCodeCanvas, { value: url, size: 512, level: 'M', includeMargin: true }));
+            await new Promise(r => requestAnimationFrame(() => r(null)));
+            const canvas = host.querySelector('canvas') as HTMLCanvasElement | null;
+            if (canvas) {
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = `qr-${code}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+            root.unmount();
+            host.remove();
+        } catch (e) {
+            console.error('QR download failed', e);
+        }
+    }, []);
+
     // ── Stats recompute from listings array ───────────────────────────────────
     const recomputeStats = useCallback((updatedListings: any[]) => {
         const c = { AVAILABLE: 0, HOLD: 0, BOOKING: 0, SOLD: 0, OPENING: 0, RENTED: 0, INACTIVE: 0 };
@@ -2013,176 +2075,187 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                                {/* Mini-site công khai — Mở /p/<code> + tải QR. Chỉ hiển thị
-                                    khi metadata.public_microsite === true và project.code có giá trị. */}
+                                {/* Hidden file input cho Import — phải nằm ngoài actions menu
+                                    để click có thể mở dialog kể cả khi menu đóng. */}
+                                {canCreate && (
+                                    <input
+                                        ref={importFileRef}
+                                        type="file"
+                                        accept=".xlsx,.xls"
+                                        className="hidden"
+                                        onChange={handleImportFile}
+                                    />
+                                )}
+                                {/* Compact "Thao tác" dropdown — gom Mini-site / QR / Drive /
+                                    Export / Import / Mẫu / Tải ảnh hàng loạt / Sa bàn / Hoa hồng
+                                    để giảm số nút trên thanh công cụ. Quyền hiển thị từng item
+                                    vẫn theo role gốc (canCreate / canEditOwn / isAdmin). */}
                                 {(() => {
                                     const meta = (project?.metadata && typeof project.metadata === 'object') ? project.metadata : {};
-                                    const enabled = meta.public_microsite === true || meta.public_microsite === 'true';
                                     const code: string = (project?.code || '').toString().trim().toUpperCase();
-                                    if (!enabled || !code) return null;
-                                    const url = `${window.location.origin}/p/${code}`;
-                                    const downloadQR = async () => {
-                                        // Sử dụng Google Chart API client-side fallback — không cần thêm dep
-                                        // vì pages/PublicProjectMicrosite render QR riêng. Ở đây chỉ cần
-                                        // render PNG nhanh, dùng canvas vẽ qrcode.react thoáng qua.
-                                        try {
-                                            const { QRCodeCanvas } = await import('qrcode.react');
-                                            const React = (await import('react'));
-                                            const ReactDOMClient = (await import('react-dom/client'));
-                                            const host = document.createElement('div');
-                                            host.style.position = 'fixed';
-                                            host.style.left = '-9999px';
-                                            document.body.appendChild(host);
-                                            const root = ReactDOMClient.createRoot(host);
-                                            root.render(React.createElement(QRCodeCanvas, { value: url, size: 512, level: 'M', includeMargin: true }));
-                                            // Đợi 1 frame cho React mount canvas
-                                            await new Promise(r => requestAnimationFrame(() => r(null)));
-                                            await new Promise(r => requestAnimationFrame(() => r(null)));
-                                            const canvas = host.querySelector('canvas') as HTMLCanvasElement | null;
-                                            if (canvas) {
-                                                const dataUrl = canvas.toDataURL('image/png');
-                                                const a = document.createElement('a');
-                                                a.href = dataUrl;
-                                                a.download = `qr-${code}.png`;
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                document.body.removeChild(a);
-                                            }
-                                            root.unmount();
-                                            host.remove();
-                                        } catch (e) {
-                                            console.error('QR download failed', e);
-                                        }
+                                    const micrositeOn = (meta.public_microsite === true || meta.public_microsite === 'true') && !!code;
+                                    const micrositeUrl = micrositeOn ? `${window.location.origin}/p/${code}` : '';
+                                    const driveUrl: string = String(meta.drive_url || meta.driveUrl || '').trim();
+
+                                    type Item = {
+                                        key: string;
+                                        label: string;
+                                        title?: string;
+                                        icon: React.ReactNode;
+                                        onClick: () => void;
+                                        disabled?: boolean;
+                                        accent?: 'emerald' | 'default';
                                     };
-                                    return (
-                                        <>
-                                            <a
-                                                href={url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-emerald-300 text-emerald-700 dark:text-emerald-300 dark:border-emerald-700 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
-                                                title={`Mở mini-site: ${url}`}
-                                                aria-label="Mở mini-site công khai"
-                                            >
+                                    const items: Item[] = [];
+
+                                    if (micrositeOn) {
+                                        items.push({
+                                            key: 'minisite',
+                                            label: t('project.minisite_btn'),
+                                            title: micrositeUrl,
+                                            accent: 'emerald',
+                                            icon: (
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3a16 16 0 010 18M3 12h18" />
                                                 </svg>
-                                                <span className="hidden md:inline text-xs font-semibold">Mini-site</span>
-                                            </a>
-                                            <button
-                                                type="button"
-                                                onClick={() => { void downloadQR(); }}
-                                                className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
-                                                title={`Tải QR code mini-site (${url})`}
-                                                aria-label="Tải QR code mini-site"
-                                            >
+                                            ),
+                                            onClick: () => { window.open(micrositeUrl, '_blank', 'noopener,noreferrer'); setActionsOpen(false); },
+                                        });
+                                        items.push({
+                                            key: 'qr',
+                                            label: t('project.qr_btn'),
+                                            title: t('project.qr_download_title'),
+                                            icon: (
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z" />
                                                 </svg>
-                                                <span className="hidden md:inline text-xs">QR</span>
+                                            ),
+                                            onClick: () => { void downloadMicrositeQR(micrositeUrl, code); setActionsOpen(false); },
+                                        });
+                                    }
+                                    if (driveUrl) {
+                                        items.push({
+                                            key: 'drive',
+                                            label: t('project.drive_open'),
+                                            title: driveUrl,
+                                            icon: (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                </svg>
+                                            ),
+                                            onClick: () => { window.open(driveUrl, '_blank', 'noopener,noreferrer'); setActionsOpen(false); },
+                                        });
+                                    }
+                                    items.push({
+                                        key: 'export',
+                                        label: t('inventory.export_excel'),
+                                        icon: IC.DOWNLOAD,
+                                        disabled: listings.length === 0,
+                                        onClick: () => { void handleExport(); setActionsOpen(false); },
+                                    });
+                                    if (canCreate) {
+                                        items.push({
+                                            key: 'import',
+                                            label: t('inventory.import_excel'),
+                                            icon: importing
+                                                ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin inline-block" />
+                                                : IC.UPLOAD,
+                                            disabled: importing,
+                                            onClick: () => { importFileRef.current?.click(); setActionsOpen(false); },
+                                        });
+                                        items.push({
+                                            key: 'template',
+                                            label: t('inventory.template'),
+                                            icon: IC.TEMPLATE,
+                                            onClick: () => { void downloadImportTemplate(); setActionsOpen(false); },
+                                        });
+                                    }
+                                    if (canEditOwn) {
+                                        items.push({
+                                            key: 'bulk_images',
+                                            label: t('project.bulk_images_btn'),
+                                            title: project.code ? undefined : t('project.bulk_images_no_project_code'),
+                                            disabled: !project.code,
+                                            icon: (
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            ),
+                                            onClick: () => { setShowBulkImages(true); setActionsOpen(false); },
+                                        });
+                                    }
+                                    if (isAdmin) {
+                                        items.push({
+                                            key: 'manage_floorplan',
+                                            label: t('floorplan.manage_btn'),
+                                            icon: (
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.553 2.776A1 1 0 0021 18.882V8.118a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                                </svg>
+                                            ),
+                                            onClick: () => { setShowFloorPlanManager(true); setActionsOpen(false); },
+                                        });
+                                    }
+                                    items.push({
+                                        key: 'commission',
+                                        label: t('project.commission_btn'),
+                                        icon: (
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v2m9-9a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        ),
+                                        onClick: () => { setShowCommissions(true); setActionsOpen(false); },
+                                    });
+
+                                    return (
+                                        <>
+                                            <button
+                                                ref={actionsBtnRef}
+                                                type="button"
+                                                onClick={toggleActionsMenu}
+                                                className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                                aria-haspopup="menu"
+                                                aria-expanded={actionsOpen}
+                                                aria-label={t('project.actions_aria')}
+                                                title={t('project.actions_btn')}
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                                </svg>
+                                                <span className="text-xs font-semibold">{t('project.actions_btn')}</span>
+                                                <svg className={`w-3 h-3 transition-transform ${actionsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
                                             </button>
+                                            {actionsOpen && createPortal(
+                                                <div
+                                                    ref={actionsRef}
+                                                    role="menu"
+                                                    aria-label={t('project.actions_btn')}
+                                                    className="fixed z-[10001] min-w-[240px] rounded-xl bg-white dark:bg-slate-800 border border-[var(--glass-border)] shadow-2xl py-1.5"
+                                                    style={{ top: actionsPos.top, right: actionsPos.right }}
+                                                >
+                                                    {items.map(it => (
+                                                        <button
+                                                            key={it.key}
+                                                            type="button"
+                                                            role="menuitem"
+                                                            onClick={it.onClick}
+                                                            disabled={it.disabled}
+                                                            title={it.title}
+                                                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] ${it.accent === 'emerald' ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-[var(--text-primary)]'}`}
+                                                        >
+                                                            <span className={`shrink-0 ${it.accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-secondary)]'}`}>{it.icon}</span>
+                                                            <span className="flex-1 truncate">{it.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>,
+                                                document.body,
+                                            )}
                                         </>
                                     );
                                 })()}
-                                {/* Mở Google Drive của dự án — chỉ hiện khi đã cấu hình drive_url trong form Dự án */}
-                                {(() => {
-                                    const meta = (project?.metadata && typeof project.metadata === 'object') ? project.metadata : {};
-                                    const driveUrl: string = (meta.drive_url || meta.driveUrl || '').trim();
-                                    if (!driveUrl) return null;
-                                    return (
-                                        <a
-                                            href={driveUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
-                                            title={t('project.drive_open')}
-                                            aria-label={t('project.drive_open')}
-                                        >
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                            </svg>
-                                            <span className="hidden md:inline text-xs">{t('project.drive_open')}</span>
-                                        </a>
-                                    );
-                                })()}
-                                {/* Export — always visible, disabled when empty */}
-                                <button type="button" onClick={handleExport}
-                                    disabled={listings.length === 0}
-                                    className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    title={t('inventory.export_excel')}
-                                    aria-label={t('inventory.export_excel')}>
-                                    {IC.DOWNLOAD} <span className="hidden md:inline text-xs">{t('inventory.export_excel')}</span>
-                                </button>
-                                {/* Import */}
-                                {canCreate && (
-                                    <>
-                                        <input
-                                            ref={importFileRef}
-                                            type="file"
-                                            accept=".xlsx,.xls"
-                                            className="hidden"
-                                            onChange={handleImportFile}
-                                        />
-                                        <div className="relative group">
-                                            <button type="button"
-                                                onClick={() => importFileRef.current?.click()}
-                                                disabled={importing}
-                                                className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-60 transition-colors"
-                                                title={t('inventory.import_excel')}
-                                                aria-label={t('inventory.import_excel')}>
-                                                {importing ? (
-                                                    <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                                                ) : IC.UPLOAD}
-                                                <span className="hidden md:inline text-xs">{t('inventory.import_excel')}</span>
-                                            </button>
-                                        </div>
-                                        <button type="button" onClick={() => { void downloadImportTemplate(); }}
-                                            className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
-                                            title={t('inventory.template')}
-                                            aria-label={t('inventory.template')}>
-                                            {IC.TEMPLATE} <span className="hidden md:inline text-xs">{t('inventory.template')}</span>
-                                        </button>
-                                    </>
-                                )}
-                                {/* Bulk upload images — admin/team-lead/sales/marketing
-                                    (server-side gate also enforces). PARTNER blocked. */}
-                                {canEditOwn && (
-                                    <button type="button"
-                                        onClick={() => setShowBulkImages(true)}
-                                        disabled={!project.code}
-                                        className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        title={project.code ? t('project.bulk_images_btn') : t('project.bulk_images_no_project_code')}
-                                        aria-label={t('project.bulk_images_btn')}>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        <span className="hidden md:inline text-xs">{t('project.bulk_images_btn')}</span>
-                                    </button>
-                                )}
-                                {/* Sa bàn admin manager — SUPER_ADMIN/ADMIN/TEAM_LEAD only.
-                                    isAdmin in this scope is true for those roles. */}
-                                {isAdmin && (
-                                    <button type="button"
-                                        onClick={() => setShowFloorPlanManager(true)}
-                                        className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
-                                        title={t('floorplan.manage_btn') || 'Quản lý sa bàn'}
-                                        aria-label={t('floorplan.manage_btn') || 'Quản lý sa bàn'}>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.553 2.776A1 1 0 0021 18.882V8.118a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                                        </svg>
-                                        <span className="hidden md:inline text-xs">{t('floorplan.manage_btn') || 'Sa bàn'}</span>
-                                    </button>
-                                )}
-                                {/* Hoa hồng & doanh số */}
-                                <button type="button"
-                                    onClick={() => setShowCommissions(true)}
-                                    className="flex items-center gap-1.5 px-2.5 py-2 h-[36px] rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm hover:bg-[var(--glass-surface-hover)] transition-colors"
-                                    title="Hoa hồng & doanh số"
-                                    aria-label="Hoa hồng & doanh số">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v2m9-9a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="hidden md:inline text-xs">Hoa hồng</span>
-                                </button>
                                 {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
