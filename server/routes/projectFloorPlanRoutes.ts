@@ -55,8 +55,23 @@ function safeFilename(name: string): string {
 }
 
 type AccessResult =
-  | { ok: true; isPartner: boolean; status?: undefined; error?: undefined }
-  | { ok: false; isPartner?: undefined; status: number; error: string };
+  | { ok: true; isPartner: boolean; ownerTenantId: string; status?: undefined; error?: undefined }
+  | { ok: false; isPartner?: undefined; ownerTenantId?: undefined; status: number; error: string };
+
+/**
+ * Look up the project's owning tenant_id, even when the requester is a
+ * partner from a DIFFERENT tenant. We use RLS bypass here because partners
+ * cannot SELECT from `projects` rows in another tenant under standard RLS.
+ * Caller is expected to gate this with `projectRepository.checkPartnerAccess`
+ * BEFORE invoking — we trust the call site to have verified access.
+ */
+async function resolveOwnerTenantId(projectId: string): Promise<string | null> {
+  const { withRlsBypass } = await import('../db');
+  const result = await withRlsBypass(async (client) =>
+    client.query(`SELECT tenant_id FROM projects WHERE id = $1`, [projectId]),
+  );
+  return result.rows[0]?.tenant_id ?? null;
+}
 
 async function ensureProjectAccess(
   user: { tenantId: string; role: string },
@@ -65,12 +80,14 @@ async function ensureProjectAccess(
   if (PARTNER_ROLES.includes(user.role)) {
     const has = await projectRepository.checkPartnerAccess(user.tenantId, projectId);
     if (!has) return { ok: false, status: 403, error: 'Không có quyền truy cập dự án này' };
-    return { ok: true, isPartner: true };
+    const ownerTenantId = await resolveOwnerTenantId(projectId);
+    if (!ownerTenantId) return { ok: false, status: 404, error: 'Không tìm thấy dự án' };
+    return { ok: true, isPartner: true, ownerTenantId };
   }
   // Owner-tenant member: project must exist within their tenant.
   const project = await projectRepository.findById(user.tenantId, projectId);
   if (!project) return { ok: false, status: 404, error: 'Không tìm thấy dự án' };
-  return { ok: true, isPartner: false };
+  return { ok: true, isPartner: false, ownerTenantId: user.tenantId };
 }
 
 interface ListingLite {
@@ -202,7 +219,9 @@ export function registerFloorPlanRoutes(router: Router, authenticateToken: any) 
       const access = await ensureProjectAccess(user, projectId);
       if (!access.ok) return res.status(access.status).json({ error: access.error });
 
-      const plans = await projectFloorPlanRepository.findByProject(user.tenantId, projectId);
+      // Floor-plan rows live under the project owner's tenant, not the
+      // partner's. Use the resolved owner tenant so partners can read.
+      const plans = await projectFloorPlanRepository.findByProject(access.ownerTenantId, projectId);
       // Lightweight payload — no SVG body, no mapping.
       res.json(
         plans.map((p) => ({
@@ -359,7 +378,7 @@ export function registerFloorPlanRoutes(router: Router, authenticateToken: any) 
         const access = await ensureProjectAccess(user, projectId);
         if (!access.ok) return res.status(access.status).json({ error: access.error });
 
-        const row = await projectFloorPlanRepository.findById(user.tenantId, planId);
+        const row = await projectFloorPlanRepository.findById(access.ownerTenantId, planId);
         if (!row || row.project_id !== projectId)
           return res.status(404).json({ error: 'Không tìm thấy sa bàn' });
 
@@ -404,7 +423,7 @@ export function registerFloorPlanRoutes(router: Router, authenticateToken: any) 
         const access = await ensureProjectAccess(user, projectId);
         if (!access.ok) return res.status(access.status).json({ error: access.error });
 
-        const row = await projectFloorPlanRepository.findById(user.tenantId, planId);
+        const row = await projectFloorPlanRepository.findById(access.ownerTenantId, planId);
         if (!row || row.project_id !== projectId)
           return res.status(404).json({ error: 'Không tìm thấy sa bàn' });
 
@@ -435,11 +454,12 @@ export function registerFloorPlanRoutes(router: Router, authenticateToken: any) 
         const access = await ensureProjectAccess(user, projectId);
         if (!access.ok) return res.status(access.status).json({ error: access.error });
 
-        const row = await projectFloorPlanRepository.findById(user.tenantId, planId);
+        const row = await projectFloorPlanRepository.findById(access.ownerTenantId, planId);
         if (!row || row.project_id !== projectId)
           return res.status(404).json({ error: 'Không tìm thấy sa bàn' });
 
-        const fileRow = await getFile(user.tenantId, row.svg_filename);
+        // Stored SVG bytes also live under the owner tenant's storage scope.
+        const fileRow = await getFile(access.ownerTenantId, row.svg_filename);
         if (!fileRow) return res.status(404).json({ error: 'File SVG không tồn tại' });
 
         // Re-sanitize on serve — defense-in-depth in case stored bytes were
