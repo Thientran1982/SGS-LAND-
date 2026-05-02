@@ -51,6 +51,12 @@ export const Commissions: React.FC = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   const isAdmin = !!user && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role);
 
   useEffect(() => {
@@ -341,8 +347,7 @@ export const Commissions: React.FC = () => {
       )}
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 px-4 py-2 rounded-xl shadow-lg text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}
-             onAnimationEnd={() => setTimeout(() => setToast(null), 2500)}>
+        <div className={`fixed bottom-6 right-6 px-4 py-2 rounded-xl shadow-lg text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
           {toast.msg}
         </div>
       )}
