@@ -54,10 +54,14 @@ function safeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 200);
 }
 
+type AccessResult =
+  | { ok: true; isPartner: boolean; status?: undefined; error?: undefined }
+  | { ok: false; isPartner?: undefined; status: number; error: string };
+
 async function ensureProjectAccess(
   user: { tenantId: string; role: string },
   projectId: string,
-): Promise<{ ok: true; isPartner: boolean } | { ok: false; status: number; error: string }> {
+): Promise<AccessResult> {
   if (PARTNER_ROLES.includes(user.role)) {
     const has = await projectRepository.checkPartnerAccess(user.tenantId, projectId);
     if (!has) return { ok: false, status: 403, error: 'Không có quyền truy cập dự án này' };
@@ -88,18 +92,30 @@ async function fetchProjectListings(
   isPartner: boolean,
 ): Promise<ListingLite[]> {
   if (isPartner) {
-    const result = await listingRepository.findListingsForPartner(user.tenantId, {
-      projectId,
-      page: 1,
-      pageSize: 5000,
-    });
-    return (result.data || []).map((l: any) => ({
-      id: l.id,
-      code: String(l.code || '').toUpperCase(),
-      status: l.status,
-      tower: l.attributes?.tower ?? null,
-      floor: l.attributes?.floor != null ? String(l.attributes.floor) : null,
-    }));
+    // Resolve project code so the partner-listing query (which filters by
+    // project_code) returns the right rows for this project.
+    let projectCode: string | null = null;
+    try {
+      const project = await projectRepository.findById(user.tenantId, projectId);
+      projectCode = (project as any)?.code ?? null;
+    } catch {
+      projectCode = null;
+    }
+    const filters: any = projectCode ? { projectCode } : {};
+    const result = await listingRepository.findListingsForPartner(
+      user.tenantId,
+      { page: 1, pageSize: 5000 },
+      filters,
+    );
+    return (result.data || [])
+      .filter((l: any) => l.project_id === projectId || l.projectId === projectId || projectCode)
+      .map((l: any) => ({
+        id: l.id,
+        code: String(l.code || '').toUpperCase(),
+        status: l.status,
+        tower: l.attributes?.tower ?? null,
+        floor: l.attributes?.floor != null ? String(l.attributes.floor) : null,
+      }));
   }
   return projectFloorPlanRepository.findOwnerListingsForProject(user.tenantId, projectId);
 }
