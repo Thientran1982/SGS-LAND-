@@ -363,7 +363,7 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
             type="button"
             onClick={() => setScale((s) => Math.min(8, s * 1.2))}
             className="w-7 h-7 rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
-            aria-label="Zoom in"
+            aria-label={t('floorplan.zoom_in') || 'Phóng to'}
           >
             +
           </button>
@@ -371,7 +371,7 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
             type="button"
             onClick={() => setScale((s) => Math.max(0.5, s / 1.2))}
             className="w-7 h-7 rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
-            aria-label="Zoom out"
+            aria-label={t('floorplan.zoom_out') || 'Thu nhỏ'}
           >
             −
           </button>
@@ -380,7 +380,7 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
             onClick={resetView}
             className="text-[11px] font-semibold px-2 h-7 rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]"
           >
-            {t('floorplan.reset_view') || 'Reset'}
+            {t('floorplan.reset_view') || 'Đặt lại'}
           </button>
         </div>
       </div>
