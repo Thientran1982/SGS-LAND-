@@ -113,11 +113,16 @@ async function fetchProjectListings(
 ): Promise<ListingLite[]> {
   if (isPartner) {
     // Resolve project code so the partner-listing query (which filters by
-    // project_code) returns the right rows for this project.
+    // project_code) returns the right rows for this project. Partner cannot
+    // SELECT the project under their own tenant via RLS, so go through the
+    // owner-tenant lookup (RLS bypass) — caller has already verified access.
     let projectCode: string | null = null;
     try {
-      const project = await projectRepository.findById(user.tenantId, projectId);
-      projectCode = (project as any)?.code ?? null;
+      const { withRlsBypass } = await import('../db');
+      const r = await withRlsBypass((c) =>
+        c.query(`SELECT code FROM projects WHERE id = $1`, [projectId]),
+      );
+      projectCode = r.rows[0]?.code ?? null;
     } catch {
       projectCode = null;
     }
