@@ -1502,16 +1502,25 @@ function BulkImageUploadModal({
                                 </div>
                             </div>
                             {/* Per-file results — shows every file with status badge,
-                                listing-code (when matched), and error message (when failed). */}
+                                matched listing code, and error message (when failed).
+                                Backend statuses: uploaded | skipped_no_match |
+                                skipped_no_permission | skipped_max_images |
+                                skipped_invalid | error */}
                             {result.results.length > 0 && (
                                 <ul className="max-h-64 overflow-y-auto no-scrollbar text-xs border border-[var(--glass-border)] rounded-xl divide-y divide-[var(--glass-border)]">
                                     {result.results.map((r, i) => {
                                         const ok = r.status === 'uploaded';
+                                        const isWarn = r.status === 'skipped_no_match'
+                                            || r.status === 'skipped_no_permission'
+                                            || r.status === 'skipped_max_images';
                                         const badgeCls = ok
                                             ? 'bg-emerald-100 text-emerald-700'
-                                            : r.status === 'no_match' || r.status === 'no_permission'
+                                            : isWarn
                                                 ? 'bg-amber-100 text-amber-700'
                                                 : 'bg-rose-100 text-rose-700';
+                                        // Strip "skipped_" prefix so the badge reads
+                                        // "no match" / "max images" / "invalid"
+                                        const label = String(r.status).replace(/^skipped_/, '').replace(/_/g, ' ');
                                         return (
                                             <li key={i} className="px-3 py-1.5 flex flex-col gap-0.5">
                                                 <div className="flex items-center gap-2">
@@ -1519,13 +1528,13 @@ function BulkImageUploadModal({
                                                         {ok ? '✓' : '✗'}
                                                     </span>
                                                     <span className="font-mono text-[var(--text-primary)] truncate flex-1" title={r.filename}>{r.filename}</span>
-                                                    {r.listingCode && (
+                                                    {r.matchedCode && (
                                                         <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] font-mono text-[10px]">
-                                                            {r.listingCode}
+                                                            {r.matchedCode}
                                                         </span>
                                                     )}
                                                     <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${badgeCls}`}>
-                                                        {String(r.status).replace(/_/g, ' ')}
+                                                        {label}
                                                     </span>
                                                 </div>
                                                 {r.error && (
