@@ -905,9 +905,22 @@ export function createListingRoutes(authenticateToken: any) {
         setImmediate(async () => {
           try {
             const { generateLedgerOnSold } = await import('../services/commissionHook');
+            const lst = listing as {
+              id: string;
+              price: number | string | null | undefined;
+              project_id?: string | null; projectId?: string | null;
+              assigned_to?: string | null; assignedTo?: string | null;
+            };
             await generateLedgerOnSold({
               tenantId: user.tenantId,
-              listing: listing as any,
+              listing: {
+                id: lst.id,
+                price: lst.price,
+                project_id: lst.project_id ?? null,
+                projectId: lst.projectId ?? null,
+                assigned_to: lst.assigned_to ?? null,
+                assignedTo: lst.assignedTo ?? null,
+              },
               actorUserId: user.id,
             });
           } catch (e) {
