@@ -105,6 +105,44 @@ export const projectFloorPlanRepository = {
     return rows[0];
   },
 
+  /**
+   * Lightweight listing query specifically for the floor-plan mapping surface:
+   * fetches every listing of a project that the *owner tenant* can see.
+   * The listing repository's findListings() only filters by project_code, but
+   * some seeded listings only have project_id set — this helper handles both.
+   * RLS scoping is enforced via WHERE tenant_id = $1 (the row is owned by
+   * the same tenant that owns the project).
+   */
+  async findOwnerListingsForProject(
+    tenantId: string,
+    projectId: string,
+  ): Promise<Array<{ id: string; code: string; status: string; tower: string | null; floor: string | null }>> {
+    const { rows } = await pool.query(
+      `SELECT l.id,
+              UPPER(COALESCE(l.code, '')) AS code,
+              l.status,
+              l.attributes->>'tower' AS tower,
+              l.attributes->>'floor' AS floor
+         FROM listings l
+        WHERE l.tenant_id = $1
+          AND (
+            l.project_id = $2
+            OR (l.project_id IS NULL
+                AND l.project_code IS NOT NULL
+                AND l.project_code = (SELECT code FROM projects WHERE id = $2))
+          )
+          AND COALESCE(l.code, '') <> ''`,
+      [tenantId, projectId],
+    );
+    return rows.map((r: any) => ({
+      id: r.id,
+      code: r.code,
+      status: r.status,
+      tower: r.tower ?? null,
+      floor: r.floor != null ? String(r.floor) : null,
+    }));
+  },
+
   async deleteById(tenantId: string, id: string): Promise<boolean> {
     const { rowCount } = await pool.query(
       `DELETE FROM project_floor_plans WHERE tenant_id = $1 AND id = $2`,

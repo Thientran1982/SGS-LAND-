@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { projectRepository } from '../repositories/projectRepository';
 import { projectPriceMatrixRepository } from '../repositories/projectPriceMatrixRepository';
 import { evictPublicProjectCache } from '../services/publicProjectCache';
+import { registerFloorPlanRoutes } from './projectFloorPlanRoutes';
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'];
@@ -389,6 +390,9 @@ export function createProjectRoutes(authenticateToken: any) {
       res.status(500).json({ error: 'Không thể tra giá' });
     }
   });
+
+  // ── Floor plans (Sa bàn tương tác) ─────────────────────────────────────────
+  registerFloorPlanRoutes(router, authenticateToken);
 
   return router;
 }
