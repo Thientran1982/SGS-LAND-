@@ -234,6 +234,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-[var(--glass-border)] relative">
                         <LazyImage
                             src={item.images?.[0]}
+                            width={128}
                             wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)] dark:bg-slate-800"
                         />
                         {item.isVerified && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-bl-md z-10" />}
@@ -403,6 +404,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
             <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-[var(--glass-border)] dark:border-slate-700 relative">
                 <LazyImage
                     src={item.images?.[0]}
+                    width={192}
                     wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)] dark:bg-slate-800"
                 />
                 <div className="absolute top-0 left-0 px-1 bg-black/40 text-3xs text-white font-mono">{item.code}</div>
@@ -512,6 +514,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                 <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
                     <LazyImage
                         src={item.images?.[0]}
+                        width={128}
                         wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)]"
                     />
                 </div>
