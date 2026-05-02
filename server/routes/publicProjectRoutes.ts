@@ -538,10 +538,51 @@ export function createPublicProjectRoutes(): Router {
         logger.warn(`[PublicProject] Notification email skipped: ${emailErr?.message || emailErr}`);
       }
 
-      logger.info(`[PublicProject] Lead captured: ${name}/${phone} → ${found.project.name} (${code})`);
-
       // Hotline trong response — đọc từ tenant để khách thấy đúng số tenant chủ
       const contact = await loadTenantContact(found.tenantId, found.project.name);
+
+      // Auto-reply cho khách (best-effort, không block) — chỉ gửi khi khách điền email hợp lệ.
+      // Dùng white-label sender (from-name = displayName CĐT, from-email = sender đã verify).
+      if (email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        try {
+          const replySubject = `Đã nhận yêu cầu tư vấn dự án ${found.project.name}`;
+          const replyHtml = `
+            <div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;padding:24px;background:#f8fafc;border-radius:12px;color:#1e293b;">
+              <h2 style="margin:0 0 12px;">Cảm ơn ${escapeHtml(name)}!</h2>
+              <p style="margin:0 0 12px;font-size:14px;line-height:1.55;">
+                ${escapeHtml(fromName)} đã nhận thông tin của bạn về dự án <strong>${escapeHtml(found.project.name)}</strong>
+                (mã <span style="font-family:monospace">${escapeHtml(code)}</span>).
+                Chuyên viên sẽ liên hệ trong vòng 30 phút (giờ hành chính) để gửi bảng giá, chính sách bán hàng và tư vấn chi tiết.
+              </p>
+              <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
+                <tr><td style="padding:6px 0;color:#64748b;">Hotline</td><td style="padding:6px 0;font-weight:600;"><a href="tel:${escapeHtml(contact.hotline)}" style="color:#1e293b;text-decoration:none;">${escapeHtml(contact.hotlineDisplay)}</a></td></tr>
+                <tr><td style="padding:6px 0;color:#64748b;">Zalo</td><td style="padding:6px 0;"><a href="${escapeHtml(contact.zalo)}" style="color:#1e293b;">${escapeHtml(contact.hotlineDisplay)}</a></td></tr>
+                ${interest ? `<tr><td style="padding:6px 0;color:#64748b;">Quan tâm</td><td style="padding:6px 0;">${escapeHtml(interest)}</td></tr>` : ''}
+              </table>
+              <p style="margin:12px 0 0;color:#94a3b8;font-size:12px;">
+                Email tự động — vui lòng không trả lời. Nếu cần hỗ trợ gấp, gọi hotline hoặc nhắn Zalo phía trên.
+              </p>
+              <p style="margin:8px 0 0;color:#94a3b8;font-size:12px;">
+                Thông tin được lưu trữ và xử lý theo Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân.
+              </p>
+            </div>`;
+          const replyText =
+            `Cảm ơn ${name}! ${fromName} đã nhận yêu cầu tư vấn dự án ${found.project.name} (${code}). ` +
+            `Chuyên viên sẽ liên hệ trong vòng 30 phút. Hotline: ${contact.hotlineDisplay}.`;
+          await brevoSendEmail({
+            to: [{ email, name }],
+            from: { email: fromEmail, name: fromName },
+            subject: replySubject,
+            html: replyHtml,
+            text: replyText,
+            tags: ['microsite-lead-autoreply', `code-${code.toLowerCase()}`],
+          }).catch((e) => logger.warn(`[PublicProject] Brevo auto-reply failed: ${e?.message}`));
+        } catch (replyErr: any) {
+          logger.warn(`[PublicProject] Auto-reply email skipped: ${replyErr?.message || replyErr}`);
+        }
+      }
+
+      logger.info(`[PublicProject] Lead captured: ${name}/${phone} → ${found.project.name} (${code})${email ? ' [auto-reply queued]' : ''}`);
 
       return res.json({
         ok: true,
