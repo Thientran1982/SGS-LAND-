@@ -116,11 +116,18 @@ export const projectFloorPlanRepository = {
   async findOwnerListingsForProject(
     tenantId: string,
     projectId: string,
-  ): Promise<Array<{ id: string; code: string; status: string; tower: string | null; floor: string | null }>> {
+  ): Promise<Array<{
+    id: string; code: string; status: string;
+    tower: string | null; floor: string | null;
+    area: number | null; price: number | null; title: string | null;
+  }>> {
     const { rows } = await pool.query(
       `SELECT l.id,
               UPPER(COALESCE(l.code, '')) AS code,
               l.status,
+              l.title,
+              l.area,
+              l.price,
               l.attributes->>'tower' AS tower,
               l.attributes->>'floor' AS floor
          FROM listings l
@@ -140,6 +147,9 @@ export const projectFloorPlanRepository = {
       status: r.status,
       tower: r.tower ?? null,
       floor: r.floor != null ? String(r.floor) : null,
+      area: r.area != null ? Number(r.area) : null,
+      price: r.price != null ? Number(r.price) : null,
+      title: r.title ?? null,
     }));
   },
 
