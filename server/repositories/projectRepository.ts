@@ -147,7 +147,14 @@ export class ProjectRepository extends BaseRepository {
             if (data.status !== undefined)      { sets.push(`status = $${i++}`);        values.push(data.status); }
             if (data.openDate !== undefined)    { sets.push(`open_date = $${i++}`);     values.push(data.openDate); }
             if (data.handoverDate !== undefined){ sets.push(`handover_date = $${i++}`); values.push(data.handoverDate); }
-            if (data.metadata !== undefined)    { sets.push(`metadata = $${i++}`);      values.push(JSON.stringify(data.metadata)); }
+            // Metadata is JSONB-merged (concurrent-safe) + null-stripped:
+            // sending `{ key: null }` removes that key, omitted keys stay intact,
+            // and present keys overwrite. Avoids clobbering fields written by
+            // parallel flows (e.g. cover-image upload vs Drive URL edit).
+            if (data.metadata !== undefined) {
+                sets.push(`metadata = jsonb_strip_nulls(COALESCE(metadata, '{}'::jsonb) || $${i++}::jsonb)`);
+                values.push(JSON.stringify(data.metadata));
+            }
 
             if (sets.length === 0) return null;
             sets.push(`updated_at = NOW()`);
