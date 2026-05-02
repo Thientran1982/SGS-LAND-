@@ -292,6 +292,13 @@ export const commissionLedgerRepository = {
     // (đại lý) và users (sales) trên các tenant khác mà không vướng RLS.
     const runner = <T,>(fn: (c: PoolClient) => Promise<T>) => withRlsBypass(fn);
 
+    // Sync DUE trước khi list để filter theo status hoạt động đúng.
+    await commissionLedgerRepository.syncDueStatuses(
+      partnerScope ? null : tenantId,
+      filters.projectId,
+      partnerScope || undefined,
+    );
+
     return runner(async (c) => {
       const totalRes = await c.query(
         `SELECT COUNT(*)::int AS n FROM commission_ledger cl ${where}`,
@@ -338,6 +345,41 @@ export const commissionLedgerRepository = {
     });
   },
 
+  /**
+   * Đồng bộ trạng thái: chuyển PENDING → DUE cho các bút toán đã có ít nhất một
+   * mốc thanh toán (milestone) quá hạn, hoặc với bút toán không có milestone
+   * thì sale_date đã quá 30 ngày. Idempotent, gọi an toàn trước list/aggregate.
+   * Trả về số rows được cập nhật.
+   */
+  async syncDueStatuses(tenantId: string | null, projectId?: string, partnerTenantId?: string): Promise<number> {
+    return withRlsBypass(async (c: PoolClient) => {
+      const params: any[] = [];
+      const conds: string[] = [];
+      if (tenantId)        { params.push(tenantId);        conds.push(`tenant_id = $${params.length}`); }
+      if (partnerTenantId) { params.push(partnerTenantId); conds.push(`partner_tenant_id = $${params.length}`); }
+      if (projectId)       { params.push(projectId);       conds.push(`project_id = $${params.length}`); }
+      const whereExtra = conds.length ? ` AND ${conds.join(' AND ')}` : '';
+      const { rowCount } = await c.query(
+        `UPDATE commission_ledger
+            SET status = 'DUE', updated_at = NOW()
+          WHERE status = 'PENDING'${whereExtra}
+            AND (
+              EXISTS (
+                SELECT 1 FROM jsonb_array_elements(COALESCE(milestones,'[]'::jsonb)) m
+                 WHERE COALESCE(m->>'status','PENDING') <> 'PAID'
+                   AND (m->>'dueDate')::date < CURRENT_DATE
+              )
+              OR (
+                COALESCE(jsonb_array_length(milestones),0) = 0
+                AND sale_date < (CURRENT_DATE - INTERVAL '30 days')
+              )
+            )`,
+        params,
+      );
+      return rowCount ?? 0;
+    });
+  },
+
   /** Aggregate cho widget project tab: tổng theo status + due-soon/overdue. */
   async aggregateByProject(
     tenantId: string,
@@ -348,6 +390,8 @@ export const commissionLedgerRepository = {
     dueSoonCount: number; overdueCount: number;
     grossDueSoon: number; grossOverdue: number;
   }> {
+    // Cập nhật DUE trước khi đếm để summary phản ánh đúng trạng thái hiện tại.
+    await commissionLedgerRepository.syncDueStatuses(tenantId, projectId);
     return withTenantContext(tenantId, async (c: PoolClient) => {
       const baseRes = await c.query(
         `SELECT
