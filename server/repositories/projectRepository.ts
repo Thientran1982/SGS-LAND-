@@ -102,9 +102,13 @@ export class ProjectRepository extends BaseRepository {
         metadata?: Record<string, unknown>;
     }): Promise<any> {
         return this.withTenant(tenantId, async (client) => {
+            // Null-strip metadata on create so the persisted row matches the
+            // semantics of update() — `{ key: null }` keys are dropped instead
+            // of stored as JSON nulls (avoids metadata noise from form aliases
+            // such as `cover_image: null`, `driveUrl: null`).
             const result = await client.query(
                 `INSERT INTO projects (tenant_id, name, code, description, location, total_units, status, open_date, handover_date, metadata)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, jsonb_strip_nulls($10::jsonb))
                  RETURNING *`,
                 [
                     tenantId,
