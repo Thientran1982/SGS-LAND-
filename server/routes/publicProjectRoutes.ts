@@ -29,6 +29,12 @@ import {
   evictPublicProjectCache,
 } from '../services/publicProjectCache';
 import { rateLimit } from '../middleware/rateLimiter';
+import {
+  brandingFromConfig,
+  getTenantBinding,
+  type TenantBranding,
+  type TenantHostBinding,
+} from '../services/tenantBrandingService';
 
 // Fallback platform-wide contact (chỉ dùng khi tenant chưa cấu hình public_brand)
 const FALLBACK_HOTLINE         = '0971132378';
@@ -72,7 +78,7 @@ interface TenantContact {
 async function loadTenantContact(tenantId: string, defaultBrand: string): Promise<TenantContact> {
   try {
     const r = await pool.query(
-      `SELECT t.name AS tenant_name, ec.config_value AS brand
+      `SELECT t.name AS tenant_name, t.config AS tenant_config, ec.config_value AS brand
          FROM tenants t
          LEFT JOIN enterprise_config ec
            ON ec.tenant_id = t.id AND ec.config_key = 'public_brand'
@@ -81,16 +87,20 @@ async function loadTenantContact(tenantId: string, defaultBrand: string): Promis
       [tenantId]
     );
     const row = r.rows[0] || {};
+    // Ưu tiên branding của task #28 (tenants.config.branding); fallback enterprise_config.public_brand
+    const wlBranding = brandingFromConfig(row.tenant_config);
     const brand = (row.brand && typeof row.brand === 'object') ? row.brand : {};
-    const hotlineRaw = String(brand.hotline || '').trim();
+    const hotlineRaw = String(wlBranding.hotline || brand.hotline || '').trim();
     const hotline = hotlineRaw.replace(/\D/g, '') || FALLBACK_HOTLINE;
-    const hotlineDisplay = String(brand.hotlineDisplay || '').trim() ||
+    const hotlineDisplay = String(wlBranding.hotlineDisplay || brand.hotlineDisplay || '').trim() ||
       (hotlineRaw ? hotlineRaw : FALLBACK_HOTLINE_DISPLAY);
-    const zaloRaw = String(brand.zalo || '').trim();
+    const zaloRaw = String(wlBranding.zalo || brand.zalo || '').trim();
     const zalo = zaloRaw
       ? (zaloRaw.startsWith('http') ? zaloRaw : `https://zalo.me/${zaloRaw.replace(/\D/g, '')}`)
       : (hotlineRaw ? `https://zalo.me/${hotline}` : FALLBACK_ZALO_URL);
-    const brandName = String(brand.brandName || row.tenant_name || defaultBrand || 'SGS Land').trim();
+    const brandName = String(
+      wlBranding.displayName || brand.brandName || row.tenant_name || defaultBrand || 'SGS Land'
+    ).trim();
     return { brandName, hotline, hotlineDisplay, zalo };
   } catch (err: any) {
     logger.warn(`[PublicProject] loadTenantContact failed: ${err?.message || err}`);
@@ -101,6 +111,24 @@ async function loadTenantContact(tenantId: string, defaultBrand: string): Promis
       zalo: FALLBACK_ZALO_URL,
     };
   }
+}
+
+interface PublicBrandingPayload {
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  primaryColor: string | null;
+  displayName: string | null;
+  messenger: string | null;
+}
+
+function pickPublicBranding(branding: TenantBranding): PublicBrandingPayload {
+  return {
+    logoUrl: branding.logoUrl,
+    faviconUrl: branding.faviconUrl,
+    primaryColor: branding.primaryColor,
+    displayName: branding.displayName,
+    messenger: branding.messenger,
+  };
 }
 
 // Listing statuses cho phép hiển thị công khai (không lộ HOLD/SOLD/INACTIVE)
@@ -221,19 +249,39 @@ function pickPublicProject(row: any) {
 }
 
 /**
- * Tra cứu project theo code, cross-tenant (vì microsite là public, không có
- * session để xác định tenant). withRlsBypass + ràng buộc bằng `code` + flag
- * `metadata.public_microsite=true`.
+ * Tra cứu project theo code. Khi `hostTenantId` được truyền (Host trỏ về
+ * subdomain/custom domain của 1 CĐT) → scope query theo tenant đó để xử lý
+ * đúng case 2 tenant trùng project code (vd "MCC"). Khi gọi từ apex
+ * `sgsland.vn` (hostTenantId = null) → cross-tenant lookup như cũ và trả về
+ * row đầu tiên public.
+ *
+ * Luôn `withRlsBypass` vì microsite là public, không có session để xác định
+ * tenant trong RLS context.
  */
-async function findPublicProjectByCode(code: string): Promise<{ project: any; tenantId: string } | null> {
-  // `code` đã được normalize uppercase ở route handler — query case-insensitive
-  // bằng UPPER() để khớp được cả khi DB lưu lowercase/mixed case.
+async function findPublicProjectByCode(
+  code: string,
+  hostTenantId?: string | null,
+): Promise<{ project: any; tenantId: string } | null> {
   return withRlsBypass(async (client) => {
+    if (hostTenantId) {
+      const r = await client.query(
+        `SELECT *
+           FROM projects
+           WHERE UPPER(code) = $1
+             AND tenant_id = $2
+             AND metadata->>'public_microsite' = 'true'
+           LIMIT 1`,
+        [code, hostTenantId]
+      );
+      if (!r.rows[0]) return null;
+      return { project: r.rows[0], tenantId: r.rows[0].tenant_id };
+    }
     const result = await client.query(
       `SELECT *
          FROM projects
          WHERE UPPER(code) = $1
            AND metadata->>'public_microsite' = 'true'
+         ORDER BY created_at ASC NULLS LAST
          LIMIT 1`,
       [code]
     );
@@ -288,22 +336,29 @@ async function checkDuplicateLead(tenantId: string, phone: string, code: string)
 export function createPublicProjectRoutes(): Router {
   const router = Router();
 
-  // GET /api/public/projects/:code — full payload (cached 5 phút)
+  // GET /api/public/projects/:code — full payload (cached 5 phút, scoped theo Host tenant)
   router.get('/:code', async (req: Request, res: Response) => {
     const code = String(req.params.code || '').trim().toUpperCase();
     if (!code || !/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(code)) {
       return res.status(400).json({ ok: false, error: 'Mã dự án không hợp lệ' });
     }
 
+    // Host binding được resolve trong middleware Host (server.ts) trước route mount.
+    const hostBinding: TenantHostBinding | null = (req as any).publicTenant ?? null;
+    const cacheBucket = hostBinding?.tenantId || '*';
+
     try {
-      const cached = getPublicProjectCache(code);
+      const cached = getPublicProjectCache(code, cacheBucket);
       if (cached) {
         res.setHeader('X-Public-Project-Cache', 'HIT');
         res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
         return res.json(cached);
       }
 
-      const found = await findPublicProjectByCode(code);
+      // Khi truy cập qua subdomain/custom-domain của 1 tenant, scope lookup
+      // theo tenant đó ngay từ DB query — tránh leak project chéo CĐT và xử lý
+      // đúng case 2 tenant trùng project code.
+      const found = await findPublicProjectByCode(code, hostBinding?.tenantId ?? null);
       if (!found) {
         // Không leak việc project có tồn tại nhưng chưa bật mini-site
         return res.status(404).json({ ok: false, error: 'Dự án chưa công khai hoặc không tồn tại' });
@@ -314,19 +369,31 @@ export function createPublicProjectRoutes(): Router {
       const project = pickPublicProject(found.project);
       const tenantContact = await loadTenantContact(found.tenantId, project.metadata.developer || project.name);
 
+      // Branding: ưu tiên hostBinding (subdomain/custom domain) — luôn cùng tenant
+      // nhờ check trên; nếu vào từ apex thì lấy theo project's tenant.
+      let brandingSource: TenantHostBinding | null = hostBinding;
+      if (!brandingSource) {
+        brandingSource = await getTenantBinding(found.tenantId);
+      }
+      const branding = brandingSource ? pickPublicBranding(brandingSource.branding) : pickPublicBranding({
+        logoUrl: null, faviconUrl: null, primaryColor: null,
+        displayName: null, hotline: null, hotlineDisplay: null, zalo: null, messenger: null,
+      });
+
       const payload = {
         ok: true,
         project,
         listings,
         listingCount: listings.length,
         tenantContact,
+        branding,
         captcha: TURNSTILE_SECRET
           ? { provider: 'turnstile', siteKey: process.env.TURNSTILE_SITE_KEY || '' }
           : null,
         cachedAt: new Date().toISOString(),
       };
 
-      setPublicProjectCache(code, payload);
+      setPublicProjectCache(code, payload, cacheBucket);
       res.setHeader('X-Public-Project-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
       res.json(payload);
@@ -377,8 +444,13 @@ export function createPublicProjectRoutes(): Router {
         }
       }
 
-      // Resolve project (must be public) → lấy tenantId để lưu lead đúng tenant
-      const found = await findPublicProjectByCode(code);
+      // Cross-tenant guard: tương tự GET — Host của tenant A KHÔNG được phép
+      // submit lead vào project thuộc tenant B (IDOR write protection).
+      const hostBindingForLead: TenantHostBinding | null = (req as any).publicTenant ?? null;
+
+      // Resolve project (must be public) → lấy tenantId để lưu lead đúng tenant.
+      // Scope theo Host tenant nếu có để chọn đúng project khi 2 tenant trùng code.
+      const found = await findPublicProjectByCode(code, hostBindingForLead?.tenantId ?? null);
       if (!found) {
         return res.status(404).json({ ok: false, error: 'Dự án chưa công khai hoặc không tồn tại' });
       }
@@ -431,7 +503,11 @@ export function createPublicProjectRoutes(): Router {
         logger.error(`[PublicProject] Lead insert failed: ${dbErr?.message || dbErr}`);
       }
 
-      // Notify hotline inbox (best-effort, không block phản hồi cho user)
+      // Notify hotline inbox (best-effort, không block phản hồi cho user).
+      // From-name được override bằng tên CĐT (white-label task #28).
+      const tenantBindingForEmail = await getTenantBinding(found.tenantId).catch(() => null);
+      const fromName = tenantBindingForEmail?.branding.displayName || tenantBindingForEmail?.name || 'SGS Land';
+      const fromEmail = process.env.BREVO_FROM_EMAIL || 'no-reply@sgsland.vn';
       try {
         const subject = `[Mini-site] ${found.project.name} — ${name} (${phone})`;
         const htmlBody = `
@@ -448,7 +524,8 @@ export function createPublicProjectRoutes(): Router {
             <p style="margin-top:16px;color:#94a3b8;font-size:12px;">Nguồn: ${escapeHtml(metadata.page_url || `/p/${code}`)}</p>
           </div>`;
         await brevoSendEmail({
-          to: [{ email: INTERNAL_INBOX, name: 'SGS Land Hotline' }],
+          to: [{ email: INTERNAL_INBOX, name: `${fromName} Hotline` }],
+          from: { email: fromEmail, name: fromName },
           subject,
           html: htmlBody,
           text: `Lead mới: ${name} / ${phone}${email ? ' / ' + email : ''} — ${found.project.name} (${code})`,

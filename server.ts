@@ -45,6 +45,7 @@ import { createValuationRoutes } from "./server/routes/valuationRoutes";
 import { createProjectRoutes } from "./server/routes/projectRoutes";
 import { createCommissionRoutes } from "./server/routes/commissionRoutes";
 import { createTenantRoutes } from "./server/routes/tenantRoutes";
+import { resolveTenantByHost, startCustomDomainVerifyCron } from "./server/services/tenantBrandingService";
 import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
@@ -1383,6 +1384,14 @@ async function startServer() {
     }
     if (!migrationOk) {
       logger.warn('[migrations] Skipped due to DB connectivity issue. Schema may be out of date until restart.');
+    }
+
+    // ── Tenant white-label (task #28): cron 5 phút verify TXT custom domain ──
+    try {
+      startCustomDomainVerifyCron();
+      logger.info('[tenant] Custom-domain TXT verify cron started (5min interval)');
+    } catch (err: any) {
+      logger.warn(`[tenant] Failed to start TXT verify cron: ${err?.message || err}`);
     }
 
     // ── Init self-learning price calibration engine ──────────────────────────
@@ -3031,7 +3040,21 @@ async function startServer() {
   // ─── PUBLIC mini-site cho từng dự án (no auth, server-side cache 5min) ────
   // Không bọc apiRateLimit chung — endpoint này có rate limit riêng
   // (publicMicrositeLeadRateLimit) cho POST /leads. GET /:code chỉ đọc cache.
-  app.use('/api/public/projects', createPublicProjectRoutes());
+  //
+  // Host middleware (task #28): resolve tenant theo `Host` header trước khi
+  // route handler chạy. Nếu Host khớp `<slug>.sgsland.vn` hoặc custom domain
+  // đã verify → set req.publicTenant để route scope theo tenant đó. Apex
+  // `sgsland.vn` (host tenant) luôn trả null → handler dùng cache bucket "*"
+  // và áp branding theo project's tenant.
+  app.use('/api/public/projects', async (req, _res, next) => {
+    try {
+      const binding = await resolveTenantByHost(req.headers.host as string | undefined);
+      (req as any).publicTenant = binding;
+    } catch {
+      (req as any).publicTenant = null;
+    }
+    next();
+  }, createPublicProjectRoutes());
   // Task Management module
   app.use('/api/tasks', apiRateLimit, createTaskRoutes(authenticateToken));
   app.use('/api/departments', apiRateLimit, createDepartmentRoutes(authenticateToken));

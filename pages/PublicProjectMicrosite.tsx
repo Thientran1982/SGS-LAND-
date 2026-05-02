@@ -243,9 +243,41 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   }
 
   const { project, listings, tenantContact } = data;
+  const branding = data.branding ?? null;
+  const brandPrimary = branding?.primaryColor || '#4F46E5';
+  const brandLabel   = branding?.displayName || tenantContact.brandName || 'SGS LAND';
+  const brandLogo    = branding?.logoUrl || null;
+
+  // Inject favicon + document.title cho tab browser CĐT (task #28)
+  useEffect(() => {
+    if (!branding) return;
+    const prevTitle = document.title;
+    if (brandLabel) document.title = `${project.name} — ${brandLabel}`;
+
+    let faviconLink: HTMLLinkElement | null = null;
+    let prevFaviconHref: string | null = null;
+    if (branding.faviconUrl) {
+      faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+      if (!faviconLink) {
+        faviconLink = document.createElement('link');
+        faviconLink.rel = 'icon';
+        document.head.appendChild(faviconLink);
+      } else {
+        prevFaviconHref = faviconLink.href;
+      }
+      faviconLink.href = branding.faviconUrl;
+    }
+    return () => {
+      document.title = prevTitle;
+      if (faviconLink && prevFaviconHref !== null) faviconLink.href = prevFaviconHref;
+    };
+  }, [branding, brandLabel, project.name]);
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 text-slate-900">
+    <div
+      className="min-h-[100dvh] bg-slate-50 text-slate-900"
+      style={{ ['--brand-primary' as any]: brandPrimary }}
+    >
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section className="relative bg-slate-900 text-white">
         <div className="absolute inset-0 overflow-hidden">
@@ -259,8 +291,18 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900" />
         </div>
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-          <div className="flex items-center gap-2 text-xs text-indigo-200 font-mono uppercase tracking-widest mb-3">
-            <span>SGS LAND</span>
+          <div className="flex items-center gap-3 text-xs text-indigo-200 font-mono uppercase tracking-widest mb-3">
+            {brandLogo ? (
+              <img
+                src={brandLogo}
+                alt={brandLabel}
+                className="h-8 w-auto max-w-[160px] object-contain bg-white/90 rounded px-2 py-1"
+                loading="eager"
+                onError={(e) => { (e.currentTarget.style.display = 'none'); }}
+              />
+            ) : (
+              <span>{brandLabel}</span>
+            )}
             <span className="opacity-50">/</span>
             <span>{project.code}</span>
           </div>
@@ -273,13 +315,20 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           )}
           <div className="flex flex-wrap gap-3 mb-6">
             <a href={`tel:${tenantContact.hotline}`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm transition shadow-lg shadow-indigo-500/30">
+              style={{ backgroundColor: brandPrimary }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm transition shadow-lg hover:opacity-90">
               📞 Hotline {tenantContact.hotlineDisplay}
             </a>
             <a href={tenantContact.zalo} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
               💬 Chat Zalo
             </a>
+            {branding?.messenger && (
+              <a href={branding.messenger} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
+                💬 Messenger
+              </a>
+            )}
             <button type="button" onClick={handleShare}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
               🔗 Chia sẻ
@@ -480,14 +529,19 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       {/* ── FOOTER ─────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-600">
-          <div>
-            © {tenantContact.brandName} — Mini-site dự án <strong>{project.name}</strong>
+          <div className="flex items-center gap-2">
+            {brandLogo && (
+              <img src={brandLogo} alt={brandLabel} className="h-6 w-auto max-w-[120px] object-contain" />
+            )}
+            <span>© {brandLabel} — Mini-site dự án <strong>{project.name}</strong></span>
           </div>
           <div className="flex items-center gap-3">
             <button type="button" onClick={handleDownloadQR} className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-xs font-semibold">
               Tải QR
             </button>
-            <a href={`tel:${tenantContact.hotline}`} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700">
+            <a href={`tel:${tenantContact.hotline}`}
+              style={{ backgroundColor: brandPrimary }}
+              className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90">
               📞 {tenantContact.hotlineDisplay}
             </a>
           </div>
