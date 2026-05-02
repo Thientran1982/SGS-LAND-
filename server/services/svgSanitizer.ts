@@ -192,16 +192,19 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
     throw new Error('SVG_DOCTYPE_NOT_ALLOWED');
   }
 
-  const $ = cheerio.load(rawSvg, { xmlMode: true, decodeEntities: true });
+  const $ = cheerio.load(rawSvg, { xmlMode: true });
 
   let removedTags = 0;
   let removedAttrs = 0;
   let removedRefs = 0;
 
   // Walk every element, drop disallowed tags, sanitize attributes.
+  // Cheerio v1's exported types don't include `Element` directly, but tag
+  // nodes always have `.name` and `.attribs`. We cast to a structural type.
+  type CheerioTagEl = { type: string; name?: string; attribs?: Record<string, string> };
   $('*').each((_i, el) => {
-    if (el.type !== 'tag') return;
-    const tagName = String((el as cheerio.Element).name || '').toLowerCase();
+    if ((el as CheerioTagEl).type !== 'tag') return;
+    const tagName = String((el as CheerioTagEl).name || '').toLowerCase();
 
     if (!ALLOWED_TAGS.has(tagName)) {
       $(el).remove();
@@ -209,7 +212,7 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
       return;
     }
 
-    const attribs = (el as cheerio.Element).attribs || {};
+    const attribs = (el as CheerioTagEl).attribs || {};
     for (const rawName of Object.keys(attribs)) {
       const name = rawName.toLowerCase();
       const val = attribs[rawName];
