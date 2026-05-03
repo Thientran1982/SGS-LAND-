@@ -1788,7 +1788,15 @@ async function startServer() {
         direction: 'OUTBOUND',
         type: 'TEXT',
         content: result.content,
-        metadata: { isAgent: true, ...(result.isSysMsg ? { isSysMsg: true } : {}) }
+        // Fix G: đánh dấu rõ tin nhắn AI để filter trong analytics + Inbox UI
+        metadata: {
+          isAi: true,
+          isAgent: true,
+          intent: result.intent,
+          aiConfidence: result.confidence,
+          escalated: result.escalated ?? false,
+          ...(result.isSysMsg ? { isSysMsg: true } : {}),
+        },
       });
       // Notify Inbox of the AI reply so agents see the outgoing response too
       broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
