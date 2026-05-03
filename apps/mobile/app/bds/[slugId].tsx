@@ -5,6 +5,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -24,6 +25,9 @@ import type { PublicListing } from '../../src/api/types';
 import { ApiError } from '../../src/api/client';
 import { ListingCard } from '../../src/components/ListingCard';
 import { EmptyState } from '../../src/components/EmptyState';
+import { PaymentCalculator } from '../../src/components/PaymentCalculator';
+import { MarketInsights } from '../../src/components/MarketInsights';
+import { VendorBrandCard } from '../../src/components/VendorBrandCard';
 import { loadFavorites, toggleFavorite } from '../../src/storage/favorites';
 import { colors, radius, shadow, spacing, typography } from '../../src/theme/tokens';
 import {
@@ -55,6 +59,7 @@ export default function ListingDetailScreen() {
 
   const [imgIdx, setImgIdx] = useState(0);
   const [isFav, setIsFav] = useState(false);
+  const [leadModalOpen, setLeadModalOpen] = useState(false);
 
   // Load favorite state for this listing on mount.
   useEffect(() => {
@@ -141,10 +146,7 @@ export default function ListingDetailScreen() {
   const unit = formatUnitPrice(item.price, item.area);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1, backgroundColor: colors.bgBase }}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.bgBase }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* ── Hero gallery ─────────────────────────────────────────── */}
         <View style={styles.heroWrap}>
@@ -239,8 +241,18 @@ export default function ListingDetailScreen() {
           </View>
         ) : null}
 
-        {/* ── Lead form ──────────────────────────────────────────── */}
-        <LeadForm listingId={item.id} accent={accent} />
+        {/* ── AI market insights ─────────────────────────────────── */}
+        <MarketInsights item={item} similar={similarQuery.data} accent={accent} />
+
+        {/* ── Financial calculator ───────────────────────────────── */}
+        <PaymentCalculator price={item.price} accent={accent} />
+
+        {/* ── Vendor brand card ──────────────────────────────────── */}
+        <VendorBrandCard
+          branding={item.branding}
+          fallbackContact={{ name: item.contactName, phone: item.contactPhone }}
+          accent={accent}
+        />
 
         {/* ── Similar ─────────────────────────────────────────────── */}
         {similarQuery.data && similarQuery.data.length > 0 ? (
@@ -253,7 +265,7 @@ export default function ListingDetailScreen() {
         ) : null}
       </ScrollView>
 
-      {/* ── Bottom CTA bar ──────────────────────────────────────── */}
+      {/* ── Bottom CTA bar (3 actions: Zalo / Gọi / Quan tâm) ──── */}
       <SafeAreaView edges={['bottom']} style={styles.ctaBarWrap}>
         <View style={styles.ctaBar}>
           <Pressable
@@ -264,15 +276,36 @@ export default function ListingDetailScreen() {
             <Text style={styles.ctaSecondaryText}>💬 Zalo</Text>
           </Pressable>
           <Pressable
-            style={[styles.ctaBtn, styles.ctaPrimary, { backgroundColor: accent }]}
+            style={[styles.ctaBtn, styles.ctaSecondary]}
             onPress={() => Linking.openURL(`tel:${hotline}`)}
+            android_ripple={{ color: colors.brandSoft }}
+          >
+            <Text style={styles.ctaSecondaryText} numberOfLines={1}>📞 Gọi</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.ctaBtn, styles.ctaPrimary, { backgroundColor: accent }]}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              setLeadModalOpen(true);
+            }}
             android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
           >
-            <Text style={styles.ctaPrimaryText}>📞 Gọi {hotlineDisplay}</Text>
+            <Text style={styles.ctaPrimaryText}>★ Quan tâm</Text>
           </Pressable>
         </View>
+        <Text style={styles.ctaHotlineHint} numberOfLines={1}>
+          Hotline: {hotlineDisplay}
+        </Text>
       </SafeAreaView>
-    </KeyboardAvoidingView>
+
+      {/* ── Lead form modal ─────────────────────────────────────── */}
+      <LeadFormModal
+        visible={leadModalOpen}
+        onClose={() => setLeadModalOpen(false)}
+        listing={item}
+        accent={accent}
+      />
+    </View>
   );
 }
 
@@ -286,15 +319,27 @@ const SpecCell: React.FC<{ label: string; value: string }> = ({ label, value }) 
   </View>
 );
 
-// ─── Lead form ────────────────────────────────────────────────────────────
-const LeadForm: React.FC<{ listingId: string; accent: string }> = ({ listingId, accent }) => {
+// ─── Lead form modal ─────────────────────────────────────────────────────
+interface LeadFormModalProps {
+  visible: boolean;
+  onClose: () => void;
+  listing: PublicListing;
+  accent: string;
+}
+
+const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing, accent }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: () => listingsApi.submitLead(listingId, { name: name.trim(), phone: phone.trim(), notes: notes.trim() || undefined }),
+    mutationFn: () =>
+      listingsApi.submitLead(listing.id, {
+        name: name.trim(),
+        phone: phone.trim(),
+        notes: notes.trim() || undefined,
+      }),
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setSubmitted(true);
@@ -308,72 +353,120 @@ const LeadForm: React.FC<{ listingId: string; accent: string }> = ({ listingId, 
 
   const canSubmit = useMemo(() => name.trim().length >= 2 && isValidVnPhone(phone), [name, phone]);
 
-  if (submitted) {
-    return (
-      <View style={[styles.section, styles.successBox]}>
-        <Text style={styles.successIcon}>✅</Text>
-        <Text style={styles.successTitle}>Đã gửi yêu cầu tư vấn</Text>
-        <Text style={styles.successText}>
-          Chuyên viên của chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất. Cảm ơn bạn đã quan tâm!
-        </Text>
-      </View>
-    );
-  }
+  // Reset form whenever the modal closes so reopening starts fresh.
+  useEffect(() => {
+    if (!visible) {
+      const t = setTimeout(() => {
+        setName('');
+        setPhone('');
+        setNotes('');
+        setSubmitted(false);
+        mutation.reset();
+      }, 250);
+      return () => clearTimeout(t);
+    }
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Yêu cầu tư vấn</Text>
-      <Text style={styles.formHint}>Để lại thông tin, chuyên viên sẽ liên hệ trong vòng 30 phút.</Text>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <SafeAreaView style={styles.modalRoot} edges={['top', 'bottom']}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Yêu cầu tư vấn</Text>
+          <Pressable onPress={onClose} hitSlop={12} style={styles.modalClose}>
+            <Text style={styles.modalCloseText}>✕</Text>
+          </Pressable>
+        </View>
 
-      <Text style={styles.fieldLabel}>Họ và tên *</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="Nguyễn Văn A"
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize="words"
-        returnKeyType="next"
-      />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.modalBody}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Sản phẩm bạn đang quan tâm</Text>
+              <Text style={styles.summaryTitle} numberOfLines={2}>
+                {listing.title}
+              </Text>
+              <Text style={[styles.summaryPrice, { color: accent }]}>{formatVnd(listing.price)}</Text>
+            </View>
 
-      <Text style={styles.fieldLabel}>Số điện thoại *</Text>
-      <TextInput
-        style={styles.input}
-        value={phone}
-        onChangeText={setPhone}
-        placeholder="0971 132 378"
-        placeholderTextColor={colors.textMuted}
-        keyboardType="phone-pad"
-        returnKeyType="next"
-      />
+            {submitted ? (
+              <View style={styles.successBox}>
+                <Text style={styles.successIcon}>✅</Text>
+                <Text style={styles.successTitle}>Đã gửi yêu cầu</Text>
+                <Text style={styles.successText}>
+                  Chuyên viên sẽ liên hệ với bạn trong vòng 30 phút. Cảm ơn bạn đã quan tâm!
+                </Text>
+                <Pressable onPress={onClose} style={[styles.submitBtn, { backgroundColor: accent, marginTop: spacing.lg }]}>
+                  <Text style={styles.submitText}>Đóng</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.formHint}>
+                  Để lại thông tin, chuyên viên sẽ liên hệ trong vòng 30 phút.
+                </Text>
 
-      <Text style={styles.fieldLabel}>Ghi chú (tuỳ chọn)</Text>
-      <TextInput
-        style={[styles.input, styles.inputMultiline]}
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Tôi muốn xem nhà vào cuối tuần..."
-        placeholderTextColor={colors.textMuted}
-        multiline
-        numberOfLines={3}
-      />
+                <Text style={styles.fieldLabel}>Họ và tên *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Nguyễn Văn A"
+                  placeholderTextColor={colors.textMuted}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                />
 
-      <Pressable
-        onPress={() => mutation.mutate()}
-        disabled={!canSubmit || mutation.isPending}
-        style={[
-          styles.submitBtn,
-          { backgroundColor: accent },
-          (!canSubmit || mutation.isPending) && { opacity: 0.5 },
-        ]}
-      >
-        {mutation.isPending ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={styles.submitText}>Gửi yêu cầu tư vấn</Text>
-        )}
-      </Pressable>
-    </View>
+                <Text style={styles.fieldLabel}>Số điện thoại *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="0971 132 378"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="phone-pad"
+                  returnKeyType="next"
+                />
+
+                <Text style={styles.fieldLabel}>Ghi chú (tuỳ chọn)</Text>
+                <TextInput
+                  style={[styles.input, styles.inputMultiline]}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Tôi muốn xem nhà vào cuối tuần..."
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  numberOfLines={3}
+                />
+
+                <Pressable
+                  onPress={() => mutation.mutate()}
+                  disabled={!canSubmit || mutation.isPending}
+                  style={[
+                    styles.submitBtn,
+                    { backgroundColor: accent },
+                    (!canSubmit || mutation.isPending) && { opacity: 0.5 },
+                  ]}
+                >
+                  {mutation.isPending ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.submitText}>Gửi yêu cầu tư vấn</Text>
+                  )}
+                </Pressable>
+              </>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
   );
 };
 
@@ -511,6 +604,84 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
+  ctaBarWrap: {
+    backgroundColor: colors.bgSurface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    ...shadow.card,
+  },
+  ctaBar: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: 6,
+    gap: spacing.sm,
+  },
+  ctaBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaSecondary: {
+    backgroundColor: colors.bgMuted,
+    minWidth: 84,
+  },
+  ctaSecondaryText: { color: colors.textPrimary, fontWeight: '700', fontSize: typography.base },
+  ctaPrimary: { flex: 1 },
+  ctaPrimaryText: { color: 'white', fontWeight: '800', fontSize: typography.base },
+  ctaHotlineHint: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    fontSize: typography.xs,
+    color: colors.textTertiary,
+    textAlign: 'center',
+  },
+
+  // Lead modal
+  modalRoot: { flex: 1, backgroundColor: colors.bgBase },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.bgSurface,
+  },
+  modalTitle: { fontSize: typography.lg, fontWeight: '800', color: colors.textPrimary },
+  modalClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bgMuted,
+  },
+  modalCloseText: { fontSize: 16, color: colors.textPrimary, fontWeight: '700' },
+  modalBody: { padding: spacing.lg, paddingBottom: spacing.xxxl },
+
+  summaryCard: {
+    backgroundColor: colors.bgSurface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  summaryLabel: {
+    fontSize: typography.xs,
+    color: colors.textTertiary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    marginBottom: 4,
+  },
+  summaryTitle: { fontSize: typography.base, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  summaryPrice: { fontSize: typography.lg, fontWeight: '800' },
+
   formHint: {
     fontSize: typography.sm,
     color: colors.textTertiary,
@@ -556,30 +727,4 @@ const styles = StyleSheet.create({
   successIcon: { fontSize: 48, marginBottom: spacing.md },
   successTitle: { fontSize: typography.lg, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.sm },
   successText: { fontSize: typography.sm, color: colors.textTertiary, textAlign: 'center', maxWidth: 320, lineHeight: 20 },
-
-  ctaBarWrap: {
-    backgroundColor: colors.bgSurface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    ...shadow.card,
-  },
-  ctaBar: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  ctaBtn: {
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaSecondary: {
-    backgroundColor: colors.bgMuted,
-    paddingHorizontal: spacing.lg,
-  },
-  ctaSecondaryText: { color: colors.textPrimary, fontWeight: '700', fontSize: typography.base },
-  ctaPrimary: { flex: 1 },
-  ctaPrimaryText: { color: 'white', fontWeight: '800', fontSize: typography.base },
 });

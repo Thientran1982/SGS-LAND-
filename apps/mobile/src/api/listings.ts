@@ -17,6 +17,9 @@ function buildListingParams(filters: ListingFilters | undefined) {
   if (filters.search) out.search = filters.search;
   if (filters.priceMin) out.priceMin = filters.priceMin;
   if (filters.priceMax) out.priceMax = filters.priceMax;
+  if (filters.bedroomsMin) out.bedroomsMin = filters.bedroomsMin;
+  if (filters.areaMin) out.areaMin = filters.areaMin;
+  if (filters.areaMax) out.areaMax = filters.areaMax;
   if (filters.isVerified) out.isVerified = true;
   if (filters.projectCode) out.projectCode = filters.projectCode;
   return out;

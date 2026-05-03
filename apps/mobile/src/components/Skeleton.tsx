@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
+import { Animated, DimensionValue, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors, radius } from '../theme/tokens';
 
 interface Props {
-  width?: number | `${number}%`;
+  width?: DimensionValue;
   height?: number;
   borderRadius?: number;
   style?: ViewStyle;
@@ -27,7 +27,7 @@ export const Skeleton: React.FC<Props> = ({ width = '100%', height = 16, borderR
     <Animated.View
       style={[
         styles.base,
-        { width: width as any, height, borderRadius, opacity },
+        { width, height, borderRadius, opacity },
         style,
       ]}
     />

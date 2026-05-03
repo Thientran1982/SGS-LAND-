@@ -68,6 +68,9 @@ export interface ListingFilters {
   search?: string;
   priceMin?: number;
   priceMax?: number;
+  bedroomsMin?: number;
+  areaMin?: number;
+  areaMax?: number;
   isVerified?: boolean;
   projectCode?: string;
 }

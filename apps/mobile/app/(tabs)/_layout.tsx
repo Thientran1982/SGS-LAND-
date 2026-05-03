@@ -4,8 +4,8 @@ import { Tabs } from 'expo-router';
 import { colors, typography } from '../../src/theme/tokens';
 
 // Lightweight emoji-based tab icons. We deliberately avoid pulling
-// @expo/vector-icons (≈3MB) for the first cut — the buyer flow has only 4
-// tabs and emojis render consistently across iOS/Android with zero deps.
+// @expo/vector-icons (≈3MB) for the first cut — the buyer flow has 5 tabs
+// and emojis render consistently across iOS/Android with zero deps.
 function TabIcon({ glyph, focused }: { glyph: string; focused: boolean }) {
   return (
     <Text
@@ -52,6 +52,13 @@ export default function TabLayout() {
         options={{
           title: 'Yêu thích',
           tabBarIcon: ({ focused }) => <TabIcon glyph="♥" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Tin nhắn',
+          tabBarIcon: ({ focused }) => <TabIcon glyph="💬" focused={focused} />,
         }}
       />
       <Tabs.Screen
