@@ -19,12 +19,36 @@
 
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
+import jwt from 'jsonwebtoken';
 import { logger } from '../middleware/logger';
 import { buyerPushRepository } from '../repositories/buyerPushRepository';
 import {
   isValidExpoPushToken,
   tickBuyerPushNotifications,
 } from '../services/pushNotificationService';
+
+/**
+ * Best-effort decode of an optional buyer Bearer token. Returns the buyer
+ * user id when the header is present and the token is a valid `aud: 'buyer'`
+ * token. Used by the device registration endpoint so that we can link the
+ * device row to the logged-in buyer for messaging push fan-out (Task #55)
+ * without making the endpoint require auth (anonymous saved-search alerts
+ * still need to work).
+ */
+function decodeBuyerUserId(req: Request, secret: string): string | null {
+  if (!secret) return null;
+  const header = req.headers.authorization;
+  if (!header || !header.toLowerCase().startsWith('bearer ')) return null;
+  const token = header.slice(7).trim();
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, secret) as { sub?: string; aud?: string };
+    if (decoded?.aud !== 'buyer' || !decoded.sub) return null;
+    return decoded.sub;
+  } catch {
+    return null;
+  }
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DEVICE_ID_RE = /^[A-Za-z0-9._:\-]{8,128}$/;
@@ -57,7 +81,7 @@ function sanitizeFilters(input: any): Record<string, any> {
   return out;
 }
 
-export function createBuyerPushRoutes(pool: Pool, cronSecret: string): Router {
+export function createBuyerPushRoutes(pool: Pool, cronSecret: string, jwtSecret = ''): Router {
   const router = Router();
 
   // ── Device registration ────────────────────────────────────────────────────
@@ -81,11 +105,18 @@ export function createBuyerPushRoutes(pool: Pool, cronSecret: string): Router {
       const appVersionVal =
         typeof appVersion === 'string' && appVersion.length <= 32 ? appVersion : null;
 
+      // If the request carries a valid buyer Bearer token, stamp the
+      // device row with `buyer_user_id` so messaging push (Task #55) can
+      // fan out to all of the buyer's logged-in devices later. Anonymous
+      // calls leave the column NULL and continue to work for saved-search
+      // alerts.
+      const buyerUserId = decodeBuyerUserId(req, jwtSecret);
       const device = await buyerPushRepository.upsertDevice({
         deviceId,
         expoPushToken: expoPushToken || null,
         platform: platformVal,
         appVersion: appVersionVal,
+        buyerUserId,
       });
       return res.json({ device });
     } catch (err: any) {

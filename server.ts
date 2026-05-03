@@ -65,7 +65,7 @@ import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from ".
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
 import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
 import { createBuyerRoutes } from "./server/routes/buyerRoutes";
-import { createConversationRoutes } from "./server/routes/conversationRoutes";
+import { createConversationRoutes, createAgentConversationRoutes } from "./server/routes/conversationRoutes";
 import { startBuyerPushCron } from "./server/services/pushNotificationService";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
@@ -4102,13 +4102,14 @@ async function startServer() {
       process.env.BUYER_PUSH_CRON_SECRET ||
       process.env.JWT_SECRET?.slice(0, 32) ||
       '';
-    app.use(apiRateLimit, createBuyerPushRoutes(pool, buyerPushSecret));
+    app.use(apiRateLimit, createBuyerPushRoutes(pool, buyerPushSecret, JWT_SECRET));
     // Task #52 — Buyer phone+OTP login + favorites/saved-searches/leads sync.
     // Reuse the global JWT_SECRET; tokens are scoped via `aud: 'buyer'` so
     // they cannot be cross-used against admin/agent endpoints.
     app.use(apiRateLimit, createBuyerAuthRoutes(JWT_SECRET));
     app.use(apiRateLimit, createBuyerRoutes(pool, JWT_SECRET));
     app.use(apiRateLimit, createConversationRoutes(JWT_SECRET, io));
+    app.use(apiRateLimit, createAgentConversationRoutes(authenticateToken, io));
     try {
       startBuyerPushCron(pool);
     } catch (err: any) {

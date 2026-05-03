@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { conversationsApi, type ChatMessage } from '../../src/api/conversations';
 import { subscribeToConversation } from '../../src/realtime/socket';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
@@ -46,28 +46,42 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
 
-  const messagesQuery = useQuery({
+  // Cursor pagination: server returns messages DESC with `nextCursor` set
+  // to the createdAt of the last (oldest) row in the page. Subsequent
+  // pages pass `before=<cursor>`. We hydrate `messages` (oldest-first for
+  // bottom-anchored rendering) from every loaded page.
+  const messagesQuery = useInfiniteQuery({
     queryKey: ['conversations', conversationId, 'messages'],
-    queryFn: () => conversationsApi.messages(conversationId, { limit: 50 }),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      conversationsApi.messages(conversationId, { limit: 50, before: pageParam }),
+    getNextPageParam: (last) => last.nextCursor || undefined,
     enabled: !!conversationId && !!user,
   });
 
-  // Server returns DESC; we render oldest-first so the input bar at the
-  // bottom shows the most recent message. Reverse once, deduplicate by id
-  // so realtime appends + manual sends don't double-render.
   useEffect(() => {
-    if (!messagesQuery.data) return;
+    const pages = messagesQuery.data?.pages;
+    if (!pages) return;
     setMessages((prev) => {
       const map = new Map<string, ChatMessage>();
-      for (const m of [...messagesQuery.data!.messages].reverse()) map.set(m.id, m);
-      // Preserve any locally-appended messages that haven't been refetched
-      // yet (e.g. messages that arrived realtime mid-fetch).
+      // Each page is DESC; flatten then sort ASC so render is oldest-first.
+      for (const page of pages) {
+        for (const m of page.messages) map.set(m.id, m);
+      }
+      // Preserve any locally-appended messages that arrived via realtime
+      // or just-sent mutations.
       for (const m of prev) if (!map.has(m.id)) map.set(m.id, m);
       const out = Array.from(map.values());
       out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       return out;
     });
   }, [messagesQuery.data]);
+
+  const loadOlder = useCallback(() => {
+    if (messagesQuery.hasNextPage && !messagesQuery.isFetchingNextPage) {
+      void messagesQuery.fetchNextPage();
+    }
+  }, [messagesQuery]);
 
   // Realtime subscription.
   useEffect(() => {
@@ -151,7 +165,7 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
       >
-        {messagesQuery.isLoading && messages.length === 0 ? (
+        {messagesQuery.isPending && messages.length === 0 ? (
           <View style={styles.center}>
             <ActivityIndicator color={colors.brand} />
           </View>
@@ -161,6 +175,29 @@ export default function ChatScreen() {
             data={messages}
             keyExtractor={(m) => m.id}
             contentContainerStyle={styles.listContent}
+            // Older messages live at the TOP of an oldest-first list, so we
+            // load more whenever the user scrolls up to the head. FlatList
+            // doesn't expose an `onStartReached`, so we hook the scroll
+            // event ourselves.
+            onScroll={(e) => {
+              if (e.nativeEvent.contentOffset.y <= 24) loadOlder();
+            }}
+            scrollEventThrottle={200}
+            ListHeaderComponent={
+              messagesQuery.hasNextPage ? (
+                <Pressable
+                  onPress={loadOlder}
+                  disabled={messagesQuery.isFetchingNextPage}
+                  style={styles.loadMoreBtn}
+                >
+                  {messagesQuery.isFetchingNextPage ? (
+                    <ActivityIndicator color={colors.brand} />
+                  ) : (
+                    <Text style={styles.loadMoreText}>Tải tin nhắn cũ hơn</Text>
+                  )}
+                </Pressable>
+              ) : null
+            }
             renderItem={({ item }) => {
               const mine = item.senderKind === 'BUYER';
               return (
@@ -317,4 +354,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   backCtaText: { color: 'white', fontWeight: '700' },
+  loadMoreBtn: {
+    alignSelf: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    backgroundColor: colors.bgMuted,
+    marginBottom: spacing.sm,
+  },
+  loadMoreText: { fontSize: typography.sm, color: colors.textSecondary, fontWeight: '600' },
 });

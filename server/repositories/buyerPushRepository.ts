@@ -12,6 +12,7 @@ import { pool as defaultPool } from '../db';
 export interface BuyerDevice {
   id: string;
   deviceId: string;
+  buyerUserId: string | null;
   expoPushToken: string | null;
   platform: string | null;
   appVersion: string | null;
@@ -36,6 +37,7 @@ function rowToDevice(r: any): BuyerDevice {
   return {
     id: r.id,
     deviceId: r.device_id,
+    buyerUserId: r.buyer_user_id ?? null,
     expoPushToken: r.expo_push_token,
     platform: r.platform,
     appVersion: r.app_version,
@@ -69,14 +71,17 @@ export class BuyerPushRepository {
     expoPushToken?: string | null;
     platform?: string | null;
     appVersion?: string | null;
+    buyerUserId?: string | null;
   }): Promise<BuyerDevice> {
     const res = await this.pool.query(
-      `INSERT INTO buyer_devices (device_id, expo_push_token, platform, app_version, last_seen_at, updated_at)
-       VALUES ($1, $2, $3, $4, NOW(), NOW())
+      `INSERT INTO buyer_devices
+         (device_id, expo_push_token, platform, app_version, buyer_user_id, last_seen_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
        ON CONFLICT (device_id) DO UPDATE SET
          expo_push_token = COALESCE(EXCLUDED.expo_push_token, buyer_devices.expo_push_token),
          platform        = COALESCE(EXCLUDED.platform,        buyer_devices.platform),
          app_version     = COALESCE(EXCLUDED.app_version,     buyer_devices.app_version),
+         buyer_user_id   = COALESCE(EXCLUDED.buyer_user_id,   buyer_devices.buyer_user_id),
          last_seen_at    = NOW(),
          updated_at      = NOW()
        RETURNING *`,
@@ -85,9 +90,27 @@ export class BuyerPushRepository {
         input.expoPushToken ?? null,
         input.platform ?? null,
         input.appVersion ?? null,
+        input.buyerUserId ?? null,
       ],
     );
     return rowToDevice(res.rows[0]);
+  }
+
+  /**
+   * Return every device row tied to a given buyer user that still has a
+   * non-null Expo push token and has push enabled. Used by the messaging
+   * push pipeline (Task #55) when an agent sends a message and we need to
+   * fan out a push to all of the buyer's logged-in devices.
+   */
+  async findActiveDevicesForBuyer(buyerUserId: string): Promise<BuyerDevice[]> {
+    const res = await this.pool.query(
+      `SELECT * FROM buyer_devices
+        WHERE buyer_user_id = $1
+          AND expo_push_token IS NOT NULL
+          AND notifications_enabled = TRUE`,
+      [buyerUserId],
+    );
+    return res.rows.map(rowToDevice);
   }
 
   async setDevicePreference(deviceId: string, enabled: boolean): Promise<BuyerDevice | null> {
