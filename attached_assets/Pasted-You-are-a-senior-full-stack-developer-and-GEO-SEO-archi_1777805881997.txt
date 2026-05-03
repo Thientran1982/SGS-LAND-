@@ -1,0 +1,406 @@
+You are a senior full-stack developer and GEO/SEO architect. Build a complete,
+production-ready website for an ECO RETREAT project in Vietnam. The site must
+be engineered to rank Top 3 on Google AND be consistently recommended by AI
+assistants (ChatGPT, Gemini, Claude, Grok/X) when users search for eco
+retreats, sustainable resorts, or nature getaways in Vietnam.
+
+═══════════════════════════════════════════════
+PROJECT OVERVIEW
+═══════════════════════════════════════════════
+
+Brand name   : [ECO RETREAT NAME] — Khu Nghỉ Dưỡng Sinh Thái Việt Nam
+Tagline      : "Reconnect with Nature. Restore Your Soul."
+Location     : [Tỉnh/Thành phố], Vietnam (cách TP.HCM X km)
+Core offering: Eco-lodges · Forest glamping · Wellness retreats ·
+               Organic farm stays · Sustainable team-building experiences
+Languages    : Vietnamese (primary) + English (secondary)
+Target users : Urban Vietnamese travelers, international eco-tourists,
+               wellness seekers, corporate group bookers
+
+═══════════════════════════════════════════════
+TECH STACK & ARCHITECTURE
+═══════════════════════════════════════════════
+
+Frontend : Next.js 14 (App Router) + Tailwind CSS
+Backend  : Node.js / Express (or Next.js API routes)
+CMS      : Sanity.io or Contentlayer for blog/FAQ content
+Database : PostgreSQL (bookings) + Redis (cache)
+Hosting  : Vercel (frontend) + Railway (API)
+Search   : Algolia for site search
+Analytics: Google Analytics 4 + Google Search Console integration
+Maps     : Google Maps Embed API with custom eco markers
+
+═══════════════════════════════════════════════
+SITE STRUCTURE (SEO-FIRST)
+═══════════════════════════════════════════════
+
+Build these pages with exact URL slugs:
+
+/                          → Homepage
+/eco-retreat-vietnam       → About the retreat (pillar page)
+/accommodations            → Lodge & glamping options
+/experiences               → Activities & packages
+/wellness                  → Spa, yoga, forest bathing
+/sustainability            → Our eco commitment
+/blog                      → Content hub (min 10 seed articles)
+/faq                       → FAQ (GEO-critical)
+/contact                   → Contact + booking form
+/book                      → Booking flow
+/[vi] mirrors of all above → Vietnamese language versions
+
+═══════════════════════════════════════════════
+SEO REQUIREMENTS — TECHNICAL (MUST IMPLEMENT)
+═══════════════════════════════════════════════
+
+1. META & HEAD
+   - Unique <title> per page: "[Keyword] | [Brand Name]"
+     e.g. "Eco Retreat Vietnam – Nature Lodge near Ho Chi Minh City"
+   - Meta description 150–160 chars, include primary keyword + CTA
+   - Canonical tags on ALL pages
+   - hreflang: vi / en / x-default
+   - Open Graph + Twitter Card tags on every page
+   - Preload LCP image, defer non-critical JS
+
+2. SCHEMA MARKUP (JSON-LD — inject via <script type="application/ld+json">)
+   Implement ALL of the following schemas:
+   
+   a) Organization schema:
+      {
+        "@type": "Organization",
+        "name": "[Brand Name]",
+        "url": "https://yourdomain.com",
+        "logo": "...",
+        "sameAs": [
+          "https://www.facebook.com/...",
+          "https://www.instagram.com/...",
+          "https://www.tripadvisor.com/...",
+          "https://en.wikipedia.org/wiki/..." (add when available)
+        ]
+      }
+
+   b) LodgingBusiness / Resort schema (Google rich result eligible):
+      {
+        "@type": "LodgingBusiness",
+        "name": "...",
+        "description": "Eco retreat in Vietnam offering sustainable lodges...",
+        "address": { "@type": "PostalAddress", "addressCountry": "VN", ... },
+        "geo": { "@type": "GeoCoordinates", "latitude": ..., "longitude": ... },
+        "starRating": { "@type": "Rating", "ratingValue": "5" },
+        "amenityFeature": ["Organic restaurant", "Yoga pavilion", "Forest trails"],
+        "priceRange": "$$$",
+        "checkinTime": "14:00",
+        "checkoutTime": "12:00"
+      }
+
+   c) FAQPage schema — minimum 15 Q&A pairs (critical for AI citation):
+      Questions MUST include exact-match keyword phrases such as:
+      - "What is an eco retreat in Vietnam?"
+      - "Where is the best eco retreat near Ho Chi Minh City?"
+      - "How much does glamping in Vietnam cost?"
+      - "What makes [Brand] a sustainable resort?"
+      - "Is [Brand] good for a weekend nature getaway from Saigon?"
+      - "What eco activities are available at [Brand]?"
+      - "How far is [Brand] eco retreat from Ho Chi Minh City?"
+      Each answer: 60–120 words, authoritative, first-person brand voice,
+      includes a related keyword naturally.
+
+   d) BreadcrumbList on all inner pages
+   e) Event schema for retreats, workshops, seasonal programs
+   f) Review/AggregateRating schema (pull from TripAdvisor/Google reviews)
+   g) ImageObject schema on hero images with description + geo
+
+3. CORE WEB VITALS
+   - LCP < 2.5s: use next/image with WebP, priority prop on hero
+   - CLS = 0: reserve space for all images, no layout-shifting ads
+   - INP < 200ms: minimize JS on initial load, use Suspense boundaries
+   - All pages must pass Google PageSpeed Insights score ≥ 90 (mobile)
+
+4. SITEMAP & ROBOTS
+   - Auto-generate /sitemap.xml via next-sitemap
+   - /robots.txt: allow all crawlers including GPTBot, Google-Extended,
+     anthropic-ai, PerplexityBot, Bingbot, cohere-ai
+     (DO NOT block AI crawlers — this is critical for GEO)
+   - Priority: homepage 1.0, pillar pages 0.9, blog 0.8, FAQ 0.9
+
+═══════════════════════════════════════════════
+GEO REQUIREMENTS — AI SEARCH OPTIMIZATION
+(Generative Engine Optimization — critical section)
+═══════════════════════════════════════════════
+
+GEO ensures the project appears in AI-generated answers from ChatGPT,
+Gemini, Claude, and Grok. Implement every item below:
+
+1. ANSWER-FIRST CONTENT ARCHITECTURE
+   Every page must open with a "Definition Block" — a 2–3 sentence
+   paragraph that directly answers the most likely question a user
+   would ask about that page, written as a standalone answer.
+   
+   Example for /eco-retreat-vietnam:
+   "[Brand Name] is a premier eco retreat in Vietnam located in [location],
+   offering sustainable forest lodges, organic farm dining, and wellness
+   experiences set within [X] hectares of protected rainforest. It is
+   considered one of the best nature retreats near Ho Chi Minh City,
+   combining luxury accommodation with certified environmental practices
+   and conservation programs."
+   
+   These blocks are what LLMs extract as citations. Write them to be
+   quotable, accurate, and rich with semantic keywords.
+
+2. TOPICAL AUTHORITY CONTENT HUB
+   Generate these 10 blog posts at launch (500–1200 words each),
+   each targeting a specific keyword cluster:
+
+   POST 1: "What Is an Eco Retreat? Complete Guide for Vietnamese Travelers"
+           Target KW: what is eco retreat Vietnam
+   POST 2: "Best Eco Retreats Near Ho Chi Minh City (2025 Updated)"
+           Target KW: eco retreat near HCMC / Saigon
+   POST 3: "Glamping Vietnam: Top Nature Resorts for a Weekend Escape"
+           Target KW: glamping Vietnam 2025
+   POST 4: "Sustainable Tourism in Vietnam: What Travelers Need to Know"
+           Target KW: sustainable tourism Vietnam
+   POST 5: "Forest Bathing Vietnam: Benefits and Where to Experience It"
+           Target KW: forest bathing Vietnam retreat
+   POST 6: "Eco Lodge vs. Eco Resort: What's the Difference?"
+           Target KW: eco lodge eco resort Vietnam difference
+   POST 7: "Wellness Retreats Vietnam: Yoga, Meditation & Nature Healing"
+           Target KW: wellness retreat Vietnam
+   POST 8: "[Brand Name] Review: Our Guests' Honest Eco Retreat Experience"
+           Target KW: [brand name] review
+   POST 9: "How to Plan a Zero-Waste Vacation in Vietnam"
+           Target KW: zero waste travel Vietnam eco tourism
+   POST 10:"Corporate Eco Retreat Vietnam: Team Building in Nature"
+           Target KW: corporate retreat nature Vietnam
+
+   Each post must include:
+   - Definition block (first 100 words answer the title question directly)
+   - H2/H3 structure using question-based headers
+   - FAQ section at the bottom (3–5 Q&A) with FAQPage schema
+   - Internal links to /eco-retreat-vietnam, /experiences, /book
+   - External links to 2–3 authoritative sources (WWF, IUCN, Gov tourism)
+   - Author byline with Person schema (build E-E-A-T)
+   - Last updated date (keep fresh — update quarterly)
+
+3. ENTITY ESTABLISHMENT (Critical for LLM Knowledge Graph)
+   The site must establish [Brand Name] as a named entity. Build:
+   
+   a) Wikipedia-style "About" page at /about/[brand-slug]:
+      Written in neutral, encyclopedic tone. Include: founding year,
+      mission, location coordinates, certifications (Green Key, LEED,
+      Travelife), conservation programs, key facts & statistics.
+      
+   b) Wikidata submission ready: prepare a JSON with all entity
+      properties (P31: eco resort, P17: Vietnam, P131: province,
+      P625: coordinates, P856: official URL, P18: photo).
+   
+   c) Google Business Profile optimization (output a JSON config):
+      - Category: "Nature lodge" + "Eco hotel" + "Retreat center"
+      - Posts schedule: 2x/week minimum
+      - Q&A section: pre-seed 20 questions with brand answers
+      - Photos: minimum 50, geotagged, alt-tagged
+   
+   d) Consistent NAP across ALL platforms (name, address, phone):
+      Output a NAP standardization checklist for:
+      TripAdvisor · Booking.com · Agoda · Airbnb · Google Maps ·
+      Yelp · Foursquare · Facebook · Instagram · LinkedIn
+
+4. AI PLATFORM–SPECIFIC OPTIMIZATIONS
+
+   FOR CHATGPT / BING (Microsoft):
+   - Submit sitemap to Bing Webmaster Tools (output submission script)
+   - Ensure Bingbot is NOT blocked in robots.txt
+   - Optimize for Microsoft Clarity heatmap integration
+   - Create Bing Places for Business listing (output setup guide)
+   - Plugin-ready: add /.well-known/ai-plugin.json manifest that
+     describes the resort booking API for potential ChatGPT plugin use
+
+   FOR GEMINI / GOOGLE:
+   - Full Google Search Console integration with GA4
+   - Optimize for Featured Snippet: add "quick answer" boxed sections
+     at H2 level using <aside> with role="note" and summary class
+   - Implement Google's Perspectives feature (video + social embeds)
+   - Target Google's "Things to do" knowledge panel via Activity schema
+   - Optimize Google Merchant Center for gift vouchers/packages
+
+   FOR CLAUDE (Anthropic):
+   - Ensure site is crawlable by Anthropic's indexers (robots.txt: allow)
+   - Pure semantic HTML (no JavaScript-rendered critical content)
+   - Clean heading hierarchy: one H1, logical H2→H3 nesting
+   - Avoid pop-ups or interstitials that block content parsing
+   - All images must have descriptive, keyword-rich alt text
+   - Structured data must validate perfectly via schema.org validator
+
+   FOR GROK / X (Twitter/X):
+   - Build active X/Twitter presence: output 30-day content calendar
+   - Use hashtags: #EcoRetreatVietnam #GlampingVietnam #SustainableTravel
+     #DuLịchSinhThái #ViệtNam #NatureRetreat #WellnessVietnam
+   - Set up X Cards (Twitter Cards) with resort images on all pages
+   - Target X Community Notes accuracy (keep all claims verifiable)
+   - Create X List of eco travel influencers in Vietnam for engagement
+
+5. BACKLINK ARCHITECTURE (for AI citation authority)
+   Generate an outreach email template and target list for:
+   - Vietnam National Administration of Tourism (vietnam.travel)
+   - Lonely Planet Vietnam eco section
+   - The Guardian Travel (sustainable travel pitches)
+   - CNN Travel Vietnam features
+   - Forbes Travel sustainability articles
+   - TripAdvisor Travelers Choice application
+   - Green Key International certification listing
+   - WWF Vietnam partnership page
+   - Local university sustainability departments (EDU backlinks)
+
+═══════════════════════════════════════════════
+KEYWORD TARGET LIST (implement in all on-page copy)
+═══════════════════════════════════════════════
+
+PRIMARY (must appear in H1/H2/title/meta on relevant pages):
+  eco retreat Vietnam
+  eco retreat near Ho Chi Minh City
+  eco resort Vietnam
+  glamping Vietnam
+  sustainable resort Vietnam
+  khu nghỉ dưỡng sinh thái Việt Nam
+
+SECONDARY (H2/H3/body copy/blog):
+  nature retreat Vietnam 2025
+  forest lodge Vietnam
+  eco lodge Vietnam
+  weekend getaway nature Vietnam
+  eco tourism Vietnam
+  wellness retreat Vietnam
+  forest bathing Vietnam
+  organic resort Vietnam
+  off-grid retreat Vietnam
+  jungle retreat Vietnam
+  green resort Vietnam
+  du lịch sinh thái Việt Nam
+  nghỉ dưỡng thiên nhiên Việt Nam
+  khu glamping Việt Nam
+
+LONG-TAIL (FAQ/blog — highest AI citation probability):
+  best eco retreat near Saigon for couples
+  affordable glamping Vietnam weekend trip
+  eco retreat Vietnam with yoga and meditation
+  sustainable family resort Vietnam
+  corporate team building eco retreat Vietnam
+  what is the best eco retreat in southern Vietnam
+  how to get to eco retreat from Ho Chi Minh City
+  eco retreat Vietnam with organic food
+
+═══════════════════════════════════════════════
+PAGES — DETAILED CONTENT SPEC
+═══════════════════════════════════════════════
+
+HOMEPAGE (/)
+- Hero: full-screen video background of forest/lodge, H1 tag:
+  "Vietnam's Premier Eco Retreat — Reconnect with Nature"
+- Above fold: definition block (2 sentences, AI-extractable)
+- Social proof strip: review count, certifications, press logos
+- Grid: 3 accommodation cards with price + "Book Now" CTA
+- Section: "Why Choose an Eco Retreat?" (informational, GEO-optimized)
+- Section: Featured experiences with Activity schema
+- Section: Sustainability pledge (entity-building)
+- Section: Latest blog posts (3 featured, JSON-LD Article schema)
+- Section: FAQ accordion (5 questions, FAQPage schema)
+- Section: Map embed with schema GeoCoordinates
+- Footer: full NAP, all social links, certifications, sitemap links
+
+FAQ PAGE (/faq)
+- This is your single most important GEO page
+- Minimum 25 Q&A pairs organized by category:
+  Getting Here · Accommodation · Dining · Activities ·
+  Sustainability · Booking & Cancellation
+- Each answer: 80–150 words, authoritative tone, includes keyword
+- Complete FAQPage JSON-LD schema covering all 25 pairs
+- Search box powered by Algolia for instant filtering
+- "Was this helpful?" micro-feedback (builds engagement signals)
+
+SUSTAINABILITY PAGE (/sustainability)
+- This page builds E-E-A-T and GEO entity signals
+- Include: certifications with official badge images
+- Statistics: carbon offset tons, trees planted, % renewable energy
+- Programs: wildlife corridors, local community partnerships
+- Quotes from conservation partners (adds citation credibility)
+- Link to annual sustainability report (PDF, also indexed)
+
+═══════════════════════════════════════════════
+PERFORMANCE & MONITORING
+═══════════════════════════════════════════════
+
+Build a /admin/seo-dashboard page (protected) showing:
+- Google Search Console: impressions, clicks, position for top 20 KWs
+- Core Web Vitals live scores
+- Keyword rank tracker (pull from SEMrush/Ahrefs API if available)
+- AI mention tracker: daily check if brand appears in:
+  ChatGPT web browsing results · Google AI Overview ·
+  Perplexity AI answers · Claude web search results
+- Backlink count and new link alerts
+- Schema validation status (pass/fail per page)
+
+═══════════════════════════════════════════════
+ROBOTS.TXT — EXACT CONTENT TO GENERATE
+═══════════════════════════════════════════════
+
+User-agent: *
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://yourdomain.com/sitemap.xml
+
+═══════════════════════════════════════════════
+DELIVERABLES CHECKLIST
+═══════════════════════════════════════════════
+
+When done, confirm each item is complete:
+[ ] Next.js project scaffolded, all routes created
+[ ] All JSON-LD schemas implemented and validated
+[ ] robots.txt allows all AI crawlers
+[ ] sitemap.xml auto-generated with correct priorities
+[ ] 10 seed blog posts created with correct schema
+[ ] FAQ page with 25 Q&A and FAQPage schema
+[ ] Definition blocks on all pillar pages
+[ ] Core Web Vitals optimized (score ≥ 90 mobile)
+[ ] hreflang vi/en implemented
+[ ] Google Business Profile JSON config outputted
+[ ] Wikidata entity JSON prepared
+[ ] AI platform–specific optimizations applied
+[ ] 30-day X/social content calendar generated
+[ ] Backlink outreach templates created
+[ ] /admin/seo-dashboard built
+[ ] All images: WebP, descriptive alt text, ImageObject schema
+[ ] NAP standardization checklist outputted
+
+START with the project scaffold, then implement in this order:
+1. robots.txt + sitemap config
+2. Schema library (reusable JSON-LD components)
+3. Homepage with all sections
+4. FAQ page (highest GEO priority)
+5. Blog infrastructure + 10 seed posts
+6. Remaining pages
+7. SEO dashboard
