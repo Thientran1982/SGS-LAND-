@@ -8,6 +8,9 @@ import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverrid
 import { copyToClipboard } from '../utils/clipboard';
 import seoApi, { SeoOverride, TargetKeyword, AiVisibilityStatus } from '../services/api/seoApi';
 import { Dropdown } from '../components/Dropdown';
+import {
+    LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+} from 'recharts';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -888,6 +891,251 @@ const AI_PROMPT_TEMPLATES = (kw: string) => ({
     google:     `https://www.google.com/search?q=${encodeURIComponent(kw)}`,
 });
 
+// ── GEO Monitor (last 30 days) — Sprint #64 follow-up ─────────────────────────
+// Charts daily AI mention rate per engine + best SERP position deltas, fed by
+// QStash daily cron writing into seo_geo_snapshots.
+const GeoMonitor30Days: React.FC = () => {
+    type Snap = { date: string; aiMentions: any; gscTop20: any; backlinks: any; lighthouse: any; createdAt: string };
+    const [snaps, setSnaps] = useState<Snap[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [running, setRunning] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+
+    const load = useCallback(() => {
+        setLoading(true);
+        setErr(null);
+        seoApi.listGeoSnapshots(30)
+            .then((r) => setSnaps(r.snapshots || []))
+            .catch((e: any) => setErr(e?.message || 'Không tải được snapshot'))
+            .finally(() => setLoading(false));
+    }, []);
+    useEffect(() => { load(); }, [load]);
+
+    const runNow = async () => {
+        if (running) return;
+        setRunning(true);
+        setErr(null);
+        try {
+            await seoApi.runGeoSnapshotNow();
+            await load();
+        } catch (e: any) {
+            setErr(e?.message || 'Không chạy được snapshot');
+        } finally {
+            setRunning(false);
+        }
+    };
+
+    // ── Build chart data ────────────────────────────────────────────────────
+    const ENGINES = ['gemini', 'chatgpt', 'claude', 'perplexity', 'grok'] as const;
+    const mentionData = snaps.map((s) => {
+        const engines = s.aiMentions?.engines || {};
+        const row: any = { date: s.date.slice(5) }; // MM-DD
+        for (const e of ENGINES) {
+            const er = engines[e];
+            row[e] = er && er.queries > 0 ? Math.round(((er.rate ?? 0) as number) * 100) : null;
+        }
+        row.overall = s.aiMentions?.totals?.rate != null
+            ? Math.round((s.aiMentions.totals.rate as number) * 100)
+            : null;
+        return row;
+    });
+
+    // Track best position over time for the 5 keywords with most recent data.
+    const trackedKws: string[] = (() => {
+        const last = snaps[snaps.length - 1];
+        const kws = (last?.gscTop20?.keywords || []).slice(0, 5).map((k: any) => k.keyword);
+        return kws;
+    })();
+    const positionData = snaps.map((s) => {
+        const row: any = { date: s.date.slice(5) };
+        const kwList: any[] = s.gscTop20?.keywords || [];
+        for (const kw of trackedKws) {
+            const found = kwList.find((k) => k.keyword === kw);
+            row[kw] = found?.position ?? null;
+        }
+        return row;
+    });
+
+    const latest = snaps[snaps.length - 1];
+    const previous = snaps[snaps.length - 2];
+    const delta = (latest && previous && latest.aiMentions?.totals?.rate != null && previous.aiMentions?.totals?.rate != null)
+        ? Math.round(((latest.aiMentions.totals.rate - previous.aiMentions.totals.rate) as number) * 100)
+        : null;
+
+    const COLORS: Record<string, string> = {
+        gemini: '#4285f4', chatgpt: '#10a37f', claude: '#cc785c', perplexity: '#1f6feb', grok: '#1f2937', overall: '#6366f1',
+    };
+    const KW_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#a855f7'];
+
+    return (
+        <section>
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h3 className="text-sm font-bold text-[var(--text-primary)]">
+                    1.5 GEO Monitor — 30 ngày qua
+                    {latest && (
+                        <span className="ml-2 text-2xs font-normal text-[var(--text-tertiary)]">
+                            (cập nhật lần cuối: {latest.date}{delta != null && (
+                                <span className={`ml-1 font-bold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-rose-600' : ''}`}>
+                                    {delta > 0 ? '▲' : delta < 0 ? '▼' : ''}{Math.abs(delta)}%
+                                </span>
+                            )})
+                        </span>
+                    )}
+                </h3>
+                <div className="flex items-center gap-2">
+                    <button onClick={load} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Tải lại</button>
+                    <button
+                        onClick={runNow}
+                        disabled={running}
+                        className="px-2.5 py-1 text-2xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-wait"
+                        title="Chạy ngay snapshot mới (thay vì chờ QStash 4:30 SA ICT hàng ngày)">
+                        {running ? 'Đang chạy...' : 'Chạy snapshot ngay'}
+                    </button>
+                </div>
+            </div>
+
+            {err && <div className="text-2xs text-rose-700 font-bold mb-2">❌ {err}</div>}
+
+            {loading ? (
+                <div className="text-xs text-[var(--text-tertiary)] animate-pulse">Đang tải snapshots...</div>
+            ) : snaps.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-[var(--glass-border)] text-xs text-[var(--text-tertiary)] text-center">
+                    Chưa có snapshot nào. QStash sẽ chạy mỗi ngày lúc 4:30 SA ICT — hoặc bấm <strong>Chạy snapshot ngay</strong> để tạo bản đầu tiên.
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* AI mention rate per engine */}
+                    <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                        <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">
+                            Tỉ lệ AI nhắc đến SGS Land theo engine (%)
+                        </div>
+                        <div className="h-56">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={mentionData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.2)" />
+                                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                                    <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
+                                    <Tooltip />
+                                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                                    {ENGINES.map((e) => (
+                                        <Line key={e} type="monotone" dataKey={e} stroke={COLORS[e]} strokeWidth={2} dot={false} connectNulls />
+                                    ))}
+                                    <Line type="monotone" dataKey="overall" stroke={COLORS.overall} strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* SERP position deltas (lower = better) */}
+                    <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                        <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">
+                            Vị trí SERP top-5 từ khoá (thấp hơn = tốt hơn)
+                        </div>
+                        {trackedKws.length === 0 ? (
+                            <div className="text-2xs text-[var(--text-tertiary)] py-12 text-center">
+                                Chưa có dữ liệu vị trí keyword. Cập nhật <em>current_position</em> trong tab "Theo dõi từ khoá" để biểu đồ có dữ liệu.
+                            </div>
+                        ) : (
+                            <div className="h-56">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={positionData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.2)" />
+                                        <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                                        <YAxis reversed domain={[1, 100]} tick={{ fontSize: 10 }} />
+                                        <Tooltip />
+                                        <Legend wrapperStyle={{ fontSize: 10 }} />
+                                        {trackedKws.map((kw, idx) => (
+                                            <Line key={kw} type="monotone" dataKey={kw} stroke={KW_COLORS[idx % KW_COLORS.length]} strokeWidth={2} dot={false} connectNulls />
+                                        ))}
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Latest engine breakdown */}
+                    {latest?.aiMentions?.engines && (
+                        <div className="lg:col-span-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">
+                                Snapshot mới nhất ({latest.date}) — chi tiết theo engine
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                {ENGINES.map((e) => {
+                                    const er = latest.aiMentions.engines[e];
+                                    const rate = er?.queries > 0 ? Math.round((er.rate || 0) * 100) : null;
+                                    return (
+                                        <div key={e} className="p-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--glass-border)]">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold capitalize" style={{ color: COLORS[e] }}>{e}</span>
+                                                {er?.skipped ? (
+                                                    <span className="text-2xs text-[var(--text-tertiary)]">skipped</span>
+                                                ) : (
+                                                    <span className="text-xs font-bold">{rate ?? '—'}%</span>
+                                                )}
+                                            </div>
+                                            <div className="text-2xs text-[var(--text-tertiary)] mt-0.5">
+                                                {er?.skipped
+                                                    ? er.skipped
+                                                    : `${er?.mentions ?? 0}/${er?.queries ?? 0} queries`}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Latest competitor backlinks snapshot */}
+                    {latest?.backlinks?.competitors?.length > 0 && (
+                        <div className="lg:col-span-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">
+                                Đối thủ — backlinks &amp; co-mention ({latest.date})
+                                {latest.backlinks.cseConfigured === false && (
+                                    <span className="ml-2 text-2xs font-normal lowercase italic text-amber-600">
+                                        (cấu hình GOOGLE_CSE_KEY/CX để có số trang index thật)
+                                    </span>
+                                )}
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="text-[var(--text-tertiary)] text-2xs uppercase border-b border-[var(--glass-border)]">
+                                            <th className="text-left py-1.5 px-2">Domain</th>
+                                            <th className="text-center py-1.5 px-2">Live</th>
+                                            <th className="text-center py-1.5 px-2">HTTP</th>
+                                            <th className="text-center py-1.5 px-2">Latency</th>
+                                            <th className="text-center py-1.5 px-2" title="Trang chủ đối thủ có link đến sgsland.vn">Link tới ta</th>
+                                            <th className="text-center py-1.5 px-2" title="Số trang trên domain đối thủ index có nhắc tới sgsland.vn (Google CSE)">CSE co-mentions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {latest.backlinks.competitors.map((c: any) => (
+                                            <tr key={c.domain} className="border-b border-[var(--glass-border)]">
+                                                <td className="py-1.5 px-2 font-mono text-2xs">{c.domain}</td>
+                                                <td className="text-center px-2">
+                                                    <span className={c.reachable ? 'text-emerald-600' : 'text-rose-600'}>{c.reachable ? '✓' : '✗'}</span>
+                                                </td>
+                                                <td className="text-center px-2 text-[var(--text-tertiary)]">{c.status ?? '—'}</td>
+                                                <td className="text-center px-2 text-[var(--text-tertiary)]">{c.responseMs ? `${c.responseMs}ms` : '—'}</td>
+                                                <td className="text-center px-2">
+                                                    <span className={`inline-block px-1.5 py-0.5 rounded text-2xs font-bold ${c.brandLinkOnHomepage ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                        {c.brandLinkOnHomepage ? 'Có' : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="text-center px-2 text-[var(--text-tertiary)]">{c.cseLinkResults != null ? c.cseLinkResults.toLocaleString() : '—'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </section>
+    );
+};
+
 const GeoAiSearch: React.FC = () => {
     const [status, setStatus] = useState<AiVisibilityStatus | null>(null);
     const [statusLoading, setStatusLoading] = useState(true);
@@ -1128,6 +1376,9 @@ const GeoAiSearch: React.FC = () => {
                     </div>
                 )}
             </section>
+
+            {/* ── 1.5 GEO Monitor (last 30 days) — Sprint #64 follow-up ───── */}
+            <GeoMonitor30Days />
 
             {/* ── 2. Target Keywords Tracker ─────────────────────────────── */}
             <section>

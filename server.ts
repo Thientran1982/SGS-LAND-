@@ -62,6 +62,7 @@ import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
 import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
+import { createGeoMonitorCronRouter } from "./server/routes/geoMonitorCronRoutes";
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
 import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
 import { createBuyerRoutes } from "./server/routes/buyerRoutes";
@@ -4066,6 +4067,18 @@ async function startServer() {
   }
 
   // ---------------------------------------------------------------------------
+  // GEO Monitor Cron — gọi từ QStash mỗi ngày lúc 4:30 SA ICT (21:30 UTC).
+  // Snapshot AI mention rates + top-20 SERP positions vào seo_geo_snapshots.
+  // ---------------------------------------------------------------------------
+  {
+    const geoMonitorSecret =
+      process.env.GEO_MONITOR_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createGeoMonitorCronRouter(pool, geoMonitorSecret, authenticateToken));
+  }
+
+  // ---------------------------------------------------------------------------
   // Module Chiến dịch tự động — Campaigns
   // ---------------------------------------------------------------------------
   app.use(createCampaignRouter(pool, authenticateToken));
@@ -4972,6 +4985,45 @@ async function startServer() {
         }
       } catch (e: any) {
         logger.warn('[TaskReminderCron] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+
+      // ── GEO Monitor Cron — 4:30 SA ICT = 21:30 UTC hàng ngày ──────────────
+      try {
+        const geoSecret =
+          process.env.GEO_MONITOR_CRON_SECRET ||
+          process.env.JWT_SECRET?.slice(0, 32) ||
+          '';
+        const devDomain7  = process.env.REPLIT_DEV_DOMAIN;
+        const prodDomain7 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
+        const appDomain7  = prodDomain7 || devDomain7;
+
+        if (appDomain7 && geoSecret) {
+          const geoScheduleId  = 'geo-monitor-daily';
+          const geoScheduleUrl = `https://${appDomain7}/api/internal/geo-monitor-cron`;
+          const geoQstashEp    = `https://qstash.upstash.io/v2/schedules/${geoScheduleId}`;
+          const geoBody        = JSON.stringify({ secret: geoSecret });
+
+          const geoResp = await fetch(geoQstashEp, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': geoScheduleUrl,
+              'Upstash-Cron': '30 21 * * *', // 4:30 SA ICT = 21:30 UTC
+              'Upstash-Method': 'POST',
+            },
+            body: geoBody,
+          });
+
+          if (geoResp.ok) {
+            logger.info('[GeoMonitorCron] Đã đăng ký QStash daily schedule — chạy lúc 4:30 SA ICT');
+          } else {
+            const errText = await geoResp.text();
+            logger.warn(`[GeoMonitorCron] Không thể đăng ký QStash schedule: ${geoResp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[GeoMonitorCron] Lỗi khi đăng ký QStash schedule:', e.message);
       }
 
       // ── Campaign Scheduler Cron — mỗi 5 phút ──────────────────────────────

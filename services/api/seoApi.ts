@@ -75,6 +75,25 @@ const seoApi = {
   async auditUrl(path: string): Promise<{ target: string; fetchedAt: string; items: Array<{ id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string; tip?: string }> }> {
     return api.post('/api/seo/audit-url', { path });
   },
+
+  // ── GEO Monitor (Sprint #64 follow-up) ───────────────────────────────────
+  async listGeoSnapshots(days = 30): Promise<{
+    days: number;
+    snapshots: Array<{
+      date: string;
+      aiMentions: any;
+      gscTop20: any;
+      backlinks: any;
+      lighthouse: any;
+      createdAt: string;
+    }>;
+  }> {
+    return api.get(`/api/seo/geo-snapshots?days=${days}`);
+  },
+
+  async runGeoSnapshotNow(): Promise<{ ok: boolean; date: string }> {
+    return api.post('/api/seo/geo-snapshots/run-now', {});
+  },
 };
 
 export default seoApi;
