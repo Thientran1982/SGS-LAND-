@@ -107,6 +107,8 @@ import m086 from './086_task_reminders_cron_columns';
 import m087 from './087_users_department_id';
 import m088 from './088_visitor_tracking_and_lead_attribution';
 import m089 from './089_seed_ai_agents';
+import m090 from './090_seed_prompt_templates';
+import m091 from './091_ai_agents_knowledge_filter';
 
 dotenv.config();
 
@@ -210,6 +212,8 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '087_users_department_id.ts': m087,
   '088_visitor_tracking_and_lead_attribution.ts': m088,
   '089_seed_ai_agents.ts': m089,
+  '090_seed_prompt_templates.ts': m090,
+  '091_ai_agents_knowledge_filter.ts': m091,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
