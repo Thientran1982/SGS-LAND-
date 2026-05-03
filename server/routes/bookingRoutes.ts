@@ -183,20 +183,14 @@ export function createBookingRoutes(
       const buyerEmail = typeof body.email === 'string' ? body.email.trim().slice(0, 160) : '';
       const notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 500) : null;
 
-      // Deposit amount: caller-supplied (clamped) or fallback to project default.
-      let amount = Number(body.depositAmount);
-      if (!Number.isFinite(amount) || amount <= 0) amount = cfg.defaultDepositVnd;
-      amount = Math.round(amount);
-      if (amount < MIN_DEPOSIT_VND || amount > MAX_DEPOSIT_VND) {
-        return res.status(400).json({
-          error: `Số tiền cọc phải từ ${MIN_DEPOSIT_VND.toLocaleString('vi-VN')}₫ đến ${MAX_DEPOSIT_VND.toLocaleString('vi-VN')}₫`,
-        });
-      }
-
       // Look up the listing (cross-tenant — RLS bypass) to bind tenant + agent.
+      // We pull `price` so the server can derive a project-anchored deposit
+      // ceiling (10% of listing price) and ignore client overrides outside
+      // that policy band — the mobile picker is convenience UX, not the
+      // source of truth.
       const listingRow = await withRlsBypass(async (client) => {
         const r = await client.query(
-          `SELECT id, tenant_id, title, status, assigned_to
+          `SELECT id, tenant_id, title, status, assigned_to, price
              FROM listings WHERE id = $1 LIMIT 1`,
           [listingId],
         );
@@ -205,6 +199,32 @@ export function createBookingRoutes(
       if (!listingRow) return res.status(404).json({ error: 'Không tìm thấy BĐS' });
       if (!['AVAILABLE', 'BOOKING', 'OPENING'].includes(listingRow.status)) {
         return res.status(409).json({ error: 'Sản phẩm không còn nhận đặt cọc' });
+      }
+
+      // Deposit amount — server-side policy is source of truth. The mobile
+      // client may suggest a value, but we cap it at:
+      //   • the global MAX_DEPOSIT_VND sanity ceiling, AND
+      //   • 10% of the listing's published price (rounded), if known.
+      // Below MIN we reject so accidental clicks can't fire a 0₫ payment.
+      // Default (when the client omits the field) is min(env-default,
+      // listing-anchored ceiling).
+      const listingPrice = Number(listingRow.price);
+      const listingCeiling = Number.isFinite(listingPrice) && listingPrice > 0
+        ? Math.round(listingPrice * 0.10)
+        : null;
+      let amount = Number(body.depositAmount);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        amount = listingCeiling
+          ? Math.min(cfg.defaultDepositVnd, listingCeiling)
+          : cfg.defaultDepositVnd;
+      }
+      amount = Math.round(amount);
+      // Enforce listing-anchored ceiling — ignore client override above policy.
+      if (listingCeiling && amount > listingCeiling) amount = listingCeiling;
+      if (amount < MIN_DEPOSIT_VND || amount > MAX_DEPOSIT_VND) {
+        return res.status(400).json({
+          error: `Số tiền cọc phải từ ${MIN_DEPOSIT_VND.toLocaleString('vi-VN')}₫ đến ${MAX_DEPOSIT_VND.toLocaleString('vi-VN')}₫`,
+        });
       }
 
       // Insert PENDING row. txnRef = 14-digit timestamp + 6 random hex →
