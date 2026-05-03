@@ -114,8 +114,15 @@ export default function BookListingScreen() {
       // provisional result (the screen still polls for the authoritative
       // IPN state).
       let provisionalStatus: string | null = null;
-      if (result.type === 'success' && typeof (result as any).url === 'string') {
-        const m = String((result as any).url).match(/[?&]status=([^&#]+)/);
+      // expo-web-browser's `WebBrowserAuthSessionResult` only declares `url`
+      // on the `success` variant, but the runtime shape is uniform. Narrow
+      // with an in-place type guard so we avoid `as any`.
+      const isSuccessWithUrl = (
+        r: WebBrowser.WebBrowserAuthSessionResult,
+      ): r is WebBrowser.WebBrowserRedirectResult =>
+        r.type === 'success' && typeof (r as { url?: unknown }).url === 'string';
+      if (isSuccessWithUrl(result)) {
+        const m = result.url.match(/[?&]status=([^&#]+)/);
         if (m) provisionalStatus = decodeURIComponent(m[1]);
       }
       router.replace(
@@ -125,7 +132,9 @@ export default function BookListingScreen() {
       );
     } catch (err) {
       if (err instanceof ApiError) {
-        setErrMsg((err.payload as any)?.error || err.message);
+        const payload = err.payload as { error?: unknown } | null | undefined;
+        const msg = payload && typeof payload.error === 'string' ? payload.error : err.message;
+        setErrMsg(msg);
       } else {
         setErrMsg('Không thể tạo đơn đặt cọc. Vui lòng thử lại.');
       }

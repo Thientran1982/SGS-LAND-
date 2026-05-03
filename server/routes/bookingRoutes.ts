@@ -16,7 +16,7 @@
  *     IPN from VNPay (they fire up to 5 times) doesn't double-fire emails.
  */
 
-import { Router, Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
@@ -665,7 +665,12 @@ export function createBookingRoutes(
         return res.json({ RspCode: '99', Message: 'Unknown error' });
       }
   };
-  router.post('/api/payments/vnpay/ipn', ipnHandler);
+  // VNPay v2.1.0 defaults to GET, but the spec also allows POST with an
+  // `application/x-www-form-urlencoded` body. The global Express stack only
+  // mounts `express.json()`, so attach a route-scoped urlencoded parser here
+  // to guarantee POST IPNs are parsed regardless of gateway preference.
+  const ipnUrlencoded = express.urlencoded({ extended: false, limit: '32kb' });
+  router.post('/api/payments/vnpay/ipn', ipnUrlencoded, ipnHandler);
   router.get('/api/payments/vnpay/ipn', ipnHandler);
 
   return router;
