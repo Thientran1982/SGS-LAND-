@@ -1377,10 +1377,11 @@ class DatabaseApiClient {
   }
 
   async getSimilarListings(listingId: string) {
+    // Hits /api/public/listings/:slugId/similar — backend applies the
+    // business rule: cùng quận/huyện + cùng property type + giá ±20%, top 3.
     try {
-      const result = await api.get<any>('/api/public/listings', { page: 1, pageSize: 8 });
-      const items: any[] = result.data || [];
-      return items.filter((l: any) => l.id !== listingId).slice(0, 4);
+      const items = await api.get<any[]>(`/api/public/listings/${listingId}/similar`);
+      return Array.isArray(items) ? items : [];
     } catch {
       return [];
     }
