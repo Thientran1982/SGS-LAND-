@@ -37,7 +37,10 @@ Không gọi tool — chỉ phân loại + extract. Output thuần JSON theo ROU
 • CLARIFY CHỈ dùng khi confidence < 0.5 VÀ thực sự không thể đoán intent (ví dụ "alo?", "có ai không"). "Tôi muốn mua nhà" đã đủ để chọn SEARCH_INVENTORY.
 • ESCALATE_TO_HUMAN khi: khiếu nại nghiêm trọng, đe doạ pháp lý, yêu cầu giảm giá tuỳ tiện, đề cập tự gây hại.
 • KHÔNG bịa thực thể không có trong tin nhắn. Nếu khách không nói khu vực → location_keyword để trống.
-• Câu hỏi đa intent ("cho em xem căn 3 tỷ Q7 và tính khoản vay luôn") → chọn intent CHÍNH (ưu tiên: SEARCH > CALCULATE > LEGAL > MARKETING). Có thể ghi intent phụ vào extraction.explicit_question.
+• Câu hỏi đa intent ("cho em xem căn 3 tỷ Q7 và tính khoản vay luôn") → chọn intent CHÍNH theo ý đầu tiên/ý quan trọng nhất, đồng thời ĐIỀN \`additional_intents\` (tối đa 2) cho các ý còn lại. KHÔNG lặp next_step trong additional_intents. Pipeline sẽ chạy song song specialist phụ và WRITER tổng hợp tất cả trong 1 phản hồi mạch lạc.
+  - VD: "xem căn 3PN ở Q7 và tính giúp em vay 2 tỷ" → next_step=SEARCH_INVENTORY, additional_intents=["CALCULATE_LOAN"].
+  - VD: "Sổ hồng chung có vay được không, tính giùm em 1 tỷ 20 năm" → next_step=CALCULATE_LOAN, additional_intents=["EXPLAIN_LEGAL"].
+  - VD: "Định giá nhà em 80m² Q7, có ưu đãi gì hot không?" → next_step=ESTIMATE_VALUATION, additional_intents=["EXPLAIN_MARKETING"].
 
 === OUTPUT ===
 Chỉ trả JSON hợp lệ theo ROUTER_SCHEMA, KHÔNG markdown, KHÔNG giải thích. Field bắt buộc: next_step, extraction, confidence.
@@ -48,7 +51,9 @@ Chỉ trả JSON hợp lệ theo ROUTER_SCHEMA, KHÔNG markdown, KHÔNG giải t
 • "Sổ hồng riêng với sổ chung khác gì?" →
   {"next_step":"EXPLAIN_LEGAL","extraction":{"legal_concern":"PINK_BOOK","explicit_question":"Sổ hồng riêng vs sổ chung khác gì"},"confidence":0.97}
 • "Định giá nhà em 80m² đường Lê Văn Việt, sổ hồng" →
-  {"next_step":"ESTIMATE_VALUATION","extraction":{"valuation_address":"Đường Lê Văn Việt, TP Thủ Đức","valuation_area":80,"valuation_legal":"PINK_BOOK"},"confidence":0.92}`;
+  {"next_step":"ESTIMATE_VALUATION","extraction":{"valuation_address":"Đường Lê Văn Việt, TP Thủ Đức","valuation_area":80,"valuation_legal":"PINK_BOOK"},"confidence":0.92}
+• "Cho em xem căn 3PN ở Q7 và tính giúp em vay 2 tỷ 20 năm" →
+  {"next_step":"SEARCH_INVENTORY","additional_intents":["CALCULATE_LOAN"],"extraction":{"location_keyword":"Quận 7","property_type":"APARTMENT","loan_years":20,"explicit_question":"Tìm căn 3PN Q7 + tính vay 2 tỷ 20 năm"},"confidence":0.92}`;
 
 // ── WRITER ─────────────────────────────────────────────────────────────────
 export const DEFAULT_WRITER_PERSONA = (brandName: string) => `=== ROLE ===

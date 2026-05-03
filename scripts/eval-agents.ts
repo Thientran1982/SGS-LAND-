@@ -30,6 +30,8 @@ interface GoldCase {
   mustContain?: string[];
   mustNotContain?: string[];
   mustHaveCitation?: boolean;
+  /** Optional: secondary intent(s) that router MUST list in additional_intents (multi-intent cases). */
+  expectedAdditional?: string[];
 }
 
 interface CheckResult {
@@ -44,6 +46,7 @@ interface RunResult {
   actualIntent: string;
   intentMatch: boolean;
   agentMatch: boolean;
+  additionalCheck: CheckResult;
   contentCheck: CheckResult;
   citationCheck: CheckResult;
   durationMs: number;
@@ -73,7 +76,7 @@ const INTENT_TO_AGENT: Record<string, string> = {
   CLARIFY:             'writer',
 };
 
-async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent: string; raw: string }> {
+async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent: string; additional: string[]; raw: string }> {
   const res = await client.models.generateContent({
     model: 'gemini-2.5-flash-lite',
     contents: `Tin nhắn khách hàng:\n"${input}"\n\nPhân tích intent và trả về JSON.`,
@@ -87,7 +90,10 @@ async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent:
   const txt = (res.text || '{}').trim();
   let parsed: any = {};
   try { parsed = JSON.parse(txt); } catch { /* ignore */ }
-  return { intent: parsed?.next_step || 'UNKNOWN', raw: txt };
+  const additional = Array.isArray(parsed?.additional_intents)
+    ? parsed.additional_intents.filter((s: any) => typeof s === 'string')
+    : [];
+  return { intent: parsed?.next_step || 'UNKNOWN', additional, raw: txt };
 }
 
 async function callE2E(input: string): Promise<{ intent: string; finalText: string }> {
@@ -154,6 +160,7 @@ async function main() {
     const t0 = Date.now();
     try {
       let actualIntent: string;
+      let actualAdditional: string[] = [];
       let textToCheck: string;
       if (isE2E) {
         const e = await callE2E(c.input);
@@ -162,6 +169,7 @@ async function main() {
       } else {
         const r = await callRouter(client, c.input);
         actualIntent = r.intent;
+        actualAdditional = r.additional;
         textToCheck = r.raw;
       }
 
@@ -169,6 +177,16 @@ async function main() {
       const mappedAgent = INTENT_TO_AGENT[actualIntent] || 'unknown';
       const agentMatch = mappedAgent === c.expectedAgent;
       const contentCheck = checkContent(textToCheck, c.mustContain, c.mustNotContain);
+      // Multi-intent check (router-only mode): every expected secondary must
+      // appear in router additional_intents.
+      const additionalCheck: CheckResult = (() => {
+        if (!c.expectedAdditional || c.expectedAdditional.length === 0) return { passed: true, reasons: [] };
+        if (isE2E) return { passed: true, reasons: [] }; // E2E text doesn't expose additional_intents
+        const missing = c.expectedAdditional.filter(x => !actualAdditional.includes(x));
+        return missing.length === 0
+          ? { passed: true, reasons: [] }
+          : { passed: false, reasons: [`additional_intents missing: ${missing.join(',')} (got: ${actualAdditional.join(',') || '∅'})`] };
+      })();
       // Citation check only meaningful in E2E mode (router JSON never carries citations)
       const citationCheck = isE2E
         ? checkCitation(textToCheck, !!c.mustHaveCitation)
@@ -181,17 +199,19 @@ async function main() {
         actualIntent,
         intentMatch,
         agentMatch,
+        additionalCheck,
         contentCheck,
         citationCheck,
         durationMs: Date.now() - t0,
       });
 
-      const fullPass = intentMatch && agentMatch && contentCheck.passed && citationCheck.passed;
+      const fullPass = intentMatch && agentMatch && additionalCheck.passed && contentCheck.passed && citationCheck.passed;
       const mark = fullPass ? '✓' : '✗';
       console.log(
         `${mark} ${c.id.padEnd(15)} ${c.expectedAgent.padEnd(22)} ` +
         `intent=${intentMatch ? 'OK' : `${actualIntent}≠${c.expectedIntent}`}  ` +
         `agent=${agentMatch ? 'OK' : 'FAIL'}  ` +
+        `addl=${additionalCheck.passed ? 'OK' : additionalCheck.reasons.join(';')}  ` +
         `content=${contentCheck.passed ? 'OK' : contentCheck.reasons.join(';')}  ` +
         `cite=${citationCheck.passed ? 'OK' : 'MISSING'}  ` +
         `(${Date.now() - t0}ms)`
@@ -204,6 +224,7 @@ async function main() {
         actualIntent: 'ERROR',
         intentMatch: false,
         agentMatch: false,
+        additionalCheck: { passed: false, reasons: [] },
         contentCheck: { passed: false, reasons: [e?.message || String(e)] },
         citationCheck: { passed: false, reasons: [] },
         durationMs: Date.now() - t0,
@@ -217,7 +238,7 @@ async function main() {
   const total = results.length;
   const intentPass = results.filter(r => r.intentMatch).length;
   const agentPass = results.filter(r => r.agentMatch).length;
-  const fullPass = results.filter(r => r.intentMatch && r.agentMatch && r.contentCheck.passed && r.citationCheck.passed).length;
+  const fullPass = results.filter(r => r.intentMatch && r.agentMatch && r.additionalCheck.passed && r.contentCheck.passed && r.citationCheck.passed).length;
 
   const byAgent: Record<string, { total: number; intent: number; agent: number; full: number }> = {};
   for (const r of results) {
@@ -226,7 +247,7 @@ async function main() {
     byAgent[k].total++;
     if (r.intentMatch) byAgent[k].intent++;
     if (r.agentMatch) byAgent[k].agent++;
-    if (r.intentMatch && r.agentMatch && r.contentCheck.passed && r.citationCheck.passed) byAgent[k].full++;
+    if (r.intentMatch && r.agentMatch && r.additionalCheck.passed && r.contentCheck.passed && r.citationCheck.passed) byAgent[k].full++;
   }
 
   console.log('\n' + '═'.repeat(72));
@@ -245,13 +266,14 @@ async function main() {
     console.log(`  ${agent.padEnd(22)} ${String(s.total).padStart(5)}  ${ip}%    ${ap}%    ${fp}%`);
   }
 
-  const failures = results.filter(r => !r.intentMatch || !r.agentMatch || !r.contentCheck.passed || !r.citationCheck.passed);
+  const failures = results.filter(r => !r.intentMatch || !r.agentMatch || !r.additionalCheck.passed || !r.contentCheck.passed || !r.citationCheck.passed);
   if (failures.length) {
     console.log('\nFailures:');
     for (const f of failures) {
       const why: string[] = [];
       if (!f.intentMatch) why.push(`intent ${f.actualIntent}≠${f.expectedIntent}`);
       if (!f.agentMatch) why.push('agent-route');
+      if (!f.additionalCheck.passed) why.push(`additional[${f.additionalCheck.reasons.join(';')}]`);
       if (!f.contentCheck.passed) why.push(`content[${f.contentCheck.reasons.join(';')}]`);
       if (!f.citationCheck.passed) why.push('citation');
       console.log(`  [${f.id}] ${f.agent} → ${why.join(', ')}${f.error ? ` (${f.error})` : ''}`);

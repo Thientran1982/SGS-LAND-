@@ -42,6 +42,12 @@
     { "id": "writer-001", "input": "Cảm ơn em",                                       "expectedIntent": "DIRECT_ANSWER",     "expectedAgent": "writer" },
     { "id": "writer-002", "input": "Em hỗ trợ những gì?",                             "expectedIntent": "DIRECT_ANSWER",     "expectedAgent": "writer", "mustContain": ["hỗ trợ"] },
     { "id": "clarify-001","input": "Cái đó",                                          "expectedIntent": "CLARIFY",           "expectedAgent": "writer" },
-    { "id": "clarify-002","input": "Sao kì vậy?",                                     "expectedIntent": "CLARIFY",           "expectedAgent": "writer" }
+    { "id": "clarify-002","input": "Sao kì vậy?",                                     "expectedIntent": "CLARIFY",           "expectedAgent": "writer" },
+
+    { "id": "multi-001", "input": "Cho em xem căn 3PN ở Quận 7 và tính giúp em vay 2 tỷ 20 năm",                  "expectedIntent": "SEARCH_INVENTORY", "expectedAgent": "inventory_specialist", "expectedAdditional": ["CALCULATE_LOAN"] },
+    { "id": "multi-002", "input": "Sổ hồng chung có vay ngân hàng được không, tính giùm em khoản 1 tỷ 15 năm",   "expectedIntent": "CALCULATE_LOAN",   "expectedAgent": "finance_specialist",   "expectedAdditional": ["EXPLAIN_LEGAL"] },
+    { "id": "multi-003", "input": "Định giá nhà em 80m² đường Lê Văn Việt Thủ Đức, có ưu đãi gì hot không?",     "expectedIntent": "ESTIMATE_VALUATION","expectedAgent": "valuation_specialist","expectedAdditional": ["EXPLAIN_MARKETING"] },
+    { "id": "multi-004", "input": "Tìm căn hộ 2PN dưới 3 tỷ ở Bình Thạnh và soạn giúp em hợp đồng đặt cọc 100 triệu", "expectedIntent": "SEARCH_INVENTORY", "expectedAgent": "inventory_specialist", "expectedAdditional": ["DRAFT_CONTRACT"] },
+    { "id": "multi-005", "input": "Vay 2 tỷ 20 năm thì trả bao nhiêu, mà thuế trước bạ sang tên là mấy %?",      "expectedIntent": "CALCULATE_LOAN",   "expectedAgent": "finance_specialist",   "expectedAdditional": ["EXPLAIN_LEGAL"] }
   ]
 }

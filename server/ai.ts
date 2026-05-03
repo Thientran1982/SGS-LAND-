@@ -1878,38 +1878,94 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             }
 
             // ── Multi-intent: parallel dispatch of secondary intents ──────────────
-            // Fetch RAG context for each additional_intent (max 2) in parallel,
-            // wrap each as <SPECIALIST_RESULT type="secondary_intent" intent="...">.
-            // Pure context augmentation — does NOT change writer template selection.
+            // Với mỗi additional_intent (tối đa 2), thực sự CHẠY specialist tool
+            // tương ứng (search_inventory / calculate_loan / get_legal_info ...) để
+            // WRITER có dữ liệu thật chứ không chỉ knowledge base. Các intent
+            // không có tool riêng (MARKETING / CONTRACT / LEAD / VALUATION) fallback
+            // sang RAG. Augmentation thuần — KHÔNG đổi writer template selection.
             let secondaryIntentsSection = '';
+            let secondaryArtifact: AgentArtifact | undefined;
+            const SECONDARY_ELIGIBLE = new Set(['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION']);
             const additionalIntents = (state.plan?.additional_intents || [])
-                .filter(i => i && i !== currentIntent && RAG_INTENTS.has(i))
+                .filter(i => i && i !== currentIntent && SECONDARY_ELIGIBLE.has(i))
                 .slice(0, 2);
             if (additionalIntents.length > 0) {
                 try {
+                    const ext = state.plan?.extraction || {};
                     const { agentRepository: _agentRepoSec } = await import('./repositories/agentRepository');
                     const secResults = await Promise.all(additionalIntents.map(async (secIntent) => {
                         try {
                             const secRole = INTENT_TO_ROLE[secIntent];
-                            let secDomains: string[] | undefined;
-                            if (secRole) {
-                                const a = await _agentRepoSec.getAgentByRole(state.tenantId, secRole);
-                                const d = a?.knowledgeFilter?.domains;
-                                if (Array.isArray(d) && d.length > 0) secDomains = d;
+                            let payload = '';
+
+                            if (secIntent === 'SEARCH_INVENTORY') {
+                                const bMax = ext.budget_max || parseBudgetFromMessage(state.userMessage);
+                                const inv = await TOOL_EXECUTOR.search_inventory(
+                                    state.tenantId,
+                                    ext.location_keyword || '',
+                                    bMax,
+                                    ext.property_type,
+                                    ext.area_min
+                                );
+                                payload = `[INVENTORY (intent phụ)]:\n${inv}`;
+                            } else if (secIntent === 'CALCULATE_LOAN') {
+                                const principal = ext.budget_max || parseBudgetFromMessage(state.userMessage) || 2_000_000_000;
+                                const rate  = ext.loan_rate  || 8.5;
+                                const years = ext.loan_years || 20;
+                                const ld = await TOOL_EXECUTOR.calculate_loan(principal, rate, years);
+                                const totalInterest = Math.round(ld.monthly * ld.months - principal);
+                                const totalRepay    = Math.round(ld.monthly * ld.months);
+                                const monthlyFmt    = Math.round(ld.monthly).toLocaleString('vi-VN');
+                                payload = `[LOAN CALCULATION (intent phụ)]:\nVay: ${(principal/1e9).toFixed(2)} Tỷ VNĐ | ${rate}%/năm | ${years} năm\nTrả/tháng: ${monthlyFmt} VNĐ | Tổng lãi: ${(totalInterest/1e9).toFixed(2)} Tỷ | Tổng trả: ${(totalRepay/1e9).toFixed(2)} Tỷ`;
+                                // Emit LOAN_SCHEDULE artifact nếu primary chưa tạo artifact nào
+                                if (!state.artifact && !secondaryArtifact) {
+                                    const sched: Array<{ month: number; principal: number; interest: number; balance: number }> = [];
+                                    let bal = principal;
+                                    for (let i = 1; i <= 3; i++) {
+                                        const interest = bal * (ld.rate / 100 / 12);
+                                        const pp = ld.monthly - interest;
+                                        bal -= pp;
+                                        sched.push({ month: i, principal: Math.round(pp), interest: Math.round(interest), balance: Math.round(bal) });
+                                    }
+                                    secondaryArtifact = {
+                                        type: 'LOAN_SCHEDULE',
+                                        title: state.t('inbox.loan_title'),
+                                        data: { monthlyPayment: ld.monthly, totalInterest, input: { principal, rate: ld.rate, months: ld.months }, schedule: sched }
+                                    };
+                                }
+                            } else if (secIntent === 'EXPLAIN_LEGAL') {
+                                const term = ext.legal_concern && ext.legal_concern !== 'NONE' ? ext.legal_concern : 'PINK_BOOK';
+                                const li = await TOOL_EXECUTOR.get_legal_info(state.tenantId, term);
+                                payload = `[LEGAL KNOWLEDGE (intent phụ — ${term})]:\n${li}`;
+                            } else {
+                                // EXPLAIN_MARKETING / DRAFT_CONTRACT / ANALYZE_LEAD / ESTIMATE_VALUATION → RAG
+                                let secDomains: string[] | undefined;
+                                if (secRole) {
+                                    const a = await _agentRepoSec.getAgentByRole(state.tenantId, secRole);
+                                    const d = a?.knowledgeFilter?.domains;
+                                    if (Array.isArray(d) && d.length > 0) secDomains = d;
+                                }
+                                const out = await _ragWithSrc(state.tenantId, state.userMessage, 2, { domains: secDomains });
+                                if (!out.context) return null;
+                                payload = out.context;
                             }
-                            const out = await _ragWithSrc(state.tenantId, state.userMessage, 2, { domains: secDomains });
-                            if (!out.context) return null;
-                            return `<SPECIALIST_RESULT type="secondary_intent" intent="${secIntent}" role="${secRole || 'writer'}">\n${out.context}\n</SPECIALIST_RESULT>`;
+
+                            if (!payload) return null;
+                            return `<SPECIALIST_RESULT type="secondary_intent" intent="${secIntent}" role="${secRole || 'writer'}">\n${payload}\n</SPECIALIST_RESULT>`;
                         } catch { return null; }
                     }));
                     const nonNull = secResults.filter((s): s is string => !!s);
                     if (nonNull.length > 0) {
-                        secondaryIntentsSection = '\n' + nonNull.join('\n') + '\n';
+                        secondaryIntentsSection = `\n[MULTI_INTENT]: Câu hỏi khách chứa NHIỀU Ý — WRITER PHẢI tổng hợp cả intent chính (${currentIntent}) và các intent phụ (${additionalIntents.join(', ')}) trong cùng 1 phản hồi mạch lạc, tách đoạn rõ ràng, KHÔNG bỏ sót ý nào.\n` + nonNull.join('\n') + '\n';
                         feedbackRepository.logObservation(state.tenantId, 'ROUTER', currentIntent, 'MULTI_INTENT_DISPATCHED', {
                             primary: currentIntent,
                             secondary: additionalIntents,
                             sectionsBuilt: nonNull.length,
+                            artifactEmitted: !!secondaryArtifact,
                         }).catch(() => {});
+                        this.updateTrace(state.trace, `Multi-intent: chạy thêm ${additionalIntents.join(', ')} (${nonNull.length} block dữ liệu)`);
+                        // Re-add WRITER step trace bị nuốt bởi updateTrace ở trên
+                        state.trace.push({ id: 'WRITER', node: 'WRITER', status: 'RUNNING', timestamp: Date.now() });
                     }
                 } catch (_secErr) {
                     // best-effort — không chặn pipeline
@@ -1946,7 +2002,7 @@ YÊU CẦU VIẾT PHẢN HỒI (40-70 từ):
                         return `NHIỆM VỤ: ĐỊNH GIÁ BẤT ĐỘNG SẢN — Viết báo cáo định giá chuyên nghiệp, dễ hiểu
 
 KẾT QUẢ ĐỊNH GIÁ AI (dùng chính xác, không tự tính lại):
-${state.systemContext}${leadAnalysisSection}
+${state.systemContext}${leadAnalysisSection}${ragKnowledgeSection}
 
 ${_hist}
 
@@ -2306,7 +2362,11 @@ YÊU CẦU VIẾT PHẢN HỒI:
 
             const preview = finalText.slice(0, 80).replace(/\n/g, ' ');
             this.updateTrace(state.trace, preview || 'Đã tạo phản hồi.', writerModel);
-            return { finalResponse: finalText };
+            // Multi-intent: nếu specialist phụ tạo artifact (vd LOAN_SCHEDULE) và
+            // primary chưa có artifact nào, gắn vào response để client render card.
+            return secondaryArtifact && !state.artifact
+                ? { finalResponse: finalText, artifact: secondaryArtifact }
+                : { finalResponse: finalText };
         });
 
         // Node 2h: Valuation Agent (định giá BĐS realtime + internal comps)
