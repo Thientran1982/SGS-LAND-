@@ -99,7 +99,7 @@ export function chunkText(text: string, title?: string): string[] {
 
 export interface IndexOptions {
   tenantId: string;
-  sourceType: 'document' | 'article' | 'listing';
+  sourceType: string;
   sourceId: string;
   title: string;
   content: string;
