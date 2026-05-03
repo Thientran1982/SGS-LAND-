@@ -557,8 +557,8 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                   onChange={e => upd({ scheduled_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
                   className="px-3 py-2 border rounded-lg"
                 />
-                <p className="text-xs text-amber-600 mt-1">
-                  ⚠ Hiện tại lịch hẹn giờ chưa tự động chạy — bạn vẫn cần bấm "Chạy ngay" tại thời điểm đó. (Sẽ bổ sung scheduler ở phiên bản sau.)
+                <p className="text-xs text-emerald-600 mt-1">
+                  Hệ thống tự động chạy chiến dịch khi đến giờ hẹn (kiểm tra mỗi 5 phút). Bạn không cần thao tác thêm sau khi kích hoạt.
                 </p>
               </Field>
             )}
