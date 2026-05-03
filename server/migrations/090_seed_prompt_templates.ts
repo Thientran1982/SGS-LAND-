@@ -42,6 +42,21 @@ const up = async (client: PoolClient): Promise<void> => {
     ALTER TABLE prompt_templates ADD COLUMN IF NOT EXISTS created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW();
     ALTER TABLE prompt_templates ADD COLUMN IF NOT EXISTS updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW();
   `);
+  // Deduplicate (tenant_id, name) before creating the unique index — legacy
+  // create API didn't enforce uniqueness, so older rows may collide.
+  await client.query(`
+    WITH ranked AS (
+      SELECT id,
+             ROW_NUMBER() OVER (
+               PARTITION BY tenant_id, name
+               ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, id DESC
+             ) AS rn
+        FROM prompt_templates
+    )
+    DELETE FROM prompt_templates p
+     USING ranked r
+     WHERE p.id = r.id AND r.rn > 1;
+  `);
   await client.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS uniq_prompt_templates_tenant_name
       ON prompt_templates (tenant_id, name);
