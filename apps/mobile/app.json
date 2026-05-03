@@ -66,12 +66,6 @@
         {
           "color": "#ffffff"
         }
-      ],
-      [
-        "expo-tracking-transparency",
-        {
-          "userTrackingPermission": "Cho phép SGS Land đo lường ẩn danh cách bạn dùng ứng dụng để cải thiện gợi ý sản phẩm và hiệu năng — chúng tôi không bán dữ liệu của bạn cho bên thứ ba."
-        }
       ]
     ],
     "extra": {

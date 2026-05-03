@@ -4,8 +4,9 @@
  * - Loads via TanStack Query so it shares cache across tab switches.
  * - Skeleton placeholders while loading; renders nothing on empty/error so
  *   the listings feed below stays the focal point.
- * - Tapping a card deep-links to `/p/<code>` (the existing public mini-site
- *   route which the WebView shell renders for project detail).
+ * - Tapping a card opens the existing public mini-site at `/p/<code>` in a
+ *   system browser tab (Custom Tabs / SFSafariViewController) so we don't
+ *   pull a webview dependency into the mobile bundle just for this surface.
  */
 
 import React from 'react';
@@ -18,16 +19,23 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
 import { projectsApi, type PublicProjectSummary } from '../api/projects';
 import { colors, radius, spacing, typography } from '../theme/tokens';
+
+// Mini-site lives on the existing web property at /p/<code>; opening it via
+// `expo-web-browser` (Custom Tabs / SFSafariViewController) gives buyers the
+// same rich microsite experience as the web without dragging a webview
+// dependency into the mobile bundle. When a native project-detail screen
+// lands later, swap this for a `router.push` — the call site is the only
+// place that needs to change.
+const PROJECT_MICROSITE_BASE = (process.env.EXPO_PUBLIC_API_BASE_URL || 'https://sgsland.vn').replace(/\/+$/, '');
 
 const CARD_WIDTH = 240;
 const CARD_HEIGHT = 168;
 
 export function FeaturedProjectsCarousel() {
-  const router = useRouter();
   const query = useQuery({
     queryKey: ['projects', 'featured'],
     queryFn: ({ signal }) => projectsApi.featured({ limit: 8, signal }),
@@ -57,7 +65,12 @@ export function FeaturedProjectsCarousel() {
           renderItem={({ item }) => (
             <Pressable
               style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-              onPress={() => router.push(`/p/${encodeURIComponent(item.code)}`)}
+              onPress={() => {
+                const url = `${PROJECT_MICROSITE_BASE}/p/${encodeURIComponent(item.code)}`;
+                // Fire-and-forget: any open error is non-fatal — the carousel
+                // already shows the buyer all the info they need at a glance.
+                WebBrowser.openBrowserAsync(url).catch(() => undefined);
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Mở dự án ${item.name}`}
             >

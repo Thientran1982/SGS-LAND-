@@ -9,49 +9,45 @@ import * as Notifications from 'expo-notifications';
 import { colors } from '../src/theme/tokens';
 import { ensurePushRegistration } from '../src/notifications/registerPushToken';
 import { AuthProvider } from '../src/auth/AuthContext';
+import { loadSentry, loadTrackingTransparency } from '../src/lib/optionalNativeModules';
 
 /**
  * Crash + performance monitoring (Sprint 7 — #57).
  *
- * We dynamic-import `@sentry/react-native` so the app keeps building when
- * the package isn't installed (dev environments / Expo Go). The DSN is
- * provided via `EXPO_PUBLIC_SENTRY_DSN`; without it the SDK is a no-op.
+ * The Sentry SDK is loaded via `loadSentry()` which dynamic-imports the
+ * native module if present and returns null otherwise — so dev / Expo Go
+ * builds without the package keep working. Init is also a no-op when no
+ * `EXPO_PUBLIC_SENTRY_DSN` is set, ensuring no telemetry leaks in dev.
  */
 async function initSentry(): Promise<void> {
   const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
   if (!dsn) return;
-  try {
-    // @ts-expect-error optional native dep — installed only for production builds
-    const Sentry = await import('@sentry/react-native').catch(() => null);
-    if (!Sentry || typeof (Sentry as any).init !== 'function') return;
-    (Sentry as any).init({
-      dsn,
-      enableAutoSessionTracking: true,
-      tracesSampleRate: 0.1,
-      // Tag releases by app version so the dashboard groups crashes per build.
-      release: `sgsland-mobile@${process.env.EXPO_PUBLIC_APP_VERSION || '0.1.0'}`,
-      environment: __DEV__ ? 'development' : 'production',
-    });
-  } catch {
-    /* never let observability bring down the app */
-  }
+  const Sentry = await loadSentry();
+  if (!Sentry) return;
+  Sentry.init({
+    dsn,
+    enableAutoSessionTracking: true,
+    tracesSampleRate: 0.1,
+    // Tag releases by app version so the dashboard groups crashes per build.
+    release: `sgsland-mobile@${process.env.EXPO_PUBLIC_APP_VERSION || '0.1.0'}`,
+    environment: __DEV__ ? 'development' : 'production',
+  });
 }
 
 /**
  * App Tracking Transparency prompt (Sprint 7 — #57).
  *
  * Apple requires the prompt before any analytics SDK can read the IDFA.
- * We trigger it on first launch and gate analytics on the result; if the
- * native module isn't installed we just skip — analytics ID will simply
- * remain unavailable, which is the safer default.
+ * Triggered once on first launch; analytics is gated on the result. When
+ * the native module isn't installed we silently skip — analytics ID stays
+ * unavailable, which is the safer default for privacy.
  */
 async function maybeRequestTracking(): Promise<void> {
   if (Platform.OS !== 'ios') return;
+  const att = await loadTrackingTransparency();
+  if (!att) return;
   try {
-    // @ts-expect-error optional native dep — installed only for production builds
-    const att = await import('expo-tracking-transparency').catch(() => null);
-    if (!att || typeof (att as any).requestTrackingPermissionsAsync !== 'function') return;
-    await (att as any).requestTrackingPermissionsAsync();
+    await att.requestTrackingPermissionsAsync();
   } catch {
     /* user can revisit in Settings — never block the UI on this */
   }

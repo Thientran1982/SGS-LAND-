@@ -355,8 +355,30 @@ export function createPublicProjectRoutes(): Router {
     try {
       const limitRaw = Number(req.query.limit ?? 8);
       const limit = Math.max(1, Math.min(20, Number.isFinite(limitRaw) ? limitRaw : 8));
+      // Featured selection rule:
+      //  1) Curated set: any project with `metadata.is_featured='true'` —
+      //     this is the explicit "is_featured" flag from the product spec
+      //     and is what the upcoming admin UI (#61) will set.
+      //  2) Fallback set: when no project has been curated yet, fall back
+      //     to `metadata.public_microsite='true'` so the carousel never
+      //     ships empty before ops has a chance to flip the flag.
+      // Both branches share the same `featured_rank` ordering so the
+      // semantic is "rank ASC, then most recent first".
       const rows = await withRlsBypass(async (client) => {
-        const r = await client.query(
+        const curated = await client.query(
+          `SELECT id, name, code, description, location, status,
+                  total_units, metadata, tenant_id
+             FROM projects
+            WHERE metadata->>'is_featured' = 'true'
+              AND COALESCE(metadata->>'public_microsite', 'true') <> 'false'
+            ORDER BY
+              COALESCE((metadata->>'featured_rank')::int, 999),
+              created_at DESC NULLS LAST
+            LIMIT $1`,
+          [limit],
+        );
+        if (curated.rows.length > 0) return curated.rows;
+        const fallback = await client.query(
           `SELECT id, name, code, description, location, status,
                   total_units, metadata, tenant_id
              FROM projects
@@ -367,7 +389,7 @@ export function createPublicProjectRoutes(): Router {
             LIMIT $1`,
           [limit],
         );
-        return r.rows;
+        return fallback.rows;
       });
       const projects = rows.map((row) => {
         const meta = (row.metadata && typeof row.metadata === 'object') ? row.metadata : {};
