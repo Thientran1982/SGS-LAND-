@@ -17,6 +17,7 @@ import type { CursorListings, ListingFilters, PublicListing } from '../../src/ap
 import { ListingCard } from '../../src/components/ListingCard';
 import { ListingCardSkeleton } from '../../src/components/Skeleton';
 import { EmptyState } from '../../src/components/EmptyState';
+import { ListingsMap } from '../../src/components/ListingsMap';
 import { loadFavorites, toggleFavorite } from '../../src/storage/favorites';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
 import { slugify } from '../../src/utils/format';
@@ -36,12 +37,40 @@ const TRANSACTIONS = [
   { value: 'RENT', label: 'Cho thuê' },
 ];
 
-const PRICE_RANGES = [
+interface PriceRange {
+  value: string;
+  label: string;
+  min?: number;
+  max?: number;
+}
+const PRICE_RANGES: PriceRange[] = [
   { value: 'ALL', label: 'Mọi mức giá' },
   { value: 'UNDER_2', label: 'Dưới 2 tỷ', max: 2_000_000_000 },
-  { value: '2_5',     label: '2 - 5 tỷ',   min: 2_000_000_000, max: 5_000_000_000 },
-  { value: '5_10',    label: '5 - 10 tỷ',  min: 5_000_000_000, max: 10_000_000_000 },
+  { value: '2_5', label: '2 - 5 tỷ', min: 2_000_000_000, max: 5_000_000_000 },
+  { value: '5_10', label: '5 - 10 tỷ', min: 5_000_000_000, max: 10_000_000_000 },
   { value: 'OVER_10', label: 'Trên 10 tỷ', min: 10_000_000_000 },
+];
+
+const BEDROOM_OPTIONS = [
+  { value: 0, label: 'Mọi PN' },
+  { value: 1, label: '1+ PN' },
+  { value: 2, label: '2+ PN' },
+  { value: 3, label: '3+ PN' },
+  { value: 4, label: '4+ PN' },
+];
+
+interface AreaRange {
+  value: string;
+  label: string;
+  min?: number;
+  max?: number;
+}
+const AREA_RANGES: AreaRange[] = [
+  { value: 'ALL', label: 'Mọi DT' },
+  { value: 'UNDER_50', label: '< 50m²', max: 50 },
+  { value: '50_80', label: '50–80m²', min: 50, max: 80 },
+  { value: '80_120', label: '80–120m²', min: 80, max: 120 },
+  { value: 'OVER_120', label: '> 120m²', min: 120 },
 ];
 
 interface ChipProps {
@@ -59,6 +88,8 @@ const Chip: React.FC<ChipProps> = ({ label, active, onPress }) => (
   </Pressable>
 );
 
+type ViewMode = 'list' | 'map';
+
 export default function SearchScreen() {
   const router = useRouter();
 
@@ -68,7 +99,10 @@ export default function SearchScreen() {
   const [transaction, setTransaction] = useState('ALL');
   const [location, setLocation] = useState('ALL');
   const [priceRange, setPriceRange] = useState('ALL');
+  const [bedrooms, setBedrooms] = useState<number>(0);
+  const [areaRange, setAreaRange] = useState('ALL');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   useEffect(() => {
     loadFavorites().then(setFavorites);
@@ -96,19 +130,36 @@ export default function SearchScreen() {
     const range = PRICE_RANGES.find((r) => r.value === priceRange);
     if (range?.min) f.priceMin = range.min;
     if (range?.max) f.priceMax = range.max;
+    if (bedrooms > 0) f.bedroomsMin = bedrooms;
+    const ar = AREA_RANGES.find((r) => r.value === areaRange);
+    if (ar?.min) f.areaMin = ar.min;
+    if (ar?.max) f.areaMax = ar.max;
     return f;
-  }, [type, transaction, location, debounced, priceRange]);
+  }, [type, transaction, location, debounced, priceRange, bedrooms, areaRange]);
 
-  const query = useInfiniteQuery({
+  // For Map mode we fetch a single larger page (cursor) so all pins land at
+  // once. For List mode we use infinite scroll (20/page).
+  const listQuery = useInfiniteQuery({
     queryKey: ['listings', 'search', filters],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) =>
       listingsApi.listCursor({ pageSize: 20, cursor: pageParam, filters, signal }),
     getNextPageParam: (last: CursorListings) => (last.hasNext ? last.nextCursor || undefined : undefined),
+    enabled: viewMode === 'list',
   });
 
-  const listings: PublicListing[] = query.data?.pages.flatMap((p) => p.data) ?? [];
-  const total = query.data?.pages[0]?.total ?? 0;
+  const mapQuery = useQuery({
+    queryKey: ['listings', 'search-map', filters],
+    queryFn: ({ signal }) => listingsApi.listCursor({ pageSize: 100, filters, signal }),
+    enabled: viewMode === 'map',
+    staleTime: 60_000,
+  });
+
+  const listings: PublicListing[] = listQuery.data?.pages.flatMap((p) => p.data) ?? [];
+  const total =
+    viewMode === 'map'
+      ? mapQuery.data?.total ?? 0
+      : listQuery.data?.pages[0]?.total ?? 0;
 
   const handleOpen = useCallback(
     (item: PublicListing) => {
@@ -195,6 +246,29 @@ export default function SearchScreen() {
           ))}
         </ScrollView>
 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          {BEDROOM_OPTIONS.map((opt) => (
+            <Chip
+              key={`br-${opt.value}`}
+              label={opt.label}
+              active={bedrooms === opt.value}
+              onPress={() => setBedrooms(opt.value)}
+            />
+          ))}
+          {AREA_RANGES.map((opt) => (
+            <Chip
+              key={`ar-${opt.value}`}
+              label={opt.label}
+              active={areaRange === opt.value}
+              onPress={() => setAreaRange(opt.value)}
+            />
+          ))}
+        </ScrollView>
+
         {locationOptions.length > 1 ? (
           <ScrollView
             horizontal
@@ -212,20 +286,46 @@ export default function SearchScreen() {
           </ScrollView>
         ) : null}
 
-        {total > 0 ? (
-          <Text style={styles.resultCount}>
-            {total.toLocaleString('vi-VN')} kết quả
-          </Text>
-        ) : null}
+        <View style={styles.toolbarRow}>
+          {total > 0 ? (
+            <Text style={styles.resultCount}>{total.toLocaleString('vi-VN')} kết quả</Text>
+          ) : (
+            <Text style={styles.resultCount}> </Text>
+          )}
+          <View style={styles.toggleWrap}>
+            <Pressable
+              onPress={() => setViewMode('list')}
+              style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
+            >
+              <Text style={[styles.toggleText, viewMode === 'list' && styles.toggleTextActive]}>☰ Danh sách</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setViewMode('map')}
+              style={[styles.toggleBtn, viewMode === 'map' && styles.toggleBtnActive]}
+            >
+              <Text style={[styles.toggleText, viewMode === 'map' && styles.toggleTextActive]}>🗺️ Bản đồ</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
 
-      {query.isLoading ? (
+      {viewMode === 'map' ? (
+        mapQuery.isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.brand} />
+          </View>
+        ) : mapQuery.isError ? (
+          <EmptyState icon="⚠️" title="Không tải được bản đồ" subtitle="Vui lòng thử lại sau." />
+        ) : (
+          <ListingsMap listings={mapQuery.data?.data ?? []} onSelect={handleOpen} />
+        )
+      ) : listQuery.isLoading ? (
         <View style={styles.listPad}>
           {[0, 1].map((i) => (
             <ListingCardSkeleton key={i} />
           ))}
         </View>
-      ) : query.isError ? (
+      ) : listQuery.isError ? (
         <EmptyState icon="⚠️" title="Không tải được kết quả" subtitle="Vui lòng thử lại sau." />
       ) : (
         <FlatList
@@ -234,11 +334,11 @@ export default function SearchScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.listPad}
           onEndReached={() => {
-            if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
+            if (listQuery.hasNextPage && !listQuery.isFetchingNextPage) listQuery.fetchNextPage();
           }}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
-            query.isFetchingNextPage ? (
+            listQuery.isFetchingNextPage ? (
               <View style={styles.footer}>
                 <ActivityIndicator color={colors.brand} />
               </View>
@@ -313,13 +413,32 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: colors.brand,
   },
-  resultCount: {
+  toolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
+  },
+  resultCount: {
     fontSize: typography.xs,
     color: colors.textTertiary,
     fontWeight: '600',
   },
+  toggleWrap: {
+    flexDirection: 'row',
+    backgroundColor: colors.bgMuted,
+    borderRadius: radius.pill,
+    padding: 3,
+  },
+  toggleBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+  },
+  toggleBtnActive: { backgroundColor: colors.bgSurface },
+  toggleText: { fontSize: typography.xs, color: colors.textTertiary, fontWeight: '700' },
+  toggleTextActive: { color: colors.brand },
   listPad: {
     padding: spacing.md,
     paddingBottom: spacing.xxxl,
@@ -328,4 +447,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
     alignItems: 'center',
   },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

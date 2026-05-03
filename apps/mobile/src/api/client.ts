@@ -18,9 +18,12 @@ export function getApiBaseUrl(): string {
   if (fromEnv && fromEnv.trim()) return fromEnv.replace(/\/+$/, '');
   // expo-constants exposes EAS-injected values too (extra.apiBaseUrl) — fall
   // back to that before hitting prod, so devs can override via app.config.
-  const fromExtra = (Constants?.expoConfig?.extra as any)?.apiBaseUrl;
-  if (typeof fromExtra === 'string' && fromExtra.trim()) {
-    return fromExtra.replace(/\/+$/, '');
+  const extra: unknown = Constants?.expoConfig?.extra;
+  if (extra && typeof extra === 'object' && 'apiBaseUrl' in extra) {
+    const candidate = (extra as { apiBaseUrl?: unknown }).apiBaseUrl;
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.replace(/\/+$/, '');
+    }
   }
   return FALLBACK_BASE_URL;
 }
@@ -83,11 +86,12 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     const payload = isJson ? await res.json().catch(() => null) : await res.text();
 
     if (!res.ok) {
-      const msg =
-        (isJson && payload && typeof payload === 'object' && 'error' in payload
-          ? String((payload as any).error)
-          : null) || `Request failed (${res.status})`;
-      throw new ApiError(msg, res.status, payload);
+      let msg: string | null = null;
+      if (isJson && payload && typeof payload === 'object' && 'error' in payload) {
+        const errField = (payload as { error?: unknown }).error;
+        if (errField != null) msg = String(errField);
+      }
+      throw new ApiError(msg || `Request failed (${res.status})`, res.status, payload);
     }
 
     return payload as T;
