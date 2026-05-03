@@ -43,6 +43,7 @@ export const ROUTES = {
     INVENTORY: 'inventory',
     PROJECTS: 'projects',
     LISTING: 'listing', 
+    LISTING_BDS: 'bds',
     FAVORITES: 'favorites',
     APPROVALS: 'approvals',
     SYSTEM: 'system',

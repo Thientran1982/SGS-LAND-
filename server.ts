@@ -1750,12 +1750,16 @@ async function startServer() {
         return;
       }
 
-      // MISS → cross-tenant lookup with strict status filter.
+      // MISS → cross-tenant lookup with strict status filter + verified
+      // vendor gate (tenants.approval_status = 'APPROVED'). Listings from
+      // tenants pending approval / rejected NEVER leak into public detail.
       const raw = await withRlsBypass(async (client) => {
         const r = await client.query(
-          `SELECT * FROM listings
-             WHERE id = $1
-               AND status IN ('AVAILABLE','BOOKING','OPENING')
+          `SELECT l.* FROM listings l
+             JOIN tenants t ON t.id = l.tenant_id
+             WHERE l.id = $1
+               AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+               AND t.approval_status = 'APPROVED'
              LIMIT 1`,
           [id]
         );
@@ -1810,38 +1814,42 @@ async function startServer() {
         return res.json(cached);
       }
 
+      // Business rule: cùng QUẬN/HUYỆN + cùng property TYPE + giá ±20%, top 3.
+      // Quận/huyện = token chứa "Quận"/"Huyện"/"Thành phố"/"Thị xã" trong
+      // chuỗi location, fallback về token gần cuối (định dạng VN: "đường,
+      // phường, quận, tỉnh"). Verified-vendor gate cũng áp dụng ở đây.
       const items = await withRlsBypass(async (client) => {
         const seed = await client.query(
-          `SELECT id, type, project_code, location FROM listings WHERE id = $1 LIMIT 1`,
+          `SELECT l.id, l.type, l.project_code, l.location, l.price
+             FROM listings l
+             JOIN tenants t ON t.id = l.tenant_id
+             WHERE l.id = $1 AND t.approval_status = 'APPROVED'
+             LIMIT 1`,
           [id]
         );
         if (!seed.rows[0]) return [];
         const s = seed.rows[0];
-        // Strategy 1: same project_code
-        let r = await client.query(
-          `SELECT * FROM listings
-             WHERE id <> $1
-               AND status IN ('AVAILABLE','BOOKING','OPENING')
-               AND project_code = $2
-             ORDER BY updated_at DESC LIMIT 6`,
-          [id, s.project_code]
+        // Tách quận/huyện từ location
+        const tokens = String(s.location || '').split(',').map((t: string) => t.trim()).filter(Boolean);
+        const districtToken = tokens.find((t: string) => /^(Quận|Huyện|Thành phố|Thị xã|TP\.?)\s+/i.test(t)) || tokens[tokens.length - 2] || '';
+        if (!districtToken || !s.type) return [];
+        const seedPrice = s.price !== null ? Number(s.price) : null;
+        const priceMin = seedPrice ? Math.floor(seedPrice * 0.8) : null;
+        const priceMax = seedPrice ? Math.ceil(seedPrice * 1.2) : null;
+        const r = await client.query(
+          `SELECT l.* FROM listings l
+             JOIN tenants t ON t.id = l.tenant_id
+             WHERE l.id <> $1
+               AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+               AND t.approval_status = 'APPROVED'
+               AND l.type = $2
+               AND l.location ILIKE $3
+               AND ($4::numeric IS NULL OR l.price BETWEEN $4 AND $5)
+             ORDER BY l.updated_at DESC
+             LIMIT 3`,
+          [id, s.type, `%${districtToken}%`, priceMin, priceMax]
         );
-        if (r.rows.length >= 3 || !s.location) return r.rows;
-        // Strategy 2: pad with same type + location prefix (first ward/district token)
-        const locPrefix = String(s.location).split(',')[0]?.trim() || '';
-        if (!locPrefix) return r.rows;
-        const need = 6 - r.rows.length;
-        const r2 = await client.query(
-          `SELECT * FROM listings
-             WHERE id <> $1
-               AND status IN ('AVAILABLE','BOOKING','OPENING')
-               AND type = $2
-               AND location ILIKE $3
-               AND ($4::text IS NULL OR project_code IS DISTINCT FROM $4)
-             ORDER BY updated_at DESC LIMIT $5`,
-          [id, s.type, `%${locPrefix}%`, s.project_code, need]
-        );
-        return [...r.rows, ...r2.rows];
+        return r.rows;
       });
 
       const sanitized = items.map((row: any) => sanitizePublicListing(mapListingRow(row)));
@@ -1886,14 +1894,17 @@ async function startServer() {
         return res.status(400).json({ error: 'Số điện thoại không hợp lệ' }) as any;
       }
 
-      // Resolve listing CROSS-TENANT (vendor-agnostic marketplace) + status filter.
-      // Lead phải lưu vào tenant CHỦ listing để CRM của vendor đó nhận được —
-      // không hardcode PUBLIC_TENANT.
+      // Resolve listing CROSS-TENANT (vendor-agnostic marketplace) + status
+      // + verified-vendor filter. Lead phải lưu vào tenant CHỦ listing để
+      // CRM của vendor đó nhận được — không hardcode PUBLIC_TENANT.
       const raw = await withRlsBypass(async (client) => {
         const r = await client.query(
-          `SELECT id, tenant_id, code, title, status, contact_phone
-             FROM listings WHERE id = $1
-               AND status IN ('AVAILABLE','BOOKING','OPENING')
+          `SELECT l.id, l.tenant_id, l.code, l.title, l.status, l.contact_phone
+             FROM listings l
+             JOIN tenants t ON t.id = l.tenant_id
+             WHERE l.id = $1
+               AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+               AND t.approval_status = 'APPROVED'
              LIMIT 1`,
           [listingId]
         );
@@ -1965,14 +1976,37 @@ async function startServer() {
         id: insertedId, name: String(name).trim().slice(0, 100),
       });
 
-      // Vendor-branded notification email — best-effort, không block response.
-      // From-name = displayName tenant (white-label task #28).
+      // Vendor-targeted notification email — best-effort, không block response.
+      // From-name = displayName tenant (white-label task #28). Recipient =
+      // tenant OWNER/ADMIN của listing (query users), fallback LEAD_NOTIFY_EMAIL
+      // chỉ khi vendor không có user active nào với email — đảm bảo vendor's
+      // inbox luôn được ưu tiên thay vì global ops mailbox.
       (async () => {
         try {
           const binding = await getTenantBinding(ownerTenantId).catch(() => null);
           const fromName = binding?.branding.displayName || binding?.name || 'SGS Land';
           const fromEmail = process.env.BREVO_FROM_EMAIL || 'noreply@sgsland.vn';
-          const inboxEmail = process.env.LEAD_NOTIFY_EMAIL || 'info@sgsland.vn';
+          // Resolve vendor inbox: prefer OWNER → ADMIN → SUPER_ADMIN, active + email_verified.
+          const vendorInbox = await withRlsBypass(async (client) => {
+            const r = await client.query(
+              `SELECT email, name FROM users
+                 WHERE tenant_id = $1
+                   AND email IS NOT NULL AND email <> ''
+                   AND status = 'ACTIVE'
+                 ORDER BY CASE role
+                     WHEN 'OWNER' THEN 1
+                     WHEN 'ADMIN' THEN 2
+                     WHEN 'SUPER_ADMIN' THEN 3
+                     ELSE 9 END,
+                   email_verified DESC NULLS LAST,
+                   created_at ASC
+                 LIMIT 1`,
+              [ownerTenantId]
+            );
+            return r.rows[0] || null;
+          }).catch(() => null);
+          const inboxEmail = vendorInbox?.email || process.env.LEAD_NOTIFY_EMAIL || 'info@sgsland.vn';
+          const inboxName = vendorInbox?.name || `${fromName} Sales`;
           const subject = `[Sản phẩm] ${listingTitle} — ${name} (${trimmedPhone})`;
           const escape = (s: string) => String(s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c] as string));
           const html = `
@@ -1988,7 +2022,7 @@ async function startServer() {
               <p style="margin-top:16px;color:#94a3b8;font-size:12px;">Nguồn: ${escape(metadata.page_url)}</p>
             </div>`;
           await brevoSendEmail({
-            to: [{ email: inboxEmail, name: `${fromName} Hotline` }],
+            to: [{ email: inboxEmail, name: inboxName }],
             from: { email: fromEmail, name: fromName },
             subject,
             html,
@@ -4175,10 +4209,16 @@ async function startServer() {
       // Public listings = AVAILABLE / BOOKING / OPENING (cùng filter với
       // /api/public/listings). Trước đây dùng 'ACTIVE' (legacy CRM status)
       // khiến sitemap rỗng → Googlebot không thể discover product pages.
+      // Verified-vendor gate trên sitemap: chỉ index listing của tenant đã
+      // approval_status = 'APPROVED' để Googlebot không discover trang
+      // vendor pending → tránh leak unverified content.
       const result = await pool.query(
-        `SELECT id, title, updated_at FROM listings
-         WHERE status IN ('AVAILABLE','BOOKING','OPENING')
-         ORDER BY updated_at DESC LIMIT 50000`
+        `SELECT l.id, l.title, l.updated_at
+           FROM listings l
+           JOIN tenants t ON t.id = l.tenant_id
+           WHERE l.status IN ('AVAILABLE','BOOKING','OPENING')
+             AND t.approval_status = 'APPROVED'
+           ORDER BY l.updated_at DESC LIMIT 50000`
       );
       // URL shape: `/bds/<slug>-<id>` — slug từ title (truncate, ASCII-folded,
       // hyphen-joined) giúp Googlebot index URL human-readable. Server chỉ
@@ -4389,6 +4429,41 @@ async function startServer() {
       try {
         const listing = await listingRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
         if (!listing) return next();
+        sendMeta(res, buildListingMeta(listing));
+      } catch { next(); }
+    });
+
+    // /bds/:slugId → SEO-friendly listing detail (B2C #1). Cross-tenant via
+    // withRlsBypass + approval gate, accepts both bare UUID and `<slug>-<uuid>`.
+    const TRAILING_UUID_RE = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+    app.get('/bds/:slugId', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      try {
+        const slugId = String(req.params.slugId || '');
+        const m = slugId.match(TRAILING_UUID_RE);
+        if (!m) return next();
+        const id = m[1];
+        const raw = await withRlsBypass(async (client) => {
+          const r = await client.query(
+            `SELECT l.* FROM listings l
+               JOIN tenants t ON t.id = l.tenant_id
+               WHERE l.id = $1
+                 AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+                 AND t.approval_status = 'APPROVED'
+               LIMIT 1`,
+            [id]
+          );
+          return r.rows[0] || null;
+        });
+        if (!raw) return next();
+        // Map snake_case → camelCase for buildListingMeta.
+        const listing = {
+          id: raw.id, code: raw.code, title: raw.title, description: raw.description,
+          type: raw.type, transaction: raw.transaction, status: raw.status,
+          price: raw.price !== null ? Number(raw.price) : null, currency: raw.currency,
+          area: raw.area !== null ? Number(raw.area) : null,
+          bedrooms: raw.bedrooms, bathrooms: raw.bathrooms, location: raw.location,
+          images: raw.images,
+        };
         sendMeta(res, buildListingMeta(listing));
       } catch { next(); }
     });
