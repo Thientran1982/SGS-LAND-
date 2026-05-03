@@ -1,0 +1,118 @@
+name: AI Eval
+
+# Gate accuracy của AI agents (Task #39).
+# - Router-only eval (`npm run ai:eval:strict`) chạy trên MỌI PR vào main/master
+#   và mọi push tới các branch chính. Threshold: 90% overall + 90% per-agent.
+# - WRITER pipeline eval (`npm run ai:eval:e2e`) cần backend chạy + token tenant
+#   thật, nên chỉ chạy thủ công qua workflow_dispatch (job `e2e-eval`) hoặc
+#   trên môi trường staging — KHÔNG phải gate cho PR thường.
+# Nếu GEMINI_API_KEY chưa cấu hình thì job FAIL có chủ đích để buộc maintainer
+# add secret trước khi merge (đáp ứng "chặn merge nếu < 90%").
+
+on:
+  push:
+    branches: [main, master, 'claude/**']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      run_e2e:
+        description: 'Cũng chạy E2E + LLM-judge (cần EVAL_API_BASE + EVAL_TOKEN)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  router-eval:
+    name: Router Intent Accuracy (≥90% overall + per-agent)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify GEMINI_API_KEY secret is configured
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error ::GEMINI_API_KEY secret is missing. Add it under repo Settings → Secrets and variables → Actions to enable the AI eval gate. Refusing to pass without running eval."
+            exit 1
+          fi
+          echo "GEMINI_API_KEY present (length=${#GEMINI_API_KEY})."
+
+      - name: Run router eval (gate ≥90% overall + per-agent)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npm run ai:eval:strict
+
+      - name: Upload eval run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-eval-router-${{ github.run_id }}
+          path: .local/eval-runs/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  e2e-eval:
+    name: E2E + Writer Quality (manual only)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_e2e == 'true' }}
+    needs: router-eval
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify required secrets
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          EVAL_API_BASE: ${{ secrets.EVAL_API_BASE }}
+          EVAL_TOKEN: ${{ secrets.EVAL_TOKEN }}
+        run: |
+          missing=""
+          [ -z "$GEMINI_API_KEY" ] && missing="$missing GEMINI_API_KEY"
+          [ -z "$EVAL_API_BASE" ]  && missing="$missing EVAL_API_BASE"
+          [ -z "$EVAL_TOKEN" ]     && missing="$missing EVAL_TOKEN"
+          if [ -n "$missing" ]; then
+            echo "::error ::Missing secrets:$missing"
+            exit 1
+          fi
+
+      - name: Run E2E eval with LLM-judge (gate ≥90%)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          EVAL_API_BASE: ${{ secrets.EVAL_API_BASE }}
+          EVAL_TOKEN: ${{ secrets.EVAL_TOKEN }}
+        run: npm run ai:eval:e2e
+
+      - name: Upload eval run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-eval-e2e-${{ github.run_id }}
+          path: .local/eval-runs/*.json
+          if-no-files-found: ignore
+          retention-days: 30
