@@ -297,7 +297,7 @@ export default function ListingDetailScreen() {
                   'Vui lòng đăng nhập để nhắn tin với chuyên viên tư vấn.',
                   [
                     { text: 'Để sau', style: 'cancel' },
-                    { text: 'Đăng nhập', onPress: () => router.push('/account' as any) },
+                    { text: 'Đăng nhập', onPress: () => router.push('/account') },
                   ],
                 );
                 return;

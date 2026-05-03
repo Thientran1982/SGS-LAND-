@@ -41,7 +41,15 @@ Notifications.setNotificationHandler({
 function resolveDeepLink(data: unknown): Href | null {
   if (!data || typeof data !== 'object') return null;
   const d = data as Record<string, unknown>;
+  // Generic `url` payload — accept any in-app absolute path the server
+  // provides (e.g. `/bds/<slugId>`, `/messages/<id>`).
   if (typeof d.url === 'string' && d.url.startsWith('/')) return d.url as Href;
+  // Messaging push (Task #55): server emits `conversationId` so we don't
+  // have to URL-encode the path on the backend.
+  if (typeof d.conversationId === 'string' && d.conversationId.length > 0) {
+    return `/messages/${encodeURIComponent(d.conversationId)}` as Href;
+  }
+  // Listing-match push (Task #53).
   if (typeof d.slugId === 'string' && d.slugId.length > 0) {
     return `/bds/${encodeURIComponent(d.slugId)}` as Href;
   }
