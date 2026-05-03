@@ -1831,9 +1831,10 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                 CLARIFY:           'writer',
             };
             let ragKnowledgeSection = '';
+            let ragSources: Array<{ sourceType: string; sourceId: string; metadata: Record<string, any> }> = [];
             if (RAG_INTENTS.has(currentIntent)) {
                 try {
-                    const [{ buildRagContext: _rag }, { agentRepository: _agentRepo }] = await Promise.all([
+                    const [{ buildRagContextWithSources: _ragWithSrc }, { agentRepository: _agentRepo }] = await Promise.all([
                         import('./services/ragService'),
                         import('./repositories/agentRepository'),
                     ]);
@@ -1841,12 +1842,14 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                     const role = INTENT_TO_ROLE[currentIntent];
                     if (role) {
                         const agent = await _agentRepo.getAgentByRole(state.tenantId, role);
-                        const kf: any = (agent as any)?.knowledgeFilter || (agent as any)?.metadata?.knowledge_filter;
-                        if (Array.isArray(kf?.domains) && kf.domains.length > 0) {
-                            domains = kf.domains;
+                        const kfDomains = agent?.knowledgeFilter?.domains;
+                        if (Array.isArray(kfDomains) && kfDomains.length > 0) {
+                            domains = kfDomains;
                         }
                     }
-                    ragKnowledgeSection = await _rag(state.tenantId, state.userMessage, 4, { domains });
+                    const ragOut = await _ragWithSrc(state.tenantId, state.userMessage, 4, { domains });
+                    ragKnowledgeSection = ragOut.context;
+                    ragSources = ragOut.sources;
                 } catch (_ragErr) {
                     // RAG lỗi không nên chặn AI — im lặng bỏ qua
                 }
@@ -2199,18 +2202,32 @@ YÊU CẦU VIẾT PHẢN HỒI:
             trackAiUsage('CHAT_WRITER', writerModel, Date.now() - _writerStart, writerPrompt, writerRes.text || '', { tenantId: state.tenantId });
 
             // ── Citation enforcement (post-processor) ─────────────────────────────
-            // Intent CALCULATE_LOAN/EXPLAIN_LEGAL/DRAFT_CONTRACT/ESTIMATE_VALUATION
-            // bắt buộc câu trả lời có chứa "[Nguồn:" nếu nói về số liệu/luật cụ thể.
-            // Nếu thiếu → append disclaimer thay vì chặn cứng.
-            const CITATION_REQUIRED = new Set(['CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'DRAFT_CONTRACT', 'ESTIMATE_VALUATION']);
+            // 3 intent bắt buộc trích nguồn: EXPLAIN_LEGAL / CALCULATE_LOAN / ESTIMATE_VALUATION.
+            //   • Nếu có RAG hits & WRITER quên "[Nguồn:" → tự động append actual sources
+            //     từ retrieved chunks (RAG-aware, không phải chỉ disclaimer).
+            //   • Nếu KHÔNG có RAG hits & câu trả lời chứa số liệu cụ thể →
+            //     thay bằng "chưa đủ dữ liệu" disclaimer.
+            const CITATION_REQUIRED = new Set(['EXPLAIN_LEGAL', 'CALCULATE_LOAN', 'ESTIMATE_VALUATION']);
             let finalText = writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?";
             if (CITATION_REQUIRED.has(currentIntent)) {
                 const hasCitation = /\[Nguồn[:：]/i.test(finalText) || /Theo (Luật|Nghị định|Thông tư|CBRE|Savills|JLL|HoREA|VARS)/i.test(finalText);
                 const hasNumericClaim = /\d+\s*(%|\/năm|\/tháng|tỷ|triệu|tr\b|VNĐ|đ)/i.test(finalText);
                 if (!hasCitation && hasNumericClaim) {
-                    finalText += `\n\n⚠ Lưu ý: Số liệu trên là ước tính tham khảo, anh/chị cần xác minh lại với nguồn chính thức (ngân hàng / cơ quan có thẩm quyền) trước khi quyết định.`;
+                    if (ragSources.length > 0) {
+                        // RAG-aware: append actual retrieved sources
+                        try {
+                            const { formatSourcesFooter } = await import('./services/ragService');
+                            const footer = formatSourcesFooter(ragSources as any, 3);
+                            if (footer) finalText += `\n\n${footer}`;
+                        } catch { /* best-effort */ }
+                    } else {
+                        // No RAG hits — be honest about uncertainty
+                        finalText += `\n\n⚠ Lưu ý: Hiện chưa đủ dữ liệu nguồn chính thức trong knowledge base để khẳng định con số trên. Anh/chị vui lòng xác minh lại với nguồn chính thức (ngân hàng / cơ quan có thẩm quyền) trước khi quyết định.`;
+                    }
                     feedbackRepository.logObservation(state.tenantId, 'WRITER', currentIntent, 'CITATION_MISSING', {
                         intent: currentIntent,
+                        ragHits: ragSources.length,
+                        autoAppended: ragSources.length > 0 ? 'sources' : 'disclaimer',
                         textPreview: finalText.slice(0, 120),
                     }).catch(() => {});
                 }

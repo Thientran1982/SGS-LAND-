@@ -251,20 +251,50 @@ export async function buildRagContext(
   topK = DEFAULT_TOP_K,
   opts?: { domains?: string[] }
 ): Promise<string> {
+  const { context } = await buildRagContextWithSources(tenantId, query, topK, opts);
+  return context;
+}
+
+/**
+ * Trả về context + sources riêng biệt — dùng cho citation post-processor
+ * trong WRITER node để inject "[Nguồn:" footer khi LLM quên.
+ */
+export async function buildRagContextWithSources(
+  tenantId: string,
+  query: string,
+  topK = DEFAULT_TOP_K,
+  opts?: { domains?: string[] }
+): Promise<{ context: string; sources: SearchResult[] }> {
   try {
     const results = await semanticSearch(tenantId, query, topK, undefined, opts?.domains);
-    if (!results.length) return '';
+    if (!results.length) return { context: '', sources: [] };
 
     const parts = results.map((r, i) => {
       const title = r.metadata?.title ? `[${r.metadata.title}]` : `[${r.sourceType}:${r.sourceId}]`;
       return `--- Nguồn ${i + 1} ${title} (độ liên quan: ${(r.similarity * 100).toFixed(0)}%) ---\n${r.content}`;
     });
 
-    return `\n[KNOWLEDGE BASE — thông tin nội bộ đã xác minh]\n${parts.join('\n\n')}\n[END KNOWLEDGE BASE]\n`;
+    return {
+      context: `\n[KNOWLEDGE BASE — thông tin nội bộ đã xác minh]\n${parts.join('\n\n')}\n[END KNOWLEDGE BASE]\n`,
+      sources: results,
+    };
   } catch (err) {
-    console.error('[RAG] buildRagContext lỗi:', err);
-    return '';
+    console.error('[RAG] buildRagContextWithSources lỗi:', err);
+    return { context: '', sources: [] };
   }
+}
+
+/**
+ * Format sources thành footer "[Nguồn: ...]" gọn, dùng khi WRITER quên cite.
+ * Trả về chuỗi rỗng nếu không có source.
+ */
+export function formatSourcesFooter(sources: SearchResult[], max = 3): string {
+  if (!sources?.length) return '';
+  const top = sources.slice(0, max).map((r, i) => {
+    const title = r.metadata?.title || `${r.sourceType}:${r.sourceId}`;
+    return `[Nguồn ${i + 1}: ${title}]`;
+  });
+  return top.join(' ');
 }
 
 // ── Stats & management ─────────────────────────────────────────────────────
