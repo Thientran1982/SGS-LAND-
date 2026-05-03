@@ -34,22 +34,37 @@ export const APEX_DOMAIN = (process.env.WHITELABEL_APEX_DOMAIN || 'sgsland.vn').
 
 /**
  * Tính địa chỉ email gửi đi cho 1 tenant theo white-label rule:
- * - Custom domain đã verify  → `noreply@<customDomain>`
- * - Subdomain riêng           → `noreply@<slug>.<apex>`
- * - Không có gì hợp lệ        → BREVO_FROM_EMAIL (mặc định `no-reply@sgsland.vn`)
+ * - Custom domain đã verify TXT ownership + nằm trong allowlist Brevo
+ *   (env BREVO_VERIFIED_SENDER_DOMAINS, comma-separated) → `noreply@<customDomain>`
+ * - Subdomain riêng + apex nằm trong allowlist                      → `noreply@<slug>.<apex>`
+ * - Không có gì hợp lệ                                               → BREVO_FROM_EMAIL fallback
  *
- * Lưu ý vận hành: để Brevo deliverability tốt khi dùng custom domain, CĐT
- * cần thêm SPF/DKIM cho Brevo trên DNS của họ. Trường hợp DNS chưa cấu hình
- * Brevo có thể vẫn nhận nhưng spam folder — đây là trách nhiệm của CĐT, không
- * phải lỗi hệ thống.
+ * Vì sao cần allowlist: TXT verify chỉ chứng minh CĐT sở hữu domain — KHÔNG
+ * chứng minh SPF/DKIM đã cấu hình cho Brevo. Nếu set sender chưa được Brevo
+ * authenticate, request gửi mail sẽ bị Brevo reject (HTTP 400) → mất
+ * notification lead. Allowlist do ops cập nhật khi đã onboard CĐT trên Brevo.
+ * Apex `sgsland.vn` luôn được coi là verified (default trong allowlist).
  */
+function getVerifiedSenderDomains(): Set<string> {
+  const raw = process.env.BREVO_VERIFIED_SENDER_DOMAINS || '';
+  const set = new Set(
+    raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  );
+  set.add(APEX_DOMAIN); // apex luôn verified mặc định
+  return set;
+}
+
 export function resolveTenantSenderEmail(binding: TenantHostBinding | null): string {
-  const fallback = process.env.BREVO_FROM_EMAIL || 'no-reply@sgsland.vn';
+  const fallback = process.env.BREVO_FROM_EMAIL || `no-reply@${APEX_DOMAIN}`;
   if (!binding) return fallback;
+  const verified = getVerifiedSenderDomains();
   if (binding.customDomain && binding.customDomainVerifiedAt) {
-    return `noreply@${binding.customDomain.toLowerCase()}`;
+    const dom = binding.customDomain.toLowerCase();
+    if (verified.has(dom)) return `noreply@${dom}`;
+    // Đã verify ownership nhưng chưa được ops onboard SPF/DKIM ở Brevo →
+    // fallback để không mất email; from-name vẫn là tenant (caller xử lý).
   }
-  if (binding.subdomainSlug) {
+  if (binding.subdomainSlug && verified.has(APEX_DOMAIN)) {
     return `noreply@${binding.subdomainSlug.toLowerCase()}.${APEX_DOMAIN}`;
   }
   return fallback;
