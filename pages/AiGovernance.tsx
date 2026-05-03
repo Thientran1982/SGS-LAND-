@@ -67,6 +67,11 @@ interface PromptsTabProps {
     onPromoteVersion: (version: number) => void;
     onCreateOpen: () => void;
     onSetTestInput: (s: string) => void;
+    diffMode: boolean;
+    diffLeftContent: string | null;
+    diffRightVersion: number | null;
+    onToggleDiff: () => void;
+    onSelectDiffVersion: (v: number) => void;
     t: any;
 }
 
@@ -197,7 +202,8 @@ const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string }[] = [
 
 const PromptsTab = memo(({ 
     prompts, promptDefaults, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
-    onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onPromoteVersion, onCreateOpen, onSetTestInput, t 
+    onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onPromoteVersion, onCreateOpen, onSetTestInput,
+    diffMode, diffLeftContent, diffRightVersion, onToggleDiff, onSelectDiffVersion, t
 }: PromptsTabProps) => {
     const configuredKeys = new Set((prompts || []).map(p => p.name));
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -331,7 +337,7 @@ const PromptsTab = memo(({
                     </div>
 
                     <div className="flex-1 flex flex-col relative min-h-0">
-                        <div className="flex gap-2 mb-2 overflow-x-auto pb-1 no-scrollbar">
+                        <div className="flex gap-2 mb-2 overflow-x-auto pb-1 no-scrollbar items-center">
                             {PROMPT_VARIABLES.map(v => (
                                 <button 
                                     key={v}
@@ -341,12 +347,49 @@ const PromptsTab = memo(({
                                     {ICONS.VARIABLE} {v}
                                 </button>
                             ))}
+                            {(selectedPrompt.versions || []).length > 1 && (
+                                <button
+                                    onClick={() => onToggleDiff()}
+                                    className={`ml-auto px-2 py-1 text-xs2 font-bold rounded border shrink-0 transition-colors ${
+                                        diffMode
+                                            ? 'bg-amber-100 text-amber-700 border-amber-300'
+                                            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                    title="So sánh side-by-side với version active"
+                                >
+                                    {diffMode ? 'Đóng diff' : 'So sánh phiên bản'}
+                                </button>
+                            )}
                         </div>
-                        <textarea 
-                            className="flex-1 w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl p-4 font-mono text-sm outline-none focus:border-indigo-500 resize-none leading-relaxed"
-                            value={editContent}
-                            onChange={(e) => onEditContent(e.target.value)}
-                        />
+                        {diffMode && diffLeftContent !== null ? (
+                            <div className="flex-1 grid grid-cols-2 gap-2 min-h-0">
+                                <div className="flex flex-col min-h-0">
+                                    <div className="text-2xs font-bold text-emerald-700 mb-1 px-1">v{selectedPrompt.activeVersion} (active)</div>
+                                    <pre className="flex-1 w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 font-mono text-xs overflow-auto whitespace-pre-wrap leading-relaxed">{diffLeftContent}</pre>
+                                </div>
+                                <div className="flex flex-col min-h-0">
+                                    <div className="flex items-center justify-between mb-1 px-1">
+                                        <span className="text-2xs font-bold text-indigo-700">So với v{diffRightVersion} (đang sửa)</span>
+                                        <select
+                                            value={diffRightVersion ?? ''}
+                                            onChange={(e) => onSelectDiffVersion(Number(e.target.value))}
+                                            className="text-2xs border border-slate-200 rounded px-1 py-0.5 bg-white"
+                                        >
+                                            {(selectedPrompt.versions || []).map(v => (
+                                                <option key={v.version} value={v.version}>v{v.version} {v.status === 'DRAFT' ? '(draft)' : ''}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <pre className="flex-1 w-full bg-indigo-50 border border-indigo-200 rounded-xl p-3 font-mono text-xs overflow-auto whitespace-pre-wrap leading-relaxed">{editContent}</pre>
+                                </div>
+                            </div>
+                        ) : (
+                            <textarea
+                                className="flex-1 w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl p-4 font-mono text-sm outline-none focus:border-indigo-500 resize-none leading-relaxed"
+                                value={editContent}
+                                onChange={(e) => onEditContent(e.target.value)}
+                            />
+                        )}
                     </div>
 
                     {/* SIMULATOR */}
@@ -714,6 +757,8 @@ export const AiGovernance: React.FC = () => {
     
     // Prompts State
     const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
+    const [diffMode, setDiffMode] = useState(false);
+    const [diffRightVersion, setDiffRightVersion] = useState<number | null>(null);
     const [editContent, setEditContent] = useState('');
     const [testInput, setTestInput] = useState('');
     const [isEvalRunning, setIsEvalRunning] = useState(false);
@@ -794,6 +839,43 @@ export const AiGovernance: React.FC = () => {
         const version = p.versions.find(v => v.version === p.activeVersion);
         setEditContent(version ? version.content : '');
         setLastEvalRun('');
+        setDiffMode(false);
+        setDiffRightVersion(null);
+    };
+
+    // Diff view: left = active version content, right = currently-edited buffer.
+    // User chọn 1 version khác để load nội dung version đó vào buffer phải.
+    const diffLeftContent = useMemo(() => {
+        if (!selectedPrompt) return null;
+        const active = selectedPrompt.versions?.find(v => v.version === selectedPrompt.activeVersion);
+        return active ? active.content : '';
+    }, [selectedPrompt]);
+
+    const handleToggleDiff = () => {
+        if (!selectedPrompt) return;
+        if (diffMode) {
+            setDiffMode(false);
+            const active = selectedPrompt.versions?.find(v => v.version === selectedPrompt.activeVersion);
+            setEditContent(active ? active.content : '');
+            setDiffRightVersion(null);
+        } else {
+            const others = (selectedPrompt.versions || []).filter(v => v.version !== selectedPrompt.activeVersion);
+            const target = others[0] || selectedPrompt.versions?.[0];
+            if (target) {
+                setDiffRightVersion(target.version);
+                setEditContent(target.content);
+                setDiffMode(true);
+            }
+        }
+    };
+
+    const handleSelectDiffVersion = (version: number) => {
+        if (!selectedPrompt) return;
+        const v = selectedPrompt.versions?.find(x => x.version === version);
+        if (v) {
+            setDiffRightVersion(version);
+            setEditContent(v.content);
+        }
     };
 
     const handleRunSim = async () => {
@@ -897,6 +979,11 @@ export const AiGovernance: React.FC = () => {
                     }}
                     onCreateOpen={() => setIsCreateOpen(true)}
                     onSetTestInput={setTestInput}
+                    diffMode={diffMode}
+                    diffLeftContent={diffLeftContent}
+                    diffRightVersion={diffRightVersion}
+                    onToggleDiff={handleToggleDiff}
+                    onSelectDiffVersion={handleSelectDiffVersion}
                     t={t}
                 />
             )}
