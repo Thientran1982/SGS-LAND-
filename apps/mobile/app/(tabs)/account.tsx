@@ -367,6 +367,13 @@ export default function AccountScreen() {
             {user ? (
               <>
                 <View style={styles.divider} />
+                <Row
+                  icon="📋"
+                  title="Đơn cọc của tôi"
+                  subtitle="Theo dõi các giao dịch đặt cọc giữ chỗ qua VNPay"
+                  onPress={() => router.push('/bookings')}
+                />
+                <View style={styles.divider} />
                 <Pressable
                   onPress={handleSignOut}
                   style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}

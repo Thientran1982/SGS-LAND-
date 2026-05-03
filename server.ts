@@ -66,6 +66,7 @@ import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
 import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
 import { createBuyerRoutes } from "./server/routes/buyerRoutes";
 import { createConversationRoutes, createAgentConversationRoutes } from "./server/routes/conversationRoutes";
+import { createBookingRoutes } from "./server/routes/bookingRoutes";
 import { startBuyerPushCron } from "./server/services/pushNotificationService";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
@@ -4110,6 +4111,9 @@ async function startServer() {
     app.use(apiRateLimit, createBuyerRoutes(pool, JWT_SECRET));
     app.use(apiRateLimit, createConversationRoutes(JWT_SECRET, io));
     app.use(apiRateLimit, createAgentConversationRoutes(authenticateToken, io));
+    // Task #56 — Buyer deposit booking + VNPay. Public IPN/return endpoints
+    // live on the same router; the buyer-scoped routes use the same JWT.
+    app.use(createBookingRoutes(pool, JWT_SECRET, io));
     try {
       startBuyerPushCron(pool);
     } catch (err: any) {

@@ -53,6 +53,10 @@ function resolveDeepLink(data: unknown): Href | null {
   if (typeof d.slugId === 'string' && d.slugId.length > 0) {
     return `/bds/${encodeURIComponent(d.slugId)}` as Href;
   }
+  // Booking push / VNPay return deep-link (Task #56).
+  if (typeof d.bookingId === 'string' && d.bookingId.length > 0) {
+    return `/bookings/${encodeURIComponent(d.bookingId)}` as Href;
+  }
   return null;
 }
 
@@ -119,6 +123,9 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="bds/[slugId]" options={{ headerShown: false, presentation: 'card' }} />
               <Stack.Screen name="messages/[id]" options={{ headerShown: false, presentation: 'card' }} />
+              <Stack.Screen name="listing/[code]/book" options={{ headerShown: false, presentation: 'card' }} />
+              <Stack.Screen name="bookings/index" options={{ headerShown: false, presentation: 'card' }} />
+              <Stack.Screen name="bookings/[id]" options={{ headerShown: false, presentation: 'card' }} />
             </Stack>
           </AuthProvider>
         </QueryClientProvider>

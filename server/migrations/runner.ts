@@ -116,6 +116,8 @@ import m095 from './095_buyer_push_notifications';
 import m096 from './096_buyer_users_and_data';
 import m097 from './097_buyer_conversations';
 import m098 from './098_buyer_devices_user_link';
+import m099 from './099_bookings';
+import m100 from './100_booking_events';
 
 dotenv.config();
 
@@ -228,6 +230,8 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '096_buyer_users_and_data.ts': m096,
   '097_buyer_conversations.ts': m097,
   '098_buyer_devices_user_link.ts': m098,
+  '099_bookings.ts': m099,
+  '100_booking_events.ts': m100,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
