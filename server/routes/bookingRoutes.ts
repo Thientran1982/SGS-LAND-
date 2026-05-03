@@ -19,6 +19,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { Server as SocketIOServer } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import { logger } from '../middleware/logger';
 import { authenticateBuyer } from '../middleware/buyerAuth';
 import { loadVnpayConfig, isVnpayConfigured } from '../config/env';
@@ -95,6 +96,22 @@ async function logBookingEvent(
   }
 }
 
+/**
+ * Escape HTML so untrusted user-provided text (listing titles, agent-edited
+ * codes, VNPay-supplied bank codes, etc.) cannot inject script when this
+ * receipt is rendered in a browser tab OR in an email client. Email clients
+ * are inconsistent about CSP, so escaping here is the only defense.
+ */
+function escHtml(s: string | null | undefined): string {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function depositReceiptHtml(b: {
   id: string;
   listingTitle: string;
@@ -105,17 +122,23 @@ function depositReceiptHtml(b: {
   txnRef: string;
 }): string {
   const fmtVnd = (n: number) => n.toLocaleString('vi-VN') + ' ₫';
+  const title = escHtml(b.listingTitle);
+  const code = b.listingCode ? ` (${escHtml(b.listingCode)})` : '';
+  const idEsc = escHtml(b.id);
+  const txnRef = escHtml(b.txnRef);
+  const bankCode = b.bankCode ? escHtml(b.bankCode) : '';
+  const payDate = b.payDate ? escHtml(b.payDate) : '';
   return `<!doctype html><html><body style="font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0F172A">
   <div style="max-width:560px;margin:0 auto;padding:24px;background:#FFFFFF">
     <h2 style="color:#0F766E;margin:0 0 8px">Đã nhận đặt cọc giữ chỗ</h2>
     <p>Cảm ơn quý khách đã đặt cọc qua <strong>SGS Land</strong>. Dưới đây là biên nhận giao dịch:</p>
     <table cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:14px;margin:16px 0">
-      <tr><td style="color:#64748B">Sản phẩm</td><td><strong>${b.listingTitle}</strong>${b.listingCode ? ` (${b.listingCode})` : ''}</td></tr>
+      <tr><td style="color:#64748B">Sản phẩm</td><td><strong>${title}</strong>${code}</td></tr>
       <tr><td style="color:#64748B">Số tiền cọc</td><td><strong>${fmtVnd(b.amountVnd)}</strong></td></tr>
-      <tr><td style="color:#64748B">Mã đặt cọc</td><td><code>${b.id}</code></td></tr>
-      <tr><td style="color:#64748B">Mã giao dịch</td><td><code>${b.txnRef}</code></td></tr>
-      ${b.bankCode ? `<tr><td style="color:#64748B">Ngân hàng</td><td>${b.bankCode}</td></tr>` : ''}
-      ${b.payDate ? `<tr><td style="color:#64748B">Thời điểm</td><td>${b.payDate}</td></tr>` : ''}
+      <tr><td style="color:#64748B">Mã đặt cọc</td><td><code>${idEsc}</code></td></tr>
+      <tr><td style="color:#64748B">Mã giao dịch</td><td><code>${txnRef}</code></td></tr>
+      ${bankCode ? `<tr><td style="color:#64748B">Ngân hàng</td><td>${bankCode}</td></tr>` : ''}
+      ${payDate ? `<tr><td style="color:#64748B">Thời điểm</td><td>${payDate}</td></tr>` : ''}
     </table>
     <p>Chuyên viên SGS Land sẽ liên hệ trong vòng <strong>24 giờ</strong> để hướng dẫn bước tiếp theo.</p>
     <p style="color:#64748B;font-size:12px;margin-top:24px">Hotline: 0971 132 378 · sgsland.vn</p>
@@ -273,24 +296,93 @@ export function createBookingRoutes(
     }
   });
 
+  // ── Auth helpers (dual-mode) ─────────────────────────────────────────────
+  // GET /:id and the receipt download accept EITHER:
+  //   • Buyer JWT (Authorization: Bearer …, aud:'buyer')   → mobile app
+  //   • Staff cookie token (set by web CRM login)          → agent/admin
+  // The lookup then enforces row-level authz: buyer-owner OR assigned agent
+  // OR same-tenant ADMIN/MANAGER. Anything else 404s (don't leak existence).
+  type Viewer =
+    | { kind: 'buyer'; userId: string }
+    | { kind: 'staff'; userId: string; tenantId: string | null; role: string };
+
+  function resolveViewer(req: Request): Viewer | null {
+    // 1) Bearer buyer token (mobile)
+    const header = req.headers.authorization;
+    if (header && header.toLowerCase().startsWith('bearer ')) {
+      const tok = header.slice(7).trim();
+      if (tok) {
+        try {
+          const d = jwt.verify(tok, jwtSecret) as any;
+          if (d?.aud === 'buyer' && d?.sub) {
+            return { kind: 'buyer', userId: String(d.sub) };
+          }
+        } catch {
+          /* fall through to cookie auth */
+        }
+      }
+    }
+    // 2) Staff cookie token (web CRM)
+    const cookieTok = (req as any).cookies?.token;
+    if (cookieTok) {
+      try {
+        const d = jwt.verify(cookieTok, jwtSecret) as any;
+        if (d?.id || d?.userId) {
+          return {
+            kind: 'staff',
+            userId: String(d.id || d.userId),
+            tenantId: d.tenantId ? String(d.tenantId) : null,
+            role: String(d.role || 'AGENT'),
+          };
+        }
+      } catch {
+        /* unauthenticated */
+      }
+    }
+    return null;
+  }
+
+  async function loadAuthorizedBooking(
+    bookingId: string,
+    viewer: Viewer,
+  ): Promise<any | null> {
+    const r = await pool.query(
+      `SELECT b.*, l.title AS listing_title, l.code AS listing_code
+         FROM bookings b
+         LEFT JOIN listings l ON l.id = b.listing_id
+        WHERE b.id = $1
+        LIMIT 1`,
+      [bookingId],
+    );
+    const row = r.rows[0];
+    if (!row) return null;
+    if (viewer.kind === 'buyer') {
+      return row.buyer_user_id === viewer.userId ? row : null;
+    }
+    // Staff: tenant scoping is mandatory — a token without tenantId is
+    // refused outright (defense in depth against tokens minted for system
+    // contexts accidentally being accepted on tenant-scoped data).
+    if (!viewer.tenantId || row.tenant_id !== viewer.tenantId) return null;
+    const elevated = viewer.role === 'ADMIN' || viewer.role === 'MANAGER';
+    if (!elevated) {
+      // Non-elevated AGENT: must be the explicit assignee. A null assignee
+      // is treated as "not yours" — never grant access by default.
+      if (!row.agent_user_id || row.agent_user_id !== viewer.userId) return null;
+    }
+    return row;
+  }
+
   // ── GET /api/bookings/:id ─────────────────────────────────────────────────
-  // Buyer reads their own. Agent/admin access happens via the web CRM (cookie
-  // session); we don't need to support both auth modes here for the mobile sprint.
-  router.get('/api/bookings/:id', requireBuyer, async (req: Request, res: Response) => {
+  // Dual-auth: buyer-owner via Bearer JWT OR assigned agent / same-tenant
+  // admin via staff cookie session. 404 on mismatch (no existence leak).
+  router.get('/api/bookings/:id', async (req: Request, res: Response) => {
     try {
       const id = String(req.params.id || '').toLowerCase();
       if (!UUID_RE.test(id)) return res.status(400).json({ error: 'id không hợp lệ' });
-      const buyerId = (req as any).buyerUser.id as string;
-      const r = await pool.query(
-        `SELECT b.*, l.title AS listing_title, l.code AS listing_code
-           FROM bookings b
-           LEFT JOIN listings l ON l.id = b.listing_id
-          WHERE b.id = $1 AND b.buyer_user_id = $2
-          LIMIT 1`,
-        [id, buyerId],
-      );
-      if (!r.rows[0]) return res.status(404).json({ error: 'Không tìm thấy đơn cọc' });
-      const row = r.rows[0];
+      const viewer = resolveViewer(req);
+      if (!viewer) return res.status(401).json({ error: 'Chưa đăng nhập' });
+      const row = await loadAuthorizedBooking(id, viewer);
+      if (!row) return res.status(404).json({ error: 'Không tìm thấy đơn cọc' });
       res.json({
         booking: {
           ...sanitizeBookingRow(row),
@@ -301,6 +393,94 @@ export function createBookingRoutes(
     } catch (err: any) {
       logger.error('[bookings/:id] ' + (err?.message || err));
       res.status(500).json({ error: 'Không tải được đơn cọc' });
+    }
+  });
+
+  // ── GET /api/bookings/:id/receipt-token ──────────────────────────────────
+  // Buyers can't pass an Authorization header to a system browser. We mint a
+  // short-lived (5 min) signed token bound to bookingId+viewerId so the
+  // receipt URL is shareable-as-a-link from the mobile app. Staff sessions
+  // can hit /receipt directly (cookie travels) so they don't need this.
+  router.get(
+    '/api/bookings/:id/receipt-token',
+    async (req: Request, res: Response) => {
+      try {
+        const id = String(req.params.id || '').toLowerCase();
+        if (!UUID_RE.test(id)) return res.status(400).json({ error: 'id không hợp lệ' });
+        const viewer = resolveViewer(req);
+        if (!viewer) return res.status(401).json({ error: 'Chưa đăng nhập' });
+        const row = await loadAuthorizedBooking(id, viewer);
+        if (!row) return res.status(404).json({ error: 'Không tìm thấy đơn cọc' });
+        if (row.status !== 'PAID') {
+          return res.status(409).json({ error: 'Chỉ tải biên nhận khi đơn đã thanh toán' });
+        }
+        const token = jwt.sign(
+          { sub: id, kind: 'booking_receipt', uid: viewer.userId },
+          jwtSecret,
+          { expiresIn: '5m' },
+        );
+        const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+        const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || '';
+        const url = `${proto}://${host}/api/bookings/${id}/receipt?t=${encodeURIComponent(token)}`;
+        res.json({ url, expiresInSec: 300 });
+      } catch (err: any) {
+        logger.error('[bookings/receipt-token] ' + (err?.message || err));
+        res.status(500).json({ error: 'Không tạo được liên kết biên nhận' });
+      }
+    },
+  );
+
+  // ── GET /api/bookings/:id/receipt ────────────────────────────────────────
+  // Returns a printable HTML receipt. Accepts the short-lived `?t=` token
+  // (mobile) OR a live staff cookie session OR a buyer Bearer token.
+  router.get('/api/bookings/:id/receipt', async (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id || '').toLowerCase();
+      if (!UUID_RE.test(id)) return res.status(400).send('id không hợp lệ');
+      let row: any = null;
+
+      const queryToken = String(req.query.t || '');
+      if (queryToken) {
+        try {
+          const d = jwt.verify(queryToken, jwtSecret) as any;
+          if (d?.kind === 'booking_receipt' && d?.sub === id) {
+            const r = await pool.query(
+              `SELECT b.*, l.title AS listing_title, l.code AS listing_code
+                 FROM bookings b
+                 LEFT JOIN listings l ON l.id = b.listing_id
+                WHERE b.id = $1 LIMIT 1`,
+              [id],
+            );
+            row = r.rows[0] || null;
+          }
+        } catch {
+          /* fall through to viewer auth */
+        }
+      }
+      if (!row) {
+        const viewer = resolveViewer(req);
+        if (!viewer) return res.status(401).send('Chưa đăng nhập');
+        row = await loadAuthorizedBooking(id, viewer);
+      }
+      if (!row) return res.status(404).send('Không tìm thấy đơn cọc');
+      if (row.status !== 'PAID') {
+        return res.status(409).send('Đơn cọc chưa được thanh toán.');
+      }
+      const html = depositReceiptHtml({
+        id: row.id,
+        listingTitle: row.listing_title || 'Sản phẩm',
+        listingCode: row.listing_code || null,
+        amountVnd: Number(row.deposit_amount),
+        bankCode: row.vnpay_bank_code || null,
+        payDate: row.vnpay_pay_date || (row.paid_at ? new Date(row.paid_at).toLocaleString('vi-VN') : null),
+        txnRef: row.vnpay_txn_ref,
+      });
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.send(html);
+    } catch (err: any) {
+      logger.error('[bookings/receipt] ' + (err?.message || err));
+      res.status(500).send('Không tải được biên nhận');
     }
   });
 
