@@ -34,6 +34,13 @@ export interface TenantBindingPayload {
   customDomainUnverifiedAt?: string | null;
   /** Ngưỡng fail liên tiếp để hệ thống huỷ verified + alert admin. */
   customDomainFailureThreshold?: number;
+  /**
+   * Email gửi đi đã thực sự dùng được tên miền của tenant chưa (TXT verified +
+   * Brevo SPF/DKIM allowlist). Khi false, hệ thống fallback BREVO_FROM_EMAIL —
+   * UI cần hiển thị badge "Đã xác thực sở hữu" thay vì "Đã sẵn sàng gửi email"
+   * và gợi ý liên hệ ops.
+   */
+  emailSenderReady?: boolean;
 }
 
 export interface TenantBrandingResponse {

@@ -45,13 +45,23 @@ export const APEX_DOMAIN = (process.env.WHITELABEL_APEX_DOMAIN || 'sgsland.vn').
  * notification lead. Allowlist do ops cập nhật khi đã onboard CĐT trên Brevo.
  * Apex `sgsland.vn` luôn được coi là verified (default trong allowlist).
  */
-function getVerifiedSenderDomains(): Set<string> {
+export function getVerifiedSenderDomains(): Set<string> {
   const raw = process.env.BREVO_VERIFIED_SENDER_DOMAINS || '';
   const set = new Set(
     raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
   );
   set.add(APEX_DOMAIN); // apex luôn verified mặc định
   return set;
+}
+
+/**
+ * Hostname đã được Brevo authenticate (SPF/DKIM) hay chưa — tức là email
+ * `noreply@<hostname>` thực sự gửi được, không bị fallback về BREVO_FROM_EMAIL.
+ * Apex domain luôn ready (mặc định nằm trong allowlist).
+ */
+export function isHostnameSenderReady(hostname: string | null | undefined): boolean {
+  if (!hostname) return false;
+  return getVerifiedSenderDomains().has(hostname.toLowerCase());
 }
 
 export function resolveTenantSenderEmail(binding: TenantHostBinding | null): string {
@@ -443,6 +453,14 @@ export async function tickCustomDomainVerify(): Promise<void> {
           });
           evictHostCacheByTenant(row.id);
           logger.info(`[TenantBranding] Custom domain verified: ${row.custom_domain} (tenant ${row.id})`);
+          // TXT verify chỉ chứng minh ownership — Brevo có thể chưa cấu hình
+          // SPF/DKIM cho domain này → email gửi đi vẫn fallback về
+          // BREVO_FROM_EMAIL. Cảnh báo admin để liên hệ ops hoàn tất bước này.
+          if (!isHostnameSenderReady(row.custom_domain)) {
+            notifyTenantAdminsCustomDomainNotSenderReady(row.id, row.name, row.custom_domain).catch((e) => {
+              logger.warn(`[TenantBranding] notify sender-not-ready failed for tenant ${row.id}: ${e?.message || e}`);
+            });
+          }
         } else {
           // Đã verify rồi → reset failure_count nếu trước đó đang có lỗi
           if (prevFailures !== 0) {
@@ -606,6 +624,98 @@ async function notifyTenantAdminsCustomDomainLost(
       });
     } catch (e: any) {
       logger.warn(`[TenantBranding] send email failed for ${admin.email}: ${e?.message || e}`);
+    }
+  }
+}
+
+/**
+ * Gửi notification + email cho ADMIN/SUPER_ADMIN khi custom domain đã verify
+ * TXT (ownership OK) nhưng chưa được Brevo authenticate SPF/DKIM. Trong giai
+ * đoạn này, hệ thống vẫn fallback `BREVO_FROM_EMAIL` để không mất email — CĐT
+ * cần chủ động liên hệ ops để hoàn tất bước này.
+ *
+ * Dedupe theo (domain + email) trong 7 ngày để tránh spam: nếu admin đã được
+ * báo và chưa kịp xử lý, không cần nhắc lại mỗi lần verify chạy.
+ */
+export async function notifyTenantAdminsCustomDomainNotSenderReady(
+  tenantId: string,
+  tenantName: string,
+  hostname: string,
+): Promise<void> {
+  const admins = await withRlsBypass(async (client) => {
+    const r = await client.query<{ id: string; email: string; name: string }>(
+      `SELECT id, email, name
+         FROM users
+         WHERE tenant_id = $1
+           AND role IN ('ADMIN', 'SUPER_ADMIN')
+           AND status = 'ACTIVE'
+         LIMIT 20`,
+      [tenantId]
+    );
+    return r.rows;
+  });
+  if (admins.length === 0) {
+    logger.warn(`[TenantBranding] No active admins to notify (sender-not-ready) for tenant ${tenantId} (domain ${hostname})`);
+    return;
+  }
+
+  const title = `Cần cấu hình SPF/DKIM cho ${hostname}`;
+  const body =
+    `Tên miền ${hostname} đã xác thực sở hữu thành công, nhưng email gửi từ ` +
+    `noreply@${hostname} chưa được kích hoạt. Trong thời gian chờ, hệ thống ` +
+    `tạm gửi email từ địa chỉ mặc định của SGS Land. Liên hệ ops để hoàn tất ` +
+    `bước cấu hình SPF/DKIM trên Brevo.`;
+
+  for (const admin of admins) {
+    try {
+      await notificationRepository.create({
+        tenantId,
+        userId: admin.id,
+        type: 'CUSTOM_DOMAIN_SENDER_NOT_READY',
+        title,
+        body,
+        metadata: { hostname, tenantName },
+      });
+    } catch (e: any) {
+      logger.warn(`[TenantBranding] create notification (sender-not-ready) failed for user ${admin.id}: ${e?.message || e}`);
+    }
+
+    try {
+      const html = `
+        <p>Xin chào <strong>${escapeHtmlSafe(admin.name || admin.email)}</strong>,</p>
+        <p>Tên miền riêng <strong>${escapeHtmlSafe(hostname)}</strong> của workspace
+           <strong>${escapeHtmlSafe(tenantName)}</strong> đã <strong>xác thực sở hữu</strong>
+           thành công qua bản ghi TXT.</p>
+        <p>Tuy nhiên, để email thực sự gửi đi từ địa chỉ
+           <code>noreply@${escapeHtmlSafe(hostname)}</code>, đội vận hành SGS Land cần
+           cấu hình thêm SPF/DKIM cho tên miền này trên nhà cung cấp gửi email
+           (Brevo). Trong thời gian chờ, hệ thống vẫn gửi email cho khách hàng/lead
+           bình thường — nhưng địa chỉ "From" sẽ là email mặc định của SGS Land,
+           không phải tên miền riêng của bạn.</p>
+        <p><strong>Bạn cần làm gì?</strong> Liên hệ đội hỗ trợ SGS Land để yêu cầu
+           hoàn tất bước cấu hình SPF/DKIM cho <strong>${escapeHtmlSafe(hostname)}</strong>.
+           Sau khi ops cập nhật, hệ thống sẽ tự động chuyển sang gửi email bằng
+           tên miền của bạn — không cần thao tác thêm.</p>
+        <p>Nếu bạn không cần gửi email từ tên miền riêng, có thể bỏ qua email này.</p>
+        <p>— SGS Land</p>
+      `;
+      await emailService.sendEmail(tenantId, {
+        to: admin.email,
+        subject: `[SGS Land] Hoàn tất cấu hình email cho ${hostname}`,
+        html,
+        text:
+          `Tên miền ${hostname} của workspace ${tenantName} đã xác thực sở hữu, ` +
+          `nhưng cần ops cấu hình thêm SPF/DKIM trên Brevo để email thực sự gửi từ ` +
+          `noreply@${hostname}. Hiện tại hệ thống vẫn gửi email từ địa chỉ mặc định ` +
+          `của SGS Land. Vui lòng liên hệ đội hỗ trợ để hoàn tất.`,
+        template: 'custom_domain_sender_not_ready',
+        // Dedupe 7 ngày — admin chỉ cần được nhắc 1 lần/tuần cho đến khi xử lý xong.
+        dedupeKey: `custom_domain_sender_not_ready:${hostname}:${admin.email}`,
+        dedupeWindowMinutes: 7 * 24 * 60,
+        skipQuota: true,
+      });
+    } catch (e: any) {
+      logger.warn(`[TenantBranding] send sender-not-ready email failed for ${admin.email}: ${e?.message || e}`);
     }
   }
 }

@@ -324,6 +324,11 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const lostVerification =
     !!data.binding.customDomainUnverifiedAt && !verified && !!data.binding.customDomain;
   const verifiedButFailing = verified && failureCount > 0;
+  // Task #43: Sau khi TXT verify (ownership OK), Brevo có thể chưa được ops cấu
+  // hình SPF/DKIM cho domain → email vẫn fallback BREVO_FROM_EMAIL. Hiển thị
+  // badge phụ + banner để CĐT biết và liên hệ ops hoàn tất bước này.
+  const emailSenderReady = data.binding.emailSenderReady === true;
+  const verifiedButSenderNotReady = verified && !emailSenderReady && !!data.binding.customDomain;
 
   return (
     <div className="space-y-6">
@@ -646,6 +651,29 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             </p>
           </div>
         )}
+
+        {/* Task #43: TXT verify chỉ chứng minh ownership. Để email gửi từ
+            noreply@<customDomain> thực sự "đậu", ops phải onboard SPF/DKIM trên
+            Brevo và thêm domain vào allowlist. Trong giai đoạn chờ, hệ thống
+            fallback BREVO_FROM_EMAIL — báo cho CĐT biết để tránh hiểu nhầm
+            "email đang gửi từ tên miền của tôi". */}
+        {verifiedButSenderNotReady && (
+          <div className="mb-4 p-4 rounded-xl border border-sky-300 bg-sky-50 text-sky-900">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none">✉️</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold">Cần một bước nữa để gửi email từ tên miền của bạn</div>
+                <p className="text-xs mt-1 leading-relaxed">
+                  Mini-site đã hoạt động trên <strong>{data.binding.customDomain}</strong>, nhưng email
+                  thông báo cho khách hàng/lead đang tạm gửi từ địa chỉ mặc định của SGS Land. Để email
+                  thực sự gửi từ <code className="font-mono">noreply@{data.binding.customDomain}</code>,
+                  vui lòng liên hệ đội hỗ trợ SGS Land để hoàn tất bước cấu hình SPF/DKIM trên Brevo.
+                  Sau khi ops cập nhật, hệ thống sẽ tự động chuyển — bạn không cần thao tác thêm.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row items-stretch gap-2">
           <input
             type="text"
@@ -681,6 +709,27 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                 ? 'Đã xác thực — tên miền đang hoạt động.'
                 : 'Bước 1: Tạo bản ghi TXT để xác thực'}
             </div>
+            {/* Task #43: badge phụ làm rõ 2 mức "đã verify TXT" vs "đã sẵn sàng
+                gửi email" — vì TXT chỉ chứng minh ownership, chưa cấu hình SPF/DKIM. */}
+            {verified && (
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                  ✓ Đã xác thực sở hữu (TXT)
+                </span>
+                {emailSenderReady ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                    ✉️ Đã sẵn sàng gửi email (SPF/DKIM)
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[11px] font-bold border border-sky-300"
+                    title="TXT verify chỉ chứng minh sở hữu. Email từ noreply@<customDomain> chưa gửi được — cần ops cấu hình SPF/DKIM trên Brevo."
+                  >
+                    ⏳ Email chưa sẵn sàng — cần ops cấu hình SPF/DKIM
+                  </span>
+                )}
+              </div>
+            )}
             {!verified && (
               <>
                 <div className="text-xs text-amber-700">
