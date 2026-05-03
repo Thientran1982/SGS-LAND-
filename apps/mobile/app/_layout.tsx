@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack, router, type Href } from 'expo-router';
@@ -8,6 +9,53 @@ import * as Notifications from 'expo-notifications';
 import { colors } from '../src/theme/tokens';
 import { ensurePushRegistration } from '../src/notifications/registerPushToken';
 import { AuthProvider } from '../src/auth/AuthContext';
+
+/**
+ * Crash + performance monitoring (Sprint 7 — #57).
+ *
+ * We dynamic-import `@sentry/react-native` so the app keeps building when
+ * the package isn't installed (dev environments / Expo Go). The DSN is
+ * provided via `EXPO_PUBLIC_SENTRY_DSN`; without it the SDK is a no-op.
+ */
+async function initSentry(): Promise<void> {
+  const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+  if (!dsn) return;
+  try {
+    // @ts-expect-error optional native dep — installed only for production builds
+    const Sentry = await import('@sentry/react-native').catch(() => null);
+    if (!Sentry || typeof (Sentry as any).init !== 'function') return;
+    (Sentry as any).init({
+      dsn,
+      enableAutoSessionTracking: true,
+      tracesSampleRate: 0.1,
+      // Tag releases by app version so the dashboard groups crashes per build.
+      release: `sgsland-mobile@${process.env.EXPO_PUBLIC_APP_VERSION || '0.1.0'}`,
+      environment: __DEV__ ? 'development' : 'production',
+    });
+  } catch {
+    /* never let observability bring down the app */
+  }
+}
+
+/**
+ * App Tracking Transparency prompt (Sprint 7 — #57).
+ *
+ * Apple requires the prompt before any analytics SDK can read the IDFA.
+ * We trigger it on first launch and gate analytics on the result; if the
+ * native module isn't installed we just skip — analytics ID will simply
+ * remain unavailable, which is the safer default.
+ */
+async function maybeRequestTracking(): Promise<void> {
+  if (Platform.OS !== 'ios') return;
+  try {
+    // @ts-expect-error optional native dep — installed only for production builds
+    const att = await import('expo-tracking-transparency').catch(() => null);
+    if (!att || typeof (att as any).requestTrackingPermissionsAsync !== 'function') return;
+    await (att as any).requestTrackingPermissionsAsync();
+  } catch {
+    /* user can revisit in Settings — never block the UI on this */
+  }
+}
 
 // Foreground presentation: show the banner + play a sound while the app is
 // open so the user notices new-listing alerts even without backgrounding.
@@ -80,6 +128,10 @@ export default function RootLayout() {
   // and listens for taps so we can deep-link into the listing detail.
   const responseListener = useRef<Notifications.Subscription | null>(null);
   useEffect(() => {
+    // Sprint 7: observability + ATT prompt. Both are fire-and-forget and
+    // tolerate missing native modules (no-op in Expo Go / dev).
+    void initSentry();
+    void maybeRequestTracking();
     void ensurePushRegistration();
 
     // Cold-start: if the app was launched by tapping a notification, jump to it.
