@@ -63,6 +63,8 @@ import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRef
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
 import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
+import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
+import { createBuyerRoutes } from "./server/routes/buyerRoutes";
 import { startBuyerPushCron } from "./server/services/pushNotificationService";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
@@ -4082,6 +4084,11 @@ async function startServer() {
       process.env.JWT_SECRET?.slice(0, 32) ||
       '';
     app.use(apiRateLimit, createBuyerPushRoutes(pool, buyerPushSecret));
+    // Task #52 — Buyer phone+OTP login + favorites/saved-searches/leads sync.
+    // Reuse the global JWT_SECRET; tokens are scoped via `aud: 'buyer'` so
+    // they cannot be cross-used against admin/agent endpoints.
+    app.use(apiRateLimit, createBuyerAuthRoutes(JWT_SECRET));
+    app.use(apiRateLimit, createBuyerRoutes(pool, JWT_SECRET));
     try {
       startBuyerPushCron(pool);
     } catch (err: any) {

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
 import { colors } from '../src/theme/tokens';
 import { ensurePushRegistration } from '../src/notifications/registerPushToken';
+import { AuthProvider } from '../src/auth/AuthContext';
 
 // Foreground presentation: show the banner + play a sound while the app is
 // open so the user notices new-listing alerts even without backgrounding.
@@ -98,17 +99,19 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bgBase }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBar style="dark" />
-          <Stack
+          <AuthProvider>
+            <StatusBar style="dark" />
+            <Stack
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: colors.bgBase },
               animation: 'slide_from_right',
             }}
           >
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="bds/[slugId]" options={{ headerShown: false, presentation: 'card' }} />
-          </Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="bds/[slugId]" options={{ headerShown: false, presentation: 'card' }} />
+            </Stack>
+          </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

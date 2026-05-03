@@ -113,6 +113,7 @@ import m092 from './092_seed_prompts_v2_and_knowledge_filter';
 import m093 from './093_prompt_promote_log';
 import m094 from './094_email_send_metrics';
 import m095 from './095_buyer_push_notifications';
+import m096 from './096_buyer_users_and_data';
 
 dotenv.config();
 
@@ -222,6 +223,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '093_prompt_promote_log.ts': m093,
   '094_email_send_metrics.ts': m094,
   '095_buyer_push_notifications.ts': m095,
+  '096_buyer_users_and_data.ts': m096,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
