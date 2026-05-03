@@ -4118,6 +4118,19 @@ async function startServer() {
     // replay floods. The IPN endpoint is also covered; VNPay's normal
     // retry budget (5 attempts) sits well under the 600 req/min limit.
     app.use(apiRateLimit, createBookingRoutes(pool, JWT_SECRET, io));
+    // Echo VNPay return/IPN URL on boot so ops can cross-check against the
+    // VNPay merchant portal (the portal is the source of truth for IPN URL;
+    // see server/config/env.ts for why we still validate the env var).
+    try {
+      const _vncfg = (await import('./server/config/env')).loadVnpayConfig();
+      if (_vncfg) {
+        logger.info(
+          `[VNPay] env=${_vncfg.env} return=${_vncfg.returnUrl} ipn=${_vncfg.ipnUrl} — confirm these match the merchant-portal callback settings.`,
+        );
+      }
+    } catch (err: any) {
+      logger.warn(`[VNPay] config invalid at boot: ${err?.message || err}`);
+    }
     try {
       startBuyerPushCron(pool);
     } catch (err: any) {
