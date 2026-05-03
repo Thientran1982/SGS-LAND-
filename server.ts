@@ -4113,7 +4113,11 @@ async function startServer() {
     app.use(apiRateLimit, createAgentConversationRoutes(authenticateToken, io));
     // Task #56 — Buyer deposit booking + VNPay. Public IPN/return endpoints
     // live on the same router; the buyer-scoped routes use the same JWT.
-    app.use(createBookingRoutes(pool, JWT_SECRET, io));
+    // Apply the standard API rate limiter to booking + VNPay endpoints —
+    // protects /api/bookings* and /api/payments/vnpay/* from brute-force /
+    // replay floods. The IPN endpoint is also covered; VNPay's normal
+    // retry budget (5 attempts) sits well under the 600 req/min limit.
+    app.use(apiRateLimit, createBookingRoutes(pool, JWT_SECRET, io));
     try {
       startBuyerPushCron(pool);
     } catch (err: any) {

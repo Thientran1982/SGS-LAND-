@@ -109,9 +109,20 @@ export default function BookListingScreen() {
       // the booking detail (which polls for the IPN result).
       const result = await WebBrowser.openAuthSessionAsync(paymentUrl, 'sgsland://');
       // result.type ∈ 'cancel' | 'dismiss' | 'success' | 'locked'.
-      // Regardless of outcome we send the buyer to the detail screen — it
-      // is the source of truth and will reflect the eventual IPN state.
-      router.replace(`/bookings/${booking.id}`);
+      // On 'success' we get the redirect URL with our `?status=` param;
+      // forward that to the detail screen so the buyer sees an immediate
+      // provisional result (the screen still polls for the authoritative
+      // IPN state).
+      let provisionalStatus: string | null = null;
+      if (result.type === 'success' && typeof (result as any).url === 'string') {
+        const m = String((result as any).url).match(/[?&]status=([^&#]+)/);
+        if (m) provisionalStatus = decodeURIComponent(m[1]);
+      }
+      router.replace(
+        provisionalStatus
+          ? `/bookings/${booking.id}?status=${encodeURIComponent(provisionalStatus)}`
+          : `/bookings/${booking.id}`,
+      );
     } catch (err) {
       if (err instanceof ApiError) {
         setErrMsg((err.payload as any)?.error || err.message);
