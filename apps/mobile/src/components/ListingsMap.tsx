@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import type { PublicListing } from '../api/types';
@@ -20,10 +20,24 @@ const DEFAULT_REGION = {
 };
 
 export const ListingsMap: React.FC<Props> = ({ listings, onSelect }) => {
+  const mapRef = useRef<MapView | null>(null);
+
   const pinned = useMemo(
     () => listings.filter((l) => l.coordinates && Number.isFinite(l.coordinates.lat) && Number.isFinite(l.coordinates.lng)),
     [listings],
   );
+
+  // Re-fit the map whenever the result set changes — `initialRegion` only
+  // applies on first mount, so without this the map stays zoomed on the
+  // previous filter when the user changes chips while in Map mode.
+  useEffect(() => {
+    if (pinned.length === 0 || !mapRef.current) return;
+    const coords = pinned.map((l) => ({ latitude: l.coordinates!.lat, longitude: l.coordinates!.lng }));
+    mapRef.current.fitToCoordinates(coords, {
+      edgePadding: { top: 80, right: 60, bottom: 80, left: 60 },
+      animated: true,
+    });
+  }, [pinned]);
 
   const region = useMemo(() => {
     if (pinned.length === 0) return DEFAULT_REGION;
@@ -58,6 +72,7 @@ export const ListingsMap: React.FC<Props> = ({ listings, onSelect }) => {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         provider={PROVIDER_DEFAULT}
         style={StyleSheet.absoluteFill}
         initialRegion={region}

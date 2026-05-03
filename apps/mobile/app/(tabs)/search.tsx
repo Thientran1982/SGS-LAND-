@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -349,6 +350,14 @@ export default function SearchScreen() {
               icon="🔎"
               title="Không có kết quả phù hợp"
               subtitle="Thử bỏ bớt bộ lọc hoặc tìm với từ khoá khác."
+            />
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={listQuery.isRefetching && !listQuery.isFetchingNextPage}
+              onRefresh={() => listQuery.refetch()}
+              tintColor={colors.brand}
+              colors={[colors.brand]}
             />
           }
           keyboardDismissMode="on-drag"

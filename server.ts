@@ -1559,6 +1559,7 @@ async function startServer() {
       // ?junk1=...&junk2=... để evict legit entries khỏi LRU 500 slot.
       const CACHE_KEY_PARAMS = ['page', 'pageSize', 'cursor', 'cursorMode',
         'projectCode', 'type', 'types', 'transaction', 'priceMin', 'priceMax',
+        'bedroomsMin', 'areaMin', 'areaMax',
         'search', 'location', 'isVerified'];
       const cacheKey = `pl:${PUBLIC_TENANT}|${
         CACHE_KEY_PARAMS
@@ -1587,6 +1588,19 @@ async function startServer() {
       if (req.query.transaction) filters.transaction = req.query.transaction as string;
       if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin as string);
       if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax as string);
+      // Mobile-driven extra filters (mirrored on listingRepository).
+      if (req.query.bedroomsMin) {
+        const n = parseInt(req.query.bedroomsMin as string, 10);
+        if (Number.isFinite(n) && n > 0) filters.bedrooms_gte = n;
+      }
+      if (req.query.areaMin) {
+        const n = parseFloat(req.query.areaMin as string);
+        if (Number.isFinite(n) && n > 0) filters.area_gte = n;
+      }
+      if (req.query.areaMax) {
+        const n = parseFloat(req.query.areaMax as string);
+        if (Number.isFinite(n) && n > 0) filters.area_lte = n;
+      }
       if (req.query.search) filters.search = req.query.search as string;
       if (req.query.location) {
         const province = req.query.location as string;
