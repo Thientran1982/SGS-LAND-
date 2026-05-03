@@ -1263,17 +1263,25 @@ export const ListingDetail: React.FC = () => {
         return false;
     }, [currentUser, listing]);
 
-    // Get ID from clean URL (/listing/id) or legacy hash URL (#/listing/id)
-    // Guard: chỉ nhận UUID hợp lệ (8-4-4-4-12 hex) để tránh gọi API khi URL đang ở route khác
+    // Get ID from clean URL (/listing/id, /bds/<slug>-<id>) or legacy hash.
+    // Accepts both bare UUID and `<slug>-<uuid>` form so SEO-friendly URLs
+    // emitted in sitemap (`/bds/<slug>-<uuid>`) resolve to this page.
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const TRAILING_UUID_RE = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+    const extractId = (seg: string): string => {
+        if (!seg) return '';
+        if (UUID_RE.test(seg)) return seg;
+        const m = seg.match(TRAILING_UUID_RE);
+        return m ? m[1] : '';
+    };
     const id = (() => {
         const hash = window.location.hash;
         if (hash && hash.startsWith('#/')) {
             const seg = hash.split('/').filter(Boolean).pop() || '';
-            return UUID_RE.test(seg) ? seg : '';
+            return extractId(seg);
         }
         const seg = window.location.pathname.split('/').filter(Boolean).pop() || '';
-        return UUID_RE.test(seg) ? seg : '';
+        return extractId(seg);
     })();
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {

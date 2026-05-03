@@ -274,7 +274,21 @@ export const ProductSearch: React.FC = () => {
 
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-    const handleNavigate = (id: string) => window.location.hash = `#/${ROUTES.LISTING}/${id}`;
+    // SEO-friendly URL: /bds/<slug>-<uuid>. Slug is best-effort from the
+    // listing title/code/location so Googlebot indexes a human-readable URL;
+    // server only uses the trailing UUID for lookup.
+    const slugify = (s: string) => String(s || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60);
+    const handleNavigate = (id: string) => {
+        const item = visibleListings.find(l => l.id === id);
+        const slug = slugify(item?.title || item?.code || item?.location || 'bat-dong-san') || 'bat-dong-san';
+        window.location.hash = `#/${ROUTES.LISTING_BDS}/${slug}-${id}`;
+    };
 
     // GRID/LIST: current page from server, apply client-side favorites filter
     const visibleListings = useMemo(() => {

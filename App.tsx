@@ -210,6 +210,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.DU_AN]: ProjectLandingPage,
     [ROUTES.LOGIN]: Login,
     [ROUTES.LISTING]: ListingDetail, 
+    [ROUTES.LISTING_BDS]: ListingDetail,
 
     // Private
     [ROUTES.DASHBOARD]: Dashboard,
@@ -286,7 +287,8 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.RESET_PASSWORD,
     ROUTES.VERIFY_EMAIL,
     ROUTES.PUBLIC_PREFIX,
-    ROUTES.LISTING
+    ROUTES.LISTING,
+    ROUTES.LISTING_BDS
 ]);
 
 // -----------------------------------------------------------------------------

@@ -1759,7 +1759,18 @@ export function buildListingMeta(listing: any): MetaData {
 
   const images: string[] = Array.isArray(listing.images) ? listing.images : [];
   const image = images[0] || DEFAULT_IMAGE;
-  const url = `${APP_URL}/listing/${listing.id}`;
+  // SEO-friendly canonical URL: /bds/<slug>-<id>. Server accepts both
+  // /bds/<slug>-<uuid> and legacy /listing/<uuid>; canonical points buyers
+  // and search engines to the human-readable form.
+  const slugify = (s: string) => String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  const slug = slugify(listing.title || listing.code || '') || 'bat-dong-san';
+  const url = `${APP_URL}/bds/${slug}-${listing.id}`;
 
   const structuredData: any = {
     '@context': 'https://schema.org',
