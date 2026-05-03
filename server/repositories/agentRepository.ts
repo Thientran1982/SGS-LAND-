@@ -19,6 +19,11 @@ export interface AgentSkill {
   prompt_fragment: string;
 }
 
+export interface AgentKnowledgeFilter {
+  domains?: string[];
+  [k: string]: any;
+}
+
 export interface AiAgent {
   id: string;
   tenantId: string;
@@ -31,6 +36,7 @@ export interface AiAgent {
   model: string | null;
   active: boolean;
   metadata: Record<string, any>;
+  knowledgeFilter: AgentKnowledgeFilter;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,6 +89,7 @@ class AgentRepository extends BaseRepository {
       model:             row.model || null,
       active:            row.active ?? true,
       metadata:          row.metadata || {},
+      knowledgeFilter:   row.knowledge_filter || {},
       createdAt:         row.created_at,
       updatedAt:         row.updated_at,
     };
@@ -155,8 +162,7 @@ class AgentRepository extends BaseRepository {
           [role]
         );
         if (!res.rows.length) return null;
-        const row = res.rows[0];
-        const agent = { ...this.rowToAgent(row), knowledgeFilter: row.knowledge_filter } as AiAgent & { knowledgeFilter?: any };
+        const agent = this.rowToAgent(res.rows[0]);
         agentCache.set(cacheKey, { agent, expiresAt: Date.now() + AGENT_CACHE_TTL_MS });
         return agent;
       });

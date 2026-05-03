@@ -1,15 +1,19 @@
 /**
  * AI Agent Evaluation Harness — Task #38
  *
- * Chạy gold-set qua ROUTER (intent classification) + WRITER (output keyword check).
- * Báo cáo accuracy per-intent, fail cases, và lưu run log.
+ * Hai chế độ:
+ *   • DEFAULT (router-only): chỉ chạy ROUTER, kiểm intent + expectedAgent
+ *     mapping + keyword. Nhanh, không cần auth/DB. Dùng cho CI smoke.
+ *   • E2E   (--e2e):      gọi POST /api/ai/chat (cần token + tenant), kiểm
+ *     toàn pipeline Router → Specialist → Writer + mustHaveCitation
+ *     ("[Nguồn:" trong final response).
  *
  * Usage:
- *   npm run ai:eval                          # full gold-set
- *   npm run ai:eval -- --tag router          # chỉ chạy case có id bắt đầu 'router-'
- *   npm run ai:eval -- --limit 5             # 5 case đầu
- *
- * Yêu cầu: GEMINI_API_KEY + DATABASE_URL trong env.
+ *   npm run ai:eval                              # router-only
+ *   npm run ai:eval -- --e2e                     # full pipeline (cần EVAL_API_BASE + EVAL_TOKEN)
+ *   npm run ai:eval -- --tag legal               # chỉ case có id 'legal-*'
+ *   npm run ai:eval -- --limit 5                 # 5 case đầu
+ *   npm run ai:eval -- --threshold 0.85          # chặn nếu accuracy < 85%
  */
 
 import 'dotenv/config';
@@ -22,17 +26,26 @@ interface GoldCase {
   id: string;
   input: string;
   expectedIntent: string;
+  expectedAgent: string;
   mustContain?: string[];
   mustNotContain?: string[];
+  mustHaveCitation?: boolean;
+}
+
+interface CheckResult {
+  passed: boolean;
+  reasons: string[];
 }
 
 interface RunResult {
   id: string;
-  input: string;
+  agent: string;
   expectedIntent: string;
   actualIntent: string;
   intentMatch: boolean;
-  containCheck: { passed: boolean; missing: string[]; forbidden: string[] };
+  agentMatch: boolean;
+  contentCheck: CheckResult;
+  citationCheck: CheckResult;
   durationMs: number;
   error?: string;
 }
@@ -45,6 +58,19 @@ const ROUTER_SCHEMA = {
     extraction: { type: Type.OBJECT, properties: {} },
   },
   required: ['next_step'],
+};
+
+// Same intent→agent mapping as server/ai.ts orchestrator.
+const INTENT_TO_AGENT: Record<string, string> = {
+  SEARCH_INVENTORY:    'inventory_specialist',
+  EXPLAIN_LEGAL:       'legal_specialist',
+  CALCULATE_LOAN:      'finance_specialist',
+  ESTIMATE_VALUATION:  'valuation_specialist',
+  DRAFT_CONTRACT:      'contract_specialist',
+  EXPLAIN_MARKETING:   'marketing_specialist',
+  ANALYZE_LEAD:        'lead_analyst',
+  DIRECT_ANSWER:       'writer',
+  CLARIFY:             'writer',
 };
 
 async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent: string; raw: string }> {
@@ -64,15 +90,37 @@ async function callRouter(client: GoogleGenAI, input: string): Promise<{ intent:
   return { intent: parsed?.next_step || 'UNKNOWN', raw: txt };
 }
 
-function checkContent(
-  text: string,
-  mustContain: string[] = [],
-  mustNotContain: string[] = []
-): { passed: boolean; missing: string[]; forbidden: string[] } {
+async function callE2E(input: string): Promise<{ intent: string; finalText: string }> {
+  const base = process.env.EVAL_API_BASE || 'http://localhost:5000';
+  const token = process.env.EVAL_TOKEN;
+  if (!token) throw new Error('EVAL_TOKEN env missing — required for --e2e');
+  const res = await fetch(`${base}/api/ai/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ message: input, conversationId: null }),
+  });
+  if (!res.ok) throw new Error(`E2E HTTP ${res.status}: ${await res.text()}`);
+  const data: any = await res.json();
+  return {
+    intent: data?.intent || data?.plan?.next_step || 'UNKNOWN',
+    finalText: data?.response || data?.finalResponse || data?.message || '',
+  };
+}
+
+function checkContent(text: string, mustContain: string[] = [], mustNotContain: string[] = []): CheckResult {
   const lower = text.toLowerCase();
   const missing = mustContain.filter(k => !lower.includes(k.toLowerCase()));
   const forbidden = mustNotContain.filter(k => lower.includes(k.toLowerCase()));
-  return { passed: missing.length === 0 && forbidden.length === 0, missing, forbidden };
+  const reasons: string[] = [];
+  if (missing.length) reasons.push(`missing: ${missing.join(', ')}`);
+  if (forbidden.length) reasons.push(`forbidden: ${forbidden.join(', ')}`);
+  return { passed: reasons.length === 0, reasons };
+}
+
+function checkCitation(text: string, required: boolean): CheckResult {
+  if (!required) return { passed: true, reasons: [] };
+  const has = /\[Nguồn[:：]/i.test(text) || /Theo (Luật|Nghị định|Thông tư|CBRE|Savills|JLL|HoREA|VARS)/i.test(text);
+  return has ? { passed: true, reasons: [] } : { passed: false, reasons: ['no [Nguồn:] / source citation'] };
 }
 
 async function main() {
@@ -83,10 +131,13 @@ async function main() {
   }
 
   const args = process.argv.slice(2);
+  const isE2E = args.includes('--e2e');
   const tagIdx = args.indexOf('--tag');
   const limitIdx = args.indexOf('--limit');
+  const thIdx = args.indexOf('--threshold');
   const tag = tagIdx >= 0 ? args[tagIdx + 1] : null;
   const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : Infinity;
+  const threshold = thIdx >= 0 ? Number(args[thIdx + 1]) : 0.8;
 
   const goldPath = path.resolve(process.cwd(), 'seed/eval/agent-goldset.json');
   const gold = JSON.parse(fs.readFileSync(goldPath, 'utf-8')) as { cases: GoldCase[] };
@@ -94,7 +145,7 @@ async function main() {
   if (tag) cases = cases.filter(c => c.id.startsWith(tag));
   cases = cases.slice(0, limit);
 
-  console.log(`🚀 Running ${cases.length} eval case(s) (tag=${tag || '*'}, limit=${limit})\n`);
+  console.log(`🚀 Running ${cases.length} eval case(s) — mode=${isE2E ? 'E2E' : 'router-only'}, tag=${tag || '*'}, threshold=${threshold}\n`);
 
   const client = new GoogleGenAI({ apiKey });
   const results: RunResult[] = [];
@@ -102,30 +153,59 @@ async function main() {
   for (const c of cases) {
     const t0 = Date.now();
     try {
-      const router = await callRouter(client, c.input);
-      const intentMatch = router.intent === c.expectedIntent;
-      // Note: full WRITER call would require DB + tenant context. For now we
-      // validate keyword presence on ROUTER's raw JSON — a lightweight proxy.
-      const containCheck = checkContent(router.raw, c.mustContain, c.mustNotContain);
+      let actualIntent: string;
+      let textToCheck: string;
+      if (isE2E) {
+        const e = await callE2E(c.input);
+        actualIntent = e.intent;
+        textToCheck = e.finalText;
+      } else {
+        const r = await callRouter(client, c.input);
+        actualIntent = r.intent;
+        textToCheck = r.raw;
+      }
+
+      const intentMatch = actualIntent === c.expectedIntent;
+      const mappedAgent = INTENT_TO_AGENT[actualIntent] || 'unknown';
+      const agentMatch = mappedAgent === c.expectedAgent;
+      const contentCheck = checkContent(textToCheck, c.mustContain, c.mustNotContain);
+      // Citation check only meaningful in E2E mode (router JSON never carries citations)
+      const citationCheck = isE2E
+        ? checkCitation(textToCheck, !!c.mustHaveCitation)
+        : { passed: true, reasons: [] };
+
       results.push({
         id: c.id,
-        input: c.input,
+        agent: c.expectedAgent,
         expectedIntent: c.expectedIntent,
-        actualIntent: router.intent,
+        actualIntent,
         intentMatch,
-        containCheck,
+        agentMatch,
+        contentCheck,
+        citationCheck,
         durationMs: Date.now() - t0,
       });
-      const mark = intentMatch ? '✓' : '✗';
-      console.log(`${mark} ${c.id.padEnd(15)} expect=${c.expectedIntent.padEnd(20)} got=${router.intent.padEnd(20)} (${Date.now() - t0}ms)`);
+
+      const fullPass = intentMatch && agentMatch && contentCheck.passed && citationCheck.passed;
+      const mark = fullPass ? '✓' : '✗';
+      console.log(
+        `${mark} ${c.id.padEnd(15)} ${c.expectedAgent.padEnd(22)} ` +
+        `intent=${intentMatch ? 'OK' : `${actualIntent}≠${c.expectedIntent}`}  ` +
+        `agent=${agentMatch ? 'OK' : 'FAIL'}  ` +
+        `content=${contentCheck.passed ? 'OK' : contentCheck.reasons.join(';')}  ` +
+        `cite=${citationCheck.passed ? 'OK' : 'MISSING'}  ` +
+        `(${Date.now() - t0}ms)`
+      );
     } catch (e: any) {
       results.push({
         id: c.id,
-        input: c.input,
+        agent: c.expectedAgent,
         expectedIntent: c.expectedIntent,
         actualIntent: 'ERROR',
         intentMatch: false,
-        containCheck: { passed: false, missing: [], forbidden: [] },
+        agentMatch: false,
+        contentCheck: { passed: false, reasons: [e?.message || String(e)] },
+        citationCheck: { passed: false, reasons: [] },
         durationMs: Date.now() - t0,
         error: e?.message || String(e),
       });
@@ -133,59 +213,72 @@ async function main() {
     }
   }
 
-  // Aggregate
+  // ── Aggregate ────────────────────────────────────────────────────────────
   const total = results.length;
   const intentPass = results.filter(r => r.intentMatch).length;
-  const fullPass = results.filter(r => r.intentMatch && r.containCheck.passed).length;
+  const agentPass = results.filter(r => r.agentMatch).length;
+  const fullPass = results.filter(r => r.intentMatch && r.agentMatch && r.contentCheck.passed && r.citationCheck.passed).length;
 
-  const byIntent: Record<string, { total: number; pass: number }> = {};
+  const byAgent: Record<string, { total: number; intent: number; agent: number; full: number }> = {};
   for (const r of results) {
-    const k = r.expectedIntent;
-    if (!byIntent[k]) byIntent[k] = { total: 0, pass: 0 };
-    byIntent[k].total++;
-    if (r.intentMatch) byIntent[k].pass++;
+    const k = r.agent;
+    if (!byAgent[k]) byAgent[k] = { total: 0, intent: 0, agent: 0, full: 0 };
+    byAgent[k].total++;
+    if (r.intentMatch) byAgent[k].intent++;
+    if (r.agentMatch) byAgent[k].agent++;
+    if (r.intentMatch && r.agentMatch && r.contentCheck.passed && r.citationCheck.passed) byAgent[k].full++;
   }
 
-  console.log('\n' + '═'.repeat(60));
-  console.log('📊 EVAL SUMMARY');
-  console.log('═'.repeat(60));
+  console.log('\n' + '═'.repeat(72));
+  console.log(`📊 EVAL SUMMARY — mode=${isE2E ? 'E2E (Router→Specialist→Writer)' : 'router-only'}`);
+  console.log('═'.repeat(72));
   console.log(`Total cases:        ${total}`);
   console.log(`Intent accuracy:    ${intentPass}/${total} (${((intentPass / total) * 100).toFixed(1)}%)`);
+  console.log(`Agent routing:      ${agentPass}/${total} (${((agentPass / total) * 100).toFixed(1)}%)`);
   console.log(`Full pass:          ${fullPass}/${total} (${((fullPass / total) * 100).toFixed(1)}%)`);
-  console.log('\nPer-intent breakdown:');
-  for (const [intent, s] of Object.entries(byIntent).sort()) {
-    const pct = ((s.pass / s.total) * 100).toFixed(0);
-    console.log(`  ${intent.padEnd(22)} ${s.pass}/${s.total} (${pct}%)`);
+  console.log('\nPer-agent breakdown:');
+  console.log('  agent                  total  intent%  agent%  full%');
+  for (const [agent, s] of Object.entries(byAgent).sort()) {
+    const ip = ((s.intent / s.total) * 100).toFixed(0).padStart(3);
+    const ap = ((s.agent / s.total) * 100).toFixed(0).padStart(3);
+    const fp = ((s.full / s.total) * 100).toFixed(0).padStart(3);
+    console.log(`  ${agent.padEnd(22)} ${String(s.total).padStart(5)}  ${ip}%    ${ap}%    ${fp}%`);
   }
 
-  const failures = results.filter(r => !r.intentMatch);
+  const failures = results.filter(r => !r.intentMatch || !r.agentMatch || !r.contentCheck.passed || !r.citationCheck.passed);
   if (failures.length) {
     console.log('\nFailures:');
     for (const f of failures) {
-      console.log(`  [${f.id}] "${f.input.slice(0, 60)}" → expected ${f.expectedIntent}, got ${f.actualIntent}${f.error ? ` (${f.error})` : ''}`);
+      const why: string[] = [];
+      if (!f.intentMatch) why.push(`intent ${f.actualIntent}≠${f.expectedIntent}`);
+      if (!f.agentMatch) why.push('agent-route');
+      if (!f.contentCheck.passed) why.push(`content[${f.contentCheck.reasons.join(';')}]`);
+      if (!f.citationCheck.passed) why.push('citation');
+      console.log(`  [${f.id}] ${f.agent} → ${why.join(', ')}${f.error ? ` (${f.error})` : ''}`);
     }
   }
 
-  // Persist run log
+  // ── Persist run log ──────────────────────────────────────────────────────
   const outDir = path.resolve(process.cwd(), '.local/eval-runs');
   fs.mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const outFile = path.join(outDir, `eval-${stamp}.json`);
+  const outFile = path.join(outDir, `eval-${isE2E ? 'e2e' : 'router'}-${stamp}.json`);
   fs.writeFileSync(outFile, JSON.stringify({
     timestamp: new Date().toISOString(),
-    summary: { total, intentPass, fullPass, accuracy: intentPass / total },
-    byIntent,
+    mode: isE2E ? 'e2e' : 'router-only',
+    summary: { total, intentPass, agentPass, fullPass, intentAccuracy: intentPass / total, fullAccuracy: fullPass / total },
+    byAgent,
     results,
   }, null, 2));
   console.log(`\n📝 Run saved to ${path.relative(process.cwd(), outFile)}`);
 
-  // Exit code reflects pass rate (fail if < 80% intent accuracy)
-  const passRate = intentPass / total;
-  if (passRate < 0.8) {
-    console.log(`\n✗ FAIL: intent accuracy ${(passRate * 100).toFixed(1)}% < 80% threshold`);
+  // Exit code based on intent accuracy threshold (full pass only enforced in E2E mode)
+  const passRate = isE2E ? fullPass / total : intentPass / total;
+  if (passRate < threshold) {
+    console.log(`\n✗ FAIL: pass rate ${(passRate * 100).toFixed(1)}% < ${(threshold * 100).toFixed(0)}% threshold`);
     process.exit(1);
   }
-  console.log(`\n✓ PASS: intent accuracy ${(passRate * 100).toFixed(1)}% ≥ 80% threshold`);
+  console.log(`\n✓ PASS: pass rate ${(passRate * 100).toFixed(1)}% ≥ ${(threshold * 100).toFixed(0)}% threshold`);
 }
 
 main().catch(err => {
