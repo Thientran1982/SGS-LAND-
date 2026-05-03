@@ -90,6 +90,20 @@ function setCachedToolData(key: string, value: any, ttlMs = 300_000) {
     toolDataCache.set(key, { value, expiresAt: Date.now() + ttlMs });
 }
 
+/**
+ * Clear cached prompt template for a tenant — called by AI Governance when
+ * an admin promotes a new version so the next request picks it up immediately.
+ */
+export function clearPromptCache(tenantId: string, templateKey?: string): void {
+    if (templateKey) {
+        toolDataCache.delete(`prompt:${tenantId}:${templateKey}`);
+    } else {
+        for (const key of toolDataCache.keys()) {
+            if (key.startsWith(`prompt:${tenantId}:`)) toolDataCache.delete(key);
+        }
+    }
+}
+
 // --- RLHF: Few-shot examples & negative rules from feedback ---
 interface RlhfContext {
     fewShotSection: string;
@@ -1802,14 +1816,37 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
             // Define currentIntent early (also used in RLHF section below)
             const currentIntent = state.plan?.next_step || 'DIRECT_ANSWER';
 
-            // ── RAG: Lấy context từ knowledge base ────────────────────────────────
-            // Chỉ gọi RAG khi intent phù hợp (không gọi khi định giá vì đã có AVM engine)
-            const RAG_INTENTS = new Set(['DIRECT_ANSWER', 'SEARCH_INVENTORY', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'CLARIFY']);
+            // ── RAG: Lấy context từ knowledge base, scoped per-agent ──────────────
+            // Chỉ gọi RAG khi intent phù hợp (không gọi khi định giá vì đã có AVM engine).
+            // Mỗi intent map tới role agent → fetch knowledge_filter.domains để giới hạn nguồn.
+            const RAG_INTENTS = new Set(['DIRECT_ANSWER', 'SEARCH_INVENTORY', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'CALCULATE_LOAN', 'ANALYZE_LEAD', 'CLARIFY']);
+            const INTENT_TO_ROLE: Record<string, string> = {
+                EXPLAIN_LEGAL:     'legal_specialist',
+                DRAFT_CONTRACT:    'contract_specialist',
+                CALCULATE_LOAN:    'finance_specialist',
+                SEARCH_INVENTORY:  'inventory_specialist',
+                EXPLAIN_MARKETING: 'marketing_specialist',
+                ANALYZE_LEAD:      'lead_analyst',
+                DIRECT_ANSWER:     'writer',
+                CLARIFY:           'writer',
+            };
             let ragKnowledgeSection = '';
             if (RAG_INTENTS.has(currentIntent)) {
                 try {
-                    const { buildRagContext: _rag } = await import('./services/ragService');
-                    ragKnowledgeSection = await _rag(state.tenantId, state.userMessage, 4);
+                    const [{ buildRagContext: _rag }, { agentRepository: _agentRepo }] = await Promise.all([
+                        import('./services/ragService'),
+                        import('./repositories/agentRepository'),
+                    ]);
+                    let domains: string[] | undefined;
+                    const role = INTENT_TO_ROLE[currentIntent];
+                    if (role) {
+                        const agent = await _agentRepo.getAgentByRole(state.tenantId, role);
+                        const kf: any = (agent as any)?.knowledgeFilter || (agent as any)?.metadata?.knowledge_filter;
+                        if (Array.isArray(kf?.domains) && kf.domains.length > 0) {
+                            domains = kf.domains;
+                        }
+                    }
+                    ragKnowledgeSection = await _rag(state.tenantId, state.userMessage, 4, { domains });
                 } catch (_ragErr) {
                     // RAG lỗi không nên chặn AI — im lặng bỏ qua
                 }
@@ -2161,9 +2198,27 @@ YÊU CẦU VIẾT PHẢN HỒI:
             });
             trackAiUsage('CHAT_WRITER', writerModel, Date.now() - _writerStart, writerPrompt, writerRes.text || '', { tenantId: state.tenantId });
 
-            const preview = (writerRes.text || '').slice(0, 80).replace(/\n/g, ' ');
+            // ── Citation enforcement (post-processor) ─────────────────────────────
+            // Intent CALCULATE_LOAN/EXPLAIN_LEGAL/DRAFT_CONTRACT/ESTIMATE_VALUATION
+            // bắt buộc câu trả lời có chứa "[Nguồn:" nếu nói về số liệu/luật cụ thể.
+            // Nếu thiếu → append disclaimer thay vì chặn cứng.
+            const CITATION_REQUIRED = new Set(['CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'DRAFT_CONTRACT', 'ESTIMATE_VALUATION']);
+            let finalText = writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?";
+            if (CITATION_REQUIRED.has(currentIntent)) {
+                const hasCitation = /\[Nguồn[:：]/i.test(finalText) || /Theo (Luật|Nghị định|Thông tư|CBRE|Savills|JLL|HoREA|VARS)/i.test(finalText);
+                const hasNumericClaim = /\d+\s*(%|\/năm|\/tháng|tỷ|triệu|tr\b|VNĐ|đ)/i.test(finalText);
+                if (!hasCitation && hasNumericClaim) {
+                    finalText += `\n\n⚠ Lưu ý: Số liệu trên là ước tính tham khảo, anh/chị cần xác minh lại với nguồn chính thức (ngân hàng / cơ quan có thẩm quyền) trước khi quyết định.`;
+                    feedbackRepository.logObservation(state.tenantId, 'WRITER', currentIntent, 'CITATION_MISSING', {
+                        intent: currentIntent,
+                        textPreview: finalText.slice(0, 120),
+                    }).catch(() => {});
+                }
+            }
+
+            const preview = finalText.slice(0, 80).replace(/\n/g, ' ');
             this.updateTrace(state.trace, preview || 'Đã tạo phản hồi.', writerModel);
-            return { finalResponse: writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?" };
+            return { finalResponse: finalText };
         });
 
         // Node 2h: Valuation Agent (định giá BĐS realtime + internal comps)

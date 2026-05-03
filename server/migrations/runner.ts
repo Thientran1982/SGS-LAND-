@@ -109,6 +109,7 @@ import m088 from './088_visitor_tracking_and_lead_attribution';
 import m089 from './089_seed_ai_agents';
 import m090 from './090_seed_prompt_templates';
 import m091 from './091_ai_agents_knowledge_filter';
+import m092 from './092_seed_prompts_v2_and_knowledge_filter';
 
 dotenv.config();
 
@@ -214,6 +215,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '089_seed_ai_agents.ts': m089,
   '090_seed_prompt_templates.ts': m090,
   '091_ai_agents_knowledge_filter.ts': m091,
+  '092_seed_prompts_v2_and_knowledge_filter.ts': m092,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

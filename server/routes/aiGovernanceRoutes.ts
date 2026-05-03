@@ -61,6 +61,50 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     }
   });
 
+  // Promote a specific version to ACTIVE — sets active_version + flips status,
+  // clears prompt cache so next AI call uses the new version immediately.
+  router.post('/prompt-templates/:id/promote', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req as any).user?.tenantId;
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN'].includes(user?.role)) {
+        return res.status(403).json({ error: 'Only admins can promote prompt versions' });
+      }
+      const targetVersion = Number(req.body?.version);
+      if (!Number.isFinite(targetVersion) || targetVersion < 1) {
+        return res.status(400).json({ error: 'version (positive integer) is required' });
+      }
+
+      const tpl = await aiGovernanceRepository.getPromptTemplateById(tenantId, req.params.id as string);
+      if (!tpl) return res.status(404).json({ error: 'Template not found' });
+
+      const versions = Array.isArray(tpl.versions) ? tpl.versions : [];
+      const target = versions.find((v: any) => Number(v.version) === targetVersion);
+      if (!target) return res.status(404).json({ error: `Version ${targetVersion} not found in this template` });
+
+      const newVersions = versions.map((v: any) => ({
+        ...v,
+        status: Number(v.version) === targetVersion ? 'ACTIVE' : (v.status === 'ACTIVE' ? 'ARCHIVED' : v.status),
+      }));
+
+      const updated = await aiGovernanceRepository.updatePromptTemplate(tenantId, req.params.id as string, {
+        versions: newVersions,
+        activeVersion: targetVersion,
+      });
+
+      // Clear in-process prompt cache so next request picks up the new active content.
+      try {
+        const { clearPromptCache } = await import('../ai');
+        clearPromptCache?.(tenantId, tpl.name);
+      } catch { /* cache clear is best-effort */ }
+
+      res.json({ success: true, template: updated, promotedVersion: targetVersion });
+    } catch (error) {
+      console.error('Error promoting prompt version:', error);
+      res.status(500).json({ error: 'Failed to promote prompt version' });
+    }
+  });
+
   router.delete('/prompt-templates/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const tenantId = (req as any).user?.tenantId;

@@ -64,6 +64,7 @@ interface PromptsTabProps {
     onInsertVar: (v: string) => void;
     onRunSim: () => void;
     onSaveVersion: (status: 'DRAFT' | 'APPROVED') => void;
+    onPromoteVersion: (version: number) => void;
     onCreateOpen: () => void;
     onSetTestInput: (s: string) => void;
     t: any;
@@ -196,7 +197,7 @@ const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string }[] = [
 
 const PromptsTab = memo(({ 
     prompts, promptDefaults, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
-    onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onCreateOpen, onSetTestInput, t 
+    onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onPromoteVersion, onCreateOpen, onSetTestInput, t 
 }: PromptsTabProps) => {
     const configuredKeys = new Set((prompts || []).map(p => p.name));
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -298,6 +299,28 @@ const PromptsTab = memo(({
                         <div>
                             <h3 className="font-bold text-[var(--text-primary)] text-lg">{selectedPrompt.name} <span className="text-[var(--text-secondary)] font-normal text-sm ml-1">v{selectedPrompt.activeVersion}</span></h3>
                             <p className="text-xs text-[var(--text-tertiary)] max-w-md truncate">{selectedPrompt.description}</p>
+                            {(selectedPrompt.versions || []).length > 1 && (
+                                <div className="flex gap-1 mt-2 flex-wrap items-center">
+                                    <span className="text-2xs text-[var(--text-tertiary)] mr-1">Phiên bản:</span>
+                                    {(selectedPrompt.versions || []).map(v => {
+                                        const isActive = v.version === selectedPrompt.activeVersion;
+                                        return (
+                                            <button
+                                                key={v.version}
+                                                onClick={() => !isActive && onPromoteVersion(v.version)}
+                                                title={isActive ? 'Đang dùng' : `Promote v${v.version} (${v.status})`}
+                                                className={`px-2 py-0.5 rounded font-mono text-2xs border transition-colors ${
+                                                    isActive
+                                                        ? 'bg-emerald-100 border-emerald-300 text-emerald-700 cursor-default'
+                                                        : 'bg-white border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600'
+                                                }`}
+                                            >
+                                                v{v.version}{v.status === 'DRAFT' ? '·draft' : ''}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => onSaveVersion('DRAFT')} className="px-3 py-1.5 border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold text-xs rounded-lg hover:bg-[var(--glass-surface)] transition-colors">{t('ai.draft')}</button>
@@ -863,6 +886,15 @@ export const AiGovernance: React.FC = () => {
                     onInsertVar={(v) => setEditContent(prev => prev + v)}
                     onRunSim={handleRunSim}
                     onSaveVersion={handleSaveVersion}
+                    onPromoteVersion={async (version) => {
+                        if (!selectedPrompt) return;
+                        if (!confirm(`Promote phiên bản v${version} thành ACTIVE? Các request mới sẽ dùng prompt này ngay lập tức.`)) return;
+                        try {
+                            await db.promotePromptVersion(selectedPrompt.id, version);
+                            notify(`Đã promote v${version} thành ACTIVE`, 'success');
+                            fetchData();
+                        } catch (e) { notify(t('common.error'), 'error'); }
+                    }}
                     onCreateOpen={() => setIsCreateOpen(true)}
                     onSetTestInput={setTestInput}
                     t={t}
