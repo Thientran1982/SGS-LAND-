@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "SGS Land",
+    "slug": "sgsland-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "sgsland",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "vn.sgsland.mobile",
+      "associatedDomains": ["applinks:sgsland.vn"],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "vn.sgsland.mobile",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "sgsland.vn", "pathPrefix": "/bds" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}

@@ -182,3 +182,15 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - Idempotent (upsert theo cặp `tenant_id + code`); rerun không tạo duplicate.
 - `up()` throw nếu host tenant chưa tồn tại (không soft-skip để tránh runner đánh dấu "applied" nhầm).
 - `down()` clear cả `project_id` và `project_code` rồi delete projects do chính migration này tạo.
+
+## Bước 3 — Mobile App Phase 1 (Buyer Expo) — Task #51
+
+- New green-field Expo SDK 52 + Expo Router 4 app at `apps/mobile/` for the end-buyer side of the marketplace (sgsland.vn). Bundle ID `vn.sgsland.mobile`, scheme `sgsland`, universal links for `sgsland.vn/bds/*`.
+- **Sprints delivered (0-2 of 8):**
+  - **Sprint 0 — Foundation**: package.json (Expo SDK 52, RN 0.76, Expo Router 4, TanStack Query 5, AsyncStorage), app.json, tsconfig (path alias `@/*` → `src/*`), babel/metro config, eas.json, .env.example, .gitignore.
+  - **Sprint 1 — Discovery + Search**: typed API client (`src/api/{client,types,listings}.ts`) consumes existing `/api/public/listings` (cursor pagination), `/api/public/locations`, `/api/public/listings/:slugId`, `/api/public/listings/:id/similar`. Tabs: Home (featured + recent), Search (query + city filter, infinite list), Favorites (AsyncStorage-backed), Account (placeholder for buyer auth Sprint 3).
+  - **Sprint 2 — Detail + Lead**: `app/bds/[slugId].tsx` — image gallery, specs grid, lead form with name/phone/note (VN phone validation), `useMutation` POST to `/api/public/listings/:id/leads` with `source='mobile-app'`, similar listings, hotline/zalo CTA bar (+84 971 132 378), branding-aware accent color reading `item.branding.primaryColor` (piggybacks Task #28 white-label).
+- **Code organization**: Pure StyleSheet (no NativeWind), emoji icons (no @expo/vector-icons) to keep bundle small. Theme tokens mirror web palette (`src/theme/tokens.ts`).
+- **Root tsconfig**: `apps` added to `exclude` so root `tsc --noEmit` lint stays green without RN deps installed at root. Mobile app has its own tsconfig.
+- **Install workflow**: Documented in `apps/mobile/README.md` — `cd apps/mobile && npm install && npx expo start`. Dependencies (~500MB Expo) NOT installed at session boundary; install on first dev/build.
+- **Sprints 3-7 deferred** (require backend work): buyer auth/OTP, push notifications (Expo push tokens), in-app messaging, VNPay payment for hold deposit, store account submission (App Store/Play Store).
