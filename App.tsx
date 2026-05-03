@@ -767,7 +767,7 @@ const AppShell: React.FC = () => {
             if (route.base === ROUTES.PUBLIC_PREFIX) {
                 const token = route.params[0];
                 return (
-                    <div className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]">
+                    <div className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]">
                         <ErrorBoundary>
                             <Suspense fallback={SmallSpinner}>
                                 {token?.startsWith('contract_') ? <PublicContract token={token} /> :
@@ -782,7 +782,7 @@ const AppShell: React.FC = () => {
             const PublicPage = PAGE_REGISTRY[route.base];
             if (PublicPage) {
                 return (
-                    <div className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]">
+                    <div className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]">
                         <ErrorBoundary>
                             <Suspense fallback={SmallSpinner}>
                                 <PublicPage />
@@ -848,7 +848,7 @@ const AppShell: React.FC = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
+                            className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                         >
                             <ErrorBoundary>
                                 <Suspense fallback={SmallSpinner}>
@@ -869,7 +869,7 @@ const AppShell: React.FC = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
+                            className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                         >
                             <ErrorBoundary>
                                 <Suspense fallback={SmallSpinner}>
@@ -888,7 +888,7 @@ const AppShell: React.FC = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.1 }}
-                        className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
+                        className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
                             <Suspense fallback={SmallSpinner}>
@@ -910,7 +910,7 @@ const AppShell: React.FC = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.1 }}
-                        className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
+                        className="h-[100dvh] w-full overflow-y-auto show-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
                             <Suspense fallback={SmallSpinner}>
