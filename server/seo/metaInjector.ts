@@ -1772,24 +1772,57 @@ export function buildListingMeta(listing: any): MetaData {
   const slug = slugify(listing.title || listing.code || '') || 'bat-dong-san';
   const url = `${APP_URL}/bds/${slug}-${listing.id}`;
 
-  const structuredData: any = {
-    '@context': 'https://schema.org',
+  // Breadcrumb: Trang chủ → Marketplace → <listing>
+  const breadcrumb = {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: `${APP_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Marketplace BĐS', item: `${APP_URL}/marketplace` },
+      { '@type': 'ListItem', position: 3, name: listing.title || 'Bất động sản', item: url },
+    ],
+  };
+  // Marketplace FAQ — buyer concerns, applied to every listing detail.
+  const faqPage = {
+    '@type': 'FAQPage',
+    mainEntity: [
+      { '@type': 'Question', name: 'Sản phẩm này có đang nhận đặt cọc/giao dịch không?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Sản phẩm hiển thị trên SGSLand đều thuộc trạng thái mở bán/booking/giao dịch và đã được chủ đầu tư hoặc đại lý phân phối uỷ quyền. Vui lòng liên hệ hotline 0971 132 378 để nhận tư vấn ngay.' } },
+      { '@type': 'Question', name: 'Tôi có mất phí khi mua qua SGSLand không?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Không. Khách hàng mua bất động sản qua SGSLand không phát sinh phí môi giới — chi phí do chủ đầu tư/đại lý phân phối chi trả theo hợp đồng phân phối chính thức.' } },
+      { '@type': 'Question', name: 'SGSLand có hỗ trợ vay ngân hàng không?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Có. SGSLand kết nối với VCB, BIDV, Techcombank, VPBank, MB Bank với hạn mức vay tối đa 70-85% giá trị tài sản, lãi suất ưu đãi và quy trình duyệt hồ sơ nhanh dưới 7 ngày làm việc.' } },
+      { '@type': 'Question', name: 'Pháp lý sản phẩm được kiểm tra như thế nào?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Mọi sản phẩm trên SGSLand được rà soát pháp lý 2 lớp: (1) đại lý phân phối xác nhận hồ sơ pháp lý đầy đủ trước khi đăng; (2) đội ngũ SGSLand kiểm tra lại trước khi tư vấn cho khách hàng. Báo cáo pháp lý cung cấp miễn phí.' } },
+    ],
+  };
+  const datePosted = listing.createdAt || listing.created_at || undefined;
+  const dateModified = listing.updatedAt || listing.updated_at || datePosted;
+  const realEstate: any = {
     '@type': 'RealEstateListing',
+    '@id': `${url}#listing`,
     inLanguage: 'vi',
     name: listing.title || '',
     description,
     url,
     image: images.slice(0, 5).length ? images.slice(0, 5) : undefined,
     address: listing.location
-      ? { '@type': 'PostalAddress', streetAddress: listing.location, addressCountry: 'VN' }
+      ? { '@type': 'PostalAddress', streetAddress: listing.location, addressLocality: String(listing.location).split(',').slice(-2, -1)[0]?.trim(), addressCountry: 'VN' }
       : undefined,
+    ...(datePosted ? { datePosted } : {}),
+    ...(dateModified ? { dateModified } : {}),
     ...(listing.price
-      ? { offers: { '@type': 'Offer', price: String(listing.price), priceCurrency: listing.currency || 'VND' } }
+      ? { offers: { '@type': 'Offer', price: String(listing.price), priceCurrency: listing.currency || 'VND', availability: 'https://schema.org/InStock', seller: { '@type': 'Organization', '@id': `${APP_URL}/#org`, name: 'SGS LAND' } } }
       : {}),
     ...(listing.area
       ? { floorSize: { '@type': 'QuantitativeValue', value: listing.area, unitCode: 'MTK' } }
       : {}),
     ...(listing.bedrooms != null ? { numberOfRooms: listing.bedrooms } : {}),
+    ...(listing.bathrooms != null ? { numberOfBathroomsTotal: listing.bathrooms } : {}),
+    brand: { '@type': 'Organization', '@id': `${APP_URL}/#org`, name: 'SGS LAND' },
+  };
+  const structuredData: any = {
+    '@context': 'https://schema.org',
+    '@graph': [realEstate, breadcrumb, faqPage],
   };
 
   const h1 = listing.title || `${transaction} ${type} ${areaStr}`.trim() || 'Bất Động Sản SGS LAND';

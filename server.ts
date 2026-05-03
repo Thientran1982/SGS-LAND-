@@ -1769,6 +1769,26 @@ async function startServer() {
 
       const mapped = mapListingRow(raw);
       const sanitized = sanitizePublicListing(mapped);
+      // Vendor branding (white-label task #28) — attached to the public
+      // detail payload so the storefront can render CĐT logo/displayName/
+      // primaryColor/hotline/zalo/messenger consistently with the microsite.
+      // Best-effort: if branding lookup fails the detail still serves.
+      try {
+        const binding = await getTenantBinding(String(mapped.tenantId || ''));
+        if (binding) {
+          (sanitized as any).branding = {
+            tenantId: binding.tenantId,
+            displayName: binding.branding.displayName || binding.name,
+            logoUrl: binding.branding.logoUrl || null,
+            faviconUrl: binding.branding.faviconUrl || null,
+            primaryColor: binding.branding.primaryColor || null,
+            hotline: binding.branding.hotline || null,
+            hotlineDisplay: binding.branding.hotlineDisplay || null,
+            zalo: binding.branding.zalo || null,
+            messenger: binding.branding.messenger || null,
+          };
+        }
+      } catch { /* branding optional */ }
       setPublicListingDetailCache(cacheKey, sanitized);
 
       res.setHeader('X-Public-Listing-Detail-Cache', 'MISS');
