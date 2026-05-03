@@ -52,6 +52,7 @@ import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
 import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
+import { createVisitorTrackingRoutes } from "./server/routes/visitorTrackingRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
@@ -3076,6 +3077,18 @@ async function startServer() {
     }
     next();
   }, createPublicProjectRoutes());
+
+  // Public visitor tracking (anonymous pageviews) — Host-aware giống public projects.
+  app.use('/api/public/visitor', async (req, _res, next) => {
+    try {
+      const binding = await resolveTenantByHost(req.headers.host as string | undefined);
+      (req as any).publicTenant = binding;
+    } catch {
+      (req as any).publicTenant = null;
+    }
+    next();
+  }, createVisitorTrackingRoutes());
+
   // Task Management module
   app.use('/api/tasks', apiRateLimit, createTaskRoutes(authenticateToken));
   app.use('/api/departments', apiRateLimit, createDepartmentRoutes(authenticateToken));

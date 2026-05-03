@@ -46,6 +46,14 @@ interface LandingLeadPayload {
   note?: string;
   interest?: string;
   budget?: string;
+  attribution?: {
+    visitorId?: string;
+    utm?: Record<string, string>;
+    landingPage?: string;
+    firstReferrer?: string;
+    gclid?: string;
+    fbclid?: string;
+  };
 }
 
 function escapeHtml(s: string): string {
@@ -78,6 +86,13 @@ async function checkDuplicateLead(phone: string, projectSlug: string): Promise<b
   }
 }
 
+function s(v: any, max: number): string | null {
+  if (v == null) return null;
+  const t = String(v).trim();
+  if (!t) return null;
+  return t.length > max ? t.slice(0, max) : t;
+}
+
 async function saveLeadToDB(payload: {
   name: string;
   phone: string;
@@ -93,11 +108,29 @@ async function saveLeadToDB(payload: {
   interest: string;
   budget: string;
   note: string;
+  attribution?: LandingLeadPayload['attribution'];
 }): Promise<string | null> {
   try {
+    // Merge attribution (first-click từ localStorage) với UTM hiện tại từ URL.
+    // Ưu tiên attribution (first-click) — fallback utm hiện tại.
+    const attr = payload.attribution || {};
+    const attrUtm = (attr.utm && typeof attr.utm === 'object') ? attr.utm : {};
+    const utm_source   = s(attrUtm.source   ?? attrUtm.utm_source   ?? payload.utm.utm_source,   100);
+    const utm_medium   = s(attrUtm.medium   ?? attrUtm.utm_medium   ?? payload.utm.utm_medium,   100);
+    const utm_campaign = s(attrUtm.campaign ?? attrUtm.utm_campaign ?? payload.utm.utm_campaign, 200);
+    const utm_term     = s(attrUtm.term     ?? attrUtm.utm_term     ?? payload.utm.utm_term,     200);
+    const utm_content  = s(attrUtm.content  ?? attrUtm.utm_content  ?? payload.utm.utm_content,  200);
+    const landing_page   = s(attr.landingPage   ?? payload.pageUrl,  500);
+    const first_referrer = s(attr.firstReferrer ?? payload.referrer, 500);
+    const gclid  = s(attr.gclid  ?? payload.utm.gclid,  200);
+    const fbclid = s(attr.fbclid ?? payload.utm.fbclid, 200);
+    const visitorIdRaw = s(attr.visitorId, 64) || '';
+    const visitor_id = /^[a-zA-Z0-9_-]{8,64}$/.test(visitorIdRaw) ? visitorIdRaw : null;
+
     const tags = ['landing-page', payload.projectSlug];
     if (payload.channel === 'ai_chat') tags.push('ai-chat');
-    if (payload.utm.utm_source) tags.push(`src:${payload.utm.utm_source}`);
+    if (utm_source) tags.push(`src:${utm_source}`);
+    if (utm_campaign) tags.push(`camp:${utm_campaign.slice(0, 40)}`);
 
     const metadata = {
       project: payload.project,
@@ -110,6 +143,8 @@ async function saveLeadToDB(payload: {
       ...Object.fromEntries(
         Object.entries(payload.utm).filter(([, v]) => v)
       ),
+      utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+      gclid, fbclid, landing_page, first_referrer, visitor_id,
     };
 
     const notes = [
@@ -118,8 +153,12 @@ async function saveLeadToDB(payload: {
     ].filter(Boolean).join('\n\n');
 
     const result = await pool.query(
-      `INSERT INTO leads (tenant_id, name, phone, email, source, stage, notes, tags, metadata)
-       VALUES ($1, $2, $3, $4, $5, 'NEW', $6, $7::jsonb, $8::jsonb)
+      `INSERT INTO leads
+         (tenant_id, name, phone, email, source, stage, notes, tags, metadata,
+          utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+          landing_page, first_referrer, gclid, fbclid, visitor_id)
+       VALUES ($1, $2, $3, $4, $5, 'NEW', $6, $7::jsonb, $8::jsonb,
+               $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        RETURNING id`,
       [
         DEFAULT_TENANT_ID,
@@ -130,6 +169,8 @@ async function saveLeadToDB(payload: {
         notes || null,
         JSON.stringify(tags),
         JSON.stringify(metadata),
+        utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+        landing_page, first_referrer, gclid, fbclid, visitor_id,
       ]
     );
     return result.rows[0]?.id ?? null;
@@ -190,6 +231,7 @@ export function createLandingLeadRoutes(): Router {
         name, phone, email, source, project, projectSlug,
         pageUrl, referrer, channel, utm, chatTranscript,
         interest: type, budget, note,
+        attribution: body.attribution,
       });
 
       if (leadId) {
