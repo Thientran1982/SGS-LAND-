@@ -1,5 +1,5 @@
 {
-  "exclude": ["artifacts", "node_modules", "dist"],
+  "exclude": ["artifacts", "node_modules", "dist", "apps"],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
