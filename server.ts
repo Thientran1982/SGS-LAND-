@@ -38,6 +38,7 @@ import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessi
 import { createActivityRoutes } from "./server/routes/activityRoutes";
 import { createNotificationRoutes } from "./server/routes/notificationRoutes";
 import { createBillingRoutes } from "./server/routes/billingRoutes";
+import { createEmailMetricsRoutes } from "./server/routes/emailMetricsRoutes";
 import { createBillingWebhookRouter } from "./server/routes/billingWebhookRoutes";
 import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uploadRoutes";
 import { createScimRoutes } from "./server/routes/scimRoutes";
@@ -3044,6 +3045,7 @@ async function startServer() {
   app.use('/api/sequences', apiRateLimit, createSequenceRoutes(authenticateToken));
   app.use('/api/knowledge', apiRateLimit, createKnowledgeRoutes(authenticateToken));
   app.use('/api/billing', apiRateLimit, createBillingRoutes(authenticateToken));
+  app.use('/api/admin/email-metrics', apiRateLimit, createEmailMetricsRoutes(authenticateToken));
   app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
   app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));
   app.use('/api/activity', apiRateLimit, createActivityRoutes(authenticateToken));

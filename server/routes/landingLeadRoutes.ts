@@ -10,6 +10,7 @@
 
 import { Router, Request, Response } from 'express';
 import { brevoSendEmail, isBrevoConfigured } from '../services/brevoService';
+import { recordEmailSend } from '../services/emailMetricsService';
 import { logger } from '../middleware/logger';
 import { pool } from '../db';
 import { logLeadCampaignEmail } from '../repositories/campaignRepository';
@@ -329,6 +330,12 @@ export function createLandingLeadRoutes(): Router {
 
       if (!isBrevoConfigured()) {
         logger.warn('[LandingLead] BREVO_API_KEY not set — lead saved to DB only.');
+        recordEmailSend({
+          tenantId: DEFAULT_TENANT_ID,
+          kind: 'LANDING_LEAD',
+          success: false,
+          reason: 'BREVO_API_KEY not configured',
+        }).catch(() => {});
         return res.json({
           ok: true,
           message: 'Đã nhận thông tin. Chúng tôi sẽ liên hệ trong vòng 30 phút.',
@@ -349,6 +356,13 @@ export function createLandingLeadRoutes(): Router {
       if (!internalResult.success) {
         logger.error(`[LandingLead] Internal email failed: ${internalResult.error}`);
       }
+      recordEmailSend({
+        tenantId: DEFAULT_TENANT_ID,
+        kind: 'LANDING_LEAD',
+        success: internalResult.success,
+        reason: internalResult.success ? null : internalResult.error || 'unknown',
+        messageId: internalResult.messageId ?? null,
+      }).catch(() => {});
 
       let userEmailSent = false;
       if (email) {
@@ -360,6 +374,13 @@ export function createLandingLeadRoutes(): Router {
           tags: ['landing-lead-autoreply'],
         });
         userEmailSent = userResult.success;
+        recordEmailSend({
+          tenantId: DEFAULT_TENANT_ID,
+          kind: 'LEAD_AUTOREPLY',
+          success: userResult.success,
+          reason: userResult.success ? null : userResult.error || 'unknown',
+          messageId: userResult.messageId ?? null,
+        }).catch(() => {});
         if (!userResult.success) {
           logger.warn(`[LandingLead] Auto-reply email failed for ${email}: ${userResult.error}`);
         } else if (leadId) {

@@ -23,6 +23,7 @@ import { Router, Request, Response } from 'express';
 import { pool, withRlsBypass } from '../db';
 import { logger } from '../middleware/logger';
 import { brevoSendEmail } from '../services/brevoService';
+import { recordEmailSend } from '../services/emailMetricsService';
 import {
   getPublicProjectCache,
   setPublicProjectCache,
@@ -559,7 +560,8 @@ export function createPublicProjectRoutes(): Router {
             </table>
             <p style="margin-top:16px;color:#94a3b8;font-size:12px;">Nguồn: ${escapeHtml(metadata.page_url || `/p/${code}`)}</p>
           </div>`;
-        await brevoSendEmail({
+        // brevoSendEmail tự catch lỗi và trả { success:false, error } — không throw.
+        const sendResult = await brevoSendEmail({
           to: [{ email: INTERNAL_INBOX, name: `${fromName} Hotline` }],
           from: { email: fromEmail, name: fromName },
           subject,
@@ -567,9 +569,25 @@ export function createPublicProjectRoutes(): Router {
           text: `Lead mới: ${name} / ${phone}${email ? ' / ' + email : ''} — ${found.project.name} (${code})`,
           replyTo: email ? { email, name } : undefined,
           tags: ['microsite-lead', `code-${code.toLowerCase()}`],
-        }).catch((e) => logger.warn(`[PublicProject] Brevo send failed: ${e?.message}`));
+        });
+        if (!sendResult.success) {
+          logger.warn(`[PublicProject] Brevo send failed: ${sendResult.error}`);
+        }
+        recordEmailSend({
+          tenantId: found.tenantId,
+          kind: 'LEAD_NOTIFY',
+          success: sendResult.success,
+          reason: sendResult.success ? null : sendResult.error || 'unknown',
+          messageId: sendResult.messageId ?? null,
+        }).catch(() => {});
       } catch (emailErr: any) {
         logger.warn(`[PublicProject] Notification email skipped: ${emailErr?.message || emailErr}`);
+        recordEmailSend({
+          tenantId: found.tenantId,
+          kind: 'LEAD_NOTIFY',
+          success: false,
+          reason: `threw:${emailErr?.message || emailErr}`,
+        }).catch(() => {});
       }
 
       // Hotline trong response — đọc từ tenant để khách thấy đúng số tenant chủ
@@ -603,16 +621,32 @@ export function createPublicProjectRoutes(): Router {
           const replyText =
             `Cảm ơn ${name}! ${fromName} đã nhận yêu cầu tư vấn dự án ${found.project.name} (${code}). ` +
             `Chuyên viên sẽ liên hệ trong vòng 30 phút. Hotline: ${contact.hotlineDisplay}.`;
-          await brevoSendEmail({
+          const replyResult = await brevoSendEmail({
             to: [{ email, name }],
             from: { email: fromEmail, name: fromName },
             subject: replySubject,
             html: replyHtml,
             text: replyText,
             tags: ['microsite-lead-autoreply', `code-${code.toLowerCase()}`],
-          }).catch((e) => logger.warn(`[PublicProject] Brevo auto-reply failed: ${e?.message}`));
+          });
+          if (!replyResult.success) {
+            logger.warn(`[PublicProject] Brevo auto-reply failed: ${replyResult.error}`);
+          }
+          recordEmailSend({
+            tenantId: found.tenantId,
+            kind: 'LEAD_AUTOREPLY',
+            success: replyResult.success,
+            reason: replyResult.success ? null : replyResult.error || 'unknown',
+            messageId: replyResult.messageId ?? null,
+          }).catch(() => {});
         } catch (replyErr: any) {
           logger.warn(`[PublicProject] Auto-reply email skipped: ${replyErr?.message || replyErr}`);
+          recordEmailSend({
+            tenantId: found.tenantId,
+            kind: 'LEAD_AUTOREPLY',
+            success: false,
+            reason: `threw:${replyErr?.message || replyErr}`,
+          }).catch(() => {});
         }
       }
 

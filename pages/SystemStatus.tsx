@@ -147,6 +147,206 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
     );
 });
 
+interface TenantEmailRow {
+    tenantId: string;
+    tenantName: string | null;
+    total: number;
+    success: number;
+    failure: number;
+    successRate: number;
+    topReasons: Array<{ reason: string; count: number }>;
+    lastFailureAt: string | null;
+}
+interface LeadEmailReport {
+    windowDays: number;
+    alertThreshold: number;
+    generatedAt: string;
+    totals: { total: number; success: number; failure: number; successRate: number };
+    byTenant: TenantEmailRow[];
+    alerts: TenantEmailRow[];
+}
+
+const LeadEmailMetricsPanel: React.FC = () => {
+    const [report, setReport] = useState<LeadEmailReport | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [days, setDays] = useState(7);
+    const [includeAutoreply, setIncludeAutoreply] = useState(false);
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const url = `/api/admin/email-metrics/lead-send-rate?days=${days}&includeAutoreply=${includeAutoreply}`;
+            const res = await fetch(url, {
+                credentials: 'include',
+                cache: 'no-store',
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            setReport(data);
+        } catch (err: any) {
+            setError(err?.message || 'Lỗi tải báo cáo');
+        } finally {
+            setLoading(false);
+        }
+    }, [days, includeAutoreply]);
+
+    useEffect(() => { load(); }, [load]);
+
+    const fmtPct = (n: number) => `${(n * 100).toFixed(1)}%`;
+    const fmtTime = (iso: string | null) => iso ? new Date(iso).toLocaleString('vi-VN') : '—';
+
+    const rateTone = (rate: number, threshold: number) =>
+        rate >= threshold ? 'text-emerald-600' : rate >= threshold - 0.1 ? 'text-amber-600' : 'text-rose-600 font-bold';
+
+    return (
+        <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
+                <div>
+                    <h3 className="font-bold text-[var(--text-primary)]">Tỉ lệ gửi email lead theo CĐT</h3>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
+                        {includeAutoreply
+                            ? 'Tính cả notification tới CĐT và auto-reply tới khách (mailbox khách có thể bounce ngoài kiểm soát).'
+                            : 'Chỉ tính email notification gửi tới hotline inbox của CĐT (auto-reply tới khách bị loại khỏi KPI).'
+                        } Cảnh báo khi tỉ lệ thành công &lt; {report ? fmtPct(report.alertThreshold) : '80%'} (mẫu ≥ 5).
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={includeAutoreply}
+                            onChange={(e) => setIncludeAutoreply(e.target.checked)}
+                            className="accent-indigo-600"
+                        />
+                        Tính cả auto-reply
+                    </label>
+                    <select
+                        value={days}
+                        onChange={(e) => setDays(Number(e.target.value))}
+                        className="px-3 py-1.5 text-xs font-mono rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                    >
+                        <option value={1}>1 ngày</option>
+                        <option value={7}>7 ngày</option>
+                        <option value={14}>14 ngày</option>
+                        <option value={30}>30 ngày</option>
+                    </select>
+                    <button
+                        onClick={load}
+                        disabled={loading}
+                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                        {loading ? 'Đang tải…' : 'Làm mới'}
+                    </button>
+                </div>
+            </div>
+
+            {error && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs mb-3">
+                    {error}
+                </div>
+            )}
+
+            {report && (
+                <>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
+                            <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Tổng email</div>
+                            <div className="text-xl font-bold font-mono text-[var(--text-primary)]">{report.totals.total.toLocaleString()}</div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
+                            <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Thành công</div>
+                            <div className="text-xl font-bold font-mono text-emerald-600">{report.totals.success.toLocaleString()}</div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
+                            <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Thất bại</div>
+                            <div className="text-xl font-bold font-mono text-rose-600">{report.totals.failure.toLocaleString()}</div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
+                            <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Tỉ lệ chung</div>
+                            <div className={`text-xl font-bold font-mono ${rateTone(report.totals.successRate, report.alertThreshold)}`}>
+                                {fmtPct(report.totals.successRate)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {report.alerts.length > 0 && (
+                        <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200">
+                            <div className="text-xs font-bold text-rose-700 mb-1">
+                                ⚠️ {report.alerts.length} CĐT có tỉ lệ gửi email &lt; {fmtPct(report.alertThreshold)}
+                            </div>
+                            <ul className="text-xs text-rose-700 list-disc pl-5 space-y-0.5">
+                                {report.alerts.map((a) => (
+                                    <li key={a.tenantId}>
+                                        <span className="font-bold">{a.tenantName || a.tenantId.slice(0, 8)}</span>:
+                                        {' '}{fmtPct(a.successRate)} ({a.failure}/{a.total})
+                                        {a.topReasons[0] && <> — {a.topReasons[0].reason}</>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {report.byTenant.length === 0 ? (
+                        <div className="text-xs text-[var(--text-tertiary)] py-4 text-center">
+                            Chưa có email lead nào trong {report.windowDays} ngày qua.
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="text-2xs text-[var(--text-tertiary)] uppercase tracking-wide border-b border-[var(--glass-border)]">
+                                    <tr>
+                                        <th className="text-left py-2">CĐT</th>
+                                        <th className="text-right py-2">Tổng</th>
+                                        <th className="text-right py-2">OK</th>
+                                        <th className="text-right py-2">Lỗi</th>
+                                        <th className="text-right py-2">Tỉ lệ</th>
+                                        <th className="text-left py-2 pl-3">Lý do lỗi gần đây</th>
+                                        <th className="text-right py-2">Lỗi cuối</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {report.byTenant.map((row) => (
+                                        <tr key={row.tenantId} className="border-b border-[var(--glass-border)]">
+                                            <td className="py-2">
+                                                <div className="font-bold text-[var(--text-primary)] text-xs">
+                                                    {row.tenantName || '(no name)'}
+                                                </div>
+                                                <div className="text-2xs font-mono text-[var(--text-tertiary)]">{row.tenantId.slice(0, 8)}…</div>
+                                            </td>
+                                            <td className="py-2 text-right font-mono">{row.total}</td>
+                                            <td className="py-2 text-right font-mono text-emerald-600">{row.success}</td>
+                                            <td className="py-2 text-right font-mono text-rose-600">{row.failure}</td>
+                                            <td className={`py-2 text-right font-mono ${rateTone(row.successRate, report.alertThreshold)}`}>
+                                                {fmtPct(row.successRate)}
+                                            </td>
+                                            <td className="py-2 pl-3 text-2xs text-[var(--text-secondary)]">
+                                                {row.topReasons.length === 0 ? '—' : row.topReasons.map((r, i) => (
+                                                    <div key={i} className="truncate max-w-xs" title={r.reason}>
+                                                        × {r.count}: {r.reason}
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td className="py-2 text-right text-2xs text-[var(--text-tertiary)] font-mono">
+                                                {fmtTime(row.lastFailureAt)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <div className="text-2xs text-[var(--text-tertiary)] mt-2 text-right">
+                        Cập nhật: {new Date(report.generatedAt).toLocaleString('vi-VN')}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
 const ChaosPanel = memo(({ config, onChange, t }: { config: ChaosConfig, onChange: (c: Partial<ChaosConfig>) => void, t: any }) => (
     <div className={`p-6 rounded-[24px] border-2 transition-all ${config.enabled ? 'bg-rose-50 border-rose-200' : 'bg-[var(--bg-surface)] border-[var(--glass-border)]'}`}>
         <div className="flex justify-between items-start mb-6">
@@ -199,6 +399,7 @@ export const SystemStatus: React.FC = () => {
     const [isPaused, setIsPaused] = useState(false);
     const [isRestoring, setIsRestoring] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
     const [confirmRestore, setConfirmRestore] = useState(false);
     const [confirmClearLogs, setConfirmClearLogs] = useState(false);
@@ -212,6 +413,7 @@ export const SystemStatus: React.FC = () => {
         const init = async () => {
             const user = await db.getCurrentUser();
             setIsAdmin(['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? ''));
+            setIsSuperAdmin(user?.role === 'SUPER_ADMIN');
             
             const h = await systemService.checkHealth();
             setHealth(h);
@@ -315,6 +517,8 @@ export const SystemStatus: React.FC = () => {
             {health && <HealthHero health={health} theme={chartTheme} onBackup={handleBackup} onRestore={handleRestore} isRestoring={isRestoring} t={t} />}
 
             {isAdmin && <ChaosPanel config={chaosConfig} onChange={updateChaos} t={t} />}
+
+            {isSuperAdmin && <LeadEmailMetricsPanel />}
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* LOGS - Takes 2/3 width on large screens */}
