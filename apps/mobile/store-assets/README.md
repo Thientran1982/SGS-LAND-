@@ -35,6 +35,14 @@ store-assets/
   applies the mask).
 - `android/icon-512.png` — square, alpha allowed.
 
+## Generated mockup assets (Sprint 7 follow-up #62)
+The PNGs currently in `ios/` and `android/` are brand-consistent **mockups**
+generated programmatically (`.local/scripts/gen-store-assets.mjs`) so that
+store submission can proceed without blocking on a device-capture session.
+They use the real palette/typography/copy from `listing-vi.md`. Replace any
+of them with real device captures whenever a simulator/device session is
+available — keep the same filenames and sizes so the listing stays valid.
+
 ## What we DON'T ship through the app
 - No third-party ad SDKs.
 - No data sale / brokering.
