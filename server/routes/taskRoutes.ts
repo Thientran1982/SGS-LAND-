@@ -105,7 +105,7 @@ export function createTaskRoutes(authenticateToken: any) {
       const tenantId = user.tenantId;
 
       const page    = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit   = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const limit   = Math.min(500, Math.max(1, parseInt(req.query.limit as string) || 20));
       const offset  = (page - 1) * limit;
 
       const statuses    = parseMultiParam(req.query.status as string);

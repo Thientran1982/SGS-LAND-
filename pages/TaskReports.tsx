@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PieChart, Download, Loader2, AlertTriangle, BarChart3, Building2, Users, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
-import { TaskDashboardStats } from '../types';
+import { TaskDashboardStats, Department } from '../types';
 import { CATEGORY_LABELS } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
+import { SelectDropdown } from '../components/task/SelectDropdown';
 
 interface ProjectReport {
   id: string;
@@ -63,34 +64,60 @@ export function TaskReports() {
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentId, setDepartmentId] = useState<string>(() => {
+    try { return new URLSearchParams(window.location.search).get('dept') || ''; } catch { return ''; }
+  });
+  const fetchRef = useRef(0);
 
-  const load = useCallback(async (silent = false) => {
+  useEffect(() => {
+    api.get<{ data: Department[] }>('/api/departments')
+      .then(r => setDepartments(r.data || []))
+      .catch(() => {});
+  }, []);
+
+  const load = useCallback(async (silent = false, deptId = departmentId) => {
+    const token = ++fetchRef.current;
     if (!silent) setLoading(true);
     else setRefreshing(true);
     setError(null);
     try {
+      const qs = deptId ? `?department_id=${encodeURIComponent(deptId)}` : '';
       const [s, p, u] = await Promise.all([
-        api.get<TaskDashboardStats>('/api/dashboard/task-stats'),
-        api.get<ProjectReport[]>('/api/reports/task-by-project'),
-        api.get<UserSummary[]>('/api/reports/task-summary'),
+        api.get<TaskDashboardStats>(`/api/dashboard/task-stats${qs}`),
+        api.get<ProjectReport[]>(`/api/reports/task-by-project${qs}`),
+        api.get<UserSummary[]>(`/api/reports/task-summary${qs}`),
       ]);
+      if (fetchRef.current !== token) return;
       setStats(s);
       setProjects(p || []);
       setUsers(u || []);
     } catch {
+      if (fetchRef.current !== token) return;
       setError('Không thể tải báo cáo');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (fetchRef.current === token) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, []);
+  }, [departmentId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(false, departmentId); }, [departmentId, load]);
+
+  // URL sync
+  useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
+    if (departmentId) qs.set('dept', departmentId); else qs.delete('dept');
+    const search = qs.toString();
+    window.history.replaceState(null, '', window.location.pathname + (search ? '?' + search : ''));
+  }, [departmentId]);
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      const response = await fetch('/api/reports/task-export/csv', {
+      const qs = departmentId ? `?department_id=${encodeURIComponent(departmentId)}` : '';
+      const response = await fetch(`/api/reports/task-export/csv${qs}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Export failed');
@@ -125,6 +152,20 @@ export function TaskReports() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {departments.length > 0 && (
+            <div className="min-w-[180px]">
+              <SelectDropdown
+                value={departmentId}
+                onChange={setDepartmentId}
+                placeholder="Tất cả phòng ban"
+                height={36}
+                options={[
+                  { value: '', label: 'Tất cả phòng ban' },
+                  ...departments.map(d => ({ value: d.id, label: d.name })),
+                ]}
+              />
+            </div>
+          )}
           <button
             onClick={() => load(true)}
             disabled={refreshing}
@@ -147,7 +188,7 @@ export function TaskReports() {
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <AlertTriangle className="w-10 h-10 text-amber-400" />
           <p className="text-[var(--text-secondary)]">{error}</p>
-          <button onClick={() => load()} className="text-sm text-indigo-500 font-medium">Thử lại</button>
+          <button onClick={() => load(false, departmentId)} className="text-sm text-indigo-500 font-medium">Thử lại</button>
         </div>
       )}
 

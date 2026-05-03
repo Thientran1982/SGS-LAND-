@@ -25,6 +25,13 @@ export function createTaskReportRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const tenantId = user.tenantId;
 
+      const rawDept = (req.query.department_id as string) || '';
+      const deptId = rawDept && UUID_SHAPE.test(rawDept) ? rawDept : null;
+      const deptWhere = deptId ? 'WHERE department_id = $1' : '';
+      const deptAndW = deptId ? 'AND department_id = $1' : '';
+      const deptAndT = deptId ? 'AND t.department_id = $1' : '';
+      const deptParams = deptId ? [deptId] : [];
+
       const stats = await withTenantContext(tenantId, async (client) => {
         // Overview
         const overviewRes = await client.query(`
@@ -38,26 +45,30 @@ export function createTaskReportRoutes(authenticateToken: any) {
             COUNT(*) FILTER (WHERE status NOT IN ('done','cancelled') AND deadline < CURRENT_DATE) AS overdue_count,
             COUNT(*) FILTER (WHERE deadline = CURRENT_DATE AND status NOT IN ('done','cancelled')) AS due_today_count,
             COUNT(*) FILTER (WHERE deadline BETWEEN CURRENT_DATE AND CURRENT_DATE + 7 AND status NOT IN ('done','cancelled')) AS due_this_week_count
-          FROM wf_tasks
-        `);
+          FROM wf_tasks ${deptWhere}
+        `, deptParams);
 
         // Done today / this week
         const doneTimeRes = await client.query(`
           SELECT
             COUNT(*) FILTER (WHERE updated_at >= CURRENT_DATE AND status = 'done') AS done_today,
             COUNT(*) FILTER (WHERE updated_at >= DATE_TRUNC('week', CURRENT_DATE) AND status = 'done') AS done_week
-          FROM wf_tasks
-        `);
+          FROM wf_tasks ${deptWhere}
+        `, deptParams);
 
         // By priority
         const priorityRes = await client.query(`
-          SELECT priority, COUNT(*) AS cnt FROM wf_tasks WHERE status NOT IN ('done','cancelled') GROUP BY priority
-        `);
+          SELECT priority, COUNT(*) AS cnt FROM wf_tasks
+          WHERE status NOT IN ('done','cancelled') ${deptAndW}
+          GROUP BY priority
+        `, deptParams);
 
         // By category
         const categoryRes = await client.query(`
-          SELECT category, COUNT(*) AS cnt FROM wf_tasks WHERE status NOT IN ('done','cancelled') GROUP BY category
-        `);
+          SELECT category, COUNT(*) AS cnt FROM wf_tasks
+          WHERE status NOT IN ('done','cancelled') ${deptAndW}
+          GROUP BY category
+        `, deptParams);
 
         // By project
         const projectRes = await client.query(`
@@ -67,11 +78,11 @@ export function createTaskReportRoutes(authenticateToken: any) {
             COUNT(t.id) FILTER (WHERE t.status = 'done') AS done,
             COUNT(t.id) FILTER (WHERE t.status NOT IN ('done','cancelled') AND t.deadline < CURRENT_DATE) AS overdue
           FROM projects p
-          LEFT JOIN wf_tasks t ON t.project_id = p.id
+          LEFT JOIN wf_tasks t ON t.project_id = p.id ${deptAndT}
           GROUP BY p.id, p.name
           ORDER BY total DESC
           LIMIT 10
-        `);
+        `, deptParams);
 
         // Top overdue tasks
         const overdueRes = await client.query(`
@@ -82,11 +93,11 @@ export function createTaskReportRoutes(authenticateToken: any) {
           FROM wf_tasks t
           LEFT JOIN task_assignments ta ON ta.task_id = t.id
           LEFT JOIN users u ON u.id = ta.user_id
-          WHERE t.status NOT IN ('done','cancelled') AND t.deadline < CURRENT_DATE
+          WHERE t.status NOT IN ('done','cancelled') AND t.deadline < CURRENT_DATE ${deptAndT}
           GROUP BY t.id
           ORDER BY t.deadline ASC
           LIMIT 5
-        `);
+        `, deptParams);
 
         // Upcoming deadlines
         const upcomingRes = await client.query(`
@@ -98,11 +109,11 @@ export function createTaskReportRoutes(authenticateToken: any) {
           LEFT JOIN task_assignments ta ON ta.task_id = t.id
           LEFT JOIN users u ON u.id = ta.user_id
           WHERE t.status NOT IN ('done','cancelled')
-            AND t.deadline BETWEEN CURRENT_DATE AND CURRENT_DATE + 7
+            AND t.deadline BETWEEN CURRENT_DATE AND CURRENT_DATE + 7 ${deptAndT}
           GROUP BY t.id
           ORDER BY t.deadline ASC
           LIMIT 10
-        `);
+        `, deptParams);
 
         // Workload by user
         const workloadRes = await client.query(`
@@ -118,7 +129,7 @@ export function createTaskReportRoutes(authenticateToken: any) {
             ) AS workload_score
           FROM users u
           LEFT JOIN task_assignments ta ON ta.user_id = u.id
-          LEFT JOIN wf_tasks t ON t.id = ta.task_id
+          LEFT JOIN wf_tasks t ON t.id = ta.task_id ${deptAndT}
           LEFT JOIN departments d ON d.id = (
             SELECT department_id FROM wf_tasks wt
             JOIN task_assignments ta2 ON ta2.task_id = wt.id AND ta2.user_id = u.id
@@ -128,7 +139,7 @@ export function createTaskReportRoutes(authenticateToken: any) {
           GROUP BY u.id, u.name, d.name
           ORDER BY workload_score DESC
           LIMIT 10
-        `);
+        `, deptParams);
 
         const by_priority: Record<string, number> = { urgent: 0, high: 0, medium: 0, low: 0 };
         priorityRes.rows.forEach((r: any) => { by_priority[r.priority] = parseInt(r.cnt); });
@@ -181,6 +192,11 @@ export function createTaskReportRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const tenantId = user.tenantId;
 
+      const rawDept = (req.query.department_id as string) || '';
+      const deptId = rawDept && UUID_SHAPE.test(rawDept) ? rawDept : null;
+      const deptAndT = deptId ? 'AND t.department_id = $1' : '';
+      const deptParams = deptId ? [deptId] : [];
+
       const summary = await withTenantContext(tenantId, async (client) => {
         const r = await client.query(`
           SELECT
@@ -201,7 +217,7 @@ export function createTaskReportRoutes(authenticateToken: any) {
             ) AS completion_rate
           FROM users u
           LEFT JOIN task_assignments ta ON ta.user_id = u.id
-          LEFT JOIN wf_tasks t ON t.id = ta.task_id
+          LEFT JOIN wf_tasks t ON t.id = ta.task_id ${deptAndT}
           LEFT JOIN departments d ON d.id = (
             SELECT wt2.department_id FROM wf_tasks wt2
             JOIN task_assignments ta2 ON ta2.task_id = wt2.id AND ta2.user_id = u.id
@@ -211,7 +227,7 @@ export function createTaskReportRoutes(authenticateToken: any) {
           WHERE u.status = 'ACTIVE'
           GROUP BY u.id, u.name, u.email, u.avatar, d.name
           ORDER BY overdue DESC, total_assigned DESC
-        `);
+        `, deptParams);
         return r.rows;
       });
 
@@ -227,6 +243,11 @@ export function createTaskReportRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
+
+      const rawDept = (req.query.department_id as string) || '';
+      const deptId = rawDept && UUID_SHAPE.test(rawDept) ? rawDept : null;
+      const deptWhere = deptId ? 'WHERE t.department_id = $1' : '';
+      const deptParams = deptId ? [deptId] : [];
 
       const rows = await withTenantContext(tenantId, async (client) => {
         const r = await client.query(`
@@ -249,9 +270,10 @@ export function createTaskReportRoutes(authenticateToken: any) {
           LEFT JOIN users uc ON uc.id = t.created_by
           LEFT JOIN task_assignments ta ON ta.task_id = t.id
           LEFT JOIN users u ON u.id = ta.user_id
+          ${deptWhere}
           GROUP BY t.id, p.name, uc.name
           ORDER BY t.created_at DESC
-        `);
+        `, deptParams);
         return r.rows;
       });
 
@@ -296,6 +318,11 @@ export function createTaskReportRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const tenantId = user.tenantId;
 
+      const rawDept = (req.query.department_id as string) || '';
+      const deptId = rawDept && UUID_SHAPE.test(rawDept) ? rawDept : null;
+      const deptAndT = deptId ? 'AND t.department_id = $1' : '';
+      const deptParams = deptId ? [deptId] : [];
+
       const rows = await withTenantContext(tenantId, async (client) => {
         const r = await client.query(`
           SELECT
@@ -309,10 +336,10 @@ export function createTaskReportRoutes(authenticateToken: any) {
               THEN COUNT(t.id) FILTER (WHERE t.status = 'done')::numeric / COUNT(t.id) * 100
               ELSE 0 END, 1) AS completion_rate
           FROM projects p
-          LEFT JOIN wf_tasks t ON t.project_id = p.id
+          LEFT JOIN wf_tasks t ON t.project_id = p.id ${deptAndT}
           GROUP BY p.id, p.name, p.status, p.location
           ORDER BY total DESC
-        `);
+        `, deptParams);
         return r.rows;
       });
 
