@@ -186,6 +186,8 @@ export interface User {
     metadata?: UserPreferences;
     lastLoginAt?: ISOString;
     createdAt?: ISOString;
+    departmentId?: string | null;
+    departmentName?: string | null;
 }
 
 export interface Team {

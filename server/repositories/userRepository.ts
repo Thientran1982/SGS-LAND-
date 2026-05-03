@@ -23,6 +23,8 @@ export interface UserRow {
   emailVerified?: boolean;
   emailVerificationToken?: string | null;
   emailVerificationExpires?: string | null;
+  departmentId?: string | null;
+  departmentName?: string | null;
 }
 
 export class UserRepository extends BaseRepository {
@@ -77,6 +79,7 @@ export class UserRepository extends BaseRepository {
     emailVerified?: boolean;
     emailVerificationToken?: string | null;
     emailVerificationExpires?: Date | null;
+    departmentId?: string | null;
   }): Promise<UserRow> {
     const passwordHash = data.password ? await bcrypt.hash(data.password, SALT_ROUNDS) : null;
     const status = data.status ?? 'ACTIVE';
@@ -84,10 +87,10 @@ export class UserRepository extends BaseRepository {
 
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO users (tenant_id, name, email, password_hash, role, avatar, phone, source, metadata, status, email_verified, email_verification_token, email_verification_expires)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `INSERT INTO users (tenant_id, name, email, password_hash, role, avatar, phone, source, metadata, status, email_verified, email_verification_token, email_verification_expires, department_id)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          RETURNING *`,
-        [data.name, data.email, passwordHash, data.role || 'VIEWER', data.avatar || null, data.phone || null, data.source || 'SYSTEM', data.metadata ? JSON.stringify(data.metadata) : null, status, emailVerified, data.emailVerificationToken ?? null, data.emailVerificationExpires ?? null]
+        [data.name, data.email, passwordHash, data.role || 'VIEWER', data.avatar || null, data.phone || null, data.source || 'SYSTEM', data.metadata ? JSON.stringify(data.metadata) : null, status, emailVerified, data.emailVerificationToken ?? null, data.emailVerificationExpires ?? null, data.departmentId || null]
       );
       return this.rowToEntity<UserRow>(result.rows[0]);
     });
@@ -99,7 +102,7 @@ export class UserRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 2;
 
-      const allowedFields = ['name', 'role', 'avatar', 'status', 'phone', 'bio', 'metadata', 'permissions'];
+      const allowedFields = ['name', 'role', 'avatar', 'status', 'phone', 'bio', 'metadata', 'permissions', 'departmentId'];
       for (const field of allowedFields) {
         if ((data as any)[field] !== undefined) {
           updates.push(`${this.camelToSnake(field)} = $${paramIndex}`);
@@ -189,8 +192,14 @@ export class UserRepository extends BaseRepository {
       const sortCol = SORTABLE_FIELDS[filters?.sortField || ''] || 'created_at';
       const sortDir = filters?.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
+      const userWhere = whereClause.replace(/\b(name|email|role|status)\b/g, 'u.$1');
       const result = await client.query(
-        `SELECT * FROM users ${whereClause} ORDER BY ${sortCol} ${sortDir} LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        `SELECT u.*, d.name AS department_name
+           FROM users u
+           LEFT JOIN departments d ON d.id = u.department_id
+         ${userWhere}
+         ORDER BY u.${sortCol} ${sortDir}
+         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...values, pageSize, offset]
       );
 
@@ -240,13 +249,14 @@ export class UserRepository extends BaseRepository {
     email: string;
     role?: string;
     phone?: string;
+    departmentId?: string | null;
   }): Promise<UserRow> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO users (tenant_id, name, email, phone, role, status, source)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, 'PENDING', 'INVITE')
+        `INSERT INTO users (tenant_id, name, email, phone, role, status, source, department_id)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, 'PENDING', 'INVITE', $5)
          RETURNING *`,
-        [data.name, data.email, data.phone || null, data.role || 'VIEWER']
+        [data.name, data.email, data.phone || null, data.role || 'VIEWER', data.departmentId || null]
       );
       return this.rowToEntity<UserRow>(result.rows[0]);
     });

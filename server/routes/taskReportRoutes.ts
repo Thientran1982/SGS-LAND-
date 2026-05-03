@@ -130,12 +130,8 @@ export function createTaskReportRoutes(authenticateToken: any) {
           FROM users u
           LEFT JOIN task_assignments ta ON ta.user_id = u.id
           LEFT JOIN wf_tasks t ON t.id = ta.task_id ${deptAndT}
-          LEFT JOIN departments d ON d.id = (
-            SELECT department_id FROM wf_tasks wt
-            JOIN task_assignments ta2 ON ta2.task_id = wt.id AND ta2.user_id = u.id
-            LIMIT 1
-          )
-          WHERE u.status = 'ACTIVE'
+          LEFT JOIN departments d ON d.id = u.department_id
+          WHERE u.status = 'ACTIVE' ${deptId ? 'AND u.department_id = $1' : ''}
           GROUP BY u.id, u.name, d.name
           ORDER BY workload_score DESC
           LIMIT 10
@@ -218,13 +214,8 @@ export function createTaskReportRoutes(authenticateToken: any) {
           FROM users u
           LEFT JOIN task_assignments ta ON ta.user_id = u.id
           LEFT JOIN wf_tasks t ON t.id = ta.task_id ${deptAndT}
-          LEFT JOIN departments d ON d.id = (
-            SELECT wt2.department_id FROM wf_tasks wt2
-            JOIN task_assignments ta2 ON ta2.task_id = wt2.id AND ta2.user_id = u.id
-            WHERE wt2.department_id IS NOT NULL
-            LIMIT 1
-          )
-          WHERE u.status = 'ACTIVE'
+          LEFT JOIN departments d ON d.id = u.department_id
+          WHERE u.status = 'ACTIVE' ${deptId ? 'AND u.department_id = $1' : ''}
           GROUP BY u.id, u.name, u.email, u.avatar, d.name
           ORDER BY overdue DESC, total_assigned DESC
         `, deptParams);

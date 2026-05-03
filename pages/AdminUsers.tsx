@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
-import { User, UserRole, CommonStatus } from '../types';
+import { api } from '../services/api';
+import { User, UserRole, CommonStatus, Department } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -296,29 +297,31 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
 };
 
 // --- SUB-COMPONENT: INVITE MODAL ---
-interface InviteFormData { name: string; email: string; role: UserRole; phone: string; }
+interface InviteFormData { name: string; email: string; role: UserRole; phone: string; departmentId?: string; }
 interface InviteModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (data: InviteFormData) => Promise<void>;
     t: any;
     callerRole?: string;
+    departments: Department[];
 }
 
 const VN_PHONE_RE = /^(03|05|07|08|09)\d{8}$/;
 
-const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfirm, t, callerRole }) => {
+const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfirm, t, callerRole, departments }) => {
     const [name, setName]   = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [role, setRole]   = useState<UserRole>(UserRole.SALES);
+    const [departmentId, setDepartmentId] = useState<string>('');
     const [loading, setLoading]   = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (isOpen) {
             setName(''); setEmail(''); setPhone('');
-            setRole(UserRole.SALES); setErrors({}); setLoading(false);
+            setRole(UserRole.SALES); setDepartmentId(''); setErrors({}); setLoading(false);
         }
     }, [isOpen]);
 
@@ -337,7 +340,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
         if (!validate()) return;
         setLoading(true);
         try {
-            await onConfirm({ name: name.trim(), email: email.trim().toLowerCase(), role, phone: phone.trim() });
+            await onConfirm({ name: name.trim(), email: email.trim().toLowerCase(), role, phone: phone.trim(), departmentId: departmentId || undefined });
             onClose();
         } catch (err: any) {
             setErrors({ submit: err.message || t('common.error') });
@@ -433,6 +436,25 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             {errors.phone && <p className="text-xs text-rose-500 font-medium mt-1">{errors.phone}</p>}
                         </div>
 
+                        {/* Phòng ban */}
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
+                                Phòng ban
+                                <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">(tuỳ chọn)</span>
+                            </label>
+                            <Dropdown
+                                value={departmentId}
+                                onChange={(v) => setDepartmentId(v as string)}
+                                options={[
+                                    { value: '', label: departments.length === 0 ? 'Chưa có phòng ban' : 'Chưa chọn' },
+                                    ...departments.map(d => ({ value: d.id, label: d.name })),
+                                ]}
+                                disabled={departments.length === 0}
+                                className="w-full"
+                                placement="top"
+                            />
+                        </div>
+
                         {/* Vai trò */}
                         <div className="pb-2">
                             <Dropdown
@@ -507,6 +529,13 @@ export const AdminUsers: React.FC = () => {
     const [resendingId, setResendingId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [perfUser, setPerfUser] = useState<User | null>(null);
+    const [departments, setDepartments] = useState<Department[]>([]);
+
+    useEffect(() => {
+        api.get<{ data: Department[] }>('/api/departments')
+            .then(r => setDepartments(r.data || []))
+            .catch(() => setDepartments([]));
+    }, []);
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
@@ -638,10 +667,31 @@ export const AdminUsers: React.FC = () => {
     };
 
     const handleInviteConfirm = async (data: InviteFormData) => {
-        await db.inviteUser({ name: data.name, email: data.email, role: data.role, phone: data.phone || undefined });
+        await db.inviteUser({ name: data.name, email: data.email, role: data.role, phone: data.phone || undefined, departmentId: data.departmentId });
         notify(t('admin.users.invite_sent', { email: data.email }), 'success');
         fetchData();
     };
+
+    const handleDepartmentChange = async (userId: string, newDeptId: string) => {
+        const departmentId = newDeptId || null;
+        const prev = users;
+        setUsers(p => p.map(u => u.id === userId ? {
+            ...u,
+            departmentId,
+            departmentName: departments.find(d => d.id === newDeptId)?.name || null,
+        } : u));
+        try {
+            await db.updateUserProfile(userId, { departmentId });
+        } catch (e: any) {
+            setUsers(prev);
+            notify(e.message || t('common.error'), 'error');
+        }
+    };
+
+    const departmentOptions = useMemo(() => [
+        { value: '', label: 'Chưa chọn' },
+        ...departments.map(d => ({ value: d.id, label: d.name })),
+    ], [departments]);
 
     const roleOptions = useMemo(() => [
         { value: 'ALL', label: t('admin.users.all_roles') },
@@ -783,6 +833,7 @@ export const AdminUsers: React.FC = () => {
                             <tr>
                                 <SortableHeader field="name" label={t('table.name')} />
                                 <SortableHeader field="role" label={t('table.role')} className="hidden sm:table-cell" />
+                                <th className="hidden lg:table-cell p-4 select-none">Phòng ban</th>
                                 <SortableHeader field="status" label={t('table.status')} />
                                 <SortableHeader field="lastLoginAt" label={t('table.last_active')} className="hidden md:table-cell" />
                                 <th className="p-4 text-right">{t('common.actions')}</th>
@@ -836,6 +887,18 @@ export const AdminUsers: React.FC = () => {
                                                     options={userRoleOptions} 
                                                     disabled={user.id === currentUser?.id}
                                                     className="text-xs"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="hidden lg:table-cell p-4">
+                                            <div className="w-40" onClick={e => e.stopPropagation()}>
+                                                <Dropdown
+                                                    value={(user as any).departmentId || ''}
+                                                    onChange={(v) => handleDepartmentChange(user.id, v as string)}
+                                                    options={departmentOptions}
+                                                    disabled={departments.length === 0}
+                                                    className="text-xs"
+                                                    placeholder={departments.length === 0 ? 'Chưa có' : 'Chưa chọn'}
                                                 />
                                             </div>
                                         </td>
@@ -902,7 +965,7 @@ export const AdminUsers: React.FC = () => {
                                 );
                             })}
                             {users.length === 0 && !loading && (
-                                <tr><td colSpan={5} className="p-12 text-center text-[var(--text-secondary)] italic">{t('admin.users.empty_search')}</td></tr>
+                                <tr><td colSpan={6} className="p-12 text-center text-[var(--text-secondary)] italic">{t('admin.users.empty_search')}</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -937,6 +1000,7 @@ export const AdminUsers: React.FC = () => {
                 onConfirm={handleInviteConfirm}
                 t={t}
                 callerRole={currentUser?.role}
+                departments={departments}
             />
 
             {/* Delete Confirmation Modal */}

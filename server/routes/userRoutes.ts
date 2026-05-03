@@ -6,6 +6,21 @@ import { emailService } from '../services/emailService';
 import { resolveBaseUrl } from '../utils/resolveBaseUrl';
 import { withTenantContext } from '../db';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function assertDepartmentBelongsToTenant(tenantId: string, departmentId: string | null | undefined): Promise<void> {
+  if (!departmentId) return;
+  if (!UUID_RE.test(departmentId)) {
+    const err: any = new Error('Phòng ban không hợp lệ'); err.status = 400; throw err;
+  }
+  await withTenantContext(tenantId, async (client) => {
+    const r = await client.query(`SELECT 1 FROM departments WHERE id = $1 LIMIT 1`, [departmentId]);
+    if (r.rowCount === 0) {
+      const err: any = new Error('Phòng ban không thuộc tổ chức của bạn'); err.status = 400; throw err;
+    }
+  });
+}
+
 export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   const router = Router();
 
@@ -93,7 +108,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể tạo người dùng' });
       }
 
-      const { name, email, password, role, phone, avatar } = req.body;
+      const { name, email, password, role, phone, avatar, departmentId } = req.body;
       if (!name || !email) {
         return res.status(400).json({ error: 'Tên và email là bắt buộc' });
       }
@@ -103,8 +118,10 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         return res.status(409).json({ error: 'Người dùng với email này đã tồn tại' });
       }
 
+      await assertDepartmentBelongsToTenant(user.tenantId, departmentId);
+
       const newUser = await userRepository.create(user.tenantId, {
-        name, email, password, role, phone, avatar,
+        name, email, password, role, phone, avatar, departmentId: departmentId || null,
       });
 
       await auditRepository.log(user.tenantId, {
@@ -130,7 +147,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         return res.status(403).json({ error: 'Chỉ quản trị viên hoặc trưởng nhóm mới có thể mời người dùng' });
       }
 
-      const { name, email, role, phone } = req.body;
+      const { name, email, role, phone, departmentId } = req.body;
       if (!name || !email) {
         return res.status(400).json({ error: 'Tên và email là bắt buộc' });
       }
@@ -140,7 +157,9 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         return res.status(409).json({ error: 'Người dùng với email này đã tồn tại' });
       }
 
-      const invited = await userRepository.invite(user.tenantId, { name, email, role, phone });
+      await assertDepartmentBelongsToTenant(user.tenantId, departmentId);
+
+      const invited = await userRepository.invite(user.tenantId, { name, email, role, phone, departmentId: departmentId || null });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -189,6 +208,13 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
       const VALID_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER', 'PARTNER_ADMIN', 'PARTNER_AGENT'];
       if (req.body.role !== undefined && !VALID_ROLES.includes(req.body.role)) {
         return res.status(400).json({ error: `Vai trò không hợp lệ. Các vai trò cho phép: ${VALID_ROLES.join(', ')}` });
+      }
+
+      if (req.body.departmentId !== undefined) {
+        if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role) && user.id !== String(req.params.id)) {
+          return res.status(403).json({ error: 'Không có quyền đổi phòng ban' });
+        }
+        await assertDepartmentBelongsToTenant(user.tenantId, req.body.departmentId);
       }
 
       const before = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
