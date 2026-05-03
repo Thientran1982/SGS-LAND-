@@ -44,22 +44,39 @@ export const AboutUs: React.FC = () => {
                 title="Về SGS LAND | Đội Ngũ & Sứ Mệnh Nền Tảng BĐS AI Việt Nam"
                 description="SGS LAND thành lập 2024 tại TP.HCM, đội ngũ 200+ chuyên gia BĐS, công nghệ AI định giá sai số ±5%. Sứ mệnh: minh bạch hóa thị trường BĐS Việt qua dữ liệu và AI."
                 canonicalPath="/about-us"
-                structuredData={{
-                    '@type': 'AboutPage',
-                    name: 'Về SGS LAND',
-                    description: 'Giới thiệu công ty, đội ngũ lãnh đạo và sứ mệnh của nền tảng bất động sản AI SGS LAND.',
-                    inLanguage: 'vi-VN',
-                    publisher: {
-                        '@type': 'Organization',
-                        name: 'SGS LAND',
-                        legalName: 'Công ty Cổ phần SGS Land',
-                        taxID: '0312960439',
-                        url: 'https://sgsland.vn',
-                        foundingDate: '2024',
-                        founder: { '@type': 'Person', name: 'Trần Minh Thiện', jobTitle: 'Founder & CEO' },
-                        numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },
+                structuredData={[
+                    {
+                        '@type': 'AboutPage',
+                        name: 'Về SGS LAND',
+                        description: 'Giới thiệu công ty, đội ngũ lãnh đạo và sứ mệnh của nền tảng bất động sản AI SGS LAND.',
+                        inLanguage: 'vi-VN',
+                        publisher: {
+                            '@type': 'Organization',
+                            name: 'SGS LAND',
+                            legalName: 'Công ty Cổ phần SGS Land',
+                            taxID: '0312960439',
+                            url: 'https://sgsland.vn',
+                            foundingDate: '2024',
+                            founder: { '@type': 'Person', name: 'Trần Minh Thiện', jobTitle: 'Founder & CEO' },
+                            numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },
+                            address: { '@type': 'PostalAddress', addressLocality: 'Hồ Chí Minh', addressCountry: 'VN' },
+                            sameAs: [
+                                'https://www.linkedin.com/company/sgsland',
+                                'https://www.facebook.com/sgsland',
+                            ],
+                        },
                     },
-                }}
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: [
+                            { '@type': 'Question', name: 'Ai là người sáng lập SGS LAND?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND được sáng lập năm 2024 bởi ông Trần Minh Thiện (Founder & CEO), cùng ông Nguyễn Hoàng Nam (CTO) và bà Lê Thị Hoa (COO). Đội ngũ sáng lập có hơn 5 năm kinh nghiệm phân phối bất động sản tại TP.HCM và miền Đông Nam Bộ.' } },
+                            { '@type': 'Question', name: 'Pháp nhân và mã số thuế của SGS LAND là gì?', acceptedAnswer: { '@type': 'Answer', text: 'Pháp nhân: Công ty Cổ phần SGS Land, mã số thuế 0312960439, trụ sở tại TP. Hồ Chí Minh, Việt Nam. Đăng ký kinh doanh hợp pháp với 4 ngành cốt lõi: tư vấn bất động sản, phân phối dự án, công nghệ phần mềm và đào tạo môi giới.' } },
+                            { '@type': 'Question', name: 'SGS LAND quy mô bao nhiêu nhân sự và môi giới?', acceptedAnswer: { '@type': 'Answer', text: '200+ nhân sự nội bộ tại trụ sở TP.HCM, mạng lưới 15.000+ môi giới hợp tác trên toàn quốc. Quản lý 45.000+ sản phẩm BĐS và xử lý hơn 2 tỷ USD tổng giá trị giao dịch tích lũy đến 04/2026.' } },
+                            { '@type': 'Question', name: 'SGS LAND là đại lý phân phối chính thức của những chủ đầu tư nào?', acceptedAnswer: { '@type': 'Answer', text: 'Đại lý phân phối uỷ quyền chính thức của Novaland (Aqua City), Vinhomes (Grand Park, Cần Giờ), Masterise Homes (The Global City, Lumière), Nam Long (Izumi City), Sơn Kim Land và Đại Quang Minh (Sala Thủ Thiêm). Tất cả đều có hợp đồng phân phối uỷ quyền chính chủ.' } },
+                            { '@type': 'Question', name: 'Tầm nhìn và sứ mệnh của SGS LAND là gì?', acceptedAnswer: { '@type': 'Answer', text: 'Sứ mệnh: minh bạch hóa thị trường bất động sản Việt Nam thông qua dữ liệu và AI. Tầm nhìn: trở thành hệ điều hành bất động sản số 1 Đông Nam Á vào 2030. Giá trị cốt lõi: minh bạch, độc lập với chủ đầu tư, kiểm duyệt 2 lớp, ưu tiên người mua thật.' } },
+                        ],
+                    },
+                ]}
             />
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">

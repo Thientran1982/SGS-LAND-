@@ -101,38 +101,51 @@ export const Contact: React.FC = () => {
                 title="Liên Hệ SGS LAND | Hotline, Văn Phòng TP.HCM, Email Hỗ Trợ"
                 description="Liên hệ SGS LAND: hotline 0971.132.378, email info@sgsland.vn, văn phòng tại TP.HCM. Hỗ trợ tư vấn BĐS, định giá AI, ký gửi miễn phí — phản hồi trong 15 phút 24/7."
                 canonicalPath="/contact"
-                structuredData={{
-                    '@type': 'ContactPage',
-                    name: 'Liên hệ SGS LAND',
-                    inLanguage: 'vi-VN',
-                    mainEntity: {
-                        '@type': 'Organization',
-                        name: 'SGS LAND',
-                        url: 'https://sgsland.vn',
-                        contactPoint: [
-                            {
-                                '@type': 'ContactPoint',
-                                telephone: '+84-971-132-378',
-                                email: 'info@sgsland.vn',
-                                contactType: 'customer service',
-                                areaServed: 'VN',
-                                availableLanguage: ['vi', 'en'],
+                structuredData={[
+                    {
+                        '@type': 'ContactPage',
+                        name: 'Liên hệ SGS LAND',
+                        inLanguage: 'vi-VN',
+                        mainEntity: {
+                            '@type': 'Organization',
+                            name: 'SGS LAND',
+                            url: 'https://sgsland.vn',
+                            contactPoint: [
+                                {
+                                    '@type': 'ContactPoint',
+                                    telephone: '+84-971-132-378',
+                                    email: 'info@sgsland.vn',
+                                    contactType: 'customer service',
+                                    areaServed: 'VN',
+                                    availableLanguage: ['vi', 'en'],
+                                    hoursAvailable: { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'], opens: '08:00', closes: '22:00' },
+                                },
+                                {
+                                    '@type': 'ContactPoint',
+                                    email: 'sales@sgsland.vn',
+                                    contactType: 'sales',
+                                    areaServed: 'VN',
+                                    availableLanguage: ['vi'],
+                                },
+                            ],
+                            address: {
+                                '@type': 'PostalAddress',
+                                addressLocality: 'Hồ Chí Minh',
+                                addressCountry: 'VN',
                             },
-                            {
-                                '@type': 'ContactPoint',
-                                email: 'sales@sgsland.vn',
-                                contactType: 'sales',
-                                areaServed: 'VN',
-                                availableLanguage: ['vi'],
-                            },
-                        ],
-                        address: {
-                            '@type': 'PostalAddress',
-                            addressLocality: 'Hồ Chí Minh',
-                            addressCountry: 'VN',
                         },
                     },
-                }}
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: [
+                            { '@type': 'Question', name: 'Hotline SGS LAND mở mấy giờ?', acceptedAnswer: { '@type': 'Answer', text: 'Hotline +84 971 132 378 hoạt động 8h–22h hàng ngày, kể cả cuối tuần và lễ. Phản hồi trung bình dưới 15 phút trong giờ hành chính. Ngoài giờ có thể gửi email info@sgsland.vn để được phản hồi trong 2 giờ làm việc tiếp theo.' } },
+                            { '@type': 'Question', name: 'SGS LAND có văn phòng ở đâu?', acceptedAnswer: { '@type': 'Answer', text: 'Trụ sở chính: TP. Hồ Chí Minh, Việt Nam. Pháp nhân: Công ty Cổ phần SGS Land, MST 0312960439. Khách hàng có thể đặt lịch hẹn tư vấn trực tiếp tại văn phòng qua hotline 0971.132.378 hoặc form liên hệ tại sgsland.vn/contact.' } },
+                            { '@type': 'Question', name: 'SGS LAND phục vụ khu vực nào?', acceptedAnswer: { '@type': 'Answer', text: 'Phục vụ toàn quốc với chuyên sâu Đông Nam Bộ: TP.HCM (toàn bộ 24 quận/huyện và TP Thủ Đức), Đồng Nai (Biên Hòa, Long Thành, Nhơn Trạch), Bình Dương (Thuận An, Dĩ An, Thành Phố Mới), Long An. Hỗ trợ tư vấn online 100% qua Zalo/Messenger cho các tỉnh khác.' } },
+                            { '@type': 'Question', name: 'Có những kênh liên hệ nào với SGS LAND?', acceptedAnswer: { '@type': 'Answer', text: '5 kênh chính: (1) Hotline 0971.132.378; (2) Email info@sgsland.vn (tư vấn) hoặc sales@sgsland.vn (bán hàng); (3) Form liên hệ tại sgsland.vn/contact; (4) Zalo OA và Facebook Messenger từ trang chủ; (5) Live Chat 24/7 tại sgsland.vn/livechat.' } },
+                            { '@type': 'Question', name: 'Tư vấn BĐS qua SGS LAND có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí cho mọi giai đoạn: định giá AI, tra cứu pháp lý, tư vấn dự án, hỗ trợ làm sổ hồng. SGS LAND chỉ thu phí khi giao dịch thành công thông qua hợp đồng phân phối uỷ quyền với chủ đầu tư hoặc người bán.' } },
+                        ],
+                    },
+                ]}
             />
             {/* Toast Notification */}
             {toast && (
