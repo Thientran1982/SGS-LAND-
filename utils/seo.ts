@@ -383,6 +383,45 @@ export function injectListingSEO(listing: ListingForSEO): void {
   });
 }
 
+/**
+ * Extract FAQ Q&A pairs from article body HTML.
+ * Convention: a `<div class="faq">…</div>` (or `<dl class="faq">`) section
+ * containing alternating `<h3>Question?</h3><p>Answer</p>` pairs, OR
+ * `<dt>Question?</dt><dd>Answer</dd>` pairs inside a `<dl class="faq">`.
+ */
+function extractFaqs(body: string): Array<{ q: string; a: string }> {
+  const faqs: Array<{ q: string; a: string }> = [];
+  if (!body) return faqs;
+
+  // <dl class="faq">
+  const dlMatch = body.match(/<dl[^>]*class="[^"]*\bfaq\b[^"]*"[^>]*>([\s\S]*?)<\/dl>/i);
+  if (dlMatch) {
+    const inner = dlMatch[1];
+    const re = /<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(inner))) {
+      const q = stripHtml(m[1]).trim();
+      const a = stripHtml(m[2]).trim();
+      if (q && a) faqs.push({ q, a });
+    }
+    if (faqs.length) return faqs;
+  }
+
+  // <div class="faq"> with h3/p pairs
+  const divMatch = body.match(/<(?:div|section)[^>]*class="[^"]*\bfaq\b[^"]*"[^>]*>([\s\S]*?)<\/(?:div|section)>/i);
+  if (divMatch) {
+    const inner = divMatch[1];
+    const re = /<h3[^>]*>([\s\S]*?)<\/h3>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(inner))) {
+      const q = stripHtml(m[1]).trim();
+      const a = stripHtml(m[2]).trim();
+      if (q && a) faqs.push({ q, a });
+    }
+  }
+  return faqs;
+}
+
 export function injectArticleSEO(article: ArticleForSEO): void {
   // Required format: "[Tiêu đề bài viết] - Tin Tức BĐS | SGS LAND"
   // No truncation — required suffix must always be present
@@ -392,21 +431,33 @@ export function injectArticleSEO(article: ArticleForSEO): void {
   const description = rawText.slice(0, 155);
   const image = article.image ?? DEFAULT_IMAGE;
   const canonicalPath = `/news/${article.id}`;
+  const fullUrl = `${BASE_URL}${canonicalPath}`;
   applyDynamicSEO(title, description, image, canonicalPath);
 
-  injectJsonLd({
-    '@context': 'https://schema.org',
+  const authorName = article.author ?? 'SGS LAND';
+  const authorId = `${fullUrl}#author`;
+
+  const personNode: Record<string, unknown> = {
+    '@type': 'Person',
+    '@id': authorId,
+    name: authorName,
+    affiliation: {
+      '@type': 'Organization',
+      name: 'SGS LAND',
+      url: BASE_URL,
+    },
+  };
+
+  const articleNode: Record<string, unknown> = {
     '@type': 'NewsArticle',
+    '@id': `${fullUrl}#article`,
     inLanguage: 'vi',
     headline: article.title,
     description,
-    image: image,
+    image,
     datePublished: toIso8601(article.date),
     dateModified: toIso8601(article.date),
-    author: {
-      '@type': 'Person',
-      name: article.author ?? 'SGS LAND',
-    },
+    author: { '@id': authorId },
     publisher: {
       '@type': 'Organization',
       name: 'SGS LAND',
@@ -415,8 +466,32 @@ export function injectArticleSEO(article: ArticleForSEO): void {
         url: `${BASE_URL}/logo.svg`,
       },
     },
-    url: `${BASE_URL}${canonicalPath}`,
+    mainEntityOfPage: fullUrl,
+    url: fullUrl,
     ...(article.category ? { articleSection: article.category } : {}),
+  };
+
+  const graph: Array<Record<string, unknown>> = [articleNode, personNode];
+
+  const faqs = extractFaqs(article.body || '');
+  if (faqs.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': `${fullUrl}#faq`,
+      mainEntity: faqs.map(({ q, a }) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: a,
+        },
+      })),
+    });
+  }
+
+  injectJsonLd({
+    '@context': 'https://schema.org',
+    '@graph': graph,
   });
 }
 

@@ -13,8 +13,8 @@ import { injectArticleSEO, clearDynamicSEO } from '../utils/seo';
 import { compressImages } from '../utils/imageCompressor';
 
 const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div', 'figure', 'figcaption', 'footer'],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'rel', 'width', 'height'],
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div', 'figure', 'figcaption', 'footer', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'dl', 'dt', 'dd', 'hr', 'section', 'article', 'small', 'sup', 'sub'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'rel', 'width', 'height', 'colspan', 'rowspan', 'scope', 'data-faq'],
     ALLOW_DATA_ATTR: false,
     FORCE_BODY: true,
 });

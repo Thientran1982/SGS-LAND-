@@ -140,6 +140,21 @@
 - Khu vực hot: Long Thành Đồng Nai (sân bay 2027), Phú Mỹ Hưng Q7, Vinhomes Cần Giờ Q3/2026
 - Đặt cọc: giữ chỗ vs thiện chí, tiến độ thanh toán dự án mới, phí công chứng + thuế
 
+## 10 hướng dẫn chuyên sâu BĐS 2026 (mới nhất, do chuyên gia SGS LAND biên tập)
+
+- [Định giá AI bất động sản 2026: Cách hoạt động, độ chính xác và 8 hệ số AVM](https://sgsland.vn/news/00000000-0000-0000-0000-000000000301)
+- [Sổ hồng và sổ đỏ khác nhau thế nào? So sánh chi tiết theo Luật Đất Đai 2024](https://sgsland.vn/news/00000000-0000-0000-0000-000000000302)
+- [Đất Long Thành 2026: Sân bay vận hành 2027 sẽ tác động giá đất ra sao?](https://sgsland.vn/news/00000000-0000-0000-0000-000000000303)
+- [Aqua City vs Izumi City 2026: So sánh chi tiết hai đại đô thị tại Biên Hòa](https://sgsland.vn/news/00000000-0000-0000-0000-000000000304)
+- [Lãi suất vay mua nhà 2026: So sánh 8 ngân hàng và cách tính khoản vay tối ưu](https://sgsland.vn/news/00000000-0000-0000-0000-000000000305)
+- [Vinhomes Cần Giờ (Green Paradise) mở bán Q3/2026: Toàn cảnh siêu đô thị 2.870ha](https://sgsland.vn/news/00000000-0000-0000-0000-000000000306)
+- [Ký gửi bất động sản 2026: Quy trình 7 bước, phí no-win-no-fee và 5 lưu ý](https://sgsland.vn/news/00000000-0000-0000-0000-000000000307)
+- [Đặt cọc thiện chí và đặt cọc giữ chỗ BĐS: Khác biệt pháp lý và 6 cạm bẫy](https://sgsland.vn/news/00000000-0000-0000-0000-000000000308)
+- [Bất động sản Phú Mỹ Hưng Quận 7 năm 2026: Vì sao giá tăng đều 8–12%/năm?](https://sgsland.vn/news/00000000-0000-0000-0000-000000000309)
+- [Bất động sản Bình Dương 2026: 3 thành phố trọng điểm và xu hướng giá](https://sgsland.vn/news/00000000-0000-0000-0000-000000000310)
+
+Mỗi bài 800–1500 từ tiếng Việt, có khối định nghĩa, 2–3 thống kê chính, các H2 dạng câu hỏi, bảng so sánh, FAQ và nguồn tham khảo. Schema.org @graph chứa NewsArticle + Person + FAQPage được inject tự động qua `injectArticleSEO`.
+
 ## AI plugin & API công khai
 
 - [/.well-known/ai-plugin.json](https://sgsland.vn/.well-known/ai-plugin.json) — Manifest AI plugin (ChatGPT/Claude/Grok)
