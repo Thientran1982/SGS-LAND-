@@ -15,7 +15,7 @@ interface Props {
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   OPENING:   { label: 'Mở bán',     cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  BOOKING:   { label: 'Booking',    cls: 'bg-sky-50 text-sky-700 border-sky-200' },
+  BOOKING:   { label: 'Đặt chỗ',   cls: 'bg-sky-50 text-sky-700 border-sky-200' },
   AVAILABLE: { label: 'Còn hàng',   cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
 };
 
