@@ -42,6 +42,24 @@ uri = "file://public/images/projects/vinhomes-grand-park.png"
 type = "image"
 title = "vinhomes grand park super city thu duc"
 
+[[generated]]
+id = "el2KLoVgtT7VXYJikH3cK"
+uri = "file://apps/mobile/assets/icon.png"
+type = "image"
+title = "sgs land app icon"
+
+[[generated]]
+id = "UNAdI2inJeca79X_LEPL3"
+uri = "file://apps/mobile/assets/adaptive-icon.png"
+type = "image"
+title = "sgs land adaptive icon"
+
+[[generated]]
+id = "OIv3xkODpnLsNvomqraEk"
+uri = "file://apps/mobile/assets/splash.png"
+type = "image"
+title = "sgs land splash screen"
+
 [[outputs]]
 id = "R8S80l1cgy_yqkIYZ_ab4"
 uri = "file://attached_assets/screenshots/no-image-placeholder.svg"
