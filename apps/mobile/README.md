@@ -120,25 +120,6 @@ App identifiers (set once in `app.json`):
 | 6      | Booking + VNPay deposit flow                            | Backend: booking + VNPay int |
 | 7      | App Store + Google Play submission                      | Apple Dev $99, Google $25    |
 
-## Production assets (required before EAS build)
-
-The dev build uses Expo's default placeholder icon/splash. Before a production
-EAS build, drop the following PNGs into `apps/mobile/assets/` and add the
-matching fields back to `app.json`:
-
-- `icon.png` — 1024×1024, app icon
-- `splash.png` — 1284×2778 (or any tall canvas), splash screen
-- `adaptive-icon.png` — 1024×1024 foreground for Android adaptive icon
-
-Then re-add to `app.json`:
-
-```json
-"icon": "./assets/icon.png",
-"splash": { "image": "./assets/splash.png", "resizeMode": "contain", "backgroundColor": "#0F172A" },
-"android": { "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#0F172A" } },
-"web": { "favicon": "./assets/icon.png" }
-```
-
 ## First-run smoke checklist
 
 After `npm install && npx expo start`:

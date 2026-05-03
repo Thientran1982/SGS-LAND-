@@ -1,9 +1,9 @@
 # Mobile assets
 
-Replace the following before first build:
+Branded production assets used by `app.json`:
 
-- `icon.png` — 1024×1024 PNG, brand mark on solid background
-- `splash.png` — 1242×2436 PNG, brand mark centered on `#0F172A`
-- `adaptive-icon.png` — 1024×1024 PNG (Android), foreground only
+- `icon.png` — 1024×1024, app icon (iOS + web favicon)
+- `adaptive-icon.png` — 1024×1024, Android adaptive-icon foreground (background `#0F172A`)
+- `splash.png` — splash screen on `#0F172A`, `resizeMode: contain`
 
-Until then, Expo will substitute defaults during `expo start`.
+Replace these PNGs to rebrand; keep the same filenames so `app.json` stays valid.
