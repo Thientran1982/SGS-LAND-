@@ -60,6 +60,12 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
     - Per-route noscript injection with auto-extracted facts + FAQ from JSON-LD (`server/seo/metaInjector.ts`).
     - GEO (Generative Engine Optimization) content: entity-rich descriptions, statistics, expert FAQ, E-E-A-T signals.
     - Full support for Vietnamese translation keys across all UI elements.
+    - **Sprint #64 SEO/GEO upgrade (May 2026)**:
+        - `docs/seo/` — entity establishment kit: `wikidata-sgsland.json` (Wikidata + QuickStatements CSV), `gbp-sgsland.json` (Google Business Profile config + 20 Q&A pre-seed + photo plan), `nap-checklist.md` (9-platform NAP sync), `outreach-templates.md` (3 templates VI/EN + 15 partner targets), `x-content-calendar.md` (30-day Twitter/Grok plan), `audit-baseline-2026-05.md` + `audit-after-2026-05.md` (delta tracking).
+        - `public/.well-known/ai-plugin.json` — AI plugin manifest exposing `/api/public/listings`, `/projects`, `/valuation`, `llms-full.txt` to ChatGPT/Claude/Grok with VI/EN languages and VN-SG/DN/BD/LA/BV geographic_scope.
+        - `pages/HelpCenter.tsx` — expanded from 10 → 27 Q&A across 6 categories (mua-ban-phap-ly, dinh-gia-ai, ky-gui, lai-suat-vay, khu-vuc-hot, dat-coc); FAQPage JSON-LD now mirrors all 27 Q&A; localStorage-backed micro-feedback widget ("Câu trả lời này có hữu ích?").
+        - `public/llms.txt` — added /help-center section + AI plugin/API endpoints block for direct AI engine consumption.
+        - **Drift (deferred to follow-up tasks)**: 10 VI blog seed posts (DB-backed `/news` requires content + seed script), pillar Definition-Block rewrites, `seo_geo_snapshots` migration + QStash daily cron, SeoManager GEO Monitor sub-tab, Lighthouse perf pass on 10 pillars, Event/AggregateRating/ImageObject geo schema additions.
 - **Homepage (Landing.tsx)**:
     - Hero: H1 "BẤT ĐỘNG SẢN" typewriter, badge "Đại Lý BĐS + AI Định Giá", entity-rich description (Aqua City 1.000ha, The Global City 117ha, Izumi City 170ha, Vinhomes Cần Giờ 2.870ha), hotline 0971 132 378.
     - Metrics bar (4 real BĐS stats): 11+ Dự Án, 95% Chính Xác AI, 5 Tỉnh, 24/7 Hỗ Trợ.
