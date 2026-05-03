@@ -4079,6 +4079,71 @@ async function startServer() {
   }
 
   // ---------------------------------------------------------------------------
+  // Agent Runs — unified audit trail readout (host-tenant SUPER_ADMIN only).
+  // GET /api/admin/agent-runs?agent=<name>&days=<1..30>&status=<...>&limit=<1..500>
+  // Returns recent rows from agent_runs (background cron/agent audit log).
+  // ---------------------------------------------------------------------------
+  app.get('/api/admin/agent-runs', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    const user = (req as any).user;
+    if (!user || user.role !== 'SUPER_ADMIN' || user.tenantId !== DEFAULT_TENANT_ID) {
+      return res.status(403).json({ error: 'Chỉ SUPER_ADMIN của host tenant mới truy cập được Agent Runs' }) as any;
+    }
+    const days   = Math.max(1, Math.min(30,  Number(req.query.days)  || 7));
+    const limit  = Math.max(1, Math.min(500, Number(req.query.limit) || 200));
+    const agent  = typeof req.query.agent  === 'string' ? req.query.agent  : null;
+    const status = typeof req.query.status === 'string' ? req.query.status : null;
+
+    try {
+      const params: any[] = [days, limit];
+      let where = `started_at >= NOW() - ($1::int * INTERVAL '1 day')`;
+      if (agent)  { params.push(agent);  where += ` AND agent_name = $${params.length}`; }
+      if (status) { params.push(status); where += ` AND status = $${params.length}`; }
+
+      const r = await pool.query(
+        `SELECT id, agent_name, trigger_source, status, started_at, finished_at,
+                duration_ms, summary_json, error_text
+           FROM agent_runs
+          WHERE ${where}
+          ORDER BY started_at DESC
+          LIMIT $2`,
+        params,
+      );
+      const agg = await pool.query(
+        `SELECT agent_name,
+                COUNT(*)                                   AS total,
+                COUNT(*) FILTER (WHERE status='success')   AS success,
+                COUNT(*) FILTER (WHERE status='error')     AS errors,
+                COUNT(*) FILTER (WHERE status='skipped')   AS skipped,
+                COUNT(*) FILTER (WHERE status='running')   AS running,
+                ROUND(AVG(duration_ms))::int               AS avg_duration_ms,
+                MAX(started_at)                            AS last_run_at
+           FROM agent_runs
+          WHERE started_at >= NOW() - ($1::int * INTERVAL '1 day')
+       GROUP BY agent_name
+       ORDER BY last_run_at DESC NULLS LAST`,
+        [days],
+      );
+      return res.json({
+        days,
+        runs: r.rows,
+        agents: agg.rows.map((row) => ({
+          agentName:     row.agent_name,
+          total:         Number(row.total),
+          success:       Number(row.success),
+          errors:        Number(row.errors),
+          skipped:       Number(row.skipped),
+          running:       Number(row.running),
+          avgDurationMs: row.avg_duration_ms == null ? null : Number(row.avg_duration_ms),
+          lastRunAt:     row.last_run_at,
+        })),
+      });
+    } catch (err: any) {
+      console.error('[AgentRuns] read error:', err?.message || err);
+      return res.status(500).json({ error: 'Internal error', detail: err?.message || String(err) });
+    }
+  });
+
+  // ---------------------------------------------------------------------------
   // Module Chiến dịch tự động — Campaigns
   // ---------------------------------------------------------------------------
   app.use(createCampaignRouter(pool, authenticateToken));

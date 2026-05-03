@@ -15,6 +15,7 @@ import { logger } from '../middleware/logger';
 import { applyAVM, getRegionalBasePrice, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
 import type { PropertyType, LegalStatus } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
+import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
 
 const REFRESH_THRESHOLD = 0.05;      // Chênh lệch > 5% thì cập nhật
 const BATCH_SIZE        = 50;         // Xử lý theo lô để tránh quá tải
@@ -75,6 +76,7 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
     const tenantId  = req.body?.tenantId || 'all';
     const threshold = Number(req.body?.threshold ?? REFRESH_THRESHOLD);
     const startedAt = Date.now();
+    const runId = await startAgentRun(pool, 'listing-price-refresh', dryRun ? 'manual_dry_run' : 'qstash');
 
     logger.info(`[PriceRefresh] Bắt đầu${dryRun ? ' (dry-run)' : ''} — tenantId=${tenantId} — ${new Date().toISOString()}`);
 
@@ -186,6 +188,8 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
       const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
       logger.info(`[PriceRefresh] Hoàn thành trong ${elapsed}s — ${JSON.stringify(stats)}`);
 
+      await finishAgentRun(pool, runId, 'success', { dry_run: dryRun, tenantId, threshold, elapsed_s: parseFloat(elapsed), stats }, null, startedAt);
+
       return res.json({
         ok: true,
         dryRun,
@@ -194,6 +198,7 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
       });
     } catch (err: any) {
       logger.error('[PriceRefresh] Lỗi nghiêm trọng:', err);
+      await finishAgentRun(pool, runId, 'error', { dry_run: dryRun, tenantId, stats }, (err?.message || String(err)).slice(0, 4000), startedAt);
       return res.status(500).json({ error: err.message });
     }
   });

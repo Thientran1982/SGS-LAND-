@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
 import { notificationRepository } from '../repositories/notificationRepository';
+import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
 
 type ReminderKind = 'D-1' | 'D-DAY' | 'OVERDUE';
 
@@ -54,6 +55,8 @@ export function createTaskReminderCronRouter(pool: Pool, cronSecret: string): Ro
 
     const dryRun = req.body?.dry_run === true;
     const startedAt = new Date().toISOString();
+    const startedMs = Date.now();
+    const runId = await startAgentRun(pool, 'task-reminder-cron', dryRun ? 'manual_dry_run' : 'qstash');
     logger.info(`[TaskReminderCron] Bắt đầu${dryRun ? ' (dry-run)' : ''} — ${startedAt}`);
 
     const stats = {
@@ -181,6 +184,8 @@ export function createTaskReminderCronRouter(pool: Pool, cronSecret: string): Ro
       const totalNotif = Object.values(stats).reduce((s, x) => s + x.notifications, 0);
       logger.info(`[TaskReminderCron] Hoàn thành — ${totalNotif} notification${dryRun ? ' (dry-run)' : ''}`);
 
+      await finishAgentRun(pool, runId, 'success', { dry_run: dryRun, stats, total_notifications: totalNotif }, null, startedMs);
+
       return res.json({
         ok: true,
         dry_run: dryRun,
@@ -190,6 +195,7 @@ export function createTaskReminderCronRouter(pool: Pool, cronSecret: string): Ro
       });
     } catch (err: any) {
       logger.error('[TaskReminderCron] Lỗi không xác định:', err.message);
+      await finishAgentRun(pool, runId, 'error', { dry_run: dryRun, stats }, (err?.message || String(err)).slice(0, 4000), startedMs);
       return res.status(500).json({ error: 'Internal error', detail: err.message });
     }
   });
