@@ -3,6 +3,7 @@ Allow: /
 Allow: /home
 Allow: /marketplace
 Allow: /listing/
+Allow: /bds/
 Allow: /ai-valuation
 Allow: /news
 Allow: /about-us
