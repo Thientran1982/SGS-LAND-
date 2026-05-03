@@ -43,7 +43,10 @@ export class ProjectRepository extends BaseRepository {
             const dataResult = await client.query(
                 `SELECT p.*,
                     (SELECT COUNT(*)::int FROM project_access pa WHERE pa.project_id = p.id AND pa.status = 'ACTIVE') AS partner_count,
-                    (SELECT COUNT(*)::int FROM listings l WHERE l.project_id = p.id) AS listing_count
+                    (SELECT COUNT(*)::int FROM listings l
+                       WHERE l.tenant_id = p.tenant_id
+                         AND (l.project_id = p.id OR UPPER(l.project_code) = UPPER(p.code))
+                    ) AS listing_count
                  FROM projects p ${where}
                  ORDER BY p.created_at DESC
                  LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
@@ -81,7 +84,10 @@ export class ProjectRepository extends BaseRepository {
         return this.withTenant(tenantId, async (client) => {
             const result = await client.query(
                 `SELECT p.*,
-                    (SELECT COUNT(*)::int FROM listings l WHERE l.project_id = p.id) AS listing_count
+                    (SELECT COUNT(*)::int FROM listings l
+                       WHERE l.tenant_id = p.tenant_id
+                         AND (l.project_id = p.id OR UPPER(l.project_code) = UPPER(p.code))
+                    ) AS listing_count
                  FROM projects p
                  WHERE p.id = $1 AND p.tenant_id = $2`,
                 [id, tenantId]
