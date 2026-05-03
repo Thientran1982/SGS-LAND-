@@ -329,11 +329,21 @@ export default function ListingDetailScreen() {
             style={[styles.ctaBtn, styles.ctaPrimary, { backgroundColor: accent }]}
             onPress={() => {
               Haptics.selectionAsync().catch(() => {});
-              setLeadModalOpen(true);
+              if (!item) return;
+              // Task #56 — go straight to deposit booking screen with the
+              // listing pre-bound. The screen handles the auth gate itself.
+              router.push({
+                pathname: '/listing/[code]/book',
+                params: {
+                  code: item.id,
+                  listingId: item.id,
+                  title: item.title?.slice(0, 120) || '',
+                },
+              });
             }}
             android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
           >
-            <Text style={styles.ctaPrimaryText}>★ Quan tâm</Text>
+            <Text style={styles.ctaPrimaryText}>💰 Đặt cọc</Text>
           </Pressable>
         </View>
         <Text style={styles.ctaHotlineHint} numberOfLines={1}>

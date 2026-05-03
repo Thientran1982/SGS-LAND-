@@ -217,3 +217,33 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
   - `app/(tabs)/account.tsx` — Switch toggle "Tin BĐS mới khớp tìm kiếm" with optimistic flip + Alert/`Linking.openSettings()` if user denied OS permission. Persists both locally (AsyncStorage) and server-side (`PATCH /api/buyer/devices/:id/preferences`).
   - `app/(tabs)/search.tsx` — "🔔 Lưu tìm kiếm" pill button in toolbar; auto-builds Vietnamese label from active filters, triggers permission prompt on first save if push wasn't yet decided.
 - **Idempotency & dedup**: `last_notified_at` watermark prevents back-catalog blasts on first save; UNIQUE log prevents duplicate sends across in-process + HTTP cron drivers.
+
+## Bước 5 — Buyer VNPay deposit booking — Task #56
+
+- **What**: Buyer "Đặt cọc giữ chỗ" — pay a refundable hold deposit on a listing via VNPay (sandbox by default, prod-ready). Drives conversion from interest → committed lead and gives the agent a verifiable signal.
+- **DB (migrations `099_bookings`, `100_booking_events`)**:
+  - `bookings` — id, tenant_id, listing_id (FK), unit_id (nullable for ad-hoc deposits), buyer_user_id (FK to `buyer_users`), agent_user_id (the listing's `assigned_to` snapshot), deposit_amount (VND, integer), currency='VND', status `PENDING|PAID|FAILED|CANCELLED|REFUNDED`, **vnpay_txn_ref UNIQUE** (idempotency anchor), vnpay_response_code, vnpay_bank_code, paid_at, expires_at (default now()+30min), buyer_email, notes. Indices on (buyer_user_id, created_at DESC) and (tenant_id, status).
+  - `booking_events` — append-only audit log: id, booking_id, event_type (`CREATED|PAYMENT_INITIATED|VNPAY_RETURN|VNPAY_IPN|STATUS_CHANGED|EMAIL_SENT|ERROR`), payload JSONB (raw VNPay params, amount, response codes), created_at. Used for compliance + debugging chargebacks.
+- **Server**:
+  - `server/config/env.ts` — `loadVnpayConfig()` fail-fast loader. Returns `null` if `VNPAY_TMN_CODE` or `VNPAY_HASH_SECRET` missing → `/api/bookings` responds 503 with localized "Cổng thanh toán chưa cấu hình".
+  - `server/services/vnpayService.ts` — pure crypto module:
+    - `vnpEncode()` — RFC3986 (`%20` not `+`) — VNPay's signature spec is unforgiving on this.
+    - `vnpFormatDate()` — `yyyyMMddHHmmss` in **UTC+7** (VN local), used for both `vnp_CreateDate` and `vnp_ExpireDate`.
+    - `buildPaymentUrl()` — assembles params (amount × 100, locale `vn`, return URL, IP, ref), sorts keys alphabetically, HMAC-SHA512 of the encoded query → `vnp_SecureHash`.
+    - `verifyCallback()` — strips `vnp_SecureHash`/`vnp_SecureHashType`, re-encodes, compares HMAC in constant time. Returns `{ ok, code, txnRef, amount, bankCode }`.
+  - `server/routes/bookingRoutes.ts`:
+    - `POST /api/bookings` — buyer JWT auth; clamps amount to `[100_000, 500_000_000]` VND, defaults to `VNPAY_DEFAULT_DEPOSIT_VND` (50M); inserts PENDING row + event; returns `{ booking, paymentUrl }`.
+    - `GET /api/bookings/me` — buyer's own bookings, joined with listings for title/code preview.
+    - `GET /api/bookings/:id` — single booking (must own).
+    - `GET /api/payments/vnpay/return` — verifies HMAC, **does NOT mutate state** (IPN is the only writer), then 302 → `sgsland://bookings/<id>?status=paid|failed|invalid|error`. Sets a no-cache header so an in-flight buyer browser refresh doesn't replay.
+    - `GET|POST /api/payments/vnpay/ipn` — both verbs registered (VNPay defaults to GET but documents POST). **Idempotent transition** via `UPDATE bookings SET status='PAID' WHERE id=$1 AND status='PENDING'` — guarantees exactly-once paid transition even if VNPay retries the IPN. Verifies amount × 100 matches the row, otherwise records `ERROR` event and returns `{RspCode:'04',Message:'Invalid amount'}`. Successful PAID emits `io.to('user:<agentId>').emit('booking:paid', {bookingId, listingId, amount})` so the agent CRM updates live, and fires a Brevo receipt email if `buyer_email` was provided.
+- **Mobile**:
+  - New dep: `expo-web-browser ~14.0.2` (uses `openAuthSessionAsync` so iOS surfaces a single-tap return + Android closes the Custom Tab automatically when our `sgsland://` redirect fires).
+  - `src/api/bookings.ts` — typed client + `formatVnd()` + `BOOKING_STATUS_LABEL/COLOR` maps.
+  - `app/listing/[code]/book.tsx` — preset amount chips (5/10/20/50/100M, default 50M), optional email for receipt, terms switch, "Thanh toán qua VNPay" CTA. After `openAuthSessionAsync` resolves we always `router.replace('/bookings/<id>')` regardless of result type (`success|cancel|dismiss`) — the detail screen is the source of truth.
+  - `app/bookings/index.tsx` — list of buyer's bookings with pull-to-refresh; routed from Account tab "Đơn cọc của tôi" row.
+  - `app/bookings/[id].tsx` — status hero card (icon + Vietnamese label + blurb), full booking metadata, "Gọi chuyên viên" CTA. **Polls every 3s for the first 60s while status===PENDING** to bridge the gap between the buyer's browser closing and the IPN landing; if `?status=paid|failed` is on the deep-link the screen shows a provisional state instantly.
+  - `app/_layout.tsx` — `resolveDeepLink()` extended to handle `bookingId` payload (push notifications → booking detail). New Stack screens registered: `listing/[code]/book`, `bookings/index`, `bookings/[id]`.
+  - `app/bds/[slugId].tsx` — primary CTA changed from "★ Quan tâm" lead-form to "💰 Đặt cọc" pushing to the booking screen with `listingId` + `title` pre-bound.
+- **Env vars (root `.env.example`)**: `VNPAY_ENV` (sandbox|prod), `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_RETURN_URL`, `VNPAY_IPN_URL`, optional `VNPAY_DEFAULT_DEPOSIT_VND`. Without them the booking endpoint returns 503; the rest of the app is unaffected.
+- **Note on migration numbering**: 096/097 were taken by buyer migrations from prior tasks; this task uses 099/100 (deviation from the plan's "next available" estimate but functionally identical).
