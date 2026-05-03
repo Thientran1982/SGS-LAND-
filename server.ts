@@ -1735,12 +1735,17 @@ async function startServer() {
         res.setHeader('X-Public-Listing-Detail-Cache', 'HIT');
         res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
         res.json(cached);
-        // View tracking ngay cả khi HIT — analytics phải đếm impression thật.
+        // View tracking even on HIT — analytics must count real impressions.
+        // Use the listing's owner tenant (cached payload exposes tenantId
+        // implicitly via branding.tenantId; fallback to a quick lookup) so
+        // view_count and visitor logs land in the vendor's CRM, not in
+        // PUBLIC_TENANT — preserves cross-tenant analytics accuracy.
         const ip = getClientIp(req);
+        const ownerTenantId = String((cached as any)?.branding?.tenantId || PUBLIC_TENANT);
         Promise.all([
-          listingRepository.incrementViewCount(PUBLIC_TENANT, id).catch(() => {}),
+          listingRepository.incrementViewCount(ownerTenantId, id).catch(() => {}),
           lookupIp(ip).then(geo => visitorRepository.log({
-            tenantId: PUBLIC_TENANT, ipAddress: ip,
+            tenantId: ownerTenantId, ipAddress: ip,
             country: geo?.country, countryCode: geo?.countryCode,
             region: geo?.region, city: geo?.city, lat: geo?.lat, lon: geo?.lon,
             isp: geo?.isp, page: `/bds/${slugId}`, listingId: id,
