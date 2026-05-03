@@ -207,7 +207,30 @@ function patchJsonLdDescription(schemaType: string, description: string): void {
   });
 }
 
+/**
+ * Routes có component tự render <SeoHead/> (Helmet) — bỏ qua updatePageSEO ở
+ * đây để tránh 2 hệ thống cùng ghi `<title>` / `<link rel="canonical">` →
+ * duplicate canonical & flicker title khi Helmet chạy sau navigation.
+ * Phải đồng bộ thủ công khi thêm SeoHead vào trang public mới.
+ */
+const HELMET_MANAGED_ROUTES = new Set<string>([
+  '', 'home',
+  'about-us', 'contact', 'news',
+  'crm-platform', 'help-center', 'careers',
+  'privacy-policy', 'terms-of-service',
+  'du-an',
+  'marketplace-apps',
+  'bat-dong-san-dong-nai',
+  'bat-dong-san-long-thanh',
+  'bat-dong-san-thu-duc',
+  'bat-dong-san-binh-duong',
+  'bat-dong-san-quan-7',
+  'bat-dong-san-phu-nhuan',
+  'bat-dong-san-binh-chanh',
+]);
+
 export function updatePageSEO(routeBase: string): void {
+  if (HELMET_MANAGED_ROUTES.has(routeBase)) return;
   const baseCfg = ROUTE_SEO[routeBase] ?? ROUTE_SEO[''];
   const overrides = getSEOOverrides();
   const override = overrides[routeBase];

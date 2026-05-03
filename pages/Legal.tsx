@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../services/i18n';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 
@@ -318,16 +319,30 @@ export const PrivacyPolicy: React.FC = () => {
     const content = language === 'vn' ? LEGAL_CONTENT.vn.privacy : LEGAL_CONTENT.en.privacy;
 
     return (
-        <LegalLayout title={t('legal.privacy_title')} lastUpdated="01/04/2025">
-            {content.map((section, idx) => (
-                <div key={idx} className="mb-8">
-                    <h3>{section.heading}</h3>
-                    {section.content.split('\n').map((paragraph, pIdx) => (
-                        <p key={pIdx}>{paragraph}</p>
-                    ))}
-                </div>
-            ))}
-        </LegalLayout>
+        <>
+            <SeoHead
+                title="Chính Sách Bảo Mật | SGS LAND - Tuân Thủ Nghị Định 13/2023"
+                description="Chính sách bảo mật của SGS LAND: bảo vệ dữ liệu cá nhân theo Nghị định 13/2023/NĐ-CP. Cam kết minh bạch về thu thập, lưu trữ và xử lý thông tin khách hàng."
+                canonicalPath="/privacy-policy"
+                structuredData={{
+                    '@type': 'WebPage',
+                    name: 'Chính sách bảo mật SGS LAND',
+                    inLanguage: 'vi-VN',
+                    dateModified: '2025-04-01',
+                    publisher: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                }}
+            />
+            <LegalLayout title={t('legal.privacy_title')} lastUpdated="01/04/2025">
+                {content.map((section, idx) => (
+                    <div key={idx} className="mb-8">
+                        <h3>{section.heading}</h3>
+                        {section.content.split('\n').map((paragraph, pIdx) => (
+                            <p key={pIdx}>{paragraph}</p>
+                        ))}
+                    </div>
+                ))}
+            </LegalLayout>
+        </>
     );
 };
 
@@ -336,16 +351,30 @@ export const TermsOfService: React.FC = () => {
     const content = language === 'vn' ? LEGAL_CONTENT.vn.terms : LEGAL_CONTENT.en.terms;
 
     return (
-        <LegalLayout title={t('legal.terms_title')} lastUpdated="01/04/2025">
-            {content.map((section, idx) => (
-                <div key={idx} className="mb-8">
-                    <h3>{section.heading}</h3>
-                    {section.content.split('\n').map((paragraph, pIdx) => (
-                        <p key={pIdx}>{paragraph}</p>
-                    ))}
-                </div>
-            ))}
-        </LegalLayout>
+        <>
+            <SeoHead
+                title="Điều Khoản Sử Dụng | SGS LAND - Quy Tắc Nền Tảng BĐS"
+                description="Điều khoản sử dụng nền tảng SGS LAND: quy định về tài khoản, đăng tin BĐS, giao dịch, tranh chấp. Tuân thủ Luật Kinh Doanh BĐS 2023, Luật Đất Đai 2024."
+                canonicalPath="/terms-of-service"
+                structuredData={{
+                    '@type': 'WebPage',
+                    name: 'Điều khoản sử dụng SGS LAND',
+                    inLanguage: 'vi-VN',
+                    dateModified: '2025-04-01',
+                    publisher: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                }}
+            />
+            <LegalLayout title={t('legal.terms_title')} lastUpdated="01/04/2025">
+                {content.map((section, idx) => (
+                    <div key={idx} className="mb-8">
+                        <h3>{section.heading}</h3>
+                        {section.content.split('\n').map((paragraph, pIdx) => (
+                            <p key={pIdx}>{paragraph}</p>
+                        ))}
+                    </div>
+                ))}
+            </LegalLayout>
+        </>
     );
 };
 

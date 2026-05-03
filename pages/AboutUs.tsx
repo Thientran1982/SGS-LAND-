@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -39,7 +40,27 @@ export const AboutUs: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
-
+            <SeoHead
+                title="Về SGS LAND | Đội Ngũ & Sứ Mệnh Nền Tảng BĐS AI Việt Nam"
+                description="SGS LAND thành lập 2024 tại TP.HCM, đội ngũ 200+ chuyên gia BĐS, công nghệ AI định giá sai số ±5%. Sứ mệnh: minh bạch hóa thị trường BĐS Việt qua dữ liệu và AI."
+                canonicalPath="/about-us"
+                structuredData={{
+                    '@type': 'AboutPage',
+                    name: 'Về SGS LAND',
+                    description: 'Giới thiệu công ty, đội ngũ lãnh đạo và sứ mệnh của nền tảng bất động sản AI SGS LAND.',
+                    inLanguage: 'vi-VN',
+                    publisher: {
+                        '@type': 'Organization',
+                        name: 'SGS LAND',
+                        legalName: 'Công ty Cổ phần SGS Land',
+                        taxID: '0312960439',
+                        url: 'https://sgsland.vn',
+                        foundingDate: '2024',
+                        founder: { '@type': 'Person', name: 'Trần Minh Thiện', jobTitle: 'Founder & CEO' },
+                        numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },
+                    },
+                }}
+            />
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">

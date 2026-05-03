@@ -55,13 +55,14 @@ export function SeoHead({
       <meta name="twitter:image" content={ogImage} />
       <meta name="twitter:site" content="@SGSLand" />
 
-      {/* JSON-LD — client-side layer cho AI crawlers sau navigation */}
+      {/* JSON-LD — client-side layer cho AI crawlers sau navigation.
+          Luôn auto-inject @context (https://schema.org) để callers không cần lặp lại. */}
       {structuredData && (
         <script type="application/ld+json">
           {JSON.stringify(
             Array.isArray(structuredData)
               ? { '@context': 'https://schema.org', '@graph': structuredData }
-              : structuredData
+              : { '@context': 'https://schema.org', ...(structuredData as Record<string, unknown>) }
           )}
         </script>
       )}

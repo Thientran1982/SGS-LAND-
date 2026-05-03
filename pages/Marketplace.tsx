@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { AppManifest, InstalledApp } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -115,6 +116,12 @@ export const Marketplace: React.FC = () => {
 
     return (
         <div className="space-y-6 pb-20 animate-enter relative">
+            <SeoHead
+                title="App Marketplace Nội Bộ SGS LAND | Tích Hợp & Mở Rộng"
+                description="Cửa hàng ứng dụng nội bộ SGS LAND: cài đặt và quản lý các tích hợp mở rộng cho CRM bất động sản. Khu vực dành riêng cho người dùng đã đăng nhập."
+                canonicalPath="/marketplace-apps"
+                noindex
+            />
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4">

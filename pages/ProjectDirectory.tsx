@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import ExcelJS from 'exceljs';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { motion } from 'motion/react';
 import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity, Download } from 'lucide-react';
 import { useTranslation } from '../services/i18n';
@@ -354,7 +355,19 @@ export default function ProjectDirectory() {
 
     return (
         <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
-
+            <SeoHead
+                title="Danh Sách Dự Án Bất Động Sản Việt Nam 2026 - SGS LAND"
+                description="Tổng hợp dự án BĐS nổi bật 2026 tại TP.HCM, Đồng Nai, Bình Dương: Aqua City, Vinhomes Grand Park, The Global City, Izumi City. Bảng giá, pháp lý, tư vấn miễn phí."
+                canonicalPath="/du-an"
+                structuredData={{
+                    '@type': 'CollectionPage',
+                    name: 'Danh sách dự án BĐS SGS LAND',
+                    description: 'Thư mục các dự án bất động sản đang phân phối tại SGS LAND, bao gồm thông tin chủ đầu tư, vị trí, bảng giá và pháp lý.',
+                    inLanguage: 'vi-VN',
+                    isPartOf: { '@type': 'WebSite', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                    publisher: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                }}
+            />
             {/* ── Sticky nav ── */}
             <nav className="sticky top-0 z-40 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]/90 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">

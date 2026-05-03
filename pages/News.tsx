@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { Article, UserRole, User } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -669,6 +670,19 @@ export const News: React.FC = () => {
     // Default: List View
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+            <SeoHead
+                title="Tin Tức Bất Động Sản 2026 | Phân Tích Thị Trường - SGS LAND"
+                description="Tin tức BĐS Việt Nam mới nhất: chính sách, dự án, giá thị trường TP.HCM, Đồng Nai, Bình Dương. Phân tích chuyên sâu cập nhật hàng tuần từ chuyên gia SGS LAND."
+                canonicalPath="/news"
+                structuredData={{
+                    '@type': 'CollectionPage',
+                    name: 'Tin tức bất động sản SGS LAND',
+                    description: 'Thư viện tin tức và phân tích thị trường BĐS Việt Nam, cập nhật hàng tuần.',
+                    inLanguage: 'vi-VN',
+                    isPartOf: { '@type': 'WebSite', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                    publisher: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                }}
+            />
             {errorToast && (
                 <div className="fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl bg-rose-900/90 border border-rose-500 text-white flex items-center gap-3 animate-enter">
                     <span className="font-bold text-sm">{errorToast}</span>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -134,7 +135,26 @@ export const Careers: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[var(--bg-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
-
+            <SeoHead
+                title="Tuyển Dụng SGS LAND | Việc Làm Tại Nền Tảng BĐS AI Hàng Đầu"
+                description="SGS LAND tuyển dụng 2026: lập trình viên fullstack, môi giới BĐS, marketing, sales tại TP.HCM. Lương cạnh tranh, môi trường công nghệ AI, đào tạo chuyên sâu."
+                canonicalPath="/careers"
+                structuredData={{
+                    '@type': 'WebPage',
+                    name: 'Tuyển dụng tại SGS LAND',
+                    description: 'Cơ hội nghề nghiệp tại nền tảng bất động sản AI SGS LAND.',
+                    inLanguage: 'vi-VN',
+                    about: {
+                        '@type': 'Organization',
+                        name: 'SGS LAND',
+                        legalName: 'Công ty Cổ phần SGS Land',
+                        url: 'https://sgsland.vn',
+                        taxID: '0312960439',
+                        numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },
+                        address: { '@type': 'PostalAddress', addressLocality: 'Hồ Chí Minh', addressCountry: 'VN' },
+                    },
+                }}
+            />
             {/* Apply Modal */}
             {selectedJob && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-enter" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>

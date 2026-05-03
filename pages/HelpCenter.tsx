@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 
@@ -117,7 +118,22 @@ export const HelpCenter: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
-
+            <SeoHead
+                title="Trung Tâm Hỗ Trợ SGS LAND | FAQ & Hướng Dẫn Sử Dụng"
+                description="Trung tâm hỗ trợ SGS LAND: hướng dẫn sử dụng CRM, định giá AI, đăng tin BĐS, kho hàng. Tìm câu trả lời nhanh trong FAQ hoặc liên hệ chuyên viên kỹ thuật 24/7."
+                canonicalPath="/help-center"
+                structuredData={{
+                    '@type': 'FAQPage',
+                    name: 'Trung tâm hỗ trợ SGS LAND',
+                    inLanguage: 'vi-VN',
+                    mainEntity: [
+                        { '@type': 'Question', name: 'Làm thế nào để định giá BĐS bằng AI?', acceptedAnswer: { '@type': 'Answer', text: 'Truy cập sgsland.vn/ai-valuation, nhập địa chỉ + diện tích + loại BĐS. Hệ thống trả về giá thị trường ước tính kèm khoảng tin cậy trong dưới 30 giây, hoàn toàn miễn phí.' } },
+                        { '@type': 'Question', name: 'Đăng tin BĐS có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Đăng tin cá nhân miễn phí 5 tin/tháng. Doanh nghiệp môi giới đăng không giới hạn trong gói CRM Pro.' } },
+                        { '@type': 'Question', name: 'Tôi quên mật khẩu thì làm sao?', acceptedAnswer: { '@type': 'Answer', text: 'Bấm "Quên mật khẩu" tại trang đăng nhập, nhập email đã đăng ký. Hệ thống sẽ gửi link reset trong vòng 1 phút.' } },
+                        { '@type': 'Question', name: 'Liên hệ hỗ trợ kỹ thuật ở đâu?', acceptedAnswer: { '@type': 'Answer', text: 'Hotline 0971.132.378 (8h-22h hàng ngày), email support@sgsland.vn, hoặc chat trực tiếp tại livechat trên web.' } },
+                    ],
+                }}
+            />
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">

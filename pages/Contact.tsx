@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { Dropdown } from '../components/Dropdown';
 import { db } from '../services/dbApi';
 import { User } from '../types';
@@ -96,7 +97,43 @@ export const Contact: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar relative">
-
+            <SeoHead
+                title="Liên Hệ SGS LAND | Hotline, Văn Phòng TP.HCM, Email Hỗ Trợ"
+                description="Liên hệ SGS LAND: hotline 0971.132.378, email info@sgsland.vn, văn phòng tại TP.HCM. Hỗ trợ tư vấn BĐS, định giá AI, ký gửi miễn phí — phản hồi trong 15 phút 24/7."
+                canonicalPath="/contact"
+                structuredData={{
+                    '@type': 'ContactPage',
+                    name: 'Liên hệ SGS LAND',
+                    inLanguage: 'vi-VN',
+                    mainEntity: {
+                        '@type': 'Organization',
+                        name: 'SGS LAND',
+                        url: 'https://sgsland.vn',
+                        contactPoint: [
+                            {
+                                '@type': 'ContactPoint',
+                                telephone: '+84-971-132-378',
+                                email: 'info@sgsland.vn',
+                                contactType: 'customer service',
+                                areaServed: 'VN',
+                                availableLanguage: ['vi', 'en'],
+                            },
+                            {
+                                '@type': 'ContactPoint',
+                                email: 'sales@sgsland.vn',
+                                contactType: 'sales',
+                                areaServed: 'VN',
+                                availableLanguage: ['vi'],
+                            },
+                        ],
+                        address: {
+                            '@type': 'PostalAddress',
+                            addressLocality: 'Hồ Chí Minh',
+                            addressCountry: 'VN',
+                        },
+                    },
+                }}
+            />
             {/* Toast Notification */}
             {toast && (
                 <div className={`fixed top-20 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${

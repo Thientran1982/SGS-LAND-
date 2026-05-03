@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { useTranslation } from '../services/i18n';
 import { ArrowLeft, Check, Rocket, BrainCircuit, Zap, BarChart3 } from 'lucide-react';
 import { db } from '../services/dbApi';
@@ -32,6 +33,35 @@ export const CrmLanding: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[var(--bg-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+            <SeoHead
+                title="CRM Bất Động Sản AI | Quản Lý Sàn Giao Dịch - SGS LAND"
+                description="CRM BĐS tích hợp AI cho sàn giao dịch & môi giới: phân loại lead tự động, đa kênh Zalo/Facebook/Email, dashboard realtime, từ 990K/tháng. Dùng thử miễn phí 14 ngày."
+                canonicalPath="/crm-platform"
+                structuredData={[
+                    {
+                        '@type': 'SoftwareApplication',
+                        name: 'SGS LAND CRM Bất Động Sản',
+                        applicationCategory: 'BusinessApplication',
+                        applicationSubCategory: 'CRM',
+                        operatingSystem: 'Web, iOS, Android',
+                        description: 'Phần mềm CRM chuyên ngành bất động sản tích hợp AI: phân loại lead tự động, đa kênh, AI assistant, kho hàng realtime.',
+                        offers: [
+                            { '@type': 'Offer', name: 'Starter', price: '990000', priceCurrency: 'VND', priceSpecification: { '@type': 'UnitPriceSpecification', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitCode: 'MON' } } },
+                            { '@type': 'Offer', name: 'Pro', price: '2990000', priceCurrency: 'VND', priceSpecification: { '@type': 'UnitPriceSpecification', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitCode: 'MON' } } },
+                        ],
+                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247' },
+                        provider: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                    },
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: [
+                            { '@type': 'Question', name: 'CRM SGS LAND có gì khác biệt với CRM thông thường?', acceptedAnswer: { '@type': 'Answer', text: 'CRM SGS LAND chuyên dụng cho ngành BĐS Việt Nam: tích hợp AI phân loại lead theo phân khúc, kênh, ngân sách; kết nối Zalo OA/Facebook/Email tự động; bảng giá dự án realtime; pháp lý kiểm duyệt 2 lớp.' } },
+                            { '@type': 'Question', name: 'Có dùng thử miễn phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Có, dùng thử đầy đủ tính năng 14 ngày, không cần thẻ tín dụng. Đăng ký tại sgsland.vn/crm-platform.' } },
+                            { '@type': 'Question', name: 'Giá cụ thể bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Gói Starter 990.000 VND/tháng (5 user, 1.000 lead), gói Pro 2.990.000 VND/tháng (20 user, không giới hạn lead, AI advanced).' } },
+                        ],
+                    },
+                ]}
+            />
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/90 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between gap-2">

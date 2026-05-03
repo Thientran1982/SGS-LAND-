@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { Listing, ListingStatus, PropertyType, User } from '../types'; 
 import { useTranslation } from '../services/i18n';
@@ -559,7 +560,78 @@ export const Landing: React.FC = () => {
 
     return (
         <div className="bg-[var(--bg-surface)] dark:bg-slate-900 text-[var(--text-primary)] dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-clip min-h-[100dvh] transition-colors duration-300">
-            
+            <SeoHead
+                title="SGS LAND | Định Giá AI & CRM Bất Động Sản Số 1 Việt Nam"
+                description="Nền tảng BĐS AI hàng đầu Việt Nam: Định giá ±5%, CRM đa kênh Zalo/Facebook/Email, kho 2.000+ tin thật, pháp lý kiểm duyệt 2 lớp. Dùng thử miễn phí 14 ngày."
+                canonicalPath="/"
+                structuredData={[
+                    {
+                        '@type': 'Organization',
+                        '@id': 'https://sgsland.vn/#organization',
+                        name: 'SGS LAND',
+                        legalName: 'Công ty Cổ phần SGS Land',
+                        url: 'https://sgsland.vn',
+                        logo: 'https://sgsland.vn/og-image.jpg',
+                        foundingDate: '2024',
+                        taxID: '0312960439',
+                        address: {
+                            '@type': 'PostalAddress',
+                            streetAddress: 'TP. Hồ Chí Minh',
+                            addressLocality: 'Hồ Chí Minh',
+                            addressCountry: 'VN',
+                        },
+                        contactPoint: {
+                            '@type': 'ContactPoint',
+                            telephone: '+84-971-132-378',
+                            contactType: 'customer service',
+                            email: 'info@sgsland.vn',
+                            availableLanguage: ['vi', 'en'],
+                        },
+                        sameAs: ['https://www.facebook.com/sgsland', 'https://zalo.me/sgsland'],
+                    },
+                    {
+                        '@type': 'WebSite',
+                        '@id': 'https://sgsland.vn/#website',
+                        url: 'https://sgsland.vn',
+                        name: 'SGS LAND',
+                        publisher: { '@id': 'https://sgsland.vn/#organization' },
+                        inLanguage: 'vi-VN',
+                        potentialAction: {
+                            '@type': 'SearchAction',
+                            target: 'https://sgsland.vn/marketplace?q={search_term_string}',
+                            'query-input': 'required name=search_term_string',
+                        },
+                    },
+                    {
+                        '@type': 'SoftwareApplication',
+                        name: 'SGS LAND CRM Bất Động Sản',
+                        operatingSystem: 'Web',
+                        applicationCategory: 'BusinessApplication',
+                        offers: { '@type': 'Offer', price: '0', priceCurrency: 'VND' },
+                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247' },
+                    },
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: [
+                            {
+                                '@type': 'Question',
+                                name: 'SGS LAND là gì?',
+                                acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là nền tảng công nghệ bất động sản AI hàng đầu Việt Nam, cung cấp công cụ định giá tự động sai số ±5%, CRM đa kênh, kho hàng BĐS realtime và pháp lý kiểm duyệt 2 lớp.' },
+                            },
+                            {
+                                '@type': 'Question',
+                                name: 'SGS LAND có miễn phí không?',
+                                acceptedAnswer: { '@type': 'Answer', text: 'Định giá AI và tra cứu kho hàng hoàn toàn miễn phí. Gói CRM cho doanh nghiệp BĐS từ 990.000 VND/tháng, dùng thử 14 ngày.' },
+                            },
+                            {
+                                '@type': 'Question',
+                                name: 'Định giá AI của SGS LAND chính xác không?',
+                                acceptedAnswer: { '@type': 'Answer', text: 'Sai số ±5% so với giá công chứng thực tế, được đối chiếu liên tục với dữ liệu giao dịch tại TP.HCM, Đồng Nai, Bình Dương theo chuẩn TĐGVN/IVS.' },
+                            },
+                        ],
+                    },
+                ]}
+            />
             {/* NAVBAR — only shown for guests (when logged in, Layout's CommandCenter handles navigation) */}
             {!currentUser && (
                 <nav className="fixed top-3 md:top-4 left-1/2 -translate-x-1/2 z-50 w-full px-4 flex justify-center pointer-events-none">
