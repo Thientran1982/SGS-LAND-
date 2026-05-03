@@ -60,6 +60,7 @@ import { createEngagementCronRouter } from "./server/routes/engagementCronRoutes
 import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
+import { createCampaignSchedulerCronRouter } from "./server/routes/campaignSchedulerCronRoutes";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
@@ -3626,6 +3627,17 @@ async function startServer() {
   // ---------------------------------------------------------------------------
   app.use(createCampaignRouter(pool, authenticateToken));
 
+  // ---------------------------------------------------------------------------
+  // Campaign Scheduler Cron — gọi từ QStash mỗi 5 phút; chạy campaign SCHEDULED đến hạn
+  // ---------------------------------------------------------------------------
+  {
+    const campaignSchedulerSecret =
+      process.env.CAMPAIGN_SCHEDULER_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createCampaignSchedulerCronRouter(pool, campaignSchedulerSecret));
+  }
+
   // Facebook Webhook Verification
   app.get("/api/webhooks/facebook", (req, res) => {
     const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
@@ -4358,6 +4370,45 @@ async function startServer() {
         }
       } catch (e: any) {
         logger.warn('[TaskReminderCron] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+
+      // ── Campaign Scheduler Cron — mỗi 5 phút ──────────────────────────────
+      try {
+        const campaignSchedulerSecret =
+          process.env.CAMPAIGN_SCHEDULER_CRON_SECRET ||
+          process.env.JWT_SECRET?.slice(0, 32) ||
+          '';
+        const devDomain6  = process.env.REPLIT_DEV_DOMAIN;
+        const prodDomain6 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
+        const appDomain6  = prodDomain6 || devDomain6;
+
+        if (appDomain6 && campaignSchedulerSecret) {
+          const csScheduleId  = 'campaign-scheduler-5min';
+          const csScheduleUrl = `https://${appDomain6}/api/internal/campaign-scheduler-cron`;
+          const csQstashEp    = `https://qstash.upstash.io/v2/schedules/${csScheduleId}`;
+          const csBody        = JSON.stringify({ secret: campaignSchedulerSecret });
+
+          const csResp = await fetch(csQstashEp, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': csScheduleUrl,
+              'Upstash-Cron': '*/5 * * * *', // mỗi 5 phút
+              'Upstash-Method': 'POST',
+            },
+            body: csBody,
+          });
+
+          if (csResp.ok) {
+            logger.info('[CampaignSchedulerCron] Đã đăng ký QStash schedule — chạy mỗi 5 phút');
+          } else {
+            const errText = await csResp.text();
+            logger.warn(`[CampaignSchedulerCron] Không thể đăng ký QStash schedule: ${csResp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[CampaignSchedulerCron] Lỗi khi đăng ký QStash schedule:', e.message);
       }
     }
   });
