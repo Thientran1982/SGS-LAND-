@@ -139,21 +139,33 @@ export const Careers: React.FC = () => {
                 title="Tuyển Dụng SGS LAND | Việc Làm Tại Nền Tảng BĐS AI Hàng Đầu"
                 description="SGS LAND tuyển dụng 2026: lập trình viên fullstack, môi giới BĐS, marketing, sales tại TP.HCM. Lương cạnh tranh, môi trường công nghệ AI, đào tạo chuyên sâu."
                 canonicalPath="/careers"
-                structuredData={{
-                    '@type': 'WebPage',
-                    name: 'Tuyển dụng tại SGS LAND',
-                    description: 'Cơ hội nghề nghiệp tại nền tảng bất động sản AI SGS LAND.',
-                    inLanguage: 'vi-VN',
-                    about: {
-                        '@type': 'Organization',
-                        name: 'SGS LAND',
-                        legalName: 'Công ty Cổ phần SGS Land',
-                        url: 'https://sgsland.vn',
-                        taxID: '0312960439',
-                        numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },
-                        address: { '@type': 'PostalAddress', addressLocality: 'Hồ Chí Minh', addressCountry: 'VN' },
+                structuredData={[
+                    {
+                        '@type': 'WebPage',
+                        name: 'Tuyển dụng tại SGS LAND',
+                        description: 'Cơ hội nghề nghiệp tại nền tảng bất động sản AI SGS LAND.',
+                        inLanguage: 'vi-VN',
+                        about: {
+                            '@type': 'Organization',
+                            name: 'SGS LAND',
+                            legalName: 'Công ty Cổ phần SGS Land',
+                            url: 'https://sgsland.vn',
+                            taxID: '0312960439',
+                            numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },
+                            address: { '@type': 'PostalAddress', addressLocality: 'Hồ Chí Minh', addressCountry: 'VN' },
+                        },
                     },
-                }}
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: [
+                            { '@type': 'Question', name: 'SGS LAND đang tuyển những vị trí nào?', acceptedAnswer: { '@type': 'Answer', text: 'Năm 2026 SGS LAND tuyển 4 nhóm chính: Engineering (Senior Full-stack), Data Science (AI Research Scientist LLM), Sales (Trưởng phòng Kinh doanh B2B Hà Nội) và Product (UI/UX Designer). Cập nhật thường xuyên tại sgsland.vn/careers — toàn bộ vị trí full-time, có cả option remote/hybrid.' } },
+                            { '@type': 'Question', name: 'Mức lương tại SGS LAND như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Senior Full-stack Engineer: $2,500–4,000/tháng. Trưởng phòng Sales B2B: $1,500/tháng + commission. Product Designer: $1,200–2,000/tháng. AI Research Scientist: thoả thuận theo năng lực. Tất cả vị trí có thưởng quý/năm theo OKR và lộ trình tăng lương 6 tháng/lần.' } },
+                            { '@type': 'Question', name: 'Văn phòng làm việc của SGS LAND ở đâu?', acceptedAnswer: { '@type': 'Answer', text: 'Trụ sở chính tại TP. Hồ Chí Minh. Văn phòng đại diện Hà Nội cho team Sales B2B miền Bắc. Một số vị trí Engineering và Data Science cho phép Remote/Hybrid (3 ngày văn phòng/tuần). Môi trường công nghệ trẻ, mở, KPI minh bạch.' } },
+                            { '@type': 'Question', name: 'Quy trình ứng tuyển tại SGS LAND ra sao?', acceptedAnswer: { '@type': 'Answer', text: '4 bước: (1) Nộp CV qua form ứng tuyển trên sgsland.vn/careers; (2) Sàng lọc CV trong 3 ngày làm việc; (3) Phỏng vấn online + làm bài test (1–2 vòng tuỳ vị trí); (4) Offer trong 7 ngày sau vòng cuối. Thời gian quy trình trung bình 2 tuần. Mọi ứng viên đều nhận phản hồi.' } },
+                            { '@type': 'Question', name: 'SGS LAND có chính sách phúc lợi gì?', acceptedAnswer: { '@type': 'Answer', text: 'BHXH/BHYT/BHTN đầy đủ, bảo hiểm sức khoẻ Bảo Việt mở rộng cho gia đình, nghỉ phép 14 ngày/năm + thưởng tháng 13 + thưởng dự án. Hỗ trợ học phí khoá học AI/BĐS, ngân sách laptop riêng và team building 2 lần/năm.' } },
+                        ],
+                    },
+                ]}
             />
             {/* Apply Modal */}
             {selectedJob && (
