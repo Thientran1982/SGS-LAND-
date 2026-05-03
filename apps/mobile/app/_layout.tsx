@@ -110,6 +110,7 @@ export default function RootLayout() {
           >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="bds/[slugId]" options={{ headerShown: false, presentation: 'card' }} />
+              <Stack.Screen name="messages/[id]" options={{ headerShown: false, presentation: 'card' }} />
             </Stack>
           </AuthProvider>
         </QueryClientProvider>

@@ -114,6 +114,7 @@ import m093 from './093_prompt_promote_log';
 import m094 from './094_email_send_metrics';
 import m095 from './095_buyer_push_notifications';
 import m096 from './096_buyer_users_and_data';
+import m097 from './097_buyer_conversations';
 
 dotenv.config();
 
@@ -224,6 +225,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '094_email_send_metrics.ts': m094,
   '095_buyer_push_notifications.ts': m095,
   '096_buyer_users_and_data.ts': m096,
+  '097_buyer_conversations.ts': m097,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

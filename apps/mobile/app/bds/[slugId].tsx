@@ -21,8 +21,10 @@ import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { listingsApi } from '../../src/api/listings';
+import { conversationsApi } from '../../src/api/conversations';
 import type { PublicListing } from '../../src/api/types';
 import { ApiError } from '../../src/api/client';
+import { useAuth } from '../../src/auth/AuthContext';
 import { ListingCard } from '../../src/components/ListingCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { PaymentCalculator } from '../../src/components/PaymentCalculator';
@@ -60,6 +62,8 @@ export default function ListingDetailScreen() {
   const [imgIdx, setImgIdx] = useState(0);
   const [isFav, setIsFav] = useState(false);
   const [leadModalOpen, setLeadModalOpen] = useState(false);
+  const [chatOpening, setChatOpening] = useState(false);
+  const { user: buyerUser } = useAuth();
 
   // Load favorite state for this listing on mount.
   useEffect(() => {
@@ -265,7 +269,7 @@ export default function ListingDetailScreen() {
         ) : null}
       </ScrollView>
 
-      {/* ── Bottom CTA bar (3 actions: Zalo / Gọi / Quan tâm) ──── */}
+      {/* ── Bottom CTA bar (Zalo / Gọi / Nhắn tin / Quan tâm) ──── */}
       <SafeAreaView edges={['bottom']} style={styles.ctaBarWrap}>
         <View style={styles.ctaBar}>
           <Pressable
@@ -281,6 +285,45 @@ export default function ListingDetailScreen() {
             android_ripple={{ color: colors.brandSoft }}
           >
             <Text style={styles.ctaSecondaryText} numberOfLines={1}>📞 Gọi</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.ctaBtn, styles.ctaSecondary, chatOpening && { opacity: 0.6 }]}
+            disabled={chatOpening}
+            onPress={async () => {
+              if (!item) return;
+              if (!buyerUser) {
+                Alert.alert(
+                  'Cần đăng nhập',
+                  'Vui lòng đăng nhập để nhắn tin với chuyên viên tư vấn.',
+                  [
+                    { text: 'Để sau', style: 'cancel' },
+                    { text: 'Đăng nhập', onPress: () => router.push('/account' as any) },
+                  ],
+                );
+                return;
+              }
+              try {
+                setChatOpening(true);
+                Haptics.selectionAsync().catch(() => {});
+                const r = await conversationsApi.openForListing(item.id);
+                router.push({
+                  pathname: '/messages/[id]',
+                  params: { id: r.conversation.id, title: item.title.slice(0, 80) },
+                });
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : 'Không thể mở hội thoại';
+                Alert.alert('Lỗi', msg);
+              } finally {
+                setChatOpening(false);
+              }
+            }}
+            android_ripple={{ color: colors.brandSoft }}
+          >
+            {chatOpening ? (
+              <ActivityIndicator color={colors.brand} />
+            ) : (
+              <Text style={styles.ctaSecondaryText} numberOfLines={1}>✉️ Nhắn</Text>
+            )}
           </Pressable>
           <Pressable
             style={[styles.ctaBtn, styles.ctaPrimary, { backgroundColor: accent }]}
