@@ -63,6 +63,7 @@ const LOAN_TYPE_OPTIONS = [
 const BANK_OPTIONS = [
   'Agribank','Vietcombank','VietinBank','BIDV','Techcombank','MB Bank',
   'ACB','Sacombank','VPBank','HDBank','SHB','OCB','VIB','TPBank','SeABank','LienVietPostBank',
+  'Standard Chartered','Shinhan Bank','UOB',
 ].map(b => ({ value: b, label: b }));
 
 function fmtRate(min: number, max: number | null) {
