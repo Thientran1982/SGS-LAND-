@@ -54,6 +54,12 @@ export const bookingsApi = {
   get(id: string) {
     return apiRequest<{ booking: Booking }>(`/api/bookings/${encodeURIComponent(id)}`);
   },
+  /** Mint a short-lived signed URL the system browser can open standalone. */
+  receiptUrl(id: string) {
+    return apiRequest<{ url: string; expiresInSec: number }>(
+      `/api/bookings/${encodeURIComponent(id)}/receipt-token`,
+    );
+  },
 };
 
 export function formatVnd(n: number): string {

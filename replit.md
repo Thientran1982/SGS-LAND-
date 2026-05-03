@@ -247,3 +247,11 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
   - `app/bds/[slugId].tsx` — primary CTA changed from "★ Quan tâm" lead-form to "💰 Đặt cọc" pushing to the booking screen with `listingId` + `title` pre-bound.
 - **Env vars (root `.env.example`)**: `VNPAY_ENV` (sandbox|prod), `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_RETURN_URL`, `VNPAY_IPN_URL`, optional `VNPAY_DEFAULT_DEPOSIT_VND`. Without them the booking endpoint returns 503; the rest of the app is unaffected.
 - **Note on migration numbering**: 096/097 were taken by buyer migrations from prior tasks; this task uses 099/100 (deviation from the plan's "next available" estimate but functionally identical).
+
+### Round-2 hardening (post code review)
+- **Signing fix**: `vnpEncode()` now keeps spaces as `%20` (strict RFC3986). Previous `+` substitution caused VNPay sandbox to reject signatures intermittently.
+- **IPN exactly-once**: idempotent transition uses `UPDATE … WHERE status='PENDING' RETURNING id` — only the request that actually flipped the row fires the socket emit + Brevo email. Concurrent IPN retries from VNPay no longer double-fire.
+- **Mandatory amount**: missing/non-numeric `vnp_Amount` now hard-fails with `RspCode '04'` even if signature validates.
+- **Dual-auth on `GET /api/bookings/:id`**: accepts buyer Bearer JWT (mobile) OR staff cookie session (web CRM). AGENT must be the assignee; ADMIN/MANAGER scoped by tenant. 404 on mismatch (no existence leak).
+- **Receipt download**: `GET /api/bookings/:id/receipt-token` mints a 5-min signed URL; `GET /api/bookings/:id/receipt?t=<token>` returns printable HTML. Mobile detail screen shows "📄 Tải biên nhận" when status is PAID, opening the URL via `WebBrowser.openBrowserAsync` (persistent tab, not auth session).
+- **Plan drift**: payment UX uses `expo-web-browser` (Custom Tabs / SFAuthenticationSession) instead of an in-app `expo-web-view`. This is the Expo-recommended path and avoids issues with banks that block iframes; functionally equivalent for the buyer.

@@ -23,7 +23,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import * as WebBrowser from 'expo-web-browser';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
 import {
   bookingsApi,
@@ -97,6 +98,20 @@ export default function BookingDetailScreen() {
   const status: BookingStatus = booking?.status ?? (provisional as BookingStatus) ?? 'PENDING';
   const color = BOOKING_STATUS_COLOR[status];
 
+  // "Tải biên nhận" — fetch a short-lived signed URL then hand off to the
+  // system browser. Using openBrowserAsync (not openAuthSessionAsync) so the
+  // receipt page persists even after the app is backgrounded for sharing.
+  const receiptMut = useMutation({
+    mutationFn: () => bookingsApi.receiptUrl(id),
+    onSuccess: async ({ url }) => {
+      try {
+        await WebBrowser.openBrowserAsync(url);
+      } catch {
+        /* iOS may throw if user dismisses immediately — ignore */
+      }
+    },
+  });
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
@@ -166,6 +181,23 @@ export default function BookingDetailScreen() {
               ) : null}
               {booking.buyerEmail ? <Row k="Email" v={booking.buyerEmail} /> : null}
             </View>
+
+            {booking.status === 'PAID' ? (
+              <Pressable
+                onPress={() => receiptMut.mutate()}
+                disabled={receiptMut.isPending}
+                style={({ pressed }) => [
+                  styles.receiptBtn,
+                  (pressed || receiptMut.isPending) && { opacity: 0.85 },
+                ]}
+              >
+                {receiptMut.isPending ? (
+                  <ActivityIndicator color={colors.brand} />
+                ) : (
+                  <Text style={styles.receiptBtnTxt}>📄 Tải biên nhận</Text>
+                )}
+              </Pressable>
+            ) : null}
 
             <Pressable
               onPress={() => Linking.openURL(`tel:${HOTLINE}`)}
@@ -251,6 +283,16 @@ const styles = StyleSheet.create({
   rowK: { color: colors.textTertiary, fontSize: typography.sm, flexShrink: 0 },
   rowV: { color: colors.textPrimary, fontSize: typography.sm, fontWeight: '600', flex: 1, textAlign: 'right' },
   mono: { fontFamily: 'Courier', fontSize: typography.xs },
+  receiptBtn: {
+    marginTop: spacing.md,
+    backgroundColor: colors.brandSoft,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.brand,
+  },
+  receiptBtnTxt: { color: colors.brand, fontWeight: '800', fontSize: typography.base },
   callBtn: {
     marginTop: spacing.md,
     backgroundColor: colors.brand,
