@@ -184,29 +184,43 @@ export interface SearchResult {
 /**
  * Tìm kiếm các chunks gần nhất với query bằng cosine similarity.
  * Sử dụng pgvector operator `<=>` (cosine distance).
+ *
+ * @param sourceTypes — filter theo source_type (vd ['knowledge_legal']).
+ * @param domains    — filter theo metadata.domain (vd ['legal','finance']).
+ *                     Áp dụng đồng thời với sourceTypes (AND).
  */
 export async function semanticSearch(
   tenantId: string,
   query: string,
   topK = DEFAULT_TOP_K,
-  sourceTypes?: string[]
+  sourceTypes?: string[],
+  domains?: string[]
 ): Promise<SearchResult[]> {
   const queryVec = await embedText(query);
   const vecStr = `[${queryVec.join(',')}]`;
 
-  const typeFilter = sourceTypes?.length
-    ? `AND source_type = ANY($4::text[])`
-    : '';
-
   const params: any[] = [tenantId, vecStr, topK];
-  if (sourceTypes?.length) params.push(sourceTypes);
+  let extraFilters = '';
+  if (sourceTypes?.length) {
+    params.push(sourceTypes);
+    extraFilters += ` AND source_type = ANY($${params.length}::text[])`;
+  }
+  if (domains?.length) {
+    // Match either (a) source_type prefix `knowledge_<domain>` (seeded layout)
+    // or (b) metadata->>'domain' = ANY(...) (admin-uploaded docs).
+    params.push(domains.map(d => `knowledge_${d}`));
+    const stIdx = params.length;
+    params.push(domains);
+    const dmIdx = params.length;
+    extraFilters += ` AND (source_type = ANY($${stIdx}::text[]) OR metadata->>'domain' = ANY($${dmIdx}::text[]))`;
+  }
 
   const result = await pool.query(
     `SELECT
        source_type, source_id, chunk_index, content, metadata,
        1 - (embedding <=> $2::vector) AS similarity
      FROM knowledge_chunks
-     WHERE tenant_id = $1 ${typeFilter}
+     WHERE tenant_id = $1 ${extraFilters}
        AND embedding IS NOT NULL
      ORDER BY embedding <=> $2::vector
      LIMIT $3`,
@@ -234,10 +248,11 @@ export async function semanticSearch(
 export async function buildRagContext(
   tenantId: string,
   query: string,
-  topK = DEFAULT_TOP_K
+  topK = DEFAULT_TOP_K,
+  opts?: { domains?: string[] }
 ): Promise<string> {
   try {
-    const results = await semanticSearch(tenantId, query, topK);
+    const results = await semanticSearch(tenantId, query, topK, undefined, opts?.domains);
     if (!results.length) return '';
 
     const parts = results.map((r, i) => {

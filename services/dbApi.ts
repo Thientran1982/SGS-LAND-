@@ -1589,6 +1589,13 @@ class DatabaseApiClient {
     return api.post<{ output: string }>('/api/ai/governance/simulate', { systemPrompt, userInput, model });
   }
 
+  async promotePromptVersion(id: string, version: number) {
+    return api.post<{ success: boolean; promotedVersion: number; template: any }>(
+      `/api/ai/governance/prompt-templates/${id}/promote`,
+      { version }
+    );
+  }
+
   async getFeedbackStats(days: number = 30) {
     try {
       return await api.get<any>('/api/ai/governance/feedback/stats', { days });

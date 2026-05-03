@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "description": "Gold-set evaluation cases cho 10 AI agents (router + writer + 8 specialists). Mỗi case kiểm tra: intent classification chính xác + (tùy) câu trả lời chứa từ khóa bắt buộc / không chứa từ khóa cấm.",
+  "cases": [
+    { "id": "router-001", "input": "Cho em xin bảng giá Vinhomes Grand Park",        "expectedIntent": "SEARCH_INVENTORY" },
+    { "id": "router-002", "input": "Sổ hồng có thời hạn 50 năm là sao ạ?",            "expectedIntent": "EXPLAIN_LEGAL", "mustContain": ["50 năm"] },
+    { "id": "router-003", "input": "Vay 2 tỷ trong 20 năm thì trả bao nhiêu mỗi tháng?", "expectedIntent": "CALCULATE_LOAN", "mustContain": ["lãi suất"] },
+    { "id": "router-004", "input": "Định giá nhà em ở 123 Nguyễn Trãi Q1 80m2",       "expectedIntent": "ESTIMATE_VALUATION" },
+    { "id": "router-005", "input": "Soạn giúp em hợp đồng đặt cọc 500 triệu",         "expectedIntent": "DRAFT_CONTRACT" },
+    { "id": "router-006", "input": "Thị trường BĐS Q4/2025 ở HCM thế nào?",           "expectedIntent": "EXPLAIN_MARKETING" },
+    { "id": "router-007", "input": "Khách này có tiềm năng không em phân tích giúp anh", "expectedIntent": "ANALYZE_LEAD" },
+    { "id": "router-008", "input": "Chào em",                                         "expectedIntent": "DIRECT_ANSWER" },
+    { "id": "router-009", "input": "Em nói rõ hơn được không?",                       "expectedIntent": "CLARIFY" },
+    { "id": "router-010", "input": "Cho anh xem căn 3PN dưới 5 tỷ ở Thủ Đức",        "expectedIntent": "SEARCH_INVENTORY", "mustContain": ["3PN"] },
+
+    { "id": "legal-001",  "input": "Đất không có sổ đỏ có mua được không?",           "expectedIntent": "EXPLAIN_LEGAL", "mustContain": ["sổ đỏ"], "mustNotContain": ["chắc chắn an toàn"] },
+    { "id": "legal-002",  "input": "Thuế trước bạ chuyển nhượng nhà đất là bao nhiêu?", "expectedIntent": "EXPLAIN_LEGAL", "mustContain": ["0,5"] },
+    { "id": "legal-003",  "input": "Quy định mới 2026 về condotel?",                  "expectedIntent": "EXPLAIN_LEGAL" },
+    { "id": "legal-004",  "input": "Người nước ngoài mua nhà ở VN cần điều kiện gì?", "expectedIntent": "EXPLAIN_LEGAL", "mustContain": ["nước ngoài"] },
+
+    { "id": "finance-001","input": "Lãi suất vay mua nhà Vietcombank hiện tại?",      "expectedIntent": "CALCULATE_LOAN" },
+    { "id": "finance-002","input": "Trả góp 30% trước, vay 70%, 3 tỷ giá nhà",        "expectedIntent": "CALCULATE_LOAN", "mustContain": ["2,1 tỷ", "70%"] },
+    { "id": "finance-003","input": "DTI bao nhiêu là an toàn khi vay BĐS?",           "expectedIntent": "CALCULATE_LOAN", "mustContain": ["40%"] },
+
+    { "id": "valuation-001","input": "Định giá nhà phố 5x20 đường Phan Văn Trị Gò Vấp", "expectedIntent": "ESTIMATE_VALUATION" },
+    { "id": "valuation-002","input": "Căn hộ Masteri Thảo Điền 70m2 giá khoảng nhiêu?", "expectedIntent": "ESTIMATE_VALUATION", "mustContain": ["Masteri"] },
+
+    { "id": "inventory-001","input": "Còn căn nào view sông không?",                  "expectedIntent": "SEARCH_INVENTORY" },
+    { "id": "inventory-002","input": "Dự án nào đang mở bán giá tốt ở Long An?",     "expectedIntent": "SEARCH_INVENTORY", "mustContain": ["Long An"] },
+    { "id": "inventory-003","input": "Liệt kê căn 2PN đang hot",                      "expectedIntent": "SEARCH_INVENTORY", "mustContain": ["2PN"] },
+
+    { "id": "marketing-001","input": "Viết caption Facebook quảng cáo căn hộ Q7",     "expectedIntent": "EXPLAIN_MARKETING" },
+    { "id": "marketing-002","input": "Phân tích thị trường BĐS Hà Nội Q1/2026",       "expectedIntent": "EXPLAIN_MARKETING", "mustContain": ["Hà Nội"] },
+
+    { "id": "contract-001","input": "Soạn hợp đồng môi giới 2% phí",                  "expectedIntent": "DRAFT_CONTRACT", "mustContain": ["2%"] },
+    { "id": "contract-002","input": "Cho em mẫu hợp đồng cho thuê nhà 3 năm",         "expectedIntent": "DRAFT_CONTRACT", "mustContain": ["thuê"] },
+
+    { "id": "lead-001",   "input": "Khách Nguyễn Văn A đã call 5 lần, ngân sách 4 tỷ, anh đánh giá giúp", "expectedIntent": "ANALYZE_LEAD", "mustContain": ["A"] },
+    { "id": "lead-002",   "input": "Phân tích mức độ sẵn sàng mua của lead này",      "expectedIntent": "ANALYZE_LEAD" },
+
+    { "id": "writer-001", "input": "Cảm ơn em",                                       "expectedIntent": "DIRECT_ANSWER" },
+    { "id": "writer-002", "input": "Em hỗ trợ những gì?",                             "expectedIntent": "DIRECT_ANSWER", "mustContain": ["hỗ trợ"] },
+    { "id": "clarify-001","input": "Cái đó",                                          "expectedIntent": "CLARIFY" },
+    { "id": "clarify-002","input": "Sao kì vậy?",                                     "expectedIntent": "CLARIFY" }
+  ]
+}

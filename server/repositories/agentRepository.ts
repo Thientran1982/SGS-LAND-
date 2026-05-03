@@ -134,6 +134,38 @@ class AgentRepository extends BaseRepository {
     agentCache.delete(`${tenantId}:${name}`);
   }
 
+  /**
+   * Load an agent by role (e.g. 'legal_specialist') — used by orchestrator
+   * to fetch knowledge_filter when scoping RAG calls.
+   * Cached under role key (separate from name cache).
+   */
+  async getAgentByRole(tenantId: string, role: string): Promise<AiAgent | null> {
+    const cacheKey = `${tenantId}:role:${role}`;
+    const cached = agentCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.agent;
+
+    try {
+      return await this.withTenant(tenantId, async (client) => {
+        const res = await client.query(
+          `SELECT *,
+                  COALESCE(knowledge_filter, '{}'::jsonb) AS knowledge_filter
+             FROM ai_agents
+            WHERE role = $1 AND ${TENANT_FILTER} AND active = true
+            LIMIT 1`,
+          [role]
+        );
+        if (!res.rows.length) return null;
+        const row = res.rows[0];
+        const agent = { ...this.rowToAgent(row), knowledgeFilter: row.knowledge_filter } as AiAgent & { knowledgeFilter?: any };
+        agentCache.set(cacheKey, { agent, expiresAt: Date.now() + AGENT_CACHE_TTL_MS });
+        return agent;
+      });
+    } catch (e) {
+      logger.warn(`AgentRepository.getAgentByRole failed for '${role}':`, e);
+      return null;
+    }
+  }
+
   /** List all agents for a tenant. */
   async listAgents(tenantId: string): Promise<AiAgent[]> {
     return this.withTenant(tenantId, async (client) => {

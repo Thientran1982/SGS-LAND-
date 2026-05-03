@@ -11,6 +11,7 @@
     "lint": "tsc --noEmit",
     "seed": "tsx server/seed.ts",
     "knowledge:seed": "tsx scripts/seed-knowledge.ts",
+    "ai:eval": "tsx scripts/eval-agents.ts",
     "migrate": "tsx server/migrations/cli.ts",
     "migrate:dry": "tsx server/migrations/cli.ts --dry-run",
     "migrate:rollback": "tsx server/migrations/cli.ts --rollback",
