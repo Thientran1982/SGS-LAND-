@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ClipboardList, AlertTriangle, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
-import { TaskDashboardStats } from '../types';
+import { TaskDashboardStats, Department } from '../types';
 import { ROUTES } from '../config/routes';
 import { STATUS_LABELS, PRIORITY_LABELS, PRIORITY_DOT } from '../utils/taskUtils';
+import { SelectDropdown } from '../components/task/SelectDropdown';
 
 interface Props {
   onNavigate?: (route: string) => void;
@@ -69,23 +70,48 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentId, setDepartmentId] = useState<string>(() => {
+    try { return new URLSearchParams(window.location.search).get('dept') || ''; } catch { return ''; }
+  });
+  const fetchRef = useRef(0);
 
-  const load = useCallback(async (silent = false) => {
+  useEffect(() => {
+    api.get<{ data: Department[] }>('/api/departments')
+      .then(r => setDepartments(r.data || []))
+      .catch(() => {});
+  }, []);
+
+  const load = useCallback(async (silent = false, deptId = departmentId) => {
+    const token = ++fetchRef.current;
     if (!silent) setLoading(true);
     else setRefreshing(true);
     setError(null);
     try {
-      const data = await api.get<TaskDashboardStats>('/api/dashboard/task-stats');
+      const qs = deptId ? `?department_id=${encodeURIComponent(deptId)}` : '';
+      const data = await api.get<TaskDashboardStats>(`/api/dashboard/task-stats${qs}`);
+      if (fetchRef.current !== token) return;
       setStats(data);
     } catch {
+      if (fetchRef.current !== token) return;
       setError('Không thể tải dữ liệu. Vui lòng thử lại.');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (fetchRef.current === token) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, []);
+  }, [departmentId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(false, departmentId); }, [departmentId, load]);
+
+  // URL sync
+  useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
+    if (departmentId) qs.set('dept', departmentId); else qs.delete('dept');
+    const search = qs.toString();
+    window.history.replaceState(null, '', window.location.pathname + (search ? '?' + search : ''));
+  }, [departmentId]);
 
   const { overview } = stats ?? {};
   const completionRate = overview && overview.total_tasks > 0
@@ -104,13 +130,29 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
             <p className="text-sm text-[var(--text-secondary)]">Theo dõi tiến độ và phân công công việc</p>
           </div>
         </div>
-        <button
-          onClick={() => load(true)}
-          disabled={refreshing}
-          className="h-[34px] px-3 rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors flex items-center gap-1.5 text-sm disabled:opacity-50">
-          <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
-          Làm mới
-        </button>
+        <div className="flex items-center gap-2">
+          {departments.length > 0 && (
+            <div className="min-w-[180px]">
+              <SelectDropdown
+                value={departmentId}
+                onChange={setDepartmentId}
+                placeholder="Tất cả phòng ban"
+                height={34}
+                options={[
+                  { value: '', label: 'Tất cả phòng ban' },
+                  ...departments.map(d => ({ value: d.id, label: d.name })),
+                ]}
+              />
+            </div>
+          )}
+          <button
+            onClick={() => load(true)}
+            disabled={refreshing}
+            className="h-[34px] px-3 rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors flex items-center gap-1.5 text-sm disabled:opacity-50">
+            <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+            Làm mới
+          </button>
+        </div>
       </div>
 
       {/* Error */}
@@ -118,7 +160,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <AlertTriangle className="w-10 h-10 text-amber-400" />
           <p className="text-[var(--text-secondary)]">{error}</p>
-          <button onClick={() => load()} className="text-sm text-indigo-500 font-medium">Thử lại</button>
+          <button onClick={() => load(false, departmentId)} className="text-sm text-indigo-500 font-medium">Thử lại</button>
         </div>
       )}
 

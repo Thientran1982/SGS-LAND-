@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   DndContext, DragOverlay, useDraggable, useDroppable,
@@ -7,12 +7,47 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, AlertTriangle, RefreshCw, CheckCircle, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../services/api';
-import { WfTask, WfTaskStatus } from '../types';
+import { WfTask, WfTaskStatus, TaskPriority } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/TaskFilterBar';
 import { PriorityBadge, AvatarStack } from '../components/task/Badges';
 import { CATEGORY_LABELS_SHORT, STATUS_LABELS, formatDeadlineRelative, isValidTransition } from '../utils/taskUtils';
+import { ROUTES } from '../config/routes';
+
+const KANBAN_LIMIT = 500;
+
+function serializeKanbanFilters(f: TaskFilters): string {
+  const qs = new URLSearchParams();
+  if (f.search) qs.set('q', f.search);
+  if (f.priorityFilter.length) qs.set('priority', f.priorityFilter.join(','));
+  if (f.departmentId) qs.set('dept', f.departmentId);
+  if (f.projectId) qs.set('proj', f.projectId);
+  if (f.assigneeId) qs.set('uid', f.assigneeId);
+  if (f.assigneeId && f.assigneeName) qs.set('uname', f.assigneeName);
+  return qs.toString();
+}
+
+function deserializeKanbanFilters(): TaskFilters {
+  try {
+    const search = window.location.search;
+    if (!search) return EMPTY_FILTERS;
+    const qs = new URLSearchParams(search);
+    return {
+      search: qs.get('q') || '',
+      statusFilter: [],
+      priorityFilter: (qs.get('priority')?.split(',').filter(Boolean) as TaskPriority[]) || [],
+      departmentId: qs.get('dept') || '',
+      projectId: qs.get('proj') || '',
+      assigneeId: qs.get('uid') || '',
+      assigneeName: qs.get('uname') || '',
+      deadlineFrom: '',
+      deadlineTo: '',
+    };
+  } catch {
+    return EMPTY_FILTERS;
+  }
+}
 
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 
@@ -116,7 +151,9 @@ export function TaskKanban() {
   const [activeTask, setActiveTask] = useState<WfTask | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [filters, setFilters] = useState<TaskFilters>(EMPTY_FILTERS);
+  const initFilters = useMemo(() => deserializeKanbanFilters(), []);
+  const [filters, setFilters] = useState<TaskFilters>(initFilters);
+  const fetchRef = useRef(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -183,15 +220,37 @@ export function TaskKanban() {
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
   );
 
-  const loadTasks = useCallback(() => {
+  const loadTasks = useCallback((f: TaskFilters) => {
+    const token = ++fetchRef.current;
     setLoading(true);
-    api.get<{ data: WfTask[] }>('/api/tasks?limit=200&sort_by=created_at')
-      .then(r => setTasks(r.data || []))
-      .catch(() => setError('Không thể tải công việc'))
-      .finally(() => setLoading(false));
+    setError(null);
+    const qs = new URLSearchParams();
+    qs.set('limit', String(KANBAN_LIMIT));
+    qs.set('sort_by', 'created_at');
+    if (f.search) qs.set('search', f.search);
+    if (f.priorityFilter.length) qs.set('priority', f.priorityFilter.join(','));
+    if (f.departmentId) qs.set('department_id', f.departmentId);
+    if (f.projectId) qs.set('project_id', f.projectId);
+    if (f.assigneeId) qs.set('assignee_id', f.assigneeId);
+    api.get<{ data: WfTask[] }>(`/api/tasks?${qs.toString()}`)
+      .then(r => { if (fetchRef.current === token) setTasks(r.data || []); })
+      .catch(() => { if (fetchRef.current === token) setError('Không thể tải công việc'); })
+      .finally(() => { if (fetchRef.current === token) setLoading(false); });
   }, []);
 
-  useEffect(() => { loadTasks(); }, [loadTasks]);
+  // URL sync
+  useEffect(() => {
+    const qs = serializeKanbanFilters(filters);
+    window.history.replaceState(null, '', `/${ROUTES.TASK_KANBAN}${qs ? '?' + qs : ''}`);
+  }, [filters]);
+
+  // Debounced reload on filter change (debounce only the search field)
+  const reloadTimer = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (reloadTimer.current) clearTimeout(reloadTimer.current);
+    reloadTimer.current = setTimeout(() => loadTasks(filters), 300);
+    return () => { if (reloadTimer.current) clearTimeout(reloadTimer.current); };
+  }, [filters, loadTasks]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveTask(tasks.find(t => t.id === event.active.id) || null);
@@ -232,17 +291,8 @@ export function TaskKanban() {
     setTasks(prev => [task, ...prev]);
   }, []);
 
-  const filteredTasks = tasks.filter(t => {
-    if (filters.priorityFilter.length > 0 && !filters.priorityFilter.includes(t.priority)) return false;
-    if (filters.departmentId && t.department_id !== filters.departmentId) return false;
-    if (filters.projectId && t.project_id !== filters.projectId) return false;
-    if (filters.assigneeId && !(t.assignees?.some(a => a.id === filters.assigneeId))) return false;
-    if (filters.search.trim()) {
-      const q = filters.search.toLowerCase();
-      if (!t.title.toLowerCase().includes(q) && !(t.assignees?.some(a => a.name.toLowerCase().includes(q)))) return false;
-    }
-    return true;
-  });
+  // Server-side filtering already applied; keep `tasks` as the filtered set
+  const filteredTasks = tasks;
 
   const tasksByStatus = COLUMNS.reduce((acc, col) => {
     acc[col.id] = filteredTasks.filter(t => t.status === col.id);
@@ -272,7 +322,7 @@ export function TaskKanban() {
     <div className="flex flex-col items-center justify-center h-full gap-3">
       <AlertTriangle className="w-10 h-10 text-amber-400" />
       <p className="text-[var(--text-secondary)]">{error}</p>
-      <button onClick={loadTasks} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+      <button onClick={() => loadTasks(filters)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
     </div>
   );
 
@@ -299,7 +349,7 @@ export function TaskKanban() {
                 <ChevronRight size={16} />
               </button>
             </div>
-            <button onClick={loadTasks} className="h-[32px] w-[32px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] transition-colors">
+            <button onClick={() => loadTasks(filters)} className="h-[32px] w-[32px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] transition-colors">
               <RefreshCw size={14} />
             </button>
             <button onClick={() => setShowCreate(true)}
