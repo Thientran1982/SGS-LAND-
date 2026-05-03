@@ -69,7 +69,8 @@ import { priceCalibrationService } from "./server/services/priceCalibrationServi
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus, rateLimit } from "./server/middleware/rateLimiter";
+import { getPublicListingsCache, setPublicListingsCache } from "./server/services/publicListingsCache";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
@@ -1546,6 +1547,30 @@ async function startServer() {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 500);
+
+      // Server-side cache 5 phút cho public listings feed (LRU per-process).
+      // Mọi mutate trên listings (create/update/delete/bulk/status) sẽ
+      // evictPublicListingsCache() — đảm bảo SLA listing mới hiển thị < 30s
+      // sau khi tạo trên các route quản trị.
+      // Whitelist param key để chống cache pollution: attacker không thể spam
+      // ?junk1=...&junk2=... để evict legit entries khỏi LRU 500 slot.
+      const CACHE_KEY_PARAMS = ['page', 'pageSize', 'cursor', 'cursorMode',
+        'projectCode', 'type', 'types', 'transaction', 'priceMin', 'priceMax',
+        'search', 'location', 'isVerified'];
+      const cacheKey = `pl:${PUBLIC_TENANT}|${
+        CACHE_KEY_PARAMS
+          .filter(k => req.query[k] !== undefined)
+          .sort()
+          .map(k => `${k}=${String(req.query[k])}`)
+          .join('&')
+      }`;
+      const cached = getPublicListingsCache(cacheKey);
+      if (cached) {
+        res.setHeader('X-Public-Listings-Cache', 'HIT');
+        res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+        return res.json(cached) as any;
+      }
+
       const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING'] };
       if (req.query.projectCode) {
         filters.projectCode = req.query.projectCode as string;
@@ -1582,6 +1607,9 @@ async function startServer() {
       } else {
         result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
       }
+      setPublicListingsCache(cacheKey, result);
+      res.setHeader('X-Public-Listings-Cache', 'MISS');
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(result);
       // Log visitor in background (only page 1/cursor-first, to avoid spamming on pagination)
       if (page === 1 || !req.query.cursor) {
@@ -1669,6 +1697,110 @@ async function startServer() {
     } catch (error) {
       console.error('Error fetching public listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
+    }
+  });
+
+  // ── Public lead capture scoped to a specific listing ──────────────────────
+  // POST /api/public/listings/:id/leads
+  // - Rate limit: 5 req / giờ / IP (publicListingLeadRateLimit, riêng để
+  //   không cạnh tranh với /api/public/leads chung).
+  // - Dedup: cùng phone + cùng listing_id trong 24h → trả về lead cũ
+  //   (silent success — không spam DB / không khoá user).
+  // - Lead lưu metadata.listing_id / listing_code / listing_title để CRM
+  //   thấy ngay nguồn gốc, đồng thời prefix vào notes.
+  const publicListingLeadRateLimit = rateLimit({
+    name: 'public_listing_lead',
+    windowMs: 60 * 60 * 1000,
+    maxRequests: 5,
+    keyFn: (req: express.Request) => `pll:${req.ip || 'anonymous'}`,
+    message: 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau 1 giờ hoặc gọi hotline.',
+  });
+
+  app.post('/api/public/listings/:id/leads', publicListingLeadRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const listingId = String(req.params.id || '');
+      if (!UUID_REGEX.test(listingId)) {
+        return res.status(400).json({ error: 'Invalid listing id' }) as any;
+      }
+      const { name, phone, notes, source } = req.body || {};
+      if (!name || !phone) {
+        return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
+      }
+      const trimmedPhone = String(phone).trim().slice(0, 20);
+      if (!/^(0|\+84)\d{9,10}$/.test(trimmedPhone.replace(/\s+/g, ''))) {
+        return res.status(400).json({ error: 'Số điện thoại không hợp lệ' }) as any;
+      }
+
+      // Verify listing exists + is publicly visible (AVAILABLE/BOOKING/OPENING)
+      const listing = await listingRepository.findById(PUBLIC_TENANT, listingId);
+      if (!listing) return res.status(404).json({ error: 'Không tìm thấy sản phẩm' }) as any;
+      const status = String((listing as any).status || '').toUpperCase();
+      if (!['AVAILABLE', 'BOOKING', 'OPENING'].includes(status)) {
+        return res.status(404).json({ error: 'Sản phẩm hiện không nhận yêu cầu tư vấn' }) as any;
+      }
+
+      // Dedup 24h: same phone + same listing_id (metadata->>'listing_id')
+      try {
+        const dup = await pool.query(
+          `SELECT id FROM leads
+             WHERE tenant_id = $1
+               AND phone = $2
+               AND metadata->>'listing_id' = $3
+               AND created_at > NOW() - INTERVAL '24 hours'
+             LIMIT 1`,
+          [PUBLIC_TENANT, trimmedPhone, listingId]
+        );
+        if (dup.rows.length > 0) {
+          return res.json({ id: dup.rows[0].id, success: true, deduped: true }) as any;
+        }
+      } catch { /* best-effort, không block create nếu query lỗi */ }
+
+      const listingTitle = String((listing as any).title || '').slice(0, 200);
+      const listingCode = String((listing as any).code || '').slice(0, 64);
+      const url = String(req.headers.referer || '').slice(0, 500);
+      const baseNotes = `🏠 LEAD TỪ TRANG SẢN PHẨM\n────────────────\n📍 Sản phẩm: [${listingCode}] ${listingTitle}\n🔗 Link: ${url || `/listing/${listingId}`}`;
+      const finalNotes = notes
+        ? `${baseNotes}\n📝 Ghi chú KH: ${String(notes).slice(0, 1500)}`
+        : baseNotes;
+
+      // Insert via raw SQL — leadRepository.create chưa expose `metadata`
+      // (chỉ có attributes/preferences). Cần persist metadata.listing_id để
+      // dedup query 24h ở các request kế tiếp hoạt động đúng.
+      const metadata = {
+        listing_id: listingId,
+        listing_code: listingCode,
+        listing_title: listingTitle,
+        source_type: 'listing_detail',
+        page_url: url || `/listing/${listingId}`,
+        ip: req.ip || null,
+        user_agent: String(req.headers['user-agent'] || '').slice(0, 300),
+      };
+      const tags = ['listing-lead', `listing:${listingId.slice(0, 8)}`];
+      const result = await pool.query(
+        `INSERT INTO leads
+           (tenant_id, name, phone, source, stage, notes, tags, metadata)
+         VALUES ($1, $2, $3, $4, 'NEW', $5, $6::jsonb, $7::jsonb)
+         RETURNING id`,
+        [
+          PUBLIC_TENANT,
+          String(name).trim().slice(0, 100),
+          trimmedPhone,
+          source || 'WEBSITE',
+          finalNotes,
+          JSON.stringify(tags),
+          JSON.stringify(metadata),
+        ]
+      );
+      const leadId = result.rows[0]?.id;
+
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
+        id: leadId, name: String(name).trim().slice(0, 100),
+      });
+      return res.status(201).json({ id: leadId, success: true });
+    } catch (error) {
+      console.error('Error creating public listing lead:', error);
+      return res.status(500).json({ error: 'Không thể tạo yêu cầu, vui lòng thử lại' }) as any;
     }
   });
 
@@ -3836,9 +3968,12 @@ async function startServer() {
   app.get('/sitemap-listings.xml', async (_req: express.Request, res: express.Response) => {
     try {
       // neondb_owner có BYPASSRLS + row_security=off mặc định → query thẳng pool không cần transaction/role switch
+      // Public listings = AVAILABLE / BOOKING / OPENING (cùng filter với
+      // /api/public/listings). Trước đây dùng 'ACTIVE' (legacy CRM status)
+      // khiến sitemap rỗng → Googlebot không thể discover product pages.
       const result = await pool.query(
         `SELECT id, updated_at FROM listings
-         WHERE status = 'ACTIVE'
+         WHERE status IN ('AVAILABLE','BOOKING','OPENING')
          ORDER BY updated_at DESC LIMIT 50000`
       );
       const urls = result.rows.map((r: any) => {

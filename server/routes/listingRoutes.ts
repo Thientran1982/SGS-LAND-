@@ -6,6 +6,7 @@ import { fileTypeFromBuffer } from 'file-type';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { evictPublicProjectCache } from '../services/publicProjectCache';
+import { evictPublicListingsCache } from '../services/publicListingsCache';
 import { priceCalibrationService } from '../services/priceCalibrationService';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { storeFile } from '../services/storageService';
@@ -463,6 +464,7 @@ export function createListingRoutes(authenticateToken: any) {
         const code = (listing as any).projectCode || (listing as any).project_code || (req.body as any).projectCode || (req.body as any).project_code;
         if (code) evictPublicProjectCache(String(code));
       } catch { /* best-effort */ }
+      evictPublicListingsCache();
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -530,6 +532,7 @@ export function createListingRoutes(authenticateToken: any) {
       for (const code of touchedProjectCodes) {
         try { evictPublicProjectCache(code); } catch { /* best-effort */ }
       }
+      evictPublicListingsCache();
 
       res.json({ created: created.length, errors });
     } catch (error) {
@@ -695,6 +698,7 @@ export function createListingRoutes(authenticateToken: any) {
         // :projectCode), nên evict 1 lần sau loop là đủ.
         if (updatedImages.size > 0 && projectCode) {
           try { evictPublicProjectCache(projectCode); } catch { /* best-effort */ }
+          evictPublicListingsCache();
         }
         for (const [listingId, images] of updatedImages) {
           await listingRepository.update(user.tenantId, listingId, { images });
@@ -780,6 +784,7 @@ export function createListingRoutes(authenticateToken: any) {
         if (oldCode) evictPublicProjectCache(String(oldCode));
         if (newCode && newCode !== oldCode) evictPublicProjectCache(String(newCode));
       } catch { /* best-effort */ }
+      evictPublicListingsCache();
 
       // ── Self-learning: record ground-truth price when listing is sold ─────
       // A sold transaction is the most accurate price signal — weight 50% in calibration.
@@ -880,6 +885,7 @@ export function createListingRoutes(authenticateToken: any) {
         const code = (listing as any).projectCode || (listing as any).project_code || (existing as any).projectCode || (existing as any).project_code;
         if (code) evictPublicProjectCache(String(code));
       } catch { /* best-effort */ }
+      evictPublicListingsCache();
 
       await auditRepository.log(user.tenantId, {
         actorId:    user.id,
@@ -1027,6 +1033,7 @@ export function createListingRoutes(authenticateToken: any) {
         const code = (beforeDelete as any).projectCode || (beforeDelete as any).project_code;
         if (code) evictPublicProjectCache(String(code));
       }
+      evictPublicListingsCache();
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,

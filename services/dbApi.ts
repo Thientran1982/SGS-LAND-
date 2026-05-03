@@ -198,6 +198,12 @@ class DatabaseApiClient {
     return api.post<any>('/api/public/leads', data);
   }
 
+  // Listing-scoped public lead — gắn metadata.listing_id để CRM thấy nguồn
+  // gốc chính xác + dedup 24h theo (phone + listing_id) ở backend.
+  async createPublicListingLead(listingId: string, data: { name: string; phone: string; notes?: string; source?: string }) {
+    return api.post<any>(`/api/public/listings/${listingId}/leads`, data);
+  }
+
   async updateLead(id: string, data: any) {
     const result = await leadApi.updateLead(id, data);
     _cache.invalidate('leads:');
