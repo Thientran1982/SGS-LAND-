@@ -12,6 +12,8 @@
     "seed": "tsx server/seed.ts",
     "knowledge:seed": "tsx scripts/seed-knowledge.ts",
     "ai:eval": "tsx scripts/eval-agents.ts",
+    "ai:eval:strict": "tsx scripts/eval-agents.ts --threshold 0.9 --per-agent 0.9",
+    "ai:eval:e2e": "tsx scripts/eval-agents.ts --e2e --judge --threshold 0.9 --per-agent 0.9",
     "migrate": "tsx server/migrations/cli.ts",
     "migrate:dry": "tsx server/migrations/cli.ts --dry-run",
     "migrate:rollback": "tsx server/migrations/cli.ts --rollback",
