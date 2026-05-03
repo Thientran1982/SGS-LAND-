@@ -1,0 +1,108 @@
+{
+  "_comment": "Google Business Profile config cho SGS Land. File này dùng làm checklist khi team marketing tạo/cập nhật profile thật trên https://business.google.com. Mỗi field map sang form tương ứng trong GBP Manager.",
+  "businessProfile": {
+    "name": "SGS Land — Nền tảng BĐS AI Việt Nam",
+    "primaryCategory": "Real estate agency",
+    "additionalCategories": [
+      "Property management company",
+      "Real estate consultant",
+      "Real estate developer (re-seller)"
+    ],
+    "address": {
+      "street": "Cập nhật địa chỉ trụ sở chính (số nhà + tên đường)",
+      "ward":   "Cập nhật phường",
+      "district": "Cập nhật quận",
+      "city": "Hồ Chí Minh",
+      "province": "Hồ Chí Minh",
+      "country": "VN",
+      "postalCode": "70000"
+    },
+    "phone": "+84 971 132 378",
+    "secondaryPhone": null,
+    "website": "https://sgsland.vn",
+    "appointmentUrl": "https://sgsland.vn/contact",
+    "menuUrl": null,
+    "openingHours": {
+      "monday":    { "open": "08:00", "close": "22:00" },
+      "tuesday":   { "open": "08:00", "close": "22:00" },
+      "wednesday": { "open": "08:00", "close": "22:00" },
+      "thursday":  { "open": "08:00", "close": "22:00" },
+      "friday":    { "open": "08:00", "close": "22:00" },
+      "saturday":  { "open": "08:00", "close": "22:00" },
+      "sunday":    { "open": "09:00", "close": "18:00" }
+    },
+    "shortName": "sgsland",
+    "fromTheBusiness": "SGS Land là nền tảng công nghệ bất động sản AI hàng đầu Việt Nam: định giá tự động sai số ±5%, kho 45.000+ sản phẩm BĐS, đại lý phân phối uỷ quyền chính thức của Novaland, Vinhomes, Masterise Homes, Nam Long, Sơn Kim Land, Đại Quang Minh. Thành lập 2024 tại TP.HCM."
+  },
+  "attributes": [
+    "Online appointments",
+    "Onsite services",
+    "Identifies as women-owned: false",
+    "Wheelchair accessible entrance",
+    "Free Wi-Fi",
+    "Vietnamese (primary), English (secondary)"
+  ],
+  "services": [
+    { "name": "Định giá bất động sản AI miễn phí", "url": "https://sgsland.vn/ai-valuation" },
+    { "name": "Tìm kiếm & mua bán BĐS",          "url": "https://sgsland.vn/marketplace" },
+    { "name": "Ký gửi BĐS",                       "url": "https://sgsland.vn/ky-gui-bat-dong-san" },
+    { "name": "Tư vấn pháp lý BĐS",               "url": "https://sgsland.vn/help-center" },
+    { "name": "Tư vấn vay ngân hàng",             "url": "https://sgsland.vn/bank-rates" }
+  ],
+  "products": [
+    { "name": "Aqua City Novaland",       "category": "Biệt thự sinh thái Đồng Nai",   "url": "https://sgsland.vn/du-an/aqua-city" },
+    { "name": "Vinhomes Cần Giờ",         "category": "Đại đô thị lấn biển TP.HCM",   "url": "https://sgsland.vn/du-an/vinhomes-can-gio" },
+    { "name": "Vinhomes Grand Park",      "category": "Căn hộ TP. Thủ Đức",            "url": "https://sgsland.vn/du-an/vinhomes-grand-park" },
+    { "name": "The Global City Masterise","category": "Đô thị thương mại Thủ Đức",     "url": "https://sgsland.vn/du-an/the-global-city" },
+    { "name": "Izumi City Nam Long",      "category": "Nhà phố compound Đồng Nai",     "url": "https://sgsland.vn/du-an/izumi-city" },
+    { "name": "Vạn Phúc City",            "category": "Khu đô thị ven sông Sài Gòn",   "url": "https://sgsland.vn/du-an/van-phuc-city" }
+  ],
+  "postSchedule": {
+    "frequency": "2x/tuần (thứ Ba & thứ Sáu)",
+    "categories": ["Update", "Offer", "Event"],
+    "minMonthly": 8,
+    "templates": [
+      "🏘️ [Dự án] vừa cập nhật giá bán T{tháng}/2026 — chi tiết tại sgsland.vn/du-an/{slug}",
+      "🏷️ Ưu đãi: ký HĐĐC trước {ngày} nhận chiết khấu {x}% + voucher nội thất {y} triệu.",
+      "📅 Sự kiện mở bán {dự án} — {ngày}, đăng ký nhận thiệp tại sgsland.vn/contact",
+      "📊 Báo cáo thị trường BĐS {khu vực} Q{quý}/2026 — đọc tại sgsland.vn/news/{slug}"
+    ]
+  },
+  "qaSeed": [
+    { "q": "SGS Land có phải đại lý phân phối chính thức không?", "a": "Có. SGS Land là đại lý phân phối uỷ quyền chính thức của Novaland, Vinhomes, Masterise Homes, Nam Long, Sơn Kim Land, Đại Quang Minh. Mọi giao dịch đều có hợp đồng phân phối uỷ quyền chính chủ." },
+    { "q": "Định giá AI có mất phí không?",               "a": "Hoàn toàn miễn phí. Truy cập sgsland.vn/ai-valuation, nhập địa chỉ + diện tích + loại BĐS, kết quả trả về trong dưới 30 giây." },
+    { "q": "SGS Land có hỗ trợ vay ngân hàng không?",     "a": "Có. Đối tác chiến lược 15+ ngân hàng (Vietcombank, BIDV, Techcombank, MB Bank, VPBank…). Tỷ lệ vay tối đa 70-80% giá trị BĐS, kỳ hạn đến 25 năm." },
+    { "q": "Người nước ngoài có mua được nhà qua SGS Land không?", "a": "Được, theo Luật Nhà ở 2014 (sửa đổi 2023): có visa hợp lệ, không vượt 30%/toà chung cư, sở hữu 50 năm có gia hạn." },
+    { "q": "Ký gửi BĐS qua SGS Land mất phí bao nhiêu?",  "a": "Phí môi giới chuẩn 1-2% giá bán cho căn hộ và 2-3% cho nhà phố/đất nền, chỉ thu khi giao dịch thành công." },
+    { "q": "SGS Land hoạt động ở những tỉnh nào?",         "a": "Tập trung Đông Nam Bộ: TP.HCM, Đồng Nai, Bình Dương, Long An, Bà Rịa-Vũng Tàu. Mở rộng dần ra Hà Nội, Đà Nẵng, Nha Trang." },
+    { "q": "Sổ hồng và sổ đỏ khác nhau thế nào?",          "a": "Từ 2009 đã hợp nhất thành Giấy chứng nhận quyền sử dụng đất, quyền sở hữu nhà ở. Sổ đỏ trước cấp cho đất, sổ hồng cấp cho nhà + đất ở. Hiện chỉ là cách gọi theo màu cũ." },
+    { "q": "AI định giá của SGS Land chính xác đến đâu?",  "a": "Sai số trung bình ±5% so với giá công chứng thực tế, đối chiếu trên 1.200 giao dịch mẫu Q1/2026." },
+    { "q": "Tôi muốn xem dự án Aqua City, đăng ký thế nào?", "a": "Truy cập sgsland.vn/du-an/aqua-city → bấm 'Đặt lịch tham quan' hoặc gọi hotline 0971 132 378." },
+    { "q": "SGS Land có ứng dụng di động không?",          "a": "Hiện tại sử dụng PWA tại sgsland.vn (mobile-first responsive). App native đang trong giai đoạn beta, dự kiến phát hành Q4/2026." },
+    { "q": "Lãi suất vay mua nhà 2026 hiện tại là bao nhiêu?", "a": "Dao động 7,5-9,5%/năm cố định 24 tháng đầu, sau đó thả nổi theo lãi suất tham chiếu + biên độ 3-3,5%. Bảng so sánh chi tiết tại sgsland.vn/bank-rates." },
+    { "q": "Có thể đặt cọc giữ chỗ online không?",          "a": "Có với một số dự án mở bán mới (đặt cọc thiện chí từ 50-100 triệu, hoàn 100% nếu đổi ý trong 7 ngày). Liên hệ chuyên viên để xác nhận chính sách từng dự án." },
+    { "q": "SGS Land có nhận ký gửi đất nông nghiệp không?", "a": "Có, sau khi kiểm tra pháp lý 2 lớp (sổ + quy hoạch + tranh chấp). Tập trung khu vực Đồng Nai, Bình Dương, Long An, Bà Rịa-Vũng Tàu." },
+    { "q": "Báo cáo thị trường BĐS có mất phí không?",      "a": "Báo cáo tóm tắt miễn phí trên sgsland.vn/news. Báo cáo chuyên sâu (theo dự án/khu vực) phục vụ khách hàng VIP miễn phí khi đăng ký tài khoản." },
+    { "q": "Tôi có thể trở thành môi giới hợp tác không?",   "a": "Có. Đăng ký tại sgsland.vn/careers — chương trình hợp tác chia hoa hồng 50-70% cho môi giới có hợp đồng giao dịch hoàn tất qua sàn." },
+    { "q": "Dữ liệu khách hàng có được bảo mật không?",     "a": "Tuân thủ Nghị định 13/2023/NĐ-CP, mã hoá SSL/TLS, máy chủ tại Việt Nam, không bán dữ liệu cho bên thứ ba." },
+    { "q": "Có dự án nào tại Long Thành đang mở bán không?", "a": "Có. Khu vực Long Thành đang sôi động nhờ sân bay Long Thành (vận hành 2027). Xem danh sách dự án tại sgsland.vn/bat-dong-san-long-thanh." },
+    { "q": "SGS Land có tổ chức hội thảo BĐS không?",       "a": "Có. Hội thảo định kỳ hàng tháng tại Hồ Chí Minh + livestream online. Đăng ký tại sgsland.vn/contact." },
+    { "q": "Khi nào nên mua/bán BĐS?",                       "a": "Tuỳ mục tiêu: đầu tư nắm giữ 5-7 năm (mua khi thị trường trầm lắng), ở thực (mua khi pháp lý rõ + đáp ứng nhu cầu). Tư vấn miễn phí qua hotline 0971 132 378." },
+    { "q": "SGS Land có hỗ trợ thuê nhà không?",             "a": "Có với một số phân khúc cao cấp (căn hộ ≥3PN, biệt thự, shophouse mặt tiền). Liên hệ qua marketplace để được kết nối chuyên viên cho thuê." }
+  ],
+  "photos": {
+    "minimum": 50,
+    "categories": [
+      { "type": "Logo",          "count": 1 },
+      { "type": "Cover",         "count": 1 },
+      { "type": "Exterior",      "count": 5,  "note": "Mặt tiền văn phòng + biển hiệu" },
+      { "type": "Interior",      "count": 8,  "note": "Sảnh tiếp khách, phòng họp, không gian làm việc" },
+      { "type": "Team",          "count": 6,  "note": "Đội ngũ + sự kiện công ty" },
+      { "type": "Projects",      "count": 20, "note": "Hình thực tế các dự án phân phối" },
+      { "type": "Events",        "count": 6,  "note": "Sự kiện mở bán, hội thảo" },
+      { "type": "Recognition",   "count": 3,  "note": "Giải thưởng, chứng nhận đối tác" }
+    ],
+    "geotagging": "BẮT BUỘC — gắn EXIF GPS toạ độ trụ sở TP.HCM (10.762622, 106.660172) cho tối thiểu 80% ảnh."
+  },
+  "verificationMethod": "Postcard hoặc Phone (ưu tiên Postcard cho tỷ lệ chấp thuận cao hơn)."
+}

@@ -130,6 +130,24 @@
 > "Mua căn 2PN Aqua City qua SGS Land tháng 12/2025. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và pháp lý đầy đủ. Đặt cọc xong là có hợp đồng phân phối uỷ quyền chính chủ."
 > — **Anh Nguyễn Văn Hải**, khách hàng Aqua City (15/01/2026) — ⭐⭐⭐⭐⭐
 
+## Trung tâm hỗ trợ & Q&A chuyên sâu
+
+- [Trung tâm hỗ trợ SGS Land — 27 câu hỏi thường gặp](https://sgsland.vn/help-center) — 6 nhóm chủ đề: mua bán & pháp lý, định giá AI, ký gửi & đăng tin, lãi suất vay, khu vực hot, đặt cọc & thanh toán.
+- Pháp lý: sổ hồng vs sổ đỏ, vi bằng có giá trị không, người nước ngoài mua nhà tại VN
+- Định giá AI: cách hoạt động 3 lớp, độ chính xác ±5%, hỗ trợ 13 loại BĐS
+- Ký gửi: phí 1-3% no-win-no-fee, kiểm duyệt pháp lý 2 lớp, thanh khoản trung bình 45 ngày
+- Lãi suất vay 6/2026: 7,5-9,5%/năm cố định 24 tháng, LTV 70-80% sổ hồng
+- Khu vực hot: Long Thành Đồng Nai (sân bay 2027), Phú Mỹ Hưng Q7, Vinhomes Cần Giờ Q3/2026
+- Đặt cọc: giữ chỗ vs thiện chí, tiến độ thanh toán dự án mới, phí công chứng + thuế
+
+## AI plugin & API công khai
+
+- [/.well-known/ai-plugin.json](https://sgsland.vn/.well-known/ai-plugin.json) — Manifest AI plugin (ChatGPT/Claude/Grok)
+- [/api/public/listings](https://sgsland.vn/api/public/listings) — Tìm kiếm listing realtime
+- [/api/public/projects](https://sgsland.vn/api/public/projects) — Danh sách dự án phân phối
+- [/api/valuation/teaser](https://sgsland.vn/api/valuation/teaser) — Định giá AI tự động (public, không cần auth)
+- [/llms-full.txt](https://sgsland.vn/llms-full.txt) — Knowledge base đầy đủ cho AI engines
+
 ## Thông tin liên hệ
 
 - **Trụ sở**: TP. Hồ Chí Minh, Việt Nam

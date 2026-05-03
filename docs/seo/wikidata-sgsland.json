@@ -1,0 +1,51 @@
+{
+  "_comment": "Wikidata-ready entity payload cho SGS Land. Khi tạo Item trên wikidata.org, dùng các property bên dưới. Các giá trị 'value' đã chuẩn hoá theo Wikidata datatype. File này không tự động submit — đội marketing cần đăng nhập Wikidata account và nhập tay (hoặc dùng QuickStatements với CSV được sinh từ file này).",
+  "label": {
+    "vi": "SGS Land",
+    "en": "SGS Land"
+  },
+  "description": {
+    "vi": "Nền tảng công nghệ bất động sản AI tại Việt Nam, định giá tự động và phân phối dự án",
+    "en": "AI-powered real estate platform in Vietnam offering automated valuation and project distribution"
+  },
+  "aliases": {
+    "vi": ["Công ty Cổ phần SGS Land", "SGS LAND", "sgsland.vn"],
+    "en": ["SGS Land JSC", "SGSLand"]
+  },
+  "claims": {
+    "P31":  { "label": "instance of",      "value": "Q18127", "valueLabel": "online marketplace" },
+    "P31_2":{ "label": "instance of",      "value": "Q4830453", "valueLabel": "business enterprise" },
+    "P17":  { "label": "country",          "value": "Q881",   "valueLabel": "Vietnam" },
+    "P159": { "label": "headquarters location", "value": "Q1854", "valueLabel": "Ho Chi Minh City" },
+    "P571": { "label": "inception",        "value": "+2024-00-00T00:00:00Z", "valueLabel": "2024" },
+    "P856": { "label": "official website", "value": "https://sgsland.vn" },
+    "P18":  { "label": "logo image",       "value": "https://sgsland.vn/logo.svg" },
+    "P452": { "label": "industry",         "value": "Q170584", "valueLabel": "real estate" },
+    "P452_2":{"label": "industry",         "value": "Q11661", "valueLabel": "information technology" },
+    "P407": { "label": "language of work or name", "value": "Q9199", "valueLabel": "Vietnamese" },
+    "P112": { "label": "founded by",       "value": "Trần Minh Thiện", "valueType": "string", "note": "Tạo Person item riêng cho founder, sau đó link bằng Q-id." },
+    "P2002":{ "label": "Twitter username", "value": "sgsland" },
+    "P2013":{ "label": "Facebook username","value": "sgsland" },
+    "P4264":{ "label": "LinkedIn company ID","value": "sgsland" },
+    "P3185":{ "label": "VK username",       "value": null },
+    "P2397":{ "label": "YouTube channel ID","value": null, "note": "Cập nhật khi tạo channel chính thức." }
+  },
+  "references": {
+    "_comment": "Mỗi claim trên Wikidata cần ≥1 reference URL. Dùng các URL sau:",
+    "official_site": "https://sgsland.vn",
+    "about_page": "https://sgsland.vn/about-us",
+    "press_releases": [
+      "https://cafef.vn",
+      "https://cafeland.vn"
+    ]
+  },
+  "sitelinks": {
+    "viwiki": null,
+    "enwiki": null,
+    "_comment": "Nếu tạo Wikipedia article (VI hoặc EN) cho SGS Land, link sang đây."
+  },
+  "quickstatements_csv": [
+    "qid,Lvi,Len,Dvi,Den,P31,P17,P159,P571,P856,P18,P452,P407,P2013,P4264",
+    "CREATE,SGS Land,SGS Land,\"Nền tảng công nghệ bất động sản AI tại Việt Nam\",\"AI-powered real estate platform in Vietnam\",Q18127,Q881,Q1854,+2024-00-00T00:00:00Z/9,\"https://sgsland.vn\",\"https://sgsland.vn/logo.svg\",Q170584,Q9199,sgsland,sgsland"
+  ]
+}
