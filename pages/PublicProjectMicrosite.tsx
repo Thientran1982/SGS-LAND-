@@ -336,12 +336,14 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
 
     let faviconLink: HTMLLinkElement | null = null;
     let prevFaviconHref: string | null = null;
+    let createdFaviconLink = false;
     if (branding.faviconUrl) {
       faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
       if (!faviconLink) {
         faviconLink = document.createElement('link');
         faviconLink.rel = 'icon';
         document.head.appendChild(faviconLink);
+        createdFaviconLink = true;
       } else {
         prevFaviconHref = faviconLink.href;
       }
@@ -349,7 +351,15 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     }
     return () => {
       document.title = prevTitle;
-      if (faviconLink && prevFaviconHref !== null) faviconLink.href = prevFaviconHref;
+      if (faviconLink) {
+        if (createdFaviconLink) {
+          // Tự tay tạo → phải tự gỡ, tránh tích luỹ <link rel=icon> trên SPA
+          // navigation và tránh browser dùng icon CĐT khi user về trang khác.
+          faviconLink.parentNode?.removeChild(faviconLink);
+        } else if (prevFaviconHref !== null) {
+          faviconLink.href = prevFaviconHref;
+        }
+      }
     };
   }, [data?.branding, data?.project?.name, data?.tenantContact?.brandName]);
 
