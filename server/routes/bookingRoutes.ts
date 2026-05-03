@@ -209,38 +209,62 @@ export function createBookingRoutes(
 
       // Insert PENDING row. txnRef = 14-digit timestamp + 6 random hex →
       // unique within the tenant and short enough for VNPay's 100-char cap.
-      const ts = new Date();
-      const yyyymmddhhmmss =
-        ts.getFullYear().toString() +
-        String(ts.getMonth() + 1).padStart(2, '0') +
-        String(ts.getDate()).padStart(2, '0') +
-        String(ts.getHours()).padStart(2, '0') +
-        String(ts.getMinutes()).padStart(2, '0') +
-        String(ts.getSeconds()).padStart(2, '0');
-      const rand = Math.random().toString(16).slice(2, 8).padEnd(6, '0');
-      const txnRef = `SGS${yyyymmddhhmmss}${rand}`;
+      // Collision risk is astronomically low (≈1 in 16M per millisecond),
+      // but `vnpay_txn_ref` carries a UNIQUE constraint, so we retry on
+      // 23505 (unique_violation) up to 3 times to harden create-booking
+      // under burst concurrency rather than surfacing an opaque 500.
+      const newTxnRef = (): string => {
+        const ts = new Date();
+        const yyyymmddhhmmss =
+          ts.getFullYear().toString() +
+          String(ts.getMonth() + 1).padStart(2, '0') +
+          String(ts.getDate()).padStart(2, '0') +
+          String(ts.getHours()).padStart(2, '0') +
+          String(ts.getMinutes()).padStart(2, '0') +
+          String(ts.getSeconds()).padStart(2, '0');
+        const rand = Math.random().toString(16).slice(2, 8).padEnd(6, '0');
+        return `SGS${yyyymmddhhmmss}${rand}`;
+      };
       const expiresAt = new Date(Date.now() + BOOKING_TTL_MIN * 60 * 1000);
 
-      const inserted = await pool.query(
-        `INSERT INTO bookings
-           (tenant_id, listing_id, unit_id, buyer_user_id, agent_user_id,
-            buyer_email, deposit_amount, vnpay_txn_ref, expires_at, notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-         RETURNING *`,
-        [
-          listingRow.tenant_id,
-          listingId,
-          unitId,
-          buyerId,
-          listingRow.assigned_to || null,
-          buyerEmail || null,
-          amount,
-          txnRef,
-          expiresAt,
-          notes,
-        ],
-      );
-      const booking = inserted.rows[0];
+      let booking: any = null;
+      let txnRef = '';
+      let attempt = 0;
+      while (attempt < 3 && !booking) {
+        attempt++;
+        txnRef = newTxnRef();
+        try {
+          const inserted = await pool.query(
+            `INSERT INTO bookings
+               (tenant_id, listing_id, unit_id, buyer_user_id, agent_user_id,
+                buyer_email, deposit_amount, vnpay_txn_ref, expires_at, notes)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+             RETURNING *`,
+            [
+              listingRow.tenant_id,
+              listingId,
+              unitId,
+              buyerId,
+              listingRow.assigned_to || null,
+              buyerEmail || null,
+              amount,
+              txnRef,
+              expiresAt,
+              notes,
+            ],
+          );
+          booking = inserted.rows[0];
+        } catch (e: any) {
+          if (e?.code === '23505' && attempt < 3) {
+            logger.warn(`[bookings] txnRef collision (attempt ${attempt}), retrying`);
+            continue;
+          }
+          throw e;
+        }
+      }
+      if (!booking) {
+        return res.status(503).json({ error: 'Không thể khởi tạo mã giao dịch, vui lòng thử lại' });
+      }
 
       // Build VNPay redirect URL. Use the per-booking return URL so the
       // browser callback can deep-link to /bookings/<id> in the mobile app.
@@ -497,6 +521,11 @@ export function createBookingRoutes(
         cfg = null;
       }
       if (!cfg) return res.status(503).send('VNPay not configured');
+      // The return URL is a one-time deep-link bridge — never let a CDN /
+      // proxy cache it (the same URL with the same params should always
+      // re-resolve the booking and re-emit the audit log).
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
 
       const result = verifyCallback(cfg, req.query as Record<string, unknown>);
       const txnRef = result.txnRef || '';
