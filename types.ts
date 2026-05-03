@@ -95,11 +95,12 @@ export enum DataResidency {
 
 export enum UserRole {
     SUPER_ADMIN = 'SUPER_ADMIN',      // Quản trị viên cấp cao nhất (SGSLand platform owner)
-    ADMIN = 'ADMIN',
-    SALES = 'SALES',
-    TEAM_LEAD = 'TEAM_LEAD',
-    MARKETING = 'MARKETING',
-    VIEWER = 'VIEWER',
+    ADMIN = 'ADMIN',                  // Quản trị viên tenant
+    MANAGER = 'MANAGER',              // Quản lý (cấp trung, được duyệt hợp đồng — xem contractRoutes)
+    TEAM_LEAD = 'TEAM_LEAD',          // Trưởng nhóm
+    SALES = 'SALES',                  // Nhân viên kinh doanh
+    MARKETING = 'MARKETING',          // Marketing
+    VIEWER = 'VIEWER',                // Chỉ xem
     // B2B2C: Broker/Exchange partner roles
     PARTNER_ADMIN = 'PARTNER_ADMIN',  // Quản trị viên sàn đối tác
     PARTNER_AGENT = 'PARTNER_AGENT',  // Nhân viên môi giới sàn đối tác

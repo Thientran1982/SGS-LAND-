@@ -205,7 +205,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể thay đổi vai trò người dùng' });
       }
       // Validate role value is from allowed enum
-      const VALID_ROLES = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER', 'PARTNER_ADMIN', 'PARTNER_AGENT'];
+      const VALID_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER', 'PARTNER_ADMIN', 'PARTNER_AGENT'];
       if (req.body.role !== undefined && !VALID_ROLES.includes(req.body.role)) {
         return res.status(400).json({ error: `Vai trò không hợp lệ. Các vai trò cho phép: ${VALID_ROLES.join(', ')}` });
       }
