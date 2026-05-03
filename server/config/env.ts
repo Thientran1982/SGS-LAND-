@@ -21,7 +21,18 @@ export interface VnpayConfig {
   hashSecret: string;
   /** Public URL where VNPay redirects the buyer's browser after payment. */
   returnUrl: string;
-  /** Public URL VNPay POSTs the IPN to (server-to-server). */
+  /**
+   * Public URL VNPay POSTs the IPN to (server-to-server).
+   *
+   * Note: VNPay does NOT accept `vnp_IpnUrl` as a per-request parameter —
+   * the gateway uses the IPN URL registered in the merchant portal. We
+   * still load+validate this here so:
+   *   1. Boot fails fast if ops forgot to set it (parity with portal).
+   *   2. We can echo it on startup for ops to cross-check against the
+   *      portal config (see boot log in server.ts).
+   *   3. Future helper scripts can use it to register the URL via
+   *      VNPay's merchant API once that surface is wired.
+   */
   ipnUrl: string;
   /** Gateway URL we redirect the buyer to. */
   gatewayUrl: string;

@@ -154,6 +154,14 @@ export default function BookListingScreen() {
           <View style={styles.card}>
             <Text style={styles.cardLabel}>SẢN PHẨM</Text>
             <Text style={styles.cardTitle} numberOfLines={3}>{title}</Text>
+            {params.unitId ? (
+              // Unit pre-selected from the listing detail (e.g. project floor
+              // plan with multiple inventory units). When dự án có nhiều
+              // căn/lô, the upstream screen passes ?unitId=… so the deposit
+              // is tagged to the exact unit. A future iteration can replace
+              // this read-only line with an in-screen picker.
+              <Text style={styles.subValue}>Đơn vị: {String(params.unitId)}</Text>
+            ) : null}
           </View>
 
           <View style={styles.card}>
@@ -271,6 +279,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   cardTitle: { fontSize: typography.base, color: colors.textPrimary, fontWeight: '700' },
+  subValue: { fontSize: typography.sm, color: colors.textSecondary, marginTop: 4 },
   amountDisplay: {
     fontSize: typography.xxl,
     fontWeight: '800',
