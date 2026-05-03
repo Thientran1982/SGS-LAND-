@@ -136,6 +136,15 @@ html, body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Show scrollbar on customer-facing public pages (microsite, proposal, contract).
+   Marketing pages need scroll affordance so visitors on small laptops realize
+   the page extends below the fold. Overrides the global hide rule. */
+.show-scrollbar { -ms-overflow-style: auto !important; scrollbar-width: thin !important; }
+.show-scrollbar::-webkit-scrollbar { display: block !important; width: 10px; height: 10px; }
+.show-scrollbar::-webkit-scrollbar-track { background: rgba(15,23,42,0.05); }
+.show-scrollbar::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.25); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+.show-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.45); background-clip: padding-box; border: 2px solid transparent; }
+
 @layer components {
   .glass-card {
     background: var(--glass-surface);
