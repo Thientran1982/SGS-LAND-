@@ -1270,23 +1270,62 @@ export default function ProjectLandingPage() {
                 title={seoMeta.title}
                 description={seoMeta.description}
                 canonicalPath={`/du-an/${cfg.slug}`}
-                structuredData={{
-                    '@context': 'https://schema.org',
-                    '@type': 'ApartmentComplex',
-                    name: cfg.name,
-                    description: seoMeta.description,
-                    url: `https://sgsland.vn/du-an/${cfg.slug}`,
-                    address: {
-                        '@type': 'PostalAddress',
-                        addressLocality: cfg.location,
-                        addressCountry: 'VN',
+                structuredData={[
+                    {
+                        '@type': 'ApartmentComplex',
+                        '@id': `https://sgsland.vn/du-an/${cfg.slug}#project`,
+                        name: cfg.name,
+                        description: seoMeta.description,
+                        url: `https://sgsland.vn/du-an/${cfg.slug}`,
+                        address: {
+                            '@type': 'PostalAddress',
+                            addressLocality: cfg.location,
+                            addressCountry: 'VN',
+                        },
+                        additionalProperty: [
+                            { '@type': 'PropertyValue', name: 'Chủ đầu tư', value: cfg.developer },
+                            { '@type': 'PropertyValue', name: 'Loại dự án', value: cfg.projectType },
+                            { '@type': 'PropertyValue', name: 'Khoảng giá', value: cfg.priceRange },
+                        ],
                     },
-                    additionalProperty: {
-                        '@type': 'PropertyValue',
-                        name: 'Chủ đầu tư',
-                        value: cfg.developer,
+                    {
+                        '@type': 'Product',
+                        '@id': `https://sgsland.vn/du-an/${cfg.slug}#product`,
+                        name: cfg.name,
+                        description: seoMeta.description,
+                        brand: { '@type': 'Brand', name: cfg.developer },
+                        category: cfg.projectType,
+                        offers: {
+                            '@type': 'AggregateOffer',
+                            priceCurrency: 'VND',
+                            availability: 'https://schema.org/InStock',
+                            seller: {
+                                '@type': 'RealEstateAgent',
+                                name: 'SGS LAND',
+                                legalName: 'Công ty Cổ phần SGS Land',
+                                taxID: '0312960439',
+                                url: 'https://sgsland.vn',
+                                telephone: '+84-971-132-378',
+                            },
+                        },
                     },
-                }}
+                    {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: 'https://sgsland.vn/' },
+                            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: 'https://sgsland.vn/du-an' },
+                            { '@type': 'ListItem', position: 3, name: cfg.name, item: `https://sgsland.vn/du-an/${cfg.slug}` },
+                        ],
+                    },
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: cfg.faqs.map(f => ({
+                            '@type': 'Question',
+                            name: f.q,
+                            acceptedAnswer: { '@type': 'Answer', text: f.a },
+                        })),
+                    },
+                ]}
             />
         <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
             {/* ── Nav ── */}

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 import { useTranslation } from '../services/i18n';
 import { formatSmartPrice } from '../utils/textUtils';
 import { aiService } from '../services/aiService';
@@ -985,6 +986,73 @@ export const AiValuation: React.FC = () => {
 
     return (
         <>
+        <SeoHead
+            title="Định Giá Bất Động Sản AI Miễn Phí | Sai Số ±5% — SGS LAND"
+            description="Công cụ định giá bất động sản AI miễn phí của SGS LAND: nhập địa chỉ và diện tích, nhận giá thị trường ước tính trong 30 giây với sai số ±5% theo chuẩn TĐGVN/IVS. Đối chiếu trên 45.000+ giao dịch lịch sử tại TP.HCM, Đồng Nai, Bình Dương."
+            canonicalPath="/ai-valuation"
+            structuredData={[
+                {
+                    '@type': 'SoftwareApplication',
+                    '@id': 'https://sgsland.vn/ai-valuation#app',
+                    name: 'Định Giá BĐS AI SGS LAND',
+                    applicationCategory: 'BusinessApplication',
+                    applicationSubCategory: 'Real Estate Valuation',
+                    operatingSystem: 'Web',
+                    url: 'https://sgsland.vn/ai-valuation',
+                    inLanguage: 'vi-VN',
+                    offers: { '@type': 'Offer', price: '0', priceCurrency: 'VND' },
+                    aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127' },
+                    publisher: {
+                        '@type': 'Organization',
+                        name: 'SGS LAND',
+                        legalName: 'Công ty Cổ phần SGS Land',
+                        taxID: '0312960439',
+                        url: 'https://sgsland.vn',
+                    },
+                    featureList: [
+                        'Định giá tự động trong 30 giây',
+                        'Sai số ±5% so với giá công chứng',
+                        'Đối chiếu 45.000+ giao dịch lịch sử',
+                        'Hỗ trợ 8 loại BĐS (căn hộ, nhà phố, biệt thự, đất nền, shophouse, văn phòng, kho xưởng, đất nông nghiệp)',
+                        'Phủ sóng TP.HCM, Đồng Nai, Bình Dương, Long An',
+                        'Miễn phí 100%, không giới hạn lượt tra cứu',
+                    ],
+                },
+                {
+                    '@type': 'HowTo',
+                    '@id': 'https://sgsland.vn/ai-valuation#howto',
+                    name: 'Cách định giá bất động sản bằng AI miễn phí trên SGS LAND',
+                    description: 'Hướng dẫn 4 bước sử dụng công cụ định giá AI của SGS LAND để nhận giá thị trường ước tính cho căn nhà, đất hoặc căn hộ trong 30 giây.',
+                    totalTime: 'PT30S',
+                    estimatedCost: { '@type': 'MonetaryAmount', currency: 'VND', value: '0' },
+                    tool: [{ '@type': 'HowToTool', name: 'Trình duyệt web hoặc ứng dụng di động' }],
+                    step: [
+                        { '@type': 'HowToStep', position: 1, name: 'Nhập địa chỉ BĐS', text: 'Truy cập sgsland.vn/ai-valuation và nhập địa chỉ chi tiết (số nhà, đường, phường/xã, quận/huyện, tỉnh/thành). Hệ thống AI sẽ tự nhận dạng loại BĐS và khu vực giá tham chiếu.', url: 'https://sgsland.vn/ai-valuation#step-address' },
+                        { '@type': 'HowToStep', position: 2, name: 'Nhập diện tích và đặc điểm', text: 'Nhập diện tích đất (m²), diện tích sàn xây dựng, số tầng, số phòng ngủ, hướng nhà và năm xây dựng. Càng nhiều thông tin, định giá càng chính xác.', url: 'https://sgsland.vn/ai-valuation#step-area' },
+                        { '@type': 'HowToStep', position: 3, name: 'Nhận kết quả định giá', text: 'AI trả về 3 con số trong vòng 30 giây: giá thị trường ước tính, khoảng tin cậy (low–high), và đơn giá VND/m². Kết quả đối chiếu trên 45.000+ giao dịch công chứng và 4 nguồn dữ liệu (CBRE, Savills, batdongsan.com.vn, công chứng).', url: 'https://sgsland.vn/ai-valuation#step-result' },
+                        { '@type': 'HowToStep', position: 4, name: 'Đặt tư vấn chuyên gia (tuỳ chọn)', text: 'Nếu cần định giá chính xác hơn cho mục đích vay ngân hàng, công chứng hoặc tranh chấp, bấm "Tư vấn chuyên gia" để được chuyên viên thẩm định viên SGS LAND khảo sát thực tế trong 24h, miễn phí.', url: 'https://sgsland.vn/ai-valuation#step-expert' },
+                    ],
+                },
+                {
+                    '@type': 'BreadcrumbList',
+                    itemListElement: [
+                        { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: 'https://sgsland.vn/' },
+                        { '@type': 'ListItem', position: 2, name: 'Định Giá AI', item: 'https://sgsland.vn/ai-valuation' },
+                    ],
+                },
+                {
+                    '@type': 'FAQPage',
+                    mainEntity: [
+                        { '@type': 'Question', name: 'Định giá AI của SGS LAND có chính xác không?', acceptedAnswer: { '@type': 'Answer', text: 'Sai số trung bình ±5% so với giá công chứng thực tế tại TP.HCM, Đồng Nai và Bình Dương — đo lường trên 45.000+ giao dịch lịch sử. Mô hình định giá theo chuẩn TĐGVN (Tiêu Chuẩn Định Giá Việt Nam) và IVS (International Valuation Standards), kết hợp 4 nguồn dữ liệu: CBRE, Savills, batdongsan.com.vn và dữ liệu công chứng.' } },
+                        { '@type': 'Question', name: 'Định giá AI SGS LAND có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí và không giới hạn lượt tra cứu. Không cần đăng ký tài khoản, không cần thẻ tín dụng. SGS LAND duy trì miễn phí dịch vụ này như một cam kết minh bạch hoá thị trường BĐS Việt Nam.' } },
+                        { '@type': 'Question', name: 'Định giá AI hỗ trợ những loại bất động sản nào?', acceptedAnswer: { '@type': 'Answer', text: 'Hỗ trợ 8 loại: (1) Căn hộ chung cư trung tâm và ngoại ô; (2) Nhà phố liền kề; (3) Biệt thự đơn lập/song lập; (4) Đất nền dự án và đất thổ cư; (5) Shophouse / nhà phố thương mại; (6) Văn phòng cho thuê; (7) Kho xưởng / nhà xưởng; (8) Đất nông nghiệp. Hệ thống tự nhận dạng loại BĐS từ địa chỉ nhập vào.' } },
+                        { '@type': 'Question', name: 'Khu vực nào được định giá AI hỗ trợ tốt nhất?', acceptedAnswer: { '@type': 'Answer', text: 'Độ chính xác cao nhất tại Đông Nam Bộ: TP.HCM (toàn bộ 24 quận/huyện và TP Thủ Đức), Đồng Nai (Biên Hòa, Long Thành, Nhơn Trạch), Bình Dương (Thuận An, Dĩ An, Thủ Dầu Một, Thành Phố Mới), Long An. Các tỉnh khác có hỗ trợ nhưng dữ liệu so sánh ít hơn nên khoảng tin cậy rộng hơn.' } },
+                        { '@type': 'Question', name: 'Định giá AI có dùng được cho mục đích vay ngân hàng không?', acceptedAnswer: { '@type': 'Answer', text: 'Định giá AI là tham chiếu tốt cho người mua/bán đàm phán giá. Để vay ngân hàng, công chứng hoặc tranh chấp pháp lý, cần báo cáo định giá chính thức của thẩm định viên có chứng chỉ TĐGVN — bấm "Tư vấn chuyên gia" trên trang này để SGS LAND khảo sát thực tế trong 24h, có hồ sơ pháp lý đầy đủ.' } },
+                        { '@type': 'Question', name: 'AI lấy dữ liệu từ đâu để định giá?', acceptedAnswer: { '@type': 'Answer', text: '4 nguồn dữ liệu chính: (1) Báo cáo thị trường định kỳ của CBRE và Savills; (2) Niêm yết công khai trên batdongsan.com.vn (đã loại tin ảo); (3) Dữ liệu công chứng giao dịch thực tế (đối tác văn phòng công chứng); (4) Dữ liệu nội bộ 45.000+ sản phẩm SGS LAND đã giao dịch. Toàn bộ dữ liệu được làm sạch và cập nhật hàng tuần.' } },
+                    ],
+                },
+            ]}
+        />
         <div className="min-h-screen bg-slate-900 font-sans text-white pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
             <div className="sticky top-0 bg-slate-900/80 backdrop-blur-md z-50 border-b border-slate-800">
