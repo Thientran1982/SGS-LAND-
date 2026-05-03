@@ -25,7 +25,9 @@ import {
   generateTxtToken,
   getApexDomain,
   getTenantBinding,
+  isHostnameSenderReady,
   normalizeBrandingInput,
+  notifyTenantAdminsCustomDomainNotSenderReady,
   validateHostname,
   validateSlug,
   verifyCustomDomainTxt,
@@ -80,6 +82,15 @@ interface BindingPayload {
   customDomainUnverifiedAt: string | null;
   /** Ngưỡng fail để alert (đồng bộ với cron) — frontend dùng để hiển thị tiến trình. */
   customDomainFailureThreshold: number;
+  /**
+   * Email gửi đi đã thực sự dùng được tên miền của tenant chưa.
+   * - Custom domain verified TXT + nằm trong allowlist Brevo (SPF/DKIM ops đã cấu hình) → true
+   * - Hoặc subdomain `<slug>.<apex>` (apex luôn có SPF/DKIM)                              → true
+   * - Còn lại                                                                              → false
+   * Khi false: hệ thống vẫn gửi mail bằng BREVO_FROM_EMAIL (không mất lead),
+   *   nhưng UI cần báo cho admin biết để liên hệ ops hoàn tất bước SPF/DKIM.
+   */
+  emailSenderReady: boolean;
 }
 
 interface BrandingResponse {
@@ -114,6 +125,15 @@ async function loadBrandingResponse(tenantId: string): Promise<BrandingResponse 
   });
   if (!row) return null;
   const apex = getApexDomain();
+  // emailSenderReady = "tên miền From: thực sự dùng được". Custom domain phải
+  // verified TXT VÀ ops đã thêm vào BREVO_VERIFIED_SENDER_DOMAINS. Nếu không có
+  // custom domain mà có subdomain, coi như ready (apex luôn ready).
+  const customSenderReady =
+    !!row.custom_domain &&
+    !!row.custom_domain_verified_at &&
+    isHostnameSenderReady(row.custom_domain);
+  const subdomainSenderReady = !!row.subdomain_slug && isHostnameSenderReady(apex);
+  const emailSenderReady = customSenderReady || (!row.custom_domain && subdomainSenderReady);
   const binding: BindingPayload = {
     apexDomain: apex,
     subdomainSlug: row.subdomain_slug,
@@ -127,6 +147,7 @@ async function loadBrandingResponse(tenantId: string): Promise<BrandingResponse 
     customDomainLastCheckAt: row.custom_domain_last_check_at,
     customDomainUnverifiedAt: row.custom_domain_unverified_at,
     customDomainFailureThreshold: CUSTOM_DOMAIN_FAILURE_THRESHOLD,
+    emailSenderReady,
   };
   return {
     tenantId: row.id,
@@ -308,8 +329,14 @@ export function createTenantRoutes(authenticateToken: any): Router {
     if (!u) return;
     try {
       const row = await withRlsBypass(async (client) => {
-        const r = await client.query<{ custom_domain: string | null; custom_domain_txt_token: string | null }>(
-          `SELECT custom_domain, custom_domain_txt_token FROM tenants WHERE id = $1 LIMIT 1`,
+        const r = await client.query<{
+          name: string;
+          custom_domain: string | null;
+          custom_domain_txt_token: string | null;
+          custom_domain_verified_at: string | null;
+        }>(
+          `SELECT name, custom_domain, custom_domain_txt_token, custom_domain_verified_at
+             FROM tenants WHERE id = $1 LIMIT 1`,
           [u.tenantId]
         );
         return r.rows[0];
@@ -317,6 +344,7 @@ export function createTenantRoutes(authenticateToken: any): Router {
       if (!row?.custom_domain || !row.custom_domain_txt_token) {
         return res.status(400).json({ error: 'Chưa cấu hình custom domain.' });
       }
+      const wasVerified = row.custom_domain_verified_at !== null;
       const ok = await verifyCustomDomainTxt(row.custom_domain, row.custom_domain_txt_token);
       if (ok) {
         // Reset cả health (failure_count, unverified_at) — manual verify thắng cron
@@ -333,6 +361,14 @@ export function createTenantRoutes(authenticateToken: any): Router {
         });
         invalidate(u.tenantId);
         writeAuditLog(u.tenantId, u.id, 'TENANT_CUSTOM_DOMAIN_VERIFIED', 'tenant', u.tenantId, { hostname: row.custom_domain }, req.ip);
+        // Lần đầu verify (pending → verified) qua thao tác thủ công — nếu domain
+        // chưa được Brevo authenticate, gửi thông báo cho admin để liên hệ ops.
+        // Cron cũng có nhánh tương tự; dedupe trong service đảm bảo không trùng.
+        if (!wasVerified && !isHostnameSenderReady(row.custom_domain)) {
+          notifyTenantAdminsCustomDomainNotSenderReady(u.tenantId, row.name, row.custom_domain).catch((e) => {
+            logger.warn(`[Tenant] notify sender-not-ready failed for tenant ${u.tenantId}: ${e?.message || e}`);
+          });
+        }
       }
       const data = await loadBrandingResponse(u.tenantId);
       res.json({ verified: ok, ...data });
