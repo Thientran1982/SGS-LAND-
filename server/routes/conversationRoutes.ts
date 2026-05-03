@@ -177,23 +177,32 @@ export function createConversationRoutes(jwtSecret: string, io: IOServer): Route
 export function createAgentConversationRoutes(authenticateToken: any, io: IOServer): Router {
   const router = Router();
 
+  /**
+   * Authorization for agent-side conversation access. We enforce strict
+   * least-privilege: an agent only sees the threads explicitly assigned to
+   * them. The only fallback is for unassigned threads (`agentUserId IS NULL`
+   * — overflow inbox), and only for tenant administrators within the same
+   * tenant. SUPER_ADMIN bypasses tenant scoping for support cases.
+   *
+   * In particular, peer agents in the same tenant can NOT read each other's
+   * threads even when they know the conversation id.
+   */
   function isOwner(conv: { agentUserId: string | null; tenantId: string }, user: any): boolean {
     if (!user) return false;
-    // Direct assignment wins.
+    // SUPER_ADMIN gets cross-tenant access for ops/support.
+    if (user.role === 'SUPER_ADMIN') return true;
+    // Direct assignment is the normal path.
     if (conv.agentUserId && conv.agentUserId === user.id) return true;
-    // Tenant-scoped access for unassigned threads (e.g. tenant admin handling
-    // overflow). Cross-tenant access is never allowed.
-    if (conv.tenantId && user.tenantId && conv.tenantId === user.tenantId) {
-      // Admin-ish roles can pick up any thread in their tenant.
-      const ROLES_ALLOWED = new Set([
-        'SUPER_ADMIN',
-        'TENANT_ADMIN',
-        'PARTNER_ADMIN',
-        'PARTNER_AGENT',
-        'AGENT',
-        'STAFF',
-      ]);
-      if (ROLES_ALLOWED.has(user.role)) return true;
+    // Unassigned overflow inbox: only same-tenant administrators may pick
+    // up a thread that is not yet routed to a specific agent.
+    if (
+      conv.agentUserId === null &&
+      conv.tenantId &&
+      user.tenantId &&
+      conv.tenantId === user.tenantId &&
+      (user.role === 'TENANT_ADMIN' || user.role === 'PARTNER_ADMIN')
+    ) {
+      return true;
     }
     return false;
   }
