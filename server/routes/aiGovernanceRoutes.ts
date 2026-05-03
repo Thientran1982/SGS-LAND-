@@ -82,6 +82,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
       const target = versions.find((v: any) => Number(v.version) === targetVersion);
       if (!target) return res.status(404).json({ error: `Version ${targetVersion} not found in this template` });
 
+      const previousActive = Number(tpl.activeVersion) || null;
       const newVersions = versions.map((v: any) => ({
         ...v,
         status: Number(v.version) === targetVersion ? 'ACTIVE' : (v.status === 'ACTIVE' ? 'ARCHIVED' : v.status),
@@ -91,6 +92,21 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
         versions: newVersions,
         activeVersion: targetVersion,
       });
+
+      // Record promote history (best-effort — never fail the promote)
+      try {
+        await aiGovernanceRepository.logPromotion(tenantId, {
+          templateId: req.params.id as string,
+          templateName: tpl.name,
+          version: targetVersion,
+          previousVersion: previousActive,
+          promotedByUserId: user?.id || user?.userId || null,
+          promotedByName: user?.fullName || user?.name || null,
+          promotedByEmail: user?.email || null,
+        });
+      } catch (logErr) {
+        console.error('[promote] Failed to write promote log (non-fatal):', logErr);
+      }
 
       // Clear in-process prompt cache so next request picks up the new active content.
       try {
@@ -102,6 +118,22 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     } catch (error) {
       console.error('Error promoting prompt version:', error);
       res.status(500).json({ error: 'Failed to promote prompt version' });
+    }
+  });
+
+  // Promote history for a single template — last 50 entries.
+  router.get('/prompt-templates/:id/promote-log', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req as any).user?.tenantId;
+      const user = (req as any).user;
+      if (!['SUPER_ADMIN'].includes(user?.role)) {
+        return res.status(403).json({ error: 'Only admins can view promote log' });
+      }
+      const log = await aiGovernanceRepository.getPromoteLog(tenantId, req.params.id as string, 50);
+      res.json(log);
+    } catch (error) {
+      console.error('Error fetching promote log:', error);
+      res.status(500).json({ error: 'Failed to fetch promote log' });
     }
   });
 
