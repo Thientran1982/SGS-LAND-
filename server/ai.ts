@@ -10,6 +10,7 @@ import { leadRepository } from './repositories/leadRepository';
 import { feedbackRepository } from './repositories/feedbackRepository';
 import { agentRepository } from './repositories/agentRepository';
 import { recordAiUsage, estimateAiCostUsd } from './services/aiUsageService';
+import { pool } from './db';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -244,6 +245,21 @@ function trackAiUsage(
             latencyMs,
             source: ctx?.source || null,
         }).catch(() => {});
+
+        // ── Fix E: Governance audit log — đồng bộ với ai_usage_log để admin trace
+        // toàn bộ AI traffic (cost, latency, model) qua AI Governance panel.
+        // Không block bất kỳ flow nào — silent failure.
+        if (ctx?.tenantId) {
+            const promptTokens = Math.round((promptStr?.length || 0) / 4);
+            const outputTokens = Math.round((responseStr?.length || 0) / 4);
+            const inputHash = String(promptStr?.length || 0) + ':' + ((promptStr || '').slice(0, 32));
+            pool.query(
+                `INSERT INTO ai_governance_logs
+                  (tenant_id, task_type, model, prompt_tokens, output_tokens, latency_ms, cost_usd, safety_flags, input_hash, timestamp)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, '[]'::jsonb, $8, NOW())`,
+                [ctx.tenantId, feature, model, promptTokens, outputTokens, latencyMs, costUsd, inputHash]
+            ).catch(() => {});
+        }
     } catch {
         // never throw from a tracking helper
     }
@@ -3599,32 +3615,46 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 : governanceValModel;
 
             // Run both searches in parallel — STEP 1 (Google Search grounding)
+            // ── CACHE LAYER (Fix D): Valuation searches dùng Google Search Grounding
+            // mất ~16s/lần. Cache 30 phút theo prompt hash giảm cost + latency cho cùng địa chỉ.
             const _valSearchStart = Date.now();
+            const _saleCacheKey   = `valSearch:sale:${tid}:${saleSearchPrompt.slice(0, 200)}`;
+            const _rentalCacheKey = `valSearch:rental:${tid}:${rentalSearchPrompt.slice(0, 200)}`;
+            const _cachedSale   = getCachedToolData<string>(_saleCacheKey);
+            const _cachedRental = getCachedToolData<string>(_rentalCacheKey);
+
             const [saleSearchRes, rentalSearchRes] = await Promise.all([
-                getAiClient().models.generateContent({
-                    model: GENAI_CONFIG.MODELS.WRITER,
-                    contents: saleSearchPrompt,
-                    config: {
-                        systemInstruction: valSearchInstruction,
-                        tools: [{ googleSearch: {} }],
-                        temperature: 0.3,       // moderate — allows diverse search synthesis
-                        maxOutputTokens: 2048,  // cap search summary size
-                    }
-                }),
-                getAiClient().models.generateContent({
-                    model: GENAI_CONFIG.MODELS.WRITER,
-                    contents: rentalSearchPrompt,
-                    config: {
-                        systemInstruction: valRentalInstruction,
-                        tools: [{ googleSearch: {} }],
-                        temperature: 0.3,
-                        maxOutputTokens: 1536,
-                    }
-                })
+                _cachedSale != null
+                    ? Promise.resolve({ text: _cachedSale } as { text: string })
+                    : getAiClient().models.generateContent({
+                        model: GENAI_CONFIG.MODELS.WRITER,
+                        contents: saleSearchPrompt,
+                        config: {
+                            systemInstruction: valSearchInstruction,
+                            tools: [{ googleSearch: {} }],
+                            temperature: 0.3,       // moderate — allows diverse search synthesis
+                            maxOutputTokens: 2048,  // cap search summary size
+                        }
+                    }),
+                _cachedRental != null
+                    ? Promise.resolve({ text: _cachedRental } as { text: string })
+                    : getAiClient().models.generateContent({
+                        model: GENAI_CONFIG.MODELS.WRITER,
+                        contents: rentalSearchPrompt,
+                        config: {
+                            systemInstruction: valRentalInstruction,
+                            tools: [{ googleSearch: {} }],
+                            temperature: 0.3,
+                            maxOutputTokens: 1536,
+                        }
+                    })
             ]);
             const _valSearchLatency = Date.now() - _valSearchStart;
-            trackAiUsage('VALUATION_SEARCH', GENAI_CONFIG.MODELS.WRITER, _valSearchLatency, saleSearchPrompt, saleSearchRes.text || '', { tenantId: tid, source: 'sale' });
-            trackAiUsage('VALUATION_SEARCH', GENAI_CONFIG.MODELS.WRITER, _valSearchLatency, rentalSearchPrompt, rentalSearchRes.text || '', { tenantId: tid, source: 'rental' });
+            // Cache mới (30 phút) — chỉ cache miss
+            if (_cachedSale == null && saleSearchRes.text)     setCachedToolData(_saleCacheKey,   saleSearchRes.text,   1_800_000);
+            if (_cachedRental == null && rentalSearchRes.text) setCachedToolData(_rentalCacheKey, rentalSearchRes.text, 1_800_000);
+            trackAiUsage('VALUATION_SEARCH', GENAI_CONFIG.MODELS.WRITER, _valSearchLatency, saleSearchPrompt, saleSearchRes.text || '', { tenantId: tid, source: _cachedSale != null ? 'sale_cache' : 'sale' });
+            trackAiUsage('VALUATION_SEARCH', GENAI_CONFIG.MODELS.WRITER, _valSearchLatency, rentalSearchPrompt, rentalSearchRes.text || '', { tenantId: tid, source: _cachedRental != null ? 'rental_cache' : 'rental' });
 
             const saleContext   = saleSearchRes.text   || '';
             const rentalContext = rentalSearchRes.text || '';
