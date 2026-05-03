@@ -1404,6 +1404,15 @@ export const ListingDetail: React.FC = () => {
                         bookingCount: (listing.bookingCount || 0) + 1,
                     });
                 }
+            } else if (listing?.id) {
+                // Listing-scoped public lead → backend gắn metadata.listing_id
+                // + dedup 24h. Fallback createPublicLead nếu chưa có id.
+                await db.createPublicListingLead(listing.id, {
+                    name,
+                    phone,
+                    notes: leadNotes,
+                    source: 'BOOKING',
+                });
             } else {
                 await db.createPublicLead({
                     name,
@@ -1424,13 +1433,12 @@ export const ListingDetail: React.FC = () => {
 
     const handleContact = useCallback(() => {
         setShowPhone(true);
-        if (!currentUser && listing) {
-            db.createPublicLead({
+        if (!currentUser && listing?.id) {
+            db.createPublicListingLead(listing.id, {
                 name: 'Khách quan tâm',
                 phone: listing.contactPhone || '0000000000',
                 notes: `📞 GỌI ĐIỆN TRỰC TIẾP\n📍 Sản phẩm: [${listing.code}] ${listing.title}\n🔗 Link: ${window.location.href}`,
                 source: 'WEBSITE',
-                stage: 'NEW',
             }).catch(() => {});
         }
     }, [listing, currentUser]);
