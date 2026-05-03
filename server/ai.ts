@@ -1831,13 +1831,12 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                 CLARIFY:           'writer',
             };
             let ragKnowledgeSection = '';
-            let ragSources: Array<{ sourceType: string; sourceId: string; metadata: Record<string, any> }> = [];
+            const { buildRagContextWithSources: _ragWithSrc, formatSourcesFooter: _formatSources } = await import('./services/ragService');
+            type RagSearchResult = Awaited<ReturnType<typeof _ragWithSrc>>['sources'][number];
+            let ragSources: RagSearchResult[] = [];
             if (RAG_INTENTS.has(currentIntent)) {
                 try {
-                    const [{ buildRagContextWithSources: _ragWithSrc }, { agentRepository: _agentRepo }] = await Promise.all([
-                        import('./services/ragService'),
-                        import('./repositories/agentRepository'),
-                    ]);
+                    const { agentRepository: _agentRepo } = await import('./repositories/agentRepository');
                     let domains: string[] | undefined;
                     const role = INTENT_TO_ROLE[currentIntent];
                     if (role) {
@@ -1966,10 +1965,11 @@ YÊU CẦU VIẾT PHẢN HỒI (150-220 từ):
 - Nếu kịch bản TRANH_CHẤP: mở đầu bằng đánh giá mức độ rủi ro (Cao/Trung bình/Thấp) + bước khẩn cấp cần làm NGAY
 - Nếu kịch bản NGƯỜI_MUA: nhấn mạnh checklist thẩm định trước khi ký
 - Nếu kịch bản NGƯỜI_BÁN: nhấn mạnh thủ tục, thuế phí thực tế (thuế TNCN 2%, lệ phí trước bạ)
-- Giải thích bằng ví dụ cụ thể: "Ví dụ: nhà vi bằng nghĩa là…" thay vì trích điều luật
+- Giải thích bằng ví dụ cụ thể: "Ví dụ: nhà vi bằng nghĩa là…" để khách dễ hiểu
+- Khi viện dẫn quy định pháp lý cụ thể (điều luật, nghị định, thông tư) BẮT BUỘC phải trích "[Nguồn: Luật X điều Y / Nghị định Z]" lấy từ [LEGAL KNOWLEDGE] đã cung cấp
+- Nếu trong [LEGAL KNOWLEDGE] không có điều luật cụ thể, KHÔNG bịa số hiệu — nói "Theo quy định hiện hành" và đề nghị khách xác minh với luật sư
 - Nêu rõ: khi nào cần công chứng bắt buộc vs. tuỳ chọn
-- Kết thúc: "Anh/chị đang ở giai đoạn nào — chưa ký / đã ký / đang tranh chấp ạ?"
-- TUYỆT ĐỐI KHÔNG: "Theo điều X Luật Y…" — thay bằng "Theo quy định hiện hành…"`;
+- Kết thúc: "Anh/chị đang ở giai đoạn nào — chưa ký / đã ký / đang tranh chấp ạ?"`;
 
                     // ── 5. ĐẶT LỊCH XEM NHÀ ─────────────────────────────────────────────
                     case 'DRAFT_BOOKING':
@@ -2204,32 +2204,40 @@ YÊU CẦU VIẾT PHẢN HỒI:
             // ── Citation enforcement (post-processor) ─────────────────────────────
             // 3 intent bắt buộc trích nguồn: EXPLAIN_LEGAL / CALCULATE_LOAN / ESTIMATE_VALUATION.
             //   • Nếu có RAG hits & WRITER quên "[Nguồn:" → tự động append actual sources
-            //     từ retrieved chunks (RAG-aware, không phải chỉ disclaimer).
-            //   • Nếu KHÔNG có RAG hits & câu trả lời chứa số liệu cụ thể →
-            //     thay bằng "chưa đủ dữ liệu" disclaimer.
+            //     từ retrieved chunks (UNCONDITIONAL — không chỉ khi có số liệu).
+            //   • Nếu KHÔNG có RAG hits → "chưa đủ dữ liệu" disclaimer khi response
+            //     có claim cụ thể (số liệu hoặc khẳng định pháp lý).
             const CITATION_REQUIRED = new Set(['EXPLAIN_LEGAL', 'CALCULATE_LOAN', 'ESTIMATE_VALUATION']);
             let finalText = writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?";
             if (CITATION_REQUIRED.has(currentIntent)) {
                 const hasCitation = /\[Nguồn[:：]/i.test(finalText) || /Theo (Luật|Nghị định|Thông tư|CBRE|Savills|JLL|HoREA|VARS)/i.test(finalText);
                 const hasNumericClaim = /\d+\s*(%|\/năm|\/tháng|tỷ|triệu|tr\b|VNĐ|đ)/i.test(finalText);
-                if (!hasCitation && hasNumericClaim) {
+                // Legal claim phrases: assertions about rights/duties/procedures even without numbers.
+                const hasLegalAssertion = currentIntent === 'EXPLAIN_LEGAL' && /(quy định|được phép|không được|bắt buộc|cấm|hợp pháp|trái luật|sổ đỏ|sổ hồng|công chứng|thuế|luật|nghị định)/i.test(finalText);
+                const needsCitation = hasNumericClaim || hasLegalAssertion;
+
+                if (!hasCitation) {
                     if (ragSources.length > 0) {
-                        // RAG-aware: append actual retrieved sources
-                        try {
-                            const { formatSourcesFooter } = await import('./services/ragService');
-                            const footer = formatSourcesFooter(ragSources as any, 3);
-                            if (footer) finalText += `\n\n${footer}`;
-                        } catch { /* best-effort */ }
-                    } else {
-                        // No RAG hits — be honest about uncertainty
-                        finalText += `\n\n⚠ Lưu ý: Hiện chưa đủ dữ liệu nguồn chính thức trong knowledge base để khẳng định con số trên. Anh/chị vui lòng xác minh lại với nguồn chính thức (ngân hàng / cơ quan có thẩm quyền) trước khi quyết định.`;
+                        // UNCONDITIONAL append actual sources when RAG hits exist —
+                        // ngay cả khi response chưa có claim rõ, vẫn show nguồn đã tham khảo.
+                        const footer = _formatSources(ragSources, 3);
+                        if (footer) finalText += `\n\n${footer}`;
+                        feedbackRepository.logObservation(state.tenantId, 'WRITER', currentIntent, 'CITATION_MISSING', {
+                            intent: currentIntent,
+                            ragHits: ragSources.length,
+                            autoAppended: 'sources',
+                            textPreview: finalText.slice(0, 120),
+                        }).catch(() => {});
+                    } else if (needsCitation) {
+                        // No RAG hits + has assertion/numeric claim → honest uncertainty
+                        finalText += `\n\n⚠ Lưu ý: Hiện chưa đủ dữ liệu nguồn chính thức trong knowledge base để khẳng định nội dung trên. Anh/chị vui lòng xác minh lại với nguồn chính thức (luật sư / ngân hàng / cơ quan có thẩm quyền) trước khi quyết định.`;
+                        feedbackRepository.logObservation(state.tenantId, 'WRITER', currentIntent, 'CITATION_MISSING', {
+                            intent: currentIntent,
+                            ragHits: 0,
+                            autoAppended: 'disclaimer',
+                            textPreview: finalText.slice(0, 120),
+                        }).catch(() => {});
                     }
-                    feedbackRepository.logObservation(state.tenantId, 'WRITER', currentIntent, 'CITATION_MISSING', {
-                        intent: currentIntent,
-                        ragHits: ragSources.length,
-                        autoAppended: ragSources.length > 0 ? 'sources' : 'disclaimer',
-                        textPreview: finalText.slice(0, 120),
-                    }).catch(() => {});
                 }
             }
 
