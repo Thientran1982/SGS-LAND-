@@ -60,7 +60,7 @@ import { createEngagementCronRouter } from "./server/routes/engagementCronRoutes
 import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
-import { createCampaignSchedulerCronRouter } from "./server/routes/campaignSchedulerCronRoutes";
+import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
@@ -3628,7 +3628,11 @@ async function startServer() {
   app.use(createCampaignRouter(pool, authenticateToken));
 
   // ---------------------------------------------------------------------------
-  // Campaign Scheduler Cron — gọi từ QStash mỗi 5 phút; chạy campaign SCHEDULED đến hạn
+  // Campaign Scheduler — chạy mỗi 5 phút.
+  // Hai driver:
+  //   • In-process setInterval (luôn chạy, không phụ thuộc QStash quota).
+  //   • POST /api/internal/campaign-scheduler-cron cho QStash (nếu còn quota).
+  // Atomic claim ở repo đảm bảo không gửi trùng dù chạy song song.
   // ---------------------------------------------------------------------------
   {
     const campaignSchedulerSecret =
@@ -3636,6 +3640,11 @@ async function startServer() {
       process.env.JWT_SECRET?.slice(0, 32) ||
       '';
     app.use(createCampaignSchedulerCronRouter(pool, campaignSchedulerSecret));
+    try {
+      startCampaignSchedulerCron(pool);
+    } catch (err: any) {
+      logger.warn(`[CampaignScheduler] Không thể khởi động in-process cron: ${err?.message || err}`);
+    }
   }
 
   // Facebook Webhook Verification
