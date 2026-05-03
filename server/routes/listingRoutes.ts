@@ -7,6 +7,7 @@ import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { evictPublicProjectCache } from '../services/publicProjectCache';
 import { evictPublicListingsCache } from '../services/publicListingsCache';
+import { evictPublicListingDetailCache } from '../services/publicListingDetailCache';
 import { priceCalibrationService } from '../services/priceCalibrationService';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { storeFile } from '../services/storageService';
@@ -465,6 +466,7 @@ export function createListingRoutes(authenticateToken: any) {
         if (code) evictPublicProjectCache(String(code));
       } catch { /* best-effort */ }
       evictPublicListingsCache();
+      try { evictPublicListingDetailCache(String(listing.id)); } catch { /* best-effort */ }
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -533,6 +535,11 @@ export function createListingRoutes(authenticateToken: any) {
         try { evictPublicProjectCache(code); } catch { /* best-effort */ }
       }
       evictPublicListingsCache();
+      // Bulk-create: detail cache cho từng listing mới (defensive — entry chưa
+      // tồn tại, nhưng evict sẽ no-op nhanh).
+      for (const c of created) {
+        try { evictPublicListingDetailCache(String((c as any).id)); } catch { /* best-effort */ }
+      }
 
       res.json({ created: created.length, errors });
     } catch (error) {
@@ -699,6 +706,9 @@ export function createListingRoutes(authenticateToken: any) {
         if (updatedImages.size > 0 && projectCode) {
           try { evictPublicProjectCache(projectCode); } catch { /* best-effort */ }
           evictPublicListingsCache();
+          for (const lid of updatedImages.keys()) {
+            try { evictPublicListingDetailCache(String(lid)); } catch { /* best-effort */ }
+          }
         }
         for (const [listingId, images] of updatedImages) {
           await listingRepository.update(user.tenantId, listingId, { images });
@@ -785,6 +795,7 @@ export function createListingRoutes(authenticateToken: any) {
         if (newCode && newCode !== oldCode) evictPublicProjectCache(String(newCode));
       } catch { /* best-effort */ }
       evictPublicListingsCache();
+      try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
 
       // ── Self-learning: record ground-truth price when listing is sold ─────
       // A sold transaction is the most accurate price signal — weight 50% in calibration.
@@ -886,6 +897,7 @@ export function createListingRoutes(authenticateToken: any) {
         if (code) evictPublicProjectCache(String(code));
       } catch { /* best-effort */ }
       evictPublicListingsCache();
+      try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
 
       await auditRepository.log(user.tenantId, {
         actorId:    user.id,
@@ -1034,6 +1046,7 @@ export function createListingRoutes(authenticateToken: any) {
         if (code) evictPublicProjectCache(String(code));
       }
       evictPublicListingsCache();
+      try { evictPublicListingDetailCache(String(req.params.id)); } catch { /* best-effort */ }
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,

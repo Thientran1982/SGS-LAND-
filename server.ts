@@ -71,6 +71,9 @@ import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
 import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus, rateLimit } from "./server/middleware/rateLimiter";
 import { getPublicListingsCache, setPublicListingsCache } from "./server/services/publicListingsCache";
+import { getPublicListingDetailCache, setPublicListingDetailCache } from "./server/services/publicListingDetailCache";
+import { getTenantBinding } from "./server/services/tenantBrandingService";
+import { brevoSendEmail } from "./server/services/brevoService";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
@@ -1662,41 +1665,193 @@ async function startServer() {
     }
   });
 
-  app.get('/api/public/listings/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
+  // ── Public listing DETAIL (B2C #1) ────────────────────────────────────────
+  // GET /api/public/listings/:slugId
+  // - `slugId` chấp nhận 2 dạng:
+  //     * UUID nguyên (legacy `/listing/<uuid>`)
+  //     * `<slug>-<uuid>` (B2C URL `/bds/<slug>-<uuid>` — slug bị bỏ ở server,
+  //       chỉ dùng trailing UUID để lookup. Slug được client tạo từ title để
+  //       làm URL human-readable + tốt cho SEO).
+  // - Cross-tenant via `withRlsBypass` (vendor-agnostic marketplace).
+  // - Hard filter `status IN (AVAILABLE, BOOKING, OPENING)` — không trả
+  //   HOLD/SOLD/INACTIVE → tránh leak listing nội bộ.
+  // - Payload SANITIZED (allow-list 17 trường) — KHÔNG bao gồm
+  //   owner_name/owner_phone/commission/commission_unit/audit_logs để chống
+  //   leak data nội bộ qua endpoint công khai.
+  // - Detail cache 5 phút theo id, evict ngay khi mutate (CREATE/UPDATE/
+  //   STATUS/DELETE/BULK).
+  const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+  function extractListingId(slugId: string): string | null {
+    if (!slugId) return null;
+    const m = slugId.match(UUID_RE);
+    return m ? m[0].toLowerCase() : null;
+  }
+  // Allow-list trường được phép trả ra public — KHÔNG bao gồm owner/commission/audit
+  const PUBLIC_LISTING_DETAIL_FIELDS = [
+    'id', 'code', 'title', 'description', 'type', 'transaction', 'status',
+    'price', 'currency', 'area', 'builtArea', 'bedrooms', 'bathrooms',
+    'location', 'coordinates', 'images', 'attributes', 'projectCode',
+    'contactPhone', 'isVerified', 'viewCount', 'bookingCount', 'createdAt',
+    'updatedAt',
+  ] as const;
+  function sanitizePublicListing(row: any): Record<string, any> {
+    if (!row) return row;
+    const out: Record<string, any> = {};
+    for (const f of PUBLIC_LISTING_DETAIL_FIELDS) {
+      out[f] = row[f] ?? null;
+    }
+    if (Array.isArray(out.images)) out.images = out.images.slice(0, 20);
+    return out;
+  }
+  // Raw row → camelCase mapping (withRlsBypass returns snake_case from DB).
+  function mapListingRow(r: any): Record<string, any> {
+    return {
+      id: r.id, code: r.code, title: r.title, description: r.description,
+      type: r.type, transaction: r.transaction, status: r.status,
+      price: r.price !== null ? Number(r.price) : null,
+      currency: r.currency,
+      area: r.area !== null ? Number(r.area) : null,
+      builtArea: r.built_area !== null ? Number(r.built_area) : null,
+      bedrooms: r.bedrooms, bathrooms: r.bathrooms, location: r.location,
+      coordinates: r.coordinates, images: r.images, attributes: r.attributes,
+      projectCode: r.project_code, contactPhone: r.contact_phone,
+      isVerified: r.is_verified, viewCount: r.view_count,
+      bookingCount: r.booking_count, tenantId: r.tenant_id,
+      createdAt: r.created_at, updatedAt: r.updated_at,
+    };
+  }
+  app.get('/api/public/listings/:slugId', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!UUID_REGEX.test(String(req.params.id))) {
-        return res.status(400).json({ error: 'Invalid id format. Must be a valid UUID.' }) as any;
+      const slugId = String(req.params.slugId || '');
+      const id = extractListingId(slugId);
+      if (!id) {
+        return res.status(400).json({ error: 'Invalid id format. Expected UUID or `<slug>-<uuid>`.' }) as any;
       }
-      const listing = await listingRepository.findById(PUBLIC_TENANT, String(req.params.id));
-      if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
-      res.json(listing);
-      // Increment view count, log visitor, và tự geocode nếu thiếu tọa độ (background, non-blocking)
+
+      // Cache lookup
+      const cacheKey = `pld:${id}`;
+      const cached = getPublicListingDetailCache(cacheKey);
+      if (cached) {
+        res.setHeader('X-Public-Listing-Detail-Cache', 'HIT');
+        res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+        res.json(cached);
+        // View tracking ngay cả khi HIT — analytics phải đếm impression thật.
+        const ip = getClientIp(req);
+        Promise.all([
+          listingRepository.incrementViewCount(PUBLIC_TENANT, id).catch(() => {}),
+          lookupIp(ip).then(geo => visitorRepository.log({
+            tenantId: PUBLIC_TENANT, ipAddress: ip,
+            country: geo?.country, countryCode: geo?.countryCode,
+            region: geo?.region, city: geo?.city, lat: geo?.lat, lon: geo?.lon,
+            isp: geo?.isp, page: `/bds/${slugId}`, listingId: id,
+            userAgent: req.headers['user-agent'], referrer: req.headers['referer'],
+          })).catch(() => {}),
+        ]).catch(() => {});
+        return;
+      }
+
+      // MISS → cross-tenant lookup with strict status filter.
+      const raw = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `SELECT * FROM listings
+             WHERE id = $1
+               AND status IN ('AVAILABLE','BOOKING','OPENING')
+             LIMIT 1`,
+          [id]
+        );
+        return r.rows[0] || null;
+      });
+      if (!raw) return res.status(404).json({ error: 'Không tìm thấy sản phẩm' }) as any;
+
+      const mapped = mapListingRow(raw);
+      const sanitized = sanitizePublicListing(mapped);
+      setPublicListingDetailCache(cacheKey, sanitized);
+
+      res.setHeader('X-Public-Listing-Detail-Cache', 'MISS');
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+      res.json(sanitized);
+
+      // Background: view count, visitor log, geocode missing coords.
       const ip = getClientIp(req);
-      const pl = listing as any;
-      const plMissingCoords = !pl.coordinates?.lat || !pl.coordinates?.lng || (pl.coordinates.lat === 0 && pl.coordinates.lng === 0);
-      if (plMissingCoords && pl.location) scheduleGeocode(PUBLIC_TENANT, String(req.params.id), pl.location);
+      const coordsMissing = !mapped.coordinates?.lat || !mapped.coordinates?.lng ||
+        (mapped.coordinates.lat === 0 && mapped.coordinates.lng === 0);
+      if (coordsMissing && mapped.location) {
+        scheduleGeocode(String(mapped.tenantId || PUBLIC_TENANT), id, mapped.location);
+      }
       Promise.all([
-        listingRepository.incrementViewCount(PUBLIC_TENANT, String(req.params.id)),
+        listingRepository.incrementViewCount(String(mapped.tenantId || PUBLIC_TENANT), id).catch(() => {}),
         lookupIp(ip).then(geo => visitorRepository.log({
-          tenantId: PUBLIC_TENANT,
-          ipAddress: ip,
-          country: geo?.country,
-          countryCode: geo?.countryCode,
-          region: geo?.region,
-          city: geo?.city,
-          lat: geo?.lat,
-          lon: geo?.lon,
-          isp: geo?.isp,
-          page: `/listings/${req.params.id}`,
-          listingId: String(req.params.id),
-          userAgent: req.headers['user-agent'],
-          referrer: req.headers['referer'],
-        })),
+          tenantId: String(mapped.tenantId || PUBLIC_TENANT), ipAddress: ip,
+          country: geo?.country, countryCode: geo?.countryCode,
+          region: geo?.region, city: geo?.city, lat: geo?.lat, lon: geo?.lon,
+          isp: geo?.isp, page: `/bds/${slugId}`, listingId: id,
+          userAgent: req.headers['user-agent'], referrer: req.headers['referer'],
+        })).catch(() => {}),
       ]).catch(() => {});
     } catch (error) {
       console.error('Error fetching public listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
+    }
+  });
+
+  // GET /api/public/listings/:slugId/similar
+  // Trả tối đa 6 listing "tương tự" — cùng project_code (ưu tiên) hoặc cùng
+  // type + cùng location prefix. Hard filter status công khai.
+  app.get('/api/public/listings/:slugId/similar', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const id = extractListingId(String(req.params.slugId || ''));
+      if (!id) return res.status(400).json({ error: 'Invalid id' }) as any;
+
+      const cacheKey = `pld:${id}|similar`;
+      const cached = getPublicListingDetailCache(cacheKey);
+      if (cached) {
+        res.setHeader('X-Public-Listing-Detail-Cache', 'HIT');
+        res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
+        return res.json(cached);
+      }
+
+      const items = await withRlsBypass(async (client) => {
+        const seed = await client.query(
+          `SELECT id, type, project_code, location FROM listings WHERE id = $1 LIMIT 1`,
+          [id]
+        );
+        if (!seed.rows[0]) return [];
+        const s = seed.rows[0];
+        // Strategy 1: same project_code
+        let r = await client.query(
+          `SELECT * FROM listings
+             WHERE id <> $1
+               AND status IN ('AVAILABLE','BOOKING','OPENING')
+               AND project_code = $2
+             ORDER BY updated_at DESC LIMIT 6`,
+          [id, s.project_code]
+        );
+        if (r.rows.length >= 3 || !s.location) return r.rows;
+        // Strategy 2: pad with same type + location prefix (first ward/district token)
+        const locPrefix = String(s.location).split(',')[0]?.trim() || '';
+        if (!locPrefix) return r.rows;
+        const need = 6 - r.rows.length;
+        const r2 = await client.query(
+          `SELECT * FROM listings
+             WHERE id <> $1
+               AND status IN ('AVAILABLE','BOOKING','OPENING')
+               AND type = $2
+               AND location ILIKE $3
+               AND ($4::text IS NULL OR project_code IS DISTINCT FROM $4)
+             ORDER BY updated_at DESC LIMIT $5`,
+          [id, s.type, `%${locPrefix}%`, s.project_code, need]
+        );
+        return [...r.rows, ...r2.rows];
+      });
+
+      const sanitized = items.map((row: any) => sanitizePublicListing(mapListingRow(row)));
+      setPublicListingDetailCache(cacheKey, sanitized);
+      res.setHeader('X-Public-Listing-Detail-Cache', 'MISS');
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
+      return res.json(sanitized);
+    } catch (error) {
+      console.error('Error fetching similar listings:', error);
+      return res.status(500).json({ error: 'Failed to fetch similar listings' });
     }
   });
 
@@ -1718,12 +1873,11 @@ async function startServer() {
 
   app.post('/api/public/listings/:id/leads', publicListingLeadRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const listingId = String(req.params.id || '');
-      if (!UUID_REGEX.test(listingId)) {
+      const listingId = extractListingId(String(req.params.id || ''));
+      if (!listingId) {
         return res.status(400).json({ error: 'Invalid listing id' }) as any;
       }
-      const { name, phone, notes, source } = req.body || {};
+      const { name, phone, notes, source, email } = req.body || {};
       if (!name || !phone) {
         return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
       }
@@ -1732,72 +1886,122 @@ async function startServer() {
         return res.status(400).json({ error: 'Số điện thoại không hợp lệ' }) as any;
       }
 
-      // Verify listing exists + is publicly visible (AVAILABLE/BOOKING/OPENING)
-      const listing = await listingRepository.findById(PUBLIC_TENANT, listingId);
-      if (!listing) return res.status(404).json({ error: 'Không tìm thấy sản phẩm' }) as any;
-      const status = String((listing as any).status || '').toUpperCase();
-      if (!['AVAILABLE', 'BOOKING', 'OPENING'].includes(status)) {
-        return res.status(404).json({ error: 'Sản phẩm hiện không nhận yêu cầu tư vấn' }) as any;
-      }
-
-      // Dedup 24h: same phone + same listing_id (metadata->>'listing_id')
-      try {
-        const dup = await pool.query(
-          `SELECT id FROM leads
-             WHERE tenant_id = $1
-               AND phone = $2
-               AND metadata->>'listing_id' = $3
-               AND created_at > NOW() - INTERVAL '24 hours'
+      // Resolve listing CROSS-TENANT (vendor-agnostic marketplace) + status filter.
+      // Lead phải lưu vào tenant CHỦ listing để CRM của vendor đó nhận được —
+      // không hardcode PUBLIC_TENANT.
+      const raw = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `SELECT id, tenant_id, code, title, status, contact_phone
+             FROM listings WHERE id = $1
+               AND status IN ('AVAILABLE','BOOKING','OPENING')
              LIMIT 1`,
-          [PUBLIC_TENANT, trimmedPhone, listingId]
+          [listingId]
         );
-        if (dup.rows.length > 0) {
-          return res.json({ id: dup.rows[0].id, success: true, deduped: true }) as any;
+        return r.rows[0] || null;
+      });
+      if (!raw) return res.status(404).json({ error: 'Không tìm thấy sản phẩm hoặc sản phẩm không nhận yêu cầu tư vấn' }) as any;
+      const ownerTenantId = String(raw.tenant_id);
+
+      // Dedup 24h trong PHẠM VI TENANT CHỦ listing.
+      try {
+        const dup = await withRlsBypass(async (client) => {
+          const r = await client.query(
+            `SELECT id FROM leads
+               WHERE tenant_id = $1
+                 AND phone = $2
+                 AND metadata->>'listing_id' = $3
+                 AND created_at > NOW() - INTERVAL '24 hours'
+               LIMIT 1`,
+            [ownerTenantId, trimmedPhone, listingId]
+          );
+          return r.rows[0] || null;
+        });
+        if (dup) {
+          return res.json({ id: dup.id, success: true, deduped: true }) as any;
         }
       } catch { /* best-effort, không block create nếu query lỗi */ }
 
-      const listingTitle = String((listing as any).title || '').slice(0, 200);
-      const listingCode = String((listing as any).code || '').slice(0, 64);
+      const listingTitle = String(raw.title || '').slice(0, 200);
+      const listingCode = String(raw.code || '').slice(0, 64);
       const url = String(req.headers.referer || '').slice(0, 500);
-      const baseNotes = `🏠 LEAD TỪ TRANG SẢN PHẨM\n────────────────\n📍 Sản phẩm: [${listingCode}] ${listingTitle}\n🔗 Link: ${url || `/listing/${listingId}`}`;
+      const baseNotes = `🏠 LEAD TỪ TRANG SẢN PHẨM\n────────────────\n📍 Sản phẩm: [${listingCode}] ${listingTitle}\n🔗 Link: ${url || `/bds/${listingId}`}`;
       const finalNotes = notes
         ? `${baseNotes}\n📝 Ghi chú KH: ${String(notes).slice(0, 1500)}`
         : baseNotes;
 
-      // Insert via raw SQL — leadRepository.create chưa expose `metadata`
-      // (chỉ có attributes/preferences). Cần persist metadata.listing_id để
-      // dedup query 24h ở các request kế tiếp hoạt động đúng.
       const metadata = {
         listing_id: listingId,
         listing_code: listingCode,
         listing_title: listingTitle,
         source_type: 'listing_detail',
-        page_url: url || `/listing/${listingId}`,
+        page_url: url || `/bds/${listingId}`,
         ip: req.ip || null,
         user_agent: String(req.headers['user-agent'] || '').slice(0, 300),
       };
       const tags = ['listing-lead', `listing:${listingId.slice(0, 8)}`];
-      const result = await pool.query(
-        `INSERT INTO leads
-           (tenant_id, name, phone, source, stage, notes, tags, metadata)
-         VALUES ($1, $2, $3, $4, 'NEW', $5, $6::jsonb, $7::jsonb)
-         RETURNING id`,
-        [
-          PUBLIC_TENANT,
-          String(name).trim().slice(0, 100),
-          trimmedPhone,
-          source || 'WEBSITE',
-          finalNotes,
-          JSON.stringify(tags),
-          JSON.stringify(metadata),
-        ]
-      );
-      const leadId = result.rows[0]?.id;
-
-      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
-        id: leadId, name: String(name).trim().slice(0, 100),
+      // INSERT vào tenant chủ listing — withRlsBypass vì đây là public endpoint.
+      const insertedId = await withRlsBypass(async (client) => {
+        const result = await client.query(
+          `INSERT INTO leads
+             (tenant_id, name, phone, email, source, stage, notes, tags, metadata)
+           VALUES ($1, $2, $3, $4, $5, 'NEW', $6, $7::jsonb, $8::jsonb)
+           RETURNING id`,
+          [
+            ownerTenantId,
+            String(name).trim().slice(0, 100),
+            trimmedPhone,
+            email ? String(email).trim().slice(0, 120) : null,
+            source || 'WEBSITE',
+            finalNotes,
+            JSON.stringify(tags),
+            JSON.stringify(metadata),
+          ]
+        );
+        return result.rows[0]?.id || null;
       });
-      return res.status(201).json({ id: leadId, success: true });
+
+      // Realtime cho CRM của tenant chủ listing.
+      broadcastIo?.to(`tenant:${ownerTenantId}`).emit('lead_created', {
+        id: insertedId, name: String(name).trim().slice(0, 100),
+      });
+
+      // Vendor-branded notification email — best-effort, không block response.
+      // From-name = displayName tenant (white-label task #28).
+      (async () => {
+        try {
+          const binding = await getTenantBinding(ownerTenantId).catch(() => null);
+          const fromName = binding?.branding.displayName || binding?.name || 'SGS Land';
+          const fromEmail = process.env.BREVO_FROM_EMAIL || 'noreply@sgsland.vn';
+          const inboxEmail = process.env.LEAD_NOTIFY_EMAIL || 'info@sgsland.vn';
+          const subject = `[Sản phẩm] ${listingTitle} — ${name} (${trimmedPhone})`;
+          const escape = (s: string) => String(s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c] as string));
+          const html = `
+            <div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;padding:24px;background:#f8fafc;border-radius:12px;">
+              <h2 style="margin:0 0 16px;color:#1e293b;">Lead mới từ trang sản phẩm</h2>
+              <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <tr><td style="padding:6px 0;color:#64748b;">Sản phẩm</td><td style="padding:6px 0;font-weight:600;">${escape(listingTitle)} (${escape(listingCode)})</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b;">Họ tên</td><td style="padding:6px 0;font-weight:600;">${escape(name)}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b;">Điện thoại</td><td style="padding:6px 0;"><a href="tel:${escape(trimmedPhone)}">${escape(trimmedPhone)}</a></td></tr>
+                ${email ? `<tr><td style="padding:6px 0;color:#64748b;">Email</td><td style="padding:6px 0;"><a href="mailto:${escape(email)}">${escape(email)}</a></td></tr>` : ''}
+                ${notes ? `<tr><td style="padding:6px 0;color:#64748b;vertical-align:top;">Ghi chú</td><td style="padding:6px 0;white-space:pre-wrap;">${escape(String(notes))}</td></tr>` : ''}
+              </table>
+              <p style="margin-top:16px;color:#94a3b8;font-size:12px;">Nguồn: ${escape(metadata.page_url)}</p>
+            </div>`;
+          await brevoSendEmail({
+            to: [{ email: inboxEmail, name: `${fromName} Hotline` }],
+            from: { email: fromEmail, name: fromName },
+            subject,
+            html,
+            text: `Lead mới: ${name} / ${trimmedPhone} — ${listingTitle} (${listingCode})`,
+            replyTo: email ? { email, name } : undefined,
+            tags: ['listing-lead', `code-${listingCode.toLowerCase()}`],
+          });
+        } catch (emailErr: any) {
+          logger.warn(`[PublicListingLead] Notification email skipped: ${emailErr?.message || emailErr}`);
+        }
+      })();
+
+      return res.status(201).json({ id: insertedId, success: true });
     } catch (error) {
       console.error('Error creating public listing lead:', error);
       return res.status(500).json({ error: 'Không thể tạo yêu cầu, vui lòng thử lại' }) as any;
@@ -3972,13 +4176,24 @@ async function startServer() {
       // /api/public/listings). Trước đây dùng 'ACTIVE' (legacy CRM status)
       // khiến sitemap rỗng → Googlebot không thể discover product pages.
       const result = await pool.query(
-        `SELECT id, updated_at FROM listings
+        `SELECT id, title, updated_at FROM listings
          WHERE status IN ('AVAILABLE','BOOKING','OPENING')
          ORDER BY updated_at DESC LIMIT 50000`
       );
+      // URL shape: `/bds/<slug>-<id>` — slug từ title (truncate, ASCII-folded,
+      // hyphen-joined) giúp Googlebot index URL human-readable. Server chỉ
+      // dùng trailing UUID để lookup (slug ignored).
+      const slugify = (s: string) => String(s || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60);
       const urls = result.rows.map((r: any) => {
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
-        return `  <url>\n    <loc>${APP_SITEMAP_URL}/listing/${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>`;
+        const slug = slugify(r.title) || 'bat-dong-san';
+        return `  <url>\n    <loc>${APP_SITEMAP_URL}/bds/${slug}-${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>`;
       }).join('\n');
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
       res.setHeader('Content-Type', 'application/xml; charset=utf-8');
