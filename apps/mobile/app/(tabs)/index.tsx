@@ -8,6 +8,7 @@ import type { CursorListings, PublicListing } from '../../src/api/types';
 import { ListingCard } from '../../src/components/ListingCard';
 import { ListingCardSkeleton } from '../../src/components/Skeleton';
 import { EmptyState } from '../../src/components/EmptyState';
+import { FeaturedProjectsCarousel } from '../../src/components/FeaturedProjectsCarousel';
 import { loadFavorites, toggleFavorite } from '../../src/storage/favorites';
 import { colors, spacing, typography } from '../../src/theme/tokens';
 import { slugify } from '../../src/utils/format';
@@ -105,6 +106,7 @@ export default function DiscoverScreen() {
             if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
           }}
           onEndReachedThreshold={0.5}
+          ListHeaderComponent={<FeaturedProjectsCarousel />}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={
             <EmptyState title="Chưa có sản phẩm" subtitle="Hệ thống đang cập nhật. Vui lòng quay lại sau." />

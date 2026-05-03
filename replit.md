@@ -255,3 +255,32 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - **Dual-auth on `GET /api/bookings/:id`**: accepts buyer Bearer JWT (mobile) OR staff cookie session (web CRM). AGENT must be the assignee; ADMIN/MANAGER scoped by tenant. 404 on mismatch (no existence leak).
 - **Receipt download**: `GET /api/bookings/:id/receipt-token` mints a 5-min signed URL; `GET /api/bookings/:id/receipt?t=<token>` returns printable HTML. Mobile detail screen shows "📄 Tải biên nhận" when status is PAID, opening the URL via `WebBrowser.openBrowserAsync` (persistent tab, not auth session).
 - **Plan drift**: payment UX uses `expo-web-browser` (Custom Tabs / SFAuthenticationSession) instead of an in-app `expo-web-view`. This is the Expo-recommended path and avoids issues with banks that block iframes; functionally equivalent for the buyer.
+
+## Bước 6 — Mobile Sprint 7: polish + TestFlight/Play Internal submit — Task #57
+
+- **Goal**: Production-ready buyer mobile app submitted to Apple TestFlight and Google Play Internal Testing. No code-only feature work — focus on submission readiness, store compliance, observability, and one Discover surface upgrade.
+- **Discover featured projects**:
+  - New endpoint `GET /api/public/projects/featured?limit=N` (1-20, default 8) in `server/routes/publicProjectRoutes.ts`. Whitelisted public, mounted **before** `/:code` to avoid Express route shadowing. Reuses the existing `metadata.public_microsite='true'` flag (no new schema column) ordered by optional `metadata.featured_rank` then `created_at DESC`. `Cache-Control: public, max-age=300, swr=60`.
+  - Mobile: `apps/mobile/src/api/projects.ts` (typed `projectsApi.featured()` via the shared `apiRequest` helper, `auth: false`). `apps/mobile/src/components/FeaturedProjectsCarousel.tsx` — horizontal `FlatList` of project cards (240×168 with cover image / fallback brand chip), tap deep-links to `/p/<code>`. Mounted as `ListHeaderComponent` of the Discover tab so it scrolls naturally with the listings feed and disappears on empty/error to keep the feed focal.
+  - TanStack Query `staleTime: 5min`, `gcTime: 30min` matches server cache so tab switches don't re-fetch.
+- **Observability (Sentry) + ATT**:
+  - `app/_layout.tsx` adds `initSentry()` and `maybeRequestTracking()` — both fire-and-forget on mount.
+  - **Optional native deps strategy**: `@sentry/react-native` and `expo-tracking-transparency` are loaded via dynamic `await import(...)` wrapped in `.catch(() => null)`, with a `// @ts-expect-error` so TS skips missing modules. Means the packages are NOT in `package.json` — they are installed only for production builds (`pnpm --filter @sgsland/mobile add @sentry/react-native expo-tracking-transparency`). Result: Expo Go / dev builds keep working without the native pods, and lint/typecheck pass cleanly.
+  - DSN from `EXPO_PUBLIC_SENTRY_DSN` (documented in `apps/mobile/.env.example`). When unset, init is a complete no-op — no telemetry leaks in dev.
+  - `tsconfig.json` overrides `module: "esnext"` + `moduleResolution: "bundler"` so `import()` syntax type-checks under expo's base config.
+- **iOS / Android compliance** (`apps/mobile/app.json`):
+  - All 5 iOS usage strings in Vietnamese: `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSPhotoLibraryAddUsageDescription`, `NSLocationWhenInUseUsageDescription`, `NSUserTrackingUsageDescription`. `ITSAppUsesNonExemptEncryption=false` already set (no custom crypto, only HTTPS — exempt under US export rules).
+  - Android `permissions` array narrowed to what we actually use: INTERNET, ACCESS_NETWORK_STATE, CAMERA, READ_MEDIA_IMAGES, ACCESS_*_LOCATION, POST_NOTIFICATIONS, VIBRATE.
+  - `expo-tracking-transparency` plugin block added with the same VI prompt copy.
+  - **Bundle id deviation**: task spec said `vn.sgsland.buyer` but the existing record is `vn.sgsland.mobile` (already wired into `associatedDomains` + `intentFilters`). Kept as-is to preserve any existing TestFlight history; documented in submission runbook.
+  - `version: "0.1.0"`, `ios.buildNumber: "2"`, `android.versionCode: 2` — bumped to differentiate from any earlier internal experiment uploads.
+- **EAS profile** (`apps/mobile/eas.json`):
+  - `production` profile sets `autoIncrement: true`, channel `production`, ios `m-medium` resource class, Android `app-bundle`, env `EXPO_PUBLIC_API_BASE_URL=https://sgsland.vn`.
+  - `submit.production.ios.ascAppId` + `appleTeamId` left as `REPLACE_WITH_…` placeholders (real values are operator-specific; runbook tells the human to swap before `eas submit`).
+- **Store assets** — `apps/mobile/store-assets/`:
+  - `listing-vi.md` — Vietnamese display name, subtitle, short + long description, keywords, categories, age rating, screenshot plan (6 captioned slots × 4 device sizes).
+  - `README.md` — folder layout (`ios/6.7`, `android/phone`, `feature-graphic.png`, etc.), how to capture screenshots, icon specs.
+  - **Out of scope**: actual PNG screenshots and icons must be captured on real devices/simulators by the operator and committed into the subfolders before submit.
+- **Submission runbook** (`docs/mobile-store-submission.md`): operator-facing playbook — Apple/Google account prerequisites, EAS init, native-dep install command, build commands, listing fill-in references, on-device QA checklist, VNPay sandbox test cards, reviewer test account `+84 999 000 999` (gated by server env `BUYER_OTP_REVIEWER_BYPASS`), pre-submit checklist.
+- **Data Safety form** (`docs/mobile-data-safety.md`): exhaustive Google Play Data Safety questionnaire mapped from the actual data we touch — personal info, financial (booking amount only — card numbers stay on VNPay's PCI page), messages, app activity, device IDs, location. Lists each third-party (VNPay, Brevo, Expo Push, Sentry, agents) with what they receive and why. iOS App Privacy questionnaire uses the same matrix.
+- **Out of scope (operator must run)**: actual `eas build` + `eas submit` invocations (need Apple/Google credentials and EAS account); real-device screenshots; production VNPay cutover from sandbox.

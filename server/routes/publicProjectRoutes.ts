@@ -344,6 +344,53 @@ async function checkDuplicateLead(tenantId: string, phone: string, code: string)
 export function createPublicProjectRoutes(): Router {
   const router = Router();
 
+  // GET /api/public/projects/featured — Sprint 7 (#57). Trả về danh sách rút
+  // gọn các project được flag `metadata.public_microsite=true` để render
+  // carousel "Dự án nổi bật" trên Discover của mobile app. Chúng ta tái sử
+  // dụng cờ public_microsite (đã có sẵn cho web mini-site) thay vì bịa ra
+  // một cờ `is_featured` riêng — cùng một tập project được CĐT chủ động bật
+  // công khai. Endpoint nằm TRƯỚC `/:code` để Express không bắt nhầm
+  // "featured" thành mã dự án.
+  router.get('/featured', async (req: Request, res: Response) => {
+    try {
+      const limitRaw = Number(req.query.limit ?? 8);
+      const limit = Math.max(1, Math.min(20, Number.isFinite(limitRaw) ? limitRaw : 8));
+      const rows = await withRlsBypass(async (client) => {
+        const r = await client.query(
+          `SELECT id, name, code, description, location, status,
+                  total_units, metadata, tenant_id
+             FROM projects
+            WHERE metadata->>'public_microsite' = 'true'
+            ORDER BY
+              COALESCE((metadata->>'featured_rank')::int, 999),
+              created_at DESC NULLS LAST
+            LIMIT $1`,
+          [limit],
+        );
+        return r.rows;
+      });
+      const projects = rows.map((row) => {
+        const meta = (row.metadata && typeof row.metadata === 'object') ? row.metadata : {};
+        return {
+          id: row.id,
+          name: row.name,
+          code: row.code,
+          location: row.location,
+          status: row.status,
+          totalUnits: row.total_units ?? null,
+          coverImage: meta.coverImage || meta.cover_image || null,
+          description: row.description,
+          developer: meta.developer || null,
+        };
+      });
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+      res.json({ ok: true, projects });
+    } catch (err: any) {
+      logger.error(`[PublicProject] GET /featured failed: ${err?.message || err}`);
+      res.status(500).json({ ok: false, error: 'Lỗi máy chủ. Vui lòng thử lại.' });
+    }
+  });
+
   // GET /api/public/projects/:code — full payload (cached 5 phút, scoped theo Host tenant)
   router.get('/:code', async (req: Request, res: Response) => {
     const code = String(req.params.code || '').trim().toUpperCase();
