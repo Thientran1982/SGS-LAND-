@@ -475,7 +475,19 @@ export function createBookingRoutes(
                 WHERE b.id = $1 LIMIT 1`,
               [id],
             );
-            row = r.rows[0] || null;
+            const candidate = r.rows[0] || null;
+            // Strict viewer-binding: the `uid` claim is set when the token
+            // was minted (see /receipt-token); enforce it here so a leaked
+            // signed URL cannot be replayed by an unrelated user. The uid
+            // must match the buyer who placed the booking OR the agent
+            // assigned to it. Tokens minted before this check (no uid)
+            // continue to fall back to viewer auth below.
+            if (candidate && d?.uid && (
+              candidate.buyer_user_id === d.uid ||
+              candidate.agent_user_id === d.uid
+            )) {
+              row = candidate;
+            }
           }
         } catch {
           /* fall through to viewer auth */
