@@ -120,6 +120,9 @@ interface PublicBrandingPayload {
   primaryColor: string | null;
   displayName: string | null;
   messenger: string | null;
+  ga4Id: string | null;
+  fbPixelId: string | null;
+  gtmId: string | null;
 }
 
 function pickPublicBranding(branding: TenantBranding): PublicBrandingPayload {
@@ -129,6 +132,9 @@ function pickPublicBranding(branding: TenantBranding): PublicBrandingPayload {
     primaryColor: branding.primaryColor,
     displayName: branding.displayName,
     messenger: branding.messenger,
+    ga4Id: branding.ga4Id,
+    fbPixelId: branding.fbPixelId,
+    gtmId: branding.gtmId,
   };
 }
 
@@ -379,6 +385,7 @@ export function createPublicProjectRoutes(): Router {
       const branding = brandingSource ? pickPublicBranding(brandingSource.branding) : pickPublicBranding({
         logoUrl: null, faviconUrl: null, primaryColor: null,
         displayName: null, hotline: null, hotlineDisplay: null, zalo: null, messenger: null,
+        ga4Id: null, fbPixelId: null, gtmId: null,
       });
 
       const payload = {
@@ -467,7 +474,25 @@ export function createPublicProjectRoutes(): Router {
         });
       }
 
+      // Marketing attribution payload (first-click — gửi từ FE attribution lib).
+      const attribution = (body.attribution && typeof body.attribution === 'object') ? body.attribution : {};
+      const attrUtm = (attribution.utm && typeof attribution.utm === 'object') ? attribution.utm : {};
+      const utm_source   = String(attrUtm.source   ?? attrUtm.utm_source   ?? body.utm_source   ?? '').trim().slice(0, 100) || null;
+      const utm_medium   = String(attrUtm.medium   ?? attrUtm.utm_medium   ?? body.utm_medium   ?? '').trim().slice(0, 100) || null;
+      const utm_campaign = String(attrUtm.campaign ?? attrUtm.utm_campaign ?? body.utm_campaign ?? '').trim().slice(0, 200) || null;
+      const utm_term     = String(attrUtm.term     ?? attrUtm.utm_term     ?? body.utm_term     ?? '').trim().slice(0, 200) || null;
+      const utm_content  = String(attrUtm.content  ?? attrUtm.utm_content  ?? body.utm_content  ?? '').trim().slice(0, 200) || null;
+      const landing_page   = String(attribution.landingPage   ?? body.landingPage   ?? body.pageUrl  ?? '').slice(0, 500) || null;
+      const first_referrer = String(attribution.firstReferrer ?? body.firstReferrer ?? body.referrer ?? '').slice(0, 500) || null;
+      const gclid     = String(attribution.gclid  ?? body.gclid  ?? '').trim().slice(0, 200) || null;
+      const fbclid    = String(attribution.fbclid ?? body.fbclid ?? '').trim().slice(0, 200) || null;
+      const visitorIdRaw = String(attribution.visitorId ?? body.visitorId ?? '').trim().slice(0, 64);
+      const visitor_id = /^[a-zA-Z0-9_-]{8,64}$/.test(visitorIdRaw) ? visitorIdRaw : null;
+
       const tags = ['microsite', `code:${code}`];
+      if (utm_source) tags.push(`src:${utm_source}`);
+      if (utm_campaign) tags.push(`camp:${utm_campaign.slice(0, 40)}`);
+
       const metadata = {
         project_code: code,
         project_name: found.project.name,
@@ -476,6 +501,9 @@ export function createPublicProjectRoutes(): Router {
         referrer: String(body.referrer || '').slice(0, 500),
         ip: req.ip || null,
         user_agent: String(req.headers['user-agent'] || '').slice(0, 300),
+        // Backward-compat: vẫn lưu UTM trong metadata cho code cũ
+        utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+        gclid, fbclid, landing_page, first_referrer, visitor_id,
       };
       const notes = [
         interest ? `Quan tâm: ${interest}` : '',
@@ -485,8 +513,12 @@ export function createPublicProjectRoutes(): Router {
       let leadId: string | null = null;
       try {
         const result = await pool.query(
-          `INSERT INTO leads (tenant_id, name, phone, email, source, stage, notes, tags, metadata)
-             VALUES ($1, $2, $3, $4, $5, 'NEW', $6, $7::jsonb, $8::jsonb)
+          `INSERT INTO leads
+             (tenant_id, name, phone, email, source, stage, notes, tags, metadata,
+              utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+              landing_page, first_referrer, gclid, fbclid, visitor_id)
+             VALUES ($1, $2, $3, $4, $5, 'NEW', $6, $7::jsonb, $8::jsonb,
+                     $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
              RETURNING id`,
           [
             found.tenantId,
@@ -497,6 +529,8 @@ export function createPublicProjectRoutes(): Router {
             notes,
             JSON.stringify(tags),
             JSON.stringify(metadata),
+            utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+            landing_page, first_referrer, gclid, fbclid, visitor_id,
           ]
         );
         leadId = result.rows[0]?.id ?? null;

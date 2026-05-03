@@ -81,6 +81,9 @@ export interface TenantBranding {
   hotlineDisplay: string | null;
   zalo: string | null;
   messenger: string | null;
+  ga4Id: string | null;
+  fbPixelId: string | null;
+  gtmId: string | null;
 }
 
 export interface TenantHostBinding {
@@ -101,7 +104,14 @@ export const EMPTY_BRANDING: TenantBranding = {
   hotlineDisplay: null,
   zalo: null,
   messenger: null,
+  ga4Id: null,
+  fbPixelId: null,
+  gtmId: null,
 };
+
+const GA4_ID_RE = /^G-[A-Z0-9]{4,12}$/i;
+const FB_PIXEL_RE = /^\d{6,20}$/;
+const GTM_ID_RE = /^GTM-[A-Z0-9]{4,12}$/i;
 
 // ── Slug validation ──────────────────────────────────────────────────────────
 
@@ -155,6 +165,9 @@ function clean(s: unknown, max = 200): string | null {
 export function normalizeBrandingInput(input: any): TenantBranding {
   const b = (input && typeof input === 'object') ? input : {};
   const primaryColor = clean(b.primaryColor, 16);
+  const ga4 = clean(b.ga4Id, 32);
+  const pixel = clean(b.fbPixelId, 32);
+  const gtm = clean(b.gtmId, 32);
   return {
     logoUrl: clean(b.logoUrl, 500),
     faviconUrl: clean(b.faviconUrl, 500),
@@ -164,6 +177,9 @@ export function normalizeBrandingInput(input: any): TenantBranding {
     hotlineDisplay: clean(b.hotlineDisplay, 30),
     zalo: clean(b.zalo, 200),
     messenger: clean(b.messenger, 200),
+    ga4Id: ga4 && GA4_ID_RE.test(ga4) ? ga4.toUpperCase() : null,
+    fbPixelId: pixel && FB_PIXEL_RE.test(pixel) ? pixel : null,
+    gtmId: gtm && GTM_ID_RE.test(gtm) ? gtm.toUpperCase() : null,
   };
 }
 

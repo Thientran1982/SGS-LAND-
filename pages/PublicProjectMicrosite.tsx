@@ -7,6 +7,7 @@ import {
 } from '../services/api/publicProjectApi';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
+import { buildLeadAttribution, trackPageView } from '../services/attribution';
 
 interface Props {
   projectCode: string;
@@ -55,6 +56,9 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       primaryColor: string | null;
       displayName: string | null;
       messenger: string | null;
+      ga4Id: string | null;
+      fbPixelId: string | null;
+      gtmId: string | null;
     }> | null>(null);
 
   const isPreviewMode = useMemo(() => {
@@ -192,6 +196,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
         captchaToken: captchaToken || undefined,
         pageUrl: typeof window !== 'undefined' ? window.location.href : '',
         referrer: typeof document !== 'undefined' ? document.referrer : '',
+        attribution: buildLeadAttribution(),
       });
       if (res.ok) {
         setSubmitMsg({ ok: true, text: res.message || 'Cảm ơn bạn! Chuyên viên sẽ liên hệ sớm.' });
@@ -253,6 +258,69 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       turnstileWidgetIdRef.current = null;
     };
   }, [data?.captcha?.siteKey]);
+
+  // ─── Marketing attribution & visitor tracking ────────────────────────────
+  // - Capture UTM/referrer first-click + track pageview cho khách vãng lai.
+  // - Skip preview iframe (?preview=1) để không nhiễu data thật.
+  useEffect(() => {
+    if (isPreviewMode) return;
+    if (!data?.project?.code) return;
+    trackPageView({
+      projectCode: data.project.code,
+      pageLabel: `Microsite: ${data.project.name}`,
+    });
+  }, [isPreviewMode, data?.project?.code, data?.project?.name]);
+
+  // Inject GA4 / Meta Pixel / GTM scripts theo branding của tenant (task #4).
+  // Chỉ inject 1 lần / 1 ID / page-load; cleanup khi unmount để không leak khi
+  // user điều hướng giữa các microsite của 2 tenant khác nhau.
+  useEffect(() => {
+    if (isPreviewMode) return;
+    const branding = data?.branding ?? null;
+    if (!branding) return;
+    const { ga4Id, fbPixelId, gtmId } = branding;
+    if (!ga4Id && !fbPixelId && !gtmId) return;
+
+    const appended: HTMLElement[] = [];
+
+    // GA4 (gtag.js)
+    if (ga4Id && !document.querySelector(`script[data-sgs-ga4="${ga4Id}"]`)) {
+      const s1 = document.createElement('script');
+      s1.async = true;
+      s1.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`;
+      s1.setAttribute('data-sgs-ga4', ga4Id);
+      document.head.appendChild(s1);
+      appended.push(s1);
+
+      const s2 = document.createElement('script');
+      s2.setAttribute('data-sgs-ga4-init', ga4Id);
+      s2.text = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id.replace(/'/g, '')}',{send_page_view:true});`;
+      document.head.appendChild(s2);
+      appended.push(s2);
+    }
+
+    // Meta (Facebook) Pixel
+    if (fbPixelId && !document.querySelector(`script[data-sgs-fbp="${fbPixelId}"]`)) {
+      const s = document.createElement('script');
+      s.setAttribute('data-sgs-fbp', fbPixelId);
+      s.text = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${fbPixelId.replace(/'/g, '')}');fbq('track','PageView');`;
+      document.head.appendChild(s);
+      appended.push(s);
+    }
+
+    // Google Tag Manager
+    if (gtmId && !document.querySelector(`script[data-sgs-gtm="${gtmId}"]`)) {
+      const s = document.createElement('script');
+      s.setAttribute('data-sgs-gtm', gtmId);
+      s.text = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId.replace(/'/g, '')}');`;
+      document.head.appendChild(s);
+      appended.push(s);
+    }
+
+    return () => {
+      appended.forEach((el) => { try { el.remove(); } catch { /* noop */ } });
+    };
+  }, [isPreviewMode, data?.branding?.ga4Id, data?.branding?.fbPixelId, data?.branding?.gtmId]);
 
   // Inject favicon + document.title cho tab browser CĐT (task #28).
   // PHẢI đặt trước mọi early-return để giữ thứ tự hooks ổn định giữa các render
@@ -327,6 +395,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const baseBranding = data.branding ?? {
     logoUrl: null, faviconUrl: null, primaryColor: null,
     displayName: null, messenger: null,
+    ga4Id: null, fbPixelId: null, gtmId: null,
   };
   const branding = brandingOverride
     ? { ...baseBranding, ...brandingOverride }

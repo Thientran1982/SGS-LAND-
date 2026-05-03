@@ -68,6 +68,25 @@ export interface PublicMicrositeBranding {
   primaryColor: string | null;
   displayName: string | null;
   messenger: string | null;
+  /** Tracking IDs cho white-label analytics (server validate format). */
+  ga4Id: string | null;
+  fbPixelId: string | null;
+  gtmId: string | null;
+}
+
+export interface LeadAttributionPayload {
+  visitorId?: string;
+  utm?: {
+    source?: string | null;
+    medium?: string | null;
+    campaign?: string | null;
+    term?: string | null;
+    content?: string | null;
+  };
+  landingPage?: string;
+  firstReferrer?: string;
+  gclid?: string;
+  fbclid?: string;
 }
 
 export interface PublicLeadInput {
@@ -80,6 +99,8 @@ export interface PublicLeadInput {
   referrer?: string;
   /** Cloudflare Turnstile token (chỉ cần khi server bật TURNSTILE_SECRET_KEY). */
   captchaToken?: string;
+  /** Marketing attribution (first-click + visitorId). */
+  attribution?: LeadAttributionPayload;
 }
 
 export interface PublicLeadResponse {
