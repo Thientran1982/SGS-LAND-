@@ -27,6 +27,7 @@ import { syncFavorites, clearLocalFavorites } from '../storage/favorites';
 import { syncSavedSearches } from '../storage/savedSearches';
 import { setCachedPushToken } from '../storage/device';
 import { ensurePushRegistration } from '../notifications/registerPushToken';
+import { disconnectRealtime } from '../realtime/socket';
 
 interface AuthContextValue {
   user: BuyerUser | null;
@@ -78,6 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Token rejected by server → treat as a forced sign-out so we never
       // leave another buyer's favorites on disk for the next sign-in.
       clearLocalFavorites().catch(() => {});
+      try {
+        disconnectRealtime();
+      } catch {
+        /* best-effort */
+      }
       setUser(null);
     });
   }, []);
@@ -117,6 +123,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* best-effort — token discard happens regardless */
     }
     await clearBuyerToken();
+    // Tear down any authenticated realtime socket so the previous buyer's
+    // session can't keep receiving events after logout. The next subscriber
+    // will lazily reconnect with whatever token is on disk.
+    try {
+      disconnectRealtime();
+    } catch {
+      /* best-effort */
+    }
     // Clear local personal caches so the next buyer who signs in on this
     // device cannot inherit (or accidentally upload) the previous account's
     // data via the next syncFavorites() merge.
