@@ -99,6 +99,12 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         driveUrl: existingMeta.drive_url || existingMeta.driveUrl || '',
     });
     const [publicMicrosite, setPublicMicrosite] = useState<boolean>(existingMeta.public_microsite === true || existingMeta.public_microsite === 'true');
+    const [featuredRank, setFeaturedRank] = useState<string>(() => {
+        const v = existingMeta.featured_rank;
+        if (v === null || v === undefined || v === '') return '';
+        const n = Number(v);
+        return Number.isFinite(n) && n >= 1 ? String(Math.trunc(n)) : '';
+    });
     const [coverImage, setCoverImage] = useState<string>(existingMeta.coverImage || existingMeta.cover_image || '');
     const [coverUploading, setCoverUploading] = useState(false);
     const [coverErr, setCoverErr] = useState('');
@@ -144,6 +150,16 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         e.preventDefault();
         if (!form.name.trim()) { setErr(t('project.error_name_required')); return; }
         if (driveUrlTrim && !driveUrlValid) { setErr(t('project.error_drive_url_invalid')); return; }
+        const featuredRankTrim = featuredRank.trim();
+        let featuredRankNum: number | null = null;
+        if (featuredRankTrim !== '') {
+            const n = Number(featuredRankTrim);
+            if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1) {
+                setErr(t('project.featured_rank_invalid'));
+                return;
+            }
+            featuredRankNum = n;
+        }
         setSaving(true);
         setErr('');
         try {
@@ -158,6 +174,11 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             nextMeta.cover_image = null; // legacy snake_case alias — always strip
             // Mini-site công khai (Task #25) — gửi true/false để bật/tắt /p/<code>
             nextMeta.public_microsite = publicMicrosite ? true : null;
+            // Featured rank (Task #61) — số nguyên ≥1 để xếp hạng trên carousel
+            // "Dự án nổi bật" của mobile app; null để gỡ khỏi danh sách xếp hạng.
+            // Server endpoint /api/public/projects/featured đã ORDER BY
+            // (metadata->>'featured_rank')::int — không cần đổi mobile client.
+            nextMeta.featured_rank = featuredRankNum;
             // Lưu ý: gửi chuỗi rỗng (đã trim) thay vì undefined cho các text
             // field, và null cho number/date đã xoá. Nếu gửi undefined thì
             // JSON.stringify sẽ drop key, server bỏ qua, DB giữ giá trị cũ —
@@ -353,6 +374,28 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                     </span>
                                 </span>
                             </label>
+                        </div>
+                        {/* Featured rank (Task #61) — admin-only ordering control for the
+                            mobile Discover "Dự án nổi bật" carousel. Whole number ≥1, blank
+                            removes the rank. Server merges metadata via jsonb_strip_nulls so
+                            sending `null` deletes the key. */}
+                        <div className="col-span-2">
+                            <label htmlFor="pj-featured-rank" className={labelCls}>{t('project.featured_rank')}</label>
+                            <input
+                                id="pj-featured-rank"
+                                type="number"
+                                min="1"
+                                step="1"
+                                inputMode="numeric"
+                                placeholder={t('project.featured_rank_placeholder')}
+                                className={inputCls}
+                                value={featuredRank}
+                                onChange={e => setFeaturedRank(e.target.value)}
+                                aria-describedby="pj-featured-rank-help"
+                            />
+                            <p id="pj-featured-rank-help" className="mt-1 text-xs text-[var(--text-secondary)]">
+                                {t('project.featured_rank_help')}
+                            </p>
                         </div>
                     </div>
                     <div className="flex gap-3 justify-end pt-2">
