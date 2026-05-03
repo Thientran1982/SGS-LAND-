@@ -62,6 +62,8 @@ import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
 import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
+import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
+import { startBuyerPushCron } from "./server/services/pushNotificationService";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
@@ -4063,6 +4065,27 @@ async function startServer() {
       startCampaignSchedulerCron(pool);
     } catch (err: any) {
       logger.warn(`[CampaignScheduler] Không thể khởi động in-process cron: ${err?.message || err}`);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Buyer push notifications (Task #53) — register Expo push tokens, manage
+  // saved searches, and run a 15-minute matching cron.
+  // Two drivers like other crons:
+  //   • In-process setInterval (always on).
+  //   • POST /api/internal/buyer-push-cron for QStash.
+  // Idempotent via UNIQUE(device_id, saved_search_id, listing_id) on the dedup log.
+  // ---------------------------------------------------------------------------
+  {
+    const buyerPushSecret =
+      process.env.BUYER_PUSH_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(apiRateLimit, createBuyerPushRoutes(pool, buyerPushSecret));
+    try {
+      startBuyerPushCron(pool);
+    } catch (err: any) {
+      logger.warn(`[push] Không thể khởi động in-process buyer-push cron: ${err?.message || err}`);
     }
   }
 

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -20,6 +21,9 @@ import { ListingCardSkeleton } from '../../src/components/Skeleton';
 import { EmptyState } from '../../src/components/EmptyState';
 import { ListingsMap } from '../../src/components/ListingsMap';
 import { loadFavorites, toggleFavorite } from '../../src/storage/favorites';
+import { createSavedSearch } from '../../src/storage/savedSearches';
+import { ensurePushRegistration } from '../../src/notifications/registerPushToken';
+import { getCachedPushPreference } from '../../src/storage/device';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
 import { slugify } from '../../src/utils/format';
 
@@ -122,6 +126,8 @@ export default function SearchScreen() {
     staleTime: 10 * 60_000,
   });
 
+  const [savingSearch, setSavingSearch] = useState(false);
+
   const filters: ListingFilters = useMemo(() => {
     const f: ListingFilters = {};
     if (type !== 'ALL') f.type = type;
@@ -169,6 +175,51 @@ export default function SearchScreen() {
     },
     [router],
   );
+
+  // Build a human-readable label for the saved search from current filters.
+  const buildSearchLabel = useCallback((): string => {
+    const parts: string[] = [];
+    if (debounced) parts.push(`"${debounced}"`);
+    const tt = PROPERTY_TYPES.find((t) => t.value === type);
+    if (tt && type !== 'ALL') parts.push(tt.label);
+    const tr = TRANSACTIONS.find((t) => t.value === transaction);
+    if (tr && transaction !== 'ALL') parts.push(tr.label);
+    if (location !== 'ALL') parts.push(location);
+    const pr = PRICE_RANGES.find((p) => p.value === priceRange);
+    if (pr && priceRange !== 'ALL') parts.push(pr.label);
+    if (bedrooms > 0) parts.push(`${bedrooms}+ PN`);
+    const ar = AREA_RANGES.find((a) => a.value === areaRange);
+    if (ar && areaRange !== 'ALL') parts.push(ar.label);
+    return parts.length ? parts.join(' · ') : 'Tất cả BĐS';
+  }, [debounced, type, transaction, location, priceRange, bedrooms, areaRange]);
+
+  const handleSaveSearch = useCallback(async () => {
+    if (savingSearch) return;
+    setSavingSearch(true);
+    try {
+      const label = buildSearchLabel();
+      await createSavedSearch({ label, filters, notificationsEnabled: true });
+
+      // First-time saves should also trigger the permission prompt so the
+      // user actually receives the alerts they just opted into. This is a
+      // no-op if push is already enabled.
+      const cached = await getCachedPushPreference();
+      if (cached !== false) {
+        void ensurePushRegistration({ forcePromptIfUndecided: true });
+      }
+
+      Alert.alert(
+        'Đã lưu tìm kiếm',
+        cached === false
+          ? `"${label}" đã được lưu. Bật thông báo trong tab Tài khoản để nhận tin BĐS mới.`
+          : `Bạn sẽ nhận thông báo khi có BĐS mới khớp với "${label}".`,
+      );
+    } catch (err: any) {
+      Alert.alert('Không lưu được tìm kiếm', err?.message || 'Vui lòng thử lại sau.');
+    } finally {
+      setSavingSearch(false);
+    }
+  }, [savingSearch, buildSearchLabel, filters]);
 
   const handleToggleFav = useCallback(async (id: string) => {
     const next = await toggleFavorite(id);
@@ -293,6 +344,16 @@ export default function SearchScreen() {
           ) : (
             <Text style={styles.resultCount}> </Text>
           )}
+          <Pressable
+            onPress={handleSaveSearch}
+            disabled={savingSearch}
+            style={[styles.saveBtn, savingSearch && styles.saveBtnDisabled]}
+            android_ripple={{ color: colors.brandSoft }}
+          >
+            <Text style={styles.saveBtnText}>
+              {savingSearch ? 'Đang lưu…' : '🔔 Lưu tìm kiếm'}
+            </Text>
+          </Pressable>
           <View style={styles.toggleWrap}>
             <Pressable
               onPress={() => setViewMode('list')}
@@ -444,6 +505,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: radius.pill,
+  },
+  saveBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brandSoft,
+    marginRight: spacing.sm,
+  },
+  saveBtnDisabled: { opacity: 0.6 },
+  saveBtnText: {
+    fontSize: typography.xs,
+    color: colors.brand,
+    fontWeight: '700',
   },
   toggleBtnActive: { backgroundColor: colors.bgSurface },
   toggleText: { fontSize: typography.xs, color: colors.textTertiary, fontWeight: '700' },
