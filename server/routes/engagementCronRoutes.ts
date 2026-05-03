@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
 import { emailService } from '../services/emailService';
+import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
 import {
   querySegmentA,
   querySegmentB,
@@ -44,6 +45,8 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
     }
 
     const dryRun = req.body?.dry_run === true;
+    const startedMs = Date.now();
+    const runId = await startAgentRun(pool, 'engagement-email-cron', dryRun ? 'manual_dry_run' : 'qstash');
     logger.info(`[EngagementCron] Bắt đầu${dryRun ? ' (dry-run)' : ''} — ${new Date().toISOString()}`);
 
     const stats = {
@@ -123,6 +126,8 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
         `[EngagementCron] Hoàn thành — Tổng gửi: ${totalSent}, Lỗi: ${totalFail}${dryRun ? ' (dry-run)' : ''}`,
       );
 
+      await finishAgentRun(pool, runId, 'success', { dry_run: dryRun, stats, total_sent: totalSent, total_failed: totalFail }, null, startedMs);
+
       return res.json({
         ok: true,
         dry_run: dryRun,
@@ -134,6 +139,7 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
 
     } catch (err: any) {
       logger.error('[EngagementCron] Lỗi không xác định:', err.message);
+      await finishAgentRun(pool, runId, 'error', { dry_run: dryRun, stats }, (err?.message || String(err)).slice(0, 4000), startedMs);
       return res.status(500).json({ error: 'Internal error', detail: err.message });
     }
   });

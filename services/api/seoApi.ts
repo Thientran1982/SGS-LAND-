@@ -94,6 +94,35 @@ const seoApi = {
   async runGeoSnapshotNow(): Promise<{ ok: boolean; date: string }> {
     return api.post('/api/seo/geo-snapshots/run-now', {});
   },
+
+  // ── Agent Runs (unified audit trail) ─────────────────────────────────────
+  async listAgentRuns(params: { agent?: string; status?: string; days?: number; limit?: number } = {}): Promise<{
+    days: number;
+    runs: Array<{
+      id: string;
+      agent_name: string;
+      trigger_source: string;
+      status: 'running' | 'success' | 'error' | 'skipped';
+      started_at: string;
+      finished_at: string | null;
+      duration_ms: number | null;
+      summary_json: any;
+      error_text: string | null;
+    }>;
+    agents: Array<{
+      agentName: string;
+      total: number; success: number; errors: number; skipped: number; running: number;
+      avgDurationMs: number | null;
+      lastRunAt: string | null;
+    }>;
+  }> {
+    const qs = new URLSearchParams();
+    if (params.agent)  qs.set('agent', params.agent);
+    if (params.status) qs.set('status', params.status);
+    qs.set('days',  String(params.days  ?? 7));
+    qs.set('limit', String(params.limit ?? 200));
+    return api.get(`/api/admin/agent-runs?${qs.toString()}`);
+  },
 };
 
 export default seoApi;

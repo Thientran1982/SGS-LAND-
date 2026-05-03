@@ -891,6 +891,190 @@ const AI_PROMPT_TEMPLATES = (kw: string) => ({
     google:     `https://www.google.com/search?q=${encodeURIComponent(kw)}`,
 });
 
+// ── Agent Runs (audit trail) — 7 ngày qua ────────────────────────────────────
+// Hiển thị lịch sử chạy của mọi background cron/agent có wrap bằng
+// startAgentRun/finishAgentRun. Mặc định 7 ngày, lọc theo agent + status.
+const AgentRuns7Days: React.FC = () => {
+    type Run = {
+        id: string;
+        agent_name: string;
+        trigger_source: string;
+        status: 'running' | 'success' | 'error' | 'skipped';
+        started_at: string;
+        finished_at: string | null;
+        duration_ms: number | null;
+        summary_json: any;
+        error_text: string | null;
+    };
+    type Agg = {
+        agentName: string;
+        total: number; success: number; errors: number; skipped: number; running: number;
+        avgDurationMs: number | null;
+        lastRunAt: string | null;
+    };
+    const [runs, setRuns] = useState<Run[]>([]);
+    const [agents, setAgents] = useState<Agg[]>([]);
+    const [filterAgent, setFilterAgent] = useState<string>('');
+    const [filterStatus, setFilterStatus] = useState<string>('');
+    const [loading, setLoading] = useState(true);
+    const [err, setErr] = useState<string | null>(null);
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+    const load = useCallback(() => {
+        setLoading(true);
+        setErr(null);
+        seoApi.listAgentRuns({
+            days: 7,
+            limit: 200,
+            agent: filterAgent || undefined,
+            status: filterStatus || undefined,
+        })
+            .then((r) => { setRuns(r.runs || []); setAgents(r.agents || []); })
+            .catch((e: any) => setErr(e?.message || 'Không tải được agent runs'))
+            .finally(() => setLoading(false));
+    }, [filterAgent, filterStatus]);
+    useEffect(() => { load(); }, [load]);
+
+    const fmtTime = (s: string) => new Date(s).toLocaleString('vi-VN', { hour12: false });
+    const fmtDur = (ms: number | null) => {
+        if (ms == null) return '—';
+        if (ms < 1000) return `${ms}ms`;
+        if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
+        return `${(ms / 60_000).toFixed(1)}m`;
+    };
+    const statusBadge = (s: Run['status']) => {
+        const map: Record<Run['status'], string> = {
+            success: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+            error:   'bg-rose-100 text-rose-700 border-rose-300',
+            skipped: 'bg-slate-100 text-slate-600 border-slate-300',
+            running: 'bg-amber-100 text-amber-700 border-amber-300',
+        };
+        return <span className={`px-1.5 py-0.5 rounded border text-2xs font-bold ${map[s]}`}>{s}</span>;
+    };
+
+    return (
+        <section className="mt-6">
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h3 className="text-sm font-bold text-[var(--text-primary)]">
+                    1.6 Agent Runs — 7 ngày qua
+                    <span className="ml-2 text-2xs font-normal text-[var(--text-tertiary)]">
+                        (audit trail thống nhất cho mọi cron/agent)
+                    </span>
+                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)}
+                        className="text-2xs border border-[var(--border)] rounded px-2 py-1 bg-[var(--bg-secondary)]">
+                        <option value="">Mọi agent</option>
+                        {agents.map((a) => (
+                            <option key={a.agentName} value={a.agentName}>{a.agentName}</option>
+                        ))}
+                    </select>
+                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+                        className="text-2xs border border-[var(--border)] rounded px-2 py-1 bg-[var(--bg-secondary)]">
+                        <option value="">Mọi status</option>
+                        <option value="success">success</option>
+                        <option value="error">error</option>
+                        <option value="skipped">skipped</option>
+                        <option value="running">running</option>
+                    </select>
+                    <button onClick={load} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Tải lại</button>
+                </div>
+            </div>
+
+            {err && <div className="text-2xs text-rose-700 font-bold mb-2">❌ {err}</div>}
+
+            {/* Tổng hợp theo agent */}
+            {agents.length > 0 && (
+                <div className="overflow-x-auto mb-3 rounded-lg border border-[var(--border)]">
+                    <table className="w-full text-2xs">
+                        <thead className="bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+                            <tr>
+                                <th className="text-left px-2 py-1.5 font-bold">Agent</th>
+                                <th className="text-right px-2 py-1.5 font-bold">Total</th>
+                                <th className="text-right px-2 py-1.5 font-bold text-emerald-700">✓</th>
+                                <th className="text-right px-2 py-1.5 font-bold text-rose-700">✗</th>
+                                <th className="text-right px-2 py-1.5 font-bold text-slate-600">skip</th>
+                                <th className="text-right px-2 py-1.5 font-bold text-amber-700">run</th>
+                                <th className="text-right px-2 py-1.5 font-bold">Avg time</th>
+                                <th className="text-left  px-2 py-1.5 font-bold">Last run</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {agents.map((a) => (
+                                <tr key={a.agentName} className="border-t border-[var(--border)]">
+                                    <td className="px-2 py-1 font-mono">{a.agentName}</td>
+                                    <td className="px-2 py-1 text-right">{a.total}</td>
+                                    <td className="px-2 py-1 text-right text-emerald-700 font-bold">{a.success}</td>
+                                    <td className={`px-2 py-1 text-right font-bold ${a.errors > 0 ? 'text-rose-700' : 'text-[var(--text-tertiary)]'}`}>{a.errors}</td>
+                                    <td className="px-2 py-1 text-right text-slate-600">{a.skipped}</td>
+                                    <td className="px-2 py-1 text-right text-amber-700">{a.running}</td>
+                                    <td className="px-2 py-1 text-right">{fmtDur(a.avgDurationMs)}</td>
+                                    <td className="px-2 py-1">{a.lastRunAt ? fmtTime(a.lastRunAt) : '—'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Danh sách run gần nhất */}
+            {loading ? (
+                <div className="text-2xs text-[var(--text-tertiary)]">Đang tải...</div>
+            ) : runs.length === 0 ? (
+                <div className="text-2xs text-[var(--text-tertiary)] p-3 rounded border border-dashed border-[var(--border)]">
+                    Chưa có lần chạy nào trong 7 ngày qua{filterAgent ? ` cho agent "${filterAgent}"` : ''}{filterStatus ? ` với status "${filterStatus}"` : ''}.
+                </div>
+            ) : (
+                <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+                    <table className="w-full text-2xs">
+                        <thead className="bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+                            <tr>
+                                <th className="text-left  px-2 py-1.5 font-bold">Khi</th>
+                                <th className="text-left  px-2 py-1.5 font-bold">Agent</th>
+                                <th className="text-left  px-2 py-1.5 font-bold">Trigger</th>
+                                <th className="text-left  px-2 py-1.5 font-bold">Status</th>
+                                <th className="text-right px-2 py-1.5 font-bold">Duration</th>
+                                <th className="text-left  px-2 py-1.5 font-bold">Summary</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {runs.map((r) => {
+                                const isOpen = !!expanded[r.id];
+                                return (
+                                    <React.Fragment key={r.id}>
+                                        <tr className="border-t border-[var(--border)] hover:bg-[var(--bg-tertiary)]/40 cursor-pointer"
+                                            onClick={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}>
+                                            <td className="px-2 py-1 whitespace-nowrap">{fmtTime(r.started_at)}</td>
+                                            <td className="px-2 py-1 font-mono">{r.agent_name}</td>
+                                            <td className="px-2 py-1 text-[var(--text-tertiary)]">{r.trigger_source}</td>
+                                            <td className="px-2 py-1">{statusBadge(r.status)}</td>
+                                            <td className="px-2 py-1 text-right">{fmtDur(r.duration_ms)}</td>
+                                            <td className="px-2 py-1 truncate max-w-md">
+                                                {r.error_text
+                                                    ? <span className="text-rose-700 font-bold">{r.error_text.slice(0, 120)}{r.error_text.length > 120 ? '…' : ''}</span>
+                                                    : <span className="text-[var(--text-tertiary)] font-mono">{JSON.stringify(r.summary_json || {}).slice(0, 120)}</span>}
+                                            </td>
+                                        </tr>
+                                        {isOpen && (
+                                            <tr className="bg-[var(--bg-tertiary)]/40">
+                                                <td colSpan={6} className="px-3 py-2">
+                                                    <pre className="text-2xs font-mono whitespace-pre-wrap break-all max-h-72 overflow-auto">
+{JSON.stringify({ summary: r.summary_json, error: r.error_text, finished_at: r.finished_at }, null, 2)}
+                                                    </pre>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </section>
+    );
+};
+
 // ── GEO Monitor (last 30 days) — Sprint #64 follow-up ─────────────────────────
 // Charts daily AI mention rate per engine + best SERP position deltas, fed by
 // QStash daily cron writing into seo_geo_snapshots.
@@ -1379,6 +1563,9 @@ const GeoAiSearch: React.FC = () => {
 
             {/* ── 1.5 GEO Monitor (last 30 days) — Sprint #64 follow-up ───── */}
             <GeoMonitor30Days />
+
+            {/* ── 1.6 Agent Runs (audit trail cho mọi cron/agent) ──────── */}
+            <AgentRuns7Days />
 
             {/* ── 2. Target Keywords Tracker ─────────────────────────────── */}
             <section>

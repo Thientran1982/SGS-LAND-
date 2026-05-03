@@ -18,6 +18,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
 import { DEFAULT_TENANT_ID } from '../constants';
+import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
 
 // Curated brand probes — short list to keep daily AI quota cost low.
 const BRAND_QUERIES = [
@@ -457,6 +458,8 @@ export function createGeoMonitorCronRouter(
     }
 
     logger.info('[GeoMonitorCron] Bắt đầu snapshot ngày — ' + new Date().toISOString());
+    const startedMs = Date.now();
+    const runId = await startAgentRun(pool, 'geo-monitor-cron', 'qstash');
     try {
       const result = await runSnapshot(pool);
       const totalRate = result.ai_mentions?.totals?.rate ?? 0;
@@ -464,9 +467,21 @@ export function createGeoMonitorCronRouter(
       logger.info(
         `[GeoMonitorCron] Snapshot ${result.date} — overall mention rate=${totalRate} kw=${kwCount}`,
       );
+      await finishAgentRun(pool, runId, 'success', {
+        date: result.date,
+        overall_rate: totalRate,
+        keyword_count: kwCount,
+        engines: Object.fromEntries(
+          Object.entries(result.ai_mentions?.engines || {}).map(([k, v]: [string, any]) => [
+            k, { queries: v?.queries ?? 0, mentions: v?.mentions ?? 0, rate: v?.rate ?? 0, skipped: v?.skipped ?? null },
+          ]),
+        ),
+        competitors_probed: result.backlinks?.competitors?.length ?? 0,
+      }, null, startedMs);
       return res.json({ ok: true, ...result });
     } catch (err: any) {
       logger.error('[GeoMonitorCron] Lỗi snapshot:', err?.message || err);
+      await finishAgentRun(pool, runId, 'error', {}, (err?.message || String(err)).slice(0, 4000), startedMs);
       return res.status(500).json({ error: 'Internal error', detail: err?.message || String(err) });
     }
   });
@@ -524,11 +539,17 @@ export function createGeoMonitorCronRouter(
     authenticateToken,
     requireHostSuperAdmin,
     async (_req: Request, res: Response) => {
+      const startedMs = Date.now();
+      const runId = await startAgentRun(pool, 'geo-monitor-cron', 'manual_admin');
       try {
         const result = await runSnapshot(pool);
+        const totalRate = result.ai_mentions?.totals?.rate ?? 0;
+        const kwCount = result.gsc_top20?.keywords?.length ?? 0;
+        await finishAgentRun(pool, runId, 'success', { date: result.date, overall_rate: totalRate, keyword_count: kwCount, manual: true }, null, startedMs);
         return res.json({ ok: true, ...result });
       } catch (err: any) {
         logger.error('[GeoMonitorCron] run-now lỗi:', err?.message || err);
+        await finishAgentRun(pool, runId, 'error', { manual: true }, (err?.message || String(err)).slice(0, 4000), startedMs);
         return res.status(500).json({ error: 'Internal error', detail: err?.message || String(err) });
       }
     },

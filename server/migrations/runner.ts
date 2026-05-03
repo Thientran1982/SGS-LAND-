@@ -120,6 +120,7 @@ import m099 from './099_bookings';
 import m100 from './100_booking_events';
 import m101 from './101_seed_expert_real_estate_guides_2026';
 import m102 from './102_seo_geo_snapshots';
+import m103 from './103_agent_runs';
 
 dotenv.config();
 
@@ -236,6 +237,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '100_booking_events.ts': m100,
   '101_seed_expert_real_estate_guides_2026.ts': m101,
   '102_seo_geo_snapshots.ts': m102,
+  '103_agent_runs.ts': m103,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

@@ -16,6 +16,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
 import { runCampaign } from '../services/campaignSenderService';
+import { startAgentRun, finishAgentRun } from './../services/agentRunsService';
 
 function publicBaseUrl(): string {
   const prod = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
@@ -91,16 +92,24 @@ let schedulerInFlight = false;
 async function runTickGuarded(pool: Pool, label: string): Promise<void> {
   if (schedulerInFlight) {
     logger.warn(`[CampaignScheduler] tick ${label} skipped — previous still in flight`);
+    // Record skipped runs so leadership can see scheduler health.
+    const startedMs = Date.now();
+    const skipId = await startAgentRun(pool, 'campaign-scheduler', `in_process:${label}`);
+    await finishAgentRun(pool, skipId, 'skipped', { reason: 'previous tick still in flight' }, null, startedMs);
     return;
   }
   schedulerInFlight = true;
+  const startedMs = Date.now();
+  const runId = await startAgentRun(pool, 'campaign-scheduler', `in_process:${label}`);
   try {
     const r = await tickCampaignScheduler(pool);
     if (r.picked > 0) {
       logger.info(`[CampaignScheduler] tick ${label} done — picked=${r.picked} sent=${r.sent} failed=${r.failed}`);
     }
+    await finishAgentRun(pool, runId, 'success', { picked: r.picked, sent: r.sent, failed: r.failed }, null, startedMs);
   } catch (err: any) {
     logger.warn(`[CampaignScheduler] tick ${label} failed: ${err?.message || err}`);
+    await finishAgentRun(pool, runId, 'error', {}, (err?.message || String(err)).slice(0, 4000), startedMs);
   } finally {
     schedulerInFlight = false;
   }
@@ -143,12 +152,16 @@ export function createCampaignSchedulerCronRouter(pool: Pool, cronSecret: string
     }
 
     const startedAt = new Date().toISOString();
+    const startedMs = Date.now();
+    const runId = await startAgentRun(pool, 'campaign-scheduler', 'qstash');
     try {
       const r = await tickCampaignScheduler(pool);
       logger.info(`[CampaignScheduler] HTTP tick — picked=${r.picked} sent=${r.sent} failed=${r.failed}`);
+      await finishAgentRun(pool, runId, 'success', { picked: r.picked, sent: r.sent, failed: r.failed }, null, startedMs);
       return res.json({ ok: true, run_at: startedAt, ...r });
     } catch (err: any) {
       logger.error('[CampaignScheduler] HTTP lỗi:', err.message);
+      await finishAgentRun(pool, runId, 'error', {}, (err?.message || String(err)).slice(0, 4000), startedMs);
       return res.status(500).json({ error: 'Internal error', detail: err.message });
     }
   });
