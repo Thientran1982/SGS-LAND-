@@ -25,6 +25,8 @@ import { onApiUnauthorized } from '../api/client';
 import { buyerAuthApi, type BuyerUser } from '../api/buyerAuth';
 import { syncFavorites, clearLocalFavorites } from '../storage/favorites';
 import { syncSavedSearches } from '../storage/savedSearches';
+import { setCachedPushToken } from '../storage/device';
+import { ensurePushRegistration } from '../notifications/registerPushToken';
 
 interface AuthContextValue {
   user: BuyerUser | null;
@@ -93,6 +95,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // into the buyer's account so they appear on every device.
     syncFavorites().catch(() => {});
     syncSavedSearches().catch(() => {});
+    // Re-post the device row so the server stamps `buyer_user_id` now that
+    // we have a Bearer token. Without this, message push notifications
+    // (Task #55) would only become reliable after the next 24h refresh
+    // window (or app restart). We invalidate the cached registration
+    // timestamp so ensurePushRegistration() actually re-hits the backend.
+    void (async () => {
+      try {
+        await setCachedPushToken(null);
+        await ensurePushRegistration();
+      } catch {
+        /* best-effort — push linkage will retry on next foreground tick */
+      }
+    })();
   }, []);
 
   const signOut = useCallback(async () => {
