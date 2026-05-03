@@ -65,6 +65,7 @@ import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from ".
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
 import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
 import { createBuyerRoutes } from "./server/routes/buyerRoutes";
+import { createConversationRoutes } from "./server/routes/conversationRoutes";
 import { startBuyerPushCron } from "./server/services/pushNotificationService";
 import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
@@ -1302,11 +1303,29 @@ async function startServer() {
 
   io.use((socket, next) => {
     try {
-      const cookieHeader = socket.handshake.headers.cookie;
-      if (!cookieHeader) {
-        socket.data.authUser = null;
-        return next();
+      socket.data.authUser = null;
+      socket.data.buyerUser = null;
+
+      // Buyer auth path: mobile app passes the buyer JWT in handshake.auth
+      // (Bearer-style). Validate aud='buyer' so admin/agent cookies signed
+      // with the same secret can't impersonate a buyer's room.
+      const handshakeToken =
+        (socket.handshake.auth as any)?.token ||
+        (socket.handshake.query as any)?.token;
+      if (typeof handshakeToken === 'string' && handshakeToken.length > 0) {
+        try {
+          const decoded: any = jwt.verify(handshakeToken, JWT_SECRET);
+          if (decoded && decoded.aud === 'buyer' && decoded.sub) {
+            socket.data.buyerUser = { id: decoded.sub, phone: decoded.phone };
+          }
+        } catch {
+          // Bad buyer token → fall through to anonymous; cookie path still tries.
+        }
       }
+
+      // Cookie auth path: web admin/agent users.
+      const cookieHeader = socket.handshake.headers.cookie;
+      if (!cookieHeader) return next();
 
       const cookies: Record<string, string> = {};
       cookieHeader.split(';').forEach(c => {
@@ -1315,17 +1334,17 @@ async function startServer() {
       });
 
       const token = cookies['token'];
-      if (!token) {
-        socket.data.authUser = null;
-        return next();
-      }
+      if (!token) return next();
 
       jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
-        socket.data.authUser = err ? null : decoded;
+        if (!err && decoded && decoded.aud !== 'buyer') {
+          socket.data.authUser = decoded;
+        }
         next();
       });
     } catch (e) {
       socket.data.authUser = null;
+      socket.data.buyerUser = null;
       next();
     }
   });
@@ -4089,6 +4108,7 @@ async function startServer() {
     // they cannot be cross-used against admin/agent endpoints.
     app.use(apiRateLimit, createBuyerAuthRoutes(JWT_SECRET));
     app.use(apiRateLimit, createBuyerRoutes(pool, JWT_SECRET));
+    app.use(apiRateLimit, createConversationRoutes(JWT_SECRET, io));
     try {
       startBuyerPushCron(pool);
     } catch (err: any) {
@@ -4164,6 +4184,53 @@ async function startServer() {
     if (socket.data.authUser?.id) {
       socket.join(`user:${socket.data.authUser.id}`);
     }
+    if (socket.data.buyerUser?.id) {
+      socket.join(`buyer:${socket.data.buyerUser.id}`);
+    }
+
+    // ── Buyer messaging room joins (Task #55) ─────────────────────────────
+    // Buyer joins a conversation room only if they actually own it. The
+    // REST POST /api/buyer/conversations creates rows so we look up
+    // ownership before letting the socket subscribe to fan-out events.
+    socket.on('buyer:join_conversation', async (conversationId: string) => {
+      if (!socket.data.buyerUser?.id) return;
+      if (typeof conversationId !== 'string') return;
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(conversationId)) return;
+      try {
+        const { conversationRepository } = await import('./server/repositories/conversationRepository');
+        const conv = await conversationRepository.findById(conversationId);
+        if (!conv || conv.buyerUserId !== socket.data.buyerUser.id) return;
+        socket.join(`conv:${conversationId}`);
+      } catch (err) {
+        logger.warn(`[buyer:join_conversation] ${err instanceof Error ? err.message : String(err)}`);
+      }
+    });
+    socket.on('buyer:leave_conversation', (conversationId: string) => {
+      if (typeof conversationId !== 'string') return;
+      socket.leave(`conv:${conversationId}`);
+    });
+
+    // Agent (cookie-auth) join: scoped to conversations the agent is
+    // assigned to. Agents already auto-join `user:<id>` above which
+    // receives `conversation:updated` for inbox refresh; explicit room
+    // join keeps `conversation:message` deliverable on the open thread.
+    socket.on('agent:join_conversation', async (conversationId: string) => {
+      if (!socket.data.authUser?.id) return;
+      if (typeof conversationId !== 'string') return;
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(conversationId)) return;
+      try {
+        const { conversationRepository } = await import('./server/repositories/conversationRepository');
+        const conv = await conversationRepository.findById(conversationId);
+        if (!conv || conv.agentUserId !== socket.data.authUser.id) return;
+        socket.join(`conv:${conversationId}`);
+      } catch (err) {
+        logger.warn(`[agent:join_conversation] ${err instanceof Error ? err.message : String(err)}`);
+      }
+    });
+    socket.on('agent:leave_conversation', (conversationId: string) => {
+      if (typeof conversationId !== 'string') return;
+      socket.leave(`conv:${conversationId}`);
+    });
 
     socket.on("join_room", (room) => {
       if (!socket.data.authUser) return;
