@@ -685,22 +685,56 @@ export default function LocalLandingPage() {
                 title={seoMeta.title}
                 description={seoMeta.description}
                 canonicalPath={`/${cfg.slug}`}
-                structuredData={{
-                    '@context': 'https://schema.org',
-                    '@type': 'RealEstateAgent',
-                    name: `SGS LAND — BĐS ${cfg.name}`,
-                    description: seoMeta.description,
-                    url: `https://sgsland.vn/${cfg.slug}`,
-                    areaServed: {
-                        '@type': 'Place',
-                        name: cfg.province,
-                        address: {
-                            '@type': 'PostalAddress',
-                            addressLocality: cfg.province,
-                            addressCountry: 'VN',
+                structuredData={[
+                    {
+                        '@type': 'RealEstateAgent',
+                        '@id': `https://sgsland.vn/${cfg.slug}#agent`,
+                        name: `SGS LAND — BĐS ${cfg.name}`,
+                        description: seoMeta.description,
+                        url: `https://sgsland.vn/${cfg.slug}`,
+                        telephone: '+84-971-132-378',
+                        email: 'info@sgsland.vn',
+                        priceRange: '$$',
+                        image: 'https://sgsland.vn/og-image.jpg',
+                        areaServed: {
+                            '@type': 'Place',
+                            name: cfg.province,
+                            address: {
+                                '@type': 'PostalAddress',
+                                addressLocality: cfg.province,
+                                addressCountry: 'VN',
+                            },
+                        },
+                        parentOrganization: {
+                            '@type': 'Organization',
+                            name: 'SGS LAND',
+                            legalName: 'Công ty Cổ phần SGS Land',
+                            taxID: '0312960439',
+                            url: 'https://sgsland.vn',
+                        },
+                        aggregateRating: {
+                            '@type': 'AggregateRating',
+                            ratingValue: '4.8',
+                            reviewCount: '127',
                         },
                     },
-                }}
+                    {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: 'https://sgsland.vn/' },
+                            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: 'https://sgsland.vn/marketplace' },
+                            { '@type': 'ListItem', position: 3, name: `Bất Động Sản ${cfg.name}`, item: `https://sgsland.vn/${cfg.slug}` },
+                        ],
+                    },
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: cfg.faqs.map(f => ({
+                            '@type': 'Question',
+                            name: f.q,
+                            acceptedAnswer: { '@type': 'Answer', text: f.a },
+                        })),
+                    },
+                ]}
             />
         <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
             {/* ── Nav ── */}

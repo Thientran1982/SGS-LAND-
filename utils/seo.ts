@@ -219,6 +219,7 @@ const HELMET_MANAGED_ROUTES = new Set<string>([
   'crm-platform', 'help-center', 'careers',
   'privacy-policy', 'terms-of-service',
   'du-an',
+  'ai-valuation',
   'marketplace-apps',
   'bat-dong-san-dong-nai',
   'bat-dong-san-long-thanh',

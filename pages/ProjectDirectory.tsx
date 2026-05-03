@@ -359,14 +359,58 @@ export default function ProjectDirectory() {
                 title="Danh Sách Dự Án Bất Động Sản Việt Nam 2026 - SGS LAND"
                 description="Tổng hợp dự án BĐS nổi bật 2026 tại TP.HCM, Đồng Nai, Bình Dương: Aqua City, Vinhomes Grand Park, The Global City, Izumi City. Bảng giá, pháp lý, tư vấn miễn phí."
                 canonicalPath="/du-an"
-                structuredData={{
-                    '@type': 'CollectionPage',
-                    name: 'Danh sách dự án BĐS SGS LAND',
-                    description: 'Thư mục các dự án bất động sản đang phân phối tại SGS LAND, bao gồm thông tin chủ đầu tư, vị trí, bảng giá và pháp lý.',
-                    inLanguage: 'vi-VN',
-                    isPartOf: { '@type': 'WebSite', name: 'SGS LAND', url: 'https://sgsland.vn' },
-                    publisher: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
-                }}
+                structuredData={[
+                    {
+                        '@type': 'CollectionPage',
+                        name: 'Danh sách dự án BĐS SGS LAND',
+                        description: 'Thư mục các dự án bất động sản đang phân phối tại SGS LAND, bao gồm thông tin chủ đầu tư, vị trí, bảng giá và pháp lý.',
+                        inLanguage: 'vi-VN',
+                        isPartOf: { '@type': 'WebSite', name: 'SGS LAND', url: 'https://sgsland.vn' },
+                        publisher: { '@type': 'Organization', name: 'SGS LAND', legalName: 'Công ty Cổ phần SGS Land', taxID: '0312960439', url: 'https://sgsland.vn' },
+                        dateModified: new Date().toISOString().slice(0, 10),
+                    },
+                    {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: 'https://sgsland.vn/' },
+                            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: 'https://sgsland.vn/du-an' },
+                        ],
+                    },
+                    {
+                        '@type': 'ItemList',
+                        name: 'Dự án bất động sản SGS LAND đang phân phối 2026',
+                        numberOfItems: ALL_PROJECTS.length,
+                        itemListOrder: 'https://schema.org/ItemListOrderDescending',
+                        itemListElement: ALL_PROJECTS.map((p, i) => ({
+                            '@type': 'ListItem',
+                            position: i + 1,
+                            url: `https://sgsland.vn/du-an/${p.slug}`,
+                            item: {
+                                '@type': 'ApartmentComplex',
+                                name: p.name,
+                                description: p.description,
+                                url: `https://sgsland.vn/du-an/${p.slug}`,
+                                address: { '@type': 'PostalAddress', addressLocality: p.location, addressCountry: 'VN' },
+                                additionalProperty: [
+                                    { '@type': 'PropertyValue', name: 'Chủ đầu tư', value: p.developer },
+                                    { '@type': 'PropertyValue', name: 'Quy mô', value: p.scale },
+                                    { '@type': 'PropertyValue', name: 'Khoảng giá', value: p.priceRange },
+                                    { '@type': 'PropertyValue', name: 'Trạng thái', value: p.status },
+                                ],
+                            },
+                        })),
+                    },
+                    {
+                        '@type': 'FAQPage',
+                        mainEntity: [
+                            { '@type': 'Question', name: 'SGS LAND đang phân phối những dự án BĐS nào tại Việt Nam?', acceptedAnswer: { '@type': 'Answer', text: `SGS LAND hiện phân phối ${ALL_PROJECTS.length} dự án BĐS lớn tại TP.HCM và Đồng Nai từ các chủ đầu tư uy tín nhất Việt Nam: Novaland (Aqua City), Vinhomes (Grand Park, Cần Giờ, Central Park), Masterise Homes (The Global City), Nam Long (Izumi City), Sơn Kim Land, Đại Quang Minh (Sala Thủ Thiêm). Tất cả đều có hợp đồng phân phối uỷ quyền chính chủ.` } },
+                            { '@type': 'Question', name: 'Mua dự án qua SGS LAND có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí cho người mua. SGS LAND nhận hoa hồng phân phối từ chủ đầu tư theo hợp đồng uỷ quyền chính thức. Người mua được tư vấn pháp lý, thẩm định dự án, hỗ trợ vay ngân hàng và làm sổ hồng miễn phí trọn gói.' } },
+                            { '@type': 'Question', name: 'Pháp lý các dự án trên SGS LAND có an toàn không?', acceptedAnswer: { '@type': 'Answer', text: 'Tất cả dự án phân phối qua SGS LAND đều được kiểm tra pháp lý 2 lớp (AI + chuyên viên) trước khi đưa lên hệ thống: kiểm tra giấy phép xây dựng, sổ đỏ tổng, đánh giá rủi ro tài chính chủ đầu tư. Khách hàng được cung cấp hồ sơ pháp lý đầy đủ trước khi đặt cọc.' } },
+                            { '@type': 'Question', name: 'Dự án nào của SGS LAND đang bán chạy nhất 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 dự án bán chạy nhất qua SGS LAND năm 2026: (1) Aqua City Novaland (Biên Hòa, Đồng Nai) — biệt thự đảo từ 6,5 tỷ; (2) Vinhomes Cần Giờ Green Paradise (Cần Giờ, TP.HCM) — siêu đô thị lấn biển 2.870ha mở bán Q3/2026; (3) Vinhomes Grand Park (TP Thủ Đức) — căn hộ từ 3 tỷ đã bàn giao.' } },
+                            { '@type': 'Question', name: 'Làm sao để xem bảng giá chính thức của một dự án?', acceptedAnswer: { '@type': 'Answer', text: 'Bấm vào tên dự án trong danh sách để vào trang chi tiết, hoặc liên hệ hotline SGS LAND +84 971 132 378 (8h-22h) để nhận bảng giá PDF chính chủ + chính sách thanh toán + lịch mở bán mới nhất qua Zalo trong 5 phút.' } },
+                        ],
+                    },
+                ]}
             />
             {/* ── Sticky nav ── */}
             <nav className="sticky top-0 z-40 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]/90 backdrop-blur-md">
