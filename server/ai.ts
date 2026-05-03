@@ -490,6 +490,12 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
 // Typed Router plan output
 type RouterPlan = {
     next_step: string;
+    /**
+     * Multi-intent: secondary intents the message also touches (max 2).
+     * Pipeline dispatches these in parallel as auxiliary RAG context for the
+     * Writer, but only the primary `next_step` chooses the writer template.
+     */
+    additional_intents?: string[];
     extraction: {
         explicit_question?: string;
         budget_max?: number;
@@ -548,7 +554,15 @@ const ROUTER_SCHEMA: Schema = {
                 valuation_bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ (chỉ cho căn hộ/penthouse). VD: 'studio/1 phòng' → 0/1, '2PN/2 phòng ngủ' → 2, '3PN' → 3, '4 phòng ngủ trở lên' → 4" }
             }
         },
-        confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" }
+        confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" },
+        additional_intents: {
+            type: Type.ARRAY,
+            description: "Tối đa 2 intent phụ mà câu hỏi cũng đề cập (vd hỏi vừa giá vừa pháp lý). KHÔNG lặp lại next_step. Bỏ trống nếu chỉ có 1 intent.",
+            items: {
+                type: Type.STRING,
+                enum: ['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION'] as string[],
+            }
+        }
     },
     required: ['next_step', 'confidence', 'extraction']
 };
@@ -1010,7 +1024,11 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             const rawConf = plan.confidence || 0;
             plan.confidence = rawConf > 1 ? Math.max(0, Math.min(1, rawConf / 100)) : Math.max(0, Math.min(1, rawConf));
             const confPct = Math.round(plan.confidence * 100);
-            this.updateTrace(state.trace, `→ ${plan.next_step} (conf: ${confPct}%)${entityStr}`, GENAI_CONFIG.MODELS.ROUTER);
+            const secIntentsArr = Array.isArray(plan.additional_intents)
+                ? plan.additional_intents.filter(i => i && i !== plan.next_step).slice(0, 2)
+                : [];
+            const secIntentsStr = secIntentsArr.length > 0 ? ` [+ ${secIntentsArr.join(', ')}]` : '';
+            this.updateTrace(state.trace, `→ ${plan.next_step}${secIntentsStr} (conf: ${confPct}%)${entityStr}`, GENAI_CONFIG.MODELS.ROUTER);
 
             // --- CONFIDENCE-BASED ROUTING ---
             // < 50% : CLARIFY  — quá mơ hồ, chỉ hỏi lại 1 câu, không đoán mù
@@ -1789,8 +1807,11 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                     .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN VIÊN'}: ${h.content}`)
                     .join('\n');
 
+            // Structured specialist output wrapping — Writer parses by tag name.
+            // Each specialist's contribution comes inside <SPECIALIST_RESULT type="...">…</SPECIALIST_RESULT>
+            // tags so prompts can reference them precisely (vs prose blob).
             const leadAnalysisSection = state.leadAnalysis
-                ? `\n[LEAD ANALYSIS]:\n${state.leadAnalysis}`
+                ? `\n<SPECIALIST_RESULT type="lead_analysis">\n${state.leadAnalysis}\n</SPECIALIST_RESULT>\n`
                 : '';
 
             const langInstruction = (state.lang === 'en')
@@ -1847,12 +1868,54 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                         }
                     }
                     const ragOut = await _ragWithSrc(state.tenantId, state.userMessage, 4, { domains });
-                    ragKnowledgeSection = ragOut.context;
+                    if (ragOut.context) {
+                        ragKnowledgeSection = `\n<SPECIALIST_RESULT type="rag_knowledge" role="${role || 'writer'}">\n${ragOut.context}\n</SPECIALIST_RESULT>\n`;
+                    }
                     ragSources = ragOut.sources;
                 } catch (_ragErr) {
                     // RAG lỗi không nên chặn AI — im lặng bỏ qua
                 }
             }
+
+            // ── Multi-intent: parallel dispatch of secondary intents ──────────────
+            // Fetch RAG context for each additional_intent (max 2) in parallel,
+            // wrap each as <SPECIALIST_RESULT type="secondary_intent" intent="...">.
+            // Pure context augmentation — does NOT change writer template selection.
+            let secondaryIntentsSection = '';
+            const additionalIntents = (state.plan?.additional_intents || [])
+                .filter(i => i && i !== currentIntent && RAG_INTENTS.has(i))
+                .slice(0, 2);
+            if (additionalIntents.length > 0) {
+                try {
+                    const { agentRepository: _agentRepoSec } = await import('./repositories/agentRepository');
+                    const secResults = await Promise.all(additionalIntents.map(async (secIntent) => {
+                        try {
+                            const secRole = INTENT_TO_ROLE[secIntent];
+                            let secDomains: string[] | undefined;
+                            if (secRole) {
+                                const a = await _agentRepoSec.getAgentByRole(state.tenantId, secRole);
+                                const d = a?.knowledgeFilter?.domains;
+                                if (Array.isArray(d) && d.length > 0) secDomains = d;
+                            }
+                            const out = await _ragWithSrc(state.tenantId, state.userMessage, 2, { domains: secDomains });
+                            if (!out.context) return null;
+                            return `<SPECIALIST_RESULT type="secondary_intent" intent="${secIntent}" role="${secRole || 'writer'}">\n${out.context}\n</SPECIALIST_RESULT>`;
+                        } catch { return null; }
+                    }));
+                    const nonNull = secResults.filter((s): s is string => !!s);
+                    if (nonNull.length > 0) {
+                        secondaryIntentsSection = '\n' + nonNull.join('\n') + '\n';
+                        feedbackRepository.logObservation(state.tenantId, 'ROUTER', currentIntent, 'MULTI_INTENT_DISPATCHED', {
+                            primary: currentIntent,
+                            secondary: additionalIntents,
+                            sectionsBuilt: nonNull.length,
+                        }).catch(() => {});
+                    }
+                } catch (_secErr) {
+                    // best-effort — không chặn pipeline
+                }
+            }
+            ragKnowledgeSection += secondaryIntentsSection;
 
             // ── Per-intent WRITER prompt — 9 branches ─────────────────────────────
             const _ctx  = `CONTEXT (dữ liệu đã được phân tích thực tế):\n${state.systemContext}${leadAnalysisSection}${ragKnowledgeSection}`;
