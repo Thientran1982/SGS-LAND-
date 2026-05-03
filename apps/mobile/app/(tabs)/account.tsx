@@ -1,7 +1,14 @@
-import React from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
+import {
+  getCachedPushPreference,
+  getDeviceId,
+  setCachedPushPreference,
+} from '../../src/storage/device';
+import { ensurePushRegistration } from '../../src/notifications/registerPushToken';
+import { pushApi } from '../../src/api/push';
 
 const HOTLINE = '+84971132378';
 const HOTLINE_DISPLAY = '0971 132 378';
@@ -30,6 +37,77 @@ const Row: React.FC<RowProps> = ({ icon, title, subtitle, onPress }) => (
 );
 
 export default function AccountScreen() {
+  const [pushEnabled, setPushEnabled] = useState<boolean>(false);
+  const [pushBusy, setPushBusy] = useState<boolean>(false);
+
+  // Hydrate from cache on mount; default to ON if never decided.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const cached = await getCachedPushPreference();
+      if (cancelled) return;
+      setPushEnabled(cached !== false); // null or true → ON
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleTogglePush = useCallback(
+    async (next: boolean) => {
+      if (pushBusy) return;
+      setPushBusy(true);
+      const prev = pushEnabled;
+      // Optimistic flip — we'll revert on failure.
+      setPushEnabled(next);
+      await setCachedPushPreference(next);
+      try {
+        if (next) {
+          // Turning ON: request permission + (re-)register the token.
+          const r = await ensurePushRegistration({ forcePromptIfUndecided: true });
+          if (!r.ok) {
+            setPushEnabled(false);
+            await setCachedPushPreference(false);
+            if (r.reason === 'permission-denied') {
+              Alert.alert(
+                'Cần cấp quyền thông báo',
+                'Vui lòng bật thông báo trong Cài đặt để nhận tin BĐS mới.',
+                [
+                  { text: 'Hủy', style: 'cancel' },
+                  { text: 'Mở Cài đặt', onPress: () => Linking.openSettings() },
+                ],
+              );
+            } else if (r.reason === 'no-device') {
+              Alert.alert('Không hỗ trợ', 'Thông báo đẩy chỉ hoạt động trên thiết bị thật.');
+            }
+          } else {
+            // Sync server-side preference.
+            try {
+              const deviceId = await getDeviceId();
+              await pushApi.setPreference(deviceId, true);
+            } catch {
+              /* best-effort */
+            }
+          }
+        } else {
+          // Turning OFF: keep the token, just flip the server preference.
+          try {
+            const deviceId = await getDeviceId();
+            await pushApi.setPreference(deviceId, false);
+          } catch {
+            /* best-effort — local cache is the source of truth on next launch */
+          }
+        }
+      } catch {
+        setPushEnabled(prev);
+        await setCachedPushPreference(prev);
+      } finally {
+        setPushBusy(false);
+      }
+    },
+    [pushBusy, pushEnabled],
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -67,6 +145,28 @@ export default function AccountScreen() {
               subtitle="sgsland.vn"
               onPress={() => Linking.openURL(WEBSITE)}
             />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Thông báo</Text>
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.rowIcon}>🔔</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Tin BĐS mới khớp tìm kiếm</Text>
+                <Text style={styles.rowSub}>
+                  Nhận thông báo đẩy khi có bất động sản mới phù hợp với tìm kiếm đã lưu.
+                </Text>
+              </View>
+              <Switch
+                value={pushEnabled}
+                onValueChange={handleTogglePush}
+                disabled={pushBusy}
+                trackColor={{ false: colors.border, true: colors.brandSoft }}
+                thumbColor={pushEnabled ? colors.brand : colors.bgSurface}
+              />
+            </View>
           </View>
         </View>
 

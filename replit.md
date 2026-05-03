@@ -194,3 +194,26 @@ SGS Land is an AI-powered real estate CRM and management platform designed for t
 - **Root tsconfig**: `apps` added to `exclude` so root `tsc --noEmit` lint stays green without RN deps installed at root. Mobile app has its own tsconfig.
 - **Install workflow**: Documented in `apps/mobile/README.md` — `cd apps/mobile && npm install && npx expo start`. Dependencies (~500MB Expo) NOT installed at session boundary; install on first dev/build.
 - **Sprints 3-7 deferred** (require backend work): buyer auth/OTP, push notifications (Expo push tokens), in-app messaging, VNPay payment for hold deposit, store account submission (App Store/Play Store).
+
+## Bước 4 — Buyer Push Notifications cho new matching listings — Task #53
+
+- **What**: Notify buyers (mobile Expo app) when new listings match their saved searches. Sprint 4-5 of the mobile plan; key driver of buyer retention.
+- **Architecture (anonymous device-based)**: Buyer auth ships in Sprint 3+; for now identity = stable UUID per install (AsyncStorage `sgs.device.id.v1`). All push/saved-search APIs are public, scoped via `x-buyer-device-id` header.
+- **DB (migration `095_buyer_push_notifications`)**: 3 buyer-side tables, no `tenant_id`:
+  - `buyer_devices` — UNIQUE(device_id), expo_push_token, notifications_enabled, platform, app_version, last_seen_at.
+  - `buyer_saved_searches` — JSONB filters (mobile filter shape: type/transaction/location/search/priceMin/priceMax/bedroomsMin/areaMin/areaMax/isVerified), notifications_enabled, last_notified_at watermark.
+  - `buyer_push_notification_log` — UNIQUE(device_id, saved_search_id, listing_id) dedup; success/error tracking. INSERT…ON CONFLICT DO NOTHING…RETURNING gives atomic claim semantics so the cron is safe under concurrent runs.
+- **Server**:
+  - `server/services/pushNotificationService.ts` — Expo Push HTTPS API directly (`https://exp.host/--/api/v2/push/send`, no SDK dep). `tickBuyerPushNotifications()` finds active searches, runs through `listingRepository.findListings` with status_in=AVAILABLE/BOOKING/OPENING, filters by `createdAt > since` (search.last_notified_at ?? createdAt), claims via dedup log, batches into Expo (cap 100/req, cap 3 listings/tick/search to prevent spam), and emits `data.url=/bds/<slugId>` for deep-link. `DeviceNotRegistered` errors auto-scrub the token.
+  - `server/repositories/buyerPushRepository.ts` — raw pool (no RLS; tables are unscoped).
+  - `server/routes/buyerPushRoutes.ts` — `POST /api/buyer/devices`, `PATCH /api/buyer/devices/:deviceId/preferences`, `GET|POST|PATCH|DELETE /api/buyer/saved-searches[/:id]`, plus internal `POST /api/internal/buyer-push-cron` (header `x-internal-secret`, secret falls back to `JWT_SECRET[:32]`).
+  - In-process `setInterval` driver started in `server.ts` (15-min interval, initial run +60s). HTTP cron drives the same `tickBuyerPushNotifications` for QStash compatibility.
+- **Mobile (Expo)**:
+  - New deps: `expo-notifications` ~0.29, `expo-device` ~7.0. Added `expo-notifications` plugin entry in `app.json`.
+  - `src/storage/device.ts` — UUID generator + AsyncStorage cache for deviceId, push preference, last-known token.
+  - `src/notifications/registerPushToken.ts` — `ensurePushRegistration()`: checks `Device.isDevice`, configures Android `matches` channel (HIGH importance), requests permission, calls `Notifications.getExpoPushTokenAsync({projectId})`, POSTs to `/api/buyer/devices` only when token changes. Single-flight guard prevents concurrent registration.
+  - `src/api/push.ts`, `src/storage/savedSearches.ts` — typed clients.
+  - `app/_layout.tsx` — sets `setNotificationHandler` (foreground banner + sound), invokes `ensurePushRegistration()` on mount, hooks `getLastNotificationResponseAsync` (cold start) + `addNotificationResponseReceivedListener` (warm) and `router.push(data.url || '/bds/'+data.slugId)` for deep-link into `/bds/[slugId]`.
+  - `app/(tabs)/account.tsx` — Switch toggle "Tin BĐS mới khớp tìm kiếm" with optimistic flip + Alert/`Linking.openSettings()` if user denied OS permission. Persists both locally (AsyncStorage) and server-side (`PATCH /api/buyer/devices/:id/preferences`).
+  - `app/(tabs)/search.tsx` — "🔔 Lưu tìm kiếm" pill button in toolbar; auto-builds Vietnamese label from active filters, triggers permission prompt on first save if push wasn't yet decided.
+- **Idempotency & dedup**: `last_notified_at` watermark prevents back-catalog blasts on first save; UNIQUE log prevents duplicate sends across in-process + HTTP cron drivers.
