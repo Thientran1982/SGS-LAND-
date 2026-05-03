@@ -1586,7 +1586,7 @@ class DatabaseApiClient {
   }
 
   async simulatePrompt(systemPrompt: string, userInput: string, model?: string) {
-    return api.post<{ output: string }>('/api/ai/governance/simulate', { systemPrompt, userInput, model });
+    return api.post<{ output: string; latencyMs?: number; model?: string }>('/api/ai/governance/simulate', { systemPrompt, userInput, model });
   }
 
   async promotePromptVersion(id: string, version: number) {
@@ -1594,6 +1594,22 @@ class DatabaseApiClient {
       `/api/ai/governance/prompt-templates/${id}/promote`,
       { version }
     );
+  }
+
+  async getPromotePromptLog(id: string) {
+    try {
+      return await api.get<Array<{
+        id: string;
+        templateName: string;
+        version: number;
+        previousVersion: number | null;
+        promotedByName: string | null;
+        promotedByEmail: string | null;
+        createdAt: string;
+      }>>(`/api/ai/governance/prompt-templates/${id}/promote-log`);
+    } catch {
+      return [];
+    }
   }
 
   async getFeedbackStats(days: number = 30) {

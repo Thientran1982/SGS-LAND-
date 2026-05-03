@@ -95,6 +95,307 @@ const ICONS = {
 
 const PROMPT_VARIABLES = ['{{name}}', '{{role}}', '{{context}}', '{{history}}', '{{market_data}}'];
 
+// Line-level LCS diff used by the side-by-side promote modal.
+type DiffLine = { type: 'same' | 'removed' | 'added' | 'pad'; text: string; lineNo: number | null };
+function computeLineDiff(a: string, b: string): { left: DiffLine[]; right: DiffLine[]; addedCount: number; removedCount: number } {
+    const aLines = (a || '').split('\n');
+    const bLines = (b || '').split('\n');
+    const m = aLines.length, n = bLines.length;
+    // LCS table — O(m*n) memory; prompt sizes are small in practice.
+    const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = m - 1; i >= 0; i--) {
+        for (let j = n - 1; j >= 0; j--) {
+            dp[i][j] = aLines[i] === bLines[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+        }
+    }
+    const left: DiffLine[] = [];
+    const right: DiffLine[] = [];
+    let i = 0, j = 0, aLine = 1, bLine = 1, added = 0, removed = 0;
+    while (i < m && j < n) {
+        if (aLines[i] === bLines[j]) {
+            left.push({ type: 'same', text: aLines[i], lineNo: aLine++ });
+            right.push({ type: 'same', text: bLines[j], lineNo: bLine++ });
+            i++; j++;
+        } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+            left.push({ type: 'removed', text: aLines[i], lineNo: aLine++ });
+            right.push({ type: 'pad', text: '', lineNo: null });
+            removed++; i++;
+        } else {
+            left.push({ type: 'pad', text: '', lineNo: null });
+            right.push({ type: 'added', text: bLines[j], lineNo: bLine++ });
+            added++; j++;
+        }
+    }
+    while (i < m) { left.push({ type: 'removed', text: aLines[i++], lineNo: aLine++ }); right.push({ type: 'pad', text: '', lineNo: null }); removed++; }
+    while (j < n) { left.push({ type: 'pad', text: '', lineNo: null }); right.push({ type: 'added', text: bLines[j++], lineNo: bLine++ }); added++; }
+    return { left, right, addedCount: added, removedCount: removed };
+}
+
+interface DiffPromoteModalProps {
+    open: boolean;
+    prompt: PromptTemplate | null;
+    targetVersion: number | null;
+    defaultModel?: string;
+    onClose: () => void;
+    onPromoted: () => void;
+    notify: (msg: string, type?: 'success' | 'error') => void;
+}
+
+interface SimResult { text: string; latencyMs?: number }
+interface PromoteLogEntry {
+    id: string;
+    templateName: string;
+    version: number;
+    previousVersion: number | null;
+    promotedByName: string | null;
+    promotedByEmail: string | null;
+    createdAt: string;
+}
+
+const errorMessage = (e: unknown): string => {
+    if (e instanceof Error) return e.message;
+    if (typeof e === 'string') return e;
+    return 'Lỗi không xác định';
+};
+
+const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targetVersion, defaultModel, onClose, onPromoted, notify }) => {
+    const [testInput, setTestInput] = useState('');
+    const [runningBoth, setRunningBoth] = useState(false);
+    const [leftOutput, setLeftOutput] = useState<SimResult | null>(null);
+    const [rightOutput, setRightOutput] = useState<SimResult | null>(null);
+    const [promoting, setPromoting] = useState(false);
+    const [log, setLog] = useState<PromoteLogEntry[]>([]);
+    const [loadingLog, setLoadingLog] = useState(false);
+
+    const activeVersion = prompt?.activeVersion ?? null;
+    const leftVersionObj = useMemo(() => prompt?.versions?.find(v => v.version === activeVersion) || null, [prompt, activeVersion]);
+    const rightVersionObj = useMemo(() => prompt?.versions?.find(v => v.version === targetVersion) || null, [prompt, targetVersion]);
+    const diff = useMemo(() => computeLineDiff(leftVersionObj?.content || '', rightVersionObj?.content || ''), [leftVersionObj, rightVersionObj]);
+
+    useEffect(() => {
+        if (!open || !prompt) return;
+        setLeftOutput(null);
+        setRightOutput(null);
+        setTestInput('');
+        setLoadingLog(true);
+        db.getPromotePromptLog(prompt.id)
+            .then((rows) => setLog(rows || []))
+            .catch(() => setLog([]))
+            .finally(() => setLoadingLog(false));
+    }, [open, prompt]);
+
+    if (!open || !prompt || targetVersion == null) return null;
+
+    const handleTestBoth = async () => {
+        if (!testInput.trim() || !leftVersionObj || !rightVersionObj) return;
+        setRunningBoth(true);
+        setLeftOutput(null);
+        setRightOutput(null);
+        try {
+            const runOne = (systemPrompt: string): Promise<SimResult> =>
+                db.simulatePrompt(systemPrompt, testInput, defaultModel)
+                    .then((r) => ({ text: r.output || '', latencyMs: r.latencyMs }))
+                    .catch((e: unknown) => ({ text: errorMessage(e), latencyMs: 0 }));
+            const [l, r] = await Promise.all([
+                runOne(leftVersionObj.content),
+                runOne(rightVersionObj.content),
+            ]);
+            setLeftOutput(l);
+            setRightOutput(r);
+        } finally {
+            setRunningBoth(false);
+        }
+    };
+
+    const handlePromote = async () => {
+        if (!confirm(`Promote v${targetVersion} thành ACTIVE? Các request mới sẽ dùng prompt này ngay lập tức.`)) return;
+        setPromoting(true);
+        try {
+            await db.promotePromptVersion(prompt.id, targetVersion);
+            notify(`Đã promote v${targetVersion} thành ACTIVE`, 'success');
+            onPromoted();
+            onClose();
+        } catch {
+            notify('Lỗi khi promote', 'error');
+        } finally {
+            setPromoting(false);
+        }
+    };
+
+    const formatTs = (iso: string) => {
+        try { return new Date(iso).toLocaleString('vi-VN'); } catch { return iso; }
+    };
+
+    return createPortal(
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-enter" onClick={onClose}>
+            <div className="bg-[var(--bg-surface)] w-full max-w-6xl max-h-[92vh] rounded-[24px] shadow-2xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-start justify-between px-6 py-4 border-b border-[var(--glass-border)]">
+                    <div>
+                        <h3 className="font-bold text-[var(--text-primary)] text-base">So sánh phiên bản — {prompt.name}</h3>
+                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                            <span className="font-mono px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">v{activeVersion} (active)</span>
+                            <span className="mx-2 text-[var(--text-tertiary)]">↔</span>
+                            <span className="font-mono px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : ''}</span>
+                            <span className="ml-3 text-emerald-600">+{diff.addedCount}</span>
+                            <span className="ml-1 text-rose-500">−{diff.removedCount}</span>
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1" title="Đóng">
+                        {ICONS.X}
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+                    {/* Side-by-side diff */}
+                    <div>
+                        <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Diff nội dung prompt</div>
+                        <div className="grid grid-cols-2 gap-2 border border-[var(--glass-border)] rounded-xl overflow-hidden">
+                            <div className="bg-emerald-50/40 border-r border-[var(--glass-border)]">
+                                <div className="text-2xs font-bold text-emerald-700 px-3 py-1.5 bg-emerald-100/60 border-b border-emerald-200">v{activeVersion} (active)</div>
+                                <div className="font-mono text-[11px] leading-5 max-h-[40vh] overflow-auto">
+                                    {diff.left.map((ln, idx) => {
+                                        const bg = ln.type === 'removed' ? 'bg-rose-100/70' : ln.type === 'pad' ? 'bg-slate-50' : '';
+                                        const marker = ln.type === 'removed' ? '−' : ln.type === 'pad' ? ' ' : ' ';
+                                        const markerColor = ln.type === 'removed' ? 'text-rose-500' : 'text-slate-300';
+                                        return (
+                                            <div key={`l${idx}`} className={`flex ${bg} ${ln.type === 'pad' ? 'min-h-[20px]' : ''}`}>
+                                                <span className="w-10 shrink-0 text-right pr-2 text-slate-400 select-none border-r border-slate-100">{ln.lineNo ?? ''}</span>
+                                                <span className={`w-4 shrink-0 text-center font-bold ${markerColor}`}>{marker}</span>
+                                                <span className="flex-1 whitespace-pre-wrap break-all px-1">{ln.text || ' '}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <div className="bg-indigo-50/30">
+                                <div className="text-2xs font-bold text-indigo-700 px-3 py-1.5 bg-indigo-100/60 border-b border-indigo-200">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : `(${rightVersionObj?.status || ''})`}</div>
+                                <div className="font-mono text-[11px] leading-5 max-h-[40vh] overflow-auto">
+                                    {diff.right.map((ln, idx) => {
+                                        const bg = ln.type === 'added' ? 'bg-emerald-100/70' : ln.type === 'pad' ? 'bg-slate-50' : '';
+                                        const marker = ln.type === 'added' ? '+' : ln.type === 'pad' ? ' ' : ' ';
+                                        const markerColor = ln.type === 'added' ? 'text-emerald-600' : 'text-slate-300';
+                                        return (
+                                            <div key={`r${idx}`} className={`flex ${bg} ${ln.type === 'pad' ? 'min-h-[20px]' : ''}`}>
+                                                <span className="w-10 shrink-0 text-right pr-2 text-slate-400 select-none border-r border-slate-100">{ln.lineNo ?? ''}</span>
+                                                <span className={`w-4 shrink-0 text-center font-bold ${markerColor}`}>{marker}</span>
+                                                <span className="flex-1 whitespace-pre-wrap break-all px-1">{ln.text || ' '}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Test both */}
+                    <div>
+                        <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Chạy thử song song trên cùng input</div>
+                        <div className="flex gap-2">
+                            <input
+                                className="flex-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500"
+                                placeholder="Nhập câu hỏi mẫu để test cả 2 phiên bản..."
+                                value={testInput}
+                                onChange={(e) => setTestInput(e.target.value)}
+                                disabled={runningBoth}
+                            />
+                            <button
+                                onClick={handleTestBoth}
+                                disabled={runningBoth || !testInput.trim()}
+                                className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow hover:bg-indigo-700 disabled:opacity-60 flex items-center gap-2 transition-colors shrink-0"
+                            >
+                                {runningBoth ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : ICONS.PLAY}
+                                Test cả 2 phiên bản
+                            </button>
+                        </div>
+                        {(leftOutput || rightOutput || runningBoth) && (
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div className="border border-emerald-200 bg-emerald-50/50 rounded-xl p-3 max-h-56 overflow-auto">
+                                    <div className="text-2xs font-bold text-emerald-700 mb-1 flex items-center justify-between">
+                                        <span>v{activeVersion} (active)</span>
+                                        {leftOutput?.latencyMs != null && <span className="font-mono text-[10px] text-emerald-600">{leftOutput.latencyMs}ms</span>}
+                                    </div>
+                                    <pre className="text-[11px] font-mono text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
+                                        {runningBoth && !leftOutput ? 'Đang chạy...' : (leftOutput?.text || '—')}
+                                    </pre>
+                                </div>
+                                <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-3 max-h-56 overflow-auto">
+                                    <div className="text-2xs font-bold text-indigo-700 mb-1 flex items-center justify-between">
+                                        <span>v{targetVersion}</span>
+                                        {rightOutput?.latencyMs != null && <span className="font-mono text-[10px] text-indigo-600">{rightOutput.latencyMs}ms</span>}
+                                    </div>
+                                    <pre className="text-[11px] font-mono text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
+                                        {runningBoth && !rightOutput ? 'Đang chạy...' : (rightOutput?.text || '—')}
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Promote history */}
+                    <div>
+                        <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Lịch sử promote</div>
+                        {loadingLog ? (
+                            <div className="text-xs text-[var(--text-tertiary)] italic">Đang tải...</div>
+                        ) : log.length === 0 ? (
+                            <div className="text-xs text-[var(--text-tertiary)] italic bg-[var(--glass-surface)] rounded-lg p-3 border border-[var(--glass-border)]">Chưa có lịch sử promote cho prompt này.</div>
+                        ) : (
+                            <div className="border border-[var(--glass-border)] rounded-xl overflow-hidden max-h-44 overflow-y-auto">
+                                <table className="min-w-full text-xs">
+                                    <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] sticky top-0">
+                                        <tr>
+                                            <th className="text-left p-2 font-bold">Thời gian</th>
+                                            <th className="text-left p-2 font-bold">Người promote</th>
+                                            <th className="text-center p-2 font-bold">Từ</th>
+                                            <th className="text-center p-2 font-bold">→</th>
+                                            <th className="text-center p-2 font-bold">Đến</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[var(--glass-border)]">
+                                        {log.map((entry) => (
+                                            <tr key={entry.id} className="hover:bg-[var(--glass-surface)]">
+                                                <td className="p-2 font-mono text-[var(--text-secondary)]">{formatTs(entry.createdAt)}</td>
+                                                <td className="p-2 text-[var(--text-secondary)]">
+                                                    {entry.promotedByName || entry.promotedByEmail || <span className="italic text-[var(--text-tertiary)]">—</span>}
+                                                </td>
+                                                <td className="p-2 text-center font-mono text-rose-500">{entry.previousVersion != null ? `v${entry.previousVersion}` : '—'}</td>
+                                                <td className="p-2 text-center text-[var(--text-tertiary)]">→</td>
+                                                <td className="p-2 text-center font-mono font-bold text-emerald-600">v{entry.version}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-[var(--glass-border)] flex items-center justify-between gap-3">
+                    <div className="text-xs text-[var(--text-tertiary)]">
+                        Sau khi promote, các request mới sẽ dùng <span className="font-bold font-mono">v{targetVersion}</span> ngay lập tức.
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={onClose} className="px-4 py-2 border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold text-xs rounded-lg hover:bg-[var(--glass-surface)] transition-colors">
+                            Đóng
+                        </button>
+                        <button
+                            onClick={handlePromote}
+                            disabled={promoting || targetVersion === activeVersion}
+                            className="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                        >
+                            {promoting ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : ICONS.CHECK}
+                            Promote v{targetVersion} thành ACTIVE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
 const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
@@ -764,6 +1065,7 @@ export const AiGovernance: React.FC = () => {
     const [isEvalRunning, setIsEvalRunning] = useState(false);
     const [lastEvalRun, setLastEvalRun] = useState<string>('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [promoteModalVersion, setPromoteModalVersion] = useState<number | null>(null);
 
     // Prompt defaults (read-only; loaded once for admin skill catalog tooltips)
     const [promptDefaults, setPromptDefaults] = useState<Record<string, SkillDefault>>({});
@@ -968,14 +1270,9 @@ export const AiGovernance: React.FC = () => {
                     onInsertVar={(v) => setEditContent(prev => prev + v)}
                     onRunSim={handleRunSim}
                     onSaveVersion={handleSaveVersion}
-                    onPromoteVersion={async (version) => {
+                    onPromoteVersion={(version) => {
                         if (!selectedPrompt) return;
-                        if (!confirm(`Promote phiên bản v${version} thành ACTIVE? Các request mới sẽ dùng prompt này ngay lập tức.`)) return;
-                        try {
-                            await db.promotePromptVersion(selectedPrompt.id, version);
-                            notify(`Đã promote v${version} thành ACTIVE`, 'success');
-                            fetchData();
-                        } catch (e) { notify(t('common.error'), 'error'); }
+                        setPromoteModalVersion(version);
                     }}
                     onCreateOpen={() => setIsCreateOpen(true)}
                     onSetTestInput={setTestInput}
@@ -1046,6 +1343,17 @@ export const AiGovernance: React.FC = () => {
                     formatTime={formatTime}
                 />
             )}
+
+            {/* Diff + Promote Modal */}
+            <DiffPromoteModal
+                open={promoteModalVersion != null}
+                prompt={selectedPrompt}
+                targetVersion={promoteModalVersion}
+                defaultModel={config?.defaultModel}
+                onClose={() => setPromoteModalVersion(null)}
+                onPromoted={fetchData}
+                notify={notify}
+            />
 
             {/* Create Prompt Modal */}
             {isCreateOpen && createPortal(

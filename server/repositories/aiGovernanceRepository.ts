@@ -173,6 +173,53 @@ class AiGovernanceRepository extends BaseRepository {
     });
   }
 
+  async logPromotion(
+    tenantId: string,
+    data: {
+      templateId: string;
+      templateName: string;
+      version: number;
+      previousVersion: number | null;
+      promotedByUserId?: string | null;
+      promotedByName?: string | null;
+      promotedByEmail?: string | null;
+    }
+  ): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `INSERT INTO prompt_promote_log
+           (tenant_id, template_id, template_name, version, previous_version,
+            promoted_by_user_id, promoted_by_name, promoted_by_email)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [
+          tenantId,
+          data.templateId,
+          data.templateName,
+          data.version,
+          data.previousVersion,
+          data.promotedByUserId || null,
+          data.promotedByName || null,
+          data.promotedByEmail || null,
+        ]
+      );
+      return this.rowToEntity(result.rows[0]);
+    });
+  }
+
+  async getPromoteLog(tenantId: string, templateId: string, limit: number = 50): Promise<any[]> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM prompt_promote_log
+          WHERE template_id = $1
+          ORDER BY created_at DESC
+          LIMIT $2`,
+        [templateId, limit]
+      );
+      return this.rowsToEntities(result.rows);
+    });
+  }
+
   async upsertAiConfig(tenantId: string, config: any): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
