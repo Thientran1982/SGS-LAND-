@@ -57,15 +57,25 @@ export class ListingRepository extends BaseRepository {
     if (filters?.bedrooms_gte !== undefined) { conditions.push(`bedrooms >= $${paramIndex++}`); values.push(filters.bedrooms_gte); }
     if (filters?.projectCode) { conditions.push(`project_code = $${paramIndex++}`); values.push(filters.projectCode); }
     // noProjectCode: exclude unit-level listings that belong to a project catalog.
-    // Double-check strategy (both must pass to exclude):
-    //   1. project_id IS NOT NULL  → explicitly linked to a project via Projects module
-    //   2. project_code IN (SELECT code FROM projects)  → safety net if project_id wasn't set
-    // Public listings that carry a project_code tag (e.g. scraped AQUA-CITY, VINHOMES-*)
-    // are NOT in the projects table → will always be shown.
+    // A listing is considered a project-catalog unit when ANY of these is true:
+    //   1. project_id IS NOT NULL  → explicitly linked via Projects module
+    //   2. project_code matches a project's code
+    //   3. project_code matches a project's slug (derived from name)
+    // Public scraped listings (AQUA-CITY, VINHOMES-*) that are NOT linked to any
+    // managed project will always pass through.
     // type='Project' master listings are always kept regardless.
     if (filters?.noProjectCode) {
       conditions.push(`(
-        (project_id IS NULL AND (project_code IS NULL OR project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')))
+        (project_id IS NULL
+         AND (project_code IS NULL
+              OR project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')
+             )
+         AND NOT EXISTS (
+           SELECT 1 FROM projects p
+           WHERE p.name IS NOT NULL
+             AND UPPER(REPLACE(REPLACE(p.name, ' ', '-'), '''', '')) = UPPER(project_code)
+         )
+        )
         OR type = 'Project'
       )`);
     }
@@ -300,9 +310,18 @@ export class ListingRepository extends BaseRepository {
       }
       // Always exclude project catalog units from global stats — they are managed
       // via the Projects module, not the Inventory page.
-      // Same double-check logic as buildFilterConditions noProjectCode.
+      // Same logic as buildFilterConditions noProjectCode.
       conditions.push(`(
-        (l.project_id IS NULL AND (l.project_code IS NULL OR l.project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')))
+        (l.project_id IS NULL
+         AND (l.project_code IS NULL
+              OR l.project_code NOT IN (SELECT code FROM projects WHERE code IS NOT NULL AND code != '')
+             )
+         AND NOT EXISTS (
+           SELECT 1 FROM projects p
+           WHERE p.name IS NOT NULL
+             AND UPPER(REPLACE(REPLACE(p.name, ' ', '-'), '''', '')) = UPPER(l.project_code)
+         )
+        )
         OR l.type = 'Project'
       )`);
 
@@ -607,30 +626,41 @@ export class ListingRepository extends BaseRepository {
 
   async create(tenantId: string, data: Record<string, any>): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
+      let resolvedProjectId: string | null = data.projectId || data.project_id || null;
+      const projectCode = data.projectCode || null;
+      if (projectCode && !resolvedProjectId) {
+        const pRes = await client.query(
+          `SELECT id FROM projects WHERE code = $1 LIMIT 1`,
+          [projectCode],
+        );
+        if (pRes.rows.length > 0) resolvedProjectId = pRes.rows[0].id;
+      }
+
       const result = await client.query(
         `INSERT INTO listings (
           tenant_id, code, title, location, price, currency, area, built_area, bedrooms, bathrooms,
           type, status, transaction, attributes, images, project_code, contact_phone,
           coordinates, is_verified, owner_name, owner_phone, commission, commission_unit,
-          created_by, authorized_agents, total_units, available_units
+          created_by, authorized_agents, total_units, available_units, project_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
           $10, $11, $12, $13, $14, $15, $16,
           $17, $18, $19, $20, $21, $22,
-          $23, $24, $25, $26
+          $23, $24, $25, $26, $27
         ) RETURNING *`,
         [
           data.code, data.title, data.location, data.price, data.currency || 'VND',
           data.area, data.builtArea || null, data.bedrooms || null, data.bathrooms || null,
           data.type, data.status || 'AVAILABLE', data.transaction || 'SALE',
           JSON.stringify(data.attributes || {}), JSON.stringify(data.images || []),
-          data.projectCode || null, data.contactPhone || null,
+          projectCode, data.contactPhone || null,
           data.coordinates ? JSON.stringify(data.coordinates) : null,
           data.isVerified || false, data.ownerName || null, data.ownerPhone || null,
           data.commission || null, data.commissionUnit || null,
           data.createdBy || null, JSON.stringify(data.authorizedAgents || []),
           data.totalUnits || null, data.availableUnits || null,
+          resolvedProjectId,
         ]
       );
       return this.rowToEntity(result.rows[0]);
