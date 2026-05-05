@@ -198,6 +198,36 @@ const ALL_PROJECTS: DuAnProject[] = [
         img: '/images/projects/vinhomes-can-gio.png',
         description: 'Siêu đô thị lấn biển 2.870ha lớn nhất Việt Nam tại Cần Giờ, TP.HCM. Bãi biển nhân tạo 7km, Vinwonders, marina, resort 5 sao, sân golf 18 lỗ.',
     },
+    {
+        slug: 'sala',
+        name: 'Sala Đại Quang Minh',
+        developer: 'Đại Quang Minh',
+        location: 'An Lợi Đông, TP Thủ Đức, TP.HCM',
+        province: 'TP.HCM',
+        scale: '257 ha',
+        priceRange: 'Từ 80 triệu/m²',
+        projectType: 'Khu Đô Thị Ven Sông',
+        typeGroup: 'Biệt thự & nhà phố',
+        status: 'Thứ cấp',
+        statusColor: 'emerald',
+        img: '/images/projects/the-global-city.png',
+        description: 'KĐT Sala Đại Quang Minh 257ha ven sông Sài Gòn — An Lợi Đông, TP Thủ Đức. Biệt thự, nhà phố shophouse, căn hộ hạng sang. Pháp lý sổ hồng đầy đủ, thanh khoản cao.',
+    },
+    {
+        slug: 'eco-retreat',
+        name: 'Eco Retreat Long Hải',
+        developer: 'Novaland Group',
+        location: 'Long Hải, Bà Rịa – Vũng Tàu',
+        province: 'Bà Rịa – Vũng Tàu',
+        scale: '120 ha',
+        priceRange: 'Từ 4,5 tỷ đồng',
+        projectType: 'Khu Nghỉ Dưỡng Sinh Thái',
+        typeGroup: 'Biệt thự & nhà phố',
+        status: 'Đang bán',
+        statusColor: 'indigo',
+        img: '/images/projects/aqua-city.png',
+        description: 'Khu nghỉ dưỡng sinh thái 120ha tại Long Hải, Bà Rịa – Vũng Tàu. Biệt thự biển, bungalow cao cấp, mô hình cho thuê khai thác. Cách TP.HCM 90 phút.',
+    },
 ];
 
 interface FilterOption {
@@ -210,6 +240,7 @@ const PROVINCE_OPTIONS: FilterOption[] = [
     { value: 'Tất cả', label: 'Tất cả khu vực' },
     { value: 'TP.HCM', label: 'TP. Hồ Chí Minh' },
     { value: 'Đồng Nai', label: 'Đồng Nai' },
+    { value: 'Bà Rịa – Vũng Tàu', label: 'Bà Rịa – Vũng Tàu' },
 ];
 
 const TYPE_OPTIONS: FilterOption[] = [
