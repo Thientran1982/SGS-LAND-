@@ -10,7 +10,12 @@
 // =============================================================================
 // 0. SHARED CONSTANTS (Single Source of Truth)
 // =============================================================================
-export const LEAD_SOURCES = ['Facebook', 'Zalo', 'Website', 'Giới thiệu', 'Khách vãng lai'] as const;
+export const LEAD_SOURCES = [
+  // Manual / social
+  'Facebook', 'Zalo', 'Website', 'Giới thiệu', 'Khách vãng lai',
+  // System-generated (from DB)
+  'WIDGET', 'BOOKING', 'LINK', 'QR',
+] as const;
 export const VN_PHONE_REGEX = /^(03|05|07|08|09)([0-9]{8})$/;
 
 export interface Article {

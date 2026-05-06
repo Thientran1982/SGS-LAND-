@@ -47,18 +47,41 @@ const ICONS = {
     FB: <svg className="w-3 h-3 pointer-events-none" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>,
     ZALO: <svg className="w-3 h-3 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
     GLOBE: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    WIDGET: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
+    QR: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>,
+    LINK: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>,
+    BOOKING: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+    MICROSITE: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>,
     VIEW_LIST: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
     VIEW_BOARD: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v12a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>,
     X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     USER: <svg className="w-3 h-3 pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
 };
 
+// Case-insensitive source icon lookup
 const getSourceIcon = (source: string) => {
-    switch(source) {
-        case 'Facebook': return ICONS.FB;
-        case 'Zalo': return ICONS.ZALO;
-        default: return ICONS.GLOBE;
+    const s = source.toUpperCase();
+    if (s === 'FACEBOOK' || s.startsWith('FACEBOOK')) return ICONS.FB;
+    if (s === 'ZALO') return ICONS.ZALO;
+    if (s === 'WIDGET') return ICONS.WIDGET;
+    if (s === 'QR' || s === 'QR CODE') return ICONS.QR;
+    if (s === 'LINK') return ICONS.LINK;
+    if (s === 'BOOKING') return ICONS.BOOKING;
+    if (s === 'MICROSITE' || s.startsWith('MICROSITE-')) return ICONS.MICROSITE;
+    return ICONS.GLOBE;
+};
+
+// Translate source label; handles dynamic `microsite-{CODE}` pattern
+const formatSource = (source: string, t: (k: string) => string): string => {
+    const key = `source.${source}`;
+    const translated = t(key);
+    if (translated !== key) return translated;
+    // Dynamic microsite-{CODE} → "Microsite (CODE)"
+    if (source.toLowerCase().startsWith('microsite-')) {
+        const code = source.slice('microsite-'.length);
+        return `Microsite (${code})`;
     }
+    return source;
 };
 
 // --- HOOK: DRAGGABLE SCROLL (Desktop) ---
@@ -296,7 +319,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         <span className="text-[var(--text-secondary)]">
                             {getSourceIcon(lead.source)}
                         </span>
-                        {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
+                        {formatSource(lead.source, t)}
                     </div>
                 </td>
             )}
@@ -473,7 +496,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                 <span className="text-xs text-[var(--text-tertiary)] font-mono truncate flex-1 mr-2">{lead.phone}</span>
                 <span className="inline-flex items-center gap-1 text-xs2 font-bold px-1.5 py-0.5 rounded bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] shrink-0">
                     {getSourceIcon(lead.source)}
-                    {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
+                    {formatSource(lead.source, t)}
                 </span>
             </div>
 
@@ -867,7 +890,7 @@ export const Leads: React.FC = () => {
     };
 
     const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_stages') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
-    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: t(`source.${s}`) !== `source.${s}` ? t(`source.${s}`) : s }))], [t]);
+    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: formatSource(s, t) }))], [t]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1478,7 +1501,7 @@ export const Leads: React.FC = () => {
                                                 <div className="font-bold text-[var(--text-primary)] text-sm">{lead.name}</div>
                                                 <div className="text-xs2 text-[var(--text-secondary)] font-medium flex items-center gap-1">
                                                     {getSourceIcon(lead.source)}
-                                                    {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source} • {formatDate(lead.createdAt)}
+                                                    {formatSource(lead.source, t)} • {formatDate(lead.createdAt)}
                                                 </div>
                                                 {lead.tags && lead.tags.length > 0 && (
                                                     <div className="flex flex-wrap gap-1 mt-1">
