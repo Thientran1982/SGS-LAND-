@@ -1104,7 +1104,8 @@ export const Leads: React.FC = () => {
     const metrics = serverStats;
     const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
     const isScopedView = currentUser && RESTRICTED_ROLES.includes(currentUser.role);
-    const canDelete = currentUser && ['ADMIN', 'PARTNER_ADMIN'].includes(currentUser.role);
+    // Mirror server-side DELETE guard: SUPER_ADMIN | ADMIN | TEAM_LEAD (leadRoutes.ts:339)
+    const canDelete = currentUser && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser.role);
 
     return (
         <>
@@ -1545,12 +1546,14 @@ export const Leads: React.FC = () => {
                                         >
                                             {ICONS.PROPOSAL} {t('leads.create_proposal')}
                                         </button>
+                                        {canDelete && (
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); handleDeleteClick(lead); }} 
                                             className="w-10 h-10 flex items-center justify-center text-rose-400 bg-rose-50 rounded-xl active:bg-rose-100 transition-colors shrink-0"
                                         >
                                             {ICONS.TRASH}
                                         </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
