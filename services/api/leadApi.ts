@@ -5,7 +5,10 @@ export const leadApi = {
     api.get('/api/leads', { page, pageSize, ...filters }),
 
   getLeadsCursor: (pageSize = 20, cursor: string | undefined, filters?: Record<string, any>): Promise<any> =>
-    api.get('/api/leads', { cursor: cursor ?? '', pageSize, ...filters }),
+    // 'FIRST' is a sentinel for the first page: apiClient strips empty strings so we
+    // use a non-empty value; the server's base64-JSON decode will fail gracefully and
+    // treat any undecodable cursor as page 1.
+    api.get('/api/leads', { cursor: cursor ?? 'FIRST', pageSize, ...filters }),
 
   getLeadById: (id: string): Promise<any> =>
     api.get(`/api/leads/${id}`),
