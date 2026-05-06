@@ -363,7 +363,9 @@ const badgeStyles: Record<string, string> = {
     amber:   'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800',
 };
 
-const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: () => void }) => (
+const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: () => void }) => {
+    const [imgLoaded, setImgLoaded] = React.useState(false);
+    return (
     <motion.article
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -374,13 +376,21 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
     >
         {/* Project image */}
         <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-slate-700">
+            {/* Skeleton shimmer — shown until image loads */}
+            {!imgLoaded && (
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite]"
+                />
+            )}
             <img
                 src={project.img}
                 alt={`${project.name} - ${project.type} ${project.loc}`}
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                onLoad={() => setImgLoaded(true)}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; setImgLoaded(true); }}
             />
             <span className={`absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full border whitespace-nowrap leading-none backdrop-blur-sm ${badgeStyles[project.badgeColor] ?? badgeStyles.indigo}`}>
                 {project.badge}
@@ -407,7 +417,8 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
             </div>
         </div>
     </motion.article>
-);
+    );
+};
 
 const HomeFAQAccordion = ({ items }: { items: { q: string; a: string }[] }) => {
     const [open, setOpen] = useState<number | null>(0);
