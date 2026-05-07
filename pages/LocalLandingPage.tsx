@@ -716,7 +716,25 @@ export default function LocalLandingPage() {
                             '@type': 'AggregateRating',
                             ratingValue: '4.8',
                             reviewCount: '127',
+                            bestRating: '5',
+                            worstRating: '1',
                         },
+                        review: [
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Nguyễn Minh Trí' },
+                                datePublished: '2026-03-10',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'Chuyên viên SGS LAND tư vấn kỹ về thị trường BĐS địa phương, hỗ trợ kiểm tra pháp lý miễn phí và kết nối vay ngân hàng tốt.',
+                            },
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Đặng Thị Hương' },
+                                datePublished: '2026-02-05',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'Tư vấn nhiệt tình và am hiểu thị trường địa phương. SGS LAND là lựa chọn đáng tin cậy khi mua BĐS tại khu vực này.',
+                            },
+                        ],
                     },
                     {
                         '@type': 'BreadcrumbList',

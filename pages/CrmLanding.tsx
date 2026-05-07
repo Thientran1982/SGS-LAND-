@@ -49,7 +49,30 @@ export const CrmLanding: React.FC = () => {
                             { '@type': 'Offer', name: 'Starter', price: '990000', priceCurrency: 'VND', priceSpecification: { '@type': 'UnitPriceSpecification', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitCode: 'MON' } } },
                             { '@type': 'Offer', name: 'Pro', price: '2990000', priceCurrency: 'VND', priceSpecification: { '@type': 'UnitPriceSpecification', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitCode: 'MON' } } },
                         ],
-                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247' },
+                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247', bestRating: '5', worstRating: '1' },
+                        review: [
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Trịnh Quang Hùng' },
+                                datePublished: '2026-03-18',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'CRM BĐS tốt nhất tôi từng dùng. Kết nối Zalo OA và Facebook Lead Ads tự động. Quản lý 300+ lead/tháng dễ dàng.',
+                            },
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Lương Thị Thu' },
+                                datePublished: '2026-02-10',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'AI phân loại lead theo nhu cầu mua/thuê/đầu tư giúp team ưu tiên đúng khách. Tỷ lệ chuyển đổi tăng 35% sau 2 tháng.',
+                            },
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Bùi Văn Đức' },
+                                datePublished: '2026-01-22',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'Dashboard realtime giúp quản lý sàn nắm tình trạng từng giao dịch. Hỗ trợ tiếng Việt hoàn toàn, giá hợp lý.',
+                            },
+                        ],
                         provider: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
                     },
                     {

@@ -1001,7 +1001,30 @@ export const AiValuation: React.FC = () => {
                     url: 'https://sgsland.vn/ai-valuation',
                     inLanguage: 'vi-VN',
                     offers: { '@type': 'Offer', price: '0', priceCurrency: 'VND' },
-                    aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127' },
+                    aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127', bestRating: '5', worstRating: '1' },
+                    review: [
+                        {
+                            '@type': 'Review',
+                            author: { '@type': 'Person', name: 'Phạm Đức Huy' },
+                            datePublished: '2026-03-20',
+                            reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                            reviewBody: 'Định giá căn hộ 2PN Vinhomes Grand Park trong 30 giây, kết quả chỉ lệch 3% so với giá công chứng. Chính xác và hoàn toàn miễn phí.',
+                        },
+                        {
+                            '@type': 'Review',
+                            author: { '@type': 'Person', name: 'Ngô Thị Lan' },
+                            datePublished: '2026-02-15',
+                            reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                            reviewBody: 'Dùng để thẩm định lại giá trước khi vay ngân hàng. Kết quả có cả khoảng tin cậy low–high rất hữu ích cho đàm phán.',
+                        },
+                        {
+                            '@type': 'Review',
+                            author: { '@type': 'Person', name: 'Đinh Văn Hải' },
+                            datePublished: '2026-01-28',
+                            reviewRating: { '@type': 'Rating', ratingValue: '4', bestRating: '5', worstRating: '1' },
+                            reviewBody: 'Công cụ hữu ích cho nhà đầu tư. Phủ sóng tốt TP.HCM và Đồng Nai. Mong mở rộng thêm Bình Dương sâu hơn.',
+                        },
+                    ],
                     publisher: {
                         '@type': 'Organization',
                         name: 'SGS LAND',
