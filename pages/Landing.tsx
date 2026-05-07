@@ -367,28 +367,28 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
     const [imgLoaded, setImgLoaded] = React.useState(false);
     return (
     <motion.article
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-50px' }}
-        transition={{ duration: 0.4 }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ duration: 0.35 }}
         onClick={onClick}
         className="relative rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 bg-[var(--bg-surface)] dark:bg-slate-800 hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 flex flex-col overflow-hidden"
     >
         {/* Project image */}
         <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-slate-700">
-            {/* Skeleton shimmer — shown until image loads */}
-            {!imgLoaded && (
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite]"
-                />
-            )}
+            {/* Shimmer — always in DOM, fades out via opacity so no layout reflow on image load */}
+            <div
+                aria-hidden="true"
+                className={`absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite] transition-opacity duration-300 pointer-events-none ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
+            />
             <img
                 src={project.img}
                 alt={`${project.name} - ${project.type} ${project.loc}`}
+                width={640}
+                height={360}
                 loading="lazy"
                 decoding="async"
-                className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`w-full h-full object-cover transition-opacity duration-500 group-hover:scale-105 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setImgLoaded(true)}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; setImgLoaded(true); }}
             />
@@ -857,8 +857,8 @@ export const Landing: React.FC = () => {
             <section className="py-20 md:py-32 px-6 bg-[var(--bg-surface)] dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
                         className="mb-12 md:mb-16"
                     >
