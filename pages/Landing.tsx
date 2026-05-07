@@ -768,11 +768,11 @@ export const Landing: React.FC = () => {
                             transition={{ duration: 0.5, delay: 0.1 }}
                             className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] dark:text-white tracking-tight mb-8 md:mb-10 leading-[1.1] drop-shadow-sm relative"
                         >
-                            {/* Invisible ghost text reserves full heading height from first render,
-                                preventing layout shift while the typewriter animation runs */}
-                            <span className="invisible select-none" aria-hidden="true">{t('landing.typewriter')}</span>
-                            {/* Visible animated text overlaid — occupies same space */}
-                            <span className="absolute inset-0">{text}<span className="animate-blink text-indigo-500">|</span></span>
+                            {/* Invisible ghost text reserves full heading height; whitespace-nowrap
+                                guarantees single-line so the text never wraps on narrow viewports */}
+                            <span className="invisible select-none whitespace-nowrap" aria-hidden="true">{t('landing.typewriter')}</span>
+                            {/* Visible animated text overlaid — whitespace-nowrap keeps it on one line */}
+                            <span className="absolute inset-0 whitespace-nowrap">{text}<span className="animate-blink text-indigo-500">|</span></span>
                         </motion.h1>
 
                         <motion.p 
