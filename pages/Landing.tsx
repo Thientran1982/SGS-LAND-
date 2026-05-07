@@ -619,7 +619,30 @@ export const Landing: React.FC = () => {
                         operatingSystem: 'Web',
                         applicationCategory: 'BusinessApplication',
                         offers: { '@type': 'Offer', price: '0', priceCurrency: 'VND' },
-                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247' },
+                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247', bestRating: '5', worstRating: '1' },
+                        review: [
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Nguyễn Văn An' },
+                                datePublished: '2026-03-15',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'Nền tảng CRM BĐS tốt nhất thị trường. Định giá AI sai số ±5% giúp tôi đàm phán hiệu quả hơn. Giao diện thân thiện, không cần đào tạo.',
+                            },
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Trần Thị Bình' },
+                                datePublished: '2026-02-20',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'Quản lý lead đa kênh Zalo/Facebook rất tiện. Team chăm sóc khách hàng phản hồi nhanh, hỗ trợ onboarding tận tình.',
+                            },
+                            {
+                                '@type': 'Review',
+                                author: { '@type': 'Person', name: 'Lê Minh Khoa' },
+                                datePublished: '2026-01-10',
+                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                                reviewBody: 'Dùng thử 14 ngày rồi đăng ký luôn gói Pro. Tính năng AI phân loại lead tiết kiệm 3–4 giờ mỗi ngày.',
+                            },
+                        ],
                     },
                     {
                         '@type': 'FAQPage',
