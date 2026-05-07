@@ -766,9 +766,13 @@ export const Landing: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.1 }}
-                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] dark:text-white tracking-tight mb-6 md:mb-8 leading-[1.1] drop-shadow-sm"
+                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] dark:text-white tracking-tight mb-6 md:mb-8 leading-[1.1] drop-shadow-sm relative"
                         >
-                            {text}<span className="animate-blink text-indigo-500">|</span>
+                            {/* Invisible ghost text reserves full heading height from first render,
+                                preventing layout shift while the typewriter animation runs */}
+                            <span className="invisible select-none" aria-hidden="true">{t('landing.typewriter')}</span>
+                            {/* Visible animated text overlaid — occupies same space */}
+                            <span className="absolute inset-0">{text}<span className="animate-blink text-indigo-500">|</span></span>
                         </motion.h1>
 
                         <motion.p 
@@ -812,8 +816,8 @@ export const Landing: React.FC = () => {
                         </motion.div>
                     </div>
 
-                    {/* Right Column: 3D SVG */}
-                    <div className="w-full flex justify-center items-center lg:justify-end">
+                    {/* Right Column: 3D SVG — hidden on mobile (saves rAF loop + reduces page weight) */}
+                    <div className="hidden lg:flex w-full justify-end items-center">
                         <Hero3D />
                     </div>
                 </div>
