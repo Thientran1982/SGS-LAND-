@@ -816,8 +816,8 @@ export const Landing: React.FC = () => {
                         </motion.div>
                     </div>
 
-                    {/* Right Column: 3D SVG — hidden on mobile (saves rAF loop + reduces page weight) */}
-                    <div className="hidden lg:flex w-full justify-end items-center">
+                    {/* Right Column: 3D SVG */}
+                    <div className="w-full flex justify-center items-center lg:justify-end">
                         <Hero3D />
                     </div>
                 </div>
