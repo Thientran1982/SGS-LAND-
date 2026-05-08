@@ -964,6 +964,69 @@ export function createValuationRoutes(
         priceMax   = Math.round(priceMax   * typeMult);
       }
 
+      // ── 3. Query internal listing inventory for comparable unit prices ─────
+      // Uses pool (owner role) for a public aggregate — no tenant context needed.
+      // Provides real market signal from actual transactions in the DB.
+      let internalCompsMedian: number | undefined;
+      let internalCompsCount = 0;
+      try {
+        const areaMin = area * 0.55;
+        const areaMax = area * 1.55;
+        // Extract district-level keyword from location for fuzzy matching
+        const locParts = location.split(/[,;]/);
+        const districtKw = (locParts[1] || locParts[0] || location).trim().slice(0, 50);
+        // Broad type prefix match (e.g. "apartment", "townhouse", "land", "shophouse")
+        const typePrefix = (propertyType as string).split('_')[0];
+
+        const compsRes = await pool.query<{ price_per_m2: string }>(
+          `SELECT ROUND(price::numeric / area::numeric) AS price_per_m2
+           FROM listings
+           WHERE area BETWEEN $1 AND $2
+             AND location ILIKE $3
+             AND type ILIKE $4
+             AND price > 0 AND area > 0
+             AND status IN ('AVAILABLE', 'SOLD', 'HOLD')
+           ORDER BY updated_at DESC
+           LIMIT 40`,
+          [areaMin, areaMax, `%${districtKw}%`, `%${typePrefix}%`]
+        );
+
+        if (compsRes.rows.length >= 2) {
+          const validPrices = compsRes.rows
+            .map((r) => Number(r.price_per_m2))
+            .filter((p) => p > 500_000 && p < 2_000_000_000) // sanity: 0.5M – 2B VNĐ/m²
+            .sort((a, b) => a - b);
+
+          if (validPrices.length >= 2) {
+            internalCompsCount = validPrices.length;
+            internalCompsMedian = validPrices[Math.floor(validPrices.length / 2)];
+            logger.info(
+              `[Teaser] Internal comps: ${internalCompsCount} listings, ` +
+              `median=${(internalCompsMedian / 1_000_000).toFixed(0)} tr/m²`
+            );
+          }
+        }
+      } catch (compsErr: any) {
+        logger.warn('[Teaser] Could not fetch internal comps:', compsErr.message);
+      }
+
+      // ── 4. Blend internal comps median into price estimate ────────────────
+      // Only blend when the comps median is plausible relative to market price
+      // (within 0.25× – 4× range) to guard against bad data.
+      if (internalCompsMedian && internalCompsCount >= 2) {
+        const ratio = internalCompsMedian / pricePerM2;
+        if (ratio >= 0.25 && ratio <= 4.0) {
+          // Weight: 40% comps when market_price_history matched; 50% when using fallback only
+          const compsWeight  = foundMatch ? 0.40 : 0.50;
+          const marketWeight = 1 - compsWeight;
+          pricePerM2 = Math.round(pricePerM2 * marketWeight + internalCompsMedian * compsWeight);
+          priceMin   = Math.round(pricePerM2 * 0.85);
+          priceMax   = Math.round(pricePerM2 * 1.18);
+          // Boost confidence: each additional comp adds ~3 points, capped at +15
+          confidence = Math.min(92, confidence + Math.min(15, internalCompsCount * 3));
+        }
+      }
+
       // Compute total value range
       const totalMin = Math.round(priceMin * area);
       const totalMid = Math.round(pricePerM2 * area);
@@ -993,6 +1056,8 @@ export function createValuationRoutes(
         trendText,
         dataSource,
         dataAge,
+        internalCompsCount,
+        internalCompsMedian: internalCompsMedian ?? null,
       });
     } catch (err: any) {
       logger.error('[Valuation] Teaser error:', err);

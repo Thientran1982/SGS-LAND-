@@ -460,6 +460,8 @@ export const AiValuation: React.FC = () => {
         dataSource: string;
         dataAge: string;
         found: boolean;
+        internalCompsCount?: number;
+        internalCompsMedian?: number | null;
     } | null>(null);
     const [teaserLoading, setTeaserLoading] = useState(false);
     
@@ -1909,7 +1911,8 @@ export const AiValuation: React.FC = () => {
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                     Đang lấy giá thị trường tham chiếu
                                 </div>
-                                <div className="text-slate-400 text-sm">Tra cứu dữ liệu khu vực — không tốn lượt AI</div>
+                                <div className="text-slate-400 text-sm mb-1">Tra cứu dữ liệu khu vực — không tốn lượt AI</div>
+                                <div className="text-slate-500 text-xs">Đối chiếu kho BĐS nội bộ để tăng độ chính xác…</div>
                             </div>
                         ) : teaserError ? (
                             <div className="bg-slate-800 rounded-[32px] border border-rose-500/30 p-7 md:p-8 shadow-2xl">
@@ -1983,6 +1986,19 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Internal comps badge — shown when inventory data was blended in */}
+                                {!!teaser.internalCompsCount && teaser.internalCompsCount > 0 && (
+                                    <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/25 rounded-xl px-3 py-2 mb-3">
+                                        <svg className="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7zM9 12h6M9 8h6M9 16h3" /></svg>
+                                        <span className="text-xs text-indigo-300 font-medium">
+                                            Đã đối chiếu <b className="text-indigo-200">{teaser.internalCompsCount} BĐS tương đương</b> từ kho nội bộ
+                                            {teaser.internalCompsMedian ? (
+                                                <> · median <b className="text-indigo-200">{(teaser.internalCompsMedian / 1_000_000).toFixed(0)} tr/m²</b></>
+                                            ) : null}
+                                        </span>
+                                    </div>
+                                )}
+
                                 {/* Source meta */}
                                 <div className="grid grid-cols-3 gap-2 mb-5">
                                     <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
@@ -1994,8 +2010,15 @@ export const AiValuation: React.FC = () => {
                                         <div className="text-sm font-bold text-white truncate" title={teaser.trendText}>{teaser.trendText}</div>
                                     </div>
                                     <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
-                                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Nguồn</div>
-                                        <div className="text-[11px] font-bold text-slate-300 leading-tight">{teaser.dataSource}</div>
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">
+                                            {teaser.internalCompsCount ? 'Kho BĐS' : 'Nguồn'}
+                                        </div>
+                                        <div className="text-[11px] font-bold text-slate-300 leading-tight">
+                                            {teaser.internalCompsCount
+                                                ? <span className="text-indigo-300">{teaser.internalCompsCount} BĐS</span>
+                                                : teaser.dataSource
+                                            }
+                                        </div>
                                     </div>
                                 </div>
 
