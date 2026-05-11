@@ -65,3 +65,9 @@ id = "R8S80l1cgy_yqkIYZ_ab4"
 uri = "file://attached_assets/screenshots/no-image-placeholder.svg"
 type = "image"
 title = "Placeholder khi listing chưa có ảnh (kích thước gốc 400×300)"
+
+[[outputs]]
+id = "vgslLZ5EeuLsnJvFkivQh"
+uri = "file://.local/geo-audit-sgsland.pdf"
+type = "pdf"
+title = "GEO & SEO Audit Report — sgsland.vn"
