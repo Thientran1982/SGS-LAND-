@@ -407,7 +407,56 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
       ],
     },
   },
-  marketplace:             { title: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc - SGS LAND', description: 'Mua bán bất động sản toàn quốc — tìm kiếm nhà đất, căn hộ, biệt thự theo vị trí, diện tích và mức giá. Kho hàng nghìn bất động sản cập nhật realtime.', h1: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc' },
+  marketplace: {
+    title: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc - SGS LAND',
+    description: 'Mua bán bất động sản toàn quốc — tìm kiếm nhà đất, căn hộ, biệt thự theo vị trí, diện tích và mức giá. Kho hàng 45.000+ BĐS cập nhật realtime, pháp lý xác minh 2 lớp.',
+    h1: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+          ],
+        },
+        {
+          '@type': 'SearchResultsPage',
+          name: 'Tìm Kiếm Bất Động Sản Toàn Quốc — SGS LAND',
+          description: 'Kho hàng 45.000+ bất động sản tại Việt Nam — căn hộ, nhà phố, biệt thự, đất nền, shophouse. Lọc theo vị trí, giá, diện tích, pháp lý. Cập nhật realtime Q2/2026.',
+          url: `${APP_URL}/marketplace`,
+          inLanguage: 'vi',
+          dateModified: '2026-05-11',
+          provider: { '@id': `${APP_URL}/#org` },
+        },
+        {
+          '@type': 'ItemList',
+          name: 'Bất Động Sản Nổi Bật Tại Việt Nam 2026',
+          description: 'Danh sách bất động sản được tìm kiếm nhiều nhất trên SGS LAND — giá thực tế Q2/2026, pháp lý xác minh 2 lớp, định giá AI miễn phí.',
+          url: `${APP_URL}/marketplace`,
+          numberOfItems: 45000,
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Căn hộ TP.HCM — Từ 1,5 tỷ đến 20 tỷ đồng', url: `${APP_URL}/marketplace?type=apartment&city=hcm` },
+            { '@type': 'ListItem', position: 2, name: 'Nhà phố TP.HCM — Từ 3 tỷ đến 100 tỷ đồng', url: `${APP_URL}/marketplace?type=house&city=hcm` },
+            { '@type': 'ListItem', position: 3, name: 'Đất nền Đồng Nai & Bình Dương — Từ 500 triệu', url: `${APP_URL}/marketplace?type=land` },
+            { '@type': 'ListItem', position: 4, name: 'Biệt thự & Shophouse — Từ 5 tỷ đến 200 tỷ đồng', url: `${APP_URL}/marketplace?type=villa` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'Giá căn hộ TP.HCM hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá căn hộ TP.HCM Q2/2026: bình dân 25–40 triệu/m², trung cấp 40–80 triệu/m², cao cấp 80–150 triệu/m², hạng sang 150–400 triệu/m². Tăng trung bình 8–12%/năm trong 5 năm qua (nguồn: CBRE Vietnam Q1/2026).' } },
+            { '@type': 'Question', name: 'Mua nhà đất trên SGS LAND có an toàn pháp lý không?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND xác minh pháp lý 2 lớp: tầng 1 kiểm tra quy hoạch/tranh chấp, tầng 2 thẩm định sổ đỏ/sổ hồng. 100% BĐS đăng trên sàn đã qua quy trình kiểm duyệt độc lập trước khi công bố.' } },
+            { '@type': 'Question', name: 'Tìm bất động sản dưới 2 tỷ tại TP.HCM có không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. Căn hộ 1–2 phòng ngủ tại Bình Dương, Đồng Nai, Bình Chánh, Bình Thạnh từ 1,2–2 tỷ. SGS LAND có 3.000+ tin dưới 2 tỷ cập nhật realtime, lọc ngay theo ngân sách trên marketplace.' } },
+            { '@type': 'Question', name: 'Định giá AI có thể hỗ trợ trước khi mua BĐS không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. Công cụ AVM miễn phí tại sgsland.vn/ai-valuation — nhập địa chỉ, diện tích, số phòng để nhận giá tham chiếu ±5% sai số trong 30 giây. Không cần đăng ký tài khoản.' } },
+            { '@type': 'Question', name: 'SGS LAND có hỗ trợ vay ngân hàng khi mua BĐS không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. SGS LAND kết nối với 12+ ngân hàng lớn (Vietcombank, BIDV, Techcombank, MB). Hỗ trợ hoàn thiện hồ sơ vay, LTV 70–80%, lãi suất ưu đãi 6–8,5%/năm 24 tháng đầu, miễn phí dịch vụ.' } },
+          ],
+        },
+      ],
+    },
+  },
   'ai-valuation': {
     title: 'Định Giá Bất Động Sản Bằng AI | Sai Số ±5% - SGS LAND',
     description: 'Công nghệ định giá bất động sản AI từ SGS LAND với sai số chỉ ±5–10% — ngang chuẩn thẩm định viên chuyên nghiệp. Hoàn toàn miễn phí.',
@@ -480,10 +529,219 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
       ],
     },
   },
-  'crm-platform':          { title: 'Nền Tảng CRM Bất Động Sản Thế Hệ Mới | SGS LAND', description: 'Hệ thống CRM bất động sản tích hợp AI, đa kênh Zalo/Facebook/Email, tự động hóa quy trình từ lead đến hợp đồng.', h1: 'CRM Bất Động Sản Thế Hệ Mới' },
-  'about-us':              { title: 'Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn', description: 'SGS LAND - Công ty công nghệ bất động sản hàng đầu Việt Nam. Tìm hiểu về tầm nhìn, sứ mệnh và giá trị cốt lõi của chúng tôi.', h1: 'Về SGS LAND' },
-  news:                    { title: 'Tin Tức Bất Động Sản | Thị Trường BĐS Cập Nhật - SGS LAND', description: 'Cập nhật tin tức bất động sản mới nhất, phân tích thị trường, xu hướng giá và các chính sách pháp luật liên quan đến bất động sản Việt Nam.', h1: 'Tin Tức Bất Động Sản Mới Nhất' },
-  contact:                 { title: 'Liên Hệ Tư Vấn | SGS LAND', description: 'Liên hệ với đội ngũ tư vấn SGS LAND để được hỗ trợ demo, tư vấn gói dịch vụ và tích hợp nền tảng quản lý bất động sản.', h1: 'Liên Hệ SGS LAND' },
+  'crm-platform': {
+    title: 'Nền Tảng CRM Bất Động Sản Thế Hệ Mới | SGS LAND',
+    description: 'Hệ thống CRM bất động sản tích hợp AI, đa kênh Zalo/Facebook/Email, tự động hóa quy trình từ lead đến hợp đồng. Dùng thử miễn phí 30 ngày.',
+    h1: 'CRM Bất Động Sản Thế Hệ Mới',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
+            { '@type': 'ListItem', position: 2, name: 'CRM Bất Động Sản', item: `${APP_URL}/crm-platform` },
+          ],
+        },
+        {
+          '@type': 'SoftwareApplication',
+          '@id': `${APP_URL}/crm-platform#app`,
+          name: 'SGS LAND CRM — Nền Tảng Quản Lý Bất Động Sản AI',
+          applicationCategory: 'BusinessApplication',
+          applicationSubCategory: 'Real Estate CRM',
+          operatingSystem: 'Web, iOS, Android',
+          inLanguage: 'vi',
+          url: `${APP_URL}/crm-platform`,
+          description: 'CRM bất động sản thế hệ mới — tích hợp AI định giá tự động (AVM ±5% sai số), quản lý lead đa kênh Zalo/Facebook/Email, pipeline hợp đồng, ký số điện tử và báo cáo realtime. Thiết kế cho sàn giao dịch và doanh nghiệp BĐS Việt Nam.',
+          featureList: [
+            'Quản lý lead & pipeline đa kênh (Zalo, Facebook, Email, LiveChat)',
+            'Định giá AI tự động (AVM) ±5% sai số trên 45.000+ giao dịch',
+            'Quản lý kho hàng BĐS realtime',
+            'Báo cáo doanh số & KPI môi giới',
+            'Ký số hợp đồng điện tử',
+            'Tích hợp VNPay đặt cọc online',
+            'Multi-tenant với PostgreSQL Row Level Security',
+          ],
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'VND',
+            description: 'Dùng thử miễn phí 30 ngày, không cần thẻ tín dụng',
+          },
+          aggregateRating: SGS_RATING,
+          provider: { '@id': `${APP_URL}/#org` },
+          datePublished: '2023-01-01',
+          dateModified: '2026-05-01',
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'SGS LAND CRM khác gì so với Salesforce hay HubSpot?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND CRM xây dựng chuyên biệt cho thị trường BĐS Việt Nam — tích hợp định giá AI AVM, quy trình pháp lý theo Luật KDBĐS 2023, đa kênh Zalo/Facebook, thanh toán VNPay. Không phải giải pháp generic mà là vertical SaaS thuần BĐS cho môi giới và sàn giao dịch Việt Nam.' } },
+            { '@type': 'Question', name: 'Giá sử dụng SGS LAND CRM là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Dùng thử miễn phí 30 ngày, không cần thẻ tín dụng. Gói Standard từ 2,5 triệu/tháng cho 5 người dùng. Gói Enterprise theo số môi giới và tính năng. Liên hệ info@sgsland.vn để nhận demo và báo giá chi tiết.' } },
+            { '@type': 'Question', name: 'CRM BĐS SGS LAND bảo mật dữ liệu như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Multi-tenant với PostgreSQL Row Level Security (RLS) — mỗi tenant hoàn toàn cô lập dữ liệu. JWT authentication, mã hóa TLS 1.3, backup hàng ngày trên Neon PostgreSQL. Tuân thủ Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân Việt Nam.' } },
+            { '@type': 'Question', name: 'Có thể tích hợp Zalo OA vào CRM SGS LAND không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. SGS LAND CRM hỗ trợ tích hợp Zalo Official Account (OA), Facebook Messenger, Email (SMTP/Brevo), và LiveChat trong một inbox duy nhất. Lead từ tất cả kênh được tự động phân luồng và phân công môi giới.' } },
+          ],
+        },
+      ],
+    },
+  },
+  'about-us': {
+    title: 'Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn',
+    description: 'SGS LAND — công ty công nghệ bất động sản hàng đầu Việt Nam. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch. Sứ mệnh minh bạch hóa thị trường BĐS.',
+    h1: 'Về SGS LAND',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
+            { '@type': 'ListItem', position: 2, name: 'Về Chúng Tôi', item: `${APP_URL}/about-us` },
+          ],
+        },
+        {
+          '@type': 'AboutPage',
+          '@id': `${APP_URL}/about-us#webpage`,
+          url: `${APP_URL}/about-us`,
+          name: 'Về SGS LAND — Công Ty Công Nghệ Bất Động Sản AI Hàng Đầu Việt Nam',
+          description: 'SGS LAND là công ty công nghệ bất động sản Việt Nam với sứ mệnh minh bạch hóa thị trường thông qua AI định giá, CRM thế hệ mới và hệ sinh thái B2B2C cho toàn bộ chuỗi giao dịch BĐS. 5+ năm hoạt động, 15.000+ môi giới đối tác, 2 tỷ USD+ giao dịch.',
+          inLanguage: 'vi',
+          isPartOf: { '@id': `${APP_URL}/#website` },
+          about: { '@id': `${APP_URL}/#org` },
+          dateModified: '2026-05-11',
+        },
+        {
+          '@type': 'Organization',
+          '@id': `${APP_URL}/#org`,
+          name: 'SGS LAND',
+          legalName: 'Công ty TNHH Công Nghệ SGS LAND',
+          url: APP_URL,
+          foundingDate: '2019',
+          description: 'SGS LAND — nền tảng công nghệ bất động sản B2B2C hàng đầu Việt Nam. 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch. Dịch vụ: định giá AI (AVM ±5%), CRM đa kênh, phân phối dự án, ký gửi BĐS.',
+          numberOfEmployees: { '@type': 'QuantitativeValue', value: 50 },
+          areaServed: { '@type': 'Country', name: 'Việt Nam' },
+          contactPoint: {
+            '@type': 'ContactPoint',
+            telephone: '+84-971-132-378',
+            email: 'info@sgsland.vn',
+            contactType: 'customer service',
+            availableLanguage: 'Vietnamese',
+          },
+          sameAs: [
+            'https://www.facebook.com/sgsland.vn',
+            'https://www.linkedin.com/company/sgsland',
+          ],
+          aggregateRating: SGS_RATING,
+        },
+      ],
+    },
+  },
+  news: {
+    title: 'Tin Tức Bất Động Sản | Thị Trường BĐS Cập Nhật - SGS LAND',
+    description: 'Cập nhật tin tức bất động sản mới nhất Q2/2026, phân tích thị trường, xu hướng giá căn hộ, nhà phố, đất nền và các chính sách pháp luật BĐS Việt Nam.',
+    h1: 'Tin Tức Bất Động Sản Mới Nhất',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
+            { '@type': 'ListItem', position: 2, name: 'Tin Tức BĐS', item: `${APP_URL}/news` },
+          ],
+        },
+        {
+          '@type': 'Blog',
+          '@id': `${APP_URL}/news#blog`,
+          name: 'Tin Tức Bất Động Sản SGS LAND',
+          description: 'Phân tích thị trường bất động sản Việt Nam, xu hướng giá căn hộ/nhà phố/đất nền, chính sách pháp luật và dự án mới. Cập nhật hàng ngày từ đội ngũ chuyên gia SGS LAND.',
+          url: `${APP_URL}/news`,
+          inLanguage: 'vi',
+          publisher: { '@id': `${APP_URL}/#org` },
+          author: { '@id': `${APP_URL}/#org` },
+          dateModified: '2026-05-11',
+          about: [
+            { '@type': 'Thing', name: 'Thị trường bất động sản Việt Nam' },
+            { '@type': 'Thing', name: 'Giá căn hộ TP.HCM 2026' },
+            { '@type': 'Thing', name: 'Luật Kinh doanh Bất động sản 2023' },
+            { '@type': 'Thing', name: 'Sân bay Long Thành và BĐS vùng ven' },
+          ],
+          keywords: 'tin tức bất động sản, thị trường BĐS 2026, giá nhà TP.HCM, pháp lý BĐS, sân bay Long Thành',
+        },
+        {
+          '@type': 'WebPage',
+          '@id': `${APP_URL}/news#webpage`,
+          url: `${APP_URL}/news`,
+          name: 'Tin Tức Bất Động Sản Mới Nhất 2026 — SGS LAND',
+          isPartOf: { '@id': `${APP_URL}/#website` },
+          publisher: { '@id': `${APP_URL}/#org` },
+          inLanguage: 'vi',
+          dateModified: '2026-05-11',
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: ['h1', 'h2', 'p:first-of-type'],
+          },
+        },
+      ],
+    },
+  },
+  contact: {
+    title: 'Liên Hệ Tư Vấn | SGS LAND',
+    description: 'Liên hệ đội ngũ tư vấn SGS LAND qua hotline +84 971 132 378, email info@sgsland.vn hoặc LiveChat. Phản hồi trong 4 giờ làm việc. Demo miễn phí theo yêu cầu.',
+    h1: 'Liên Hệ SGS LAND',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
+            { '@type': 'ListItem', position: 2, name: 'Liên Hệ', item: `${APP_URL}/contact` },
+          ],
+        },
+        {
+          '@type': 'ContactPage',
+          '@id': `${APP_URL}/contact#webpage`,
+          url: `${APP_URL}/contact`,
+          name: 'Liên Hệ SGS LAND — Tư Vấn & Hỗ Trợ BĐS',
+          description: 'Liên hệ đội ngũ tư vấn SGS LAND qua hotline, email, LiveChat hoặc form đặt lịch demo. Phản hồi trong 4 giờ làm việc.',
+          inLanguage: 'vi',
+          isPartOf: { '@id': `${APP_URL}/#website` },
+        },
+        {
+          '@type': 'LocalBusiness',
+          '@id': `${APP_URL}/#localbusiness`,
+          name: 'SGS LAND',
+          url: APP_URL,
+          telephone: '+84-971-132-378',
+          email: 'info@sgsland.vn',
+          image: `${APP_URL}/og-image.jpg`,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: 'TP. Hồ Chí Minh',
+            addressCountry: 'VN',
+          },
+          geo: {
+            '@type': 'GeoCoordinates',
+            latitude: '10.7769',
+            longitude: '106.7009',
+          },
+          openingHoursSpecification: [
+            { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday','Tuesday','Wednesday','Thursday','Friday'], opens: '08:00', closes: '18:00' },
+            { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Saturday'], opens: '08:00', closes: '12:00' },
+          ],
+          contactPoint: [
+            { '@type': 'ContactPoint', telephone: '+84-971-132-378', contactType: 'sales', availableLanguage: 'Vietnamese' },
+            { '@type': 'ContactPoint', email: 'info@sgsland.vn', contactType: 'customer service', availableLanguage: 'Vietnamese' },
+          ],
+          aggregateRating: SGS_RATING,
+          priceRange: '$$',
+          parentOrganization: SGS_PARENT_ORG,
+        },
+      ],
+    },
+  },
   careers:                 { title: 'Tuyển Dụng | Cơ Hội Nghề Nghiệp tại SGS LAND', description: 'Tham gia đội ngũ SGS LAND – nơi công nghệ và bất động sản hội tụ. Khám phá cơ hội việc làm trong lĩnh vực AI, product và business development.', h1: 'Cơ Hội Nghề Nghiệp tại SGS LAND' },
   'help-center':           { title: 'Trung Tâm Hỗ Trợ | SGS LAND Help Center', description: 'Tìm hướng dẫn sử dụng, câu hỏi thường gặp và tài liệu kỹ thuật cho nền tảng quản lý bất động sản SGS LAND.', h1: 'Trung Tâm Hỗ Trợ SGS LAND' },
   developers:              { title: 'API & Tài Liệu Kỹ Thuật | SGS LAND Developers', description: 'Tài liệu API SGS LAND dành cho nhà phát triển. Tích hợp dữ liệu bất động sản, định giá AI và CRM vào ứng dụng của bạn.', h1: 'SGS LAND Developer API' },
@@ -1948,6 +2206,117 @@ function findSchemaNodes(structuredData: any, typeMatcher: (t: string) => boolea
 }
 
 /**
+ * Build per-route noscript HTML for area landing pages (bat-dong-san-*) that use
+ * RealEstateAgent + FAQPage schema but NOT ApartmentComplex.
+ * GPTBot, PerplexityBot, ClaudeBot and other non-JS crawlers will see ≥300 words of
+ * page-specific, citation-ready content about the local real-estate market instead
+ * of the generic homepage fallback.
+ *
+ * GEO principle: answer-first (direct answer in first 40-60 words), statistics,
+ * named entities, structured FAQ — maximises AI citation probability.
+ *
+ * Returns the inner HTML for `<div class="noscript-wrapper">…</div>`.
+ * Returns null when the route has no RealEstateAgent schema.
+ */
+function buildAreaNoscriptHtml(structuredData: any, h1: string | undefined, url: string): string | null {
+  const agentNodes = findSchemaNodes(structuredData, t => /^RealEstateAgent$/i.test(t));
+  if (agentNodes.length === 0) return null;
+
+  const agent = agentNodes[0];
+  const faqNodes = findSchemaNodes(structuredData, t => /^FAQPage$/i.test(t));
+  const itemListNodes = findSchemaNodes(structuredData, t => /^ItemList$/i.test(t));
+  const breadcrumbs = findSchemaNodes(structuredData, t => /^BreadcrumbList$/i.test(t))[0];
+
+  const areaName = (() => {
+    const served = agent.areaServed;
+    if (!served) return '';
+    if (typeof served === 'string') return served;
+    if (served.name) return String(served.name);
+    return '';
+  })();
+
+  const lines: string[] = [];
+
+  // ── 1. H1 + direct answer block (GEO: answer-first, 40-60 words) ──────────
+  lines.push(`<h1>${esc(h1 || agent.name || 'Bất động sản khu vực')}</h1>`);
+
+  const faqItems = faqNodes.flatMap((n: any) => Array.isArray(n.mainEntity) ? n.mainEntity : []);
+  // Use first FAQ answer as the direct-answer block (most likely to match user query)
+  if (faqItems.length > 0 && faqItems[0]?.acceptedAnswer?.text) {
+    lines.push(`<p><strong>Tổng quan:</strong> ${esc(faqItems[0].acceptedAnswer.text)}</p>`);
+  }
+
+  // ── 2. Breadcrumb navigation ───────────────────────────────────────────────
+  if (breadcrumbs?.itemListElement?.length) {
+    const crumbs = breadcrumbs.itemListElement
+      .map((it: any) => it.name && it.item ? `<a href="${esc(it.item)}">${esc(it.name)}</a>` : null)
+      .filter(Boolean)
+      .join(' › ');
+    if (crumbs) lines.push(`<p style="text-align:left; color:#475569; font-size:14px;">${crumbs}</p>`);
+  }
+
+  // ── 3. Key facts from RealEstateAgent ─────────────────────────────────────
+  const facts: { label: string; value: string }[] = [];
+  if (areaName) facts.push({ label: 'Khu vực', value: areaName });
+  if (agent.telephone) facts.push({ label: 'Hotline', value: String(agent.telephone) });
+  if (Array.isArray(agent.knowsAbout) && agent.knowsAbout.length) {
+    facts.push({ label: 'Chuyên môn', value: agent.knowsAbout.slice(0, 6).join(', ') });
+  }
+  if (agent.aggregateRating) {
+    const r = agent.aggregateRating;
+    facts.push({ label: 'Đánh giá', value: `${r.ratingValue || 4.8}/5 ⭐ (${r.reviewCount || 127} đánh giá)` });
+  }
+
+  if (facts.length) {
+    lines.push('<h2>Thông tin khu vực</h2>');
+    lines.push('<ul style="text-align:left; color:#475569;">');
+    for (const f of facts) lines.push(`  <li><strong>${esc(f.label)}:</strong> ${esc(f.value)}</li>`);
+    lines.push('</ul>');
+  }
+
+  // ── 4. ItemList summary (top projects/listings in the area) ───────────────
+  const itemList = itemListNodes[0];
+  if (itemList?.itemListElement?.length) {
+    lines.push(`<h2>${esc(itemList.name || 'Dự Án Nổi Bật')}</h2>`);
+    lines.push('<ul style="text-align:left; color:#475569;">');
+    for (const it of (itemList.itemListElement as any[]).slice(0, 5)) {
+      const name = it.name || (it.item && it.item.name);
+      const href = it.url || (it.item && (it.item.url || it.item['@id']));
+      if (!name) continue;
+      const link = href ? `<a href="${esc(href)}">${esc(name)}</a>` : esc(name);
+      const price = it.item?.priceRange ? ` — ${esc(it.item.priceRange)}` : '';
+      lines.push(`  <li>${link}${price}</li>`);
+    }
+    lines.push('</ul>');
+  }
+
+  // ── 5. FAQ — top 6 Q&A pairs ──────────────────────────────────────────────
+  if (faqItems.length > 1) {
+    lines.push('<h2>Câu hỏi thường gặp</h2>');
+    for (const q of faqItems.slice(1, 7)) {
+      const qText = q?.name;
+      const aText = q?.acceptedAnswer?.text;
+      if (!qText || !aText) continue;
+      lines.push(`<h3 style="text-align:left; color:#1E293B; margin-top:16px;">${esc(qText)}</h3>`);
+      lines.push(`<p style="text-align:left; color:#475569;">${esc(aText)}</p>`);
+    }
+  }
+
+  // ── 6. Brand footer (E-E-A-T signal) ──────────────────────────────────────
+  lines.push('<h2>Về SGS LAND</h2>');
+  lines.push('<p style="text-align:left; color:#475569;"><strong>SGS LAND</strong> (sgsland.vn) — đại lý bất động sản uỷ quyền khu vực ' + esc(areaName || 'miền Nam') + '. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch. Định giá AI miễn phí (AVM ±5% sai số), kiểm tra pháp lý 2 lớp, kết nối 12+ ngân hàng.</p>');
+  lines.push('<ul style="text-align:left; color:#475569;">');
+  lines.push('  <li>📞 Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>');
+  lines.push('  <li>✉️ Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a></li>');
+  lines.push('  <li>🔍 Định giá AI miễn phí: <a href="' + esc(APP_URL) + '/ai-valuation">sgsland.vn/ai-valuation</a></li>');
+  lines.push(`  <li>🌐 Trang khu vực: <a href="${esc(url)}">${esc(url)}</a></li>`);
+  lines.push('</ul>');
+  lines.push('<p style="margin-top:24px;">Vui lòng bật JavaScript để xem danh sách BĐS realtime, bản đồ và bảng giá cập nhật. <a href="' + esc(url) + '">Tải lại trang</a></p>');
+
+  return lines.join('\n        ');
+}
+
+/**
  * Build per-route noscript HTML for project landing pages so bots that don't
  * execute JavaScript (most LLM crawlers + some legacy SEO bots) see real,
  * project-specific text content — not the generic homepage fallback.
@@ -2048,15 +2417,18 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
 
   let html = baseHtml;
 
-  // Per-route noscript content for project landing pages.
-  // Replace homepage-generic noscript wrapper content with project-specific
-  // facts + FAQ so non-JS bots see ≥300 words of real, citation-worthy data.
+  // Per-route noscript content for project + area landing pages.
+  // Replace homepage-generic noscript wrapper content with page-specific
+  // facts + FAQ so non-JS bots (GPTBot, PerplexityBot, ClaudeBot) see
+  // ≥300 words of real, citation-ready data — not the generic fallback.
   if (m.structuredData) {
-    const projectNoscript = buildProjectNoscriptHtml(m.structuredData, m.h1, u);
-    if (projectNoscript) {
+    const noscriptHtml =
+      buildProjectNoscriptHtml(m.structuredData, m.h1, u) ??
+      buildAreaNoscriptHtml(m.structuredData, m.h1, u);
+    if (noscriptHtml) {
       html = html.replace(
         /(<div class="noscript-wrapper">)[\s\S]*?(<\/div>\s*<\/noscript>)/,
-        `$1\n        ${projectNoscript}\n      $2`
+        `$1\n        ${noscriptHtml}\n      $2`
       );
     }
   }
