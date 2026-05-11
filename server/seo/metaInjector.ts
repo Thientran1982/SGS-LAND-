@@ -98,6 +98,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         {
           '@type': 'FAQPage',
           '@id': `${APP_URL}/#faq`,
+          name: 'Câu hỏi thường gặp về bất động sản SGS LAND',
           inLanguage: 'vi',
           mainEntity: [
             { '@type': 'Question', name: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Biên Hòa, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.' } },
@@ -283,6 +284,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
         {
           '@type': 'FAQPage',
           '@id': `${APP_URL}/#faq`,
+          name: 'Câu hỏi thường gặp về bất động sản SGS LAND',
           inLanguage: 'vi',
           mainEntity: [
             { '@type': 'Question', name: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Biên Hòa, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.' } },

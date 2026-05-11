@@ -644,56 +644,6 @@ export const Landing: React.FC = () => {
                             },
                         ],
                     },
-                    {
-                        '@type': 'FAQPage',
-                        mainEntity: [
-                            {
-                                '@type': 'Question',
-                                name: 'SGS LAND là gì?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là nền tảng công nghệ bất động sản AI hàng đầu Việt Nam (sgsland.vn), cung cấp công cụ định giá tự động sai số ±5%, CRM đa kênh Zalo/Facebook/Email, kho hàng BĐS realtime 45.000+ sản phẩm và pháp lý kiểm duyệt 2 lớp (AI + chuyên viên). Pháp nhân: Công ty Cổ phần SGS Land, MST 0312960439, trụ sở TP.HCM.' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'SGS LAND có miễn phí không?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'Định giá AI, tra cứu kho hàng và tư vấn pháp lý hoàn toàn miễn phí cho người dùng cá nhân. Gói CRM cho doanh nghiệp BĐS từ 990.000 VND/tháng, dùng thử 14 ngày không cần thẻ.' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'Định giá AI của SGS LAND chính xác không?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'Sai số ±5% so với giá công chứng thực tế, được đối chiếu liên tục với dữ liệu giao dịch tại TP.HCM, Đồng Nai, Bình Dương theo chuẩn TĐGVN/IVS. Mô hình kết hợp 4 nguồn dữ liệu (CBRE, Savills, batdongsan.com.vn, công chứng) trên 45.000+ giao dịch lịch sử.' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'SGS LAND phục vụ khu vực nào tại Việt Nam?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND chuyên sâu khu vực Đông Nam Bộ: TP.HCM (Quận 1, 2, 7, 9, Bình Thạnh, Phú Nhuận, Bình Chánh, TP Thủ Đức), Đồng Nai (Biên Hòa, Long Thành, Nhơn Trạch), Bình Dương (Thuận An, Dĩ An, Thành Phố Mới) và Long An. Có trang chuyên sâu cho 7 khu vực và 13 dự án trọng điểm.' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'SGS LAND khác gì với batdongsan.com.vn hay nhadat24h?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'Khác biệt cốt lõi: (1) Không nhận hoa hồng quảng cáo tin niêm yết — kiểm duyệt 2 lớp loại tin ảo; (2) Định giá AI miễn phí với sai số ±5% — đối thủ chỉ có thanh tra giá thủ công; (3) CRM tích hợp sẵn cho môi giới — không phải mua riêng phần mềm; (4) Đại lý phân phối uỷ quyền chính thức Novaland, Vinhomes, Masterise, Nam Long, Sơn Kim — có hợp đồng phân phối, không phải tin treo.' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'Làm thế nào để đăng ký dùng thử CRM SGS LAND?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'Truy cập sgsland.vn/crm-platform, bấm "Dùng thử miễn phí 14 ngày", nhập email công ty và số điện thoại. Tài khoản kích hoạt trong 1 phút, không cần thẻ tín dụng. Trong 14 ngày được toàn quyền dùng đầy đủ tính năng (đa kênh, định giá AI, kho hàng, báo cáo, automation).' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'SGS LAND có tuân thủ quy định pháp luật Việt Nam về dữ liệu cá nhân?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'Có. SGS LAND tuân thủ Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân, Luật Đất Đai 2024, Luật Nhà Ở 2023 và Luật Kinh Doanh BĐS 2023. Dữ liệu khách hàng lưu trữ tại trung tâm dữ liệu Việt Nam, có DPO chuyên trách, thông báo xử lý dữ liệu công khai tại sgsland.vn/privacy-policy.' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'Hotline và email liên hệ SGS LAND là gì?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'Hotline: +84 971 132 378 (8h-22h hàng ngày). Email tư vấn: info@sgsland.vn. Email hỗ trợ kỹ thuật: support@sgsland.vn. Văn phòng: TP. Hồ Chí Minh, Việt Nam. Phản hồi trung bình dưới 15 phút trong giờ hành chính.' },
-                            },
-                            {
-                                '@type': 'Question',
-                                name: 'SGS LAND có hỗ trợ ký gửi bất động sản không?',
-                                acceptedAnswer: { '@type': 'Answer', text: 'Có. Dịch vụ ký gửi BĐS miễn phí với đội ngũ 200+ chuyên viên độc lập tại sgsland.vn/ky-gui-bat-dong-san. Cam kết bán nhanh trong 30-60 ngày, hoa hồng cạnh tranh, không thu phí định giá hay đăng tin.' },
-                            },
-                        ],
-                    },
                 ]}
             />
             {/* NAVBAR — only shown for guests (when logged in, Layout's CommandCenter handles navigation) */}
