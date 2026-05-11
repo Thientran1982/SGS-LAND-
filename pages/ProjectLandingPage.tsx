@@ -31,11 +31,11 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
     },
     'son-kim-land': {
         title: 'Sơn Kim Land | BĐS Thương Mại Cao Cấp TP.HCM & Hà Nội - SGS LAND',
-        description: 'Sơn Kim Land — danh mục BĐS cao cấp: Gem Riverside Q4, Metropole Thủ Thiêm, Seasons Avenue HN. GEM Center, GS25. Giá 40-150 triệu/m². Tư vấn tại SGS LAND.',
+        description: 'Sơn Kim Land — danh mục BĐS cao cấp: Gem Riverside Q4, Metropole Thủ Thiêm, Seasons Avenue HN. GEM Center, GS25. Giá 110-250 triệu/m². Tư vấn tại SGS LAND.',
     },
     'masterise-homes': {
         title: 'Masterise Homes | Căn Hộ Hạng Sang Masteri, Lumière, Grand Marina - SGS LAND',
-        description: 'Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.',
+        description: 'Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 80-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.',
     },
     'the-global-city': {
         title: 'The Global City Masterise | Đại Đô Thị 117ha An Phú Thủ Đức - SGS LAND',
@@ -178,7 +178,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Cho thuê căn hộ/nhà phố Aqua City được bao nhiêu tiền?',
-                a: 'Giá cho thuê tham khảo: Căn hộ studio 1PN: 4-7 triệu/tháng; nhà phố liền kề: 8-15 triệu/tháng; biệt thự đơn lập: 30-60 triệu/tháng. Phân khúc cho thuê chuyên gia Nhật, Hàn tại các KCN Nhơn Trạch đang tăng mạnh. Tỷ suất cho thuê biệt thự cao cấp ước đạt 4-6%/năm.',
+                a: 'Giá cho thuê tham khảo: Nhà phố liền kề: 8-15 triệu/tháng; biệt thự đơn lập: 30-50 triệu/tháng. Phân khúc cho thuê chuyên gia Nhật, Hàn tại các KCN Nhơn Trạch đang tăng mạnh. Tỷ suất cho thuê biệt thự cao cấp ước đạt 4-6%/năm.',
             },
             {
                 q: 'Aqua City có dịch vụ quản lý và vận hành tòa nhà không?',
@@ -677,7 +677,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Thị trường', value: 'TP.HCM, Hà Nội' },
             { label: 'Phân khúc', value: 'Căn hộ trung cao cấp, BĐS thương mại, nghỉ dưỡng' },
             { label: 'Dự án tiêu biểu', value: 'Gem Riverside, Seasons Avenue, Metropole Thủ Thiêm' },
-            { label: 'Mức giá tham khảo', value: 'Căn hộ 40-150 triệu/m²' },
+            { label: 'Mức giá tham khảo', value: 'Căn hộ 110-250 triệu/m²' },
             { label: 'Hệ sinh thái', value: 'GEM CENTER, GS25, khách sạn 5 sao' },
             { label: 'Kinh nghiệm', value: '20+ năm phát triển BĐS' },
             { label: 'Đặc điểm', value: 'Tích hợp thương mại, dịch vụ và ở ở cùng khu' },
@@ -714,7 +714,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Dự án Gem Riverside của Sơn Kim Land như thế nào?',
-                a: 'Gem Riverside tại Quận 4 TP.HCM là dự án căn hộ cao cấp ven sông Sài Gòn. Vị trí cực kỳ hiếm — mặt tiền sông trong nội thành, cách Q1 chỉ 10 phút. Giá 65-100 triệu/m², phù hợp đầu tư dài hạn hoặc ở thực tại trung tâm thành phố với view sông đắt giá.',
+                a: 'Gem Riverside tại Quận 4 TP.HCM là dự án căn hộ cao cấp ven sông Sài Gòn. Vị trí cực kỳ hiếm — mặt tiền sông trong nội thành, cách Q1 chỉ 10 phút. Giá 85-120 triệu/m², phù hợp đầu tư dài hạn hoặc ở thực tại trung tâm thành phố với view sông đắt giá.',
             },
             {
                 q: 'Sơn Kim Land có dự án nào tại Hà Nội không?',
@@ -734,7 +734,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Gem Riverside Q4 Sơn Kim Land giá bao nhiêu năm 2026?',
-                a: 'Gem Riverside tại Quận 4, mặt tiền sông Sài Gòn, thị trường thứ cấp 2025-2026: căn 2PN (70-80m²) khoảng 5-8 tỷ, 3PN (90-110m²) khoảng 8-12 tỷ. Cho thuê 2PN 20-30 triệu/tháng, 3PN 30-45 triệu/tháng. Vị trí hiếm view sông nội thành, tiềm năng tăng giá bền vững.',
+                a: 'Gem Riverside tại Quận 4, mặt tiền sông Sài Gòn, thị trường thứ cấp 2025-2026: căn 2PN (70-80m²) khoảng 7-9 tỷ, 3PN (90-110m²) khoảng 9-15 tỷ. Cho thuê 2PN 20-30 triệu/tháng, 3PN 30-45 triệu/tháng. Vị trí hiếm view sông nội thành, tiềm năng tăng giá bền vững.',
             },
             {
                 q: 'GS25 của Sơn Kim Land có ý nghĩa gì với dự án BĐS?',
@@ -742,7 +742,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'So sánh Sơn Kim Land và Masterise Homes — khác nhau thế nào?',
-                a: 'Sơn Kim Land: tích hợp thương mại-lifestyle mạnh (GEM Center, GS25, hotel), giá từ 50-130 triệu/m², cộng đồng quốc tế vừa phải. Masterise: ultra-luxury (branded residence, 60-300 triệu/m²), vận hành bởi Marriott/IHG, cộng đồng doanh nhân/expat cấp cao. Chọn Sơn Kim nếu giá vừa hơn; chọn Masterise nếu cần prestige cao nhất.',
+                a: 'Sơn Kim Land: tích hợp thương mại-lifestyle mạnh (GEM Center, GS25, hotel), giá từ 50-130 triệu/m², cộng đồng quốc tế vừa phải. Masterise: ultra-luxury (branded residence, 110-350 triệu/m²), vận hành bởi Marriott/IHG, cộng đồng doanh nhân/expat cấp cao. Chọn Sơn Kim nếu giá vừa hơn; chọn Masterise nếu cần prestige cao nhất.',
             },
             {
                 q: 'Sơn Kim Land có dự án nghỉ dưỡng hay resort nào không?',
@@ -810,7 +810,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             },
             {
                 q: 'Giá căn hộ Masterise Homes hiện nay là bao nhiêu?',
-                a: 'Giá Masterise theo dự án: Masteri Thảo Điền 65-100 triệu/m²; Masteri An Phú 60-90 triệu/m²; Lumière Boulevard 90-150 triệu/m²; Grand Marina Saigon 130-300 triệu/m² (luxury). Cho thuê: Masteri Thảo Điền 25-60 triệu/tháng; căn hộ Lumière 40-80 triệu/tháng. Liên hệ SGS LAND để báo giá cập nhật.',
+                a: 'Giá Masterise theo dự án: Masteri Thảo Điền 110-150 triệu/m²; Masteri An Phú 80-130 triệu/m²; Lumière Boulevard 110-180 triệu/m²; Grand Marina Saigon 180-350 triệu/m² (luxury). Cho thuê: Masteri Thảo Điền 25-60 triệu/tháng; căn hộ Lumière 40-80 triệu/tháng. Liên hệ SGS LAND để báo giá cập nhật.',
             },
             {
                 q: 'Grand Marina Saigon của Masterise có đặc biệt không?',

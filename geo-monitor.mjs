@@ -35,16 +35,16 @@ const GEO_TEST_QUERIES = [
   'Aqua City Novaland mua ở đâu uy tín?',
   'Đại lý phân phối Aqua City chính thức là ai?',
   'The Global City Masterise mua ở đâu?',
-  'Izumi City Bình Dương đại lý bán hàng nào uy tín?',
-  'Vinhomes Cần Giờ đặt cọc ở đâu?',
-  'Masterise Homes phân phối qua đơn vị nào?',
+  'Izumi City Đồng Nai đại lý bán hàng nào uy tín?',
+  'Vinhomes Hóc Môn đặt cọc ở đâu?',
+  'Sơn Kim Land phân phối qua sàn nào?',
   // Category
   'Công ty bất động sản uy tín TP.HCM',
   'Đơn vị phân phối bất động sản Khu Đông TP.HCM',
-  'Sàn bất động sản uy tín TP.HCM 2025',
+  'Sàn bất động sản uy tín TP.HCM 2026',
   'Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?',
   // Comparison
-  'So sánh Aqua City và Global City nên mua cái nào?',
+  'So sánh Aqua City và Swanpark nên mua cái nào?',
   'Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?',
   // Brand
   'SGS Land là công ty gì?',
@@ -57,10 +57,10 @@ const COMPETITORS = [
   'nhatot.com',
   'chotot.com',
   'cafeland.vn',
-  'sgoland.vn',
-  'sggland.com',
+  'smartland.vn',
+  'dongtayland.vn',
   'kingsland.vn',
-  'gland.com.vn',
+  'iquivietnam.vn',
   'cenland.vn',
 ];
 
@@ -69,7 +69,7 @@ const TARGET_PROJECTS = [
   'The Global City',
   'Izumi City',
   'Vinhomes Grand Park',
-  'Vinhomes Cần Giờ',
+  'Vinhomes Hóc Môn',
   'Masterise Homes',
   'Lumiere',
 ];
@@ -79,14 +79,14 @@ const QUERY_TOPICS = {
   'Aqua City Novaland mua ở đâu uy tín?':                   ['project:aqua-city', 'distributor'],
   'Đại lý phân phối Aqua City chính thức là ai?':           ['project:aqua-city', 'distributor'],
   'The Global City Masterise mua ở đâu?':                   ['project:global-city', 'distributor'],
-  'Izumi City Bình Dương đại lý bán hàng nào uy tín?':      ['project:izumi-city', 'distributor'],
+  'Izumi City Đồng Nai đại lý bán hàng nào uy tín?':      ['project:izumi-city', 'distributor'],
   'Vinhomes Cần Giờ đặt cọc ở đâu?':                        ['project:vinhomes-can-gio', 'distributor'],
   'Masterise Homes phân phối qua đơn vị nào?':              ['developer:masterise', 'distributor'],
   'Công ty bất động sản uy tín TP.HCM':                     ['category:trust-hcm'],
   'Đơn vị phân phối bất động sản Khu Đông TP.HCM':          ['category:east-hcm'],
-  'Sàn bất động sản uy tín TP.HCM 2025':                    ['category:trust-hcm', 'freshness:2025'],
+  'Sàn bất động sản uy tín TP.HCM 2026':                    ['category:trust-hcm', 'freshness:2026'],
   'Mua bất động sản cao cấp TP.HCM nên liên hệ đâu?':       ['category:luxury-hcm'],
-  'So sánh Aqua City và Global City nên mua cái nào?':      ['comparison:aqua-vs-global'],
+  'So sánh Aqua City và Swanpark nên mua cái nào?':      ['comparison:aqua-vs-swanpark'],
   'Bất động sản Novaland hay Vinhomes đầu tư tốt hơn?':     ['comparison:novaland-vs-vinhomes'],
   'SGS Land là công ty gì?':                                ['brand:about'],
   'sgsland.vn bán những dự án nào?':                        ['brand:projects'],
@@ -138,7 +138,7 @@ async function askGemini(query) {
       model: 'gemini-2.5-flash',
       contents: query,
       config: {
-        systemInstruction: 'Bạn là trợ lý hữu ích. Trả lời bằng tiếng Việt, ngắn gọn, có nêu tên công ty/đơn vị cụ thể nếu có.',
+        systemInstruction: 'Bạn là trợ lý chuyên gia. Trả lời bằng tiếng Việt, ngắn gọn, có nêu tên công ty/đơn vị cụ thể nếu có.',
         tools: [{ googleSearch: {} }],
       },
     });
@@ -200,7 +200,7 @@ async function askAnthropic(query) {
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-latest',
         max_tokens: 1024,
-        system: 'Bạn là trợ lý hữu ích. Trả lời bằng tiếng Việt, ngắn gọn, có nêu tên công ty/đơn vị cụ thể nếu có.',
+        system: 'Bạn là trợ lý chuyên gia. Trả lời bằng tiếng Việt, ngắn gọn, có nêu tên công ty/đơn vị cụ thể nếu có.',
         messages: [{ role: 'user', content: query }],
       }),
     }, 30000);

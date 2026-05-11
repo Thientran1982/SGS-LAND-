@@ -29,7 +29,7 @@ const TODAY = new Date().toISOString().slice(0, 10);
 // Real production data (synced from index.html / metaInjector.ts / AboutUs.tsx)
 const BRAND = {
   name: 'SGS LAND',
-  legal: 'Công ty Cổ phần SGS Land',
+  legal: 'Công ty TNHH SGS Land',
   url: APP_URL,
   logo: `${APP_URL}/apple-touch-icon.png`,
   hotline: '+84 971 132 378',
@@ -48,13 +48,13 @@ const BRAND = {
 };
 
 const PROJECTS = [
-  { slug: 'aqua-city',         name: 'Aqua City Novaland',           dev: 'Novaland',        loc: 'Nhơn Trạch, Đồng Nai',     scale: '1.000ha', priceFrom: '3 tỷ',   handover: '2024-2026', legal: 'Sổ hồng từng căn (đã cấp một số phân khu)', usp: 'Đại đô thị sinh thái 1.000ha, marina, golf' },
+  { slug: 'aqua-city',         name: 'Aqua City Novaland',           dev: 'Novaland',        loc: 'Long Hưng, Đồng Nai',     scale: '1.000ha', priceFrom: '5.5 tỷ',   handover: '2024-2026', legal: 'Sổ hồng từng căn (đã cấp một số phân khu)', usp: 'Đại đô thị sinh thái 1.000ha, marina, golf' },
   { slug: 'the-global-city',   name: 'The Global City',              dev: 'Masterise Homes', loc: 'An Phú, TP Thủ Đức',       scale: '117ha',  priceFrom: '15 tỷ',  handover: '2025-2027', legal: 'Sổ hồng riêng',                              usp: 'Đại đô thị thương mại chuẩn Singapore, cạnh Metro số 1' },
-  { slug: 'izumi-city',        name: 'Izumi City Nam Long',          dev: 'Nam Long',        loc: 'Biên Hòa, Đồng Nai',       scale: '170ha',  priceFrom: '2 tỷ',   handover: '2024-2027', legal: 'Sổ hồng riêng',                              usp: 'Đô thị tích hợp chuẩn Nhật, Fuji Mart, trường Nhật' },
+  { slug: 'izumi-city',        name: 'Izumi City Nam Long',          dev: 'Nam Long',        loc: 'Biên Hòa, Đồng Nai',       scale: '170ha',  priceFrom: '8 tỷ',   handover: '2024-2027', legal: 'Sổ hồng riêng',                              usp: 'Đô thị tích hợp chuẩn Nhật, Fuji Mart, trường Nhật' },
   { slug: 'vinhomes-can-gio',  name: 'Vinhomes Cần Giờ — Green Paradise', dev: 'Vinhomes',  loc: 'Cần Giờ, TP.HCM',          scale: '2.870ha', priceFrom: 'Mở bán 2026', handover: '2027-2030', legal: 'Đang hoàn thiện pháp lý',         usp: 'Siêu đô thị du lịch lấn biển lớn nhất Việt Nam' },
-  { slug: 'masterise-homes',   name: 'Masterise Homes',              dev: 'Masterise Homes', loc: 'TP.HCM',                   scale: 'Hệ sinh thái', priceFrom: '60 triệu/m²', handover: 'Đã/đang bàn giao', legal: 'Sổ hồng riêng', usp: 'Branded residence Marriott/IHG, Masteri, Lumière, Grand Marina' },
-  { slug: 'vinhomes-grand-park', name: 'Vinhomes Grand Park',        dev: 'Vinhomes',        loc: 'TP Thủ Đức, TP.HCM',       scale: '271ha',  priceFrom: '2.5 tỷ',  handover: 'Đã bàn giao', legal: 'Sổ hồng riêng',                            usp: 'Siêu đô thị 271ha, Metro số 1, công viên 36ha' },
-  { slug: 'vinhomes-central-park', name: 'Vinhomes Central Park',    dev: 'Vinhomes',        loc: 'Bình Thạnh, TP.HCM',       scale: '43,9ha', priceFrom: '3.5 tỷ',  handover: 'Đã bàn giao', legal: 'Sổ hồng riêng',                            usp: '44 tòa cao tầng + Landmark 81 ven sông Sài Gòn' },
+  { slug: 'masterise-homes',   name: 'Masterise Homes',              dev: 'Masterise Homes', loc: 'TP.HCM',                   scale: 'Hệ sinh thái', priceFrom: '80 triệu/m²', handover: 'Đã/đang bàn giao', legal: 'Sổ hồng riêng', usp: 'Branded residence Marriott/IHG, Masteri, Lumière, Grand Marina' },
+  { slug: 'vinhomes-grand-park', name: 'Vinhomes Grand Park',        dev: 'Vinhomes',        loc: 'TP Thủ Đức, TP.HCM',       scale: '271ha',  priceFrom: '2.9 tỷ',  handover: 'Đã bàn giao', legal: 'Sổ hồng riêng',                            usp: 'Siêu đô thị 271ha, Metro số 1, công viên 36ha' },
+  { slug: 'vinhomes-central-park', name: 'Vinhomes Central Park',    dev: 'Vinhomes',        loc: 'Bình Thạnh, TP.HCM',       scale: '43,9ha', priceFrom: '6.5 tỷ',  handover: 'Đã bàn giao', legal: 'Sổ hồng riêng',                            usp: '44 tòa cao tầng + Landmark 81 ven sông Sài Gòn' },
 ];
 
 // FAQ generator — produces 10 natural Vietnamese Q&A per project
@@ -222,7 +222,7 @@ ${ld(videoObject)}
 function buildMetaTags() {
   const pages = [
     { path: '/',                       title: 'SGS LAND | Phân Phối F1 BĐS TP.HCM Aqua City, Global City',  desc: 'Đại lý F1 phân phối Aqua City, The Global City, Izumi City, Vinhomes Cần Giờ, Masterise. Định giá AI ±5%, hỗ trợ vay miễn phí. Hotline ' + BRAND.hotline + '.' },
-    { path: '/du-an/aqua-city',        title: 'Aqua City Novaland | Đại Đô Thị 1.000ha Đồng Nai — SGS LAND',  desc: 'Aqua City Novaland 1.000ha Nhơn Trạch: bảng giá, tiện ích, pháp lý 2026. Đại lý uỷ quyền Novaland, hỗ trợ vay 70%. Hotline ' + BRAND.hotline + '.' },
+    { path: '/du-an/aqua-city',        title: 'Aqua City Novaland | Đại Đô Thị 1.000ha Đồng Nai — SGS LAND',  desc: 'Aqua City Novaland 1.000ha Long Hưng: bảng giá, tiện ích, pháp lý 2026. Đại lý uỷ quyền Novaland, hỗ trợ vay 70%. Hotline ' + BRAND.hotline + '.' },
     { path: '/du-an/the-global-city',  title: 'The Global City | Đại Đô Thị 117ha Masterise Thủ Đức',          desc: 'The Global City Masterise An Phú: 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố 15 tỷ, biệt thự 30 tỷ. Tư vấn SGS LAND ' + BRAND.hotline + '.' },
     { path: '/du-an/izumi-city',       title: 'Izumi City Nam Long | Đô Thị Chuẩn Nhật 170ha Đồng Nai',         desc: 'Izumi City Nam Long Biên Hòa: 170ha chuẩn Nhật Bản, Fuji Mart, trường Nhật. Nhà phố 5-12 tỷ, biệt thự 10-25 tỷ. Tư vấn SGS LAND.' },
     { path: '/du-an/vinhomes-can-gio', title: 'Vinhomes Cần Giờ | Siêu Đô Thị Lấn Biển 2.870ha — SGS LAND',     desc: 'Vinhomes Green Paradise Cần Giờ: siêu đô thị lấn biển 2.870ha lớn nhất VN. Tiến độ, pháp lý, đặt chỗ ưu tiên tại SGS LAND.' },
@@ -540,7 +540,7 @@ _Generated: ${TODAY}_
 ## Nguyên tắc heading hierarchy cho project pages
 
 1. **Đúng 1 thẻ \`<h1>\`** mỗi page — chứa keyword chính + USP, 60-70 ký tự
-2. **\`<h2>\`** cho mỗi section lớn — tránh skip level (h1 → h3 ❌)
+2. **\`<h2>\`** cho mỗi section lớn — tránh skip level (h1 → h3)
 3. **\`<h3>\`** cho sub-section trong h2
 4. **Không dùng h2/h3 chỉ để tạo style** — dùng \`<p class="...">\` cho việc đó
 5. Các câu hỏi FAQ dùng \`<h3>\` để bot index thành "People Also Ask"
@@ -565,7 +565,7 @@ function buildReadme(produced) {
 
 _Generated: ${TODAY} by \`seo-auto-fix.mjs\`_
 
-## ⚠️ Đọc trước khi dùng
+## Đọc trước khi dùng
 
 Đa số "fix" được generate ở đây **đã LIVE trong production code** — file \`./fixes/*\` chỉ là **reference templates** cho:
 - Review / so sánh với code đang chạy
@@ -581,10 +581,10 @@ ${produced.map(f => `| \`fixes/${f.name}\` | ${f.purpose} | ${f.status} |`).join
 
 ## Các fix CẦN tay can thiệp (không tự sinh được)
 
-1. **🔴 Cloudflare "Block AI Crawlers" toggle** — vào dashboard Cloudflare → Bots → AI Audit → tắt. Đây là root cause khiến GPTBot/ClaudeBot/Google-Extended bị chặn ở tầng CDN, override mọi config robots.txt trong code.
-2. **🟠 Blog content** — \`/news\` mỏng 144 từ. Cần seed bài viết ≥1500 từ (template trong \`geo-content-templates.md\` có thể adapt).
-3. **🟡 Author byline UI** — render component \`AuthorByline\` ở cuối project pages thay vì chỉ trong noscript.
-4. **🟡 OG image per project** — hiện dùng \`og-image.jpg\` chung; cân nhắc generate \`og-{slug}.jpg\` 1200×630 riêng cho mỗi dự án để tăng CTR khi share Facebook/Zalo.
+1. **Cloudflare "Block AI Crawlers" toggle** — vào dashboard Cloudflare → Bots → AI Audit → tắt. Đây là root cause khiến GPTBot/ClaudeBot/Google-Extended bị chặn ở tầng CDN, override mọi config robots.txt trong code.
+2. **Blog content** — \`/news\` mỏng 144 từ. Cần seed bài viết ≥1500 từ (template trong \`geo-content-templates.md\` có thể adapt).
+3. **Author byline UI** — render component \`AuthorByline\` ở cuối project pages thay vì chỉ trong noscript.
+4. **OG image per project** — hiện dùng \`og-image.jpg\` chung; cân nhắc generate \`og-{slug}.jpg\` 1200×630 riêng cho mỗi dự án để tăng CTR khi share Facebook/Zalo.
 
 ## Workflow
 
@@ -609,16 +609,16 @@ async function main() {
     await access(path.join(ROOT, 'reports', 'FIXES-TODO.md'));
     const todo = await readFile(path.join(ROOT, 'reports', 'FIXES-TODO.md'), 'utf-8');
     const m = todo.match(/P0[^*]*\*\*(\d+)\*\*[^P]*P1[^*]*\*\*(\d+)\*\*[^P]*P2[^*]*\*\*(\d+)\*\*/s);
-    if (m) todoSummary = `Latest audit: 🔴 ${m[1]} P0 · 🟠 ${m[2]} P1 · 🟡 ${m[3]} P2`;
+    if (m) todoSummary = `Latest audit: ${m[1]} P0 · ${m[2]} P1 · ${m[3]} P2`;
   } catch {}
 
   const produced = [
-    { name: 'schema-blocks.html',       content: buildSchemaBlocks(),        purpose: 'JSON-LD reference (Org/LocalBiz/FAQ/Listing/Breadcrumb/Video)', status: '✅ Already injected per-route by metaInjector.ts' },
-    { name: 'meta-tags-optimized.html', content: buildMetaTags(),            purpose: 'Optimized <head> per key route',                                status: '✅ Already injected per-route by metaInjector.ts' },
-    { name: 'robots.txt',               content: buildRobotsTxt(),           purpose: 'Optimal robots.txt with all AI bots allowed',                   status: '⚠️ Source-of-truth at public/robots.txt — Cloudflare overrides on prod' },
-    { name: 'sitemap-template.xml',     content: buildSitemapTemplate(),     purpose: 'Sitemap-index + child sitemaps structure',                      status: '✅ public/sitemap.xml + sitemap-static.xml + sitemap-images.xml live' },
-    { name: 'geo-content-templates.md', content: buildGeoContentTemplates(), purpose: 'AI-citable content templates per project',                      status: '🟡 Partial — noscript covers basics; enrich UI per template' },
-    { name: 'heading-structure.md',     content: buildHeadingStructure(),    purpose: 'H1/H2/H3 outline reference for project pages',                  status: '🟡 H1 correct via metaInjector; H2/H3 need component audit' },
+    { name: 'schema-blocks.html',       content: buildSchemaBlocks(),        purpose: 'JSON-LD reference (Org/LocalBiz/FAQ/Listing/Breadcrumb/Video)', status: 'Already injected per-route by metaInjector.ts' },
+    { name: 'meta-tags-optimized.html', content: buildMetaTags(),            purpose: 'Optimized <head> per key route',                                status: 'Already injected per-route by metaInjector.ts' },
+    { name: 'robots.txt',               content: buildRobotsTxt(),           purpose: 'Optimal robots.txt with all AI bots allowed',                   status: 'Source-of-truth at public/robots.txt — Cloudflare overrides on prod' },
+    { name: 'sitemap-template.xml',     content: buildSitemapTemplate(),     purpose: 'Sitemap-index + child sitemaps structure',                      status: 'public/sitemap.xml + sitemap-static.xml + sitemap-images.xml live' },
+    { name: 'geo-content-templates.md', content: buildGeoContentTemplates(), purpose: 'AI-citable content templates per project',                      status: 'Partial — noscript covers basics; enrich UI per template' },
+    { name: 'heading-structure.md',     content: buildHeadingStructure(),    purpose: 'H1/H2/H3 outline reference for project pages',                  status: 'H1 correct via metaInjector; H2/H3 need component audit' },
   ];
 
   for (const f of produced) {
@@ -626,7 +626,7 @@ async function main() {
   }
   await writeFile(path.join(FIXES_DIR, 'README.md'), buildReadme(produced));
 
-  console.log(`\n✅ SGS LAND — seo-auto-fix complete`);
+  console.log(`\n SGS LAND — seo-auto-fix complete`);
   console.log(`   ${todoSummary}\n`);
   console.log(`Generated ${produced.length + 1} reference files in ./fixes/:`);
   for (const f of produced) console.log(`   • ${f.name}  — ${f.status}`);

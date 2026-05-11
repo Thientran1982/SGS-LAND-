@@ -48,8 +48,9 @@ const SPECIAL_URLS = [
 ];
 
 const TARGET_KEYWORDS = [
-  'aqua city', 'global city', 'izumi', 'vinhomes can gio',
-  'masterise', 'bat dong san', 'sgs land', 'sgsland',
+  'aqua city', 'global city', 'izumi', 'vinhomes hoc mon',
+  'masterise', 'bat dong san', 'sgs land', 'sgsland', 
+  'thu thiem', 'van phuc city', 'sonkim land', 'sala',
 ];
 
 const ENTITIES = [
@@ -176,7 +177,7 @@ function analyzeHtml(pageRes) {
   // robots meta
   const robotsMeta = $('meta[name="robots"]').attr('content') || '';
   facts.robotsMeta = robotsMeta;
-  if (/noindex/i.test(robotsMeta)) issues.push({ level: 'CRITICAL', code: 'noindex', message: '⚠️ Meta robots = noindex — page bị loại khỏi index' });
+  if (/noindex/i.test(robotsMeta)) issues.push({ level: 'CRITICAL', code: 'noindex', message: 'Meta robots = noindex — page bị loại khỏi index' });
 
   // Open Graph
   const og = {
@@ -569,7 +570,7 @@ function buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, ov
   lines.push(`- **Overall site score:** ${overall.avg}/100 — ${overall.label}`);
   lines.push(`- **Best page:** ${overall.best.url} (${overall.best.score}/100)`);
   lines.push(`- **Worst page:** ${overall.worst.url} (${overall.worst.score}/100)`);
-  lines.push(`- **Tổng số issue:** 🔴 ${overall.counts.CRITICAL} CRITICAL · 🟠 ${overall.counts.WARN} WARN · 🟡 ${overall.counts.INFO} INFO`);
+  lines.push(`- **Tổng số issue:** ${overall.counts.CRITICAL} CRITICAL · ${overall.counts.WARN} WARN · ${overall.counts.INFO} INFO`);
   lines.push('');
   lines.push(`### Top 5 vấn đề ưu tiên`);
   for (const t of topIssues.slice(0, 5)) {
@@ -584,7 +585,7 @@ function buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, ov
   lines.push('');
 
   lines.push(`## Sitemap`);
-  if (sitemapInfo.error) lines.push(`- ❌ ${sitemapInfo.error}`);
+  if (sitemapInfo.error) lines.push(`- ${sitemapInfo.error}`);
   else {
     lines.push(`- URLs trong sitemap: **${sitemapInfo.urlCount}**`);
     if (sitemapInfo.sample.length) {
@@ -595,12 +596,12 @@ function buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, ov
   lines.push('');
 
   lines.push(`## Core Web Vitals (Lighthouse)`);
-  if (lighthouseInfo.skipped) lines.push(`- 🟡 ${lighthouseInfo.skipped}`);
+  if (lighthouseInfo.skipped) lines.push(`- ${lighthouseInfo.skipped}`);
   else {
     lines.push('| URL | Perf | SEO | A11y | LCP (ms) | CLS | TTFB (ms) |');
     lines.push('|---|---:|---:|---:|---:|---:|---:|');
     for (const r of lighthouseInfo.results || []) {
-      if (r.error) lines.push(`| ${r.url} | ❌ ${r.error} | | | | | |`);
+      if (r.error) lines.push(`| ${r.url} | ${r.error} | | | | | |`);
       else lines.push(`| ${r.url} | ${r.performance} | ${r.seo} | ${r.accessibility} | ${Math.round(r.lcp || 0)} | ${(r.cls || 0).toFixed(3)} | ${Math.round(r.ttfb || 0)} |`);
     }
   }
@@ -666,7 +667,7 @@ function buildFixesTodo(perPage, robots, sitemapInfo) {
     thin_content_blog:      'Bài blog cần ≥1500 từ: cover topic đầy đủ, có dữ liệu/case study, có FAQ cuối bài.',
     no_body_text:           'SPA chưa SSR — bot không chạy JS thấy trang trống. Bổ sung nội dung text trong `<noscript>` hoặc cân nhắc SSR/prerender các route public.',
     no_factual_data:        'Bổ sung số liệu cụ thể (giá từ ... tỷ, diện tích ... m²/ha, số căn, năm bàn giao) — AI cần dữ liệu để cite.',
-    no_faq:                 'Thêm FAQ section 5-10 câu hỏi thực tế khách hàng, kèm JSON-LD FAQPage.',
+    no_faq:                 'Thêm FAQ section 8-10 câu hỏi thực tế khách hàng, kèm JSON-LD FAQPage.',
     no_author:              'Thêm author byline cuối bài: tên + chức danh + ảnh + link LinkedIn.',
     no_pub_date:            'Hiển thị ngày đăng + ngày cập nhật (`<time datetime="2026-01-15">`).',
     no_local_biz_schema:    'Thêm JSON-LD `RealEstateAgent` hoặc `LocalBusiness` ở homepage với address, geo, telephone, openingHours.',
@@ -702,9 +703,9 @@ function buildFixesTodo(perPage, robots, sitemapInfo) {
   lines.push(`## Quick stats`);
   const counts = { P0: 0, P1: 0, P2: 0 };
   for (const f of fixes) counts[f.priority]++;
-  lines.push(`- 🔴 P0 (fix ngay): **${counts.P0}**`);
-  lines.push(`- 🟠 P1 (fix trong 2 tuần): **${counts.P1}**`);
-  lines.push(`- 🟡 P2 (cải thiện): **${counts.P2}**`);
+  lines.push(`- P0 (fix ngay): **${counts.P0}**`);
+  lines.push(`- P1 (fix trong 2 tuần): **${counts.P1}**`);
+  lines.push(`- P2 (cải thiện): **${counts.P2}**`);
   lines.push('');
   for (const f of fixes) {
     lines.push(`## [${f.priority}] ${f.issue}`);
@@ -723,11 +724,11 @@ function buildFixesTodo(perPage, robots, sitemapInfo) {
 // ──────────────────────────────────────────────────────────────────────────────
 async function main() {
   await mkdir(REPORTS_DIR, { recursive: true });
-  console.log(c.bold(c.cyan(`\n🔎 SGS Land SEO + GEO Audit — ${TIMESTAMP}`)));
+  console.log(c.bold(c.cyan(`\n SGS Land SEO + GEO Audit — ${TIMESTAMP}`)));
   console.log(c.dim(`Target: ${BASE_URL}\n`));
 
   // Special files first
-  console.log(c.bold('📄 robots.txt + sitemap + llms.txt'));
+  console.log(c.bold('robots.txt + sitemap + llms.txt'));
   const [robotsRes, sitemapRes, llmsRes, llmsFullRes] = await Promise.all(SPECIAL_URLS.map(fetchUrl));
   const robots = analyzeRobots(robotsRes);
   console.log(`  robots.txt: ${robotsRes.status === 200 ? c.green('✓') : c.red('✗')}  ` +
@@ -748,12 +749,12 @@ async function main() {
   console.log('');
 
   // Crawl
-  console.log(c.bold(`🕷️  Crawling (max ${MAX_PAGES} pages, delay ${REQUEST_DELAY_MS}ms)`));
+  console.log(c.bold(`Crawling (max ${MAX_PAGES} pages, delay ${REQUEST_DELAY_MS}ms)`));
   const pages = await crawl(TARGET_URLS, MAX_PAGES);
   console.log(c.dim(`Crawled ${pages.length} pages.\n`));
 
   // Per-page analysis
-  console.log(c.bold(`🧪 Analyzing pages…`));
+  console.log(c.bold(`Analyzing pages…`));
   const perPage = [];
   const counts = { CRITICAL: 0, WARN: 0, INFO: 0 };
   for (const pageRes of pages) {
@@ -768,11 +769,11 @@ async function main() {
 
   // Lighthouse (optional)
   console.log('');
-  console.log(c.bold(`⚡ Core Web Vitals (Lighthouse)`));
+  console.log(c.bold(` Core Web Vitals (Lighthouse)`));
   const lighthouseInfo = await tryLighthouse(TARGET_URLS.slice(0, 4));
-  if (lighthouseInfo.skipped) console.log(`  🟡 ${lighthouseInfo.skipped}`);
+  if (lighthouseInfo.skipped) console.log(`  ${lighthouseInfo.skipped}`);
   else for (const r of lighthouseInfo.results || []) {
-    if (r.error) console.log(`  ❌ ${r.url}: ${r.error}`);
+    if (r.error) console.log(`  ${r.url}: ${r.error}`);
     else console.log(`  ${r.url}  perf=${r.performance} seo=${r.seo} a11y=${r.accessibility} LCP=${Math.round(r.lcp)}ms TTFB=${Math.round(r.ttfb)}ms`);
   }
 
@@ -824,12 +825,12 @@ async function main() {
   await writeFile(todoFile, todo);
 
   console.log('');
-  console.log(c.bold(`📊 Site score: ${scoreLabel(avg)}`));
-  console.log(`   🔴 ${counts.CRITICAL} CRITICAL · 🟠 ${counts.WARN} WARN · 🟡 ${counts.INFO} INFO`);
+  console.log(c.bold(`Site score: ${scoreLabel(avg)}`));
+  console.log(`   ${counts.CRITICAL} CRITICAL · ${counts.WARN} WARN · ${counts.INFO} INFO`);
   console.log('');
-  console.log(`📝 ${mdFile}`);
-  console.log(`📦 ${jsonFile}`);
-  console.log(`🛠  ${todoFile}`);
+  console.log(`${mdFile}`);
+  console.log(`${jsonFile}`);
+  console.log(`${todoFile}`);
   console.log('');
 }
 
