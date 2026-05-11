@@ -6,7 +6,7 @@ import { SeoHead } from '../components/SeoHead';
 
 const LOCATION_SEO_META: Record<string, { title: string; description: string }> = {
     'bat-dong-san-dong-nai': {
-        title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2025 — SGS LAND',
+        title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2026 — SGS LAND',
         description: 'Mua bán bất động sản Đồng Nai: Nhơn Trạch, Biên Hòa, Long Thành. Kho hàng nghìn căn, giá thực tế, pháp lý kiểm tra trước. SGS LAND.',
     },
     'bat-dong-san-long-thanh': {
@@ -87,7 +87,7 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             },
             {
                 q: 'Giá đất Đồng Nai hiện nay là bao nhiêu?',
-                a: 'Giá đất Đồng Nai dao động lớn theo vị trí: đất nền Long Thành 8-25 triệu/m², đất nền Nhơn Trạch 5-15 triệu/m², căn hộ Biên Hòa 35-80 triệu/m², biệt thự dự án 15-50 triệu/m². Giá cập nhật theo thị trường và có thể thay đổi theo giai đoạn dự án.',
+                a: 'Giá đất Đồng Nai dao động lớn theo vị trí: đất nền Long Thành 8-25 triệu/m², đất nền Nhơn Trạch 5-15 triệu/m², căn hộ Biên Hòa 35-80 triệu/m², biệt thự dự án 55-90 triệu/m². Giá cập nhật theo thị trường và có thể thay đổi theo giai đoạn dự án.',
             },
             {
                 q: 'Sân bay Long Thành ảnh hưởng thế nào đến giá BĐS?',
@@ -95,7 +95,7 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             },
             {
                 q: 'Những dự án BĐS nào nổi bật tại Đồng Nai?',
-                a: 'Các dự án lớn đáng chú ý: Aqua City (Novaland, 1.000ha tại Nhơn Trạch), Izumi City (Nam Long, 170ha tại Biên Hòa), Waterpoint (Nam Long, Long An giáp ranh), HUD Nhơn Trạch (chung cư giá vừa), Gem Sky World (Long Thành). SGS LAND có thông tin cập nhật và hỗ trợ tư vấn tất cả dự án.',
+                a: 'Các dự án lớn đáng chú ý: Aqua City (Novaland, 1.000ha tại Long Hưng), Izumi City (Nam Long, 170ha tại Biên Hòa), Waterpoint (Nam Long, Long An giáp ranh), HUD Nhơn Trạch (chung cư giá vừa), Gem Sky World (Long Thành). SGS LAND có thông tin cập nhật và hỗ trợ tư vấn tất cả dự án.',
             },
             {
                 q: 'Mua đất Đồng Nai cần lưu ý gì về pháp lý?',
@@ -165,8 +165,8 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         ],
         faqs: [
             {
-                q: 'Có nên mua đất Long Thành năm 2025-2026 không?',
-                a: 'Long Thành là một trong các thị trường BĐS được khuyến nghị đầu tư mạnh trong giai đoạn 2024-2027. Với sân bay Long Thành hoàn thành giai đoạn 1 năm 2026, cơ sở hạ tầng đồng bộ và dòng vốn FDI đổ vào khu công nghiệp, giá BĐS được dự báo tiếp tục tăng 15-25%/năm.',
+                q: 'Có nên mua đất Long Thành năm 2026-2027 không?',
+                a: 'Long Thành là một trong các thị trường BĐS được khuyến nghị đầu tư mạnh trong giai đoạn 2026-2027. Với sân bay Long Thành hoàn thành giai đoạn 1 năm 2026, cơ sở hạ tầng đồng bộ và dòng vốn FDI đổ vào khu công nghiệp, giá BĐS được dự báo tiếp tục tăng 15-25%/năm.',
             },
             {
                 q: 'Giá đất nền Long Thành hiện nay khoảng bao nhiêu?',
@@ -253,7 +253,7 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             },
             {
                 q: 'Giá căn hộ TP Thủ Đức hiện nay là bao nhiêu?',
-                a: 'Giá căn hộ Thủ Đức biến động theo khu vực: Thủ Thiêm (Q2 cũ) 80-250 triệu/m²; khu vực Metro số 1 (Q9 cũ) 45-90 triệu/m²; Thủ Đức (gần ĐH Quốc Gia) 35-65 triệu/m². Phân khúc cho thuê sôi động nhờ nhu cầu từ chuyên gia công nghệ và sinh viên.',
+                a: 'Giá căn hộ Thủ Đức biến động theo khu vực: Thủ Thiêm (Q2 cũ) 80-280 triệu/m²; khu vực Metro số 1 (Q9 cũ) 45-90 triệu/m²; Thủ Đức (gần ĐH Quốc Gia) 35-65 triệu/m². Phân khúc cho thuê sôi động nhờ nhu cầu từ chuyên gia công nghệ và sinh viên.',
             },
             {
                 q: 'Khu vực nào ở Thủ Đức nên đầu tư nhất?',
