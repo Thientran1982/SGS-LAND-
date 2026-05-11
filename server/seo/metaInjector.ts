@@ -2113,8 +2113,11 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
 
   if (m.h1) {
     const h1Text = esc(m.h1);
+    // Target the dedicated SEO placeholder <h1 id="seo-h1"> injected in the template body.
+    // This element is outside <noscript> so Bingbot and Googlebot count it as a real in-body h1.
+    // React replaces #root content on mount, so real users never see duplicate h1s.
     html = html.replace(
-      /(<h1[^>]*>)[^<]*(<\/h1>)/i,
+      /(<h1\b[^>]*\bid="seo-h1"[^>]*>)[^<]*(<\/h1>)/i,
       `$1${h1Text}$2`
     );
   }
