@@ -673,6 +673,14 @@ export const Landing: React.FC = () => {
                             >
                                 {theme === 'dark' ? ICONS.SUN : ICONS.MOON}
                             </button>
+                            <button
+                                onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
+                                className="p-1.5 rounded-full text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)]/60 dark:hover:bg-slate-800/60 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center text-xs2 font-extrabold tracking-tighter border border-transparent hover:border-[var(--glass-border)]/60 dark:hover:border-slate-700"
+                                title={t('nav.lang_switch')}
+                                aria-label={t('nav.lang_switch')}
+                            >
+                                {language.toUpperCase()}
+                            </button>
                             <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-4 py-1.5 lg:py-2 text-xs2 lg:text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[36px] items-center">
                                 {t('auth.btn_login')}
                             </button>
@@ -1274,24 +1282,6 @@ export const Landing: React.FC = () => {
                         {t('footer.copyright', { year: new Date().getFullYear() })}
                     </span>
                     <div className="flex items-center gap-4 md:gap-6">
-                        <div className="flex items-center gap-2 border-r border-[var(--glass-border)] dark:border-slate-700 pr-4 md:pr-6">
-                            <button
-                                onClick={toggleTheme}
-                                className="hidden p-2 rounded-full text-[var(--text-tertiary)] dark:text-slate-400 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors items-center justify-center min-w-[44px] min-h-[44px]"
-                                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                            >
-                                {theme === 'dark' ? ICONS.SUN : ICONS.MOON}
-                            </button>
-
-                            <button
-                                onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
-                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-xs2 font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-[var(--glass-border)] dark:hover:border-slate-700"
-                                title={t('nav.lang_switch')}
-                                aria-label={t('nav.lang_switch')}
-                            >
-                                {language.toUpperCase()}
-                            </button>
-                        </div>
                         <div className="flex gap-4 md:gap-6">
                             <a href="https://www.facebook.com/sgslandvn" target="_blank" rel="noreferrer" className="w-10 h-10 md:w-8 md:h-8 bg-[var(--glass-surface-hover)] dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] dark:hover:text-slate-300">
                                 <span className="sr-only">Facebook</span>
