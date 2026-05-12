@@ -836,10 +836,10 @@ export const Landing: React.FC = () => {
 
                     <div className="mt-12 text-center">
                         <button
-                            onClick={() => navigateTo(ROUTES.SEARCH)}
+                            onClick={() => navigateTo(ROUTES.DU_AN)}
                             className="group inline-flex items-center gap-2 text-[var(--text-primary)] dark:text-white font-bold border-b-2 border-[var(--glass-border)] dark:border-slate-700 pb-1 hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all text-sm md:text-base"
                         >
-                            Xem tất cả sản phẩm đang rao bán
+                            Xem tất cả dự án đang bán
                             <span className="group-hover:translate-x-1 transition-transform">{ICONS.ARROW_RIGHT}</span>
                         </button>
                     </div>
