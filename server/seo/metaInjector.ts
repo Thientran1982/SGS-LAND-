@@ -14,16 +14,11 @@ const APP_URL = (process.env.APP_URL || 'https://sgsland.vn').replace(/\/$/, '')
 const DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
 
 // ─── Reusable JSON-LD fragments for E-E-A-T (used across all area + project pages) ─
-const SGS_RATING = { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127', bestRating: '5', worstRating: '1' };
+const SGS_RATING = { '@type': 'AggregateRating', ratingValue: 4.8, reviewCount: 127, bestRating: 5, worstRating: 1 };
 const SGS_PARENT_ORG = { '@id': `${APP_URL}/#org` };
 const SGS_FAQ_META = {
-  datePublished: '2025-06-01',
-  dateModified: '2026-04-18',
+  name: 'Câu hỏi thường gặp về bất động sản SGS LAND',
   inLanguage: 'vi',
-  speakable: {
-    '@type': 'SpeakableSpecification',
-    cssSelector: ['h1', 'h2', '.faq-question', '.faq-answer', '[itemprop="name"]', '[itemprop="text"]'],
-  },
 };
 
 const DEFAULT_META = {
