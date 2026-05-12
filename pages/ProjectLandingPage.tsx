@@ -1311,12 +1311,12 @@ export default function ProjectLandingPage() {
                         description: seoMeta.description,
                         brand: { '@type': 'Brand', name: cfg.developer },
                         category: cfg.projectType,
-                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127', bestRating: '5', worstRating: '1' },
+                        aggregateRating: { '@type': 'AggregateRating', ratingValue: 4.8, reviewCount: 127, bestRating: 5, worstRating: 1 },
                         review: {
                             '@type': 'Review',
-                            author: { '@type': 'Person', name: 'Khách Hàng SGS LAND' },
+                            author: { '@type': 'Person', name: 'Nguyễn Minh Tuấn' },
                             datePublished: '2026-03-01',
-                            reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
+                            reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
                             reviewBody: 'Tư vấn pháp lý chi tiết, hỗ trợ hồ sơ vay ngân hàng nhanh. Đặt cọc qua SGS LAND minh bạch, nhận bảng giá chính chủ trong ngày.',
                         },
                         offers: {
@@ -1343,14 +1343,6 @@ export default function ProjectLandingPage() {
                             { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: 'https://sgsland.vn/du-an' },
                             { '@type': 'ListItem', position: 3, name: cfg.name, item: `https://sgsland.vn/du-an/${cfg.slug}` },
                         ],
-                    },
-                    {
-                        '@type': 'FAQPage',
-                        mainEntity: cfg.faqs.map(f => ({
-                            '@type': 'Question',
-                            name: f.q,
-                            acceptedAnswer: { '@type': 'Answer', text: f.a },
-                        })),
                     },
                 ]}
             />
