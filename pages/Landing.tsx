@@ -834,10 +834,7 @@ export const Landing: React.FC = () => {
                             <ProjectCard
                                 key={p.slug}
                                 project={p}
-                                onClick={() => {
-                                    if (p.href) window.location.href = p.href;
-                                    else navigateTo(`/du-an/${p.slug}`);
-                                }}
+                                onClick={() => navigateTo(`du-an/${p.slug}`)}
                             />
                         ))}
                     </div>
