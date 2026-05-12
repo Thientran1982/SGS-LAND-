@@ -1359,7 +1359,7 @@ export default function ProjectLandingPage() {
                         SGS LAND
                     </button>
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--text-secondary)]">
-                        <button onClick={() => navigate('/marketplace')} className="hover:text-[var(--primary-600)] transition-colors">Mua Bán BĐS</button>
+                        <button onClick={() => navigate('/du-an')} className="hover:text-[var(--primary-600)] transition-colors">Dự Án BĐS</button>
                         <button onClick={() => navigate('/bat-dong-san-dong-nai')} className="hover:text-[var(--primary-600)] transition-colors">BĐS Đồng Nai</button>
                         <button onClick={() => navigate('/bat-dong-san-long-thanh')} className="hover:text-[var(--primary-600)] transition-colors">BĐS Long Thành</button>
                         <button onClick={() => navigate('/ai-valuation')} className="hover:text-[var(--primary-600)] transition-colors">Định Giá AI</button>
@@ -1380,7 +1380,7 @@ export default function ProjectLandingPage() {
                     <nav aria-label="breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-secondary)]">
                         <button onClick={() => navigate('/home')} className="hover:text-[var(--primary-600)] transition-colors">Trang Chủ</button>
                         <span>/</span>
-                        <button onClick={() => navigate('/marketplace')} className="hover:text-[var(--primary-600)] transition-colors">Dự Án BĐS</button>
+                        <button onClick={() => navigate('/du-an')} className="hover:text-[var(--primary-600)] transition-colors">Dự Án BĐS</button>
                         <span>/</span>
                         <span className="text-[var(--text-primary)] font-medium">{cfg.name}</span>
                     </nav>
