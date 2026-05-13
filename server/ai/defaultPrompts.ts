@@ -121,23 +121,156 @@ CẢNH BÁO CẦN NÊU:
 • Giá/m² > thị trường khu vực 20% → cần lý do rõ ràng.
 
 DỰ ÁN SGS LAND ĐANG PHÂN PHỐI — KIẾN THỨC TĨNH (dùng khi DB không có listing hoặc khách hỏi trực tiếp về dự án):
+
+══ NHÓM 1: ĐÔ THỊ TỔNG HỢP ══
+
 • MASTERI COSMO CENTRAL (phân khu căn hộ thuộc The Global City, TP Thủ Đức):
-  - Vị trí: lõi trung tâm đại đô thị The Global City 117,4ha, đường Đỗ Xuân Hợp, An Phú, TP Thủ Đức, TP.HCM.
-  - Chủ đầu tư: Masterise Homes. Kiến trúc sư: Foster + Partners (Anh Quốc).
-  - Quy mô: 6 tòa tháp cao 19–29 tầng; mô hình All-in-One (Sống – Làm việc – Giải trí).
-  - Loại căn: 1PN, 2PN, 3PN, Penthouse, Duplex. Hướng view: kênh đào/nội khu/công viên.
-  - Giá mở bán: từ 6,429 tỷ (ra mắt 15/01/2026, đang mở bán 5/2026).
-  - Đặc điểm độc đáo: kênh đào nhạc nước lớn nhất Đông Nam Á nằm ngay trung tâm dự án; ga Metro số 1 An Phú 5 phút đi bộ; cạnh cầu Thủ Thiêm 2.
+  - Vị trí: lõi The Global City 117,4ha, đường Đỗ Xuân Hợp, An Phú, TP Thủ Đức, TP.HCM.
+  - CĐT: Masterise Homes. Kiến trúc sư: Foster + Partners (Anh Quốc) — hãng thiết kế Apple Park, The Gherkin London.
+  - Quy mô: 6 tòa tháp cao 19–29 tầng; All-in-One (Sống – Làm việc – Giải trí).
+  - Loại căn: 1PN (47–57m²), 2PN, 3PN, 4PN (~119m²), Penthouse, Duplex. 100% có ban công, view kênh đào/City Park.
+  - Giá: từ 6,429 tỷ (≈ 110–136 triệu/m²). Ra mắt 15/01/2026, đang mở bán.
+  - Chính sách: lãi suất 0% từ giải ngân đến 28/03/2029; CK 2% khách hàng thân thiết Masterise.
+  - Đặc điểm độc đáo: kênh đào nhạc nước lớn nhất Đông Nam Á ngay trung tâm; ga Metro số 1 An Phú 5 phút; Lotte Mall 123.000m² 5 phút.
   - Pháp lý: sổ hồng riêng lâu dài (Masterise Homes cam kết).
   - Hotline SGS Land: 0971 132 378.
-  - Từ khoá nhận dạng: "cosmo central", "masteri cosmo", "căn hộ the global city", "the global city căn hộ", "cosmo".
-  - Khi hỏi về Cosmo Central: tư vấn thông tin trên, mời khách để lại SĐT để nhận bảng giá & chính sách ưu đãi chi tiết nhất.
+  - Từ khoá: "cosmo central", "masteri cosmo", "căn hộ the global city", "the global city căn hộ", "cosmo".
 
-• THE GLOBAL CITY (đại đô thị thương mại – dịch vụ):
-  - Vị trí: An Phú, TP Thủ Đức. Quy mô: 117,4ha. Chủ đầu tư: Masterise Homes.
-  - Sản phẩm: nhà phố thương mại 15–40 tỷ; biệt thự song lập 30–60 tỷ; biệt thự đơn lập 60–120 tỷ.
+• THE GLOBAL CITY (đại đô thị thương mại – dịch vụ – nhà ở):
+  - Vị trí: An Phú, TP Thủ Đức. 117,4ha. CĐT: Masterise Homes.
+  - Sản phẩm: nhà phố TM 15–40 tỷ; biệt thự song lập 30–60 tỷ; biệt thự đơn lập 60–120 tỷ; shophouse 15–40 tỷ.
+  - Cho thuê shophouse mặt tiền trục chính: 50–200 triệu/tháng.
   - Phân khu căn hộ: Masteri Cosmo Central (xem trên).
-  - Tiện ích: Metro số 1 An Phú, cầu Thủ Thiêm 2, trường BIS/Eaton House, bệnh viện 5 sao.
+  - Tiện ích: TTTM 200.000m², Metro số 1 An Phú, cầu Thủ Thiêm 2 (Q1 5 phút), trường BIS/Eaton House/IVS, bệnh viện 5 sao.
+  - Pháp lý: sổ hồng riêng, quy hoạch 1/500 rõ ràng.
+  - Từ khoá: "the global city", "global city", "masterise homes an phú".
+
+• VINHOMES GRAND PARK (siêu đô thị, TP Thủ Đức):
+  - Vị trí: Quận 9 (TP Thủ Đức), TP.HCM. 271ha, 44 tòa. CĐT: Vinhomes (Vingroup).
+  - Phân khu: The Rainbow/Origami (nhập môn–mid, 2,5–5 tỷ); The Beverly (cao cấp, 4–7 tỷ); The Opus One (hạng sang, 8–15 tỷ); shophouse từ 10 tỷ.
+  - Cho thuê: 1PN 8–12 triệu/tháng; 2PN 12–18 triệu/tháng; 3PN 18–25 triệu/tháng. Yield 4–6%/năm.
+  - Tiện ích: công viên 36ha, Vinschool, Vinmec, Vincom Mega Mall, Metro số 1 ga Suối Tiên (5–10 phút đi bộ), SHTP kế bên.
+  - Pháp lý: nhiều phân khu sổ hồng riêng đã bàn giao (Rainbow, Origami, Beverly từ 2019–2022).
+  - Từ khoá: "grand park", "vinhomes q9", "vinhomes thủ đức", "origami", "the beverly".
+
+• VINHOMES CẦN GIỜ / GREEN PARADISE (siêu đô thị lấn biển):
+  - Vị trí: huyện Cần Giờ, TP.HCM. 2.870ha — lớn nhất Việt Nam. CĐT: Vinhomes (Vingroup).
+  - Sản phẩm: căn hộ resort từ 12 tỷ; condotel 8–15 tỷ; shophouse biển 20–50 tỷ; biệt thự song lập 30–80 tỷ; biệt thự đơn lập mặt biển 80–200 tỷ.
+  - Tiện ích: bãi biển nhân tạo 7km, Vinwonders, sân golf 18 lỗ, marina, Vinmec, Vinschool, Vincom Mega Mall.
+  - Hạ tầng chủ chốt: Cầu Cần Giờ 11.000 tỷ (khởi công 2025, hoàn thành 2028 — rút ngắn về Q1 còn 30–40 phút thay vì 60 phút qua phà).
+  - Pháp lý: Thủ tướng phê duyệt chủ trương; mở bán phân kỳ 2026, bàn giao từ 2028.
+  - ⚠ Pháp lý theo phân kỳ — cần xác minh từng phân khu cụ thể trước khi cọc.
+  - Từ khoá: "cần giờ", "vinhomes green paradise", "vinhomes biển", "vinhomes cần giờ".
+
+• AQUA CITY NOVALAND (đại đô thị sinh thái):
+  - Vị trí: Long Hưng, Biên Hòa, Đồng Nai. 1.000ha. CĐT: Novaland Group. Cách TP.HCM 30–40 phút.
+  - Sản phẩm: nhà phố liền kề 6,5–12 tỷ; shophouse 9–18 tỷ; biệt thự song lập 12–25 tỷ; biệt thự đơn lập 20–50 tỷ.
+  - Cho thuê: nhà phố 8–15 triệu/tháng; biệt thự đơn lập 30–50 triệu/tháng. Yield ≈ 4–6%/năm.
+  - Tiện ích: 100.000m² mặt nước, Nova Mall, bệnh viện 500 giường, sân golf 18 lỗ, marina, trường quốc tế.
+  - Pháp lý: sổ hồng riêng nhiều phân khu (Novaland hoàn tất tái cơ cấu tài chính 2024, track record bàn giao ổn định trở lại).
+  - Từ khoá: "aqua city", "novaland đồng nai", "aqua city biên hòa", "aqua city novaland".
+
+• IZUMI CITY NAM LONG (đô thị chuẩn Nhật Bản):
+  - Vị trí: Biên Hòa, Đồng Nai. 170ha. CĐT: Nam Long Group + Hankyu Hanshin Properties (Nhật Bản).
+  - Cách TP.HCM: ~30 phút cao tốc. Cách sân bay Long Thành: 20 phút.
+  - Sản phẩm: nhà phố 8,4–15 tỷ; biệt thự song lập 15–25 tỷ; biệt thự đơn lập 25–40 tỷ; căn hộ Akari.
+  - Cho thuê: nhà phố 8–15 triệu/tháng; biệt thự song lập 15–25 triệu/tháng. Yield ≈ 4–5%/năm.
+  - Tiện ích: siêu thị Fuji Mart, trường chuẩn Nhật, công viên 7ha, y tế Nhật Bản, hồ bơi Olympic.
+  - Pháp lý: sổ hồng riêng từng căn. Nam Long track record bàn giao đúng tiến độ (Flora, Valora, Kikyo).
+  - Từ khoá: "izumi city", "nam long đồng nai", "izumi biên hòa", "nam long nhật bản".
+
+• VINHOMES HÓC MÔN (siêu đô thị cửa ngõ Tây Bắc HCM):
+  - Vị trí: huyện Hóc Môn, TP.HCM, mặt tiền QL22. 1.080ha — lớn nhất TP.HCM (gấp 4× Grand Park). CĐT: Vinhomes (Vingroup).
+  - Sản phẩm: nhà phố TM, biệt thự đơn/song lập, shophouse, chung cư cao tầng smart apartment.
+  - Kết nối: Vành đai 3 (hoàn thành 2026), Metro số 2 (ga cuối khu vực), cao tốc HCM–Mộc Bài. Q1 ≈ 30 phút, TSN ≈ 15km.
+  - Giá: ĐANG CẬP NHẬT — Vinhomes chưa công bố. Mở bán dự kiến 2026, bàn giao 2028–2031.
+  - Pháp lý: sổ hồng lâu dài theo phân kỳ.
+  - Từ khoá: "vinhomes hóc môn", "hóc môn vinhomes", "vinhomes tây bắc hcm", "vinhomes 1080ha".
+
+══ NHÓM 2: CĂN HỘ CAO CẤP & ULTRA LUXURY ══
+
+• VINHOMES CENTRAL PARK (đại đô thị ven sông Bình Thạnh):
+  - Vị trí: Quận Bình Thạnh, TP.HCM. 44 tòa, ~14.500 căn. CĐT: Vinhomes (Vingroup).
+  - Đặc điểm: Landmark 81 (tòa nhà cao nhất VN, 461m), bể bơi vô cực, công viên 3,3ha ven sông Sài Gòn. Thứ cấp.
+  - Giá thứ cấp 2025–2026: 1PN 3,5–5 tỷ; 2PN 5–9 tỷ; 3PN 8–15 tỷ; penthouse 20–50 tỷ. (50–200 triệu/m²).
+  - Cho thuê: studio 15–20 triệu/tháng; 2PN 25–40 triệu/tháng; biệt thự sông 60–120 triệu/tháng. Yield 4–6%/năm.
+  - Kết nối: sân bay TSN 10 phút, Q1 15 phút. Cộng đồng expat đông.
+  - Pháp lý: sổ hồng riêng đầy đủ (toàn bộ thứ cấp).
+  - Từ khoá: "central park", "vinhomes bình thạnh", "landmark 81", "vinhomes central park".
+
+• DIAMOND SKY – VẠN PHÚC CITY (căn hộ cao tầng view sông):
+  - Vị trí: KĐT Vạn Phúc City 198ha, Hiệp Bình Phước, TP Thủ Đức (giáp Thuận An, Bình Dương). CĐT: Tập đoàn Vạn Phúc.
+  - Quy mô: 1 tháp 20 tầng, ~520 căn. 1PN 50–55m²; 2PN 68–82m²; 3PN 95–110m²; penthouse 130–180m².
+  - Giá: từ 192 triệu/m²; 1PN từ 9,6 tỷ; 2PN 13,5–15,5 tỷ; 3PN 18,2–21 tỷ; penthouse từ 25 tỷ.
+  - Cho thuê: 1PN 30–40 triệu/tháng; 2PN 55–75 triệu/tháng; 3PN 90–120 triệu/tháng. Yield ≈ 3,5–4,5%/năm.
+  - View: sông Sài Gòn (60% căn view trực tiếp), hồ Đại Nhật 16ha, kênh Sông Trăng nội khu.
+  - Tiện ích: hồ bơi rooftop, gym, tennis, trường WASS, Vạn Phúc Mall, bến du thuyền, bệnh viện Hạnh Phúc.
+  - Tiến độ: mở bán Q3/2026; bàn giao Q4/2028. Pháp lý: sổ hồng riêng lâu dài từng căn.
+  - Kết nối: Q1 25 phút (Phạm Văn Đồng), TSN 30 phút, Thuận An BD 10 phút (QL13).
+  - Từ khoá: "diamond sky", "vạn phúc city", "căn hộ hiệp bình phước", "van phuc city".
+
+• GRAND MANHATTAN NOVALAND (căn hộ hạng sang nội thành):
+  - Vị trí: nội thành TP.HCM, giáp Q1 và Phú Nhuận. CĐT: Novaland Group. Chuẩn 5 sao.
+  - Sản phẩm: căn hộ hạng sang, penthouse, sky villa.
+  - Giá: từ 120 triệu/m²; 2PN (75–100m²) 9–15 tỷ; 3PN (120–150m²) 15–22 tỷ; penthouse 30–50 tỷ.
+  - Cho thuê: 2PN 50–80 triệu/tháng; 3PN 80–130 triệu/tháng; penthouse từ 150 triệu/tháng.
+  - Kết nối: TSN 5–10 phút. Pháp lý: sổ hồng chính chủ lâu dài.
+  - Từ khoá: "grand manhattan", "manhattan novaland", "novaland hạng sang nội thành".
+
+• MASTERISE HOMES PORTFOLIO (ultra-luxury, TP.HCM & toàn quốc):
+  - CĐT: Masterise Homes (Masterise Group). Phân khúc: hạng sang đến ultra-luxury. Vận hành: Marriott, IHG.
+  - Dự án tiêu biểu:
+    + Masteri Thảo Điền (Q2): thứ cấp 65–100 triệu/m²; thuê 25–60 triệu/tháng; cộng đồng expat Thảo Điền đông nhất HCM.
+    + Masteri An Phú (Q2): thứ cấp 80–130 triệu/m²; cạnh Metro số 1 An Phú.
+    + Masteri Centre Point (Q9/Thủ Đức): kết nối KĐT mới.
+    + Lumière Boulevard (Q9/Thủ Đức): 90–150 triệu/m²; phong cách Paris.
+    + Lumière Riverside (Q2): 120–200 triệu/m²; biệt thự ven sông Sài Gòn.
+    + Grand Marina Saigon (Ba Son, Q1): 130–350 triệu/m²; Marriott + JW Marriott + bến du thuyền sông Sài Gòn.
+  - Tất cả: sổ hồng riêng, thiết kế quốc tế, vận hành chuẩn khách sạn 5 sao.
+  - Từ khoá: "masteri", "masterise", "lumière", "grand marina", "masteri thảo điền", "masteri an phú".
+
+• LEGACY 66 (căn hộ trung tâm Chợ Lớn):
+  - Vị trí: 66 Tân Thành, Phường Chợ Lớn, TP.HCM (4 mặt giáp đường: Nguyễn Chí Thanh, Tân Thành, Phó Cơ Điều, Đỗ Ngọc Thạnh). CĐT: Công ty TNHH ĐT TM Tân Thành. Tổng thầu: DELTA. Quản lý: Savills.
+  - Quy mô: 2 tầng hầm + 2 tầng TM dịch vụ + 19 tầng căn hộ. 348 căn. 36 tiện ích nội khu.
+  - Loại căn: 1PN 45–53m²; 2PN 64–74m²; 2PN+1 71–79m²; 3PN 85–95m².
+  - Giá: ĐANG CẬP NHẬT — chưa công bố. KHÔNG bịa giá. Mời khách đăng ký nhận bảng giá khi mở bán.
+  - Bàn giao: Q2/2027. Pháp lý: sổ hồng riêng lâu dài (freehold).
+  - Từ khoá: "legacy 66", "legacy saigon", "căn hộ chợ lớn", "66 tân thành".
+
+══ NHÓM 3: BIỆT THỰ, NHÀ PHỐ & KHU ĐÔ THỊ THƯƠNG MẠI ══
+
+• KHU ĐÔ THỊ THỦ THIÊM (trung tâm tài chính tương lai TP.HCM):
+  - Vị trí: Thủ Thiêm, TP Thủ Đức (Q2 cũ). 657ha. Quy hoạch: "Manhattan Sài Gòn" — trung tâm tài chính quốc tế.
+  - Dự án tiêu biểu: Empire City (Keppel Land, 90–150 triệu/m²); Metropole Thủ Thiêm (Sơn Kim Land + Creed Nhật, 90–130 triệu/m²); The River (Kiến Á, 80–120 triệu/m²); Grand Marina Saigon (Masterise, 130–350 triệu/m²).
+  - Kết nối Q1: Hầm Thủ Thiêm + Cầu Thủ Thiêm 2 — 5–8 phút.
+  - Cho thuê căn hộ Thủ Thiêm: 35–80 triệu/tháng. Yield 3–5%/năm. Phù hợp đầu tư dài hạn 5–10 năm.
+  - Từ khoá: "thủ thiêm", "empire city", "metropole thủ thiêm", "the river thủ thiêm", "grand marina saigon".
+
+• SƠN KIM LAND (BĐS thương mại & căn hộ cao cấp):
+  - CĐT: Sơn Kim Land (Sơn Kim Group). Hệ sinh thái: GEM Center, GS25, khách sạn 4–5 sao.
+  - Dự án tiêu biểu: Gem Riverside Q4 (85–120 triệu/m², 2PN 7–9 tỷ, thuê 20–30 triệu/tháng); Metropole Thủ Thiêm (đồng CĐT Creed Nhật, 7–20 tỷ/căn); Seasons Avenue Hà Nội (Mỗ Lao, HĐ).
+  - Từ khoá: "sơn kim land", "gem riverside", "metropole thủ thiêm sơn kim", "son kim".
+
+• SALA ĐẠI QUANG MINH (KĐT ven sông, TP Thủ Đức):
+  - Vị trí: An Lợi Đông, TP Thủ Đức. 257ha ven sông Sài Gòn. CĐT: Đại Quang Minh.
+  - Sản phẩm: biệt thự, nhà phố shophouse, căn hộ hạng sang. Thứ cấp từ 80 triệu/m². Pháp lý: sổ hồng đầy đủ. Thanh khoản cao.
+  - Từ khoá: "sala", "đại quang minh", "kdt sala", "sala thủ thiêm".
+
+• NHÀ PHỐ TRUNG TÂM TP.HCM (tài sản tích lũy bền vững):
+  - Khu vực: Q1, Q3, Q5, Phú Nhuận, Bình Thạnh, Gò Vấp.
+  - Giá đất thổ cư: MT Q1 (Nguyễn Huệ, Đồng Khởi) 1.000–2.000 triệu/m²; MT Q1 đường nhánh 300–600 triệu/m²; hẻm xe hơi Q3 100–250 triệu/m²; MT Phú Nhuận (Phan Xích Long) 200–500 triệu/m²; hẻm Q. Phú Nhuận 80–150 triệu/m²; Gò Vấp hẻm 4–8 tỷ/căn, MT 6–12 tỷ (đang tăng 15–25%/năm).
+  - Cho thuê MT kinh doanh Q1: 100–500 triệu/tháng; MT Phú Nhuận: 30–100 triệu/tháng.
+  - Pháp lý: sổ đỏ thổ cư, không thời hạn. Yield 2,5–4%/năm nhưng tăng giá bền vững 8–15%/năm.
+  - Từ khoá: "nhà phố trung tâm", "mặt tiền hcm", "nhà hẻm q3", "shophouse nội thành", "nhà phố q1".
+
+══ NHÓM 4: NGHỈ DƯỠNG ══
+
+• ECO RETREAT LONG HẢI (khu nghỉ dưỡng sinh thái):
+  - Vị trí: Long Hải, Bà Rịa – Vũng Tàu. 120ha. CĐT: Novaland Group. Cách TP.HCM ≈ 90 phút.
+  - Sản phẩm: biệt thự biển, bungalow cao cấp. Mô hình cho thuê khai thác.
+  - Giá: từ 4,5 tỷ đồng.
+  - ⚠ Kiểm tra cam kết thuê lại từ CĐT; pháp lý từng phân khu riêng — Novaland đang tái cơ cấu.
+  - Từ khoá: "eco retreat", "novaland long hải", "biệt thự long hải", "eco retreat long hải".
 
 [KNOWLEDGE BASE] block (nếu có) chứa data nội bộ về dự án, listing, giá khu vực — TRÍCH DẪN khi sử dụng.
 
@@ -555,10 +688,17 @@ KIẾN THỨC GIÁ THAM CHIẾU (Q1-Q2/2026):
 TP.HCM:
 • Căn hộ cao cấp Q1, Q3 (Vinhomes Golden River, Masteri Millennium): 90–220tr/m² sàn.
 • Căn hộ Bình Thạnh (Vinhomes Central Park, Masteri Thảo Điền): 55–100tr/m² sàn.
-• Căn hộ TP Thủ Đức (Vinhomes GP, Masteri Waterfront): 48–90tr/m² sàn.
+• Căn hộ TP Thủ Đức — giải mã theo dự án:
+  - Vinhomes GP (Rainbow/Origami): 45–65tr/m² | Beverly: 55–75tr/m² | Opus One: 75–90tr/m².
+  - Masteri Thảo Điền / An Phú: 65–130tr/m².
+  - Masteri Cosmo Central (The Global City): 110–145tr/m² (giá mở bán từ 6,429 tỷ/1PN 47m²).
+  - Diamond Sky Vạn Phúc City: ~192tr/m² (ultra-premium ven sông, mở bán Q3/2026).
+  - Sala Đại Quang Minh / Khu TT Thủ Thiêm: 80–150tr/m².
 • Nhà phố MT Q1, Q3: 450–2.000tr/m² đất. Hẻm Q1, Q3: 200–600tr.
 • Nhà phố Bình Thạnh, Tân Bình (hẻm ≥4m): 130–280tr/m² đất.
+• Nhà phố MT Phú Nhuận/Bình Thạnh: 200–500tr/m². Hẻm ≥4m Q. Phú Nhuận: 80–150tr/m². Gò Vấp hẻm: 60–90tr/m².
 • Đất nền TP Thủ Đức (sổ): 80–200tr/m². Bình Dương giáp HCM: 30–75tr. Long An giáp HCM: 18–45tr. Đồng Nai (Trảng Bom, Long Thành): 20–55tr.
+• Nhà phố DA Đồng Nai — Aqua City Novaland (Biên Hòa, 1.000ha): 6,5–18 tỷ/căn. Izumi City Nam Long (170ha): 8,4–25 tỷ/căn.
 
 HÀ NỘI:
 • Phố cổ Hoàn Kiếm: 700–2.500tr/m² đất.
