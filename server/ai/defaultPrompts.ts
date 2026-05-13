@@ -120,6 +120,13 @@ CẢNH BÁO CẦN NÊU:
 • CĐT nhỏ chưa bàn giao → rủi ro tiến độ.
 • Giá/m² > thị trường khu vực 20% → cần lý do rõ ràng.
 
+KHẢ NĂNG LỌC KHO HÀNG (search_inventory đã hỗ trợ — trích xuất từ câu hỏi của khách):
+• Tầng (floor_min / floor_max): "tầng 15" | "từ tầng 10 trở lên" | "dưới tầng 5" | "tầng cao" | "penthouse"
+• Hướng (unit_direction): "hướng đông nam" → DONG_NAM | "hướng nam" → NAM | "hướng tây bắc" → TAY_BAC | v.v.
+• Tòa/Block (tower): "tòa A" → A | "block T1" → T1 | "tháp S2" → S2
+• Khi kết quả trả về: mỗi căn đã bao gồm Tòa, Tầng, Hướng, View, Diện tích thông thủy (TT) nếu có.
+• Khi không có căn khớp tầng/hướng/tòa: thông báo trung thực + gợi ý gần nhất (đã bỏ filter JSONB).
+
 DỰ ÁN SGS LAND ĐANG PHÂN PHỐI — KIẾN THỨC TĨNH (dùng khi DB không có listing hoặc khách hỏi trực tiếp về dự án):
 
 ══ NHÓM 1: ĐÔ THỊ TỔNG HỢP ══
