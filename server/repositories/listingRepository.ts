@@ -17,6 +17,13 @@ export interface ListingFilters {
   isVerified?: boolean;
   location_contains?: string;
   location_any?: string[];
+  /** Filter by floor number stored in attributes JSONB (attributes->>'floor') */
+  floor_gte?: number;
+  floor_lte?: number;
+  /** Filter by cardinal direction stored in attributes JSONB (attributes->>'direction'), ILIKE match */
+  direction?: string;
+  /** Filter by tower/block stored in attributes JSONB (attributes->>'tower'), ILIKE match */
+  tower?: string;
 }
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
@@ -93,6 +100,23 @@ export class ListingRepository extends BaseRepository {
       const ph = filters.location_any.map(() => `location ILIKE $${paramIndex++}`).join(' OR ');
       conditions.push(`(${ph})`);
       values.push(...filters.location_any.map((a: string) => `%${a}%`));
+    }
+    // JSONB attribute filters — only applied when attributes column is populated
+    if (filters?.floor_gte !== undefined) {
+      conditions.push(`(attributes->>'floor') IS NOT NULL AND (attributes->>'floor')::numeric >= $${paramIndex++}`);
+      values.push(filters.floor_gte);
+    }
+    if (filters?.floor_lte !== undefined) {
+      conditions.push(`(attributes->>'floor') IS NOT NULL AND (attributes->>'floor')::numeric <= $${paramIndex++}`);
+      values.push(filters.floor_lte);
+    }
+    if (filters?.direction) {
+      conditions.push(`attributes->>'direction' ILIKE $${paramIndex++}`);
+      values.push(`%${filters.direction}%`);
+    }
+    if (filters?.tower) {
+      conditions.push(`attributes->>'tower' ILIKE $${paramIndex++}`);
+      values.push(`%${filters.tower}%`);
     }
 
     return { conditions, values, nextIndex: paramIndex };

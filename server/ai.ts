@@ -521,6 +521,13 @@ type RouterPlan = {
         valuation_furnishing?: 'LUXURY' | 'FULL' | 'BASIC' | 'NONE';
         valuation_building_age?: number;
         valuation_bedrooms?: number;
+        /** Unit/apartment floor filter for search_inventory */
+        floor_min?: number;
+        floor_max?: number;
+        /** Cardinal direction of the unit (DONG, TAY, NAM, BAC, DONG_NAM, etc.) */
+        unit_direction?: string;
+        /** Tower / block identifier (A, B, T1, S2, etc.) */
+        tower?: string;
     };
     confidence: number;
 };
@@ -555,7 +562,11 @@ const ROUTER_SCHEMA: Schema = {
                 valuation_frontage: { type: Type.NUMBER, description: "Chiều rộng mặt tiền nhà/lô đất (mét). VD: 'mặt tiền 5m' → 5, 'ngang 4m' → 4, 'mặt ngang 6 mét' → 6" },
                 valuation_furnishing: { type: Type.STRING, enum: ['LUXURY', 'FULL', 'BASIC', 'NONE'], description: "Tình trạng nội thất. LUXURY=nội thất cao cấp/luxury, FULL=full nội thất/đầy đủ, BASIC=nội thất cơ bản/một phần, NONE=không nội thất/bàn giao thô" },
                 valuation_building_age: { type: Type.NUMBER, description: "Tuổi công trình (năm). VD: 'nhà xây 2010' → 15 (năm 2025), 'mới xây/2024' → 1, 'xây 5 năm' → 5, 'cũ 20 năm' → 20" },
-                valuation_bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ (chỉ cho căn hộ/penthouse). VD: 'studio/1 phòng' → 0/1, '2PN/2 phòng ngủ' → 2, '3PN' → 3, '4 phòng ngủ trở lên' → 4" }
+                valuation_bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ (chỉ cho căn hộ/penthouse). VD: 'studio/1 phòng' → 0/1, '2PN/2 phòng ngủ' → 2, '3PN' → 3, '4 phòng ngủ trở lên' → 4" },
+                floor_min: { type: Type.NUMBER, description: "Tầng tối thiểu khách muốn. VD: 'từ tầng 10', 'tầng cao', 'trên tầng 15' → 10/15/15. 'tầng thấp' → 1" },
+                floor_max: { type: Type.NUMBER, description: "Tầng tối đa khách muốn. VD: 'dưới tầng 10', 'tầng thấp (dưới 5)' → 10/5. Nếu chỉ hỏi 1 tầng cụ thể thì floor_min = floor_max = số đó" },
+                unit_direction: { type: Type.STRING, description: "Hướng căn hộ/nhà khách muốn. VD: 'hướng đông' → 'DONG', 'hướng đông nam' → 'DONG_NAM', 'hướng nam' → 'NAM', 'tây bắc' → 'TAY_BAC'. Giá trị: DONG | TAY | NAM | BAC | DONG_NAM | DONG_BAC | TAY_NAM | TAY_BAC" },
+                tower: { type: Type.STRING, description: "Tòa/Block/Tháp khách muốn. VD: 'tòa A', 'block B', 'tháp T1', 'tòa S1' → 'A'/'B'/'T1'/'S1'. Chỉ lấy ký hiệu tòa, không lấy chữ 'tòa'/'tháp'/'block'" }
             }
         },
         confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" },
@@ -576,13 +587,27 @@ const ROUTER_SCHEMA: Schema = {
 // -----------------------------------------------------------------------------
 
 const TOOL_EXECUTOR = {
-    async search_inventory(tenantId: string, query: string, priceMax?: number, propertyType?: string, areaMin?: number) {
+    async search_inventory(
+        tenantId: string,
+        query: string,
+        priceMax?: number,
+        propertyType?: string,
+        areaMin?: number,
+        floorMin?: number,
+        floorMax?: number,
+        direction?: string,
+        tower?: string,
+    ) {
         try {
             const filters: ListingFilters = {};
             if (query) filters.search = query;
             if (priceMax) filters.price_lte = priceMax;
             if (propertyType) filters.type = propertyType;
             if (areaMin) filters.area_gte = areaMin;
+            if (floorMin !== undefined) filters.floor_gte = floorMin;
+            if (floorMax !== undefined) filters.floor_lte = floorMax;
+            if (direction) filters.direction = direction;
+            if (tower) filters.tower = tower;
             filters.status = 'AVAILABLE';
 
             const result = await listingRepository.findListings(
@@ -591,20 +616,59 @@ const TOOL_EXECUTOR = {
                 filters
             );
 
+            // Build active-filter summary for the agent to understand what was searched
+            const activeFilters: string[] = [];
+            if (query) activeFilters.push(`Khu vực/Từ khóa: "${query}"`);
+            if (priceMax) activeFilters.push(`Giá ≤ ${(priceMax / 1e9).toFixed(2)} Tỷ`);
+            if (propertyType) activeFilters.push(`Loại: ${propertyType}`);
+            if (areaMin) activeFilters.push(`Diện tích ≥ ${areaMin}m²`);
+            if (floorMin !== undefined && floorMax !== undefined && floorMin === floorMax) activeFilters.push(`Tầng: ${floorMin}`);
+            else if (floorMin !== undefined) activeFilters.push(`Tầng ≥ ${floorMin}`);
+            else if (floorMax !== undefined) activeFilters.push(`Tầng ≤ ${floorMax}`);
+            if (direction) activeFilters.push(`Hướng: ${direction}`);
+            if (tower) activeFilters.push(`Tòa: ${tower}`);
+            const filterSummary = activeFilters.length ? `[Bộ lọc: ${activeFilters.join(' | ')}]` : '';
+
+            const formatListing = (l: any, i: number, deltaNote?: string) => {
+                const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
+                const delta = deltaNote ?? ((priceMax && l.price) ? ` (±${Math.abs((l.price - priceMax) / 1e6).toFixed(0)}M)` : '');
+                const pricePerM2 = (l.price && l.area) ? ` | ${(l.price / l.area / 1e6).toFixed(0)}Tr/m²` : '';
+                const bedroomStr = l.bedrooms ? ` | ${l.bedrooms}PN` : '';
+                const attrs = l.attributes || {};
+                const towerStr = attrs.tower ? ` | Tòa ${attrs.tower}` : '';
+                const floorStr = attrs.floor ? ` | Tầng ${attrs.floor}` : '';
+                const dirStr = attrs.direction ? ` | Hướng ${attrs.direction}` : '';
+                const viewStr = attrs.view ? ` | View ${attrs.view}` : '';
+                const clearArea = attrs.clearArea ? ` | TT ${attrs.clearArea}m²` : '';
+                const code = l.code ? ` [${l.code}]` : '';
+                return `${i + 1}. ${l.title || l.code}${code} — ${l.location || 'N/A'} | ${price}${delta}${pricePerM2} | ${l.area || 'N/A'}m²${clearArea}${bedroomStr}${towerStr}${floorStr}${dirStr}${viewStr} | ${l.type || 'N/A'}`;
+            };
+
             if (result.data.length === 0) {
-                // Relax budget filter and retry with location only
+                // Progressive relaxation: drop JSONB filters first, then budget
+                const hasJsonbFilters = floorMin !== undefined || floorMax !== undefined || direction || tower;
+                if (hasJsonbFilters) {
+                    // Retry without JSONB filters to show what IS available
+                    const relaxed: ListingFilters = { status: 'AVAILABLE' };
+                    if (query) relaxed.search = query;
+                    if (priceMax) relaxed.price_lte = priceMax;
+                    if (propertyType) relaxed.type = propertyType;
+                    if (areaMin) relaxed.area_gte = areaMin;
+                    const fallback = await listingRepository.findListings(tenantId, { page: 1, pageSize: 5 }, relaxed);
+                    if (fallback.data.length === 0) {
+                        return `${filterSummary}\nKhông tìm thấy sản phẩm phù hợp. Kho hàng hiện chưa có căn khớp tiêu chí (tầng/hướng/tòa). Vui lòng liên hệ Sales để cập nhật.`;
+                    }
+                    const fmt = fallback.data.slice(0, 5).map((l: any, i: number) => formatListing(l, i)).join('\n');
+                    return `${filterSummary}\nKhông có căn khớp tầng/hướng/tòa chính xác. Gợi ý gần nhất (${fallback.total} sản phẩm bỏ qua filter tầng/hướng/tòa):\n${fmt}`;
+                }
+                // Relax budget and retry with location only
                 const relaxed: ListingFilters = { status: 'AVAILABLE' };
                 if (query) relaxed.search = query;
                 if (propertyType) relaxed.type = propertyType;
                 const fallback = await listingRepository.findListings(tenantId, { page: 1, pageSize: 5 }, relaxed);
-                if (fallback.data.length === 0) return "Hiện tại kho hàng chưa có sản phẩm phù hợp. Vui lòng liên hệ Sales để cập nhật danh sách mới nhất.";
-                const fmt = fallback.data.slice(0, 5).map((l: any, i: number) => {
-                    const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
-                    const bedroomStr = l.bedrooms ? ` | ${l.bedrooms}PN` : '';
-                    const pricePerM2 = (l.price && l.area) ? ` | ${(l.price / l.area / 1e6).toFixed(0)}Tr/m²` : '';
-                    return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price}${pricePerM2} | ${l.area || 'N/A'}m²${bedroomStr} | ${l.type || 'N/A'}`;
-                }).join('\n');
-                return `Không tìm thấy đúng tiêu chí, gợi ý gần nhất (${fallback.total} sản phẩm):\n${fmt}`;
+                if (fallback.data.length === 0) return `${filterSummary}\nHiện tại kho hàng chưa có sản phẩm phù hợp. Vui lòng liên hệ Sales để cập nhật danh sách mới nhất.`;
+                const fmt = fallback.data.slice(0, 5).map((l: any, i: number) => formatListing(l, i)).join('\n');
+                return `${filterSummary}\nKhông tìm thấy đúng ngân sách, gợi ý gần nhất (${fallback.total} sản phẩm):\n${fmt}`;
             }
 
             // Sort by price proximity to budget if budget is known
@@ -613,17 +677,8 @@ const TOOL_EXECUTOR = {
                 : result.data;
 
             const top = sorted.slice(0, 5);
-            const formatted = top.map((l: any, i: number) => {
-                const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
-                const delta = (priceMax && l.price) ? ` (±${Math.abs((l.price - priceMax) / 1e6).toFixed(0)}M)` : '';
-                const bedroomStr = l.bedrooms ? ` | ${l.bedrooms}PN` : '';
-                const floorStr = l.floor ? ` | Tầng ${l.floor}` : '';
-                const pricePerM2 = (l.price && l.area) ? ` | ${(l.price / l.area / 1e6).toFixed(0)}Tr/m²` : '';
-                const desc = l.description ? ` — ${l.description.slice(0, 60)}${l.description.length > 60 ? '...' : ''}` : '';
-                return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price}${delta}${pricePerM2} | ${l.area || 'N/A'}m²${bedroomStr}${floorStr} | ${l.type || 'N/A'}${desc}`;
-            }).join('\n');
-
-            return `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất):\n${formatted}`;
+            const formatted = top.map((l: any, i: number) => formatListing(l, i)).join('\n');
+            return `${filterSummary}\nTìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất):\n${formatted}`;
         } catch (error) {
             logger.error('Inventory search error:', error);
             return "Lỗi khi tìm kiếm kho hàng. Vui lòng thử lại.";
@@ -935,6 +990,10 @@ Diện tích: "trên 80m²/ít nhất 100m/khoảng 70m"→area_min: 80/100/70
 Vay: "lãi suất 7%/7 phần trăm"→loan_rate:7 | "vay 20 năm/hai mươi năm"→loan_years:20
 Định giá:
 • valuation_address: Ghép ĐẦY ĐỦ thông tin vị trí từ tin nhắn → "Hẻm 10 Đường Nguyễn Văn Cừ, P.An Bình, Q.5, TP.HCM" | Tên dự án đủ: "Vinhomes Grand Park, Thủ Đức, TP.HCM" | Khu vực: "Phú Mỹ Hưng, Q.7, TP.HCM" | Nếu chỉ có quận/tỉnh: "Bình Thạnh, TP.HCM" | Viết tắt được dùng: Q.=quận, P.=phường, H.=huyện, TP.=thành phố, TX.=thị xã
+Tầng/Hướng/Tòa (chỉ cho SEARCH_INVENTORY):
+• floor_min/floor_max: "tầng 15" → min=max=15 | "từ tầng 10 trở lên/tầng cao" → min=10 | "dưới tầng 5/tầng thấp" → max=5 | "tầng trung (7-15)" → min=7, max=15 | penthouse/tầng cao nhất → min=18
+• unit_direction: "hướng đông"→DONG | "đông nam"→DONG_NAM | "nam"→NAM | "tây"→TAY | "bắc"→BAC | "tây bắc"→TAY_BAC | "đông bắc"→DONG_BAC | "tây nam"→TAY_NAM | Nếu không đề cập → bỏ trống
+• tower: "tòa A"→"A" | "block B"→"B" | "tháp T1"→"T1" | "tòa S2"→"S2" | Chỉ lấy ký hiệu, bỏ chữ "tòa"/"tháp"/"block"
 • valuation_road_width: "đường 8m/hẻm 4m/hẻm xe hơi/đường lớn"→8/4/4/12 | Nếu không đề cập → bỏ trống
 • valuation_direction: "hướng nam/đông nam/tây bắc"→giữ nguyên tiếng Việt
 • valuation_floor: "tầng 5/lầu 3"→5/4 (lầu N=tầng N+1) | "tầng trệt/trệt"→1
@@ -1124,7 +1183,17 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             let budgetMax = extraction.budget_max;
             if (!budgetMax) budgetMax = parseBudgetFromMessage(state.userMessage);
 
-            const searchRes = await TOOL_EXECUTOR.search_inventory(state.tenantId, extraction.location_keyword || '', budgetMax, extraction.property_type, extraction.area_min);
+            const searchRes = await TOOL_EXECUTOR.search_inventory(
+                state.tenantId,
+                extraction.location_keyword || '',
+                budgetMax,
+                extraction.property_type,
+                extraction.area_min,
+                extraction.floor_min,
+                extraction.floor_max,
+                extraction.unit_direction,
+                extraction.tower,
+            );
 
             // ── Buyer profile detection for branching ──────────────────────────────
             const msg = state.userMessage.toLowerCase();
@@ -1154,7 +1223,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             const inventoryAnalysisPrompt = `KẾT QUẢ TÌM KIẾM KHO HÀNG:
 ${searchRes}
 
-HỒ SƠ: Ngân sách ${budgetTier} | Khu vực: ${extraction.location_keyword || 'Chưa rõ'} | Loại: ${extraction.property_type || 'Chưa rõ'} | Diện tích: ${extraction.area_min ? '>=' + extraction.area_min + 'm²' : 'Chưa rõ'} | Mục đích: ${isInvestor ? 'ĐẦU TƯ' : isFirstBuyer ? 'Ở THỰC LẦN ĐẦU' : 'Chưa rõ'} | Khẩn cấp: ${isUrgent ? 'CÓ' : 'Không'}${favCrossCheck}
+HỒ SƠ: Ngân sách ${budgetTier} | Khu vực: ${extraction.location_keyword || 'Chưa rõ'} | Loại: ${extraction.property_type || 'Chưa rõ'} | Diện tích: ${extraction.area_min ? '>=' + extraction.area_min + 'm²' : 'Chưa rõ'}${extraction.floor_min !== undefined || extraction.floor_max !== undefined ? ` | Tầng: ${extraction.floor_min ?? '?'}–${extraction.floor_max ?? '?'}` : ''}${extraction.unit_direction ? ` | Hướng: ${extraction.unit_direction}` : ''}${extraction.tower ? ` | Tòa: ${extraction.tower}` : ''} | Mục đích: ${isInvestor ? 'ĐẦU TƯ' : isFirstBuyer ? 'Ở THỰC LẦN ĐẦU' : 'Chưa rõ'} | Khẩn cấp: ${isUrgent ? 'CÓ' : 'Không'}${favCrossCheck}
 
 PHÂN TÍCH TOP 3 BĐS PHÙ HỢP NHẤT (bullet point, max 200 từ):
 1. Xếp hạng + lý do ngắn gọn (khớp hồ sơ ở điểm nào)
@@ -1183,13 +1252,17 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
             const resultCountMatch = searchRes.match(/Tìm thấy (\d+) sản phẩm/);
             feedbackRepository.logObservation(state.tenantId, 'INVENTORY_AGENT', 'SEARCH_INVENTORY', 'QUERY_RESULT', {
                 resultCount: resultCountMatch ? parseInt(resultCountMatch[1]) : 0,
-                hasResults: !searchRes.startsWith('Hiện tại kho hàng'),
+                hasResults: !searchRes.includes('chưa có sản phẩm'),
                 budgetTier,
                 buyerProfile,
                 isUrgent,
                 location: extraction.location_keyword || null,
                 propertyType: extraction.property_type || null,
                 areaMin: extraction.area_min || null,
+                floorMin: extraction.floor_min ?? null,
+                floorMax: extraction.floor_max ?? null,
+                direction: extraction.unit_direction || null,
+                tower: extraction.tower || null,
             }).catch(() => {});
 
             const inventoryFetchedAt = new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
