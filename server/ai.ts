@@ -441,6 +441,10 @@ function parseBudgetFromMessage(msg: string): number | undefined {
 function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]): string {
     if (!lead) return 'Khách vãng lai — chưa có hồ sơ.';
     const parts = [`Khách hàng: ${lead.name}`];
+    // Extract Vietnamese first name (last word) for personalized addressing
+    const nameParts = (lead.name || '').trim().split(/\s+/);
+    const firstName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0];
+    if (firstName) parts.push(`Tên gọi: ${firstName}`);
     if (lead.stage)                              parts.push(`Giai đoạn: ${lead.stage}`);
     if (lead.score?.score != null)               parts.push(`Điểm: ${lead.score.score} (${lead.score.grade || '?'})`);
     if (lead.preferences?.budgetMax)             parts.push(`Ngân sách: ${(lead.preferences.budgetMax / 1e9).toFixed(2)} Tỷ`);

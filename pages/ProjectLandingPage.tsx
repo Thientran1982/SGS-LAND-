@@ -867,12 +867,24 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Vị trí', value: 'An Phú, TP Thủ Đức, TP.HCM' },
             { label: 'Quy mô', value: '117 ha' },
             { label: 'Kết nối Metro', value: 'Cạnh ga Metro số 1 An Phú' },
-            { label: 'Loại hình', value: 'Nhà phố, biệt thự, shophouse thương mại' },
-            { label: 'Mức giá', value: 'Nhà phố 15-40 tỷ; biệt thự 30-120 tỷ' },
-            { label: 'Tiêu chuẩn', value: 'Chuẩn Singapore (Capitaland, Keppel)' },
+            { label: 'Loại hình', value: 'Nhà phố, biệt thự, shophouse thương mại, căn hộ Masteri Cosmo Central' },
+            { label: 'Mức giá', value: 'Nhà phố 15-40 tỷ; biệt thự 30-120 tỷ; căn hộ Cosmo Central từ 6,4 tỷ' },
+            { label: 'Tiêu chuẩn', value: 'Chuẩn Singapore (Capitaland, Keppel) + Foster + Partners' },
             { label: 'Pháp lý', value: 'Sổ hồng riêng, quy hoạch 1/500 rõ ràng' },
         ],
         amenities: [
+            {
+                title: 'Phân khu căn hộ Masteri Cosmo Central',
+                items: [
+                    '6 tòa tháp cao 19–29 tầng, thiết kế bởi Foster + Partners (Anh Quốc)',
+                    'Mô hình All-in-One: Sống – Làm việc – Giải trí ngay trong dự án',
+                    'Kênh đào nhạc nước lớn nhất Đông Nam Á tại trung tâm khu căn hộ',
+                    'Loại căn: 1PN, 2PN, 3PN, Penthouse, Duplex — diện tích đa dạng',
+                    'Giá từ 6,429 tỷ (mở bán 01/2026, đang nhận đặt chỗ)',
+                    'Sổ hồng riêng lâu dài, pháp lý chuẩn Masterise Homes',
+                    'View kênh đào, nội khu, công viên — không gian sống đẳng cấp quốc tế',
+                ],
+            },
             {
                 title: 'Hạ tầng thương mại đẳng cấp',
                 items: [
@@ -938,9 +950,17 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Vay ngân hàng mua nhà phố The Global City có thuận lợi không?',
                 a: 'Pháp lý rõ ràng và Masterise Homes uy tín cao giúp vay ngân hàng dễ dàng. LTV tối đa 65-70%, kỳ hạn 20-25 năm. Techcombank và VPBank là ngân hàng chính hỗ trợ The Global City với lãi suất ưu đãi 12-18 tháng đầu. SGS LAND hỗ trợ hồ sơ vay và so sánh gói vay miễn phí.',
             },
+            {
+                q: 'Masteri Cosmo Central là gì? Có phải thuộc The Global City không?',
+                a: 'Masteri Cosmo Central chính là phân khu căn hộ cao cấp nằm tại lõi trung tâm đại đô thị The Global City. Đây là sản phẩm căn hộ duy nhất trong hệ sinh thái The Global City, thuộc bộ sưu tập Masteri Collection. Dự án gồm 6 tòa tháp 19–29 tầng do Foster + Partners (Anh Quốc) thiết kế, mô hình All-in-One với kênh đào nhạc nước lớn nhất Đông Nam Á. Giá từ 6,429 tỷ, đang mở bán. Liên hệ SGS LAND: 0971 132 378 để nhận bảng giá.',
+            },
+            {
+                q: 'Masteri Cosmo Central giá bao nhiêu? Loại căn hộ nào đang bán?',
+                a: 'Masteri Cosmo Central mở bán từ tháng 01/2026 với giá khởi điểm từ 6,429 tỷ đồng. Cơ cấu căn: 1PN, 2PN, 3PN, Penthouse và Duplex — diện tích đa dạng phù hợp nhiều nhu cầu từ ở thực đến đầu tư. Pháp lý sổ hồng riêng lâu dài. Masterise Homes hỗ trợ lãi suất 0% giai đoạn đầu. Liên hệ SGS LAND để nhận bảng giá và chính sách ưu đãi chi tiết: 0971 132 378.',
+            },
         ],
         relatedProjects: [
-            { name: 'Masterise Homes', slug: 'masterise-homes' },
+            { name: 'Masteri Cosmo Central', slug: 'masteri-cosmo-central' },
             { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
             { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
         ],
