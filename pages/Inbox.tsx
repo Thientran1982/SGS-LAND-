@@ -786,6 +786,15 @@ export const Inbox: React.FC = () => {
                                     </div>
                                     <div className="flex justify-between items-center mt-1 gap-2">
                                         <div className={`text-xs truncate min-w-0 flex-1 flex items-center gap-1.5 ${thread.unreadCount > 0 ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>
+                                            {/* Follow-up badge — shown when last outbound was an AI follow-up */}
+                                            {thread.lastMessage?.direction === 'OUTBOUND' && thread.lastMessage?.metadata?.isFollowUp && (
+                                                <span
+                                                    className="text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 bg-amber-50 text-amber-600 border border-amber-200"
+                                                    title={`Follow-up tự động ngày ${thread.lastMessage.metadata.followUpDay ?? ''}`}
+                                                >
+                                                    ⏰ {thread.lastMessage.metadata.followUpDay ? `D${thread.lastMessage.metadata.followUpDay}` : 'FU'}
+                                                </span>
+                                            )}
                                             {/* Channel badge */}
                                             {thread.lastChannel && thread.lastChannel !== 'INTERNAL' && (() => {
                                                 const ch = thread.lastChannel;
