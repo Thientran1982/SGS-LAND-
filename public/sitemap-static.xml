@@ -266,6 +266,22 @@
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/phap-ly-nha-dat" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/phap-ly-nha-dat" />
   </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-binh-thanh</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-binh-thanh" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-binh-thanh" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-long-an</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-long-an" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-long-an" />
+  </url>
 
   <!-- ══ LANDING PAGES DỰ ÁN ══ -->
   <url>
