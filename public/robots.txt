@@ -42,6 +42,9 @@ Allow: /du-an/van-phuc-city
 Allow: /du-an/sala
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /.well-known/
+Allow: /api/public/
 
 Disallow: /login
 Disallow: /dashboard
@@ -83,75 +86,104 @@ User-agent: GPTBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: OAI-SearchBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: ChatGPT-User
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Claude-Web
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Anthropic-AI
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: ClaudeBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Claude-SearchBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Gemini-WebFetch
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Google-Extended
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: PerplexityBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: YouBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: CCBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Applebot-Extended
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Meta-ExternalAgent
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 User-agent: Bytespider
 Allow: /
 Allow: /llms.txt
+Allow: /data/
 
 Sitemap: https://sgsland.vn/sitemap.xml
 Sitemap: https://sgsland.vn/sitemap-static.xml

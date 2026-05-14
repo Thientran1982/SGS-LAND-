@@ -413,6 +413,88 @@ export function createPublicProjectRoutes(): Router {
     }
   });
 
+  // GET /api/public/project-feed — GEO machine-readable entity catalog (JSON-LD).
+  // Designed for LLM crawlers (GPTBot, ClaudeBot, PerplexityBot) that want a
+  // structured entity feed of all public projects without paginating the full
+  // /projects endpoint. Returns a JSON-LD @graph array of ApartmentComplex /
+  // Residence entities. Cached 1 hour; no auth required.
+  router.get('/project-feed', async (_req: Request, res: Response) => {
+    try {
+      const rows = await withRlsBypass(async (client) => {
+        const result = await client.query<{
+          id: string;
+          name: string;
+          code: string;
+          description: string | null;
+          location: string | null;
+          status: string | null;
+          total_units: number | null;
+          metadata: Record<string, unknown>;
+        }>(
+          `SELECT id, name, code, description, location, status, total_units, metadata
+             FROM projects
+            WHERE metadata->>'public_microsite' = 'true'
+            ORDER BY
+              COALESCE((metadata->>'featured_rank')::int, 999),
+              created_at DESC NULLS LAST
+            LIMIT 50`,
+        );
+        return result.rows;
+      });
+
+      const baseUrl = 'https://sgsland.vn';
+      const graph = rows.map((p) => {
+        const meta = p.metadata || {};
+        return {
+          '@type': (meta.schema_type as string) || 'Residence',
+          '@id': `${baseUrl}/du-an/${p.code.toLowerCase()}`,
+          name: p.name,
+          description: p.description || undefined,
+          url: `${baseUrl}/du-an/${p.code.toLowerCase()}`,
+          address: p.location
+            ? { '@type': 'PostalAddress', addressLocality: p.location, addressCountry: 'VN' }
+            : undefined,
+          developer: meta.developer
+            ? { '@type': 'Organization', name: meta.developer as string }
+            : undefined,
+          numberOfUnits: p.total_units || undefined,
+          priceRange: (meta.price_range as string) || undefined,
+          keywords: (meta.seo_keywords as string) || undefined,
+          status: p.status || undefined,
+        };
+      });
+
+      res.setHeader('Content-Type', 'application/ld+json; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.json({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'SGS LAND — Danh mục dự án BĐS phân phối chính thức',
+        description:
+          'Machine-readable entity catalog of real estate projects distributed by SGS LAND in Vietnam. Updated hourly.',
+        url: `${baseUrl}/api/public/project-feed`,
+        publisher: {
+          '@type': 'Organization',
+          '@id': `${baseUrl}/#org`,
+          name: 'SGS LAND',
+          url: baseUrl,
+        },
+        numberOfItems: graph.length,
+        itemListElement: graph.map((item, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item,
+        })),
+        sameAs: `${baseUrl}/data/project-feed.json`,
+        dateModified: new Date().toISOString().slice(0, 10),
+      });
+    } catch (err: any) {
+      logger.error(`[PublicProject] GET /project-feed failed: ${err?.message || err}`);
+      res.status(500).json({ ok: false, error: 'Lỗi máy chủ. Vui lòng thử lại.' });
+    }
+  });
+
   // GET /api/public/projects/:code — full payload (cached 5 phút, scoped theo Host tenant)
   router.get('/:code', async (req: Request, res: Response) => {
     const code = String(req.params.code || '').trim().toUpperCase();
