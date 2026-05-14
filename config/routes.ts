@@ -29,6 +29,8 @@ export const ROUTES = {
     BDS_QUAN_7: 'bat-dong-san-quan-7',
     BDS_PHU_NHUAN: 'bat-dong-san-phu-nhuan',
     BDS_BINH_CHANH: 'bat-dong-san-binh-chanh',
+    DAU_TU_BDS: 'dau-tu-bat-dong-san',
+    PHAP_LY_NHA_DAT: 'phap-ly-nha-dat',
     DU_AN: 'du-an',
 
     // Legal Pages

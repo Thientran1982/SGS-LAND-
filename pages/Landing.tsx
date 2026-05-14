@@ -1218,6 +1218,8 @@ export const Landing: React.FC = () => {
                             <li><a href={`/${ROUTES.BDS_QUAN_7}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Quận 7</a></li>
                             <li><a href={`/${ROUTES.BDS_PHU_NHUAN}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Phú Nhuận</a></li>
                             <li><a href={`/${ROUTES.BDS_BINH_CHANH}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Bình Chánh</a></li>
+                            <li><a href={`/${ROUTES.DAU_TU_BDS}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Đầu Tư Bất Động Sản</a></li>
+                            <li><a href={`/${ROUTES.PHAP_LY_NHA_DAT}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Pháp Lý Nhà Đất</a></li>
                         </ul>
                     </div>
 

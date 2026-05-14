@@ -33,11 +33,20 @@ const LOCATION_SEO_META: Record<string, { title: string; description: string }> 
         title: 'Bất Động Sản Bình Chánh TP.HCM | Đất Nền, Nhà Phố — SGS LAND',
         description: 'Mua bán bất động sản Bình Chánh: đất nền, nhà phố, dự án ven Vành đai 3. Cửa ngõ Tây Nam TP.HCM, tiềm năng tăng giá cao. SGS LAND tư vấn miễn phí.',
     },
+    'dau-tu-bat-dong-san': {
+        title: 'Đầu Tư Bất Động Sản Hiệu Quả 2026 | Hướng Dẫn Toàn Diện — SGS LAND',
+        description: 'Hướng dẫn đầu tư bất động sản 2026: chiến lược chọn BĐS sinh lời, tính ROI, quản lý rủi ro pháp lý và tối ưu tài chính. Tư vấn miễn phí từ chuyên gia SGS LAND.',
+    },
+    'phap-ly-nha-dat': {
+        title: 'Pháp Lý Nhà Đất 2026 | Hướng Dẫn Kiểm Tra Sổ Đỏ, Quy Hoạch — SGS LAND',
+        description: 'Hướng dẫn pháp lý nhà đất: kiểm tra sổ đỏ, quy hoạch, thủ tục mua bán, công chứng và sang tên. SGS LAND kiểm tra pháp lý miễn phí trong 24 giờ.',
+    },
 };
 
 interface LocationConfig {
     slug: string;
     name: string;
+    h1Title?: string;
     province: string;
     searchQuery: string;
     heroDescription: string;
@@ -635,6 +644,158 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             { name: 'The Global City', slug: 'the-global-city' },
         ],
     },
+    'dau-tu-bat-dong-san': {
+        slug: 'dau-tu-bat-dong-san',
+        name: 'Đầu Tư',
+        h1Title: 'Đầu Tư Bất Động Sản Hiệu Quả 2026',
+        province: 'Việt Nam',
+        searchQuery: '',
+        heroDescription: 'Hướng dẫn đầu tư bất động sản toàn diện từ chuyên gia SGS LAND: phân tích thị trường, chiến lược chọn BĐS sinh lời, tính toán dòng tiền, quản lý danh mục và tối ưu thuế. Phù hợp cả nhà đầu tư mới lẫn có kinh nghiệm — cập nhật theo Luật Đất đai 2024.',
+        stats: [
+            { label: 'Tỷ suất sinh lợi BĐS trung bình/năm', value: '12–18%' },
+            { label: 'Nhà đầu tư tin dùng SGS LAND', value: '5.000+' },
+            { label: 'Dự án đang phân phối', value: '50+' },
+            { label: 'Năm kinh nghiệm thị trường', value: '10+' },
+        ],
+        highlights: [
+            {
+                title: 'Phân Tích Thị Trường & Chọn Vị Trí',
+                desc: 'Vị trí quyết định 60–70% giá trị BĐS. SGS LAND cung cấp phân tích hạ tầng, quy hoạch, dòng tiền dân cư và tiềm năng tăng giá từng khu vực — giúp bạn ra quyết định có cơ sở dữ liệu.',
+            },
+            {
+                title: 'Tính Toán Dòng Tiền & ROI',
+                desc: 'Trước khi đầu tư, cần tính đủ: giá mua + thuế phí + chi phí cải tạo + lãi vay + vận hành. SGS LAND cung cấp công cụ AI định giá và mô phỏng dòng tiền miễn phí cho mọi giao dịch.',
+            },
+            {
+                title: 'Chiến Lược Đầu Tư Theo Ngân Sách',
+                desc: 'Dưới 1 tỷ: đất nền ven đô, phòng trọ KCN. 1–3 tỷ: căn hộ cho thuê, nhà phố nhỏ. 3–10 tỷ: nhà phố thương mại, căn hộ cao cấp. Trên 10 tỷ: biệt thự dự án, shophouse. Mỗi phân khúc có chiến lược exit khác nhau.',
+            },
+            {
+                title: 'Quản Lý Rủi Ro & Pháp Lý',
+                desc: 'Rủi ro lớn nhất khi đầu tư BĐS: pháp lý không rõ ràng, đòn bẩy tài chính quá cao và mua đỉnh chu kỳ. SGS LAND kiểm tra pháp lý độc lập và tư vấn cấu trúc tài chính tối ưu cho từng khoản đầu tư.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Đầu tư bất động sản cần bao nhiêu vốn tối thiểu?',
+                a: 'Tối thiểu 200–500 triệu đồng để đầu tư đất nền ven đô hoặc góp vốn dự án. Từ 1–1,5 tỷ bắt đầu mua căn hộ chung cư cho thuê (sử dụng đòn bẩy ngân hàng 50–70%). Lý tưởng nhất từ 2–3 tỷ để đa dạng hoá danh mục và chủ động vốn tự có ≥30%. SGS LAND tư vấn cơ cấu vốn và kết nối ngân hàng miễn phí.',
+            },
+            {
+                q: 'Tỷ suất sinh lời BĐS tại Việt Nam hiện nay là bao nhiêu?',
+                a: 'Tỷ suất sinh lời gộp (bao gồm tăng giá + cho thuê) trung bình 12–18%/năm, cao hơn đáng kể so với gửi ngân hàng (5–6%) và chứng khoán (8–12%). Phân khúc đất nền ven đô tăng 15–30%/năm giai đoạn 2020–2025. Căn hộ cho thuê tại TP.HCM tỷ suất cho thuê thuần 5–8%/năm.',
+            },
+            {
+                q: 'Nên đầu tư đất nền hay căn hộ?',
+                a: 'Đất nền: tiềm năng tăng giá cao hơn (20–40%/năm giai đoạn tốt), ít phí vận hành, nhưng thanh khoản chậm hơn, khó cho thuê. Căn hộ: dòng tiền ổn định từ cho thuê (8–16 triệu/tháng), thanh khoản tốt hơn, quản lý dễ hơn nhưng tốc độ tăng giá thấp hơn. Chiến lược tối ưu: đất nền dài hạn 5–10 năm, căn hộ trung hạn 3–5 năm tạo dòng tiền.',
+            },
+            {
+                q: 'Mua BĐS bằng đòn bẩy ngân hàng có rủi ro không?',
+                a: 'Đòn bẩy tài chính là con dao hai lưỡi: tối đa hoá lợi nhuận khi thị trường tăng nhưng khuếch đại thua lỗ khi thị trường xuống. Nguyên tắc an toàn: vốn tự có ≥30%, dòng tiền cho thuê ≥80% tiền lãi vay, không dùng đòn bẩy trên 60% với đất nền thuần tuý. SGS LAND tư vấn cơ cấu tài chính cá nhân hoá.',
+            },
+            {
+                q: 'Chu kỳ bất động sản Việt Nam kéo dài bao lâu?',
+                a: 'Chu kỳ BĐS Việt Nam thường 7–10 năm, gồm 4 giai đoạn: tích lũy (giá đi ngang) → tăng trưởng (20–40%/năm) → bong bóng (đầu cơ, volume giảm) → điều chỉnh (giá giảm 10–30%). Giai đoạn 2023–2024 là đáy điều chỉnh, 2025–2027 dự báo chu kỳ tăng mới nhờ hạ tầng, Luật Đất đai 2024 và FDI.',
+            },
+            {
+                q: 'Thuế và phí khi mua bán BĐS gồm những khoản nào?',
+                a: 'Người mua chịu: phí công chứng 0,1% giá trị, phí trước bạ 0,5% (nhà đất) hoặc 2% (căn hộ lần đầu được ưu đãi). Người bán chịu: thuế thu nhập 2% trên giá bán. Tổng phí giao dịch thực tế 2–4% giá trị BĐS. SGS LAND hỗ trợ tối ưu cấu trúc giao dịch hợp pháp để tiết kiệm chi phí.',
+            },
+            {
+                q: 'BĐS nghỉ dưỡng (condotel, biệt thự biển) có nên đầu tư không?',
+                a: 'BĐS nghỉ dưỡng tiềm năng nhưng rủi ro cao hơn BĐS dân cư: pháp lý phức tạp (condotel chưa có sổ riêng), cam kết lợi nhuận thường không được thực hiện đầy đủ, thanh khoản thấp. Chỉ phù hợp nhà đầu tư dài hạn 10+ năm với vốn nhàn rỗi. SGS LAND tư vấn kỹ pháp lý và so sánh dự án trước khi quyết định.',
+            },
+            {
+                q: 'Làm sao chọn được BĐS sinh lời tốt nhất?',
+                a: '5 tiêu chí vàng: (1) Vị trí gần tiện ích, hạ tầng đang phát triển; (2) Pháp lý sổ đỏ/sổ hồng sạch, không tranh chấp; (3) Giá thấp hơn thị trường 5–15%; (4) Khu vực có giao dịch thực tế; (5) Cho thuê ≥60% lãi vay. SGS LAND dùng AI định giá so sánh và lọc BĐS theo 5 tiêu chí này trước khi tư vấn.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
+            { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+            { name: 'Pháp Lý Nhà Đất', slug: 'phap-ly-nha-dat' },
+        ],
+        relatedProjects: [
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+        ],
+    },
+    'phap-ly-nha-dat': {
+        slug: 'phap-ly-nha-dat',
+        name: 'Nhà Đất',
+        h1Title: 'Hướng Dẫn Pháp Lý Nhà Đất 2026',
+        province: 'Việt Nam',
+        searchQuery: '',
+        heroDescription: 'Hướng dẫn pháp lý nhà đất toàn diện 2026: kiểm tra sổ đỏ/sổ hồng, tra cứu quy hoạch đất, thủ tục mua bán, công chứng, sang tên và giải quyết tranh chấp. SGS LAND kiểm tra pháp lý miễn phí trong 24 giờ cho mọi giao dịch.',
+        stats: [
+            { label: 'Giao dịch được kiểm tra pháp lý', value: '10.000+' },
+            { label: 'Tỉ lệ giao dịch an toàn', value: '99,8%' },
+            { label: 'Chuyên gia pháp lý BĐS', value: '50+' },
+            { label: 'Tiết kiệm chi phí tranh chấp', value: '500 tỷ+' },
+        ],
+        highlights: [
+            {
+                title: 'Kiểm Tra Sổ Đỏ / Sổ Hồng',
+                desc: 'Xác minh: chủ sở hữu, số thửa, diện tích, mục đích sử dụng đất, thời hạn sử dụng. Tra cứu tình trạng thế chấp, phong tỏa tại ngân hàng và cơ quan đăng ký đất đai. SGS LAND thực hiện miễn phí trong 24 giờ.',
+            },
+            {
+                title: 'Tra Cứu Quy Hoạch Đất',
+                desc: 'Kiểm tra bản đồ quy hoạch sử dụng đất 1/500, 1/2000 và 1/5000. Xác định đất có nằm trong quy hoạch lộ giới, hành lang an toàn hay vùng bảo tồn không. Đây là bước bắt buộc trước khi đặt cọc bất kỳ BĐS nào.',
+            },
+            {
+                title: 'Thủ Tục Mua Bán & Công Chứng',
+                desc: 'Quy trình chuẩn: đặt cọc (10%) → kiểm tra pháp lý → ký HĐMB có công chứng → nộp thuế phí → sang tên tại VPĐK đất đai → nhận sổ đỏ mới. Thời gian trung bình 30–60 ngày. SGS LAND đồng hành toàn bộ quy trình.',
+            },
+            {
+                title: 'Phòng Tránh Rủi Ro Pháp Lý',
+                desc: 'Những BĐS cần tránh: đất nông nghiệp chưa chuyển mục đích, đất chung sổ chưa tách thửa, BĐS đang thế chấp ngân hàng, dự án chưa đủ điều kiện mở bán, đất tranh chấp thừa kế. SGS LAND lập checklist pháp lý 50+ điểm cho mỗi giao dịch.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Sổ đỏ và sổ hồng khác nhau như thế nào?',
+                a: 'Sổ đỏ (GCNQSDĐ) cấp trước 2009 — thường cho đất thuần tuý. Sổ hồng (GCNQSDĐ và tài sản gắn liền) cấp từ 2009, thể hiện cả đất lẫn công trình xây dựng trên đất. Từ 2025, Luật Đất đai 2024 quy định cấp một loại giấy chứng nhận thống nhất. Cả hai đều có giá trị pháp lý như nhau khi giao dịch.',
+            },
+            {
+                q: 'Đặt cọc mua nhà bao nhiêu phần trăm là hợp lý?',
+                a: 'Thông lệ đặt cọc 10% giá trị BĐS, tối đa 20%. Pháp lý: nếu bên mua bỏ cọc thì mất tiền cọc; nếu bên bán bội ước phải bồi thường gấp đôi tiền cọc. Bắt buộc kiểm tra pháp lý sổ đỏ, quy hoạch và tình trạng thế chấp TRƯỚC khi ký đặt cọc. SGS LAND soạn hợp đồng đặt cọc chuẩn miễn phí cho khách hàng.',
+            },
+            {
+                q: 'Quy trình sang tên sổ đỏ mất bao lâu và tốn bao nhiêu?',
+                a: 'Thời gian: 15–30 ngày làm việc (có thể lên 45–60 ngày nếu cần giải chấp). Chi phí: phí công chứng 0,1% + phí trước bạ 0,5% (đất) + phí đăng ký 0,03% + lệ phí địa chính. Tổng phí thực tế 1–3% giá trị BĐS. SGS LAND hỗ trợ toàn bộ hồ sơ và giải thích từng khoản.',
+            },
+            {
+                q: 'Mua đất thổ cư và đất nông nghiệp khác nhau thế nào về pháp lý?',
+                a: 'Đất thổ cư (ONT/ODT): được xây dựng nhà ở, giao dịch tự do, pháp lý rõ ràng — ưu tiên mua để ở hoặc đầu tư. Đất nông nghiệp (LUC, CLN): không được xây nhà ở trái phép, muốn xây cần xin chuyển mục đích sử dụng đất (1–3 năm, chi phí 10–30% giá đất). Rủi ro cao khi mua đất nông nghiệp phân lô bán nền chưa qua chuyển mục đích.',
+            },
+            {
+                q: 'Làm sao kiểm tra BĐS có đang bị thế chấp ngân hàng không?',
+                a: 'Ba cách kiểm tra: (1) Yêu cầu bên bán xuất trình bản gốc sổ đỏ — nếu đang thế chấp, ngân hàng đang giữ sổ; (2) Tra cứu tại Văn phòng đăng ký đất đai cấp huyện; (3) Nhờ SGS LAND tra cứu chuyên nghiệp bao gồm lịch sử giao dịch và tình trạng thế chấp trong 24 giờ miễn phí.',
+            },
+            {
+                q: 'Mua nhà trong dự án chung cư cần kiểm tra pháp lý gì?',
+                a: 'Checklist pháp lý chung cư: (1) Chủ đầu tư đã có sổ đỏ khu đất chưa; (2) Giấy phép xây dựng đã cấp chưa; (3) Đã được ngân hàng bảo lãnh theo Luật Nhà ở 2023; (4) Hợp đồng mua bán theo mẫu Bộ Xây dựng; (5) Phí bảo trì 2% đã rõ ràng chưa; (6) Tiến độ bàn giao thực tế so với cam kết.',
+            },
+            {
+                q: 'Tranh chấp BĐS giải quyết ở đâu và mất bao lâu?',
+                a: 'Tranh chấp BĐS giải quyết qua 3 kênh: hòa giải tại UBND phường/xã (miễn phí, 45 ngày) → khởi kiện Tòa án nhân dân cấp huyện/tỉnh (6–24 tháng, án phí 5% giá trị tranh chấp) → thi hành án (thêm 6–12 tháng). Phòng tránh tốt nhất là kiểm tra pháp lý kỹ trước giao dịch — SGS LAND hỗ trợ miễn phí.',
+            },
+            {
+                q: 'Luật Đất đai 2024 có thay đổi gì quan trọng với người mua nhà đất?',
+                a: 'Luật Đất đai 2024 (hiệu lực 1/1/2025) có 5 thay đổi chính: (1) Cấm chia lô bán nền tại đô thị lớn; (2) Bỏ khung giá đất Nhà nước, áp dụng giá thị trường; (3) Minh bạch hóa quy hoạch đất online; (4) Tăng thời hạn thuê đất thương mại lên 70 năm; (5) Người Việt định cư nước ngoài được mua nhà dễ hơn. SGS LAND cập nhật tư vấn theo quy định mới nhất.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'Đầu Tư BĐS', slug: 'dau-tu-bat-dong-san' },
+            { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+            { name: 'BĐS Bình Chánh', slug: 'bat-dong-san-binh-chanh' },
+        ],
+        relatedProjects: [
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
+            { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+        ],
+    },
 };
 
 function navigate(path: string) {
@@ -790,11 +951,11 @@ export default function LocalLandingPage() {
                         <span>/</span>
                         <button onClick={() => navigate('/marketplace')} className="hover:text-[var(--primary-600)] transition-colors">Mua Bán BĐS</button>
                         <span>/</span>
-                        <span className="text-[var(--text-primary)] font-medium">Bất Động Sản {cfg.name}</span>
+                        <span className="text-[var(--text-primary)] font-medium">{cfg.h1Title ?? `Bất Động Sản ${cfg.name}`}</span>
                     </nav>
 
                     <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-4 leading-tight">
-                        Bất Động Sản {cfg.name}
+                        {cfg.h1Title ?? `Bất Động Sản ${cfg.name}`}
                     </h1>
                     <p className="text-[var(--text-secondary)] text-base md:text-lg max-w-3xl leading-relaxed mb-8">
                         {cfg.heroDescription}
@@ -979,6 +1140,8 @@ export default function LocalLandingPage() {
                         <button onClick={() => navigate('/ai-valuation')} className="hover:text-[var(--primary-600)]">Định Giá AI</button>
                         <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-[var(--primary-600)]">Ký Gửi BĐS</button>
                         <button onClick={() => navigate('/news')} className="hover:text-[var(--primary-600)]">Tin Tức</button>
+                        <button onClick={() => navigate('/dau-tu-bat-dong-san')} className="hover:text-[var(--primary-600)]">Đầu Tư BĐS</button>
+                        <button onClick={() => navigate('/phap-ly-nha-dat')} className="hover:text-[var(--primary-600)]">Pháp Lý Nhà Đất</button>
                         <button onClick={() => navigate('/contact')} className="hover:text-[var(--primary-600)]">Liên Hệ</button>
                     </div>
                 </div>
