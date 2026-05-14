@@ -4908,6 +4908,26 @@ async function startServer() {
         if (meta.price_from) amenities.push({ '@type': 'LocationFeatureSpecification', name: 'Giá từ', value: String(meta.price_from) });
         if (meta.legal) amenities.push({ '@type': 'LocationFeatureSpecification', name: 'Pháp lý', value: String(meta.legal) });
 
+        const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const projectBadges: string[] = [];
+        if (meta.price_from) projectBadges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:4px 14px;border-radius:20px;font-size:14px;font-weight:700">Giá từ ${esc(String(meta.price_from))}</span>`);
+        if (meta.area_ha) projectBadges.push(`<span style="background:#f0fdf4;color:#166534;padding:4px 14px;border-radius:20px;font-size:14px">${esc(String(meta.area_ha))} ha</span>`);
+        if (meta.legal) projectBadges.push(`<span style="background:#fefce8;color:#854d0e;padding:4px 14px;border-radius:20px;font-size:14px">${esc(String(meta.legal))}</span>`);
+        const projectBodyHtml = `<div id="ssr-body" style="font-family:system-ui,sans-serif;padding:24px 16px;max-width:800px;margin:0 auto;color:#1e293b;background:#fff;min-height:200px">
+  <nav style="font-size:12px;color:#64748b;margin-bottom:16px">
+    <a href="/" style="color:#4f46e5;text-decoration:none">SGS LAND</a> ›
+    <a href="/marketplace" style="color:#4f46e5;text-decoration:none">Dự án BĐS</a> ›
+    <span>${esc(row.name)}</span>
+  </nav>
+  ${cover ? `<img src="${esc(cover)}" alt="${esc(row.name)}" style="width:100%;max-height:360px;object-fit:cover;border-radius:8px;margin-bottom:16px" loading="lazy">` : ''}
+  <h2 style="font-size:22px;font-weight:700;margin:0 0 12px;line-height:1.3;color:#0f172a">${esc(row.name)}</h2>
+  ${projectBadges.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">${projectBadges.join('')}</div>` : ''}
+  ${row.location ? `<p style="font-size:14px;color:#64748b;margin:0 0 12px">📍 ${esc(String(row.location))}</p>` : ''}
+  ${meta.developer ? `<p style="font-size:14px;color:#475569;margin:0 0 10px">Chủ đầu tư: <strong>${esc(String(meta.developer))}</strong></p>` : ''}
+  <p style="font-size:15px;line-height:1.7;color:#475569;margin:0 0 16px">${esc(desc)}</p>
+  <p style="font-size:13px;color:#94a3b8;margin:0">Nguồn: SGS LAND — Đại lý phân phối BĐS uỷ quyền tại TP.HCM</p>
+</div>`;
+
         sendMeta(res, {
           title: `${row.name} — Mini-site dự án | SGS LAND`,
           description: desc,
@@ -4915,6 +4935,7 @@ async function startServer() {
           image: cover || undefined,
           url: `${APP_SITEMAP_URL}/p/${row.code}`,
           type: 'website',
+          bodyHtml: projectBodyHtml,
           structuredData: {
             '@context': 'https://schema.org',
             '@type': 'ApartmentComplex',
