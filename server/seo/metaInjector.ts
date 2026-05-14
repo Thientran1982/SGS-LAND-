@@ -2299,14 +2299,17 @@ function buildAreaNoscriptHtml(structuredData: any, h1: string | undefined, url:
     }
   }
 
-  // ── 6. Brand footer (E-E-A-T signal) ──────────────────────────────────────
+  // ── 6. Brand footer (E-E-A-T signal + semantic internal links) ───────────
   lines.push('<h2>Về SGS LAND</h2>');
   lines.push('<p style="text-align:left; color:#475569;"><strong>SGS LAND</strong> (sgsland.vn) — đại lý bất động sản uỷ quyền khu vực ' + esc(areaName || 'miền Nam') + '. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch. Định giá AI miễn phí (AVM ±5% sai số), kiểm tra pháp lý 2 lớp, kết nối 12+ ngân hàng.</p>');
   lines.push('<ul style="text-align:left; color:#475569;">');
   lines.push('  <li>📞 Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>');
   lines.push('  <li>✉️ Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a></li>');
-  lines.push('  <li>🔍 Định giá AI miễn phí: <a href="' + esc(APP_URL) + '/ai-valuation">sgsland.vn/ai-valuation</a></li>');
-  lines.push(`  <li>🌐 Trang khu vực: <a href="${esc(url)}">${esc(url)}</a></li>`);
+  lines.push('  <li>🔍 <a href="' + esc(APP_URL) + '/ai-valuation">Định giá AI bất động sản miễn phí</a> — sai số ±5%, không cần đăng ký</li>');
+  lines.push('  <li>🏘️ <a href="' + esc(APP_URL) + '/marketplace">Tìm kiếm bất động sản toàn quốc</a> — 45.000+ sản phẩm cập nhật realtime</li>');
+  lines.push('  <li>📰 <a href="' + esc(APP_URL) + '/news">Tin tức thị trường bất động sản</a> — phân tích giá, quy hoạch, pháp lý</li>');
+  lines.push('  <li>📋 <a href="' + esc(APP_URL) + '/contact">Tư vấn miễn phí 1-1 với chuyên gia SGS LAND</a></li>');
+  lines.push(`  <li>🌐 Trang khu vực này: <a href="${esc(url)}">${esc(url)}</a></li>`);
   lines.push('</ul>');
   lines.push('<p style="margin-top:24px;">Vui lòng bật JavaScript để xem danh sách BĐS realtime, bản đồ và bảng giá cập nhật. <a href="' + esc(url) + '">Tải lại trang</a></p>');
 
@@ -2391,13 +2394,17 @@ function buildProjectNoscriptHtml(structuredData: any, h1: string | undefined, u
     }
   }
 
-  // Authority + brand footer (E-E-A-T signal carried into every project page)
+  // Authority + brand footer (E-E-A-T signal + semantic internal links)
   lines.push('<h2>Về SGS LAND</h2>');
   lines.push('<p style="text-align:left; color:#475569;"><strong>SGS LAND</strong> (sgsland.vn) — đại lý phân phối uỷ quyền của Novaland, Masterise Homes, Nam Long, Vinhomes, Sơn Kim Land. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch xử lý qua nền tảng. Định giá theo chuẩn TĐGVN/IVS, tuân thủ Luật Đất Đai 2024 và Nghị định 13/2023.</p>');
   lines.push('<ul style="text-align:left; color:#475569;">');
   lines.push('  <li>📞 Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>');
   lines.push('  <li>✉️ Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a></li>');
-  lines.push(`  <li>🌐 Trang dự án: <a href="${esc(url)}">${esc(url)}</a></li>`);
+  lines.push('  <li>🔍 <a href="' + esc(APP_URL) + '/ai-valuation">Định giá AI bất động sản miễn phí</a> — nhập địa chỉ, nhận kết quả ±5% trong 30 giây</li>');
+  lines.push('  <li>🏘️ <a href="' + esc(APP_URL) + '/marketplace">Tìm kiếm bất động sản toàn quốc</a> — căn hộ, nhà phố, biệt thự, đất nền</li>');
+  lines.push('  <li>📰 <a href="' + esc(APP_URL) + '/news">Tin tức & phân tích thị trường BĐS</a> — cập nhật hàng ngày</li>');
+  lines.push('  <li>📋 <a href="' + esc(APP_URL) + '/contact">Đặt lịch tư vấn miễn phí</a> với chuyên gia SGS LAND</li>');
+  lines.push(`  <li>🌐 Trang dự án này: <a href="${esc(url)}">${esc(url)}</a></li>`);
   lines.push('</ul>');
 
   lines.push('<p style="margin-top:24px;">Vui lòng bật JavaScript để xem đầy đủ tiện ích, mặt bằng và bảng giá realtime. <a href="' + esc(url) + '">Tải lại trang</a></p>');
