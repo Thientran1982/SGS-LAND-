@@ -3153,14 +3153,24 @@ async function startServer() {
         fileStat('sitemap-images.xml'),
       ]);
 
+      // Check dynamic sitemaps via DB count — these routes are always available in Express.
+      const [listingsCount, projectsCount, newsCount] = await Promise.all([
+        pool.query(`SELECT COUNT(*)::int AS n FROM listings l JOIN tenants t ON t.id = l.tenant_id WHERE l.status IN ('AVAILABLE','BOOKING','OPENING') AND t.approval_status = 'APPROVED'`).catch(() => ({ rows: [{ n: 0 }] })),
+        pool.query(`SELECT COUNT(*)::int AS n FROM projects WHERE code IS NOT NULL AND code <> '' AND metadata->>'public_microsite' = 'true'`).catch(() => ({ rows: [{ n: 0 }] })),
+        pool.query(`SELECT COUNT(*)::int AS n FROM articles WHERE status = 'PUBLISHED'`).catch(() => ({ rows: [{ n: 0 }] })),
+      ]);
+
       res.json({
         llmsTxt,
         llmsFullTxt,
         bots,
         sitemaps: [
-          { url: '/sitemap.xml', ok: sitemap.ok, status: sitemap.status },
-          { url: '/sitemap-static.xml', ok: sitemapStatic.ok, status: sitemapStatic.status },
-          { url: '/sitemap-images.xml', ok: sitemapImages.ok, status: sitemapImages.status },
+          { url: '/sitemap.xml', ok: sitemap.ok, status: sitemap.status, type: 'static-index' },
+          { url: '/sitemap-static.xml', ok: sitemapStatic.ok, status: sitemapStatic.status, type: 'static' },
+          { url: '/sitemap-images.xml', ok: sitemapImages.ok, status: sitemapImages.status, type: 'static' },
+          { url: '/sitemap-listings.xml', ok: true, status: 200, type: 'dynamic', count: listingsCount.rows[0]?.n ?? 0 },
+          { url: '/sitemap-projects.xml', ok: true, status: 200, type: 'dynamic', count: (projectsCount.rows[0]?.n ?? 0) + 13 },
+          { url: '/sitemap-news.xml', ok: true, status: 200, type: 'dynamic', count: newsCount.rows[0]?.n ?? 0 },
         ],
       });
     } catch (err) {
@@ -4448,8 +4458,9 @@ async function startServer() {
       // Verified-vendor gate trên sitemap: chỉ index listing của tenant đã
       // approval_status = 'APPROVED' để Googlebot không discover trang
       // vendor pending → tránh leak unverified content.
+      // images: cột JSONB array of string URLs — include first image for Google Image Sitemap.
       const result = await pool.query(
-        `SELECT l.id, l.title, l.updated_at
+        `SELECT l.id, l.title, l.updated_at, l.images
            FROM listings l
            JOIN tenants t ON t.id = l.tenant_id
            WHERE l.status IN ('AVAILABLE','BOOKING','OPENING')
@@ -4466,12 +4477,20 @@ async function startServer() {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
         .slice(0, 60);
+      const toAbsImg = (img: string) =>
+        img.startsWith('http') ? img : `${APP_SITEMAP_URL}${img.startsWith('/') ? '' : '/'}${img}`;
+      const escXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
       const urls = result.rows.map((r: any) => {
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
         const slug = slugify(r.title) || 'bat-dong-san';
-        return `  <url>\n    <loc>${APP_SITEMAP_URL}/bds/${slug}-${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>`;
+        const imgs: string[] = Array.isArray(r.images) ? r.images : (typeof r.images === 'string' ? JSON.parse(r.images || '[]') : []);
+        const firstImg = imgs.find((i) => typeof i === 'string' && i.length > 0);
+        const imgTag = firstImg
+          ? `\n    <image:image>\n      <image:loc>${escXml(toAbsImg(firstImg))}</image:loc>\n      <image:title>${escXml(r.title || 'Bất động sản SGS LAND')}</image:title>\n    </image:image>`
+          : '';
+        return `  <url>\n    <loc>${APP_SITEMAP_URL}/bds/${slug}-${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>${imgTag}\n  </url>`;
       }).join('\n');
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls}\n</urlset>`;
       res.setHeader('Content-Type', 'application/xml; charset=utf-8');
       res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       res.send(xml);
@@ -4483,8 +4502,20 @@ async function startServer() {
 
   app.get('/sitemap-projects.xml', async (_req: express.Request, res: express.Response) => {
     try {
-      // Chỉ liệt kê các project đã bật mini-site công khai
-      // (metadata.public_microsite = 'true').
+      // SEO landing pages tại /du-an/<slug> — high-priority, hardcoded slugs khớp với STATIC_PAGE_META.
+      // Đây là các trang GEO-target đã có rich structured data (RealEstateProject schema).
+      const STATIC_PROJECT_SLUGS = [
+        'aqua-city', 'izumi-city', 'vinhomes-grand-park', 'vinhomes-can-gio',
+        'vinhomes-central-park', 'the-global-city', 'masterise-homes',
+        'van-phuc-city', 'sala', 'thu-thiem', 'manhattan', 'son-kim-land',
+        'nha-pho-trung-tam',
+      ];
+      const staticUrls = STATIC_PROJECT_SLUGS.map((slug) =>
+        `  <url>\n    <loc>${APP_SITEMAP_URL}/du-an/${slug}</loc>\n    <lastmod>${TODAY}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.90</priority>\n  </url>`
+      );
+
+      // DB mini-sites: /p/<code> cho các dự án đã bật public_microsite.
+      // Đây là mini-site nội bộ CRM — priority thấp hơn landing page GEO.
       const result = await pool.query(
         `SELECT code, updated_at FROM projects
          WHERE code IS NOT NULL
@@ -4492,11 +4523,13 @@ async function startServer() {
            AND metadata->>'public_microsite' = 'true'
          ORDER BY updated_at DESC LIMIT 10000`
       );
-      const urls = result.rows.map((r: any) => {
+      const dbUrls = result.rows.map((r: any) => {
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
         const code = String(r.code).replace(/[^A-Za-z0-9_-]/g, '');
-        return `  <url>\n    <loc>${APP_SITEMAP_URL}/p/${code}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>`;
-      }).join('\n');
+        return `  <url>\n    <loc>${APP_SITEMAP_URL}/p/${code}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>`;
+      });
+
+      const urls = [...staticUrls, ...dbUrls].join('\n');
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
       res.setHeader('Content-Type', 'application/xml; charset=utf-8');
       res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
@@ -4530,6 +4563,49 @@ async function startServer() {
       logger.error('[Sitemap] news error:', err);
       res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
     }
+  });
+
+  // Dynamic sitemap index — same URLs as public/sitemap.xml but with TODAY's lastmod so
+  // Google Search Console always sees a fresh timestamp. Registered before express.static
+  // so this route takes precedence over the static file.
+  app.get('/sitemap.xml', (_req: express.Request, res: express.Response) => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Sitemap tĩnh: các trang công khai cố định -->
+  <sitemap>
+    <loc>${APP_SITEMAP_URL}/sitemap-static.xml</loc>
+    <lastmod>${TODAY}</lastmod>
+  </sitemap>
+
+  <!-- Sitemap động: bất động sản (generated tại runtime) -->
+  <sitemap>
+    <loc>${APP_SITEMAP_URL}/sitemap-listings.xml</loc>
+    <lastmod>${TODAY}</lastmod>
+  </sitemap>
+
+  <!-- Sitemap động: tin tức (generated tại runtime) -->
+  <sitemap>
+    <loc>${APP_SITEMAP_URL}/sitemap-news.xml</loc>
+    <lastmod>${TODAY}</lastmod>
+  </sitemap>
+
+  <!-- Sitemap động: dự án (GEO landing pages + mini-site công khai) -->
+  <sitemap>
+    <loc>${APP_SITEMAP_URL}/sitemap-projects.xml</loc>
+    <lastmod>${TODAY}</lastmod>
+  </sitemap>
+
+  <!-- Sitemap hình ảnh: hình ảnh sản phẩm (static) -->
+  <sitemap>
+    <loc>${APP_SITEMAP_URL}/sitemap-images.xml</loc>
+    <lastmod>${TODAY}</lastmod>
+  </sitemap>
+
+</sitemapindex>`;
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    res.send(xml);
   });
 
   // Serve public assets (widget.js, QR codes, etc.) in all environments
@@ -4660,12 +4736,23 @@ async function startServer() {
       }
     };
 
-    // /listing/:id → inject listing-specific meta (singular, matching ROUTES.LISTING)
+    // /listing/:id → 301 redirect to canonical /bds/<slug>-<id>.
+    // Consolidates crawl budget and link equity to the SEO-friendly URL.
+    // The SPA also handles /listing/:id client-side for existing bookmarks.
     app.get('/listing/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
-        const listing = await listingRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
+        const id = String(req.params.id);
+        const listing = await listingRepository.findById(DEFAULT_TENANT_ID, id);
         if (!listing) return next();
-        sendMeta(res, buildListingMeta(listing));
+        const slugifyLocal = (s: string) => String(s || '')
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 60);
+        const slug = slugifyLocal(listing.title) || 'bat-dong-san';
+        return res.redirect(301, `/bds/${slug}-${listing.id ?? id}`);
       } catch { next(); }
     });
 
@@ -4797,6 +4884,12 @@ async function startServer() {
         const cover = meta.coverImage || meta.cover_image || null;
         const desc = (row.description ? String(row.description).replace(/\s+/g, ' ').slice(0, 240)
           : `${row.name} — bảng giá, mặt bằng, sản phẩm và tư vấn miễn phí từ SGS Land.`);
+        const amenities: any[] = [];
+        if (meta.area_ha) amenities.push({ '@type': 'LocationFeatureSpecification', name: 'Quy mô', value: `${meta.area_ha} ha` });
+        if (meta.developer) amenities.push({ '@type': 'LocationFeatureSpecification', name: 'Chủ đầu tư', value: String(meta.developer) });
+        if (meta.price_from) amenities.push({ '@type': 'LocationFeatureSpecification', name: 'Giá từ', value: String(meta.price_from) });
+        if (meta.legal) amenities.push({ '@type': 'LocationFeatureSpecification', name: 'Pháp lý', value: String(meta.legal) });
+
         sendMeta(res, {
           title: `${row.name} — Mini-site dự án | SGS LAND`,
           description: desc,
@@ -4806,12 +4899,29 @@ async function startServer() {
           type: 'website',
           structuredData: {
             '@context': 'https://schema.org',
-            '@type': 'Place',
+            '@type': 'ApartmentComplex',
+            '@id': `${APP_SITEMAP_URL}/p/${row.code}`,
             name: row.name,
             description: desc,
             url: `${APP_SITEMAP_URL}/p/${row.code}`,
             ...(cover ? { image: cover } : {}),
-            ...(row.location ? { address: { '@type': 'PostalAddress', streetAddress: row.location, addressCountry: 'VN' } } : {}),
+            ...(row.location ? {
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: row.location,
+                addressCountry: 'VN',
+                addressLocality: meta.district || row.location,
+                addressRegion: meta.province || 'TP. Hồ Chí Minh',
+              }
+            } : {}),
+            ...(amenities.length > 0 ? { amenityFeature: amenities } : {}),
+            ...(meta.developer ? { author: { '@type': 'Organization', name: String(meta.developer) } } : {}),
+            ...(meta.website ? { sameAs: String(meta.website) } : {}),
+            potentialAction: {
+              '@type': 'ReserveAction',
+              target: `${APP_SITEMAP_URL}/p/${row.code}`,
+              name: 'Đăng ký tư vấn',
+            },
           },
         });
       } catch (err) {
