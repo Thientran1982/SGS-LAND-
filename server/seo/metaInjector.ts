@@ -31,10 +31,11 @@ const DEFAULT_META = {
 };
 
 /** Server-side route → meta mapping (mirrors utils/seo.ts ROUTE_SEO without browser APIs). */
-const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?: string; noIndex?: boolean; structuredData?: object }> = {
+const STATIC_PAGE_META: Record<string, { title: string; description: string; keywords?: string; h1?: string; noIndex?: boolean; structuredData?: object }> = {
   '': {
     title: 'SGS LAND | Top BĐS TP.HCM 2026: Căn Hộ Nhà Phố Aqua City Vinhomes',
     description: 'Top 3 dự án căn hộ TP.HCM 2026 (Vinhomes Grand Park, Global City, Masterise) và Top 3 nhà phố Đồng Nai (Aqua City, Izumi City, Vạn Phúc). SGS LAND định giá AI ±5%, tư vấn miễn phí.',
+    keywords: 'bất động sản TP.HCM, mua bán nhà đất TP.HCM, căn hộ TP.HCM 2026, dự án bất động sản 2026, aqua city novaland, vinhomes grand park, the global city masterise, biệt thự đồng nai, đầu tư bất động sản, SGS LAND',
     h1: 'SGS LAND - Đại Lý Bất Động Sản TP.HCM',
     structuredData: {
       '@context': 'https://schema.org',
@@ -626,6 +627,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-dong-nai': {
     title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2026 — SGS LAND',
     description: 'Mua bán bất động sản Đồng Nai: Nhơn Trạch, Biên Hòa, Long Thành. Kho hàng nghìn căn, giá thực tế, pháp lý kiểm tra trước. SGS LAND.',
+    keywords: 'bất động sản đồng nai, nhà đất đồng nai, mua bán nhà đất đồng nai, đất nền đồng nai, nhà phố đồng nai, aqua city đồng nai, bất động sản biên hòa, long thành đồng nai',
     h1: 'Bất Động Sản Đồng Nai',
     structuredData: {
       '@context': 'https://schema.org',
@@ -674,6 +676,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-long-thanh': {
     title: 'Bất Động Sản Long Thành | Đất Nền, Nhà Phố — SGS LAND',
     description: 'Mua bán đất nền, nhà phố Long Thành Đồng Nai. Vùng kinh tế sân bay, tiềm năng tăng giá cao. Định giá AI miễn phí tại SGS LAND.',
+    keywords: 'bất động sản long thành, đất nền long thành, nhà đất long thành đồng nai, mua đất long thành, sân bay long thành, aqua city long thành, giá đất long thành 2026',
     h1: 'Bất Động Sản Long Thành',
     structuredData: {
       '@context': 'https://schema.org',
@@ -717,6 +720,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an': {
     title: 'Dự Án Bất Động Sản | Aqua City, The Global City, Izumi, Vinhomes — SGS LAND',
     description: 'Tổng hợp các dự án bất động sản SGS LAND đang phân phối: Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Cần Giờ, Vinhomes Grand Park, Grand Marina Saigon. Giá từ 2 tỷ, tư vấn miễn phí.',
+    keywords: 'dự án bất động sản TP.HCM, dự án căn hộ 2026, dự án nhà phố đồng nai, bảng giá dự án bất động sản, aqua city novaland, vinhomes grand park, the global city masterise, izumi city nam long',
     h1: 'Dự Án Bất Động Sản SGS LAND Đang Phân Phối',
     structuredData: {
       '@context': 'https://schema.org',
@@ -766,6 +770,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/aqua-city': {
     title: 'Aqua City Novaland | Căn Hộ, Biệt Thự Đồng Nai - SGS LAND',
     description: 'Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.',
+    keywords: 'aqua city novaland, aqua city đồng nai, biệt thự aqua city, biệt thự aqua city giá bao nhiêu, nhà phố aqua city, dự án aqua city novaland, aqua city long thành, giá aqua city 2026',
     h1: 'Aqua City Novaland',
     structuredData: {
       '@context': 'https://schema.org',
@@ -837,6 +842,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/manhattan': {
     title: 'Grand Manhattan Novaland | Căn Hộ Hạng Sang Novaland TP.HCM - SGS LAND',
     description: 'Grand Manhattan Novaland: căn hộ hạng sang biểu tượng của Novaland tại trung tâm TP.HCM, từ 120 triệu/m². Xem bảng giá, penthouse và sky villa tại SGS LAND.',
+    keywords: 'grand manhattan novaland, căn hộ grand manhattan, grand manhattan bình thạnh, novaland bình thạnh, căn hộ hạng sang TP.HCM, giá grand manhattan novaland',
     h1: 'Grand Manhattan Novaland',
     structuredData: {
       '@context': 'https://schema.org',
@@ -882,6 +888,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/vinhomes-can-gio': {
     title: 'Vinhomes Cần Giờ 2.870ha — Siêu Đô Thị Biển Lớn Nhất VN | SGS LAND',
     description: 'Vinhomes Cần Giờ (Green Paradise): siêu đô thị lấn biển 2.870ha lớn nhất Việt Nam tại huyện Cần Giờ, TP.HCM. Bãi biển 7km, Vinwonders, golf, marina. Từ 12 tỷ. Đặt chỗ ưu tiên tại SGS LAND.',
+    keywords: 'vinhomes cần giờ, vinhomes green paradise, dự án vinhomes cần giờ, giá vinhomes cần giờ, biệt thự biển vinhomes cần giờ, mua biệt thự cần giờ, siêu đô thị biển cần giờ',
     h1: 'Vinhomes Cần Giờ — Vinhomes Green Paradise 2.870ha',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1043,6 +1050,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/van-phuc-city': {
     title: 'Vạn Phúc City | Khu Đô Thị 198ha Ven Sông Sài Gòn, Thủ Đức — SGS LAND',
     description: 'Vạn Phúc City Đại Phúc: khu đô thị 198ha ven sông Sài Gòn tại TP Thủ Đức. Bảng giá nhà phố, biệt thự, shophouse cập nhật, sổ hồng riêng. Tư vấn miễn phí tại SGS LAND.',
+    keywords: 'vạn phúc city, nhà phố vạn phúc city, vạn phúc city thủ đức, khu đô thị ven sông sài gòn, biệt thự vạn phúc city, giá vạn phúc city 2026',
     h1: 'Vạn Phúc City — Khu Đô Thị Ven Sông Đại Phúc',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1084,6 +1092,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/sala': {
     title: 'Sala Đại Quang Minh | Khu Đô Thị Sala Thủ Thiêm 257ha — SGS LAND',
     description: 'Khu đô thị Sala Đại Quang Minh tại Thủ Thiêm: căn hộ Sarica, Sarimi, Sadora, Sapphire; nhà phố, biệt thự cao cấp. Bảng giá, pháp lý, định giá AI miễn phí tại SGS LAND.',
+    keywords: 'sala đại quang minh, căn hộ sala thủ thiêm, sarica sala, sarimi sala, khu đô thị sala, giá sala thủ thiêm, nhà phố sala thủ thiêm',
     h1: 'Khu Đô Thị Sala Đại Quang Minh — Thủ Thiêm',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1128,6 +1137,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-thu-duc': {
     title: 'Bất Động Sản TP Thủ Đức 2026 | Top 3 Dự Án Căn Hộ Vinhomes, Masterise — SGS LAND',
     description: 'Top 3 dự án căn hộ TP Thủ Đức 2026: Vinhomes Grand Park (271ha), The Global City (117ha), Vạn Phúc City (198ha). Giá 35–250 triệu/m², gần Metro số 1 vận hành cuối 2024. SGS LAND phân phối, định giá AI miễn phí.',
+    keywords: 'bất động sản thủ đức, nhà đất thủ đức, căn hộ thủ đức, mua nhà thủ đức, vinhomes grand park thủ đức, the global city thủ đức, giá nhà thủ đức 2026',
     h1: 'Bất Động Sản TP Thủ Đức',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1191,6 +1201,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-binh-duong': {
     title: 'Bất Động Sản Bình Dương 2026 | Top 3 Khu Đầu Tư Thuận An, Dĩ An, TP Mới — SGS LAND',
     description: 'Top 3 khu đầu tư BĐS Bình Dương 2026: Thuận An (40–100tr/m²), Dĩ An (30–90tr/m²), Thành Phố Mới (20–50tr/m²). Hơn 30 khu công nghiệp, tăng 8–15%/năm. SGS LAND định giá AI miễn phí, kiểm tra pháp lý độc lập.',
+    keywords: 'bất động sản bình dương, nhà đất bình dương, mua nhà bình dương, căn hộ bình dương, đất nền bình dương, vạn phúc city bình dương, nhà phố bình dương 2026',
     h1: 'Bất Động Sản Bình Dương',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1248,6 +1259,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-quan-7': {
     title: 'Bất Động Sản Quận 7 TP.HCM 2026 | Top 3 Khu Phú Mỹ Hưng, Sunrise, Tân Phong — SGS LAND',
     description: 'Top 3 khu BĐS Quận 7 TP.HCM 2026: Phú Mỹ Hưng (70–150tr/m²), Sunrise City (55–90tr/m²), Tân Phong (40–70tr/m²). Cộng đồng Hàn–Nhật–Đài đông nhất TP.HCM, tăng 8–12%/năm. SGS LAND định giá AI miễn phí.',
+    keywords: 'bất động sản quận 7, nhà đất quận 7, căn hộ quận 7, phú mỹ hưng quận 7, nhà phố quận 7 tp hcm, mua nhà quận 7, sunrise city quận 7',
     h1: 'Bất Động Sản Quận 7',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1305,6 +1317,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-phu-nhuan': {
     title: 'Bất Động Sản Phú Nhuận TP.HCM 2026 | Top 3 Trục Phan Đình Phùng, Hoàng Văn Thụ — SGS LAND',
     description: 'Top 3 trục BĐS Phú Nhuận 2026: Phan Đình Phùng (200–350tr/m²), Hoàng Văn Thụ (150–280tr/m²), nhà hẻm xe hơi (80–150tr/m²). Cách sân bay Tân Sơn Nhất 2–4km, tăng 8–15%/năm. SGS LAND định giá AI miễn phí.',
+    keywords: 'bất động sản phú nhuận, nhà đất phú nhuận, căn hộ phú nhuận, nhà phố phú nhuận tp hcm, mua nhà phú nhuận, giá nhà phú nhuận 2026',
     h1: 'Bất Động Sản Phú Nhuận',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1362,6 +1375,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-binh-chanh': {
     title: 'Bất Động Sản Bình Chánh TP.HCM 2026 | Top 3 Khu Bình Hưng, Tân Kiên, Vĩnh Lộc — SGS LAND',
     description: 'Top 3 khu BĐS Bình Chánh 2026: Bình Hưng – Phong Phú (60–100tr/m²), Tân Kiên gần Metro 3a (25–50tr/m²), Vĩnh Lộc A/B ven Vành đai 3 (20–40tr/m²). Tăng giá 12–20%/năm, cửa ngõ Tây Nam TP.HCM. SGS LAND định giá AI miễn phí.',
+    keywords: 'bất động sản bình chánh, nhà đất bình chánh, đất nền bình chánh, nhà phố bình chánh tp hcm, mua đất bình chánh, giá đất bình chánh 2026',
     h1: 'Bất Động Sản Bình Chánh',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1420,6 +1434,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-can-gio': {
     title: 'Bất Động Sản Cần Giờ TP.HCM 2026 | Vinhomes Cần Giờ, Đất Ven Biển — SGS LAND',
     description: 'Mua bán BĐS Cần Giờ TP.HCM 2026: Vinhomes Cần Giờ 2.870ha lấn biển, đất nền ven biển 15–50 triệu/m², biệt thự nghỉ dưỡng. Huyện duy nhất Dự trữ Sinh quyển UNESCO tại TP.HCM. SGS LAND tư vấn miễn phí.',
+    keywords: 'bất động sản cần giờ, đất cần giờ, nhà đất cần giờ tp hcm, vinhomes cần giờ, biệt thự nghỉ dưỡng cần giờ, đầu tư bất động sản cần giờ, giá đất cần giờ 2026',
     h1: 'Bất Động Sản Cần Giờ',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1466,6 +1481,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-binh-thanh': {
     title: 'Bất Động Sản Bình Thạnh TP.HCM 2026 | Vinhomes Central Park, Masterise Grand Marina — SGS LAND',
     description: 'Mua bán căn hộ, nhà phố Bình Thạnh TP.HCM 2026: Vinhomes Central Park (Landmark 81), Masterise Grand Marina Saigon, Lumière Riverside. Giá 50–400 triệu/m². SGS LAND tư vấn miễn phí.',
+    keywords: 'bất động sản bình thạnh, nhà đất bình thạnh, căn hộ bình thạnh tp hcm, vinhomes central park bình thạnh, grand marina saigon, mua nhà bình thạnh, giá nhà bình thạnh 2026',
     h1: 'Bất Động Sản Bình Thạnh',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1526,6 +1542,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'bat-dong-san-long-an': {
     title: 'Bất Động Sản Long An 2026 | Đất Nền Đức Hòa, Bến Lức, Cần Đước — SGS LAND',
     description: 'Mua bán bất động sản Long An 2026: đất nền Đức Hòa 5–20 triệu/m², Bến Lức 8–25 triệu/m², Cần Đước 4–12 triệu/m². Cửa ngõ TP.HCM phía Tây – Tây Nam, hưởng lợi Vành đai 3&4. SGS LAND tư vấn miễn phí.',
+    keywords: 'bất động sản long an, nhà đất long an, đất nền long an, mua nhà long an, đất long an giá rẻ, đất đức hòa long an, bất động sản gần tp hcm',
     h1: 'Bất Động Sản Long An',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1571,6 +1588,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'dau-tu-bat-dong-san': {
     title: 'Đầu Tư Bất Động Sản 2026 | Loại Nào Sinh Lời Nhất? Hướng Dẫn SGS LAND',
     description: 'Hướng dẫn đầu tư bất động sản 2026: so sánh căn hộ vs đất nền vs nhà phố, phân tích tỷ suất lợi nhuận, rủi ro và chiến lược tối ưu cho nhà đầu tư Việt Nam. SGS LAND.',
+    keywords: 'đầu tư bất động sản, đầu tư bất động sản 2026, kênh đầu tư bất động sản sinh lời, lợi nhuận đầu tư bất động sản, chiến lược đầu tư bất động sản, mua nhà đầu tư, đất nền đầu tư',
     h1: 'Đầu Tư Bất Động Sản 2026',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1639,6 +1657,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'phap-ly-nha-dat': {
     title: 'Pháp Lý Nhà Đất 2026 | Thủ Tục Mua Bán, Sổ Đỏ Sổ Hồng — SGS LAND',
     description: 'Hướng dẫn pháp lý nhà đất Việt Nam 2026: thủ tục mua bán, sổ đỏ sổ hồng, Luật KDBĐS 2023, thuế phí chuyển nhượng. Kiểm tra pháp lý miễn phí tại SGS LAND.',
+    keywords: 'pháp lý nhà đất, thủ tục mua bán nhà đất, sổ đỏ sổ hồng, hướng dẫn mua nhà, thuế chuyển nhượng bất động sản, kiểm tra pháp lý nhà đất, luật kinh doanh bất động sản',
     h1: 'Pháp Lý Nhà Đất Việt Nam 2026',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1708,6 +1727,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/izumi-city': {
     title: 'Izumi City Nam Long | Đô Thị Chuẩn Nhật Bản Đồng Nai - SGS LAND',
     description: 'Izumi City Nam Long Biên Hòa: đô thị tích hợp 170ha chuẩn Nhật Bản, siêu thị Fuji Mart, trường học Nhật. Bảng giá nhà phố, biệt thự và tư vấn tại SGS LAND.',
+    keywords: 'izumi city nam long, izumi city biên hòa đồng nai, nhà phố izumi city, biệt thự izumi city, giá izumi city 2026, dự án nhật bản đồng nai, nam long izumi',
     h1: 'Izumi City Nam Long',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1752,6 +1772,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/vinhomes-grand-park': {
     title: 'Vinhomes Grand Park | Siêu Đô Thị 271ha Thủ Đức - SGS LAND',
     description: 'Vinhomes Grand Park Quận 9 TP Thủ Đức: căn hộ, shophouse, biệt thự siêu đô thị 271ha. Công viên 36ha, Metro số 1, Vinmec, Vinschool. Bảng giá tại SGS LAND.',
+    keywords: 'vinhomes grand park, căn hộ vinhomes grand park, giá vinhomes grand park, vinhomes quận 9 thủ đức, bảng giá vinhomes grand park 2026, shophouse vinhomes grand park',
     h1: 'Vinhomes Grand Park',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1822,6 +1843,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/vinhomes-central-park': {
     title: 'Vinhomes Central Park | Căn Hộ Cao Cấp Bình Thạnh Landmark 81 - SGS LAND',
     description: 'Vinhomes Central Park Bình Thạnh: 44 tòa cao tầng, Landmark 81, bể bơi vô cực ven sông Sài Gòn. Căn hộ từ 50 triệu/m², cho thuê 15-60 triệu/tháng. Tư vấn tại SGS LAND.',
+    keywords: 'vinhomes central park, căn hộ vinhomes central park bình thạnh, landmark 81 vinhomes, giá vinhomes central park, cho thuê vinhomes central park, mua căn hộ bình thạnh',
     h1: 'Vinhomes Central Park',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1867,6 +1889,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/thu-thiem': {
     title: 'Khu Đô Thị Thủ Thiêm | BĐS Hạng Sang Trung Tâm Tài Chính - SGS LAND',
     description: 'Bất động sản Khu Đô Thị Mới Thủ Thiêm 657ha — trung tâm tài chính tương lai TP.HCM. Empire City, Metropole, The River. Giá từ 80 triệu/m². Tư vấn tại SGS LAND.',
+    keywords: 'bất động sản thủ thiêm, căn hộ thủ thiêm, đất thủ thiêm, khu đô thị mới thủ thiêm, empire city thủ thiêm, metropole thủ thiêm, giá nhà thủ thiêm 2026',
     h1: 'Khu Đô Thị Thủ Thiêm',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1911,6 +1934,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/son-kim-land': {
     title: 'Sơn Kim Land | BĐS Thương Mại Cao Cấp TP.HCM & Hà Nội - SGS LAND',
     description: 'Sơn Kim Land — danh mục BĐS cao cấp: Gem Riverside Q4, Metropole Thủ Thiêm, Seasons Avenue HN. GEM Center, GS25. Giá 40-150 triệu/m². Tư vấn tại SGS LAND.',
+    keywords: 'sơn kim land, gem riverside quận 4, metropole thủ thiêm sơn kim, sơn kim real estate, căn hộ cao cấp tp hcm, gem center sơn kim, seasons avenue hà nội',
     h1: 'Sơn Kim Land',
     structuredData: {
       '@context': 'https://schema.org',
@@ -1956,6 +1980,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/masterise-homes': {
     title: 'Masterise Homes | Masteri, Lumière, Grand Marina — SGS LAND',
     description: 'Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.',
+    keywords: 'masterise homes, grand marina saigon masterise, căn hộ masterise, masteri thảo điền, lumière boulevard masterise, căn hộ hạng sang tp hcm, giá masterise homes',
     h1: 'Masterise Homes',
     structuredData: {
       '@context': 'https://schema.org',
@@ -2001,6 +2026,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/the-global-city': {
     title: 'The Global City Masterise | Đại Đô Thị 117ha An Phú Thủ Đức - SGS LAND',
     description: 'The Global City Masterise Homes An Phú Thủ Đức: đại đô thị 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Tư vấn tại SGS LAND.',
+    keywords: 'the global city masterise, the global city an phú thủ đức, masterise homes the global city, giá the global city, nhà phố the global city, biệt thự the global city, mua nhà global city',
     h1: 'The Global City',
     structuredData: {
       '@context': 'https://schema.org',
@@ -2045,6 +2071,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'du-an/nha-pho-trung-tam': {
     title: 'Nhà Phố Trung Tâm TP.HCM | Mặt Tiền, Nhà Hẻm, Shophouse - SGS LAND',
     description: 'Mua bán nhà phố trung tâm TP.HCM: mặt tiền Q1 từ 500 triệu/m², nhà hẻm Q3 từ 100 triệu/m². Định giá AI miễn phí, kiểm tra pháp lý độc lập tại SGS LAND.',
+    keywords: 'nhà phố trung tâm tp hcm, mua nhà phố tp hcm, nhà phố quận 1 quận 3, mặt tiền tp hcm, shophouse tp hcm, nhà hẻm xe hơi tp hcm, giá nhà phố tp hcm 2026',
     h1: 'Nhà Phố Trung Tâm TP.HCM',
     structuredData: {
       '@context': 'https://schema.org',
@@ -2103,6 +2130,7 @@ export interface MetaData {
   structuredData?: object;
   noIndex?: boolean;
   bodyHtml?: string;
+  keywords?: string;
 }
 
 function esc(str: string): string {
@@ -2208,6 +2236,16 @@ export function buildListingMeta(listing: any): MetaData {
 
   const h1 = listing.title || `${transaction} ${type} ${areaStr}`.trim() || 'Bất Động Sản SGS LAND';
 
+  const locShort = listing.location ? String(listing.location).split(',').slice(-2).join(',').trim() : '';
+  const keyParts: string[] = [];
+  if (listing.title) keyParts.push(listing.title);
+  if (locShort) keyParts.push(`${transaction.toLowerCase()} ${type ? type.toLowerCase() : 'bất động sản'} ${locShort}`);
+  if (areaStr && locShort) keyParts.push(`${type ? type.toLowerCase() : 'bất động sản'} ${areaStr} ${locShort}`);
+  if (listing.bedrooms && locShort) keyParts.push(`${type ? type.toLowerCase() : 'nhà'} ${listing.bedrooms} phòng ngủ ${locShort}`);
+  if (priceStr && locShort) keyParts.push(`giá ${type ? type.toLowerCase() : 'nhà'} ${locShort}`);
+  keyParts.push('bất động sản SGS LAND');
+  const listingKeywords = [...new Set(keyParts)].slice(0, 8).join(', ');
+
   const badges: string[] = [];
   if (priceStr) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:4px 14px;border-radius:20px;font-size:15px;font-weight:700">${esc(priceStr)}</span>`);
   if (areaStr) badges.push(`<span style="background:#f0fdf4;color:#166534;padding:4px 14px;border-radius:20px;font-size:14px">${esc(areaStr)}</span>`);
@@ -2232,7 +2270,7 @@ export function buildListingMeta(listing: any): MetaData {
   <p style="font-size:13px;color:#94a3b8;margin:0">Nguồn: SGS LAND — Đại lý phân phối BĐS uỷ quyền tại TP.HCM</p>
 </div>`;
 
-  return { title, description, h1, image, url, type: 'website', structuredData, bodyHtml };
+  return { title, description, h1, image, url, type: 'website', structuredData, bodyHtml, keywords: listingKeywords };
 }
 
 export function buildArticleMeta(article: any): MetaData {
@@ -2323,7 +2361,7 @@ export function buildArticleMeta(article: any): MetaData {
   <p style="font-size:13px;color:#94a3b8;margin:0">Nguồn: SGS LAND — Tin tức & Phân tích Bất động sản Việt Nam</p>
 </div>`;
 
-  return { title, description, h1: article.title || undefined, image, url, type: 'article', structuredData, bodyHtml };
+  return { title, description, h1: article.title || undefined, image, url, type: 'article', structuredData, bodyHtml, keywords };
 }
 
 export function buildStaticPageMeta(
@@ -2343,6 +2381,7 @@ export function buildStaticPageMeta(
     image: ogImage || DEFAULT_IMAGE,
     url: `${APP_URL}${pagePath}`,
     type: 'website',
+    keywords: routeMeta.keywords,
     noIndex: routeMeta.noIndex,
     structuredData: routeMeta.structuredData,
   };
@@ -2604,6 +2643,13 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
 
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${t}</title>`);
   html = html.replace(/(<meta\s+name="description"\s+content=")[^"]*(")/i, `$1${d}$2`);
+
+  if (m.keywords) {
+    html = html.replace(
+      /(<meta\s+name="keywords"\s+content=")[^"]*(")/i,
+      `$1${esc(m.keywords)}$2`
+    );
+  }
 
   html = html.replace(/(<meta\s+property="og:title"\s+content=")[^"]*(")/i, `$1${t}$2`);
   html = html.replace(/(<meta\s+property="og:description"\s+content=")[^"]*(")/i, `$1${d}$2`);
