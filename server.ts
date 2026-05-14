@@ -3487,7 +3487,7 @@ async function startServer() {
   app.use('/api/analytics', apiRateLimit, createAnalyticsRoutes(authenticateToken));
   app.use('/api/scoring', apiRateLimit, createScoringRoutes(authenticateToken));
   app.use('/api/routing-rules', apiRateLimit, createRoutingRuleRoutes(authenticateToken));
-  app.use('/api/sequences', apiRateLimit, createSequenceRoutes(authenticateToken));
+  app.use('/api/sequences', apiRateLimit, createSequenceRoutes(pool, authenticateToken));
   app.use('/api/knowledge', apiRateLimit, createKnowledgeRoutes(authenticateToken));
   app.use('/api/billing', apiRateLimit, createBillingRoutes(authenticateToken));
   app.use('/api/admin/email-metrics', apiRateLimit, createEmailMetricsRoutes(authenticateToken));
