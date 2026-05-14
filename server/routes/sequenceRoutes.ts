@@ -68,7 +68,7 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
 
   // ── Open-tracking pixel (no auth, must be before /:id routes) ───────────────
   router.get('/track/open/:enrollmentId.gif', async (req: Request, res: Response) => {
-    const { enrollmentId } = req.params;
+    const enrollmentId = String(req.params.enrollmentId || '');
 
     if (UUID_RE.test(enrollmentId)) {
       try {
@@ -94,7 +94,7 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
 
   // ── Click-tracking redirect (no auth) ────────────────────────────────────────
   router.get('/track/click/:enrollmentId', async (req: Request, res: Response) => {
-    const { enrollmentId } = req.params;
+    const enrollmentId = String(req.params.enrollmentId || '');
     const url = decodeURIComponent(String(req.query.url || ''));
 
     if (UUID_RE.test(enrollmentId) && /^https?:\/\//.test(url)) {
