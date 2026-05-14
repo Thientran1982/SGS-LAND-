@@ -38,7 +38,7 @@ class SequenceRepository extends BaseRepository {
 
   /** Map a raw DB row → entity with a computed `stats` object. */
   private rowWithStats(row: any) {
-    const entity = this.rowToEntity(row);
+    const entity = this.rowToEntity<Record<string, any>>(row);
 
     const sent    = Number(row.sent_count  ?? 0);
     const opened  = Number(row.open_count  ?? 0);
