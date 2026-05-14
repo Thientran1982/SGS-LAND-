@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 const SITE_URL = 'https://sgsland.vn';
@@ -28,11 +28,19 @@ export function SeoHead({
     ? 'noindex, nofollow'
     : 'index, follow, max-image-preview:large, max-snippet:-1';
 
+  // Update the single canonical element that lives in index.html (id="canonical-url").
+  // We do NOT put <link rel="canonical"> inside Helmet because Helmet removes the
+  // existing element (losing its id) and creates a new one — which causes a duplicate
+  // canonical conflict detected by Lighthouse and Google Search Console.
+  useEffect(() => {
+    const el = document.getElementById('canonical-url') as HTMLLinkElement | null;
+    if (el) el.href = canonicalUrl;
+  }, [canonicalUrl]);
+
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
-      <link rel="canonical" href={canonicalUrl} />
       <meta name="robots" content={robotsContent} />
 
       {/* OpenGraph */}
