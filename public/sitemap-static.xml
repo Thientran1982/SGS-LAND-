@@ -224,6 +224,48 @@
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-binh-chanh" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-binh-chanh" />
   </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-can-gio</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.88</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-can-gio" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-can-gio" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-binh-thanh</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.87</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-binh-thanh" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-binh-thanh" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-long-an</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.86</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-long-an" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-long-an" />
+  </url>
+
+  <!-- ══ TOPICAL CLUSTER PAGES ══ -->
+  <url>
+    <loc>https://sgsland.vn/dau-tu-bat-dong-san</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/dau-tu-bat-dong-san" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/dau-tu-bat-dong-san" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/phap-ly-nha-dat</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.84</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/phap-ly-nha-dat" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/phap-ly-nha-dat" />
+  </url>
 
   <!-- ══ LANDING PAGES DỰ ÁN ══ -->
   <url>
