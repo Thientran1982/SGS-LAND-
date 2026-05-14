@@ -790,8 +790,8 @@ const STATIC_PAGE_META: Record<string, {
     title: 'Aqua City Novaland | Căn Hộ, Biệt Thự Đồng Nai - SGS LAND',
     description: 'Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.',
     keywords: 'aqua city novaland, aqua city đồng nai, biệt thự aqua city, biệt thự aqua city giá bao nhiêu, nhà phố aqua city, dự án aqua city novaland, aqua city long thành, giá aqua city 2026',
-    geoPosition: '10.7843;106.8807',
-    geoPlacename: 'Long Hưng, Nhơn Trạch, Đồng Nai',
+    geoPosition: '10.8912;106.8712',
+    geoPlacename: 'Long Hưng, Biên Hòa, Đồng Nai',
     geoRegion: 'VN-43',
     h1: 'Aqua City Novaland',
     structuredData: {
