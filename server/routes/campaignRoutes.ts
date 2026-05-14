@@ -232,8 +232,8 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
 
       if (body.name !== undefined) set('name', String(body.name).trim().slice(0, 200));
       if (body.description !== undefined) set('description', body.description ? String(body.description).slice(0, 2000) : null);
-      if (body.subject !== undefined) set('subject', body.subject ? String(body.subject).slice(0, 300) : null);
-      if (body.body_html !== undefined) set('body_html', body.body_html || null);
+      if (body.subject !== undefined) set('subject', String(body.subject || '').slice(0, 300) || null);
+      if (body.body_html !== undefined) set('body_html', String(body.body_html || '') || null);
       if (body.audience !== undefined) set('audience', JSON.stringify(body.audience || {}));
       if (body.ab_test !== undefined) set('ab_test', JSON.stringify(body.ab_test || { enabled: false }));
       if (body.schedule_type !== undefined && ALLOWED_SCHEDULE.has(body.schedule_type)) set('schedule_type', body.schedule_type);

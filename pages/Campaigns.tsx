@@ -100,7 +100,8 @@ export const Campaigns: React.FC = () => {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
+    const delay = toast.kind === 'err' ? 6000 : 3500;
+    const t = setTimeout(() => setToast(null), delay);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -155,12 +156,13 @@ export const Campaigns: React.FC = () => {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-lg shadow-lg border text-sm font-medium ${
+        <div className={`fixed top-20 right-6 z-[200] max-w-sm px-5 py-3.5 rounded-xl shadow-xl border text-sm font-semibold flex items-start gap-2.5 ${
           toast.kind === 'ok'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            : 'bg-rose-50 border-rose-200 text-rose-800'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+            : 'bg-rose-100 border-rose-300 text-rose-900'
         }`}>
-          {toast.msg}
+          <span className="text-base leading-none mt-0.5">{toast.kind === 'ok' ? '✓' : '✕'}</span>
+          <span>{toast.msg}</span>
         </div>
       )}
 
@@ -321,6 +323,8 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
 
   const save = async () => {
     if (!form.name?.trim()) return onError('Vui lòng nhập tên chiến dịch');
+    if (!form.subject?.trim()) return onError('Vui lòng nhập tiêu đề email (subject) trước khi lưu');
+    if (!form.body_html?.trim()) return onError('Vui lòng nhập nội dung email trước khi lưu');
     setSaving(true);
     try {
       const payload = {
