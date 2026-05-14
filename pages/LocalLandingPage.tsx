@@ -33,6 +33,14 @@ const LOCATION_SEO_META: Record<string, { title: string; description: string }> 
         title: 'Bất Động Sản Bình Chánh TP.HCM | Đất Nền, Nhà Phố — SGS LAND',
         description: 'Mua bán bất động sản Bình Chánh: đất nền, nhà phố, dự án ven Vành đai 3. Cửa ngõ Tây Nam TP.HCM, tiềm năng tăng giá cao. SGS LAND tư vấn miễn phí.',
     },
+    'bat-dong-san-binh-thanh': {
+        title: 'Bất Động Sản Bình Thạnh TP.HCM 2026 | Vinhomes Central Park, Masterise — SGS LAND',
+        description: 'Mua bán căn hộ, nhà phố Bình Thạnh TP.HCM 2026: Vinhomes Central Park (Landmark 81), Masterise Grand Marina Saigon, Lumière Riverside. Giá 50–400 triệu/m². SGS LAND tư vấn miễn phí.',
+    },
+    'bat-dong-san-long-an': {
+        title: 'Bất Động Sản Long An 2026 | Đất Nền Đức Hòa, Bến Lức, Cần Đước — SGS LAND',
+        description: 'Mua bán bất động sản Long An 2026: đất nền Đức Hòa 5–20 triệu/m², Bến Lức 8–25 triệu/m², Cần Đước 4–12 triệu/m². Hưởng lợi Vành đai 3&4. SGS LAND tư vấn miễn phí.',
+    },
     'dau-tu-bat-dong-san': {
         title: 'Đầu Tư Bất Động Sản Hiệu Quả 2026 | Hướng Dẫn Toàn Diện — SGS LAND',
         description: 'Hướng dẫn đầu tư bất động sản 2026: chiến lược chọn BĐS sinh lời, tính ROI, quản lý rủi ro pháp lý và tối ưu tài chính. Tư vấn miễn phí từ chuyên gia SGS LAND.',
@@ -796,6 +804,154 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             { name: 'Izumi City Nam Long', slug: 'izumi-city' },
         ],
     },
+    'bat-dong-san-binh-thanh': {
+        slug: 'bat-dong-san-binh-thanh',
+        name: 'Bình Thạnh',
+        province: 'TP.HCM',
+        searchQuery: 'Bình Thạnh',
+        heroDescription: 'Mua bán căn hộ, nhà phố Bình Thạnh TP.HCM 2026: Vinhomes Central Park (Landmark 81), Masterise Grand Marina Saigon, Lumière Riverside. Điểm nóng BĐS hạng sang — ven sông Sài Gòn, sát trung tâm Q1, cộng đồng expat đông đảo. SGS LAND tư vấn miễn phí.',
+        stats: [
+            { label: 'Giá căn hộ cao cấp', value: '50–400 tr/m²' },
+            { label: 'Tỷ suất cho thuê', value: '4–7%/năm' },
+            { label: 'Cách trung tâm Q1', value: '5–10 phút' },
+            { label: 'Tốc độ tăng giá/năm', value: '8–15%' },
+        ],
+        highlights: [
+            {
+                title: 'Ven Sông Sài Gòn — View Đẹp Nhất Nội Đô',
+                desc: 'Bình Thạnh sở hữu mặt tiền sông Sài Gòn dài nhất TP.HCM, là nơi tọa lạc của Vinhomes Central Park, Masterise Grand Marina, Lumière Riverside — những dự án căn hộ ven sông đẳng cấp nhất Đông Nam Á. Giá trị view sông không thể tái tạo, tạo lợi thế cạnh tranh bền vững dài hạn.',
+            },
+            {
+                title: 'Landmark 81 — Biểu Tượng TP.HCM',
+                desc: 'Landmark 81 (tòa nhà cao nhất Đông Nam Á, 461m) tọa lạc tại Vinhomes Central Park Bình Thạnh là điểm định vị thương hiệu mạnh nhất của khu vực. BĐS quanh Landmark 81 luôn dẫn đầu về giá cho thuê (20–80 triệu/tháng) và tỷ suất tăng giá 10–18%/năm.',
+            },
+            {
+                title: 'Cộng Đồng Expat & Chuyên Gia FDI',
+                desc: 'Bình Thạnh có mật độ người nước ngoài và chuyên gia FDI cao nhất TP.HCM — tạo ra thị trường cho thuê cao cấp ổn định nhất thành phố. Tỷ suất lấp đầy căn hộ cao cấp luôn duy trì trên 90%, giá thuê 20–80 triệu/tháng ngay cả giai đoạn thị trường khó khăn.',
+            },
+            {
+                title: 'Metro Số 1 & Hạ Tầng Giao Thông Hoàn Thiện',
+                desc: 'Hai ga Metro số 1 (Văn Thánh và Bình Thạnh) kết nối trực tiếp với Bến Thành Q1, Suối Tiên và sân bay Long Thành tương lai. BĐS bán kính 500m từ ga Metro tăng 15–25% từ khi thông tin xác nhận và dự báo tiếp tục tăng khi vận hành thương mại đầy đủ.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Top 3 dự án căn hộ cao cấp nhất Bình Thạnh TP.HCM 2026?',
+                a: 'Top 3 dự án căn hộ Bình Thạnh 2026: (1) Vinhomes Central Park (Landmark 81) — biểu tượng TP.HCM, căn hộ 50–200 triệu/m²; (2) Masterise Grand Marina Saigon — branded residence IHG Hotel, 120–250 triệu/m²; (3) Lumière Riverside (Masterise) — ven sông Sài Gòn, 80–150 triệu/m². Cả ba đều ven sông, pháp lý sổ hồng vĩnh viễn.',
+            },
+            {
+                q: 'Giá căn hộ Bình Thạnh TP.HCM hiện nay là bao nhiêu?',
+                a: 'Giá căn hộ Bình Thạnh theo phân khúc 2026: Hạng sang (Vinhomes Central Park, Grand Marina): 80–400 triệu/m²; Cao cấp (Lumière, The Ascent, Masteri Thảo Điền): 60–120 triệu/m²; Trung cấp (Lexington, Saigon Gate): 40–70 triệu/m². Nhà phố hẻm xe hơi: 80–200 triệu/m².',
+            },
+            {
+                q: 'Tại sao Bình Thạnh là điểm nóng BĐS hạng sang TP.HCM?',
+                a: 'Bình Thạnh có 5 lợi thế: (1) Ven sông Sài Gòn — view đẹp nhất nội đô; (2) Sát trung tâm Q1 chỉ 5–10 phút; (3) Landmark 81 — tòa nhà cao nhất Đông Nam Á; (4) Cộng đồng người nước ngoài, chuyên gia FDI đông; (5) Đường Nguyễn Hữu Cảnh và metro số 1 (Bình Thạnh–Q1) giảm ùn tắc.',
+            },
+            {
+                q: 'Vinhomes Central Park Bình Thạnh giá bao nhiêu?',
+                a: 'Vinhomes Central Park thứ cấp 2026: căn hộ Studio–1PN từ 3,5–5 tỷ; 2PN từ 5–9 tỷ; 3PN từ 8–15 tỷ. Penthouse Landmark 81: 40–120 tỷ. Tỷ suất cho thuê 4–7%/năm, rất ổn định với cộng đồng expat đông đảo.',
+            },
+            {
+                q: 'Grand Marina Saigon (Masterise) Bình Thạnh là gì?',
+                a: 'Grand Marina Saigon là dự án branded residence hạng sang TP.HCM đầu tiên — hợp tác với InterContinental Hotels Group. Tọa lạc bờ sông Sài Gòn Q1/Bình Thạnh, bao gồm tháp căn hộ (từ 120 triệu/m²), hotel IHG 5 sao và marina thuyền du lịch. Pháp lý sổ hồng vĩnh viễn.',
+            },
+            {
+                q: 'Nhà phố Bình Thạnh giá bao nhiêu và có đáng đầu tư không?',
+                a: 'Nhà phố mặt tiền đường lớn Bình Thạnh (Đinh Tiên Hoàng, Phan Văn Trị): 150–350 triệu/m². Nhà hẻm xe hơi: 60–120 triệu/m². Tăng giá 8–15%/năm ổn định 10 năm qua. Cho thuê mặt bằng kinh doanh 30–100 triệu/tháng. Rất đáng đầu tư dài hạn với thanh khoản tốt nhất TP.HCM.',
+            },
+            {
+                q: 'Metro số 1 ảnh hưởng giá BĐS Bình Thạnh thế nào?',
+                a: 'Metro số 1 (Bến Thành–Suối Tiên) có 2 ga qua Bình Thạnh: Văn Thánh (hiện vận hành thử) và ga Bình Thạnh. BĐS bán kính 500m quanh ga tăng 15–25% từ khi thông tin metro xác nhận. Khi vận hành thương mại đầy đủ 2025–2026, dự báo thêm 10–20% thanh khoản.',
+            },
+            {
+                q: 'So sánh BĐS Bình Thạnh và Quận 7 — nên chọn đâu?',
+                a: 'Bình Thạnh: ven sông Sài Gòn, sát Q1, cộng đồng expat đông, phân khúc hạng sang 80–400 triệu/m², cho thuê quốc tế 20–80 triệu/tháng. Quận 7 (Phú Mỹ Hưng): quy hoạch đô thị hoàn chỉnh hơn, cộng đồng Hàn–Nhật đông, giá 60–180 triệu/m², môi trường sống yên tĩnh hơn. Chọn Bình Thạnh nếu muốn đầu tư sinh lời cao; Quận 7 nếu ưu tiên ở thực cao cấp.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS Quận 7', slug: 'bat-dong-san-quan-7' },
+            { name: 'BĐS Phú Nhuận', slug: 'bat-dong-san-phu-nhuan' },
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+        ],
+    },
+    'bat-dong-san-long-an': {
+        slug: 'bat-dong-san-long-an',
+        name: 'Long An',
+        province: 'Long An',
+        searchQuery: 'Long An',
+        heroDescription: 'Mua bán bất động sản Long An 2026: đất nền Đức Hòa 5–20 triệu/m², Bến Lức 8–25 triệu/m², Cần Đước 4–12 triệu/m². Cửa ngõ TP.HCM phía Tây – Tây Nam, hưởng lợi Vành đai 3 & 4, logistics và KCN bùng nổ. SGS LAND tư vấn miễn phí.',
+        stats: [
+            { label: 'Giá đất nền Đức Hòa', value: '5–20 tr/m²' },
+            { label: 'Giá đất nền Bến Lức', value: '8–25 tr/m²' },
+            { label: 'Tổng FDI đăng ký', value: '8,5 tỷ USD' },
+            { label: 'KCN lớn đang hoạt động', value: '35+ KCN' },
+        ],
+        highlights: [
+            {
+                title: 'Hưởng Lợi Vành Đai 3 & 4 — Giá Còn Rẻ',
+                desc: 'Long An là tỉnh giáp TP.HCM duy nhất hưởng lợi đồng thời Vành đai 3 (đoạn Bến Lức–Nhơn Trạch, thông xe 2026) và Vành đai 4 (đang quy hoạch). Đất bán kính 3km quanh nút giao tăng 20–40% kể từ khởi công. Giá vẫn chỉ bằng 30–50% Bình Chánh — window cơ hội còn lớn.',
+            },
+            {
+                title: 'Trung Tâm Logistics & KCN Lớn Nhất Vùng',
+                desc: 'Long An có 35+ KCN với tổng diện tích 10.000ha — lớn nhất vùng kinh tế trọng điểm phía Nam. KCN Long Hậu (chuyên logistics ven sông Soài Rạp), KCN Tân Đô, KCN Xuyên Á thu hút 8,5 tỷ USD FDI. Nhu cầu nhà ở công nhân, kỹ sư và kho bãi logistics tăng ổn định hàng năm.',
+            },
+            {
+                title: 'Giá Đất Còn Rẻ — Tiềm Năng Dài Hạn',
+                desc: 'Đất nền Long An vùng giáp TP.HCM (Bến Lức, Đức Hòa, Cần Đước) hiện 5–25 triệu/m² — rẻ hơn Bình Chánh 50–70%. Với lộ trình hạ tầng 2025–2030 rõ ràng (Vành đai 3, cao tốc Mộc Bài, Metro số 3a kéo dài), đây là phân khúc tích lũy dài hạn tốt nhất cho ngân sách dưới 1,5 tỷ.',
+            },
+            {
+                title: 'Quy Hoạch 3 Đô Thị Vệ Tinh Bài Bản',
+                desc: 'Long An đã phê duyệt quy hoạch 3 đô thị vệ tinh: Đức Hòa (đô thị công nghiệp KCN), Bến Lức (đô thị cửa ngõ TP.HCM) và Tân An (đô thị trung tâm tỉnh lỵ). Hạ tầng đô thị, trường học, bệnh viện được đầu tư theo lộ trình — giá trị BĐS tăng theo tiến độ đô thị hóa.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Bất động sản Long An có đáng đầu tư không năm 2026?',
+                a: 'Long An là thị trường BĐS hấp dẫn nhất khu vực lân cận TP.HCM nhờ: (1) Vành đai 3 (đoạn qua Long An–Bình Chánh) thông xe 2026; (2) Cao tốc TP.HCM–Mộc Bài đang xây dựng; (3) Giá đất chỉ bằng 30–50% Bình Chánh; (4) Nhu cầu kho logistics và KCN tăng mạnh; (5) Quy hoạch 3 đô thị vệ tinh Đức Hòa, Bến Lức, Tân An.',
+            },
+            {
+                q: 'Giá đất Long An hiện nay khu vực nào rẻ nhất và đắt nhất?',
+                a: 'Giá đất Long An 2026 theo khu vực: Bến Lức giáp Bình Chánh (đắt nhất): 8–25 triệu/m²; Đức Hòa KCN: 5–20 triệu/m²; Cần Đước, Cần Giuộc (giáp Q7, Nhà Bè): 4–12 triệu/m²; Tân An trung tâm tỉnh: 15–40 triệu/m²; Đức Huệ, Thạnh Hóa (xa nhất): 1–5 triệu/m².',
+            },
+            {
+                q: 'Khu vực nào ở Long An gần TP.HCM nhất?',
+                a: 'Bến Lức và Đức Hòa gần TP.HCM nhất (giáp Bình Chánh). Cần Đước và Cần Giuộc giáp Nhà Bè–Q7. Từ ngã tư An Lạc (Q.Bình Tân) vào trung tâm Bến Lức chỉ 20–25km. Với Vành đai 3 thông xe 2026, thời gian từ Bến Lức đến Q1 rút còn 30–40 phút không qua nội đô.',
+            },
+            {
+                q: 'Đức Hòa Long An có tiềm năng đầu tư không?',
+                a: 'Đức Hòa là huyện có nhiều KCN nhất Long An (KCN Đức Hòa I, II, III, Tân Đô, Hải Sơn, Thuận Đạo) với hơn 400 doanh nghiệp FDI, nhu cầu nhà ở công nhân và chuyên gia lớn. Giá đất nền 5–20 triệu/m², tỷ suất cho thuê nhà trọ 10–15%/năm. Rủi ro: thanh khoản thứ cấp chậm hơn Bình Chánh.',
+            },
+            {
+                q: 'Pháp lý đất Long An cần kiểm tra gì?',
+                a: 'Đất Long An hay gặp vấn đề: (1) Đất nông nghiệp chưa chuyển mục đích dùng, phân lô bán nền trái phép; (2) Đất nằm trong quy hoạch KCN hoặc hành lang bảo vệ kênh thủy lợi; (3) Đất thuộc vùng thấp trũng, ngập úng theo mùa. SGS LAND kiểm tra sổ đỏ, quy hoạch 1/500 và hệ thống thoát nước miễn phí trước giao dịch.',
+            },
+            {
+                q: 'Vành đai 3 và Vành đai 4 ảnh hưởng BĐS Long An thế nào?',
+                a: 'Vành đai 3 qua Long An (đoạn Bến Lức–Nhơn Trạch) thông xe 2026, mở kết nối trực tiếp với sân bay Long Thành mà không qua TP.HCM. Vành đai 4 (đang quy hoạch) sẽ đi qua trung tâm Long An, tạo thêm nút giao và đô thị mới. Đất bán kính 3km quanh nút giao Vành đai 3 tại Long An đã tăng 20–40%.',
+            },
+            {
+                q: 'Long An có KCN nào lớn nhất và thu hút FDI nhất?',
+                a: 'Top KCN Long An thu hút FDI lớn nhất: (1) KCN Tân Đô (Đức Hòa, 405ha); (2) KCN Long Hậu (Cần Đước, 164ha) — chuyên logistics và kho lạnh giáp sông Soài Rạp; (3) KCN Hải Sơn (Đức Hòa, 179ha); (4) KCN Xuyên Á (Đức Huệ, 800ha). Tổng vốn FDI đăng ký 8,5 tỷ USD tính đến 2025.',
+            },
+            {
+                q: 'SGS LAND hỗ trợ tìm đất nền Long An như thế nào?',
+                a: 'SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 971 132 378 — tư vấn miễn phí, không ép mua.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS Bình Chánh', slug: 'bat-dong-san-binh-chanh' },
+            { name: 'BĐS Quận 7', slug: 'bat-dong-san-quan-7' },
+            { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
+        ],
+        relatedProjects: [
+            { name: 'Waterpoint Nam Long', slug: 'aqua-city' },
+            { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+        ],
+    },
 };
 
 function navigate(path: string) {
@@ -1140,6 +1296,8 @@ export default function LocalLandingPage() {
                         <button onClick={() => navigate('/ai-valuation')} className="hover:text-[var(--primary-600)]">Định Giá AI</button>
                         <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-[var(--primary-600)]">Ký Gửi BĐS</button>
                         <button onClick={() => navigate('/news')} className="hover:text-[var(--primary-600)]">Tin Tức</button>
+                        <button onClick={() => navigate('/bat-dong-san-binh-thanh')} className="hover:text-[var(--primary-600)]">BĐS Bình Thạnh</button>
+                        <button onClick={() => navigate('/bat-dong-san-long-an')} className="hover:text-[var(--primary-600)]">BĐS Long An</button>
                         <button onClick={() => navigate('/dau-tu-bat-dong-san')} className="hover:text-[var(--primary-600)]">Đầu Tư BĐS</button>
                         <button onClick={() => navigate('/phap-ly-nha-dat')} className="hover:text-[var(--primary-600)]">Pháp Lý Nhà Đất</button>
                         <button onClick={() => navigate('/contact')} className="hover:text-[var(--primary-600)]">Liên Hệ</button>
