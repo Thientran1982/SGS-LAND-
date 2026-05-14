@@ -5,13 +5,61 @@ class SequenceRepository extends BaseRepository {
     super('sequences');
   }
 
+  /**
+   * Return all sequences for a tenant, with live stats computed from
+   * sequence_enrollments (enrolled count, open rate, click/reply rate).
+   */
   async findAllSequences(tenantId: string) {
     return this.withTenant(tenantId, async (client) => {
-      const result = await client.query(
-        `SELECT * FROM sequences ORDER BY created_at DESC`
-      );
-      return this.rowsToEntities(result.rows);
+      const result = await client.query(`
+        SELECT
+          s.*,
+          COALESCE(e.enrolled,    0) AS enrolled_count,
+          COALESCE(e.sent_count,  0) AS sent_count,
+          COALESCE(e.open_count,  0) AS open_count,
+          COALESCE(e.click_count, 0) AS click_count
+        FROM sequences s
+        LEFT JOIN (
+          SELECT
+            sequence_id,
+            COUNT(*)                                          AS enrolled,
+            COUNT(*) FILTER (WHERE sent_at IS NOT NULL)      AS sent_count,
+            COUNT(*) FILTER (WHERE opened_at IS NOT NULL)    AS open_count,
+            COUNT(*) FILTER (WHERE clicked_at IS NOT NULL)   AS click_count
+          FROM sequence_enrollments
+          GROUP BY sequence_id
+        ) e ON e.sequence_id = s.id
+        ORDER BY s.created_at DESC
+      `);
+
+      return result.rows.map(row => this.rowWithStats(row));
     });
+  }
+
+  /** Map a raw DB row → entity with a computed `stats` object. */
+  private rowWithStats(row: any) {
+    const entity = this.rowToEntity(row);
+
+    const sent    = Number(row.sent_count  ?? 0);
+    const opened  = Number(row.open_count  ?? 0);
+    const clicked = Number(row.click_count ?? 0);
+    const enrolled = Number(row.enrolled_count ?? 0);
+
+    const openRate   = sent > 0 ? Math.round((opened  / sent) * 100) : 0;
+    const replyRate  = sent > 0 ? Math.round((clicked / sent) * 100) : 0;
+    const clickRate  = sent > 0 ? Math.round((clicked / sent) * 100) : 0;
+
+    return {
+      ...entity,
+      stats: {
+        enrolled,
+        active:    enrolled,
+        completed: sent,
+        openRate,
+        replyRate,
+        clickRate,
+      },
+    };
   }
 
   async create(tenantId: string, data: any) {
