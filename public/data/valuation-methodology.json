@@ -1,0 +1,124 @@
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "SGS LAND — Phương pháp Định giá AI (AVM 9 Coefficients)",
+  "headline": "Hệ thống định giá bất động sản tự động (AVM) của SGS LAND: 9 hệ số, MAPE ±4.8%, chuẩn TĐGVN/IVS",
+  "description": "Tài liệu kỹ thuật mô tả 9 hệ số hiệu chỉnh của mô hình AVM (Automated Valuation Model) SGS LAND, phương pháp kiểm chứng, và tiêu chuẩn định giá áp dụng.",
+  "url": "https://sgsland.vn/data/valuation-methodology.json",
+  "author": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#org",
+    "name": "SGS LAND — AI Valuation Team"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#org",
+    "name": "SGS LAND"
+  },
+  "dateModified": "2026-05-01",
+  "datePublished": "2024-06-01",
+  "about": "Định giá bất động sản tự động (AVM) tại thị trường Việt Nam",
+  "keywords": ["AVM", "automated valuation model", "định giá AI", "bất động sản Việt Nam", "TĐGVN", "IVS", "hedonic regression"],
+  "methodology": {
+    "model_name": "SGS-AVM v2.1",
+    "approach": "Hybrid: Comparable Sales (CS) + Hedonic Regression (HR) + Income Approach (IA) cho bất động sản thương mại và cho thuê",
+    "calibration_frequency": "Hàng quý (Q1, Q2, Q3, Q4) — mỗi lần dùng batch giao dịch công chứng 3 tháng gần nhất",
+    "validation_dataset": "2.400+ giao dịch công chứng tại TP.HCM, Đồng Nai, Bình Dương (2024-2025)",
+    "mape": 4.8,
+    "mape_unit": "%",
+    "mape_note": "Mean Absolute Percentage Error đối chiếu giá công chứng, không phải giá rao. Outlier (>30% lệch) loại khỏi tập kiểm chứng.",
+    "standards": ["TĐGVN — Tiêu chuẩn Thẩm định Giá Việt Nam", "IVS — International Valuation Standards (IVSC)"],
+    "legal_framework": ["Luật Kinh Doanh BĐS 2023", "Luật Đất Đai 2024", "Nghị định 96/2024/NĐ-CP"],
+    "supported_property_types": [
+      "Căn hộ chung cư", "Nhà phố mặt tiền", "Nhà hẻm xe hơi", "Biệt thự", "Shophouse",
+      "Đất nền thổ cư", "Đất nông nghiệp (giới hạn)", "Văn phòng", "Mặt bằng kinh doanh",
+      "Nhà xưởng", "Kho bãi", "Condotel (giới hạn)", "Đất dự án"
+    ]
+  },
+  "coefficients": [
+    {
+      "id": 1,
+      "name": "Comparable Sales (CS)",
+      "name_vi": "Giá giao dịch tương đương",
+      "weight_pct": 35,
+      "description": "Giá trung bình (median) của 3-10 giao dịch tương đương trong bán kính 1km, 6 tháng gần nhất. Tương đương phải khớp: loại hình, diện tích ±20%, pháp lý tương đồng.",
+      "data_source": "Giao dịch công chứng + broker network SGS LAND"
+    },
+    {
+      "id": 2,
+      "name": "Hedonic Regression",
+      "name_vi": "Hồi quy đặc trưng tài sản",
+      "weight_pct": 20,
+      "description": "Mô hình OLS hồi quy log-linear với 12 biến đặc trưng: diện tích sàn, diện tích đất, số phòng ngủ, số toilet, tầng, hướng (Nam/Đông Nam +3%), tuổi công trình, loại hình, vị trí mặt tiền vs hẻm, mật độ tiện ích 500m.",
+      "data_source": "Lịch sử listing + giao dịch SGS LAND (45.000+ records)"
+    },
+    {
+      "id": 3,
+      "name": "Spatial Interpolation",
+      "name_vi": "Nội suy không gian",
+      "weight_pct": 12,
+      "description": "Kriging interpolation trên bản đồ giá m² theo tọa độ GPS. Điền khuyết khu vực ít giao dịch. Cập nhật hàng tuần khi có đủ 10 giao dịch mới trong polygon.",
+      "data_source": "GPS coordinates từ listing + geocoding Mapbox"
+    },
+    {
+      "id": 4,
+      "name": "Legal Premium / Discount",
+      "name_vi": "Điều chỉnh pháp lý",
+      "weight_pct": 10,
+      "description": "Sổ hồng riêng từng căn: +0% (baseline). Sổ hồng chung (nhiều thửa): -3 đến -8%. Vi bằng hoặc hợp đồng mua bán công chứng: -20 đến -30%. Đất nông nghiệp chưa chuyển mục đích: -40 đến -60%.",
+      "data_source": "Phân loại pháp lý từ layer 2 (chuyên viên) SGS LAND"
+    },
+    {
+      "id": 5,
+      "name": "Infrastructure Access Index",
+      "name_vi": "Chỉ số tiếp cận hạ tầng",
+      "weight_pct": 8,
+      "description": "Tính điểm hạ tầng theo khoảng cách: Metro <2km +5 đến +12%; sân bay quốc tế <5km +3 đến +8%; cao tốc on/off ramp <500m +3 đến +8%; vành đai đang thi công (discount đến thông xe) -2 đến -5%.",
+      "data_source": "GeoJSON hạ tầng từ Bộ GTVT + OpenStreetMap"
+    },
+    {
+      "id": 6,
+      "name": "Floor & View Premium",
+      "name_vi": "Phụ giá tầng và tầm nhìn",
+      "weight_pct": 6,
+      "description": "Căn hộ: tầng 2-5 = 0%, tầng 6-15 +2-5%, tầng 16-30 +5-10%, tầng 31+ +10-20%. View sông/biển +8-15% bổ sung. Shophouse tầng trệt +15-25% vs căn hộ cùng tầng. Tầng trệt chung cư phổ thông -5%.",
+      "data_source": "Phân tích giá sàn theo tầng từ bảng giá chủ đầu tư F1"
+    },
+    {
+      "id": 7,
+      "name": "Building Age Depreciation",
+      "name_vi": "Khấu hao theo tuổi công trình",
+      "weight_pct": 5,
+      "description": "Nhà phố và biệt thự: khấu hao 1.5-2%/năm, tối đa -30%. Sau renovation toàn bộ: giảm khấu hao 50%. Căn hộ: chủ đầu tư premium (Vinhomes, Masterise) khấu hao chậm hơn 0.5-1%/năm.",
+      "data_source": "Năm xây từ hồ sơ pháp lý + xác minh thực địa"
+    },
+    {
+      "id": 8,
+      "name": "Developer Brand Premium",
+      "name_vi": "Phụ giá thương hiệu chủ đầu tư",
+      "weight_pct": 3,
+      "description": "Vinhomes/Vingroup: +12 đến +18% so với trung bình khu vực. Masterise Homes: +10 đến +15%. Novaland: +5 đến +10%. Nam Long: +3 đến +7%. Áp dụng khi bất động sản nằm trong dự án có thương hiệu rõ ràng.",
+      "data_source": "So sánh median giá theo developer từ giao dịch công chứng"
+    },
+    {
+      "id": 9,
+      "name": "Market Liquidity Index",
+      "name_vi": "Chỉ số thanh khoản thị trường",
+      "weight_pct": 1,
+      "description": "Dựa trên DOM (days on market) trung bình khu vực: DOM <15 ngày → +3 đến +5% (thị trường nóng). DOM 15-45 ngày → 0% (neutral). DOM 45-90 ngày → -2 đến -5%. DOM >90 ngày → -5 đến -10% (thị trường nguội).",
+      "data_source": "DOM tracker nội bộ SGS LAND từ listing activity log"
+    }
+  ],
+  "income_approach": {
+    "applicable_to": ["Căn hộ cho thuê", "Shophouse", "Mặt bằng kinh doanh", "Văn phòng", "Kho bãi"],
+    "method": "Gross Rent Multiplier (GRM) = Giá trị / Doanh thu thuê năm. DCF 10 năm cho bất động sản thương mại > 5 tỷ.",
+    "cap_rate_benchmarks": {
+      "nha_pho_mat_tien_q1": "2.0-3.0%",
+      "can_ho_tp_hcm": "3.5-5.0%",
+      "shophouse_thu_duc": "4.0-5.5%",
+      "nha_xuong_binh_duong": "6.0-8.0%"
+    }
+  },
+  "api_endpoint": "https://sgsland.vn/api/valuation/teaser",
+  "try_it": "https://sgsland.vn/ai-valuation"
+}

@@ -1,0 +1,83 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Chỉ số giá bất động sản Long Thành 2024-2026",
+  "description": "Dữ liệu giá đất nền và nhà phố khu vực Long Thành, Đồng Nai — cập nhật hàng tuần từ mạng lưới 200+ broker SGS LAND đối chiếu với giao dịch công chứng. Đơn vị: triệu VNĐ/m².",
+  "url": "https://sgsland.vn/data/long-thanh-price-index.json",
+  "identifier": "sgsland-long-thanh-price-index-2024-2026",
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#org",
+    "name": "SGS LAND",
+    "url": "https://sgsland.vn",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+84971132378",
+      "email": "info@sgsland.vn",
+      "contactType": "data inquiry"
+    }
+  },
+  "license": "https://sgsland.vn/terms-of-service",
+  "temporalCoverage": "2024-01/2026-05",
+  "spatialCoverage": {
+    "@type": "AdministrativeArea",
+    "name": "Huyện Long Thành",
+    "containedIn": {
+      "@type": "AdministrativeArea",
+      "name": "Tỉnh Đồng Nai",
+      "containedIn": { "@type": "Country", "name": "Việt Nam", "sameAs": "https://www.wikidata.org/wiki/Q881" }
+    }
+  },
+  "dateModified": "2026-05-09",
+  "keywords": ["Long Thành", "đất nền Long Thành", "giá đất Long Thành", "sân bay Long Thành", "bất động sản Đồng Nai", "đầu tư BĐS Long Thành 2026"],
+  "about": {
+    "@type": "Place",
+    "name": "Long Thành",
+    "description": "Huyện Long Thành, tỉnh Đồng Nai — trung tâm vùng kinh tế sân bay quốc tế Long Thành (dự kiến vận hành GĐ1 năm 2026-2027)."
+  },
+  "data": {
+    "currency": "VND",
+    "unit": "triệu VNĐ/m²",
+    "methodology": "Tổng hợp từ giao dịch công chứng + giá chào bán broker SGS LAND, lọc outlier ±2σ, hiệu chỉnh theo pháp lý sổ đỏ thổ cư",
+    "quarterly_avg_price": [
+      { "period": "2024-Q1", "segment": "đất nền thổ cư sổ đỏ", "min": 8.5, "avg": 13.2, "max": 22.0, "transactions": 87, "dom_days": 62 },
+      { "period": "2024-Q2", "segment": "đất nền thổ cư sổ đỏ", "min": 9.0, "avg": 14.8, "max": 24.5, "transactions": 112, "dom_days": 55 },
+      { "period": "2024-Q3", "segment": "đất nền thổ cư sổ đỏ", "min": 9.5, "avg": 16.5, "max": 27.0, "transactions": 134, "dom_days": 48 },
+      { "period": "2024-Q4", "segment": "đất nền thổ cư sổ đỏ", "min": 10.5, "avg": 18.3, "max": 30.0, "transactions": 145, "dom_days": 42 },
+      { "period": "2025-Q1", "segment": "đất nền thổ cư sổ đỏ", "min": 11.0, "avg": 19.8, "max": 32.0, "transactions": 89, "dom_days": 50 },
+      { "period": "2025-Q2", "segment": "đất nền thổ cư sổ đỏ", "min": 12.5, "avg": 21.2, "max": 34.0, "transactions": 98, "dom_days": 45 },
+      { "period": "2025-Q3", "segment": "đất nền thổ cư sổ đỏ", "min": 13.0, "avg": 22.8, "max": 35.0, "transactions": 118, "dom_days": 40 },
+      { "period": "2025-Q4", "segment": "đất nền thổ cư sổ đỏ", "min": 14.0, "avg": 24.1, "max": 36.0, "transactions": 127, "dom_days": 38 },
+      { "period": "2026-Q1", "segment": "đất nền thổ cư sổ đỏ", "min": 15.0, "avg": 25.5, "max": 38.0, "transactions": 67, "dom_days": 35 }
+    ],
+    "by_sub_area": [
+      { "area": "Thị trấn Long Thành", "current_avg": 28.0, "yoy_growth_pct": 20, "note": "Gần trung tâm hành chính huyện, cao nhất khu vực" },
+      { "area": "Bình Sơn", "current_avg": 22.0, "yoy_growth_pct": 24, "note": "Giáp ranh sân bay Long Thành GĐ1, tăng trưởng nóng nhất" },
+      { "area": "Long An", "current_avg": 16.0, "yoy_growth_pct": 22, "note": "Khu công nghiệp Long Thành, nhu cầu từ chuyên gia KCN" },
+      { "area": "Tam Phước", "current_avg": 14.0, "yoy_growth_pct": 18, "note": "Gần cao tốc Bến Lức – Long Thành, đất nền còn quỹ lớn" },
+      { "area": "Phước Bình", "current_avg": 11.0, "yoy_growth_pct": 25, "note": "Tăng mạnh nhờ cầu Nhơn Trạch 2026, còn room" },
+      { "area": "Suối Trầu (cửa ngõ sân bay)", "current_avg": 35.0, "yoy_growth_pct": 28, "note": "Đặc biệt — đất liền kề cổng sân bay, khan hiếm" }
+    ],
+    "catalyst_events": [
+      { "event": "Khởi công sân bay Long Thành GĐ1", "date": "2021-01", "price_impact_pct": "+15 đến +20 (trong 6 tháng sau)" },
+      { "event": "Thông xe một phần cao tốc TP.HCM–Long Thành", "date": "2025-04", "price_impact_pct": "+8 đến +12" },
+      { "event": "Thông xe cầu Nhơn Trạch (kết nối Q2 TP.HCM–Long Thành)", "date": "2026-03", "price_impact_pct": "+5 đến +10 phía Nhơn Trạch" },
+      { "event": "Dự kiến vận hành sân bay Long Thành GĐ1", "date": "2026-12 (dự kiến)", "price_impact_pct": "TBD — kịch bản cơ sở +20 đến +30" }
+    ],
+    "market_summary": {
+      "total_growth_2024Q1_to_2026Q1_pct": 93,
+      "avg_dom_2026_days": 35,
+      "primary_buyer_profile": "Nhà đầu tư trung hạn 3-5 năm 65%, end-user gần sân bay 35%",
+      "key_risk": "Xác minh pháp lý thổ cư sổ đỏ — tránh đất nông nghiệp chưa chuyển mục đích sử dụng",
+      "key_infrastructure": "Sân bay Long Thành GĐ1 (2026-2027), cao tốc Bến Lức–Long Thành, Vành đai 3 TP.HCM–Nhơn Trạch",
+      "recommended_segments": "Đất nền sổ đỏ thổ cư 80-200m² bán kính 3-5km từ cổng sân bay"
+    }
+  },
+  "credit": "Dữ liệu tổng hợp từ mạng lưới 200+ broker SGS LAND, giao dịch công chứng Văn phòng ĐKĐĐ huyện Long Thành, và báo cáo thị trường CafeF/VnEconomy. Sai số thống kê ±5-10%.",
+  "update_frequency": "Hàng tuần — thứ Sáu 18:00 ICT",
+  "source_url": "https://sgsland.vn/bat-dong-san-long-thanh",
+  "valuation_tool": "https://sgsland.vn/ai-valuation",
+  "related_articles": [
+    "https://sgsland.vn/news/00000000-0000-0000-0000-000000000303"
+  ]
+}

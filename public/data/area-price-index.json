@@ -1,0 +1,171 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Chỉ số giá bất động sản Đông Nam Bộ 2026",
+  "description": "Chỉ số giá BĐS theo khu vực cho TP.HCM, Đồng Nai, Bình Dương — cập nhật hàng tuần từ SGS LAND. Đơn vị: triệu VNĐ/m². Nguồn: giao dịch công chứng + broker network.",
+  "url": "https://sgsland.vn/data/area-price-index.json",
+  "identifier": "sgsland-area-price-index-2026",
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#org",
+    "name": "SGS LAND",
+    "url": "https://sgsland.vn"
+  },
+  "dateModified": "2026-05-09",
+  "temporalCoverage": "2026-05",
+  "license": "https://sgsland.vn/terms-of-service",
+  "spatialCoverage": {
+    "@type": "AdministrativeArea",
+    "name": "Đông Nam Bộ",
+    "containedIn": { "@type": "Country", "name": "Việt Nam" }
+  },
+  "data": {
+    "unit": "triệu VNĐ/m²",
+    "as_of": "2026-05",
+    "areas": [
+      {
+        "area": "Quận 1 (TP.HCM)",
+        "area_slug": "quan-1",
+        "segment": "nhà phố mặt tiền",
+        "price_range": { "min": 500, "avg": 850, "max": 2000 },
+        "yoy_growth_pct": 8,
+        "rental_yield_pct": 2.5,
+        "liquidity": "cao — DOM trung bình 25 ngày"
+      },
+      {
+        "area": "Quận 3 (TP.HCM)",
+        "area_slug": "quan-3",
+        "segment": "nhà phố + căn hộ hạng sang",
+        "price_range": { "min": 150, "avg": 280, "max": 600 },
+        "yoy_growth_pct": 7,
+        "rental_yield_pct": 3.0,
+        "liquidity": "cao"
+      },
+      {
+        "area": "Phú Mỹ Hưng — Quận 7 (TP.HCM)",
+        "area_slug": "phu-my-hung-quan-7",
+        "segment": "căn hộ + nhà phố",
+        "price_range": { "min": 70, "avg": 110, "max": 200 },
+        "yoy_growth_pct": 9,
+        "rental_yield_pct": 4.2,
+        "liquidity": "cao — cộng đồng Hàn-Nhật 50.000+ chuyên gia",
+        "note": "Phú Mỹ Hưng 433ha: khu đô thị kiểu mẫu, nhu cầu thuê từ chuyên gia nước ngoài ổn định nhất TP.HCM"
+      },
+      {
+        "area": "TP Thủ Đức (Quận 2 cũ + Quận 9 cũ + Thủ Đức cũ)",
+        "area_slug": "thu-duc",
+        "segment": "căn hộ",
+        "price_range": { "min": 50, "avg": 95, "max": 200 },
+        "yoy_growth_pct": 12,
+        "rental_yield_pct": 4.5,
+        "liquidity": "cao — Metro số 1 vận hành, SHTP",
+        "sub_areas": [
+          { "name": "Thủ Thiêm (cực cao cấp)", "avg": 180, "note": "Empire City, Metropole — trung tâm tài chính tương lai" },
+          { "name": "Vinhomes Grand Park area", "avg": 65, "note": "Metro số 1 đến tận cửa, đang bàn giao" },
+          { "name": "An Phú / Global City", "avg": 120, "note": "Masterise Homes, Thảo Điền — expat hub" }
+        ]
+      },
+      {
+        "area": "Phú Nhuận (TP.HCM)",
+        "area_slug": "phu-nhuan",
+        "segment": "nhà phố mặt tiền",
+        "price_range": { "min": 150, "avg": 230, "max": 350 },
+        "yoy_growth_pct": 8,
+        "rental_yield_pct": 3.5,
+        "liquidity": "cao",
+        "note": "Gần sân bay Tân Sơn Nhất 3-5km, Phan Đình Phùng thanh khoản <30 ngày"
+      },
+      {
+        "area": "Bình Thạnh (TP.HCM)",
+        "area_slug": "binh-thanh",
+        "segment": "căn hộ + nhà phố",
+        "price_range": { "min": 50, "avg": 90, "max": 150 },
+        "yoy_growth_pct": 9,
+        "rental_yield_pct": 4.0,
+        "liquidity": "cao",
+        "note": "Vinhomes Central Park 44 tòa, Landmark 81, Metro Bến Thành–Tham Lương"
+      },
+      {
+        "area": "Bình Chánh (TP.HCM)",
+        "area_slug": "binh-chanh",
+        "segment": "đất nền + nhà phố dự án",
+        "price_range": { "min": 25, "avg": 55, "max": 100 },
+        "yoy_growth_pct": 15,
+        "rental_yield_pct": 3.0,
+        "liquidity": "trung bình — DOM 45-60 ngày",
+        "note": "Vành đai 3 thông xe 2026, đề án nâng lên thành phố vệ tinh"
+      },
+      {
+        "area": "Biên Hòa — Long Hưng (Đồng Nai)",
+        "area_slug": "bien-hoa",
+        "segment": "nhà phố compound + biệt thự",
+        "price_range": { "min": 25, "avg": 45, "max": 120 },
+        "yoy_growth_pct": 14,
+        "rental_yield_pct": 3.5,
+        "liquidity": "trung bình",
+        "note": "Tâm điểm Aqua City 1.000ha (Novaland) và Izumi City 170ha (Nam Long)"
+      },
+      {
+        "area": "Long Thành (Đồng Nai)",
+        "area_slug": "long-thanh",
+        "segment": "đất nền thổ cư sổ đỏ",
+        "price_range": { "min": 10, "avg": 25, "max": 38 },
+        "yoy_growth_pct": 22,
+        "rental_yield_pct": null,
+        "liquidity": "trung bình — DOM 35-45 ngày",
+        "note": "Sân bay Long Thành GĐ1 vận hành 2026-2027; dữ liệu chi tiết: /data/long-thanh-price-index.json"
+      },
+      {
+        "area": "Nhơn Trạch (Đồng Nai)",
+        "area_slug": "nhon-trach",
+        "segment": "đất nền",
+        "price_range": { "min": 5, "avg": 10, "max": 20 },
+        "yoy_growth_pct": 25,
+        "rental_yield_pct": null,
+        "liquidity": "trung bình",
+        "note": "Cầu Nhơn Trạch (2026): rút ngắn còn 20-25 phút đến Q2 TP.HCM; room tăng trưởng còn lớn"
+      },
+      {
+        "area": "Thuận An (Bình Dương)",
+        "area_slug": "thuan-an",
+        "segment": "căn hộ + đất nền",
+        "price_range": { "min": 40, "avg": 70, "max": 100 },
+        "yoy_growth_pct": 11,
+        "rental_yield_pct": 5.0,
+        "liquidity": "cao — giáp TP.HCM, nhu cầu chuyên gia KCN",
+        "note": "Thanh khoản cao nhất Bình Dương; nhiều KCN lớn như Sóng Thần, Bình An, Đại Đăng"
+      },
+      {
+        "area": "Dĩ An (Bình Dương)",
+        "area_slug": "di-an",
+        "segment": "căn hộ",
+        "price_range": { "min": 30, "avg": 55, "max": 90 },
+        "yoy_growth_pct": 10,
+        "rental_yield_pct": 5.5,
+        "liquidity": "cao — nhu cầu sinh viên ĐH Quốc Gia ổn định",
+        "note": "Gần Metro số 1 Suối Tiên, ĐHQG TP.HCM 40.000 SV, KCN Dĩ An"
+      },
+      {
+        "area": "TP Bình Dương mới (Bình Dương)",
+        "area_slug": "binh-duong-moi",
+        "segment": "đất nền + căn hộ",
+        "price_range": { "min": 20, "avg": 38, "max": 60 },
+        "yoy_growth_pct": 13,
+        "rental_yield_pct": 4.0,
+        "liquidity": "trung bình",
+        "note": "Quy hoạch bài bản; 500.000+ chuyên gia và lao động từ KCN toàn tỉnh"
+      }
+    ],
+    "interest_rate_context": {
+      "as_of": "2026-06",
+      "fixed_24_months_range": "7.5-9.5%/năm",
+      "ltv_with_pink_book_pct": 70,
+      "avg_loan_term_years": 20,
+      "partner_banks": ["BIDV", "Vietcombank", "VietinBank", "Techcombank", "VPBank", "MB Bank", "Sacombank", "ACB", "HDBank", "Agribank", "SeABank", "OCB"]
+    }
+  },
+  "credit": "SGS LAND — tổng hợp từ mạng lưới 200+ broker, giao dịch công chứng TP.HCM/Đồng Nai/Bình Dương, báo cáo CafeF và VnEconomy. Sai số ±5-10%.",
+  "update_frequency": "Hàng tuần — thứ Sáu 18:00 ICT",
+  "valuation_tool": "https://sgsland.vn/ai-valuation",
+  "marketplace": "https://sgsland.vn/marketplace"
+}
