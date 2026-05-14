@@ -58,6 +58,7 @@ import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
 import { createEngagementCronRouter } from "./server/routes/engagementCronRoutes";
+import { createChatFollowUpCronRouter } from "./server/routes/chatFollowUpCronRoutes";
 import { createBackupRouter } from "./server/routes/backupRoutes";
 import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRefreshRoutes";
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
@@ -4044,6 +4045,18 @@ async function startServer() {
   }
 
   // ---------------------------------------------------------------------------
+  // Chat Follow-up Cron — gọi từ QStash mỗi ngày lúc 9:00 SA ICT (2:00 UTC)
+  // Tự động nhắn Zalo/Facebook sau 1 ngày, 3 ngày, 7 ngày không phản hồi
+  // ---------------------------------------------------------------------------
+  {
+    const chatFollowUpSecret =
+      process.env.CHAT_FOLLOWUP_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createChatFollowUpCronRouter(pool, chatFollowUpSecret, io));
+  }
+
+  // ---------------------------------------------------------------------------
   // Backup DB Cron — gọi từ QStash mỗi ngày lúc 2:30 SA ICT (19:30 UTC)
   // ---------------------------------------------------------------------------
   {
@@ -5243,6 +5256,45 @@ async function startServer() {
         }
       } catch (e: any) {
         logger.warn('[CampaignSchedulerCron] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+
+      // ── Chat Follow-up Cron — 9:00 SA ICT = 2:00 UTC hàng ngày ───────────────
+      try {
+        const chatFollowUpSecret8 =
+          process.env.CHAT_FOLLOWUP_CRON_SECRET ||
+          process.env.JWT_SECRET?.slice(0, 32) ||
+          '';
+        const prodDomain8  = process.env.PROD_DOMAIN;
+        const devDomain8   = process.env.REPLIT_DEV_DOMAIN;
+        const appDomain8   = prodDomain8 || devDomain8;
+
+        if (appDomain8 && chatFollowUpSecret8) {
+          const cfScheduleId  = 'chat-followup-daily';
+          const cfScheduleUrl = `https://${appDomain8}/api/internal/chat-followup-cron`;
+          const cfQstashEp    = `https://qstash.upstash.io/v2/schedules/${cfScheduleId}`;
+          const cfBody        = JSON.stringify({ secret: chatFollowUpSecret8 });
+
+          const cfResp = await fetch(cfQstashEp, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.QSTASH_TOKEN!}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': cfScheduleUrl,
+              'Upstash-Cron': '0 2 * * *', // 9:00 SA ICT = 2:00 UTC
+              'Upstash-Method': 'POST',
+            },
+            body: cfBody,
+          });
+
+          if (cfResp.ok) {
+            logger.info('[ChatFollowUpCron] Đã đăng ký QStash daily schedule — chạy lúc 9:00 SA ICT');
+          } else {
+            const errText = await cfResp.text();
+            logger.warn(`[ChatFollowUpCron] Không thể đăng ký QStash schedule: ${cfResp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[ChatFollowUpCron] Lỗi khi đăng ký QStash schedule:', e.message);
       }
     }
   });

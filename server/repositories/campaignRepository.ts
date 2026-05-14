@@ -294,3 +294,77 @@ export async function queryLeadsNeedingNurture(pool: Pool): Promise<CampaignLead
   `);
   return result.rows;
 }
+
+// ── Chat Follow-up segment ─────────────────────────────────────────────────────
+
+/**
+ * Lead record returned for chat follow-up processing.
+ * channel reflects the channel of the last INBOUND message (ZALO or FACEBOOK).
+ */
+export interface ChatFollowUpLead {
+  id: string;
+  tenant_id: string;
+  name: string;
+  channel: 'ZALO' | 'FACEBOOK';
+  zalo_id: string | null;
+  facebook_id: string | null;
+  last_inbound_at: Date;
+  last_inbound_content: string;
+}
+
+/**
+ * Finds leads whose last INBOUND Zalo/Facebook message was approximately
+ * `dayInterval` days ago, thread is AI_ACTIVE, and no follow-up for this
+ * exact interval has already been sent after that message.
+ *
+ * Window: ±3 hours around the target day to tolerate cron drift.
+ */
+export async function queryLeadsNeedingChatFollowUp(
+  pool: Pool,
+  dayInterval: 1 | 3 | 7,
+): Promise<ChatFollowUpLead[]> {
+  const result = await pool.query<ChatFollowUpLead>(
+    `
+    SELECT DISTINCT ON (l.id)
+      l.id,
+      l.tenant_id,
+      l.name,
+      last_inbound.channel,
+      l.social_ids->>'zalo'     AS zalo_id,
+      l.social_ids->>'facebook' AS facebook_id,
+      last_inbound.created_at   AS last_inbound_at,
+      last_inbound.content      AS last_inbound_content
+    FROM leads l
+    JOIN LATERAL (
+      SELECT i.created_at, i.content, i.channel
+      FROM interactions i
+      WHERE i.lead_id = l.id
+        AND i.direction = 'INBOUND'
+        AND i.channel IN ('ZALO', 'FACEBOOK')
+      ORDER BY i.created_at DESC
+      LIMIT 1
+    ) last_inbound ON true
+    WHERE
+      COALESCE(l.thread_status, 'AI_ACTIVE') = 'AI_ACTIVE'
+      AND (
+        l.social_ids->>'zalo'     IS NOT NULL
+        OR l.social_ids->>'facebook' IS NOT NULL
+      )
+      AND last_inbound.created_at BETWEEN
+          NOW() - ($1 * INTERVAL '1 day') - INTERVAL '3 hours'
+          AND NOW() - ($1 * INTERVAL '1 day') + INTERVAL '3 hours'
+      AND NOT EXISTS (
+        SELECT 1 FROM interactions i2
+        WHERE i2.lead_id = l.id
+          AND i2.direction = 'OUTBOUND'
+          AND i2.created_at > last_inbound.created_at
+          AND (i2.metadata->>'isFollowUp')::boolean IS TRUE
+          AND (i2.metadata->>'followUpDay')::int = $1
+      )
+    ORDER BY l.id
+    LIMIT 200
+    `,
+    [dayInterval],
+  );
+  return result.rows;
+}
