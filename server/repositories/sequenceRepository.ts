@@ -17,10 +17,11 @@ class SequenceRepository extends BaseRepository {
   async create(tenantId: string, data: any) {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO sequences (name, trigger_event, steps, is_active)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO sequences (tenant_id, name, trigger_event, steps, is_active)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
         [
+          tenantId,
           data.name,
           data.triggerEvent || data.trigger_event || 'MANUAL',
           JSON.stringify(data.steps || []),
@@ -58,9 +59,9 @@ class SequenceRepository extends BaseRepository {
 
       if (fields.length === 1) return null;
 
-      values.push(id);
+      values.push(id, tenantId);
       const result = await client.query(
-        `UPDATE sequences SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+        `UPDATE sequences SET ${fields.join(', ')} WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} RETURNING *`,
         values
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;

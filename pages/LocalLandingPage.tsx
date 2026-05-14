@@ -708,7 +708,7 @@ export default function LocalLandingPage() {
                         parentOrganization: {
                             '@type': 'Organization',
                             name: 'SGS LAND',
-                            legalName: 'Công ty Cổ phần SGS Land',
+                            legalName: 'Công ty TNHH SGS Land',
                             taxID: '0312960439',
                             url: 'https://sgsland.vn',
                         },

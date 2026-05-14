@@ -669,7 +669,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         locationSlug: 'marketplace',
         heroDescription:
             'Sơn Kim Land là thương hiệu bất động sản cao cấp thuộc Sơn Kim Group — tập đoàn đa ngành hàng đầu Việt Nam với chuỗi trung tâm thương mại GEM CENTER, hệ thống GS25 và các dự án BĐS nghỉ dưỡng, căn hộ tại TP.HCM và Hà Nội. Danh mục dự án đa dạng từ căn hộ trung cao cấp đến bất động sản thương mại và nghỉ dưỡng. SGS LAND hỗ trợ tư vấn mua bán, cho thuê dự án Sơn Kim Land.',
-        priceRange: 'Từ 40 triệu/m² — 150 triệu/m²',
+        priceRange: 'Từ 110 triệu/m² — 250 triệu/m²',
         projectType: 'BĐS Thương Mại & Căn Hộ Cao Cấp',
         scale: 'Nhiều dự án tại TP.HCM & Hà Nội',
         details: [
@@ -1349,7 +1349,7 @@ export default function ProjectLandingPage() {
                             seller: {
                                 '@type': 'RealEstateAgent',
                                 name: 'SGS LAND',
-                                legalName: 'Công ty Cổ phần SGS Land',
+                                legalName: 'Công ty TNHH SGS Land',
                                 taxID: '0312960439',
                                 url: 'https://sgsland.vn',
                                 telephone: '+84-971-132-378',
