@@ -2102,6 +2102,7 @@ export interface MetaData {
   type?: string;
   structuredData?: object;
   noIndex?: boolean;
+  bodyHtml?: string;
 }
 
 function esc(str: string): string {
@@ -2206,7 +2207,32 @@ export function buildListingMeta(listing: any): MetaData {
   };
 
   const h1 = listing.title || `${transaction} ${type} ${areaStr}`.trim() || 'Bất Động Sản SGS LAND';
-  return { title, description, h1, image, url, type: 'website', structuredData };
+
+  const badges: string[] = [];
+  if (priceStr) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:4px 14px;border-radius:20px;font-size:15px;font-weight:700">${esc(priceStr)}</span>`);
+  if (areaStr) badges.push(`<span style="background:#f0fdf4;color:#166534;padding:4px 14px;border-radius:20px;font-size:14px">${esc(areaStr)}</span>`);
+  if (listing.bedrooms) badges.push(`<span style="background:#fefce8;color:#854d0e;padding:4px 14px;border-radius:20px;font-size:14px">${listing.bedrooms} PN</span>`);
+  if (listing.bathrooms) badges.push(`<span style="background:#fdf4ff;color:#6b21a8;padding:4px 14px;border-radius:20px;font-size:14px">${listing.bathrooms} WC</span>`);
+
+  const desc = listing.description ? esc(String(listing.description).slice(0, 400)) : '';
+  const loc = listing.location ? esc(String(listing.location)) : '';
+  const txLabel = listing.transaction === 'RENT' ? 'Cho thuê' : 'Bán';
+  const typeLabel = listing.type ? esc(String(listing.type)) : 'Bất động sản';
+
+  const bodyHtml = `<div id="ssr-body" style="font-family:system-ui,sans-serif;padding:24px 16px;max-width:800px;margin:0 auto;color:#1e293b;background:#fff;min-height:200px">
+  <nav style="font-size:12px;color:#64748b;margin-bottom:16px">
+    <a href="/" style="color:#4f46e5;text-decoration:none">SGS LAND</a> ›
+    <a href="/marketplace" style="color:#4f46e5;text-decoration:none">Mua bán BĐS</a> ›
+    <span>${esc(listing.title || txLabel + ' ' + typeLabel)}</span>
+  </nav>
+  <h2 style="font-size:22px;font-weight:700;margin:0 0 12px;line-height:1.3;color:#0f172a">${esc(listing.title || txLabel + ' ' + typeLabel)}</h2>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">${badges.join('')}</div>
+  ${loc ? `<p style="font-size:14px;color:#64748b;margin:0 0 12px">📍 ${loc}</p>` : ''}
+  ${desc ? `<p style="font-size:15px;line-height:1.7;color:#475569;margin:0 0 16px">${desc}</p>` : ''}
+  <p style="font-size:13px;color:#94a3b8;margin:0">Nguồn: SGS LAND — Đại lý phân phối BĐS uỷ quyền tại TP.HCM</p>
+</div>`;
+
+  return { title, description, h1, image, url, type: 'website', structuredData, bodyHtml };
 }
 
 export function buildArticleMeta(article: any): MetaData {
@@ -2274,7 +2300,30 @@ export function buildArticleMeta(article: any): MetaData {
     },
   };
 
-  return { title, description, h1: article.title || undefined, image, url, type: 'article', structuredData };
+  const articleTitle = esc(article.title || '');
+  const articleExcerpt = esc(rawExcerpt.slice(0, 400));
+  const articleDate = datePublished
+    ? new Date(datePublished).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '';
+  const articleAuthor = esc(authorName);
+  const coverImg = article.coverImage || article.cover_image || '';
+
+  const bodyHtml = `<div id="ssr-body" style="font-family:system-ui,sans-serif;padding:24px 16px;max-width:800px;margin:0 auto;color:#1e293b;background:#fff;min-height:200px">
+  <nav style="font-size:12px;color:#64748b;margin-bottom:16px">
+    <a href="/" style="color:#4f46e5;text-decoration:none">SGS LAND</a> ›
+    <a href="/news" style="color:#4f46e5;text-decoration:none">Tin tức BĐS</a> ›
+    <span>${articleTitle}</span>
+  </nav>
+  ${coverImg ? `<img src="${esc(coverImg)}" alt="${articleTitle}" style="width:100%;max-height:360px;object-fit:cover;border-radius:8px;margin-bottom:16px" loading="lazy">` : ''}
+  <h2 style="font-size:22px;font-weight:700;margin:0 0 10px;line-height:1.35;color:#0f172a">${articleTitle}</h2>
+  <div style="font-size:13px;color:#64748b;margin-bottom:14px">
+    ${articleDate ? `<span>${articleDate}</span> · ` : ''}<span>${articleAuthor}</span>${articleSection ? ` · <span>${esc(articleSection)}</span>` : ''}
+  </div>
+  ${articleExcerpt ? `<p style="font-size:15px;line-height:1.7;color:#475569;margin:0 0 16px">${articleExcerpt}</p>` : ''}
+  <p style="font-size:13px;color:#94a3b8;margin:0">Nguồn: SGS LAND — Tin tức & Phân tích Bất động sản Việt Nam</p>
+</div>`;
+
+  return { title, description, h1: article.title || undefined, image, url, type: 'article', structuredData, bodyHtml };
 }
 
 export function buildStaticPageMeta(
@@ -2612,6 +2661,14 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
       /(<h1\b[^>]*\bid="seo-h1"[^>]*>)[^<]*(<\/h1>)/i,
       `$1${h1Text}$2`
     );
+  }
+
+  // Inject server-rendered body content into the root placeholder.
+  // This content is visible to all crawlers (Googlebot, GPTBot, ClaudeBot, PerplexityBot)
+  // in the raw HTML before JS executes. React's createRoot().render() replaces the entire
+  // #root children when it mounts, so users with JS never see this static content.
+  if (m.bodyHtml) {
+    html = html.replace('<!-- ssr-body-placeholder -->', m.bodyHtml);
   }
 
   if (m.structuredData) {
