@@ -4844,6 +4844,11 @@ async function startServer() {
       '/bat-dong-san-quan-7',
       '/bat-dong-san-phu-nhuan',
       '/bat-dong-san-binh-chanh',
+      '/bat-dong-san-can-gio',
+      '/bat-dong-san-binh-thanh',
+      '/bat-dong-san-long-an',
+      '/dau-tu-bat-dong-san',
+      '/phap-ly-nha-dat',
     ] as const;
     for (const route of LOCAL_LANDING_ROUTES) {
       app.get(route, (_req: express.Request, res: express.Response) => {

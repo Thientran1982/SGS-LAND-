@@ -624,7 +624,7 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
 
   // ─── SEO Local & Project Landing Pages ─────────────────────────────────────
   'bat-dong-san-dong-nai': {
-    title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2025 — SGS LAND',
+    title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2026 — SGS LAND',
     description: 'Mua bán bất động sản Đồng Nai: Nhơn Trạch, Biên Hòa, Long Thành. Kho hàng nghìn căn, giá thực tế, pháp lý kiểm tra trước. SGS LAND.',
     h1: 'Bất Động Sản Đồng Nai',
     structuredData: {
@@ -658,7 +658,12 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           name: 'SGS LAND - Bất Động Sản Đồng Nai',
           url: `${APP_URL}/bat-dong-san-dong-nai`,
           areaServed: { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
-          knowsAbout: ['Bất động sản Đồng Nai', 'Đất nền Long Thành', 'Nhơn Trạch', 'Biên Hòa', 'Sân bay Long Thành'],
+          knowsAbout: ['Bất động sản Đồng Nai', 'Đất nền Long Thành', 'Nhơn Trạch', 'Biên Hòa', 'Sân bay Long Thành', 'Aqua City Novaland', 'Izumi City Nam Long'],
+          mentions: [
+            { '@id': `${APP_URL}/bat-dong-san-long-thanh#agent` },
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/aqua-city#project`, name: 'Aqua City Novaland', url: `${APP_URL}/du-an/aqua-city` },
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/izumi-city#project`, name: 'Izumi City Nam Long', url: `${APP_URL}/du-an/izumi-city` },
+          ],
           telephone: '+84-971-132-378',
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
@@ -1170,7 +1175,13 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           url: `${APP_URL}/bat-dong-san-thu-duc`,
           telephone: '+84-971-132-378',
           areaServed: { '@type': 'City', name: 'TP Thủ Đức', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
-          knowsAbout: ['Bất động sản Thủ Đức', 'Căn hộ Thủ Đức', 'Vinhomes Grand Park', 'The Global City', 'Vạn Phúc City', 'Thủ Thiêm', 'Metro số 1', 'SHTP'],
+          knowsAbout: ['Bất động sản Thủ Đức', 'Căn hộ Thủ Đức', 'Vinhomes Grand Park', 'The Global City Masterise', 'Vạn Phúc City', 'Thủ Thiêm', 'Metro số 1', 'SHTP', 'Đại Học Quốc Gia TP.HCM'],
+          mentions: [
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/vinhomes-grand-park#project`, name: 'Vinhomes Grand Park', url: `${APP_URL}/du-an/vinhomes-grand-park` },
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/the-global-city#project`, name: 'The Global City Masterise Homes', url: `${APP_URL}/du-an/the-global-city` },
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/van-phuc-city#project`, name: 'Vạn Phúc City', url: `${APP_URL}/du-an/van-phuc-city` },
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/thu-thiem#project`, name: 'Khu Đô Thị Thủ Thiêm', url: `${APP_URL}/du-an/thu-thiem` },
+          ],
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
         },
@@ -1400,6 +1411,294 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           knowsAbout: ['Bất động sản Bình Chánh', 'Đất nền Bình Chánh', 'Vành đai 3', 'Bình Hưng', 'Tân Kiên', 'Vĩnh Lộc', 'Khu công nghiệp Lê Minh Xuân', 'Cửa ngõ Tây Nam TP.HCM'],
           aggregateRating: SGS_RATING,
           parentOrganization: SGS_PARENT_ORG,
+        },
+      ],
+    },
+  },
+
+  // ─── Additional District Intelligence Pages ───────────────────────────────────
+  'bat-dong-san-can-gio': {
+    title: 'Bất Động Sản Cần Giờ TP.HCM 2026 | Vinhomes Cần Giờ, Đất Ven Biển — SGS LAND',
+    description: 'Mua bán BĐS Cần Giờ TP.HCM 2026: Vinhomes Cần Giờ 2.870ha lấn biển, đất nền ven biển 15–50 triệu/m², biệt thự nghỉ dưỡng. Huyện duy nhất Dự trữ Sinh quyển UNESCO tại TP.HCM. SGS LAND tư vấn miễn phí.',
+    h1: 'Bất Động Sản Cần Giờ',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS Cần Giờ', item: `${APP_URL}/bat-dong-san-can-gio` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'Vinhomes Cần Giờ là dự án như thế nào và giá bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Cần Giờ là siêu đô thị lấn biển 2.870ha tại huyện Cần Giờ TP.HCM do Vinhomes phát triển — quy mô lớn nhất Việt Nam và top 5 châu Á. Giai đoạn 1 "Miami" gồm căn hộ, biệt thự nghỉ dưỡng, shophouse ven biển. Giá từ 12 tỷ (căn hộ) đến 30–80 tỷ (biệt thự mặt biển). SGS LAND là đại lý phân phối chính thức.' } },
+            { '@type': 'Question', name: 'Bất động sản Cần Giờ có tiềm năng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Cần Giờ hội tụ 4 yếu tố: (1) Cầu Cần Giờ vượt sông Soài Rạp dài 3,3km đang thi công (thông xe 2026) rút ngắn Q1→Cần Giờ còn 30 phút; (2) Vinhomes đầu tư 400.000 tỷ đồng phát triển đô thị biển; (3) Duy nhất TP.HCM có Dự trữ Sinh quyển UNESCO; (4) Quy hoạch đặc khu kinh tế biển và du lịch quốc tế.' } },
+            { '@type': 'Question', name: 'Giá đất nền và biệt thự Cần Giờ hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Đất thổ cư mặt tiền đường lớn: 30–80 triệu/m²; đất ven biển: 50–150 triệu/m²; đất nông nghiệp có thể chuyển đổi: 3–15 triệu/m². Biệt thự nghỉ dưỡng hiện hữu: 8–25 tỷ. Vinhomes Cần Giờ: căn hộ từ 12 tỷ, biệt thự mặt biển từ 30 tỷ.' } },
+            { '@type': 'Question', name: 'Pháp lý đất Cần Giờ cần lưu ý gì?', acceptedAnswer: { '@type': 'Answer', text: 'Cần Giờ có nhiều loại đất rừng phòng hộ và đất rừng đặc dụng (Khu Dự trữ Sinh quyển UNESCO) không được mua bán hay xây dựng. Chỉ đất thổ cư trong ranh giới khu dân cư hiện hữu mới có sổ đỏ hợp lệ. SGS LAND kiểm tra quy hoạch, sổ đỏ và loại đất miễn phí trước giao dịch.' } },
+            { '@type': 'Question', name: 'Cầu Cần Giờ khi nào hoàn thành và ảnh hưởng giá BĐS thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Cầu Cần Giờ vượt sông Soài Rạp dài 3,3km dự kiến thông xe 2026, rút ngắn khoảng cách từ Q1 xuống còn 30–35 phút (thay vì 90 phút qua phà). BĐS bán kính 5km từ cầu đã tăng 30–50% từ 2022. Khi thông xe, dự báo thêm 20–40% tăng trưởng.' } },
+            { '@type': 'Question', name: 'Nên mua biệt thự nghỉ dưỡng hay đất nền Cần Giờ?', acceptedAnswer: { '@type': 'Answer', text: 'Đất nền thổ cư trong khu dân cư: vốn thấp (3–10 tỷ), thanh khoản tốt hơn, phù hợp đầu tư dài hạn. Biệt thự nghỉ dưỡng Vinhomes: vốn lớn (20–80 tỷ), khai thác cho thuê ngắn hạn Airbnb 8–15%/năm khi Cầu Cần Giờ thông xe. SGS LAND định giá AI và tư vấn chiến lược miễn phí.' } },
+            { '@type': 'Question', name: 'Từ trung tâm TP.HCM đến Cần Giờ mất bao lâu?', acceptedAnswer: { '@type': 'Answer', text: 'Hiện tại: Q1 → Cần Giờ qua phà Bình Khánh mất 60–90 phút. Sau 2026: khi Cầu Cần Giờ và đường ven biển hoàn thành, rút ngắn còn 30–40 phút qua đường bộ liên tục.' } },
+            { '@type': 'Question', name: 'SGS LAND phân phối dự án nào ở Cần Giờ?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND là đại lý phân phối chính thức Vinhomes Cần Giờ — siêu đô thị biển 2.870ha lớn nhất Việt Nam. Ngoài ra SGS LAND kết nối quỹ đất thổ cư và biệt thự hiện hữu tại thị trấn Cần Thạnh và Bình Khánh. Hotline tư vấn: +84 971 132 378.' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-can-gio#agent`,
+          name: 'SGS LAND - Bất Động Sản Cần Giờ',
+          url: `${APP_URL}/bat-dong-san-can-gio`,
+          telephone: '+84-971-132-378',
+          areaServed: { '@type': 'City', name: 'Cần Giờ', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
+          knowsAbout: ['Bất động sản Cần Giờ', 'Vinhomes Cần Giờ', 'Đất nền Cần Giờ', 'Cầu Cần Giờ', 'Đô thị biển TP.HCM', 'Dự trữ Sinh quyển UNESCO Cần Giờ', 'Biệt thự nghỉ dưỡng Cần Giờ'],
+          mentions: [
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/vinhomes-can-gio#project`, name: 'Vinhomes Cần Giờ', url: `${APP_URL}/du-an/vinhomes-can-gio` },
+          ],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+        },
+      ],
+    },
+  },
+  'bat-dong-san-binh-thanh': {
+    title: 'Bất Động Sản Bình Thạnh TP.HCM 2026 | Vinhomes Central Park, Masterise Grand Marina — SGS LAND',
+    description: 'Mua bán căn hộ, nhà phố Bình Thạnh TP.HCM 2026: Vinhomes Central Park (Landmark 81), Masterise Grand Marina Saigon, Lumière Riverside. Giá 50–400 triệu/m². SGS LAND tư vấn miễn phí.',
+    h1: 'Bất Động Sản Bình Thạnh',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS Bình Thạnh', item: `${APP_URL}/bat-dong-san-binh-thanh` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'Top 3 dự án căn hộ cao cấp nhất Bình Thạnh TP.HCM 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Top 3 dự án căn hộ Bình Thạnh 2026: (1) Vinhomes Central Park (Landmark 81) — biểu tượng TP.HCM, căn hộ 50–200 triệu/m²; (2) Masterise Grand Marina Saigon — branded residence IHG Hotel, 120–250 triệu/m²; (3) Lumière Riverside (Masterise) — ven sông Sài Gòn, 80–150 triệu/m². Cả ba đều ven sông, pháp lý sổ hồng vĩnh viễn.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Bình Thạnh TP.HCM hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá căn hộ Bình Thạnh theo phân khúc 2026: Hạng sang (Vinhomes Central Park, Grand Marina): 80–400 triệu/m²; Cao cấp (Lumière, The Ascent, Masteri Thảo Điền): 60–120 triệu/m²; Trung cấp (Lexington, Saigon Gate): 40–70 triệu/m². Nhà phố hẻm xe hơi: 80–200 triệu/m².' } },
+            { '@type': 'Question', name: 'Tại sao Bình Thạnh là điểm nóng BĐS hạng sang TP.HCM?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Thạnh có 5 lợi thế: (1) Ven sông Sài Gòn — view đẹp nhất nội đô; (2) Sát trung tâm Q1 chỉ 5–10 phút; (3) Landmark 81 — tòa nhà cao nhất Đông Nam Á; (4) Cộng đồng người nước ngoài, chuyên gia FDI đông; (5) Đường Nguyễn Hữu Cảnh và metro số 1 (Bình Thạnh–Q1) giảm ùn tắc.' } },
+            { '@type': 'Question', name: 'Vinhomes Central Park Bình Thạnh giá bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Central Park thứ cấp 2026: căn hộ Studio–1PN từ 3,5–5 tỷ; 2PN từ 5–9 tỷ; 3PN từ 8–15 tỷ. Penthouse Landmark 81: 40–120 tỷ. Tỷ suất cho thuê 4–7%/năm, rất ổn định với cộng đồng expat đông đảo.' } },
+            { '@type': 'Question', name: 'Grand Marina Saigon (Masterise) Bình Thạnh là gì?', acceptedAnswer: { '@type': 'Answer', text: 'Grand Marina Saigon là dự án branded residence hạng sang TP.HCM đầu tiên — hợp tác với InterContinental Hotels Group. Tọa lạc bờ sông Sài Gòn Q1/Bình Thạnh, bao gồm tháp căn hộ (từ 120 triệu/m²), hotel IHG 5 sao và marina thuyền du lịch. Pháp lý sổ hồng vĩnh viễn.' } },
+            { '@type': 'Question', name: 'Nhà phố Bình Thạnh giá bao nhiêu và có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Nhà phố mặt tiền đường lớn Bình Thạnh (Đinh Tiên Hoàng, Phan Văn Trị): 150–350 triệu/m². Nhà hẻm xe hơi: 60–120 triệu/m². Tăng giá 8–15%/năm ổn định 10 năm qua. Cho thuê mặt bằng kinh doanh 30–100 triệu/tháng. Rất đáng đầu tư dài hạn với thanh khoản tốt nhất TP.HCM.' } },
+            { '@type': 'Question', name: 'Metro số 1 ảnh hưởng giá BĐS Bình Thạnh thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Metro số 1 (Bến Thành–Suối Tiên) có 2 ga qua Bình Thạnh: Văn Thánh (hiện vận hành thử) và ga Bình Thạnh. BĐS bán kính 500m quanh ga tăng 15–25% từ khi thông tin metro xác nhận. Khi vận hành thương mại đầy đủ 2025–2026, dự báo thêm 10–20% thanh khoản.' } },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          '@id': `${APP_URL}/bat-dong-san-binh-thanh#top3`,
+          name: 'Top 3 Dự Án Căn Hộ Cao Cấp Bình Thạnh TP.HCM 2026',
+          description: 'Bảng xếp hạng 3 dự án căn hộ hàng đầu Bình Thạnh năm 2026 — chọn lọc theo vị trí ven sông, chủ đầu tư uy tín, pháp lý và tỷ suất cho thuê.',
+          inLanguage: 'vi',
+          numberOfItems: 3,
+          itemListOrder: 'https://schema.org/ItemListOrderAscending',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Vinhomes Central Park (Landmark 81)', url: `${APP_URL}/du-an/vinhomes-central-park`, description: 'Biểu tượng TP.HCM, ven sông Sài Gòn, 50–200 triệu/m².' },
+            { '@type': 'ListItem', position: 2, name: 'Masterise Grand Marina Saigon', url: `${APP_URL}/du-an/masterise-homes`, description: 'Branded residence IHG Hotel, 120–250 triệu/m², hạng sang nhất TP.HCM.' },
+            { '@type': 'ListItem', position: 3, name: 'Lumière Riverside (Masterise)', url: `${APP_URL}/du-an/masterise-homes`, description: 'Ven sông Sài Gòn, 80–150 triệu/m², view Landmark 81.' },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-binh-thanh#agent`,
+          name: 'SGS LAND - BĐS Bình Thạnh',
+          url: `${APP_URL}/bat-dong-san-binh-thanh`,
+          telephone: '+84-971-132-378',
+          areaServed: { '@type': 'City', name: 'Bình Thạnh', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
+          knowsAbout: ['Bất động sản Bình Thạnh', 'Vinhomes Central Park', 'Landmark 81', 'Masterise Grand Marina Saigon', 'Lumière Riverside', 'Căn hộ ven sông Bình Thạnh', 'Metro số 1 Bình Thạnh'],
+          mentions: [
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/vinhomes-central-park#project`, name: 'Vinhomes Central Park', url: `${APP_URL}/du-an/vinhomes-central-park` },
+            { '@type': 'ApartmentComplex', '@id': `${APP_URL}/du-an/masterise-homes#project`, name: 'Masterise Grand Marina Saigon', url: `${APP_URL}/du-an/masterise-homes` },
+          ],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+        },
+      ],
+    },
+  },
+  'bat-dong-san-long-an': {
+    title: 'Bất Động Sản Long An 2026 | Đất Nền Đức Hòa, Bến Lức, Cần Đước — SGS LAND',
+    description: 'Mua bán bất động sản Long An 2026: đất nền Đức Hòa 5–20 triệu/m², Bến Lức 8–25 triệu/m², Cần Đước 4–12 triệu/m². Cửa ngõ TP.HCM phía Tây – Tây Nam, hưởng lợi Vành đai 3&4. SGS LAND tư vấn miễn phí.',
+    h1: 'Bất Động Sản Long An',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS Long An', item: `${APP_URL}/bat-dong-san-long-an` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'Bất động sản Long An có đáng đầu tư không năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Long An là thị trường BĐS hấp dẫn nhất khu vực lân cận TP.HCM nhờ: (1) Vành đai 3 (đoạn qua Long An–Bình Chánh) thông xe 2026; (2) Cao tốc TP.HCM–Mộc Bài đang xây dựng; (3) Giá đất chỉ bằng 30–50% Bình Chánh; (4) Nhu cầu kho logistics và KCN tăng mạnh; (5) Quy hoạch 3 đô thị vệ tinh Đức Hòa, Bến Lức, Tân An.' } },
+            { '@type': 'Question', name: 'Giá đất Long An hiện nay khu vực nào rẻ nhất và đắt nhất?', acceptedAnswer: { '@type': 'Answer', text: 'Giá đất Long An 2026 theo khu vực: Bến Lức giáp Bình Chánh (đắt nhất): 8–25 triệu/m²; Đức Hòa KCN: 5–20 triệu/m²; Cần Đước, Cần Giuộc (giáp Q7, Nhà Bè): 4–12 triệu/m²; Tân An trung tâm tỉnh: 15–40 triệu/m²; Đức Huệ, Thạnh Hóa (xa nhất): 1–5 triệu/m².' } },
+            { '@type': 'Question', name: 'Khu vực nào ở Long An gần TP.HCM nhất?', acceptedAnswer: { '@type': 'Answer', text: 'Bến Lức và Đức Hòa gần TP.HCM nhất (giáp Bình Chánh). Cần Đước và Cần Giuộc giáp Nhà Bè–Q7. Từ ngã tư An Lạc (Q.Bình Tân) vào trung tâm Bến Lức chỉ 20–25km.' } },
+            { '@type': 'Question', name: 'Đức Hòa Long An có tiềm năng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Đức Hòa là huyện có nhiều KCN nhất Long An (KCN Đức Hòa I, II, III, Tân Đô, Hải Sơn, Thuận Đạo) với hơn 400 doanh nghiệp FDI, nhu cầu nhà ở công nhân và chuyên gia lớn. Giá đất nền 5–20 triệu/m², tỷ suất cho thuê nhà trọ 10–15%/năm. Rủi ro: thanh khoản thứ cấp chậm hơn Bình Chánh.' } },
+            { '@type': 'Question', name: 'Pháp lý đất Long An cần kiểm tra gì?', acceptedAnswer: { '@type': 'Answer', text: 'Đất Long An hay gặp vấn đề: (1) Đất nông nghiệp chưa chuyển mục đích dùng, phân lô bán nền trái phép; (2) Đất nằm trong quy hoạch KCN hoặc hành lang bảo vệ kênh thủy lợi; (3) Đất thuộc vùng thấp trũng, ngập úng theo mùa. SGS LAND kiểm tra sổ đỏ, quy hoạch 1/500 và hệ thống thoát nước miễn phí trước giao dịch.' } },
+            { '@type': 'Question', name: 'Vành đai 3 và Vành đai 4 ảnh hưởng BĐS Long An thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Vành đai 3 qua Long An (đoạn Bến Lức–Nhơn Trạch) thông xe 2026, mở kết nối trực tiếp với sân bay Long Thành mà không qua TP.HCM. Vành đai 4 (đang quy hoạch) sẽ đi qua trung tâm Long An, tạo thêm nút giao và đô thị mới. Đất bán kính 3km quanh nút giao Vành đai 3 tại Long An đã tăng 20–40%.' } },
+            { '@type': 'Question', name: 'Long An có KCN nào lớn nhất và thu hút FDI nhất?', acceptedAnswer: { '@type': 'Answer', text: 'Top KCN Long An thu hút FDI lớn nhất: (1) KCN Tân Đô (Đức Hòa, 405ha); (2) KCN Long Hậu (Cần Đước, 164ha) — chuyên logistics và kho lạnh giáp sông Soài Rạp; (3) KCN Hải Sơn (Đức Hòa, 179ha); (4) KCN Xuyên Á (Đức Huệ, 800ha). Tổng vốn FDI đăng ký 8,5 tỷ USD tính đến 2025.' } },
+            { '@type': 'Question', name: 'SGS LAND hỗ trợ tìm đất nền Long An như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND có kho hàng đất nền Long An đã xác minh sổ đỏ, hỗ trợ định giá AI so sánh với giao dịch thực trong bán kính 2km, kiểm tra quy hoạch và tình trạng pháp lý độc lập. Hotline: +84 971 132 378 — tư vấn miễn phí, không ép mua.' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-long-an#agent`,
+          name: 'SGS LAND - Bất Động Sản Long An',
+          url: `${APP_URL}/bat-dong-san-long-an`,
+          telephone: '+84-971-132-378',
+          areaServed: { '@type': 'State', name: 'Long An', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+          knowsAbout: ['Bất động sản Long An', 'Đất nền Đức Hòa', 'Đất nền Bến Lức', 'Đất nền Cần Đước', 'KCN Long An', 'Vành đai 3 Long An', 'Cần Giuộc', 'Tân An'],
+          aggregateRating: SGS_RATING,
+          parentOrganization: SGS_PARENT_ORG,
+        },
+      ],
+    },
+  },
+
+  // ─── Topical Cluster Pages — Đầu Tư & Pháp Lý ─────────────────────────────
+  'dau-tu-bat-dong-san': {
+    title: 'Đầu Tư Bất Động Sản 2026 | Loại Nào Sinh Lời Nhất? Hướng Dẫn SGS LAND',
+    description: 'Hướng dẫn đầu tư bất động sản 2026: so sánh căn hộ vs đất nền vs nhà phố, phân tích tỷ suất lợi nhuận, rủi ro và chiến lược tối ưu cho nhà đầu tư Việt Nam. SGS LAND.',
+    h1: 'Đầu Tư Bất Động Sản 2026',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Đầu Tư BĐS', item: `${APP_URL}/dau-tu-bat-dong-san` },
+          ],
+        },
+        {
+          '@type': 'Article',
+          '@id': `${APP_URL}/dau-tu-bat-dong-san#article`,
+          headline: 'Đầu Tư Bất Động Sản 2026: Hướng Dẫn Toàn Diện Cho Nhà Đầu Tư Việt Nam',
+          description: 'Phân tích chiến lược đầu tư BĐS 2026 — so sánh căn hộ, đất nền, nhà phố, biệt thự theo tỷ suất lợi nhuận, thanh khoản và rủi ro pháp lý. Dành cho nhà đầu tư cá nhân Việt Nam.',
+          inLanguage: 'vi',
+          author: { '@id': `${APP_URL}/#org` },
+          publisher: { '@id': `${APP_URL}/#org` },
+          datePublished: '2025-01-01',
+          dateModified: '2026-05-14',
+          isPartOf: { '@id': `${APP_URL}/#website` },
+          about: [
+            { '@type': 'Thing', name: 'Đầu tư bất động sản' },
+            { '@type': 'Thing', name: 'Tỷ suất lợi nhuận BĐS' },
+            { '@type': 'Thing', name: 'Chiến lược đầu tư căn hộ' },
+            { '@type': 'Thing', name: 'Đất nền đầu tư' },
+          ],
+          mentions: [
+            { '@id': `${APP_URL}/bat-dong-san-dong-nai#agent` },
+            { '@id': `${APP_URL}/bat-dong-san-long-thanh#agent` },
+            { '@id': `${APP_URL}/bat-dong-san-thu-duc#agent` },
+            { '@id': `${APP_URL}/du-an/aqua-city#project` },
+            { '@id': `${APP_URL}/du-an/vinhomes-grand-park#project` },
+          ],
+        },
+        {
+          '@type': 'HowTo',
+          name: 'Cách đầu tư bất động sản sinh lời năm 2026 — 5 bước từ A đến Z',
+          description: 'Quy trình 5 bước giúp nhà đầu tư cá nhân Việt Nam chọn đúng loại BĐS, đúng khu vực và đúng thời điểm để tối ưu lợi nhuận và giảm thiểu rủi ro.',
+          inLanguage: 'vi',
+          totalTime: 'P30D',
+          author: { '@id': `${APP_URL}/#org` },
+          step: [
+            { '@type': 'HowToStep', position: 1, name: 'Xác định mục tiêu và ngân sách', text: 'Phân biệt 3 mục tiêu: (1) Tăng trưởng vốn (đất nền, dự án hưởng lợi hạ tầng); (2) Thu nhập thụ động (căn hộ cho thuê, shophouse); (3) An toàn tài sản (nhà phố trung tâm). Ngân sách thực tế = vốn tự có + vay tối đa 50% LTV để an toàn dòng tiền.' },
+            { '@type': 'HowToStep', position: 2, name: 'Chọn loại BĐS phù hợp mục tiêu', text: 'Căn hộ: thanh khoản cao, cho thuê ổn định, không cần quản lý nhiều. Đất nền: tăng giá cao nhất dài hạn (10–30%/năm), vốn thấp hơn, nhưng rủi ro pháp lý cao. Nhà phố: cân bằng tốt nhất — tăng giá + thu nhập kép (ở + cho thuê). Biệt thự: vốn lớn, thanh khoản chậm, phù hợp nhà đầu tư dài hạn 7–10 năm.' },
+            { '@type': 'HowToStep', position: 3, name: 'Phân tích vị trí và hạ tầng', text: '4 yếu tố hạ tầng tạo ra giá trị: (1) Gần ga Metro/BRT (tăng 15–25% trong bán kính 500m); (2) Nút giao cao tốc/vành đai mới; (3) Khu công nghiệp tăng nhu cầu thuê; (4) Sân bay mới (Long Thành) tạo bùng nổ giá trong bán kính 15km. SGS LAND cung cấp bản đồ hạ tầng và dự báo giá miễn phí.' },
+            { '@type': 'HowToStep', position: 4, name: 'Kiểm tra pháp lý kỹ lưỡng', text: 'Pháp lý là yếu tố quyết định: sổ đỏ/sổ hồng chính chủ, không tranh chấp, không quy hoạch lộ giới, đủ điều kiện chuyển nhượng theo Luật KDBĐS 2023. SGS LAND kiểm tra pháp lý độc lập miễn phí — kết quả trong 3–5 ngày làm việc.' },
+            { '@type': 'HowToStep', position: 5, name: 'Định giá và đàm phán tối ưu', text: 'Dùng AI AVM của SGS LAND để định giá so sánh với 45.000+ giao dịch thực. Đàm phán dưới giá thị trường 5–15% bằng cách: tìm BĐS ký gửi lâu ngày, chủ cần tiền gấp, hoặc BĐS nhiều tầng không phù hợp số đông. SGS LAND hỗ trợ đàm phán miễn phí.' },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'Có nên đầu tư bất động sản năm 2026 không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. Ba lý do: (1) Lãi suất ngân hàng giảm về 6–8%/năm (mức hỗ trợ đầu tư BĐS); (2) Luật Đất đai 2024 và Luật KDBĐS 2023 có hiệu lực làm tăng nguồn cung hợp pháp, giá ổn định hơn; (3) Hạ tầng giao thông (Metro số 1, Vành đai 3, sân bay Long Thành) tạo sóng tăng giá khu vực. Thận trọng với đất nền tỉnh xa và dự án chưa đủ pháp lý.' } },
+            { '@type': 'Question', name: 'Loại bất động sản nào sinh lời nhất năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Theo dữ liệu SGS LAND Q1/2026: (1) Đất nền Long Thành (gần sân bay): +18–25%/năm; (2) Căn hộ TP Thủ Đức (gần Metro số 1): +10–15%/năm + cho thuê 4–6%; (3) Nhà phố nội đô (Phú Nhuận, Bình Thạnh): +8–12%/năm + cho thuê 3–5%; (4) Shophouse KCN Bình Dương: cho thuê 8–12%/năm.' } },
+            { '@type': 'Question', name: 'Đầu tư BĐS cần bao nhiêu vốn tối thiểu năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Vốn tối thiểu theo loại: Căn hộ trung cấp (vay 70%): vốn tự có 700 triệu – 1,5 tỷ; Đất nền tỉnh lân cận: từ 500 triệu – 1,5 tỷ; Căn hộ cao cấp (vay 50%): vốn 1,5–4 tỷ; Nhà phố quận nội thành: vốn 3–8 tỷ (vay 50%). SGS LAND kết nối gói vay ưu đãi 6,5%/năm (24 tháng đầu) từ 8 ngân hàng đối tác.' } },
+            { '@type': 'Question', name: 'Rủi ro lớn nhất khi đầu tư bất động sản là gì?', acceptedAnswer: { '@type': 'Answer', text: '4 rủi ro phổ biến nhất: (1) Pháp lý — đất nông nghiệp phân lô trái phép, dự án không đủ điều kiện mở bán; (2) Thanh khoản — BĐS tỉnh xa, đất vườn khó bán khi cần tiền gấp; (3) Lãi suất — vay thả nổi khi lãi suất tăng đột ngột làm âm dòng tiền; (4) Quy hoạch — đất trong lộ giới, hành lang kênh mương bị thu hồi.' } },
+            { '@type': 'Question', name: 'So sánh đầu tư BĐS và gửi tiết kiệm ngân hàng năm 2026?', acceptedAnswer: { '@type': 'Answer', text: 'Gửi tiết kiệm: 5–6%/năm, thanh khoản tức thì, không rủi ro. BĐS: tăng giá 8–25%/năm + thu nhập cho thuê 4–8% = tổng 12–33%/năm, nhưng vốn lớn và kém thanh khoản. Kết hợp lý tưởng: 60% BĐS (nhà phố hoặc căn hộ) + 40% tiết kiệm/trái phiếu để duy trì thanh khoản.' } },
+          ],
+        },
+      ],
+    },
+  },
+  'phap-ly-nha-dat': {
+    title: 'Pháp Lý Nhà Đất 2026 | Thủ Tục Mua Bán, Sổ Đỏ Sổ Hồng — SGS LAND',
+    description: 'Hướng dẫn pháp lý nhà đất Việt Nam 2026: thủ tục mua bán, sổ đỏ sổ hồng, Luật KDBĐS 2023, thuế phí chuyển nhượng. Kiểm tra pháp lý miễn phí tại SGS LAND.',
+    h1: 'Pháp Lý Nhà Đất Việt Nam 2026',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Pháp Lý Nhà Đất', item: `${APP_URL}/phap-ly-nha-dat` },
+          ],
+        },
+        {
+          '@type': 'Article',
+          '@id': `${APP_URL}/phap-ly-nha-dat#article`,
+          headline: 'Pháp Lý Nhà Đất Việt Nam 2026 — Hướng Dẫn Toàn Diện Theo Luật KDBĐS 2023',
+          description: 'Tổng hợp pháp lý mua bán bất động sản Việt Nam: sổ đỏ sổ hồng, thủ tục công chứng, thuế chuyển nhượng, điều kiện dự án mở bán và quyền của người mua theo Luật KDBĐS 2023 và Luật Đất đai 2024.',
+          inLanguage: 'vi',
+          author: { '@id': `${APP_URL}/#org` },
+          publisher: { '@id': `${APP_URL}/#org` },
+          datePublished: '2024-01-01',
+          dateModified: '2026-05-14',
+          isPartOf: { '@id': `${APP_URL}/#website` },
+          about: [
+            { '@type': 'Thing', name: 'Pháp lý nhà đất Việt Nam' },
+            { '@type': 'Thing', name: 'Luật Kinh doanh Bất động sản 2023' },
+            { '@type': 'Thing', name: 'Sổ đỏ sổ hồng' },
+            { '@type': 'Thing', name: 'Thủ tục mua bán nhà đất' },
+          ],
+          citation: [
+            { '@type': 'Legislation', name: 'Luật Kinh doanh Bất động sản 2023 (Luật số 29/2023/QH15)', datePublished: '2024-01-01' },
+            { '@type': 'Legislation', name: 'Luật Đất đai 2024 (Luật số 31/2024/QH15)', datePublished: '2024-07-01' },
+            { '@type': 'Legislation', name: 'Nghị định 96/2024/NĐ-CP hướng dẫn Luật KDBĐS 2023', datePublished: '2024-07-24' },
+          ],
+        },
+        {
+          '@type': 'HowTo',
+          name: 'Quy trình mua bán nhà đất hợp pháp tại Việt Nam — 6 bước theo Luật 2023',
+          description: 'Hướng dẫn từng bước thủ tục mua bán nhà đất Việt Nam đúng pháp luật, từ kiểm tra pháp lý đến sang tên sổ đỏ, căn cứ Luật KDBĐS 2023 và Nghị định 96/2024.',
+          inLanguage: 'vi',
+          totalTime: 'P30D',
+          author: { '@id': `${APP_URL}/#org` },
+          step: [
+            { '@type': 'HowToStep', position: 1, name: 'Kiểm tra pháp lý bất động sản', text: 'Kiểm tra 6 điểm: (1) Sổ đỏ/sổ hồng chính chủ, không thế chấp; (2) Không nằm trong quy hoạch lộ giới, kênh mương; (3) Không tranh chấp thừa kế, chia tài sản; (4) Diện tích khớp hiện trạng thực tế; (5) Mục đích sử dụng đất đúng loại (thổ cư, đất ở); (6) Không vi phạm xây dựng cần tháo dỡ.' },
+            { '@type': 'HowToStep', position: 2, name: 'Ký hợp đồng đặt cọc', text: 'Hợp đồng đặt cọc theo Điều 328 Bộ luật Dân sự: nêu rõ giá, diện tích, thời hạn, tiến độ thanh toán. Mức đặt cọc thông thường 5–10% giá trị. Pháp lý: nếu bên mua vi phạm, mất cọc; nếu bên bán vi phạm, hoàn cọc + bồi thường thêm đúng số cọc.' },
+            { '@type': 'HowToStep', position: 3, name: 'Ký hợp đồng mua bán công chứng', text: 'Hợp đồng mua bán BĐS phải công chứng tại Văn phòng Công chứng hoặc UBND cấp huyện (đất ở nông thôn). Hai bên mang: sổ đỏ bản gốc, CCCD, hôn thú (nếu tài sản chung vợ chồng), giấy ủy quyền (nếu có người đại diện).' },
+            { '@type': 'HowToStep', position: 4, name: 'Nộp thuế và phí chuyển nhượng', text: 'Người bán nộp: Thuế TNCN 2% giá chuyển nhượng (hoặc 25% lãi nếu tính được). Người mua nộp: Lệ phí trước bạ 0,5% (nhà + đất); Phí thẩm định 0,015% (tối thiểu 100.000đ). Thời hạn nộp: 30 ngày kể từ công chứng hợp đồng.' },
+            { '@type': 'HowToStep', position: 5, name: 'Nộp hồ sơ sang tên sổ đỏ', text: 'Nộp tại Văn phòng Đăng ký đất đai cấp quận/huyện: hợp đồng công chứng, biên lai nộp thuế, đơn đăng ký sang tên, CCCD, sổ đỏ gốc. Thời hạn giải quyết: 15 ngày làm việc (thực tế 20–30 ngày). SGS LAND hỗ trợ toàn bộ hồ sơ miễn phí.' },
+            { '@type': 'HowToStep', position: 6, name: 'Nhận sổ đỏ mang tên người mua', text: 'Nhận sổ đỏ mới tại Văn phòng Đăng ký. Kiểm tra kỹ: tên chủ sở hữu, diện tích, thửa đất, bản đồ. Nếu phát hiện sai sót yêu cầu đính chính ngay tại chỗ. Sau khi nhận sổ: đăng ký tạm trú/thường trú (nếu là nhà ở) trong 30 ngày theo quy định.' },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          ...SGS_FAQ_META,
+          mainEntity: [
+            { '@type': 'Question', name: 'Sổ đỏ và sổ hồng khác nhau như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Sổ đỏ (Giấy chứng nhận quyền sử dụng đất) xác nhận quyền sử dụng đất. Sổ hồng (Giấy chứng nhận quyền sở hữu nhà ở và quyền sử dụng đất ở) xác nhận cả đất + công trình trên đất. Từ 2009, cả hai được gộp vào một loại giấy chứng nhận theo mẫu mới (màu hồng)— dân gian vẫn gọi theo màu cũ.' } },
+            { '@type': 'Question', name: 'Luật KDBĐS 2023 có hiệu lực từ khi nào và thay đổi gì?', acceptedAnswer: { '@type': 'Answer', text: 'Luật KDBĐS 2023 (Luật số 29/2023/QH15) có hiệu lực từ 1/1/2024. Thay đổi quan trọng: (1) Bắt buộc thanh toán qua ngân hàng (cấm giao dịch tiền mặt BĐS từ 1/1/2024); (2) Tăng điều kiện mở bán dự án (phải có ngân hàng bảo lãnh hoặc đủ hạ tầng thiết yếu); (3) Cho phép chuyển nhượng hợp đồng mua bán căn hộ hình thành trong tương lai.' } },
+            { '@type': 'Question', name: 'Thuế và phí khi mua bán nhà đất là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Người bán: Thuế TNCN 2% giá trị hợp đồng (nếu không xác định được giá vốn) hoặc 25% lợi nhuận. Người mua: Lệ phí trước bạ 0,5% (nhà + đất), phí thẩm định 0,015% (tối thiểu 100.000đ), phí công chứng 0,1–0,15% giá trị hợp đồng (tối thiểu 50.000đ, tối đa 70 triệu). Tổng chi phí thông thường: người mua chịu 0,7–0,8%, người bán chịu 2%.' } },
+            { '@type': 'Question', name: 'Mua nhà chung cư hình thành trong tương lai có an toàn không?', acceptedAnswer: { '@type': 'Answer', text: 'An toàn nếu: (1) Dự án có bảo lãnh ngân hàng theo Điều 27 Luật KDBĐS 2023 (bắt buộc từ 2024); (2) Chủ đầu tư đã có Giấy phép xây dựng và hoàn thành móng; (3) Có Thông báo nhà ở đủ điều kiện mở bán từ Sở Xây dựng. Rủi ro cần tránh: dự án chỉ có quyết định chủ trương đầu tư nhưng chưa đủ điều kiện mở bán.' } },
+            { '@type': 'Question', name: 'Quy trình kiểm tra pháp lý nhà đất mất bao lâu?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND thực hiện kiểm tra pháp lý độc lập trong 3–7 ngày làm việc, bao gồm: tra cứu sổ đỏ tại VPĐKĐĐ, kiểm tra quy hoạch 1/500 tại Sở QH-KT, xác minh không tranh chấp tại TAND cấp huyện, kiểm tra thế chấp ngân hàng. Báo cáo chi tiết 2 trang giao tận tay — hoàn toàn miễn phí trước giao dịch.' } },
+          ],
         },
       ],
     },
