@@ -4765,6 +4765,15 @@ async function startServer() {
             ? 'public, max-age=60, stale-while-revalidate=300'
             : 'no-cache, no-store, must-revalidate'
         );
+        // Explicit X-Robots-Tag so production deployments (custom domain) are indexable.
+        // This header takes effect on sgsland.vn where no platform-level noindex is added.
+        // For noIndex pages (e.g. /login) we honour the meta flag.
+        res.setHeader(
+          'X-Robots-Tag',
+          (meta as any).noIndex
+            ? 'noindex, nofollow'
+            : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+        );
         res.send(html);
       } catch {
         res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
