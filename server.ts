@@ -4621,6 +4621,28 @@ async function startServer() {
     res.send(xml);
   });
 
+  // ─── Dynamic OG images for project / district landing pages ───────────────
+  // Route: GET /og/<slug> — returns 1200x630 JPEG with project photo overlay
+  // or branded gradient for district pages. Results are cached in-memory.
+  // Dynamic OG image handler — must use app.use (not app.get with /*) for newer path-to-regexp
+  app.use('/og', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    const slug = req.path.replace(/^\//, ''); // strip leading "/"
+    if (!slug) return next();
+    try {
+      const { generateOgImage } = await import('./server/seo/ogImageGenerator');
+      const buf = await generateOgImage(slug);
+      if (!buf) return res.redirect(302, '/og-image.jpg') as any;
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      res.setHeader('X-OG-Slug', slug);
+      return res.send(buf);
+    } catch (err) {
+      logger.error('[OG image]', err);
+      return res.redirect(302, '/og-image.jpg');
+    }
+  });
+
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
