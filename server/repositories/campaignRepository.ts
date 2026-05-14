@@ -330,18 +330,18 @@ export async function queryLeadsNeedingChatFollowUp(
       l.tenant_id,
       l.name,
       last_inbound.channel,
-      l.social_ids->>'zalo'     AS zalo_id,
-      l.social_ids->>'facebook' AS facebook_id,
-      last_inbound.created_at   AS last_inbound_at,
-      last_inbound.content      AS last_inbound_content
+      l.social_ids->>'zalo'      AS zalo_id,
+      l.social_ids->>'facebook'  AS facebook_id,
+      last_inbound.ts            AS last_inbound_at,
+      last_inbound.content       AS last_inbound_content
     FROM leads l
     JOIN LATERAL (
-      SELECT i.created_at, i.content, i.channel
+      SELECT i.timestamp AS ts, i.content, i.channel
       FROM interactions i
       WHERE i.lead_id = l.id
         AND i.direction = 'INBOUND'
         AND i.channel IN ('ZALO', 'FACEBOOK')
-      ORDER BY i.created_at DESC
+      ORDER BY i.timestamp DESC
       LIMIT 1
     ) last_inbound ON true
     WHERE
@@ -350,14 +350,14 @@ export async function queryLeadsNeedingChatFollowUp(
         l.social_ids->>'zalo'     IS NOT NULL
         OR l.social_ids->>'facebook' IS NOT NULL
       )
-      AND last_inbound.created_at BETWEEN
+      AND last_inbound.ts BETWEEN
           NOW() - ($1 * INTERVAL '1 day') - INTERVAL '3 hours'
           AND NOW() - ($1 * INTERVAL '1 day') + INTERVAL '3 hours'
       AND NOT EXISTS (
         SELECT 1 FROM interactions i2
         WHERE i2.lead_id = l.id
           AND i2.direction = 'OUTBOUND'
-          AND i2.created_at > last_inbound.created_at
+          AND i2.timestamp > last_inbound.ts
           AND (i2.metadata->>'isFollowUp')::boolean IS TRUE
           AND (i2.metadata->>'followUpDay')::int = $1
       )
