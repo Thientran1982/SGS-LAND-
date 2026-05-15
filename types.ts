@@ -253,6 +253,11 @@ export interface LeadPreferences {
     _lastInteraction?: string;
     _lastAnalysisSummary?: string;
     _lastAnalysisDate?: string;
+    // P3 self-learning: accumulated persona signals across sessions
+    _inferredPersona?: string;        // e.g. VIET_KIEU, FAMILY_UPGRADER, FIRST_BUYER_YOUNG…
+    _lifeEvents?: string[];           // e.g. ["sắp có em bé", "vừa bán nhà xong"]
+    _lastUrgency?: 'HIGH' | 'MEDIUM' | 'LOW';
+    _lastEmotionalState?: 'ANXIOUS' | 'FRUSTRATED' | 'EXCITED' | 'NEUTRAL';
 }
 
 export type AmlStatus = 'PENDING' | 'CLEAR' | 'FLAGGED' | 'BLOCKED';
