@@ -4900,6 +4900,69 @@ METADATA BẮT BUỘC ĐẦU MỖI OUTPUT:
   fallback_used:    true/false (đã dùng fallback tầng nào)
   fallback_tier:    null / "TIER1_RADIUS" / "TIER2_STALE" / "TIER3_INSUFFICIENT"
   processing_notes: "[ghi chú nội bộ cho STEP 2 — không hiển thị khách]"
+
+
+════════════════════════════════════════
+SEARCH METADATA — FORMAT ĐẦY ĐỦ
+════════════════════════════════════════
+
+=== SEARCH METADATA ===
+Agent_version:            ${PROMPT_VERSION}
+Timestamp:                [ISO 8601]
+Input_address:            [địa chỉ gốc]
+Input_normalized:         [địa chỉ chuẩn hoá]
+Property_type_detected:   [loại BĐS]
+Project_detected:         [tên dự án / null]
+Sub_zone_detected:        [phân khu / null]
+Search_strategy:          [A/B/C + fallback tier]
+Queries_executed:         N
+Query_list:               ["query 1", "query 2", ...]
+Total_sources_found:      N
+Sources_used:             M (sau khi lọc outlier/expired)
+Sources_excluded:         K (outlier: X, expired: Y, unreliable: Z)
+Fallback_used:            none/tier1/tier2/tier3/tier4
+Multi_tier_project:       true/false
+Rental_data_collected:    true/false
+Processing_time_estimate: "< 30 giây"
+
+════════════════════════════════════════
+PHẦN IX — SEARCH QUALITY SCORING
+════════════════════════════════════════
+
+SEARCH QUALITY SCORE — tự đánh giá trước khi truyền STEP 2:
+
+Điểm cơ sở: 100
+
+Trừ điểm:
+  Mỗi nguồn TIER4 thay TIER1:                -8
+  Mỗi nguồn STALE (6–12 tháng):              -5
+  Mỗi nguồn EXPIRED (> 12 tháng):           -10
+  Phải dùng fallback Tầng 2 (mở rộng khu):  -8
+  Phải dùng fallback Tầng 3 (hạ freshness): -12
+  Outlier phát hiện không giải thích được:  -10
+  N sources < 3:                             -15
+  Không có TIER1 hoặc TIER2 nào:            -20
+
+Cộng điểm:
+  N sources ≥ 7:                            +5
+  Có ít nhất 2 TIER1 (giao dịch thực):     +10
+  Có TIER2 báo cáo chuyên ngành:            +8
+  Tất cả nguồn FRESH (≤ 3 tháng):           +5
+  Có cả giá mua và giá thuê:                +5
+
+MAPPING SCORE → RECOMMENDED CONFIDENCE CAP:
+  Score ≥ 85:  confidence_cap = 95 → HIGH QUALITY SEARCH
+  Score 70–84: confidence_cap = 85 → MEDIUM QUALITY SEARCH
+  Score 55–69: confidence_cap = 75 → LOW QUALITY SEARCH
+  Score < 55:  confidence_cap = 60 → INSUFFICIENT SEARCH —
+               cần human review trước khi dùng
+
+Ghi vào cuối QUALITY ASSESSMENT:
+  Search_quality_score: [điểm]
+  Confidence_cap:       [95/85/75/60]
+  Quality_level:        HIGH/MEDIUM/LOW/INSUFFICIENT
+  Quality_deductions:   "[lý do trừ điểm cụ thể]"
+  Quality_bonuses:      "[lý do cộng điểm cụ thể]"
 `;
 
 
