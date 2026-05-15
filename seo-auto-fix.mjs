@@ -48,7 +48,7 @@ const BRAND = {
 };
 
 const PROJECTS = [
-  { slug: 'aqua-city',         name: 'Aqua City Novaland',           dev: 'Novaland',        loc: 'Long Hưng, Đồng Nai',     scale: '1.000ha', priceFrom: '5.5 tỷ',   handover: '2024-2026', legal: 'Sổ hồng từng căn (đã cấp một số phân khu)', usp: 'Đại đô thị sinh thái 1.000ha, marina, golf' },
+  { slug: 'aqua-city',         name: 'Aqua City Novaland',           dev: 'Novaland',        loc: 'Long Hưng, Biên Hoà, Đồng Nai',     scale: '1.000ha', priceFrom: '5.5 tỷ',   handover: '2024-2026', legal: 'Sổ hồng từng căn (đã cấp một số phân khu)', usp: 'Đại đô thị sinh thái 1.000ha, marina, golf' },
   { slug: 'the-global-city',   name: 'The Global City',              dev: 'Masterise Homes', loc: 'An Phú, TP Thủ Đức',       scale: '117ha',  priceFrom: '15 tỷ',  handover: '2025-2027', legal: 'Sổ hồng riêng',                              usp: 'Đại đô thị thương mại chuẩn Singapore, cạnh Metro số 1' },
   { slug: 'izumi-city',        name: 'Izumi City Nam Long',          dev: 'Nam Long',        loc: 'Biên Hòa, Đồng Nai',       scale: '170ha',  priceFrom: '8 tỷ',   handover: '2024-2027', legal: 'Sổ hồng riêng',                              usp: 'Đô thị tích hợp chuẩn Nhật, Fuji Mart, trường Nhật' },
   { slug: 'vinhomes-can-gio',  name: 'Vinhomes Cần Giờ — Green Paradise', dev: 'Vinhomes',  loc: 'Cần Giờ, TP.HCM',          scale: '2.870ha', priceFrom: 'Mở bán 2026', handover: '2027-2030', legal: 'Đang hoàn thiện pháp lý',         usp: 'Siêu đô thị du lịch lấn biển lớn nhất Việt Nam' },

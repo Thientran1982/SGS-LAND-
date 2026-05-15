@@ -1,0 +1,69 @@
+// server/index.ts — Thêm middleware SSR vào server Express hiện có
+
+import express from "express";
+import compression from "compression";
+import path from "path";
+import { isBot } from "./bot-detector";
+import { generateBotHTML } from "./ssr-renderer";
+
+const app = express();
+
+// ===== COMPRESSION (tăng tốc tải trang) =====
+app.use(compression());
+
+// ===== SECURITY HEADERS =====
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+// ===== STATIC FILES với caching =====
+app.use(
+  "/assets",
+  express.static(path.join(__dirname, "../dist/assets"), {
+    maxAge: "1y", // Cache JS/CSS 1 năm (có hash trong tên file)
+    immutable: true,
+  })
+);
+app.use(
+  express.static(path.join(__dirname, "../dist"), {
+    maxAge: "1h",
+    index: false, // QUAN TRỌNG: tắt auto-serve index.html để middleware xử lý
+  })
+);
+
+// ===== SSR MIDDLEWARE — Core của toàn bộ giải pháp =====
+app.get("*", (req, res) => {
+  const ua = req.headers["user-agent"] ?? "";
+  const pathname = req.path;
+
+  // Bỏ qua API routes
+  if (pathname.startsWith("/api/")) return res.status(404).json({ error: "Not found" });
+
+  // Bot → Trả HTML đầy đủ với meta tags + schema + nội dung tĩnh
+  if (isBot(ua)) {
+    console.log(`[SSR-BOT] ${new Date().toISOString()} | ${ua.substring(0, 50)} | ${pathname}`);
+
+    const html = generateBotHTML(pathname);
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.setHeader("X-Rendered-By", "SGS-SSR");
+    return res.status(200).send(html);
+  }
+
+  // Người dùng thường → Trả React SPA như cũ
+  const indexPath = path.join(__dirname, "../dist/index.html");
+  res.setHeader("Cache-Control", "no-cache");
+  res.sendFile(indexPath);
+});
+
+const PORT = process.env.PORT ?? 5000;
+app.listen(PORT, () => {
+  console.log(`✅ SGS LAND Server running on port ${PORT}`);
+  console.log(`📡 SSR enabled for bots | SPA for users`);
+});
+
+export default app;
