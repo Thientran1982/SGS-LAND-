@@ -2686,7 +2686,9 @@ function buildProjectNoscriptHtml(structuredData: any, h1: string | undefined, u
   if (project.priceRange) {
     facts.push({ label: 'Khoảng giá', value: String(project.priceRange) });
   }
-  if (project.offers?.price) {
+  if (project.offers?.lowPrice && project.offers?.highPrice) {
+    facts.push({ label: 'Khoảng giá', value: `Từ ${fmtVND(Number(project.offers.lowPrice))} — ${fmtVND(Number(project.offers.highPrice))}` });
+  } else if (project.offers?.price) {
     const cur = project.offers.priceCurrency || 'VND';
     const unit = project.offers.unitText ? ` / ${project.offers.unitText}` : '';
     facts.push({ label: 'Giá từ', value: `${project.offers.price} ${cur}${unit}` });
