@@ -4748,6 +4748,7 @@ async function startServer() {
     const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta } =
       await import('./server/seo/metaInjector');
     const { renderSsrPage } = await import('./server/ssr-renderer');
+    const { isAIBot, isSocialBot } = await import('./server/bot-detector');
 
     // Preload the base HTML once at startup to avoid repeated disk reads.
     try { getBaseHtml(); } catch { /* dist not ready in some edge cases */ }
@@ -4902,12 +4903,23 @@ async function startServer() {
     }
     app.get('/du-an/:projectSlug', (req: express.Request, res: express.Response) => {
       const pagePath = `/du-an/${req.params.projectSlug}`;
-      // Try enhanced SSR renderer (RealEstateListing + AggregateOffer + bodyHtml)
-      // for key project pages. Falls back to standard STATIC_PAGE_META for all others.
-      const ssrHtml = renderSsrPage(pagePath);
+      const ua = String(req.headers['user-agent'] || '');
+      const aiBot = isAIBot(ua);
+      // GEO-maximized body for AI crawlers (GPTBot, PerplexityBot, ClaudeBot);
+      // standard body + RealEstateListing schema for all other requests.
+      // Falls back to STATIC_PAGE_META for project pages not in PAGE_META.
+      const ssrHtml = renderSsrPage(pagePath, { aiBot });
       if (ssrHtml) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+        // AI-bot responses must not be served from a shared cache (content differs
+        // from what regular crawlers/users see). Vary: User-Agent is avoided as it
+        // effectively kills CDN caching; instead, no-store for AI bots only.
+        res.setHeader(
+          'Cache-Control',
+          aiBot
+            ? 'no-store'
+            : 'public, max-age=300, stale-while-revalidate=3600'
+        );
         res.send(ssrHtml);
         return;
       }
