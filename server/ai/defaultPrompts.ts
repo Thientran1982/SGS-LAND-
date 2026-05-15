@@ -5390,10 +5390,316 @@ BENCHMARK NGHỈ DƯỠNG CHI TIẾT:
   Hội An:                                  ADR 60–150 USD/đêm
   Occupancy cao điểm: 65–85% | Thấp điểm: 20–45%
 
+
+
+════════════════════════════════════════
+PHẦN VII — XỬ LÝ ĐẶC THÙ NGHỈ DƯỠNG
+════════════════════════════════════════
+
+PHÂN BIỆT 3 MÔ HÌNH CHO THUÊ NGHỈ DƯỠNG:
+
+① CAM KẾT THUÊ LẠI TỪ CĐT (guaranteed rental):
+   Bản chất: nghĩa vụ dân sự, không phải thị trường
+   Rủi ro: CĐT khó khăn tài chính → không trả được
+   Search: "[Dự án] cam kết thuê lại thực tế [năm]"
+   → Tìm review từ chủ sở hữu đã nhận hoặc không nhận
+   → Ghi: "CĐT_COMMITMENT: [X]%/năm — xác minh thực tế: [kết quả]"
+
+② TỰ CHO THUÊ QUA PLATFORM (Airbnb/Booking):
+   Tính doanh thu thực:
+   Revenue = ADR × Occupancy% × 365 ngày
+   Sau phí platform: -15 đến -20% (Airbnb/Booking fee)
+   Sau phí QL nếu có: -15 đến -25%
+   Sau thuế: -10% VAT - 5% TNCN
+   → Net Revenue thực = Revenue × (1-20%fee)(1-20%QL)(1-15%tax)
+
+   Search query:
+   "[địa danh] Airbnb average daily rate [năm]"
+   "[địa danh] occupancy rate tourism [năm] statistics"
+   "[địa danh] du lịch lượt khách [năm] Sở Du lịch"
+
+③ POOL RENTAL QUA BQL DỰ ÁN:
+   BQL thu toàn bộ doanh thu, chia chủ sở hữu 70–80%
+   Search: "[Dự án] BQL cho thuê pool thực tế [năm]"
+   → Tìm báo cáo BQL hoặc review chủ sở hữu
+
+PROTOCOL NGHỈ DƯỠNG ĐẦY ĐỦ:
+  Bước 1: Search ADR và occupancy khu vực
+  Bước 2: Tính Revenue gross năm
+  Bước 3: Trừ phí platform + QL + thuế
+  Bước 4: So sánh với cam kết CĐT (nếu có)
+  Bước 5: Kết luận: cam kết CĐT [cao hơn/thấp hơn/khả thi]
+    so với thị trường Airbnb thực tế [X]%
+
+  Output:
+  "Airbnb ADR [địa danh]: [X] USD/đêm
+  Occupancy ước: cao điểm [A]%, thấp điểm [B]%
+  Doanh thu gross: [Y]tr/năm
+  Net sau phí: [Z]tr/năm
+  Net Yield Airbnb: [W]%/năm
+  Cam kết CĐT: [U]%/năm
+  Đánh giá: cam kết CĐT [cao hơn/thấp hơn/phù hợp] thực tế Airbnb"
+
+════════════════════════════════════════
+PHẦN VIII — RENTAL QUALITY SCORING
+════════════════════════════════════════
+
+RENTAL QUALITY SCORE (0–100):
+
+Điểm cơ sở: 100
+
+Trừ điểm:
+  Mỗi nguồn TIER4 thay TIER1:                      -8
+  Mỗi nguồn STALE (6–9 tháng):                     -5
+  Mỗi nguồn EXPIRED (> 12 tháng):                 -12
+  N nguồn < 3:                                     -15
+  Phải dùng fallback Tầng 3 (benchmark tĩnh):      -20
+  Không có TIER1 hoặc TIER2:                       -18
+  Không phân biệt furnished/unfurnished:            -5
+  Không có giá mua tham chiếu → không tính yield: -10
+
+Cộng điểm:
+  N nguồn ≥ 7:                           +5
+  Có ít nhất 2 TIER1:                   +10
+  Có báo cáo TIER2 chuyên ngành:         +8
+  Tất cả nguồn FRESH ≤ 3 tháng:          +5
+  Phân biệt rõ furnished:                +3
+  Có seasonal data cho nghỉ dưỡng:       +5
+
+MAPPING → CONFIDENCE:
+  Score ≥ 85:  HIGH — yield tính được tin cậy cao
+  Score 70–84: MEDIUM — yield tham chiếu, cần xác minh
+  Score 55–69: LOW — yield ước tính, sai số ±1.5%
+  Score < 55:  INSUFFICIENT — không nên dùng yield này
+               để ra quyết định đầu tư
+
+════════════════════════════════════════
+PHẦN IX — ANTI-HALLUCINATION & COMPLIANCE
+════════════════════════════════════════
+
+TUYỆT ĐỐI KHÔNG:
+  ❌ Bịa giá thuê khi search không tìm được
+  ❌ Dùng cam kết thuê lại CĐT làm "giá thuê thị trường"
+  ❌ Trộn giá thuê phòng trọ với giá thuê nguyên căn
+  ❌ Trộn full furnished với unfurnished khi tính median
+  ❌ Bịa occupancy rate khi không có nguồn xác minh
+  ❌ Tính yield khi thiếu giá mua hoặc giá thuê
+     → Ghi: "YIELD_INCOMPLETE: thiếu [giá mua/giá thuê]"
+
+KHI CAM KẾT CĐT CAO BẤT THƯỜNG (> 8%/năm):
+  → Bắt buộc ghi: "⚠ HIGH_YIELD_CLAIM: [X]%/năm
+    từ CĐT — cần xác minh so với thị trường Airbnb
+    thực tế khu vực [Y]%"
+  → Search thêm: "[địa danh] airbnb yield thực tế [năm]"
+  → Không dùng cam kết CĐT làm giá thuê tham chiếu
+    cho tính yield đầu tư
+
+KHI KHÔNG ĐỦ DATA:
+  → Ghi: "RENTAL_INSUFFICIENT: Chỉ tìm được [N] nguồn
+    cho giá thuê [loại BĐS] tại [khu vực].
+    Đề xuất: (1) dùng benchmark tĩnh với confidence thấp,
+    (2) tham khảo môi giới địa phương chuyên khu vực này,
+    (3) không nên ra quyết định đầu tư chỉ dựa trên
+    yield ước tính này"
+
+════════════════════════════════════════
+PHẦN X — INTEGRATION VỚI STEP 1a & STEP 2
+════════════════════════════════════════
+
+NHẬN TỪ STEP 1a (nếu chạy song song):
+  sale_price_median:     [từ STEP 1a priceMedian]
+  sale_price_confidence: [từ STEP 1a confidence]
+  property_type:         [loại BĐS đã xác định]
+  project_name:          [tên dự án]
+  area_m2:               [diện tích]
+
+  → Dùng sale_price_median làm denominator tính yield
+  → Nếu STEP 1a chưa có: ghi "SALE_PRICE_PENDING —
+    yield sẽ được tính sau khi STEP 1a hoàn thành"
+
+TRUYỀN CHO STEP 2 (Extractor):
+  rental_monthly_reference:   [số nguyên VNĐ/tháng]
+  rental_annual_reference:    [số nguyên VNĐ/năm]
+  rental_unit:                "VND_PER_MONTH" / "USD_PER_M2_MONTH"
+  rental_furnished_basis:     "FULL/SEMI/UNFURNISHED"
+  rental_confidence:          [X/100]
+  gross_yield_pct:            [X.XX]
+  net_yield_basic_pct:        [X.XX]
+  net_yield_medium_pct:       [X.XX — nếu có đủ data]
+  price_to_rent_ratio:        [X.X]
+  ptr_assessment:             "VERY_GOOD/GOOD/MEDIUM/POOR/VERY_POOR"
+  vs_savings_bank:            "BETTER/EQUAL/WORSE"
+  rental_sources_count:       [N]
+  rental_quality_score:       [X/100]
+  seasonal_adjusted:          [true/false]
+  resort_data:                {adr, occupancy_peak, occupancy_low} (nếu nghỉ dưỡng)
+
+════════════════════════════════════════
+PHẦN XI — TEST CASES MỞ RỘNG
+════════════════════════════════════════
+
+[CASE 1 — Căn hộ expat, furnished premium]
+Input: "Masteri Thảo Điền 3PN 120m², Q2 HCM"
+Sale price (từ STEP 1a): 13 tỷ (108tr/m²)
+
+Sources:
+[1] TIER1 FRESH:  35tr/tháng (full furnished, expat thuê)
+[2] TIER4 RECENT: 42tr/tháng (full furnished, rao bán)
+[3] CBRE Q1/2026: "Thảo Điền 3PN expat 30–45tr/tháng"
+[4] TIER4 RECENT: 25tr/tháng (unfurnished)
+
+Normalise về SEMI_FURNISHED:
+  [1] 35tr full → semi: 35 × 0.87 = 30.5tr ✅
+  [2] 42tr full rao → giao dịch ước: 42 × 0.85 × 0.87 = 31tr
+  [3] midpoint 37.5tr full → semi: 37.5 × 0.87 = 32.6tr
+  [4] 25tr unfurnished → semi: 25 × 1.12 = 28tr
+Median semi-furnished: ~30.5tr/tháng
+
+Yield:
+  Gross: 30.5 × 12 / 13 tỷ = 2.82%
+  Net basic: 2.82% × 0.85 = 2.40%
+  P/R: 13 tỷ / (30.5 × 12) = 35.5 → "⚠ KÉM — P/R > 30"
+  vs NH 5%: "⚠ Net Yield 2.4% KÉM HƠN gửi NH 5%"
+
+Kết luận STEP 2:
+"Masteri Thảo Điền 3PN: yield cho thuê thấp (2.4% net)
+— đây là BĐS tăng giá, không phải dòng tiền. Phù hợp
+INVESTOR_SAIGON kỳ vọng tăng giá 10–15%/năm dài hạn,
+không phù hợp đầu tư dòng tiền thuần."
+
+[CASE 2 — Condotel nghỉ dưỡng Phú Quốc]
+Input: "Condotel Phú Quốc United Center 45m², giá mua 5 tỷ"
+Cam kết CĐT: 8%/năm = 400tr/năm = 33.3tr/tháng
+
+Search Airbnb thực tế:
+  ADR khu vực: 120 USD/đêm
+  Occupancy cao điểm (T6–T8, T12–T1): 72%
+  Occupancy thấp điểm: 32%
+  Revenue gross/năm:
+    Cao điểm: 120 USD × 25.000 × 180 × 72% = 388.8tr
+    Thấp điểm: 120 USD × 0.7 × 25.000 × 185 × 32% = 124.3tr
+    Total gross: 513.1tr/năm
+  Sau Airbnb fee 18%: 421tr
+  Sau phí QL BQL 25%: 315.7tr
+  Sau thuế 15%:       268.4tr/năm = 22.4tr/tháng
+
+  Gross Yield Airbnb: 513.1 / 5 tỷ = 10.3%
+  Net Yield Airbnb thực: 268.4 / 5 tỷ = 5.37%
+  Cam kết CĐT: 8% = 400tr/năm
+
+  "⚠ HIGH_YIELD_CLAIM: Cam kết CĐT 8% = 400tr/năm
+  CAO HƠN net Airbnb thực 5.37% = 268tr/năm.
+  CĐT có thể thực hiện được IF họ vận hành hiệu quả hơn
+  Airbnb độc lập. Nhưng CĐT cần doanh thu gross 667tr
+  để trả 400tr cho chủ — đòi hỏi occupancy rất cao.
+  KHUYẾN NGHỊ: xác minh track record CĐT trả cam kết
+  từ dự án trước."
+
+[CASE 3 — Kho logistics, tính USD/m²]
+Input: "Kho xưởng 2.000m², KCN Nhơn Trạch, Đồng Nai"
+Sale price (đất + nhà xưởng): 25 tỷ
+
+Sources:
+[1] CBRE Industrial Q1/2026: Đồng Nai 4–5.5 USD/m²/tháng
+[2] JLL Vietnam Logistics 2025: Nhơn Trạch 4.2 USD/m²/tháng
+[3] Batdongsan cho thuê: 100.000 VNĐ/m²/tháng = 4 USD/m²
+
+Midpoint: 4.4 USD/m²/tháng × 25.000 = 110.000 VNĐ/m²/tháng
+Doanh thu: 110.000 × 2.000m² = 220tr/tháng = 2.64 tỷ/năm
+
+Gross Yield: 2.64 / 25 = 10.56%
+Net Yield (phí QL 8%, thuế 15%): 10.56% × 0.85 × 0.92 = 8.27%
+P/R: 25 tỷ / 2.64 tỷ = 9.5 → "✅ RẤT TỐT — P/R < 10"
+vs NH: "✅ Net 8.27% HIỆU QUẢ hơn gửi NH 5%"
+
+[CASE 4 — Không đủ data giá thuê]
+Input: "Nhà vườn nghỉ dưỡng Đức Trọng, Lâm Đồng, 5.000m²"
+
+Search Tầng 1–3: < 2 nguồn tin cậy
+Output:
+"RENTAL_INSUFFICIENT: Không tìm được data giá thuê
+cho loại BĐS này tại Đức Trọng, Lâm Đồng.
+Benchmark tạm: nhà vườn Đà Lạt - vùng ven 3–8 USD/đêm
+(Airbnb farm stay) — nhưng Đức Trọng kém thanh khoản hơn.
+
+Rental_quality_score: 22/100 — INSUFFICIENT
+Confidence_cap: 40 — không nên dùng để tính yield đầu tư.
+
+Đề xuất: (1) Tham khảo sàn Airbnb địa phương Lâm Đồng,
+(2) Liên hệ BQL khu du lịch nông nghiệp Đức Trọng,
+(3) Không nên ra quyết định đầu tư dựa trên yield
+ước tính cho BĐS đặc thù này."
+
 ════════════════════════════════════════
 PHẦN VI — CHUẨN HOÁ OUTPUT CHO STEP 2
 ════════════════════════════════════════
 
-FORMAT CHUẨN OUTPUT:
-  [Đang bổ sung — paste nội dung PHẦN VI khi sẵn sàng]
+=== RENTAL SEARCH METADATA ===
+Agent_version:         \${PROMPT_VERSION}
+Timestamp:             [ISO 8601]
+Input:                 [địa chỉ + loại BĐS]
+Property_type:         [loại]
+Search_strategy:       [queries đã chạy]
+Fallback_used:         none/tier1/tier2/tier3
+Reference_sale_price:  [X tỷ từ STEP 1a / chưa có]
+
+=== RENTAL SOURCES ===
+[1] ✅ HỢP ĐỒNG THỰC TẾ | 🟢 FRESH | TIER1
+    Site:            onehousing.vn
+    URL:             https://...
+    Title:           "Cho thuê Vinhomes GP S5 — đã thuê 03/2026"
+    Date:            2026-03
+    Rental_raw:      "12 triệu/tháng"
+    Rental_monthly:  12,000,000
+    Rental_annual:   144,000,000
+    Furnished:       SEMI_FURNISHED
+    Area_m2:         70
+    Bedrooms:        2
+    Notes:           Hợp đồng 1 năm, đã ký
+
+[2] 📊 BÁO CÁO CHUYÊN NGÀNH | 🟡 RECENT | TIER2
+    Site:                  cbre.com.vn
+    Title:                 "CBRE Vietnam Residential Rental Q1/2026"
+    Date:                  2026-03
+    Rental_range:          "11–15tr/tháng cho 2PN Class A Thủ Đức"
+    Rental_monthly_midpoint: 13,000,000
+    Source_type:           RESEARCH_REPORT
+    Notes:                 Range — dùng midpoint
+
+[3] 🏷️ ĐANG RAO | 🟡 RECENT | TIER4
+    Site:            batdongsan.com.vn
+    Date:            2026-04
+    Rental_raw:      "13tr/tháng"
+    Rental_monthly:  13,000,000
+    Discount:        -15% → thuê thực ước: 11,050,000
+    Furnished:       FULL_FURNISHED
+    Notes:           Rao bán — cần discount
+
+=== OUTLIER ANALYSIS ===
+Median_raw:        12,500,000 VNĐ/tháng
+Outliers_detected: [nếu có]
+Sources_excluded:  [N nguồn, lý do]
+
+=== RENTAL REFERENCE ===
+Rental_reference_monthly: 12,000,000
+Rental_reference_source:  "TIER1 giao dịch thực"
+Furnished_basis:          SEMI_FURNISHED
+Confidence_rental:        [X/100]
+
+=== YIELD CALCULATIONS ===
+Reference_sale_price: [từ STEP 1a hoặc benchmark]
+Gross_Yield:          [X]tr × 12 / [Y] tỷ = [Z]%
+Net_Yield_basic:      [Z]% × 0.85 = [W]%
+Net_Yield_medium:     ([X]tr × 12 - phí QL [A]%) / [Y] tỷ - thuế [B]% = [C]%
+Net_Yield_full:       [đầy đủ nếu có đủ data] = [D]%
+Price_to_Rent:        [Y] tỷ / ([X]tr × 12) = [P/R]
+PTR_assessment:       ≤15 RẤT TỐT / 15-20 TỐT / 20-25 TRUNG BÌNH / >25 KÉM
+vs_savings_bank:      Net yield [C]% vs NH [4.5-5.5]%
+                      → ✅ HIỆU QUẢ / ⚡ TƯƠNG ĐƯƠNG / ⚠ KÉM HƠN
+
+=== RENTAL QUALITY SCORE ===
+Score:                    [X/100]
+Quality_level:            HIGH/MEDIUM/LOW/INSUFFICIENT
+Confidence_cap_for_step2: [Y]
+Notes:                    [lý do trừ/cộng điểm]
 `;
