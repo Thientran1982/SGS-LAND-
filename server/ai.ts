@@ -643,9 +643,12 @@ const TOOL_EXECUTOR = {
                 filters.status = 'AVAILABLE';
             }
 
+            // Project catalog: fetch up to 50 units (show all);
+            // general search: fetch top 10 then rank by budget proximity.
+            const fetchSize = projectCode ? 50 : 10;
             const result = await listingRepository.findListings(
                 tenantId,
-                { page: 1, pageSize: 15 },
+                { page: 1, pageSize: fetchSize },
                 filters
             );
 
@@ -717,11 +720,19 @@ const TOOL_EXECUTOR = {
                 ? result.data
                 : [...result.data].sort((a: any, b: any) => Math.abs((a.price || 0) - priceMax!) - Math.abs((b.price || 0) - priceMax!));
 
-            const top = sorted.slice(0, 15); // show all units for project catalog, cap at 15
+            // Project catalog: show all fetched units (up to 50).
+            // General search: show top 5 ranked by budget proximity.
+            const top = projectCode ? sorted : sorted.slice(0, 5);
             const formatted = top.map((l: any, i: number) => formatListing(l, i)).join('\n');
+            const remaining = result.total - top.length;
+            const remainingNote = (!projectCode && remaining > 0)
+                ? ` (còn ${remaining} sản phẩm khác — hỏi thêm tiêu chí để lọc)`
+                : (projectCode && result.total > top.length)
+                    ? ` (hiển thị ${top.length}/${result.total} — có thêm sản phẩm)`
+                    : '';
             const summaryLabel = projectCode
-                ? `Danh sách ${result.total} sản phẩm trong dự án [${projectCode}]`
-                : `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất)`;
+                ? `Danh sách ${result.total} sản phẩm trong dự án [${projectCode}]${remainingNote}`
+                : `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất)${remainingNote}`;
             return `${filterSummary}\n${summaryLabel}:\n${formatted}`;
         } catch (error) {
             logger.error('Inventory search error:', error);
