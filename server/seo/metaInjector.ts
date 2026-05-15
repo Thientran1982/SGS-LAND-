@@ -22,9 +22,9 @@ const SGS_FAQ_META = {
 };
 
 const DEFAULT_META = {
-  title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
+  title: 'SGS LAND | Mua Bán Bất Động Sản TP.HCM — Căn Hộ, Nhà Phố, Đất Nền 2026',
   description:
-    'SGS LAND - Nền tảng BĐS AI: định giá tự động, CRM đa kênh, quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
+    'SGS LAND — mua bán BĐS uy tín nhất Việt Nam. 45.000+ sản phẩm, 15.000+ môi giới, định giá AI ±5% miễn phí. Căn hộ TP.HCM từ 2 tỷ, đất nền từ 1 tỷ. Đại lý Vinhomes, Novaland, Masterise.',
   image: DEFAULT_IMAGE,
   url: APP_URL,
   type: 'website',
@@ -48,8 +48,8 @@ const STATIC_PAGE_META: Record<string, {
   structuredData?: object;
 }> = {
   '': {
-    title: 'SGS LAND | Top BĐS TP.HCM 2026: Căn Hộ Nhà Phố Aqua City Vinhomes',
-    description: 'Top 3 dự án căn hộ TP.HCM 2026 (Vinhomes Grand Park, Global City, Masterise) và Top 3 nhà phố Đồng Nai (Aqua City, Izumi City, Vạn Phúc). SGS LAND định giá AI ±5%, tư vấn miễn phí.',
+    title: 'SGS LAND | Top BĐS TP.HCM 2026: Shophouse Nhà Phố Aqua City Novaland',
+    description: 'Top 3 dự án căn hộ TP.HCM 2026 (Vinhomes Grand Park, Global City, Masterise) và Top 3 nhà phố Đồng Nai (Aqua City, Izumi City, Vạn Phúc City). SGS LAND định giá AI ±5%, tư vấn miễn phí.',
     keywords: 'bất động sản TP.HCM, mua bán nhà đất TP.HCM, căn hộ TP.HCM 2026, dự án bất động sản 2026, aqua city novaland, vinhomes grand park, the global city masterise, biệt thự đồng nai, đầu tư bất động sản, SGS LAND',
     h1: 'SGS LAND - Đại Lý Bất Động Sản TP.HCM',
     structuredData: {

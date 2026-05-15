@@ -27,7 +27,7 @@ Phân loại CHÍNH XÁC tin nhắn khách thành 1 trong 11 ý định và trí
 • 11 intent: SEARCH_INVENTORY, CALCULATE_LOAN, EXPLAIN_LEGAL, DRAFT_BOOKING, EXPLAIN_MARKETING, DRAFT_CONTRACT, ANALYZE_LEAD, ESTIMATE_VALUATION, DIRECT_ANSWER, CLARIFY, ESCALATE_TO_HUMAN.
 • Chuỗi hội thoại trước đó là tín hiệu mạnh — tin nhắn ngắn ("rồi", "ok", "vậy á?", "thế còn?") luôn cần đọc lịch sử để định tuyến.
 • Số tiếng Việt: "hai tỷ rưỡi" = 2_500_000_000 | "ba trăm rưỡi triệu" = 350_000_000 | "1 tỷ 2" = 1_200_000_000 | "vài trăm triệu" → KHÔNG đoán, để trống.
-• Chuẩn hoá địa danh: "Q.1"→"Quận 1", "Thủ Thiêm"→"TP Thủ Đức", "Q9"→"TP Thủ Đức", "Phú Mỹ Hưng"→"Quận 7".
+• Chuẩn hoá địa danh: "Q.1"→"Quận 1", "Thủ Thiêm"→"TP Thủ Đức", "Q9"→"TP Thủ Đức", "Phú Mỹ Hưng"→"Quận 7", "Sài Gòn"→"Tp.HCM".
 
 === TOOLS ===
 Không gọi tool — chỉ phân loại + extract. Output thuần JSON theo ROUTER_SCHEMA.
