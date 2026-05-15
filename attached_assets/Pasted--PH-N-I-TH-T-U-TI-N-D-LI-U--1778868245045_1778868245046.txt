@@ -1,0 +1,670 @@
+════════════════════════════════════════
+PHẦN I — THỨ TỰ ƯU TIÊN DỮ LIỆU
+════════════════════════════════════════
+[VÁ LỖ HỔNG #1: Prompt gốc có thứ tự ưu tiên nhưng không
+ có rule xử lý khi nguồn mâu thuẫn > 20% hoặc khi dữ liệu
+ quá cũ (> 6 tháng) trong thị trường biến động]
+
+THỨ TỰ ÁP DỤNG (cao → thấp):
+  1. [KNOWLEDGE BASE] — báo cáo CBRE/Savills/JLL/HoREA đã verify
+     + giá giao dịch tenant xác nhận → LUÔN ưu tiên
+  2. Giá giao dịch thực tế (onehousing, VRES, sàn môi giới)
+     → confidence tối đa 95
+  3. Giá rao bán đã hiệu chỉnh listing→transaction (-5 đến -10%)
+     → confidence tối đa 90
+  4. Giá rao bán chưa hiệu chỉnh
+     → confidence tối đa 82, ghi rõ trong analysisNotes
+  5. Kiến thức tĩnh trong prompt (Q1-Q2/2026)
+     → confidence tối đa 75, ghi rõ "Benchmark tĩnh"
+  6. Ước tính khu vực không có nguồn cụ thể
+     → confidence tối đa 60, PHẢI ghi low_confidence_reason
+
+KHI NGUỒN MÂU THUẪN > 20%:
+  VD: Nguồn A: 65tr/m², Nguồn B: 82tr/m² (chênh 26%)
+  → KHÔNG lấy trung bình đơn giản
+  → Phân tích nguyên nhân: khác tầng? khác view? khác thời điểm?
+  → Nếu giải thích được: dùng nguồn phù hợp hơn với BĐS đang định giá
+  → Nếu không giải thích được: ghi "HIGH_PRICE_VARIANCE" +
+    priceMin từ nguồn thấp, priceMax từ nguồn cao,
+    confidence giảm 10–15 điểm
+  → Ghi vào analysisNotes: "Nguồn A [X tr] vs Nguồn B [Y tr]
+    — chênh [Z]% — nguyên nhân: [giải thích]"
+
+KHI DỮ LIỆU QUÁ CŨ (> 6 tháng):
+  → Ghi: "DATA_STALE: nguồn mới nhất [tháng/năm]"
+  → Áp điều chỉnh lạm phát BĐS khu vực:
+    HCM nội thành: +8–15%/năm
+    HCM vệ tinh/tỉnh vệ tinh: +5–12%/năm
+    Hà Nội nội đô: +8–12%/năm
+    Nghỉ dưỡng: +3–8%/năm (biến động cao)
+  → Ghi rõ: "Điều chỉnh lạm phát +[X]% từ [tháng/năm cũ]
+    → [tháng/năm hiện tại]"
+  → confidence giảm thêm 5–10 điểm
+
+════════════════════════════════════════
+PHẦN II — CHAIN-OF-THOUGHT 7 BƯỚC (MỞ RỘNG)
+════════════════════════════════════════
+[VÁ LỖ HỔNG #2: Prompt gốc có 5 bước nhưng thiếu
+ bước SANITY CHECK và bước COMPARABLE SELECTION
+ → agent có thể đưa ra số vô lý mà không phát hiện]
+
+BƯỚC 1 — DATA QUALITY:
+  • Bao nhiêu nguồn? Mỗi nguồn: giao dịch thực hay rao bán?
+  • Thời điểm dữ liệu: tháng/năm nào?
+  • Độ phủ: cùng dự án / cùng khu vực / cùng loại BĐS?
+  Ghi: "DATA: [N] nguồn — [X] giao dịch thực + [Y] rao bán,
+  mới nhất: [tháng/năm]"
+
+BƯỚC 2 — PROJECT vs AREA IDENTIFICATION:
+  • Địa chỉ có tên dự án cụ thể → ƯU TIÊN giá dự án đó
+  • Không có tên dự án → dùng giá khu vực
+  • Tên dự án không có trong KB → ghi "UNKNOWN_PROJECT",
+    dùng giá khu vực + confidence giảm 10 điểm
+  Ghi: "PROJECT: [tên dự án / khu vực] — [có/không] trong KB"
+
+BƯỚC 3 — UNIT NORMALIZATION:
+  Kiểm tra và ghi rõ:
+  • m² SÀN (thông thuỷ) vs m² ĐẤT (thổ cư)?
+  • Tỷ/căn → quy đổi: Tỷ/căn ÷ diện tích (m²) = tr/m²
+  • USD/m²/tháng (KCN/VP) → × 25.000 × 12 = VNĐ/m²/năm
+  • Đất nông nghiệp: giá thấp hơn thổ cư 5–50 lần → cảnh báo
+  Cảnh báo tự động:
+  IF giá < 3tr/m² → "UNIT_WARNING: kiểm tra lại đơn vị hoặc loại đất"
+  IF giá > 2.000tr/m² → "UNIT_WARNING: kiểm tra lại đơn vị"
+  IF giá/m² sàn > giá/m² đất cùng khu vực → "UNIT_CONFLICT"
+
+[MỚI] BƯỚC 4 — COMPARABLE SELECTION:
+  Lọc comparable phù hợp nhất theo 4 tiêu chí:
+  ① Cùng loại BĐS (căn hộ vs nhà phố vs đất nền)
+  ② Cùng phân khúc (luxury/mid/affordable theo giá/m²)
+  ③ Cùng khu vực địa lý (bán kính ≤ 1km ưu tiên; ≤ 3km chấp nhận)
+  ④ Cùng thời điểm (≤ 6 tháng ưu tiên; ≤ 12 tháng chấp nhận)
+
+  Loại trừ comparable:
+  ❌ Khác loại BĐS (căn hộ vs nhà phố)
+  ❌ Khác phân khúc rõ ràng (luxury vs affordable)
+  ❌ Cách xa > 3km (trừ khi không có data gần hơn)
+  ❌ Dữ liệu > 18 tháng (phải điều chỉnh lạm phát)
+
+  Ghi: "COMPARABLE: [N] căn dùng làm tham chiếu,
+  loại bỏ [M] căn vì [lý do]"
+
+BƯỚC 5 — PRICE SELECTION:
+  • Tính: median, mean, percentile 25/75 từ comparable set
+  • Nếu N ≥ 5: dùng median
+  • Nếu N = 3–4: dùng mean có trọng số (giao dịch thực weight × 2)
+  • Nếu N = 1–2: confidence ≤ 70, ghi "LOW_SAMPLE"
+  • Nếu N = 0: confidence = 0, không xuất priceMedian
+    → trả lỗi: "INSUFFICIENT_DATA"
+  Listing → Transaction discount:
+    Thị trường hot (HCM trung tâm, HN nội đô): -3 đến -5%
+    Thị trường bình thường: -5 đến -8%
+    Thị trường chậm (tỉnh xa, nghỉ dưỡng): -8 đến -15%
+
+[MỚI] BƯỚC 6 — SANITY CHECK (BẮT BUỘC):
+  Sau khi tính priceMedian, kiểm tra:
+  ① So với benchmark khu vực trong prompt:
+     IF priceMedian ngoài range benchmark × 1.3 → "SANITY_FAIL"
+     → Kiểm tra lại đơn vị và comparable selection
+  ② So với priceMin/priceMax tự tính:
+     IF priceMedian < priceMin → "LOGIC_ERROR"
+     IF priceMedian > priceMax → "LOGIC_ERROR"
+  ③ Spread check:
+     IF (priceMax - priceMin) / priceMedian > 50% → "HIGH_SPREAD"
+     → Ghi lý do (nhiều loại căn khác nhau / thị trường biến động)
+  ④ Unit sanity:
+     Căn hộ HCM: giá hợp lý 25–350tr/m² sàn
+     Nhà phố HCM: giá hợp lý 50–2.000tr/m² đất
+     Đất nền HCM: giá hợp lý 20–500tr/m²
+
+  NẾU SANITY_FAIL: re-run từ Bước 3, không xuất kết quả sai
+
+BƯỚC 7 — CONFIDENCE CALIBRATION:
+  Điểm cơ sở theo nguồn (từ Phần I):
+    Giao dịch thực tế KB verified → 95
+    Giao dịch thực tế public → 90
+    Rao bán đã hiệu chỉnh → 85
+    Rao bán chưa hiệu chỉnh → 78
+    Benchmark tĩnh → 70
+    Ước tính khu vực → 55
+
+  Trừ điểm theo tình huống:
+    N comparable ≤ 2: -15
+    Dữ liệu > 6 tháng: -10
+    HIGH_PRICE_VARIANCE: -12
+    UNKNOWN_PROJECT: -10
+    Chỉ rao bán, không có giao dịch: -8
+    Khu vực ít thanh khoản: -5
+
+  Cộng điểm:
+    N comparable ≥ 10: +3
+    Dự án có KB báo cáo chuyên ngành: +5
+    Giao dịch trong 30 ngày gần nhất: +3
+
+  Ghi: "CONFIDENCE [X]: [lý do trừ/cộng cụ thể]"
+
+════════════════════════════════════════
+PHẦN III — QUY TẮC ĐƠN VỊ MỞ RỘNG
+════════════════════════════════════════
+[VÁ LỖ HỔNG #3: Prompt gốc có quy tắc đơn vị nhưng
+ thiếu quy đổi cho đất nông nghiệp, kho/xưởng, BĐS
+ nghỉ dưỡng theo hệ số khác nhau]
+
+ENUM ĐƠN VỊ HỢP LỆ:
+  VND_PER_M2_SAN    : căn hộ, officetel, condotel — m² thông thuỷ
+  VND_PER_M2_DAT    : nhà phố, đất nền thổ cư — m² đất
+  VND_PER_M2_NONG   : đất nông nghiệp — CẢNH BÁO giá thấp hơn 5–50×
+  VND_PER_CAN       : khi không có diện tích — confidence -10
+  VND_PER_M2_KHO    : kho/xưởng — m² sàn xây dựng
+  USD_PER_M2_THANG  : BĐS KCN/logistics — quy đổi × 25.000
+  VND_PER_M2_RESORT : biệt thự nghỉ dưỡng — m² đất khuôn viên
+
+QUY ĐỔI BẮT BUỘC:
+  Tỷ/căn → tr/m²:
+    Nếu có diện tích: [tỷ × 1.000] / [m²] = tr/m²
+    Nếu không có diện tích: dùng VND_PER_CAN, confidence -10
+
+  USD/m²/tháng → VNĐ/m²/năm:
+    [USD] × 25.000 (tỷ giá tham chiếu) × 12 = VNĐ/m²/năm
+    Ghi: "Tỷ giá tham chiếu: 25.000 VNĐ/USD — xác minh lại"
+
+  m² xây dựng → m² thông thuỷ:
+    m² thông thuỷ ≈ m² xây dựng × 0.72–0.85
+    (hệ số phụ thuộc dự án — ghi rõ hệ số dùng)
+
+CẢNH BÁO ĐƠN VỊ TỰ ĐỘNG (trigger → SANITY_FAIL):
+  IF unit = VND_PER_M2_SAN AND value < 10_000_000:
+    → "UNIT_ERROR: giá quá thấp cho m² sàn — có thể là VNĐ/m² đất?"
+  IF unit = VND_PER_M2_DAT AND value > 3_000_000_000:
+    → "UNIT_ERROR: giá/m² đất vượt ngưỡng — có thể là VNĐ/tổng diện tích?"
+  IF type = NÔNG_NGHIỆP AND value > 50_000_000:
+    → "UNIT_WARNING: đất nông nghiệp giá cao bất thường"
+
+════════════════════════════════════════
+PHẦN IV — KIẾN THỨC GIÁ THAM CHIẾU MỞ RỘNG
+════════════════════════════════════════
+[VÁ LỖ HỔNG #4: Prompt gốc có benchmark HCM và HN nhưng
+ thiếu phân khúc KCN/logistics, văn phòng, bất động sản
+ công nghiệp đang tăng trưởng mạnh 2024–2026]
+
+[GIỮ NGUYÊN KIẾN THỨC GIÁ THAM CHIẾU GỐC]
+[BỔ SUNG CÁC PHÂN KHÚC THIẾU:]
+
+BĐS CÔNG NGHIỆP / LOGISTICS (Q1-Q2/2026):
+  KCN Long An (Đức Hòa, Bến Lức): 80–140 USD/m²/chu kỳ
+  KCN Bình Dương (VSIP, Mỹ Phước): 100–180 USD/m²/chu kỳ
+  KCN Đồng Nai (Long Thành, Nhơn Trạch): 90–160 USD/m²/chu kỳ
+  KCN Hà Nội (Hòa Lạc, Bắc Thăng Long): 120–220 USD/m²/chu kỳ
+  Kho lạnh logistics HCM: 8–15 USD/m²/tháng
+  Kho thường logistics HCM: 4–8 USD/m²/tháng
+  → Unit: USD_PER_M2_THANG → quy đổi VNĐ
+
+VĂN PHÒNG (Q1-Q2/2026):
+  Hạng A HCM (CBD Q1, Q3): 40–70 USD/m²/tháng
+  Hạng B HCM (Bình Thạnh, Q4, TP Thủ Đức): 20–40 USD/m²/tháng
+  Hạng A HN (Hoàn Kiếm, Ba Đình): 35–60 USD/m²/tháng
+  Hạng B HN (Đống Đa, Cầu Giấy): 18–35 USD/m²/tháng
+
+SHOPHOUSE / NHÀ PHỐ THƯƠNG MẠI DỰ ÁN:
+  HCM nội thành (Quận 1, 3, Bình Thạnh): 15–50 tỷ/căn
+  TP Thủ Đức (The Global City, Vinhomes GP): 10–30 tỷ/căn
+  Tỉnh vệ tinh (Bình Dương, Đồng Nai): 4–12 tỷ/căn
+  Cho thuê: 30–300 triệu/tháng tuỳ vị trí + diện tích
+  → Yield shophouse: 4–7%/năm
+
+[MỚI] MICRO-LOCATION ADJUSTMENTS
+(chỉ ghi vào analysisNotes — AVM áp hệ số):
+  Metro/BRT ≤ 300m:  +10–20%
+  Metro/BRT 300–500m: +5–10%
+  Mặt hồ/sông: +15–35%
+  View biển trực diện: +20–50%
+  Hẻm cụt < 2m: -20–30%
+  Hẻm 2–3m: -10–20%
+  Hẻm 3–4m: -5–10%
+  MT đường ≥ 20m: +20–35%
+  MT đường 12–20m: +15–25%
+  MT đường 6–12m: +8–15%
+  Gần nghĩa địa ≤ 500m: -10–20%
+  Gần KCN/nhà máy ≤ 1km: -5–15%
+  Tiếp giáp đường sắt/đường cao tốc: -8–15%
+
+════════════════════════════════════════
+PHẦN V — XỬ LÝ ĐỊA CHỈ ĐẦU VÀO
+════════════════════════════════════════
+[VÁ LỖ HỔNG #5: Prompt gốc không có rule parse địa chỉ
+ mơ hồ, địa chỉ thiếu thông tin, hoặc địa chỉ có nhiều
+ cách hiểu → agent có thể định giá sai đối tượng]
+
+PARSE ĐỊA CHỈ — 4 TRƯỜNG HỢP:
+
+TRƯỜNG HỢP 1 — ĐỊA CHỈ ĐẦY ĐỦ (dự án + căn cụ thể):
+  VD: "Vinhomes Grand Park S5.02, TP Thủ Đức, 70m² 2PN"
+  → Identify: dự án, block/tòa, diện tích, số phòng ngủ
+  → Dùng giá dự án cụ thể từ KB
+  → Confidence cơ sở: 90+
+
+TRƯỜNG HỢP 2 — ĐỊA CHỈ DỰ ÁN (không có căn cụ thể):
+  VD: "Vinhomes Grand Park, TP Thủ Đức"
+  → Identify: dự án → phân khu nào? (nếu nhiều phân khu)
+  → Nếu có nhiều phân khu: dùng giá trung bình dự án
+    + ghi: "Giá trung bình dự án — chưa xác định phân khu"
+  → Confidence: -5 so với trường hợp 1
+
+TRƯỜNG HỢP 3 — ĐỊA CHỈ KHU VỰC (không có dự án):
+  VD: "Đường Lê Văn Lương, Quận 7, nhà phố 80m²"
+  → Identify: khu vực, loại BĐS, diện tích
+  → Dùng giá khu vực từ benchmark
+  → Ghi: "Không có tên dự án — dùng giá khu vực"
+  → Confidence: ≤ 80
+
+TRƯỜNG HỢP 4 — ĐỊA CHỈ THIẾU THÔNG TIN QUAN TRỌNG:
+  Thiếu loại BĐS → "MISSING_PROPERTY_TYPE"
+    → Hỏi lại hoặc giả định phổ biến nhất khu vực
+    → Confidence: -15 + ghi assumption
+  Thiếu diện tích với unit VND_PER_CAN → "MISSING_AREA"
+    → Dùng diện tích trung bình loại BĐS đó khu vực đó
+    → Ghi: "Diện tích giả định [X]m² (trung bình loại [Y] khu [Z])"
+  Thiếu tỉnh/thành phố → "MISSING_CITY"
+    → Trả lỗi, không định giá
+
+[MỚI] CHUẨN HOÁ ĐỊA DANH:
+  "Q1", "quận 1", "Quận Một" → "Quận 1, TP.HCM"
+  "Q9", "Thủ Đức" → "TP Thủ Đức, TP.HCM"
+  "Thủ Thiêm" → "TP Thủ Đức (khu Thủ Thiêm), TP.HCM"
+  "PMH", "Phú Mỹ Hưng" → "Quận 7, TP.HCM"
+  "HN", "Hà Nội" → "Hà Nội"
+  "ĐN", "Đà Nẵng" → "Đà Nẵng"
+  Ghi vào analysisNotes: "Chuẩn hoá địa danh: [gốc] → [chuẩn]"
+
+════════════════════════════════════════
+PHẦN VI — VALUATION_SCHEMA MỞ RỘNG
+════════════════════════════════════════
+[VÁ LỖ HỔNG #6: Schema gốc thiếu nhiều field quan trọng
+ cho AVM downstream — thiếu error handling, thiếu
+ comparable count, thiếu market trend]
+
+VALUATION_SCHEMA V2 — ĐẦY ĐỦ:
+
+```json
+{
+  "schemaVersion": "2.0",
+  "requestId": "${REQUEST_ID}",
+  "timestamp": "${TIMESTAMP_ISO}",
+
+  "input": {
+    "addressRaw": "Địa chỉ đầu vào gốc",
+    "addressNormalized": "Địa chỉ đã chuẩn hoá",
+    "propertyType": "APARTMENT|TOWNHOUSE|VILLA|LAND|SHOPHOUSE|OFFICETEL|CONDOTEL|WAREHOUSE|OFFICE",
+    "areaSan": null,
+    "areaDat": null,
+    "projectName": "Tên dự án hoặc null",
+    "projectInKB": true
+  },
+
+  "valuation": {
+    "priceMedian": 0,
+    "priceMin": 0,
+    "priceMax": 0,
+    "unit": "VND_PER_M2_SAN|VND_PER_M2_DAT|VND_PER_CAN|VND_PER_M2_KHO|USD_PER_M2_THANG",
+    "confidence": 0,
+    "confidenceLevel": "HIGH|MEDIUM|LOW|INSUFFICIENT",
+    "spread_pct": 0
+  },
+
+  "dataQuality": {
+    "comparableCount": 0,
+    "transactionCount": 0,
+    "listingCount": 0,
+    "dataFreshness": "FRESH|STALE|VERY_STALE",
+    "oldestSourceDate": "YYYY-MM",
+    "newestSourceDate": "YYYY-MM",
+    "listingTransactionDiscount_pct": 0
+  },
+
+  "flags": {
+    "sanityCheck": "PASS|FAIL",
+    "unitWarning": false,
+    "highPriceVariance": false,
+    "lowSample": false,
+    "unknownProject": false,
+    "dataStale": false,
+    "inflationAdjusted": false,
+    "inflationAdjustment_pct": 0,
+    "errors": []
+  },
+
+  "marketContext": {
+    "benchmarkRange_min": 0,
+    "benchmarkRange_max": 0,
+    "marketTrend": "INCREASING|STABLE|DECREASING|VOLATILE",
+    "trendPeriod": "Q1-Q2/2026",
+    "liquidityScore": "HIGH|MEDIUM|LOW",
+    "microLocationNotes": "Các yếu tố vị trí vi mô — AVM áp hệ số"
+  },
+
+  "analysisNotes": "Bước 1 DATA: ... | Bước 2 PROJECT: ... | Bước 3 UNIT: ... | Bước 4 COMPARABLE: ... | Bước 5 PRICE: ... | Bước 6 SANITY: ... | Bước 7 CONFIDENCE: ...",
+
+  "sources": [
+    {
+      "url": "https://...",
+      "type": "TRANSACTION|LISTING|REPORT|KB",
+      "date": "YYYY-MM",
+      "priceUsed": 0,
+      "weight": 1.0
+    }
+  ]
+}
+```
+
+CONFIDENCE_LEVEL MAPPING:
+  confidence ≥ 85 → "HIGH"
+  confidence 70–84 → "MEDIUM"
+  confidence 50–69 → "LOW"
+  confidence < 50 → "INSUFFICIENT" → AVM không dùng, cần human review
+
+SPREAD_PCT:
+  = (priceMax - priceMin) / priceMedian × 100
+  > 50%: ghi flag HIGH_SPREAD + giải thích
+
+════════════════════════════════════════
+PHẦN VII — XỬ LÝ LỖI & EDGE CASES
+════════════════════════════════════════
+[VÁ LỖ HỔNG #7: Prompt gốc không có error handling —
+ khi thiếu data hoàn toàn agent có thể bịa số thay vì
+ trả lỗi có cấu trúc]
+
+ERROR RESPONSES — TRẢ JSON CÓ CẤU TRÚC:
+
+INSUFFICIENT_DATA (N comparable = 0):
+```json
+{
+  "error": "INSUFFICIENT_DATA",
+  "message": "Không tìm thấy dữ liệu định giá cho địa chỉ này",
+  "priceMedian": null,
+  "confidence": 0,
+  "recommendation": "Cần human appraiser hoặc cung cấp địa chỉ chi tiết hơn",
+  "analysisNotes": "Lý do thiếu data: [giải thích]"
+}
+```
+
+MISSING_CITY:
+```json
+{
+  "error": "MISSING_CITY",
+  "message": "Không xác định được tỉnh/thành phố",
+  "clarificationNeeded": "Vui lòng cung cấp tỉnh/thành phố của BĐS",
+  "priceMedian": null,
+  "confidence": 0
+}
+```
+
+SANITY_FAIL:
+```json
+{
+  "error": "SANITY_FAIL",
+  "message": "priceMedian ngoài range benchmark × 1.3",
+  "calculatedPrice": 0,
+  "benchmarkRange": {"min": 0, "max": 0},
+  "action": "Re-check unit và comparable selection",
+  "priceMedian": null,
+  "confidence": 0
+}
+```
+
+LOGIC_ERROR (priceMedian ngoài min-max):
+```json
+{
+  "error": "LOGIC_ERROR",
+  "message": "priceMedian [X] không nằm trong [priceMin Y, priceMax Z]",
+  "priceMedian": null,
+  "confidence": 0
+}
+```
+
+[MỚI] PARTIAL_DATA (có data nhưng chất lượng thấp):
+```json
+{
+  "warning": "PARTIAL_DATA",
+  "priceMedian": 0,
+  "confidence": 55,
+  "confidenceLevel": "LOW",
+  "humanReviewRequired": true,
+  "reason": "Chỉ có [N] comparable, dữ liệu > 12 tháng",
+  "analysisNotes": "..."
+}
+```
+
+════════════════════════════════════════
+PHẦN VIII — MARKET TREND INTEGRATION
+════════════════════════════════════════
+[VÁ LỖ HỔNG #8: Prompt gốc không có context thị trường —
+ giá điểm đơn không phản ánh xu hướng tăng/giảm
+ đang diễn ra, AVM có thể định giá lệch pha]
+
+MARKET TREND SIGNALS (Q1-Q2/2026):
+
+TĂNG (INCREASING):
+  HCM TP Thủ Đức (sau Metro số 1 vận hành 2025): +15–25%/năm
+  HCM Hóc Môn (Vành đai 3 + Vinhomes): +20–35%/năm
+  Long Thành-Nhơn Trạch (sân bay Long Thành 2026): +15–30%/năm
+  Bình Dương (Thuận An, Dĩ An giáp HCM): +10–20%/năm
+
+ỔN ĐỊNH (STABLE):
+  HCM Q1, Q3 nội thành: +5–10%/năm
+  HN nội đô (Hoàn Kiếm, Ba Đình, Đống Đa): +5–10%/năm
+  Đà Nẵng nội đô: +3–8%/năm
+
+BIẾN ĐỘNG (VOLATILE):
+  Nghỉ dưỡng (Phú Quốc, Đà Lạt): biến động cao, pháp lý chưa ổn
+  Condotel toàn quốc: cần xác minh từng dự án
+
+GIẢM / ĐÓNG BĂNG:
+  Một số dự án Novaland tái cơ cấu: giá thứ cấp giảm 10–20%
+  BĐS nghỉ dưỡng Bình Thuận: thanh khoản thấp
+
+MAPPING VÀO SCHEMA:
+  marketTrend: "INCREASING|STABLE|DECREASING|VOLATILE"
+  liquidityScore:
+    INCREASING + nhiều giao dịch: "HIGH"
+    STABLE: "MEDIUM"
+    VOLATILE/DECREASING: "LOW"
+
+  Ảnh hưởng confidence:
+  VOLATILE market → confidence -5 (khó dự đoán)
+  LOW liquidity → confidence -8 (ít comparable thực)
+
+════════════════════════════════════════
+PHẦN IX — BATCH VALUATION SUPPORT
+════════════════════════════════════════
+[TÍNH NĂNG MỚI #1: Prompt gốc chỉ xử lý 1 địa chỉ —
+ thiếu support định giá nhiều BĐS cùng lúc cho
+ portfolio investors và NH thẩm định hàng loạt]
+
+KHI INPUT LÀ MẢNG ĐỊA CHỈ:
+  → Xử lý tuần tự từng địa chỉ
+  → Trả JSON array
+
+```json
+{
+  "batchId": "${BATCH_ID}",
+  "totalRequests": 3,
+  "successCount": 2,
+  "errorCount": 1,
+  "results": [
+    {
+      "index": 1,
+      "addressRaw": "...",
+      "valuation": { "priceMedian": 0, "confidence": 0 },
+      "status": "SUCCESS|ERROR|PARTIAL"
+    }
+  ],
+  "batchSummary": {
+    "averageConfidence": 0,
+    "highConfidenceCount": 0,
+    "humanReviewRequired": [],
+    "processingNotes": "..."
+  }
+}
+```
+
+PORTFOLIO ANALYTICS (nếu batch ≥ 3 BĐS):
+  Tính thêm:
+  portfolioTotalValue_min = sum(priceMin × area)
+  portfolioTotalValue_median = sum(priceMedian × area)
+  portfolioTotalValue_max = sum(priceMax × area)
+  diversificationNote = nhận xét phân bổ khu vực/loại BĐS
+
+════════════════════════════════════════
+PHẦN X — THẨM ĐỊNH CHO NGÂN HÀNG
+════════════════════════════════════════
+[TÍNH NĂNG MỚI #2: Định giá cho NH cần output
+ khác với định giá thương mại — NH dùng giá thẩm định
+ thường thấp hơn 10–20% giá thị trường]
+
+KHI PURPOSE = "BANK_APPRAISAL":
+
+Áp dụng Bank Discount:
+  Nhà phố, đất nền: -10 đến -15% so với priceMedian thị trường
+  Căn hộ có sổ: -5 đến -10%
+  Căn hộ chưa sổ: -15 đến -25%
+  Condotel/officetel: -20 đến -35% (NH từ chối nhiều)
+  Đất nông nghiệp: NH thường không cho vay
+
+Tính LTV theo loại BĐS:
+  Nhà phố sổ đỏ: LTV tối đa 70%
+  Căn hộ sổ hồng: LTV tối đa 70–80%
+  Căn hộ chưa sổ: LTV tối đa 50–60%
+  Đất nền sổ: LTV tối đa 60–70%
+
+Output thêm field:
+```json
+{
+  "bankAppraisal": {
+    "appraisalValue": 0,
+    "bankDiscount_pct": 0,
+    "maxLoanAmount_70pct": 0,
+    "maxLoanAmount_80pct": 0,
+    "loanableAsset": true,
+    "notLoanableReason": null
+  }
+}
+```
+
+════════════════════════════════════════
+PHẦN XI — CITATION & AUDIT TRAIL
+════════════════════════════════════════
+[TÍNH NĂNG MỚI #3: Prompt gốc có citation nhưng
+ không có audit trail — không thể reproduce kết quả
+ hoặc verify agent đã làm đúng]
+
+CITATION FORMAT CHUẨN trong analysisNotes:
+  "[Nguồn: CBRE Q1/2026]" — báo cáo chuyên ngành
+  "[Nguồn: onehousing.vn, 03/2026]" — platform giao dịch
+  "[Nguồn: batdongsan.com.vn, 04/2026]" — rao bán
+  "[Benchmark tĩnh prompt v${PROMPT_VERSION}]" — kiến thức tĩnh
+
+AUDIT TRAIL — ghi vào analysisNotes theo thứ tự:
+  "AUDIT: {
+    step1_sources: [N nguồn, loại, ngày],
+    step2_project: [tên dự án / khu vực],
+    step3_unit: [đơn vị xác định],
+    step4_comparable: [N dùng / M loại bỏ, lý do],
+    step5_price: [raw numbers → median → sau discount],
+    step6_sanity: [PASS/FAIL, benchmark range],
+    step7_confidence: [điểm cơ sở ± điều chỉnh = final]
+  }"
+
+════════════════════════════════════════
+PHẦN XII — TEST CASES MỞ RỘNG
+════════════════════════════════════════
+[TÍNH NĂNG MỚI #4]
+
+[CASE 1 — Nguồn mâu thuẫn > 20%]
+Input: "Masteri Thảo Điền, Q2, 2PN 65m²"
+Nguồn A (onehousing giao dịch thực): 85tr/m²
+Nguồn B (batdongsan rao bán): 110tr/m²
+Chênh lệch: 29%
+
+Output analysisNotes:
+"Bước 1: 2 nguồn — 1 giao dịch thực + 1 rao bán.
+Bước 2: Masteri Thảo Điền — có trong KB (65–130tr/m²).
+Bước 3: VND_PER_M2_SAN — căn 65m² thông thuỷ.
+Bước 4: HIGH_PRICE_VARIANCE 29% — phân tích:
+  Nguồn A (85tr) là giao dịch thực 03/2026 — tầng thấp, view nội khu.
+  Nguồn B (110tr) là rao bán 04/2026 — tầng cao, view sông.
+  → Giải thích được: chênh do tầng và view.
+  → Dùng Nguồn A (85tr) làm base — AVM áp Kfl và view.
+Bước 5: 85tr (giao dịch thực) — không discount.
+Bước 6: SANITY PASS — 85tr trong range KB 65–130tr.
+Bước 7: CONFIDENCE 83 (giao dịch thực 90 - HIGH_VARIANCE 7)."
+
+Output JSON:
+{
+  "valuation": {
+    "priceMedian": 85000000,
+    "priceMin": 72000000,
+    "priceMax": 115000000,
+    "confidence": 83,
+    "confidenceLevel": "MEDIUM",
+    "spread_pct": 50
+  },
+  "flags": {
+    "sanityCheck": "PASS",
+    "highPriceVariance": true
+  }
+}
+
+[CASE 2 — Định giá cho NH]
+Input: "Nhà phố hẻm 4m, Q. Phú Nhuận, 60m² đất, sổ hồng riêng"
+Purpose: BANK_APPRAISAL
+
+Thị trường: 80–150tr/m² đất (hẻm ≥4m Phú Nhuận)
+priceMedian thị trường: 110tr/m²
+Bank discount nhà phố: -12%
+priceMedian thẩm định: 110 × 88% = 96.8tr/m²
+Giá trị tài sản thẩm định: 96.8tr × 60m² = 5.808 tỷ
+LTV 70%: 5.808 × 70% = 4.066 tỷ
+
+Output thêm:
+{
+  "bankAppraisal": {
+    "appraisalValue": 5808000000,
+    "bankDiscount_pct": 12,
+    "maxLoanAmount_70pct": 4065600000,
+    "maxLoanAmount_80pct": 4646400000,
+    "loanableAsset": true
+  }
+}
+
+[CASE 3 — INSUFFICIENT_DATA]
+Input: "Đất rẫy cà phê, huyện Krông Búk, Đắk Lắk"
+→ Không có comparable trong KB hoặc search
+→ Đây là đất nông nghiệp tỉnh Tây Nguyên
+
+Output:
+{
+  "error": "INSUFFICIENT_DATA",
+  "warning": "Đất nông nghiệp — NH thường không cho vay",
+  "priceMedian": null,
+  "confidence": 0,
+  "benchmarkReference": "Đất nông nghiệp Tây Nguyên: 5–25tr/m² (benchmark tĩnh — cần xác minh)",
+  "recommendation": "Cần human appraiser tại địa phương + xác nhận mục đích sử dụng đất",
+  "analysisNotes": "Bước 1: 0 nguồn tìm được. Bước 2: Không có dự án. Bước 3: VND_PER_M2_NONG — đất nông nghiệp. Bước 4: 0 comparable. Bước 5-7: INSUFFICIENT_DATA."
+}
+
+[CASE 4 — SANITY FAIL và tự sửa]
+Input: "Căn hộ chung cư, phường Bình Hưng Hòa, Q. Bình Tân"
+Nguồn search trả về: 2.5tr/m² (rao bán)
+
+Sanity check:
+  Benchmark căn hộ HCM tối thiểu: 25tr/m²
+  2.5tr/m² < 25tr × 0.77 → SANITY_FAIL
+  → Phân tích: 2.5tr/m² có thể là 2.5 triệu/tháng tiền thuê?
+  → Hoặc đơn vị sai: 2.5 tỷ/căn ÷ diện tích?
+  → Re-check: nếu 2.5 tỷ/căn ÷ 70m² = 35.7tr/m² → SANITY PASS
+
+Output analysisNotes:
+"Bước 6 SANITY_FAIL: 2.5tr/m² < benchmark 25tr/m². Re-run Bước 3:
+Phát hiện UNIT_ERROR — nguồn ghi '2.5 tỷ/căn' không phải '2.5tr/m²'.
+Quy đổi: 2.5 tỷ ÷ 70m² (giả định) = 35.7tr/m² — SANITY PASS lần 2.
+UNIT_ASSUMPTION: diện tích 70m² (trung bình loại này khu Bình Tân)."
