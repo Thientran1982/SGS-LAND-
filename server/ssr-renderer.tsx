@@ -133,7 +133,7 @@ export const PAGE_META: Record<string, SsrPage> = {
       'Aqua City Novaland Biên Hoà: shophouse từ 12 tỷ, biệt thự từ 15 tỷ. Cập nhật bảng giá, tiến độ xây dựng, pháp lý T5/2026. Đại lý ủy quyền chính thức SGS LAND.',
     h1: 'Aqua City Novaland',
     keywords:
-      'aqua city novaland, aqua city bảng giá 2026, aqua city Biên Hoà đồng nai, biệt thự aqua city giá bao nhiêu, aqua city có nên mua không, dự án aqua city, nhà phố aqua city giá bao nhiêu, shophouse aqua city giá bao nhiêu',
+      'aqua city novaland, aqua city bảng giá 2026, aqua city Biên Hoà đồng nai, biệt thự aqua city giá bao nhiêu, aqua city có nên mua không, dự án aqua city, nhà phố aqua city giá bao nhiêu, shophouse aqua city giá bao nhiêu, giá bán aqua city',
     image: `${APP}/og/du-an/aqua-city`,
     geoPosition: '10.8912;106.8712',
     geoPlacename: 'Long Hưng, Biên Hòa, Đồng Nai',
@@ -246,7 +246,7 @@ export const PAGE_META: Record<string, SsrPage> = {
       'Vinhomes Grand Park TP. Thủ Đức: siêu đô thị 271ha, căn hộ từ 2.5 tỷ. Bảng giá, chính sách vay, tiến độ bàn giao mới nhất tháng 5/2026. Đại lý ủy quyền chính thức.',
     h1: 'Vinhomes Grand Park',
     keywords:
-      'vinhomes grand park, vinhomes grand park bảng giá 2026, vinhomes thủ đức căn hộ, vinhomes grand park có nên mua, the opus one vinhomes',
+      'vinhomes grand park, vinhomes grand park bảng giá 2026, vinhomes thủ đức căn hộ, vinhomes grand park có nên mua, the opus one vinhomes, giá bán vinhomes grand park, vinhomes grand park giá bao nhiêu',
     image: `${APP}/og/du-an/vinhomes-grand-park`,
     geoPosition: '10.8555;106.8400',
     geoPlacename: 'TP Thủ Đức, TP.HCM',
