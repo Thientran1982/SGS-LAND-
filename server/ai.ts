@@ -589,7 +589,8 @@ const ROUTER_SCHEMA: Schema = {
                 floor_min: { type: Type.NUMBER, description: "Tầng tối thiểu khách muốn. VD: 'từ tầng 10', 'tầng cao', 'trên tầng 15' → 10/15/15. 'tầng thấp' → 1" },
                 floor_max: { type: Type.NUMBER, description: "Tầng tối đa khách muốn. VD: 'dưới tầng 10', 'tầng thấp (dưới 5)' → 10/5. Nếu chỉ hỏi 1 tầng cụ thể thì floor_min = floor_max = số đó" },
                 unit_direction: { type: Type.STRING, description: "Hướng căn hộ/nhà khách muốn. VD: 'hướng đông' → 'DONG', 'hướng đông nam' → 'DONG_NAM', 'hướng nam' → 'NAM', 'tây bắc' → 'TAY_BAC'. Giá trị: DONG | TAY | NAM | BAC | DONG_NAM | DONG_BAC | TAY_NAM | TAY_BAC" },
-                tower: { type: Type.STRING, description: "Tòa/Block/Tháp khách muốn. VD: 'tòa A', 'block B', 'tháp T1', 'tòa S1' → 'A'/'B'/'T1'/'S1'. Chỉ lấy ký hiệu tòa, không lấy chữ 'tòa'/'tháp'/'block'" }
+                tower: { type: Type.STRING, description: "Tòa/Block/Tháp khách muốn. VD: 'tòa A', 'block B', 'tháp T1', 'tòa S1' → 'A'/'B'/'T1'/'S1'. Chỉ lấy ký hiệu tòa, không lấy chữ 'tòa'/'tháp'/'block'" },
+                project_name: { type: Type.STRING, description: "Tên dự án cụ thể khi khách hỏi về danh sách sản phẩm/căn hộ trong một dự án. Ghi nguyên văn từ tin nhắn. VD: 'Cosmo Central', 'Masteri Cosmo Central', 'Vinhomes Grand Park', 'Aqua City'. Chỉ điền khi khách hỏi rõ về sản phẩm/căn của 1 dự án nhất định." }
             }
         },
         confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" },
@@ -620,6 +621,8 @@ const TOOL_EXECUTOR = {
         floorMax?: number,
         direction?: string,
         tower?: string,
+        /** Direct project_code lookup — bypasses title ILIKE and shows all active statuses */
+        projectCode?: string,
     ) {
         try {
             const filters: ListingFilters = {};
@@ -631,7 +634,14 @@ const TOOL_EXECUTOR = {
             if (floorMax !== undefined) filters.floor_lte = floorMax;
             if (direction) filters.direction = direction;
             if (tower) filters.tower = tower;
-            filters.status = 'AVAILABLE';
+
+            if (projectCode) {
+                // Project catalog view: show all active statuses (not just AVAILABLE)
+                filters.projectCode = projectCode;
+                filters.status_in = ['AVAILABLE', 'OPENING', 'BOOKING', 'HOLD'];
+            } else {
+                filters.status = 'AVAILABLE';
+            }
 
             const result = await listingRepository.findListings(
                 tenantId,
@@ -652,6 +662,12 @@ const TOOL_EXECUTOR = {
             if (tower) activeFilters.push(`Tòa: ${tower}`);
             const filterSummary = activeFilters.length ? `[Bộ lọc: ${activeFilters.join(' | ')}]` : '';
 
+            const STATUS_LABEL: Record<string, string> = {
+                AVAILABLE: '✅ Còn hàng',
+                OPENING:   '🔶 Đang mở bán',
+                BOOKING:   '🔷 Đã có đặt cọc',
+                HOLD:      '⏸ Đang giữ chỗ',
+            };
             const formatListing = (l: any, i: number, deltaNote?: string) => {
                 const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
                 const delta = deltaNote ?? ((priceMax && l.price) ? ` (±${Math.abs((l.price - priceMax) / 1e6).toFixed(0)}M)` : '');
@@ -664,7 +680,9 @@ const TOOL_EXECUTOR = {
                 const viewStr = attrs.view ? ` | View ${attrs.view}` : '';
                 const clearArea = attrs.clearArea ? ` | TT ${attrs.clearArea}m²` : '';
                 const code = l.code ? ` [${l.code}]` : '';
-                return `${i + 1}. ${l.title || l.code}${code} — ${l.location || 'N/A'} | ${price}${delta}${pricePerM2} | ${l.area || 'N/A'}m²${clearArea}${bedroomStr}${towerStr}${floorStr}${dirStr}${viewStr} | ${l.type || 'N/A'}`;
+                // Show status label only in project catalog view (non-AVAILABLE units)
+                const statusStr = projectCode && l.status !== 'AVAILABLE' ? ` | ${STATUS_LABEL[l.status] || l.status}` : '';
+                return `${i + 1}. ${l.title || l.code}${code} — ${l.location || 'N/A'} | ${price}${delta}${pricePerM2} | ${l.area || 'N/A'}m²${clearArea}${bedroomStr}${towerStr}${floorStr}${dirStr}${viewStr}${statusStr} | ${l.type || 'N/A'}`;
             };
 
             if (result.data.length === 0) {
@@ -694,14 +712,17 @@ const TOOL_EXECUTOR = {
                 return `${filterSummary}\nKhông tìm thấy đúng ngân sách, gợi ý gần nhất (${fallback.total} sản phẩm):\n${fmt}`;
             }
 
-            // Sort by price proximity to budget if budget is known
-            const sorted = priceMax
-                ? [...result.data].sort((a: any, b: any) => Math.abs((a.price || 0) - priceMax) - Math.abs((b.price || 0) - priceMax))
-                : result.data;
+            // Sort by price proximity to budget if budget is known; for project catalog keep order
+            const sorted = (projectCode || !priceMax)
+                ? result.data
+                : [...result.data].sort((a: any, b: any) => Math.abs((a.price || 0) - priceMax!) - Math.abs((b.price || 0) - priceMax!));
 
-            const top = sorted.slice(0, 5);
+            const top = sorted.slice(0, 15); // show all units for project catalog, cap at 15
             const formatted = top.map((l: any, i: number) => formatListing(l, i)).join('\n');
-            return `${filterSummary}\nTìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất):\n${formatted}`;
+            const summaryLabel = projectCode
+                ? `Danh sách ${result.total} sản phẩm trong dự án [${projectCode}]`
+                : `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất)`;
+            return `${filterSummary}\n${summaryLabel}:\n${formatted}`;
         } catch (error) {
             logger.error('Inventory search error:', error);
             return "Lỗi khi tìm kiếm kho hàng. Vui lòng thử lại.";
@@ -1043,6 +1064,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
    → legal_concern: PINK_BOOK (sổ hồng/đỏ/sang tên) | HDMB (hợp đồng mua bán/dự án) | VI_BANG (vi bằng/giấy tay) | NONE (chưa rõ)
 2. SEARCH_INVENTORY — Hỏi: giá bán, khu vực, tìm mua, căn hộ, nhà phố, biệt thự, xem nhà cụ thể, mấy phòng ngủ, tầng bao nhiêu, diện tích, hỏi về sản phẩm/danh sách căn trong dự án cụ thể
    → Khi khách đề cập TÊN DỰ ÁN cụ thể (VD: "Cosmo Central", "Vinhomes Grand Park", "Masteri Thảo Điền") → location_keyword = tên dự án (giữ nguyên tên, không dịch)
+   → Khi khách hỏi "danh sách sản phẩm/căn hộ dự án X", "cho xem kho hàng dự án X", "dự án X có những căn nào" → ĐỒNG THỜI điền project_name = tên dự án đó (nguyên văn)
 3. CALCULATE_LOAN — Hỏi: vay ngân hàng, trả góp, lãi suất, khả năng vay, tính toán tài chính, vay bao nhiêu được, ân hạn nợ gốc
 4. EXPLAIN_MARKETING — Hỏi: ưu đãi, chiết khấu, khuyến mãi, giảm giá, quà tặng, chính sách bán hàng, brochure, tài liệu, nhận báo giá
 5. DRAFT_CONTRACT — Hỏi: hợp đồng, đặt cọc, thanh lý, điều khoản, phí công chứng, tiến độ thanh toán, môi giới, thuê nhà, cho thuê
@@ -1260,6 +1282,25 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             let budgetMax = extraction.budget_max;
             if (!budgetMax) budgetMax = parseBudgetFromMessage(state.userMessage);
 
+            // ── Project-catalog lookup: resolve project name → project_code ────────────
+            // When the router extracts project_name (e.g. "Cosmo Central"), we look up
+            // the real project_code in the DB so that search_inventory can use
+            // filters.projectCode instead of ILIKE (which won't match "MCC A-15-02").
+            let resolvedProjectCode: string | undefined;
+            const rawProjectName = (extraction as Record<string, any>).project_name as string | undefined;
+            if (rawProjectName) {
+                try {
+                    const projRow = await pool.query(
+                        `SELECT code FROM projects WHERE tenant_id = $1 AND name ILIKE $2 LIMIT 1`,
+                        [state.tenantId, `%${rawProjectName.replace(/%/g, '').trim()}%`]
+                    );
+                    resolvedProjectCode = projRow.rows[0]?.code ?? undefined;
+                    logger.info(`[INVENTORY_AGENT] project_name="${rawProjectName}" → code="${resolvedProjectCode ?? 'not found'}"`);
+                } catch (e) {
+                    logger.warn('[INVENTORY_AGENT] project lookup failed:', e);
+                }
+            }
+
             const searchRes = await TOOL_EXECUTOR.search_inventory(
                 state.tenantId,
                 extraction.location_keyword || extraction.explicit_question || '',
@@ -1270,6 +1311,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 extraction.floor_max,
                 extraction.unit_direction,
                 extraction.tower,
+                resolvedProjectCode,
             );
 
             // ── Buyer profile detection for branching ──────────────────────────────
