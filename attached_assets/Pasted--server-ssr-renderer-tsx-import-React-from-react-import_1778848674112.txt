@@ -1,0 +1,530 @@
+// server/ssr-renderer.tsx
+import React from "react";
+import { renderToString } from "react-dom/server";
+import { StaticRouter } from "react-router-dom/server";
+
+// Import toàn bộ SEO data đã tạo ở Ưu tiên 1
+const PAGE_META: Record<string, {
+  title: string;
+  description: string;
+  canonical: string;
+  keywords?: string;
+  ogImage?: string;
+  schema?: object[];
+}> = {
+  "/": {
+    title: "SGS LAND | Mua Bán Bất Động Sản TP.HCM — Căn Hộ, Nhà Phố, Đất Nền 2026",
+    description: "SGS LAND — Nền tảng bất động sản AI hàng đầu Việt Nam. 45.000+ listings, định giá AVM ±4.8%, 15.000+ môi giới xác thực. Tư vấn miễn phí: 0971 132 378.",
+    canonical: "https://sgsland.vn/",
+    keywords: "bất động sản TP.HCM, mua nhà TP.HCM, căn hộ TP.HCM, nhà phố TP.HCM",
+    ogImage: "https://sgsland.vn/og-home.jpg",
+    schema: [
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateAgent",
+        "@id": "https://sgsland.vn/#organization",
+        name: "SGS LAND",
+        url: "https://sgsland.vn",
+        telephone: "+84971132378",
+        email: "info@sgsland.vn",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Hồ Chí Minh",
+          addressCountry: "VN",
+        },
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: "4.9",
+          reviewCount: "238",
+          bestRating: "5",
+        },
+        areaServed: [
+          { "@type": "City", name: "Hồ Chí Minh" },
+          { "@type": "City", name: "Đồng Nai" },
+          { "@type": "City", name: "Bình Dương" },
+        ],
+        sameAs: [
+          "https://www.facebook.com/sgsland.vn",
+          "https://zalo.me/sgsland",
+        ],
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        url: "https://sgsland.vn",
+        name: "SGS LAND",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: "https://sgsland.vn/marketplace?q={search_term_string}",
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "SGS LAND có uy tín không? Đã hoạt động bao lâu?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "SGS LAND thành lập năm 2019, là đại lý ủy quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. Đã hỗ trợ 45.000+ giao dịch, tổng giá trị hơn 2 tỷ USD. Mạng lưới 15.000+ môi giới được xác thực.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Mua căn hộ TP.HCM cần vốn tối thiểu bao nhiêu?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Tối thiểu cần 30% giá trị + chi phí phát sinh (thuế 2%, công chứng 0.1%, môi giới). Với căn hộ 2.8 tỷ tại Vinhomes Grand Park, cần khoảng 950 triệu tiền mặt. Phần còn lại vay ngân hàng 6.9-8.5%/năm.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Dự án bất động sản nào đang hot nhất TP.HCM 2026?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Top 3: (1) Vinhomes Grand Park Thủ Đức — căn hộ từ 2.5 tỷ; (2) Aqua City Novaland Nhơn Trạch — biệt thự từ 15 tỷ; (3) Vinhomes Cần Giờ — dự án lấn biển lớn nhất Việt Nam 2.870ha.",
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  "/marketplace": {
+    title: "Chợ Bất Động Sản TP.HCM | 45.000+ Tin Đăng Mua Bán — SGS LAND",
+    description: "Tìm kiếm 45.000+ bất động sản TP.HCM, Đồng Nai, Bình Dương. Lọc theo giá, diện tích, khu vực. Định giá AI tức thì.",
+    canonical: "https://sgsland.vn/marketplace",
+    keywords: "chợ bất động sản, mua bán nhà đất TP.HCM, tìm kiếm bất động sản",
+  },
+
+  "/ai-valuation": {
+    title: "Định Giá Bất Động Sản AI | Chính Xác ±4.8% — SGS LAND",
+    description: "Định giá bất động sản tự động bằng AI với độ chính xác ±4.8%. Phân tích 9 hệ số AVM, so sánh giao dịch thực tế. Miễn phí, tức thì.",
+    canonical: "https://sgsland.vn/ai-valuation",
+    keywords: "định giá bất động sản, định giá nhà đất online, AVM Việt Nam",
+    schema: [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "SGS LAND AI Valuation",
+        applicationCategory: "BusinessApplication",
+        description: "Hệ thống định giá bất động sản AI với độ chính xác ±4.8%",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "VND" },
+        operatingSystem: "Web",
+      },
+    ],
+  },
+
+  "/du-an/aqua-city": {
+    title: "Aqua City Novaland | Bảng Giá & Pháp Lý Mới Nhất T5/2026 — SGS LAND",
+    description: "Aqua City Novaland Nhơn Trạch: căn hộ từ 3 tỷ, biệt thự từ 15 tỷ. Cập nhật bảng giá, tiến độ xây dựng, pháp lý T5/2026. Đại lý ủy quyền chính thức.",
+    canonical: "https://sgsland.vn/du-an/aqua-city",
+    keywords: "aqua city novaland, aqua city bảng giá 2026, aqua city nhơn trạch đồng nai",
+    ogImage: "https://sgsland.vn/images/projects/aqua-city-og.jpg",
+    schema: [
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateListing",
+        name: "Aqua City Novaland",
+        description: "Khu đô thị sinh thái 1.000ha tại Nhơn Trạch, Đồng Nai. Căn hộ từ 3 tỷ, biệt thự từ 15 tỷ.",
+        url: "https://sgsland.vn/du-an/aqua-city",
+        image: "https://sgsland.vn/images/projects/aqua-city-og.jpg",
+        offers: {
+          "@type": "AggregateOffer",
+          priceCurrency: "VND",
+          lowPrice: 3000000000,
+          highPrice: 50000000000,
+          availability: "https://schema.org/InStock",
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Nhơn Trạch",
+          addressRegion: "Đồng Nai",
+          addressCountry: "VN",
+        },
+        brand: { "@type": "Brand", name: "Novaland" },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Trang chủ", item: "https://sgsland.vn" },
+          { "@type": "ListItem", position: 2, name: "Dự án", item: "https://sgsland.vn/du-an" },
+          { "@type": "ListItem", position: 3, name: "Aqua City Novaland", item: "https://sgsland.vn/du-an/aqua-city" },
+        ],
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "Aqua City Novaland giá bao nhiêu tháng 5/2026?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Giá Aqua City T5/2026: Căn hộ 3-5 tỷ (60-100m²), nhà phố 8-20 tỷ, biệt thự 15-50 tỷ. Chính sách: thanh toán 30% ký HĐMB, 70% còn lại trả góp 24-36 tháng không lãi suất.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Aqua City Novaland có nên mua đầu tư 2026 không?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Aqua City phù hợp đầu tư dài hạn 5-10 năm. Lợi thế: quy mô 1.000ha, vị trí hưởng lợi sân bay Long Thành và cầu Nhơn Trạch (hoàn thành 2026), tiện ích đầy đủ. Giá đã tăng 18% từ 2024 đến 2026.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Từ trung tâm TP.HCM đến Aqua City mất bao lâu?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Từ trung tâm HCM: ~30 phút qua cao tốc Long Thành - Dầu Giây, hoặc ~45 phút qua phà Cát Lái. Sau khi cầu Nhơn Trạch hoàn thành (cuối 2026), thời gian giảm còn 20-25 phút.",
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  "/du-an/vinhomes-grand-park": {
+    title: "Vinhomes Grand Park | Căn Hộ Từ 2.5 Tỷ, Bảng Giá T5/2026 — SGS LAND",
+    description: "Vinhomes Grand Park Thủ Đức: siêu đô thị 271ha, căn hộ từ 2.5 tỷ. Bảng giá, chính sách vay, tiến độ bàn giao mới nhất tháng 5/2026. Đại lý ủy quyền chính thức.",
+    canonical: "https://sgsland.vn/du-an/vinhomes-grand-park",
+    keywords: "vinhomes grand park, vinhomes grand park bảng giá 2026, vinhomes thủ đức căn hộ",
+    ogImage: "https://sgsland.vn/images/projects/vinhomes-gp-og.jpg",
+    schema: [
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateListing",
+        name: "Vinhomes Grand Park",
+        description: "Siêu đô thị thông minh 271ha tại TP. Thủ Đức, TP.HCM. Căn hộ từ 2.5 tỷ.",
+        url: "https://sgsland.vn/du-an/vinhomes-grand-park",
+        offers: {
+          "@type": "AggregateOffer",
+          priceCurrency: "VND",
+          lowPrice: 2500000000,
+          highPrice: 6000000000,
+          availability: "https://schema.org/InStock",
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "TP. Thủ Đức",
+          addressRegion: "TP. Hồ Chí Minh",
+          addressCountry: "VN",
+        },
+        brand: { "@type": "Brand", name: "Vinhomes" },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Trang chủ", item: "https://sgsland.vn" },
+          { "@type": "ListItem", position: 2, name: "Dự án", item: "https://sgsland.vn/du-an" },
+          { "@type": "ListItem", position: 3, name: "Vinhomes Grand Park", item: "https://sgsland.vn/du-an/vinhomes-grand-park" },
+        ],
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "Giá căn hộ Vinhomes Grand Park tháng 5/2026 là bao nhiêu?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Giá căn hộ Vinhomes Grand Park T5/2026: 1PN từ 2.5 tỷ (45m²), 2PN từ 3.5 tỷ (65m²), 3PN từ 5 tỷ (90m²). Giá đã bao gồm VAT. Vay ngân hàng tối đa 70%, lãi suất ưu đãi 6.9%/2 năm đầu.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Vinhomes Grand Park có bao nhiêu phân khu? Phân khu nào tốt nhất?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Vinhomes Grand Park gồm 9 phân khu. Tốt nhất về vị trí: The Origami (gần công viên 36ha), The Beverly Solari (cao cấp nhất, giá cao). Tốt về tài chính: The Rainbow và The Masteri Centre Point (đã bàn giao, dễ cho thuê).",
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  "/bat-dong-san-dong-nai": {
+    title: "Bất Động Sản Đồng Nai | Mua Bán Nhà Đất Giá Tốt T5/2026 — SGS LAND",
+    description: "Bất động sản Đồng Nai: Aqua City, Izumi City, Long Thành Airport. 1.200+ listings. Đất nền từ 800 triệu/nền. Tư vấn miễn phí từ SGS LAND.",
+    canonical: "https://sgsland.vn/bat-dong-san-dong-nai",
+    keywords: "bất động sản đồng nai, nhà đất đồng nai, mua đất đồng nai 2026, dự án đồng nai",
+  },
+
+  "/bat-dong-san-thu-duc": {
+    title: "Bất Động Sản TP. Thủ Đức | Vinhomes, Masterise — Giá T5/2026 — SGS LAND",
+    description: "Mua bán bất động sản TP. Thủ Đức: Vinhomes Grand Park, The Global City, Masteri. 3.500+ listings. Giá từ 2.5 tỷ. SGS LAND tư vấn 24/7.",
+    canonical: "https://sgsland.vn/bat-dong-san-thu-duc",
+    keywords: "bất động sản thủ đức, nhà đất thủ đức, căn hộ thủ đức 2026",
+  },
+
+  "/lai-suat-vay-ngan-hang": {
+    title: "Lãi Suất Vay Ngân Hàng Mua Nhà T5/2026 | So Sánh 20 Ngân Hàng — SGS LAND",
+    description: "So sánh lãi suất vay mua nhà 20 ngân hàng tháng 5/2026. Cập nhật hàng tuần. Tìm ngân hàng cho vay lãi thấp nhất, điều kiện tốt nhất.",
+    canonical: "https://sgsland.vn/lai-suat-vay-ngan-hang",
+    keywords: "lãi suất vay mua nhà 2026, vay ngân hàng mua nhà lãi thấp, lãi suất ngân hàng tháng 5 2026",
+    schema: [
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "Lãi suất vay mua nhà tháng 5/2026 là bao nhiêu?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Lãi suất vay mua nhà T5/2026 dao động 6.9-8.5%/năm tùy ngân hàng và thời hạn. Thấp nhất: Vietcombank 6.9% (2 năm đầu), VietinBank 7.0%, BIDV 7.2%. Sau ưu đãi thả nổi 10-12%/năm.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Vay mua nhà cần điều kiện gì?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Điều kiện vay mua nhà: (1) Thu nhập tối thiểu đủ trả nợ (tổng trả nợ ≤ 50% thu nhập), (2) Vốn tự có ≥ 30% giá trị tài sản, (3) Không có nợ xấu, (4) Hợp đồng lao động ≥ 12 tháng hoặc chứng minh thu nhập 6 tháng gần nhất.",
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+
+// ===== HÀM TẠO HTML TĨNH CHO BOT =====
+export function generateBotHTML(pathname: string): string {
+  // Normalize pathname
+  const path = pathname.replace(/\/$/, "") || "/";
+  const meta = PAGE_META[path] ?? {
+    title: "SGS LAND | Bất Động Sản TP.HCM",
+    description: "Nền tảng bất động sản AI hàng đầu Việt Nam. 45.000+ listings, định giá AVM ±4.8%.",
+    canonical: `https://sgsland.vn${path}`,
+  };
+
+  const schemasHTML = (meta.schema ?? [])
+    .map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</script>`)
+    .join("\n  ");
+
+  const ogImage = meta.ogImage ?? "https://sgsland.vn/og-default.jpg";
+
+  return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PRIMARY SEO -->
+  <title>${escapeHtml(meta.title)}</title>
+  <meta name="description" content="${escapeHtml(meta.description)}">
+  ${meta.keywords ? `<meta name="keywords" content="${escapeHtml(meta.keywords)}">` : ""}
+  <link rel="canonical" href="${meta.canonical}">
+  <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
+
+  <!-- OPEN GRAPH -->
+  <meta property="og:title" content="${escapeHtml(meta.title)}">
+  <meta property="og:description" content="${escapeHtml(meta.description)}">
+  <meta property="og:url" content="${meta.canonical}">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="${ogImage}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="SGS LAND">
+  <meta property="og:locale" content="vi_VN">
+
+  <!-- TWITTER CARD -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(meta.title)}">
+  <meta name="twitter:description" content="${escapeHtml(meta.description)}">
+  <meta name="twitter:image" content="${ogImage}">
+
+  <!-- SCHEMA JSON-LD -->
+  ${schemasHTML}
+
+  <!-- PRECONNECT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://www.google-analytics.com">
+</head>
+<body>
+  <!-- Static content visible to bots BEFORE JS loads -->
+  ${generateStaticBody(path, meta)}
+
+  <!-- App mount point (React hydrates here) -->
+  <div id="root"></div>
+
+  <!-- JS bundles load after static content -->
+</body>
+</html>`;
+}
+
+// ===== TẠO NỘI DUNG TĨNH CHO TỪNG LOẠI TRANG =====
+function generateStaticBody(path: string, meta: typeof PAGE_META[string]): string {
+  if (path === "/") return generateHomepageBody();
+  if (path.startsWith("/du-an/")) return generateProjectBody(path);
+  if (path.startsWith("/bat-dong-san-")) return generateGeoBody(path, meta);
+  if (path === "/marketplace") return generateMarketplaceBody();
+  return generateGenericBody(meta);
+}
+
+function generateHomepageBody(): string {
+  return `
+  <noscript>
+    <header>
+      <nav aria-label="Điều hướng chính">
+        <a href="/">SGS LAND</a>
+        <a href="/marketplace">Chợ BĐS</a>
+        <a href="/ai-valuation">Định giá AI</a>
+        <a href="/du-an">Dự án</a>
+        <a href="/news">Tin tức</a>
+        <a href="/lien-he">Liên hệ</a>
+      </nav>
+    </header>
+
+    <main>
+      <section aria-label="Hero">
+        <h1>SGS LAND — Nền Tảng Bất Động Sản AI Hàng Đầu Việt Nam</h1>
+        <p class="hero-summary">
+          Mua bán bất động sản TP.HCM uy tín: 45.000+ listings, định giá AI độ chính xác ±4.8%,
+          15.000+ môi giới xác thực. Đại lý ủy quyền Vinhomes, Novaland, Masterise Homes.
+          Hotline: <a href="tel:+84971132378">0971 132 378</a>
+        </p>
+      </section>
+
+      <section aria-label="Dự án nổi bật">
+        <h2>Dự Án Bất Động Sản Nổi Bật T5/2026</h2>
+        <ul>
+          <li><a href="/du-an/vinhomes-grand-park">Vinhomes Grand Park — Căn hộ từ 2.5 tỷ, TP. Thủ Đức</a></li>
+          <li><a href="/du-an/aqua-city">Aqua City Novaland — Biệt thự từ 15 tỷ, Nhơn Trạch</a></li>
+          <li><a href="/du-an/vinhomes-can-gio">Vinhomes Cần Giờ — Dự án lấn biển 2.870ha</a></li>
+          <li><a href="/du-an/izumi-city">Izumi City Nam Long — Đô thị chuẩn Nhật, Đồng Nai</a></li>
+          <li><a href="/du-an/the-global-city">The Global City Masterise — Shophouse, Thủ Đức</a></li>
+        </ul>
+      </section>
+
+      <section aria-label="Khu vực">
+        <h2>Bất Động Sản Theo Khu Vực</h2>
+        <ul>
+          <li><a href="/bat-dong-san-thu-duc">Bất động sản TP. Thủ Đức</a></li>
+          <li><a href="/bat-dong-san-dong-nai">Bất động sản Đồng Nai</a></li>
+          <li><a href="/bat-dong-san-binh-duong">Bất động sản Bình Dương</a></li>
+          <li><a href="/bat-dong-san-quan-7">Bất động sản Quận 7</a></li>
+          <li><a href="/bat-dong-san-binh-chanh">Bất động sản Bình Chánh</a></li>
+        </ul>
+      </section>
+
+      <section aria-label="Về SGS LAND">
+        <h2>Tại Sao Chọn SGS LAND?</h2>
+        <ul>
+          <li><strong>Đại lý ủy quyền cấp 1:</strong> Vinhomes (2019), Novaland (2017), Masterise Homes (2021)</li>
+          <li><strong>Định giá AI ±4.8%:</strong> Hệ thống AVM phân tích 9 hệ số, so sánh giao dịch thực tế</li>
+          <li><strong>Kiểm tra pháp lý 2 lớp:</strong> OCR/NLP tự động + chuyên gia có chứng chỉ</li>
+          <li><strong>45.000+ giao dịch</strong> từ 2019, tổng giá trị 2 tỷ USD</li>
+          <li><strong>15.000+ môi giới</strong> được xác thực trên toàn mạng lưới</li>
+        </ul>
+      </section>
+
+      <section aria-label="Câu hỏi thường gặp">
+        <h2>Câu Hỏi Thường Gặp</h2>
+        <dl>
+          <dt>Mua căn hộ TP.HCM cần bao nhiêu vốn tối thiểu?</dt>
+          <dd>Tối thiểu 30% giá trị + chi phí phát sinh. Với căn hộ 2.8 tỷ, cần ~950 triệu tiền mặt. Vay ngân hàng 6.9-8.5%/năm.</dd>
+          <dt>SGS LAND có thu phí môi giới từ người mua không?</dt>
+          <dd>Không. SGS LAND không thu phí từ người mua. Tư vấn và hỗ trợ pháp lý hoàn toàn miễn phí.</dd>
+          <dt>Dự án nào đang hot nhất tháng 5/2026?</dt>
+          <dd>Top 3: Vinhomes Grand Park (căn hộ từ 2.5 tỷ), Aqua City Novaland (biệt thự từ 15 tỷ), Vinhomes Cần Giờ (dự án mới nhất).</dd>
+        </dl>
+      </section>
+    </main>
+
+    <footer>
+      <address>
+        <strong>SGS LAND</strong><br>
+        Hotline: <a href="tel:+84971132378">0971 132 378</a><br>
+        Email: <a href="mailto:info@sgsland.vn">info@sgsland.vn</a><br>
+        TP. Hồ Chí Minh, Việt Nam
+      </address>
+    </footer>
+  </noscript>`;
+}
+
+function generateProjectBody(path: string): string {
+  const slug = path.replace("/du-an/", "");
+  const projectNames: Record<string, string> = {
+    "aqua-city": "Aqua City Novaland",
+    "vinhomes-grand-park": "Vinhomes Grand Park",
+    "vinhomes-can-gio": "Vinhomes Cần Giờ",
+    "izumi-city": "Izumi City Nam Long",
+    "the-global-city": "The Global City Masterise",
+    "masterise-homes": "Masterise Homes",
+    "van-phuc-city": "Vạn Phúc City",
+    "sala": "Sala Đại Quang Minh",
+  };
+  const name = projectNames[slug] ?? slug;
+
+  return `
+  <noscript>
+    <nav aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Trang chủ</a></li>
+        <li><a href="/du-an">Dự án</a></li>
+        <li>${escapeHtml(name)}</li>
+      </ol>
+    </nav>
+    <main>
+      <h1>${escapeHtml(name)}</h1>
+      <p>Xem bảng giá, tiến độ xây dựng và pháp lý mới nhất của ${escapeHtml(name)} tháng 5/2026.</p>
+      <p>Liên hệ tư vấn miễn phí: <a href="tel:+84971132378">0971 132 378</a></p>
+      <p><a href="/du-an">← Xem tất cả dự án</a></p>
+    </main>
+  </noscript>`;
+}
+
+function generateGeoBody(path: string, meta: typeof PAGE_META[string]): string {
+  return `
+  <noscript>
+    <nav aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Trang chủ</a></li>
+        <li>${escapeHtml(meta.title.split("|")[0].trim())}</li>
+      </ol>
+    </nav>
+    <main>
+      <h1>${escapeHtml(meta.title.split("|")[0].trim())}</h1>
+      <p>${escapeHtml(meta.description)}</p>
+      <p>Liên hệ tư vấn: <a href="tel:+84971132378">0971 132 378</a></p>
+    </main>
+  </noscript>`;
+}
+
+function generateMarketplaceBody(): string {
+  return `
+  <noscript>
+    <main>
+      <h1>Chợ Bất Động Sản TP.HCM — 45.000+ Tin Đăng</h1>
+      <p>Tìm kiếm bất động sản TP.HCM, Đồng Nai, Bình Dương. Lọc theo giá, diện tích, khu vực.</p>
+    </main>
+  </noscript>`;
+}
+
+function generateGenericBody(meta: typeof PAGE_META[string]): string {
+  return `
+  <noscript>
+    <main>
+      <h1>${escapeHtml(meta.title.split("|")[0].trim())}</h1>
+      <p>${escapeHtml(meta.description)}</p>
+    </main>
+  </noscript>`;
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}

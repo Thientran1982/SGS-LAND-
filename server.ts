@@ -4747,6 +4747,7 @@ async function startServer() {
     // Import the injector lazily so it is never bundled when running in dev mode.
     const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta } =
       await import('./server/seo/metaInjector');
+    const { renderSsrPage } = await import('./server/ssr-renderer');
 
     // Preload the base HTML once at startup to avoid repeated disk reads.
     try { getBaseHtml(); } catch { /* dist not ready in some edge cases */ }
@@ -4901,6 +4902,15 @@ async function startServer() {
     }
     app.get('/du-an/:projectSlug', (req: express.Request, res: express.Response) => {
       const pagePath = `/du-an/${req.params.projectSlug}`;
+      // Try enhanced SSR renderer (RealEstateListing + AggregateOffer + bodyHtml)
+      // for key project pages. Falls back to standard STATIC_PAGE_META for all others.
+      const ssrHtml = renderSsrPage(pagePath);
+      if (ssrHtml) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+        res.send(ssrHtml);
+        return;
+      }
       sendMeta(res, buildStaticPageMeta(null, null, null, pagePath));
     });
 
