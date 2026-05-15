@@ -33,14 +33,107 @@ interface SsrPage {
   schema: object[];
 }
 
+// Homepage entry — shared by '/' and '/home'.
+// Schema: WebSite (SearchAction) + Organization (E-E-A-T) + FAQPage (GEO).
+// GEO body (stats + city comparison table) lives in GEO_BODY_DATA below.
+const HOME_PAGE: SsrPage = {
+  title: 'SGS LAND | Mua Bán Bất Động Sản TP.HCM — Căn Hộ, Nhà Phố, Đất Nền 2026',
+  description:
+    'SGS LAND — mua bán BĐS uy tín nhất Việt Nam. 45.000+ sản phẩm, 15.000+ môi giới, định giá AI ±5% miễn phí. Căn hộ TP.HCM từ 2 tỷ, đất nền từ 1 tỷ. Đại lý Vinhomes, Novaland, Masterise.',
+  h1: 'Mua Bán Bất Động Sản Toàn Quốc — SGS LAND',
+  keywords:
+    'mua bán bất động sản, nhà đất TP.HCM, căn hộ chung cư 2026, đất nền Đồng Nai, nhà phố Hà Nội, biệt thự cao cấp, SGS LAND',
+  geoPosition: '10.8231;106.6297',
+  geoPlacename: 'TP. Hồ Chí Minh, Việt Nam',
+  geoRegion: 'VN-SG',
+  schema: [
+    {
+      '@type': 'WebSite',
+      '@id': `${APP}/#website`,
+      url: APP,
+      name: 'SGS LAND',
+      description: 'Nền tảng mua bán và quản lý bất động sản hàng đầu Việt Nam, thành lập 2019.',
+      inLanguage: 'vi',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: `${APP}/marketplace?q={search_term_string}` },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${APP}/#org`,
+      name: 'SGS LAND',
+      url: APP,
+      logo: { '@type': 'ImageObject', url: `${APP}/logo.png`, width: 200, height: 60 },
+      foundingDate: '2019',
+      areaServed: 'VN',
+      numberOfEmployees: { '@type': 'QuantitativeValue', value: 15000 },
+      contactPoint: {
+        '@type': 'ContactPoint',
+        telephone: '+84-971-132-378',
+        contactType: 'customer service',
+        availableLanguage: 'Vietnamese',
+      },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'SGS LAND là gì?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'SGS LAND (sgsland.vn) là nền tảng bất động sản hàng đầu Việt Nam, thành lập năm 2019. Đại lý phân phối uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. Tính đến T5/2026: 45.000+ giao dịch thành công, 15.000+ môi giới được xác thực, hơn 2 tỷ USD tổng giá trị giao dịch.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Giá căn hộ TP.HCM hiện tại là bao nhiêu?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Giá căn hộ TP.HCM T5/2026: phân khúc bình dân 25–40 triệu đồng/m² (Thủ Đức ngoại vi, Bình Chánh); trung cấp 40–65 triệu/m² (Quận 7, Thủ Đức, Bình Thạnh); cao cấp 65–120 triệu/m² (Quận 1, 2, Bình Thạnh ven sông). Nguồn: CBRE Vietnam Market Report Q1/2026.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Nên mua nhà hay đất nền năm 2026?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Năm 2026, căn hộ trung cấp gần metro tại TP.HCM và Hà Nội có thanh khoản tốt nhất với tỷ suất cho thuê 4–6%/năm. Đất nền vùng ven (Đồng Nai, Bình Dương) phù hợp đầu tư 3–5 năm khi hạ tầng hoàn thiện với tiềm năng tăng giá 15–20%. Căn cứ vào mục tiêu và khả năng tài chính cá nhân.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'SGS LAND định giá bất động sản như thế nào?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'SGS LAND sử dụng hệ thống định giá AVM (Automated Valuation Model) với 9 hệ số: vị trí, diện tích, tầng, hướng, pháp lý, tiện ích, thị trường khu vực, chủ đầu tư và tiến độ bàn giao. Sai số ±5% so với giá thị trường, trả kết quả trong 30 giây. Miễn phí tại sgsland.vn/ai-valuation.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Mua nhà lần đầu tại Việt Nam cần chuẩn bị gì?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Người mua nhà lần đầu cần: (1) vốn tự có tối thiểu 30% giá trị căn cộng chi phí phát sinh 5–8%; (2) kiểm tra pháp lý — GCN riêng (SHR), không tranh chấp, không thế chấp; (3) vay ngân hàng LTV 65–75%, lãi suất ưu đãi 6–8%/năm trong 2 năm đầu; (4) ký hợp đồng mua bán có công chứng. SGS LAND hỗ trợ toàn bộ quy trình miễn phí.',
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export const PAGE_META: Record<string, SsrPage> = {
+  '/': HOME_PAGE,
+  '/home': HOME_PAGE,
   '/du-an/aqua-city': {
     title: 'Aqua City Novaland | Bảng Giá & Pháp Lý Mới Nhất T5/2026 — SGS LAND',
     description:
-      'Aqua City Novaland Nhơn Trạch: căn hộ từ 3 tỷ, biệt thự từ 15 tỷ. Cập nhật bảng giá, tiến độ xây dựng, pháp lý T5/2026. Đại lý ủy quyền chính thức SGS LAND.',
+      'Aqua City Novaland Biên Hoà: shophouse từ 12 tỷ, biệt thự từ 15 tỷ. Cập nhật bảng giá, tiến độ xây dựng, pháp lý T5/2026. Đại lý ủy quyền chính thức SGS LAND.',
     h1: 'Aqua City Novaland',
     keywords:
-      'aqua city novaland, aqua city bảng giá 2026, aqua city Biên Hoà đồng nai, biệt thự aqua city giá bao nhiêu, aqua city có nên mua không',
+      'aqua city novaland, aqua city bảng giá 2026, aqua city Biên Hoà đồng nai, biệt thự aqua city giá bao nhiêu, aqua city có nên mua không, dự án aqua city',
     image: `${APP}/og/du-an/aqua-city`,
     geoPosition: '10.8912;106.8712',
     geoPlacename: 'Long Hưng, Biên Hòa, Đồng Nai',
@@ -292,11 +385,46 @@ const TABLE_STYLE = 'border-collapse:collapse;width:100%;font-size:13px;color:#3
 const TH_STYLE = 'border:1px solid #e2e8f0;padding:8px 10px;background:#f8fafc;text-align:left;font-weight:600;';
 const TD_STYLE = 'border:1px solid #e2e8f0;padding:8px 10px;';
 
+// Homepage GEO data — platform stats + top-city comparison table.
+// directAnswer: 40-60 words, cited statistics, named sources per GEO research (+33.9% visibility).
+const HOME_GEO = {
+  directAnswer:
+    'SGS LAND (sgsland.vn) là nền tảng mua bán bất động sản hàng đầu Việt Nam — đại lý uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. ' +
+    'Tính đến T5/2026: 45.000+ giao dịch, 15.000+ môi giới được xác thực, hơn 2 tỷ USD tổng giá trị, phủ sóng 25+ tỉnh thành. ' +
+    'Định giá AI AVM miễn phí với sai số ±5%, kết quả trong 30 giây.',
+  stats: [
+    'Thị trường TP.HCM Q1/2026: 8.400 căn hộ mở bán mới, tăng 23% so với Q1/2025 (nguồn: DKRA Vietnam Q1/2026).',
+    'Giá căn hộ sơ cấp TP.HCM T5/2026: trung bình 65 triệu đồng/m², tăng 15% so với cùng kỳ 2024 (nguồn: CBRE Vietnam Market Report Q1/2026).',
+    'Hà Nội Q1/2026: 6.200 căn hộ mở bán, giá trung bình 58 triệu/m², tăng 18% YoY (nguồn: Savills Vietnam Q1/2026).',
+    'Khu vực vùng ven (Đồng Nai, Bình Dương): giá đất nền tăng 12–18% trong 2024–2026, thu hút đầu tư từ sân bay Long Thành và Vành đai 3 TP.HCM (nguồn: JLL Vietnam 2026).',
+    'Tỷ suất cho thuê căn hộ: TP.HCM 4–6%/năm gross yield; Hà Nội 4–5,5%/năm (nguồn: Savills Vietnam Q4/2025).',
+    'Lãi suất vay mua nhà T5/2026: 6–8%/năm ưu đãi 1–3 năm đầu tại BIDV, Vietcombank, VPBank; thả nổi 8–10% sau đó.',
+  ],
+  comparisonHtml:
+    `<table style="${TABLE_STYLE}">` +
+    '<thead><tr>' +
+    `<th style="${TH_STYLE}">Thành phố/Tỉnh</th>` +
+    `<th style="${TH_STYLE}">Giá căn hộ TB (triệu/m²)</th>` +
+    `<th style="${TH_STYLE}">Tăng giá 2024–2026</th>` +
+    `<th style="${TH_STYLE}">Gross Yield cho thuê</th>` +
+    `<th style="${TH_STYLE}">Hạ tầng nổi bật</th>` +
+    '</tr></thead><tbody>' +
+    `<tr><td style="${TD_STYLE}">TP. Hồ Chí Minh</td><td style="${TD_STYLE}">55–120</td><td style="${TD_STYLE}">+15%</td><td style="${TD_STYLE}">4–6%</td><td style="${TD_STYLE}">Metro số 1 (vận hành Q4/2024)</td></tr>` +
+    `<tr><td style="${TD_STYLE}">Hà Nội</td><td style="${TD_STYLE}">45–90</td><td style="${TD_STYLE}">+18%</td><td style="${TD_STYLE}">4–5,5%</td><td style="${TD_STYLE}">Vành đai 4, Metro Nhổn – Ga Hà Nội</td></tr>` +
+    `<tr><td style="${TD_STYLE}">Đồng Nai</td><td style="${TD_STYLE}">22–45</td><td style="${TD_STYLE}">+18%</td><td style="${TD_STYLE}">4–6%</td><td style="${TD_STYLE}">Sân bay Long Thành, Vành đai 3</td></tr>` +
+    `<tr><td style="${TD_STYLE}">Bình Dương</td><td style="${TD_STYLE}">18–38</td><td style="${TD_STYLE}">+12%</td><td style="${TD_STYLE}">4–5%</td><td style="${TD_STYLE}">Metro số 1 kéo dài, Vành đai 3</td></tr>` +
+    `<tr><td style="${TD_STYLE}">Đà Nẵng</td><td style="${TD_STYLE}">35–60</td><td style="${TD_STYLE}">+10%</td><td style="${TD_STYLE}">3–5%</td><td style="${TD_STYLE}">Cảng Liên Chiểu, Hầm Đèo Cả</td></tr>` +
+    `<tr><td style="${TD_STYLE}">Cần Thơ</td><td style="${TD_STYLE}">15–28</td><td style="${TD_STYLE}">+8%</td><td style="${TD_STYLE}">3,5–5%</td><td style="${TD_STYLE}">Cao tốc Cần Thơ – Cà Mau</td></tr>` +
+    '</tbody></table>',
+};
+
 const GEO_BODY_DATA: Record<string, {
   directAnswer: string;
   stats: string[];
   comparisonHtml: string;
 }> = {
+  '/': HOME_GEO,
+  '/home': HOME_GEO,
   '/du-an/aqua-city': {
     directAnswer:
       'Aqua City Novaland là đại đô thị sinh thái 1.000ha tại Long Hưng, Nhơn Trạch, Đồng Nai — do Tập đoàn Novaland (mã NVL-HOSE) phát triển từ năm 2019. ' +
