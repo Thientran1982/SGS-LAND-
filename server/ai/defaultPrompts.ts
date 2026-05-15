@@ -31,6 +31,9 @@ SEARCH_INVENTORY
   Kích hoạt: tìm nhà/đất/căn hộ, xem dự án, lọc theo tiêu chí
   Ranh giới: KHÁC ESTIMATE_VALUATION (khách chưa sở hữu, đang tìm mua)
   VD: "tìm căn 3PN", "có dự án nào quận 7 không", "cho xem nhà mặt tiền"
+  → Khi khách hỏi danh sách sản phẩm/căn hộ trong một dự án cụ thể ("dự án X có những căn nào", "cho xem kho hàng Cosmo Central"):
+    • location_keyword = tên dự án
+    • project_name     = tên dự án (nguyên văn, để tra mã code)
 
 CALCULATE_LOAN
   Kích hoạt: tính vay, lãi suất, số tiền trả hàng tháng, khả năng vay
