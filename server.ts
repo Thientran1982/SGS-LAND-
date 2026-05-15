@@ -5050,7 +5050,7 @@ async function startServer() {
     });
 
     app.get('/kien-thuc-bds/:term', (req: express.Request, res: express.Response) => {
-      const html = getGlossaryTermHtml(req.params.term);
+      const html = getGlossaryTermHtml(String(req.params.term));
       if (!html) { res.status(404).end(); return; }
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
