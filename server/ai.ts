@@ -437,6 +437,17 @@ function parseBudgetFromMessage(msg: string): number | undefined {
     return undefined;
 }
 
+// Vietnamese gender detection from given name (last word of full name)
+function detectVietnameseGender(name: string): 'MALE' | 'FEMALE' | 'UNKNOWN' {
+    const MALE_GIVEN = new Set(['hùng','dũng','nam','tuấn','khoa','trung','hải','phong','thành','đức','quân','long','huy','vũ','cường','nhân','tú','kiên','duy','tùng','sơn','toàn','thắng','việt','đạt','hiếu','mạnh','trọng','hào','bình','hưng','phúc','tài','tiến','quốc','thịnh','lâm','khải','khôi','lực','bảo','trí','phát','khang','nhật','tấn','hoan','hoàng']);
+    const FEMALE_GIVEN = new Set(['hoa','lan','mai','hương','thảo','linh','trang','phương','thu','hà','yến','oanh','hạnh','nhung','quỳnh','tuyết','xuân','loan','nhi','vy','my','ly','chi','hiền','dung','nga','huệ','diệu','bích','nhàn','thúy','vân','giang','châu','duyên','hằng','diễm','uyên','trâm','thi','lam','thy','nhu','trinh','thùy','ngân','tâm','thư','trúc','phụng','điệp','huyền']);
+    const parts = (name || '').trim().toLowerCase().split(/\s+/);
+    const given = parts[parts.length - 1];
+    if (MALE_GIVEN.has(given)) return 'MALE';
+    if (FEMALE_GIVEN.has(given)) return 'FEMALE';
+    return 'UNKNOWN';
+}
+
 // Module-level system context builder (no recreation per call)
 function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]): string {
     if (!lead) return 'Khách vãng lai — chưa có hồ sơ.';
@@ -1013,7 +1024,8 @@ Tầng/Hướng/Tòa (chỉ cho SEARCH_INVENTORY):
 BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 1. EXPLAIN_LEGAL — Hỏi: sổ hồng, sổ đỏ, pháp lý, giấy tờ, vi bằng, HĐMB, sang tên, thế chấp, quy hoạch
    → legal_concern: PINK_BOOK (sổ hồng/đỏ/sang tên) | HDMB (hợp đồng mua bán/dự án) | VI_BANG (vi bằng/giấy tay) | NONE (chưa rõ)
-2. SEARCH_INVENTORY — Hỏi: giá bán, khu vực, tìm mua, căn hộ, nhà phố, biệt thự, xem nhà cụ thể, mấy phòng ngủ, tầng bao nhiêu, diện tích
+2. SEARCH_INVENTORY — Hỏi: giá bán, khu vực, tìm mua, căn hộ, nhà phố, biệt thự, xem nhà cụ thể, mấy phòng ngủ, tầng bao nhiêu, diện tích, hỏi về sản phẩm/danh sách căn trong dự án cụ thể
+   → Khi khách đề cập TÊN DỰ ÁN cụ thể (VD: "Cosmo Central", "Vinhomes Grand Park", "Masteri Thảo Điền") → location_keyword = tên dự án (giữ nguyên tên, không dịch)
 3. CALCULATE_LOAN — Hỏi: vay ngân hàng, trả góp, lãi suất, khả năng vay, tính toán tài chính, vay bao nhiêu được, ân hạn nợ gốc
 4. EXPLAIN_MARKETING — Hỏi: ưu đãi, chiết khấu, khuyến mãi, giảm giá, quà tặng, chính sách bán hàng, brochure, tài liệu, nhận báo giá
 5. DRAFT_CONTRACT — Hỏi: hợp đồng, đặt cọc, thanh lý, điều khoản, phí công chứng, tiến độ thanh toán, môi giới, thuê nhà, cho thuê
@@ -1022,7 +1034,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 7. ANALYZE_LEAD — Yêu cầu: xem hồ sơ khách này, phân tích khách hàng, lead này thế nào, tiềm năng không (dùng nội bộ)
 8. ESTIMATE_VALUATION — Hỏi: nhà/đất của tôi giá bao nhiêu, định giá, ước tính giá trị, giá thị trường nhà tôi, bán được không
    → PHÂN BIỆT: "Nhà tôi ở X → giá?" = ESTIMATE_VALUATION | "Nhà ở X giá bao nhiêu để mua" = SEARCH_INVENTORY
-9. DIRECT_ANSWER — Chào hỏi, cảm ơn, câu hỏi đơn giản, hỏi tiến độ dự án, giờ mở cửa, thông tin liên hệ; HỎI VỀ TÍNH NĂNG/CÁCH SỬ DỤNG NỀN TẢNG như: "đăng lãi suất chỗ nào", "đăng tin ở đâu", "tìm tính năng X ở đâu", "làm sao dùng Y", "hướng dẫn dùng Z"
+9. DIRECT_ANSWER — Chào hỏi, cảm ơn, câu hỏi đơn giản, hỏi tiến độ/thông tin chung dự án (KHÔNG kèm tên dự án cụ thể), giờ mở cửa, thông tin liên hệ; HỎI VỀ TÍNH NĂNG/CÁCH SỬ DỤNG NỀN TẢNG như: "đăng lãi suất chỗ nào", "đăng tin ở đâu", "tìm tính năng X ở đâu", "làm sao dùng Y", "hướng dẫn dùng Z"
 10. ESCALATE_TO_HUMAN — Tức giận, phàn nàn nghiêm trọng, yêu cầu gặp nhân viên thật, từ chối AI
 
 QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
@@ -1233,7 +1245,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
 
             const searchRes = await TOOL_EXECUTOR.search_inventory(
                 state.tenantId,
-                extraction.location_keyword || '',
+                extraction.location_keyword || extraction.explicit_question || '',
                 budgetMax,
                 extraction.property_type,
                 extraction.area_min,
@@ -1939,9 +1951,12 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                 ? `\n<SPECIALIST_RESULT type="lead_analysis">\n${state.leadAnalysis}\n</SPECIALIST_RESULT>\n`
                 : '';
 
+            const _gender = state.lead ? detectVietnameseGender(state.lead.name) : 'UNKNOWN';
+            const salutation = _gender === 'MALE' ? 'anh' : _gender === 'FEMALE' ? 'chị' : 'anh/chị';
+            const Salutation = salutation.charAt(0).toUpperCase() + salutation.slice(1);
             const langInstruction = (state.lang === 'en')
                 ? 'Answer in English. Address the customer professionally.'
-                : 'Trả lời bằng Tiếng Việt tự nhiên. Xưng "em", gọi khách là "anh/chị". Không dùng bản dịch máy.';
+                : `Trả lời bằng Tiếng Việt tự nhiên. Xưng "em", gọi khách là "${salutation}". Không dùng bản dịch máy.`;
 
             const INTENT_LABELS: Record<string, string> = {
                 SEARCH_INVENTORY: 'Tìm kiếm kho hàng',
@@ -2162,7 +2177,7 @@ YÊU CẦU VIẾT PHẢN HỒI (120-200 từ):
 - Nếu [BUYER_PROFILE] = ĐẦU_TƯ: nhấn mạnh tỷ suất cho thuê, tiềm năng tăng giá
 - Nếu [BUYER_PROFILE] = Ở_THỰC_LẦN_ĐẦU: nhấn mạnh pháp lý sạch, vay được ngân hàng, gần tiện ích
 - Nếu Khẩn_cấp: CÓ — đề cập ngay bước xem nhà và đặt giữ chỗ trước khi hết
-- Kết thúc bằng câu hỏi thu hẹp: "Anh/chị ưu tiên diện tích hay vị trí hơn ạ?" hoặc "Căn nào em giới thiệu thêm chi tiết?"
+- Kết thúc bằng câu hỏi thu hẹp: "${Salutation} ưu tiên diện tích hay vị trí hơn ạ?" hoặc "Căn nào em giới thiệu thêm chi tiết?"
 - Giọng điệu: nhiệt tình như người quen tư vấn — không đọc catalogue
 - [DATA_FRESHNESS] đã có trong CONTEXT — KHÔNG cần đề cập đến người dùng (real-time data)`;
 
@@ -2213,7 +2228,7 @@ YÊU CẦU VIẾT PHẢN HỒI (150-220 từ):
 - Khi viện dẫn quy định pháp lý cụ thể (điều luật, nghị định, thông tư) BẮT BUỘC phải trích "[Nguồn: Luật X điều Y / Nghị định Z]" lấy từ [LEGAL KNOWLEDGE] đã cung cấp
 - Nếu trong [LEGAL KNOWLEDGE] không có điều luật cụ thể, KHÔNG bịa số hiệu — nói "Theo quy định hiện hành" và đề nghị khách xác minh với luật sư
 - Nêu rõ: khi nào cần công chứng bắt buộc vs. tuỳ chọn
-- Kết thúc: "Anh/chị đang ở giai đoạn nào — chưa ký / đã ký / đang tranh chấp ạ?"`;
+- Kết thúc: "${Salutation} đang ở giai đoạn nào — chưa ký / đã ký / đang tranh chấp ạ?"`;
 
                     // ── 5. ĐẶT LỊCH XEM NHÀ ─────────────────────────────────────────────
                     case 'DRAFT_BOOKING':
@@ -2254,7 +2269,7 @@ YÊU CẦU VIẾT PHẢN HỒI (120-180 từ):
   (VD: "Tiết kiệm được X triệu", "Giảm X% chi phí ban đầu")
 - Nếu ưu đãi sắp hết hạn: tạo urgency — "Chương trình này còn hiệu lực đến ngày…"
 - Nếu khách là nhà đầu tư: nhấn mạnh ưu đãi tác động tốt nhất đến ROI
-- Kết thúc bằng câu hỏi closing: "Anh/chị muốn em giữ suất ưu đãi này trước khi hết hạn không ạ?"
+- Kết thúc bằng câu hỏi closing: "${Salutation} muốn em giữ suất ưu đãi này trước khi hết hạn không ạ?"
 - TRÁNH: "hiện có nhiều ưu đãi hấp dẫn", số chung chung không đo được`;
 
                     // ── 7. HỢP ĐỒNG ──────────────────────────────────────────────────────
@@ -2275,7 +2290,7 @@ YÊU CẦU VIẾT PHẢN HỒI (150-220 từ):
 - Nếu kịch bản RỦI_RO: mở đầu ngay "Điều khoản này có thể bất lợi vì…"
 - Nếu kịch bản ĐẶT_CỌC: nêu rõ mức cọc phổ biến (5-10%), quy trình hoàn cọc khi vi phạm
 - Nếu kịch bản CHO_THUÊ: nhấn mạnh điều khoản tăng giá thuê, gia hạn, bồi thường chấm dứt sớm
-- Kết thúc: "Anh/chị có muốn em xem qua một số điều khoản cụ thể trong hợp đồng không ạ?"
+- Kết thúc: "${Salutation} có muốn em xem qua một số điều khoản cụ thể trong hợp đồng không ạ?"
 - KHÔNG dùng: "pháp nhân", "bên nhận chuyển nhượng", "điều X khoản Y" — dùng ngôn ngữ thông thường`;
 
                     // ── 8. PHÂN TÍCH KHÁCH HÀNG → COACHING NỘI BỘ CHO SALES ─────────────
@@ -2358,7 +2373,7 @@ YÊU CẦU VIẾT PHẢN HỒI (50-120 từ):
 - Nếu hỏi chung về tính năng: liệt kê 2-3 tính năng liên quan kèm URL
 - KHÔNG đề cập các tính năng không liên quan câu hỏi
 - Giọng điệu: đồng nghiệp hướng dẫn nghiệp vụ — ngắn gọn, thực tế, không vòng vo
-- Kết thúc bằng: "Anh/chị cần hỗ trợ thêm tính năng nào không ạ?"`;
+- Kết thúc bằng: "${Salutation} cần hỗ trợ thêm tính năng nào không ạ?"`;
                         }
 
                         if (isGreeting) {
@@ -2402,7 +2417,7 @@ YÊU CẦU (60-120 từ):
 - Nếu CONTEXT không có thông tin → báo thẳng và đề xuất cách khách tra thêm (website CĐT, hotline)
 - Cấu trúc: Thông tin chính xác → 1 điểm nổi bật cập nhật → gợi ý hành động tiếp (đặt lịch xem/gọi ngay)
 - Giá BĐS: "Tỷ" / "Triệu VNĐ". KHÔNG dùng nhãn kỹ thuật [CONTEXT], [INVENTORY DATA]
-- Kết thúc: câu hỏi liên quan (anh/chị muốn đặt lịch tham quan không ạ?)`;
+- Kết thúc: câu hỏi liên quan (${salutation} muốn đặt lịch tham quan không ạ?)`;
                         }
 
                         // Generic DIRECT_ANSWER (quick query, FAQ, mixed intent)
@@ -2452,7 +2467,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
             //   • Nếu KHÔNG có RAG hits → "chưa đủ dữ liệu" disclaimer khi response
             //     có claim cụ thể (số liệu hoặc khẳng định pháp lý).
             const CITATION_REQUIRED = new Set(['EXPLAIN_LEGAL', 'CALCULATE_LOAN', 'ESTIMATE_VALUATION']);
-            let finalText = writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?";
+            let finalText = writerRes.text || `Dạ, ${salutation} cần em hỗ trợ thêm thông tin gì không ạ?`;
             if (CITATION_REQUIRED.has(currentIntent)) {
                 const hasCitation = /\[Nguồn[:：]/i.test(finalText) || /Theo (Luật|Nghị định|Thông tư|CBRE|Savills|JLL|HoREA|VARS)/i.test(finalText);
                 const hasNumericClaim = /\d+\s*(%|\/năm|\/tháng|tỷ|triệu|tr\b|VNĐ|đ)/i.test(finalText);
@@ -2474,7 +2489,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
                         }).catch(() => {});
                     } else if (needsCitation) {
                         // No RAG hits + has assertion/numeric claim → honest uncertainty
-                        finalText += `\n\n⚠ Lưu ý: Hiện chưa đủ dữ liệu nguồn chính thức trong knowledge base để khẳng định nội dung trên. Anh/chị vui lòng xác minh lại với nguồn chính thức (luật sư / ngân hàng / cơ quan có thẩm quyền) trước khi quyết định.`;
+                        finalText += `\n\n⚠ Lưu ý: Hiện chưa đủ dữ liệu nguồn chính thức trong knowledge base để khẳng định nội dung trên. ${Salutation} vui lòng xác minh lại với nguồn chính thức (luật sư / ngân hàng / cơ quan có thẩm quyền) trước khi quyết định.`;
                         feedbackRepository.logObservation(state.tenantId, 'WRITER', currentIntent, 'CITATION_MISSING', {
                             intent: currentIntent,
                             ragHits: 0,
