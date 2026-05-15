@@ -93,9 +93,8 @@ export function createChatFollowUpCronRouter(
               // History is optional — silently continue without it
             }
 
-            // Build minimal lead object for the AI agent
+            // Build minimal lead object for the AI agent (id omitted — branded type; not used by generator)
             const minimalLead = {
-              id:        lead.id,
               name:      lead.name,
               socialIds: lead.zalo_id ? { zalo: lead.zalo_id } : undefined,
             };
