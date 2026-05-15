@@ -2,14 +2,15 @@
  * chatFollowUpCronRoutes.ts
  *
  * Internal endpoint called by QStash daily at 9:00 AM ICT (2:00 UTC).
- * Automatically sends follow-up messages via Zalo/Facebook chat to leads
- * that have not replied after 1 day, 3 days, and 7 days.
+ * Automatically sends AI-generated follow-up messages via Zalo/Facebook chat
+ * to leads that have not replied after 1 day, 3 days, and 7 days.
  *
  * Logic:
  *   - Finds leads whose last INBOUND chat message was ~N days ago
  *   - Thread must be AI_ACTIVE and lead must have a Zalo or Facebook social ID
  *   - No previous follow-up for this exact interval has been sent
- *   - Sends a personalized Vietnamese message via the correct channel
+ *   - Generates a personalised Vietnamese message via aiService.generateFollowup
+ *   - Falls back to a static template if AI generation fails
  *   - Logs the interaction with { isFollowUp: true, followUpDay: N }
  *   - Emits socket event so Inbox UI updates in real-time
  */
@@ -20,15 +21,16 @@ import { Server } from 'socket.io';
 import { logger } from '../middleware/logger';
 import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
 import { queryLeadsNeedingChatFollowUp, ChatFollowUpLead } from '../repositories/campaignRepository';
+import { aiService } from '../ai';
 
-// Vietnamese follow-up templates for each interval
-const FOLLOW_UP_TEMPLATES: Record<1 | 3 | 7, (name: string) => string> = {
+// Static fallback templates used when AI generation fails
+const FALLBACK_TEMPLATES: Record<1 | 3 | 7, (name: string) => string> = {
   1: (name) =>
-    `Xin chào ${name || 'bạn'}! 👋 Hôm qua bạn có hỏi thăm chúng tôi về bất động sản. Tôi muốn hỏi xem bạn đã có đủ thông tin cần thiết chưa ạ? Nếu còn điều gì thắc mắc hoặc muốn xem thêm căn hộ/đất nền phù hợp, đội ngũ SGS LAND luôn sẵn lòng hỗ trợ miễn phí! 🏠`,
+    `Xin chào ${name || 'bạn'}! Em từ SGS LAND muốn hỏi thăm: anh/chị đã có đủ thông tin về dự án chưa ạ? Nếu còn điều gì cần tư vấn thêm, em luôn sẵn sàng hỗ trợ ạ.`,
   3: (name) =>
-    `Chào ${name || 'bạn'}! SGS LAND hỏi thăm sau 3 ngày ạ. 😊 Bạn đã tìm được bất động sản ưng ý chưa? Hiện chúng tôi có nhiều căn hộ và đất nền mới, pháp lý rõ ràng, giá hợp lý. Bạn có muốn tôi gợi ý một số dự án phù hợp với nhu cầu không ạ? Tư vấn hoàn toàn miễn phí! 🏡`,
+    `Chào ${name || 'bạn'}! SGS LAND hỏi thăm sau 3 ngày ạ. Hiện chúng em có nhiều dự án mới, pháp lý rõ ràng, giá hợp lý. Anh/chị có muốn em gợi ý thêm không ạ?`,
   7: (name) =>
-    `Xin chào ${name || 'bạn'}! Đã một tuần rồi, SGS LAND vẫn luôn sẵn sàng đồng hành cùng bạn trên hành trình tìm kiếm bất động sản lý tưởng. 💬 Nếu bạn cần tư vấn mua bán, định giá AI, hoặc kiểm tra pháp lý — hãy nhắn tin cho chúng tôi. Hotline: 0971-132-378 — miễn phí, không ép mua!`,
+    `Xin chào ${name || 'bạn'}! Đã một tuần rồi — em từ SGS LAND vẫn luôn sẵn sàng hỗ trợ anh/chị trên hành trình tìm kiếm bất động sản lý tưởng. Anh/chị cần tư vấn gì thêm không ạ?`,
 };
 
 export function createChatFollowUpCronRouter(
@@ -61,12 +63,14 @@ export function createChatFollowUpCronRouter(
     );
 
     const stats = {
-      day1: { queried: 0, sent: 0, failed: 0 },
-      day3: { queried: 0, sent: 0, failed: 0 },
-      day7: { queried: 0, sent: 0, failed: 0 },
+      day1: { queried: 0, sent: 0, failed: 0, ai_generated: 0 },
+      day3: { queried: 0, sent: 0, failed: 0, ai_generated: 0 },
+      day7: { queried: 0, sent: 0, failed: 0, ai_generated: 0 },
     };
 
     try {
+      const { interactionRepository } = await import('../repositories/interactionRepository');
+
       for (const dayInterval of [1, 3, 7] as const) {
         const key = `day${dayInterval}` as keyof typeof stats;
         const leads = await queryLeadsNeedingChatFollowUp(pool, dayInterval);
@@ -77,11 +81,50 @@ export function createChatFollowUpCronRouter(
 
         for (const lead of leads) {
           try {
-            const message = FOLLOW_UP_TEMPLATES[dayInterval](lead.name);
+            // Fetch recent chat history for context (best-effort, non-blocking on error)
+            let history: any[] = [];
+            try {
+              history = await interactionRepository.findByLead(
+                lead.tenant_id,
+                lead.id,
+                { page: 1, pageSize: 8 },
+              );
+            } catch {
+              // History is optional — silently continue without it
+            }
+
+            // Build minimal lead object for the AI agent
+            const minimalLead = {
+              id:        lead.id,
+              name:      lead.name,
+              socialIds: lead.zalo_id ? { zalo: lead.zalo_id } : undefined,
+            };
+
+            // Attempt AI-generated personalised message
+            let message: string;
+            let aiGenerated = false;
+            try {
+              const result = await aiService.generateFollowup({
+                tenantId:              lead.tenant_id,
+                lead:                  minimalLead,
+                history,
+                daysSinceLastContact:  dayInterval,
+                // Both ZALO and FACEBOOK are messaging channels — use ZALO format
+                channel: 'ZALO',
+              });
+              message = result.message;
+              aiGenerated = true;
+              stats[key].ai_generated++;
+            } catch (aiErr: any) {
+              logger.warn(
+                `[ChatFollowUpCron] AI generation failed for ${lead.name} — using fallback: ${aiErr.message}`,
+              );
+              message = FALLBACK_TEMPLATES[dayInterval](lead.name);
+            }
 
             if (dryRun) {
               logger.info(
-                `[ChatFollowUpCron][dry-run] DAY_${dayInterval} → ${lead.name} (${lead.channel}) | msg: ${message.slice(0, 60)}...`,
+                `[ChatFollowUpCron][dry-run] DAY_${dayInterval} → ${lead.name} (${lead.channel}) | ai=${aiGenerated} | msg: ${message.slice(0, 80)}…`,
               );
               stats[key].sent++;
               continue;
@@ -90,7 +133,7 @@ export function createChatFollowUpCronRouter(
             await sendChatFollowUp(pool, lead, message, dayInterval, io);
             stats[key].sent++;
             logger.info(
-              `[ChatFollowUpCron] DAY_${dayInterval} ✓ → ${lead.name} (${lead.channel})`,
+              `[ChatFollowUpCron] DAY_${dayInterval} ✓ → ${lead.name} (${lead.channel}) | ai=${aiGenerated}`,
             );
           } catch (err: any) {
             stats[key].failed++;
@@ -103,27 +146,29 @@ export function createChatFollowUpCronRouter(
 
       const totalSent = Object.values(stats).reduce((s, x) => s + x.sent, 0);
       const totalFail = Object.values(stats).reduce((s, x) => s + x.failed, 0);
+      const totalAi   = Object.values(stats).reduce((s, x) => s + x.ai_generated, 0);
 
       logger.info(
-        `[ChatFollowUpCron] Hoàn thành — Tổng gửi: ${totalSent}, Lỗi: ${totalFail}${dryRun ? ' (dry-run)' : ''}`,
+        `[ChatFollowUpCron] Hoàn thành — Tổng gửi: ${totalSent}, AI: ${totalAi}, Lỗi: ${totalFail}${dryRun ? ' (dry-run)' : ''}`,
       );
 
       await finishAgentRun(
         pool,
         runId,
         'success',
-        { dry_run: dryRun, stats, total_sent: totalSent, total_failed: totalFail },
+        { dry_run: dryRun, stats, total_sent: totalSent, total_failed: totalFail, total_ai: totalAi },
         null,
         startedMs,
       );
 
       return res.json({
-        ok: true,
-        dry_run: dryRun,
-        run_at: new Date().toISOString(),
+        ok:           true,
+        dry_run:      dryRun,
+        run_at:       new Date().toISOString(),
         stats,
-        total_sent: totalSent,
+        total_sent:   totalSent,
         total_failed: totalFail,
+        total_ai:     totalAi,
       });
     } catch (err: any) {
       logger.error('[ChatFollowUpCron] Lỗi không xác định:', err.message);
@@ -212,11 +257,11 @@ async function sendChatFollowUp(
   // 3. Emit socket event so Inbox UI updates in real-time without reload
   if (io) {
     io.to(`tenant:${lead.tenant_id}`).emit('new_inbound_message', {
-      leadId: lead.id,
-      message: interaction,
-      source: lead.channel,
-      isAi: true,
-      isFollowUp: true,
+      leadId:      lead.id,
+      message:     interaction,
+      source:      lead.channel,
+      isAi:        true,
+      isFollowUp:  true,
       followUpDay,
     });
   }
