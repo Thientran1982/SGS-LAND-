@@ -1,0 +1,63 @@
+=== RENTAL SEARCH METADATA ===
+Agent_version: ${PROMPT_VERSION}
+Timestamp: [ISO 8601]
+Input: [địa chỉ + loại BĐS]
+Property_type: [loại]
+Search_strategy: [queries đã chạy]
+Fallback_used: [none/tier1/2/3]
+Reference_sale_price: [X tỷ từ STEP 1a / chưa có]
+=== RENTAL SOURCES ===
+[1] ✅ HỢP ĐỒNG THỰC TẾ | 🟢 FRESH | TIER1
+Site: onehousing.vn
+URL: https://...
+Title: "Cho thuê Vinhomes GP S5 — đã thuê 03/2026"
+Date: 2026-03
+Rental_raw: "12 triệu/tháng"
+Rental_monthly: 12,000,000
+Rental_annual: 144,000,000
+Furnished: SEMI_FURNISHED
+Area_m2: 70
+Bedrooms: 2
+Notes: Hợp đồng 1 năm, đã ký
+[2] 📊 BÁO CÁO CHUYÊN NGÀNH | 🟡 RECENT | TIER2
+Site: cbre.com.vn
+Title: "CBRE Vietnam Residential Rental Q1/2026"
+Date: 2026-03
+Rental_range: "11–15tr/tháng cho 2PN Class A Thủ Đức"
+Rental_monthly_midpoint: 13,000,000
+Source_type: RESEARCH_REPORT
+Notes: Range — dùng midpoint
+[3] 🏷️ ĐANG RAO | 🟡 RECENT | TIER4
+Site: batdongsan.com.vn
+Date: 2026-04
+Rental_raw: "13tr/tháng"
+Rental_monthly: 13,000,000
+Discount_needed: -15% → thuê thực ước: 11,050,000
+Furnished: FULL_FURNISHED
+Notes: Rao bán — cần discount
+...
+=== OUTLIER ANALYSIS ===
+Median_raw: 12,500,000 VNĐ/tháng
+Outliers_detected: [nếu có]
+Sources_excluded: [N nguồn, lý do]
+=== RENTAL REFERENCE ===
+Rental_reference_monthly: 12,000,000
+Rental_reference_source: "TIER1 giao dịch thực"
+Furnished_basis: SEMI_FURNISHED
+Confidence_rental: [X/100]
+=== YIELD CALCULATIONS ===
+Reference_sale_price: [từ STEP 1a hoặc benchmark]
+Gross_Yield: [X]tr × 12 / [Y] tỷ = [Z]%
+Net_Yield_basic: [Z]% × 0.85 = [W]%
+Net_Yield_medium: ([X]tr × 12 - phí QL [A]%) / [Y] tỷ
+- thuế [B]% = [C]%
+Net_Yield_full: [đầy đủ nếu có đủ data] = [D]%
+Price_to_Rent: [Y] tỷ / ([X]tr × 12) = [P/R]
+PTR_assessment: [≤15 RẤT TỐT / 15-20 TỐT / 20-25 TRUNG BÌNH / >25 KÉM]
+vs_savings_bank: Net yield [C]% vs NH [4.5-5.5]%
+→ [✅ HIỆU QUẢ / ⚡ TƯƠNG ĐƯƠNG / ⚠ KÉM HƠN]
+=== RENTAL QUALITY SCORE ===
+Score: [X/100]
+Quality_level: HIGH/MEDIUM/LOW/INSUFFICIENT
+Confidence_cap_for_extractor: [Y]
+Notes: [lý do trừ/cộng điểm]
