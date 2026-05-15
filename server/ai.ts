@@ -21,6 +21,7 @@ import {
     DEFAULT_MARKETING_SYSTEM,
     DEFAULT_CONTRACT_SYSTEM,
     DEFAULT_LEAD_ANALYST_SYSTEM,
+    DEFAULT_FOLLOWUP_SYSTEM,
     DEFAULT_VALUATION_SYSTEM,
     DEFAULT_VALUATION_SEARCH_SYSTEM,
     DEFAULT_VALUATION_RENTAL_SYSTEM,
@@ -391,6 +392,9 @@ async function getValuationSearchInstruction(tenantId: string): Promise<string> 
 }
 async function getValuationRentalInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'VALUATION_RENTAL_SYSTEM', DEFAULT_VALUATION_RENTAL_SYSTEM);
+}
+async function getFollowupInstruction(tenantId: string): Promise<string> {
+    return getPromptTemplate(tenantId, 'FOLLOWUP_SYSTEM', DEFAULT_FOLLOWUP_SYSTEM);
 }
 
 async function getPromptTemplate(tenantId: string, templateKey: string, fallback: string): Promise<string> {
@@ -856,6 +860,19 @@ const TOOL_EXECUTOR = {
 // -----------------------------------------------------------------------------
 // 3. LANGGRAPH CORE (Native Implementation)
 // -----------------------------------------------------------------------------
+
+export type FollowupResult = {
+    message: string;
+    channel: 'ZALO' | 'EMAIL' | 'CALL' | 'SMS';
+    sequenceType: 'A' | 'B' | 'C';
+    /** T+2H | T+24H | T+72H | T+7D | T+14D | T+30D */
+    sequenceStep: string;
+    /** Recommended ICT hour to send (24h format) */
+    scheduledHour: number;
+    hesitationHandled?: string;
+    tokensEstimate: number;
+    durationMs: number;
+};
 
 export type CompactFavorite = {
     id: string;
@@ -3253,6 +3270,147 @@ Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise
                 ? (isVN ? 'Hệ thống AI đang bận, vui lòng thử lại sau ít phút.' : 'AI analysis unavailable — system busy. Please try again in a few minutes.')
                 : (isVN ? 'Phân tích AI tạm thời không khả dụng.' : 'AI analysis temporarily unavailable.');
         }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // FOLLOW-UP AGENT — AI-powered personalised nurture message generator
+    // Called by chatFollowUpCronRoutes or on-demand from UI / queue.
+    // ────────────────────────────────────────────────────────────────────────
+    async generateFollowup(params: {
+        tenantId: string;
+        /** Accepts full Lead or a minimal object — all fields except name are optional */
+        lead: Pick<Lead, 'name'> & Partial<Omit<Lead, 'name'>>;
+        history: Interaction[];
+        /** Fractional days since the last INBOUND message (0.25 = 6 h) */
+        daysSinceLastContact: number;
+        channel?: 'ZALO' | 'EMAIL' | 'CALL' | 'SMS';
+        /** A = post-viewing | B = post-quote | C = cold re-engagement */
+        sequenceType?: 'A' | 'B' | 'C';
+        /** price | legal | competitor | market | partner */
+        hesitationType?: string;
+        projectName?: string;
+        agentName?: string;
+    }): Promise<FollowupResult> {
+        const _start = Date.now();
+        const { tenantId, lead, history, daysSinceLastContact } = params;
+
+        // ── Determine sequence step from elapsed days ──────────────────────
+        const sequenceStep =
+            daysSinceLastContact <= 0.25 ? 'T+2H'
+            : daysSinceLastContact <= 1.5 ? 'T+24H'
+            : daysSinceLastContact <= 4   ? 'T+72H'
+            : daysSinceLastContact <= 10  ? 'T+7D'
+            : daysSinceLastContact <= 21  ? 'T+14D'
+            : 'T+30D';
+
+        // ── Auto-detect sequence type if not supplied ──────────────────────
+        const sequenceType: 'A' | 'B' | 'C' = params.sequenceType || (
+            daysSinceLastContact >= 30 ? 'C'
+            : history.some(h => h.direction === 'OUTBOUND' &&
+                /báo giá|bảng giá|quote|đã gửi giá/i.test(h.content || '')) ? 'B'
+            : 'A'
+        );
+
+        // ── Auto-detect channel ────────────────────────────────────────────
+        const channel: 'ZALO' | 'EMAIL' | 'CALL' | 'SMS' = params.channel || (
+            lead.socialIds?.zalo  ? 'ZALO'  :
+            lead.email            ? 'EMAIL' :
+            'ZALO'
+        );
+
+        const scheduledHour =
+            channel === 'EMAIL' ? 8
+            : channel === 'CALL' ? 10
+            : 9; // ZALO / SMS → 9h sáng
+
+        // ── Gender-aware salutation ────────────────────────────────────────
+        const nameParts   = (lead.name || '').trim().split(/\s+/);
+        const firstName   = nameParts[nameParts.length - 1] || lead.name;
+        const gender      = detectVietnameseGender(lead.name);
+        const salutation  = gender === 'MALE' ? 'anh' : gender === 'FEMALE' ? 'chị' : 'anh/chị';
+
+        // ── Build context ──────────────────────────────────────────────────
+        const budgetStr = lead.preferences?.budgetMax
+            ? `${(lead.preferences.budgetMax / 1e9).toFixed(2)} Tỷ`
+            : 'Chưa rõ';
+
+        const recentHistory = history.slice(-6)
+            .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN'}: ${h.content}`)
+            .join('\n');
+
+        const SEQ_LABEL: Record<string, string> = {
+            A: 'POST-VIEWING (sau xem nhà)',
+            B: 'POST-QUOTE (sau báo giá, chưa ký)',
+            C: 'COLD RE-ENGAGEMENT (> 30 ngày im lặng)',
+        };
+        const CH_LABEL: Record<string, string> = {
+            ZALO: 'Zalo', EMAIL: 'Email', CALL: 'Điện thoại / Call', SMS: 'SMS',
+        };
+        const CH_GUIDE: Record<string, string> = {
+            ZALO:  '≤ 150 từ | emoji nhẹ (1-2) | tự nhiên, gần gũi',
+            SMS:   '≤ 160 ký tự | không emoji | formal',
+            EMAIL: 'Subject line ở dòng đầu (Subject: ...) | ≤ 300 từ | formal | CTA cuối',
+            CALL:  'Script ≤ 3 phút: Chào → Mục đích → Câu hỏi mở → Hẹn tiếp theo',
+        };
+
+        const followupPrompt =
+`NHIỆM VỤ: Soạn tin nhắn follow-up cá nhân hoá — GỬI THẲNG cho khách BĐS.
+
+=== THÔNG TIN KHÁCH HÀNG ===
+Tên đầy đủ: ${lead.name} | Tên gọi: ${salutation} ${firstName}
+Stage CRM: ${lead.stage || 'Chưa rõ'} | Score: ${lead.score?.score ?? '?'} (${lead.score?.grade || '?'})
+Ngân sách: ${budgetStr} | Loại BĐS: ${lead.preferences?.propertyTypes?.join(', ') || 'Chưa rõ'}
+Khu vực: ${lead.preferences?.regions?.join(', ') || 'Chưa rõ'}
+Persona: ${lead.preferences?._inferredPersona || 'Chưa phân tích'}
+Cảm xúc: ${lead.preferences?._lastEmotionalState || 'NEUTRAL'} | Mức gấp: ${lead.preferences?._lastUrgency || 'LOW'}
+${params.projectName ? `Dự án quan tâm: ${params.projectName}` : ''}
+${params.agentName ? `Nhân viên phụ trách: ${params.agentName}` : ''}
+
+=== SEQUENCE & KÊNH ===
+Sequence: ${sequenceType} — ${SEQ_LABEL[sequenceType]}
+Bước: ${sequenceStep} (${daysSinceLastContact} ngày chưa phản hồi)
+Kênh: ${CH_LABEL[channel]} | Yêu cầu định dạng: ${CH_GUIDE[channel]}
+${params.hesitationType ? `Loại trở ngại cần xử lý: ${params.hesitationType}` : ''}
+
+=== LỊCH SỬ HỘI THOẠI GẦN ĐÂY ===
+${recentHistory || '(Chưa có lịch sử)'}
+
+=== YÊU CẦU OUTPUT ===
+Viết TRỰC TIẾP nội dung tin nhắn — KHÔNG giải thích, KHÔNG brief nội bộ:
+• Xưng: "em" | Gọi khách: "${salutation} ${firstName}"
+• Áp dụng chiến thuật đúng bước ${sequenceStep} theo GOLDEN WINDOW / HESITATION / SEQUENCE ${sequenceType}
+• Tạo giá trị trước — KHÔNG push mua ngay
+• Kết thúc bằng 1 câu hỏi mở hoặc CTA cụ thể, nhẹ nhàng`;
+
+        const followupInstruction = await getFollowupInstruction(tenantId);
+        const _aiStart = Date.now();
+        const response = await getAiClient().models.generateContent({
+            model: GENAI_CONFIG.MODELS.EXTRACTOR,
+            contents: followupPrompt,
+            config: {
+                systemInstruction: followupInstruction,
+                maxOutputTokens: 600,
+                thinkingConfig: THINKING_OFF,
+            },
+        });
+
+        const message = (response.text || '').trim();
+        const durationMs = Date.now() - _start;
+        const tokensEstimate = Math.round(message.length / 4);
+
+        trackAiUsage(
+            'FOLLOWUP_AGENT',
+            GENAI_CONFIG.MODELS.EXTRACTOR,
+            Date.now() - _aiStart,
+            followupPrompt,
+            message,
+            { tenantId },
+        );
+        logger.info(
+            `[FollowupAgent] ${lead.name} | seq=${sequenceType}/${sequenceStep} | ch=${channel} | ${durationMs}ms`,
+        );
+
+        return { message, channel, sequenceType, sequenceStep, scheduledHour, hesitationHandled: params.hesitationType, tokensEstimate, durationMs };
     }
 
     async getRealtimeValuation(address: string, area: number, roadWidth: number, legal: string, propertyType?: string, tenantId?: string, advanced?: {
