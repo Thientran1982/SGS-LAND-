@@ -551,6 +551,8 @@ type RouterPlan = {
         unit_direction?: string;
         /** Tower / block identifier (A, B, T1, S2, etc.) */
         tower?: string;
+        /** Pagination: page number for search_inventory results (default 1) */
+        inventory_page?: number;
     };
     confidence: number;
 };
@@ -590,7 +592,8 @@ const ROUTER_SCHEMA: Schema = {
                 floor_max: { type: Type.NUMBER, description: "Tầng tối đa khách muốn. VD: 'dưới tầng 10', 'tầng thấp (dưới 5)' → 10/5. Nếu chỉ hỏi 1 tầng cụ thể thì floor_min = floor_max = số đó" },
                 unit_direction: { type: Type.STRING, description: "Hướng căn hộ/nhà khách muốn. VD: 'hướng đông' → 'DONG', 'hướng đông nam' → 'DONG_NAM', 'hướng nam' → 'NAM', 'tây bắc' → 'TAY_BAC'. Giá trị: DONG | TAY | NAM | BAC | DONG_NAM | DONG_BAC | TAY_NAM | TAY_BAC" },
                 tower: { type: Type.STRING, description: "Tòa/Block/Tháp khách muốn. VD: 'tòa A', 'block B', 'tháp T1', 'tòa S1' → 'A'/'B'/'T1'/'S1'. Chỉ lấy ký hiệu tòa, không lấy chữ 'tòa'/'tháp'/'block'" },
-                project_name: { type: Type.STRING, description: "Tên dự án cụ thể khi khách hỏi về danh sách sản phẩm/căn hộ trong một dự án. Ghi nguyên văn từ tin nhắn. VD: 'Cosmo Central', 'Masteri Cosmo Central', 'Vinhomes Grand Park', 'Aqua City'. Chỉ điền khi khách hỏi rõ về sản phẩm/căn của 1 dự án nhất định." }
+                project_name: { type: Type.STRING, description: "Tên dự án cụ thể khi khách hỏi về danh sách sản phẩm/căn hộ trong một dự án. Ghi nguyên văn từ tin nhắn. VD: 'Cosmo Central', 'Masteri Cosmo Central', 'Vinhomes Grand Park', 'Aqua City'. Chỉ điền khi khách hỏi rõ về sản phẩm/căn của 1 dự án nhất định." },
+                inventory_page: { type: Type.NUMBER, description: "Số trang kết quả kho hàng khách muốn xem. VD: 'trang 2', 'tiếp theo' → 2, 'trang 3' → 3. Mặc định = 1 nếu không đề cập." }
             }
         },
         confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" },
@@ -623,6 +626,8 @@ const TOOL_EXECUTOR = {
         tower?: string,
         /** Direct project_code lookup — bypasses title ILIKE and shows all active statuses */
         projectCode?: string,
+        /** Page number for paginated results (default 1) */
+        page: number = 1,
     ) {
         try {
             const filters: ListingFilters = {};
@@ -643,12 +648,13 @@ const TOOL_EXECUTOR = {
                 filters.status = 'AVAILABLE';
             }
 
-            // Project catalog: fetch up to 50 units (show all);
-            // general search: fetch top 10 then rank by budget proximity.
+            // Project catalog: 50 per page (show all on page);
+            // general search: 10 per page, rank by budget proximity.
             const fetchSize = projectCode ? 50 : 10;
+            const currentPage = Math.max(1, Math.floor(page));
             const result = await listingRepository.findListings(
                 tenantId,
-                { page: 1, pageSize: fetchSize },
+                { page: currentPage, pageSize: fetchSize },
                 filters
             );
 
@@ -720,19 +726,27 @@ const TOOL_EXECUTOR = {
                 ? result.data
                 : [...result.data].sort((a: any, b: any) => Math.abs((a.price || 0) - priceMax!) - Math.abs((b.price || 0) - priceMax!));
 
-            // Project catalog: show all fetched units (up to 50).
+            // Project catalog: show all fetched units on this page (up to 50).
             // General search: show top 5 ranked by budget proximity.
             const top = projectCode ? sorted : sorted.slice(0, 5);
-            const formatted = top.map((l: any, i: number) => formatListing(l, i)).join('\n');
-            const remaining = result.total - top.length;
-            const remainingNote = (!projectCode && remaining > 0)
-                ? ` (còn ${remaining} sản phẩm khác — hỏi thêm tiêu chí để lọc)`
-                : (projectCode && result.total > top.length)
-                    ? ` (hiển thị ${top.length}/${result.total} — có thêm sản phẩm)`
-                    : '';
+            const formatted = top.map((l: any, i: number) => {
+                const globalIdx = (currentPage - 1) * fetchSize + i;
+                return formatListing(l, globalIdx);
+            }).join('\n');
+
+            // Pagination metadata
+            const totalPages = Math.ceil(result.total / fetchSize);
+            const pageNote = totalPages > 1
+                ? ` | Trang ${currentPage}/${totalPages}`
+                : '';
+            const hasNextPage = currentPage < totalPages;
+            const nextPageHint = hasNextPage
+                ? ` (còn ${totalPages - currentPage} trang — khách hỏi "trang tiếp theo" để xem thêm)`
+                : '';
+
             const summaryLabel = projectCode
-                ? `Danh sách ${result.total} sản phẩm trong dự án [${projectCode}]${remainingNote}`
-                : `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất)${remainingNote}`;
+                ? `Danh sách ${result.total} sản phẩm trong dự án [${projectCode}]${pageNote}${nextPageHint}`
+                : `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất)${pageNote}${nextPageHint}`;
             return `${filterSummary}\n${summaryLabel}:\n${formatted}`;
         } catch (error) {
             logger.error('Inventory search error:', error);
@@ -1312,6 +1326,9 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 }
             }
 
+            const rawPage = (extraction as Record<string, any>).inventory_page as number | undefined;
+            const inventoryPage = (rawPage && rawPage > 0) ? Math.floor(rawPage) : 1;
+
             const searchRes = await TOOL_EXECUTOR.search_inventory(
                 state.tenantId,
                 extraction.location_keyword || extraction.explicit_question || '',
@@ -1323,6 +1340,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 extraction.unit_direction,
                 extraction.tower,
                 resolvedProjectCode,
+                inventoryPage,
             );
 
             // ── Buyer profile detection for branching ──────────────────────────────
