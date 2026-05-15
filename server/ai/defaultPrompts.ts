@@ -4963,6 +4963,113 @@ Ghi vào cuối QUALITY ASSESSMENT:
   Quality_level:        HIGH/MEDIUM/LOW/INSUFFICIENT
   Quality_deductions:   "[lý do trừ điểm cụ thể]"
   Quality_bonuses:      "[lý do cộng điểm cụ thể]"
+
+
+=== SEARCH QUALITY ===
+Search_quality_score:    [X/100]
+Confidence_cap_for_step2: [Y]
+Quality_level:           HIGH/MEDIUM/LOW/INSUFFICIENT
+Quality_notes:           "[lý do trừ/cộng điểm chính]"
+
+════════════════════════════════════════
+PHẦN X — COMPLIANCE & ANTI-HALLUCINATION
+════════════════════════════════════════
+
+TUYỆT ĐỐI KHÔNG:
+  ❌ Bịa URL không tồn tại
+  ❌ Bịa giá khi search không tìm được
+  ❌ Dùng nguồn > 18 tháng mà không đánh dấu EXPIRED
+  ❌ Trộn giá m² sàn với m² đất trong cùng pool
+  ❌ Dùng giá dự án khác phân khu mà không ghi chú
+  ❌ Confirm giá mà không có URL hoặc nguồn xác minh
+
+KHI SEARCH KHÔNG TÌM ĐƯỢC NGUỒN ĐỦ TIN CẬY:
+  → Ghi rõ: "SEARCH_RESULT: Không tìm được nguồn đáng tin cậy
+    cho [địa chỉ]. Đề xuất STEP 2 dùng benchmark tĩnh với
+    confidence thấp (≤ 65)"
+  → KHÔNG tự điền benchmark vào kết quả search
+
+KHI PHÁT HIỆN THÔNG TIN MÂU THUẪN:
+  → Báo cáo cả hai phiên bản cho STEP 2
+  → Ghi: "CONFLICT: [nguồn A] = [giá A] vs [nguồn B] = [giá B]
+    — chênh [X]%. Nguyên nhân có thể: [giải thích].
+    STEP 2 cần tự đánh giá."
+
+════════════════════════════════════════
+PHẦN XI — TEST CASES MỞ RỘNG
+════════════════════════════════════════
+
+[CASE 1 — Dự án đa phân khu, địa chỉ mơ hồ]
+Input: "Vinhomes Grand Park, TP Thủ Đức, 2PN"
+(Không có tên phân khu cụ thể)
+
+Multi_tier_project: TRUE — Sub_zone_detected: NULL
+Queries: Rainbow/Beverly/Opus One tìm riêng từng phân khu
+
+Sources theo phân khu:
+  Rainbow 2PN:   3.2–3.8 tỷ (45–54tr/m²)  TIER1 FRESH
+  Beverly 2PN:   4.1–5.2 tỷ (58–74tr/m²)  TIER3 RECENT
+  Opus One 2PN:  5.5–7.0 tỷ (78–100tr/m²) TIER4 RECENT
+
+NOTES_FOR_STEP2: Giá khác biệt rõ theo phân khu (45–100tr/m²).
+Cần khách xác định phân khu cụ thể. Nếu không rõ → dùng
+trung bình dự án với HIGH_SPREAD flag.
+
+[CASE 2 — BĐS công nghiệp hiếm data]
+Input: "Kho xưởng 5.000m², KCN Nhơn Trạch, Đồng Nai"
+
+Strategy: English queries (báo cáo thường tiếng Anh)
+Query A: "industrial warehouse Nhon Trach Dong Nai rental 2026 USD"
+Query B: "logistics real estate Dong Nai 2025 2026 CBRE JLL"
+Query C: "kho xưởng cho thuê Nhơn Trạch 2026"
+
+Sources:
+[1] CBRE Vietnam Industrial Q1/2026: Đồng Nai 4–6 USD/m²/tháng
+    → 4.5 USD × 25.000 = 112.500 VNĐ/m²/tháng  TIER2 FRESH
+[2] batdongsan cho thuê: 110.000 VNĐ/m²/tháng   TIER4 RECENT
+[3] JLL Vietnam Logistics 2025: Đồng Nai 4–5.5 USD TIER2 USABLE
+
+Search_quality_score: 72 — MEDIUM (không có TIER1 giao dịch thực)
+Confidence_cap: 82
+
+[CASE 3 — Không đủ data, báo đúng]
+Input: "Nhà vườn 2ha, huyện Tuy Đức, Đắk Nông"
+
+Fallback Tầng 1: "nhà vườn Tuy Đức Đắk Nông giá" → 0 nguồn
+Fallback Tầng 2: "đất vườn Đắk Nông giá 2025 2026" → 2 EXPIRED
+Fallback Tầng 3: chấp nhận STALE → vẫn < 2 nguồn đáng tin
+Fallback Tầng 4: BÁO INSUFFICIENT
+
+Output:
+"SEARCH_RESULT: INSUFFICIENT
+Chỉ tìm được 1 nguồn EXPIRED (2022). Sources_used: 0.
+Search_quality_score: 25/100
+
+Đề xuất STEP 2:
+(1) Dùng benchmark Tây Nguyên tĩnh: 5–25tr/m² đất nông nghiệp
+(2) Confidence tối đa: 45
+(3) Bắt buộc human appraiser tại địa phương
+(4) Contact Sở TN&MT Đắk Nông để tra giá đất hàng năm"
+
+[CASE 4 — Phát hiện outlier và giải thích]
+Input: "Nhà phố Gò Vấp, 60m² đất, hẻm 4m"
+
+Sources:
+  A: 70tr/m² (hẻm 4m Gò Vấp)          TIER3 FRESH
+  B: 75tr/m² (hẻm 5m Gò Vấp)          TIER4 FRESH
+  C: 180tr/m² (mặt tiền Nguyễn Văn Lượng) TIER3 FRESH
+  D: 68tr/m² (hẻm 4m Gò Vấp)          TIER4 RECENT
+
+Median pool A+B+D: 71tr/m²
+Nguồn C: 180tr = median × 2.54 → ⚠ OUTLIER
+
+Phân tích: "Nguồn C (180tr/m²) = mặt TIỀN đường lớn — khác loại
+với yêu cầu HẺM 4m. LOẠI khỏi pool định giá. Giữ trong report
+để STEP 2 tham khảo nếu cần giá mặt tiền."
+
+Pool sau lọc: A, B, D — median: 71tr/m²
+Search_quality_score: 80 — MEDIUM (không có TIER1, có outlier -10)
+Confidence_cap: 85
 `;
 
 
