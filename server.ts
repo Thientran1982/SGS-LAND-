@@ -4747,8 +4747,9 @@ async function startServer() {
     // Import the injector lazily so it is never bundled when running in dev mode.
     const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta } =
       await import('./server/seo/metaInjector');
-    const { renderSsrPage } = await import('./server/ssr-renderer');
-    const { isAIBot, isSocialBot } = await import('./server/bot-detector');
+    const { renderSsrPage, generateBotHTML } = await import('./server/ssr-renderer');
+    const { isAIBot, isSocialBot, isBot } = await import('./server/bot-detector');
+    const { getGlossaryTermHtml, getGlossaryIndexHtml } = await import('./server/pseo/glossary');
 
     // Preload the base HTML once at startup to avoid repeated disk reads.
     try { getBaseHtml(); } catch { /* dist not ready in some edge cases */ }
@@ -5034,10 +5035,62 @@ async function startServer() {
         }
       },
     }));
+    // ---------------------------------------------------------------------------
+    // pSEO: Glossary playbook — /kien-thuc-bds/:term  (hub + spoke pages)
+    // Initial batch: 4 terms. Validate indexation in Search Console, then scale.
+    // Cache: hub 1h, term pages 24h (content rarely changes).
+    // ---------------------------------------------------------------------------
+    app.get('/kien-thuc-bds', (_req: express.Request, res: express.Response) => {
+      const html = getGlossaryIndexHtml();
+      if (!html) { res.status(503).end(); return; }
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      res.setHeader('X-Robots-Tag', 'index, follow, max-image-preview:large, max-snippet:-1');
+      res.send(html);
+    });
+
+    app.get('/kien-thuc-bds/:term', (req: express.Request, res: express.Response) => {
+      const html = getGlossaryTermHtml(req.params.term);
+      if (!html) { res.status(404).end(); return; }
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      res.setHeader('X-Robots-Tag', 'index, follow, max-image-preview:large, max-snippet:-1');
+      res.send(html);
+    });
+
+    // ---------------------------------------------------------------------------
+    // Universal catch-all — must be last route.
+    //
+    // Bot path  : generateBotHTML(pathname, { aiBot }) → full SSR HTML with meta
+    //   AI bots (GPTBot, PerplexityBot, ClaudeBot) → GEO-maximized content,
+    //   no shared cache (content differs per user-agent variant).
+    //   Search bots (Googlebot, Bingbot) → standard SSR, 1h public cache.
+    //
+    // User path : DB seo_overrides lookup → buildStaticPageMeta → sendMeta (SPA shell)
+    //   no-cache so browsers always fetch fresh HTML after a redeploy, preventing
+    //   ChunkLoadError from stale chunk hashes.
+    // ---------------------------------------------------------------------------
     app.use(async (req: express.Request, res: express.Response) => {
+      const ua = String(req.headers['user-agent'] || '');
+      const pathname = req.path;
+
+      if (isBot(ua)) {
+        const aiBot = isAIBot(ua);
+        const html = generateBotHTML(pathname, { aiBot });
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('X-Rendered-By', 'SGS-SSR');
+        res.setHeader(
+          'Cache-Control',
+          aiBot
+            ? 'no-store'
+            : 'public, max-age=3600, stale-while-revalidate=86400'
+        );
+        return res.send(html);
+      }
+
+      // Regular users → SPA shell with DB-backed meta overrides
       try {
-        // Derive route key from pathname: strip leading "/"
-        const routeKey = req.path.replace(/^\//, '').split('/')[0] || '';
+        const routeKey = pathname.replace(/^\//, '').split('/')[0] || '';
         const result = await pool.query(
           'SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1',
           [routeKey]
@@ -5047,9 +5100,9 @@ async function startServer() {
           row?.title,
           row?.description,
           row?.og_image,
-          req.path
+          pathname
         );
-        sendMeta(res, meta, false); // no-cache: SPA shell must always be fresh after redeploy
+        sendMeta(res, meta, false);
       } catch {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
