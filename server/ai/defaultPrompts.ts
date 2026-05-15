@@ -4807,7 +4807,100 @@ Thông tin CHẤT LƯỢNG:
   weight:          1.0–3.0 (theo tier)
   outlier_flag:    true/false
   outlier_reason:  lý do nếu outlier
-  notes:           ghi chú thêm`;
+  notes:           ghi chú thêm
+
+════════════════════════════════════════
+OUTPUT FORMAT — SEARCH REPORT CHUẨN
+════════════════════════════════════════
+
+=== SEARCH REPORT ===
+Address:           [địa chỉ chuẩn hoá]
+Query_strategy:    [A/B/C, fallback tier nào đã dùng]
+Total_sources:     N
+Transaction_count: X
+Listing_count:     Y
+Date_range:        [YYYY-MM] đến [YYYY-MM]
+Overall_freshness: FRESH/MIXED/STALE
+
+=== SOURCES ===
+[1] 🟢 FRESH | TIER1 | TRANSACTION_VERIFIED
+    Site:          onehousing.vn
+    URL:           https://...
+    Title:         "Chuyển nhượng Vinhomes Grand Park S5.02 — 14/3/2026"
+    Date:          2026-03
+    Price_raw:     "4.55 tỷ, căn 70m²"
+    Price_per_m2:  65,000,000 VNĐ/m² sàn
+    Price_type:    SECONDARY_SALE
+    Area:          70m²
+    Notes:         Giao dịch thực tế, đã sang tên
+
+[2] 🟡 RECENT | TIER4 | ACTIVE_LISTING
+    Site:          batdongsan.com.vn
+    URL:           https://...
+    Title:         "Bán căn hộ S5.05 — 68.5tr/m²"
+    Date:          2026-04
+    Price_raw:     "4.8 tỷ, căn 70m²"
+    Price_per_m2:  68,571,429 VNĐ/m² sàn
+    Price_type:    ACTIVE_LISTING
+    Discount:      -5% → giá giao dịch ước: 65,100,000
+    Notes:         Giá rao — cần discount 5% để ra giá giao dịch
+
+=== QUALITY ASSESSMENT ===
+Median_price_raw:              65,000,000–68,500,000 VNĐ/m²
+Outliers_detected:             [tên nguồn nếu có]
+Recommended_range_for_step2:   62,000,000–70,000,000
+Data_quality:                  HIGH/MEDIUM/LOW/INSUFFICIENT
+Confidence_estimate:           85
+Notes_for_step2:               "[ghi chú cho STEP 2]"
+
+════════════════════════════════════════
+PHẦN VII — CHO THUÊ vs MUA BÁN
+════════════════════════════════════════
+
+KHI PURPOSE = "RENTAL" HOẶC CẦN TÍNH YIELD:
+
+Query bổ sung cho giá thuê:
+  "[Dự án/khu vực] giá thuê [năm hiện tại]"
+  "[loại BĐS] cho thuê [quận/huyện] tháng [tháng/năm]"
+  "thuê [dự án] [số PN]PN [năm]"
+
+Nguồn giá thuê ưu tiên:
+  TIER1: onehousing.vn/cho-thue (hợp đồng thực tế)
+  TIER2: Savills/CBRE Leasing Market Report
+  TIER3: batdongsan.com.vn/cho-thue (tin đang cho thuê)
+  TIER4: cen.vn, alonhadat.com (cho thuê)
+
+Trích xuất giá thuê chuẩn:
+  rental_price_month: số nguyên VNĐ/tháng
+  rental_unit:        "VND_PER_MONTH" / "USD_PER_M2_MONTH"
+  rental_type:        "FURNISHED/UNFURNISHED"
+  rental_source_tier: TIER1/2/3/4
+
+Tính Gross Yield ước (ghi vào notes cho STEP 2):
+  IF có cả giá thuê và giá bán:
+  Gross_yield_estimate = (rental_price × 12) / sale_price × 100
+  Ghi: "Gross yield ước: [X]%/năm (sale [Y]tr/m², thuê [Z]tr/tháng)"
+
+BENCHMARK GIÁ THUÊ THAM CHIẾU (khi thiếu data):
+  Căn hộ Vinhomes GP 2PN:         12–18tr/tháng
+  Căn hộ Vinhomes Central Park 2PN: 20–35tr/tháng
+  Masteri Thảo Điền 2PN:           20–35tr/tháng
+  Nhà phố Phú Nhuận mặt tiền:      30–80tr/tháng
+  Văn phòng hạng A HCM:            40–70 USD/m²/tháng
+  Shophouse dự án HCM:             30–200tr/tháng tuỳ vị trí
+
+════════════════════════════════════════
+PHẦN VIII — TRACKING & METADATA
+════════════════════════════════════════
+
+METADATA BẮT BUỘC ĐẦU MỖI OUTPUT:
+  agent_version:    "${PROMPT_VERSION}"
+  search_timestamp: "[YYYY-MM-DD HH:mm]"
+  query_count:      N (tổng số query đã chạy)
+  fallback_used:    true/false (đã dùng fallback tầng nào)
+  fallback_tier:    null / "TIER1_RADIUS" / "TIER2_STALE" / "TIER3_INSUFFICIENT"
+  processing_notes: "[ghi chú nội bộ cho STEP 2 — không hiển thị khách]"
+`;
 
 
 // ── VALUATION RENTAL ───────────────────────────────────────────────────────
