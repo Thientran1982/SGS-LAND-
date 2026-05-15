@@ -6,7 +6,7 @@ import ProjectDirectory from './ProjectDirectory';
 
 const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
     'aqua-city': {
-        title: 'Aqua City Novaland | Căn Hộ, Biệt Thự Đồng Nai - SGS LAND',
+        title: 'Aqua City Novaland | Nhà Phố, Biệt Thự Đồng Nai - SGS LAND',
         description: 'Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.',
     },
     'izumi-city': {
@@ -113,7 +113,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             { label: 'Quy mô', value: '1.000 ha' },
             { label: 'Vị trí', value: 'Long Hưng, Biên Hòa, Đồng Nai' },
             { label: 'Khoảng cách TP.HCM', value: '~30 phút qua cầu Nhơn Trạch' },
-            { label: 'Loại hình', value: 'Căn hộ, Nhà phố, Biệt thự, Shophouse' },
+            { label: 'Loại hình', value: 'Shophouse, Nhà phố, Biệt thự, Shophouse' },
             { label: 'Mức giá tham khảo', value: 'Nhà phố từ 6,5 tỷ — Biệt thự từ 20+ tỷ đồng' },
             { label: 'Pháp lý', value: 'Sổ hồng riêng' },
             { label: 'Tiến độ', value: 'Đang bàn giao nhiều phân khu' },

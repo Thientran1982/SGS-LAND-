@@ -92,7 +92,7 @@ const HOME_PAGE: SsrPage = {
           name: 'Giá căn hộ TP.HCM hiện tại là bao nhiêu?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Giá căn hộ TP.HCM T5/2026: phân khúc bình dân 25–40 triệu đồng/m² (Thủ Đức ngoại vi, Bình Chánh); trung cấp 40–65 triệu/m² (Quận 7, Thủ Đức, Bình Thạnh); cao cấp 65–120 triệu/m² (Quận 1, 2, Bình Thạnh ven sông). Nguồn: CBRE Vietnam Market Report Q1/2026.',
+            text: 'Giá căn hộ TP.HCM T5/2026: phân khúc bình dân 25–40 triệu đồng/m² (Thủ Đức ngoại vi, Bình Chánh); trung cấp 60–85 triệu/m² (Quận 7, Thủ Đức, Bình Thạnh); cao cấp 120–250 triệu/m² (Quận 1, 2, Bình Thạnh ven sông). Nguồn: CBRE Vietnam Market Report Q1/2026.',
           },
         },
         {
@@ -177,7 +177,7 @@ export const PAGE_META: Record<string, SsrPage> = {
         amenityFeature: [
           'Golf 18 lỗ',
           'Marina cảng du thuyền',
-          'Bệnh viện Hòa Hảo',
+          'Bệnh viện Sing Mart',
           'Trường Tesla Education',
           'Công viên 100.000m² mặt nước',
           'Trung tâm thương mại Nova Mall',
