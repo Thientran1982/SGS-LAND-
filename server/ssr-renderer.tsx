@@ -133,7 +133,7 @@ export const PAGE_META: Record<string, SsrPage> = {
       'Aqua City Novaland Biên Hoà: shophouse từ 12 tỷ, biệt thự từ 15 tỷ. Cập nhật bảng giá, tiến độ xây dựng, pháp lý T5/2026. Đại lý ủy quyền chính thức SGS LAND.',
     h1: 'Aqua City Novaland',
     keywords:
-      'aqua city novaland, aqua city bảng giá 2026, aqua city Biên Hoà đồng nai, biệt thự aqua city giá bao nhiêu, aqua city có nên mua không, dự án aqua city',
+      'aqua city novaland, aqua city bảng giá 2026, aqua city Biên Hoà đồng nai, biệt thự aqua city giá bao nhiêu, aqua city có nên mua không, dự án aqua city, nhà phố aqua city giá bao nhiêu, shophouse aqua city giá bao nhiêu',
     image: `${APP}/og/du-an/aqua-city`,
     geoPosition: '10.8912;106.8712',
     geoPlacename: 'Long Hưng, Biên Hòa, Đồng Nai',
