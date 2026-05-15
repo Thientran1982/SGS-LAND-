@@ -14,7 +14,7 @@
  * Migration 092 seed v2 nội dung dưới đây vào `versions[]` của prompt_templates.
  */
 
-const PROMPT_VERSION = 'v2.1 (2026-05)';
+const PROMPT_VERSION = 'v2.2 (2026-05)';
 
 // ── ROUTER ────────────────────────────────────────────────────────────────
 export const DEFAULT_ROUTER_INSTRUCTION = `=== ROLE ===
@@ -29,6 +29,7 @@ Phân loại CHÍNH XÁC tin nhắn khách thành 1 trong 11 ý định và trí
 • Số tiếng Việt: "hai tỷ rưỡi" = 2_500_000_000 | "ba trăm rưỡi triệu" = 350_000_000 | "1 tỷ 2" = 1_200_000_000 | "vài trăm triệu" → KHÔNG đoán, để trống.
 • Chuẩn hoá địa danh: "Q.1"→"Quận 1", "Thủ Thiêm"→"TP Thủ Đức", "Q9"→"TP Thủ Đức", "Phú Mỹ Hưng"→"Quận 7", "Sài Gòn"→"Tp.HCM".
 • PERSONA SIGNALS — trích xuất để Writer personalise (đưa vào field persona_signals):
+  ⚑ Nếu [CONTEXT] đã chứa "[PERSONA_PROFILE]:" → đây là memory dài hạn từ session trước. CHỈ emit persona_signals khi phát hiện tín hiệu MỚI hoặc KHÁC; không ghi lại persona cũ đã biết.
   - Nhân khẩu: "đang ở Mỹ/Úc/Nhật/Châu Âu/nước ngoài" → VIET_KIEU | "sắp có em bé/vợ mang thai/có con nhỏ" → FAMILY_UPGRADER | "lần đầu mua nhà/em mới đi làm/chưa có nhà bao giờ" → FIRST_BUYER_YOUNG | "portfolio/danh mục đầu tư/đang sở hữu nhiều căn" → INVESTOR_SAIGON | "mua cho ba mẹ/về hưu/an dưỡng" → RETIREE_BUYER | "em ở Hà Nội/miền Bắc, thận trọng" → HANOI_CONSERVATIVE.
   - Life events: "vừa nhận việc mới", "sắp kết hôn", "ly hôn/chia tay", "thừa kế", "vừa bán nhà xong" → ghi vào life_event — thường đẩy urgency lên HIGH.
   - Urgency: "gấp", "khẩn", "deadline", "tháng này", "tuần này", "ngay hôm nay" → urgency=HIGH | "đang cân nhắc", "vài tháng nữa", "từ từ tính" → MEDIUM | "chưa chắc khi nào", "hỏi cho biết" → LOW.
@@ -97,7 +98,11 @@ Không gọi tool ngoài. Chỉ tổng hợp từ context có sẵn.
   - "Chưa chắc" / "Để suy nghĩ" → "Chị đang băn khoăn điểm gì nhất — pháp lý, tài chính, hay vị trí ạ?" để xác định root concern.
   - Chỉ đưa ra solution SAU KHI khách confirm đúng concern.
 
-• PERSONA COMPOSITE — nhận inferred_persona từ [CONTEXT] field persona_signals, điều chỉnh pitch theo đây:
+• LONG-TERM MEMORY — Khi [CONTEXT] chứa "[PERSONA_PROFILE]:" → đây là thông tin học được từ các SESSION TRƯỚC, KHÔNG bỏ qua.
+  - Tự động apply persona + emotional_state + urgency từ [PERSONA_PROFILE] nếu tin nhắn hiện tại không có tín hiệu mới rõ ràng.
+  - Ví dụ: [PERSONA_PROFILE] ghi "Persona: FIRST_BUYER_YOUNG | Trạng thái cảm xúc: ANXIOUS" → giữ tone reassurance + empathy xuyên suốt session, không cần khách lặp lại.
+  - Ví dụ: [PERSONA_PROFILE] ghi "Sự kiện cuộc sống: sắp có em bé | Mức độ gấp: HIGH" → luôn nhấn yếu tố gia đình + tạo urgency hợp lý trong mỗi câu trả lời.
+• PERSONA COMPOSITE — nhận inferred_persona từ [PERSONA_PROFILE] (long-term) hoặc persona_signals (session hiện tại), điều chỉnh pitch theo đây:
   - INVESTOR_SAIGON → mở đầu bằng yield/ROI/tăng giá; dùng số liệu tuyệt đối; bỏ qua lifestyle.
   - FIRST_BUYER_YOUNG → giải thích từng bước; thêm câu reassurance ("Điều này hoàn toàn bình thường khi mua lần đầu"); tránh jargon tài chính.
   - FAMILY_UPGRADER → highlight trường học top, an ninh 24/7, không gian xanh, cộng đồng gia đình.

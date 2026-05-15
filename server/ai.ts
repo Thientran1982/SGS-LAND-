@@ -471,6 +471,14 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
         parts.push(`Phân tích gần nhất: ${lead.preferences._lastAnalysisSummary}`);
     }
 
+    // P3 self-learning: accumulated persona signals from past sessions — Writer reads this as long-term memory
+    const personaBlock: string[] = [];
+    if (lead.preferences?._inferredPersona)         personaBlock.push(`Persona: ${lead.preferences._inferredPersona}`);
+    if (lead.preferences?._lifeEvents?.length)      personaBlock.push(`Sự kiện cuộc sống: ${(lead.preferences._lifeEvents as string[]).slice(-2).join(', ')}`);
+    if (lead.preferences?._lastUrgency && lead.preferences._lastUrgency !== 'LOW')         personaBlock.push(`Mức độ gấp: ${lead.preferences._lastUrgency}`);
+    if (lead.preferences?._lastEmotionalState && lead.preferences._lastEmotionalState !== 'NEUTRAL') personaBlock.push(`Trạng thái cảm xúc: ${lead.preferences._lastEmotionalState}`);
+    if (personaBlock.length > 0) parts.push(`[PERSONA_PROFILE]: ${personaBlock.join(' | ')}`);
+
     if (lead.preferences?._lastInteraction) {
         const lastDate = new Date(lead.preferences._lastInteraction);
         const diffDays = Math.floor((Date.now() - lastDate.getTime()) / 86400000);
@@ -1149,6 +1157,37 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                     updates._lastInteraction = new Date().toISOString();
                     hasChange = true;
 
+                    // P3 self-learning: persist persona_signals emitted by Router (P2) into lead.preferences
+                    // Accumulates across sessions — Writer reads this back as [PERSONA_PROFILE] block
+                    const ps = plan.persona_signals as {
+                        inferred_persona?: string;
+                        life_event?: string;
+                        urgency?: string;
+                        emotional_state?: string;
+                    } | undefined;
+                    if (ps) {
+                        // Only overwrite persona when a NEW or DIFFERENT one is detected
+                        if (ps.inferred_persona && ps.inferred_persona !== currentPrefs._inferredPersona) {
+                            updates._inferredPersona = ps.inferred_persona;
+                            hasChange = true;
+                        }
+                        // Accumulate life events (dedup, keep last 5)
+                        if (ps.life_event && !(currentPrefs._lifeEvents || []).includes(ps.life_event)) {
+                            updates._lifeEvents = [...(currentPrefs._lifeEvents || []), ps.life_event].slice(-5);
+                            hasChange = true;
+                        }
+                        // Track urgency only when non-trivial
+                        if (ps.urgency && ps.urgency !== 'LOW') {
+                            updates._lastUrgency = ps.urgency;
+                            hasChange = true;
+                        }
+                        // Track emotional state only when non-neutral
+                        if (ps.emotional_state && ps.emotional_state !== 'NEUTRAL') {
+                            updates._lastEmotionalState = ps.emotional_state;
+                            hasChange = true;
+                        }
+                    }
+
                     if (hasChange) {
                         leadRepository.mergePreferences(state.tenantId, state.lead.id, updates).catch(() => {});
                         state.lead.preferences = { ...currentPrefs, ...updates };
@@ -1157,6 +1196,10 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             }
 
             // --- ROUTER OBSERVATION LOGGING (self-learning) ---
+            const _ps = plan.persona_signals as {
+                inferred_persona?: string; life_event?: string;
+                urgency?: string; emotional_state?: string;
+            } | undefined;
             feedbackRepository.logObservation(state.tenantId, 'ROUTER', plan.next_step, 'INTENT_CLASSIFIED', {
                 intent: plan.next_step,
                 confidence: confPct,
@@ -1165,6 +1208,11 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 locationDetected: !!ext.location_keyword,
                 propertyTypeDetected: !!ext.property_type,
                 msgLength: state.userMessage.length,
+                // P3: persona signal tracking for longitudinal learning analytics
+                personaDetected: _ps?.inferred_persona || null,
+                emotionalState:  _ps?.emotional_state  || 'NEUTRAL',
+                urgency:         _ps?.urgency          || 'LOW',
+                lifeEvent:       _ps?.life_event        || null,
             }).catch(() => {});
 
             return {
