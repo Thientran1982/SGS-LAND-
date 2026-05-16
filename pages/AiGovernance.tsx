@@ -6,14 +6,12 @@ import { AiTenantConfig, PromptTemplate, AiSafetyLog, AiModelType } from '../typ
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-
 interface ConfigTabProps {
     config: AiTenantConfig;
     onSave: () => void;
     onUpdateConfig: (k: keyof AiTenantConfig, v: any) => void;
     t: any;
 }
-
 // Models grouped by generation — verified working with Google GenAI API (April 2026)
 const MODEL_GROUPS: { label: string; badge: string; badgeColor: string; models: AiModelType[] }[] = [
     {
@@ -29,11 +27,9 @@ const MODEL_GROUPS: { label: string; badge: string; badgeColor: string; models: 
         models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'],
     },
 ];
-
 const SUPPORTED_MODELS: AiModelType[] = MODEL_GROUPS.flatMap(g => g.models);
 
 const DEPRECATED_MODELS = new Set(['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']);
-
 // Helper to format model names for display
 const formatModelName = (model: string) => {
     return model
@@ -48,7 +44,6 @@ const formatModelName = (model: string) => {
         .replace(/\s+/g, ' ')
         .trim();
 };
-
 interface SkillDefault { name: string; summary: string; notes: string; }
 
 interface PromptsTabProps {
@@ -74,7 +69,6 @@ interface PromptsTabProps {
     onSelectDiffVersion: (v: number) => void;
     t: any;
 }
-
 const ICONS = {
     ADD:          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     SAVE:         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
@@ -92,9 +86,7 @@ const ICONS = {
     THUMBS_DOWN:  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" /></svg>,
     BOT:          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2v3M7 5h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2zM9 10h.01M15 10h.01M9 14h6" /></svg>,
 };
-
 const PROMPT_VARIABLES = ['{{name}}', '{{role}}', '{{context}}', '{{history}}', '{{market_data}}'];
-
 // Line-level LCS diff used by the side-by-side promote modal.
 type DiffLine = { type: 'same' | 'removed' | 'added' | 'pad'; text: string; lineNo: number | null };
 function computeLineDiff(a: string, b: string): { left: DiffLine[]; right: DiffLine[]; addedCount: number; removedCount: number } {
@@ -130,7 +122,6 @@ function computeLineDiff(a: string, b: string): { left: DiffLine[]; right: DiffL
     while (j < n) { left.push({ type: 'pad', text: '', lineNo: null }); right.push({ type: 'added', text: bLines[j++], lineNo: bLine++ }); added++; }
     return { left, right, addedCount: added, removedCount: removed };
 }
-
 interface DiffPromoteModalProps {
     open: boolean;
     prompt: PromptTemplate | null;
@@ -140,7 +131,6 @@ interface DiffPromoteModalProps {
     onPromoted: () => void;
     notify: (msg: string, type?: 'success' | 'error') => void;
 }
-
 interface SimResult { text: string; latencyMs?: number }
 interface PromoteLogEntry {
     id: string;
@@ -151,13 +141,11 @@ interface PromoteLogEntry {
     promotedByEmail: string | null;
     createdAt: string;
 }
-
 const errorMessage = (e: unknown): string => {
     if (e instanceof Error) return e.message;
     if (typeof e === 'string') return e;
     return 'Lỗi không xác định';
 };
-
 const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targetVersion, defaultModel, onClose, onPromoted, notify }) => {
     const [testInput, setTestInput] = useState('');
     const [runningBoth, setRunningBoth] = useState(false);
@@ -166,12 +154,10 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
     const [promoting, setPromoting] = useState(false);
     const [log, setLog] = useState<PromoteLogEntry[]>([]);
     const [loadingLog, setLoadingLog] = useState(false);
-
     const activeVersion = prompt?.activeVersion ?? null;
     const leftVersionObj = useMemo(() => prompt?.versions?.find(v => v.version === activeVersion) || null, [prompt, activeVersion]);
     const rightVersionObj = useMemo(() => prompt?.versions?.find(v => v.version === targetVersion) || null, [prompt, targetVersion]);
     const diff = useMemo(() => computeLineDiff(leftVersionObj?.content || '', rightVersionObj?.content || ''), [leftVersionObj, rightVersionObj]);
-
     useEffect(() => {
         if (!open || !prompt) return;
         setLeftOutput(null);
@@ -206,7 +192,6 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
             setRunningBoth(false);
         }
     };
-
     const handlePromote = async () => {
         if (!confirm(`Promote v${targetVersion} thành ACTIVE? Các request mới sẽ dùng prompt này ngay lập tức.`)) return;
         setPromoting(true);
@@ -221,11 +206,9 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
             setPromoting(false);
         }
     };
-
     const formatTs = (iso: string) => {
         try { return new Date(iso).toLocaleString('vi-VN'); } catch { return iso; }
     };
-
     return createPortal(
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-enter" onClick={onClose}>
             <div className="bg-[var(--bg-surface)] w-full max-w-6xl max-h-[92vh] rounded-[24px] shadow-2xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -245,7 +228,6 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                         {ICONS.X}
                     </button>
                 </div>
-
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
                     {/* Side-by-side diff */}
@@ -370,7 +352,6 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                         )}
                     </div>
                 </div>
-
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-[var(--glass-border)] flex items-center justify-between gap-3">
                     <div className="text-xs text-[var(--text-tertiary)]">
@@ -395,7 +376,6 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
         document.body
     );
 };
-
 const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
@@ -485,7 +465,6 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
         </div>
     </div>
 ));
-
 const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string }[] = [
     { key: 'ROUTER_SYSTEM',           agent: 'Router',            descKey: 'ai.agent_router_desc' },
     { key: 'WRITER_PERSONA',          agent: 'Writer',            descKey: 'ai.agent_writer_desc' },
@@ -499,8 +478,8 @@ const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string }[] = [
     { key: 'VALUATION_SYSTEM',        agent: 'Valuation Extract', descKey: 'ai.agent_valuation_desc' },
     { key: 'VALUATION_SEARCH_SYSTEM', agent: 'Valuation Sale',    descKey: 'ai.agent_valuation_search_desc' },
     { key: 'VALUATION_RENTAL_SYSTEM', agent: 'Valuation Rental',  descKey: 'ai.agent_valuation_rental_desc' },
+    { key: 'FOLLOWUP_SYSTEM',         agent: 'Follow Up',         descKey: 'ai.agent_followup_desc' },
 ];
-
 const PromptsTab = memo(({ 
     prompts, promptDefaults, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
     onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onPromoteVersion, onCreateOpen, onSetTestInput,

@@ -3,7 +3,6 @@ import { api } from '../services/api/apiClient';
 import { db } from '../services/dbApi';
 import { User, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
-
 interface CostReport {
   period: string;
   totalValuations: number;
@@ -26,7 +25,6 @@ interface CostReport {
   prevEstimatedCostUsd: number;
   pricing: { pricePerCallUsd: number; callsPerValuation: number; costPerValuationUsd: number };
 }
-
 interface AlertConfig {
   thresholdUsd: number;
   alertEmail: string | null;
@@ -35,20 +33,17 @@ interface AlertConfig {
   hardCapEnabled: boolean;
   lastWarnAlertedPeriod: string | null;
 }
-
 interface FeatureCostRow {
   feature: string;
   calls: number;
   aiCalls: number;
   costUsd: number;
 }
-
 interface FeatureBreakdown {
   rows: FeatureCostRow[];
   totalCostUsd: number;
   totalAiCalls: number;
 }
-
 interface PlanQuotaRow {
   planId: string;
   planLabel: string;
@@ -58,7 +53,6 @@ interface PlanQuotaRow {
   isUnlimited: boolean;
   exceeded: boolean;
 }
-
 interface ReportResponse {
   report: CostReport;
   alertConfig: AlertConfig;
@@ -67,7 +61,6 @@ interface ReportResponse {
   pricing: CostReport['pricing'];
   featureBreakdown?: FeatureBreakdown;
 }
-
 const FEATURE_LABELS: Record<string, string> = {
   VALUATION_SEARCH: 'Định giá — tìm kiếm thị trường',
   VALUATION_EXTRACT: 'Định giá — trích xuất kết quả',
@@ -87,7 +80,6 @@ const FEATURE_LABELS: Record<string, string> = {
 function featureLabel(f: string): string {
   return FEATURE_LABELS[f] || f;
 }
-
 function fmtUsd(n: number): string {
   return `$${(n || 0).toFixed(2)}`;
 }
@@ -106,7 +98,6 @@ function shiftPeriod(p: string, delta: number): string {
   const d = new Date(y, m - 1 + delta, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
-
 const AdminAiCost: React.FC = () => {
   const { t } = useTranslation();
   const [me, setMe] = useState<User | null>(null);
@@ -157,14 +148,11 @@ const AdminAiCost: React.FC = () => {
       setLoading(false);
     }
   }, [period]);
-
   useEffect(() => { load(); }, [load]);
-
   const downloadCsv = useCallback(() => {
     const url = `/api/valuation/admin/cost-report.csv?month=${encodeURIComponent(period)}`;
     window.open(url, '_blank');
   }, [period]);
-
   const saveAlert = useCallback(async () => {
     setSavingAlert(true);
     try {
@@ -183,7 +171,6 @@ const AdminAiCost: React.FC = () => {
       setSavingAlert(false);
     }
   }, [alertDraft]);
-
   const saveQuota = useCallback(async (planId: string) => {
     setSavingQuotaPlan(planId);
     try {
@@ -220,7 +207,6 @@ const AdminAiCost: React.FC = () => {
     );
   }
   if (!data) return null;
-
   const r = data.report;
   const cfg = data.alertConfig;
   const trendCount = pct(r.totalValuations, r.prevTotalValuations);
@@ -253,7 +239,6 @@ const AdminAiCost: React.FC = () => {
       };
     }
   }
-
   return (
     <div className="p-4 sm:p-6 space-y-6 animate-enter pb-20">
       {/* Header */}
@@ -290,7 +275,6 @@ const AdminAiCost: React.FC = () => {
           >Export CSV</button>
         </div>
       </div>
-
       {/* Threshold banner (current period only) */}
       {banner && (
         <div
@@ -312,7 +296,6 @@ const AdminAiCost: React.FC = () => {
           </div>
         </div>
       )}
-
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
@@ -340,7 +323,6 @@ const AdminAiCost: React.FC = () => {
           sub={`Khách trả phí ${r.guestValuations === 0 ? '0%' : Math.round((r.guestValuations / r.totalValuations) * 100) + '%'}`}
         />
       </div>
-
       {/* Breakdown by plan + by source */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Panel title="Chi phí theo gói">
@@ -382,7 +364,6 @@ const AdminAiCost: React.FC = () => {
             </table>
           )}
         </Panel>
-
         <Panel title="Nguồn dữ liệu">
           {r.bySource.length === 0 ? (
             <EmptyRow text="Chưa có dữ liệu." />
@@ -407,7 +388,6 @@ const AdminAiCost: React.FC = () => {
           )}
         </Panel>
       </div>
-
       {/* Per-feature breakdown (all Gemini features, not just valuation) */}
       <Panel title="Chi phí theo tính năng AI">
         <p className="text-xs text-[var(--text-tertiary)] mb-3">
@@ -449,7 +429,6 @@ const AdminAiCost: React.FC = () => {
           </table>
         )}
       </Panel>
-
       {/* Daily trend */}
       <Panel title="Xu hướng theo ngày">
         {r.dailyTrend.length === 0 ? (
@@ -472,7 +451,6 @@ const AdminAiCost: React.FC = () => {
           </div>
         )}
       </Panel>
-
       {/* Per-plan AI cost quotas */}
       <Panel title="Hạn mức chi phí AI theo gói thuê bao">
         <p className="text-xs text-[var(--text-tertiary)] mb-3">
@@ -550,7 +528,7 @@ const AdminAiCost: React.FC = () => {
                 )}
                 {q.exceeded && (
                   <div className="mt-2 text-xs text-rose-700 font-bold">
-                    ⛔ Gói này đã vượt hạn mức — các yêu cầu định giá AI mới của user gói {q.planId} đang bị chặn.
+                     Gói này đã vượt hạn mức — các yêu cầu định giá AI mới của user gói {q.planId} đang bị chặn.
                   </div>
                 )}
               </div>
@@ -589,7 +567,6 @@ const AdminAiCost: React.FC = () => {
           </table>
         )}
       </Panel>
-
       {/* Alert config */}
       <Panel title="Cảnh báo chi phí qua email">
         <p className="text-xs text-[var(--text-tertiary)] mb-3">
@@ -679,7 +656,6 @@ const AdminAiCost: React.FC = () => {
           )}
         </div>
       </Panel>
-
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl bg-slate-900 text-white text-sm shadow-2xl animate-enter">
           {toast}
@@ -688,7 +664,6 @@ const AdminAiCost: React.FC = () => {
     </div>
   );
 };
-
 const KpiCard: React.FC<{
   label: string; value: string; sub?: string; trend?: string; trendPositive?: boolean | null;
 }> = ({ label, value, sub, trend, trendPositive }) => (
@@ -706,16 +681,13 @@ const KpiCard: React.FC<{
     {sub && <div className="mt-2 text-xs text-[var(--text-tertiary)]">{sub}</div>}
   </div>
 );
-
 const Panel: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm">
     <h3 className="text-sm font-bold text-[var(--text-primary)] mb-3">{title}</h3>
     {children}
   </div>
 );
-
 const EmptyRow: React.FC<{ text: string }> = ({ text }) => (
   <div className="py-6 text-center text-xs text-[var(--text-tertiary)]">{text}</div>
 );
-
 export default AdminAiCost;
