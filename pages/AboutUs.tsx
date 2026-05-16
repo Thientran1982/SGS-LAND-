@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
@@ -6,38 +5,31 @@ import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
-
 const ASSETS = {
     OFFICE: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2301&auto=format&fit=crop",
     CEO: "https://ui-avatars.com/api/?name=Tran+Minh+Tuan&background=0D8ABC&color=fff&size=512",
     CTO: "https://ui-avatars.com/api/?name=Nguyen+Hoang+Nam&background=10B981&color=fff&size=512",
     COO: "https://ui-avatars.com/api/?name=Le+Thi+Hoa&background=F59E0B&color=fff&size=512"
 };
-
 const ICONS = {
     MISSION: <svg className="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
     VISION: <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>,
     VALUES: <svg className="w-8 h-8 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
 };
-
 export const AboutUs: React.FC = () => {
     const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-
     const leaders = [
         { name: "Trần Minh Thiện", role: "Founder & CEO", img: ASSETS.CEO, bio: t('about.ceo_bio') },
         { name: "Nguyễn Hoàng Nam", role: "CTO", img: ASSETS.CTO, bio: t('about.cto_bio') },
         { name: "Lê Thị Hoa", role: "COO", img: ASSETS.COO, bio: t('about.coo_bio') }
     ];
-
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             <SeoHead
@@ -93,7 +85,6 @@ export const AboutUs: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {/* Hero */}
             <section className="relative py-24 bg-slate-900 text-white overflow-hidden">
                 <div className="absolute inset-0 opacity-40">
@@ -113,7 +104,6 @@ export const AboutUs: React.FC = () => {
                     </p>
                 </div>
             </section>
-
             {/* Mission & Vision */}
             <section className="py-20 px-6">
                 <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 -mt-24 relative z-20">
@@ -134,7 +124,6 @@ export const AboutUs: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* Stats */}
             <section className="py-16 bg-[var(--bg-surface)] border-y border-[var(--glass-border)]">
                 <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -156,7 +145,6 @@ export const AboutUs: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* Leadership */}
             <section className="py-24 px-6">
                 <div className="max-w-6xl mx-auto">
@@ -164,7 +152,6 @@ export const AboutUs: React.FC = () => {
                         <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-4">{t('about.team_title')}</h2>
                         <p className="text-[var(--text-tertiary)] max-w-2xl mx-auto">{t('about.team_desc')}</p>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {leaders.map((leader, i) => (
                             <div key={i} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] text-center group hover:border-indigo-100 transition-colors">
@@ -179,7 +166,6 @@ export const AboutUs: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* Footer CTA */}
             <section className="py-24 bg-slate-900 text-center px-6">
                 <h2 className="text-3xl font-bold text-white mb-6">{t('about.cta_title')}</h2>

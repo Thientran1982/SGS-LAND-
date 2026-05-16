@@ -11,18 +11,15 @@ import { Hero3D } from '../components/Hero3D';
 import { AiChatWidget } from '../components/AiChatWidget';
 import { ArrowRight, Search, Sparkles, BarChart3, Globe2, Zap, Sun, Moon, ChevronRight, X, Phone, MapPin, Scale, Building2, Bot } from 'lucide-react';
 import { motion } from 'motion/react';
-
 // -----------------------------------------------------------------------------
 // ASSETS & CONFIGURATION
 // -----------------------------------------------------------------------------
-
 const PARTNERS = [
     "AQUA CITY NOVALAND", "THE GLOBAL CITY MASTERISE", "IZUMI CITY NAM LONG",
     "VINHOMES CẦN GIỜ", "VINHOMES GRAND PARK", "MASTERISE HOMES",
     "GRAND MARINA SAIGON", "WATERPOINT NAM LONG", "THE PRIVIA KHANG ĐIỀN",
     "VINHOMES CENTRAL PARK", "SƠN KIM LAND",
 ];
-
 const FEATURED_PROJECTS: FeaturedProject[] = [
     {
         slug: 'aqua-city',
@@ -137,7 +134,6 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         href: '/landing/legacy-66/',
     },
 ];
-
 const HOME_FAQ = [
     {
         q: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?',
@@ -188,7 +184,6 @@ const HOME_FAQ = [
         a: 'Bất động sản TP.HCM là thị trường BĐS lớn nhất Việt Nam, GDP đầu người gấp 2,5 lần trung bình cả nước, lượng giao dịch chiếm 35% cả nước. Năm 2026 ba khu vực sôi động nhất: TP Thủ Đức (căn hộ 50–80 triệu/m² — Vinhomes Grand Park, The Global City), Bình Thạnh (nhà phố 150–300 triệu/m² — Masterise Homes), khu Đông Đồng Nai (Long Hưng – Biên Hòa, biệt thự từ 6,5 tỷ — Aqua City, Izumi City). SGS LAND phân phối chính thức 11+ dự án tại các khu vực này.',
     },
 ];
-
 const TOP3_RANKINGS = [
     {
         category: 'Căn Hộ',
@@ -221,7 +216,6 @@ const TOP3_RANKINGS = [
         ],
     },
 ];
-
 const ICONS = {
     ARROW_RIGHT: <ArrowRight className="w-4 h-4" />,
     SEARCH: <Search className="w-5 h-5" />,
@@ -233,29 +227,22 @@ const ICONS = {
     MOON: <Moon className="w-4 h-4" />,
     X: <X className="w-4 h-4" />
 };
-
 // --- HOOKS ---
-
 const useCountUp = (end: number, duration: number = 2000, start: boolean = false) => {
     const [count, setCount] = useState(0);
-
     useEffect(() => {
         if (!start) return;
-
         let animId: number;
         let startTime: number | null = null;
         const animate = (currentTime: number) => {
             if (!startTime) startTime = currentTime;
             const progress = currentTime - startTime;
             const percentage = Math.min(progress / duration, 1);
-
             // Easing function (easeOutExpo)
             const ease = percentage === 1 ? 1 : 1 - Math.pow(2, -10 * percentage);
-
             // Preserve decimal places for fractional `end` values
             const raw = ease * end;
             setCount(Number.isInteger(end) ? Math.floor(raw) : Math.round(raw * 100) / 100);
-
             if (progress < duration) {
                 animId = requestAnimationFrame(animate);
             }
@@ -263,10 +250,8 @@ const useCountUp = (end: number, duration: number = 2000, start: boolean = false
         animId = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animId);
     }, [end, duration, start]);
-
     return count;
 };
-
 const NavPill = ({ children, onClick }: { children?: React.ReactNode, onClick?: () => void }) => (
     <button
         type="button"
@@ -276,7 +261,6 @@ const NavPill = ({ children, onClick }: { children?: React.ReactNode, onClick?: 
         {children}
     </button>
 );
-
 // Enhanced Stat Card with Intersection Observer for Animation
 const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string, value: number, suffix: string, trend: string, prefix?: string }) => {
     const [isVisible, setIsVisible] = useState(false);
@@ -297,7 +281,6 @@ const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string,
         if (cardRef.current) observer.observe(cardRef.current);
         return () => observer.disconnect();
     }, []);
-
     return (
         <motion.div 
             ref={cardRef} 
@@ -317,7 +300,6 @@ const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string,
         </motion.div>
     );
 };
-
 const FeatureBento = ({ title, desc, icon, className = "", iconBg = "bg-[var(--glass-surface-hover)] dark:bg-slate-700", onClick, ctaLabel, delay = 0 }: any) => (
     <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -342,7 +324,6 @@ const FeatureBento = ({ title, desc, icon, className = "", iconBg = "bg-[var(--g
         </div>
     </motion.div>
 );
-
 type FeaturedProject = {
     slug: string;
     name: string;
@@ -356,13 +337,11 @@ type FeaturedProject = {
     img: string;
     href?: string;
 };
-
 const badgeStyles: Record<string, string> = {
     emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800',
     indigo:  'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800',
     amber:   'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800',
 };
-
 const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: () => void }) => {
     const [imgLoaded, setImgLoaded] = React.useState(false);
     return (
@@ -419,7 +398,6 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
     </motion.article>
     );
 };
-
 const HomeFAQAccordion = ({ items }: { items: { q: string; a: string }[] }) => {
     const [open, setOpen] = useState<number | null>(0);
     return (
@@ -445,11 +423,9 @@ const HomeFAQAccordion = ({ items }: { items: { q: string; a: string }[] }) => {
         </div>
     );
 };
-
 export const Landing: React.FC = () => {
     const { formatCurrency, language, setLanguage, t } = useTranslation();
-    const { theme, toggleTheme } = useTheme();
-    
+    const { theme, toggleTheme } = useTheme();   
     const [scrolled, setScrolled] = useState(false);
     const [allListings, setAllListings] = useState<Listing[]>([]);
     const [activeCategory, setActiveCategory] = useState<'ALL' | 'PROJECT' | 'UNIT'>('ALL');
@@ -457,10 +433,8 @@ export const Landing: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [chatOpen, setChatOpen] = useState(false);
-    
     // Typewriter effect
-    const [text, setText] = useState('');
-    
+    const [text, setText] = useState('');  
     useEffect(() => {
         db.getCurrentUser().then(user => {
             setCurrentUser(user);
@@ -472,12 +446,10 @@ export const Landing: React.FC = () => {
                 try { setFavorites(new Set(JSON.parse(localStorage.getItem('sgs_favorites') || '[]'))); } catch {}
             }
         }).catch(() => {});
-
         const onLogout = () => { setCurrentUser(null); setFavorites(new Set()); };
         window.addEventListener('auth:logout', onLogout);
         return () => window.removeEventListener('auth:logout', onLogout);
     }, []);
-
     useEffect(() => {
         const heroTitle = t('landing.hero_title');
         document.title = `SGS LAND | ${heroTitle}`;
@@ -493,12 +465,10 @@ export const Landing: React.FC = () => {
         const twDesc = document.querySelector('meta[name="twitter:description"]');
         if (twDesc) twDesc.setAttribute('content', t('landing.hero_desc'));
     }, [t, language]);
-
     useEffect(() => {
         const fullText = t('landing.typewriter');
         let idx = 0;
-        setText('');
-        
+        setText('');        
         const interval = setInterval(() => {
             setText(fullText.slice(0, idx));
             idx++;
@@ -506,7 +476,6 @@ export const Landing: React.FC = () => {
         }, 40);
         return () => clearInterval(interval);
     }, [language, t]); 
-
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
@@ -524,12 +493,10 @@ export const Landing: React.FC = () => {
         
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
-
     const navigateTo = (route: string) => {
         window.location.hash = `#/${route}`;
         window.scrollTo(0, 0); 
     };
-
     const handleSearch = () => {
         // Navigate to search page with query parameter if present
         const route = searchQuery.trim() 
@@ -537,7 +504,6 @@ export const Landing: React.FC = () => {
             : ROUTES.SEARCH;
         navigateTo(route);
     };
-
     const handleToggleFavorite = async (id: string) => {
         if (!currentUser) { navigateTo(ROUTES.LOGIN); return; }
         const isFav = favorites.has(id);
@@ -546,7 +512,6 @@ export const Landing: React.FC = () => {
         setFavorites(newSet);
         try { await db.toggleFavorite(id); } catch { setFavorites(favorites); }
     };
-
     const displayedListings = useMemo(() => {
         let filtered = allListings;
         if (activeCategory === 'PROJECT') {
@@ -557,7 +522,6 @@ export const Landing: React.FC = () => {
         // Show top 6
         return filtered.slice(0, 6);
     }, [allListings, activeCategory]);
-
     const FooterLink = ({ label, route }: { label: string, route: string }) => (
         <li>
             <button 
@@ -568,7 +532,6 @@ export const Landing: React.FC = () => {
             </button>
         </li>
     );
-
     return (
         <div className="bg-[var(--bg-surface)] dark:bg-slate-900 text-[var(--text-primary)] dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-clip min-h-[100dvh] transition-colors duration-300">
             <SeoHead
@@ -649,22 +612,19 @@ export const Landing: React.FC = () => {
             {/* NAVBAR — only shown for guests (when logged in, Layout's CommandCenter handles navigation) */}
             {!currentUser && (
                 <nav className="fixed top-3 md:top-4 left-1/2 -translate-x-1/2 z-50 w-full px-4 flex justify-center pointer-events-none">
-                    <div className={`pointer-events-auto relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex items-center justify-between p-1.5 rounded-full border ${scrolled ? 'bg-[var(--bg-surface)]/90 dark:bg-slate-900/90 backdrop-blur-xl border-[var(--glass-border)]/50 dark:border-white/10 shadow-2xl w-full max-w-5xl' : 'bg-transparent border-transparent w-full max-w-7xl'}`}>
-                        
+                    <div className={`pointer-events-auto relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex items-center justify-between p-1.5 rounded-full border ${scrolled ? 'bg-[var(--bg-surface)]/90 dark:bg-slate-900/90 backdrop-blur-xl border-[var(--glass-border)]/50 dark:border-white/10 shadow-2xl w-full max-w-5xl' : 'bg-transparent border-transparent w-full max-w-7xl'}`}>                        
                         <div className="flex items-center gap-1.5 md:gap-2 pl-1.5 cursor-pointer group z-10 flex-none md:flex-1" onClick={() => navigateTo('')}>
                             <div className="bg-[var(--bg-surface)] dark:bg-slate-800 p-1 rounded-lg shadow-sm border border-[var(--glass-border)] dark:border-slate-700 group-hover:scale-105 transition-transform">
                                 <Logo className="w-4 h-4 md:w-5 md:h-5 text-indigo-600 dark:text-indigo-400" />
                             </div>
                             <span className={`font-bold text-sm md:text-base tracking-tight transition-opacity text-[var(--text-primary)] dark:text-white`}>SGS<span className="text-slate-400">LAND</span></span>
                         </div>
-
                         <div className="hidden md:flex items-center gap-0.5 bg-[var(--glass-surface-hover)]/80 dark:bg-slate-800/80 p-0.5 rounded-full border border-[var(--glass-border)]/50 dark:border-slate-700 backdrop-blur-md shadow-sm pointer-events-auto flex-none 
                             md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-20">
                             <NavPill onClick={() => navigateTo(ROUTES.SEARCH)}>{t('nav.public_market')}</NavPill>
                             <NavPill onClick={() => navigateTo(ROUTES.AI_VALUATION)}>{t('footer.link_valuation')}</NavPill>
                             <NavPill onClick={() => navigateTo(ROUTES.CRM_SOLUTION)}>{t('footer.link_crm')}</NavPill>
                         </div>
-
                         <div className="flex items-center gap-1 md:gap-1.5 pr-0.5 z-10 flex-none ml-auto md:flex-1 md:justify-end">
                             <button
                                 onClick={toggleTheme}
@@ -691,7 +651,6 @@ export const Landing: React.FC = () => {
                     </div>
                 </nav>
             )}
-
             {/* HERO SECTION */}
             <section className={`relative ${currentUser ? 'pt-8 md:pt-12' : 'pt-32 md:pt-40'} pb-20 md:pb-32 px-6 overflow-hidden min-h-[90svh] flex flex-col justify-center items-center`}>
                 {/* Background Decor */}
@@ -702,8 +661,7 @@ export const Landing: React.FC = () => {
                     }}
                     transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                     className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[1200px] h-[600px] md:h-[800px] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-100/40 via-transparent to-transparent dark:from-indigo-900/20 rounded-full blur-3xl -z-10 pointer-events-none"
-                ></motion.div>
-                
+                ></motion.div>                
                 <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
                     {/* Left Column: Text & Search */}
                     <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
@@ -719,7 +677,6 @@ export const Landing: React.FC = () => {
                             </span>
                             <span className="text-2xs md:text-xs2 font-bold text-indigo-700 dark:text-indigo-300 tracking-widest uppercase">{t('landing.badge_tech')}</span>
                         </motion.div>
-
                         <motion.h1 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -732,7 +689,6 @@ export const Landing: React.FC = () => {
                             {/* Visible animated text overlaid — whitespace-nowrap keeps it on one line */}
                             <span className="absolute inset-0 whitespace-nowrap">{text}<span className="animate-blink text-indigo-500">|</span></span>
                         </motion.h1>
-
                         <motion.p 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -741,7 +697,6 @@ export const Landing: React.FC = () => {
                         >
                             {t('landing.hero_desc')}
                         </motion.p>
-
                         <motion.div 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -773,13 +728,11 @@ export const Landing: React.FC = () => {
                             </div>
                         </motion.div>
                     </div>
-
                     {/* Right Column: 3D SVG */}
                     <div className="w-full flex justify-center items-center lg:justify-end">
                         <Hero3D />
                     </div>
                 </div>
-
                 <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -798,7 +751,6 @@ export const Landing: React.FC = () => {
                     </div>
                 </motion.div>
             </section>
-
             {/* METRICS (ENTERPRISE GRADE) */}
             <section className="py-16 md:py-20 px-6 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 border-y border-[var(--glass-border)] dark:border-slate-800 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto">
@@ -810,7 +762,6 @@ export const Landing: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* FEATURED PROJECTS */}
             <section className="py-20 md:py-32 px-6 bg-[var(--bg-surface)] dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto">
@@ -828,7 +779,6 @@ export const Landing: React.FC = () => {
                             SGS LAND phân phối các dự án quy mô lớn tại TP.HCM, Đồng Nai và Bình Dương — tổng diện tích hơn 4.500ha, giá từ 2 tỷ đến hàng trăm tỷ đồng/căn.
                         </p>
                     </motion.div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {(FEATURED_PROJECTS as unknown as FeaturedProject[]).map((p) => (
                             <ProjectCard
@@ -841,7 +791,6 @@ export const Landing: React.FC = () => {
                             />
                         ))}
                     </div>
-
                     <div className="mt-12 text-center">
                         <button
                             onClick={() => navigateTo(ROUTES.DU_AN)}
@@ -853,7 +802,6 @@ export const Landing: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* CORE INTELLIGENCE */}
             <section className="py-20 md:py-32 px-6 relative bg-[var(--bg-surface)] dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto">
@@ -866,9 +814,7 @@ export const Landing: React.FC = () => {
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 tracking-tight">{t('landing.core_title_prefix')} <br className="hidden md:block"/> <span className="text-indigo-600 dark:text-indigo-400">{t('landing.core_title_suffix')}</span></h2>
                         <p className="text-lg md:text-xl text-[var(--text-tertiary)] dark:text-slate-400 max-w-2xl leading-relaxed">{t('landing.core_section_desc')}</p>
                     </motion.div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">
-                        
+                    <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">                      
                         <FeatureBento 
                             title={t('landing.feature_ai_title')}
                             desc={t('landing.feature_ai_desc')}
@@ -879,7 +825,6 @@ export const Landing: React.FC = () => {
                             ctaLabel={t('common.learn_more')}
                             delay={0.1}
                         />
-
                         <FeatureBento 
                             title={t('landing.feature_data_title')}
                             desc={t('landing.feature_data_desc')}
@@ -890,7 +835,6 @@ export const Landing: React.FC = () => {
                             ctaLabel={t('common.learn_more')}
                             delay={0.2}
                         />
-
                         <FeatureBento 
                             title={t('landing.feature_crm_title')}
                             desc={t('landing.feature_crm_desc')}
@@ -901,7 +845,6 @@ export const Landing: React.FC = () => {
                             ctaLabel={t('common.learn_more')}
                             delay={0.3}
                         />
-
                         <FeatureBento 
                             title={t('landing.feature_comm_title')}
                             desc={t('landing.feature_comm_desc')}
@@ -915,7 +858,6 @@ export const Landing: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* LIVE MARKET (PREMIUM FIRST) */}
             <section className="py-20 md:py-32 bg-[var(--glass-surface)] dark:bg-slate-900/50 border-t border-[var(--glass-border)] dark:border-slate-800">
                 <div className="max-w-[1600px] mx-auto px-6">
@@ -923,8 +865,7 @@ export const Landing: React.FC = () => {
                         <div>
                             <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-widest text-xs uppercase mb-2 block">{t('landing.market_subtitle')}</span>
                             <h2 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] dark:text-white">{t('landing.market_title')}</h2>
-                        </div>
-                        
+                        </div>                       
                         <div className="flex bg-[var(--bg-surface)] dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-[var(--glass-border)] dark:border-slate-700">
                             {[
                                 { id: 'ALL', label: t('dash.filter_all') },
@@ -945,7 +886,6 @@ export const Landing: React.FC = () => {
                             ))}
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                         {allListings.length === 0 ? (
                             /* Initial loading — data not yet fetched */
@@ -985,8 +925,7 @@ export const Landing: React.FC = () => {
                                 <p className="text-slate-400 font-medium">{t('common.no_results')}</p>
                             </div>
                         )}
-                    </div>
-                    
+                    </div>                   
                     <div className="mt-12 text-center">
                         <button onClick={() => navigateTo(ROUTES.SEARCH)} className="group inline-flex items-center gap-2 text-[var(--text-primary)] dark:text-white font-bold border-b-2 border-[var(--glass-border)] dark:border-slate-700 pb-1 hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all text-sm md:text-base">
                             {t('landing.market_view_all')} <span className="group-hover:translate-x-1 transition-transform">{ICONS.ARROW_RIGHT}</span>
@@ -994,7 +933,6 @@ export const Landing: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* GEO TOP 3 RANKINGS — high-value AI citation format */}
             <section className="py-20 md:py-32 px-6 border-t border-[var(--glass-border)] dark:border-slate-800">
                 <div className="max-w-7xl mx-auto">
@@ -1012,7 +950,6 @@ export const Landing: React.FC = () => {
                             Bảng xếp hạng do SGS LAND tổng hợp từ quy mô, chủ đầu tư uy tín, pháp lý sổ hồng và tiến độ bàn giao thực tế tháng 4/2026.
                         </p>
                     </motion.div>
-
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                         {TOP3_RANKINGS.map((list, listIdx) => {
                             const accentClasses: Record<string, { ring: string; badge: string; rank1: string; text: string }> = {
@@ -1060,13 +997,11 @@ export const Landing: React.FC = () => {
                             );
                         })}
                     </div>
-
                     <p className="text-xs text-[var(--text-muted)] dark:text-slate-500 mt-10 text-center max-w-3xl mx-auto">
                         Xếp hạng dựa trên dữ liệu công khai từ chủ đầu tư, Bộ Xây Dựng và báo cáo CBRE Vietnam Q1/2026. SGS LAND là đại lý phân phối chính thức của Novaland, Masterise Homes, Nam Long Group, Vinhomes và Đại Phúc Group.
                     </p>
                 </div>
             </section>
-
             {/* GEO FAQ */}
             <section className="py-20 md:py-32 px-6 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 border-t border-[var(--glass-border)] dark:border-slate-800">
                 <div className="max-w-4xl mx-auto">
@@ -1084,7 +1019,6 @@ export const Landing: React.FC = () => {
                             Giải đáp thắc mắc về bất động sản TP.HCM, các dự án lớn và dịch vụ của SGS LAND.
                         </p>
                     </motion.div>
-
                     <HomeFAQAccordion items={HOME_FAQ} />
 
                     <p className="text-xs text-[var(--text-muted)] dark:text-slate-500 mt-8 text-center">
@@ -1093,7 +1027,6 @@ export const Landing: React.FC = () => {
                     </p>
                 </div>
             </section>
-
             {/* CTA */}
             <section className="py-20 md:py-32 px-6 text-center relative overflow-hidden bg-slate-900">
                 <motion.div 
@@ -1105,8 +1038,7 @@ export const Landing: React.FC = () => {
                     animate={{ rotate: -360 }}
                     transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
                     className="absolute bottom-0 left-0 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen"
-                ></motion.div>
-                
+                ></motion.div>                
                 <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
@@ -1138,7 +1070,6 @@ export const Landing: React.FC = () => {
                     </div>
                 </motion.div>
             </section>
-
             {/* AI CHAT WIDGET */}
             <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
 
@@ -1154,7 +1085,6 @@ export const Landing: React.FC = () => {
                     : <Bot className="w-6 h-6 text-white" />
                 }
             </button>
-
             {/* STICKY MOBILE BOTTOM BAR — md:hidden */}
             <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-[var(--glass-border)] dark:border-slate-800 px-3 py-2 flex gap-2 shadow-2xl">
                 <a
@@ -1183,7 +1113,6 @@ export const Landing: React.FC = () => {
                     <span>Tư vấn</span>
                 </button>
             </div>
-
             {/* FOOTER */}
             <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800 pb-safe-footer pb-28 md:pb-20">
                 <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-8 md:gap-12">
@@ -1195,8 +1124,7 @@ export const Landing: React.FC = () => {
                         <p className="text-[var(--text-tertiary)] dark:text-slate-400 mb-8 max-w-xs leading-relaxed text-xs md:text-sm">
                             {t('footer.brand_desc')}
                         </p>
-                    </div>
-                    
+                    </div>                    
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_product')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
@@ -1207,7 +1135,6 @@ export const Landing: React.FC = () => {
                             <li><a href="/lai-suat-vay-ngan-hang" className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_bank_rates')}</a></li>
                         </ul>
                     </div>
-
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_locations')}</h4>
                         <ul className="space-y-3 md:space-y-4 font-medium text-xs md:text-sm">
@@ -1224,7 +1151,6 @@ export const Landing: React.FC = () => {
                             <li><a href={`/${ROUTES.PHAP_LY_NHA_DAT}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Pháp Lý Nhà Đất</a></li>
                         </ul>
                     </div>
-
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">Dự Án</h4>
                         <ul className="space-y-3 md:space-y-4 font-medium text-xs md:text-sm">
@@ -1239,7 +1165,6 @@ export const Landing: React.FC = () => {
                             <li><a href={`/${ROUTES.DU_AN}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Xem tất cả →</a></li>
                         </ul>
                     </div>
-
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_company')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
@@ -1248,7 +1173,6 @@ export const Landing: React.FC = () => {
                             <FooterLink label={t('footer.link_news')} route={ROUTES.NEWS} />
                         </ul>
                     </div>
-
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_legal')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
@@ -1272,7 +1196,6 @@ export const Landing: React.FC = () => {
                             </li>
                         </ul>
                     </div>
-
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_terms')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
@@ -1302,5 +1225,4 @@ export const Landing: React.FC = () => {
         </div>
     );
 };
-
 export default Landing;

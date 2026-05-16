@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -7,7 +6,6 @@ import { User, UserRole, CommonStatus, Department } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 interface AgentStatsData {
     deals: number;
     lost: number;
@@ -23,7 +21,6 @@ interface AgentStatsData {
     completedThisMonth: number;
     workloadScore: number;
 }
-
 function getRoleBadgeClass(role: string): string {
     switch (role) {
         case 'ADMIN':          return 'bg-rose-50 text-rose-700 border border-rose-200';
@@ -38,7 +35,6 @@ function getRoleBadgeClass(role: string): string {
         default:               return 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]';
     }
 }
-
 const ICONS = {
     SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -50,13 +46,11 @@ const ICONS = {
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     CHART: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
 };
-
 // --- SUB-COMPONENT: PAGINATION ---
 const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSizeChange, t }: any) => {
     const totalPages = Math.ceil(total / pageSize);
     const start = (page - 1) * pageSize + 1;
     const end = Math.min(page * pageSize, total);
-
     return (
         <>
             {/* Mobile: slim icon-only bar */}
@@ -77,7 +71,6 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
-
             {/* Desktop: full bar */}
             <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
@@ -119,13 +112,11 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
         </>
     );
 });
-
 // --- SUB-COMPONENT: PERFORMANCE MODAL ---
 const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = ({ user, onClose, t }) => {
     const [data, setData] = useState<AgentStatsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-
     useEffect(() => {
         setLoading(true);
         setError(false);
@@ -135,7 +126,6 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
             .then(d => { setData(d); setLoading(false); })
             .catch(() => { setError(true); setLoading(false); });
     }, [user.id]);
-
     const slaColor = data
         ? data.slaScore >= 90 ? 'text-emerald-500' : data.slaScore >= 70 ? 'text-indigo-500' : 'text-amber-500'
         : 'text-[var(--text-secondary)]';
@@ -166,7 +156,6 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                         {ICONS.CLOSE}
                     </button>
                 </div>
-
                 {/* Body */}
                 <div className="overflow-y-auto px-6 py-5 space-y-5 no-scrollbar">
                     {loading && (
@@ -296,7 +285,6 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
         document.body
     );
 };
-
 // --- SUB-COMPONENT: INVITE MODAL ---
 interface InviteFormData { name: string; email: string; role: UserRole; phone: string; departmentId?: string; }
 interface InviteModalProps {
@@ -307,7 +295,6 @@ interface InviteModalProps {
     callerRole?: string;
     departments: Department[];
 }
-
 const VN_PHONE_RE = /^(03|05|07|08|09)\d{8}$/;
 
 const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfirm, t, callerRole, departments }) => {
@@ -318,14 +305,12 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     const [departmentId, setDepartmentId] = useState<string>('');
     const [loading, setLoading]   = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
-
     useEffect(() => {
         if (isOpen) {
             setName(''); setEmail(''); setPhone('');
             setRole(UserRole.SALES); setDepartmentId(''); setErrors({}); setLoading(false);
         }
     }, [isOpen]);
-
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
         if (!name.trim()) errs.name = t('admin.users.name_required');
@@ -335,7 +320,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
@@ -349,7 +333,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
             setLoading(false);
         }
     };
-
     const roleOptions = useMemo(() =>
         Object.values(UserRole)
             .filter(r => callerRole === UserRole.SUPER_ADMIN || r !== UserRole.SUPER_ADMIN)
@@ -357,16 +340,13 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     , [t, callerRole]);
 
     if (!isOpen) return null;
-
     const inputCls = (field: string) =>
         `w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
         ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`;
-
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-
             {/* Card */}
             <div className="relative z-10 w-full sm:max-w-sm bg-[var(--bg-surface)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] animate-scale-up flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}>
 
@@ -380,7 +360,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                         {ICONS.CLOSE}
                     </button>
                 </div>
-
                 {/* Body — cuộn được */}
                 <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-6">
                     {errors.submit && (
@@ -388,7 +367,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             {errors.submit}
                         </div>
                     )}
-
                     <form id="invite-user-form" onSubmit={handleSubmit} className="space-y-4">
                         {/* Họ tên */}
                         <div>
@@ -405,7 +383,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             />
                             {errors.name && <p className="text-xs text-rose-500 font-medium mt-1">{errors.name}</p>}
                         </div>
-
                         {/* Email */}
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
@@ -420,7 +397,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             />
                             {errors.email && <p className="text-xs text-rose-500 font-medium mt-1">{errors.email}</p>}
                         </div>
-
                         {/* Số điện thoại (optional) */}
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
@@ -436,7 +412,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             />
                             {errors.phone && <p className="text-xs text-rose-500 font-medium mt-1">{errors.phone}</p>}
                         </div>
-
                         {/* Phòng ban */}
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
@@ -455,7 +430,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                                 placement="top"
                             />
                         </div>
-
                         {/* Vai trò */}
                         <div className="pb-2">
                             <Dropdown
@@ -478,7 +452,6 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                         </div>
                     </form>
                 </div>
-
                 {/* Footer — cố định, luôn hiển thị */}
                 <div className="px-6 pt-3 pb-6 sm:pb-4 shrink-0 border-t border-[var(--glass-border)]">
                     <button
@@ -498,21 +471,17 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
         document.body
     );
 };
-
 // -----------------------------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const AdminUsers: React.FC = () => {
-    const { t, formatDateTime } = useTranslation();
-    
+    const { t, formatDateTime } = useTranslation();   
     // Data State
     const [users, setUsers] = useState<User[]>([]);
     const [stats, setStats] = useState({ activeCount: 0, pendingCount: 0 });
     const [loading, setLoading] = useState(true);
     const [totalUsers, setTotalUsers] = useState(0);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
-    
+    const [currentUser, setCurrentUser] = useState<User | null>(null);   
     // Filters & Pagination
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -521,7 +490,6 @@ export const AdminUsers: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [sort, setSort] = useState<{ field: string, order: 'asc' | 'desc' }>({ field: 'createdAt', order: 'desc' });
-
     // Modals & Action States
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -531,41 +499,34 @@ export const AdminUsers: React.FC = () => {
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [perfUser, setPerfUser] = useState<User | null>(null);
     const [departments, setDepartments] = useState<Department[]>([]);
-
     useEffect(() => {
         api.get<{ data: Department[] }>('/api/departments')
             .then(r => setDepartments(r.data || []))
             .catch(() => setDepartments([]));
     }, []);
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(search);
         }, 300);
         return () => clearTimeout(handler);
     }, [search]);
-
     useEffect(() => {
         setPage(1);
     }, [debouncedSearch, roleFilter, statusFilter, sort]);
-
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const me = await db.getCurrentUser();
-            setCurrentUser(me);
-            
+            setCurrentUser(me);            
             // If not super_admin, admin, or team_lead, don't fetch users
             if (me?.role !== UserRole.SUPER_ADMIN && me?.role !== UserRole.ADMIN && me?.role !== UserRole.TEAM_LEAD) {
                 setLoading(false);
                 return;
             }
-
             const usersData = await db.getTenantUsers(page, pageSize, debouncedSearch, roleFilter === 'ALL' ? undefined : roleFilter, sort, statusFilter === 'ALL' ? undefined : statusFilter);
             setUsers(usersData?.data || []);
             setTotalUsers(usersData?.total || 0);
@@ -577,18 +538,15 @@ export const AdminUsers: React.FC = () => {
             setLoading(false);
         }
     }, [debouncedSearch, roleFilter, statusFilter, page, pageSize, sort]);
-
     useEffect(() => {
         fetchData();
     }, [fetchData]);
-
     const handleSort = (field: string) => {
         setSort(prev => ({
             field,
             order: prev.field === field && prev.order === 'asc' ? 'desc' : 'asc'
         }));
     };
-
     const handleRoleChange = async (id: string, newRole: UserRole) => {
         if (id === currentUser?.id) {
             notify(t('admin.users.self_lockout'), 'error');
@@ -599,7 +557,6 @@ export const AdminUsers: React.FC = () => {
             setUserToRoleChange({ user, newRole });
         }
     };
-
     const confirmRoleChange = async () => {
         if (!userToRoleChange) return;
         const { user, newRole } = userToRoleChange;
@@ -613,7 +570,6 @@ export const AdminUsers: React.FC = () => {
             setUserToRoleChange(null);
         }
     };
-
     const confirmStatusChange = async () => {
         if (!userToStatusChange) return;
         if (userToStatusChange.id === currentUser?.id) {
@@ -634,9 +590,7 @@ export const AdminUsers: React.FC = () => {
             setUserToStatusChange(null);
         }
     };
-
     const handleDeleteClick = (user: User) => setUserToDelete(user);
-
     const confirmDelete = async () => {
         if (!userToDelete) return;
         if (userToDelete.id === currentUser?.id) {
@@ -654,7 +608,6 @@ export const AdminUsers: React.FC = () => {
             setUserToDelete(null);
         }
     };
-
     const handleResendInvite = async (user: User) => {
         setResendingId(user.id);
         try {
@@ -666,13 +619,11 @@ export const AdminUsers: React.FC = () => {
             setResendingId(null);
         }
     };
-
     const handleInviteConfirm = async (data: InviteFormData) => {
         await db.inviteUser({ name: data.name, email: data.email, role: data.role, phone: data.phone || undefined, departmentId: data.departmentId });
         notify(t('admin.users.invite_sent', { email: data.email }), 'success');
         fetchData();
     };
-
     const handleDepartmentChange = async (userId: string, newDeptId: string) => {
         const departmentId = newDeptId || null;
         const prev = users;
@@ -688,19 +639,16 @@ export const AdminUsers: React.FC = () => {
             notify(e.message || t('common.error'), 'error');
         }
     };
-
     const departmentOptions = useMemo(() => [
         { value: '', label: 'Chưa chọn' },
         ...departments.map(d => ({ value: d.id, label: d.name })),
     ], [departments]);
-
     const roleOptions = useMemo(() => [
         { value: 'ALL', label: t('admin.users.all_roles') },
         ...Object.values(UserRole)
             .filter(r => currentUser?.role === UserRole.SUPER_ADMIN || r !== UserRole.SUPER_ADMIN)
             .map(r => ({ value: r, label: t(`role.${r}`) }))
     ], [t, currentUser?.role]);
-
     const statusOptions = useMemo(() => [
         { value: 'ALL', label: t('admin.users.all_statuses') },
         { value: CommonStatus.ACTIVE, label: t('admin.users.status_active') },
@@ -709,13 +657,11 @@ export const AdminUsers: React.FC = () => {
         { value: CommonStatus.DEACTIVATED, label: t('admin.users.status_deactivated') },
         { value: CommonStatus.ARCHIVED, label: t('admin.users.status_archived') },
     ], [t]);
-
     const userRoleOptions = useMemo(() =>
         Object.values(UserRole)
             .filter(r => currentUser?.role === UserRole.SUPER_ADMIN || r !== UserRole.SUPER_ADMIN)
             .map(r => ({ value: r, label: t(`role.${r}`) }))
     , [t, currentUser?.role]);
-
     // Header Helper
     const SortableHeader = ({ field, label, className = "" }: { field: string, label: string, className?: string }) => (
         <th 
@@ -732,7 +678,6 @@ export const AdminUsers: React.FC = () => {
             </div>
         </th>
     );
-
     if (!loading && currentUser && currentUser.role !== UserRole.SUPER_ADMIN && currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.TEAM_LEAD) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-enter">
@@ -746,14 +691,12 @@ export const AdminUsers: React.FC = () => {
             </div>
         );
     }
-
     return (
         <>
         <div className="h-full flex flex-col relative animate-enter">
 
             {/* HEADER */}
             <div className="flex flex-col bg-[var(--bg-surface)] border-b border-[var(--glass-border)] shrink-0">
-
                 {/* Row 1: Số liệu thành viên + nút mời */}
                 <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pt-4 pb-3">
                     {/* Stat chips — compact on mobile, full label on sm+ */}
@@ -778,7 +721,6 @@ export const AdminUsers: React.FC = () => {
                             <span className="text-xs sm:text-sm font-black text-amber-700">{stats.pendingCount}</span>
                         </div>
                     </div>
-
                     {/* Nút mời thành viên */}
                     <button
                         onClick={() => setIsInviteOpen(true)}
@@ -789,7 +731,6 @@ export const AdminUsers: React.FC = () => {
                         <span className="sm:hidden">{t('admin.users.invite_short')}</span>
                     </button>
                 </div>
-
                 {/* Row 2: Thanh tìm kiếm + bộ lọc vai trò */}
                 <div className="flex items-center gap-3 px-4 sm:px-5 py-2 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
                     {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
@@ -825,7 +766,6 @@ export const AdminUsers: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* CONTENT */}
             <div className="flex-1 overflow-auto bg-[var(--glass-surface)]/50 no-scrollbar pt-3 px-3 sm:px-0">
                 <div className="w-full overflow-x-auto no-scrollbar bg-[var(--bg-surface)] rounded-xl sm:rounded-none border border-[var(--glass-border)] sm:border-0 sm:border-b">
@@ -984,7 +924,6 @@ export const AdminUsers: React.FC = () => {
                     t={t}
                 />
             </div>
-
             {/* Performance Modal */}
             {perfUser && (
                 <PerformanceModal
