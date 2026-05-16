@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -10,8 +9,6 @@ import { formatSmartPrice } from '../utils/textUtils';
 import { aiService } from '../services/aiService';
 import { db } from '../services/dbApi';
 import { User } from '../types';
-
-
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     SEARCH: <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -25,7 +22,6 @@ const ICONS = {
     RESET: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
-
 // ─── AUTO-DETECT PROPERTY TYPE FROM ADDRESS / FREE-TEXT ───────────────────────
 // Phân tích văn bản địa chỉ để tự nhận dạng loại BĐS.
 // Ưu tiên: keyword mạnh (căn hộ, biệt thự) → keyword yếu (đất, nhà)
@@ -61,7 +57,6 @@ function detectPropertyTypeFromText(text: string): string | null {
     if (/nhà phố|nhà mặt tiền|nhà mặt phố|nhà phố nội|townhouse/i.test(t)) return 'townhouse_center';
     return null; // no detection
 }
-
 // Tên hiển thị loại BĐS (cho badge trên form)
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
     apartment_center:  'Căn hộ nội đô',
@@ -79,13 +74,10 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
     townhouse_suburb:  'Nhà phố ngoại thành',
     townhouse_center:  'Nhà phố nội đô',
 };
-
 // --- GUEST QUOTA ---
 const GUEST_DAILY_LIMIT = 1;
 const GUEST_LS_KEY = 'sgs_guest_val';
-
 interface GuestValRecord { count: number; date: string }
-
 function todayStr(): string {
     return new Date().toISOString().slice(0, 10);
 }
@@ -102,11 +94,9 @@ function readGuestVal(): GuestValRecord {
 function writeGuestVal(v: GuestValRecord): void {
     try { localStorage.setItem(GUEST_LS_KEY, JSON.stringify(v)); } catch { /* ignore */ }
 }
-
 // --- VALUATION HISTORY (localStorage) ---
 const HISTORY_LS_KEY = 'sgs_val_history';
 const HISTORY_MAX = 8;
-
 interface ValuationHistoryItem {
     id: string;
     date: string;
@@ -121,7 +111,6 @@ interface ValuationHistoryItem {
     confidence: number;
     marketTrend: string;
 }
-
 function readHistory(): ValuationHistoryItem[] {
     try {
         const raw = localStorage.getItem(HISTORY_LS_KEY);
@@ -129,7 +118,6 @@ function readHistory(): ValuationHistoryItem[] {
         return JSON.parse(raw) as ValuationHistoryItem[];
     } catch { return []; }
 }
-
 function addToHistory(item: ValuationHistoryItem): void {
     try {
         const current = readHistory().filter(h => h.id !== item.id);
@@ -137,11 +125,9 @@ function addToHistory(item: ValuationHistoryItem): void {
         localStorage.setItem(HISTORY_LS_KEY, JSON.stringify(updated));
     } catch { /* ignore */ }
 }
-
 function clearHistory(): void {
     try { localStorage.removeItem(HISTORY_LS_KEY); } catch { /* ignore */ }
 }
-
 // --- FORMAT TIỀN VIỆT NAM ---
 // formatVND(6.5)   → "6,50 tỷ"
 // formatVND(0.85)  → "850 triệu"
@@ -154,19 +140,16 @@ function formatVND(totalVnd: number): string {
     const trieu = Math.round(ty * 1000);
     return trieu.toLocaleString('vi-VN') + ' triệu';
 }
-
 function getConfidenceLevel(c: number): 'high' | 'med' | 'low' {
     return c >= 80 ? 'high' : c >= 70 ? 'med' : 'low';
 }
-
 // --- DYNAMIC AGENT STEPS (ghi nhận thông tin người dùng và xử lý theo từng agent) ---
 interface AgentStep { icon: string; title: string; details: string[] }
-
 // ─── Client-side region inference (mirrors server/valuationEngine.ts) ────────
 function inferRegionClient(addr: string): { region: string; baseMRange: string; conf: number; streetHit: boolean } {
     const a = addr.toLowerCase();
     // Street / project overrides
-    if (/aqua\s*city|aquacity/i.test(a))    return { region: 'Aqua City, Nhơn Trạch', baseMRange: '65–95M/m²', conf: 72, streetHit: true };
+    if (/aqua\s*city|aquacity/i.test(a))    return { region: 'Aqua City, Biên Hoà', baseMRange: '65–95M/m²', conf: 72, streetHit: true };
     if (/swan\s*park/i.test(a))             return { region: 'Swan Park, Nhơn Trạch', baseMRange: '45–65M/m²', conf: 68, streetHit: true };
     if (/izumi\s*city/i.test(a))            return { region: 'Izumi City, Biên Hòa', baseMRange: '45–65M/m²', conf: 68, streetHit: true };
     if (/waterpoint/i.test(a))              return { region: 'Waterpoint, Bến Lức', baseMRange: '35–55M/m²', conf: 65, streetHit: true };
@@ -209,7 +192,6 @@ function inferRegionClient(addr: string): { region: string; baseMRange: string; 
     if (/phú quốc|phu quoc/i.test(a))        return { region: 'Phú Quốc, Kiên Giang', baseMRange: '60–100M/m²', conf: 57, streetHit: false };
     return { region: 'Khu vực đang tra cứu…', baseMRange: '—', conf: 42, streetHit: false };
 }
-
 // ─── Market sources by property segment ───────────────────────────────────────
 function getMarketSources(pType: string): { primary: string; reports: string } {
     if (['warehouse', 'land_industrial'].includes(pType))
@@ -224,7 +206,6 @@ function getMarketSources(pType: string): { primary: string; reports: string } {
         return { primary: 'batdongsan.com.vn · onehousing.vn · nha.vn', reports: 'Savills Apartment Q1/2026 · CBRE Vietnam Q1/2026' };
     return { primary: 'batdongsan.com.vn · cafeland.vn · cen.vn', reports: 'Savills · CBRE · JLL Vietnam Q1/2026' };
 }
-
 // ─── AVM coefficients with ACTUAL computed values ─────────────────────────────
 function computeKd(roadM: number): { val: number; label: string } {
     if (roadM <= 2)  return { val: 0.78, label: `Kd=0.78 (hẻm≤2m)` };
@@ -293,7 +274,6 @@ function computeKage(ageY: number): string | null {
     if (ageY <= 25)  return `Kage=0.83 (Nhà 16–25 năm, −17%)`;
     return `Kage=0.74 (Nhà >25 năm, xuống cấp −26%)`;
 }
-
 // ─── Main builder ─────────────────────────────────────────────────────────────
 function buildAgentSteps(
     addr: string, pType: string, areaM2: string, road: string, legalStatus: string,
@@ -302,11 +282,9 @@ function buildAgentSteps(
     const ptLabel = PROPERTY_TYPE_LABELS[pType] || pType;
     const legalLabel = legalStatus === 'PINK_BOOK' ? 'Sổ Hồng' : legalStatus === 'CONTRACT' ? 'HĐMB' : legalStatus === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
     const shortAddr = addr.length > 46 ? addr.slice(0, 46) + '…' : addr;
-
     // ── Infer region & sources ──
     const region = inferRegionClient(addr);
     const sources = getMarketSources(pType);
-
     // ── Agent 1 details ──
     const a1Details: string[] = [
         `Địa chỉ: "${shortAddr}"`,
@@ -319,7 +297,6 @@ function buildAgentSteps(
     if (fl && !isNaN(parseFloat(fl))) a1Details.push(`Tầng ${fl}`);
     if (rent && !isNaN(parseFloat(rent))) a1Details.push(`Thuê dự kiến: ${rent} tr/tháng`);
     if (age && !isNaN(parseFloat(age))) a1Details.push(`Tuổi nhà: ${age} năm`);
-
     // ── Agent 2 details ──
     const a2Details: string[] = [
         `Khu vực: ${region.region}`,
@@ -331,7 +308,6 @@ function buildAgentSteps(
         `Báo cáo: ${sources.reports}`,
         `Ưu tiên: Giao dịch thực tế > Rao bán > Ước tính`,
     ];
-
     // ── Agent 3 — compute coefficients ──
     const roadN = parseFloat(road) || 0;
     const areaN = parseFloat(areaM2) || 50;
@@ -369,7 +345,6 @@ function buildAgentSteps(
         ...coeffLines,
         methodLine,
     ];
-
     // ── Agent 4 details ──
     const confBand = region.conf >= 65 ? '±5–8%' : region.conf >= 55 ? '±8–12%' : '±12–20%';
     const dataQuality = region.conf >= 60 ? 'Tốt' : region.conf >= 50 ? 'Trung bình' : 'Hạn chế';
@@ -383,7 +358,6 @@ function buildAgentSteps(
             : `Xác nhận: Comps thứ cấp + Yield nhà ở VN (3–5%/năm)`,
         `Hoàn thiện kết quả định giá…`,
     ];
-
     return [
         { icon: '🔍', title: 'Agent Nhận Diện BĐS', details: a1Details },
         { icon: '📡', title: 'Agent Dữ Liệu Thị Trường', details: a2Details },
@@ -391,7 +365,6 @@ function buildAgentSteps(
         { icon: '✅', title: 'Agent Tổng Hợp & Kiểm Định', details: a4Details },
     ];
 }
-
 export const AiValuation: React.FC = () => {
     const { t, formatCurrency } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -405,19 +378,16 @@ export const AiValuation: React.FC = () => {
         plan: string; planLabel: string; resetAt: string; isUnlimited: boolean;
     } | null>(null);
     const [showQuotaGate, setShowQuotaGate] = useState(false);
-
     // Feedback / RLHF states
     const [valuationId, setValuationId] = useState<string | null>(null);
     const [feedbackSent, setFeedbackSent] = useState(false);
     const [feedbackRating, setFeedbackRating] = useState<1 | -1 | null>(null);
     const [actualPriceInput, setActualPriceInput] = useState('');
     const [feedbackLoading, setFeedbackLoading] = useState(false);
-
     const notify = (msg: string, type: 'success' | 'error' = 'error') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 4000);
     };
-
     useEffect(() => {
         setHistory(readHistory());
         db.getCurrentUser().then(async (user) => {
@@ -436,10 +406,8 @@ export const AiValuation: React.FC = () => {
             }
         });
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
-    const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-    
+    const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;   
     // Workflow State
     const [step, setStep] = useState<'ADDRESS' | 'DETAILS' | 'TEASER' | 'ANALYZING' | 'RESULT'>('ADDRESS');
     // Teaser (free, zero-AI-quota) preview shown after DETAILS, before user opts into deep AI analysis
@@ -463,8 +431,7 @@ export const AiValuation: React.FC = () => {
         internalCompsCount?: number;
         internalCompsMedian?: number | null;
     } | null>(null);
-    const [teaserLoading, setTeaserLoading] = useState(false);
-    
+    const [teaserLoading, setTeaserLoading] = useState(false);   
     // Input State
     const [address, setAddress] = useState('');
     const [area, setArea] = useState<string>('');
@@ -503,7 +470,6 @@ export const AiValuation: React.FC = () => {
         setRoadTypeSelect(id);
         setRoadWidth(String(width));
     };
-
     const handleYearBuiltChange = (val: string) => {
         setYearBuilt(val);
         const y = parseInt(val);
@@ -513,7 +479,6 @@ export const AiValuation: React.FC = () => {
             setBuildingAge('');
         }
     };
-
     const handleNgangChange = (val: string) => {
         setNgang(val);
         setFrontageWidth(val); // ngang = mặt tiền
@@ -525,10 +490,8 @@ export const AiValuation: React.FC = () => {
         const n = parseFloat(ngang), d = parseFloat(val);
         if (n > 0 && d > 0) setArea(String(Math.round(n * d)));
     };
-
     const isApartment = propertyType.startsWith('apartment') || propertyType === 'penthouse';
     const isApartmentOrProject = isApartment || propertyType === 'project';
-
     // Live Accuracy Meter — increases as user fills in more details
     const accuracy = (() => {
         let s = 75.12;
@@ -546,12 +509,10 @@ export const AiValuation: React.FC = () => {
     })();
     const accuracyLabel = accuracy < 80 ? 'Cơ bản' : accuracy < 88 ? 'Khá tốt' : accuracy < 95 ? 'Rất tốt' : 'Chuyên sâu';
     const accuracyColor = accuracy < 80 ? '#eab308' : accuracy < 88 ? '#f97316' : accuracy < 95 ? '#22c55e' : '#10b981';
-
     // Process State — agent-based
     const [agentStepsList, setAgentStepsList] = useState<AgentStep[]>([]);
     const [currentAgentIdx, setCurrentAgentIdx] = useState(0);
     const [progress, setProgress] = useState(0);
-
     // Results State
     const [valuation, setValuation] = useState<{
         price: number;
@@ -576,19 +537,16 @@ export const AiValuation: React.FC = () => {
             compsValue: number; incomeValue: number; finalValue: number;
         };
     } | null>(null);
-
     // Ref for interval cleanup
     const intervalRef = useRef<any>(null);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [historyItems, setHistoryItems] = useState<ValuationHistoryItem[]>([]);
     const [breakdownOpen, setBreakdownOpen] = useState(false);
-
     useEffect(() => {
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
     }, []);
-
     // --- TYPEWRITER PLACEHOLDER ANIMATION ---
     useEffect(() => {
         const MESSAGES = [
@@ -599,11 +557,9 @@ export const AiValuation: React.FC = () => {
         const TYPE_SPEED  = 42;   // ms per char typing
         const ERASE_SPEED = 18;   // ms per char erasing
         const HOLD_MS     = 2200; // pause at full message
-
         const tick = () => {
             const msg   = MESSAGES[twIndexRef.current];
             const erase = twEraseRef.current;
-
             if (!erase) {
                 // Typing forward
                 twCharRef.current = Math.min(twCharRef.current + 1, msg.length);
@@ -628,26 +584,21 @@ export const AiValuation: React.FC = () => {
                     return;
                 }
             }
-
             twTimerRef.current = setTimeout(tick, erase ? ERASE_SPEED : TYPE_SPEED);
         };
-
         twTimerRef.current = setTimeout(tick, 600);
         return () => { if (twTimerRef.current) clearTimeout(twTimerRef.current); };
     }, []);
-
     // --- STEP 1 (free): Fetch teaser price-range from regional/cache table.
     // Zero AI quota usage. User reviews this preview, then decides whether
     // to spend a quota point on the deep AI analysis (runAdvancedAnalysis).
     const runCalculation = async () => {
         const areaNum = parseFloat(area) || 0;
         if (!address || areaNum <= 0) return;
-
         setTeaser(null);
         setTeaserError('');
         setTeaserLoading(true);
         setStep('TEASER');
-
         try {
             const params = new URLSearchParams({
                 location: address,
@@ -669,7 +620,6 @@ export const AiValuation: React.FC = () => {
         }
         setTeaserLoading(false);
     };
-
     // --- STEP 2 (paid): Full multi-source AVM + AI valuation.
     // Consumes 1 quota point for authenticated users (or 1 daily slot for guests).
     // Triggered when the user clicks "Phân tích AI chuyên sâu" on the TEASER step.
@@ -687,7 +637,6 @@ export const AiValuation: React.FC = () => {
             setShowQuotaGate(true);
             return;
         }
-
         if (intervalRef.current) clearInterval(intervalRef.current);
         // Reset feedback states for a new valuation
         setValuationId(null);
@@ -697,14 +646,12 @@ export const AiValuation: React.FC = () => {
         setStep('ANALYZING');
         setProgress(0);
         setCurrentAgentIdx(0);
-
         // Build dynamic agent steps from current user inputs
         const steps = buildAgentSteps(
             address, propertyType, area, roadWidth, legal,
             direction, frontageWidth, furnishing, floorLevel, monthlyRent, buildingAge
         );
         setAgentStepsList(steps);
-
         // Advance agent cards every ~900ms while API call is in progress
         let agentTickCount = 0;
         intervalRef.current = setInterval(() => {
@@ -712,11 +659,9 @@ export const AiValuation: React.FC = () => {
             setCurrentAgentIdx(Math.min(agentTickCount, steps.length - 1));
             setProgress(prev => Math.min(prev + Math.round(80 / steps.length), 90));
         }, 900);
-
         // Fetch real-time data from Gemini
         const areaNum = parseFloat(area) || 50;
         const roadNum = parseFloat(roadWidth) || 3;
-
         let aiResult: any;
         // Road type label for AI context (e.g. "Hẻm xe hơi (≥4m)")
         const roadTypeLabelMap: Record<string, string> = {
@@ -767,12 +712,10 @@ export const AiValuation: React.FC = () => {
                 }
                 return;
             }
-
             // Emergency client-side fallback (network completely down or server error)
             // Uses same AVM coefficient logic as server/valuationEngine.ts
             notify(t('ai.error_valuation'), 'error');
             const addr = address.toLowerCase();
-
             // ── Premium project price overrides (match server/valuationEngine.ts) ──
             let streetBase: number | null = null;
             if (/aqua\s*city|aquacity/i.test(addr))          streetBase = 72_000_000;
@@ -784,7 +727,6 @@ export const AiValuation: React.FC = () => {
             else if (/phú mỹ hưng|phu my hung/i.test(addr)) streetBase = 160_000_000;
             else if (/thảo điền|thao dien/i.test(addr))     streetBase = 180_000_000;
             else if (/vinhome.*golden.*river|ba.*son\b/i.test(addr)) streetBase = 250_000_000;
-
             // ── Regional base prices ──
             const isQ1 = /quận 1\b|q\.?1\b/.test(addr);
             const isHCM = /hcm|hồ chí minh|sài gòn|saigon|bình thạnh|thủ đức/.test(addr) || /quận [0-9]/.test(addr);
@@ -799,7 +741,6 @@ export const AiValuation: React.FC = () => {
                 : isBienHoa ? 42_000_000 : isNhonTrach ? 30_000_000 : isDongNai ? 35_000_000
                 : isBinhDuong ? 38_000_000 : isLongAn ? 28_000_000 : 25_000_000;
             const marketBase = streetBase ?? regionalBase;
-
             // Kd: Road Width
             const Kd = roadNum >= 20 ? 1.30 : roadNum >= 12 ? 1.18 : roadNum >= 8 ? 1.10 :
                        roadNum >= 6 ? 1.05 : roadNum >= 4 ? 1.00 : roadNum >= 3 ? 0.90 :
@@ -809,12 +750,10 @@ export const AiValuation: React.FC = () => {
             // Ka: Area
             const Ka = areaNum < 25 ? 0.90 : areaNum < 40 ? 0.95 : areaNum < 60 ? 0.98 :
                        areaNum < 100 ? 1.00 : areaNum < 150 ? 1.03 : areaNum < 250 ? 1.06 : 1.10;
-
             const adjPerM2 = Math.round(marketBase * Kd * Kp * Ka);
             const total = adjPerM2 * areaNum;
             const margin = 0.25;
             const legalLabel = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'Hợp đồng mua bán' : legal === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
-
             aiResult = {
                 basePrice: marketBase,
                 pricePerM2: adjPerM2,
@@ -831,12 +770,10 @@ export const AiValuation: React.FC = () => {
                     { label: `Diện tích ${areaNum}m²`, coefficient: Ka, impact: Math.round(Math.abs(Ka - 1) * 100), isPositive: Ka >= 1, description: '', type: 'AVM' as const },
                 ]
             };
-        }
-        
+        }        
         if (intervalRef.current) clearInterval(intervalRef.current);
         setProgress(100);
-        setCurrentAgentIdx(999); // mark all agents as done
-        
+        setCurrentAgentIdx(999); // mark all agents as done        
         setTimeout(() => {
             calculateResults(aiResult, areaNum, roadNum);
             setValuationId(aiResult.interactionId || null);
@@ -877,14 +814,12 @@ export const AiValuation: React.FC = () => {
             }
         }, 500);
     };
-
     const calculateResults = (aiResult: any, areaNum: number, _roadNum: number) => {
         // Server returns fully computed AVM result.
         // totalPrice = pricePerM2 × area, already calculated by AVM engine server-side.
         const pricePerM2: number = aiResult.pricePerM2 || (aiResult.basePrice || 0);
         const totalPrice: number = aiResult.totalPrice || Math.round(pricePerM2 * areaNum);
         const confidence: number = aiResult.confidence || 98;
-
         // Use server's pre-computed range if available, otherwise use confidence margin
         const rangeMin: number = aiResult.rangeMin || (() => {
             const margin = confidence >= 95 ? 0.05 : confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
@@ -894,7 +829,6 @@ export const AiValuation: React.FC = () => {
             const margin = confidence >= 95 ? 0.05 : confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
             return Math.round(totalPrice * (1 + margin));
         })();
-
         const baseBillion = totalPrice / 1_000_000_000;
         // Parse annual growth % from marketTrend text (server does not return trendGrowthPct directly)
         const trendText = (aiResult.marketTrend || '').toLowerCase();
@@ -915,7 +849,6 @@ export const AiValuation: React.FC = () => {
                 price: Number((baseBillion * factor).toFixed(3))
             };
         });
-
         setValuation({
             price: totalPrice,
             compsPrice: aiResult.compsPrice,
@@ -931,7 +864,6 @@ export const AiValuation: React.FC = () => {
             incomeApproach: aiResult.incomeApproach,
             reconciliation: aiResult.reconciliation,
         });
-
         // Save to localStorage history
         const histItem: ValuationHistoryItem = {
             id: Date.now().toString(),
@@ -950,11 +882,9 @@ export const AiValuation: React.FC = () => {
         addToHistory(histItem);
         setHistoryItems(readHistory());
     };
-
     const handleAdjustParams = () => {
         setStep('DETAILS');
     };
-
     const handleNewValuation = () => {
         setAddress('');
         setArea('');
@@ -985,7 +915,6 @@ export const AiValuation: React.FC = () => {
         setActualPriceInput('');
         setStep('ADDRESS');
     };
-
     return (
         <>
         <SeoHead
@@ -1130,13 +1059,10 @@ export const AiValuation: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* MAIN CONTENT AREA */}
-            <div className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 relative">
-                
+            <div className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 relative"               
                 {/* BACKGROUND FX */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-
                 {/* STEP INDICATOR */}
                 {step !== 'RESULT' && (
                     <div className="flex items-center justify-center gap-2 mb-10">
@@ -1174,7 +1100,6 @@ export const AiValuation: React.FC = () => {
                         })}
                     </div>
                 )}
-
                 {/* STEP 1: ADDRESS INPUT */}
                 {step === 'ADDRESS' && (
                     <div className="text-center animate-enter">
@@ -1985,7 +1910,6 @@ export const AiValuation: React.FC = () => {
                                         <span className="text-slate-500">{(teaser.pricePerM2 / 1_000_000).toFixed(0)} tr/m²</span>
                                     </div>
                                 </div>
-
                                 {/* Internal comps badge — shown when inventory data was blended in */}
                                 {!!teaser.internalCompsCount && teaser.internalCompsCount > 0 && (
                                     <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/25 rounded-xl px-3 py-2 mb-3">
@@ -1998,7 +1922,6 @@ export const AiValuation: React.FC = () => {
                                         </span>
                                     </div>
                                 )}
-
                                 {/* Source meta */}
                                 <div className="grid grid-cols-3 gap-2 mb-5">
                                     <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
@@ -2021,7 +1944,6 @@ export const AiValuation: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-
                                 {/* CTA: upgrade to deep AI analysis */}
                                 <div className="bg-gradient-to-br from-emerald-900/30 to-cyan-900/20 border border-emerald-500/30 rounded-2xl p-4 mb-3">
                                     <div className="flex items-start gap-3">
@@ -2035,7 +1957,6 @@ export const AiValuation: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-
                                 <button
                                     onClick={runAdvancedAnalysis}
                                     className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 text-base flex items-center justify-center gap-2"
@@ -2053,7 +1974,6 @@ export const AiValuation: React.FC = () => {
                         )}
                     </div>
                 )}
-
                 {/* STEP 3: ANALYZING — Agent Cards (ghi nhận thông số thực từ người dùng) */}
                 {step === 'ANALYZING' && (
                     <div className="max-w-xl mx-auto pt-8 animate-enter">
@@ -2071,7 +1991,6 @@ export const AiValuation: React.FC = () => {
                             </div>
                             <div className="text-xs text-slate-500 mt-1.5 font-mono tabular-nums">{Math.round(progress)}% hoàn thành</div>
                         </div>
-
                         {/* Agent cards */}
                         <div className="space-y-3">
                             {agentStepsList.map((agent, idx) => {
@@ -2217,7 +2136,6 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 );
                             })()}
-
                             {/* ── INPUT SUMMARY CHIPS ── */}
                             {(() => {
                                 const legalChip = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'HĐ Mua Bán' : legal === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
@@ -2243,7 +2161,6 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 );
                             })()}
-
                             {/* ── FACTORS BREAKDOWN (XAI) ── */}
                             {valuation.factors.length > 0 && (() => {
                                 const avmFactors = valuation.factors.filter(f => f.type !== 'LOCATION');
@@ -2303,7 +2220,6 @@ export const AiValuation: React.FC = () => {
                                 );
                             })()}
                         </div>
-
                         {/* ── CƠ SỞ ĐỊNH GIÁ (ACCORDION TABLE) ── */}
                         {valuation.factors.length > 0 && (() => {
                             const avmFactors = valuation.factors.filter(f => f.type === 'AVM');
@@ -2369,7 +2285,6 @@ export const AiValuation: React.FC = () => {
                                 </div>
                             );
                         })()}
-
                         {/* ── NHẬN XÉT AI + LƯU Ý RỦI RO ── */}
                         {valuation.marketTrend && valuation.marketTrend !== 'Đang cập nhật' && (
                             <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl mb-6 space-y-5">
@@ -2397,7 +2312,6 @@ export const AiValuation: React.FC = () => {
                                 )}
                             </div>
                         )}
-
                         {/* ── PHƯƠNG PHÁP THU NHẬP + TỔNG HỢP ── */}
                         {valuation.incomeApproach && (
                             <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl mb-6">
@@ -2405,7 +2319,6 @@ export const AiValuation: React.FC = () => {
                                     <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
                                     Phân tích đa phương pháp
                                 </h3>
-
                                 {/* Two-column: Comps vs Income */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                     {/* Comps Method */}
@@ -2424,7 +2337,6 @@ export const AiValuation: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-
                                     {/* Income Method */}
                                     <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-5">
                                         <div className="flex items-center gap-2 mb-3">
@@ -2442,7 +2354,6 @@ export const AiValuation: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
-
                                 {/* Income Details breakdown */}
                                 <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden mb-4">
                                     <div className="px-5 py-3 border-b border-slate-700/50">
@@ -2463,7 +2374,6 @@ export const AiValuation: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
-
                                 {/* Gross Rental Yield */}
                                 <div className="flex items-center gap-3 text-sm">
                                     <span className="text-slate-400">Tỷ suất cho thuê gộp:</span>
@@ -2475,7 +2385,6 @@ export const AiValuation: React.FC = () => {
                                 </div>
                             </div>
                         )}
-
                         {/* Fallback warning banner */}
                         {valuation.isRealtime === false && (
                             <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3 flex items-start gap-3">
@@ -2486,7 +2395,6 @@ export const AiValuation: React.FC = () => {
                                 </div>
                             </div>
                         )}
-
                         {/* Chart Simulation */}
                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-sm relative">
                             {(() => {
@@ -2550,8 +2458,7 @@ export const AiValuation: React.FC = () => {
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
-                        </div>
-                        
+                        </div>                      
                         {/* ── RLHF Feedback Widget — hiển thị cho mọi người (guest + user) ─── */}
                         {valuationId && (
                             <div className="bg-slate-800/60 border border-slate-700 rounded-[28px] px-7 py-6 flex flex-col gap-4">
@@ -2639,7 +2546,6 @@ export const AiValuation: React.FC = () => {
                                 )}
                             </div>
                         )}
-
                         {/* ── DISCLAIMER BẮT BUỘC ── */}
                         <div style={{
                             background: '#F1EFE8',
@@ -2651,9 +2557,8 @@ export const AiValuation: React.FC = () => {
                             color: '#5F5E5A',
                             lineHeight: 1.6,
                         }}>
-                            ⚠️ <strong>Lưu ý quan trọng:</strong> Kết quả định giá mang tính tham khảo dựa trên dữ liệu AI, không phải thẩm định pháp lý chính thức theo Nghị định 21/2021/NĐ-CP. SGS Land không chịu trách nhiệm về các quyết định giao dịch dựa trên kết quả này. Để có thẩm định chính thức, vui lòng liên hệ chuyên gia thẩm định được cấp phép của Bộ Tài chính Việt Nam.
+                             <strong>Lưu ý quan trọng:</strong> Kết quả định giá mang tính tham khảo dựa trên dữ liệu AI, không phải thẩm định pháp lý chính thức theo Nghị định 21/2021/NĐ-CP. SGS Land không chịu trách nhiệm về các quyết định giao dịch dựa trên kết quả này. Để có thẩm định chính thức, vui lòng liên hệ chuyên gia thẩm định được cấp phép của Bộ Tài chính Việt Nam.
                         </div>
-
                         {/* ── ACTION BUTTONS + HISTORY LINK ── */}
                         <div className="flex flex-col items-center gap-3 mt-10">
                             <div className="flex justify-center gap-4">
@@ -2680,7 +2585,6 @@ export const AiValuation: React.FC = () => {
                     </div>
                 )}
             </div>
-
             {/* Features Footer */}
             {step === 'ADDRESS' && (
                 <section className="py-20 px-6 max-w-6xl mx-auto border-t border-slate-800 mt-20">
@@ -2774,14 +2678,12 @@ export const AiValuation: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
-
                     <div>
                         <h2 className="text-lg font-bold text-white">Bạn đã dùng {GUEST_DAILY_LIMIT} lượt miễn phí hôm nay</h2>
                         <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
                             Tạo tài khoản miễn phí để định giá không giới hạn và truy cập đầy đủ tính năng.
                         </p>
                     </div>
-
                     {/* Benefits list */}
                     <ul className="w-full text-left space-y-2">
                         {[
@@ -2799,7 +2701,6 @@ export const AiValuation: React.FC = () => {
                             </li>
                         ))}
                     </ul>
-
                     <div className="flex flex-col gap-2.5 w-full">
                         <button
                             onClick={() => { window.location.hash = `#/${ROUTES.LOGIN}`; }}
@@ -2830,7 +2731,6 @@ export const AiValuation: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                     </div>
-
                     <div>
                         <h2 className="text-lg font-bold text-white">
                             Đã dùng hết {quotaInfo?.limit} lượt định giá AI tháng này
@@ -2841,7 +2741,6 @@ export const AiValuation: React.FC = () => {
                             Nâng cấp để tiếp tục định giá không giới hạn.
                         </p>
                     </div>
-
                     <ul className="w-full text-left space-y-2">
                         {[
                             'Định giá AI không giới hạn mỗi tháng',
@@ -2858,7 +2757,6 @@ export const AiValuation: React.FC = () => {
                             </li>
                         ))}
                     </ul>
-
                     <div className="flex flex-col gap-2.5 w-full">
                         <button
                             onClick={() => {
@@ -2900,5 +2798,4 @@ export const AiValuation: React.FC = () => {
         </>
     );
 };
-
 export default AiValuation;

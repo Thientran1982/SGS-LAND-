@@ -615,7 +615,6 @@ const PromptsTab = memo(({
                             </button>
                         </div>
                     </div>
-
                     <div className="flex-1 flex flex-col relative min-h-0">
                         <div className="flex gap-2 mb-2 overflow-x-auto pb-1 no-scrollbar items-center">
                             {PROMPT_VARIABLES.map(v => (
@@ -671,7 +670,6 @@ const PromptsTab = memo(({
                             />
                         )}
                     </div>
-
                     {/* SIMULATOR */}
                     <div className="mt-4 pt-4 border-t border-[var(--glass-border)]">
                         <div className="flex gap-3">
