@@ -6,26 +6,21 @@
  * might look like "slop".
  */
 export const cleanAiResponse = (text: string): string => {
-    if (!text) return "";
-    
+    if (!text) return "";    
     return text
         // Remove bold/italic markers (double or single asterisks/underscores)
         // We keep the text inside them
         .replace(/(\*\*|__)(.*?)\1/g, "$2")
-        .replace(/(\*|_)(.*?)\1/g, "$2")
-        
+        .replace(/(\*|_)(.*?)\1/g, "$2")        
         // Remove leading asterisks from bullet points if they are just used for emphasis
         // e.g., "* Nhu cầu: ..." -> "Nhu cầu: ..."
-        .replace(/^\s*[\*\-]\s+/gm, "• ")
-        
+        .replace(/^\s*[\*\-]\s+/gm, "• ")        
         // Remove any remaining stray asterisks that aren't part of a list
-        .replace(/(?<!\w)\*(?!\w)/g, "")
-        
+        .replace(/(?<!\w)\*(?!\w)/g, "")        
         // Clean up multiple spaces and newlines
         .replace(/[ ]{2,}/g, " ")
         .trim();
 };
-
 /**
  * Executes an async function with Exponential Backoff retry logic.
  * Useful for handling rate limits (429) or temporary network failures with AI APIs.
@@ -46,13 +41,11 @@ export const withRetry = async <T>(
             return await fn();
         } catch (error: any) {
             attempt++;
-            console.warn(`[Retry Mechanism] Attempt ${attempt} failed:`, error.message);
-            
+            console.warn(`[Retry Mechanism] Attempt ${attempt} failed:`, error.message);            
             if (attempt >= maxRetries) {
                 console.error(`[Retry Mechanism] Max retries (${maxRetries}) reached. Throwing error.`);
                 throw error;
-            }
-            
+            }            
             // Exponential backoff: baseDelay * 2^attempt + random jitter
             const jitter = Math.random() * 200;
             const delay = baseDelayMs * Math.pow(2, attempt - 1) + jitter;
@@ -62,4 +55,3 @@ export const withRetry = async <T>(
     }
     throw new Error("Unreachable");
 };
-

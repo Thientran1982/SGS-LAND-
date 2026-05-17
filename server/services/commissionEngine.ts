@@ -10,13 +10,10 @@
  *  - MILESTONE : { ratePct, milestones: [{ key,label,pct,offsetDays }] }
  *                 → gross = price * rate%, chia nhỏ theo % milestone, dueDate = sale + offset
  */
-
 export type PolicyType = 'FLAT' | 'TIERED' | 'MILESTONE';
-
 export interface FlatConfig {
   ratePct: number; // 0..100
 }
-
 export interface TierBand {
   minUnitsThisMonth: number; // inclusive
   ratePct: number;
@@ -24,7 +21,6 @@ export interface TierBand {
 export interface TieredConfig {
   tiers: TierBand[]; // sorted ascending by minUnitsThisMonth
 }
-
 export interface MilestoneStep {
   key: string;            // unique within policy
   label: string;          // ví dụ "Đặt cọc"
@@ -35,26 +31,21 @@ export interface MilestoneConfig {
   ratePct: number;
   milestones: MilestoneStep[];
 }
-
 export type PolicyConfig = FlatConfig | TieredConfig | MilestoneConfig;
-
 export interface CommissionPolicy {
   id: string;
   type: PolicyType;
   version: number;
   config: PolicyConfig;
 }
-
 export interface ListingForCommission {
   id: string;
   price: number | string | null | undefined;
 }
-
 export interface CommissionContext {
   /** Số căn đã SOLD trong tháng của partner/sales (TIERED) — caller tự đếm. */
   unitsThisMonth?: number;
 }
-
 export interface MilestoneEntry {
   key: string;
   label: string;
@@ -63,13 +54,11 @@ export interface MilestoneEntry {
   dueDate: string; // ISO
   status: 'PENDING' | 'PAID';
 }
-
 export interface CalculatedCommission {
   ratePct: number;
   grossAmount: number;
   milestones: MilestoneEntry[];
 }
-
 function toNumber(v: unknown): number {
   if (typeof v === 'number') return isFinite(v) ? v : 0;
   if (typeof v === 'string') {
@@ -78,13 +67,11 @@ function toNumber(v: unknown): number {
   }
   return 0;
 }
-
 function clampPct(v: number): number {
   if (!isFinite(v) || v < 0) return 0;
   if (v > 100) return 100;
   return v;
 }
-
 function pickTierRate(cfg: TieredConfig, unitsThisMonth: number): number {
   if (!cfg.tiers || cfg.tiers.length === 0) return 0;
   const sorted = [...cfg.tiers].sort((a, b) => a.minUnitsThisMonth - b.minUnitsThisMonth);
@@ -95,13 +82,11 @@ function pickTierRate(cfg: TieredConfig, unitsThisMonth: number): number {
   }
   return clampPct(rate);
 }
-
 function addDays(iso: string, days: number): string {
   const d = new Date(iso);
   d.setUTCDate(d.getUTCDate() + Math.round(days));
   return d.toISOString();
 }
-
 /**
  * PURE: tính hoa hồng. `now` truyền vào dưới dạng ISO string (sale_date).
  */
@@ -112,21 +97,18 @@ export function calculateCommission(
   saleDateIso: string,
 ): CalculatedCommission {
   const price = toNumber(listing.price);
-
   if (policy.type === 'FLAT') {
     const cfg = policy.config as FlatConfig;
     const ratePct = clampPct(toNumber(cfg.ratePct));
     const gross = Math.round((price * ratePct) / 100);
     return { ratePct, grossAmount: gross, milestones: [] };
   }
-
   if (policy.type === 'TIERED') {
     const cfg = policy.config as TieredConfig;
     const ratePct = pickTierRate(cfg, Math.max(0, Math.floor(toNumber(ctx.unitsThisMonth ?? 0))));
     const gross = Math.round((price * ratePct) / 100);
     return { ratePct, grossAmount: gross, milestones: [] };
   }
-
   if (policy.type === 'MILESTONE') {
     const cfg = policy.config as MilestoneConfig;
     const ratePct = clampPct(toNumber(cfg.ratePct));
@@ -145,10 +127,8 @@ export function calculateCommission(
     });
     return { ratePct, grossAmount: gross, milestones };
   }
-
   return { ratePct: 0, grossAmount: 0, milestones: [] };
 }
-
 /**
  * Validate policy config trước khi insert. Trả về null nếu OK, hoặc message lỗi.
  */

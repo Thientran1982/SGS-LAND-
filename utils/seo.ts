@@ -1,6 +1,5 @@
 const BASE_URL = 'https://sgsland.vn';
 const DEFAULT_IMAGE = `${BASE_URL}/og-image.jpg`;
-
 export interface SEOConfig {
   title: string;
   description: string;
@@ -8,7 +7,6 @@ export interface SEOConfig {
   image?: string;
   noIndex?: boolean;
 }
-
 export const ROUTE_SEO: Record<string, SEOConfig> = {
   // Default / root (hash empty)
   '': {
@@ -157,13 +155,11 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
     path: '/ky-gui-bat-dong-san',
   },
 };
-
 function setMeta(selector: string, attr: string, value: string) {
   let el = document.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
   if (!el) return;
   (el as any)[attr] = value;
 }
-
 const SEO_OVERRIDES_KEY = 'sgs_seo_overrides';
 
 export function getSEOOverrides(): Record<string, { title: string; description: string }> {
@@ -172,21 +168,17 @@ export function getSEOOverrides(): Record<string, { title: string; description: 
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
-
 export function saveSEOOverride(routeBase: string, title: string, description: string): void {
   const overrides = getSEOOverrides();
   overrides[routeBase] = { title, description };
   localStorage.setItem(SEO_OVERRIDES_KEY, JSON.stringify(overrides));
 }
-
 export function clearSEOOverride(routeBase: string): void {
   const overrides = getSEOOverrides();
   delete overrides[routeBase];
   localStorage.setItem(SEO_OVERRIDES_KEY, JSON.stringify(overrides));
 }
-
 export const SEO_BASE_URL = BASE_URL;
-
 /**
  * Patch the `description` field inside a static JSON-LD <script> whose
  * @type matches `schemaType`. Updates the live DOM so the SCHEMA tab
@@ -206,7 +198,6 @@ function patchJsonLdDescription(schemaType: string, description: string): void {
     }
   });
 }
-
 /**
  * Routes có component tự render <SeoHead/> (Helmet) — bỏ qua updatePageSEO ở
  * đây để tránh 2 hệ thống cùng ghi `<title>` / `<link rel="canonical">` →
@@ -229,7 +220,6 @@ const HELMET_MANAGED_ROUTES = new Set<string>([
   'bat-dong-san-phu-nhuan',
   'bat-dong-san-binh-chanh',
 ]);
-
 export function updatePageSEO(routeBase: string): void {
   if (HELMET_MANAGED_ROUTES.has(routeBase)) return;
   const baseCfg = ROUTE_SEO[routeBase] ?? ROUTE_SEO[''];
@@ -240,25 +230,19 @@ export function updatePageSEO(routeBase: string): void {
   const cfg = { ...baseCfg, title, description };
   const fullUrl = `${BASE_URL}${cfg.path}`;
   const image = cfg.image ?? DEFAULT_IMAGE;
-
   document.title = cfg.title;
-
   setMeta('meta[name="description"]', 'content', cfg.description);
   setMeta('meta[name="robots"]', 'content', cfg.noIndex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
-
   const canonical = document.getElementById('canonical-url') as HTMLLinkElement | null;
   if (canonical) canonical.href = fullUrl;
-
   setMeta('meta[property="og:title"]', 'content', cfg.title);
   setMeta('meta[property="og:description"]', 'content', cfg.description);
   setMeta('meta[property="og:image"]', 'content', image);
   const ogUrl = document.getElementById('og-url') as HTMLMetaElement | null;
   if (ogUrl) ogUrl.content = fullUrl;
-
   setMeta('meta[name="twitter:title"]', 'content', cfg.title);
   setMeta('meta[name="twitter:description"]', 'content', cfg.description);
   setMeta('meta[name="twitter:image"]', 'content', image);
-
   // ── Sync JSON-LD descriptions so the "Dữ liệu cấu trúc" tab stays current.
   // The root/home routes map to the global site description used by WebSite,
   // SoftwareApplication and Organization schemas.
@@ -272,11 +256,9 @@ export function updatePageSEO(routeBase: string): void {
     patchJsonLdDescription('Service', description);
   }
 }
-
 // =============================================================================
 // DYNAMIC SEO — Per-Listing and Per-Article injection
 // =============================================================================
-
 function applyDynamicSEO(title: string, description: string, image: string, canonicalPath: string, noIndex = false): void {
   const fullUrl = `${BASE_URL}${canonicalPath}`;
   document.title = title;
@@ -293,14 +275,12 @@ function applyDynamicSEO(title: string, description: string, image: string, cano
   setMeta('meta[name="twitter:description"]', 'content', description);
   setMeta('meta[name="twitter:image"]', 'content', image);
 }
-
 function formatVNDShort(price: number, currency: 'VND' | 'USD'): string {
   if (currency === 'USD') return `$${(price / 1_000).toFixed(0)}K`;
   if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(1)} tỷ VNĐ`;
   if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(0)} triệu VNĐ`;
   return `${price.toLocaleString('vi-VN')} VNĐ`;
 }
-
 export interface ListingForSEO {
   id: string;
   title: string;
@@ -313,7 +293,6 @@ export interface ListingForSEO {
   bedrooms?: number;
   images?: string[];
 }
-
 export interface ArticleForSEO {
   id: string;
   title: string;
@@ -324,11 +303,9 @@ export interface ArticleForSEO {
   date?: string;
   category?: string;
 }
-
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
-
 function toIso8601(dateStr?: string): string {
   if (!dateStr) return new Date().toISOString();
   const parsed = new Date(dateStr);
@@ -336,7 +313,6 @@ function toIso8601(dateStr?: string): string {
   // Vietnamese locale format (e.g. "15 tháng 3, 2024") — fallback to current time
   return new Date().toISOString();
 }
-
 function injectJsonLd(jsonLd: Record<string, unknown>): void {
   // Remove any existing dynamic JSON-LD to prevent stale duplicates
   document.querySelectorAll('script[data-dynamic="true"]').forEach(el => el.remove());
@@ -346,7 +322,6 @@ function injectJsonLd(jsonLd: Record<string, unknown>): void {
   script.textContent = JSON.stringify(jsonLd);
   document.head.appendChild(script);
 }
-
 export function injectListingSEO(listing: ListingForSEO): void {
   const priceStr = formatVNDShort(listing.price, listing.currency);
   const typeStr = listing.type ?? 'Bất Động Sản';
@@ -382,7 +357,6 @@ export function injectListingSEO(listing: ListingForSEO): void {
     ...(listing.bedrooms != null ? { numberOfRooms: listing.bedrooms } : {}),
   });
 }
-
 /**
  * Extract FAQ Q&A pairs from article body HTML.
  * Convention: a `<div class="faq">…</div>` (or `<dl class="faq">`) section
@@ -392,7 +366,6 @@ export function injectListingSEO(listing: ListingForSEO): void {
 function extractFaqs(body: string): Array<{ q: string; a: string }> {
   const faqs: Array<{ q: string; a: string }> = [];
   if (!body) return faqs;
-
   // <dl class="faq">
   const dlMatch = body.match(/<dl[^>]*class="[^"]*\bfaq\b[^"]*"[^>]*>([\s\S]*?)<\/dl>/i);
   if (dlMatch) {
@@ -406,7 +379,6 @@ function extractFaqs(body: string): Array<{ q: string; a: string }> {
     }
     if (faqs.length) return faqs;
   }
-
   // <div class="faq"> with h3/p pairs
   const divMatch = body.match(/<(?:div|section)[^>]*class="[^"]*\bfaq\b[^"]*"[^>]*>([\s\S]*?)<\/(?:div|section)>/i);
   if (divMatch) {
@@ -421,7 +393,6 @@ function extractFaqs(body: string): Array<{ q: string; a: string }> {
   }
   return faqs;
 }
-
 export function injectArticleSEO(article: ArticleForSEO): void {
   // Required format: "[Tiêu đề bài viết] - Tin Tức BĐS | SGS LAND"
   // No truncation — required suffix must always be present
@@ -433,10 +404,8 @@ export function injectArticleSEO(article: ArticleForSEO): void {
   const canonicalPath = `/news/${article.id}`;
   const fullUrl = `${BASE_URL}${canonicalPath}`;
   applyDynamicSEO(title, description, image, canonicalPath);
-
   const authorName = article.author ?? 'SGS LAND';
   const authorId = `${fullUrl}#author`;
-
   const personNode: Record<string, unknown> = {
     '@type': 'Person',
     '@id': authorId,
@@ -447,7 +416,6 @@ export function injectArticleSEO(article: ArticleForSEO): void {
       url: BASE_URL,
     },
   };
-
   const articleNode: Record<string, unknown> = {
     '@type': 'NewsArticle',
     '@id': `${fullUrl}#article`,
@@ -470,9 +438,7 @@ export function injectArticleSEO(article: ArticleForSEO): void {
     url: fullUrl,
     ...(article.category ? { articleSection: article.category } : {}),
   };
-
   const graph: Array<Record<string, unknown>> = [articleNode, personNode];
-
   const faqs = extractFaqs(article.body || '');
   if (faqs.length > 0) {
     graph.push({
@@ -488,13 +454,11 @@ export function injectArticleSEO(article: ArticleForSEO): void {
       })),
     });
   }
-
   injectJsonLd({
     '@context': 'https://schema.org',
     '@graph': graph,
   });
 }
-
 export function clearDynamicSEO(routeBase: string): void {
   // Remove all dynamic JSON-LD scripts injected per-content
   document.querySelectorAll('script[data-dynamic="true"]').forEach(el => el.remove());

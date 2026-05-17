@@ -6,19 +6,15 @@
  *
  * Docs: https://developers.zalo.me/docs/official-account/nhan-tin-voi-nguoi-dung/gui-tin-nhan-van-ban
  */
-
 import { logger } from '../middleware/logger';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { withRetry, isTransientError } from '../utils/retry';
-
 const ZALO_OA_API = 'https://openapi.zalo.me/v2.0/oa/message/cs';
-
 export interface ZaloSendResult {
   success: boolean;
   messageId?: string;
   error?: string;
 }
-
 /**
  * Send a text message to a Zalo user via OA API.
  * @param accessToken - OA Access Token (from Zalo Developers Console)
@@ -35,7 +31,6 @@ export async function sendZaloTextMessage(
       recipient: { user_id: userId },
       message: { text: text.slice(0, 2000) },
     };
-
     const json: any = await withRetry(
       async () => {
         const response = await fetch(ZALO_OA_API, {
@@ -57,12 +52,10 @@ export async function sendZaloTextMessage(
       2000,
       isTransientError
     );
-
     if (json.error !== 0) {
       logger.warn(`[Zalo] Send failed: error=${json.error} message=${json.message}`);
       return { success: false, error: `Zalo API error ${json.error}: ${json.message}` };
     }
-
     logger.info(`[Zalo] Message sent to ${userId}, msgId=${json.data?.message_id}`);
     return { success: true, messageId: json.data?.message_id };
   } catch (err: any) {
@@ -70,7 +63,6 @@ export async function sendZaloTextMessage(
     return { success: false, error: err.message };
   }
 }
-
 /**
  * Get the OA Access Token for a tenant from enterprise config.
  * Returns null if Zalo is not connected or token is missing.

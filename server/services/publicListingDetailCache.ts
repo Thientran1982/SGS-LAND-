@@ -9,13 +9,10 @@
  * Mọi mutate listing (create/update/status/delete/bulk) gọi
  * `evictPublicListingDetailCache(id)` từ listingRoutes.ts.
  */
-
 interface Entry { value: unknown; expiresAt: number; }
-
 const TTL_MS = 5 * 60 * 1000;
 const MAX_ENTRIES = 1000;
 const store = new Map<string, Entry>();
-
 export function getPublicListingDetailCache(key: string): unknown | null {
   const e = store.get(key);
   if (!e) return null;
@@ -25,7 +22,6 @@ export function getPublicListingDetailCache(key: string): unknown | null {
   store.set(key, e);
   return e.value;
 }
-
 export function setPublicListingDetailCache(key: string, value: unknown): void {
   if (store.has(key)) store.delete(key);
   store.set(key, { value, expiresAt: Date.now() + TTL_MS });
@@ -35,7 +31,6 @@ export function setPublicListingDetailCache(key: string, value: unknown): void {
     store.delete(firstKey);
   }
 }
-
 /**
  * Xoá tất cả entries của 1 listing id (key prefix `pld:<id>`).
  * Gọi sau mọi mutate (create/update/status/delete) để buyer thấy data mới
@@ -48,7 +43,6 @@ export function evictPublicListingDetailCache(id: string | null | undefined): vo
     if (key === prefix || key.startsWith(prefix + '|')) store.delete(key);
   }
 }
-
 export function publicListingDetailCacheStats(): { size: number } {
   return { size: store.size };
 }

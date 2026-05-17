@@ -1,29 +1,23 @@
 import bcrypt from 'bcrypt';
 import { pool, withTenantContext } from './db';
-
 if (process.env.NODE_ENV === 'production') {
   console.error('ERROR: Seed script cannot run in production. Aborting.');
   process.exit(1);
 }
-
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const SALT_ROUNDS = 12;
-
 async function seed() {
   console.log('Starting database seed...');
   const client = await pool.connect();
-
   try {
     await client.query('BEGIN');
     await client.query(`SET LOCAL app.current_tenant_id = '${TENANT_ID}'`);
-
     const existingUsers = await client.query(`SELECT COUNT(*)::int as count FROM users`);
     if (existingUsers.rows[0].count > 0) {
       console.log('Database already seeded. Skipping.');
       await client.query('COMMIT');
       return;
     }
-
     console.log('Seeding users...');
     // Use SEED_PASSWORD env var; never default to a weak password in production
     const seedPassword = process.env.SEED_PASSWORD;
@@ -31,7 +25,6 @@ async function seed() {
       throw new Error('SEED_PASSWORD environment variable is required. Set it to a strong password before seeding.');
     }
     const defaultHash = await bcrypt.hash(seedPassword, SALT_ROUNDS);
-
     const users = [
       { name: 'Admin SGS', email: 'admin@sgs.vn', hash: defaultHash, role: 'SUPER_ADMIN', avatar: '' },
       { name: 'Nguyen Van Hieu', email: 'hieu@sgs.vn', hash: defaultHash, role: 'TEAM_LEAD', avatar: '' },
@@ -42,7 +35,6 @@ async function seed() {
       { name: 'Vu Thi Huong', email: 'huong@sgs.vn', hash: defaultHash, role: 'MARKETING', avatar: '' },
       { name: 'Viewer Demo', email: 'viewer@sgs.vn', hash: defaultHash, role: 'VIEWER', avatar: '' },
     ];
-
     const userIds: string[] = [];
     for (const u of users) {
       const result = await client.query(
@@ -53,9 +45,7 @@ async function seed() {
       userIds.push(result.rows[0].id);
     }
     console.log(`  Created ${userIds.length} users`);
-
     const salesUserIds = userIds.slice(2, 6);
-
     console.log('Seeding teams...');
     const teamResult = await client.query(
       `INSERT INTO teams (tenant_id, name, lead_id) VALUES ($1, 'Team Kinh Doanh 1', $2) RETURNING id`,
@@ -69,7 +59,6 @@ async function seed() {
       );
     }
     console.log('  Created 1 team with 4 members');
-
     console.log('Seeding leads...');
     const leadData = [
       { name: 'Nguyen Minh Tuan', phone: '0901234567', email: 'tuan.nm@gmail.com', source: 'FACEBOOK', stage: 'NEW', notes: 'Quan tam du an Vinhomes Grand Park Q9' },
@@ -93,7 +82,6 @@ async function seed() {
       { name: 'Luong Van Dat', phone: '0889012345', email: null, source: 'ZALO', stage: 'PROPOSAL', notes: 'Quan tam du an Celadon City Tan Phu' },
       { name: 'Trinh Thi Hoa', phone: '0890123456', email: 'hoa.tt@gmail.com', source: 'DIRECT', stage: 'WON', notes: 'Da chot can A-1205, thanh toan 70%' },
     ];
-
     const grades = ['A', 'B', 'C', 'D'];
     const leadIds: string[] = [];
     for (let i = 0; i < leadData.length; i++) {
@@ -102,7 +90,6 @@ async function seed() {
       const scoreVal = Math.floor(Math.random() * 60) + 30;
       const grade = grades[Math.floor(scoreVal / 25)] || 'C';
       const score = { score: scoreVal, grade, reasoning: 'Auto-scored during seed' };
-
       const result = await client.query(
         `INSERT INTO leads (tenant_id, name, phone, email, source, stage, assigned_to, notes, score, tags, preferences)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
@@ -132,7 +119,6 @@ async function seed() {
       { code: 'DAN-DT01', title: 'Dat nen Dong Nai 200m2', location: 'Bien Hoa, Dong Nai', price: 2000000000, area: 200, type: 'LAND', bedrooms: 0, bathrooms: 0, status: 'AVAILABLE', direction: 'East', lat: 10.9575, lng: 106.8427, contactPhone: '0934444555', ownerName: 'Cao Văn Sơn', ownerPhone: '0956444555', commission: 2.0, commissionUnit: 'PERCENT' },
       { code: 'MAP-2PN02', title: 'Can ho Masteri An Phu 2PN', location: 'Q2, TP.HCM', price: 4500000000, area: 75, type: 'APARTMENT', bedrooms: 2, bathrooms: 2, status: 'AVAILABLE', direction: 'SouthEast', lat: 10.8015, lng: 106.7401, contactPhone: '0945555666', ownerName: 'Trịnh Thị Yến', ownerPhone: '0967555666', commission: 2.5, commissionUnit: 'PERCENT' },
     ];
-
     const listingIds: string[] = [];
     for (const li of listingData) {
       const result = await client.query(
@@ -145,7 +131,6 @@ async function seed() {
       listingIds.push(result.rows[0].id);
     }
     console.log(`  Created ${listingIds.length} listings`);
-
     console.log('Seeding proposals...');
     const proposalData = [
       { leadIdx: 3, listingIdx: 0, discount: 0.05, status: 'APPROVED' },
@@ -156,14 +141,12 @@ async function seed() {
       { leadIdx: 18, listingIdx: 5, discount: 0.06, status: 'SENT' },
       { leadIdx: 19, listingIdx: 9, discount: 0, status: 'APPROVED' },
     ];
-
     const proposalIds: string[] = [];
     for (const p of proposalData) {
       const listing = listingData[p.listingIdx];
       const basePrice = listing.price;
       const discountAmount = basePrice * p.discount;
       const finalPrice = basePrice - discountAmount;
-
       const result = await client.query(
         `INSERT INTO proposals (tenant_id, lead_id, listing_id, base_price, discount_amount, final_price, currency, status, token, created_by, created_by_id, valid_until)
          VALUES ($1, $2, $3, $4, $5, $6, 'VND', $7, $8, $9, $10, NOW() + INTERVAL '30 days') RETURNING id`,
@@ -174,7 +157,6 @@ async function seed() {
       proposalIds.push(result.rows[0].id);
     }
     console.log(`  Created ${proposalIds.length} proposals`);
-
     console.log('Seeding contracts...');
     const contractResult = await client.query(
       `INSERT INTO contracts (tenant_id, proposal_id, lead_id, listing_id, type, status, value, property_price, deposit_amount, created_by, party_a, party_b, property_details)
@@ -186,7 +168,6 @@ async function seed() {
        JSON.stringify({ address: listingData[2].location, area: listingData[2].area, type: listingData[2].type })]
     );
     console.log('  Created 1 contract');
-
     console.log('Seeding interactions...');
     const channels = ['ZALO', 'FACEBOOK', 'INTERNAL', 'EMAIL'];
     let interactionCount = 0;
@@ -196,8 +177,7 @@ async function seed() {
         const isInbound = j % 2 === 0;
         const content = isInbound
           ? ['Cho toi xem them hinh anh du an', 'Gia co the thuong luong khong?', 'Khi nao co the xem nha mau?', 'Cam on, de toi suy nghi them'][j % 4]
-          : ['Chao anh/chi, em gui hinh anh du an', 'Da, em gui bao gia chi tiet', 'Em sap xep lich hen xem nha mau nhe', 'Du, anh/chi can ho tro gi them khong?'][j % 4];
-        
+          : ['Chao anh/chi, em gui hinh anh du an', 'Da, em gui bao gia chi tiet', 'Em sap xep lich hen xem nha mau nhe', 'Du, anh/chi can ho tro gi them khong?'][j % 4];        
         await client.query(
           `INSERT INTO interactions (tenant_id, lead_id, channel, direction, type, content, status, sender_id, timestamp)
            VALUES ($1, $2, $3, $4, 'TEXT', $5, 'SENT', $6, NOW() - INTERVAL '${msgCount - j} hours')`,
@@ -209,7 +189,6 @@ async function seed() {
       }
     }
     console.log(`  Created ${interactionCount} interactions`);
-
     await client.query('COMMIT');
     console.log('Seed completed successfully!');
   } catch (error) {
@@ -221,7 +200,6 @@ async function seed() {
     await pool.end();
   }
 }
-
 seed().catch(err => {
   console.error(err);
   process.exit(1);

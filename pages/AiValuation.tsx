@@ -1060,7 +1060,7 @@ export const AiValuation: React.FC = () => {
                 </div>
             </div>
             {/* MAIN CONTENT AREA */}
-            <div className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 relative"               
+            <div className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 relative">
                 {/* BACKGROUND FX */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
                 {/* STEP INDICATOR */}

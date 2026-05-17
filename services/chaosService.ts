@@ -1,16 +1,13 @@
 import { ChaosConfig } from '../types';
-
 // -----------------------------------------------------------------------------
 // CONSTANTS & TYPES
 // -----------------------------------------------------------------------------
-
 export class ChaosError extends Error {
     constructor(public serviceName: string, message: string) {
         super(`[CHAOS] ${serviceName}: ${message}`);
         this.name = 'ChaosError';
     }
 }
-
 const DEFAULT_CONFIG: ChaosConfig = {
     latencyMs: 0,
     errorRate: 0,
@@ -21,16 +18,12 @@ const DEFAULT_CONFIG: ChaosConfig = {
     },
     enabled: false
 };
-
 const JITTER_FACTOR = 0.2;
-
 // -----------------------------------------------------------------------------
 // SERVICE IMPLEMENTATION
 // -----------------------------------------------------------------------------
-
 class ChaosService {
     private config: ChaosConfig = { ...DEFAULT_CONFIG };
-
     /**
      * Update chaos configuration (Admin Only).
      * Merges with existing config using safe object spread.
@@ -38,11 +31,9 @@ class ChaosService {
     configure(newConfig: Partial<ChaosConfig>) {
         this.config = { ...this.config, ...newConfig };
     }
-
     getConfig(): ChaosConfig {
         return { ...this.config };
     }
-
     /**
      * Intercept an operation and inject chaos if enabled.
      * @param service Target service identifier
@@ -50,7 +41,6 @@ class ChaosService {
     async intercept(service: keyof ChaosConfig['services']): Promise<void> {
         // Fast-fail if chaos is disabled globally or for specific service
         if (!this.config.enabled || !this.config.services[service]) return;
-
         // 1. Latency Injection (Network Jitter Simulation)
         if (this.config.latencyMs > 0) {
             // Jitter: +/- 20% to simulate real-world network instability
@@ -59,7 +49,6 @@ class ChaosService {
             
             await new Promise(resolve => setTimeout(resolve, delay));
         }
-
         // 2. Fault Injection (500 Errors)
         if (this.config.errorRate > 0 && Math.random() < this.config.errorRate) {
             // Throw specific ChaosError so monitoring tools can properly classify these alerts
@@ -67,5 +56,4 @@ class ChaosService {
         }
     }
 }
-
 export const chaosService = new ChaosService();

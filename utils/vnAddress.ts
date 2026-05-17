@@ -7,7 +7,6 @@
  *  - Geocode query builder for Nominatim
  *  - Fallback coordinate lookup: HCMC wards/districts + 63 provinces + ~700 districts
  */
-
 // ── HCMC Districts / Quận / Huyện ──────────────────────────────────────────
 const HCMC_DISTRICTS: Record<string, string> = {
     'binh thanh':   'Bình Thạnh',
@@ -36,7 +35,6 @@ const HCMC_DISTRICTS: Record<string, string> = {
     'quan 11':      'Quận 11',
     'quan 12':      'Quận 12',
 };
-
 // ── Administrative term prefixes ────────────────────────────────────────────
 const ADMIN_TERMS: Record<string, string> = {
     '\\bduong\\b':    'Đường',
@@ -50,7 +48,6 @@ const ADMIN_TERMS: Record<string, string> = {
     '\\bthi tran\\b': 'Thị Trấn',
     '\\bthi xa\\b':   'Thị Xã',
 };
-
 // ── Non-HCMC province/city detection ────────────────────────────────────────
 const NON_HCMC_PROVINCES: string[] = [
     'dong nai', 'đồng nai',
@@ -117,28 +114,23 @@ const NON_HCMC_PROVINCES: string[] = [
     'binh phuoc', 'bình phước',
     'dak nong', 'đắk nông',
 ];
-
 export function isNonHCMCAddress(address: string): boolean {
     const lower = address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
     // Explicit HCMC markers always win — even if the address string contains a
     // province name as part of a street/ward name (e.g. "Đường Nguyễn Bình Dương").
     // Uses pre-built array to avoid object allocation on every call.
     if (_HCMC_MARKERS_LOWER.some(m => lower.includes(m))) return false;
-
     // Only scan the last two comma-delimited segments.  Province/city names appear at
     // the END of Vietnamese addresses; names embedded in street names (e.g. "Đường
     // Nguyễn Bình Dương, Quận 7") must NOT trigger a non-HCMC match.
     const segments = lower.split(',').map(s => s.trim()).filter(Boolean);
     const tail = segments.slice(-2).join(',');
-
     // Use pre-compiled regexes — avoids creating new RegExp objects in a hot loop.
     for (const re of _NON_HCMC_PROVINCE_COMPILED) {
         if (re.test(tail)) return true;
     }
     return false;
 }
-
 export function normalizeVNAddress(address: string): string {
     let result = address;
     for (const [plain, diacritic] of Object.entries(HCMC_DISTRICTS)) {
@@ -150,7 +142,6 @@ export function normalizeVNAddress(address: string): string {
     }
     return result;
 }
-
 // ── Geocode query builder ───────────────────────────────────────────────────
 const HCMC_SUFFIXES = [
     ', Thành phố Hồ Chí Minh, Việt Nam',
@@ -159,7 +150,6 @@ const HCMC_SUFFIXES = [
     ', Vietnam',
 ];
 const GENERIC_SUFFIXES = [', Việt Nam', ', Vietnam'];
-
 export function buildVNGeoQueries(address: string): string[] {
     const orig = address.trim();
     const norm = normalizeVNAddress(orig);
@@ -170,7 +160,6 @@ export function buildVNGeoQueries(address: string): string[] {
     for (const variant of variants) for (const suffix of suffixes) queries.push(`${variant}${suffix}`);
     return queries;
 }
-
 // ── HCMC district & key ward centres ─────────────────────────────────────────
 export const HCMC_DISTRICT_CENTERS: Record<string, [number, number]> = {
     // Quận số
@@ -241,12 +230,10 @@ export const HCMC_DISTRICT_CENTERS: Record<string, [number, number]> = {
     'tan kieng':        [10.7191, 106.7317],
     'phu thuan q7':     [10.7444, 106.7225],
 };
-
 // ── Toàn bộ tỉnh/thành + huyện/quận Việt Nam ─────────────────────────────────
 // Thứ tự: huyện cụ thể nhất trước, tỉnh/thành phố sau.
 // Các key là plain-Latin không dấu.
 export const NON_HCMC_PLACE_CENTERS: { key: string; coords: [number, number]; label: string }[] = [
-
     // ═══════════════════════ MIỀN NAM ═══════════════════════
 
     // ── Đồng Nai ──
@@ -1043,40 +1030,32 @@ export const NON_HCMC_PLACE_CENTERS: { key: string; coords: [number, number]; la
     { key: 'yen thuy',         coords: [20.4300, 105.6000], label: 'Yên Thủy, Hòa Bình' },
     { key: 'hoa binh',         coords: [20.8135, 105.3388], label: 'Hòa Bình' },
 ];
-
 // ── Pre-compiled lookup tables (built once at module load) ───────────────────
 // Creating `new RegExp(...)` inside a loop that runs 300–700 times per listing
 // freezes the browser main thread when 400+ listings are processed in Phase 1
 // of the MapView geocoding pipeline.  All regexes are compiled here once so
 // subsequent calls to getProvinceFallback / getDistrictFallback / isNonHCMCAddress
 // only call RegExp.prototype.test() on already-compiled objects (~100 ns each).
-
 function makeWordBoundaryRe(plainKey: string): RegExp {
     const escaped = plainKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i');
 }
-
 const _PROVINCE_COMPILED: { re: RegExp; coords: [number, number]; label: string }[] =
     NON_HCMC_PLACE_CENTERS.map(e => ({ re: makeWordBoundaryRe(e.key), coords: e.coords, label: e.label }));
-
 const _DISTRICT_COMPILED: { re: RegExp; key: string }[] =
     Object.keys(HCMC_DISTRICT_CENTERS)
         .sort((a, b) => b.length - a.length)          // longest key first → most-specific match wins
         .map(key => ({ re: makeWordBoundaryRe(key), key }));
-
 const _NON_HCMC_PROVINCE_COMPILED: RegExp[] =
     NON_HCMC_PROVINCES.map(province => {
         const plain = province.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         return makeWordBoundaryRe(plain);
     });
-
 const _HCMC_MARKERS_LOWER = [
     'hcm', 'ho chi minh', 'tphcm', 'tp hcm',
     'thanh pho ho chi minh', 'tp. ho chi minh', 'tp.ho chi minh',
 ];
-
 // ── End pre-compiled lookup tables ───────────────────────────────────────────
-
 /**
  * Scan an address for a known non-HCMC province / district name and return
  * its approximate centre coordinates.  Returns null when nothing matches.
@@ -1094,7 +1073,6 @@ export function getProvinceFallback(address: string): { coords: [number, number]
     }
     return null;
 }
-
 /**
  * Scan an address string for a known HCMC district/ward name and return its
  * centre coordinates.  Returns null when no match found.

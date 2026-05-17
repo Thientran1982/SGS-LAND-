@@ -5,7 +5,6 @@
  * Mỗi template chứa sẵn các bước (steps) phù hợp với từng tình huống
  * chăm sóc khách hàng bất động sản.
  */
-
 export interface SequenceTemplateStep {
   id: string;
   type: 'EMAIL' | 'SMS' | 'ZALO' | 'WAIT' | 'CREATE_TASK';
@@ -14,7 +13,6 @@ export interface SequenceTemplateStep {
   content?: string;
   taskTitle?: string;
 }
-
 export interface SequenceTemplate {
   id: string;
   name: string;
@@ -24,7 +22,6 @@ export interface SequenceTemplate {
   icon: string;
   steps: SequenceTemplateStep[];
 }
-
 export const SEQUENCE_TEMPLATES: SequenceTemplate[] = [
   // ── Lead mới từ landing page ────────────────────────────────────────────────
   {
@@ -68,7 +65,6 @@ export const SEQUENCE_TEMPLATES: SequenceTemplate[] = [
       },
     ],
   },
-
   // ── Lead chưa phản hồi sau 7 ngày ──────────────────────────────────────────
   {
     id: 'tpl_cold_lead_reactivation',
@@ -105,7 +101,6 @@ export const SEQUENCE_TEMPLATES: SequenceTemplate[] = [
       },
     ],
   },
-
   // ── Khách hàng đang cân nhắc ─────────────────────────────────────────────────
   {
     id: 'tpl_decision_nurture',
@@ -147,7 +142,6 @@ export const SEQUENCE_TEMPLATES: SequenceTemplate[] = [
       },
     ],
   },
-
   // ── Sau khi ký hợp đồng ──────────────────────────────────────────────────────
   {
     id: 'tpl_post_contract',
@@ -189,7 +183,6 @@ export const SEQUENCE_TEMPLATES: SequenceTemplate[] = [
       },
     ],
   },
-
   // ── Nhà đầu tư đang tìm kiếm ─────────────────────────────────────────────────
   {
     id: 'tpl_investor_outreach',
@@ -226,7 +219,6 @@ export const SEQUENCE_TEMPLATES: SequenceTemplate[] = [
       },
     ],
   },
-
   // ── Khách hàng cũ / Upsell ────────────────────────────────────────────────────
   {
     id: 'tpl_upsell_existing',

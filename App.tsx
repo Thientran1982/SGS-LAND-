@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
@@ -15,14 +14,11 @@ import { usePageTracker } from './services/pageTracker';
 import { socket } from './services/websocket';
 import { copyToClipboard } from './utils/clipboard';
 import { initErrorMonitor, captureException, flushErrorsSync } from './utils/errorMonitor';
-
 // Khởi tạo ngay khi module load — bắt lỗi toàn cục từ sớm nhất có thể
 initErrorMonitor();
-
 // -----------------------------------------------------------------------------
 // 1. LAZY LOADED PAGES
 // -----------------------------------------------------------------------------
-
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -33,13 +29,11 @@ const queryClient = new QueryClient({
         },
     },
 });
-
 // Public Pages - using lazyLoad wrapper which handles named exports automatically
 const Login = lazyLoad(() => import('./pages/Login'), 'Login');
 const PublicProposal = lazyLoad(() => import('./pages/PublicProposal'), 'PublicProposal');
 const PublicContract = lazyLoad(() => import('./pages/PublicContract'), 'PublicContract');
 const PublicProjectMicrosite = lazyLoad(() => import('./pages/PublicProjectMicrosite'), 'PublicProjectMicrosite');
-
 // Project codes (mã dự án) — alphanumeric + dashes/underscores, không phải UUID.
 // Hỗ trợ cả lowercase (vd `/p/mcc`) lẫn uppercase. Proposal tokens là UUID v4
 // (loại trừ riêng), contract tokens có prefix `contract_` (đã bắt trước đó).
@@ -68,7 +62,6 @@ const Consignment = lazyLoad(() => import('./pages/Consignment'), 'Consignment')
 const BankRates = lazyLoad(() => import('./pages/BankRates'), 'BankRates');
 const LocalLandingPage = lazyLoad(() => import('./pages/LocalLandingPage'), 'LocalLandingPage');
 const ProjectLandingPage = lazyLoad(() => import('./pages/ProjectLandingPage'), 'ProjectLandingPage');
-
 // Private Pages - Core
 const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
 const Leads = lazyLoad(() => import('./pages/Leads'), 'Leads');
@@ -78,7 +71,6 @@ const Projects = lazyLoad(() => import('./pages/Projects'), 'Projects');
 const Favorites = lazyLoad(() => import('./pages/Favorites'), 'Favorites');
 const Inbox = lazyLoad(() => import('./pages/Inbox'), 'Inbox');
 const Reports = lazyLoad(() => import('./pages/Reports'), 'Reports');
-
 // Private Pages - Operations
 const ApprovalInbox = lazyLoad(() => import('./pages/ApprovalInbox'), 'ApprovalInbox');
 const RoutingRules = lazyLoad(() => import('./pages/RoutingRules'), 'RoutingRules');
@@ -86,7 +78,6 @@ const Sequences = lazyLoad(() => import('./pages/Sequences'), 'Sequences');
 const Campaigns = lazyLoad(() => import('./pages/Campaigns'), 'Campaigns');
 const ScoringRules = lazyLoad(() => import('./pages/ScoringRules'), 'ScoringRules');
 const KnowledgeBase = lazyLoad(() => import('./pages/KnowledgeBase'), 'KnowledgeBase');
-
 // Task Management Pages
 const TaskDashboard = lazyLoad(() => import('./pages/TaskDashboard'), 'TaskDashboard');
 const TaskKanban = lazyLoad(() => import('./pages/TaskKanban'), 'TaskKanban');
@@ -95,7 +86,6 @@ const TaskDetail = lazyLoad(() => import('./pages/TaskDetail'), 'TaskDetail');
 const Employees = lazyLoad(() => import('./pages/Employees'), 'Employees');
 const TaskReports = lazyLoad(() => import('./pages/TaskReports'), 'TaskReports');
 const Commissions = lazyLoad(() => import('./pages/Commissions'), 'Commissions');
-
 // Private Pages - Enterprise
 const VendorManagement = lazyLoad(() => import('./pages/VendorManagement'), 'VendorManagement');
 const SystemStatus = lazyLoad(() => import('./pages/SystemStatus'), 'SystemStatus');
@@ -112,7 +102,6 @@ const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
 const ErrorMonitor = lazyLoad(() => import('./pages/ErrorMonitor'), 'ErrorMonitor');
 const ScraperDashboard = lazyLoad(() => import('./pages/ScraperDashboard'), 'ScraperDashboard');
 const Profile = lazyLoad(() => import('./pages/Profile'), 'Profile');
-
 // ---------------------------------------------------------------------------
 // PREFETCH REGISTRATION — maps each route to its raw import so nav hover
 // can call registerPrefetch(route) before the user clicks.
@@ -154,7 +143,6 @@ registerPrefetch(ROUTES.TASK_REPORTS,       () => import('./pages/TaskReports'))
 registerPrefetch(ROUTES.COMMISSIONS,        () => import('./pages/Commissions'));
 registerPrefetch(ROUTES.SEARCH,             () => import('./pages/ProductSearch'));
 registerPrefetch(ROUTES.LANDING,            () => import('./pages/Landing'));
-
 // Placeholder for Mobile App
 const MobileApp = () => {
     const { t } = useTranslation();
@@ -174,11 +162,9 @@ const MobileApp = () => {
         </div>
     );
 };
-
 // -----------------------------------------------------------------------------
 // 2. REGISTRIES & CONFIG
 // -----------------------------------------------------------------------------
-
 // Comprehensive mapping of ALL routes to their components
 const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     // Public
@@ -215,7 +201,6 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.LOGIN]: Login,
     [ROUTES.LISTING]: ListingDetail, 
     [ROUTES.LISTING_BDS]: ListingDetail,
-
     // Private
     [ROUTES.DASHBOARD]: Dashboard,
     [ROUTES.LEADS]: Leads,
@@ -257,7 +242,6 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     // Misc
     [ROUTES.MOBILE_APP]: MobileApp
 };
-
 // List of routes that do NOT require authentication and should NOT render the App Sidebar
 const PUBLIC_ROUTES = new Set([
     '', // Root
@@ -298,21 +282,17 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.LISTING,
     ROUTES.LISTING_BDS
 ]);
-
 // -----------------------------------------------------------------------------
 // 3. UI COMPONENTS
 // -----------------------------------------------------------------------------
-
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
     constructor(props: { children: React.ReactNode }) {
         super(props);
         this.state = { hasError: false, error: null };
     }
-
     static getDerivedStateFromError(error: Error) {
         return { hasError: true, error };
     }
-
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
         // Auto-reload once when a chunk-load failure occurs after a production redeploy.
@@ -351,7 +331,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
             metadata: { componentStack: errorInfo.componentStack?.slice(0, 1000) },
         });
     }
-
     render() {
         if (this.state.hasError) {
             const lang = typeof window !== 'undefined' ? localStorage.getItem('sgs_lang') : 'vn';
@@ -361,7 +340,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
         return this.props.children;
     }
 }
-
 const ErrorState: React.FC<{ message: string, onRetry?: () => void }> = ({ message, onRetry }) => {
     const { t } = useTranslation();
     return (
@@ -379,7 +357,6 @@ const ErrorState: React.FC<{ message: string, onRetry?: () => void }> = ({ messa
         </div>
     );
 };
-
 const NotFound: React.FC = () => {
     const { t } = useTranslation();
     return (
@@ -396,11 +373,9 @@ const NotFound: React.FC = () => {
         </div>
     );
 };
-
 // -----------------------------------------------------------------------------
 // 4. ROUTING LOGIC
 // -----------------------------------------------------------------------------
-
 const useRouter = () => {
     const getPathData = useCallback(() => {
         let pathname = window.location.pathname;
@@ -413,9 +388,7 @@ const useRouter = () => {
             fullPath: pathname + window.location.search
         };
     }, []);
-
     const [route, setRoute] = useState(getPathData());
-
     // On first load: convert legacy hash URLs (/#/xxx) to clean paths (/xxx)
     useEffect(() => {
         const hash = window.location.hash;
@@ -454,39 +427,31 @@ const useRouter = () => {
             window.removeEventListener('popstate', handlePopState);
         };
     }, [getPathData]);
-
     useEffect(() => {
         updatePageSEO(route.base);
     }, [route.base]);
-
     const navigate = useCallback((path: string) => {
         const target = path.startsWith('/') ? path : `/${path}`;
         window.history.pushState(null, '', target);
         setRoute(getPathData());
     }, [getPathData]);
-
     return { route, navigate };
 };
-
 // -----------------------------------------------------------------------------
 // 5. APPLICATION SHELL
 // -----------------------------------------------------------------------------
-
 const AUTH_CACHE_KEY = 'sgs_auth_cached';
-
 const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
     // Always start with LOADING so the server session check runs before rendering
     // any private content. Using localStorage as AUTH directly caused a flash of
     // private pages when the session had expired but the cache flag was still set.
     return 'LOADING';
 };
-
 // Routes yêu cầu ít nhất ADMIN (bao gồm SUPER_ADMIN)
 const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.ADMIN_USERS,
     ROUTES.ENTERPRISE_SETTINGS,
 ]);
-
 // Routes chỉ dành riêng cho SUPER_ADMIN (quản trị viên cấp cao nhất)
 const SUPER_ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.VENDOR_MANAGEMENT,
@@ -500,13 +465,10 @@ const SUPER_ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.DATA_PLATFORM,
     ROUTES.SYSTEM,
 ]);
-
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD']);
-
 // Routes /projects: vendor managers (SUPER_ADMIN/ADMIN/TEAM_LEAD), nhân viên kinh doanh (SALES),
 // nhân viên marketing (MARKETING) và partners (cross-tenant access). Chỉ VIEWER bị chặn.
 const PROJECT_ALLOWED_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'PARTNER_ADMIN', 'PARTNER_AGENT']);
-
 const AppShell: React.FC = () => {
     const { route, navigate } = useRouter();
     const { t } = useTranslation();
@@ -518,15 +480,12 @@ const AppShell: React.FC = () => {
     const approvedNotifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [interestNotification, setInterestNotification] = useState<{ leadId: string; leadName: string; listingTitle: string } | null>(null);
     const interestNotifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
     useThemeConfig();
     usePageTracker(authState === 'AUTH', route.base);
-
     // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount.
     // Uses a ref updated synchronously during render to avoid the extra useEffect render cycle
     // that previously caused a visible blank flash before the new page div appeared.
     const mountedPrivateRoutesRef = useRef<Set<string>>(new Set());
-
     // Prefetch JS chunks as soon as auth is confirmed — covers all frequently-visited pages
     useEffect(() => {
         if (authState === 'AUTH') {
@@ -538,13 +497,11 @@ const AppShell: React.FC = () => {
             ]);
         }
     }, [authState]);
-
     // Clear the set of mounted routes when the session changes (logout/login).
     // This forces all private page components to remount fresh for the new user.
     useEffect(() => {
         mountedPrivateRoutesRef.current.clear();
     }, [sessionKey]);
-
     // Synchronously register private route into the ref during render (no useEffect needed).
     // This eliminates the extra render cycle that useEffect caused, removing the 1-frame
     // flash before the new page div appeared in the DOM.
@@ -553,7 +510,6 @@ const AppShell: React.FC = () => {
         mountedPrivateRoutesRef.current.add(route.base);
     }
     const mountedPrivateRoutes = mountedPrivateRoutesRef.current;
-
     // Auth Initialization — runs once on mount to check session
     useEffect(() => {
         const initAuth = async () => {
@@ -575,7 +531,6 @@ const AppShell: React.FC = () => {
             }
         };
         initAuth();
-
         // Re-check on explicit auth events (login/logout)
         const onLogin = () => db.getCurrentUser().then(u => {
             if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setCurrentUser(u); setAuthState('AUTH'); }
@@ -584,7 +539,6 @@ const AppShell: React.FC = () => {
         const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setCurrentUser(null); setAuthState('GUEST'); setSessionKey(k => k + 1); };
         window.addEventListener('auth:login', onLogin);
         window.addEventListener('auth:logout', onLogout);
-
         // Re-verify auth when user returns to the tab after being idle.
         // This handles cases where the JWT expired while the page was open.
         let hiddenAt = 0;
@@ -616,7 +570,6 @@ const AppShell: React.FC = () => {
             document.removeEventListener('visibilitychange', onVisibilityChange);
         };
     }, []);
-
     // Listen for real-time proposal approval notifications
     useEffect(() => {
         if (authState !== 'AUTH') return;
@@ -629,7 +582,6 @@ const AppShell: React.FC = () => {
         socket.on('proposal_approved', handleApproved);
         return () => { socket.off('proposal_approved', handleApproved); };
     }, [authState]);
-
     // Listen for real-time proposal interest notifications (customer clicked "I'm Interested")
     useEffect(() => {
         if (authState !== 'AUTH') return;
@@ -641,7 +593,6 @@ const AppShell: React.FC = () => {
         socket.on('proposal_interest', handleInterest);
         return () => { socket.off('proposal_interest', handleInterest); };
     }, [authState]);
-
     // Route Guard — reacts to route changes using cached authState
     useEffect(() => {
         if (authState === 'LOADING') return;
@@ -651,45 +602,38 @@ const AppShell: React.FC = () => {
             navigate(ROUTES.LANDING);
             return;
         }
-
         const isPublic = PUBLIC_ROUTES.has(route.base);
         if (!isPublic && authState === 'GUEST') {
             navigate(ROUTES.LOGIN);
             return;
         }
-
         // RBAC: redirect non-admin roles away from admin-only routes
         if (authState === 'AUTH' && ADMIN_ONLY_ROUTES.has(route.base) && currentUser && !ADMIN_ROLES.has(currentUser.role)) {
             navigate(ROUTES.DASHBOARD);
             setAccessDenied(true);
         }
-
         // RBAC: SUPER_ADMIN exclusive routes (e.g. vendor management)
         if (authState === 'AUTH' && SUPER_ADMIN_ONLY_ROUTES.has(route.base) && currentUser && currentUser.role !== 'SUPER_ADMIN') {
             navigate(ROUTES.DASHBOARD);
             setAccessDenied(true);
         }
-
         // RBAC: chặn các role không thuộc {ADMIN, TEAM_LEAD, PARTNER_*} khỏi trang Projects
         if (authState === 'AUTH' && route.base === ROUTES.PROJECTS && currentUser && !PROJECT_ALLOWED_ROLES.has(currentUser.role)) {
             navigate(ROUTES.DASHBOARD);
             setAccessDenied(true);
         }
-
         // PARTNER roles: redirect away from Dashboard to Inventory
         const isPartnerRole = currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT';
         if (authState === 'AUTH' && isPartnerRole && route.base === ROUTES.DASHBOARD) {
             navigate(ROUTES.INVENTORY);
         }
     }, [route.base, authState, currentUser, navigate]);
-
     // Auto-dismiss access denied banner
     useEffect(() => {
         if (!accessDenied) return;
         const timer = setTimeout(() => setAccessDenied(false), 4000);
         return () => clearTimeout(timer);
     }, [accessDenied]);
-
     // Scroll Restoration
     useEffect(() => {
         const mainContainer = document.getElementById('main-scroll-container');
@@ -699,7 +643,6 @@ const AppShell: React.FC = () => {
             window.scrollTo(0, 0);
         }
     }, [route.fullPath]);
-
     const handleLoginSuccess = useCallback(() => {
         localStorage.setItem(AUTH_CACHE_KEY, '1');
         setAuthState('AUTH');
@@ -713,7 +656,6 @@ const AppShell: React.FC = () => {
             }
         }).catch(() => { navigate(ROUTES.DEFAULT_PRIVATE); });
     }, [navigate]);
-
     const handleLogout = useCallback(() => {
         db.logout();
         localStorage.removeItem(AUTH_CACHE_KEY);
@@ -721,16 +663,13 @@ const AppShell: React.FC = () => {
         setAuthState('GUEST');
         navigate(ROUTES.LOGIN);
     }, [navigate]);
-
     // --- RENDERER ---
-
     // Full-screen spinner for initial auth check / public page load
     const SmallSpinner = (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-app)]">
             <div className="w-8 h-8 border-2 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin" />
         </div>
     );
-
     // Skeleton shown inside the main content area while a private page chunk loads.
     // Sidebar + header remain visible — only the content slot shows this.
     const PageSkeleton = (
@@ -754,7 +693,6 @@ const AppShell: React.FC = () => {
             </div>
         </div>
     );
-
     // --- LOADING STATE: fully self-contained, never falls through ---
     if (authState === 'LOADING') {
         // Root path — redirect immediately to landing so no blank page or 404
@@ -762,7 +700,6 @@ const AppShell: React.FC = () => {
             navigate(ROUTES.LANDING);
             return null;
         }
-
         // Known public route — render the page immediately, no spinner
         if (PUBLIC_ROUTES.has(route.base)) {
             if (route.base === ROUTES.LOGIN) {
@@ -802,11 +739,9 @@ const AppShell: React.FC = () => {
                 );
             }
         }
-
         // Private route or unknown — tiny spinner, no text
         return SmallSpinner;
     }
-
     // 2. Public Pages Routing (Guest or Auth user on public page)
     if (authState === 'GUEST' || (PUBLIC_ROUTES.has(route.base) && authState === 'AUTH' && route.base !== ROUTES.LANDING)) {
         
@@ -815,7 +750,6 @@ const AppShell: React.FC = () => {
             navigate(ROUTES.LOGIN);
             return null;
         }
-
         if (route.base === ROUTES.RESET_PASSWORD) {
             const tokenFromUrl = route.params[0] || new URLSearchParams(window.location.search).get('reset_token') || '';
             if (tokenFromUrl) {
@@ -825,7 +759,6 @@ const AppShell: React.FC = () => {
             }
             return null;
         }
-
         if (route.base === ROUTES.LOGIN || route.base === ROUTES.VERIFY_EMAIL) {
             return (
                 <AnimatePresence mode="sync">
@@ -844,7 +777,6 @@ const AppShell: React.FC = () => {
                 </AnimatePresence>
             );
         }
-
         // Special Case: Public Proposal / Contract / Project Mini-site
         if (route.base === ROUTES.PUBLIC_PREFIX) {
             const token = route.params[0];
@@ -869,7 +801,6 @@ const AppShell: React.FC = () => {
                     </AnimatePresence>
                 );
             }
-
             if (isProjectCodeToken(token)) {
                 return (
                     <AnimatePresence mode="sync">
@@ -890,7 +821,6 @@ const AppShell: React.FC = () => {
                     </AnimatePresence>
                 );
             }
-
             return (
                 <AnimatePresence mode="sync">
                     <motion.div
@@ -909,7 +839,6 @@ const AppShell: React.FC = () => {
                 </AnimatePresence>
             );
         }
-
         const TargetComponent = PAGE_REGISTRY[route.base];
         
         if (TargetComponent) {
@@ -930,12 +859,10 @@ const AppShell: React.FC = () => {
                     </motion.div>
                 </AnimatePresence>
             );
-        }
-        
+        }        
         // Fallback
         return <NotFound />;
     }
-
     // 3. Authenticated App Layout (Private Pages)
     if (authState === 'AUTH') {
         const hasKnownPage = !!PAGE_REGISTRY[route.base];
@@ -984,7 +911,6 @@ const AppShell: React.FC = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-
                 {/* Customer interest real-time notification banner */}
                 <AnimatePresence>
                     {interestNotification && (
@@ -1020,7 +946,6 @@ const AppShell: React.FC = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-
                 {/* Access-denied toast for RBAC redirects */}
                 <AnimatePresence>
                     {accessDenied && (
@@ -1072,7 +997,6 @@ const AppShell: React.FC = () => {
             </ErrorBoundary>
         );
     }
-
     return null;
 };
 
@@ -1091,5 +1015,4 @@ const App: React.FC = () => {
         </React.StrictMode>
     );
 };
-
 export default App;

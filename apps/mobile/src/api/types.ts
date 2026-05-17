@@ -1,11 +1,9 @@
 // Subset of the web `types.ts` — only the public marketplace shapes the buyer
 // app consumes. Kept intentionally minimal so the mobile app stays decoupled
 // from the (much larger) admin/CRM type surface.
-
 export type PropertyType = 'APARTMENT' | 'VILLA' | 'TOWNHOUSE' | 'LAND' | 'PROJECT' | string;
 export type TransactionType = 'SALE' | 'RENT' | string;
 export type ListingStatus = 'AVAILABLE' | 'BOOKING' | 'OPENING' | 'SOLD' | 'PAUSED' | string;
-
 export interface ListingBranding {
   tenantId: string;
   displayName: string | null;
@@ -17,7 +15,6 @@ export interface ListingBranding {
   zalo: string | null;
   messenger: string | null;
 }
-
 export interface PublicListing {
   id: string;
   code?: string | null;
@@ -45,7 +42,6 @@ export interface PublicListing {
   updatedAt?: string | null;
   branding?: ListingBranding | null;
 }
-
 export interface PaginatedListings {
   data: PublicListing[];
   total: number;
@@ -53,14 +49,12 @@ export interface PaginatedListings {
   pageSize: number;
   totalPages: number;
 }
-
 export interface CursorListings {
   data: PublicListing[];
   total: number;
   nextCursor: string | null;
   hasNext: boolean;
 }
-
 export interface ListingFilters {
   type?: PropertyType;
   transaction?: TransactionType;
@@ -74,7 +68,6 @@ export interface ListingFilters {
   isVerified?: boolean;
   projectCode?: string;
 }
-
 export interface LeadInput {
   name: string;
   phone: string;
@@ -82,7 +75,6 @@ export interface LeadInput {
   notes?: string;
   source?: string;
 }
-
 export interface LeadResponse {
   id: string;
   success: boolean;

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
 import { db } from '../services/dbApi';
 import { systemService } from '../services/systemService';
@@ -7,7 +6,6 @@ import { SystemHealth, ChaosConfig, LogEntry, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 const ICONS = {
     REFRESH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
     DOWNLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" /></svg>,
@@ -16,18 +14,15 @@ const ICONS = {
     PAUSE: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
 };
-
 const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: LogEntry[], isPaused: boolean, togglePause: () => void, onClear: () => void, t: any }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [autoScroll, setAutoScroll] = useState(true);
-
     const handleScroll = () => {
         if (!containerRef.current) return;
         const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
         const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
         setAutoScroll(isNearBottom);
     };
-
     useEffect(() => {
         if (autoScroll && containerRef.current) {
             containerRef.current.scrollTo({
@@ -36,7 +31,6 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
             });
         }
     }, [logs, autoScroll]);
-
     return (
         <div className="bg-[#0f1117] rounded-3xl shadow-xl overflow-hidden flex flex-col h-[600px] border border-slate-800 animate-enter ring-1 ring-white/10">
             <div className="flex justify-between items-center p-3 border-b border-white/5 bg-[var(--bg-surface)]/5">
@@ -53,8 +47,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
                         {ICONS.TRASH}
                     </button>
                 </div>
-            </div>
-            
+            </div>            
             <div 
                 ref={containerRef} 
                 onScroll={handleScroll}
@@ -87,12 +80,10 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
         </div>
     );
 });
-
 const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }: { health: SystemHealth, theme: any, onBackup: () => void, onRestore: () => void, isRestoring: boolean, t: any }) => {
     const statusColor = health.status === 'HEALTHY' ? 'text-emerald-500' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
     const borderColor = health.status === 'HEALTHY' ? 'border-emerald-500' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
     const primaryColor = theme?.colors?.primary || '#4F46E5';
-
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
             <div className={`bg-[var(--bg-surface)] p-8 rounded-[32px] border-2 ${borderColor} shadow-lg relative overflow-hidden`}>
@@ -109,7 +100,6 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
                     </div>
                 </div>
             </div>
-
             <div className="bg-slate-900 p-8 rounded-[32px] text-white shadow-xl flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                 <div>
@@ -146,7 +136,6 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
         </div>
     );
 });
-
 interface TenantEmailRow {
     tenantId: string;
     tenantName: string | null;
@@ -165,14 +154,12 @@ interface LeadEmailReport {
     byTenant: TenantEmailRow[];
     alerts: TenantEmailRow[];
 }
-
 const LeadEmailMetricsPanel: React.FC = () => {
     const [report, setReport] = useState<LeadEmailReport | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [days, setDays] = useState(7);
     const [includeAutoreply, setIncludeAutoreply] = useState(false);
-
     const load = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -191,15 +178,12 @@ const LeadEmailMetricsPanel: React.FC = () => {
             setLoading(false);
         }
     }, [days, includeAutoreply]);
-
     useEffect(() => { load(); }, [load]);
-
     const fmtPct = (n: number) => `${(n * 100).toFixed(1)}%`;
     const fmtTime = (iso: string | null) => iso ? new Date(iso).toLocaleString('vi-VN') : '—';
 
     const rateTone = (rate: number, threshold: number) =>
         rate >= threshold ? 'text-emerald-600' : rate >= threshold - 0.1 ? 'text-amber-600' : 'text-rose-600 font-bold';
-
     return (
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
             <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
@@ -241,13 +225,11 @@ const LeadEmailMetricsPanel: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {error && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs mb-3">
                     {error}
                 </div>
             )}
-
             {report && (
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -270,7 +252,6 @@ const LeadEmailMetricsPanel: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
                     {report.alerts.length > 0 && (
                         <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200">
                             <div className="text-xs font-bold text-rose-700 mb-1">
@@ -287,7 +268,6 @@ const LeadEmailMetricsPanel: React.FC = () => {
                             </ul>
                         </div>
                     )}
-
                     {report.byTenant.length === 0 ? (
                         <div className="text-xs text-[var(--text-tertiary)] py-4 text-center">
                             Chưa có email lead nào trong {report.windowDays} ngày qua.
@@ -337,7 +317,6 @@ const LeadEmailMetricsPanel: React.FC = () => {
                             </table>
                         </div>
                     )}
-
                     <div className="text-2xs text-[var(--text-tertiary)] mt-2 text-right">
                         Cập nhật: {new Date(report.generatedAt).toLocaleString('vi-VN')}
                     </div>
@@ -346,7 +325,6 @@ const LeadEmailMetricsPanel: React.FC = () => {
         </div>
     );
 };
-
 const ChaosPanel = memo(({ config, onChange, t }: { config: ChaosConfig, onChange: (c: Partial<ChaosConfig>) => void, t: any }) => (
     <div className={`p-6 rounded-[24px] border-2 transition-all ${config.enabled ? 'bg-rose-50 border-rose-200' : 'bg-[var(--bg-surface)] border-[var(--glass-border)]'}`}>
         <div className="flex justify-between items-start mb-6">
@@ -366,7 +344,6 @@ const ChaosPanel = memo(({ config, onChange, t }: { config: ChaosConfig, onChang
                 </button>
             </div>
         </div>
-
         <div className={`grid grid-cols-2 gap-6 transition-opacity duration-300 ${config.enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
             <div>
                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-2 block">{t('system.latency')} (ms)</label>
@@ -391,7 +368,6 @@ const ChaosPanel = memo(({ config, onChange, t }: { config: ChaosConfig, onChang
         </div>
     </div>
 ));
-
 export const SystemStatus: React.FC = () => {
     const [health, setHealth] = useState<SystemHealth | null>(null);
     const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -403,23 +379,19 @@ export const SystemStatus: React.FC = () => {
     const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
     const [confirmRestore, setConfirmRestore] = useState(false);
     const [confirmClearLogs, setConfirmClearLogs] = useState(false);
-    const [confirmFailover, setConfirmFailover] = useState(false);
-    
+    const [confirmFailover, setConfirmFailover] = useState(false);    
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
     const { chartTheme } = useTheme();
-
     useEffect(() => {
         const init = async () => {
             const user = await db.getCurrentUser();
             setIsAdmin(['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? ''));
-            setIsSuperAdmin(user?.role === 'SUPER_ADMIN');
-            
+            setIsSuperAdmin(user?.role === 'SUPER_ADMIN');            
             const h = await systemService.checkHealth();
             setHealth(h);
         };
         init();
-
         const interval = setInterval(async () => {
             if (!document.hidden) {
                 const h = await systemService.checkHealth();
@@ -429,20 +401,16 @@ export const SystemStatus: React.FC = () => {
                 }
             }
         }, 1000);
-
         return () => clearInterval(interval);
     }, [isPaused]);
-
     const notify = (msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     };
-
     const updateChaos = (newConfig: Partial<ChaosConfig>) => {
         chaosService.configure(newConfig);
         setChaosConfig(chaosService.getConfig());
     };
-
     const handleBackup = async () => {
         try {
             await systemService.downloadBackup();
@@ -451,22 +419,17 @@ export const SystemStatus: React.FC = () => {
             notify(e.message, 'error');
         }
     };
-
     const handleRestore = () => setConfirmRestore(true);
-
     const handleClearLogs = () => setConfirmClearLogs(true);
-
     const executeClearLogs = () => {
         systemService.clearLogs();
         setLogs([]);
         notify(t('system.clear_logs_success'), 'success');
         setConfirmClearLogs(false);
     };
-
     const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-        
+        if (!file) return;       
         setIsRestoring(true);
         try {
             await systemService.processRestoreFile(file);
@@ -480,7 +443,6 @@ export const SystemStatus: React.FC = () => {
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
-
     const runbooks = [
         { id: 1, title: t('system.runbook.sop1_title'), code: 'SOP-001', variant: 'warning', action: () => {
             setConfirmFailover(true);
@@ -488,7 +450,6 @@ export const SystemStatus: React.FC = () => {
         { id: 2, title: t('system.runbook.sop2_title'), code: 'SOP-002', variant: 'neutral', action: () => notify(t('system.runbook.sop2_success'), 'success') },
         { id: 3, title: t('system.runbook.sop3_title'), code: 'SOP-003', variant: 'danger', action: () => notify(t('system.runbook.sop3_success'), 'success') },
     ];
-
     return (
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
             {toast && (
@@ -498,7 +459,6 @@ export const SystemStatus: React.FC = () => {
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             )}
-
             {/* Header */}
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
@@ -513,13 +473,9 @@ export const SystemStatus: React.FC = () => {
                     <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wide">{t('system.auto_refresh')}</span>
                 </div>
             </div>
-
             {health && <HealthHero health={health} theme={chartTheme} onBackup={handleBackup} onRestore={handleRestore} isRestoring={isRestoring} t={t} />}
-
             {isAdmin && <ChaosPanel config={chaosConfig} onChange={updateChaos} t={t} />}
-
             {isSuperAdmin && <LeadEmailMetricsPanel />}
-
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* LOGS - Takes 2/3 width on large screens */}
                 <div className="xl:col-span-2">
@@ -531,7 +487,6 @@ export const SystemStatus: React.FC = () => {
                         t={t} 
                     />
                 </div>
-
                 {/* INFO & RUNBOOKS */}
                 <div className="space-y-6">
                     <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm p-6 animate-enter">
@@ -550,7 +505,6 @@ export const SystemStatus: React.FC = () => {
                             ))}
                         </div>
                     </div>
-
                     <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm p-6 animate-enter">
                         <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4 uppercase tracking-wider">{t('system.runbook_title')}</h3>
                         <div className="grid grid-cols-1 gap-3">
@@ -567,10 +521,8 @@ export const SystemStatus: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-            
+            </div>           
             <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={onFileSelected} />
-
             <ConfirmModal
                 isOpen={confirmRestore}
                 title={t('system.alert.restore_title')}

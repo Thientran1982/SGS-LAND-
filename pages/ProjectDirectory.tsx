@@ -5,9 +5,7 @@ import { SeoHead } from '../components/SeoHead';
 import { motion } from 'motion/react';
 import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity, Download } from 'lucide-react';
 import { useTranslation } from '../services/i18n';
-
 // ─── Constants ───────────────────────────────────────────────────────────────
-
 const HOTLINE_DISPLAY = '+84 971 132 378';
 const HOTLINE_TEL = '+84971132378';
 
@@ -15,7 +13,6 @@ function navigate(path: string) {
     window.history.pushState(null, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
 }
-
 interface DuAnProject {
     slug: string;
     name: string;
@@ -31,7 +28,6 @@ interface DuAnProject {
     img: string;
     description: string;
 }
-
 const ALL_PROJECTS: DuAnProject[] = [
     {
         slug: 'aqua-city',
@@ -229,27 +225,23 @@ const ALL_PROJECTS: DuAnProject[] = [
         description: 'Khu nghỉ dưỡng sinh thái 120ha tại Long Hải, Bà Rịa – Vũng Tàu. Biệt thự biển, bungalow cao cấp, mô hình cho thuê khai thác. Cách TP.HCM 90 phút.',
     },
 ];
-
 interface FilterOption {
     value: string;
     label: string;
     dot?: string;
 }
-
 const PROVINCE_OPTIONS: FilterOption[] = [
     { value: 'Tất cả', label: 'Tất cả khu vực' },
     { value: 'TP.HCM', label: 'TP. Hồ Chí Minh' },
     { value: 'Đồng Nai', label: 'Đồng Nai' },
     { value: 'Bà Rịa – Vũng Tàu', label: 'Bà Rịa – Vũng Tàu' },
 ];
-
 const TYPE_OPTIONS: FilterOption[] = [
     { value: 'Tất cả', label: 'Tất cả loại hình' },
     { value: 'Đô thị tổng hợp', label: 'Đô thị tổng hợp' },
     { value: 'Căn hộ cao cấp', label: 'Căn hộ cao cấp' },
     { value: 'Biệt thự & nhà phố', label: 'Biệt thự & nhà phố' },
 ];
-
 const STATUS_OPTIONS: FilterOption[] = [
     { value: 'Tất cả', label: 'Tất cả trạng thái' },
     { value: 'Đang bàn giao', label: 'Đang bàn giao', dot: 'bg-emerald-500' },
@@ -259,15 +251,12 @@ const STATUS_OPTIONS: FilterOption[] = [
     { value: 'Sắp mở bán', label: 'Sắp mở bán', dot: 'bg-amber-500' },
     { value: 'Đang phát triển', label: 'Đang phát triển', dot: 'bg-amber-400' },
 ];
-
 const STATUS_BADGE: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     amber: 'bg-amber-50 text-amber-700 border-amber-200',
 };
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
 const ProjectCard = ({ project }: { project: DuAnProject }) => (
     <motion.article
         initial={{ opacity: 0, y: 18 }}
@@ -312,9 +301,7 @@ const ProjectCard = ({ project }: { project: DuAnProject }) => (
         </div>
     </motion.article>
 );
-
 // ─── Main component ───────────────────────────────────────────────────────────
-
 export default function ProjectDirectory() {
     const { language } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
@@ -322,7 +309,6 @@ export default function ProjectDirectory() {
     const [typeGroup, setTypeGroup] = useState('Tất cả');
     const [statusFilter, setStatusFilter] = useState('Tất cả');
     const [showFilters, setShowFilters] = useState(false);
-
     const filtered = useMemo(() => {
         return ALL_PROJECTS.filter(p => {
             const q = searchQuery.toLowerCase();
@@ -353,7 +339,6 @@ export default function ProjectDirectory() {
         colDescription: isEn ? 'Description' : 'Mô tả',
         colUrl: isEn ? 'URL' : 'Liên kết',
     };
-
     const exportToExcel = async () => {
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet(tx.sheetName);
@@ -383,12 +368,11 @@ export default function ProjectDirectory() {
         a.click();
         URL.revokeObjectURL(url);
     };
-
     return (
         <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
             <SeoHead
-                title="Danh Sách Dự Án Bất Động Sản Việt Nam 2026 - SGS LAND"
-                description="Tổng hợp dự án BĐS nổi bật 2026 tại TP.HCM, Đồng Nai, Bình Dương: Aqua City, Vinhomes Grand Park, The Global City, Izumi City. Bảng giá, pháp lý, tư vấn miễn phí."
+                title="Danh Sách Dự Án Bất Động Sản Việt Nam - SGS LAND"
+                description="Tổng hợp dự án BĐS nổi bật tại TP.HCM, Đồng Nai, Bình Dương, Long An: Aqua City, Vinhomes Grand Park, The Global City, Izumi City. Bảng giá, pháp lý, tư vấn miễn phí."
                 canonicalPath="/du-an"
                 structuredData={[
                     {
@@ -464,7 +448,6 @@ export default function ProjectDirectory() {
                     </a>
                 </div>
             </nav>
-
             {/* ── Hero ── */}
             <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white py-16 px-4">
                 <div className="absolute inset-0 pointer-events-none">
@@ -491,7 +474,6 @@ export default function ProjectDirectory() {
                     </div>
                 </div>
             </section>
-
             {/* ── Filters ── */}
             <section className="sticky top-14 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-md border-b border-[var(--glass-border)]">
                 <div className="max-w-7xl mx-auto px-4 py-3">
@@ -549,7 +531,6 @@ export default function ProjectDirectory() {
                     )}
                 </div>
             </section>
-
             {/* ── Project grid ── */}
             <main className="max-w-7xl mx-auto px-4 py-10">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -590,7 +571,6 @@ export default function ProjectDirectory() {
                     </div>
                 )}
             </main>
-
             {/* ── CTA ── */}
             <section className="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white py-14 px-4 mt-4">
                 <div className="max-w-3xl mx-auto text-center">
@@ -616,14 +596,12 @@ export default function ProjectDirectory() {
                     </div>
                 </div>
             </section>
-
             {/* ── E-E-A-T disclaimer ── */}
             <div className="max-w-4xl mx-auto px-4 py-8 text-center">
                 <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
                     Thông tin dự án cập nhật tháng 4/2026. Giá tham khảo, có thể thay đổi theo giai đoạn. SGS LAND là đại lý phân phối, không phải chủ đầu tư. Nguồn: CBRE Vietnam, Savills Vietnam, Bộ Xây Dựng.
                 </p>
             </div>
-
             {/* ── Footer ── */}
             <footer className="border-t border-[var(--glass-border)] bg-[var(--bg-surface)] py-8 px-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -646,9 +624,7 @@ export default function ProjectDirectory() {
         </div>
     );
 }
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function FilterDropdown({
     label,
     icon,
@@ -669,7 +645,6 @@ function FilterDropdown({
 
     const selected = options.find(o => o.value === value) ?? options[0];
     const isActive = value !== 'Tất cả';
-
     useEffect(() => {
         if (!open) return;
         const handler = (e: MouseEvent) => {
@@ -708,7 +683,6 @@ function FilterDropdown({
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
-
             {/* Dropdown panel */}
             {open && (
                 <div className={`absolute top-full mt-1.5 z-50 ${fullWidth ? 'left-0 right-0' : 'left-0 min-w-[200px]'} bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden`}

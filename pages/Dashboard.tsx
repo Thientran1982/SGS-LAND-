@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState, memo, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-    BarChart, Bar, LineChart, Line, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, Cell
+    BarChart, Bar, Line, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, Cell
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
@@ -16,7 +15,6 @@ import { DashboardSkeleton } from '../components/Skeleton';
 import { GlassBento as BentoCard } from '../components/GlassBento';
 import { Dropdown } from '../components/Dropdown';
 import { useSocket, socket } from '../services/websocket';
-
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -29,9 +27,7 @@ const ICONS = {
     WARNING: <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
     EMPTY: <svg className="w-8 h-8 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
 };
-
 // --- SUB-COMPONENTS ---
-
 const TrendIndicator = ({ value, label }: { value: number; label: string }) => {
     const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
     const isPositive = safeValue >= 0;
@@ -43,7 +39,6 @@ const TrendIndicator = ({ value, label }: { value: number; label: string }) => {
         </div>
     );
 };
-
 /** Client-side locale-aware relative time formatter (replaces server-hardcoded Vietnamese). */
 function useTimeAgo() {
     const { language } = useTranslation();
@@ -61,7 +56,6 @@ function useTimeAgo() {
         return isVN ? `${diffDays} ngày trước` : `${diffDays}d ago`;
     }, [language]);
 }
-
 const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
     const getIcon = (type: string) => {
         switch(type) {
@@ -73,7 +67,6 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
     };
     const style = getIcon(activity.type);
     const timeAgo = useTimeAgo();
-
     return (
         <div className="flex gap-3 py-3 border-b border-[var(--glass-border)] dark:border-slate-800/50 last:border-0 hover:bg-[var(--glass-surface)]/50 dark:hover:bg-slate-800/30 transition-colors rounded-lg px-2 -mx-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${style.bg}`}>
@@ -86,7 +79,6 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
         </div>
     );
 };
-
 const CustomTooltip = memo(({ active, payload, label, t, formatCurrency, language }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         return (
@@ -108,7 +100,6 @@ const CustomTooltip = memo(({ active, payload, label, t, formatCurrency, languag
     }
     return null;
 });
-
 const ScatterTooltip = memo(({ active, payload, t }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         const data = payload[0].payload;
@@ -142,14 +133,12 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
     }
     return null;
 });
-
 const EmptyState = ({ message }: { message: string }) => (
     <div className="flex flex-col items-center justify-center h-full w-full opacity-60">
         {ICONS.EMPTY}
         <p className="text-xs text-[var(--text-tertiary)] mt-2 font-medium">{message}</p>
     </div>
 );
-
 // --- AGENT AVATAR with initials fallback ---
 const AVATAR_COLORS = [
     'bg-indigo-500', 'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
@@ -160,7 +149,6 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
     const initials = (name || '?').split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
     const colorClass = AVATAR_COLORS[(name || '').charCodeAt(0) % AVATAR_COLORS.length];
     const isValidSrc = !broken && avatar && avatar.trim() !== '';
-
     return isValidSrc ? (
         <img
             src={avatar}
@@ -174,7 +162,6 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
         </div>
     );
 };
-
 // --- GEOLOCATION TABLE ---
 const GeoLocationTable = memo(({ t }: { t: any }) => {
     const { data: visitorStats, isLoading, isError } = useQuery({
@@ -184,16 +171,13 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
         refetchInterval: 120000, // Auto-refresh every 2 minutes
         retry: 1,
     });
-
     const countries: { country: string; countryCode: string; count: number }[] = visitorStats?.topCountries || [];
     const cities: { city: string; count: number }[] = visitorStats?.topCities || [];
     const totalVisits: number = visitorStats?.totalVisits || 0;
     const uniqueIps: number = visitorStats?.uniqueIps || 0;
     const geoVisits: number = countries.reduce((sum, c) => sum + c.count, 0);
     const geoCoverage: number = totalVisits > 0 ? Math.round((geoVisits / totalVisits) * 100) : 0;
-
     const FLAG_BASE = 'https://flagcdn.com/16x12';
-
     return (
         <BentoCard
             title={t('dash.geo_title')}
@@ -228,7 +212,6 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                             <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{geoVisits}/{totalVisits} {t('dash.geo_visits_unit')}</div>
                         </div>
                     </div>
-
                     <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
                         <div className="flex flex-col min-h-0">
                             <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">{t('dash.geo_top_countries')}</div>
@@ -268,7 +251,6 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                                 </div>
                             )}
                         </div>
-
                         <div className="flex flex-col min-h-0">
                             <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">{t('dash.geo_top_cities')}</div>
                             {cities.length === 0 ? (
@@ -310,7 +292,6 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
         </BentoCard>
     );
 });
-
 // --- REALTIME TRAFFIC WIDGET ---
 const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     const [data, setData] = useState<any[]>([]);
@@ -318,7 +299,6 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     const colors = theme?.colors || {};
     const { isConnected } = useSocket();
     const { language } = useTranslation();
-
     // Poll real server metrics every 5 seconds
     useEffect(() => {
         const fetchMetrics = async () => {
@@ -339,12 +319,10 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                 // Leave stats unchanged if API fails
             }
         };
-
         fetchMetrics();
         const interval = setInterval(fetchMetrics, 5000);
         return () => clearInterval(interval);
     }, []);
-
     return (
         <BentoCard 
             title={t('dash.traffic_title')}
@@ -380,8 +358,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                         {isConnected ? t('dash.live_status') : t('dash.connecting')}
                     </span>
                 </div>
-            </div>
-            
+            </div>            
             <div className="h-[130px] w-full -ml-2 relative">
                 {data.length > 0 ? (
                     <ResponsiveContainer width="100%" height={150} minHeight={100} minWidth={150}>
@@ -421,9 +398,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
         </BentoCard>
     );
 });
-
 // --- MAIN DASHBOARD ---
-
 /**
  * Read the current user's tenantId from the JWT cookie without an extra API call.
  * Returns null if the cookie is absent or the token is malformed.
@@ -440,12 +415,10 @@ function getTenantIdFromCookie(): string | null {
         return null;
     }
 }
-
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const [isExporting, setIsExporting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
@@ -453,19 +426,15 @@ export const Dashboard: React.FC = () => {
     const dashboardRef = useRef<HTMLDivElement>(null);
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
-
     // Namespaces the React Query cache by tenant so that switching between
     // admin accounts in the same browser never shows a stale tenant's data.
     const cacheTenantId = useMemo(() => getTenantIdFromCookie(), []);
-
     const handleExport = async () => {
         if (!dashboardRef.current) return;
-        setIsExporting(true);
-        
+        setIsExporting(true);      
         try {
             // Give a small delay for any animations to settle
             await new Promise(resolve => setTimeout(resolve, 500));
-
             const canvas = await html2canvas(dashboardRef.current, {
                 scale: 2, // Retina quality
                 useCORS: true,
@@ -480,16 +449,14 @@ export const Dashboard: React.FC = () => {
                     `;
                     clonedDoc.head.appendChild(style);
                 }
-            });
-            
+            });           
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = await import('jspdf');
             const pdf = new jsPDF({
                 orientation: canvas.width > canvas.height ? 'l' : 'p',
                 unit: 'px',
                 format: [canvas.width, canvas.height]
-            });
-            
+            });            
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
             pdf.save(`SGS_LAND_Report_${timeRange}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
@@ -499,7 +466,6 @@ export const Dashboard: React.FC = () => {
             setIsExporting(false);
         }
     };
-
     // Use React Query for data fetching, caching, and auto-refresh
     const { data: analytics, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
         queryKey: ['dashboardAnalytics', timeRange, language, cacheTenantId],
@@ -513,7 +479,6 @@ export const Dashboard: React.FC = () => {
         refetchInterval: 30000, // Auto-refresh every 30s as baseline
         staleTime: 10000,
     });
-
     // Socket-triggered refetch: immediately react to lead/deal changes without waiting up to 30s
     const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const scheduleRefetch = useCallback(() => {
@@ -521,7 +486,6 @@ export const Dashboard: React.FC = () => {
         // Debounce 2s so rapid bulk changes (imports, routing) generate only one API call
         refreshTimerRef.current = setTimeout(() => refetch(), 2000);
     }, [refetch]);
-
     useEffect(() => {
         // Lead events — affects totalLeads, salesVelocity, pipeline
         socket.on('lead_created', scheduleRefetch);
@@ -540,9 +504,7 @@ export const Dashboard: React.FC = () => {
             if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
         };
     }, [scheduleRefetch]);
-
     if (isLoading) return <DashboardSkeleton />;
-
     if (isError) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-enter">
@@ -562,21 +524,16 @@ export const Dashboard: React.FC = () => {
             </div>
         );
     }
-
     if (!analytics) return null;
-
     const lastUpdated = new Date(dataUpdatedAt || Date.now());
-
     const currentUser = (analytics as any)?.user;
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
     const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
     const isSalesScope = scopeKey === 'personal';
     const scopeLabel = isSalesScope ? t('dash.scope_personal') : t('dash.scope_company');
-
     return (
     <>
         <div className="space-y-6 p-4 sm:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
-
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
                 {/* Left: title + subtitle + badges */}
@@ -603,8 +560,7 @@ export const Dashboard: React.FC = () => {
                             {ICONS.REFRESH} {lastUpdated.toLocaleTimeString()}
                         </span>
                     </div>
-                </div>
-                
+                </div>               
                 {/* Right: filter + export — full width on mobile, auto on desktop */}
                 <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
                     <div className="flex-1 md:flex-none md:w-36 z-20">
@@ -633,7 +589,6 @@ export const Dashboard: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {/* Getting Started Banner — shown until dismissed or user has 5+ leads */}
             {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
                 <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-900/40 to-slate-800/60 border border-emerald-800/40">
@@ -670,10 +625,8 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </div>
             )}
-
             {/* MAIN GRID LAYOUT */}
-            <div ref={dashboardRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                
+            <div ref={dashboardRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">               
                 {/* TIER 1: North Star Metrics (KPI Cards) — Unified Layout */}
                 {/* 1. Revenue (Doanh Thu Hoa Hồng) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
@@ -700,7 +653,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 {/* 2. Pipeline Value (Giá Trị Pipeline) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard title={t('dash.pipeline_value')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
@@ -719,7 +671,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 {/* 3. AI Deflection Rate (Tỷ Lệ Tự Động Hóa AI) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard title={t('dash.ai_deflection_rate')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
@@ -746,7 +697,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 {/* 4. Sales Velocity (Tốc Độ Bán Hàng) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard title={t('dash.sales_velocity')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
@@ -765,7 +715,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 {/* TIER 2: The Engine (Charts & Activity) */}
                 <div className="md:col-span-2 lg:col-span-3 min-h-[420px]">
                     <BentoCard 
@@ -818,7 +767,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 <div className="md:col-span-2 lg:col-span-1 min-h-[420px]">
                     <BentoCard title={t('dash.activity_title')} className="h-full bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden flex flex-col">
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
@@ -835,7 +783,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 {/* TIER 3: Market Pulse & Leaderboard */}
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                     <BentoCard
@@ -885,7 +832,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                     <BentoCard
                         title={t('dash.leaderboard_title')}
@@ -934,23 +880,19 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </BentoCard>
                 </div>
-
                 {/* TIER 4: Geolocation Table (Admin & Team Lead Only) */}
                 {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
                     <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                         <GeoLocationTable t={t} />
                     </div>
                 )}
-
                 {/* TIER 4: Realtime Traffic (Admin & Team Lead Only) */}
                 {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(analytics.user?.role ?? '')) && (
                     <div className="md:col-span-2 lg:col-span-2 h-[400px]">
                         <RealtimeTrafficWidget t={t} theme={chartTheme} />
                     </div>
                 )}
-
             </div>
-
         </div>
         {createPortal(
             toast ? (
@@ -963,5 +905,4 @@ export const Dashboard: React.FC = () => {
     </>
     );
 };
-
 export default Dashboard;

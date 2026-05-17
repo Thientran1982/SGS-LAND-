@@ -7,12 +7,8 @@
  *
  * Admin-facing aggregates are computed on demand (no cron / materialized views).
  */
-
 import { pool } from '../db';
-import { logger } from '../middleware/logger';
-import { getTotalAiSpend, getFeatureBreakdown } from './aiUsageService';
-
-// Friendly Vietnamese labels for known AI feature codes (used in alert emails).
+import { logger } from '../middleware/logger';// Friendly Vietnamese labels for known AI feature codes (used in alert emails).
 const FEATURE_LABELS_VI: Record<string, string> = {
   VALUATION_SEARCH: 'Định giá – Tìm kiếm so sánh',
   VALUATION_EXTRACT: 'Định giá – Trích xuất dữ liệu',
@@ -29,29 +25,24 @@ const FEATURE_LABELS_VI: Record<string, string> = {
   LEAD_SCORING: 'Chấm điểm lead',
   LEAD_SUMMARY: 'Tóm tắt lead',
 };
-
 function featureLabel(code: string): string {
   return FEATURE_LABELS_VI[code] || code;
 }
-
 const PRICE_PER_CALL_USD = (() => {
   const v = parseFloat(process.env.GEMINI_PRICE_PER_CALL_USD || '');
   if (Number.isFinite(v) && v >= 0) return v;
   return 0.002; // Gemini Flash typical: ~$0.002/call (input+output blended)
 })();
-
 const CALLS_PER_VALUATION = (() => {
   const v = parseInt(process.env.VALUATION_AI_CALLS_PER_REQUEST || '', 10);
   if (Number.isFinite(v) && v >= 1) return v;
   return 2;
 })();
-
 export const COST_CONSTANTS = {
   pricePerCallUsd: PRICE_PER_CALL_USD,
   callsPerValuation: CALLS_PER_VALUATION,
   costPerValuationUsd: PRICE_PER_CALL_USD * CALLS_PER_VALUATION,
 };
-
 export interface RecordParams {
   tenantId?: string | null;
   userId?: string | null;
@@ -64,11 +55,9 @@ export interface RecordParams {
   ipAddress?: string | null;
   addressHint?: string | null;
 }
-
 export async function recordValuationUsage(params: RecordParams): Promise<void> {
   const aiCalls = params.aiCalls ?? CALLS_PER_VALUATION;
   const cost = aiCalls * PRICE_PER_CALL_USD;
-
   try {
     await pool.query(
       `INSERT INTO valuation_usage_log
@@ -93,17 +82,14 @@ export async function recordValuationUsage(params: RecordParams): Promise<void> 
     logger.warn('[valuationUsage] recordValuationUsage failed:', err.message);
     return;
   }
-
   // Fire-and-forget: check threshold after insert
   if (params.tenantId) {
     setImmediate(() => maybeSendCombinedThresholdAlert(params.tenantId!).catch(() => {}));
   }
 }
-
 // ───────────────────────────────────────────────────────────────────────────
 // Aggregates
 // ───────────────────────────────────────────────────────────────────────────
-
 export interface MonthlyReport {
   period: string;                 // YYYY-MM
   totalValuations: number;
@@ -126,7 +112,6 @@ export interface MonthlyReport {
   prevEstimatedCostUsd: number;
   pricing: typeof COST_CONSTANTS;
 }
-
 function periodBounds(period: string): { start: string; end: string } {
   // period: YYYY-MM → first day of month → first day of next month
   const [y, m] = period.split('-').map((s) => parseInt(s, 10));
@@ -134,18 +119,15 @@ function periodBounds(period: string): { start: string; end: string } {
   const end = new Date(Date.UTC(y, m, 1)).toISOString();
   return { start, end };
 }
-
 function shiftPeriod(period: string, deltaMonths: number): string {
   const [y, m] = period.split('-').map((s) => parseInt(s, 10));
   const d = new Date(Date.UTC(y, m - 1 + deltaMonths, 1));
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
-
 export function currentPeriod(): string {
   const d = new Date();
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
-
 async function totalsForPeriod(
   period: string,
   tenantId?: string | null,
@@ -165,7 +147,6 @@ async function totalsForPeriod(
   const row = r.rows[0] || { total: 0, cost: 0 };
   return { total: row.total ?? 0, cost: Number(row.cost ?? 0) };
 }
-
 export async function getMonthlyReport(
   period: string,
   opts: { tenantId?: string | null; topUsersLimit?: number } = {},
@@ -175,7 +156,6 @@ export async function getMonthlyReport(
   const tenantFilterV = opts.tenantId ? ` AND v.tenant_id = $3` : '';
   const baseParams: any[] = [start, end];
   if (opts.tenantId) baseParams.push(opts.tenantId);
-
   const totalQ = pool.query(
     `SELECT COUNT(*)::int                                                AS total,
             COALESCE(SUM(ai_calls),0)::int                               AS calls,
@@ -186,7 +166,6 @@ export async function getMonthlyReport(
       WHERE created_at >= $1 AND created_at < $2 ${tenantFilter}`,
     baseParams,
   );
-
   const planQ = pool.query(
     `SELECT COALESCE(plan_id,'GUEST') AS plan_id,
             COUNT(*)::int            AS valuations,
@@ -197,7 +176,6 @@ export async function getMonthlyReport(
       ORDER BY valuations DESC`,
     baseParams,
   );
-
   const sourceQ = pool.query(
     `SELECT COALESCE(source,'unknown') AS source,
             COUNT(*)::int             AS valuations
@@ -207,7 +185,6 @@ export async function getMonthlyReport(
       ORDER BY valuations DESC`,
     baseParams,
   );
-
   const topLimit = Math.max(1, Math.min(50, opts.topUsersLimit || 10));
   const topQ = pool.query(
     `SELECT v.user_id,
@@ -224,7 +201,6 @@ export async function getMonthlyReport(
       LIMIT ${topLimit}`,
     baseParams,
   );
-
   const dailyQ = pool.query(
     `SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
             COUNT(*)::int                                        AS valuations,
@@ -235,13 +211,10 @@ export async function getMonthlyReport(
       ORDER BY 1 ASC`,
     baseParams,
   );
-
   const prevPeriod = shiftPeriod(period, -1);
   const [totalsRes, plansRes, sourcesRes, topRes, dailyRes, prev] =
     await Promise.all([totalQ, planQ, sourceQ, topQ, dailyQ, totalsForPeriod(prevPeriod, opts.tenantId)]);
-
   const t = totalsRes.rows[0] || { total: 0, calls: 0, cost: 0, guests: 0, auths: 0 };
-
   return {
     period,
     totalValuations: t.total ?? 0,
@@ -276,11 +249,9 @@ export async function getMonthlyReport(
     pricing: COST_CONSTANTS,
   };
 }
-
 // ───────────────────────────────────────────────────────────────────────────
 // Cost alert config + email notification
 // ───────────────────────────────────────────────────────────────────────────
-
 export interface CostAlertConfig {
   thresholdUsd: number;
   alertEmail: string | null;
@@ -289,9 +260,7 @@ export interface CostAlertConfig {
   hardCapEnabled: boolean;         // if true, block AI calls once spending ≥ thresholdUsd
   lastWarnAlertedPeriod: string | null;
 }
-
 const DEFAULT_WARN_PERCENT = 80;
-
 export async function getCostAlertConfig(tenantId: string): Promise<CostAlertConfig> {
   try {
     const r = await pool.query(
@@ -330,7 +299,6 @@ export async function getCostAlertConfig(tenantId: string): Promise<CostAlertCon
     };
   }
 }
-
 export async function setCostAlertConfig(
   tenantId: string,
   cfg: {
@@ -363,7 +331,6 @@ export async function setCostAlertConfig(
   );
   return getCostAlertConfig(tenantId);
 }
-
 /**
  * Check whether AI valuation requests for this tenant must be blocked because
  * the configured monthly hard cap (thresholdUsd) has been reached.
@@ -385,7 +352,6 @@ export async function checkHardCap(
     return null;
   }
 }
-
 /**
  * Evaluates the per-tenant monthly cost cap against the *combined* AI spend
  * recorded in `ai_usage_log` (covers all Gemini-backed features: valuation,
@@ -397,7 +363,6 @@ export async function maybeSendCombinedThresholdAlert(tenantId: string): Promise
   const cfg = await getCostAlertConfig(tenantId);
   if (!cfg.thresholdUsd || cfg.thresholdUsd <= 0) return;
   if (!cfg.alertEmail) return;
-
   const period = currentPeriod();
   const totals = await getTotalAiSpend(period, tenantId);
   const spent = totals.totalCostUsd;
@@ -412,9 +377,7 @@ export async function maybeSendCombinedThresholdAlert(tenantId: string): Promise
     spent >= warnAt &&
     spent < cfg.thresholdUsd &&
     cfg.lastWarnAlertedPeriod !== period;
-
   if (!needOver && !needWarn) return;
-
   // Fetch top features driving cost (best-effort)
   let topFeatures: Array<{ feature: string; costUsd: number }> = [];
   try {
@@ -425,7 +388,6 @@ export async function maybeSendCombinedThresholdAlert(tenantId: string): Promise
   } catch {
     /* best-effort */
   }
-
   if (needOver) {
     await pool.query(
       `UPDATE valuation_cost_alerts
@@ -449,7 +411,6 @@ export async function maybeSendCombinedThresholdAlert(tenantId: string): Promise
     });
     return;
   }
-
   await pool.query(
     `UPDATE valuation_cost_alerts
         SET last_warn_alerted_period = $2, updated_at = CURRENT_TIMESTAMP
@@ -469,7 +430,6 @@ export async function maybeSendCombinedThresholdAlert(tenantId: string): Promise
     topFeatures,
   });
 }
-
 async function sendCostAlertEmail(args: {
   tenantId: string;
   to: string;
@@ -495,7 +455,6 @@ async function sendCostAlertEmail(args: {
     args.hardCapEnabled && args.severity === 'over'
       ? `<p><strong>Chế độ tự động chặn đang bật:</strong> các yêu cầu định giá AI mới sẽ bị tạm dừng cho đến khi sang tháng hoặc nâng ngưỡng. (Lưu ý: hard-cap chỉ chặn AI định giá; các tính năng AI khác vẫn chạy nhưng vẫn được tính vào chi phí tháng.)</p>`
       : '';
-
   const featuresBlock = args.topFeatures.length
     ? `<p style="margin:12px 0 4px 0"><strong>Top tính năng tốn chi phí trong tháng:</strong></p>
        <ol style="margin:0 0 12px 20px;padding:0">
@@ -507,7 +466,6 @@ async function sendCostAlertEmail(args: {
            .join('')}
        </ol>`
     : '';
-
   const body = `
     <p>Xin chào,</p>
     <p>${headline}</p>
@@ -535,7 +493,6 @@ async function sendCostAlertEmail(args: {
     logger.warn('[valuationUsage] Failed to send cost alert email:', err.message);
   }
 }
-
 // ───────────────────────────────────────────────────────────────────────────
 // Per-plan AI cost quotas
 // Each tenant can configure a monthly USD limit for each subscription plan.
@@ -549,14 +506,12 @@ export const DEFAULT_PLAN_QUOTAS_USD: Record<string, number> = {
   TEAM: 20,
   ENTERPRISE: 0,
 };
-
 export const PLAN_LABELS_VI: Record<string, string> = {
   INDIVIDUAL: 'Miễn phí',
   TEAM: 'Team',
   ENTERPRISE: 'Enterprise',
   GUEST: 'Khách',
 };
-
 export interface PlanQuotaRow {
   planId: string;
   planLabel: string;
@@ -566,7 +521,6 @@ export interface PlanQuotaRow {
   isUnlimited: boolean;
   exceeded: boolean;
 }
-
 async function spendByPlanForPeriod(
   period: string,
   tenantId: string,
@@ -586,7 +540,6 @@ async function spendByPlanForPeriod(
   }
   return map;
 }
-
 export async function getPlanQuotas(
   tenantId: string,
   period?: string,
@@ -606,11 +559,9 @@ export async function getPlanQuotas(
   } catch {
     /* table may not exist yet — fall back to defaults */
   }
-
   // Merge with defaults so every known plan tier shows up
   const merged: Record<string, number> = { ...DEFAULT_PLAN_QUOTAS_USD, ...configured };
   const spend = await spendByPlanForPeriod(p, tenantId).catch(() => new Map());
-
   const result: PlanQuotaRow[] = [];
   for (const planId of Object.keys(merged)) {
     const limitUsd = merged[planId];
@@ -639,7 +590,6 @@ export async function getPlanQuotas(
   });
   return result;
 }
-
 export async function setPlanQuota(
   tenantId: string,
   planId: string,
@@ -658,7 +608,6 @@ export async function setPlanQuota(
     [tenantId, safePlan, limit],
   );
 }
-
 /**
  * Returns null if not exceeded. Otherwise returns the relevant numbers so
  * the caller can build a friendly upgrade-prompt error response.
@@ -684,12 +633,10 @@ export async function checkPlanQuota(
     return null;
   }
 }
-
 // CSV export
 export function reportToCsv(report: MonthlyReport): string {
   const rows: string[] = [];
-  rows.push('Section,Key,Valuations,Cost USD');
-  rows.push(`Summary,Total,${report.totalValuations},${report.estimatedCostUsd.toFixed(4)}`);
+  rows.push('Section,Key,Valuations,Cost USD');  rows.push(`Summary,Total,${report.totalValuations},${report.estimatedCostUsd.toFixed(4)}`);
   rows.push(`Summary,Guest,${report.guestValuations},`);
   rows.push(`Summary,Authenticated,${report.authValuations},`);
   rows.push(`Summary,AI calls,${report.totalAiCalls},`);

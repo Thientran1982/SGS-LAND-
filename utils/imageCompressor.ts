@@ -13,10 +13,8 @@
  *   const compressed = await compressImages(fileList);
  *   const result = await db.uploadFiles(compressed);
  */
-
 const MAX_DIM = 1920;
 const JPEG_QUALITY = 0.82;
-
 /**
  * Compress a single image File to JPEG.
  * - Scales down proportionally if either dimension exceeds MAX_DIM.
@@ -25,16 +23,13 @@ const JPEG_QUALITY = 0.82;
  */
 export async function compressImage(file: File, maxDim = MAX_DIM, quality = JPEG_QUALITY): Promise<File> {
     if (!file.type.startsWith('image/')) return file;
-
     return new Promise<File>((resolve) => {
         const img = new Image();
         const objectUrl = URL.createObjectURL(file);
-
         img.onload = () => {
             URL.revokeObjectURL(objectUrl);
             try {
                 let { width, height } = img;
-
                 if (width > maxDim || height > maxDim) {
                     if (width >= height) {
                         height = Math.round((height * maxDim) / width);
@@ -44,14 +39,12 @@ export async function compressImage(file: File, maxDim = MAX_DIM, quality = JPEG
                         height = maxDim;
                     }
                 }
-
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 if (!ctx) { resolve(file); return; }
                 ctx.drawImage(img, 0, 0, width, height);
-
                 canvas.toBlob(
                     (blob) => {
                         if (!blob) { resolve(file); return; }
@@ -66,16 +59,13 @@ export async function compressImage(file: File, maxDim = MAX_DIM, quality = JPEG
                 resolve(file);
             }
         };
-
         img.onerror = () => {
             URL.revokeObjectURL(objectUrl);
             resolve(file);
         };
-
         img.src = objectUrl;
     });
 }
-
 /**
  * Compress an array of Files in parallel.
  * Non-image files are returned as-is.

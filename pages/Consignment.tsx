@@ -3,9 +3,7 @@ import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { db } from '../services/dbApi';
 import { User } from '../types';
-
 // ─── SVG Icon helper ──────────────────────────────────────────────────────────
-
 function Ico({ d, d2, cls = 'w-6 h-6' }: { d: string; d2?: string; cls?: string }) {
     return (
         <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
@@ -14,7 +12,6 @@ function Ico({ d, d2, cls = 'w-6 h-6' }: { d: string; d2?: string; cls?: string 
         </svg>
     );
 }
-
 const P = {
     clipboard:   'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
     scale:       'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3',
@@ -35,9 +32,7 @@ const P = {
     tagDot:      'M6 6h.008v.008H6V6z',
     key:         'M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.169.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z',
 };
-
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 interface FormData {
     name: string;
     phone: string;
@@ -50,16 +45,13 @@ interface FormData {
     notes: string;
     agreed: boolean;
 }
-
 const INITIAL_FORM: FormData = {
     name: '', phone: '', email: '',
     propertyType: '', transaction: 'SELL',
     address: '', area: '', price: '',
     notes: '', agreed: false,
 };
-
 // ─── Data ─────────────────────────────────────────────────────────────────────
-
 const PROCESS_STEPS = [
     {
         num: '01',
@@ -128,7 +120,6 @@ const COMMISSION_TABLE = [
         note: 'Thu khi hợp đồng thuê ký kết và tiền thuê tháng đầu được thanh toán',
     },
 ];
-
 const BENEFITS = [
     {
         icon: <Ico d={P.globe} cls="w-7 h-7" />,
@@ -161,7 +152,6 @@ const BENEFITS = [
         desc: 'Hoàn toàn miễn phí khi đăng ký ký gửi. Chi phí marketing (ảnh, video, quảng cáo) do SGS LAND chi trả. Hoa hồng chỉ thu khi giao dịch thành công.',
     },
 ];
-
 const FAQ_ITEMS = [
     {
         q: 'Ký gửi bất động sản là gì?',
@@ -196,9 +186,7 @@ const FAQ_ITEMS = [
         a: 'SGS LAND hiện hoạt động tập trung tại TP. Hồ Chí Minh và các tỉnh lân cận (Bình Dương, Đồng Nai, Long An). Đang mở rộng sang Hà Nội và Đà Nẵng. Liên hệ để kiểm tra khả năng ký gửi tại khu vực của bạn.',
     },
 ];
-
 // ─── Sub-components ──────────────────────────────────────────────────────────
-
 const StepCard: React.FC<typeof PROCESS_STEPS[0]> = ({ num, icon, title, desc, detail }) => (
     <div className="relative flex gap-4 md:gap-6">
         <div className="flex flex-col items-center">
@@ -219,7 +207,6 @@ const StepCard: React.FC<typeof PROCESS_STEPS[0]> = ({ num, icon, title, desc, d
         </div>
     </div>
 );
-
 const FaqItem: React.FC<{ q: string; a: string; defaultOpen?: boolean }> = ({ q, a, defaultOpen }) => {
     const [open, setOpen] = useState(defaultOpen ?? false);
     return (
@@ -240,9 +227,7 @@ const FaqItem: React.FC<{ q: string; a: string; defaultOpen?: boolean }> = ({ q,
         </div>
     );
 };
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
-
 export const Consignment: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [form, setForm] = useState<FormData>(INITIAL_FORM);
@@ -253,7 +238,6 @@ export const Consignment: React.FC = () => {
 
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
-
         // SEO meta injection
         document.title = 'Ký Gửi Bất Động Sản | SGS LAND – Miễn Phí, Pháp Lý Bảo Đảm';
         const setMeta = (name: string, content: string, prop = false) => {
@@ -270,15 +254,12 @@ export const Consignment: React.FC = () => {
         setMeta('og:type', 'website', true);
         setMeta('twitter:title', 'Ký Gửi Bất Động Sản | SGS LAND – Miễn Phí, Pháp Lý Bảo Đảm');
         setMeta('twitter:description', desc);
-
         return () => { /* structured data injected server-side via metaInjector */ };
     }, []);
-
     const navigate = (path: string) => {
         window.history.pushState(null, '', `/${path}`);
         window.dispatchEvent(new PopStateEvent('popstate'));
     };
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         setForm(prev => ({
@@ -287,11 +268,9 @@ export const Consignment: React.FC = () => {
         }));
         setError('');
     };
-
     const scrollToForm = () => {
         formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
@@ -326,7 +305,6 @@ export const Consignment: React.FC = () => {
             setSubmitting(false);
         }
     };
-
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] overflow-y-auto h-[100dvh] no-scrollbar">
 
@@ -357,7 +335,6 @@ export const Consignment: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* ── Hero ── */}
             <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white py-20 md:py-32 px-6">
                 <div className="absolute inset-0 opacity-10">
@@ -401,7 +378,6 @@ export const Consignment: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* ── Benefits ── */}
             <section className="py-16 md:py-24 px-6 bg-[var(--bg-surface)]">
                 <div className="max-w-6xl mx-auto">
@@ -420,7 +396,6 @@ export const Consignment: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* ── Commission Table ── */}
             <section className="py-16 md:py-24 px-6 bg-[var(--glass-surface)]">
                 <div className="max-w-5xl mx-auto">
@@ -488,7 +463,6 @@ export const Consignment: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* ── Legal Commitment Box ── */}
             <section className="py-12 px-6 bg-indigo-950 text-white">
                 <div className="max-w-4xl mx-auto">
@@ -516,7 +490,6 @@ export const Consignment: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* ── FAQ ── */}
             <section className="py-16 md:py-24 px-6 bg-[var(--glass-surface)]">
                 <div className="max-w-3xl mx-auto">
@@ -531,7 +504,6 @@ export const Consignment: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* ── Registration Form ── */}
             <section ref={formRef} id="form-ky-gui" className="py-16 md:py-24 px-6 bg-[var(--bg-surface)]">
                 <div className="max-w-2xl mx-auto">
@@ -539,7 +511,6 @@ export const Consignment: React.FC = () => {
                         <h2 className="text-3xl md:text-4xl font-black mb-4">Đăng Ký Ký Gửi</h2>
                         <p className="text-[var(--text-secondary)]">Điền thông tin — chuyên viên SGS LAND liên hệ trong <strong>4 giờ làm việc</strong></p>
                     </div>
-
                     {submitted ? (
                         <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-10 text-center animate-enter">
                             <div className="mb-4 flex justify-center text-emerald-500"><Ico d={P.checkCircle} cls="w-14 h-14" /></div>
@@ -556,7 +527,6 @@ export const Consignment: React.FC = () => {
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-8 shadow-sm space-y-5">
-
                             {/* Personal info */}
                             <div className="pb-2 border-b border-[var(--glass-border)]">
                                 <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4">Thông tin chủ sở hữu</p>
@@ -587,7 +557,6 @@ export const Consignment: React.FC = () => {
                                     />
                                 </div>
                             </div>
-
                             {/* Property info */}
                             <div className="pb-2 border-b border-[var(--glass-border)]">
                                 <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4">Thông tin bất động sản</p>
@@ -631,7 +600,6 @@ export const Consignment: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="mb-4">
                                     <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Địa chỉ bất động sản <span className="text-red-500">*</span></label>
                                     <input
@@ -661,7 +629,6 @@ export const Consignment: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-
                             {/* Notes */}
                             <div>
                                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Thông tin thêm</label>
@@ -671,7 +638,6 @@ export const Consignment: React.FC = () => {
                                     className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                                 />
                             </div>
-
                             {/* Agreement */}
                             <label className="flex items-start gap-3 cursor-pointer group">
                                 <input
@@ -684,13 +650,11 @@ export const Consignment: React.FC = () => {
                                     Tôi hiểu rằng hoa hồng chỉ phát sinh khi giao dịch thành công và được xác lập trong hợp đồng ký gửi. <span className="text-red-500">*</span>
                                 </span>
                             </label>
-
                             {error && (
                                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-600 dark:text-red-400">
                                     {error}
                                 </div>
                             )}
-
                             <button
                                 type="submit"
                                 disabled={submitting}
@@ -707,7 +671,6 @@ export const Consignment: React.FC = () => {
                                     </span>
                                 ) : 'Gửi yêu cầu ký gửi →'}
                             </button>
-
                             <p className="text-center text-xs text-[var(--text-tertiary)]">
                                 Hoặc liên hệ trực tiếp:{' '}
                                 <a href="mailto:info@sgsland.vn" className="text-indigo-600 font-semibold">info@sgsland.vn</a>
@@ -716,7 +679,6 @@ export const Consignment: React.FC = () => {
                     )}
                 </div>
             </section>
-
             {/* ── Footer ── */}
             <footer className="py-10 px-6 border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">
                 <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm text-[var(--text-secondary)] mb-6">
@@ -738,5 +700,4 @@ export const Consignment: React.FC = () => {
         </div>
     );
 };
-
 export default Consignment;

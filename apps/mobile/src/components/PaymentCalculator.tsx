@@ -2,16 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { formatVnd } from '../utils/format';
-
 interface Props {
   price: number | null;
   accent: string;
 }
-
 const DOWN_OPTIONS = [20, 30, 50, 70];
 const TERM_OPTIONS = [10, 15, 20, 25];
 const RATE_DEFAULT = 10.5; // % / năm — default tham khảo VCB/BIDV
-
 // Standard mortgage payment formula. Returns monthly payment for a fully
 // amortizing loan of `principal` at annual `rateAnnual`% over `years`.
 function monthlyPayment(principal: number, rateAnnual: number, years: number): number {
@@ -21,28 +18,22 @@ function monthlyPayment(principal: number, rateAnnual: number, years: number): n
   if (r === 0) return principal / n;
   return (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
 }
-
 export const PaymentCalculator: React.FC<Props> = ({ price, accent }) => {
   const [downPct, setDownPct] = useState<number>(30);
   const [termYears, setTermYears] = useState<number>(20);
   const [rateText, setRateText] = useState<string>(String(RATE_DEFAULT));
-
   const rate = useMemo(() => {
     const n = parseFloat(rateText.replace(',', '.'));
     return Number.isFinite(n) && n > 0 ? n : RATE_DEFAULT;
   }, [rateText]);
-
   if (!price || price <= 0) return null;
-
   const downAmount = (price * downPct) / 100;
   const loan = price - downAmount;
   const monthly = monthlyPayment(loan, rate, termYears);
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tính khoản vay</Text>
       <Text style={styles.hint}>Ước tính khoản trả góp hàng tháng (lãi suất tham khảo).</Text>
-
       <Text style={styles.label}>Trả trước</Text>
       <View style={styles.chipRow}>
         {DOWN_OPTIONS.map((p) => (
@@ -55,7 +46,6 @@ export const PaymentCalculator: React.FC<Props> = ({ price, accent }) => {
           </Pressable>
         ))}
       </View>
-
       <Text style={styles.label}>Thời hạn vay</Text>
       <View style={styles.chipRow}>
         {TERM_OPTIONS.map((y) => (
@@ -68,7 +58,6 @@ export const PaymentCalculator: React.FC<Props> = ({ price, accent }) => {
           </Pressable>
         ))}
       </View>
-
       <Text style={styles.label}>Lãi suất (% / năm)</Text>
       <TextInput
         style={styles.input}
@@ -78,7 +67,6 @@ export const PaymentCalculator: React.FC<Props> = ({ price, accent }) => {
         placeholder={String(RATE_DEFAULT)}
         placeholderTextColor={colors.textMuted}
       />
-
       <View style={styles.summaryBox}>
         <Row label="Trả trước" value={formatVnd(downAmount)} />
         <Row label="Khoản vay" value={formatVnd(loan)} />
@@ -96,7 +84,6 @@ export const PaymentCalculator: React.FC<Props> = ({ price, accent }) => {
     </View>
   );
 };
-
 const Row: React.FC<{ label: string; value: string; highlight?: boolean; accent?: string }> = ({
   label,
   value,
@@ -110,7 +97,6 @@ const Row: React.FC<{ label: string; value: string; highlight?: boolean; accent?
     </Text>
   </View>
 );
-
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,

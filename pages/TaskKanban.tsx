@@ -14,9 +14,7 @@ import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/Ta
 import { PriorityBadge, AvatarStack } from '../components/task/Badges';
 import { CATEGORY_LABELS_SHORT, STATUS_LABELS, formatDeadlineRelative, isValidTransition } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
-
 const KANBAN_LIMIT = 500;
-
 function serializeKanbanFilters(f: TaskFilters): string {
   const qs = new URLSearchParams();
   if (f.search) qs.set('q', f.search);
@@ -27,7 +25,6 @@ function serializeKanbanFilters(f: TaskFilters): string {
   if (f.assigneeId && f.assigneeName) qs.set('uname', f.assigneeName);
   return qs.toString();
 }
-
 function deserializeKanbanFilters(): TaskFilters {
   try {
     const search = window.location.search;
@@ -48,9 +45,7 @@ function deserializeKanbanFilters(): TaskFilters {
     return EMPTY_FILTERS;
   }
 }
-
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
-
 const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
   { id: 'todo',        label: 'Chờ xử lý',      color: 'bg-slate-50 dark:bg-slate-800/30',       headerColor: 'bg-slate-100 dark:bg-slate-800/60',       dot: 'bg-slate-400' },
   { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10',  headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30',  dot: 'bg-indigo-500' },
@@ -58,24 +53,19 @@ const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: st
   { id: 'done',        label: 'Hoàn thành',       color: 'bg-emerald-50/60 dark:bg-emerald-900/10', headerColor: 'bg-emerald-100/80 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
   { id: 'cancelled',   label: 'Đã hủy',           color: 'bg-rose-50/40 dark:bg-rose-900/10',      headerColor: 'bg-rose-100/80 dark:bg-rose-900/30',      dot: 'bg-rose-400' },
 ];
-
 function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: boolean; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
-
   const style = overlay ? undefined : {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.4 : 1,
     cursor: isDragging ? 'grabbing' : 'grab',
   };
-
   const urgencyBorder = task.is_overdue
     ? 'border-rose-300 dark:border-rose-800'
     : task.urgency_level === 'critical'
     ? 'border-amber-300 dark:border-amber-800'
     : 'border-[var(--glass-border)]';
-
   const rel = formatDeadlineRelative(task.deadline?.toString(), task.is_overdue, task.days_until_deadline);
-
   return (
     <div
       ref={setNodeRef}
@@ -97,7 +87,6 @@ function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: 
         {task.is_overdue && <span className="text-[10px] text-rose-500 font-semibold">⚠ Quá hạn</span>}
         {!task.is_overdue && task.urgency_level === 'critical' && <span className="text-[10px] text-amber-500 font-semibold">Sắp hết hạn</span>}
       </div>
-
       <p className="text-sm font-semibold text-[var(--text-primary)] line-clamp-2 leading-snug mb-2.5">{task.title}</p>
 
       <div className="flex items-center justify-between">
@@ -108,17 +97,14 @@ function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: 
           </span>
         )}
       </div>
-
       <div className="mt-1.5 text-[10px] text-[var(--text-tertiary)]">
         💬 {task.comment_count ?? 0}
       </div>
     </div>
   );
 }
-
 function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tasks: WfTask[]; onCardClick: (id: string) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
-
   return (
     <div className={`flex flex-col rounded-2xl border transition-colors ${col.color} ${isOver ? 'border-indigo-400 dark:border-indigo-500 shadow-md' : 'border-[var(--glass-border)]'}`}
       style={{ width: '272px', minWidth: '272px' }}>
@@ -143,7 +129,6 @@ function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tas
     </div>
   );
 }
-
 export function TaskKanban() {
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +145,6 @@ export function TaskKanban() {
   const dragScrolling = useRef(false);
   const dragStartX = useRef(0);
   const dragScrollLeft = useRef(0);
-
   useEffect(() => {
     const el = boardRef.current;
     if (!el) return;
@@ -180,13 +164,11 @@ export function TaskKanban() {
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
-
   const scrollBoard = useCallback((delta: number) => {
     if (boardRef.current) {
       boardRef.current.scrollBy({ left: delta, behavior: 'smooth' });
     }
   }, []);
-
   const onBoardMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest('[data-task-card]')) return;
@@ -196,30 +178,25 @@ export function TaskKanban() {
     e.currentTarget.style.cursor = 'grabbing';
     e.currentTarget.style.userSelect = 'none';
   }, []);
-
   const onBoardMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!dragScrolling.current || !boardRef.current) return;
     const dx = e.clientX - dragStartX.current;
     boardRef.current.scrollLeft = dragScrollLeft.current - dx;
   }, []);
-
   const onBoardMouseUp = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     dragScrolling.current = false;
     e.currentTarget.style.cursor = '';
     e.currentTarget.style.userSelect = '';
   }, []);
-
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     const id = ++toastId.current;
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   }, []);
-
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
   );
-
   const loadTasks = useCallback((f: TaskFilters) => {
     const token = ++fetchRef.current;
     setLoading(true);
@@ -237,13 +214,11 @@ export function TaskKanban() {
       .catch(() => { if (fetchRef.current === token) setError('Không thể tải công việc'); })
       .finally(() => { if (fetchRef.current === token) setLoading(false); });
   }, []);
-
   // URL sync
   useEffect(() => {
     const qs = serializeKanbanFilters(filters);
     window.history.replaceState(null, '', `/${ROUTES.TASK_KANBAN}${qs ? '?' + qs : ''}`);
   }, [filters]);
-
   // Debounced reload on filter change (debounce only the search field)
   const reloadTimer = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
@@ -251,11 +226,9 @@ export function TaskKanban() {
     reloadTimer.current = setTimeout(() => loadTasks(filters), 300);
     return () => { if (reloadTimer.current) clearTimeout(reloadTimer.current); };
   }, [filters, loadTasks]);
-
   const handleDragStart = (event: DragStartEvent) => {
     setActiveTask(tasks.find(t => t.id === event.active.id) || null);
   };
-
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveTask(null);
     const { active, over } = event;
@@ -277,28 +250,22 @@ export function TaskKanban() {
       showToast((err as { message?: string })?.message || 'Không thể đổi trạng thái. Đã hoàn tác.', 'error');
     }
   };
-
   const handleTaskUpdated = useCallback((updated: WfTask) => {
     setTasks(prev => prev.map(t => t.id === updated.id ? { ...t, ...updated } : t));
   }, []);
-
   const handleTaskDeleted = useCallback((id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
     setSelectedTaskId(null);
   }, []);
-
   const handleTaskCreated = useCallback((task: WfTask) => {
     setTasks(prev => [task, ...prev]);
   }, []);
-
   // Server-side filtering already applied; keep `tasks` as the filtered set
   const filteredTasks = tasks;
-
   const tasksByStatus = COLUMNS.reduce((acc, col) => {
     acc[col.id] = filteredTasks.filter(t => t.status === col.id);
     return acc;
   }, {} as Record<WfTaskStatus, WfTask[]>);
-
   if (loading) return (
     <div className="h-full flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
@@ -317,7 +284,6 @@ export function TaskKanban() {
       </div>
     </div>
   );
-
   if (error) return (
     <div className="flex flex-col items-center justify-center h-full gap-3">
       <AlertTriangle className="w-10 h-10 text-amber-400" />
@@ -325,7 +291,6 @@ export function TaskKanban() {
       <button onClick={() => loadTasks(filters)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
     </div>
   );
-
   return (
     <div className="h-full flex flex-col overflow-hidden animate-enter">
       <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0 space-y-2.5">
@@ -369,7 +334,6 @@ export function TaskKanban() {
           compact
         />
       </div>
-
       <div
         ref={boardRef}
         onMouseDown={onBoardMouseDown}
@@ -392,7 +356,6 @@ export function TaskKanban() {
           )}
         </DndContext>
       </div>
-
       <TaskDetailModal
         taskId={selectedTaskId}
         onClose={() => setSelectedTaskId(null)}
@@ -401,7 +364,6 @@ export function TaskKanban() {
         onOpenFullPage={id => { setSelectedTaskId(null); window.location.hash = `#/tasks/${id}`; }}
       />
       {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} onCreated={handleTaskCreated} />}
-
       <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-2 pointer-events-none">
         {toasts.map(toast => (
           <div key={toast.id}

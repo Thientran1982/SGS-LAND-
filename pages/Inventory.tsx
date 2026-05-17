@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { NO_IMAGE_URL } from '../utils/constants';
@@ -13,13 +12,10 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { smartMatch, formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
 import { ROUTES } from '../config/routes';
 import MapView from '../components/MapView';
-
 // -----------------------------------------------------------------------------
 //  CONSTANTS & CONFIG
 // -----------------------------------------------------------------------------
-
 type ViewMode = 'LIST' | 'BOARD' | 'GRID' | 'MAP';
-
 const ICONS = {
     ADD: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -32,7 +28,6 @@ const ICONS = {
     X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     VIEW_MAP: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
 };
-
 const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: string }> = {
     [ListingStatus.BOOKING]: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
     [ListingStatus.OPENING]: { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
@@ -43,56 +38,47 @@ const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: 
     [ListingStatus.INACTIVE]: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
     [ListingStatus.BEST_MARKET]: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-300' },
 };
-
 // --- HOOK: DRAGGABLE SCROLL (Unified) ---
 const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;
-
         let isDown = false;
         let startX = 0;
         let startY = 0;
         let scrollLeft = 0;
         let scrollTop = 0;
-
         const onMouseDown = (e: MouseEvent) => {
             // Prevent dragging if clicking interactive elements inside
-            if ((e.target as HTMLElement).closest('button, input, select, a, [role="button"]')) return;
-            
+            if ((e.target as HTMLElement).closest('button, input, select, a, [role="button"]')) return;            
             isDown = true;
             node.classList.add('cursor-grabbing');
             node.classList.remove('cursor-grab');
-            node.classList.remove('snap-x');
-            
+            node.classList.remove('snap-x');            
             startX = e.pageX - node.offsetLeft;
             startY = e.pageY - node.offsetTop;
             scrollLeft = node.scrollLeft;
             scrollTop = node.scrollTop;
         };
-
         const onMouseLeave = () => {
             isDown = false;
             node.classList.remove('cursor-grabbing');
             node.classList.add('cursor-grab');
             node.classList.add('snap-x');
         };
-
         const onMouseUp = () => {
             isDown = false;
             node.classList.remove('cursor-grabbing');
             node.classList.add('cursor-grab');
             node.classList.add('snap-x');
         };
-
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
             e.preventDefault();
             const x = e.pageX - node.offsetLeft;
             const y = e.pageY - node.offsetTop;
             const walkX = (x - startX) * 2; // Speed multiplier X
-            const walkY = (y - startY) * 2; // Speed multiplier Y
-            
+            const walkY = (y - startY) * 2; // Speed multiplier Y            
             node.scrollLeft = scrollLeft - walkX;
             // Only scroll vertically if it's not a predominantly horizontal container (like filters)
             // For simple detection, we can check if scrollHeight > clientHeight significantly
@@ -100,14 +86,11 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
                 node.scrollTop = scrollTop - walkY;
             }
         };
-
         node.addEventListener('mousedown', onMouseDown);
         node.addEventListener('mouseleave', onMouseLeave);
         node.addEventListener('mouseup', onMouseUp);
-        node.addEventListener('mousemove', onMouseMove);
-        
+        node.addEventListener('mousemove', onMouseMove);        
         node.classList.add('cursor-grab');
-
         return () => {
             node.removeEventListener('mousedown', onMouseDown);
             node.removeEventListener('mouseleave', onMouseLeave);
@@ -117,8 +100,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         };
     }, [ref, trigger]);
 };
-
-
 // --- CURSOR PAGINATION COMPONENT ---
 // Cursor-based: no OFFSET, O(1) at any depth. Prev/next use a cursor stack.
 const CursorPaginationControl = memo(({
@@ -140,7 +121,6 @@ const CursorPaginationControl = memo(({
         { value: 100, label: '100' }
     ];
     const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
-
     return (
         <>
             {/* Mobile */}
@@ -155,7 +135,6 @@ const CursorPaginationControl = memo(({
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
-
             {/* Desktop */}
             <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
@@ -193,7 +172,6 @@ const CursorPaginationControl = memo(({
         </>
     );
 });
-
 // --- TABLE ROW (LIST VIEW) ---
 const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, formatCurrency, canViewInternal }: any) => {
     const statusStyle = STATUS_CONFIG[item.status as ListingStatus] || STATUS_CONFIG[ListingStatus.AVAILABLE];
@@ -201,7 +179,6 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
     const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
-
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
@@ -212,7 +189,6 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
         }
         setMenuOpen(v => !v);
     };
-
     useEffect(() => {
         if (!menuOpen) return;
         const handler = (e: MouseEvent) => {
@@ -222,7 +198,6 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, [menuOpen]);
-
     return (
         <tr 
             onClick={() => onClick && onClick(item)}
@@ -250,11 +225,9 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     </div>
                 </div>
             </td>
-
             <td className="px-4 py-3 text-xs text-[var(--text-secondary)] dark:text-slate-400 max-w-[150px] truncate" title={item.location}>
                 {item.location}
             </td>
-
             {canViewInternal && (
                 <>
                     <td className="px-4 py-3 text-xs">
@@ -274,7 +247,6 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                             )}
                         </div>
                     </td>
-
                     <td className="px-4 py-3 text-xs text-right">
                         <div className="flex flex-col items-end">
                             {item.commission ? (
@@ -287,14 +259,12 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                         </div>
                     </td>
                 </>
-            )}
-            
+            )}            
             <td className="px-4 py-3 text-xs">
                 <span className="font-bold text-[var(--text-secondary)] dark:text-slate-300 bg-[var(--glass-surface)] dark:bg-slate-800 px-2 py-1 rounded border border-[var(--glass-border)] dark:border-slate-700 whitespace-nowrap">
                     {t(`property.${item.type.toUpperCase()}`)}
                 </span>
             </td>
-
             {/* Smart Pricing Column */}
             <td className="px-4 py-3 text-right">
                 <div className="flex flex-col items-end">
@@ -308,21 +278,17 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     </span>
                 </div>
             </td>
-
             <td className="px-4 py-3 text-right text-xs3 font-bold text-indigo-600 dark:text-indigo-400">
                 {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
             </td>
-
             <td className="px-4 py-3 text-right text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono">
                 {item.area} <span className="text-xs2 text-[var(--text-secondary)]">m²</span>
             </td>
-
             <td className="px-4 py-3 text-center">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                     {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                 </span>
             </td>
-
             {/* Sticky Actions */}
             <td className="px-3 py-3 text-right sticky right-0 z-10 bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-l border-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
                 {canViewInternal && (
@@ -366,7 +332,6 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
         </tr>
     );
 });
-
 // --- COMPACT ROW (MOBILE LIST VIEW) ---
 const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, canViewInternal }: any) => {
     const statusStyle = STATUS_CONFIG[item.status as ListingStatus] || STATUS_CONFIG[ListingStatus.AVAILABLE];
@@ -374,7 +339,6 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
     const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
-
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
@@ -385,7 +349,6 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
         }
         setMenuOpen(v => !v);
     };
-
     useEffect(() => {
         if (!menuOpen) return;
         const handler = (e: MouseEvent) => {
@@ -395,7 +358,6 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, [menuOpen]);
-
     return (
         <div 
             onClick={() => onClick && onClick(item)}
@@ -408,8 +370,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                     wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)] dark:bg-slate-800"
                 />
                 <div className="absolute top-0 left-0 px-1 bg-black/40 text-3xs text-white font-mono">{item.code}</div>
-            </div>
-            
+            </div>            
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
                     <span className={`text-3xs font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
@@ -451,7 +412,6 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                     </button>
                 )}
             </div>
-
             {menuOpen && createPortal(
                 <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top ?? 'auto', bottom: menuPos.bottom ?? 'auto', right: menuPos.right, zIndex: 9999 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
@@ -476,14 +436,12 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
         </div>
     );
 });
-
 // --- KANBAN CARD (BOARD VIEW) ---
 const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate, canViewInternal, t, formatCurrency }: any) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
-
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
@@ -494,7 +452,6 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
         }
         setMenuOpen(v => !v);
     };
-
     useEffect(() => {
         if (!menuOpen) return;
         const handler = (e: MouseEvent) => {
@@ -504,7 +461,6 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, [menuOpen]);
-
     return (
         <div 
             onClick={() => onClick(item)}
@@ -557,7 +513,6 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                     )}
                 </div>
             </div>
-
             {menuOpen && createPortal(
                 <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top ?? 'auto', bottom: menuPos.bottom ?? 'auto', right: menuPos.right, zIndex: 9999 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
@@ -582,11 +537,9 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const Inventory: React.FC = () => {
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const [listings, setListings] = useState<Listing[]>([]); // Store current page data
@@ -595,8 +548,7 @@ export const Inventory: React.FC = () => {
     const [allFilteredListings, setAllFilteredListings] = useState<Listing[]>([]); // For Kanban board
     const [loading, setLoading] = useState(true);
     const [boardLoading, setBoardLoading] = useState(false);
-    const [currentUser, setCurrentUser] = useState<any>(null);
-    
+    const [currentUser, setCurrentUser] = useState<any>(null);    
     // Filters & Cursor Pagination State
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -609,7 +561,6 @@ export const Inventory: React.FC = () => {
     const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
     const [nextCursor, setNextCursor] = useState<string | null>(null);
     const [hasNext, setHasNext] = useState(false);
-
     // Debounce search
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -617,40 +568,32 @@ export const Inventory: React.FC = () => {
         }, 300);
         return () => clearTimeout(handler);
     }, [search]);
-
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingListing, setEditingListing] = useState<Listing | undefined>(undefined);
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-    
+    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);    
     // View State
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         try { return (localStorage.getItem('sgs_inv_view') as ViewMode) || 'GRID'; } catch { return 'GRID'; }
     });
-
     const boardRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLDivElement>(null);
     const filtersRef = useRef<HTMLDivElement>(null);
     const metricsRef = useRef<HTMLDivElement>(null);
-
     // Apply Draggable Scroll Physics to containers
     useDraggableScroll(boardRef, viewMode);
     useDraggableScroll(tableRef, viewMode);
     useDraggableScroll(filtersRef, null);
     useDraggableScroll(metricsRef, null);
-
     useEffect(() => { localStorage.setItem('sgs_inv_view', viewMode); }, [viewMode]);
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const fetchListings = useCallback(async () => {
         setLoading(true);
         try {
@@ -689,7 +632,6 @@ export const Inventory: React.FC = () => {
 
     useEffect(() => { fetchListings(); }, [fetchListings]);
     useEffect(() => { fetchBoardData(); }, [fetchBoardData]);
-
     // Reset cursor to first page when filters or pageSize change
     useEffect(() => {
         setCursorStack([]);
@@ -697,14 +639,12 @@ export const Inventory: React.FC = () => {
         setNextCursor(null);
         setHasNext(false);
     }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, pageSize]);
-
     // Cursor navigation handlers
     const handleCursorNext = useCallback(() => {
         if (!nextCursor) return;
         setCursorStack(prev => [...prev, currentCursor ?? '']);
         setCurrentCursor(nextCursor);
     }, [nextCursor, currentCursor]);
-
     const handleCursorPrev = useCallback(() => {
         setCursorStack(prev => {
             const newStack = [...prev];
@@ -713,7 +653,6 @@ export const Inventory: React.FC = () => {
             return newStack;
         });
     }, []);
-
     // Grouping for Kanban (apply to all filtered items to show full board)
     const groupedListings = useMemo(() => {
         const groups: Record<string, Listing[]> = {};
@@ -723,7 +662,6 @@ export const Inventory: React.FC = () => {
         });
         return groups;
     }, [allFilteredListings]);
-
     // Handlers
     const canViewInternalInfo = useMemo(() => {
         if (!currentUser) return false;
@@ -731,7 +669,6 @@ export const Inventory: React.FC = () => {
         // Data masking is handled at the DB level (mockDb.ts) for SALES.
         return [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.TEAM_LEAD, UserRole.SALES].includes(currentUser.role);
     }, [currentUser]);
-
     const handleToggleFavorite = async (id: string) => {
         const isFav = favorites.has(id);
         const newFavs = new Set(favorites);
@@ -739,11 +676,9 @@ export const Inventory: React.FC = () => {
         setFavorites(newFavs);
         try { await db.toggleFavorite(id); } catch { setFavorites(favorites); }
     };
-
     const handleDeleteClick = (id: string) => {
         setItemToDelete(id);
     };
-
     const confirmDelete = async () => {
         if (!itemToDelete) return;
         try {
@@ -756,7 +691,6 @@ export const Inventory: React.FC = () => {
             setItemToDelete(null);
         }
     };
-
     const handleSaveListing = async (data: Partial<Listing>) => {
         try {
             if (editingListing) await db.updateListing(editingListing.id, data);
@@ -767,17 +701,14 @@ export const Inventory: React.FC = () => {
             fetchListings();
         } catch (e: any) { notify(e.message, 'error'); }
     };
-
     const handleNavigate = (id: string) => { window.location.hash = `#/${ROUTES.LISTING}/${id}`; };
 
     const typeOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_types') }, ...Object.values(PropertyType).map(tKey => ({ value: tKey, label: t(`property.${tKey.toUpperCase()}`) }))], [t]);
     const statusOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_statuses') }, ...Object.values(ListingStatus).map(s => ({ value: s, label: t(`status.${s}`) }))], [t]);
     const transactionOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_transactions') }, ...Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) }))], [t]);
-
     return (
         <>
         <div className="h-full flex flex-col relative">
-
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 sm:px-5 sm:py-3 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
@@ -808,12 +739,10 @@ export const Inventory: React.FC = () => {
                             <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="md:hidden shrink-0 w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
                         )}
                     </div>
-
                     <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing">
                         <div className="min-w-[140px] shrink-0"><Dropdown value={transactionFilter} onChange={(v) => setTransactionFilter(v as string)} options={transactionOptions} className="text-xs" /></div>
                         <div className="min-w-[140px] shrink-0"><Dropdown value={typeFilter} onChange={(v) => setTypeFilter(v as string)} options={typeOptions} className="text-xs" /></div>
-                        <div className="min-w-[140px] shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" /></div>
-                        
+                        <div className="min-w-[140px] shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" /></div>                        
                         {/* View Switcher */}
                         <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
                             <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
@@ -821,7 +750,6 @@ export const Inventory: React.FC = () => {
                             <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
                             <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map')}>{ICONS.VIEW_MAP}</button>
                         </div>
-
                         {/* Active filter chip */}
                         {(typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL') && (
                             <button
@@ -834,9 +762,7 @@ export const Inventory: React.FC = () => {
                                 <span className="ml-0.5 opacity-70">×</span>
                             </button>
                         )}
-
                         <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
-
                         {canViewInternalInfo && (
                             <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                                 {ICONS.ADD} {t('inventory.create_title')}
@@ -845,7 +771,6 @@ export const Inventory: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* Metrics Section */}
             <div ref={metricsRef} className="px-3 md:px-5 py-2 md:py-2.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-2 md:gap-3 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
                 <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
@@ -881,14 +806,11 @@ export const Inventory: React.FC = () => {
                     <div className="text-base md:text-xl font-black text-rose-600">{stats.inactiveCount}</div>
                 </div>
             </div>
-
             {/* Content Area */}
             <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] min-h-0 relative flex flex-col">
-
                 {/* GRID & LIST — inside overflow-auto so content can scroll */}
                 {(viewMode === 'GRID' || viewMode === 'LIST') && (
-                    <div className="flex-1 overflow-auto p-3 sm:p-4 no-scrollbar">
-                        
+                    <div className="flex-1 overflow-auto p-3 sm:p-4 no-scrollbar">                        
                         {/* GRID VIEW (DEFAULT) */}
                         {viewMode === 'GRID' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -965,7 +887,6 @@ export const Inventory: React.FC = () => {
                                 )}
                             </div>
                         )}
-
                         {/* LIST VIEW (TABLE) */}
                         {viewMode === 'LIST' && (
                             <div className="bg-[var(--bg-surface)] rounded-[24px] md:border border-[var(--glass-border)] shadow-sm overflow-hidden h-full flex flex-col">
@@ -1034,7 +955,6 @@ export const Inventory: React.FC = () => {
                                             )}
                                         </tbody>
                                     </table>}
-
                                     {/* Mobile Compact List */}
                                     {(loading || listings.length > 0) && <div className="md:hidden flex flex-col divide-y divide-[var(--glass-border)]">
                                         {loading ? (
@@ -1117,7 +1037,6 @@ export const Inventory: React.FC = () => {
                         )}
                     </div>
                 )}
-
                 {/* MAP VIEW — absolute positioning for guaranteed pixel height independent of scroll/flex chain */}
                 {viewMode === 'MAP' && (
                     <div className="absolute inset-0 p-4 sm:p-6" style={{ zIndex: 1 }}>
@@ -1141,14 +1060,12 @@ export const Inventory: React.FC = () => {
                         </div>
                     </div>
                 )}
-
                 {/* KANBAN BOARD VIEW — direct flex-1 child for proper height */}
                 {viewMode === 'BOARD' && (
                     <div ref={boardRef} className="flex flex-1 min-h-0 overflow-x-auto gap-4 p-4 sm:p-6 no-scrollbar snap-x snap-mandatory overscroll-x-contain cursor-grab active:cursor-grabbing scroll-px-4">
                         {Object.values(ListingStatus).map(status => {
                             const style = STATUS_CONFIG[status];
-                            const items = groupedListings[status] || [];
-                            
+                            const items = groupedListings[status] || [];                            
                             return (
                                 <div key={status} className="min-w-[85vw] md:min-w-[280px] w-[85vw] md:w-[280px] flex-shrink-0 flex flex-col h-full bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] snap-center">
                                     <div className={`p-3 border-b border-[var(--glass-border)] flex justify-between items-center rounded-t-2xl ${style.bg}`}>
@@ -1199,7 +1116,6 @@ export const Inventory: React.FC = () => {
                         })}
                     </div>
                 )}
-
                 {/* Sticky Pagination Footer — only for GRID / LIST */}
                 {viewMode !== 'BOARD' && viewMode !== 'MAP' && (
                     <CursorPaginationControl
@@ -1214,7 +1130,6 @@ export const Inventory: React.FC = () => {
                     />
                 )}
             </div>
-
             <ListingForm 
                 isOpen={isCreateModalOpen} 
                 onClose={() => { setIsCreateModalOpen(false); setEditingListing(undefined); }} 
@@ -1222,7 +1137,6 @@ export const Inventory: React.FC = () => {
                 initialData={editingListing}
                 t={t}
             />
-
             <ConfirmModal 
                 isOpen={!!itemToDelete}
                 title={t('inventory.confirm_delete_title')}

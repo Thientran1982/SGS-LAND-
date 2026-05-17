@@ -1,7 +1,5 @@
-
 const TRANSLATABLE_PREFIXES = ['ai.', 'inbox.', 'livechat.', 'common.', 'auth.'];
 const I18N_KEY_RE = /^[a-z_]+\.[a-z_.]+$/;
-
 /**
  * Translate raw i18n keys that were persisted to the database before server-side
  * translation was in place (e.g. "ai.msg_system_busy" stored literally).

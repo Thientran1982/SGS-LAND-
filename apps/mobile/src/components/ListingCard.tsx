@@ -5,14 +5,12 @@ import * as Haptics from 'expo-haptics';
 import { colors, radius, shadow, spacing, typography } from '../theme/tokens';
 import { formatArea, formatUnitPrice, formatVnd, propertyTypeLabel, statusLabel, transactionLabel } from '../utils/format';
 import type { PublicListing } from '../api/types';
-
 interface Props {
   item: PublicListing;
   onPress: (item: PublicListing) => void;
   onToggleFavorite?: (id: string) => void;
   isFavorite?: boolean;
 }
-
 const STATUS_BG: Record<string, string> = {
   AVAILABLE: '#ECFDF5',
   BOOKING: '#E0F2FE',
@@ -23,7 +21,6 @@ const STATUS_FG: Record<string, string> = {
   BOOKING: '#0369A1',
   OPENING: '#4338CA',
 };
-
 const PLACEHOLDER = 'https://placehold.co/800x600?text=No+Image';
 
 const ListingCardImpl: React.FC<Props> = ({ item, onPress, onToggleFavorite, isFavorite }) => {
@@ -31,13 +28,11 @@ const ListingCardImpl: React.FC<Props> = ({ item, onPress, onToggleFavorite, isF
   const unit = formatUnitPrice(item.price, item.area);
   const statusBg = STATUS_BG[item.status] || colors.bgMuted;
   const statusFg = STATUS_FG[item.status] || colors.textSecondary;
-
   const handleFav = () => {
     if (!onToggleFavorite) return;
     Haptics.selectionAsync().catch(() => {});
     onToggleFavorite(item.id);
   };
-
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
@@ -76,12 +71,10 @@ const ListingCardImpl: React.FC<Props> = ({ item, onPress, onToggleFavorite, isF
           </Pressable>
         ) : null}
       </View>
-
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>
           {item.title}
         </Text>
-
         <View style={styles.priceRow}>
           <Text style={styles.price}>{formatVnd(item.price)}</Text>
           {unit ? <Text style={styles.unitPrice}>{unit}</Text> : null}
@@ -92,7 +85,6 @@ const ListingCardImpl: React.FC<Props> = ({ item, onPress, onToggleFavorite, isF
             📍 {item.location || 'Đang cập nhật'}
           </Text>
         </View>
-
         <View style={styles.tagsRow}>
           <View style={styles.tag}>
             <Text style={styles.tagText}>{propertyTypeLabel(item.type)}</Text>
@@ -115,9 +107,7 @@ const ListingCardImpl: React.FC<Props> = ({ item, onPress, onToggleFavorite, isF
     </Pressable>
   );
 };
-
 export const ListingCard = memo(ListingCardImpl);
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.bgSurface,

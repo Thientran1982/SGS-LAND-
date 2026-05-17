@@ -13,12 +13,9 @@
 // automatically attach `Authorization: Bearer <token>` so any logged-in
 // request reaches the user-scoped endpoints. On 401 we clear the cached
 // token and notify subscribers so the UI can prompt re-login.
-
 import Constants from 'expo-constants';
 import { clearBuyerToken, getBuyerToken } from '../storage/auth';
-
 const FALLBACK_BASE_URL = 'https://sgsland.vn';
-
 export function getApiBaseUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_API_BASE_URL;
   if (fromEnv && fromEnv.trim()) return fromEnv.replace(/\/+$/, '');
@@ -33,7 +30,6 @@ export function getApiBaseUrl(): string {
   }
   return FALLBACK_BASE_URL;
 }
-
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
@@ -44,7 +40,6 @@ export interface RequestOptions {
   /** Set to false to skip auto-attaching the buyer JWT (e.g. on the auth endpoints themselves). */
   auth?: boolean;
 }
-
 export class ApiError extends Error {
   status: number;
   payload: unknown;
@@ -54,7 +49,6 @@ export class ApiError extends Error {
     this.payload = payload;
   }
 }
-
 // ── Auth-failure subscribers ────────────────────────────────────────────────
 // Components (e.g. AuthContext) can subscribe so they re-render the login UI
 // when a token expires server-side mid-session.
@@ -73,7 +67,6 @@ function notifyUnauthorized() {
     }
   });
 }
-
 export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {}, params, timeoutMs = 20_000, signal, auth = true } = opts;
 
@@ -87,7 +80,6 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     const qs = sp.toString();
     if (qs) url += `?${qs}`;
   }
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   // Propagate caller's abort signal too (TanStack Query passes one on cancel).
@@ -95,7 +87,6 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     if (signal.aborted) controller.abort();
     else signal.addEventListener('abort', () => controller.abort(), { once: true });
   }
-
   // Inject buyer JWT when present and not explicitly disabled / pre-set.
   const finalHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -106,7 +97,6 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     const token = await getBuyerToken();
     if (token) finalHeaders.Authorization = `Bearer ${token}`;
   }
-
   try {
     const res = await fetch(url, {
       method,
@@ -114,11 +104,9 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
       body: body && method !== 'GET' ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
-
     const ctype = res.headers.get('content-type') || '';
     const isJson = ctype.includes('application/json');
     const payload = isJson ? await res.json().catch(() => null) : await res.text();
-
     if (!res.ok) {
       // Auto-clear stale tokens on auth failure so the next request doesn't
       // re-send a known-bad credential. Only triggers for requests that did
@@ -134,7 +122,6 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
       }
       throw new ApiError(msg || `Request failed (${res.status})`, res.status, payload);
     }
-
     return payload as T;
   } finally {
     clearTimeout(timer);

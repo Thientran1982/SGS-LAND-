@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
@@ -6,11 +5,9 @@ import { Logo } from '../components/Logo';
 import { useTenant } from '../services/tenantContext';
 import { formatSmartPrice } from '../utils/textUtils';
 import { NO_IMAGE_URL } from '../utils/constants';
-
 interface PublicProposalProps {
     token: string;
 }
-
 const ICONS = {
     AREA: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>,
     BED: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
@@ -25,7 +22,6 @@ const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     ALERT: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
 };
-
 export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
     const { isLoading: isTenantLoading } = useTenant();
     const [proposal, setProposal] = useState<any>(null);
@@ -34,9 +30,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
     const [accepted, setAccepted] = useState(false);
     const [isAccepting, setIsAccepting] = useState(false);
     const [imgError, setImgError] = useState(false);
-
     const { t, formatCurrency, formatDate } = useTranslation();
-
     useEffect(() => {
         if (isTenantLoading) return;
         const load = async () => {
@@ -56,12 +50,10 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
         };
         load();
     }, [token, isTenantLoading]);
-
     const isExpired = useMemo(() => {
         if (!proposal) return false;
         return new Date(proposal.validUntil) < new Date();
     }, [proposal]);
-
     // Derive listing data from proposal response (embedded via JOIN)
     const listingImages: string[] = useMemo(() => {
         if (!proposal) return [];
@@ -72,15 +64,12 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
         }
         return [];
     }, [proposal]);
-
     const heroImage = imgError ? NO_IMAGE_URL : (listingImages[0] || NO_IMAGE_URL);
-
     if (loading) return (
         <div className="h-screen flex items-center justify-center text-slate-400 font-mono animate-pulse">
             {t('common.loading')}
         </div>
     );
-
     if (!proposal) return (
         <div className="h-screen flex flex-col items-center justify-center text-slate-500 gap-4">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
@@ -90,7 +79,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
             <p className="text-sm text-slate-400">{t('pub.not_found')}</p>
         </div>
     );
-
     const paymentSchedule: any[] = proposal.metadata?.paymentSchedule || [];
     const createdBy: string = proposal.createdBy || '';
     const note: string = proposal.metadata?.note || '';
@@ -101,10 +89,8 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
     const listingBedrooms: number = proposal.listingBedrooms || 0;
     const listingType: string = proposal.listingType || '';
     const listingDirection: string = proposal.listingAttributes?.direction || '';
-
     return (
         <div className="fixed inset-0 h-[100dvh] w-full bg-slate-50 font-sans overflow-y-auto no-scrollbar">
-
             {/* Sticky Header */}
             <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100">
                 <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -129,7 +115,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                     </div>
                 </div>
             </div>
-
             {/* Main content */}
             <div className="max-w-2xl mx-auto px-4 py-6 pb-16 space-y-4">
 
@@ -140,10 +125,8 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                         {t('pub.offer_expired')}
                     </div>
                 )}
-
                 {/* ── HERO CARD ── */}
                 <div className="bg-white rounded-3xl shadow-sm shadow-slate-200 border border-slate-100 overflow-hidden">
-
                     {/* Hero Image */}
                     <div className="relative w-full aspect-[16/9] bg-slate-100 overflow-hidden">
                         <img
@@ -172,7 +155,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                             )}
                         </div>
                     </div>
-
                     {/* Property Specs */}
                     <div className="px-5 py-4 flex flex-wrap gap-2 border-b border-slate-100">
                         {listingArea > 0 && (
@@ -191,9 +173,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                             </span>
                         )}
                     </div>
-
                     <div className="px-5 py-5 space-y-5">
-
                         {/* Exclusive For */}
                         <div>
                             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">
@@ -203,7 +183,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                 {leadName || '—'}
                             </p>
                         </div>
-
                         {/* Agent Note */}
                         {note && (
                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
@@ -213,7 +192,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                 <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{note}</p>
                             </div>
                         )}
-
                         {/* ── PRICE SECTION ── */}
                         <div className="border-t border-slate-100 pt-5">
                             {proposal.discountAmount > 0 && (
@@ -244,7 +222,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                 )}
                             </div>
                         </div>
-
                         {/* ── PAYMENT SCHEDULE ── */}
                         {paymentSchedule.length > 0 && (
                             <div className="border-t border-slate-100 pt-5">
@@ -280,7 +257,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                         )}
                     </div>
                 </div>
-
                 {/* ── CTA CARD ── */}
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-5 space-y-4">
@@ -332,7 +308,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                 </button>
                             </>
                         )}
-
                         {/* Agent info */}
                         {createdBy && (
                             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-sm">
@@ -345,7 +320,6 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                         )}
                     </div>
                 </div>
-
                 <p className="text-center text-xs text-slate-400 leading-relaxed max-w-sm mx-auto pt-2">
                     {t('pub.disclaimer')}
                     <br />
@@ -355,5 +329,4 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
         </div>
     );
 };
-
 export default PublicProposal;

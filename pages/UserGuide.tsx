@@ -1,8 +1,6 @@
-
 import React, { useState, useRef } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
-
 /* ─────────────────────────────────────────────
    SVG ICON LIBRARY
    All icons use stroke="currentColor", consistent
@@ -77,7 +75,6 @@ const Ico = {
     KANBAN:       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>,
     BOLT:         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
 };
-
 /* ─────────────────────────────────────────────
    TYPES & DATA
 ───────────────────────────────────────────── */
@@ -100,7 +97,6 @@ const NAV_ITEMS: { id: SectionId; label: string; icon: React.ReactNode; color: s
     { id: 'knowledge',    label: 'Cơ sở Tri thức',        icon: Ico.KNOWLEDGE,  color: 'lime'    },
     { id: 'settings',     label: 'Cài đặt & Hồ sơ',      icon: Ico.SETTING,    color: 'slate'   },
 ];
-
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; badge: string }> = {
     emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
     blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/30',    text: 'text-blue-400',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30'       },
@@ -115,7 +111,6 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; badg
     lime:    { bg: 'bg-lime-500/10',    border: 'border-lime-500/30',    text: 'text-lime-400',    badge: 'bg-lime-500/20 text-lime-300 border-lime-500/30'       },
     slate:   { bg: 'bg-slate-500/10',   border: 'border-slate-500/30',   text: 'text-slate-400',   badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30'   },
 };
-
 /* ─────────────────────────────────────────────
    REUSABLE COMPONENTS
 ───────────────────────────────────────────── */
@@ -127,7 +122,6 @@ function Tip({ children }: { children: React.ReactNode }) {
         </div>
     );
 }
-
 function Note({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 mt-5">
@@ -136,7 +130,6 @@ function Note({ children }: { children: React.ReactNode }) {
         </div>
     );
 }
-
 function StepList({ steps }: { steps: { title: string; desc: string }[] }) {
     return (
         <ol className="space-y-4 mt-5">
@@ -152,7 +145,6 @@ function StepList({ steps }: { steps: { title: string; desc: string }[] }) {
         </ol>
     );
 }
-
 function FeatureGrid({ items }: { items: { icon: React.ReactNode; title: string; desc: string }[] }) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
@@ -168,7 +160,6 @@ function FeatureGrid({ items }: { items: { icon: React.ReactNode; title: string;
         </div>
     );
 }
-
 function SectionHeader({ color, icon, label, badge }: { color: string; icon: React.ReactNode; label: string; badge?: string }) {
     const c = COLOR_MAP[color];
     return (
@@ -188,7 +179,6 @@ function SectionHeader({ color, icon, label, badge }: { color: string; icon: Rea
         </div>
     );
 }
-
 /* Pipeline stage pill */
 const PIPELINE_STAGES: { label: string; icon: React.ReactNode }[] = [
     { label: 'Mới',       icon: Ico.PLUS_CIRCLE },
@@ -198,7 +188,6 @@ const PIPELINE_STAGES: { label: string; icon: React.ReactNode }[] = [
     { label: 'Đàm phán', icon: Ico.HANDSHAKE   },
     { label: 'Đã chốt',  icon: Ico.CHECK_CIRCLE},
 ];
-
 /* ─────────────────────────────────────────────
    SECTION CONTENT
 ───────────────────────────────────────────── */
@@ -210,9 +199,7 @@ const QUICK_LINKS: { href: string; label: string; icon: React.ReactNode }[] = [
     { href: '/#/inbox',        label: 'Hộp thư',         icon: Ico.INBOX      },
     { href: '/#/reports',      label: 'Báo cáo',         icon: Ico.REPORT     },
 ];
-
 const SECTIONS: Record<SectionId, React.ReactNode> = {
-
     'quickstart': (
         <section id="quickstart">
             <SectionHeader color="emerald" icon={Ico.QUICKSTART} label="Bắt đầu nhanh — 5 bước đầu tiên" badge="Mới dùng" />
@@ -241,7 +228,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             <Tip>Hoàn thành 5 bước trên trong vòng 15 phút — sau đó hệ thống AI sẽ bắt đầu gợi ý hành động dựa trên dữ liệu thực của bạn.</Tip>
         </section>
     ),
-
     'dashboard': (
         <section id="dashboard">
             <SectionHeader color="blue" icon={Ico.DASHBOARD} label="Tổng quan Dashboard" />
@@ -259,7 +245,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             <Note>Dashboard hiển thị dữ liệu tương ứng với quyền truy cập. Admin thấy toàn công ty; nhân viên chỉ thấy dữ liệu của mình và team.</Note>
         </section>
     ),
-
     'leads': (
         <section id="leads">
             <SectionHeader color="violet" icon={Ico.LEADS} label="Quản lý Lead & CRM Pipeline" badge="Tính năng cốt lõi" />
@@ -300,7 +285,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             </Tip>
         </section>
     ),
-
     'ai-valuation': (
         <section id="ai-valuation">
             <SectionHeader color="cyan" icon={Ico.AI} label="Định giá AI (AVM — Automated Valuation Model)" badge="Sai số ±5–12%" />
@@ -334,7 +318,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             <Note>Kết quả AVM là tham chiếu — không thay thế thẩm định pháp lý chính thức từ tổ chức thẩm định giá có chứng chỉ.</Note>
         </section>
     ),
-
     'inventory': (
         <section id="inventory">
             <SectionHeader color="amber" icon={Ico.INVENTORY} label="Kho hàng Bất động sản" />
@@ -363,7 +346,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             </div>
         </section>
     ),
-
     'inbox': (
         <section id="inbox">
             <SectionHeader color="pink" icon={Ico.INBOX} label="Hộp thư đa kênh (Omnichannel Inbox)" badge="Zalo · Facebook · Email" />
@@ -386,7 +368,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             ]} />
         </section>
     ),
-
     'contracts': (
         <section id="contracts">
             <SectionHeader color="orange" icon={Ico.CONTRACT} label="Hợp đồng & Đề xuất" />
@@ -404,7 +385,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             <Note>Hoa hồng môi giới mặc định 2% giá trị BĐS — có thể điều chỉnh trong Cài đặt → Hoa hồng theo từng loại giao dịch.</Note>
         </section>
     ),
-
     'sequences': (
         <section id="sequences">
             <SectionHeader color="rose" icon={Ico.SEQUENCE} label="Chiến dịch tự động (Sequences)" badge="Email · Zalo · Nhắc việc" />
@@ -428,7 +408,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             ]} />
         </section>
     ),
-
     'reports': (
         <section id="reports">
             <SectionHeader color="teal" icon={Ico.REPORT} label="Báo cáo & Phân tích" />
@@ -446,7 +425,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             <Tip>Đặt lịch gửi báo cáo tự động trong Cài đặt → Báo cáo → để nhận báo cáo tổng hợp vào sáng thứ Hai mỗi tuần.</Tip>
         </section>
     ),
-
     'tasks': (
         <section id="tasks">
             <SectionHeader color="indigo" icon={Ico.TASK} label="Quản lý Công việc (Task Management)" />
@@ -463,7 +441,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             ]} />
         </section>
     ),
-
     'knowledge': (
         <section id="knowledge">
             <SectionHeader color="lime" icon={Ico.KNOWLEDGE} label="Cơ sở Tri thức (Knowledge Base)" />
@@ -481,7 +458,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             <Tip>Càng thêm nhiều bài viết chất lượng vào Knowledge Base, AI trả lời tự động trong Inbox càng chính xác. Nên upload ngay kịch bản xử lý từ chối và FAQ phổ biến.</Tip>
         </section>
     ),
-
     'settings': (
         <section id="settings">
             <SectionHeader color="slate" icon={Ico.SETTING} label="Cài đặt & Hồ sơ" />
@@ -516,7 +492,6 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
         </section>
     ),
 };
-
 /* ─────────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────────── */
@@ -590,7 +565,6 @@ export function UserGuide() {
                             </button>
                         );
                     })}
-
                     <div className="mt-auto pt-4 border-t border-slate-800 mx-2">
                         <a
                             href="mailto:info@sgsland.vn"
@@ -602,7 +576,6 @@ export function UserGuide() {
                         <p className="text-[10px] text-slate-700 mt-2">SGS LAND v2.0 · 2026</p>
                     </div>
                 </aside>
-
                 {/* SIDEBAR — mobile overlay */}
                 {mobileOpen && (
                     <div className="md:hidden fixed inset-0 z-50 bg-black/70" onClick={() => setMobileOpen(false)}>
@@ -629,7 +602,6 @@ export function UserGuide() {
                         </div>
                     </div>
                 )}
-
                 {/* MAIN CONTENT */}
                 <main ref={contentRef} className="flex-1 overflow-y-auto">
                     {/* Hero bar */}
@@ -666,7 +638,6 @@ export function UserGuide() {
                             </div>
                         </div>
                     </div>
-
                     {/* Section body */}
                     <div className="px-6 md:px-10 py-8 max-w-3xl mx-auto">
                         {SECTIONS[active]}

@@ -13,22 +13,17 @@
  *   • On logout, the local cache is intentionally preserved so the user can
  *     keep browsing their picks anonymously.
  */
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buyerApi } from '../api/buyer';
 import { ApiError } from '../api/client';
 import { getBuyerToken } from './auth';
-
 const KEY = 'sgs.favorites.v1';
 const PENDING_KEY = 'sgs.favorites.pending.v1';
-
 interface PendingOps {
   add: string[];
   remove: string[];
 }
-
 // ── Local cache primitives ──────────────────────────────────────────────────
-
 export async function loadFavorites(): Promise<Set<string>> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
@@ -40,7 +35,6 @@ export async function loadFavorites(): Promise<Set<string>> {
     return new Set();
   }
 }
-
 export async function saveFavorites(set: Set<string>): Promise<void> {
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(Array.from(set)));
@@ -48,7 +42,6 @@ export async function saveFavorites(set: Set<string>): Promise<void> {
     /* best-effort */
   }
 }
-
 /**
  * Wipe local favorites + pending sync queue. Call this on logout so the next
  * buyer who signs in on this device cannot inherit (or accidentally upload)
@@ -61,7 +54,6 @@ export async function clearLocalFavorites(): Promise<void> {
     /* best-effort */
   }
 }
-
 async function loadPending(): Promise<PendingOps> {
   try {
     const raw = await AsyncStorage.getItem(PENDING_KEY);
@@ -75,7 +67,6 @@ async function loadPending(): Promise<PendingOps> {
     return { add: [], remove: [] };
   }
 }
-
 async function savePending(p: PendingOps): Promise<void> {
   try {
     await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(p));
@@ -83,7 +74,6 @@ async function savePending(p: PendingOps): Promise<void> {
     /* best-effort */
   }
 }
-
 async function pushPending(op: 'add' | 'remove', id: string): Promise<void> {
   const p = await loadPending();
   // Cancel out conflicting ops — e.g. add then remove → both gone.
@@ -92,9 +82,7 @@ async function pushPending(op: 'add' | 'remove', id: string): Promise<void> {
   if (!p[op].includes(id)) p[op].push(id);
   await savePending(p);
 }
-
 // ── Server sync ─────────────────────────────────────────────────────────────
-
 /** Fire-and-forget: kick a server mutation but never throw to the caller. */
 async function tryServer(op: 'add' | 'remove', id: string): Promise<void> {
   const token = await getBuyerToken();
@@ -113,7 +101,6 @@ async function tryServer(op: 'add' | 'remove', id: string): Promise<void> {
     await pushPending(op, id);
   }
 }
-
 /**
  * Merge local + server favorites. Call after login (and opportunistically on
  * app launch when a token exists). Returns the reconciled local set.
@@ -122,7 +109,6 @@ export async function syncFavorites(): Promise<Set<string>> {
   const token = await getBuyerToken();
   const local = await loadFavorites();
   if (!token) return local;
-
   // 1. Replay pending ops first so the server reflects local intent.
   const pending = await loadPending();
   if (pending.add.length) {
@@ -145,7 +131,6 @@ export async function syncFavorites(): Promise<Set<string>> {
     pending.remove = stillPending;
   }
   await savePending(pending);
-
   // 2. Pull server state, union with any local-only IDs (first-time login —
   //    user had favorites before signing in).
   let serverIds: string[] = [];
@@ -155,7 +140,6 @@ export async function syncFavorites(): Promise<Set<string>> {
   } catch {
     return local; // network down — keep local truth
   }
-
   const merged = new Set<string>([...serverIds, ...local]);
   // 3. Push any local-only IDs to the server so other devices see them.
   const localOnly = Array.from(local).filter((id) => !serverIds.includes(id));
@@ -169,13 +153,10 @@ export async function syncFavorites(): Promise<Set<string>> {
       await savePending(p);
     }
   }
-
   await saveFavorites(merged);
   return merged;
 }
-
 // ── Public mutations (used by all screens) ─────────────────────────────────
-
 export async function toggleFavorite(id: string): Promise<Set<string>> {
   const cur = await loadFavorites();
   const op: 'add' | 'remove' = cur.has(id) ? 'remove' : 'add';
@@ -186,7 +167,6 @@ export async function toggleFavorite(id: string): Promise<Set<string>> {
   void tryServer(op, id);
   return cur;
 }
-
 export async function removeFavorite(id: string): Promise<Set<string>> {
   const cur = await loadFavorites();
   if (!cur.has(id)) return cur;

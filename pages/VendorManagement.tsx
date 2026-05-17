@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
-
 interface VendorAdmin {
   id: string;
   email: string;
@@ -10,13 +9,11 @@ interface VendorAdmin {
   status: string;
   emailVerified: boolean;
 }
-
 interface VendorSubscription {
   planId: string;
   status: string;
   trialEndsAt: string | null;
 }
-
 interface Vendor {
   id: string;
   name: string;
@@ -29,14 +26,12 @@ interface Vendor {
   admin: VendorAdmin | null;
   subscription: VendorSubscription;
 }
-
 const STATUS_CLASSNAMES: Record<string, string> = {
   PENDING_APPROVAL: 'bg-amber-100 text-amber-800 border border-amber-200',
   APPROVED:         'bg-emerald-100 text-emerald-800 border border-emerald-200',
   REJECTED:         'bg-rose-100 text-rose-800 border border-rose-200',
   SUSPENDED:        'bg-slate-100 text-slate-700 border border-slate-200',
 };
-
 function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
   const className = STATUS_CLASSNAMES[status] || 'bg-gray-100 text-gray-700';
@@ -47,7 +42,6 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-
 function RejectModal({
   vendor,
   onConfirm,
@@ -60,7 +54,6 @@ function RejectModal({
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) { setError('Vui lòng nhập lý do từ chối'); return; }
@@ -73,7 +66,6 @@ function RejectModal({
       setLoading(false);
     }
   };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
@@ -118,7 +110,6 @@ function RejectModal({
     </div>
   );
 }
-
 function SuspendModal({
   vendor,
   onConfirm,
@@ -130,7 +121,6 @@ function SuspendModal({
 }) {
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -141,7 +131,6 @@ function SuspendModal({
       setLoading(false);
     }
   };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
@@ -168,12 +157,9 @@ function SuspendModal({
     </div>
   );
 }
-
 const VENDOR_STATUSES = ['PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
-
 export default function VendorManagement() {
   const { t } = useTranslation();
-
   const statusOptions = [
     { value: '', label: t('vendor.status_all' as any) },
     ...VENDOR_STATUSES.map(s => ({ value: s, label: t(`vendor.status_${s}` as any) })),
@@ -206,14 +192,11 @@ export default function VendorManagement() {
       setLoading(false);
     }
   }, [filterStatus, search, page]);
-
   useEffect(() => { fetchVendors(); }, [fetchVendors]);
-
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(''), 3500);
   };
-
   const handleApprove = async (vendor: Vendor) => {
     if (!confirm(`Duyệt workspace "${vendor.name}" (${vendor.admin?.email})?`)) return;
     setActionLoading(vendor.id);
@@ -227,7 +210,6 @@ export default function VendorManagement() {
       setActionLoading(null);
     }
   };
-
   const handleReject = async (vendor: Vendor, reason: string) => {
     setActionLoading(vendor.id);
     try {
@@ -238,7 +220,6 @@ export default function VendorManagement() {
       setActionLoading(null);
     }
   };
-
   const handleSuspend = async (vendor: Vendor, reason: string) => {
     setActionLoading(vendor.id);
     try {
@@ -249,12 +230,10 @@ export default function VendorManagement() {
       setActionLoading(null);
     }
   };
-
   const statusCounts = vendors.reduce<Record<string, number>>((acc, v) => {
     acc[v.approvalStatus] = (acc[v.approvalStatus] || 0) + 1;
     return acc;
   }, {});
-
   return (
     <div className="min-h-full bg-gray-50">
       {/* Header */}
@@ -279,7 +258,6 @@ export default function VendorManagement() {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-5">
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -298,7 +276,6 @@ export default function VendorManagement() {
             );
           })}
         </div>
-
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -322,7 +299,6 @@ export default function VendorManagement() {
             className="sm:w-56"
           />
         </div>
-
         {/* Messages */}
         {successMsg && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
@@ -335,7 +311,6 @@ export default function VendorManagement() {
             {error}
           </div>
         )}
-
         {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {loading ? (
@@ -463,7 +438,6 @@ export default function VendorManagement() {
             </div>
           )}
         </div>
-
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2">
@@ -485,7 +459,6 @@ export default function VendorManagement() {
           </div>
         )}
       </div>
-
       {rejectTarget && (
         <RejectModal
           vendor={rejectTarget}

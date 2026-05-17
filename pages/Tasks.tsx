@@ -13,12 +13,10 @@ import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/Ta
 import { StatusBadge, PriorityBadge, DeadlineTag, AvatarStack, TaskSkeleton } from '../components/task/Badges';
 import { STATUS_LABELS, PRIORITY_LABELS, ALL_STATUSES, isValidTransition, exportTasksToCSV } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
-
 type SortKey = 'priority' | 'deadline' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
 const LIMIT = 20;
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
-
 function serializeFilters(f: TaskFilters, sort: SortKey, dir: SortDir, page: number): string {
   const qs = new URLSearchParams();
   if (f.search) qs.set('q', f.search);
@@ -35,7 +33,6 @@ function serializeFilters(f: TaskFilters, sort: SortKey, dir: SortDir, page: num
   if (page > 1) qs.set('page', String(page));
   return qs.toString();
 }
-
 function deserializeFilters(): { filters: TaskFilters; sort: SortKey; dir: SortDir; page: number } {
   try {
     const search = window.location.search;
@@ -61,24 +58,20 @@ function deserializeFilters(): { filters: TaskFilters; sort: SortKey; dir: SortD
     return { filters: EMPTY_FILTERS, sort: 'created_at', dir: 'desc', page: 1 };
   }
 }
-
 function getTaskIdFromPath(): string | null {
   const parts = window.location.pathname.split('/').filter(Boolean);
   return parts[0] === ROUTES.TASKS && parts.length > 1 ? parts[1] : null;
 }
-
 function TaskList() {
   const init = useMemo(() => deserializeFilters(), []);
   const [filters, setFilters] = useState<TaskFilters>(init.filters);
   const [sortKey, setSortKey] = useState<SortKey>(init.sort);
   const [sortDir, setSortDir] = useState<SortDir>(init.dir);
   const [page, setPage] = useState(init.page);
-
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -90,7 +83,6 @@ function TaskList() {
   const toastId = useRef(0);
   const [showCreate, setShowCreate] = useState(false);
   const fetchRef = useRef(0);
-
   useEffect(() => {
     const t = setTimeout(async () => {
       if (!bulkAssignSearch.trim()) { setBulkAssignResults([]); return; }
@@ -101,7 +93,6 @@ function TaskList() {
     }, 300);
     return () => clearTimeout(t);
   }, [bulkAssignSearch]);
-
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (bulkAssignRef.current && !bulkAssignRef.current.contains(e.target as Node)) setBulkAssignPickerOpen(false);
@@ -115,12 +106,10 @@ function TaskList() {
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   }, []);
-
   useEffect(() => {
     const qs = serializeFilters(filters, sortKey, sortDir, page);
     window.history.replaceState(null, '', `/${ROUTES.TASKS}${qs ? '?' + qs : ''}`);
   }, [filters, sortKey, sortDir, page]);
-
   const loadTasks = useCallback(async (f: TaskFilters, sk: SortKey, sd: SortDir, pg: number) => {
     const token = ++fetchRef.current;
     setLoading(true);
@@ -146,44 +135,36 @@ function TaskList() {
       if (fetchRef.current === token) setLoading(false);
     }
   }, []);
-
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const prevFilters = useRef<{ f: TaskFilters; sk: SortKey; sd: SortDir; pg: number } | null>(null);
-
   useEffect(() => {
     const sig = JSON.stringify({ filters, sortKey, sortDir, page });
     const prevSig = prevFilters.current ? JSON.stringify(prevFilters.current) : null;
     if (sig === prevSig) return;
     prevFilters.current = { f: filters, sk: sortKey, sd: sortDir, pg: page };
-
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => {
       loadTasks(filters, sortKey, sortDir, page);
     }, 250);
     return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
   }, [filters, sortKey, sortDir, page, loadTasks]);
-
   const openTask = useCallback((id: string) => {
     const qs = window.location.search.slice(1);
     window.history.pushState(null, '', `/${ROUTES.TASKS}/${id}${qs ? '?' + qs : ''}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, []);
-
   const handleFiltersChange = useCallback((f: TaskFilters) => {
     setFilters(f); setPage(1); setSelectedIds(new Set());
   }, []);
-
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('asc'); }
     setPage(1);
   };
-
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (sortKey !== col) return <ArrowUpDown size={12} className="opacity-40" />;
     return sortDir === 'asc' ? <ArrowUp size={12} className="text-indigo-500" /> : <ArrowDown size={12} className="text-indigo-500" />;
   };
-
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -191,11 +172,9 @@ function TaskList() {
       return next;
     });
   };
-
   const toggleSelectAll = () => {
     setSelectedIds(tasks.length > 0 && selectedIds.size === tasks.length ? new Set() : new Set(tasks.map(t => t.id)));
   };
-
   const runBulkAction = async () => {
     if (!bulkAction || selectedIds.size === 0) return;
     setBulkLoading(true);
@@ -224,7 +203,6 @@ function TaskList() {
       setBulkLoading(false);
     }
   };
-
   const runBulkAssign = async (userId: string, userName: string) => {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
@@ -248,7 +226,6 @@ function TaskList() {
       setBulkLoading(false);
     }
   };
-
   const quickChangeStatus = async (task: WfTask, newStatus: WfTaskStatus) => {
     if (!isValidTransition(task.status, newStatus)) {
       showToast(`Không thể chuyển từ "${STATUS_LABELS[task.status]}" sang "${STATUS_LABELS[newStatus]}"`, 'error');
@@ -262,7 +239,6 @@ function TaskList() {
       showToast('Không thể đổi trạng thái', 'error');
     }
   };
-
   const quickChangePriority = async (task: WfTask, newPriority: TaskPriority) => {
     try {
       const updated = await taskApi.update(task.id, { priority: newPriority });
@@ -272,7 +248,6 @@ function TaskList() {
       showToast('Không thể đổi ưu tiên', 'error');
     }
   };
-
   const hasFilters = !!(filters.search || filters.statusFilter.length || filters.priorityFilter.length ||
     filters.departmentId || filters.projectId || filters.assigneeId ||
     filters.deadlineFrom || filters.deadlineTo);
@@ -283,7 +258,6 @@ function TaskList() {
     setTasks(prev => [task, ...prev]);
     setTotal(prev => prev + 1);
   }, []);
-
   return (
     <div className="h-full flex flex-col overflow-hidden animate-enter">
       {/* Header */}
@@ -304,7 +278,6 @@ function TaskList() {
           </button>
         </div>
       </div>
-
       {/* Filter bar */}
       <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0">
         <TaskFilterBar
@@ -318,7 +291,6 @@ function TaskList() {
           showDeadlineRange
         />
       </div>
-
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-800 flex-shrink-0">
@@ -371,7 +343,6 @@ function TaskList() {
           </div>
         </div>
       )}
-
       {/* Table */}
       <div className="flex-1 overflow-auto no-scrollbar">
         {loading ? (
@@ -490,7 +461,6 @@ function TaskList() {
           </table>
         )}
       </div>
-
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 md:px-6 py-3 border-t border-[var(--glass-border)] flex-shrink-0">
@@ -506,9 +476,7 @@ function TaskList() {
           </div>
         </div>
       )}
-
       {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} onCreated={handleTaskCreated} />}
-
       {/* Toasts */}
       <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-2 pointer-events-none">
         {toasts.map(toast => (
@@ -522,18 +490,14 @@ function TaskList() {
     </div>
   );
 }
-
 export function Tasks() {
   const [path, setPath] = useState(window.location.pathname);
-
   useEffect(() => {
     const handler = () => setPath(window.location.pathname);
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, []);
-
   const taskId = useMemo(() => getTaskIdFromPath(), [path]);
-
   if (taskId) {
     return (
       <TaskDetailContent
@@ -546,6 +510,5 @@ export function Tasks() {
       />
     );
   }
-
   return <TaskList />;
 }

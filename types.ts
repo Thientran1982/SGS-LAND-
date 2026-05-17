@@ -1,4 +1,3 @@
-
 /**
  * CORE DOMAIN DEFINITIONS - SGS LAND ENTERPRISE
  * -----------------------------------------------------------------------------
@@ -6,7 +5,6 @@
  * Standard: Strict Typing, Discriminated Unions, Branded IDs
  * -----------------------------------------------------------------------------
  */
-
 // =============================================================================
 // 0. SHARED CONSTANTS (Single Source of Truth)
 // =============================================================================
@@ -33,20 +31,16 @@ export interface Article {
     featured: boolean;
     tags: string[];
 }
-
 // =============================================================================
 // 1. KERNEL & PRIMITIVES (Branded Types)
 // =============================================================================
-
 // Utility to create Nominal/Branded types (prevents mixing up different ID types)
 declare const __brand: unique symbol;
 type Brand<K, T> = K & { [__brand]: T };
-
 export type UUID = string;
 export type ISOString = string; // e.g. "2024-01-01T00:00:00Z"
 export type HTMLContent = string;
 export type Locale = 'vi-VN' | 'en-US' | (string & {}); // Flexible locale
-
 // Branded IDs for Type Safety
 export type UserId = Brand<UUID, 'UserId'>;
 export type LeadId = Brand<UUID, 'LeadId'>;
@@ -54,7 +48,6 @@ export type TenantId = Brand<string, 'TenantId'>;
 export type ListingId = Brand<UUID, 'ListingId'>;
 export type ProposalId = Brand<UUID, 'ProposalId'>;
 export type TaskId = Brand<UUID, 'TaskId'>;
-
 export interface TenantConfig {
     primaryColor: string;
     logoUrl?: string;
@@ -63,14 +56,12 @@ export interface TenantConfig {
         maxUsers: number;
     };
 }
-
 export interface Tenant {
     id: TenantId;
     name: string;
     domain: string;
     config: TenantConfig;
 }
-
 export interface PaginatedList<T> {
     data: T[];
     total: number;
@@ -93,7 +84,6 @@ export enum DataResidency {
     US = 'US',
     EU = 'EU'
 }
-
 // =============================================================================
 // 2. IAM & ORGANIZATION
 // =============================================================================
@@ -110,7 +100,6 @@ export enum UserRole {
     PARTNER_ADMIN = 'PARTNER_ADMIN',  // Quản trị viên sàn đối tác
     PARTNER_AGENT = 'PARTNER_AGENT',  // Nhân viên môi giới sàn đối tác
 }
-
 // B2B2C: Dự án do chủ đầu tư sở hữu
 export interface Project {
     id: UUID;
@@ -127,7 +116,6 @@ export interface Project {
     createdAt: ISOString;
     updatedAt: ISOString;
 }
-
 // B2B2C: Cấp quyền sàn đối tác xem/bán dự án
 export interface ProjectAccess {
     id: UUID;
@@ -141,7 +129,6 @@ export interface ProjectAccess {
     status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
     note?: string;              // Ghi chú điều kiện hợp tác
 }
-
 // B2B2C: Phân quyền xem từng sản phẩm (listing-level) cho partner tenant cụ thể
 // Logic: nếu listing có bất kỳ ACTIVE listing_access → chỉ partner được grant mới thấy
 //        nếu listing không có listing_access nào → mọi partner có project_access đều thấy (mặc định)
@@ -157,7 +144,6 @@ export interface ListingAccess {
     status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
     note?: string;
 }
-
 export type Permission = 
     | 'VIEW_DASHBOARD'
     | 'MANAGE_USERS'
@@ -176,7 +162,6 @@ export interface UserPreferences {
     };
     language?: Locale;
 }
-
 export interface User {
     id: UserId;
     tenantId: TenantId;
@@ -195,7 +180,6 @@ export interface User {
     departmentId?: string | null;
     departmentName?: string | null;
 }
-
 export interface Team {
     id: UUID;
     name: string;
@@ -203,7 +187,6 @@ export interface Team {
     memberIds: UserId[];
     metadata?: Record<string, unknown>;
 }
-
 // --- DYNAMIC NAVIGATION TYPES (SERVER DRIVEN UI) ---
 export interface NavItem {
     id: string;
@@ -212,17 +195,14 @@ export interface NavItem {
     iconKey: string;  // Key to map to icon component
     badge?: { count: number; color: 'red' | 'blue' | 'green' };
 }
-
 export interface NavGroup {
     id: string;
     labelKey: string;
     items: NavItem[];
 }
-
 // =============================================================================
 // 3. SALES ENGINE (CRM)
 // =============================================================================
-
 export enum LeadStage {
     NEW = 'NEW',
     CONTACTED = 'CONTACTED',
@@ -233,14 +213,12 @@ export enum LeadStage {
     LOST = 'LOST',
     MANUAL = 'MANUAL'
 }
-
 export interface LeadScore {
     score: number; // 0-100
     grade: 'A' | 'B' | 'C' | 'D' | 'F' | string;
     factors?: Array<{ factor: string; weight: number; delta: number }>;
     reasoning?: string;
 }
-
 export interface LeadPreferences {
     budgetMin?: number;
     budgetMax?: number;
@@ -259,9 +237,7 @@ export interface LeadPreferences {
     _lastUrgency?: 'HIGH' | 'MEDIUM' | 'LOW';
     _lastEmotionalState?: 'ANXIOUS' | 'FRUSTRATED' | 'EXCITED' | 'NEUTRAL';
 }
-
 export type AmlStatus = 'PENDING' | 'CLEAR' | 'FLAGGED' | 'BLOCKED';
-
 export interface Lead {
     id: LeadId;
     tenantId?: TenantId;
@@ -285,17 +261,14 @@ export interface Lead {
         telegram?: string;
     };
     optOutChannels: string[]; // e.g. ['SMS', 'EMAIL']
-
     // AML / Compliance
     amlStatus?: AmlStatus;
     amlRiskScore?: number;   // 0–100; higher = riskier
     amlCheckedAt?: ISOString;
     amlNotes?: string;
-
     // Flexible attributes but prefer strongly typed preferences for matching
     attributes?: Record<string, string | number | boolean | string[]>;
     preferences?: LeadPreferences;
-
     // Denormalized from latest linked contract (via LATERAL JOIN)
     contractId?: string;
     contractPaymentSchedule?: PaymentMilestone[];
@@ -304,7 +277,6 @@ export interface Lead {
     contractValue?: number;
     contractNumber?: string;
 }
-
 export enum PropertyType {
     PROJECT = 'Project',       // Dự án
     APARTMENT = 'Apartment',   // Căn hộ
@@ -317,12 +289,10 @@ export enum PropertyType {
     OFFICE = 'Office',         // Văn phòng
     COMMERCIAL = 'Commercial'  // Thương mại
 }
-
 export enum ListingStatus {
     // Project Statuses
     BOOKING = 'BOOKING',       // Nhận Booking
-    OPENING = 'OPENING',       // Đang mở bán
-    
+    OPENING = 'OPENING',       // Đang mở bán   
     // Unit Statuses
     AVAILABLE = 'AVAILABLE',   // Đang bán/cho thuê
     HOLD = 'HOLD',             // Giữ chỗ
@@ -331,12 +301,10 @@ export enum ListingStatus {
     INACTIVE = 'INACTIVE',     // Ngưng giao dịch
     BEST_MARKET = 'BEST_MARKET' // Tốt nhất thị trường
 }
-
 export enum TransactionType {
     SALE = 'SALE',
     RENT = 'RENT'
 }
-
 export interface ListingAttributes {
     direction?: 'North' | 'South' | 'East' | 'West' | 'NorthEast' | 'NorthWest' | 'SouthEast' | 'SouthWest' | string;
     floor?: number;
@@ -344,24 +312,19 @@ export interface ListingAttributes {
     tower?: string;       // Toà / Block (Apartment/Penthouse)
     clearArea?: number;   // DT thông thủy m² (Apartment/Penthouse)
     legalStatus?: 'PinkBook' | 'Contract' | 'Waiting' | string;
-    furniture?: 'FULL' | 'BASIC' | 'NONE';
-    
+    furniture?: 'FULL' | 'BASIC' | 'NONE';    
     // Vietnam Specific Land Types
     landType?: 'ONT' | 'ODT' | 'CLN' | 'LUK' | 'SKK' | 'TMD'; 
     frontage?: number; // meters (Mặt tiền)
-    roadWidth?: number; // meters (Lộ giới)
-    
+    roadWidth?: number; // meters (Lộ giới)    
     // Project Specifics
     developer?: string;
     handoverYear?: string;
-
     // General
-    notes?: string;
-    
+    notes?: string;    
     // Index signature for extensibility
     [key: string]: unknown;
 }
-
 export interface Listing {
     id: ListingId;
     tenantId?: TenantId;
@@ -382,7 +345,6 @@ export interface Listing {
     images?: string[];
     projectCode?: string;
     projectId?: UUID; // FK to projects.id (B2B2C: scoped listing access via project_access)
-
     // Contact Info
     contactPhone?: string; // Explicit contact number for this listing
 
@@ -390,8 +352,7 @@ export interface Listing {
     coordinates?: {
         lat: number;
         lng: number;
-    };
-    
+    };    
     // New Fields
     isVerified: boolean;
     isFavorite: boolean;
@@ -399,7 +360,6 @@ export interface Listing {
     bookingCount?: number; // For Projects
     totalUnits?: number; // For Projects
     availableUnits?: number; // For Projects
-
     // Internal / Agent Info
     ownerName?: string;
     ownerPhone?: string;
@@ -414,11 +374,9 @@ export interface Listing {
     authorizedAgents?: UserId[]; // Agents granted permission to view sensitive info
     createdAt?: ISOString;
 }
-
 // =============================================================================
 // 4. COMMERCIAL & TRANSACTIONS
 // =============================================================================
-
 export enum ProposalStatus {
     DRAFT = 'DRAFT',
     PENDING_APPROVAL = 'PENDING_APPROVAL',
@@ -426,7 +384,6 @@ export enum ProposalStatus {
     REJECTED = 'REJECTED',
     EXPIRED = 'EXPIRED'
 }
-
 export interface ProposedPaymentMilestone {
     id: string;
     label: string;
@@ -434,7 +391,6 @@ export interface ProposedPaymentMilestone {
     percentage: number;
     amount: number;
 }
-
 export interface ProposalMetadata {
     depositRequired?: number;
     validityDays?: number;
@@ -442,7 +398,6 @@ export interface ProposalMetadata {
     terms?: string;
     paymentSchedule?: ProposedPaymentMilestone[];
 }
-
 export interface Proposal {
     id: ProposalId;
     tenantId?: TenantId;
@@ -462,7 +417,6 @@ export interface Proposal {
     // AML clearance flag — set to true after compliance review before APPROVED
     amlVerified?: boolean;
 }
-
 // =============================================================================
 // 5. WORKFLOW & AUTOMATION
 // =============================================================================
@@ -474,14 +428,12 @@ export enum TaskStatus {
     OVERDUE = 'OVERDUE',
     CANCELED = 'CANCELED'
 }
-
 export enum Priority {
     LOW = 'LOW',
     MEDIUM = 'MEDIUM',
     HIGH = 'HIGH',
     URGENT = 'URGENT'
 }
-
 export interface Task {
     id: TaskId;
     title: string;
@@ -494,14 +446,12 @@ export interface Task {
     dueDate: ISOString;
     createdAt: ISOString;
 }
-
 export enum RoutingStrategy {
     ROUND_ROBIN = 'ROUND_ROBIN',
     WEIGHTED_ROUND_ROBIN = 'WEIGHTED_ROUND_ROBIN',
     SKILL_BASED = 'SKILL_BASED',
     BEST_AVAILABLE = 'BEST_AVAILABLE'
 }
-
 export interface RoutingCondition {
     source?: string[];
     region?: string[];
@@ -511,7 +461,6 @@ export interface RoutingCondition {
     budgetMax?: number;
     temperature?: string[];
 }
-
 export interface RoutingRule {
     id: UUID;
     name: string;
@@ -526,11 +475,9 @@ export interface RoutingRule {
     enabled?: boolean;
     isActive?: boolean;
 }
-
 // =============================================================================
 // 6. INFRASTRUCTURE & CONFIGURATION
 // =============================================================================
-
 export interface EnterpriseConfig {
     id: UUID;
     tenantId: TenantId;
@@ -550,22 +497,18 @@ export interface EnterpriseConfig {
     dlpRules: DlpRule[];
     slaConfig: SLAConfig;
 }
-
 export type ComplianceConfig = Pick<EnterpriseConfig, 'retention' | 'legalHold' | 'dlpRules' | 'ipAllowlist'>;
-
 export interface OnboardingState {
     completedSteps: string[];
     isDismissed: boolean;
     percentage: number;
 }
-
 export interface DomainVerification {
     domain: string;
     verified: boolean;
     verifiedAt?: ISOString;
     verificationTxtRecord?: string;
 }
-
 export interface SSOConfig {
     enabled: boolean;
     provider: 'OIDC' | 'SAML';
@@ -574,23 +517,19 @@ export interface SSOConfig {
     clientSecret?: string;
     loginUrl?: string;
 }
-
 export interface SCIMConfig {
     enabled: boolean;
     token: string;
     tokenCreatedAt: ISOString;
 }
-
 export interface RetentionPolicy {
     messagesDays: number;
     auditLogsDays: number;
 }
-
 export interface SLAConfig {
     responseThresholdHours: number;
     maxDisplayItems: number;
 }
-
 export interface FacebookPage {
     id: string;
     name: string;
@@ -600,7 +539,6 @@ export interface FacebookPage {
     connectedBy?: string;
     picture?: string;
 }
-
 export interface ZaloOaConfig {
     enabled: boolean;
     oaId: string;
@@ -611,7 +549,6 @@ export interface ZaloOaConfig {
     refreshToken?: string;
     webhookUrl?: string;
 }
-
 export interface EmailConfig {
     enabled: boolean;
     host: string;
@@ -622,20 +559,17 @@ export interface EmailConfig {
     fromName: string;
     fromAddress: string;
 }
-
 export enum HealthStatus {
     HEALTHY = 'HEALTHY',
     DEGRADED = 'DEGRADED',
     CRITICAL = 'CRITICAL'
 }
-
 export interface EnvCheckResult {
     key: string;
     exists: boolean;
     maskedValue?: string;
     status: 'OK' | 'MISSING';
 }
-
 export interface SystemHealth {
     status: HealthStatus;
     uptime: number;
@@ -645,9 +579,7 @@ export interface SystemHealth {
     checks: Record<string, boolean>;
     config: EnvCheckResult[];
 }
-
 export type LogSource = 'USER' | 'SYSTEM' | 'CHAOS' | 'TRAFFIC' | 'SECURITY' | 'AI';
-
 export interface LogEntry {
     id: UUID;
     timestamp: ISOString;
@@ -659,14 +591,12 @@ export interface LogEntry {
     correlationId?: string;
     traceId?: string;
 }
-
 export interface ChaosConfig {
     latencyMs: number;
     errorRate: number; // 0.0 to 1.0
     services: { database: boolean; webhook: boolean; ai: boolean };
     enabled: boolean;
 }
-
 export interface AuditLog {
     id: UUID;
     timestamp: ISOString;
@@ -679,7 +609,6 @@ export interface AuditLog {
     metadata?: Record<string, unknown>;
     ipAddress?: string;
 }
-
 export interface DlpRule {
     id: UUID;
     name: string;
@@ -687,7 +616,6 @@ export interface DlpRule {
     action: 'REDACT' | 'BLOCK' | 'LOG_ONLY';
     enabled: boolean;
 }
-
 export interface SecuritySession {
     id: UUID;
     userId: UserId;
@@ -698,11 +626,9 @@ export interface SecuritySession {
     userName?: string;
     userEmail?: string;
 }
-
 // =============================================================================
 // 7. OMNICHANNEL & AI AGENTS
 // =============================================================================
-
 export enum Channel {
     ZALO = 'ZALO',
     FACEBOOK = 'FACEBOOK',
@@ -712,12 +638,10 @@ export enum Channel {
     VOICE = 'VOICE',
     WEB = 'WEB'
 }
-
 export enum Direction {
     INBOUND = 'INBOUND',
     OUTBOUND = 'OUTBOUND'
 }
-
 export type AgentArtifact = 
     | { type: 'LOAN_SCHEDULE'; title: string; data: LoanScheduleData }
     | { type: 'BOOKING_DRAFT'; title: string; data: BookingDraftData }
@@ -726,38 +650,32 @@ export type AgentArtifact =
     | { type: 'VALUATION_REPORT'; title: string; data: ValuationData }
     | { type: 'LEAD_BRIEF'; title: string; data: LeadBriefData }
     | { type: 'ESCALATION_HANDOVER'; title: string; data: EscalationHandoverData };
-
 export interface LoanScheduleData {
     monthlyPayment: number;
     totalInterest: number;
     input: { principal: number; rate: number; months: number };
     schedule: Array<{ month: number; principal: number; interest: number; balance: number }>;
 }
-
 export interface BookingDraftData {
     time: string;
     location: string;
     notes?: string;
 }
-
 export interface MarketChartData {
     labels: string[];
     values: number[];
     trend: number;
 }
-
 export interface MarketingCopyData {
     headline: string;
     body: string;
     hashtags: string[];
 }
-
 export interface ValuationData {
     estimatedPrice: number;
     confidence: number;
     comparables: string[];
 }
-
 export interface LeadBriefData {
     leadName: string;
     stage: 'Awareness' | 'Consideration' | 'Decision' | string;
@@ -768,7 +686,6 @@ export interface LeadBriefData {
     urgencySignals: string[];
     hesitationSignals: string[];
 }
-
 export interface EscalationHandoverData {
     leadName: string;
     stage: string;
@@ -783,7 +700,6 @@ export interface EscalationHandoverData {
     escalatedAt: string;
     triggerMessage: string;
 }
-
 export interface InteractionMetadata {
     fileName?: string;
     fileSize?: number;
@@ -799,7 +715,6 @@ export interface InteractionMetadata {
     trace?: AgentTraceStep[]; // Trace for debugging
     [key: string]: unknown; // Allow extensions but prefer typed unions above
 }
-
 export interface Interaction {
     id: UUID;
     leadId: LeadId;
@@ -811,14 +726,12 @@ export interface Interaction {
     metadata?: InteractionMetadata;
     status: 'SENT' | 'DELIVERED' | 'READ' | 'FAILED' | 'PENDING';
 }
-
 export enum ThreadStatus {
     AI_ACTIVE = 'AI_ACTIVE', // Agent is handling
     HUMAN_NEEDED = 'HUMAN_NEEDED', // AI gave up or low confidence
     HUMAN_TAKEOVER = 'HUMAN_TAKEOVER', // Agent manually paused
     COMPLETED = 'COMPLETED' // Closed
 }
-
 export interface InboxThread {
     lead: Lead;
     lastMessage?: Interaction;
@@ -827,7 +740,6 @@ export interface InboxThread {
     aiConfidenceLast?: number; // Snapshot of last AI confidence
     lastChannel?: string;
 }
-
 // Updated models based on Google GenAI SDK rules (Feb 2026 Compatible)
 export type AiModelType = 
     | 'gemini-2.5-flash'
@@ -841,14 +753,12 @@ export type AiModelType =
     | 'gemini-1.5-flash'
     | 'gemini-1.5-pro'
     | (string & {}); 
-
 export interface AiTenantConfig {
     allowedModels: AiModelType[];
     defaultModel: AiModelType;
     budgetCapUsd: number;
     currentSpendUsd: number;
 }
-
 export interface SystemPrompt {
     key: string; 
     version: string;
@@ -856,7 +766,6 @@ export interface SystemPrompt {
     model?: AiModelType; 
     isActive: boolean;
 }
-
 export interface PromptTemplate {
     id: UUID;
     name: string;
@@ -869,7 +778,6 @@ export interface PromptTemplate {
         createdAt?: ISOString;
     }>;
 }
-
 export interface AiEvalRun {
     id: UUID;
     templateId: UUID;
@@ -880,7 +788,6 @@ export interface AiEvalRun {
     runAt: ISOString;
     runBy: string;
 }
-
 export interface AiSafetyLog {
     id: UUID;
     timestamp: ISOString;
@@ -890,19 +797,16 @@ export interface AiSafetyLog {
     costUsd: number;
     safetyFlags: string[];
 }
-
 export interface GroundingChunk {
     web?: { uri?: string; title?: string };
     maps?: { uri?: string; title?: string; placeAnswerSources?: unknown };
 }
-
 export interface GroundingMetadata {
     groundingChunks?: GroundingChunk[];
     webSearchQueries?: string[];
     searchEntryPoint?: unknown;
     [key: string]: unknown;
 }
-
 export interface AgentTraceStep {
     id: string;
     node: string; 
@@ -916,7 +820,6 @@ export interface AgentTraceStep {
     tokensEstimate?: number;
     costEstimate?: number;
 }
-
 export interface AgentTraceResponse {
     agent: string;
     content: string;
@@ -931,7 +834,6 @@ export interface AgentTraceResponse {
     intent?: string;
     userMessage?: string;
 }
-
 export interface GraphState {
     messages: { role: 'user' | 'model' | 'system'; content: string; name?: string }[];
     lead: Lead;
@@ -939,11 +841,9 @@ export interface GraphState {
     artifacts: AgentArtifact[];
     trace: AgentTraceStep[];
 }
-
 // =============================================================================
 // 8. MARKETPLACE & INTEGRATIONS
 // =============================================================================
-
 export interface AppManifest {
     id: string;
     name: string;
@@ -955,7 +855,6 @@ export interface AppManifest {
     subscribedEvents: string[];
     developer?: string;
 }
-
 export interface InstalledApp {
     id: UUID;
     appId: string;
@@ -967,7 +866,6 @@ export interface InstalledApp {
     lastEventAt?: ISOString;
     config?: Record<string, unknown>;
 }
-
 export interface WebhookEventPayload {
     eventId: string;
     eventType: string;
@@ -975,7 +873,6 @@ export interface WebhookEventPayload {
     tenantId: string;
     data: unknown;
 }
-
 export enum ConnectorType {
     GOOGLE_SHEETS = 'GOOGLE_SHEETS',
     HUBSPOT = 'HUBSPOT',
@@ -983,7 +880,6 @@ export enum ConnectorType {
     WEBHOOK_EXPORT = 'WEBHOOK_EXPORT',
     SALESFORCE = 'SALESFORCE'
 }
-
 export interface ConnectorConfig<T = Record<string, unknown>> {
     id: UUID;
     type: ConnectorType;
@@ -994,14 +890,12 @@ export interface ConnectorConfig<T = Record<string, unknown>> {
     lastSyncAt?: ISOString;
     lastSyncStatus?: SyncStatus;
 }
-
 export enum SyncStatus {
     QUEUED = 'QUEUED',
     RUNNING = 'RUNNING',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED'
 }
-
 export interface SyncJob {
     id: UUID;
     connectorId: UUID;
@@ -1012,18 +906,15 @@ export interface SyncJob {
     errors: string[];
     retryCount: number;
 }
-
 export interface DataExportResponse<T> {
     data: T[];
     newWatermark: string;
 }
-
 export enum PlanTier {
     INDIVIDUAL = 'INDIVIDUAL',
     TEAM = 'TEAM',
     ENTERPRISE = 'ENTERPRISE'
 }
-
 export interface Plan {
     id: PlanTier;
     name: string;
@@ -1036,14 +927,12 @@ export interface Plan {
         storageGb?: number; 
     };
 }
-
 export interface Subscription {
     planId: PlanTier;
     status: 'active' | 'past_due' | 'canceled' | 'trialing';
     currentPeriodEnd: ISOString;
     paymentMethod?: { last4: string; brand: string; expMonth: number; expYear: number };
 }
-
 export interface UsageMetrics {
     seatsUsed: number;
     emailsSent: number;
@@ -1051,7 +940,6 @@ export interface UsageMetrics {
     periodStart: ISOString;
     periodEnd: ISOString;
 }
-
 export interface Invoice {
     id: string;
     number: string;
@@ -1061,7 +949,6 @@ export interface Invoice {
     status: 'paid' | 'open' | 'void' | 'uncollectible';
     pdfUrl?: string;
 }
-
 export interface AnalyticsSummary {
     totalLeads: number;
     totalLeadsDelta: number;
@@ -1084,7 +971,6 @@ export interface AnalyticsSummary {
     /** Describes data scope: "Toàn công ty" | "Dữ liệu của bạn" */
     scopeLabel?: string;
 }
-
 export interface CampaignCost {
     id: UUID;
     campaignName: string;
@@ -1093,7 +979,6 @@ export interface CampaignCost {
     cost: number;
     createdAt: ISOString;
 }
-
 // Update to include metrics
 export interface SequenceStats {
     enrolled: number;
@@ -1103,7 +988,6 @@ export interface SequenceStats {
     replyRate: number; // percentage
     clickRate: number; // percentage
 }
-
 export interface Sequence {
     id: UUID;
     name: string;
@@ -1113,7 +997,6 @@ export interface Sequence {
     stats?: SequenceStats; // Added metrics
     createdAt?: ISOString;
 }
-
 export interface Template {
     id: UUID;
     name: string;
@@ -1121,7 +1004,6 @@ export interface Template {
     content: string;
     variables?: string[];
 }
-
 export interface SequenceStep {
     id: string;
     type: 'SEND_MESSAGE' | 'CREATE_TASK' | 'WAIT' | 'CONDITION';
@@ -1131,7 +1013,6 @@ export interface SequenceStep {
     taskTitle?: string;
     condition?: unknown;
 }
-
 export interface KnowledgeDocument {
     id: UUID;
     title: string;
@@ -1143,7 +1024,6 @@ export interface KnowledgeDocument {
     fileUrl?: string;
     vectorId?: string;
 }
-
 export interface ScoringConfig {
     version: number;
     weights: { 
@@ -1155,7 +1035,6 @@ export interface ScoringConfig {
     };
     thresholds?: { A: number; B: number; C: number; D: number };
 }
-
 export interface Playbook {
     id: UUID;
     stage: LeadStage;
@@ -1163,34 +1042,29 @@ export interface Playbook {
     description: string;
     steps: { id: string; text: string; type: 'CHECKBOX' | 'INFO'; required: boolean }[];
 }
-
 export interface MarketMetrics {
     avgPrice: number;
     trend: number;
     liquidity: 'High' | 'Medium' | 'Low';
     rentalYield: number;
 }
-
 export enum ContractType {
     RESERVATION = 'RESERVATION', // Phiếu giữ chỗ
     DEPOSIT = 'DEPOSIT',          // Thoả thuận đặt cọc
     SALES = 'SALES'               // Hợp đồng mua bán
 }
-
 export enum ContractStatus {
     DRAFT = 'DRAFT',
     PENDING_SIGNATURE = 'PENDING_SIGNATURE',
     SIGNED = 'SIGNED',
     CANCELLED = 'CANCELLED'
 }
-
 export enum PaymentStatus {
     PENDING = 'PENDING',
     PAID = 'PAID',
     OVERDUE = 'OVERDUE',
     WAIVED = 'WAIVED'
 }
-
 export interface PaymentMilestone {
     id: string;
     name: string;        // "Đợt 1 - Đặt cọc", "Đợt 2 - Ký HĐMB"
@@ -1202,15 +1076,13 @@ export interface PaymentMilestone {
     paidAmount?: number; // Số tiền đã thanh toán thực tế
     note?: string;
 }
-
 export interface Contract {
     id: UUID;
     tenantId?: string;
     type: ContractType;
     status: ContractStatus;
     leadId: LeadId;
-    listingId: ListingId;
-    
+    listingId: ListingId;   
     // Party A (Seller/Company)
     partyAName: string;
     partyARepresentative: string;
@@ -1222,7 +1094,6 @@ export interface Contract {
     partyAPhone: string;
     partyABankAccount?: string;
     partyABankName?: string;
-
     // Party B (Buyer/Customer)
     partyBName: string;
     partyBIdNumber: string; // CMND/CCCD
@@ -1232,7 +1103,6 @@ export interface Contract {
     partyBPhone: string;
     partyBBankAccount?: string;
     partyBBankName?: string;
-
     // Property Details
     propertyAddress: string;
     propertyArea: number; // General area, kept for backward compatibility
@@ -1246,7 +1116,6 @@ export interface Contract {
     propertyRoomNumber?: string; // Số phòng (căn hộ)
     propertyFloorNumber?: string; // Số tầng (căn hộ)
     propertyPrice: number;
-
     // Payment & Terms
     depositAmount?: number;
     paymentTerms: string;
@@ -1255,7 +1124,6 @@ export interface Contract {
     handoverDate?: string; // Ngày bàn giao dự kiến
     handoverCondition?: string; // Tình trạng bàn giao
     disputeResolution?: string; // Giải quyết tranh chấp
-
     signedAt?: ISOString;    // Ngày ký (mapped from signed_at)
     signedPlace?: string;    // Địa điểm ký hợp đồng
     contractDate?: string;   // Ngày ký tùy chỉnh (nếu khác ngày tạo)
@@ -1264,13 +1132,11 @@ export interface Contract {
     updatedAt: ISOString;
     createdBy: string;
 }
-
 export interface ISocialProvider {
     getProfile(userId: string, config?: Record<string, unknown>): Promise<SocialUserProfile>;
     sendMessage(userId: string, text: string, config?: Record<string, unknown>): Promise<{ messageId: string; error?: string }>;
     verifySignature(signature: string, body: unknown, secret?: string): boolean;
 }
-
 export interface SocialUserProfile {
     id: string;
     name: string;
@@ -1278,17 +1144,14 @@ export interface SocialUserProfile {
     platform: Channel;
     email?: string;
 }
-
 // =============================================================================
 // 20. TASK MANAGEMENT MODULE
 // =============================================================================
-
 export type WfTaskStatus = 'todo' | 'in_progress' | 'review' | 'done' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskCategory =
     | 'sales' | 'legal' | 'marketing' | 'site_visit'
     | 'customer_care' | 'finance' | 'construction' | 'admin' | 'other';
-
 export interface Department {
     id: string;
     tenant_id: string;
@@ -1297,7 +1160,6 @@ export interface Department {
     created_at: ISOString;
     task_count?: number;
 }
-
 export interface TaskAssignee {
     id: string;
     name: string;
@@ -1307,7 +1169,6 @@ export interface TaskAssignee {
     assigned_at?: ISOString;
     due_note?: string;
 }
-
 export interface WfTask {
     id: string;
     tenant_id: string;
@@ -1334,7 +1195,6 @@ export interface WfTask {
     days_until_deadline: number | null;
     urgency_level: 'normal' | 'warning' | 'critical' | 'overdue';
 }
-
 export interface TaskComment {
     id: string;
     tenant_id: string;
@@ -1346,7 +1206,6 @@ export interface TaskComment {
     created_at: ISOString;
     updated_at: ISOString;
 }
-
 export interface TaskActivityLog {
     id: string;
     tenant_id: string;
@@ -1360,7 +1219,6 @@ export interface TaskActivityLog {
     detail?: string;
     created_at: ISOString;
 }
-
 export interface WorkloadStats {
     user_id: string;
     name: string;
@@ -1371,7 +1229,6 @@ export interface WorkloadStats {
     completed_this_week?: number;
     completed_this_month?: number;
 }
-
 export interface TaskDashboardStats {
     overview: {
         total_tasks: number;
@@ -1399,7 +1256,6 @@ export interface TaskDashboardStats {
     upcoming_deadlines: WfTask[];
     workload_by_user: WorkloadStats[];
 }
-
 export interface TaskListParams {
     status?: WfTaskStatus | WfTaskStatus[];
     priority?: TaskPriority | TaskPriority[];

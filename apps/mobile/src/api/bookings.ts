@@ -5,11 +5,8 @@
  * The single exception is the VNPay return/IPN endpoints which are public —
  * the mobile app never calls those directly.
  */
-
 import { apiRequest } from './client';
-
 export type BookingStatus = 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
-
 export interface Booking {
   id: string;
   tenantId: string;
@@ -32,7 +29,6 @@ export interface Booking {
   listingTitle?: string | null;
   listingCode?: string | null;
 }
-
 export interface CreateBookingInput {
   listingId: string;
   unitId?: string | null;
@@ -40,7 +36,6 @@ export interface CreateBookingInput {
   email?: string | null;
   notes?: string | null;
 }
-
 export const bookingsApi = {
   create(input: CreateBookingInput) {
     return apiRequest<{ booking: Booking; paymentUrl: string }>('/api/bookings', {
@@ -61,11 +56,9 @@ export const bookingsApi = {
     );
   },
 };
-
 export function formatVnd(n: number): string {
   return n.toLocaleString('vi-VN') + ' ₫';
 }
-
 export const BOOKING_STATUS_LABEL: Record<BookingStatus, string> = {
   PENDING: 'Chờ thanh toán',
   PAID: 'Đã thanh toán',
@@ -73,7 +66,6 @@ export const BOOKING_STATUS_LABEL: Record<BookingStatus, string> = {
   CANCELLED: 'Đã huỷ',
   REFUNDED: 'Đã hoàn tiền',
 };
-
 export const BOOKING_STATUS_COLOR: Record<BookingStatus, string> = {
   PENDING: '#D97706',
   PAID: '#059669',

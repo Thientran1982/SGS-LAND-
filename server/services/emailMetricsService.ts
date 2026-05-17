@@ -6,18 +6,14 @@
  * can spot tenants whose lead notifications are silently failing (sender chưa
  * verified, rate-limit, mailbox bounce, …).
  */
-
 import { pool } from '../db';
 import { logger } from '../middleware/logger';
-
 const HOST_TENANT_ID = '00000000-0000-0000-0000-000000000001';
-
 export type EmailKind =
   | 'LEAD_NOTIFY'        // notification gửi vào hotline inbox của CĐT
   | 'LEAD_AUTOREPLY'     // auto-reply cho khách điền form
   | 'LANDING_LEAD'       // landing page lead notification
   | 'OTHER';
-
 export interface RecordEmailSendParams {
   tenantId?: string | null;
   kind: EmailKind;
@@ -26,7 +22,6 @@ export interface RecordEmailSendParams {
   provider?: string;
   messageId?: string | null;
 }
-
 /** Insert one metric row. Never throws — best-effort logging. */
 export async function recordEmailSend(params: RecordEmailSendParams): Promise<void> {
   try {
@@ -47,7 +42,6 @@ export async function recordEmailSend(params: RecordEmailSendParams): Promise<vo
     logger.warn(`[emailMetrics] recordEmailSend failed: ${err?.message || err}`);
   }
 }
-
 export interface TenantEmailStats {
   tenantId: string;
   tenantName: string | null;
@@ -58,7 +52,6 @@ export interface TenantEmailStats {
   topReasons: Array<{ reason: string; count: number }>;
   lastFailureAt: string | null;
 }
-
 export interface LeadEmailStatsReport {
   windowDays: number;
   alertThreshold: number; // 0..1 (e.g. 0.8)
@@ -72,7 +65,6 @@ export interface LeadEmailStatsReport {
   byTenant: TenantEmailStats[];
   alerts: TenantEmailStats[]; // tenants with rate < threshold AND total >= minSample
 }
-
 // Alerting tập trung vào notification gửi tới CĐT (LEAD_NOTIFY + LANDING_LEAD).
 // Auto-reply tới khách (mailbox người dùng có thể bounce vì lý do ngoài tầm kiểm
 // soát của CĐT) được loại khỏi KPI mặc định để tránh làm loãng tín hiệu — nhưng
@@ -81,7 +73,6 @@ const NOTIFY_KINDS: EmailKind[] = ['LEAD_NOTIFY', 'LANDING_LEAD'];
 const ALL_LEAD_KINDS: EmailKind[] = ['LEAD_NOTIFY', 'LEAD_AUTOREPLY', 'LANDING_LEAD'];
 const ALERT_THRESHOLD = 0.8;
 const MIN_SAMPLE = 5; // ignore tenants with < 5 attempts to avoid noisy alerts
-
 /**
  * Aggregate lead-email send stats per tenant for the last N days.
  * Returns global totals + per-tenant breakdown + alert list.
@@ -96,7 +87,6 @@ export async function getLeadEmailSendStats(
 ): Promise<LeadEmailStatsReport> {
   const days = Math.max(1, Math.min(90, Math.floor(windowDays)));
   const kinds = includeAutoreply ? ALL_LEAD_KINDS : NOTIFY_KINDS;
-
   // Per-tenant aggregates
   const aggSql = `
     SELECT
@@ -112,7 +102,6 @@ export async function getLeadEmailSendStats(
     ORDER BY total DESC
   `;
   const aggRes = await pool.query(aggSql, [kinds, String(days)]);
-
   const tenantIds = aggRes.rows.map((r: any) => r.tenant_id).filter(Boolean);
   const nameMap = new Map<string, string>();
   if (tenantIds.length > 0) {
@@ -126,7 +115,6 @@ export async function getLeadEmailSendStats(
       /* tenants table may not exist in tests; ignore */
     }
   }
-
   // Top-3 failure reasons per tenant — dùng ROW_NUMBER OVER (PARTITION BY tenant)
   // để bảo đảm thứ tự ổn định (ties tie-break bằng reason ASC) và giới hạn ở DB
   // thay vì truncate trong application code.
@@ -158,7 +146,6 @@ export async function getLeadEmailSendStats(
     arr.push({ reason: r.reason, count: r.count });
     reasonsByTenant.set(r.tenant_id, arr);
   }
-
   const byTenant: TenantEmailStats[] = aggRes.rows.map((r: any) => {
     const total = Number(r.total) || 0;
     const success = Number(r.success) || 0;
@@ -174,7 +161,6 @@ export async function getLeadEmailSendStats(
       lastFailureAt: r.last_failure_at ? new Date(r.last_failure_at).toISOString() : null,
     };
   });
-
   const totalAll = byTenant.reduce((s, t) => s + t.total, 0);
   const successAll = byTenant.reduce((s, t) => s + t.success, 0);
   const failureAll = totalAll - successAll;
@@ -182,7 +168,6 @@ export async function getLeadEmailSendStats(
   const alerts = byTenant.filter(
     (t) => t.total >= MIN_SAMPLE && t.successRate < ALERT_THRESHOLD,
   );
-
   return {
     windowDays: days,
     alertThreshold: ALERT_THRESHOLD,

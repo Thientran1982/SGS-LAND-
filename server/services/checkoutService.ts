@@ -1,10 +1,8 @@
 import crypto from 'crypto';
 import Stripe from 'stripe';
 import { pool } from '../db';
-
 export type CheckoutStatus = 'PENDING' | 'PAID' | 'CANCELLED' | 'EXPIRED';
 export type CheckoutProvider = 'mock' | 'stripe';
-
 export interface CheckoutTransaction {
   id: string;
   tenantId: string;
@@ -23,16 +21,13 @@ export interface CheckoutTransaction {
   paidAt?: string | null;
   createdAt: string;
 }
-
 const PLAN_CATALOG: Record<string, { name: string; price: number }> = {
   TEAM: { name: 'Team', price: 49 },
   ENTERPRISE: { name: 'Enterprise', price: 199 },
 };
-
 export function getPlanInfo(planId: string) {
   return PLAN_CATALOG[planId];
 }
-
 let stripeClient: Stripe | null = null;
 export function getStripeClient(): Stripe | null {
   if (stripeClient) return stripeClient;
@@ -41,11 +36,9 @@ export function getStripeClient(): Stripe | null {
   stripeClient = new Stripe(key);
   return stripeClient;
 }
-
 export function isStripeConfigured(): boolean {
   return !!process.env.STRIPE_SECRET_KEY;
 }
-
 function rowToTransaction(row: any): CheckoutTransaction {
   return {
     id: row.id,
@@ -66,7 +59,6 @@ function rowToTransaction(row: any): CheckoutTransaction {
     createdAt: row.created_at,
   };
 }
-
 export async function createTransaction(args: {
   tenantId: string;
   userId: string;
@@ -78,16 +70,13 @@ export async function createTransaction(args: {
 }): Promise<CheckoutTransaction> {
   const plan = PLAN_CATALOG[args.planId];
   if (!plan) throw new Error('Invalid plan');
-
   const idempotencyKey = crypto.randomBytes(18).toString('hex');
   const localSessionId = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
   const stripe = getStripeClient();
   const provider: CheckoutProvider = stripe ? 'stripe' : 'mock';
-
   let providerSessionId: string | null = null;
   let providerCheckoutUrl: string | null = null;
-
   if (stripe) {
     const successBase = `${args.origin}${args.successPath}`;
     const sep = successBase.includes('?') ? '&' : '?';
@@ -129,7 +118,6 @@ export async function createTransaction(args: {
     providerSessionId = session.id;
     providerCheckoutUrl = session.url;
   }
-
   const inserted = await pool.query(
     `INSERT INTO payment_transactions (
         id, tenant_id, user_id, user_email, plan_id, plan_name,
@@ -155,7 +143,6 @@ export async function createTransaction(args: {
   );
   return rowToTransaction(inserted.rows[0]);
 }
-
 export async function getTransaction(
   id: string,
   tenantId: string
@@ -176,7 +163,6 @@ export async function getTransaction(
   }
   return tx;
 }
-
 export async function findByProviderSessionId(
   providerSessionId: string
 ): Promise<CheckoutTransaction | null> {
@@ -186,7 +172,6 @@ export async function findByProviderSessionId(
   );
   return result.rows[0] ? rowToTransaction(result.rows[0]) : null;
 }
-
 export async function markPaid(
   id: string,
   providerPaymentId?: string | null
@@ -203,7 +188,6 @@ export async function markPaid(
   );
   return result.rows[0] ? rowToTransaction(result.rows[0]) : null;
 }
-
 export async function cancelTransaction(
   id: string,
   tenantId: string
@@ -219,7 +203,6 @@ export async function cancelTransaction(
   // Already finalized — return current state
   return getTransaction(id, tenantId);
 }
-
 export async function listTransactions(
   tenantId: string,
   limit = 24

@@ -3,13 +3,11 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import type { ListingBranding } from '../api/types';
-
 interface Props {
   branding: ListingBranding | null | undefined;
   fallbackContact?: { name?: string | null; phone?: string | null };
   accent: string;
 }
-
 // Vendor brand card — surfaces the white-label tenant identity (logo +
 // displayName + contact channels) directly on the listing detail. When no
 // custom branding is configured, falls back to the listing's own contact
@@ -21,13 +19,10 @@ export const VendorBrandCard: React.FC<Props> = ({ branding, fallbackContact, ac
   const hotlineDisplay = branding?.hotlineDisplay || hotline;
   const zalo = branding?.zalo || (hotline ? `https://zalo.me/${hotline.replace(/^\+?84/, '0').replace(/\D/g, '')}` : null);
   const messenger = branding?.messenger || null;
-
   const initial = name.trim().charAt(0).toUpperCase() || 'S';
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Đơn vị phân phối</Text>
-
       <View style={styles.row}>
         {logo ? (
           <Image
@@ -48,7 +43,6 @@ export const VendorBrandCard: React.FC<Props> = ({ branding, fallbackContact, ac
           <Text style={styles.tagline}>Đối tác chính thức của SGSLand</Text>
         </View>
       </View>
-
       {(hotline || zalo || messenger) ? (
         <View style={styles.channels}>
           {hotline ? (
@@ -88,7 +82,6 @@ export const VendorBrandCard: React.FC<Props> = ({ branding, fallbackContact, ac
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,

@@ -1,11 +1,9 @@
-
 import React, { useEffect, useState, useRef, useCallback, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Skeleton } from '../components/Skeleton';
-
 // -----------------------------------------------------------------------------
 //  1. CONSTANTS & UTILS
 // -----------------------------------------------------------------------------
@@ -15,11 +13,9 @@ const CONSTANTS = {
     // Strictly require 10 digits for VN mobile numbers
     VN_PHONE_REGEX: /^(03|05|07|08|09)([0-9]{8})$/
 };
-
 // -----------------------------------------------------------------------------
 //  2. ISOLATED SUB-COMPONENTS
 // -----------------------------------------------------------------------------
-
 const ICONS = {
     UPLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>,
     CAMERA: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
@@ -30,14 +26,12 @@ const ICONS = {
     SAVE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
     PERFORMANCE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
 };
-
 interface TabButtonProps {
     active: boolean;
     label: string;
     icon: React.ReactNode;
     onClick: () => void;
 }
-
 const TabButton: React.FC<TabButtonProps> = memo(({ active, label, icon, onClick }) => (
     <button 
         onClick={onClick}
@@ -49,7 +43,6 @@ const TabButton: React.FC<TabButtonProps> = memo(({ active, label, icon, onClick
         {label}
     </button>
 ));
-
 interface InputFieldProps {
     id: string; // Added ID for A11y
     label: string;
@@ -62,14 +55,12 @@ interface InputFieldProps {
     error?: string | null;
     action?: React.ReactNode;
 }
-
 const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange, disabled, placeholder, type = 'text', isTextArea, error, action }) => (
     <div className="space-y-1.5 group">
         <div className="flex justify-between">
             <label htmlFor={id} className={`text-xs3 font-bold uppercase tracking-wider ml-1 transition-colors ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>{label}</label>
             {action && <div className="text-xs">{action}</div>}
-        </div>
-        
+        </div>        
         <div className="relative">
             {isTextArea ? (
                 <textarea
@@ -100,21 +91,18 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
                     `}
                     placeholder={placeholder}
                 />
-            )}
-            
+            )}            
             {error && (
                 <div className="absolute right-3 top-3 text-rose-500 pointer-events-none animate-enter">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
             )}
-        </div>
-        
+        </div>        
         {error && (
             <p className="text-xs2 font-bold text-rose-500 ml-1 animate-enter">{error}</p>
         )}
     </div>
 ));
-
 // -----------------------------------------------------------------------------
 //  3. MAIN COMPONENT
 // -----------------------------------------------------------------------------
@@ -135,7 +123,6 @@ interface AgentStatsData {
     completedThisMonth: number;
     workloadScore: number;
 }
-
 export const Profile: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
@@ -143,27 +130,22 @@ export const Profile: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'GENERAL' | 'SECURITY' | 'PERFORMANCE'>('GENERAL');
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
-
     // Performance tab state
     const [perfLoading, setPerfLoading] = useState(false);
     const [perfData, setPerfData] = useState<AgentStatsData | null>(null);
-    const [perfError, setPerfError] = useState(false);
-    
+    const [perfError, setPerfError] = useState(false);    
     // Form Data
     const [formData, setFormData] = useState({ name: '', phone: '', bio: '', avatar: '' });
     const [avatarError, setAvatarError] = useState(false);
     const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
-
     // Email change state
     const [emailChangeOpen, setEmailChangeOpen] = useState(false);
     const [emailData, setEmailData] = useState({ newEmail: '', confirmPass: '' });
     const [emailSaving, setEmailSaving] = useState(false);
-    const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});
-    
+    const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});    
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
-
     const loadData = useCallback(async () => {
         setLoading(true);
         const u = await db.getCurrentUser();
@@ -181,10 +163,8 @@ export const Profile: React.FC = () => {
     }, []);
 
     useEffect(() => { loadData(); }, [loadData]);
-
     // Reset avatarError whenever the avatar URL is changed (new upload or load)
     useEffect(() => { setAvatarError(false); }, [formData.avatar]);
-
     useEffect(() => {
         if (message) {
             const timer = setTimeout(() => setMessage(null), CONSTANTS.TOAST_DURATION);
@@ -215,18 +195,15 @@ export const Profile: React.FC = () => {
         })();
         return () => { cancelled = true; };
     }, [activeTab, user, perfData]);
-
     const getLocalizedError = useCallback((msg: string) => {
         if (msg === 'Email already exists') return t('profile.err_email_exists');
         if (msg === 'Invalid credentials') return t('auth.error_generic');
         return msg || t('common.error');
     }, [t]);
-
     const handleSaveProfile = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
         setErrors({});
-
         // 1. Validation
         const newErrors: Record<string, string> = {};
         if (!formData.name.trim()) newErrors.name = t('auth.error_name_required');
@@ -234,13 +211,11 @@ export const Profile: React.FC = () => {
         if (formData.phone && !CONSTANTS.VN_PHONE_REGEX.test(formData.phone)) {
             newErrors.phone = t('profile.error_phone_invalid');
         }
-
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             setMessage({ text: t('common.error'), type: 'error' });
             return;
         }
-
         // 2. Save
         setSaving(true);
         try {
@@ -249,8 +224,7 @@ export const Profile: React.FC = () => {
                 phone: formData.phone,
                 bio: formData.bio,
                 avatar: formData.avatar
-            });
-            
+            });            
             setUser(updatedUser);
             // Consistent state update
             setFormData({
@@ -258,10 +232,8 @@ export const Profile: React.FC = () => {
                 phone: updatedUser.phone || '',
                 bio: updatedUser.bio || '',
                 avatar: updatedUser.avatar || ''
-            });
-            
-            window.dispatchEvent(new Event('user-updated'));
-            
+            });            
+            window.dispatchEvent(new Event('user-updated'));            
             setMessage({ text: t('profile.success_update'), type: 'success' });
         } catch (err: any) {
             setMessage({ text: getLocalizedError(err.message), type: 'error' });
@@ -269,12 +241,10 @@ export const Profile: React.FC = () => {
             setSaving(false);
         }
     }, [user, formData, t, getLocalizedError]);
-
     const handleSavePassword = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
-        setErrors({});
-        
+        setErrors({});        
         if (!passData.current || !passData.new) {
             setErrors({ 
                 current: !passData.current ? t('auth.error_password_required') : '', 
@@ -287,7 +257,6 @@ export const Profile: React.FC = () => {
             setErrors({ confirm: t('profile.error_pass_match') });
             return;
         }
-
         setSaving(true);
         try {
             await db.changeUserPassword(user.id, passData.current, passData.new);
@@ -300,7 +269,6 @@ export const Profile: React.FC = () => {
             setSaving(false);
         }
     }, [user, passData, t, getLocalizedError]);
-
     const handleReset = useCallback(() => {
         if (!user) return;
         setFormData({
@@ -312,7 +280,6 @@ export const Profile: React.FC = () => {
         setErrors({});
         setMessage(null);
     }, [user]);
-
     const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -326,7 +293,6 @@ export const Profile: React.FC = () => {
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }
-
             setUploading(true);
             try {
                 const result = await db.uploadFiles([file]);
@@ -341,19 +307,16 @@ export const Profile: React.FC = () => {
             }
         }
     }, [t]);
-
     const handleRequestEmailChange = () => {
         setEmailChangeOpen(true);
         setEmailData({ newEmail: '', confirmPass: '' });
         setEmailErrors({});
     };
-
     const handleCancelEmailChange = () => {
         setEmailChangeOpen(false);
         setEmailData({ newEmail: '', confirmPass: '' });
         setEmailErrors({});
     };
-
     const handleSubmitEmailChange = async () => {
         if (!user) return;
         const errs: Record<string, string> = {};
@@ -372,7 +335,6 @@ export const Profile: React.FC = () => {
             setEmailErrors(errs);
             return;
         }
-
         setEmailSaving(true);
         setEmailErrors({});
         try {
@@ -403,11 +365,9 @@ export const Profile: React.FC = () => {
             setEmailSaving(false);
         }
     };
-
     // Calculate dirty state by deep comparing relevant fields
     const isDirty = useMemo(() => {
-        if (!user) return false;
-        
+        if (!user) return false;        
         // Normalize fields for comparison to avoid null vs undefined vs empty string issues
         const current = {
             name: formData.name,
@@ -420,21 +380,18 @@ export const Profile: React.FC = () => {
             phone: user.phone || '',
             bio: user.bio || '',
             avatar: user.avatar || ''
-        };
-        
+        };        
         return JSON.stringify(current) !== JSON.stringify(original);
     }, [formData, user]);
 
     if (loading) return <div className="p-4 sm:p-6"><Skeleton className="h-64 w-full" /></div>;
     if (!user) return null;
-
     return (
         <>
         <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 animate-enter">
             {/* Header Card */}
             <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
-                <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>
-                
+                <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>                
                 {/* Avatar */}
                 <div className="relative group cursor-pointer z-10" onClick={() => !saving && !uploading && fileInputRef.current?.click()} role="button" aria-label={t('common.upload')}>
                     <div className="w-32 h-32 rounded-full p-1 border-4 border-white shadow-xl bg-[var(--bg-surface)] overflow-hidden relative">
@@ -465,7 +422,6 @@ export const Profile: React.FC = () => {
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/png, image/jpeg, image/webp" aria-hidden="true" />
                 </div>
-
                 {/* Identity */}
                 <div className="text-center md:text-left z-10 flex-1">
                     <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight mb-2">{user.name}</h1>
@@ -485,7 +441,6 @@ export const Profile: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Sidebar Navigation */}
                 <div className="lg:col-span-3">
@@ -510,7 +465,6 @@ export const Profile: React.FC = () => {
                         />
                     </div>
                 </div>
-
                 {/* Form Content */}
                 <div className="lg:col-span-9">
                     <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm min-h-[500px] relative">
@@ -519,7 +473,6 @@ export const Profile: React.FC = () => {
                                 {activeTab === 'GENERAL' ? t('profile.tab_general') : activeTab === 'SECURITY' ? t('profile.tab_security') : t('profile.tab_perf')}
                             </h2>
                         </div>
-
                         {activeTab === 'GENERAL' ? (
                             <form onSubmit={handleSaveProfile} className="space-y-6 max-w-2xl animate-enter">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -561,7 +514,6 @@ export const Profile: React.FC = () => {
                                         disabled
                                         className="w-full bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-sm text-[var(--text-tertiary)] cursor-not-allowed outline-none"
                                     />
-
                                     {emailChangeOpen && (
                                         <div className="mt-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3 animate-enter">
                                             <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">{t('profile.email_change_title')}</p>
@@ -612,7 +564,6 @@ export const Profile: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-
                                     <InputField 
                                         id="bio"
                                         label={t('profile.bio')} 
@@ -621,7 +572,6 @@ export const Profile: React.FC = () => {
                                         placeholder={t('profile.placeholder_bio')}
                                         isTextArea={true}
                                     />
-
                                 <div className="pt-6 flex justify-end gap-3">
                                     <button 
                                         type="button"
@@ -729,7 +679,6 @@ export const Profile: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className="space-y-8">
-
                                         {/* ── SLA Score Hero ───────────────────────────────── */}
                                         <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-100 dark:border-indigo-800/40">
                                             {/* Radial SLA ring */}
@@ -768,7 +717,6 @@ export const Profile: React.FC = () => {
                                                 </p>
                                             </div>
                                         </div>
-
                                         {/* ── Lead KPIs grid ───────────────────────────────── */}
                                         <div>
                                             <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-4">{t('profile.perf_lead_section')}</h3>
@@ -813,7 +761,6 @@ export const Profile: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-
                                         {/* ── Workload grid ─────────────────────────────────── */}
                                         <div>
                                             <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-4">{t('profile.perf_task_section')}</h3>

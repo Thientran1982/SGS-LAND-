@@ -76,6 +76,7 @@ const FEATURE_LABELS: Record<string, string> = {
   CHAT_CONTRACT_AGENT: 'Chatbot — hợp đồng',
   CHAT_LEAD_ANALYSIS: 'Chatbot — phân tích lead',
   CHAT_WRITER: 'Chatbot — soạn phản hồi',
+  CHAT_FOLLOW_UP: 'Chatbot — liên hệ lại',
 };
 function featureLabel(f: string): string {
   return FEATURE_LABELS[f] || f;
@@ -212,7 +213,6 @@ const AdminAiCost: React.FC = () => {
   const trendCount = pct(r.totalValuations, r.prevTotalValuations);
   const trendCost = pct(r.estimatedCostUsd, r.prevEstimatedCostUsd);
   const maxDaily = Math.max(1, ...r.dailyTrend.map((d) => d.valuations));
-
   // Compute threshold banner state for the CURRENT period only — historical
   // months would be misleading because the cap is monthly.
   // Banner uses *combined* AI spend (all features) so it matches what the
@@ -536,7 +536,6 @@ const AdminAiCost: React.FC = () => {
           })}
         </div>
       </Panel>
-
       {/* Top users */}
       <Panel title="Top user dùng nhiều nhất">
         {r.topUsers.length === 0 ? (

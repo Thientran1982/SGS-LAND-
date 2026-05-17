@@ -1,10 +1,8 @@
 import { Lead, Interaction, AgentTraceResponse } from '../types';
-
 const AI_QUOTA_MESSAGE_VN = 'Hệ thống AI đang bận do lượng truy cập cao. Vui lòng thử lại sau ít phút.';
 const AI_QUOTA_MESSAGE_EN = 'The AI system is temporarily busy. Please try again in a few minutes.';
 const AI_ERROR_MESSAGE_VN = 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau.';
 const AI_ERROR_MESSAGE_EN = 'AI service temporarily unavailable. Please try again later.';
-
 class AiApiClient {
     private async fetchApi(endpoint: string, body: unknown): Promise<any> {
         const response = await fetch(endpoint, {
@@ -34,7 +32,6 @@ class AiApiClient {
         }
         return await response.json();
     }
-
     async processMessage(lead: Lead, userMessage: string, history: Interaction[], lang: string, onStream?: (chunk: string) => void): Promise<AgentTraceResponse> {
         const result = await this.fetchApi('/api/ai/process-message', { lead, userMessage, history, lang });
         if (onStream && result.content) {
@@ -47,7 +44,6 @@ class AiApiClient {
         }
         return result;
     }
-
     async scoreLead(leadData: Partial<Lead>, messageContent?: string, weights?: Record<string, number>, lang: string = 'vn'): Promise<{ score: number, grade: string, reasoning: string }> {
         return this.fetchApi('/api/ai/score-lead', { leadData, messageContent, weights, lang });
     }
@@ -66,7 +62,6 @@ class AiApiClient {
             return { summary: summaryMsg, quota: null };
         }
     }
-
     async getAiQuota(): Promise<{ valuation: any; aria: any } | null> {
         try {
             const response = await fetch('/api/ai/quota', { credentials: 'include' });
@@ -76,7 +71,6 @@ class AiApiClient {
             return null;
         }
     }
-
     async getRealtimeValuation(
         address: string,
         area: number,
@@ -99,7 +93,6 @@ class AiApiClient {
             ...(advanced ?? {}),
         });
     }
-
     async getAdvancedValuation(
         address: string,
         area: number,
@@ -122,7 +115,6 @@ class AiApiClient {
             ...(advanced ?? {}),
         });
     }
-
     async submitFeedback(data: {
         interactionId?: string;
         leadId?: string;
@@ -136,7 +128,6 @@ class AiApiClient {
     }): Promise<any> {
         return this.fetchApi('/api/ai/governance/feedback', data);
     }
-
     async getFeedbackStats(days: number = 30): Promise<any> {
         const response = await fetch(`/api/ai/governance/feedback/stats?days=${days}`, {
             credentials: 'include',
@@ -144,7 +135,6 @@ class AiApiClient {
         if (!response.ok) throw new Error('Không thể tải thống kê phản hồi');
         return response.json();
     }
-
     async getRewardSignals(): Promise<any[]> {
         const response = await fetch('/api/ai/governance/feedback/rewards', {
             credentials: 'include',
@@ -152,7 +142,6 @@ class AiApiClient {
         if (!response.ok) throw new Error('Không thể tải reward signals');
         return response.json();
     }
-
     async getFeedbackTrends(days: number = 90): Promise<any[]> {
         const response = await fetch(`/api/ai/governance/feedback/trends?days=${days}`, {
             credentials: 'include',
@@ -160,7 +149,6 @@ class AiApiClient {
         if (!response.ok) throw new Error('Không thể tải xu hướng phản hồi');
         return response.json();
     }
-
     async listFeedback(page: number = 1, intent?: string): Promise<any> {
         const params = new URLSearchParams({ page: String(page) });
         if (intent) params.set('intent', intent);
@@ -170,19 +158,16 @@ class AiApiClient {
         if (!response.ok) throw new Error('Không thể tải danh sách phản hồi');
         return response.json();
     }
-
     async recomputeRewards(): Promise<any> {
         return this.fetchApi('/api/ai/governance/feedback/recompute', {});
     }
-
     async parseSearchQuery(query: string): Promise<any> {
         const prompt = `
             Bạn là một hệ thống phân tích ngôn ngữ tự nhiên cho công cụ tìm kiếm bất động sản.
             Nhiệm vụ: Trích xuất các tiêu chí tìm kiếm từ câu truy vấn của người dùng.
             
             Câu truy vấn: "${query}"
-        `;
-        
+        `;        
         const schema = {
             type: "OBJECT",
             properties: {
@@ -202,16 +187,13 @@ class AiApiClient {
             },
             required: ['query']
         };
-
         const result = await this.fetchApi('/api/ai/generate-content', {
             prompt,
             model: 'gemini-2.0-flash',
             responseMimeType: 'application/json',
             responseSchema: schema
-        });
-        
+        });        
         return JSON.parse(result.text || '{}');
     }
 }
-
 export const aiService = new AiApiClient();

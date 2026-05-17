@@ -16,10 +16,8 @@
  * - Multi-instance: cache là per-process. Yêu cầu invalidation < 30s thoả mãn
  *   bằng TTL ngắn + best-effort evict; multi-instance cần Redis-backed cache.
  */
-
 const TTL_MS = 25 * 1000;
 const MAX_ENTRIES = 500;
-
 interface Entry {
   value: any;
   bucket: string;            // bucket key ("*" cho apex, tenantId cho subdomain/custom domain)
@@ -28,15 +26,12 @@ interface Entry {
                              // được cache dưới bucket "*" (apex)
   expiresAt: number;
 }
-
 const store = new Map<string, Entry>();
-
 function buildKey(tenantId: string | null | undefined, code: string): string {
   const t = (tenantId && String(tenantId).trim()) || '*';
   const c = String(code || '').trim().toUpperCase();
   return `${t}|${c}`;
 }
-
 export function getPublicProjectCache(code: string, tenantId?: string | null): any | null {
   const key = buildKey(tenantId, code);
   if (!key.endsWith('|') === false && key === `${tenantId || '*'}|`) return null;
@@ -48,7 +43,6 @@ export function getPublicProjectCache(code: string, tenantId?: string | null): a
   }
   return entry.value;
 }
-
 /**
  * Cache 1 payload public project.
  * - `bucketTenantId`: Host bucket — `null`/empty = apex (bucket "*"), string = tenant subdomain/custom domain
@@ -75,7 +69,6 @@ export function setPublicProjectCache(
   }
   store.set(key, { value, bucket, projectTenantId: ptid, expiresAt: Date.now() + TTL_MS });
 }
-
 /** Evict mọi entry của 1 project code, ở MỌI tenant bucket. */
 export function evictPublicProjectCache(code: string | null | undefined): void {
   const c = String(code || '').trim().toUpperCase();
@@ -85,7 +78,6 @@ export function evictPublicProjectCache(code: string | null | undefined): void {
     if (key.endsWith(suffix)) store.delete(key);
   }
 }
-
 /**
  * Evict mọi entry thuộc 1 tenant — gọi khi update branding/subdomain.
  * Match cả entry cached dưới bucket riêng (subdomain/custom domain) lẫn entry
@@ -99,7 +91,6 @@ export function evictPublicProjectCacheByTenant(tenantId: string | null | undefi
     if (entry.bucket === t || entry.projectTenantId === t) store.delete(key);
   }
 }
-
 export function clearPublicProjectCache(): void {
   store.clear();
 }

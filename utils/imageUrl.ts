@@ -13,10 +13,8 @@
  * - Làm tròn lên bội số 64 để tăng tỉ lệ trùng cache giữa các kích thước
  *   gần nhau (50px → 64, 80px → 128, 200px → 256, …).
  */
-
 const STEP = 64;
 const MAX_W = 2400;
-
 export function optimizedImageUrl(url: string | null | undefined, targetWidth: number): string {
   if (!url) return '';
   if (typeof url !== 'string') return String(url);

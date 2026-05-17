@@ -1,5 +1,4 @@
 import { api } from './apiClient';
-
 export interface SeoOverride {
   routeKey: string;
   title: string;
@@ -7,7 +6,6 @@ export interface SeoOverride {
   ogImage?: string | null;
   updatedAt?: string;
 }
-
 export interface TargetKeyword {
   id: string;
   keyword: string;
@@ -26,19 +24,16 @@ export interface TargetKeyword {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface AiVisibilityStatus {
   llmsTxt: { ok: boolean; status: number; bytes: number };
   llmsFullTxt: { ok: boolean; status: number; bytes: number };
   bots: { name: string; allowed: boolean; userAgent: string }[];
   sitemaps: { url: string; ok: boolean; status: number }[];
 }
-
 const seoApi = {
   async getAll(): Promise<Record<string, SeoOverride>> {
     return api.get('/api/seo-overrides');
   },
-
   async upsert(routeKey: string, title: string, description: string, ogImage?: string | null): Promise<SeoOverride> {
     return api.post(`/api/seo-overrides/${encodeURIComponent(routeKey)}`, {
       title,
@@ -46,36 +41,28 @@ const seoApi = {
       ogImage: ogImage ?? null,
     });
   },
-
   async remove(routeKey: string): Promise<void> {
     return api.delete(`/api/seo-overrides/${encodeURIComponent(routeKey)}`);
   },
-
   // ── GEO / AI Search ──────────────────────────────────────────────────────
   async listKeywords(): Promise<TargetKeyword[]> {
     return api.get('/api/seo/target-keywords');
   },
-
   async upsertKeyword(input: Partial<TargetKeyword> & { keyword: string }): Promise<TargetKeyword> {
     return api.post('/api/seo/target-keywords', input);
   },
-
   async deleteKeyword(id: string): Promise<void> {
     return api.delete(`/api/seo/target-keywords/${encodeURIComponent(id)}`);
   },
-
   async aiVisibilityStatus(): Promise<AiVisibilityStatus> {
     return api.get('/api/seo/ai-visibility');
   },
-
   async seedDefaultKeywords(): Promise<{ success: boolean; inserted: number; skipped: number; total: number }> {
     return api.post('/api/seo/target-keywords/seed-defaults', {});
   },
-
   async auditUrl(path: string): Promise<{ target: string; fetchedAt: string; items: Array<{ id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string; tip?: string }> }> {
     return api.post('/api/seo/audit-url', { path });
   },
-
   // ── GEO Monitor (Sprint #64 follow-up) ───────────────────────────────────
   async listGeoSnapshots(days = 30): Promise<{
     days: number;
@@ -90,11 +77,9 @@ const seoApi = {
   }> {
     return api.get(`/api/seo/geo-snapshots?days=${days}`);
   },
-
   async runGeoSnapshotNow(): Promise<{ ok: boolean; date: string }> {
     return api.post('/api/seo/geo-snapshots/run-now', {});
   },
-
   // ── Agent Runs (unified audit trail) ─────────────────────────────────────
   async listAgentRuns(params: { agent?: string; status?: string; days?: number; limit?: number } = {}): Promise<{
     days: number;
@@ -124,5 +109,4 @@ const seoApi = {
     return api.get(`/api/admin/agent-runs?${qs.toString()}`);
   },
 };
-
 export default seoApi;

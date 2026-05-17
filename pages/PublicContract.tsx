@@ -2,11 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../services/dbApi';
 import { Contract, ContractType, ContractStatus, PaymentMilestone, PaymentStatus } from '../types';
 import { useTenant } from '../services/tenantContext';
-
 interface PublicContractProps {
     token: string;
 }
-
 /* ── Helpers ── */
 const fmtVND = (n?: number | null): string => {
     if (n == null || isNaN(n)) return '...........';
@@ -22,12 +20,10 @@ const fmtVND = (n?: number | null): string => {
     const text = parts.length ? parts.join(' ') + ' đồng' : 'không đồng';
     return text.charAt(0).toUpperCase() + text.slice(1);
 };
-
 const fmtMoney = (n?: number | null): string => {
     if (n == null) return '................';
     return n.toLocaleString('vi-VN') + ' đồng';
 };
-
 const fmtDate = (d?: string | null): string => {
     if (!d) return 'ngày ........ tháng ........ năm ........';
     try {
@@ -36,7 +32,6 @@ const fmtDate = (d?: string | null): string => {
         return `ngày ${dt.getDate().toString().padStart(2, '0')} tháng ${(dt.getMonth() + 1).toString().padStart(2, '0')} năm ${dt.getFullYear()}`;
     } catch { return d; }
 };
-
 const fmtShortDate = (d?: string | null): string => {
     if (!d) return '........';
     try {
@@ -48,13 +43,11 @@ const fmtShortDate = (d?: string | null): string => {
 
 const blank = (s?: string | null, fallback = '...') =>
     s && s.trim() ? s.trim() : fallback;
-
 /* ── Styling constants ── */
 const FONT = "'Times New Roman', 'DejaVu Serif', 'Noto Serif', Times, serif";
 const FONT_SANS = "'Arial', 'Helvetica Neue', sans-serif";
 const TEXT = '#000000';
 const GRAY = '#4b5563';
-
 const pageStyle: React.CSSProperties = {
     maxWidth: '794px',
     margin: '0 auto',
@@ -64,10 +57,8 @@ const pageStyle: React.CSSProperties = {
     fontSize: '13pt',
     lineHeight: '1.9',
 };
-
 const center: React.CSSProperties = { textAlign: 'center' };
 const bold: React.CSSProperties = { fontWeight: 700 };
-
 /* ── Sub-components ── */
 const ArticleTitle: React.FC<{ num: string | number; title: string }> = ({ num, title }) => (
     <div style={{ marginTop: '22px', marginBottom: '8px' }}>
@@ -76,7 +67,6 @@ const ArticleTitle: React.FC<{ num: string | number; title: string }> = ({ num, 
         </p>
     </div>
 );
-
 const EMPTY_PLACEHOLDER = <span style={{ color: '#999', fontStyle: 'italic', letterSpacing: '0.05em' }}>...</span>;
 
 const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }> = ({ label, value, inline }) => {
@@ -96,11 +86,9 @@ const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }>
         </p>
     );
 };
-
 const Divider: React.FC<{ style?: React.CSSProperties; className?: string }> = ({ style, className }) => (
     <div className={className} style={{ borderBottom: '1px solid #000', margin: '6px 0', ...style }} />
 );
-
 export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     const { isLoading: isTenantLoading } = useTenant();
     const [contract, setContract] = useState<Contract | null>(null);
@@ -150,7 +138,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
 </script></body></html>`);
         pw.document.close();
     };
-
     const handleExportPDF = async () => {
         if (!contract || !contractRef.current) return;
         setExporting(true);
@@ -171,10 +158,8 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
             window.scrollTo(0, 0);
             await new Promise(r => setTimeout(r, 350));
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
             const fullWidth = el.offsetWidth;
             const fullHeight = el.scrollHeight;
-
             const canvas = await html2canvas(el, {
                 scale: 2,
                 useCORS: true,
@@ -190,7 +175,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                 windowWidth: fullWidth,
                 windowHeight: fullHeight,
             });
-
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const pageW = pdf.internal.pageSize.getWidth();   // 210mm
             const pageH = pdf.internal.pageSize.getHeight();  // 297mm
@@ -260,7 +244,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
             setExporting(false);
         }
     };
-
     /* ── States ── */
     if (loading) return (
         <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_SANS, color: GRAY }}>
@@ -273,7 +256,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
             <p style={{ fontSize: '14px' }}>Liên kết không hợp lệ hoặc hợp đồng đã bị xóa.</p>
         </div>
     );
-
     const isDeposit = contract.type === ContractType.DEPOSIT;
     const isReservation = contract.type === ContractType.RESERVATION;
     const schedule: PaymentMilestone[] = contract.paymentSchedule || [];
@@ -287,7 +269,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
     // signedPlace: địa điểm ký hợp đồng
     const signedPlace = contract.signedPlace || null;
     const contractNum = `HĐ-${contract.id.slice(0, 8).toUpperCase()}`;
-
     /* ── RESERVATION SLIP (Phiếu Giữ Chỗ) — render riêng ── */
     if (isReservation) {
         const slipNum = `PGC-${contract.id.slice(0, 8).toUpperCase()}`;
@@ -295,7 +276,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
         const reservationFee = contract.depositAmount ?? null;
         const expectedPrice = contract.propertyPrice ?? null;
         const notes = contract.paymentTerms || null;
-
         return (
             <div style={{ minHeight: '100vh', background: '#e8e8e8', padding: '32px 16px', fontFamily: FONT_SANS }} className="public-contract-page">
                 {/* TOOLBAR */}
@@ -315,7 +295,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </button>
                     </div>
                 </div>
-
                 {/* DOCUMENT */}
                 <div ref={contractRef} style={{ ...pageStyle, padding: '48px 64px', boxShadow: '0 2px 24px rgba(0,0,0,0.15)' }} className="contract-document">
                     {/* QUỐC HIỆU */}
@@ -325,7 +304,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                             <span style={{ display: 'inline-block', borderBottom: '1.5px solid #000', paddingBottom: '2px' }}>Độc lập – Tự do – Hạnh phúc</span>
                         </p>
                     </div>
-
                     {/* TIÊU ĐỀ */}
                     <div style={{ ...center, margin: '0 0 20px' }}>
                         <p style={{ ...bold, fontSize: '15pt', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, lineHeight: 1.6 }}>
@@ -339,16 +317,13 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                             <p style={{ fontSize: '11pt', margin: '4px 0 0', color: '#166534' }}>✓ Đã xác nhận {fmtDate(signDate)}</p>
                         )}
                     </div>
-
                     <Divider className="contract-divider" style={{ margin: '16px 0' }} />
-
                     {/* MỞ ĐẦU */}
                     <p style={{ margin: '0 0 16px' }}>
                         Hôm nay, {fmtDate(contractDate ?? contract.createdAt)},
                         {signedPlace ? <> tại <strong>{signedPlace}</strong>,</> : null}{' '}
                         chúng tôi gồm các bên dưới đây cùng thỏa thuận về việc giữ chỗ bất động sản như sau:
                     </p>
-
                     {/* BÊN A */}
                     <div style={{ marginBottom: '16px' }}>
                         <p style={{ ...bold, margin: '0 0 6px', fontSize: '13pt', borderBottom: '1px solid #ccc', paddingBottom: '4px' }}>BÊN A — BÊN BÁN / CHỦ ĐẦU TƯ:</p>
@@ -359,7 +334,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         {contract.partyATaxCode && <Line label="Mã số thuế" value={contract.partyATaxCode} />}
                         <p style={{ margin: '4px 0 0', paddingLeft: '16px', fontStyle: 'italic' }}>(Sau đây gọi là "<strong>Bên A</strong>")</p>
                     </div>
-
                     {/* KHÁCH HÀNG */}
                     <div style={{ marginBottom: '16px' }}>
                         <p style={{ ...bold, margin: '0 0 6px', fontSize: '13pt', borderBottom: '1px solid #ccc', paddingBottom: '4px' }}>BÊN B — KHÁCH HÀNG ĐẶT GIỮ CHỖ:</p>
@@ -375,7 +349,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         {contract.partyBAddress && <Line label="Địa chỉ thường trú" value={contract.partyBAddress} />}
                         <p style={{ margin: '4px 0 0', paddingLeft: '16px', fontStyle: 'italic' }}>(Sau đây gọi là "<strong>Bên B</strong>")</p>
                     </div>
-
                     {/* BẤT ĐỘNG SẢN */}
                     <div style={{ margin: '16px 0', padding: '14px 18px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
                         <p style={{ ...bold, margin: '0 0 10px', fontSize: '13pt' }}>THÔNG TIN BẤT ĐỘNG SẢN GIỮ CHỖ:</p>
@@ -387,7 +360,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                             <Line label="Giá bán dự kiến" value={`${fmtMoney(expectedPrice)} (Bằng chữ: ${fmtVND(expectedPrice)})`} />
                         )}
                     </div>
-
                     {/* ĐIỀU KHOẢN GIỮ CHỖ */}
                     <div style={{ margin: '16px 0', padding: '14px 18px', background: '#fdf4ff', border: '1px solid #e9d5ff', borderRadius: '6px' }}>
                         <p style={{ ...bold, margin: '0 0 10px', fontSize: '13pt' }}>ĐIỀU KHOẢN GIỮ CHỖ:</p>
@@ -418,7 +390,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                             {notes && <p style={{ margin: '8px 0 2px' }}><strong>Ghi chú thêm: </strong>{notes}</p>}
                         </div>
                     </div>
-
                     {/* CHỮ KÝ */}
                     <div style={{ marginTop: '40px' }}>
                         <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
@@ -446,7 +417,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                             </div>
                         </div>
                     </div>
-
                     {/* FOOTER */}
                     <div style={{ marginTop: '32px', paddingTop: '12px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
                         <p style={{ fontSize: '10pt', color: '#888', fontFamily: FONT_SANS, margin: 0 }}>
@@ -454,7 +424,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </p>
                     </div>
                 </div>
-
                 {errorMsg && (
                     <div className="no-print" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 100, padding: '12px 20px', borderRadius: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', background: '#7f1d1d', color: '#fff', fontSize: '13px', fontFamily: FONT_SANS }}>
                         {errorMsg}
@@ -477,16 +446,13 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
         );
     }
     /* ── END RESERVATION ── */
-
     const legalRefs = isDeposit
         ? ['Bộ Luật Dân sự năm 2015;', 'Luật Kinh doanh Bất động sản năm 2023;', 'Nhu cầu và sự thỏa thuận của hai bên.']
         : ['Bộ Luật Dân sự năm 2015;', 'Luật Đất đai năm 2024;', 'Luật Kinh doanh Bất động sản năm 2023;', 'Nhu cầu và sự thỏa thuận của hai bên.'];
-
     // articleOffset: +1 nếu có lịch thanh toán (Điều 4)
     const articleOffset = schedule.length > 0 ? 1 : 0;
     // handoverOffset: +1 nếu có thông tin bàn giao
     const handoverOffset = (contract.handoverDate || contract.handoverCondition) ? 1 : 0;
-
     /* ── Render ── */
     return (
         <div style={{ minHeight: '100vh', background: '#e8e8e8', padding: '32px 16px', fontFamily: FONT_SANS }} className="public-contract-page">
@@ -511,10 +477,8 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     </button>
                 </div>
             </div>
-
             {/* ── DOCUMENT ── */}
             <div ref={contractRef} style={{ ...pageStyle, padding: '48px 64px', boxShadow: '0 2px 24px rgba(0,0,0,0.15)' }} className="contract-document">
-
                 {/* QUỐC HIỆU */}
                 <div style={{ ...center, marginBottom: '20px' }}>
                     <p style={{ ...bold, fontSize: '13pt', margin: 0 }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
@@ -524,7 +488,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </span>
                     </p>
                 </div>
-
                 {/* TÊN HỢP ĐỒNG */}
                 <div style={{ ...center, margin: '0 0 16px' }}>
                     <p style={{ ...bold, fontSize: '15pt', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, lineHeight: 1.6 }}>
@@ -546,7 +509,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </p>
                     )}
                 </div>
-
                 <Divider className="contract-divider" style={{ margin: '16px 0' }} />
 
                 {/* CĂN CỨ */}
@@ -556,7 +518,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         <p key={i} style={{ margin: '2px 0', paddingLeft: '16px' }}>- {ref}</p>
                     ))}
                 </div>
-
                 {/* MỞ ĐẦU */}
                 <p style={{ margin: '12px 0' }}>
                     Hôm nay, {fmtDate(contractDate)}, tại{' '}
@@ -566,10 +527,8 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     }
                     {' '}(tỉnh/thành phố), chúng tôi gồm:
                 </p>
-
                 {/* ── ĐIỀU 1: CÁC BÊN ── */}
                 <ArticleTitle num={1} title={`Các Bên Tham Gia Hợp Đồng`} />
-
                 {/* Bên A */}
                 <p style={{ ...bold, margin: '8px 0 4px' }}>BÊN A ({isDeposit ? 'BÊN NHẬN ĐẶT CỌC' : 'BÊN CHUYỂN NHƯỢNG'}):</p>
                 <Line label="Tên cá nhân / tổ chức" value={contract.partyAName} />
@@ -590,7 +549,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                 <p style={{ margin: '4px 0 0', paddingLeft: '16px', fontStyle: 'italic' }}>
                     (Sau đây gọi là "<strong>Bên A</strong>")
                 </p>
-
                 {/* Bên B */}
                 <p style={{ ...bold, margin: '14px 0 4px' }}>BÊN B ({isDeposit ? 'BÊN ĐẶT CỌC' : 'BÊN NHẬN CHUYỂN NHƯỢNG'}):</p>
                 <Line label="Họ và tên" value={contract.partyBName} />
@@ -609,11 +567,9 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                 <p style={{ margin: '4px 0 0', paddingLeft: '16px', fontStyle: 'italic' }}>
                     (Sau đây gọi là "<strong>Bên B</strong>")
                 </p>
-
                 <p style={{ margin: '12px 0' }}>
                     Hai bên đồng ý ký kết hợp đồng với các điều khoản và điều kiện sau đây:
                 </p>
-
                 {/* ── ĐIỀU 2: BẤT ĐỘNG SẢN ── */}
                 <ArticleTitle num={2} title="Đối Tượng Hợp Đồng" />
                 <p style={{ margin: '4px 0 8px' }}>
@@ -664,7 +620,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         )}
                     </p>
                 </div>
-
                 {/* ── ĐIỀU 3: GIÁ TRỊ & THANH TOÁN ── */}
                 <ArticleTitle num={3} title={isDeposit ? 'Số Tiền Đặt Cọc và Giá Chuyển Nhượng' : 'Giá Chuyển Nhượng và Phương Thức Thanh Toán'} />
 
@@ -705,7 +660,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </div>
                     )}
                 </div>
-
                 {/* ── ĐIỀU 4: LỊCH THANH TOÁN ── */}
                 {schedule.length > 0 && (
                     <>
@@ -762,7 +716,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </table>
                     </>
                 )}
-
                 {/* ── ĐIỀU 5: NGHĨA VỤ CÁC BÊN ── */}
                 <ArticleTitle num={4 + articleOffset} title="Nghĩa Vụ Các Bên" />
                 <p style={{ ...bold, margin: '6px 0 2px', paddingLeft: '16px' }}>1. Nghĩa vụ của Bên A:</p>
@@ -777,7 +730,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     <p style={{ margin: '2px 0' }}>b) Chịu trách nhiệm về việc sử dụng bất động sản sau khi nhận bàn giao;</p>
                     <p style={{ margin: '2px 0' }}>c) Phối hợp với Bên A hoàn thành thủ tục sang tên theo quy định pháp luật.</p>
                 </div>
-
                 {/* ── ĐIỀU 6: THUẾ & PHÍ ── */}
                 <ArticleTitle num={5 + articleOffset} title="Thuế, Phí và Lệ Phí" />
                 <div style={{ paddingLeft: '16px' }}>
@@ -790,7 +742,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </>
                     )}
                 </div>
-
                 {/* ── ĐIỀU 7: BÀN GIAO ── */}
                 {(contract.handoverDate || contract.handoverCondition) && (
                     <>
@@ -809,7 +760,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </div>
                     </>
                 )}
-
                 {/* ── ĐIỀU: GIẢI QUYẾT TRANH CHẤP ── */}
                 <ArticleTitle num={6 + articleOffset + handoverOffset} title="Giải Quyết Tranh Chấp" />
                 <div style={{ paddingLeft: '16px' }}>
@@ -822,7 +772,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </p>
                     )}
                 </div>
-
                 {/* ── ĐIỀU KHOẢN CHUNG ── */}
                 <ArticleTitle num={7 + articleOffset + handoverOffset} title="Điều Khoản Chung" />
                 <div style={{ paddingLeft: '16px' }}>
@@ -831,7 +780,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     <p style={{ margin: '3px 0' }}>- Mọi sửa đổi, bổ sung hợp đồng này phải được lập thành văn bản và có chữ ký của cả hai bên.</p>
                     <p style={{ margin: '3px 0' }}>- Các điều khoản khác không được đề cập trong hợp đồng này sẽ được thực hiện theo quy định của pháp luật Việt Nam hiện hành.</p>
                 </div>
-
                 {/* ── KÝ TÊN ── */}
                 <div style={{ marginTop: '40px' }}>
                     <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
@@ -855,7 +803,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                                 <p style={{ margin: 0, fontSize: '11pt', color: GRAY }}>{contract.partyAName}</p>
                             )}
                         </div>
-
                         {/* Bên B */}
                         <div style={{ textAlign: 'center' }}>
                             <p style={{ ...bold, textTransform: 'uppercase', fontSize: '12pt', margin: '0 0 4px' }}>
@@ -874,7 +821,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </div>
                     </div>
                 </div>
-
                 {/* ── FOOTER ── */}
                 <div style={{ marginTop: '32px', paddingTop: '12px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
                     <p style={{ fontSize: '10pt', color: '#888', fontFamily: FONT_SANS, margin: 0 }}>
@@ -882,7 +828,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     </p>
                 </div>
             </div>
-
             {/* Error toast */}
             {errorMsg && (
                 <div className="no-print" style={{
@@ -893,7 +838,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     {errorMsg}
                 </div>
             )}
-
             {/* Fallback print CSS (used when popup is blocked) */}
             <style>{`
                 @media print {
@@ -928,5 +872,4 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
         </div>
     );
 };
-
 export default PublicContract;

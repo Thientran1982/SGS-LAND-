@@ -8,7 +8,6 @@
  *   system browser tab (Custom Tabs / SFSafariViewController) so we don't
  *   pull a webview dependency into the mobile bundle just for this surface.
  */
-
 import React from 'react';
 import {
   ActivityIndicator,
@@ -23,7 +22,6 @@ import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
 import { projectsApi, type PublicProjectSummary } from '../api/projects';
 import { colors, radius, spacing, typography } from '../theme/tokens';
-
 // Mini-site lives on the existing web property at /p/<code>; opening it via
 // `expo-web-browser` (Custom Tabs / SFSafariViewController) gives buyers the
 // same rich microsite experience as the web without dragging a webview
@@ -31,10 +29,8 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 // lands later, swap this for a `router.push` — the call site is the only
 // place that needs to change.
 const PROJECT_MICROSITE_BASE = (process.env.EXPO_PUBLIC_API_BASE_URL || 'https://sgsland.vn').replace(/\/+$/, '');
-
 const CARD_WIDTH = 240;
 const CARD_HEIGHT = 168;
-
 export function FeaturedProjectsCarousel() {
   const query = useQuery({
     queryKey: ['projects', 'featured'],
@@ -43,12 +39,10 @@ export function FeaturedProjectsCarousel() {
     gcTime: 30 * 60_000,
     retry: 1,
   });
-
   // Hide the whole block on error or when there are no featured projects so
   // the Discover feed isn't crowded with an empty state for a marketing band.
   if (query.isError) return null;
   if (!query.isLoading && (query.data?.projects.length ?? 0) === 0) return null;
-
   return (
     <View style={styles.wrap}>
       <View style={styles.headerRow}>
@@ -100,7 +94,6 @@ export function FeaturedProjectsCarousel() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   wrap: {
     paddingTop: spacing.md,

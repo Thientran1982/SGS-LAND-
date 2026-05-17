@@ -1,12 +1,9 @@
 import { Pool, PoolClient, types } from 'pg';
 import dotenv from 'dotenv';
-
 dotenv.config();
-
 // Parse numeric (OID 1700) and int8 (OID 20) columns as JS numbers instead of strings
 types.setTypeParser(1700, (val: string) => parseFloat(val));
 types.setTypeParser(20, (val: string) => parseInt(val, 10));
-
 // NEON_DATABASE_URL là nguồn dữ liệu duy nhất (đã đồng bộ đầy đủ từ PROD 20/04/2026).
 // Ưu tiên NEON_DATABASE_URL → PROD_DATABASE_URL (backup) → DATABASE_URL (runtime).
 // Strip libpq-only params (e.g. channel_binding) that node-pg does not recognise.
@@ -22,7 +19,6 @@ if (process.env.NEON_DATABASE_URL) {
 } else if (process.env.PROD_DATABASE_URL) {
   console.log('[DB] Using PROD_DATABASE_URL (fallback)');
 }
-
 export const pool = new Pool({
   connectionString: DB_CONNECTION_STRING,
   max: 20,                       // 20 connections — supports 1000+ concurrent users (Neon allows 25-100 depending on plan)
@@ -33,12 +29,10 @@ export const pool = new Pool({
   keepAliveInitialDelayMillis: 10000,
   application_name: 'sgs-land-api',
 });
-
 // Log pool errors so they appear in production logs rather than crashing silently
 pool.on('error', (err) => {
   console.error('[DB Pool] Unexpected client error:', err.message);
 });
-
 /**
  * @deprecated Schema initialization is handled exclusively by the migration runner.
  * Call runPendingMigrations(pool) from server/migrations/runner.ts instead.
@@ -50,13 +44,11 @@ export async function initializeDatabase(): Promise<void> {
   const { runPendingMigrations } = await import('./migrations/runner');
   await runPendingMigrations(pool);
 }
-
 /**
  * Tên role runtime — KHÔNG có BYPASSRLS — để Postgres thực thi RLS thay vì owner bỏ qua.
  * Tạo bởi migration 070. Có thể override qua APP_DB_ROLE nếu cần.
  */
 const APP_DB_ROLE = (process.env.APP_DB_ROLE || 'sgs_app').replace(/[^a-z0-9_]/gi, '');
-
 export async function withTenantContext<T>(
   tenantId: string,
   queryFn: (client: PoolClient) => Promise<T>
@@ -86,7 +78,6 @@ export async function withTenantContext<T>(
     client.release();
   }
 }
-
 export async function withTransaction<T>(
   queryFn: (client: PoolClient) => Promise<T>
 ): Promise<T> {
@@ -103,7 +94,6 @@ export async function withTransaction<T>(
     client.release();
   }
 }
-
 /**
  * RLS bypass channel — sử dụng cho các truy vấn cross-tenant hợp pháp:
  *   • B2B2C partner đọc inventory của developer (project_access JOIN).

@@ -1,10 +1,8 @@
-
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { KnowledgeDocument } from '../types';
 import { useTranslation } from '../services/i18n';
-
 const ICONS = {
     UPLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>,
     SEARCH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -16,11 +14,9 @@ const ICONS = {
     X: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     DOCS: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
 };
-
 const normalizeString = (str: string) => {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 };
-
 export const KnowledgeBase: React.FC = () => {
     const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,17 +32,14 @@ export const KnowledgeBase: React.FC = () => {
     const headerUploadRef = useRef<HTMLInputElement>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const { t, formatDate } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     useEffect(() => {
         const handler = setTimeout(() => setDebouncedSearch(search), 350);
         return () => clearTimeout(handler);
     }, [search]);
-
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -59,9 +52,7 @@ export const KnowledgeBase: React.FC = () => {
         } catch {
         } finally { setLoading(false); }
     }, []);
-
     useEffect(() => { fetchData(); }, [fetchData]);
-
     // Auto-poll khi có doc đang xử lý — refresh đến khi tất cả hoàn thành
     useEffect(() => {
         const hasProcessing = docs.some(d => d.status === 'PROCESSING');
@@ -77,14 +68,11 @@ export const KnowledgeBase: React.FC = () => {
         }, 3000);
         return () => clearInterval(timer);
     }, [docs]);
-
     const displayedDocs = debouncedSearch
         ? docs.filter(d => normalizeString(d.title || '').includes(normalizeString(debouncedSearch)))
         : docs;
-
     const canUpload = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING'].includes(currentUser?.role ?? '');
     const canManage = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '');
-
     const processFile = async (file: File): Promise<boolean> => {
         const validTypes = ['.pdf', '.docx', '.doc', '.txt'];
         const isValidType = validTypes.some(type => file.name.toLowerCase().endsWith(type));
@@ -111,7 +99,6 @@ export const KnowledgeBase: React.FC = () => {
             return false;
         }
     };
-
     const processFiles = async (files: File[]) => {
         if (!files.length) return;
         setIsUploading(true);
@@ -134,13 +121,11 @@ export const KnowledgeBase: React.FC = () => {
             );
         }
     };
-
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
         await processFiles(files);
     };
-
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); };
     const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); };
     const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -150,7 +135,6 @@ export const KnowledgeBase: React.FC = () => {
         if (!files.length) return;
         await processFiles(files);
     };
-
     const handleDelete = async (id: string) => {
         setIsDeleting(true);
         try {
@@ -162,13 +146,11 @@ export const KnowledgeBase: React.FC = () => {
             notify(error?.message || t('common.error'), 'error');
         } finally { setIsDeleting(false); }
     };
-
     if (loading) return (
         <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">
             {t('common.loading')}
         </div>
     );
-
     return (
         <>
         <div className="w-full space-y-5 p-4 sm:p-6 pb-20 animate-enter relative max-w-6xl mx-auto">
@@ -184,7 +166,6 @@ export const KnowledgeBase: React.FC = () => {
                         {t('knowledge.subtitle')}
                     </p>
                 </div>
-
                 {/* Controls: search + upload button */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     {/* Search input */}
@@ -210,7 +191,6 @@ export const KnowledgeBase: React.FC = () => {
                             </div>
                         )}
                     </div>
-
                     {/* Upload button — header shortcut */}
                     {canUpload && (
                         <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
@@ -237,7 +217,6 @@ export const KnowledgeBase: React.FC = () => {
                     )}
                 </div>
             </div>
-
             {/* ─── Drag & Drop zone ─── */}
             {canUpload && (
                 <div
@@ -282,7 +261,6 @@ export const KnowledgeBase: React.FC = () => {
                     </label>
                 </div>
             )}
-
             {/* ─── Documents list ─── */}
             <div>
                 <div className="flex items-center justify-between mb-4">
@@ -319,7 +297,6 @@ export const KnowledgeBase: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="mt-auto pt-4 border-t border-[var(--glass-border)] flex items-center justify-between">
                                 {doc.status === 'PROCESSING' ? (
                                     <div className="flex items-center gap-1.5">
@@ -353,7 +330,6 @@ export const KnowledgeBase: React.FC = () => {
                         </div>
                     ))}
                 </div>
-
                 {displayedDocs.length === 0 && !loading && (
                     <div className="py-16 text-center bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
                         <div className="w-14 h-14 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--text-secondary)]">
@@ -369,7 +345,6 @@ export const KnowledgeBase: React.FC = () => {
                 )}
             </div>
         </div>
-
         {/* ─── Delete Confirmation Modal ─── */}
         {confirmDeleteId && createPortal(
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-enter">
@@ -404,7 +379,6 @@ export const KnowledgeBase: React.FC = () => {
             </div>,
             document.body
         )}
-
         {createPortal(
             toast ? (
                 <div className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 sm:max-w-sm z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>

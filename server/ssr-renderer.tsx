@@ -10,17 +10,13 @@
 //
 // Integration: called from the /du-an/:projectSlug handler in server.ts.
 // Returns null for unknown paths — caller falls back to buildStaticPageMeta.
-
 import { injectMeta, getBaseHtml, MetaData, buildStaticPageMeta } from './seo/metaInjector';
-
 const APP = 'https://sgsland.vn';
-
 // ---------------------------------------------------------------------------
 // Page metadata registry
 // Only routes that need RICHER schema than the metaInjector STATIC_PAGE_META
 // (i.e. RealEstateListing + AggregateOffer price data) are listed here.
 // ---------------------------------------------------------------------------
-
 interface SsrPage {
   title: string;
   description: string;
@@ -32,7 +28,6 @@ interface SsrPage {
   geoRegion?: string;
   schema: object[];
 }
-
 // Homepage entry — shared by '/' and '/home'.
 // Schema: WebSite (SearchAction) + Organization (E-E-A-T) + FAQPage (GEO).
 // GEO body (stats + city comparison table) lives in GEO_BODY_DATA below.
@@ -123,7 +118,6 @@ const HOME_PAGE: SsrPage = {
     },
   ],
 };
-
 export const PAGE_META: Record<string, SsrPage> = {
   '/': HOME_PAGE,
   '/home': HOME_PAGE,
@@ -239,7 +233,6 @@ export const PAGE_META: Record<string, SsrPage> = {
       },
     ],
   },
-
   '/du-an/vinhomes-grand-park': {
     title: 'Vinhomes Grand Park | Căn Hộ Từ 2.5 Tỷ, Bảng Giá T5/2026 — SGS LAND',
     description:
@@ -352,11 +345,9 @@ export const PAGE_META: Record<string, SsrPage> = {
     ],
   },
 };
-
 // ---------------------------------------------------------------------------
 // HTML escape helper
 // ---------------------------------------------------------------------------
-
 function esc(str: string): string {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -364,13 +355,11 @@ function esc(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
-
 function fmtVND(price: number): string {
   if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(1)} tỷ đồng`;
   if (price >= 1_000_000) return `${Math.round(price / 1_000_000)} triệu đồng`;
   return price.toLocaleString('vi-VN') + ' đồng';
 }
-
 // ---------------------------------------------------------------------------
 // GEO-enhanced body data for AI crawlers (GPTBot, PerplexityBot, ClaudeBot).
 //
@@ -380,11 +369,9 @@ function fmtVND(price: number): string {
 //   Authoritative citations           → +30.3%
 //   Comparison tables & ranked lists  → 74% of AI citations from structured formats
 // ---------------------------------------------------------------------------
-
 const TABLE_STYLE = 'border-collapse:collapse;width:100%;font-size:13px;color:#334155;margin:8px 0 16px;';
 const TH_STYLE = 'border:1px solid #e2e8f0;padding:8px 10px;background:#f8fafc;text-align:left;font-weight:600;';
 const TD_STYLE = 'border:1px solid #e2e8f0;padding:8px 10px;';
-
 // Homepage GEO data — platform stats + top-city comparison table.
 // directAnswer: 40-60 words, cited statistics, named sources per GEO research (+33.9% visibility).
 const HOME_GEO = {
@@ -417,7 +404,6 @@ const HOME_GEO = {
     `<tr><td style="${TD_STYLE}">Cần Thơ</td><td style="${TD_STYLE}">15–28</td><td style="${TD_STYLE}">+8%</td><td style="${TD_STYLE}">3,5–5%</td><td style="${TD_STYLE}">Cao tốc Cần Thơ – Cà Mau</td></tr>` +
     '</tbody></table>',
 };
-
 const GEO_BODY_DATA: Record<string, {
   directAnswer: string;
   stats: string[];
@@ -455,7 +441,6 @@ const GEO_BODY_DATA: Record<string, {
       `<tr><td style="${TD_STYLE}">Khoảng cách TP.HCM</td><td style="${TD_STYLE}">35km (~30 phút)</td><td style="${TD_STYLE}">35km (~40 phút)</td><td style="${TD_STYLE}">50km (~60 phút)</td></tr>` +
       '</tbody></table>',
   },
-
   '/du-an/vinhomes-grand-park': {
     directAnswer:
       'Vinhomes Grand Park là siêu đô thị thông minh 271ha tại TP. Thủ Đức — gồm 9 phân khu, 44 tòa tháp và hơn 25.000 căn hộ, do Vinhomes (mã VHM-HOSE) phát triển từ 2019. ' +
@@ -486,21 +471,17 @@ const GEO_BODY_DATA: Record<string, {
       '</tbody></table>',
   },
 };
-
 // ---------------------------------------------------------------------------
 // Body HTML generators
 // Produces visible HTML injected into <!-- ssr-body-placeholder --> inside #root.
 // React.createRoot().render() replaces #root on mount — users with JS see the SPA.
 // Crawlers (Googlebot, GPTBot, ClaudeBot, PerplexityBot) read this before JS runs.
 // ---------------------------------------------------------------------------
-
 function buildProjectBodyHtml(page: SsrPage, path: string): string {
   const listing = page.schema.find((s: any) => s['@type'] === 'RealEstateListing') as any;
   const faqNode = page.schema.find((s: any) => s['@type'] === 'FAQPage') as any;
   const breadcrumb = page.schema.find((s: any) => s['@type'] === 'BreadcrumbList') as any;
-
   const lines: string[] = [];
-
   // Breadcrumbs
   if (breadcrumb?.itemListElement?.length) {
     const crumbs = breadcrumb.itemListElement
@@ -508,12 +489,10 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
       .join(' › ');
     lines.push(`<p style="font-size:13px;color:#64748b;margin-bottom:12px;">${crumbs}</p>`);
   }
-
   // Lead paragraph
   if (listing?.description) {
     lines.push(`<p><strong>${esc(page.h1)}</strong> — ${esc(listing.description)}</p>`);
   }
-
   // Key facts
   const facts: { label: string; value: string }[] = [];
   if (listing?.address) {
@@ -538,7 +517,6 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
   if (Array.isArray(listing?.amenityFeature) && listing.amenityFeature.length) {
     facts.push({ label: 'Tiện ích', value: listing.amenityFeature.slice(0, 5).join(', ') });
   }
-
   if (facts.length) {
     lines.push('<h2 style="font-size:16px;margin:16px 0 8px;">Thông tin dự án</h2>');
     lines.push('<ul style="margin:0;padding-left:20px;color:#475569;">');
@@ -547,7 +525,6 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
     }
     lines.push('</ul>');
   }
-
   // FAQ (top 4 Q&A)
   const faqs: any[] = faqNode?.mainEntity ?? [];
   if (faqs.length) {
@@ -560,7 +537,6 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
       lines.push(`<p style="color:#475569;margin:0 0 8px;">${esc(aText)}</p>`);
     }
   }
-
   // Authority footer + internal links
   lines.push('<h2 style="font-size:16px;margin:20px 0 8px;">Về SGS LAND</h2>');
   lines.push(
@@ -574,10 +550,8 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
   lines.push(`  <li><a href="${esc(APP)}/marketplace">Tìm kiếm 45.000+ bất động sản toàn quốc</a></li>`);
   lines.push(`  <li><a href="${esc(APP)}/contact">Đặt lịch tư vấn miễn phí</a></li>`);
   lines.push('</ul>');
-
   return lines.join('\n');
 }
-
 // ---------------------------------------------------------------------------
 // GEO-enhanced body generator for AI crawlers
 // Applies highest-impact GEO signals (Princeton/IIT Delhi KDD 2024):
@@ -586,37 +560,31 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
 //   comparison tables   → 74% of AI citations from structured formats
 //   full FAQ untruncated → topical depth
 // ---------------------------------------------------------------------------
-
 function buildGeoBodyHtml(page: SsrPage, path: string): string {
   const geo = GEO_BODY_DATA[path];
   const faqNode = page.schema.find((s: any) => s['@type'] === 'FAQPage') as any;
   const breadcrumb = page.schema.find((s: any) => s['@type'] === 'BreadcrumbList') as any;
   const lines: string[] = [];
-
   if (breadcrumb?.itemListElement?.length) {
     const crumbs = breadcrumb.itemListElement
       .map((it: any) => (it.item ? `<a href="${esc(it.item)}">${esc(it.name)}</a>` : esc(it.name)))
       .join(' &rsaquo; ');
     lines.push(`<p style="font-size:13px;color:#64748b;margin-bottom:16px;">${crumbs}</p>`);
   }
-
   if (geo?.directAnswer) {
     lines.push(`<h2 style="font-size:18px;font-weight:700;margin:0 0 8px;color:#0f172a;">${esc(page.h1)} là gì?</h2>`);
     lines.push(`<p style="color:#1e293b;line-height:1.7;margin:0 0 16px;">${esc(geo.directAnswer)}</p>`);
   }
-
   if (geo?.stats?.length) {
     lines.push(`<h2 style="font-size:16px;font-weight:700;margin:20px 0 8px;color:#0f172a;">Số liệu thị trường ${esc(page.h1)} (T5/2026)</h2>`);
     lines.push('<ul style="margin:0;padding-left:20px;color:#475569;line-height:1.7;">');
     for (const stat of geo.stats) lines.push(`  <li>${esc(stat)}</li>`);
     lines.push('</ul>');
   }
-
   if (geo?.comparisonHtml) {
     lines.push(`<h2 style="font-size:16px;font-weight:700;margin:20px 0 8px;color:#0f172a;">So sánh ${esc(page.h1)} với dự án cùng phân khúc</h2>`);
     lines.push(geo.comparisonHtml);
   }
-
   const faqs: any[] = faqNode?.mainEntity ?? [];
   if (faqs.length) {
     lines.push(`<h2 style="font-size:16px;font-weight:700;margin:20px 0 8px;color:#0f172a;">Câu hỏi thường gặp về ${esc(page.h1)}</h2>`);
@@ -628,7 +596,6 @@ function buildGeoBodyHtml(page: SsrPage, path: string): string {
       lines.push(`<p style="color:#475569;margin:0 0 8px;line-height:1.65;">${esc(aText)}</p>`);
     }
   }
-
   lines.push(`<h2 style="font-size:16px;font-weight:700;margin:24px 0 8px;color:#0f172a;">Về SGS LAND — Đại Lý Uỷ Quyền Chính Thức</h2>`);
   lines.push(
     `<p style="color:#475569;line-height:1.7;margin:0 0 12px;"><strong>SGS LAND</strong> (sgsland.vn) là đại lý phân phối uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes tại Việt Nam, thành lập 2019. ` +
@@ -643,14 +610,11 @@ function buildGeoBodyHtml(page: SsrPage, path: string): string {
   lines.push(`  <li><a href="${esc(APP)}/kien-thuc-bds">Kho kiến thức bất động sản</a> — pháp lý, tài chính, thuật ngữ</li>`);
   lines.push(`  <li><a href="${esc(APP)}/contact">Đặt lịch tư vấn 1-1 miễn phí</a></li>`);
   lines.push('</ul>');
-
   return lines.join('\n');
 }
-
 // ---------------------------------------------------------------------------
 // Main renderer
 // ---------------------------------------------------------------------------
-
 /**
  * Renders the production index.html with enhanced SSR meta for the given path.
  *
@@ -663,28 +627,23 @@ function buildGeoBodyHtml(page: SsrPage, path: string): string {
 export function renderSsrPage(path: string, opts?: { aiBot?: boolean }): string | null {
   const page = PAGE_META[path];
   if (!page) return null;
-
   let baseHtml: string;
   try {
     baseHtml = getBaseHtml();
   } catch {
     return null;
   }
-
   const graph = page.schema.map((node: any) => {
     const { '@context': _ctx, ...rest } = node as any;
     return rest;
   });
-
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': graph,
   };
-
   const bodyHtml = (opts?.aiBot && GEO_BODY_DATA[path])
     ? buildGeoBodyHtml(page, path)
     : buildProjectBodyHtml(page, path);
-
   const meta: MetaData = {
     title: page.title,
     description: page.description,
@@ -698,10 +657,8 @@ export function renderSsrPage(path: string, opts?: { aiBot?: boolean }): string 
     structuredData,
     bodyHtml,
   };
-
   return injectMeta(baseHtml, meta);
 }
-
 // ---------------------------------------------------------------------------
 // Universal bot HTML generator
 // Implements the wildcard SSR middleware pattern:
@@ -712,11 +669,9 @@ export function renderSsrPage(path: string, opts?: { aiBot?: boolean }): string 
 //   2. buildStaticPageMeta()     — all other routes via STATIC_PAGE_META
 //   3. Minimal branded fallback  — if getBaseHtml() fails (build not ready)
 // ---------------------------------------------------------------------------
-
 export function generateBotHTML(pathname: string, opts?: { aiBot?: boolean }): string {
   const rich = renderSsrPage(pathname, opts);
   if (rich) return rich;
-
   try {
     const meta = buildStaticPageMeta(null, null, null, pathname);
     return injectMeta(getBaseHtml(), meta);

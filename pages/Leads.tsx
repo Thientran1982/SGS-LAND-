@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -11,20 +10,16 @@ import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { aiService } from '../services/aiService';
-
 // -----------------------------------------------------------------------------
 //  CONSTANTS & STYLES
 // -----------------------------------------------------------------------------
-
 type RowDensity = 'compact' | 'normal' | 'relaxed';
 type ViewMode = 'LIST' | 'BOARD';
-
 const DENSITY_STYLES = {
     compact: 'py-2 text-xs',
     normal: 'py-4 text-sm',
     relaxed: 'py-6 text-sm'
 };
-
 const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: string }> = {
     [LeadStage.NEW]: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
     [LeadStage.CONTACTED]: { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200' },
@@ -35,7 +30,6 @@ const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: strin
     [LeadStage.LOST]: { color: 'text-[var(--text-tertiary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-[var(--glass-border)]' },
     [LeadStage.MANUAL]: { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' },
 };
-
 // Added pointer-events-none to icons to prevent them from becoming the event target
 const ICONS = {
     SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -57,7 +51,6 @@ const ICONS = {
     X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     USER: <svg className="w-3 h-3 pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
 };
-
 // Case-insensitive source icon lookup
 const getSourceIcon = (source: string) => {
     const s = source.toUpperCase();
@@ -70,7 +63,6 @@ const getSourceIcon = (source: string) => {
     if (s === 'MICROSITE' || s.startsWith('MICROSITE-')) return ICONS.MICROSITE;
     return ICONS.GLOBE;
 };
-
 // Translate source label; handles dynamic `microsite-{CODE}` pattern
 const formatSource = (source: string, t: (k: string) => string): string => {
     const key = `source.${source}`;
@@ -83,22 +75,18 @@ const formatSource = (source: string, t: (k: string) => string): string => {
     }
     return source;
 };
-
 // --- HOOK: DRAGGABLE SCROLL (Desktop) ---
 // Enhanced to accept a dependency trigger (like viewMode) to re-bind listeners
 const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;
-
         let isDown = false;
         let startX = 0;
         let scrollLeft = 0;
-
         const onMouseDown = (e: MouseEvent) => {
             // Only allow dragging if not clicking an interactive element
-            if ((e.target as HTMLElement).closest('button, a, input, [role="button"]')) return;
-            
+            if ((e.target as HTMLElement).closest('button, a, input, [role="button"]')) return;            
             isDown = true;
             node.classList.add('cursor-grabbing');
             node.classList.remove('cursor-grab');
@@ -106,7 +94,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             startX = e.pageX - node.offsetLeft;
             scrollLeft = node.scrollLeft;
         };
-
         const onMouseLeave = () => {
             if (!isDown) return;
             isDown = false;
@@ -114,7 +101,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             node.classList.add('cursor-grab');
             node.classList.add('snap-x');
         };
-
         const onMouseUp = () => {
             if (!isDown) return;
             isDown = false;
@@ -122,7 +108,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             node.classList.add('cursor-grab');
             node.classList.add('snap-x');
         };
-
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
             e.preventDefault();
@@ -130,15 +115,12 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             const walk = (x - startX) * 2; // Increased scroll speed multiplier for better feel
             node.scrollLeft = scrollLeft - walk;
         };
-
         node.addEventListener('mousedown', onMouseDown);
         node.addEventListener('mouseleave', onMouseLeave);
         node.addEventListener('mouseup', onMouseUp);
         node.addEventListener('mousemove', onMouseMove);
-
         // Initial State
         node.classList.add('cursor-grab');
-
         return () => {
             node.removeEventListener('mousedown', onMouseDown);
             node.removeEventListener('mouseleave', onMouseLeave);
@@ -148,7 +130,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         };
     }, [ref, trigger]); // Re-run when trigger (viewMode) changes
 };
-
 // --- PAGINATION COMPONENT ---
 const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, onPrev, onNext, onPageSizeChange, t }: {
     totalItems: number; pageSize: number; hasPrev: boolean; hasNext: boolean;
@@ -198,14 +179,12 @@ const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, 
         </>
     );
 });
-
 // --- TABLE ROW ---
 const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDuplicate, onDelete, canDelete, t, visibleColumns, density, formatDate, users }: any) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
     const btnRef = useRef<HTMLButtonElement>(null);
     const menuDivRef = useRef<HTMLDivElement>(null);
-
     useEffect(() => {
         if (!menuOpen) return;
         const close = (e: MouseEvent) => {
@@ -217,7 +196,6 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
         window.addEventListener('scroll', onScroll, true);
         return () => { document.removeEventListener('mousedown', close); window.removeEventListener('scroll', onScroll, true); };
     }, [menuOpen]);
-
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (btnRef.current) {
@@ -229,16 +207,13 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
         }
         setMenuOpen(v => !v);
     };
-
     const stickyClass = isSelected 
         ? 'bg-indigo-50 dark:bg-slate-800' 
         : 'bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50';
-
     const paddingY = DENSITY_STYLES[density as RowDensity] || DENSITY_STYLES.normal;
     const scoreValue = lead.score?.score || 0;
     const scoreGrade = lead.score?.grade || 'C';
     const stageStyle = STAGE_CONFIG[lead.stage as LeadStage] || STAGE_CONFIG[LeadStage.NEW];
-
     return (
         <tr 
             onClick={() => onClick(lead)}
@@ -258,8 +233,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                     </button>
                 </div>
-            </td>
-            
+            </td>            
             {/* Sticky Name (Left 50px) */}
             <td className={`px-4 ${paddingY} sticky left-[50px] z-10 transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass} min-w-[220px]`}>
                 <div className="flex items-center gap-3">
@@ -285,34 +259,29 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     </div>
                 </div>
             </td>
-
             {/* Dynamic Columns */}
             {visibleColumns.has('phone') && (
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono`}>
                     {lead.phone}
                 </td>
             )}
-
             {visibleColumns.has('email') && (
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400`}>
                     {lead.email || '--'}
                 </td>
             )}
-
             {visibleColumns.has('address') && (
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400 max-w-[200px] truncate`} title={lead.address}>
                     {lead.address || '--'}
                 </td>
             )}
-
             {visibleColumns.has('stage') && (
                 <td className={`px-4 ${paddingY}`}>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs2 font-bold border uppercase tracking-wider whitespace-nowrap ${stageStyle.bg} ${stageStyle.color} ${stageStyle.border}`}>
                         {t(`stage.${lead.stage}`)}
                     </span>
                 </td>
-            )}
-            
+            )}            
             {visibleColumns.has('source') && (
                 <td className={`px-4 ${paddingY}`}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] dark:text-slate-300">
@@ -323,7 +292,6 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     </div>
                 </td>
             )}
-
             {visibleColumns.has('score') && (
                 <td className={`px-4 ${paddingY}`}>
                     <div className="flex items-center gap-2" title={`Grade: ${scoreGrade}`}>
@@ -337,7 +305,6 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     </div>
                 </td>
             )}
-
             {visibleColumns.has('owner') && (
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap`}>
                     <div className="flex items-center gap-1.5">
@@ -346,13 +313,11 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     </div>
                 </td>
             )}
-
             {visibleColumns.has('createdAt') && (
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap font-mono`}>
                     {formatDate(lead.createdAt)}
                 </td>
             )}
-
             {visibleColumns.has('paymentProgress') && (() => {
                 const schedule: any[] = lead.contractPaymentSchedule || [];
                 if (!schedule.length) {
@@ -381,7 +346,6 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     </td>
                 );
             })()}
-
             {/* Sticky Actions (Right) — dropdown */}
             <td className={`px-3 ${paddingY} text-right sticky right-0 z-10 transition-colors shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass}`} onClick={e => e.stopPropagation()}>
                 <div data-menu-root="1" className="flex justify-end">
@@ -428,7 +392,6 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
         </tr>
     );
 });
-
 // --- KANBAN BOARD CARD ---
 const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, formatDate, users }: {
     lead: Lead;
@@ -454,7 +417,6 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
         setMenuPos({ top, right: window.innerWidth - rect.right });
         setMenuOpen(v => !v);
     };
-
     useEffect(() => {
         if (!menuOpen) return;
         const handler = (e: MouseEvent) => {
@@ -490,7 +452,6 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     </button>
                 </div>
             </div>
-
             {/* Phone + Source */}
             <div className="flex items-center justify-between mb-2.5">
                 <span className="text-xs text-[var(--text-tertiary)] font-mono truncate flex-1 mr-2">{lead.phone}</span>
@@ -499,7 +460,6 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     {formatSource(lead.source, t)}
                 </span>
             </div>
-
             {/* Tags */}
             {lead.tags && lead.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2.5">
@@ -515,7 +475,6 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     )}
                 </div>
             )}
-
             {/* Footer: date + assignee */}
             <div className="flex justify-between items-center text-xs2 text-[var(--text-secondary)] mt-2.5 pt-2.5 border-t border-[var(--glass-border)]">
                 <span>{formatDate(lead.createdAt)}</span>
@@ -524,7 +483,6 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                     {lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
                 </span>
             </div>
-
             {/* Dropdown menu — rendered via portal to escape overflow:hidden ancestors */}
             {menuOpen && createPortal(
                 <div
@@ -563,11 +521,9 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const Leads: React.FC = () => {
     const { t, formatDate, language } = useTranslation();
     const { socket } = useSocket();
@@ -582,32 +538,27 @@ export const Leads: React.FC = () => {
     const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
     const [nextCursor, setNextCursor] = useState<string | null>(null);
     const [hasNext, setHasNext] = useState(false);
-    const [currentUser, setCurrentUser] = useState<any>(null);
-    
+    const [currentUser, setCurrentUser] = useState<any>(null);    
     // Refs for drag-to-scroll
     const boardRef = useRef<HTMLDivElement>(null);
     const tableRef = useRef<HTMLDivElement>(null);
     const filtersRef = useRef<HTMLDivElement>(null);
-    const metricsRef = useRef<HTMLDivElement>(null);
-    
+    const metricsRef = useRef<HTMLDivElement>(null);    
     // View State
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         try { return (localStorage.getItem('sgs_leads_view') as ViewMode) || 'LIST'; } catch { return 'LIST'; }
     });
-
     // Hook: Draggable Scroll for Desktop - Added viewMode dependency to ensure listeners attach on view switch
     useDraggableScroll(boardRef, viewMode);
     // Apply draggable scroll to filters container as well to match user request for swiping
     useDraggableScroll(filtersRef, null);
     useDraggableScroll(tableRef, viewMode);
     useDraggableScroll(metricsRef, null);
-
     // Filters
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [stageFilter, setStageFilter] = useState('ALL');
     const [sourceFilter, setSourceFilter] = useState('ALL');
-
     // Debounce search
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -615,7 +566,6 @@ export const Leads: React.FC = () => {
         }, 300);
         return () => clearTimeout(handler);
     }, [search]);
-
     // Reset cursor to first page AND clear stale selections when filters change
     useEffect(() => {
         setCursorStack([]);
@@ -623,8 +573,7 @@ export const Leads: React.FC = () => {
         setNextCursor(null);
         setHasNext(false);
         setSelectedLeads(new Set());
-    }, [debouncedSearch, stageFilter, sourceFilter, pageSize]);
-    
+    }, [debouncedSearch, stageFilter, sourceFilter, pageSize]);    
     // UI State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -638,7 +587,6 @@ export const Leads: React.FC = () => {
     const [showColumnSettings, setShowColumnSettings] = useState(false);
     const colSettingsBtnRef = useRef<HTMLButtonElement>(null);
     const colSettingsPanelRef = useRef<HTMLDivElement>(null);
-
     // Deep-link: open lead from notification (e.g. /#/leads?leadId=xxx)
     const openLeadFromHash = useCallback((hash: string) => {
         // Support both legacy hash URL (#/leads?leadId=xxx) and clean URL (/leads?leadId=xxx).
@@ -660,7 +608,6 @@ export const Leads: React.FC = () => {
             setTimeout(() => setToast(null), 4000);
         });
     }, [t]);
-
     useEffect(() => {
         openLeadFromHash(window.location.hash);
         const onHashChange = () => openLeadFromHash(window.location.hash);
@@ -690,12 +637,10 @@ export const Leads: React.FC = () => {
             window.removeEventListener('sgs:open-lead', onOpenLead);
         };
     }, [openLeadFromHash, t]);
-
     // --- VIEW SETTINGS STATE (PERSISTED) ---
     const [density, setDensity] = useState<RowDensity>(() => {
         try { return (localStorage.getItem('sgs_leads_density') as RowDensity) || 'compact'; } catch { return 'compact'; }
     });
-
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
         try {
             const saved = localStorage.getItem('sgs_leads_columns');
@@ -707,12 +652,10 @@ export const Leads: React.FC = () => {
         } catch {}
         return new Set(['phone', 'stage', 'source', 'score', 'owner', 'paymentProgress']);
     });
-
     // Persistence Effects
     useEffect(() => { localStorage.setItem('sgs_leads_density', density); }, [density]);
     useEffect(() => { localStorage.setItem('sgs_leads_columns', JSON.stringify(Array.from(visibleColumns))); }, [visibleColumns]);
     useEffect(() => { localStorage.setItem('sgs_leads_view', viewMode); }, [viewMode]);
-
     // Close column settings panel on outside click
     useEffect(() => {
         if (!showColumnSettings) return;
@@ -730,7 +673,6 @@ export const Leads: React.FC = () => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const fetchLeads = useCallback(async () => {
         setLoading(true);
         try {
@@ -738,7 +680,6 @@ export const Leads: React.FC = () => {
             if (debouncedSearch) filters.search = debouncedSearch;
             if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
-
             if (viewMode === 'BOARD') {
                 // Board: offset-based, fetch up to 500 for full Kanban
                 const res = await db.getLeads(1, 500, filters);
@@ -773,7 +714,6 @@ export const Leads: React.FC = () => {
             ]);
         });
     }, [fetchLeads, t]);
-
     // WebSocket Integration for Real-time Collaboration
     useEffect(() => {
         const handleLeadChange = (data?: any) => {
@@ -782,25 +722,21 @@ export const Leads: React.FC = () => {
                 notify(t('common.success') + `: ${data.name}`, 'success');
             }
         };
-
         socket?.on("lead_created", handleLeadChange);
         socket?.on("lead_updated", handleLeadChange);
         socket?.on("lead_scored", handleLeadChange);
-
         return () => {
             socket?.off("lead_created", handleLeadChange);
             socket?.off("lead_updated", handleLeadChange);
             socket?.off("lead_scored", handleLeadChange);
         };
     }, [socket, fetchLeads, notify, t]);
-
     // Cursor navigation handlers
     const handleCursorNext = useCallback(() => {
         if (!nextCursor) return;
         setCursorStack(prev => [...prev, currentCursor ?? '']);
         setCurrentCursor(nextCursor);
     }, [nextCursor, currentCursor]);
-
     const handleCursorPrev = useCallback(() => {
         setCursorStack(prev => {
             const stack = [...prev];
@@ -809,23 +745,19 @@ export const Leads: React.FC = () => {
             return stack;
         });
     }, []);
-
     const handleSelectAll = () => {
         if (selectedLeads.size === leads.length) setSelectedLeads(new Set());
         else setSelectedLeads(new Set(leads.map(l => l.id)));
     };
-
     const handleSelectOne = (id: string) => {
         const newSet = new Set(selectedLeads);
         if (newSet.has(id)) newSet.delete(id);
         else newSet.add(id);
         setSelectedLeads(newSet);
     };
-
     const handleDeleteClick = useCallback((lead: Lead) => {
         setLeadToDelete(lead);
     }, []);
-
     const confirmBulkDelete = useCallback(async () => {
         try {
             await Promise.all(Array.from(selectedLeads).map(id => db.deleteLead(id)));
@@ -838,20 +770,17 @@ export const Leads: React.FC = () => {
             setBulkDeletePending(false);
         }
     }, [selectedLeads, notify, t, fetchLeads]);
-
     const confirmDelete = useCallback(async () => {
         if (!leadToDelete) return;
         try {
             await db.deleteLead(leadToDelete.id);
-            notify(t('leads.delete_success'), 'success');
-            
+            notify(t('leads.delete_success'), 'success');            
             // Remove from selected leads if it was selected
             setSelectedLeads(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(leadToDelete.id);
                 return newSet;
-            });
-            
+            });           
             // Refresh explicitly to update UI
             fetchLeads();
         } catch (e) {
@@ -860,7 +789,6 @@ export const Leads: React.FC = () => {
             setLeadToDelete(null);
         }
     }, [leadToDelete, notify, t, fetchLeads]);
-
     const handleDuplicate = async (id: string) => {
         try {
             await db.duplicateLead(id);
@@ -870,12 +798,10 @@ export const Leads: React.FC = () => {
             notify(t('common.error'), 'error');
         }
     };
-
     const handleEdit = (lead: Lead) => {
         setEditingLead(lead);
         setIsDetailOpen(true);
     };
-
     const handleUpdateLead = async (updatedLead: Lead) => {
         try {
             await db.updateLead(updatedLead.id, updatedLead);
@@ -888,12 +814,9 @@ export const Leads: React.FC = () => {
             notify(e.message || t('common.error'), 'error');
         }
     };
-
     const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_stages') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
     const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: formatSource(s, t) }))], [t]);
-
     const fileInputRef = useRef<HTMLInputElement>(null);
-
     const handleExportExcel = async () => {
         try {
             setLoading(true);
@@ -901,7 +824,6 @@ export const Leads: React.FC = () => {
             if (debouncedSearch) filters.search = debouncedSearch;
             if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
-
             // Paginate through all pages (server caps at 200/page)
             const EXPORT_PAGE_SIZE = 200;
             let allLeads: any[] = [];
@@ -913,11 +835,9 @@ export const Leads: React.FC = () => {
                 totalPages = res.totalPages || 1;
                 exportPage++;
             } while (exportPage <= totalPages);
-
             const ExcelJS = (await import('exceljs')).default;
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Leads');
-
             worksheet.columns = [
                 { header: 'Tên khách hàng', key: 'name', width: 25 },
                 { header: 'Số điện thoại', key: 'phone', width: 20, style: { numFmt: '@' } },
@@ -931,7 +851,6 @@ export const Leads: React.FC = () => {
                 { header: 'Người phụ trách', key: 'assignedTo', width: 20 },
                 { header: 'Ngày tạo', key: 'createdAt', width: 15 },
             ];
-
             allLeads.forEach(lead => {
                 const row = worksheet.addRow({
                     name: lead.name,
@@ -951,7 +870,6 @@ export const Leads: React.FC = () => {
                 phoneCell.numFmt = '@';
                 phoneCell.value = String(lead.phone || '');
             });
-
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const url = URL.createObjectURL(blob);
@@ -967,13 +885,11 @@ export const Leads: React.FC = () => {
             setLoading(false);
         }
     };
-
     const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         // Clear input early so the same file can be re-selected if needed
         if (fileInputRef.current) fileInputRef.current.value = '';
-
         const normalizeVNPhone = (raw: string): string => {
             // Strip all non-digit chars (spaces, dashes, parens, +)
             let p = raw.replace(/[^0-9]/g, '');
@@ -983,19 +899,16 @@ export const Leads: React.FC = () => {
             if (!p.startsWith('0') && p.length === 9) p = '0' + p;
             return p;
         };
-
         const reader = new FileReader();
         reader.onload = async (evt) => {
             const arrayBuffer = evt.target?.result;
             if (!arrayBuffer) return;
-
             setLoading(true);
             try {
                 const ExcelJS = (await import('exceljs')).default;
                 const wb = new ExcelJS.Workbook();
                 await wb.xlsx.load(arrayBuffer as ArrayBuffer);
                 const ws = wb.worksheets[0];
-
                 const headers: string[] = [];
                 const data: Record<string, string>[] = [];
                 ws.eachRow((row, rowNumber) => {
@@ -1009,26 +922,21 @@ export const Leads: React.FC = () => {
                         data.push(rowData);
                     }
                 });
-
                 const MAX_IMPORT_ROWS = 1000;
                 if (data.length > MAX_IMPORT_ROWS) {
                     notify(t('leads.import_too_many_rows', { max: MAX_IMPORT_ROWS }), 'error');
                     return;
                 }
-
                 let successCount = 0;
                 let skipCount = 0;
                 let errorCount = 0;
-
                 for (const row of data as any[]) {
                     const rawPhone = row['Số điện thoại'] ? String(row['Số điện thoại']) : '';
                     const phone = normalizeVNPhone(rawPhone);
-
                     if (!phone) {
                         skipCount++;
                         continue;
                     }
-
                     const newLead: Partial<Lead> = {
                         name: row['Tên khách hàng'] || t('leads.new_customer'),
                         phone,
@@ -1039,7 +947,6 @@ export const Leads: React.FC = () => {
                         tags: row['Tags'] ? row['Tags'].split(',').map((tag: string) => tag.trim()).filter(Boolean) : [],
                         notes: row['Ghi chú'] || '',
                     };
-
                     try {
                         await db.createLead(newLead);
                         successCount++;
@@ -1051,7 +958,6 @@ export const Leads: React.FC = () => {
                         }
                     }
                 }
-
                 if (successCount > 0) fetchLeads();
                 const msg = t('leads.import_result', { success: successCount, skip: skipCount }) + (errorCount > 0 ? t('leads.import_result_errors', { error: errorCount }) : '');
                 notify(msg, successCount > 0 ? 'success' : 'error');
@@ -1061,7 +967,6 @@ export const Leads: React.FC = () => {
         };
         reader.readAsArrayBuffer(file);
     };
-
     const handleSimulateInbound = async () => {
         setLoading(true);
         try {
@@ -1076,8 +981,7 @@ export const Leads: React.FC = () => {
                 source: randomSource,
                 stage: LeadStage.NEW,
                 notes: `${t('leads.interested_budget')} ${randomBudget.toLocaleString('vi-VN')} VND`
-            };
-            
+            };            
             const createdLead = await db.createLead(newLead);
             notify(t('leads.new_lead_received', { source: randomSource }), 'success');
             socket?.emit("lead_created", createdLead);
@@ -1089,7 +993,6 @@ export const Leads: React.FC = () => {
             setLoading(false);
         }
     };
-
     // Group leads for Board View
     const groupedLeads = useMemo(() => {
         const groups: Record<string, Lead[]> = {};
@@ -1099,18 +1002,15 @@ export const Leads: React.FC = () => {
         });
         return groups;
     }, [leads]);
-
     // Calculate Metrics
     const metrics = serverStats;
     const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
     const isScopedView = currentUser && RESTRICTED_ROLES.includes(currentUser.role);
     // Mirror server-side DELETE guard: SUPER_ADMIN | ADMIN | TEAM_LEAD (leadRoutes.ts:339)
     const canDelete = currentUser && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser.role);
-
     return (
         <>
         <div className="h-full flex flex-col relative">
-
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
@@ -1139,7 +1039,6 @@ export const Leads: React.FC = () => {
                         </div>
                         <button onClick={() => setIsCreateModalOpen(true)} className="md:hidden shrink-0 w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
                     </div>
-
                     <div 
                         ref={filtersRef}
                         className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing"
@@ -1164,7 +1063,6 @@ export const Leads: React.FC = () => {
                                 {ICONS.VIEW_BOARD}
                             </button>
                         </div>
-
                         {/* Active filter chip */}
                         {(stageFilter !== 'ALL' || sourceFilter !== 'ALL') && (
                             <button
@@ -1177,7 +1075,6 @@ export const Leads: React.FC = () => {
                                 <span className="ml-0.5 opacity-70">×</span>
                             </button>
                         )}
-
                         {/* Column settings button (LIST only) */}
                         {viewMode === 'LIST' && (
                             <div className="relative shrink-0 hidden md:block">
@@ -1250,7 +1147,6 @@ export const Leads: React.FC = () => {
                                 )}
                             </div>
                         )}
-
                         <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
 
                         {selectedLeads.size > 0 && canDelete && (
@@ -1260,8 +1156,7 @@ export const Leads: React.FC = () => {
                             >
                                 {ICONS.TRASH} {t('common.delete')} ({selectedLeads.size})
                             </button>
-                        )}
-                        
+                        )}                        
                         <input 
                             type="file" 
                             accept=".xlsx, .xls" 
@@ -1285,14 +1180,12 @@ export const Leads: React.FC = () => {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             <span className="hidden sm:inline">{t('leads.export_excel')}</span>
                         </button>
-
                         <button onClick={() => setIsCreateModalOpen(true)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                             {ICONS.ADD} {t('common.add_new')}
                         </button>
                     </div>
                 </div>
             </div>
-
             {/* Metrics Bar — compact */}
             <div ref={metricsRef} className="px-3 md:px-5 py-1.5 flex gap-1 md:gap-0 items-center border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/60 flex-none overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing divide-x divide-[var(--glass-border)]">
                 {/* Scope badge — shown when the user sees their own data only */}
@@ -1336,7 +1229,6 @@ export const Leads: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* Content Area */}
             <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] min-h-0 relative flex flex-col">
                 
@@ -1453,7 +1345,6 @@ export const Leads: React.FC = () => {
                             </div>
                         </div>
                     )}
-
                     {/* VIEW MODE: BOARD (KANBAN) - Show on Mobile and Desktop */}
                     {viewMode === 'BOARD' && (
                         <div ref={boardRef} className="flex h-full overflow-x-auto gap-4 px-4 pb-4 no-scrollbar snap-x snap-mandatory overscroll-x-contain cursor-grab active:cursor-grabbing scroll-px-4">
@@ -1483,7 +1374,6 @@ export const Leads: React.FC = () => {
                             })}
                         </div>
                     )}
-
                     {/* Mobile Cards (Only for LIST view on Mobile) */}
                     {viewMode === 'LIST' && (
                         <div className="md:hidden space-y-3 pb-6 px-2">
@@ -1591,7 +1481,6 @@ export const Leads: React.FC = () => {
                         </div>
                     )}
                 </div>
-
                 {/* Pagination Footer - only shown in LIST view */}
                 {viewMode === 'LIST' && (
                     <CursorPaginationControl
@@ -1606,7 +1495,6 @@ export const Leads: React.FC = () => {
                     />
                 )}
             </div>
-
             {/* Modals */}
             {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); setCursorStack([]); setCurrentCursor(undefined); fetchLeads(); notify(t('common.success'), 'success'); }} />}
             
@@ -1618,7 +1506,6 @@ export const Leads: React.FC = () => {
                     onSuccess={() => { setProposalLead(null); notify(t('proposal.btn_create') + ' ' + t('common.success'), 'success'); }} 
                 />
             )}
-
             {isDetailOpen && editingLead && (
                 <LeadDetail 
                     lead={editingLead} 
@@ -1627,7 +1514,6 @@ export const Leads: React.FC = () => {
                     isModal={true} 
                 />
             )}
-
             <ConfirmModal 
                 isOpen={!!leadToDelete}
                 title={t('common.delete')}
@@ -1660,5 +1546,4 @@ export const Leads: React.FC = () => {
         </>
     );
 };
-
 export default Leads;

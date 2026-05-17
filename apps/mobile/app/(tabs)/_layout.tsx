@@ -2,7 +2,6 @@ import React from 'react';
 import { Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { colors, typography } from '../../src/theme/tokens';
-
 // Lightweight emoji-based tab icons. We deliberately avoid pulling
 // @expo/vector-icons (≈3MB) for the first cut — the buyer flow has 5 tabs
 // and emojis render consistently across iOS/Android with zero deps.
@@ -18,7 +17,6 @@ function TabIcon({ glyph, focused }: { glyph: string; focused: boolean }) {
     </Text>
   );
 }
-
 export default function TabLayout() {
   return (
     <Tabs

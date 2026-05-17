@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo, memo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
@@ -11,7 +10,6 @@ import { useTheme } from '../services/theme';
 import { socket } from '../services/websocket';
 import { CampaignCost } from '../types';
 import { Dropdown } from '../components/Dropdown';
-
 // -----------------------------------------------------------------------------
 // 1. TYPES & INTERFACES
 // -----------------------------------------------------------------------------
@@ -23,13 +21,11 @@ interface AttributionData {
     cac: number;
     roi: number;
 }
-
 interface FunnelStep {
     stage: string;
     count: number;
     conversionRate: number;
 }
-
 interface ConversionPeriod {
     period: string;
     won: number;
@@ -39,18 +35,15 @@ interface ConversionPeriod {
     inProgress: number;
     conversionRate: number;
 }
-
 interface BiData {
     funnel: FunnelStep[];
     attribution: AttributionData[];
     campaignCosts: CampaignCost[];
     conversionByPeriod: ConversionPeriod[];
 }
-
 // -----------------------------------------------------------------------------
 // 2. HELPER COMPONENTS
 // -----------------------------------------------------------------------------
-
 const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
@@ -60,7 +53,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         let startX = 0;
         let scrollLeft = 0;
         let dragged = false;
-
         // --- Mouse events ---
         const onMouseDown = (e: MouseEvent) => {
             if ((e.target as HTMLElement).closest('input, textarea')) return;
@@ -94,7 +86,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         const onClick = (e: MouseEvent) => {
             if (dragged) { e.preventDefault(); e.stopPropagation(); }
         };
-
         // --- Touch events (mobile) ---
         let touchStartX = 0;
         let touchScrollLeft = 0;
@@ -110,7 +101,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
                 node.scrollLeft = touchScrollLeft - walk;
             }
         };
-
         node.addEventListener('mousedown', onMouseDown);
         node.addEventListener('mouseleave', onMouseLeave);
         node.addEventListener('mouseup', onMouseUp);
@@ -119,7 +109,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         node.addEventListener('touchstart', onTouchStart, { passive: true });
         node.addEventListener('touchmove', onTouchMove, { passive: true });
         node.classList.add('cursor-grab');
-
         return () => {
             node.removeEventListener('mousedown', onMouseDown);
             node.removeEventListener('mouseleave', onMouseLeave);
@@ -132,14 +121,12 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         };
     }, [ref, trigger]);
 };
-
 const EmptyChartState = ({ t, message }: { t: any, message: string }) => (
     <div className="flex flex-col items-center justify-center h-full text-[var(--text-secondary)]">
         <svg className="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
         <p className="text-xs font-medium">{message}</p>
     </div>
 );
-
 const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme, t }: any) => {
     if (active && Array.isArray(payload) && payload.length && theme && theme.colors) {
         const translatedLabel = t
@@ -163,25 +150,21 @@ const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme, t }
     }
     return null;
 });
-
 // -----------------------------------------------------------------------------
 // 3. TAB COMPONENTS
 // -----------------------------------------------------------------------------
-
 const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme, locale }: { data: BiData, t: any, formatCurrency: any, formatCompactNumber: any, chartTheme: any, locale: string }) => {
     const hasData = data.attribution.length > 0;
     // Fix: reverse conversionByPeriod so trend chart shows oldest → newest (left → right)
     const trendData = useMemo(() => [...data.conversionByPeriod].reverse(), [data.conversionByPeriod]);
     const hasTrend = trendData.length > 0;
     const colors = chartTheme?.colors || {};
-
     const totalRevenue = data.attribution.reduce((acc, curr) => acc + curr.revenue, 0);
     const totalSpend = data.attribution.reduce((acc, curr) => acc + curr.spend, 0);
     const totalLeads = data.attribution.reduce((acc, curr) => acc + curr.leads, 0);
     const avgRoi = totalSpend > 0
         ? ((totalRevenue - totalSpend) / totalSpend) * 100
         : 0;
-
     return (
         <div className="space-y-6 animate-enter">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -198,7 +181,6 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     </div>
                 ))}
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
@@ -259,7 +241,6 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                         )}
                     </div>
                 </div>
-
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend')}</h3>
                     <p className="text-xs2 sm:text-xs3 text-[var(--text-secondary)] mb-2 sm:mb-3">{t('reports.chart_conversion_desc')}</p>
@@ -344,25 +325,20 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
         </div>
     );
 });
-
 const FUNNEL_COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#7c3aed', '#8b5cf6', '#4f46e5'];
-
 const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTheme: any }) => {
     // Separate LOST from active pipeline stages for display
     const activeFunnel = data.funnel.filter(f => f.stage !== 'LOST');
     const lostStage = data.funnel.find(f => f.stage === 'LOST');
     const hasData = activeFunnel.length > 0;
     const colors = chartTheme?.colors || {};
-
     // maxCount based only on active stages so bars are properly scaled
     const maxCount = hasData ? Math.max(...activeFunnel.map(f => f.count)) : 1;
-
     // overallRate = WON / total (all stages including LOST) — from backend conversionRate
     const wonStage = data.funnel.find(f => f.stage === 'WON');
     const overallRate = wonStage && wonStage.conversionRate > 0
         ? wonStage.conversionRate.toFixed(1)
         : null;
-
     return (
         <div className="space-y-6 animate-enter">
             <div className="bg-[var(--bg-surface)] p-6 md:p-8 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col relative">
@@ -418,7 +394,6 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                         <EmptyChartState t={t} message={t('common.no_results')} />
                     </div>
                 )}
-
                 {hasData && (
                     <div className="mt-6 pt-4 border-t border-[var(--glass-border)] flex flex-wrap gap-3">
                         {activeFunnel.map((step, idx) => (
@@ -439,17 +414,14 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
         </div>
     );
 });
-
 const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, formatCurrency: any }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
-
     // KPI summary computed from attribution data
     const totalRevenue = data.attribution.reduce((acc, r) => acc + r.revenue, 0);
     const totalSpend = data.attribution.reduce((acc, r) => acc + r.spend, 0);
     const totalLeads = data.attribution.reduce((acc, r) => acc + r.leads, 0);
     const overallRoi = totalSpend > 0 ? ((totalRevenue - totalSpend) / totalSpend) * 100 : null;
-
     const roiDisplay = (row: AttributionData) => {
         // Fix: when spend = 0, ROI is meaningless — show N/A instead of 0%
         if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]">{t('reports.roi_na')}</span>;
@@ -459,7 +431,6 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
             </span>
         );
     };
-
     return (
     <div className="space-y-6 animate-enter">
         {/* KPI Summary */}
@@ -481,7 +452,6 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                 </div>
             ))}
         </div>
-
         {/* Attribution Table */}
         <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
             {data.attribution.length === 0 ? (
@@ -529,7 +499,6 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
     </div>
     );
 });
-
 const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, notify }: { data: BiData, t: any, formatCurrency: any, currentUser: any, onCostUpdated: () => void, notify: (msg: string, type?: 'success' | 'error') => void }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
@@ -537,16 +506,12 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
     const [editingCost, setEditingCost] = useState<CampaignCost | null>(null);
     const [newCostValue, setNewCostValue] = useState('');
     const [isSavingUpdate, setIsSavingUpdate] = useState(false);
-
     const [isAdding, setIsAdding] = useState(false);
     const [addForm, setAddForm] = useState({ campaignName: '', source: '', cost: '', period: new Date().toISOString().slice(0, 7) });
     const [isSaving, setIsSaving] = useState(false);
-
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
     const canUpdateCosts = ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '');
-
     const handleUpdate = async () => {
         if (!editingCost) return;
         const parsed = Number(newCostValue);
@@ -567,7 +532,6 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             setIsSavingUpdate(false);
         }
     };
-
     const handleAdd = async () => {
         if (!addForm.source || !addForm.cost || !addForm.period) return;
         const parsedCost = Number(addForm.cost);
@@ -593,7 +557,6 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             setIsSaving(false);
         }
     };
-
     const handleDelete = async () => {
         if (!deletingId) return;
         setIsDeleting(true);
@@ -608,7 +571,6 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             setIsDeleting(false);
         }
     };
-
     return (
     <div className="space-y-6 animate-enter">
         <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
@@ -623,8 +585,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         {t('reports.btn_add_cost')}
                     </button>
                 )}
-            </div>
-            
+            </div>            
             {data.campaignCosts.length === 0 ? (
                 <div className="p-10 flex flex-col items-center justify-center text-[var(--text-secondary)] gap-2">
                     <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -676,7 +637,6 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                 </div>
             )}
         </div>
-
         {/* Add Cost Modal */}
         {createPortal(
             isAdding ? <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
@@ -739,7 +699,6 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             </div> : null,
             document.body
         )}
-
         {/* Delete Confirm Modal */}
         {createPortal(
             deletingId ? <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
@@ -765,7 +724,6 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             </div> : null,
             document.body
         )}
-
         {/* Update Cost Modal */}
         {createPortal(
             (showUpdateModal && editingCost) ? <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
@@ -797,11 +755,9 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
     </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // 4. MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 const TIME_RANGE_VALUES = ['7', '30', '90', '365', 'all'];
 
 export const Reports: React.FC = () => {
@@ -812,24 +768,18 @@ export const Reports: React.FC = () => {
     const [timeRange, setTimeRange] = useState<string>('30');
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
     const mountedRef = useRef(true);
-    const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    
+    const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);    
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
-
     const locale = language === 'vn' ? 'vi-VN' : 'en-US';
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const loadData = useCallback(() => {
         let mounted = true;
-        setLoading(true);
-        
+        setLoading(true);      
         Promise.all([
             db.generateBiMarts(timeRange),
             db.getCurrentUser()
@@ -853,12 +803,10 @@ export const Reports: React.FC = () => {
         });
         return () => { mounted = false; };
     }, [timeRange, notify, t]);
-
     useEffect(() => {
         const cleanup = loadData();
         return cleanup;
     }, [loadData]);
-
     // Silent background refresh — no loading spinner, no error toast
     const silentRefresh = useCallback(() => {
         db.generateBiMarts(timeRange).then((res) => {
@@ -872,13 +820,11 @@ export const Reports: React.FC = () => {
             setLastUpdated(new Date());
         }).catch(() => {});
     }, [timeRange]);
-
     // Debounced refresh: wait 2s after last event before fetching (avoids hammering on bulk updates)
     const scheduleRefresh = useCallback(() => {
         if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
         refreshTimerRef.current = setTimeout(silentRefresh, 2000);
     }, [silentRefresh]);
-
     // Socket subscriptions + 60s polling for proposal/contract changes (not emitted via socket)
     useEffect(() => {
         mountedRef.current = true;
@@ -895,20 +841,16 @@ export const Reports: React.FC = () => {
             if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
         };
     }, [scheduleRefresh, silentRefresh]);
-
     const tabs = useMemo(() => [
         { id: 'OVERVIEW', label: t('reports.tab_overview') },
         { id: 'FUNNEL', label: t('reports.tab_funnel') },
         { id: 'ROI', label: t('reports.tab_roi') },
         { id: 'COSTS', label: t('reports.tab_costs') }
     ], [t]);
-
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
-
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
     if (!data) return null;
-
     return (
         <div className="p-4 sm:p-6 space-y-4 pb-20 relative animate-enter">
             {/* Header: single bar — Tabs (left) + Time Filter (right) on desktop; stacked on mobile */}
@@ -1010,7 +952,6 @@ export const Reports: React.FC = () => {
                     )}
                 </div>
             </div>
-
             {/* Content Area */}
             <div className="min-h-[500px]">
                 {activeTab === 'OVERVIEW' && <OverviewTab data={data} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} chartTheme={chartTheme} locale={locale} />}

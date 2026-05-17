@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
@@ -6,7 +5,6 @@ import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
-
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     LOCATION: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
@@ -19,7 +17,6 @@ const ICONS = {
     BRIEFCASE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
     SPIN: <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>,
 };
-
 const JOBS = [
     {
         id: 1,
@@ -67,39 +64,32 @@ const EMPTY_FORM: FormState = { name: '', email: '', phone: '', message: '' };
 export const Careers: React.FC = () => {
     const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-
     // Modal state
     const [selectedJob, setSelectedJob] = useState<string | null>(null);
     const [form, setForm] = useState<FormState>(EMPTY_FORM);
     const [errors, setErrors] = useState<Partial<FormState>>({});
     const [sendStatus, setSendStatus] = useState<SendStatus>('IDLE');
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     // Lock body scroll when modal is open
     useEffect(() => {
         if (selectedJob) document.body.style.overflow = 'hidden';
         else document.body.style.overflow = '';
         return () => { document.body.style.overflow = ''; };
     }, [selectedJob]);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-
     const openModal = (jobTitle: string) => {
         setSelectedJob(jobTitle);
         setForm(EMPTY_FORM);
         setErrors({});
         setSendStatus('IDLE');
     };
-
     const closeModal = () => {
         if (sendStatus === 'LOADING') return;
         setSelectedJob(null);
     };
-
     const validate = (): boolean => {
         const e: Partial<FormState> = {};
         if (!form.name.trim()) e.name = 'Vui lòng nhập họ và tên';
@@ -111,11 +101,9 @@ export const Careers: React.FC = () => {
         setErrors(e);
         return Object.keys(e).length === 0;
     };
-
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
-
         setSendStatus('LOADING');
         try {
             const res = await fetch('/api/public/careers/apply', {
@@ -148,7 +136,7 @@ export const Careers: React.FC = () => {
                         about: {
                             '@type': 'Organization',
                             name: 'SGS LAND',
-                            legalName: 'Công ty Cổ phần SGS Land',
+                            legalName: 'Công ty TNHH SGS Land',
                             url: 'https://sgsland.vn',
                             taxID: '0312960439',
                             numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },
@@ -184,7 +172,6 @@ export const Careers: React.FC = () => {
                                 {ICONS.CLOSE}
                             </button>
                         </div>
-
                         {sendStatus === 'SUCCESS' ? (
                             /* Success state */
                             <div className="p-8 text-center">
@@ -206,7 +193,6 @@ export const Careers: React.FC = () => {
                                         Có lỗi xảy ra. Vui lòng thử lại hoặc gửi email trực tiếp đến <strong>info@sgsland.vn</strong>
                                     </div>
                                 )}
-
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Họ và Tên <span className="text-rose-500">*</span></label>
@@ -231,7 +217,6 @@ export const Careers: React.FC = () => {
                                         {errors.email && <p className="text-rose-500 text-xs mt-1">{errors.email}</p>}
                                     </div>
                                 </div>
-
                                 <div>
                                     <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Số Điện Thoại <span className="text-[var(--text-tertiary)] font-normal normal-case">(không bắt buộc)</span></label>
                                     <input
@@ -242,7 +227,6 @@ export const Careers: React.FC = () => {
                                         className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 text-[16px] outline-none transition-all"
                                     />
                                 </div>
-
                                 <div>
                                     <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Thư Xin Việc / Giới Thiệu <span className="text-rose-500">*</span></label>
                                     <textarea
@@ -254,7 +238,6 @@ export const Careers: React.FC = () => {
                                     />
                                     {errors.message && <p className="text-rose-500 text-xs mt-1">{errors.message}</p>}
                                 </div>
-
                                 <div className="flex items-center gap-3 pt-2">
                                     <button type="submit" disabled={sendStatus === 'LOADING'} className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg">
                                         {sendStatus === 'LOADING' ? <>{ICONS.SPIN} Đang gửi...</> : <>{ICONS.SEND} Gửi Hồ Sơ Ứng Tuyển</>}
@@ -263,14 +246,12 @@ export const Careers: React.FC = () => {
                                         Hủy
                                     </button>
                                 </div>
-
                                 <p className="text-center text-[10px] text-[var(--text-tertiary)]">Thông tin của bạn sẽ được gửi đến <strong>info@sgsland.vn</strong> và chỉ dùng cho mục đích tuyển dụng.</p>
                             </form>
                         )}
                     </div>
                 </div>
             )}
-
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
@@ -286,7 +267,6 @@ export const Careers: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {/* Hero */}
             <section className="py-24 px-6 text-center bg-slate-900 text-white relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900"></div>
@@ -305,7 +285,6 @@ export const Careers: React.FC = () => {
                     </button>
                 </div>
             </section>
-
             {/* Values */}
             <section className="py-24 bg-[var(--glass-surface)] border-b border-[var(--glass-border)]">
                 <div className="max-w-6xl mx-auto px-6">
@@ -328,7 +307,6 @@ export const Careers: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* Job Listings */}
             <section id="jobs" className="py-24 px-6 bg-[var(--bg-surface)]">
                 <div className="max-w-5xl mx-auto">

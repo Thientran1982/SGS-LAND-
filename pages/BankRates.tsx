@@ -5,7 +5,6 @@ import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
-
 const ICONS = {
   BACK:  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>,
   BANK:  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10"/></svg>,
@@ -18,7 +17,6 @@ const ICONS = {
   EDIT:  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>,
   TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>,
 };
-
 interface BankRate {
   id: number;
   bank_name: string;
@@ -34,7 +32,6 @@ interface BankRate {
   submitted_by: string | null;
   updated_at: string;
 }
-
 type FormState = {
   bank_name: string;
   loan_type: string;
@@ -46,12 +43,10 @@ type FormState = {
   contact_phone: string;
   notes: string;
 };
-
 const EMPTY_FORM: FormState = {
   bank_name: '', loan_type: 'Thế chấp BĐS', rate_min: '', rate_max: '',
   tenor_min: '', tenor_max: '', contact_name: '', contact_phone: '', notes: '',
 };
-
 const LOAN_TYPE_OPTIONS = [
   { value: 'Thế chấp BĐS',    label: 'Thế chấp BĐS' },
   { value: 'Vay mua nhà',      label: 'Vay mua nhà' },
@@ -59,13 +54,11 @@ const LOAN_TYPE_OPTIONS = [
   { value: 'Vay tín chấp',     label: 'Vay tín chấp' },
   { value: 'Vay đảo nợ',       label: 'Vay đảo nợ' },
 ];
-
 const BANK_OPTIONS = [
   'Agribank','Vietcombank','VietinBank','BIDV','Techcombank','MB Bank',
   'ACB','Sacombank','VPBank','HDBank','SHB','OCB','VIB','TPBank','SeABank','LienVietPostBank',
   'Standard Chartered','Shinhan Bank','UOB',
 ].map(b => ({ value: b, label: b }));
-
 function fmtRate(min: number, max: number | null) {
   return max ? `${min}% – ${max}%` : `${min}%`;
 }
@@ -76,12 +69,10 @@ function fmtTenor(min: number | null, max: number | null) {
   if (max) return `Tối đa ${toYr(max)}`;
   return `Từ ${toYr(min!)}`;
 }
-
 function getAuthHeaders() {
   const token = localStorage.getItem('sgs_token') || sessionStorage.getItem('sgs_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
-
 export const BankRates: React.FC = () => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
@@ -93,20 +84,16 @@ export const BankRates: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   const notify = useCallback((msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
   }, []);
-
   useEffect(() => {
     db.getCurrentUser().then(setUser);
     fetchRates();
   }, []);
-
   async function fetchRates() {
     setLoading(true);
     try {
@@ -119,7 +106,6 @@ export const BankRates: React.FC = () => {
       setLoading(false);
     }
   }
-
   function validate() {
     const e: Record<string, string> = {};
     if (!form.bank_name.trim()) e.bank_name = t('bank_rates.err_bank');
@@ -134,7 +120,6 @@ export const BankRates: React.FC = () => {
     setErrors(e);
     return Object.keys(e).length === 0;
   }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
@@ -165,7 +150,6 @@ export const BankRates: React.FC = () => {
       setSending(false);
     }
   }
-
   async function handleEditSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!editingRate || !validate()) return;
@@ -196,7 +180,6 @@ export const BankRates: React.FC = () => {
       setSending(false);
     }
   }
-
   async function handleDelete(id: number) {
     setDeletingId(id);
     try {
@@ -217,7 +200,6 @@ export const BankRates: React.FC = () => {
       setDeletingId(null);
     }
   }
-
   function openEdit(r: BankRate) {
     setEditingRate(r);
     setForm({
@@ -235,17 +217,14 @@ export const BankRates: React.FC = () => {
     setShowForm(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
   function cancelEdit() {
     setEditingRate(null);
     setForm(EMPTY_FORM);
     setErrors({});
   }
-
   const canEdit = (r: BankRate) => user && r.submitted_by === (user as any).id;
   const canDelete = user && ['ADMIN', 'TEAM_LEAD', 'SUPER_ADMIN'].includes((user as any).role);
   const showActionsCol = rates.some(r => canEdit(r)) || canDelete;
-
   const fieldEl = (id: string, value: string, label: string, type = 'text', placeholder = '') => (
     <div className="space-y-1">
       <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide">{label}</label>
@@ -259,7 +238,6 @@ export const BankRates: React.FC = () => {
       {errors[id] && <p className="text-xs font-bold text-rose-500">{errors[id]}</p>}
     </div>
   );
-
   const rateForm = (isEdit: boolean, onSubmit: (e: React.FormEvent) => void, onCancel: () => void) => (
     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-6 md:p-8 shadow-xl mb-6">
       <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">
@@ -292,19 +270,16 @@ export const BankRates: React.FC = () => {
             />
           </div>
         </div>
-
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {fieldEl('rate_min', form.rate_min, t('bank_rates.label_rate_min'), 'number', 'vd: 7.5')}
           {fieldEl('rate_max', form.rate_max, t('bank_rates.label_rate_max'), 'number', 'vd: 9.0')}
           {fieldEl('tenor_min', form.tenor_min, t('bank_rates.label_tenor_min'), 'number', 'vd: 12')}
           {fieldEl('tenor_max', form.tenor_max, t('bank_rates.label_tenor_max'), 'number', 'vd: 240')}
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {fieldEl('contact_name', form.contact_name, t('bank_rates.label_contact'), 'text', t('bank_rates.placeholder_contact'))}
           {fieldEl('contact_phone', form.contact_phone, t('bank_rates.label_phone'), 'tel', 'vd: 0971 132 378')}
         </div>
-
         <div className="space-y-1">
           <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide">{t('bank_rates.label_notes')}</label>
           <textarea
@@ -315,7 +290,6 @@ export const BankRates: React.FC = () => {
             className="w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all resize-none bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500"
           />
         </div>
-
         <div className="flex gap-3">
           <button type="submit" disabled={sending} className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-60">
             {sending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : ICONS.SEND}
@@ -328,10 +302,8 @@ export const BankRates: React.FC = () => {
       </form>
     </div>
   );
-
   return (
     <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
-
       {/* Toast */}
       {toast && (
         <div className={`fixed top-20 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
@@ -339,7 +311,6 @@ export const BankRates: React.FC = () => {
           <span className="font-bold text-sm">{toast.msg}</span>
         </div>
       )}
-
       {/* Header */}
       <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
         <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
@@ -355,9 +326,7 @@ export const BankRates: React.FC = () => {
           </button>
         </div>
       </div>
-
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-10 animate-enter">
-
         {/* Title + SEO description */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
@@ -372,10 +341,8 @@ export const BankRates: React.FC = () => {
             </a>
           </div>
         </div>
-
         {/* Edit form (shown when editing) */}
         {editingRate && rateForm(true, handleEditSubmit, cancelEdit)}
-
         {/* Login gate / Add form */}
         {!editingRate && (!user ? (
           <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-8 text-center mb-8 shadow-sm">
@@ -395,21 +362,18 @@ export const BankRates: React.FC = () => {
             ) : rateForm(false, handleSubmit, () => { setShowForm(false); setForm(EMPTY_FORM); setErrors({}); })}
           </div>
         ))}
-
         {/* Rate table — UGC */}
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-[var(--glass-border)]">
             <h2 className="font-bold text-xl text-[var(--text-primary)]">{t('bank_rates.table_title')}</h2>
             <p className="text-sm text-[var(--text-tertiary)] mt-1">{t('bank_rates.table_desc')}</p>
           </div>
-
           {/* Mobile scroll hint */}
           {!loading && rates.length > 0 && (
             <p className="sm:hidden text-center text-[11px] text-[var(--text-tertiary)] py-1.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]">
               ← Vuốt ngang để xem thêm →
             </p>
           )}
-
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="w-8 h-8 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"/>
@@ -487,7 +451,6 @@ export const BankRates: React.FC = () => {
                           </td>
                         )}
                       </tr>
-
                       {/* Inline delete confirmation row */}
                       {confirmDeleteId === r.id && (
                         <tr className="bg-rose-50 dark:bg-rose-900/10 border-b border-rose-200 dark:border-rose-800">
@@ -525,7 +488,6 @@ export const BankRates: React.FC = () => {
             </div>
           )}
         </div>
-
         {/* SEO content block — internal link to SSR page */}
         <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl">
           <h3 className="font-bold text-[var(--text-primary)] mb-2">{t('bank_rates.seo_block_title')}</h3>
@@ -534,7 +496,6 @@ export const BankRates: React.FC = () => {
             {ICONS.EXT} {t('bank_rates.seo_block_link')}
           </a>
         </div>
-
       </div>
     </div>
   );

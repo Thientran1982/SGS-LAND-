@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { socket, useSocket } from './websocket';
@@ -9,12 +8,10 @@ import {
   getGlobalCachedTheme,
   tenantThemeKey,
 } from './themeConfig';
-
 // -----------------------------------------------------------------------------
 //  TYPES
 // -----------------------------------------------------------------------------
 export type ThemeMode = 'light' | 'dark';
-
 export interface ChartTheme {
     colors: typeof DESIGN_TOKENS['light'];
     palette: string[];
@@ -24,7 +21,6 @@ export interface ChartTheme {
         dotSize: number;
     };
 }
-
 // -----------------------------------------------------------------------------
 //  INTERNAL CONSTANTS (not exported — keeps this file Fast Refresh compatible)
 // -----------------------------------------------------------------------------
@@ -33,7 +29,6 @@ const CONSTANTS = {
     DEFAULT_THEME: 'light' as ThemeMode,
     MEDIA_QUERY: '(prefers-color-scheme: dark)',
 };
-
 const DESIGN_TOKENS = {
     light: {
         primary: '#4F46E5',
@@ -66,16 +61,13 @@ const DESIGN_TOKENS = {
         barGradientEnd: '#4F46E5',
     },
 };
-
 const CHART_PALETTE = ['#4F46E5', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
-
 // -----------------------------------------------------------------------------
 //  INTERNAL — fetch tenant theme (not exported)
 // -----------------------------------------------------------------------------
 async function fetchTenantTheme(): Promise<CustomThemeConfig | null> {
     const cached = getGlobalCachedTheme();
     if (cached) applyCustomTheme(cached);
-
     const res = await fetch('/api/enterprise/theme', { credentials: 'include' });
     if (!res.ok) return cached;
     const data = await res.json();
@@ -92,7 +84,6 @@ async function fetchTenantTheme(): Promise<CustomThemeConfig | null> {
     }
     return cached;
 }
-
 // -----------------------------------------------------------------------------
 //  CONTEXT
 // -----------------------------------------------------------------------------
@@ -102,9 +93,7 @@ interface ThemeContextType {
     setTheme: (mode: ThemeMode) => void;
     chartTheme: ChartTheme;
 }
-
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
 // -----------------------------------------------------------------------------
 //  PROVIDER
 // -----------------------------------------------------------------------------
@@ -117,7 +106,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
         return CONSTANTS.DEFAULT_THEME;
     });
-
     useEffect(() => {
         const root = window.document.documentElement;
         if (theme === 'dark') {
@@ -129,7 +117,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
         localStorage.setItem(CONSTANTS.STORAGE_KEY, theme);
     }, [theme]);
-
     useEffect(() => {
         const mq = window.matchMedia(CONSTANTS.MEDIA_QUERY);
         const handleOsChange = (e: MediaQueryListEvent) => {
@@ -151,25 +138,20 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
-
     const toggleTheme = useCallback(() => {
         setThemeState(prev => (prev === 'light' ? 'dark' : 'light'));
     }, []);
-
     const chartTheme: ChartTheme = useMemo(() => ({
         colors: DESIGN_TOKENS[theme] ?? DESIGN_TOKENS.light,
         palette: CHART_PALETTE,
         styles: { barRadius: [6, 6, 6, 6], strokeWidth: 3, dotSize: 4 },
     }), [theme]);
-
     const value = useMemo(
         () => ({ theme, toggleTheme, setTheme: setThemeState, chartTheme }),
         [theme, toggleTheme, chartTheme],
     );
-
     return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
-
 // -----------------------------------------------------------------------------
 //  HOOKS
 // -----------------------------------------------------------------------------
@@ -178,18 +160,15 @@ export const useTheme = () => {
     if (!ctx) throw new Error('useTheme must be used within a ThemeProvider');
     return ctx;
 };
-
 export function useThemeConfig() {
     const queryClient = useQueryClient();
     useSocket();
-
     useQuery<CustomThemeConfig | null>({
         queryKey: ['tenant-theme'],
         queryFn: fetchTenantTheme,
         staleTime: 5 * 60 * 1000,
         retry: false,
     });
-
     useEffect(() => {
         function handleThemeUpdated(data: CustomThemeConfig) {
             applyCustomTheme(data);

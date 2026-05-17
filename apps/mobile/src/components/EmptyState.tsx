@@ -1,13 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../theme/tokens';
-
 interface Props {
   title: string;
   subtitle?: string;
   icon?: string;
 }
-
 export const EmptyState: React.FC<Props> = ({ title, subtitle, icon = '🏠' }) => (
   <View style={styles.wrap}>
     <Text style={styles.icon}>{icon}</Text>
@@ -15,7 +13,6 @@ export const EmptyState: React.FC<Props> = ({ title, subtitle, icon = '🏠' }) 
     {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
   </View>
 );
-
 const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',

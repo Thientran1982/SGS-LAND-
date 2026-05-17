@@ -4,7 +4,6 @@ import { db } from '../services/dbApi';
 import { AppManifest, InstalledApp } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 const ICONS = {
     INSTALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, // Lightning bolt for Connect
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
@@ -13,7 +12,6 @@ const ICONS = {
     CONFIG: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
-
 export const Marketplace: React.FC = () => {
     const [apps, setApps] = useState<AppManifest[]>([]);
     const [installed, setInstalled] = useState<InstalledApp[]>([]);
@@ -24,9 +22,7 @@ export const Marketplace: React.FC = () => {
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<{ type: 'install' | 'uninstall', appId: string } | null>(null);
-
     const { t } = useTranslation();
-
     const loadData = async () => {
         // Only show full loading on initial load
         if (apps.length === 0) setLoading(true);
@@ -43,24 +39,19 @@ export const Marketplace: React.FC = () => {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         loadData();
     }, []);
-
     const notify = (msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     };
-
     const handleInstall = (appId: string) => {
         setConfirmAction({ type: 'install', appId });
     };
-
     const handleUninstall = (appId: string) => {
         setConfirmAction({ type: 'uninstall', appId });
     };
-
     const doConfirmedAction = async () => {
         if (!confirmAction) return;
         const { type, appId } = confirmAction;
@@ -82,17 +73,13 @@ export const Marketplace: React.FC = () => {
             setProcessingId(null);
         }
     };
-
     const handleConfigure = () => {
         notify(t('market.config_toast'), 'success');
     };
-
     const filteredApps = useMemo(() => {
         const safeApps = apps || [];
-        const safeInstalled = installed || [];
-        
-        let list = activeTab === 'BROWSE' ? safeApps : safeApps.filter(a => safeInstalled.some(i => i.appId === a.id));
-        
+        const safeInstalled = installed || [];       
+        let list = activeTab === 'BROWSE' ? safeApps : safeApps.filter(a => safeInstalled.some(i => i.appId === a.id));        
         if (category !== 'ALL') {
             list = list.filter(a => a.category === category);
         }
@@ -102,10 +89,8 @@ export const Marketplace: React.FC = () => {
         }
         return list;
     }, [apps, installed, category, search, activeTab]);
-
     // Use Array.from<string> to ensure correct type inference
     const categories: string[] = ['ALL', ...Array.from<string>(new Set((apps || []).map(a => a.category)))];
-
     // Helper to translate category keys
     const getCatLabel = (cat: string) => {
         if (cat === 'ALL') return t('market.category_all');
@@ -113,7 +98,6 @@ export const Marketplace: React.FC = () => {
         const label = t(key);
         return label !== key ? label : cat; // Fallback to key if translation missing
     };
-
     return (
         <div className="space-y-6 pb-20 animate-enter relative">
             <SeoHead
@@ -170,7 +154,6 @@ export const Marketplace: React.FC = () => {
                         </button>
                     ))}
                 </div>
-
                 {/* Grid */}
                 <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {loading ? (
@@ -209,13 +192,11 @@ export const Marketplace: React.FC = () => {
                                     <h3 className="font-bold text-[var(--text-primary)] text-lg mb-1 line-clamp-1">{app.name}</h3>
                                     <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-3">{getCatLabel(app.category)}</div>
                                     <p className="text-xs text-[var(--text-tertiary)] mb-4 line-clamp-2 flex-1 leading-relaxed">{app.description}</p>
-
                                     <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
                                         <div className="flex flex-col">
                                             <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{app.developer}</span>
                                             <span className="text-xs2 font-mono text-[var(--text-secondary)]">v{app.version}</span>
                                         </div>
-
                                         {isInstalled ? (
                                             <div className="flex gap-2">
                                                 <button onClick={handleConfigure} className="px-3 py-1.5 bg-[var(--glass-surface)] text-[var(--text-secondary)] rounded-lg text-xs font-bold hover:bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] flex items-center gap-1.5">
@@ -268,7 +249,6 @@ export const Marketplace: React.FC = () => {
                     )}
                 </div>
             </div>
-
             <ConfirmModal
                 isOpen={!!confirmAction}
                 title={confirmAction?.type === 'install' ? t('market.modal_install_title') : t('market.modal_uninstall_title')}

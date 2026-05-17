@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs';
-
 /**
  * Extract text from a Buffer (file data from PostgreSQL storage).
  * `ext` must include the dot, e.g. '.pdf', '.docx', '.txt'
@@ -22,18 +21,15 @@ export async function extractTextFromBuffer(buffer: Buffer, ext: string): Promis
     return '';
   }
 }
-
 /**
  * Extract text from a file path on disk (legacy / dev fallback).
  */
 export async function extractTextFromFile(filePath: string): Promise<string> {
   const ext = path.extname(filePath).toLowerCase();
   const absolutePath = path.resolve(filePath);
-
   if (!fs.existsSync(absolutePath)) {
     return '';
   }
-
   try {
     if (ext === '.pdf') {
       const buffer = fs.readFileSync(absolutePath);
@@ -52,12 +48,10 @@ export async function extractTextFromFile(filePath: string): Promise<string> {
     return '';
   }
 }
-
 async function extractPdfFromBuffer(buffer: Buffer): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const uint8Array = new Uint8Array(buffer);
   const doc = await pdfjsLib.getDocument({ data: uint8Array, useSystemFonts: true }).promise;
-
   const textParts: string[] = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
@@ -70,10 +64,8 @@ async function extractPdfFromBuffer(buffer: Buffer): Promise<string> {
       textParts.push(pageText);
     }
   }
-
   return textParts.join('\n');
 }
-
 async function extractDocxFromBuffer(buffer: Buffer): Promise<string> {
   const mammoth = await import('mammoth');
   const result = await mammoth.extractRawText({ buffer });

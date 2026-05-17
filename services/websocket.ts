@@ -1,6 +1,5 @@
 import { io, Socket } from "socket.io-client";
 import { useEffect, useState } from "react";
-
 // Module-level singleton — shared across all components
 export const socket: Socket = io({
   autoConnect: false,
@@ -9,7 +8,6 @@ export const socket: Socket = io({
   reconnectionDelayMax: 10000,
   timeout: 20000,
 });
-
 // Log connection errors without crashing the app
 socket.on('connect_error', (err) => {
   console.warn('[Socket.io] Connection error:', err.message);
@@ -20,7 +18,6 @@ socket.on('reconnect_failed', () => {
 socket.on('reconnect', (attempt) => {
   console.info(`[Socket.io] Reconnected after ${attempt} attempt(s)`);
 });
-
 // Reconnect the socket after login so the handshake includes the fresh auth cookie.
 // Without this the socket would remain unauthenticated (no cookie at initial connect time).
 if (typeof window !== 'undefined') {
@@ -31,31 +28,24 @@ if (typeof window !== 'undefined') {
     }
   });
 }
-
 // Reference counter: track how many components are using the socket
 // Only connect on first mount (0→1), only disconnect on last unmount (1→0)
 let _mountCount = 0;
-
 export function useSocket() {
   const [isConnected, setIsConnected] = useState(socket.connected);
-
   useEffect(() => {
     _mountCount += 1;
     if (_mountCount === 1) {
       socket.connect();
     }
-
     function onConnect() {
       setIsConnected(true);
     }
-
     function onDisconnect() {
       setIsConnected(false);
     }
-
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
@@ -65,6 +55,5 @@ export function useSocket() {
       }
     };
   }, []);
-
   return { isConnected, socket };
 }

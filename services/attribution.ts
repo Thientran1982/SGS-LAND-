@@ -11,11 +11,9 @@
  *
  * KHÔNG dùng cho user đã đăng nhập — đã có usePageTracker riêng cho CRM.
  */
-
 const LS_KEY = 'sgs_attribution_v1';
 const SS_KEY = 'sgs_session_v1';
 const VISITOR_TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 ngày
-
 export interface Attribution {
   visitorId: string;
   sessionId: string;
@@ -32,11 +30,9 @@ export interface Attribution {
   fbclid: string | null;
   capturedAt: number;
 }
-
 const EMPTY_UTM = {
   source: null, medium: null, campaign: null, term: null, content: null,
 };
-
 function safeLocalStorage(): Storage | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
@@ -47,14 +43,12 @@ function safeLocalStorage(): Storage | null {
     return window.localStorage;
   } catch { return null; }
 }
-
 function safeSessionStorage(): Storage | null {
   try {
     if (typeof window === 'undefined' || !window.sessionStorage) return null;
     return window.sessionStorage;
   } catch { return null; }
 }
-
 function genId(): string {
   // Crypto.randomUUID() có ở mọi browser modern. Fallback random nếu thiếu.
   try {
@@ -64,7 +58,6 @@ function genId(): string {
   } catch { /* noop */ }
   return Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
-
 function readUrlAttribution(): {
   utm: Attribution['utm'];
   gclid: string | null;
@@ -87,7 +80,6 @@ function readUrlAttribution(): {
   const hasNew = !!(utm.source || utm.medium || utm.campaign || gclid || fbclid);
   return { utm, gclid, fbclid, hasNew };
 }
-
 function isInternalReferrer(ref: string | null): boolean {
   if (!ref || typeof window === 'undefined') return false;
   try {
@@ -95,7 +87,6 @@ function isInternalReferrer(ref: string | null): boolean {
     return u.host === window.location.host;
   } catch { return false; }
 }
-
 /**
  * Lấy/tạo Attribution từ localStorage. Tự động:
  *  - Refresh visitorId nếu hết hạn 90d.
@@ -108,7 +99,6 @@ export function getOrCreateAttribution(): Attribution {
   const ss = safeSessionStorage();
   const now = Date.now();
   const url = readUrlAttribution();
-
   let stored: Attribution | null = null;
   if (ls) {
     try {
@@ -122,14 +112,12 @@ export function getOrCreateAttribution(): Attribution {
       }
     } catch { /* corrupted — ignore */ }
   }
-
   // sessionId per-tab.
   let sessionId = ss?.getItem(SS_KEY) || '';
   if (!sessionId) {
     sessionId = genId().slice(0, 24);
     try { ss?.setItem(SS_KEY, sessionId); } catch { /* noop */ }
   }
-
   if (!stored) {
     const ref = (typeof document !== 'undefined' ? document.referrer : '') || null;
     stored = {
@@ -163,16 +151,13 @@ export function getOrCreateAttribution(): Attribution {
       }
     }
   }
-
   if (ls) {
     try { ls.setItem(LS_KEY, JSON.stringify(stored)); } catch { /* noop */ }
   }
   return stored;
 }
-
 let lastTrackedPath = '';
 let trackTimer: ReturnType<typeof setTimeout> | null = null;
-
 /**
  * Gửi pageview event (debounce 800ms, dedupe theo path).
  * Best-effort — không throw, không retry.
@@ -215,12 +200,10 @@ export function trackPageView(opts?: { projectCode?: string; pageLabel?: string 
     } catch { /* noop */ }
   }, 800);
 }
-
 /** Reset dedupe — gọi khi route thay đổi để track view mới. */
 export function resetPageViewDedup(): void {
   lastTrackedPath = '';
 }
-
 /** Build payload gắn vào lead form submit. */
 export function buildLeadAttribution() {
   const a = getOrCreateAttribution();
