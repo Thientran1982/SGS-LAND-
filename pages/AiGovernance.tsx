@@ -270,7 +270,6 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                             </div>
                         </div>
                     </div>
-
                     {/* Test both */}
                     <div>
                         <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Chạy thử song song trên cùng input</div>
@@ -314,7 +313,6 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                             </div>
                         )}
                     </div>
-
                     {/* Promote history */}
                     <div>
                         <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Lịch sử promote</div>
@@ -433,7 +431,6 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                 </div>
             </div>
         </div>
-
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
             <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('ai.budget_title')}</h3>
             <div className="space-y-6">
@@ -545,7 +542,6 @@ const PromptsTab = memo(({
                 })}
             </div>
         </div>
-
         {/* LIST + EDITOR */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LIST */}
@@ -576,7 +572,6 @@ const PromptsTab = memo(({
                 ))}
             </div>
         </div>
-
         {/* EDITOR */}
         <div className="lg:col-span-2 bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col h-[600px]">
             {selectedPrompt ? (
@@ -701,11 +696,9 @@ const PromptsTab = memo(({
     </div>
     );
 });
-
 // ─────────────────────────────────────────────────────────────────────────────
 // RLHF Tab
 // ─────────────────────────────────────────────────────────────────────────────
-
 interface RlhfStats {
     totalFeedback: number;
     positiveCount: number;
@@ -715,7 +708,6 @@ interface RlhfStats {
     byNode: Array<{ agentNode: string; positive: number; negative: number; rate: number }>;
     recentCorrections: Array<{ userMessage: string; aiResponse: string; correction: string; intent: string; createdAt: string }>;
 }
-
 interface RewardSignal {
     intent: string;
     positiveCount: number;
@@ -726,7 +718,6 @@ interface RewardSignal {
     topExamples: any[];
     negativePatterns: any[];
 }
-
 const INTENT_LABELS: Record<string, string> = {
     SEARCH_INVENTORY: 'Tìm BĐS',
     CALCULATE_LOAN: 'Tính vay',
@@ -740,7 +731,6 @@ const INTENT_LABELS: Record<string, string> = {
     GREETING: 'Chào hỏi',
     UNKNOWN: 'Không xác định',
 };
-
 const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, formatTime }: {
     stats: RlhfStats | null;
     signals: RewardSignal[];
@@ -751,10 +741,8 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
 }) => {
     const [showCorrections, setShowCorrections] = useState(false);
     const [expandedSignal, setExpandedSignal] = useState<string | null>(null);
-
     const approvalColor = (rate: number) => rate >= 80 ? 'text-emerald-600' : rate >= 60 ? 'text-amber-500' : 'text-rose-500';
     const approvalBg = (rate: number) => rate >= 80 ? 'bg-emerald-500' : rate >= 60 ? 'bg-amber-400' : 'bg-rose-500';
-
     return (
         <div className="space-y-6 animate-enter w-full overflow-x-hidden">
             {/* Summary Cards */}
@@ -772,7 +760,6 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                     </div>
                 ))}
             </div>
-
             {/* Trend Chart + Recompute */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div className="lg:col-span-2 bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
@@ -797,7 +784,6 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                         </div>
                     )}
                 </div>
-
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col gap-4">
                     <h3 className="font-bold text-[var(--text-primary)] text-sm">Huấn luyện RLHF</h3>
                     <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
@@ -824,7 +810,6 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                     <div className="text-xs text-[var(--text-tertiary)] text-center">Tự động chạy hàng ngày lúc 2:00 SA</div>
                 </div>
             </div>
-
             {/* Intent Breakdown */}
             {(stats?.byIntent || []).length > 0 && (
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
@@ -850,12 +835,10 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                     </div>
                 </div>
             )}
-
             {/* Reward Signals — Cards on mobile, table on md+ */}
             {signals.length > 0 && (
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4 text-sm">Reward Signals đã tích lũy</h3>
-
                     {/* Mobile card layout */}
                     <div className="md:hidden space-y-3">
                         {signals.map(sig => {
@@ -907,7 +890,6 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                             );
                         })}
                     </div>
-
                     {/* Desktop table layout */}
                     <div className="hidden md:block overflow-x-auto">
                         <table className="min-w-full text-xs">
@@ -974,7 +956,6 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                     </div>
                 </div>
             )}
-
             {/* Recent Corrections */}
             {(stats?.recentCorrections || []).length > 0 && (
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
@@ -1010,7 +991,6 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                     </div>
                 </div>
             )}
-
             {/* Empty state */}
             {!stats?.totalFeedback && (
                 <div className="bg-[var(--bg-surface)] p-12 rounded-[24px] border border-[var(--glass-border)] shadow-sm text-center">
@@ -1024,15 +1004,13 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
         </div>
     );
 });
-
 export const AiGovernance: React.FC = () => {
     const [config, setConfig] = useState<AiTenantConfig | null>(null);
     const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
     const [safetyLogs, setSafetyLogs] = useState<AiSafetyLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY' | 'RLHF'>('CONFIG');
-    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-    
+    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);    
     // Prompts State
     const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
     const [diffMode, setDiffMode] = useState(false);
@@ -1043,23 +1021,18 @@ export const AiGovernance: React.FC = () => {
     const [lastEvalRun, setLastEvalRun] = useState<string>('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [promoteModalVersion, setPromoteModalVersion] = useState<number | null>(null);
-
     // Prompt defaults (read-only; loaded once for admin skill catalog tooltips)
     const [promptDefaults, setPromptDefaults] = useState<Record<string, SkillDefault>>({});
-
     // RLHF State
     const [rlhfStats, setRlhfStats] = useState<RlhfStats | null>(null);
     const [rewardSignals, setRewardSignals] = useState<RewardSignal[]>([]);
     const [feedbackTrends, setFeedbackTrends] = useState<any[]>([]);
     const [isRecomputing, setIsRecomputing] = useState(false);
-
     const { t, formatTime } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const fetchRlhfData = useCallback(async () => {
         try {
             const [stats, signals, trends] = await Promise.all([
@@ -1074,7 +1047,6 @@ export const AiGovernance: React.FC = () => {
             // silent
         }
     }, []);
-
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -1090,7 +1062,6 @@ export const AiGovernance: React.FC = () => {
             // silent — UI stays with empty state
         } finally { setLoading(false); }
     }, []);
-
     useEffect(() => { fetchData(); }, [fetchData]);
     useEffect(() => { if (activeTab === 'RLHF') fetchRlhfData(); }, [activeTab, fetchRlhfData]);
     useEffect(() => {
@@ -1099,7 +1070,6 @@ export const AiGovernance: React.FC = () => {
             .then(d => setPromptDefaults(d))
             .catch(() => {});
     }, []);
-
     const handleUpdateConfig = useCallback((key: keyof AiTenantConfig, value: any) => {
         if (!config) return;
         setConfig({ ...config, [key]: value });
@@ -1112,7 +1082,6 @@ export const AiGovernance: React.FC = () => {
             notify(t('ai.config_updated'), 'success');
         } catch (e) { notify(t('common.error'), 'error'); }
     };
-
     const handleSelectPrompt = (p: PromptTemplate) => {
         setSelectedPrompt(p);
         const version = p.versions.find(v => v.version === p.activeVersion);
@@ -1121,7 +1090,6 @@ export const AiGovernance: React.FC = () => {
         setDiffMode(false);
         setDiffRightVersion(null);
     };
-
     // Diff view: left = active version content, right = currently-edited buffer.
     // User chọn 1 version khác để load nội dung version đó vào buffer phải.
     const diffLeftContent = useMemo(() => {
@@ -1129,7 +1097,6 @@ export const AiGovernance: React.FC = () => {
         const active = selectedPrompt.versions?.find(v => v.version === selectedPrompt.activeVersion);
         return active ? active.content : '';
     }, [selectedPrompt]);
-
     const handleToggleDiff = () => {
         if (!selectedPrompt) return;
         if (diffMode) {
@@ -1147,7 +1114,6 @@ export const AiGovernance: React.FC = () => {
             }
         }
     };
-
     const handleSelectDiffVersion = (version: number) => {
         if (!selectedPrompt) return;
         const v = selectedPrompt.versions?.find(x => x.version === version);
@@ -1156,7 +1122,6 @@ export const AiGovernance: React.FC = () => {
             setEditContent(v.content);
         }
     };
-
     const handleRunSim = async () => {
         if (!selectedPrompt || !testInput.trim()) return;
         setIsEvalRunning(true);
@@ -1169,7 +1134,6 @@ export const AiGovernance: React.FC = () => {
             setIsEvalRunning(false);
         }
     };
-
     const handleSaveVersion = async (status: 'DRAFT' | 'APPROVED') => {
         if (!selectedPrompt) return;
         try {
@@ -1189,7 +1153,6 @@ export const AiGovernance: React.FC = () => {
             fetchData();
         } catch (e) { notify(t('common.error'), 'error'); }
     };
-
     const handleCreatePrompt = async (name: string, desc: string) => {
         try {
             await db.createPromptTemplate({ name, description: desc, content: '' });
@@ -1198,7 +1161,6 @@ export const AiGovernance: React.FC = () => {
             fetchData();
         } catch (e) { notify(t('common.error'), 'error'); }
     };
-
     const handleRecompute = async () => {
         setIsRecomputing(true);
         try {
@@ -1211,13 +1173,10 @@ export const AiGovernance: React.FC = () => {
             setIsRecomputing(false);
         }
     };
-
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('ai.loading')}</div>;
-
     return (
         <>
         <div className="space-y-6 pb-20 relative animate-enter p-4 sm:p-6">
-
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('ai.title')}</h2>
@@ -1230,9 +1189,7 @@ export const AiGovernance: React.FC = () => {
                     <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_rlhf')}</button>
                 </div>
             </div>
-
-            {activeTab === 'CONFIG' && <ConfigTab config={config} onSave={handleSaveConfig} onUpdateConfig={handleUpdateConfig} t={t} />}
-            
+            {activeTab === 'CONFIG' && <ConfigTab config={config} onSave={handleSaveConfig} onUpdateConfig={handleUpdateConfig} t={t} />}           
             {activeTab === 'PROMPTS' && (
                 <PromptsTab 
                     prompts={prompts}
@@ -1261,7 +1218,6 @@ export const AiGovernance: React.FC = () => {
                     t={t}
                 />
             )}
-
             {activeTab === 'SAFETY' && (
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
@@ -1309,7 +1265,6 @@ export const AiGovernance: React.FC = () => {
                     </div>
                 </div>
             )}
-
             {activeTab === 'RLHF' && (
                 <RlhfTab
                     stats={rlhfStats}
@@ -1320,7 +1275,6 @@ export const AiGovernance: React.FC = () => {
                     formatTime={formatTime}
                 />
             )}
-
             {/* Diff + Promote Modal */}
             <DiffPromoteModal
                 open={promoteModalVersion != null}
@@ -1331,7 +1285,6 @@ export const AiGovernance: React.FC = () => {
                 onPromoted={fetchData}
                 notify={notify}
             />
-
             {/* Create Prompt Modal */}
             {isCreateOpen && createPortal(
                 <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">

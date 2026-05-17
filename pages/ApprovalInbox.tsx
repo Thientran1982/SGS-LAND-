@@ -1,11 +1,9 @@
-
 import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { Proposal, Listing, Lead, User, LeadScore } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
-
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & CONFIGURATION
 // -----------------------------------------------------------------------------
@@ -14,21 +12,17 @@ const RISK_CONSTANTS = {
     THRESHOLD_MEDIUM: 2.0, // > 2% discount
     TOAST_DURATION: 3000
 };
-
 type RiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
-
 interface RiskAssessment {
     level: RiskLevel;
     reasonKeys: string[];
     score: number; // Internal score for sorting
 }
-
 const RISK_STYLES = {
     HIGH: { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200', badge: 'bg-rose-500', icon: 'text-rose-500' },
     MEDIUM: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200', badge: 'bg-amber-500', icon: 'text-amber-500' },
     LOW: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200', badge: 'bg-emerald-500', icon: 'text-emerald-500' }
 };
-
 const ICONS = {
     USER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
@@ -37,7 +31,6 @@ const ICONS = {
     SORT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>,
     CHECK_CIRCLE: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
 };
-
 // -----------------------------------------------------------------------------
 // 2. BUSINESS LOGIC (Advanced Risk Engine)
 // -----------------------------------------------------------------------------
@@ -45,7 +38,6 @@ const analyzeRisk = (discountPercent: number, leadScore?: LeadScore): RiskAssess
     const reasonKeys: string[] = [];
     let level: RiskLevel = 'LOW';
     let score = 0; // Higher score = Higher Priority/Risk
-
     // Base Risk on Discount
     if (discountPercent > RISK_CONSTANTS.THRESHOLD_HIGH) {
         level = 'HIGH';
@@ -55,7 +47,6 @@ const analyzeRisk = (discountPercent: number, leadScore?: LeadScore): RiskAssess
         level = 'MEDIUM';
         score += 20;
     }
-
     // Contextual Adjustment based on Customer Score
     if (leadScore) {
         if (leadScore.grade === 'A' && level === 'HIGH') {
@@ -73,24 +64,19 @@ const analyzeRisk = (discountPercent: number, leadScore?: LeadScore): RiskAssess
             score += 15;
         }
     }
-
     return { level, reasonKeys, score };
 };
-
 // -----------------------------------------------------------------------------
 // 3. SUB-COMPONENTS
 // -----------------------------------------------------------------------------
-
 interface RejectModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (reason: string) => void;
     t: (key: string) => string;
 }
-
 const RejectModal = memo(({ isOpen, onClose, onConfirm, t }: RejectModalProps) => {
     const [reason, setReason] = useState('');
-
     // Keep portal always mounted to avoid removeChild errors during HMR/unmount cycles.
     // Only render visible content when isOpen === true.
     return createPortal(
@@ -121,7 +107,6 @@ const RejectModal = memo(({ isOpen, onClose, onConfirm, t }: RejectModalProps) =
         document.body
     );
 });
-
 interface ProposalCardProps {
     proposal: Proposal;
     listing?: Listing;
@@ -135,7 +120,6 @@ interface ProposalCardProps {
     formatDateTime: (d: string) => string;
     formatCurrency: (amount: number) => string;
 }
-
 const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, onToggleSelect, onApprove, onReject, t, formatDateTime, formatCurrency }: ProposalCardProps) => {
     
     const { discountPercent, riskAssessment } = useMemo(() => {
@@ -179,7 +163,6 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                     {t(`approvals.risk_${riskAssessment.level.toLowerCase()}`)}
                 </div>
             </div>
-
             {/* Content Body */}
             <div className="px-4 pb-4 flex-1">
                 {/* Discount Highlight */}
@@ -187,7 +170,6 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                     <span className="text-3xl font-black text-[var(--text-primary)]">{discountPercent.toFixed(1)}%</span>
                     <span className="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">{t('approvals.discount')}</span>
                 </div>
-
                 {/* Listing & Price Context */}
                 <div className="bg-[var(--glass-surface)] rounded-xl p-3 mb-3 border border-[var(--glass-border)]">
                     <div className="text-xs font-bold text-[var(--text-secondary)] truncate mb-1" title={listing?.title}>
@@ -202,7 +184,6 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                          </div>
                     </div>
                 </div>
-
                 {/* Lead Context */}
                 <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center text-[var(--text-tertiary)]">
@@ -214,8 +195,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                             {t('approvals.lead_rank')} {lead.score.grade}
                         </div>
                     )}
-                </div>
-                
+                </div>                
                 {/* Risk Reasons */}
                 {riskAssessment.reasonKeys.length > 0 && (
                     <div className="text-xs2 text-[var(--text-tertiary)] mt-2 space-y-1">
@@ -227,7 +207,6 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                     </div>
                 )}
             </div>
-
             {/* Footer Actions */}
             <div className="p-3 border-t border-[var(--glass-border)] flex gap-2 bg-[var(--glass-surface)]/50">
                 <button 
@@ -248,7 +227,6 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // 4. MAIN COMPONENT
 // -----------------------------------------------------------------------------
@@ -258,22 +236,18 @@ export const ApprovalInbox: React.FC = () => {
     const [listings, setListings] = useState<Record<string, Listing>>({});
     const [leads, setLeads] = useState<Record<string, Lead>>({});
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-    
+    const [loading, setLoading] = useState(true);   
     // UI State
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [rejectId, setRejectId] = useState<string | null>(null);
     const [sortMode, setSortMode] = useState<'RISK' | 'DATE'>('RISK');
     const [filterMode, setFilterMode] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-
     const { t, formatDateTime, formatCurrency } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success', duration?: number) => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), duration ?? RISK_CONSTANTS.TOAST_DURATION);
     }, []);
-
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
@@ -282,23 +256,19 @@ export const ApprovalInbox: React.FC = () => {
                 db.getCurrentUser()
             ]);
             setPending(props || []);
-            setCurrentUser(user);
-            
+            setCurrentUser(user);            
             // Efficient Data Loading (Map Pattern)
             const safeProps = props || [];
             const listingIds = [...new Set(safeProps.map(p => p.listingId))];
             const leadIds = [...new Set(safeProps.map(p => p.leadId))];
-
             if (listingIds.length || leadIds.length) {
                 const [listRes, leadRes] = await Promise.all([
                     listingIds.length ? db.getListings(1, 1000) : { data: [] },
                     leadIds.length ? Promise.all(leadIds.map(id => db.getLeadById(id))) : []
-                ]);
-                
+                ]);                
                 const listMap: Record<string, Listing> = {};
                 listRes.data.forEach(l => listMap[l.id] = l);
                 setListings(listMap);
-
                 const leadMap: Record<string, Lead> = {};
                 leadRes.forEach(l => { if (l) leadMap[l.id] = l; });
                 setLeads(leadMap);
@@ -309,9 +279,7 @@ export const ApprovalInbox: React.FC = () => {
             setLoading(false);
         }
     }, []);
-
     useEffect(() => { loadData(); }, [loadData]);
-
     // Sorting & Filtering
     const sortedProposals = useMemo(() => {
         let filtered = [...pending];
@@ -333,7 +301,6 @@ export const ApprovalInbox: React.FC = () => {
             return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         });
     }, [pending, leads, sortMode, filterMode]);
-
     // Metrics
     const metrics = useMemo(() => {
         const totalValue = pending.reduce((acc, p) => acc + p.finalPrice, 0);
@@ -341,30 +308,25 @@ export const ApprovalInbox: React.FC = () => {
         const highRiskCount = pending.filter(p => analyzeRisk((p.discountAmount/p.basePrice)*100).level === 'HIGH').length;
         return { totalValue, avgDiscount, highRiskCount };
     }, [pending]);
-
     // Handlers
     const handleToggleSelect = (id: string) => {
         const newSet = new Set(selectedIds);
         if (newSet.has(id)) newSet.delete(id); else newSet.add(id);
         setSelectedIds(newSet);
     };
-
     const handleSelectAll = () => {
         if (selectedIds.size === sortedProposals.length) setSelectedIds(new Set());
         else setSelectedIds(new Set(sortedProposals.map(p => p.id)));
     };
-
     const processApproval = async (ids: string[]) => {
         const results = await Promise.allSettled(ids.map(id => db.approveProposal(id)));
         const failures = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[];
         const successes = results.filter(r => r.status === 'fulfilled').length;
-
         if (successes > 0) {
             notify(t('approvals.approve_success') + ` (${successes})`, 'success');
             setSelectedIds(new Set());
             loadData();
         }
-
         for (const failure of failures) {
             const err = failure.reason as any;
             const errCode = err?.data?.error;
@@ -374,7 +336,7 @@ export const ApprovalInbox: React.FC = () => {
                     ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price)
                     : '';
                 notify(
-                    `🔒 Cần xác minh AML trước khi phê duyệt${formattedPrice ? ` — Giá trị: ${formattedPrice}` : ''}. Vui lòng hoàn tất quy trình AML cho giao dịch này.`,
+                    ` Cần xác minh AML trước khi phê duyệt${formattedPrice ? ` — Giá trị: ${formattedPrice}` : ''}. Vui lòng hoàn tất quy trình AML cho giao dịch này.`,
                     'error',
                     8000
                 );
@@ -383,7 +345,6 @@ export const ApprovalInbox: React.FC = () => {
             }
         }
     };
-
     const processRejection = async (id: string, reason: string) => {
         try {
             await db.rejectProposal(id, reason);
@@ -392,13 +353,11 @@ export const ApprovalInbox: React.FC = () => {
             loadData();
         } catch (e) { notify(t('common.error'), 'error'); }
     };
-
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <>
         <div className="p-4 sm:p-6 space-y-6 pb-24 relative animate-enter">
-
             {/* METRICS BAR */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between col-span-2 md:col-span-1">
@@ -414,7 +373,6 @@ export const ApprovalInbox: React.FC = () => {
                     <div className="text-xl md:text-2xl font-black text-rose-500 tracking-tight mt-1">{metrics.highRiskCount}</div>
                 </div>
             </div>
-
             {/* TOOLBAR */}
             <div className="flex flex-wrap justify-between items-center bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4 sticky top-0 z-20 backdrop-blur-md bg-[var(--bg-surface)]/90">
                 <div className="flex items-center gap-4">
@@ -450,7 +408,6 @@ export const ApprovalInbox: React.FC = () => {
                     />
                 </div>
             </div>
-
             {/* GRID */}
             {sortedProposals.length === 0 ? (
                 <div className="p-20 text-center text-[var(--text-secondary)] flex flex-col items-center border-2 border-dashed border-[var(--glass-border)] rounded-[32px]">
@@ -477,7 +434,6 @@ export const ApprovalInbox: React.FC = () => {
                     ))}
                 </div>
             )}
-
             {/* BULK ACTION BAR */}
             {selectedIds.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white p-3 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-scale-up border border-slate-700 min-w-[300px] justify-between">
@@ -493,7 +449,6 @@ export const ApprovalInbox: React.FC = () => {
                     </button>
                 </div>
             )}
-
             <RejectModal 
                 isOpen={!!rejectId}
                 onClose={() => setRejectId(null)}

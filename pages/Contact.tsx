@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
@@ -7,7 +6,6 @@ import { Dropdown } from '../components/Dropdown';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
-
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     MAP_PIN: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
@@ -17,58 +15,46 @@ const ICONS = {
     CHECK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
     ERROR: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 };
-
 export const Contact: React.FC = () => {
     const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-
     const SUBJECT_OPTIONS = [
         { value: "support", label: t('contact.subj_support') },
         { value: "sales", label: t('contact.subj_sales') },
         { value: "partnership", label: t('contact.subj_partner') },
         { value: "other", label: t('contact.subj_other') }
     ];
-
     const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [sending, setSending] = useState(false);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-
     const notify = useCallback((msg: string, type: 'success' | 'error') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const validate = () => {
         const newErrors: Record<string, string> = {};
         if (!form.name.trim()) newErrors.name = t('contact.err_name');
-
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!form.email.trim()) newErrors.email = t('contact.err_email_required');
         else if (!emailRegex.test(form.email)) newErrors.email = t('contact.err_email_invalid');
 
         if (!form.message.trim()) newErrors.message = t('contact.err_message_required');
         else if (form.message.length < 10) newErrors.message = t('contact.err_message_short');
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!validate()) {
             notify(t('contact.err_check'), "error");
             return;
         }
-
         setSending(true);
         try {
             const res = await fetch('/api/public/contact', {
@@ -89,12 +75,10 @@ export const Contact: React.FC = () => {
             setSending(false);
         }
     };
-
     const handleInputChange = (field: string, value: string) => {
         setForm(prev => ({ ...prev, [field]: value }));
         if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
     };
-
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar relative">
             <SeoHead
@@ -139,7 +123,7 @@ export const Contact: React.FC = () => {
                         '@type': 'FAQPage',
                         mainEntity: [
                             { '@type': 'Question', name: 'Hotline SGS LAND mở mấy giờ?', acceptedAnswer: { '@type': 'Answer', text: 'Hotline +84 971 132 378 hoạt động 8h–22h hàng ngày, kể cả cuối tuần và lễ. Phản hồi trung bình dưới 15 phút trong giờ hành chính. Ngoài giờ có thể gửi email info@sgsland.vn để được phản hồi trong 2 giờ làm việc tiếp theo.' } },
-                            { '@type': 'Question', name: 'SGS LAND có văn phòng ở đâu?', acceptedAnswer: { '@type': 'Answer', text: 'Trụ sở chính: TP. Hồ Chí Minh, Việt Nam. Pháp nhân: Công ty Cổ phần SGS Land, MST 0312960439. Khách hàng có thể đặt lịch hẹn tư vấn trực tiếp tại văn phòng qua hotline 0971.132.378 hoặc form liên hệ tại sgsland.vn/contact.' } },
+                            { '@type': 'Question', name: 'SGS LAND có văn phòng ở đâu?', acceptedAnswer: { '@type': 'Answer', text: 'Trụ sở chính: TP. Hồ Chí Minh, Việt Nam. Pháp nhân: Công ty TNHH Sai Gon Sun, MST 0312960439. Khách hàng có thể đặt lịch hẹn tư vấn trực tiếp tại văn phòng qua hotline 0971.132.378 hoặc form liên hệ tại sgsland.vn/contact.' } },
                             { '@type': 'Question', name: 'SGS LAND phục vụ khu vực nào?', acceptedAnswer: { '@type': 'Answer', text: 'Phục vụ toàn quốc với chuyên sâu Đông Nam Bộ: TP.HCM (toàn bộ 24 quận/huyện và TP Thủ Đức), Đồng Nai (Biên Hòa, Long Thành, Nhơn Trạch), Bình Dương (Thuận An, Dĩ An, Thành Phố Mới), Long An. Hỗ trợ tư vấn online 100% qua Zalo/Messenger cho các tỉnh khác.' } },
                             { '@type': 'Question', name: 'Có những kênh liên hệ nào với SGS LAND?', acceptedAnswer: { '@type': 'Answer', text: '5 kênh chính: (1) Hotline 0971.132.378; (2) Email info@sgsland.vn (tư vấn) hoặc sales@sgsland.vn (bán hàng); (3) Form liên hệ tại sgsland.vn/contact; (4) Zalo OA và Facebook Messenger từ trang chủ; (5) Live Chat 24/7 tại sgsland.vn/livechat.' } },
                             { '@type': 'Question', name: 'Tư vấn BĐS qua SGS LAND có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí cho mọi giai đoạn: định giá AI, tra cứu pháp lý, tư vấn dự án, hỗ trợ làm sổ hồng. SGS LAND chỉ thu phí khi giao dịch thành công thông qua hợp đồng phân phối uỷ quyền với chủ đầu tư hoặc người bán.' } },
@@ -156,7 +140,6 @@ export const Contact: React.FC = () => {
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             )}
-
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
@@ -214,7 +197,6 @@ export const Contact: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
                         {/* Map */}
                         <div className="rounded-[32px] overflow-hidden border border-[var(--glass-border)] h-64 bg-[var(--glass-surface-hover)] relative group cursor-pointer shadow-sm hover:shadow-md transition-all">
                             <iframe
@@ -229,7 +211,6 @@ export const Contact: React.FC = () => {
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none"></div>
                         </div>
                     </div>
-
                     {/* Contact Form */}
                     <div className="bg-[var(--bg-surface)] p-8 md:p-10 rounded-[40px] border border-[var(--glass-border)] shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-[80px] -mr-20 -mt-20 opacity-60 pointer-events-none"></div>
@@ -283,7 +264,6 @@ export const Contact: React.FC = () => {
                                 ></textarea>
                                 {errors.message && <p className="text-xs2 font-bold text-rose-500 ml-1 animate-enter">{errors.message}</p>}
                             </div>
-
                             <button
                                 type="submit"
                                 disabled={sending}

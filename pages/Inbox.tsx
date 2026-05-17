@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,11 +12,9 @@ import { getSEOOverrides } from '../utils/seo';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { motion, AnimatePresence } from 'motion/react';
-
 const CONFIG = {
     TOAST_DURATION: 3000
 };
-
 const ICONS = {
     SEARCH: <svg className="w-4 h-4 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     SEND: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/></svg>,
@@ -41,7 +38,6 @@ const ICONS = {
     CHECK: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>,
     CHEVRON: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>,
 };
-
 /* ── Colour tokens for InboxDropdown — must be static strings for Tailwind ── */
 const DD_COLORS: Record<string, { open: string; item: string; check: string }> = {
     indigo:  { open: 'bg-indigo-50 border-indigo-400 text-indigo-700',   item: 'bg-indigo-50 text-indigo-700',   check: 'text-indigo-600'  },
@@ -49,10 +45,8 @@ const DD_COLORS: Record<string, { open: string; item: string; check: string }> =
     emerald: { open: 'bg-emerald-50 border-emerald-400 text-emerald-700',item: 'bg-emerald-50 text-emerald-700', check: 'text-emerald-600' },
     amber:   { open: 'bg-amber-50 border-amber-400 text-amber-700',      item: 'bg-amber-50 text-amber-700',     check: 'text-amber-600'   },
 };
-
 /* ── Reusable animated dropdown for inbox filters ────────────────────────── */
 type DropdownOption<T extends string> = { value: T; label: string; icon?: React.ReactNode; color?: string };
-
 function InboxDropdown<T extends string>({
     value, onChange, options, className = '', defaultColor = 'indigo'
 }: {
@@ -67,13 +61,11 @@ function InboxDropdown<T extends string>({
     const selected = options.find(o => o.value === value);
     const triggerKey = selected?.color ?? defaultColor;
     const triggerTokens = DD_COLORS[triggerKey] ?? DD_COLORS.indigo;
-
     useEffect(() => {
         const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
         document.addEventListener('mousedown', close);
         return () => document.removeEventListener('mousedown', close);
     }, []);
-
     return (
         <div ref={ref} className={`relative flex-1 min-w-0 ${className}`}>
             <button
@@ -91,7 +83,6 @@ function InboxDropdown<T extends string>({
                     {ICONS.CHEVRON}
                 </span>
             </button>
-
             <AnimatePresence>
                 {open && (
                     <motion.div
@@ -127,11 +118,9 @@ function InboxDropdown<T extends string>({
         </div>
     );
 }
-
 export const Inbox: React.FC = () => {
     const queryClient = useQueryClient();
-    const { socket } = useSocket();
-    
+    const { socket } = useSocket();   
     const [selectedLeadId, setSelectedLeadId] = useState<LeadId | null>(null);
     const [input, setInput] = useState('');
     const [channel, setChannel] = useState<Channel>(Channel.ZALO);
@@ -140,7 +129,6 @@ export const Inbox: React.FC = () => {
     const [channelFilter, setChannelFilter] = useState<'ALL' | Channel>('ALL');
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'UNREAD'>('ALL');
     const [threadToDelete, setThreadToDelete] = useState<LeadId | null>(null);
-
     // Debounce search
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -166,22 +154,18 @@ export const Inbox: React.FC = () => {
     const [isGeneratingShortLink, setIsGeneratingShortLink] = useState(false);
     const [linkChannel, setLinkChannel] = useState<'LINK' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('LINK');
     const [qrChannel, setQrChannel] = useState<'QR' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('QR');
-    const [embedChannel, setEmbedChannel] = useState<'EMBED' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('EMBED');
-    
+    const [embedChannel, setEmbedChannel] = useState<'EMBED' | 'ZALO' | 'FACEBOOK' | 'SMS' | 'TIKTOK'>('EMBED');    
     // --- SUPERVISOR STATE ---
     const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread
-    const autoResponseMapRef = useRef<Record<string, boolean>>({});
-    
+    const autoResponseMapRef = useRef<Record<string, boolean>>({});    
     useEffect(() => {
         autoResponseMapRef.current = autoResponseMap;
-    }, [autoResponseMap]);
-    
+    }, [autoResponseMap]);    
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const assignDropdownRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isSendingRef = useRef(false);
     const { t, formatTime, formatCurrency, formatDate, formatDateTime, language } = useTranslation();
-
     const channelLabel = useCallback((ch: string): string => {
         const map: Record<string, string> = {
             ZALO: t('inbox.channel_zalo'),
@@ -195,12 +179,10 @@ export const Inbox: React.FC = () => {
         };
         return map[ch] ?? ch;
     }, [t]);
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), CONFIG.TOAST_DURATION);
     }, []);
-
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (assignDropdownRef.current && !assignDropdownRef.current.contains(event.target as Node)) {
@@ -210,7 +192,6 @@ export const Inbox: React.FC = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
     // Generate short link when widget modal opens or params change
     const generateShortLink = useCallback(async (title: string, desc: string, agentId?: string, channel: string = 'LINK') => {
         setIsGeneratingShortLink(true);
@@ -235,11 +216,9 @@ export const Inbox: React.FC = () => {
             setIsGeneratingShortLink(false);
         }
     }, [language]);
-
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
-
     // --- DATA LOADING WITH REACT QUERY ---
     const { data: threads = [], isLoading: loadingThreads } = useQuery({
         queryKey: ['inboxThreads'],
@@ -249,7 +228,6 @@ export const Inbox: React.FC = () => {
         },
         staleTime: 30_000,
     });
-
     // Sync autoResponseMap when new threads arrive — only initialise entries that
     // don't exist yet so user-toggled values are never overwritten
     useEffect(() => {
@@ -265,7 +243,6 @@ export const Inbox: React.FC = () => {
             setAutoResponseMap(prev => ({ ...additions, ...prev }));
         }
     }, [threads]);
-
     const { data: messages = [] } = useQuery({
         queryKey: ['interactions', selectedLeadId],
         queryFn: async () => {
@@ -277,7 +254,6 @@ export const Inbox: React.FC = () => {
         staleTime: 30_000,
         refetchOnWindowFocus: false,
     });
-
     // Scroll to bottom whenever messages load or change
     useEffect(() => {
         if (messages.length > 0) {
@@ -293,7 +269,6 @@ export const Inbox: React.FC = () => {
         },
         staleTime: 60_000,
     });
-
     const { data: currentUser } = useQuery({
         queryKey: ['currentUser'],
         queryFn: async () => {
@@ -301,7 +276,6 @@ export const Inbox: React.FC = () => {
         },
         staleTime: 60_000,
     });
-
     // Auto-generate short link when widget modal opens (debounced on title/desc/channel changes)
     useEffect(() => {
         if (!isWidgetModalOpen) return;
@@ -310,12 +284,10 @@ export const Inbox: React.FC = () => {
         }, 600);
         return () => clearTimeout(timer);
     }, [isWidgetModalOpen, widgetTitle, widgetDesc, currentUser?.id, linkChannel, generateShortLink]);
-
     // --- WEBSOCKET INTEGRATION ---
     useEffect(() => {
         if (selectedLeadId) {
-            socket.emit("join_room", selectedLeadId);
-            
+            socket.emit("join_room", selectedLeadId);            
             // Mark thread as read — update in-place (no refetch)
             db.markThreadAsRead(selectedLeadId).then(() => {
                 queryClient.setQueryData<InboxThread[]>(['inboxThreads'], (old = []) =>
@@ -323,7 +295,6 @@ export const Inbox: React.FC = () => {
                 );
             });
         }
-
         // Helper: build a minimal lastMessage shape from a raw message payload
         const buildLastMsg = (leadId: string, msg: any) => ({
             id: msg.id || `thread-${leadId}-${Date.now()}`,
@@ -336,7 +307,6 @@ export const Inbox: React.FC = () => {
             leadId,
             metadata: msg.metadata || {},
         });
-
         // Helper: update a single thread in the sidebar list, keeping sort order
         const patchThread = (
             leadId: string,
@@ -356,11 +326,9 @@ export const Inbox: React.FC = () => {
                     );
             });
         };
-
         const handleNewMessage = (data: any) => {
             const msg = data.message;
             const leadId = data.room as string;
-
             // Append to interactions cache (avoids interaction-list refetch)
             if (msg) {
                 queryClient.setQueryData<any[]>(['interactions', leadId], (old) => {
@@ -369,7 +337,6 @@ export const Inbox: React.FC = () => {
                     return [...old, msg];
                 });
             }
-
             // Update thread sidebar in-place
             if (msg && leadId) {
                 patchThread(leadId, (th) => ({
@@ -382,12 +349,10 @@ export const Inbox: React.FC = () => {
                             : th.unreadCount,
                 }));
             }
-
             if (msg?.direction === 'INBOUND' && leadId !== selectedLeadId) {
                 notify(t('inbox.new_message'), 'success');
             }
         };
-
         // Server already persisted the score and emits it via socket — no extra DB write needed
         const handleLeadScored = (data: { leadId: string, score: any }) => {
             queryClient.setQueryData<InboxThread[]>(['inboxThreads'], (old = []) =>
@@ -399,15 +364,12 @@ export const Inbox: React.FC = () => {
             );
             queryClient.invalidateQueries({ queryKey: ['leads'] });
         };
-
         // Server webhook already persisted the message — no extra client DB call needed
         const handleNewInboundMessage = (data: { leadId: string, message: any }) => {
             const { leadId, message: msg } = data;
-
             // NOTE: Do NOT append to interactions cache here — handleNewMessage
             // (via receive_message) already does it for the active chat pane.
             // This handler is responsible ONLY for updating the sidebar.
-
             // Update thread sidebar in-place
             patchThread(leadId, (th) => ({
                 ...th,
@@ -415,31 +377,26 @@ export const Inbox: React.FC = () => {
                 lastChannel: msg?.channel || th.lastChannel,
                 unreadCount: leadId !== selectedLeadId ? th.unreadCount + 1 : th.unreadCount,
             }));
-
             if (leadId !== selectedLeadId) {
                 notify(t('inbox.new_message'), 'success');
             }
         };
-
         const handleEscalateToHuman = (data: { leadId: string }) => {
             const { leadId } = data;
             setAutoResponseMap(prev => ({ ...prev, [leadId]: false }));
             notify(t('inbox.escalated_to_human') || 'Đã chuyển sang hỗ trợ thủ công', 'error');
             db.updateThreadAiMode(leadId, 'HUMAN_TAKEOVER').catch(() => {});
         };
-
         // Sync AI mode changes triggered by other agents or by the server
         const handleAiModeChanged = (data: { leadId: string; status: string }) => {
             if (!data?.leadId) return;
             setAutoResponseMap(prev => ({ ...prev, [data.leadId]: data.status === 'AI_ACTIVE' }));
         };
-
         socket.on("receive_message", handleNewMessage);
         socket.on("lead_scored", handleLeadScored);
         socket.on("new_inbound_message", handleNewInboundMessage);
         socket.on("escalate_to_human", handleEscalateToHuman);
         socket.on("ai_mode_changed", handleAiModeChanged);
-
         return () => {
             socket.off("receive_message", handleNewMessage);
             socket.off("lead_scored", handleLeadScored);
@@ -448,7 +405,6 @@ export const Inbox: React.FC = () => {
             socket.off("ai_mode_changed", handleAiModeChanged);
         };
     }, [selectedLeadId, socket, queryClient, notify, t]);
-
     // --- AI & SEND LOGIC ---
     const appendInteraction = (leadId: string, msg: any) => {
         queryClient.setQueryData<any[]>(['interactions', leadId], (old) => {
@@ -457,7 +413,6 @@ export const Inbox: React.FC = () => {
             return [...list, msg];
         });
     };
-
     const handleAiFeedback = useCallback(async (msg: any, rating: -1 | 1, correction?: string): Promise<boolean> => {
         try {
             await aiService.submitFeedback({
@@ -475,47 +430,37 @@ export const Inbox: React.FC = () => {
             return false;
         }
     }, [selectedLeadId]);
-
     const handleSend = async () => {
-        if (!input.trim() || !selectedLeadId || isSendingRef.current) return;
-        
+        if (!input.trim() || !selectedLeadId || isSendingRef.current) return;        
         const currentLead = threads.find(t => t.lead.id === selectedLeadId)?.lead;
         if (!currentLead) return;
-
         isSendingRef.current = true;
         const isSimulation = input.startsWith('/');
         const cleanInput = isSimulation ? input.substring(1).trim() : input;
-
         try {
             if (isSimulation) {
                 const customerMsg = await db.sendInteraction(selectedLeadId, cleanInput, channel);
-                customerMsg.direction = Direction.INBOUND;
-                
+                customerMsg.direction = Direction.INBOUND;                
                 appendInteraction(selectedLeadId, customerMsg);
-                socket.emit("send_message", { room: selectedLeadId, message: customerMsg });
-                
+                socket.emit("send_message", { room: selectedLeadId, message: customerMsg });                
                 setInput('');
                 scrollToBottom();
-
                 if (autoResponseMap[selectedLeadId]) {
                     setIsThinking(true);
-                    setStreamingMessage('');
-                    
+                    setStreamingMessage('');                    
                     const newHistory = [...messages, customerMsg];
                     const aiResult = await aiService.processMessage(currentLead, cleanInput, newHistory, language, (chunk) => {
                         setIsThinking(false);
                         setStreamingMessage(prev => prev + chunk);
                         scrollToBottom();
-                    });
-                    
+                    });                    
                     // RACE CONDITION CHECK:
                     // If the human agent turned off AI or sent a message while AI was thinking, discard the AI response.
                     if (!autoResponseMapRef.current[selectedLeadId]) {
                         setIsThinking(false);
                         setStreamingMessage('');
                         return;
-                    }
-                    
+                    }                    
                     const aiMsg = await db.sendInteraction(selectedLeadId, aiResult.content, Channel.ZALO, {
                         metadata: {
                             isAi: true,
@@ -528,7 +473,6 @@ export const Inbox: React.FC = () => {
                             userMessage: cleanInput?.slice(0, 300),
                         },
                     });
-
                     // Clear streaming bubble BEFORE appending committed msg to avoid
                     // a render where both the streamed bubble and the final msg are visible
                     setIsThinking(false);
@@ -544,7 +488,6 @@ export const Inbox: React.FC = () => {
                     notify(t('inbox.manual_enabled'), "success");
                     db.updateThreadAiMode(selectedLeadId, 'HUMAN_TAKEOVER').catch(() => {});
                 }
-
                 const agentMsg = await db.sendInteraction(selectedLeadId, input, channel);
                 appendInteraction(selectedLeadId, agentMsg);
                 socket.emit("send_message", { room: selectedLeadId, message: agentMsg });
@@ -552,7 +495,6 @@ export const Inbox: React.FC = () => {
                 setInput('');
                 scrollToBottom();
             }
-
             queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
         } catch (e) {
             notify(t('common.error'), 'error');
@@ -561,7 +503,6 @@ export const Inbox: React.FC = () => {
             isSendingRef.current = false;
         }
     };
-
     // --- TOGGLE AI MODE ---
     const toggleAiMode = async (e: React.MouseEvent, leadId: LeadId) => {
         e.stopPropagation();
@@ -576,33 +517,27 @@ export const Inbox: React.FC = () => {
             notify(t('inbox.ai_mode_save_error') || 'Không thể lưu cài đặt AI', 'error');
         }
     };
-
     // --- FILE UPLOAD LOGIC ---
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !selectedLeadId) return;
-
         // Reset input
         if (fileInputRef.current) fileInputRef.current.value = '';
-
         // Check file size (e.g., max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             notify(t('inbox.file_size_error'), 'error');
             return;
         }
-
         try {
             const reader = new FileReader();
             reader.onloadend = async () => {
                 const base64String = reader.result as string;
-                const isImage = file.type.startsWith('image/');
-                
+                const isImage = file.type.startsWith('image/');                
                 // Turn off AI if human sends file
                 if (autoResponseMapRef.current[selectedLeadId]) {
                     setAutoResponseMap(prev => ({ ...prev, [selectedLeadId]: false }));
                     notify(t('inbox.manual_enabled'), "success");
                 }
-
                 const agentMsg = await db.sendInteraction(selectedLeadId, base64String, channel, {
                     type: isImage ? 'IMAGE' : 'FILE',
                     metadata: {
@@ -611,7 +546,6 @@ export const Inbox: React.FC = () => {
                         mimeType: file.type
                     }
                 });
-
                 queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), agentMsg]);
                 socket.emit("send_message", { room: selectedLeadId, message: agentMsg });
                 scrollToBottom();
@@ -622,13 +556,11 @@ export const Inbox: React.FC = () => {
             notify(t('common.error'), 'error');
         }
     };
-
     // --- DELETE LOGIC ---
     const requestDelete = (e: React.MouseEvent, id: LeadId) => {
         e.stopPropagation();
         setThreadToDelete(id);
     };
-
     const handleAssign = async (leadId: LeadId, userId: string) => {
         try {
             await db.updateLead(leadId, { assignedTo: userId as any });
@@ -638,7 +570,6 @@ export const Inbox: React.FC = () => {
             notify(t('common.error'), 'error');
         }
     };
-
     const confirmDelete = async () => {
         if (!threadToDelete) return;
         try {
@@ -654,7 +585,6 @@ export const Inbox: React.FC = () => {
             setThreadToDelete(null);
         }
     };
-
     const filteredThreads = useMemo(() =>
         (threads || []).filter(th => {
             if (!smartMatch((th.lead.name || '') + (th.lead.phone || ''), debouncedSearch)) return false;
@@ -666,7 +596,6 @@ export const Inbox: React.FC = () => {
 
     const selectedThread = threads.find(t => t.lead.id === selectedLeadId);
     const isAiActiveForSelected = selectedLeadId ? autoResponseMap[selectedLeadId] : false;
-
     // When in manual mode, hide system-generated AI busy/error messages — they are
     // noise for the human agent and confuse the conversation history.
     const AI_SYS_PATTERNS = ['đang bận', 'system busy', 'tạm thời không khả dụng', 'temporarily busy'];
@@ -682,13 +611,11 @@ export const Inbox: React.FC = () => {
             return true;
         });
     }, [messages, isAiActiveForSelected]);
-
     return (
         <>
         {/* Full-bleed on mobile, padded on sm+ — fills the flex-1 parent from Layout */}
         <div className="h-full sm:p-4 md:p-6">
         <div className="flex h-full bg-[var(--bg-surface)] sm:rounded-[24px] sm:border border-[var(--glass-border)] sm:shadow-sm overflow-hidden animate-enter relative">
-
             {/* Sidebar List */}
             <div className={`w-full md:w-80 lg:w-96 border-r border-[var(--glass-border)] flex flex-col ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
                 <div className="px-4 sm:px-5 pt-4 pb-2.5 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-2.5">
@@ -844,8 +771,7 @@ export const Inbox: React.FC = () => {
                                                 <div className="bg-rose-500 text-white text-xs2 font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">{thread.unreadCount}</div>
                                             )}
                                         </div>
-                                    </div>
-                                    
+                                    </div>                                    
                                     {/* Hover Delete Button */}
                                     {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '')) && (
                                         <button 
@@ -862,7 +788,6 @@ export const Inbox: React.FC = () => {
                     )}
                 </div>
             </div>
-
             {/* Chat Area */}
             {selectedThread ? (
                 <div className={`flex-1 flex flex-col bg-[var(--bg-surface)] h-full relative min-w-0 ${selectedLeadId ? 'flex' : 'hidden md:flex'}`}>
@@ -890,8 +815,7 @@ export const Inbox: React.FC = () => {
                                     <span className="truncate">{isAiActiveForSelected ? t('inbox.ai_agent_active') : t('inbox.human_control')}</span>
                                 </div>
                             </div>
-                        </div>
-                        
+                        </div>                        
                         <div className="flex items-center gap-1 shrink-0">
                             {/* Assign Dropdown */}
                             {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '')) && (
@@ -909,8 +833,7 @@ export const Inbox: React.FC = () => {
                                                 : t('inbox.unassigned')}
                                         </span>
                                         <svg className={`w-3 h-3 transition-transform text-[var(--text-tertiary)] ${isAssignOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                    </button>
-                                    
+                                    </button>                                    
                                     {isAssignOpen && (
                                         <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-surface)] border border-[var(--glass-border)] shadow-xl rounded-xl z-50 overflow-hidden animate-enter">
                                             <div className="max-h-60 overflow-y-auto no-scrollbar py-1">
@@ -937,7 +860,6 @@ export const Inbox: React.FC = () => {
                                     )}
                                 </div>
                             )}
-
                             {/* AI Toggle */}
                             <button 
                                 onClick={(e) => toggleAiMode(e, selectedThread.lead.id)}
@@ -952,7 +874,6 @@ export const Inbox: React.FC = () => {
                                 <span className="md:hidden">{isAiActiveForSelected ? ICONS.ROBOT_ON : ICONS.ROBOT_OFF}</span>
                                 <span className="hidden md:inline">{isAiActiveForSelected ? t('inbox.auto_pilot') : t('inbox.manual')}</span>
                             </button>
-
                             {/* Delete */}
                             {(['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser?.role ?? '')) && (
                                 <button
@@ -965,7 +886,6 @@ export const Inbox: React.FC = () => {
                             )}
                         </div>
                     </div>
-
                     {/* Messages List */}
                     <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4 bg-[var(--glass-surface)] space-y-3 sm:space-y-4 no-scrollbar scroll-smooth">
                         {visibleMessages.length === 0 && (
@@ -1020,12 +940,10 @@ export const Inbox: React.FC = () => {
                         )}
                         <div ref={messagesEndRef} />
                     </div>
-
                     {/* Input Bar */}
                     <div className="px-4 pt-2.5 sm:px-5 sm:pt-3 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
                         {/* Channel selector row + supervisor badge */}
                         <div className="flex items-center justify-between gap-2 mb-2.5 min-w-0">
-
                             {/* ── Channel tabs ── */}
                             <div className="flex flex-nowrap bg-[var(--glass-surface)] p-0.5 rounded-xl overflow-x-auto no-scrollbar">
                                 {([
@@ -1049,7 +967,6 @@ export const Inbox: React.FC = () => {
                                     </button>
                                 ))}
                             </div>
-
                             {/* Supervisor mode badge */}
                             {!isAiActiveForSelected && (
                                 <div className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0">
@@ -1059,7 +976,6 @@ export const Inbox: React.FC = () => {
                                 </div>
                             )}
                         </div>
-
                         {/* Text input row */}
                         <div className="flex items-end gap-1.5 bg-[var(--bg-surface)] p-1 pl-2.5 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all shadow-sm">
                             <input 
@@ -1075,8 +991,7 @@ export const Inbox: React.FC = () => {
                                 className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-indigo-50 shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                                 {ICONS.ATTACH}
-                            </button>
-                            
+                            </button>                            
                             <textarea 
                                 value={input}
                                 onChange={e => setInput(e.target.value)}
@@ -1089,8 +1004,7 @@ export const Inbox: React.FC = () => {
                                 className="flex-1 min-w-0 bg-transparent border-none text-[16px] md:text-sm outline-none max-h-32 min-h-[36px] py-2 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
                                 placeholder={isAiActiveForSelected ? t('inbox.type_simulate') : t('inbox.reply_supervisor')}
                                 rows={1}
-                            />
-                            
+                            />                            
                             <button
                                 onClick={handleSend}
                                 disabled={!input.trim() || isThinking}
@@ -1113,7 +1027,6 @@ export const Inbox: React.FC = () => {
                     </div>
                 </div>
             )}
-
             {/* Confirm Delete Modal */}
             <ConfirmModal 
                 isOpen={!!threadToDelete}
@@ -1125,7 +1038,6 @@ export const Inbox: React.FC = () => {
                 onCancel={() => setThreadToDelete(null)}
                 variant="danger"
             />
-
             {/* Widget Settings Modal */}
             {createPortal(
             <AnimatePresence>
@@ -1148,8 +1060,7 @@ export const Inbox: React.FC = () => {
                                 <button onClick={() => setIsWidgetModalOpen(false)} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-xl transition-colors shrink-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
-                            </div>
-                            
+                            </div>                            
                             <div className="p-4 md:p-6 overflow-y-auto no-scrollbar">
                                 <div className="space-y-6">
                                     {/* Widget Customization */}
@@ -1173,7 +1084,6 @@ export const Inbox: React.FC = () => {
                                             />
                                         </div>
                                     </div>
-
                                     {/* Link */}
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
@@ -1248,7 +1158,6 @@ export const Inbox: React.FC = () => {
                                         </div>
                                         <p className="text-xs text-[var(--text-tertiary)] mt-2">{t('inbox.widget_link_desc')}</p>
                                     </div>
-
                                     {/* Embed Code */}
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_embed_label')}</label>
@@ -1296,7 +1205,6 @@ export const Inbox: React.FC = () => {
                                         </div>
                                         <p className="text-xs text-[var(--text-tertiary)] mt-2">{t('inbox.widget_embed_desc')}</p>
                                     </div>
-
                                     {/* QR Code */}
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_qr_label')}</label>

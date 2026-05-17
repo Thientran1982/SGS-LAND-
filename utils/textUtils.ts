@@ -1,4 +1,3 @@
-
 /**
  *  TEXT UTILITIES FOR MULTILINGUAL SAAS
  * -----------------------------------------------------------------------------
@@ -11,23 +10,19 @@
  *  3. Strict Null Safety.
  * -----------------------------------------------------------------------------
  */
-
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & REGEX CACHE
 // -----------------------------------------------------------------------------
-
 // Regex for removing combining diacritical marks (pre-compiled)
 const REGEX_DIACRITICS = /[\u0300-\u036f]/g;
 const REGEX_NON_DIGIT_PLUS = /[^0-9+]/g;
 const REGEX_NON_WORD = /[^\w\-]+/g;
 const REGEX_MULTIPLE_DASH = /\-\-+/g;
 const REGEX_TRIM_DASH = /^-+|-+$/g;
-
 // Currency suffixes configuration (Injectable for i18n)
 export interface CurrencyConfig {
     multipliers: Record<string, number>;
 }
-
 const DEFAULT_CURRENCY_CONFIG: CurrencyConfig = {
     multipliers: {
         'b': 1_000_000_000,
@@ -41,11 +36,9 @@ const DEFAULT_CURRENCY_CONFIG: CurrencyConfig = {
         'nghìn': 1_000
     }
 };
-
 // -----------------------------------------------------------------------------
 // 2. TEXT NORMALIZATION
 // -----------------------------------------------------------------------------
-
 /**
  * Removes Vietnamese tones and diacritics using Unicode Normalization Form D (NFD).
  * Performance: Uses pre-compiled regex.
@@ -59,7 +52,6 @@ export const removeVietnameseTones = (str: string): string => {
         .replace(/đ/g, 'd')
         .replace(/Đ/g, 'D');
 };
-
 /**
  * Normalizes string for search indexing (lowercase + remove tones + trim).
  */
@@ -67,7 +59,6 @@ export const normalizeForSearch = (str: string): string => {
     if (!str) return '';
     return removeVietnameseTones(str).toLowerCase().trim();
 };
-
 /**
  * Normalizes phone numbers to a standard format (removes non-digits).
  * Retains '+' for international codes if present at start.
@@ -76,7 +67,6 @@ export const normalizePhone = (phone: string): string => {
     if (!phone) return '';
     return phone.replace(REGEX_NON_DIGIT_PLUS, '');
 };
-
 /**
  * Fuzzy matcher for search functionality.
  * Supports distinct logic for Phone vs Text searching.
@@ -90,7 +80,6 @@ export const smartMatch = (target: string, query: string, type: 'TEXT' | 'PHONE'
         const cleanQuery = normalizePhone(query);
         return cleanTarget.includes(cleanQuery);
     }
-
     // 1. Exact match attempt (case-insensitive) - Faster check first
     if (target.toLowerCase().includes(query.toLowerCase())) return true;
     
@@ -99,22 +88,17 @@ export const smartMatch = (target: string, query: string, type: 'TEXT' | 'PHONE'
     const cleanQuery = normalizeForSearch(query);
     return cleanTarget.includes(cleanQuery);
 };
-
 // -----------------------------------------------------------------------------
 // 3. FINANCIAL PARSING & FORMATTING (HEURISTIC)
 // -----------------------------------------------------------------------------
-
 /**
  * Parses human-friendly currency strings into raw numbers.
  */
 export const parseCurrencyString = (raw: string, config: CurrencyConfig = DEFAULT_CURRENCY_CONFIG): number => {
-    if (!raw) return 0;
-    
-    let cleanStr = raw.toString().toLowerCase().trim();
-    
+    if (!raw) return 0;    
+    let cleanStr = raw.toString().toLowerCase().trim();    
     const sortedMultipliers = Object.keys(config.multipliers).sort((a, b) => b.length - a.length);
     let multiplier = 1;
-
     for (const suffix of sortedMultipliers) {
         if (cleanStr.includes(suffix)) {
             multiplier = config.multipliers[suffix];
@@ -122,7 +106,6 @@ export const parseCurrencyString = (raw: string, config: CurrencyConfig = DEFAUL
             break; 
         }
     }
-
     const dotCount = (cleanStr.match(/\./g) || []).length;
     const commaCount = (cleanStr.match(/,/g) || []).length;
     let normalizedNumStr = cleanStr;
@@ -142,16 +125,12 @@ export const parseCurrencyString = (raw: string, config: CurrencyConfig = DEFAUL
     } else if (commaCount === 1) {
         normalizedNumStr = cleanStr.replace(',', '.');
     }
-
     const match = normalizedNumStr.match(/[\d.]+/);
     if (!match) return 0;
-
     const numPart = parseFloat(match[0]);
     if (isNaN(numPart)) return 0;
-
     return numPart * multiplier;
 };
-
 /**
  * Smartly formats large numbers into Tỷ/Triệu (Billion/Million) for Vietnamese market
  * or compact notation for English.
@@ -162,12 +141,10 @@ const fmtDecimalDot = (n: number, maxFractions: number): string => {
     const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return decPart ? `${intFormatted},${decPart}` : intFormatted;
 };
-
 export const formatSmartPrice = (price: number, t?: (key: string) => string): string => {
     if (!price) return '0';
     const billionLabel = t ? t('format.billion') : 'Tỷ';
-    const millionLabel = t ? t('format.million') : 'Tr';
-    
+    const millionLabel = t ? t('format.million') : 'Tr';    
     if (price >= 1_000_000_000) {
         return `${fmtDecimalDot(price / 1_000_000_000, 3)} ${billionLabel}`;
     }
@@ -176,7 +153,6 @@ export const formatSmartPrice = (price: number, t?: (key: string) => string): st
     }
     return Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
-
 /**
  * Calculates and formats Unit Price (Price per m2)
  * FIX APPLIED: Clamp decimals to 1 digit to prevent '123,456.79'.
@@ -186,8 +162,7 @@ export const formatUnitPrice = (price: number, area: number, t?: (key: string) =
     if (!price || !area) return '';
     const unit = price / area;
     const billionLabel = t ? t('format.billion') : 'Tỷ';
-    const millionLabel = t ? t('format.million') : 'Tr';
-    
+    const millionLabel = t ? t('format.million') : 'Tr';    
     // Billion/m2 (Rare, but for prime land)
     if (unit >= 1_000_000_000) {
         return `${fmtDecimalDot(unit / 1_000_000_000, 1)} ${billionLabel}/m²`;
@@ -199,11 +174,9 @@ export const formatUnitPrice = (price: number, area: number, t?: (key: string) =
     // Standard VND (For cheap rent)
     return `${Math.round(unit).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ/m²`;
 };
-
 // -----------------------------------------------------------------------------
 // 4. URL UTILS
 // -----------------------------------------------------------------------------
-
 /**
  * Creates a URL-friendly slug from a string.
  */

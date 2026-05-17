@@ -15,28 +15,22 @@
  *   - Prevents repeated PostgreSQL bytea round-trips for frequently-served images
  *   - Cache is invalidated on storeFile / deleteFile for the affected entry
  */
-
 import fs from 'fs';
 import path from 'path';
 import { pool } from '../db';
-
 const LOCAL_UPLOAD_BASE = path.join(process.cwd(), 'uploads');
-
 // ─────────────────────────────────────────────────────────────────────────────
 // LRU in-memory buffer cache
 // ─────────────────────────────────────────────────────────────────────────────
 const FILE_CACHE_MAX_BYTES = 120 * 1024 * 1024; // 120 MB total
 const FILE_CACHE_MAX_ENTRIES = 300;
-
 interface CacheEntry {
   buffer: Buffer;
   contentType: string;
   size: number;
 }
-
 const fileCache = new Map<string, CacheEntry>();
 let cacheTotalBytes = 0;
-
 function lruGet(key: string): CacheEntry | undefined {
   const entry = fileCache.get(key);
   if (!entry) return undefined;
@@ -45,7 +39,6 @@ function lruGet(key: string): CacheEntry | undefined {
   fileCache.set(key, entry);
   return entry;
 }
-
 function lruSet(key: string, entry: CacheEntry): void {
   // Evict if over limits
   while (
@@ -60,7 +53,6 @@ function lruSet(key: string, entry: CacheEntry): void {
   fileCache.set(key, entry);
   cacheTotalBytes += entry.size;
 }
-
 function lruDelete(key: string): void {
   const entry = fileCache.get(key);
   if (entry) {
@@ -68,15 +60,12 @@ function lruDelete(key: string): void {
     fileCache.delete(key);
   }
 }
-
 function cacheKey(tenantId: string, filename: string): string {
   return `${tenantId}/${filename}`;
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
-
 /** Store a file in PostgreSQL. Returns the relative public URL path. */
 export async function storeFile(
     tenantId: string,
@@ -97,7 +86,6 @@ export async function storeFile(
     lruDelete(cacheKey(tenantId, filename));
     return `/uploads/${tenantId}/${filename}`;
 }
-
 /**
  * Retrieve a file as a Buffer.
  * Order of lookups:
@@ -117,7 +105,6 @@ export async function getFile(
     if (cached) {
         return { buffer: cached.buffer, contentType: cached.contentType };
     }
-
     // 2. Primary: PostgreSQL
     try {
         const result = await pool.query(
@@ -133,7 +120,6 @@ export async function getFile(
     } catch (err) {
         console.warn('[Storage] DB read failed, trying local disk:', err);
     }
-
     // 3. Fallback: local disk (development / pre-migration files)
     const filePath = path.join(LOCAL_UPLOAD_BASE, tenantId, filename);
     if (fs.existsSync(filePath)) {
@@ -142,10 +128,8 @@ export async function getFile(
         lruSet(key, { buffer, contentType, size: buffer.length });
         return { buffer, contentType };
     }
-
     return null;
 }
-
 /** Delete a file from PostgreSQL (and local disk if present). */
 export async function deleteFile(
     tenantId: string,
@@ -164,7 +148,6 @@ export async function deleteFile(
         try { fs.unlinkSync(filePath); } catch { /* ignore */ }
     }
 }
-
 /** Expose cache stats for monitoring */
 export function getStorageCacheStats(): { entries: number; totalMB: number; maxMB: number } {
     return {

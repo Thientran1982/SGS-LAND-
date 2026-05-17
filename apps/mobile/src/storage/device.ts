@@ -3,14 +3,11 @@
 // system is keyed by a UUID generated on first launch and persisted with
 // AsyncStorage. Survives app updates; resets on reinstall (which is fine —
 // the old token would have been invalidated by the OS anyway).
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 const DEVICE_KEY = 'sgs.device.id.v1';
 const PREF_KEY = 'sgs.push.enabled.v1';
 const TOKEN_KEY = 'sgs.push.token.v1';
 const TOKEN_REGISTERED_AT_KEY = 'sgs.push.token.registeredAt.v1';
-
 function uuidv4(): string {
   // RFC4122 v4 — Math.random() is fine for an opaque client id.
   // Position 14 is the version nibble (always 4); position 19 is the
@@ -30,7 +27,6 @@ function uuidv4(): string {
   }
   return out;
 }
-
 export async function getDeviceId(): Promise<string> {
   try {
     const cur = await AsyncStorage.getItem(DEVICE_KEY);
@@ -46,7 +42,6 @@ export async function getDeviceId(): Promise<string> {
   }
   return next;
 }
-
 export async function getCachedPushPreference(): Promise<boolean | null> {
   try {
     const v = await AsyncStorage.getItem(PREF_KEY);
@@ -56,7 +51,6 @@ export async function getCachedPushPreference(): Promise<boolean | null> {
     return null;
   }
 }
-
 export async function setCachedPushPreference(enabled: boolean): Promise<void> {
   try {
     await AsyncStorage.setItem(PREF_KEY, enabled ? '1' : '0');
@@ -64,7 +58,6 @@ export async function setCachedPushPreference(enabled: boolean): Promise<void> {
     /* best-effort */
   }
 }
-
 export async function getCachedPushToken(): Promise<string | null> {
   try {
     return await AsyncStorage.getItem(TOKEN_KEY);
@@ -72,7 +65,6 @@ export async function getCachedPushToken(): Promise<string | null> {
     return null;
   }
 }
-
 export async function setCachedPushToken(token: string | null): Promise<void> {
   try {
     if (token) {
@@ -86,7 +78,6 @@ export async function setCachedPushToken(token: string | null): Promise<void> {
     /* best-effort */
   }
 }
-
 export async function getTokenRegisteredAt(): Promise<number | null> {
   try {
     const v = await AsyncStorage.getItem(TOKEN_REGISTERED_AT_KEY);

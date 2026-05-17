@@ -5,10 +5,8 @@
  *
  * Insert is fire-and-forget: callers do `recordAiUsage(...).catch(()=>{})`.
  */
-
 import { pool } from '../db';
 import { logger } from '../middleware/logger';
-
 // Approximate $/1K-tokens by model — kept in sync with GENAI_CONFIG.MODEL_COSTS
 // in server/ai.ts so cost numbers match the safety log.
 const MODEL_COSTS: Record<string, number> = {
@@ -24,7 +22,6 @@ const MODEL_COSTS: Record<string, number> = {
   'gemini-1.5-flash':             0.000200,
   'gemini-1.5-pro':               0.003500,
 };
-
 /** Estimate USD cost from prompt + response length, model rate, and call count. */
 export function estimateAiCostUsd(
   model: string,
@@ -36,7 +33,6 @@ export function estimateAiCostUsd(
   const ratePerK = MODEL_COSTS[model] ?? MODEL_COSTS['gemini-2.5-flash'];
   return parseFloat(((tokens / 1000) * ratePerK * Math.max(1, callsMultiplier)).toFixed(6));
 }
-
 export interface RecordAiUsageParams {
   tenantId?: string | null;
   userId?: string | null;
@@ -49,13 +45,11 @@ export interface RecordAiUsageParams {
   latencyMs?: number;
   source?: string | null;   // free-form ('cache', 'AI_LIVE', 'fallback'…)
 }
-
 export async function recordAiUsage(params: RecordAiUsageParams): Promise<void> {
   const aiCalls = Math.max(1, params.aiCalls ?? 1);
   const cost = params.costUsd != null
     ? params.costUsd
     : estimateAiCostUsd(params.model, params.promptLen || 0, params.responseLen || 0, aiCalls);
-
   try {
     await pool.query(
       `INSERT INTO ai_usage_log
@@ -76,7 +70,6 @@ export async function recordAiUsage(params: RecordAiUsageParams): Promise<void> 
     logger.warn('[aiUsage] recordAiUsage failed:', err?.message || err);
     return;
   }
-
   if (params.tenantId) {
     setImmediate(() => {
       import('./valuationUsageService')
@@ -85,7 +78,6 @@ export async function recordAiUsage(params: RecordAiUsageParams): Promise<void> 
     });
   }
 }
-
 export async function getTotalAiSpend(
   period: string,
   tenantId?: string | null,
@@ -117,25 +109,21 @@ export async function getTotalAiSpend(
     return { totalCostUsd: 0, totalAiCalls: 0, calls: 0 };
   }
 }
-
 // ───────────────────────────────────────────────────────────────────────────
 // Aggregates for the admin "Chi phí AI" page
 // ───────────────────────────────────────────────────────────────────────────
-
 export interface FeatureCostRow {
   feature: string;
   calls: number;
   aiCalls: number;
   costUsd: number;
 }
-
 function periodBounds(period: string): { start: string; end: string } {
   const [y, m] = period.split('-').map((s) => parseInt(s, 10));
   const start = new Date(Date.UTC(y, m - 1, 1)).toISOString();
   const end = new Date(Date.UTC(y, m, 1)).toISOString();
   return { start, end };
 }
-
 export async function getFeatureBreakdown(
   period: string,
   opts: { tenantId?: string | null } = {},
@@ -147,7 +135,6 @@ export async function getFeatureBreakdown(
     params.push(opts.tenantId);
     where += ` AND tenant_id = $${params.length}`;
   }
-
   try {
     const r = await pool.query(
       `SELECT feature,

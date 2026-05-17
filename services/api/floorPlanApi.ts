@@ -1,5 +1,4 @@
 import { api } from './apiClient';
-
 export interface FloorPlanSummary {
   id: string;
   tower: string;
@@ -10,7 +9,6 @@ export interface FloorPlanSummary {
   notes?: string | null;
   updatedAt: string;
 }
-
 export interface FloorPlanListingDetail {
   id: string;
   code: string;
@@ -19,7 +17,6 @@ export interface FloorPlanListingDetail {
   price: number | null;
   title: string | null;
 }
-
 export interface FloorPlanDetail {
   plan: FloorPlanSummary;
   codes: string[];
@@ -32,7 +29,6 @@ export interface FloorPlanDetail {
   /** codes that have no matching listing in this project (admin-only) */
   unmatchedCodes: string[];
 }
-
 export interface FloorPlanUploadResponse {
   plan: FloorPlanSummary;
   codes: string[];
@@ -41,24 +37,19 @@ export interface FloorPlanUploadResponse {
   extraListings: Array<{ id: string; code: string; tower: string | null; floor: string | null }>;
   sanitizerStats: { tags: number; attrs: number; refs: number };
 }
-
 export const floorPlanApi = {
   list: (projectId: string): Promise<FloorPlanSummary[]> =>
     api.get(`/api/projects/${projectId}/floor-plans`),
-
   get: (projectId: string, planId: string): Promise<FloorPlanDetail> =>
     api.get(`/api/projects/${projectId}/floor-plans/${planId}`),
-
   pollStatuses: (
     projectId: string,
     planId: string,
   ): Promise<{ statuses: Record<string, string>; refreshedAt: string }> =>
     api.get(`/api/projects/${projectId}/floor-plans/${planId}/statuses`),
-
   /** Returns the absolute URL — the SVG content is served as XML, not JSON. */
   svgUrl: (projectId: string, planId: string): string =>
     `/api/projects/${projectId}/floor-plans/${planId}/svg`,
-
   upload: async (
     projectId: string,
     params: { tower: string; floor: string; notes?: string; file: File },
@@ -85,7 +76,6 @@ export const floorPlanApi = {
     }
     return (await res.json()) as FloorPlanUploadResponse;
   },
-
   delete: (projectId: string, planId: string): Promise<{ success: boolean }> =>
     api.delete(`/api/projects/${projectId}/floor-plans/${planId}`),
 };

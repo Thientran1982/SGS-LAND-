@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -9,7 +8,6 @@ import { copyToClipboard } from '../utils/clipboard';
 import { ThemeCustomizer } from '../components/ThemeCustomizer';
 import { UserActivityPanel } from '../components/UserActivityPanel';
 import BrandingPanel from '../components/enterprise/BrandingPanel';
-
 // -----------------------------------------------------------------------------
 // CONSTANTS
 // -----------------------------------------------------------------------------
@@ -17,11 +15,9 @@ const CONSTANTS = {
     TOAST_DURATION: 3000,
     MASK: '••••••••••••••••'
 };
-
 // -----------------------------------------------------------------------------
 // HELPER COMPONENTS
 // -----------------------------------------------------------------------------
-
 const SectionHeader: React.FC<{ title: string; subtitle: string; action?: React.ReactNode }> = memo(({ title, subtitle, action }) => (
     <div className="flex justify-between items-start gap-4 mb-6">
         <div className="min-w-0 flex-1">
@@ -31,18 +27,15 @@ const SectionHeader: React.FC<{ title: string; subtitle: string; action?: React.
         {action && <div className="shrink-0 mt-1">{action}</div>}
     </div>
 ));
-
 const StatusBadge: React.FC<{ active: boolean; label: string }> = memo(({ active, label }) => (
     <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-2 ${active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]'}`}>
         <span className={`w-2 h-2 rounded-full shrink-0 ${active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
         {label}
     </span>
 ));
-
 // -----------------------------------------------------------------------------
 // PANELS (Optimized & Localized)
 // -----------------------------------------------------------------------------
-
 const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t, formatDate } = useTranslation();
     const [connecting, setConnecting] = useState(false);
@@ -55,11 +48,9 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
     const [tokenForm, setTokenForm] = useState('');
     const [updatingToken, setUpdatingToken] = useState(false);
     const [showTokenForm, setShowTokenForm] = useState(false);
-
     useEffect(() => {
         db.getZaloStatus().then(setZaloStatus);
     }, []);
-
     const handleConnect = async () => {
         if (!form.appId.trim() || !form.oaId.trim() || !form.oaName.trim()) {
             notify(t('ent.zalo_form_required'), 'error');
@@ -80,7 +71,6 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setConnecting(false); }
     };
-
     const handleDisconnect = async () => {
         setDisconnecting(true);
         try {
@@ -91,14 +81,12 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setDisconnecting(false); }
     };
-
     const copyWebhook = async (url: string) => {
         if (url) {
             await copyToClipboard(url);
             notify(t('common.copied'), 'success');
         }
     };
-
     const handleUpdateToken = async () => {
         if (!tokenForm.trim()) {
             notify(t('ent.zalo_token_required'), 'error');
@@ -114,9 +102,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setUpdatingToken(false); }
     };
-
     const webhookUrl = config.zalo?.webhookUrl || zaloStatus?.webhookUrl || `${window.location.origin}/api/webhooks/zalo`;
-
     return (
         <div className="animate-enter max-w-4xl">
             <SectionHeader
@@ -124,7 +110,6 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                 subtitle={t('ent.zalo_subtitle')}
                 action={<StatusBadge active={!!config.zalo?.enabled} label={config.zalo?.enabled ? t('ent.zalo_status_connected') : t('ent.zalo_status_disconnected')} />}
             />
-
             {/* Env var warning */}
             {zaloStatus && !zaloStatus.webhookSecretConfigured && (
                 <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 text-xs">
@@ -135,7 +120,6 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                     </span>
                 </div>
             )}
-
             {config.zalo?.enabled ? (
                 <>
                     {/* Connected state */}
@@ -233,7 +217,6 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             </div>
                         </div>
                     </div>
-
                     {/* Disconnect confirmation dialog */}
                     {confirmDisconnect && createPortal(
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -351,7 +334,6 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             </p>
                         </div>
                     </div>
-
                     <div className="flex items-start gap-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-4 mb-6 text-xs3 text-[var(--text-tertiary)]">
                         <svg className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <div>
@@ -360,7 +342,6 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             <span className="block mt-1">{t('ent.zalo_webhook_guide')}</span>
                         </div>
                     </div>
-
                     <button
                         onClick={handleConnect}
                         disabled={connecting}
@@ -374,7 +355,6 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
         </div>
     );
 });
-
 const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t, formatDate } = useTranslation();
     const emptyForm = { name: '', pageId: '', pageUrl: '', accessToken: '' };
@@ -384,11 +364,9 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
     const [confirmPageId, setConfirmPageId] = useState<string | null>(null);
     const [disconnecting, setDisconnecting] = useState(false);
     const [fbStatus, setFbStatus] = useState<{ appSecretConfigured: boolean; verifyTokenConfigured: boolean; webhookUrl: string } | null>(null);
-
     useEffect(() => {
         db.getFacebookStatus().then(setFbStatus).catch(() => {});
     }, []);
-
     const handleConnect = async () => {
         if (!form.name.trim() || !form.pageId.trim()) {
             notify(t('ent.facebook_form_required'), 'error');
@@ -408,7 +386,6 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setConnecting(false); }
     };
-
     const handleDisconnect = async () => {
         if (!confirmPageId) return;
         setDisconnecting(true);
@@ -420,13 +397,11 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setDisconnecting(false); }
     };
-
     const secretsMissing = fbStatus && (!fbStatus.appSecretConfigured || !fbStatus.verifyTokenConfigured);
 
     return (
         <div className="animate-enter max-w-4xl">
             <SectionHeader title={t('ent.facebook_title')} subtitle={t('ent.facebook_subtitle')} />
-
             {/* Env var warning */}
             {secretsMissing && (
                 <div className="mb-5 flex gap-3 items-start bg-amber-50 border border-amber-200 rounded-2xl p-4">
@@ -445,7 +420,6 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     </div>
                 </div>
             )}
-
             {/* Webhook URL (when env vars are OK) */}
             {fbStatus && fbStatus.appSecretConfigured && fbStatus.verifyTokenConfigured && (
                 <div className="mb-5 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
@@ -456,7 +430,6 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     </div>
                 </div>
             )}
-
             {/* Connect form */}
             <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--glass-border)] shadow-sm p-6 md:p-8 max-w-2xl mb-8">
                 <p className="text-sm text-[var(--text-tertiary)] mb-5 leading-relaxed">
@@ -530,7 +503,6 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     {t('ent.facebook_connect_btn')}
                 </button>
             </div>
-
             {/* Connected pages */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {config.facebookPages?.map(page => (
@@ -565,7 +537,6 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     </div>
                 )}
             </div>
-
             {/* Disconnect confirmation modal */}
             {confirmPageId && createPortal(
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -599,37 +570,31 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
         </div>
     );
 });
-
 const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t } = useTranslation();
     const [form, setForm] = useState(config.email);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
     const [sendingTest, setSendingTest] = useState(false);
-
     useEffect(() => { setForm(config.email); }, [config.email]);
-
     const handleSave = async () => {
         setSaving(true);
         try { await db.saveEmailConfig(form); notify(t('common.success'), 'success'); onRefresh(); } 
         catch (e: any) { notify(e.message, 'error'); } 
         finally { setSaving(false); }
     };
-
     const handleTestConnection = async () => {
         setTesting(true);
         try { await db.testSmtpConnection(); notify(t('enterprise.smtp_success'), 'success'); }
         catch (e: any) { notify(e.message || t('enterprise.smtp_fail'), 'error'); }
         finally { setTesting(false); }
     };
-
     const handleSendTestEmail = async () => {
         setSendingTest(true);
         try { await db.sendTestEmail(); notify(t('enterprise.email_sent'), 'success'); }
         catch (e: any) { notify(e.message || t('enterprise.email_fail'), 'error'); }
         finally { setSendingTest(false); }
     };
-
     return (
         <div className="animate-enter max-w-2xl">
             <SectionHeader title={t('ent.email_title')} subtitle={t('ent.email_subtitle')} action={
@@ -730,7 +695,6 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
         </div>
     );
 });
-
 const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t } = useTranslation();
     const [sso, setSso] = useState(config.sso);
@@ -738,11 +702,8 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
     const [verifying, setVerifying] = useState(false);
     const [showSecret, setShowSecret] = useState(false);
     const [verifyResult, setVerifyResult] = useState<{ success: boolean; message?: string; error?: string; metadata?: any } | null>(null);
-
     const redirectUri = `${window.location.origin}/api/auth/callback`;
-
     useEffect(() => { setSso(config.sso); }, [config.sso]);
-
     const handleSave = async () => {
         if (sso.enabled && (!sso.issuerUrl || !sso.clientId)) {
             notify(t('ent.sso_save_error'), 'error');
@@ -756,7 +717,6 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setSaving(false); }
     };
-
     const handleVerify = async () => {
         setVerifying(true);
         setVerifyResult(null);
@@ -769,7 +729,6 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
             notify(e.message || t('enterprise.sso_fail'), 'error');
         } finally { setVerifying(false); }
     };
-
     return (
         <div className="animate-enter max-w-3xl">
             <SectionHeader title={t('ent.sso_title')} subtitle={t('ent.sso_subtitle')} action={
@@ -858,30 +817,25 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
         </div>
     );
 });
-
 const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t } = useTranslation();
     const [newDomain, setNewDomain] = useState('');
     const [verifying, setVerifying] = useState<string | null>(null);
-
     const handleAdd = async () => {
         const domain = newDomain.trim();
         if (!domain.includes('.') || domain.length < 4) { notify(t('ent.domain_invalid'), 'error'); return; }
         try { await db.addDomain(domain); setNewDomain(''); onRefresh(); notify(t('common.success'), 'success'); }
         catch (e: any) { notify(e.message, 'error'); }
     };
-
     const handleVerify = async (domain: string) => {
         setVerifying(domain);
         try { await db.verifyDomain(domain); notify(t('ent.domain_verified_success'), 'success'); onRefresh(); }
         catch (e: any) { notify(e.message, 'error'); }
         finally { setVerifying(null); }
     };
-
     const handleRemove = async (domain: string) => {
         try { await db.removeDomain(domain); onRefresh(); } catch (e: any) { notify(e.message, 'error'); }
     };
-
     return (
         <div className="animate-enter max-w-4xl">
             <SectionHeader title={t('ent.domain_title')} subtitle={t('ent.domain_subtitle')} />
@@ -920,7 +874,6 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
         </div>
     );
 });
-
 const ACTION_COLORS: Record<string, string> = {
     // Auth
     LOGIN: 'bg-blue-50 text-blue-700 border-blue-100',
@@ -952,9 +905,7 @@ const ACTION_COLORS: Record<string, string> = {
     FACEBOOK_PAGE_CONNECTED: 'bg-violet-50 text-violet-700 border-violet-100',
     FACEBOOK_PAGE_DISCONNECTED: 'bg-pink-50 text-pink-700 border-pink-100',
 };
-
 const PAGE_SIZE = 20;
-
 const AuditPanel = memo(() => {
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [total, setTotal] = useState(0);
@@ -965,7 +916,6 @@ const AuditPanel = memo(() => {
     const [filterAction, setFilterAction] = useState('');
     const [filterEntity, setFilterEntity] = useState('');
     const { t, formatDateTime } = useTranslation();
-
     const load = useCallback(async (p: number, action: string, entity: string) => {
         setLoading(true);
         setError(null);
@@ -983,7 +933,6 @@ const AuditPanel = memo(() => {
             setLoading(false);
         }
     }, []);
-
     useEffect(() => { load(page, filterAction, filterEntity); }, [load, page, filterAction, filterEntity]);
 
     const handleFilterChange = (action: string, entity: string) => {
@@ -991,7 +940,6 @@ const AuditPanel = memo(() => {
         setFilterAction(action);
         setFilterEntity(entity);
     };
-
     const ENTITY_OPTIONS = [
         { value: '', label: t('ent.audit_entity_all') },
         { value: 'auth', label: t('ent.audit_entity_auth') },
@@ -1002,11 +950,9 @@ const AuditPanel = memo(() => {
         { value: 'CONTRACT', label: t('ent.audit_entity_contract') },
         { value: 'PROPOSAL', label: t('ent.audit_entity_proposal') },
     ];
-
     return (
         <div className="animate-enter">
             <SectionHeader title={t('ent.audit_title')} subtitle={t('ent.audit_subtitle')} />
-
             {/* Filters */}
             <div className="flex flex-wrap gap-3 mb-4 items-center">
                 <Dropdown
@@ -1070,7 +1016,6 @@ const AuditPanel = memo(() => {
                         </tbody>
                     </table>
                 </div>
-
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]">
@@ -1110,11 +1055,9 @@ const AuditPanel = memo(() => {
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const EnterpriseSettings: React.FC = () => {
     const [activeTab, setActiveTab] = useState('ZALO');
     const [config, setConfig] = useState<EnterpriseConfig | null>(null);
@@ -1122,12 +1065,10 @@ export const EnterpriseSettings: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const { t } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), CONSTANTS.TOAST_DURATION);
     }, []);
-
     const loadConfig = useCallback(async () => {
         setLoading(true);
         try {
@@ -1138,7 +1079,6 @@ export const EnterpriseSettings: React.FC = () => {
                 setLoading(false);
                 return;
             }
-
             const data = await db.getEnterpriseConfig();
             setConfig(data);
         } catch (e) {
@@ -1148,7 +1088,6 @@ export const EnterpriseSettings: React.FC = () => {
             setLoading(false);
         }
     }, [notify, t]);
-
     useEffect(() => { loadConfig(); }, [loadConfig]);
 
     if (!loading && currentUser && !['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role)) {
@@ -1164,9 +1103,7 @@ export const EnterpriseSettings: React.FC = () => {
             </div>
         );
     }
-
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
-
     const TABS = [
         { id: 'THEME', label: 'Giao Diện' },
         { id: 'BRANDING', label: 'Thương Hiệu' },
@@ -1178,11 +1115,9 @@ export const EnterpriseSettings: React.FC = () => {
         { id: 'DOMAINS', label: t('ent.tab_domain') },
         { id: 'AUDIT', label: t('ent.tab_audit') },
     ];
-
     const handleTabWheel = (e: React.WheelEvent) => {
         if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
     };
-
     return (
         <>
         <div className="space-y-6 pb-20 relative animate-enter p-4 sm:p-6">
@@ -1206,7 +1141,6 @@ export const EnterpriseSettings: React.FC = () => {
                         </svg>
                     </button>
                 </div>
-
                 {/* Mobile Dropdown */}
                 <div className="w-full lg:hidden">
                     <Dropdown 
@@ -1216,7 +1150,6 @@ export const EnterpriseSettings: React.FC = () => {
                         className="w-full"
                     />
                 </div>
-
                 {/* Desktop Tabs */}
                 <div className="hidden lg:flex w-full lg:w-auto lg:max-w-3xl bg-[var(--glass-surface-hover)] p-1 rounded-xl overflow-x-auto no-scrollbar min-w-0" onWheel={handleTabWheel}>
                     {TABS.map(tab => (
@@ -1230,7 +1163,6 @@ export const EnterpriseSettings: React.FC = () => {
                     ))}
                 </div>
             </div>
-
             <div className="min-h-[400px]">
                 {activeTab === 'THEME' && <ThemeCustomizer notify={notify} />}
                 {activeTab === 'BRANDING' && <BrandingPanel notify={notify} />}

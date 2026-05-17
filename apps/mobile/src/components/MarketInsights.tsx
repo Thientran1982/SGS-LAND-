@@ -3,13 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { formatVnd } from '../utils/format';
 import type { PublicListing } from '../api/types';
-
 interface Props {
   item: PublicListing;
   similar: PublicListing[] | undefined;
   accent: string;
 }
-
 // Lightweight on-device "AI insight" — derives a market summary from the
 // similar-listings sample the server already returns. We deliberately keep the
 // heuristic transparent (no LLM call here) so it's fast, deterministic, and
@@ -26,23 +24,18 @@ export const MarketInsights: React.FC<Props> = ({ item, similar, accent }) => {
     const unitPrices = pool
       .map((s) => (s.price as number) / (s.area as number))
       .sort((a, b) => a - b);
-
     const avg = unitPrices.reduce((a, b) => a + b, 0) / unitPrices.length;
     const median = unitPrices[Math.floor(unitPrices.length / 2)];
     const min = unitPrices[0];
     const max = unitPrices[unitPrices.length - 1];
-
     const diffPct = ((myUnit - avg) / avg) * 100;
     let verdict: 'good' | 'fair' | 'high';
     if (diffPct <= -5) verdict = 'good';
     else if (diffPct >= 8) verdict = 'high';
     else verdict = 'fair';
-
     return { myUnit, avg, median, min, max, diffPct, verdict, sample: pool.length };
   }, [item, similar]);
-
   if (!stats) return null;
-
   const verdictCopy: Record<typeof stats.verdict, { icon: string; title: string; sub: string; color: string }> = {
     good: {
       icon: '✓',
@@ -64,14 +57,12 @@ export const MarketInsights: React.FC<Props> = ({ item, similar, accent }) => {
     },
   };
   const v = verdictCopy[stats.verdict];
-
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
         <Text style={styles.titleIcon}>📊</Text>
         <Text style={styles.title}>Phân tích thị trường</Text>
       </View>
-
       <View style={[styles.verdictBox, { borderColor: v.color, backgroundColor: `${v.color}10` }]}>
         <View style={[styles.verdictIconWrap, { backgroundColor: v.color }]}>
           <Text style={styles.verdictIcon}>{v.icon}</Text>
@@ -81,21 +72,18 @@ export const MarketInsights: React.FC<Props> = ({ item, similar, accent }) => {
           <Text style={styles.verdictSub}>{v.sub}</Text>
         </View>
       </View>
-
       <View style={styles.grid}>
         <Cell label="Đơn giá sản phẩm" value={`${formatVnd(stats.myUnit)}/m²`} accent={accent} bold />
         <Cell label="Trung bình khu vực" value={`${formatVnd(stats.avg)}/m²`} />
         <Cell label="Mức thấp nhất" value={`${formatVnd(stats.min)}/m²`} />
         <Cell label="Mức cao nhất" value={`${formatVnd(stats.max)}/m²`} />
       </View>
-
       <Text style={styles.footnote}>
         Dựa trên {stats.sample} sản phẩm tương tự trong khu vực. Đây là phân tích tham khảo, không thay thế tư vấn chuyên môn.
       </Text>
     </View>
   );
 };
-
 const Cell: React.FC<{ label: string; value: string; bold?: boolean; accent?: string }> = ({
   label,
   value,
@@ -109,7 +97,6 @@ const Cell: React.FC<{ label: string; value: string; bold?: boolean; accent?: st
     </Text>
   </View>
 );
-
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,

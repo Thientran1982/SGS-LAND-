@@ -6,17 +6,14 @@ import { Contract, ContractType, ContractStatus } from '../types';
 import { ContractModal } from '../components/ContractModal';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;
-
         let isDown = false;
         let startX = 0;
         let scrollLeft = 0;
         let dragged = false;
-
         const onMouseDown = (e: MouseEvent) => {
             if ((e.target as HTMLElement).closest('button, a, input, [role="button"]')) return;
             isDown = true;
@@ -26,21 +23,18 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             startX = e.pageX - node.offsetLeft;
             scrollLeft = node.scrollLeft;
         };
-
         const onMouseLeave = () => {
             if (!isDown) return;
             isDown = false;
             node.classList.remove('cursor-grabbing', 'select-none');
             node.classList.add('cursor-grab', 'snap-x');
         };
-
         const onMouseUp = () => {
             if (!isDown) return;
             isDown = false;
             node.classList.remove('cursor-grabbing', 'select-none');
             node.classList.add('cursor-grab', 'snap-x');
         };
-
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
             e.preventDefault();
@@ -49,18 +43,15 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             if (Math.abs(walk) > 5) dragged = true;
             node.scrollLeft = scrollLeft - walk;
         };
-
         const onClick = (e: MouseEvent) => {
             if (dragged) { e.preventDefault(); e.stopPropagation(); }
         };
-
         node.addEventListener('mousedown', onMouseDown);
         node.addEventListener('mouseleave', onMouseLeave);
         node.addEventListener('mouseup', onMouseUp);
         node.addEventListener('mousemove', onMouseMove);
         node.addEventListener('click', onClick, true);
         node.classList.add('cursor-grab');
-
         return () => {
             node.removeEventListener('mousedown', onMouseDown);
             node.removeEventListener('mouseleave', onMouseLeave);
@@ -71,7 +62,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         };
     }, [ref, trigger]);
 };
-
 /* ── Row action dropdown (3 dots) ── */
 interface RowMenuProps {
     contract: Contract;
@@ -80,14 +70,12 @@ interface RowMenuProps {
     onShare: () => void;
     onDelete: () => void;
 }
-
 const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare, onDelete }) => {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [pos, setPos] = useState({ top: 0, left: 0 });
     const btnRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
-
     const toggle = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!open && btnRef.current) {
@@ -98,7 +86,6 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
         }
         setOpen(v => !v);
     };
-
     useEffect(() => {
         if (!open) return;
         const close = (e: MouseEvent) => {
@@ -112,7 +99,6 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
         document.addEventListener('keydown', esc);
         return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
     }, [open]);
-
     const item = (label: string, icon: React.ReactNode, action: () => void, danger = false) => (
         <button
             onClick={(e) => { e.stopPropagation(); setOpen(false); action(); }}
@@ -126,7 +112,6 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
             {label}
         </button>
     );
-
     return (
         <>
             <button
@@ -165,7 +150,6 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
         </>
     );
 };
-
 /* ── Main page ── */
 const Contracts: React.FC = () => {
     const { t, formatCurrency, formatDate } = useTranslation();
@@ -177,23 +161,18 @@ const Contracts: React.FC = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [stats, setStats] = useState<{ total: number; draftCount: number; pendingCount: number; signedCount: number; cancelledCount: number; signedValue: number; totalValue: number } | null>(null);
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContract, setEditingContract] = useState<Contract | null>(null);
-
     const [contractToDelete, setContractToDelete] = useState<string | null>(null);
     const [shareLink, setShareLink] = useState<string | null>(null);
     const [linkCopied, setLinkCopied] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
-
     const loadContracts = useCallback(async () => {
         setLoading(true);
         try {
@@ -207,9 +186,7 @@ const Contracts: React.FC = () => {
             setLoading(false);
         }
     }, [page, search, typeFilter, statusFilter]);
-
     useEffect(() => { loadContracts(); }, [loadContracts]);
-
     useEffect(() => {
         const handler = () => {
             const segment = window.location.pathname.split('/').filter(Boolean)[0] || '';
@@ -218,7 +195,6 @@ const Contracts: React.FC = () => {
         window.addEventListener('popstate', handler);
         return () => window.removeEventListener('popstate', handler);
     }, [loadContracts]);
-
     const handleDelete = async () => {
         if (!contractToDelete) return;
         const id = contractToDelete;
@@ -232,14 +208,11 @@ const Contracts: React.FC = () => {
             notify(t('common.error'), 'error');
         }
     };
-
     const isFiltered = useMemo(() => search !== '' || typeFilter !== 'ALL' || statusFilter !== 'ALL', [search, typeFilter, statusFilter]);
-
     const handleEdit = (contract: Contract) => {
         setEditingContract(contract);
         setIsModalOpen(true);
     };
-
     return (
         <>
         <div className="p-4 sm:p-6 h-full flex flex-col animate-enter">
@@ -255,7 +228,6 @@ const Contracts: React.FC = () => {
                     <span className="sm:hidden">Tạo HĐ</span>
                 </button>
             </div>
-
             {/* Stats bar */}
             {stats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
@@ -300,7 +272,6 @@ const Contracts: React.FC = () => {
                     </div>
                 </div>
             )}
-
             <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm flex-1 flex flex-col overflow-hidden">
                 {/* Filter bar */}
                 <div className="p-3 sm:p-4 border-b border-[var(--glass-border)] flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -506,7 +477,6 @@ const Contracts: React.FC = () => {
                         </div>
                     )}
                 </div>
-
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="p-4 border-t border-[var(--glass-border)] flex items-center justify-between">
@@ -530,7 +500,6 @@ const Contracts: React.FC = () => {
                     </div>
                 )}
             </div>
-
             {isModalOpen && (
                 <ContractModal
                     contract={editingContract}
@@ -538,7 +507,6 @@ const Contracts: React.FC = () => {
                     onSuccess={() => { setIsModalOpen(false); loadContracts(); }}
                 />
             )}
-
             <ConfirmModal
                 isOpen={!!contractToDelete}
                 title={t('common.delete')}
@@ -548,7 +516,6 @@ const Contracts: React.FC = () => {
                 onConfirm={handleDelete}
                 onCancel={() => setContractToDelete(null)}
             />
-
             {shareLink && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)} aria-hidden="true" />
@@ -609,5 +576,4 @@ const Contracts: React.FC = () => {
         </>
     );
 };
-
 export default Contracts;

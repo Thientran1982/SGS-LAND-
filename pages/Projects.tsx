@@ -19,7 +19,6 @@ import {
     downloadImportTemplate,
     type ImportResult,
 } from '../utils/listingExcel';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Icons
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,7 +39,6 @@ const IC = {
     TEMPLATE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
     CONTRACT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>,
 };
-
 const STATUS_COLOR: Record<string, string> = {
     ACTIVE: 'bg-emerald-100 text-emerald-700 border-emerald-200',
     COMPLETED: 'bg-sky-100 text-sky-700 border-sky-200',
@@ -48,18 +46,15 @@ const STATUS_COLOR: Record<string, string> = {
     SUSPENDED: 'bg-rose-100 text-rose-700 border-rose-200',
     BOOKING: 'bg-violet-100 text-violet-700 border-violet-200',
 };
-
 const ACCESS_COLOR: Record<string, string> = {
     ACTIVE: 'bg-emerald-100 text-emerald-700',
     REVOKED: 'bg-rose-100 text-rose-700',
     EXPIRED: 'bg-slate-100 text-slate-500',
 };
-
 function fmtDate(d?: string) {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('vi-VN');
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Form Modal
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,7 +64,6 @@ interface ProjectFormProps {
     onClose: () => void;
     t: (k: string) => string;
 }
-
 // Chấp nhận link Google Drive / Docs / Sheets / Slides / Forms (kể cả tên miền a/<email>/...)
 const GDRIVE_HOST_RE = /^https:\/\/(?:drive|docs)\.google\.com\//i;
 const isValidDriveUrl = (url: string): boolean => {
@@ -83,7 +77,6 @@ const isValidDriveUrl = (url: string): boolean => {
         return false;
     }
 };
-
 function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
     const p = project as any;
     const existingMeta = (p?.metadata && typeof p.metadata === 'object') ? p.metadata : {};
@@ -111,7 +104,6 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
     const coverInputRef = useRef<HTMLInputElement | null>(null);
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
-
     const handleCoverPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (e.target) e.target.value = '';
@@ -131,12 +123,10 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             setCoverUploading(false);
         }
     };
-
     const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
     const driveUrlTrim = form.driveUrl.trim();
     const driveUrlValid = isValidDriveUrl(driveUrlTrim);
-
     const handlePasteDrive = async () => {
         try {
             const text = (await navigator.clipboard.readText()).trim();
@@ -145,7 +135,6 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             // Clipboard có thể bị chặn (quyền hoặc HTTP) — bỏ qua, người dùng vẫn paste tay được
         }
     };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.name.trim()) { setErr(t('project.error_name_required')); return; }
@@ -200,10 +189,8 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             setSaving(false);
         }
     };
-
     const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
-
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
@@ -407,7 +394,6 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         </div>
     );
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Access Management Panel
 // ─────────────────────────────────────────────────────────────────────────────
@@ -416,7 +402,6 @@ interface AccessPanelProps {
     onClose: () => void;
     t: (k: string) => string;
 }
-
 function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     const [accesses, setAccesses] = useState<any[]>([]);
     const [tenants, setTenants] = useState<any[]>([]);
@@ -426,7 +411,6 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     const [err, setErr] = useState('');
     const [revokeTarget, setRevokeTarget] = useState<string | null>(null); // partnerTenantId pending confirm
     const [revokeErr, setRevokeErr] = useState('');
-
     useEffect(() => {
         Promise.all([
             db.getProjectAccess(project.id),
@@ -460,7 +444,6 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
             setGranting(false);
         }
     };
-
     const handleRevoke = async (partnerTenantId: string) => {
         setRevokeErr('');
         try {
@@ -473,14 +456,11 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
             setRevokeErr(e.message || t('common.error_generic'));
         }
     };
-
     // Tenants not yet ACTIVE in this project
     const activePartnerIds = new Set(accesses.filter(a => a.status === 'ACTIVE').map(a => a.partner_tenant_id));
     const availableTenants = tenants.filter(t2 => !activePartnerIds.has(t2.id));
-
     const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
-
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
@@ -526,7 +506,6 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
                             </button>
                         </div>
                     </form>
-
                     {/* Access list */}
                     {loading ? (
                         <p className="text-center text-sm text-[var(--text-secondary)] py-8">{t('common.loading')}</p>
@@ -581,8 +560,6 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
         </div>
     );
 }
-
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Listings Panel  (Danh mục sản phẩm trong dự án)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -595,18 +572,15 @@ const STATUS_LISTING_COLOR: Record<string, string> = {
     RENTED:    'bg-violet-100 text-violet-700',
     INACTIVE:  'bg-rose-100 text-rose-500',
 };
-
 function fmtNum(v: number, maxDec = 2) {
     return v.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: maxDec });
 }
-
 function fmtPrice(p: number) {
     if (!p) return '—';
     if (p >= 1_000_000_000) return fmtNum(p / 1_000_000_000, 3) + ' tỷ';
     if (p >= 1_000_000) return fmtNum(p / 1_000_000, 2) + ' tr';
     return fmtNum(p, 0) + ' đ';
 }
-
 function fmtUnitPrice(price: number, area: number) {
     if (!price || !area) return '—';
     const up = price / area;
@@ -614,7 +588,6 @@ function fmtUnitPrice(price: number, area: number) {
     if (up >= 1_000_000) return fmtNum(up / 1_000_000, 1) + ' tr/m²';
     return fmtNum(up, 0) + ' đ/m²';
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Listing Detail Panel  (Xem chi tiết sản phẩm)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -626,7 +599,6 @@ interface ListingDetailPanelProps {
     onStatusChange?: (newStatus: string) => Promise<void>;
     t: (k: string) => string;
 }
-
 const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
     { value: 'BOOKING',  idle: 'bg-sky-50    text-sky-600    border border-sky-200'   },
     { value: 'OPENING',  idle: 'bg-indigo-50 text-indigo-600 border border-indigo-200'},
@@ -636,7 +608,6 @@ const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
     { value: 'RENTED',   idle: 'bg-violet-50 text-violet-600 border border-violet-200'},
     { value: 'INACTIVE', idle: 'bg-rose-50   text-rose-500   border border-rose-200'  },
 ];
-
 function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange, t }: ListingDetailPanelProps) {
     const [activeImg, setActiveImg] = useState(0);
     const [changingTo, setChangingTo] = useState<string | null>(null);
@@ -652,7 +623,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
             setChangingTo(null);
         }
     };
-
     const DetailRow = ({ label, value }: { label: string; value?: React.ReactNode }) =>
         value ? (
             <div className="flex flex-col gap-0.5">
@@ -660,7 +630,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                 <span className="text-sm font-medium text-[var(--text-primary)]">{value}</span>
             </div>
         ) : null;
-
     return createPortal(
         <div
             className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4"
@@ -718,7 +687,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
-
                     {/* Image gallery */}
                     {images.length > 0 ? (
                         <div className="space-y-2">
@@ -752,7 +720,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             <span className="text-xs">{t('project.detail_no_image')}</span>
                         </div>
                     )}
-
                     {/* Price cards */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-800">
@@ -764,7 +731,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             <p className="text-base font-bold text-[var(--text-primary)]">{fmtUnitPrice(listing.price, listing.area)}</p>
                         </div>
                     </div>
-
                     {/* Quick status change */}
                     {canEdit && onStatusChange && (
                         <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4">
@@ -800,7 +766,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             </div>
                         </div>
                     )}
-
                     {/* Key specs grid */}
                     <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
                         <DetailRow label={t('inventory.label_type')} value={t(`property.${listing.type?.toUpperCase()}`) || listing.type} />
@@ -820,7 +785,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                         {listing.location && <DetailRow label={t('inventory.label_location')} value={listing.location} />}
                         {listing.contactPhone && <DetailRow label={t('inventory.label_owner_phone')} value={listing.contactPhone} />}
                     </div>
-
                     {/* Description / notes */}
                     {attrs.notes && (
                         <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-4">
@@ -828,7 +792,6 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{attrs.notes}</p>
                         </div>
                     )}
-
                     {/* Assigned agent */}
                     {listing.assignedToName && (
                         <div className="flex items-center gap-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] px-4 py-3">
@@ -847,18 +810,15 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
         document.body
     );
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PriceMatrixPanel — Bảng giá theo Tầng / Hướng / Loại phòng
 // ─────────────────────────────────────────────────────────────────────────────
 const DIRECTIONS = ['ALL','N','S','E','W','NE','NW','SE','SW'];
 const BEDROOM_TYPES = ['ALL','Studio','1PN','2PN','3PN','4PN+','Penthouse','Shophouse'];
-
 const DIR_LABEL: Record<string, string> = {
     ALL:'Tất cả', N:'Bắc', S:'Nam', E:'Đông', W:'Tây',
     NE:'Đông Bắc', NW:'Tây Bắc', SE:'Đông Nam', SW:'Tây Nam',
 };
-
 const BEDROOM_LABEL: Record<string, string> = {
     ALL: 'Tất cả loại phòng',
     Studio: 'Studio',
@@ -869,7 +829,6 @@ const BEDROOM_LABEL: Record<string, string> = {
     Penthouse: 'Penthouse',
     Shophouse: 'Shophouse',
 };
-
 function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
     value: string;
     onChange: (v: string) => void;
@@ -879,7 +838,6 @@ function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
 }) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
-
     useEffect(() => {
         if (!open) return;
         const handler = (e: MouseEvent) => {
@@ -888,7 +846,6 @@ function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, [open]);
-
     return (
         <div ref={ref} className="relative">
             <button type="button" onClick={() => setOpen(o => !o)}
@@ -912,14 +869,11 @@ function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
         </div>
     );
 }
-
 function fmtSqm(v: number) {
     if (!v) return '—';
     return (v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tr/m²';
 }
-
 const EMPTY_ROW = { tower: '', floor_from: 1, floor_to: 99, direction: 'ALL', bedroom_type: 'ALL', base_price_sqm: '', adjustment_pct: '0', notes: '' };
-
 function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit: boolean; onClose: () => void }) {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -933,7 +887,6 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     };
-
     const load = useCallback(async () => {
         setLoading(true);
         try {
@@ -965,7 +918,6 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
         } catch (e: any) { showToast(e.message || 'Lỗi lưu bảng giá', 'error'); }
         finally { setSaving(false); }
     };
-
     const handleDelete = async (id: string) => {
         setDeleting(id);
         try {
@@ -1072,7 +1024,6 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                         </div>
                     </div>
                 )}
-
                 {/* Table */}
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                     {loading ? (
@@ -1137,7 +1088,6 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                         </table>
                     )}
                 </div>
-
                 {/* Toast */}
                 {toast && createPortal(
                     <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
@@ -1150,7 +1100,6 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
         document.body
     );
 }
-
 // Local error boundary so a render error inside ProjectListingsPanel
 // shows an inline message instead of unmounting the modal and leaving
 // a blank page behind it.
@@ -1230,7 +1179,6 @@ class ListingsPanelErrorBoundary extends React.Component<
         return this.props.children;
     }
 }
-
 interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
@@ -1240,7 +1188,6 @@ interface ProjectListingsPanelProps {
     onListingCreated?: () => void;
     t: (k: string) => string;
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Bulk Image Upload Modal
 // Multi-image upload that auto-matches filenames → listing.code within a project.
@@ -1254,11 +1201,9 @@ type BulkFileItem = {
     matchedCode: string | null;
     manualCode: string;
 };
-
 function normalizeBulkCode(s: string): string {
     return s.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
-
 function deriveCodeCandidatesClient(filename: string): string[] {
     const base = filename.replace(/\.[^.]+$/, '');
     const out = [base];
@@ -1266,7 +1211,6 @@ function deriveCodeCandidatesClient(filename: string): string[] {
     if (m) out.push(m[1]);
     return out.map(normalizeBulkCode);
 }
-
 function BulkImageUploadModal({
     project, onClose, onCompleted, t,
 }: {
@@ -1286,7 +1230,6 @@ function BulkImageUploadModal({
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [dragOver, setDragOver] = useState(false);
     const projectCode = project?.code || '';
-
     // Build a normalized → original-case lookup so the dropdown still shows
     // the original casing while matching is accent/case-insensitive.
     const codeLookup = React.useMemo(() => {
@@ -1294,7 +1237,6 @@ function BulkImageUploadModal({
         for (const c of listingCodes) m.set(normalizeBulkCode(c), c);
         return m;
     }, [listingCodes]);
-
     const matchFile = useCallback((filename: string): string | null => {
         for (const cand of deriveCodeCandidatesClient(filename)) {
             const orig = codeLookup.get(cand);
@@ -1302,7 +1244,6 @@ function BulkImageUploadModal({
         }
         return null;
     }, [codeLookup]);
-
     // Load all listing codes for this project (used both for auto-match and
     // for the manual-override dropdown). The /api/listings endpoint caps
     // pageSize at 200 server-side, so we page through until exhausted with a
@@ -1336,7 +1277,6 @@ function BulkImageUploadModal({
         })();
         return () => { cancelled = true; };
     }, [projectCode]);
-
     // Re-run auto-match once codes finish loading (in case user dropped files first)
     useEffect(() => {
         if (codesLoading) return;
@@ -1345,7 +1285,6 @@ function BulkImageUploadModal({
             matchedCode: it.matchedCode ?? matchFile(it.file.name),
         })));
     }, [codesLoading, matchFile]);
-
     // Revoke object URLs on unmount to avoid leaks. Use a ref that mirrors
     // the latest items so the cleanup sees previews added after mount
     // (the empty-deps effect would otherwise capture only the initial []).
@@ -1392,16 +1331,13 @@ function BulkImageUploadModal({
             return prev.filter(it => it.id !== id);
         });
     };
-
     const setManual = (id: string, code: string) => {
         setItems(prev => prev.map(it => it.id === id ? { ...it, manualCode: code } : it));
     };
-
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault(); setDragOver(false);
         if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
     };
-
     const submit = async () => {
         if (!projectCode) { setTopError(t('project.bulk_images_no_project_code')); return; }
         if (items.length === 0) return;
@@ -1422,14 +1358,12 @@ function BulkImageUploadModal({
                 const code = (it.manualCode || it.matchedCode || '').trim();
                 if (code) mapping[String(idx)] = code;
             });
-
             const data = await listingApi.bulkUploadImagesByCode(
                 projectCode,
                 filesToUpload,
                 mapping,
                 pct => setProgress(pct),
             );
-
             setResult(data);
             // Always refresh the listings panel so newly-uploaded images are
             // visible even when uploaded count is 0 (e.g. all skipped due to
@@ -1441,7 +1375,6 @@ function BulkImageUploadModal({
             setSubmitting(false);
         }
     };
-
     const matchedCount = items.filter(it => it.matchedCode || it.manualCode).length;
     const summary = result?.summary;
 
@@ -1456,7 +1389,6 @@ function BulkImageUploadModal({
                     </div>
                     <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
                 </div>
-
                 {/* Body — scrollable */}
                 <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4">
                     <p className="text-sm text-[var(--text-secondary)]">{t('project.bulk_images_desc')}</p>
@@ -1475,7 +1407,6 @@ function BulkImageUploadModal({
                     {codesError && (
                         <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">{codesError}</div>
                     )}
-
                     {/* Drop zone */}
                     {!result && (
                         <>
@@ -1505,7 +1436,6 @@ function BulkImageUploadModal({
                             </button>
                         </>
                     )}
-
                     {/* File list */}
                     {!result && items.length > 0 && (
                         <div className="space-y-2">
@@ -1561,7 +1491,6 @@ function BulkImageUploadModal({
                             </ul>
                         </div>
                     )}
-
                     {/* Progress */}
                     {submitting && (
                         <div>
@@ -1573,7 +1502,6 @@ function BulkImageUploadModal({
                             </div>
                         </div>
                     )}
-
                     {/* Result */}
                     {result && summary && (
                         <div className="space-y-3">
@@ -1640,7 +1568,6 @@ function BulkImageUploadModal({
                         </div>
                     )}
                 </div>
-
                 {/* Footer */}
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--glass-border)] shrink-0">
                     {!result ? (
@@ -1669,7 +1596,6 @@ function BulkImageUploadModal({
         document.body
     );
 }
-
 function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, onListingCreated, t }: ProjectListingsPanelProps) {
     /** SALES and MARKETING can edit/change status on their own/assigned listings */
     const canEditOwn = canCreate || ['SALES', 'MARKETING'].includes(userRole ?? '');
@@ -1713,9 +1639,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [actionsPos, setActionsPos] = useState({ top: 0, right: 0 });
     const actionsRef = useRef<HTMLDivElement | null>(null);
     const actionsBtnRef = useRef<HTMLButtonElement | null>(null);
-
     const [loadError, setLoadError] = useState<string | null>(null);
-
     // ── Sa bàn (interactive floor plan) ──────────────────────────────────────
     // viewMode toggles between list ('list') and the SVG site map ('floorplan').
     // floorPlans is loaded lazily on first switch / on admin manager close.
@@ -1724,7 +1648,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
     const [floorPlansLoaded, setFloorPlansLoaded] = useState(false);
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [showFloorPlanManager, setShowFloorPlanManager] = useState(false);
-
     const loadFloorPlans = useCallback(async () => {
         if (!project?.id) return;
         try {
@@ -1737,7 +1660,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setFloorPlansLoaded(true);
         }
     }, [project?.id]);
-
     useEffect(() => {
         // Lazy-load floor plans the first time the user switches to the Sa bàn view.
         if (viewMode === 'floorplan' && !floorPlansLoaded) loadFloorPlans();
@@ -1758,7 +1680,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             console.error('Failed to load listing from floor plan:', e);
         }
     }, [listings]);
-
     // Report listings-load failures to the server so we have telemetry the
     // next time a user reports a blank/empty panel. Previously we silently
     // swallowed these (`.catch(() => {})`) which is exactly why the
@@ -1785,7 +1706,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         } catch {}
         return msg;
     };
-
     // Manual reload (called after CRUD operations).
     const load = useCallback(() => {
         setLoading(true);
@@ -1801,7 +1721,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [project.code]);
-
     // Initial auto-load with cleanup flag — prevents Strict Mode double-invoke from
     // causing a second loading flash after data is already displayed.
     useEffect(() => {
@@ -1822,7 +1741,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [project.code]);
-
     // Silent server stats sync — accurate even when > 200 listings are in a project.
     const syncStats = useCallback(() => {
         listingApi.getListings(1, 1, { projectCode: project.code })
@@ -1832,7 +1750,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             })
             .catch(() => {});
     }, [project.code]);
-
     // Preload tenants for access panel (admin only)
     useEffect(() => {
         if (isAdmin) db.listTenants().then(setTenants).catch(() => {});
@@ -1852,12 +1769,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         onListingCreated?.();
         syncStats();
     };
-
     // ── Export ────────────────────────────────────────────────────────────────
     const handleExport = async () => {
         await exportListingsToExcel(listings, project.name);
     };
-
     // ── Import: step 1 — parse file ───────────────────────────────────────────
     const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -1873,7 +1788,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setImporting(false);
         }
     };
-
     // ── Import: step 2 — upload to server ────────────────────────────────────
     const handleImportConfirm = async () => {
         if (!importPreview || importPreview.valid.length === 0) return;
@@ -1896,18 +1810,14 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setImportUploading(false);
         }
     };
-
     const filtered = search
         ? listings.filter(l => l.title?.toLowerCase().includes(search.toLowerCase()) || l.code?.toLowerCase().includes(search.toLowerCase()))
         : listings;
-
     const isApartmentProject = listings.some(l => l.type === 'Apartment' || l.type === 'Penthouse');
-
     // ── Checkbox helpers ──────────────────────────────────────────────────────
     const allFilteredIds = filtered.map(l => l.id);
     const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
     const someSelected = allFilteredIds.some(id => selected.has(id));
-
     const toggleAll = () => {
         if (allSelected) {
             setSelected(prev => { const next = new Set(prev); allFilteredIds.forEach(id => next.delete(id)); return next; });
@@ -1915,7 +1825,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setSelected(prev => new Set([...prev, ...allFilteredIds]));
         }
     };
-
     const toggleOne = (id: string) => {
         setSelected(prev => {
             const next = new Set(prev);
@@ -1923,7 +1832,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             return next;
         });
     };
-
     // ── Bulk status change ────────────────────────────────────────────────────
     const handleBulkStatus = async () => {
         if (!bulkStatus || selected.size === 0) return;
@@ -1943,7 +1851,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setBulkWorking(false);
         }
     };
-
     const selectedListings = filtered.filter(l => selected.has(l.id));
 
     // ── 3-dot row menu ───────────────────────────────────────────────────────
@@ -1953,7 +1860,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
         setMenuOpenId(prev => prev === id ? null : id);
     };
-
     useEffect(() => {
         if (!menuOpenId) return;
         const handler = (e: MouseEvent) => {
@@ -1980,14 +1886,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             document.removeEventListener('keydown', onKey);
         };
     }, [actionsOpen]);
-
     const toggleActionsMenu = () => {
         if (!actionsBtnRef.current) return;
         const rect = actionsBtnRef.current.getBoundingClientRect();
         setActionsPos({ top: rect.bottom + 6, right: Math.max(8, window.innerWidth - rect.right) });
         setActionsOpen(v => !v);
     };
-
     // Render PNG QR code cho mini-site công khai và trigger download. Lazy-load
     // qrcode.react để tránh phình bundle khi user không bao giờ tải QR.
     const downloadMicrositeQR = useCallback(async (url: string, code: string) => {
@@ -2017,7 +1921,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             console.error('QR download failed', e);
         }
     }, []);
-
     // ── Stats recompute from listings array ───────────────────────────────────
     const recomputeStats = useCallback((updatedListings: any[]) => {
         const c = { AVAILABLE: 0, HOLD: 0, BOOKING: 0, SOLD: 0, OPENING: 0, RENTED: 0, INACTIVE: 0 };
@@ -2037,7 +1940,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             totalCount:     updatedListings.length,
         } : prev);
     }, []);
-
     // ── Row edit ──────────────────────────────────────────────────────────────
     const handleEditSubmit = async (data: any) => {
         if (!editTarget) return;
@@ -2056,7 +1958,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setTimeout(() => setPanelToast(null), 4000);
         }
     };
-
     // ── Row delete ────────────────────────────────────────────────────────────
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
@@ -2075,7 +1976,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
             setDeleting(false);
         }
     };
-
     return (
         <>
             <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true">
@@ -2309,7 +2209,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <button type="button" onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
                             </div>
                         </div>
-
                         {/* Stats pills row */}
                         {stats && (
                             <div className="flex items-center gap-2 px-5 pb-3 overflow-x-auto no-scrollbar">
@@ -2334,7 +2233,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 ))}
                             </div>
                         )}
-
                         {/* Search + bulk toolbar */}
                         <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
                             {/* View mode toggle: List vs. Sa bàn (interactive floor plan).
@@ -2361,7 +2259,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     {t('floorplan.view_floorplan') || 'Sa bàn'}
                                 </button>
                             </div>
-
                             {/* Plan picker — only when there are multiple plans */}
                             {viewMode === 'floorplan' && floorPlans.length > 1 && (
                                 <Dropdown
@@ -2375,7 +2272,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     }))}
                                 />
                             )}
-
                             <div className="relative flex-1 min-w-[180px] max-w-sm">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">{IC.SEARCH}</span>
                                 <input
@@ -2386,7 +2282,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     className="w-full pl-9 pr-3 py-2 h-[36px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 />
                             </div>
-
                             {/* Bulk actions — visible when rows selected */}
                             {selected.size > 0 && isAdmin && (
                                 <>
@@ -2419,7 +2314,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                             )}
                         </div>
                     </div>
-
                     {/* ── Body: list view OR interactive floor plan view ── */}
                     {viewMode === 'floorplan' ? (
                         <div className="overflow-hidden bg-white dark:bg-slate-900 flex flex-col">
@@ -2643,7 +2537,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         )}
                     </div>
                     )}
-
                     {/* ── Footer ── */}
                     <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
@@ -2682,7 +2575,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 onChanged={() => { setFloorPlansLoaded(false); loadFloorPlans(); }}
                 t={t}
             />
-
             {showCommissions && (
                 <ProjectCommissionPanel
                     projectId={project.id as string}
@@ -2703,7 +2595,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     t={t}
                 />
             )}
-
             <ListingForm
                 isOpen={!!editTarget}
                 onClose={() => setEditTarget(null)}
@@ -2712,7 +2603,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 isProjectUnit={true}
                 t={t}
             />
-
             {detailListing && (
                 <ListingDetailPanel
                     listing={detailListing}
@@ -2743,7 +2633,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     t={t}
                 />
             )}
-
             {menuOpenId && (() => {
                 const menuListing = filtered.find(l => l.id === menuOpenId);
                 if (!menuListing) return null;
@@ -2816,7 +2705,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 </div>,
                 document.body
             )}
-
             {accessListings && (
                 <ListingAccessPanel
                     listings={accessListings}
@@ -2825,7 +2713,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     t={t}
                 />
             )}
-
             {/* ── Import Preview Modal ── */}
             {importPreview && createPortal(
                 <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -2839,7 +2726,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <p className="text-sm text-[var(--text-secondary)] mt-0.5">Kiểm tra trước khi tạo sản phẩm</p>
                             </div>
                         </div>
-
                         {/* Summary */}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-center">
@@ -2851,7 +2737,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <div className={`text-xs font-semibold mt-0.5 ${importPreview.errors.length > 0 ? 'text-rose-500' : 'text-slate-400'}`}>Lỗi — sẽ bỏ qua</div>
                             </div>
                         </div>
-
                         {/* Error list */}
                         {importPreview.errors.length > 0 && (
                             <div className="max-h-40 overflow-y-auto thin-scrollbar rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/10 p-3 space-y-1">
@@ -2862,7 +2747,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 ))}
                             </div>
                         )}
-
                         <div className="flex gap-2 pt-1">
                             <button
                                 type="button"
@@ -2887,7 +2771,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 </div>,
                 document.body
             )}
-
             {/* ── Import Done Modal ── */}
             {importDone && createPortal(
                 <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -2904,7 +2787,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 )}
                             </p>
                         </div>
-
                         {importDone.errors.length > 0 && (
                             <div className="max-h-40 overflow-y-auto thin-scrollbar rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/10 p-3 space-y-1">
                                 {importDone.errors.map((e, i) => (
@@ -2914,7 +2796,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 ))}
                             </div>
                         )}
-
                         <button
                             type="button"
                             onClick={() => setImportDone(null)}
@@ -2926,7 +2807,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 </div>,
                 document.body
             )}
-
             {/* ── Panel toast ── */}
             {panelToast && createPortal(
                 <div
@@ -2947,7 +2827,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 </div>,
                 document.body
             )}
-
             {/* ── Contract Modal from listing row — rendered via portal so it sits above the listing panel's stacking context ── */}
             {contractTarget && createPortal(
                 <ContractModal
@@ -2986,7 +2865,6 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         </>
     );
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Listing Access Panel  (Phân quyền xem từng sản phẩm)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2996,7 +2874,6 @@ interface ListingAccessPanelProps {
     onClose: () => void;
     t: (k: string) => string;
 }
-
 function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPanelProps) {
     const isBulk = listings.length > 1;
     const [accesses, setAccesses] = useState<Record<string, any[]>>({});   // listingId → access[]
@@ -3009,7 +2886,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
 
     const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-violet-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
-
     // Load access list for each listing
     useEffect(() => {
         listings.forEach(l => {
@@ -3024,7 +2900,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
     const handleGrant = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!grantForm.partnerTenantId) { setErr(t('project.error_partner_required')); return; }
@@ -3054,7 +2929,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
             setGranting(false);
         }
     };
-
     const handleRevoke = async (listingId: string, partnerTenantId: string) => {
         try {
             await db.revokeListingAccess(listingId, partnerTenantId);
@@ -3069,7 +2943,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
             setErr(e.message || t('common.error_generic'));
         }
     };
-
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
@@ -3088,7 +2961,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                     </div>
                     <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
                 </div>
-
                 <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
                     {/* Info box */}
                     <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-xl px-4 py-3 text-xs text-violet-700 dark:text-violet-300">
@@ -3126,7 +2998,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                             </button>
                         </div>
                     </form>
-
                     {/* Access list per listing */}
                     {listings.map(l => {
                         const list = accesses[l.id] || [];
@@ -3196,7 +3067,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
         </div>
     );
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Card
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3224,7 +3094,6 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
         setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
         setMenuOpen(v => !v);
     };
-
     useEffect(() => {
         if (!menuOpen) return;
         const handler = (e: MouseEvent) => {
@@ -3295,7 +3164,6 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                         )}
                     </div>
                 </div>
-
                 {project.description && (
                     <p className="text-xs text-[var(--text-secondary)] mb-3 line-clamp-2 leading-relaxed">{project.description}</p>
                 )}
@@ -3340,7 +3208,6 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                     )}
                 </div>
             </div>
-
             {/* Card footer — CTAs */}
             <div className="px-5 pb-4 pt-0 flex flex-col gap-2">
                 <button
@@ -3365,7 +3232,6 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                     Bảng Giá
                 </button>
             </div>
-
             {/* Admin dropdown menu */}
             {menuOpen && createPortal(
                 <div
@@ -3396,7 +3262,6 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
         </div>
     );
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3418,21 +3283,17 @@ export function Projects() {
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const [dragIdx, setDragIdx] = useState<number | null>(null);
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
-
     const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '');
     const isPartner = user?.role === 'PARTNER_ADMIN' || user?.role === 'PARTNER_AGENT';
-
     const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     // Debounce search input
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(search), 350);
         return () => clearTimeout(timer);
     }, [search]);
-
     const load = useCallback(async () => {
         setLoading(true);
         setError('');
@@ -3448,7 +3309,6 @@ export function Projects() {
 
     useEffect(() => { db.getCurrentUser().then(setUser); }, []);
     useEffect(() => { if (user) load(); }, [user, load]);
-
     // Persist `listingsTarget` so the modal survives instant remounts
     // (HMR in dev, the chunk-load ErrorBoundary's window.location.reload
     // in prod). We store the project id + a wall-clock timestamp scoped
@@ -3463,7 +3323,6 @@ export function Projects() {
     const LISTINGS_TARGET_KEY = user?.id ? `sgs_listings_target_pid:${user.id}` : '';
     const RESTORE_TTL_MS = 10_000; // 10 s is enough for HMR/chunk reload but never long enough to surprise a user navigating back later.
     const restoreAttemptedRef = useRef(false);
-
     // Step 1 — restore once, after projects loaded and user known.
     useEffect(() => {
         if (!user?.id || loading || projects.length === 0) return;
@@ -3497,7 +3356,6 @@ export function Projects() {
         } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id, loading, projects.length]);
-
     // Step 2 — persist only AFTER restore attempt has completed, so the
     // initial null state cannot wipe a freshly-saved id before we read it.
     // We write {pid, ts} so the next mount can apply the TTL check above.
@@ -3532,7 +3390,6 @@ export function Projects() {
         return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id, listingsTarget?.id]);
-
     // Restore saved drag order from localStorage (only when no search/filter active)
     useEffect(() => {
         if (loading || !user?.id || projects.length === 0) return;
@@ -3603,7 +3460,6 @@ export function Projects() {
             setDeleting(false);
         }
     };
-
     return (
         <div className="h-full flex flex-col bg-[var(--bg-app)] overflow-hidden">
             {/* Header — title + search + filters + create all in one bar */}
@@ -3618,7 +3474,6 @@ export function Projects() {
                             {isPartner ? t('project.partner_view_subtitle') : t('project.subtitle')}
                         </p>
                     </div>
-
                     {/* Divider */}
                     <div className="hidden sm:block h-8 w-px bg-[var(--glass-border)]" />
 
@@ -3633,7 +3488,6 @@ export function Projects() {
                             className="w-full pl-9 pr-3 py-2 h-[38px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
-
                     {/* Status filter */}
                     {!isPartner && (
                         <div className="shrink-0">
@@ -3648,16 +3502,13 @@ export function Projects() {
                             />
                         </div>
                     )}
-
                     {/* Count badge */}
                     {!loading && projects.length > 0 && (
                         <span className="hidden sm:inline-flex shrink-0 items-center px-2.5 py-1 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] text-xs font-semibold rounded-full">
                             {projects.length}
                         </span>
                     )}
-
                     <div className="flex-1" />
-
                     {/* Create button */}
                     {isAdmin && (
                         <button type="button" onClick={() => setFormTarget('new')}
@@ -3667,7 +3518,6 @@ export function Projects() {
                     )}
                 </div>
             </div>
-
             {/* Content */}
             <div className="flex-1 overflow-y-auto no-scrollbar p-6">
                 {error && (
@@ -3735,7 +3585,6 @@ export function Projects() {
                     </div>
                 )}
             </div>
-
             {/* Modals — rendered via portal to document.body to escape the main isolate stacking context */}
             {formTarget !== null && createPortal(
                 <ProjectFormModal
@@ -3781,7 +3630,6 @@ export function Projects() {
                     onClose={() => setPriceMatrixTarget(null)}
                 />
             )}
-
             {/* Delete confirmation modal */}
             {deleteTarget && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
@@ -3818,7 +3666,6 @@ export function Projects() {
                 </div>,
                 document.body
             )}
-
             {toast && createPortal(
                 <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
                     {toast.type === 'success'

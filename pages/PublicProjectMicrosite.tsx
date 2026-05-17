@@ -8,17 +8,14 @@ import {
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
 import { buildLeadAttribution, trackPageView } from '../services/attribution';
-
 interface Props {
   projectCode: string;
 }
-
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   OPENING:   { label: 'Mở bán',     cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
   BOOKING:   { label: 'Đặt chỗ',   cls: 'bg-sky-50 text-sky-700 border-sky-200' },
   AVAILABLE: { label: 'Còn hàng',   cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
 };
-
 function formatPrice(price: number | null, currency: string | null): string {
   if (price == null) return 'Liên hệ';
   const cur = currency || 'VND';
@@ -32,19 +29,16 @@ function formatPrice(price: number | null, currency: string | null): string {
   }
   return `${price.toLocaleString('vi-VN')} ${cur}`;
 }
-
 function formatArea(area: number | null): string {
   if (!area) return '—';
   return `${area} m²`;
 }
-
 const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const [data, setData]     = useState<PublicProjectPayload | null>(null);
   const [error, setError]   = useState<{ status: number; message: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const qrRef = useRef<HTMLDivElement | null>(null);
-
   // Live preview overlay (task #36) — nhận postMessage từ BrandingPanel khi
   // mini-site này đang được nhúng iframe trong tab Branding của CĐT. Chỉ
   // accept khi `?preview=1` để không ảnh hưởng người dùng cuối, và origin
@@ -68,7 +62,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       return sp.get('preview') === '1';
     } catch { return false; }
   }, []);
-
   useEffect(() => {
     if (!isPreviewMode || typeof window === 'undefined') return;
     const onMessage = (ev: MessageEvent) => {
@@ -93,7 +86,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     } catch { /* noop */ }
     return () => window.removeEventListener('message', onMessage);
   }, [isPreviewMode]);
-
   // Lead form state
   const [form, setForm] = useState({ name: '', phone: '', email: '', interest: '', note: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -101,9 +93,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const [captchaToken, setCaptchaToken] = useState<string>('');
   const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef  = useRef<string | null>(null);
-
   const code = projectCode.trim().toUpperCase();
-
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -120,7 +110,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [code]);
-
   // Update <title> + <meta description> client-side cho user (server đã inject sẵn cho crawler)
   useEffect(() => {
     if (!data?.project) return;
@@ -128,7 +117,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     document.title = `${data.project.name} — Mini-site SGS Land`;
     return () => { document.title = original; };
   }, [data]);
-
   const gallery = useMemo<string[]>(() => {
     if (!data) return [];
     const out: string[] = [];
@@ -146,14 +134,11 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     if (out.length === 0) out.push(NO_IMAGE_URL);
     return out;
   }, [data]);
-
   // Reset active image when gallery changes
   useEffect(() => { setActiveImageIdx(0); }, [gallery.length]);
-
   const fullUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/p/${code}`
     : `https://sgsland.vn/p/${code}`;
-
   const handleShare = async () => {
     try {
       if (navigator.share) {
@@ -165,7 +150,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       }
     } catch { /* user dismissed */ }
   };
-
   const handleDownloadQR = () => {
     const canvas = qrRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
     if (!canvas) return;
@@ -177,7 +161,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     a.click();
     document.body.removeChild(a);
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.phone.trim()) {
@@ -216,7 +199,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       setSubmitting(false);
     }
   };
-
   // Turnstile loader (chỉ inject khi server bật captcha)
   useEffect(() => {
     if (!data?.captcha?.siteKey) return;
@@ -258,7 +240,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       turnstileWidgetIdRef.current = null;
     };
   }, [data?.captcha?.siteKey]);
-
   // ─── Marketing attribution & visitor tracking ────────────────────────────
   // - Capture UTM/referrer first-click + track pageview cho khách vãng lai.
   // - Skip preview iframe (?preview=1) để không nhiễu data thật.
@@ -270,7 +251,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       pageLabel: `Microsite: ${data.project.name}`,
     });
   }, [isPreviewMode, data?.project?.code, data?.project?.name]);
-
   // Inject GA4 / Meta Pixel / GTM scripts theo branding của tenant (task #4).
   // Chỉ inject 1 lần / 1 ID / page-load; cleanup khi unmount để không leak khi
   // user điều hướng giữa các microsite của 2 tenant khác nhau.
@@ -280,9 +260,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     if (!branding) return;
     const { ga4Id, fbPixelId, gtmId } = branding;
     if (!ga4Id && !fbPixelId && !gtmId) return;
-
     const appended: HTMLElement[] = [];
-
     // GA4 (gtag.js)
     if (ga4Id && !document.querySelector(`script[data-sgs-ga4="${ga4Id}"]`)) {
       const s1 = document.createElement('script');
@@ -291,14 +269,12 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       s1.setAttribute('data-sgs-ga4', ga4Id);
       document.head.appendChild(s1);
       appended.push(s1);
-
       const s2 = document.createElement('script');
       s2.setAttribute('data-sgs-ga4-init', ga4Id);
       s2.text = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id.replace(/'/g, '')}',{send_page_view:true});`;
       document.head.appendChild(s2);
       appended.push(s2);
     }
-
     // Meta (Facebook) Pixel
     if (fbPixelId && !document.querySelector(`script[data-sgs-fbp="${fbPixelId}"]`)) {
       const s = document.createElement('script');
@@ -307,7 +283,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       document.head.appendChild(s);
       appended.push(s);
     }
-
     // Google Tag Manager
     if (gtmId && !document.querySelector(`script[data-sgs-gtm="${gtmId}"]`)) {
       const s = document.createElement('script');
@@ -316,12 +291,10 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       document.head.appendChild(s);
       appended.push(s);
     }
-
     return () => {
       appended.forEach((el) => { try { el.remove(); } catch { /* noop */ } });
     };
   }, [isPreviewMode, data?.branding?.ga4Id, data?.branding?.fbPixelId, data?.branding?.gtmId]);
-
   // Inject favicon + document.title cho tab browser CĐT (task #28).
   // PHẢI đặt trước mọi early-return để giữ thứ tự hooks ổn định giữa các render
   // (loading → loaded). Các giá trị branding được derive trong effect để không
@@ -333,7 +306,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     const brandLabel  = branding.displayName || data?.tenantContact?.brandName || 'SGS LAND';
     const prevTitle = document.title;
     if (brandLabel && projectName) document.title = `${projectName} — ${brandLabel}`;
-
     let faviconLink: HTMLLinkElement | null = null;
     let prevFaviconHref: string | null = null;
     let createdFaviconLink = false;
@@ -362,7 +334,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       }
     };
   }, [data?.branding, data?.project?.name, data?.tenantContact?.brandName]);
-
   // ─── Loading ────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -374,7 +345,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       </div>
     );
   }
-
   // ─── Error / Not Found ──────────────────────────────────────────────────
   if (error || !data) {
     return (
@@ -396,7 +366,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       </div>
     );
   }
-
   const { project, listings, tenantContact } = data;
   // Branding overlay (task #36): khi mini-site được nhúng iframe trong
   // BrandingPanel, parent gửi `sgs:branding-preview` postMessage chứa các
@@ -413,7 +382,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const brandPrimary = branding?.primaryColor || '#4F46E5';
   const brandLabel   = branding?.displayName || tenantContact.brandName || 'SGS LAND';
   const brandLogo    = branding?.logoUrl || null;
-
   return (
     <div
       className="min-h-[100dvh] bg-slate-50 text-slate-900"
@@ -503,7 +471,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           </div>
         </div>
       </section>
-
       {/* ── GALLERY ──────────────────────────────────────────────────── */}
       {gallery.length > 1 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
@@ -529,7 +496,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           </div>
         </section>
       )}
-
       {/* ── DESCRIPTION + AMENITIES ─────────────────────────────────── */}
       {(project.description || project.metadata.amenities.length || project.metadata.highlights.length) && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
@@ -584,7 +550,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           </div>
         </section>
       )}
-
       {/* ── LISTINGS TABLE ──────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
         <div className="flex items-center justify-between mb-4">
@@ -600,7 +565,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           <ListingsTable listings={listings} />
         )}
       </section>
-
       {/* ── LEAD FORM ──────────────────────────────────────────────── */}
       <section id="lead-form" className="max-w-6xl mx-auto px-4 sm:px-6 mt-10 mb-12">
         <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-6 sm:p-8 text-white shadow-xl">
@@ -670,7 +634,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           </div>
         </div>
       </section>
-
       {/* ── FOOTER ─────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-600">
@@ -701,7 +664,6 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     </div>
   );
 };
-
 const ListingsTable: React.FC<{ listings: PublicListing[] }> = ({ listings }) => (
   <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
     <div className="overflow-x-auto">
@@ -751,6 +713,5 @@ const ListingsTable: React.FC<{ listings: PublicListing[] }> = ({ listings }) =>
     </div>
   </div>
 );
-
 export default PublicProjectMicrosite;
 export { PublicProjectMicrosite };

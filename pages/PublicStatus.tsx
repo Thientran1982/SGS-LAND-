@@ -1,16 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { useTranslation } from '../services/i18n';
 import { db } from '../services/dbApi';
 import { User } from '../types';
-
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     CHECK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
 };
-
 const ServiceBar = ({ name, status = 'operational' }: { name: string, status?: 'operational' | 'degraded' }) => (
     <div className="flex justify-between items-center py-4 border-b border-[var(--glass-border)] last:border-0 group">
         <span className="font-bold text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{name}</span>
@@ -22,7 +19,6 @@ const ServiceBar = ({ name, status = 'operational' }: { name: string, status?: '
         </div>
     </div>
 );
-
 const UptimeGraph = () => (
     <div className="flex gap-1 h-8 items-end mt-4" title="99.9% Uptime">
         {Array.from({ length: 60 }).map((_, i) => (
@@ -34,18 +30,14 @@ const UptimeGraph = () => (
         ))}
     </div>
 );
-
 export const PublicStatus: React.FC = () => {
     const { t, formatDateTime } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
@@ -67,7 +59,6 @@ export const PublicStatus: React.FC = () => {
                     )}
                 </div>
             </div>
-
             <div className="max-w-3xl mx-auto px-6 py-16 animate-enter">
                 <div className="bg-emerald-500 text-white p-8 rounded-[32px] shadow-2xl shadow-emerald-500/20 mb-12 flex items-center justify-between">
                     <div>
@@ -88,7 +79,6 @@ export const PublicStatus: React.FC = () => {
                         <span>Hôm nay</span>
                     </div>
                 </div>
-
                 <div className="bg-[var(--bg-surface)] rounded-[32px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                     <div className="p-8">
                         <ServiceBar name={t('status.service_api')} />
@@ -97,7 +87,6 @@ export const PublicStatus: React.FC = () => {
                         <ServiceBar name={t('status.service_ai')} />
                     </div>
                 </div>
-
                 <div className="mt-16">
                     <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">{t('status.past_incidents')}</h2>
                     <div className="text-[var(--text-tertiary)] text-sm italic border-l-4 border-[var(--glass-border)] pl-4 py-2">

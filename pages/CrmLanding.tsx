@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
@@ -7,7 +6,6 @@ import { useTranslation } from '../services/i18n';
 import { ArrowLeft, Check, Rocket, BrainCircuit, Zap, BarChart3 } from 'lucide-react';
 import { db } from '../services/dbApi';
 import { User } from '../types';
-
 const ICONS = {
     BACK: <ArrowLeft className="w-5 h-5" />,
     CHECK: <Check className="w-5 h-5 text-indigo-600" strokeWidth={3} />,
@@ -17,17 +15,13 @@ const ICONS = {
     AUTOMATION: <Zap className="w-6 h-6 text-emerald-600" />,
     REPORT: <BarChart3 className="w-6 h-6 text-rose-600" />
 };
-
 const SCREENSHOT_URL = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop";
-
 export const CrmLanding: React.FC = () => {
     const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
 
@@ -100,7 +94,6 @@ export const CrmLanding: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {/* Hero */}
             <section className="pt-24 pb-32 px-6 text-center max-w-5xl mx-auto animate-enter">
                 <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-8">
@@ -125,7 +118,6 @@ export const CrmLanding: React.FC = () => {
                     </button>
                 </div>
             </section>
-
             {/* Mock UI */}
             <section className="px-4 md:px-6 mb-24 max-w-[1440px] mx-auto">
                 <div className="rounded-[32px] overflow-hidden shadow-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] relative group">
@@ -140,7 +132,6 @@ export const CrmLanding: React.FC = () => {
                     <img src={SCREENSHOT_URL} alt="Dashboard UI" className="w-full mt-12 object-cover opacity-90 transition-opacity group-hover:opacity-100" />
                 </div>
             </section>
-
             {/* Features Grid */}
             <section className="py-24 bg-[var(--glass-surface)] border-y border-[var(--glass-border)]">
                 <div className="max-w-6xl mx-auto px-6">
@@ -175,7 +166,6 @@ export const CrmLanding: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* Pricing */}
             <section className="py-24 px-6 max-w-4xl mx-auto text-center">
                 <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-12">{t('crm.pricing_title')}</h2>
@@ -210,5 +200,4 @@ export const CrmLanding: React.FC = () => {
         </div>
     );
 };
-
 export default CrmLanding;

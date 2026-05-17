@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { db } from '../services/dbApi';
 import { LeadStage, LEAD_SOURCES } from '../types';
-
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface AudienceFilter {
   source?: 'leads' | 'users';
@@ -11,14 +10,12 @@ interface AudienceFilter {
   has_listings?: boolean;
   user_status?: string[];
 }
-
 interface AbTestConfig {
   enabled: boolean;
   variant_b_subject?: string;
   variant_b_body_html?: string;
   split_pct?: number;
 }
-
 interface Campaign {
   id: string;
   name: string;
@@ -39,21 +36,18 @@ interface Campaign {
   created_at: string;
   updated_at: string;
 }
-
 const STATUS_COLORS: Record<string, string> = {
   DRAFT:     'bg-slate-100 text-slate-700 border-slate-200',
   ACTIVE:    'bg-emerald-100 text-emerald-700 border-emerald-200',
   PAUSED:    'bg-amber-100 text-amber-700 border-amber-200',
   COMPLETED: 'bg-indigo-100 text-indigo-700 border-indigo-200',
 };
-
 const STATUS_LABEL: Record<string, string> = {
   DRAFT:     'Bản nháp',
   ACTIVE:    'Đang chạy',
   PAUSED:    'Tạm dừng',
   COMPLETED: 'Hoàn thành',
 };
-
 const emptyCampaign = (): Partial<Campaign> => ({
   name: '',
   description: '',
@@ -65,7 +59,6 @@ const emptyCampaign = (): Partial<Campaign> => ({
   scheduled_at: null,
   ab_test: { enabled: false, split_pct: 50 },
 });
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtDate = (s: string | null) => {
   if (!s) return '—';
@@ -73,7 +66,6 @@ const fmtDate = (s: string | null) => {
   catch { return s; }
 };
 const pct = (n: number, d: number) => d > 0 ? `${((n / d) * 100).toFixed(1)}%` : '—';
-
 // ─── Page ───────────────────────────────────────────────────────────────────
 export const Campaigns: React.FC = () => {
   const [items, setItems] = useState<Campaign[]>([]);
@@ -82,7 +74,6 @@ export const Campaigns: React.FC = () => {
   const [editing, setEditing] = useState<Partial<Campaign> | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null);
-
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -95,19 +86,15 @@ export const Campaigns: React.FC = () => {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => { load(); }, [load]);
-
   useEffect(() => {
     if (!toast) return;
     const delay = toast.kind === 'err' ? 6000 : 3500;
     const t = setTimeout(() => setToast(null), delay);
     return () => clearTimeout(t);
   }, [toast]);
-
   const showOk  = (msg: string) => setToast({ kind: 'ok',  msg });
   const showErr = (msg: string) => setToast({ kind: 'err', msg });
-
   const onActivate = async (c: Campaign) => {
     if (!confirm(`Kích hoạt chiến dịch "${c.name}"?\n\nNếu lịch là "Gửi ngay", email sẽ được gửi ngay lập tức cho toàn bộ audience.`)) return;
     setBusy(c.id);
@@ -125,14 +112,12 @@ export const Campaigns: React.FC = () => {
     } catch (e: any) { showErr(e.message); }
     finally { setBusy(null); }
   };
-
   const onPause = async (c: Campaign) => {
     setBusy(c.id);
     try { await db.pauseCampaign(c.id); showOk('Đã tạm dừng'); await load(); }
     catch (e: any) { showErr(e.message); }
     finally { setBusy(null); }
   };
-
   const onRunNow = async (c: Campaign) => {
     if (!confirm(`Gửi chiến dịch "${c.name}" ngay bây giờ?`)) return;
     setBusy(c.id);
@@ -143,7 +128,6 @@ export const Campaigns: React.FC = () => {
     } catch (e: any) { showErr(e.message); }
     finally { setBusy(null); }
   };
-
   const onDelete = async (c: Campaign) => {
     if (!confirm(`Xóa chiến dịch "${c.name}"? Hành động này không thể hoàn tác.`)) return;
     setBusy(c.id);
@@ -151,7 +135,6 @@ export const Campaigns: React.FC = () => {
     catch (e: any) { showErr(e.message); }
     finally { setBusy(null); }
   };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Toast */}
@@ -165,7 +148,6 @@ export const Campaigns: React.FC = () => {
           <span>{toast.msg}</span>
         </div>
       )}
-
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Chiến dịch tự động</h1>
@@ -180,10 +162,8 @@ export const Campaigns: React.FC = () => {
           + Tạo chiến dịch
         </button>
       </div>
-
       {loading && <div className="py-12 text-center text-[var(--text-tertiary)]">Đang tải...</div>}
       {error && <div className="py-4 px-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg">{error}</div>}
-
       {!loading && !error && items.length === 0 && (
         <div className="py-16 text-center bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)]">
           <p className="text-[var(--text-tertiary)] mb-4">Chưa có chiến dịch nào.</p>
@@ -195,7 +175,6 @@ export const Campaigns: React.FC = () => {
           </button>
         </div>
       )}
-
       {!loading && items.length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] overflow-hidden">
           <table className="w-full text-sm">
@@ -259,7 +238,6 @@ export const Campaigns: React.FC = () => {
           </table>
         </div>
       )}
-
       {editing && (
         <CampaignDrawer
           initial={editing}
@@ -271,9 +249,7 @@ export const Campaigns: React.FC = () => {
     </div>
   );
 };
-
 export default Campaigns;
-
 // ─── Drawer (create/edit) ───────────────────────────────────────────────────
 interface DrawerProps {
   initial: Partial<Campaign>;
@@ -281,23 +257,19 @@ interface DrawerProps {
   onSaved: (msg: string) => void;
   onError: (msg: string) => void;
 }
-
 const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onError }) => {
   const [form, setForm] = useState<Partial<Campaign>>(initial);
   const [audCount, setAudCount] = useState<number | null>(null);
   const [audLoading, setAudLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-
   const isEdit = !!initial.id;
   const audience = form.audience || {};
   const ab = form.ab_test || { enabled: false, split_pct: 50 };
-
   const upd = (patch: Partial<Campaign>) => setForm(p => ({ ...p, ...patch }));
   const updAudience = (patch: Partial<AudienceFilter>) =>
     upd({ audience: { ...audience, ...patch } });
   const updAb = (patch: Partial<AbTestConfig>) =>
     upd({ ab_test: { ...ab, ...patch } });
-
   // Live preview audience size
   useEffect(() => {
     let cancelled = false;
@@ -311,7 +283,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
   }, [JSON.stringify(audience)]);
-
   const toggleStage = (s: string) => {
     const cur = audience.lead_stages || [];
     updAudience({ lead_stages: cur.includes(s) ? cur.filter(x => x !== s) : [...cur, s] });
@@ -320,7 +291,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
     const cur = audience.lead_sources || [];
     updAudience({ lead_sources: cur.includes(s) ? cur.filter(x => x !== s) : [...cur, s] });
   };
-
   const save = async () => {
     if (!form.name?.trim()) return onError('Vui lòng nhập tên chiến dịch');
     if (!form.subject?.trim()) return onError('Vui lòng nhập tiêu đề email (subject) trước khi lưu');
@@ -351,7 +321,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
       setSaving(false);
     }
   };
-
   const stageOptions = Object.values(LeadStage);
 
   return (
@@ -362,9 +331,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
           <h2 className="text-lg font-bold">{isEdit ? 'Sửa chiến dịch' : 'Tạo chiến dịch mới'}</h2>
           <button onClick={onClose} className="text-2xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">×</button>
         </div>
-
         <div className="p-6 space-y-6">
-
           {/* Cơ bản */}
           <Section title="Thông tin cơ bản">
             <Field label="Tên chiến dịch *">
@@ -385,7 +352,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
               />
             </Field>
           </Section>
-
           {/* Audience */}
           <Section title="Đối tượng nhận" subtitle="Chọn điều kiện lọc — số lượng cập nhật theo thời gian thực">
             <Field label="Nguồn dữ liệu">
@@ -405,7 +371,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                 ))}
               </div>
             </Field>
-
             {(audience.source || 'leads') === 'leads' && (
               <>
                 <Field label="Giai đoạn lead (chọn nhiều)">
@@ -455,7 +420,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                 </Field>
               </>
             )}
-
             {audience.source === 'users' && (
               <>
                 <Field label="Trạng thái user">
@@ -505,7 +469,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                 </Field>
               </>
             )}
-
             <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
               <div className="text-xs text-indigo-600 uppercase font-semibold">Số người sẽ nhận</div>
               <div className="text-2xl font-bold text-indigo-900 mt-1">
@@ -514,7 +477,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
               </div>
             </div>
           </Section>
-
           {/* Nội dung */}
           <Section title="Nội dung email">
             <Field label="Tiêu đề email *">
@@ -535,7 +497,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
               />
             </Field>
           </Section>
-
           {/* Lịch */}
           <Section title="Lịch gửi">
             <div className="flex gap-2">
@@ -567,7 +528,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
               </Field>
             )}
           </Section>
-
           {/* A/B Test */}
           <Section title="A/B Test (tùy chọn)">
             <label className="flex items-center gap-2">
@@ -609,7 +569,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
               </>
             )}
           </Section>
-
           {/* Footer actions */}
           <div className="flex justify-end gap-2 pt-4 border-t border-[var(--glass-border)]">
             <button
@@ -631,7 +590,6 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
     </div>
   );
 };
-
 const Section: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
   <div className="space-y-3">
     <div>
@@ -641,7 +599,6 @@ const Section: React.FC<{ title: string; subtitle?: string; children: React.Reac
     {children}
   </div>
 );
-
 const Field: React.FC<{ label: string; hint?: string; children: React.ReactNode }> = ({ label, hint, children }) => (
   <div>
     <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">{label}</label>

@@ -14,13 +14,11 @@
  *   created) and an idempotent `buyer_push_notification_log` (UNIQUE on
  *   device+search+listing) so we never push the same listing twice.
  */
-
 import { Pool } from 'pg';
 import { logger } from '../middleware/logger';
 import { buyerPushRepository, BuyerSavedSearch } from '../repositories/buyerPushRepository';
 import { listingRepository } from '../repositories/listingRepository';
 import { DEFAULT_TENANT_ID } from '../constants';
-
 // Local helper: same slugify as the mobile app uses, so server-emitted slugIds
 // match the URLs the mobile router expects.
 function slugify(input: string): string {
@@ -33,9 +31,7 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 }
-
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-
 interface ExpoPushMessage {
   to: string;
   title: string;
@@ -45,14 +41,12 @@ interface ExpoPushMessage {
   channelId?: string;
   priority?: 'default' | 'normal' | 'high';
 }
-
 interface ExpoTicket {
   status: 'ok' | 'error';
   id?: string;
   message?: string;
   details?: { error?: string };
 }
-
 /**
  * Validate that a token looks like an ExponentPushToken[…]/ExpoPushToken[…]
  * — Expo will 400 otherwise.
@@ -61,7 +55,6 @@ export function isValidExpoPushToken(token: string | null | undefined): boolean 
   if (!token) return false;
   return /^Expo(nent)?PushToken\[[A-Za-z0-9_\-]+\]$/.test(token);
 }
-
 /**
  * Send a batch of push messages. Expo accepts arrays of up to 100 per
  * request — we keep batches small here (caller is expected to batch).
@@ -96,9 +89,7 @@ export async function sendExpoPushBatch(
     return messages.map(() => ({ status: 'error', message: String(err?.message || err) }));
   }
 }
-
 // ── Saved-search matching ────────────────────────────────────────────────────
-
 interface MatchedListing {
   id: string;
   title: string;
@@ -107,12 +98,10 @@ interface MatchedListing {
   location: string | null;
   createdAt: Date;
 }
-
 function buildSlugId(row: { id: string; title?: string | null; code?: string | null; location?: string | null }): string {
   const base = slugify(row.title || row.code || row.location || 'bat-dong-san') || 'bat-dong-san';
   return `${base}-${row.id}`;
 }
-
 /**
  * Find listings created/updated AFTER `since` that match the saved search
  * filters. Public surface — only AVAILABLE/BOOKING/OPENING listings, mirroring
@@ -124,7 +113,6 @@ async function findMatchingListings(
   tenantId: string,
 ): Promise<MatchedListing[]> {
   const f = search.filters || {};
-
   // Translate the mobile filter shape into the listingRepository.findListings
   // filter shape.
   const filters: any = {
@@ -140,7 +128,6 @@ async function findMatchingListings(
   if (typeof f.areaMin === 'number') filters.area_gte = f.areaMin;
   if (typeof f.areaMax === 'number') filters.area_lte = f.areaMax;
   if (f.isVerified) filters.isVerified = true;
-
   // listingRepository.findListings returns DESC by created_at with keyset
   // cursors. Walk pages until we cross the watermark so we never miss older
   // unseen matches when more than `pageSize` rows accumulated since the
@@ -187,7 +174,6 @@ async function findMatchingListings(
   out.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   return out;
 }
-
 function formatPrice(price: number | null): string {
   if (!price || price <= 0) return 'Liên hệ';
   if (price >= 1_000_000_000) {
@@ -199,14 +185,12 @@ function formatPrice(price: number | null): string {
   }
   return String(price);
 }
-
 export interface MatchTickResult {
   searchesScanned: number;
   matchesFound: number;
   pushesSent: number;
   pushesFailed: number;
 }
-
 /**
  * One pass of the matching engine. Idempotent + safe to run concurrently
  * (claim is atomic via UNIQUE constraint on the dedup table).
@@ -222,7 +206,6 @@ export async function tickBuyerPushNotifications(
     pushesSent: 0,
     pushesFailed: 0,
   };
-
   const candidates = await buyerPushRepository.findActiveSearchesWithDevice();
   result.searchesScanned = candidates.length;
   if (!candidates.length) return result;
@@ -239,11 +222,9 @@ export async function tickBuyerPushNotifications(
     createdAt: Date;
   }
   const meta: SendMeta[] = [];
-
   for (const { search, device } of candidates) {
     const token = device.expoPushToken;
     if (!isValidExpoPushToken(token) || !token) continue;
-
     // Watermark: anchor at search creation so we never blast the user with
     // the existing back-catalog. After the first tick, the watermark moves
     // forward via `last_notified_at` — but only for successfully delivered
@@ -258,7 +239,6 @@ export async function tickBuyerPushNotifications(
       continue;
     }
     if (!matched.length) continue;
-
     // Per-tick cap — applied BEFORE claiming so we don't lock listings
     // into the dedup log only to drop them. Remaining matches stay
     // unclaimed and roll over to the next tick.
@@ -273,9 +253,7 @@ export async function tickBuyerPushNotifications(
     const claimedSet = new Set(claimed);
     const fresh = slice.filter((m) => claimedSet.has(m.id));
     if (!fresh.length) continue;
-
     result.matchesFound += fresh.length;
-
     for (const m of fresh) {
       const priceTxt = formatPrice(m.price);
       const locTxt = m.location ? ` · ${m.location}` : '';
@@ -303,12 +281,10 @@ export async function tickBuyerPushNotifications(
       });
     }
   }
-
   // Track per-saved-search the max createdAt of SUCCESSFULLY delivered
   // listings. Watermark advances only for those — failed listings get
   // their dedup claim released so the next tick retries them.
   const successMaxByStore = new Map<string, Date>();
-
   // Send in batches of 100 (Expo's per-request cap).
   for (let i = 0; i < messages.length; i += 100) {
     const batch = messages.slice(i, i + 100);
@@ -330,7 +306,6 @@ export async function tickBuyerPushNotifications(
       }
       continue;
     }
-
     for (let j = 0; j < tickets.length; j++) {
       const t = tickets[j];
       const m = meta[i + j];
@@ -363,22 +338,17 @@ export async function tickBuyerPushNotifications(
       }
     }
   }
-
   // Advance watermarks ONLY for successfully delivered listings. Anything
   // failed has already been released from the dedup log and will be
   // re-evaluated on the next tick (because watermark is unchanged for it).
   for (const [savedSearchId, maxCreatedAt] of successMaxByStore) {
     await buyerPushRepository.setLastNotifiedAt(savedSearchId, maxCreatedAt);
   }
-
   return result;
 }
-
 // ── In-process cron driver ───────────────────────────────────────────────────
-
 let pushTimer: NodeJS.Timeout | null = null;
 let pushInFlight = false;
-
 async function runTickGuarded(pool: Pool, label: string): Promise<void> {
   if (pushInFlight) {
     logger.warn(`[push] tick ${label} skipped — previous still in flight`);
@@ -398,7 +368,6 @@ async function runTickGuarded(pool: Pool, label: string): Promise<void> {
     pushInFlight = false;
   }
 }
-
 export function startBuyerPushCron(pool: Pool, opts?: { intervalMs?: number }): void {
   if (pushTimer) return;
   const intervalMs = opts?.intervalMs ?? 15 * 60 * 1000;
@@ -412,7 +381,6 @@ export function startBuyerPushCron(pool: Pool, opts?: { intervalMs?: number }): 
   }, 60_000).unref?.();
   logger.info(`[push] In-process buyer-push cron started (interval=${intervalMs}ms)`);
 }
-
 export function stopBuyerPushCron(): void {
   if (pushTimer) {
     clearInterval(pushTimer);

@@ -8,21 +8,16 @@
  * The cached user payload (id + phone + displayName) lives in AsyncStorage
  * because it's non-sensitive and we want synchronous-ish bootstrap of the UI.
  */
-
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 const TOKEN_KEY = 'sgs.buyer.jwt.v1';
 const USER_KEY = 'sgs.buyer.user.v1';
-
 export interface BuyerUserCache {
   id: string;
   phone: string;
   displayName?: string | null;
 }
-
 let memoryToken: string | null | undefined; // undefined = not yet loaded
-
 export async function getBuyerToken(): Promise<string | null> {
   if (memoryToken !== undefined) return memoryToken;
   try {
@@ -32,7 +27,6 @@ export async function getBuyerToken(): Promise<string | null> {
   }
   return memoryToken;
 }
-
 export async function setBuyerToken(token: string): Promise<void> {
   memoryToken = token;
   try {
@@ -41,7 +35,6 @@ export async function setBuyerToken(token: string): Promise<void> {
     // best effort — keep in-memory copy so the session works for this launch
   }
 }
-
 export async function clearBuyerToken(): Promise<void> {
   memoryToken = null;
   try {
@@ -55,7 +48,6 @@ export async function clearBuyerToken(): Promise<void> {
     /* ignore */
   }
 }
-
 export async function getCachedBuyerUser(): Promise<BuyerUserCache | null> {
   try {
     const raw = await AsyncStorage.getItem(USER_KEY);
@@ -69,7 +61,6 @@ export async function getCachedBuyerUser(): Promise<BuyerUserCache | null> {
   }
   return null;
 }
-
 export async function setCachedBuyerUser(user: BuyerUserCache): Promise<void> {
   try {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));

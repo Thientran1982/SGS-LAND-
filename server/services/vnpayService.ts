@@ -23,10 +23,8 @@
  *
  * Reference: https://sandbox.vnpayment.vn/apis/docs/huong-dan-tich-hop/
  */
-
 import crypto from 'crypto';
 import type { VnpayConfig } from '../config/env';
-
 export interface BuildPaymentInput {
   txnRef: string;
   /** Amount in VND (whole đồng — we multiply by 100 for VNPay). */
@@ -40,7 +38,6 @@ export interface BuildPaymentInput {
    *  app needs the per-booking deep-link). Defaults to config.returnUrl. */
   returnUrl?: string;
 }
-
 /**
  * Strict RFC 3986 percent-encoding for the VNPay signature canonical form.
  *
@@ -57,7 +54,6 @@ function vnpEncode(value: string): string {
     .replace(/\(/g, '%28')
     .replace(/\)/g, '%29');
 }
-
 /** YYYYMMDDHHmmss in Asia/Ho_Chi_Minh (UTC+7). VNPay rejects other tz. */
 export function vnpFormatDate(d: Date = new Date()): string {
   // Convert to UTC+7 by adding the offset, then format components from UTC parts.
@@ -72,7 +68,6 @@ export function vnpFormatDate(d: Date = new Date()): string {
     pad(t.getUTCSeconds())
   );
 }
-
 function buildSignedQuery(
   params: Record<string, string>,
   hashSecret: string,
@@ -95,7 +90,6 @@ function buildSignedQuery(
     .digest('hex');
   return { query: canonical, secureHash };
 }
-
 export function buildPaymentUrl(
   config: VnpayConfig,
   input: BuildPaymentInput,
@@ -115,11 +109,9 @@ export function buildPaymentUrl(
     vnp_CreateDate: vnpFormatDate(),
   };
   if (input.bankCode) params.vnp_BankCode = input.bankCode;
-
   const { query, secureHash } = buildSignedQuery(params, config.hashSecret);
   return `${config.gatewayUrl}?${query}&vnp_SecureHash=${secureHash}`;
 }
-
 export interface VerifyResult {
   valid: boolean;
   responseCode: string | null;
@@ -129,7 +121,6 @@ export interface VerifyResult {
   payDate: string | null;
   raw: Record<string, string>;
 }
-
 /**
  * Verify a callback (return or IPN). Both share the same signing rule, only
  * differ in transport (GET query vs POST body). Caller hands us a flat
@@ -150,7 +141,6 @@ export function verifyCallback(
   const a = Buffer.from(secureHash.toLowerCase(), 'utf-8');
   const b = Buffer.from(provided.toLowerCase(), 'utf-8');
   const valid = a.length === b.length && crypto.timingSafeEqual(a, b);
-
   const amountRaw = flat.vnp_Amount ? Number(flat.vnp_Amount) : null;
   return {
     valid,
@@ -162,7 +152,6 @@ export function verifyCallback(
     raw: flat,
   };
 }
-
 /** Aliases mandated by the task description for clarity at call-sites. */
 export const verifyReturn = verifyCallback;
 export const verifyIpn = verifyCallback;

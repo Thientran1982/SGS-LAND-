@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -8,9 +7,7 @@ import { ListingCard } from '../components/ListingCard';
 import { Dropdown } from '../components/Dropdown';
 import { ROUTES } from '../config/routes';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 const CONFIG = { PAGE_SIZE: 12 };
-
 const SORT_KEYS = [
     { value: 'date_desc',  key: 'favorites.sort_date_desc' },
     { value: 'price_asc',  key: 'favorites.sort_price_asc' },
@@ -18,30 +15,22 @@ const SORT_KEYS = [
     { value: 'area_asc',   key: 'favorites.sort_area_asc' },
     { value: 'area_desc',  key: 'favorites.sort_area_desc' },
 ];
-
 type Toast = { msg: string; type: 'success' | 'error' };
-
 export const Favorites: React.FC = () => {
     const { t, formatCurrency } = useTranslation();
-
     const [allFavorites, setAllFavorites] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-
     const [sortBy, setSortBy] = useState('date_desc');
     const [filterType, setFilterType] = useState<string>('ALL');
-
     const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const removingRef = useRef<Set<string>>(new Set());
-
     const [toast, setToast] = useState<Toast | null>(null);
-
     const notify = useCallback((msg: string, type: Toast['type'] = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const fetchFavorites = useCallback(async () => {
         setLoading(true);
         try {
@@ -53,14 +42,11 @@ export const Favorites: React.FC = () => {
             setLoading(false);
         }
     }, [t, notify]);
-
     useEffect(() => { fetchFavorites(); }, [fetchFavorites]);
-
     const filtered = useMemo(() => {
         let list = filterType === 'ALL'
             ? allFavorites
             : allFavorites.filter(l => l.type === filterType);
-
         list = [...list].sort((a, b) => {
             if (sortBy === 'date_desc')  return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
             if (sortBy === 'price_asc')  return (a.price ?? 0) - (b.price ?? 0);
@@ -69,20 +55,15 @@ export const Favorites: React.FC = () => {
             if (sortBy === 'area_desc')  return (b.area ?? 0) - (a.area ?? 0);
             return 0;
         });
-
         return list;
     }, [allFavorites, sortBy, filterType]);
-
     const totalPages = Math.max(1, Math.ceil(filtered.length / CONFIG.PAGE_SIZE));
     const pagedItems = filtered.slice((page - 1) * CONFIG.PAGE_SIZE, page * CONFIG.PAGE_SIZE);
-
     useEffect(() => { setPage(1); }, [sortBy, filterType]);
-
     const performRemoval = useCallback(async (id: string) => {
         if (removingRef.current.has(id)) return;
         removingRef.current.add(id);
         setRemovedIds(prev => new Set(prev).add(id));
-
         setTimeout(async () => {
             try {
                 await db.removeFromFavorites(id);
@@ -101,28 +82,22 @@ export const Favorites: React.FC = () => {
             }
         }, 300);
     }, [page, pagedItems.length, t]);
-
     const handleConfirmDelete = async () => {
         if (itemToDelete) { await performRemoval(itemToDelete); setItemToDelete(null); }
     };
-
     const handleNavigate = (id: string) => {
         window.location.hash = `#/${ROUTES.LISTING}/${id}`;
     };
-
     const availableTypes = useMemo(() => {
         const types = new Set(allFavorites.map(l => l.type).filter(Boolean));
         return Array.from(types) as string[];
     }, [allFavorites]);
-
     const sortOptions = useMemo(() =>
         SORT_KEYS.map(o => ({ value: o.value, label: t(o.key) })),
     [t]);
-
     return (
         <>
         <div className="p-4 sm:p-6 h-full flex flex-col pb-20 animate-enter relative">
-
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6">
                 {/* Row 1: count label + sort dropdown */}
                 <div className="flex items-center justify-between gap-2">
@@ -159,7 +134,6 @@ export const Favorites: React.FC = () => {
                     </div>
                 )}
             </div>
-
             <div className="flex-1 overflow-auto no-scrollbar">
                 {loading && allFavorites.length === 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -187,7 +161,6 @@ export const Favorites: React.FC = () => {
                                 />
                             </div>
                         ))}
-
                         {pagedItems.length === 0 && !loading && (
                             <div className="col-span-full py-20 text-center">
                                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center">
@@ -220,7 +193,6 @@ export const Favorites: React.FC = () => {
                         )}
                     </div>
                 )}
-
                 {totalPages > 1 && pagedItems.length > 0 && (
                     <div className="flex justify-center items-center gap-4 mt-8 mb-4">
                         <button
@@ -241,7 +213,6 @@ export const Favorites: React.FC = () => {
                     </div>
                 )}
             </div>
-
             {/* ConfirmModal — now properly triggered by both heart button and delete action */}
             <ConfirmModal
                 isOpen={!!itemToDelete}

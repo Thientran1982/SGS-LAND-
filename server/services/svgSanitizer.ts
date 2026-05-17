@@ -19,15 +19,12 @@
  *   - extract distinct `data-code` values from the sanitized output (not the
  *     raw input), guaranteeing what we store matches what we serve.
  */
-
 import { JSDOM } from 'jsdom';
 import createDOMPurify from 'dompurify';
-
 // jsdom's DOMWindow is structurally compatible with the browser Window that
 // DOMPurify expects; keep the cast scoped to this single statement.
 const jsdomWindow = new JSDOM('').window;
 const DOMPurify = createDOMPurify(jsdomWindow as unknown as Window & typeof globalThis);
-
 // Force the SVG profile + tighten the allow-list further.
 // We KEEP `data-*` attributes (we need `data-code`).
 // We do NOT allow scripts, foreignObject, image, animate*, set, switch — the
@@ -70,10 +67,8 @@ const PURIFY_CONFIG: any = {
   // We will inject as inline SVG via dangerouslySetInnerHTML — keep it as XML.
   RETURN_TRUSTED_TYPE: false,
 };
-
 // CSS-in-style-attr / <style> rejection patterns (defense-in-depth).
 const DANGEROUS_CSS_RE = /(expression\s*\(|url\s*\(\s*['"]?\s*javascript:|@import|behaviou?r\s*:)/i;
-
 export interface SanitizeResult {
   /** Sanitized SVG markup (XML serialized, includes <svg> root). */
   svg: string;
@@ -86,7 +81,6 @@ export interface SanitizeResult {
     refs: number;
   };
 }
-
 /**
  * Sanitize SVG markup and extract distinct `data-code` values.
  * Throws if input does not contain a root <svg> or violates the structural
@@ -108,7 +102,6 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
   if (/<!doctype|<!entity|<!\[cdata\[/i.test(head)) {
     throw new Error('SVG_DOCTYPE_NOT_ALLOWED');
   }
-
   // Count what DOMPurify removes for the admin "diff" surface.
   let removedTags = 0;
   let removedAttrs = 0;
@@ -142,7 +135,6 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
   DOMPurify.addHook('uponSanitizeElement', onTag);
   DOMPurify.addHook('uponSanitizeAttribute', onAttr);
   DOMPurify.addHook('uponSanitizeAttribute', onAttrBeforeAccept);
-
   let sanitized: string;
   try {
     // DOMPurify returns the inner HTML of the sanitized fragment as a string.
@@ -151,11 +143,9 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
     DOMPurify.removeHook('uponSanitizeElement');
     DOMPurify.removeHook('uponSanitizeAttribute');
   }
-
   if (!sanitized || !sanitized.toLowerCase().includes('<svg')) {
     throw new Error('SVG_INVALID_ROOT');
   }
-
   // Re-parse the sanitized output so we (a) extract data-codes from the
   // bytes we will actually serve, and (b) can scrub <style> blocks and any
   // dangerous-looking style attribute values DOMPurify may have allowed.
@@ -164,7 +154,6 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
   if (!root || root.nodeName.toLowerCase() === 'parsererror') {
     throw new Error('SVG_INVALID_ROOT');
   }
-
   // Strip dangerous <style> bodies + style="…" attributes (defense-in-depth
   // for CSS-side XSS like url(javascript:)).
   const styleNodes = doc.getElementsByTagName('style');
@@ -203,9 +192,7 @@ export function sanitizeAndParseSvg(rawSvg: string): SanitizeResult {
       if (norm.length > 0 && norm.length <= 64) codeSet.add(norm);
     }
   }
-
   const finalSvg = new jsdomWindow.XMLSerializer().serializeToString(root);
-
   return {
     svg: finalSvg,
     codes: Array.from(codeSet).sort(),

@@ -1,12 +1,8 @@
-
 import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { DICTIONARY } from '../config/locales';
-
 export type Language = 'en' | 'vn';
-
 // Helper type to get keys from the VN dictionary (assuming VN is master)
 type TranslationKey = keyof typeof DICTIONARY['vn'];
-
 interface I18nContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
@@ -19,9 +15,7 @@ interface I18nContextType {
     formatCompactNumber: (amount: number) => string;
     loading: boolean;
 }
-
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
-
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // 1. Synchronous Initialization
     const [language, setLanguageState] = useState<Language>(() => {
@@ -31,7 +25,6 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         return 'vn';
     });
-
     const setLanguage = (lang: Language) => {
         setLanguageState(lang);
         if (typeof window !== 'undefined') {
@@ -39,7 +32,6 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             document.documentElement.lang = lang === 'vn' ? 'vi' : 'en';
         }
     };
-
     /**
      * Core Translation Function
      * Optimized for performance (O(1) lookup)
@@ -47,8 +39,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const t = useCallback((key: string, params?: Record<string, string | number>): string => {
         // Defensive check: Ensure dictionary exists and language key exists
         const dict = DICTIONARY || {};
-        const currentDict = dict[language] || dict['vn'] || {};
-        
+        const currentDict = dict[language] || dict['vn'] || {};        
         let text = (currentDict as Record<string, string>)[key];
 
         // Fallback to the other language if missing
@@ -57,7 +48,6 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const fallbackDict = dict[fallbackLang] || {};
             text = (fallbackDict as Record<string, string>)[key];
         }
-
         if (!text) return key; // Return key if translation missing entirely
 
         if (params) {
@@ -65,20 +55,16 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return params[k] !== undefined ? String(params[k]) : `{${k}}`;
             });
         }
-
         return text;
     }, [language]);
-
     // --- FORMATTERS ---
     const locale = language === 'vn' ? 'vi-VN' : 'en-US';
-
     const formatDate = useCallback((dateStr: string) => {
         if (!dateStr) return '';
         try {
             return new Date(dateStr).toLocaleDateString(locale);
         } catch { return dateStr; }
     }, [locale]);
-
     const formatDateTime = useCallback((dateStr: string) => {
         if (!dateStr) return '';
         try {
@@ -100,7 +86,6 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }).format(amount);
         } catch { return String(amount); }
     }, [language]);
-
     const formatCompactNumber = useCallback((amount: number) => {
         if (!amount) return '0';
         try {
@@ -123,22 +108,19 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return String(amount);
         }
     }, [language, t]);
-
     const formatTime = useCallback((dateStr: string) => {
         if (!dateStr) return '';
         try {
             const d = new Date(dateStr);
             const now = new Date();
             const diffMs = now.getTime() - d.getTime();
-            const diffMins = Math.floor(diffMs / 60000);
-            
+            const diffMins = Math.floor(diffMs / 60000);            
             if (diffMins < 1) return t('time.just_now');
             if (diffMins < 60) return t('time.minutes_ago', { val: diffMins });
             if (diffMins < 1440) return t('time.hours_ago', { val: Math.floor(diffMins / 60) });
             return t('time.days_ago', { val: Math.floor(diffMins / 1440) });
         } catch { return dateStr; }
     }, [t]);
-
     const value = useMemo(() => ({
         language,
         setLanguage,
@@ -153,9 +135,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return React.createElement(I18nContext.Provider, { value }, children);
 };
-
 const noop = () => '';
-
 // Stable fallback returned during Vite HMR module-reload transitions.
 // In those brief moments a new I18nContext identity is created before the
 // provider re-mounts, so useContext returns undefined.
@@ -173,7 +153,6 @@ const getStoredLang = (): Language => {
         return 'vn';
     }
 };
-
 const fallbackT = (key: string, params?: Record<string, string | number>): string => {
     const dict = DICTIONARY || {};
     const lang = getStoredLang();
@@ -191,7 +170,6 @@ const fallbackT = (key: string, params?: Record<string, string | number>): strin
     }
     return text;
 };
-
 const FALLBACK_CONTEXT: I18nContextType = {
     language: 'vn',
     setLanguage: noop as any,
@@ -203,7 +181,6 @@ const FALLBACK_CONTEXT: I18nContextType = {
     formatCompactNumber: () => '0',
     loading: true,
 };
-
 export const useTranslation = () => {
     const context = useContext(I18nContext);
     if (!context) {

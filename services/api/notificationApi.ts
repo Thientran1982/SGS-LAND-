@@ -1,5 +1,4 @@
 import { api } from './apiClient';
-
 export interface AppNotification {
   id: string;
   userId?: string;
@@ -11,23 +10,17 @@ export interface AppNotification {
   readAt: string | null;
   createdAt: string;
 }
-
 export const notificationApi = {
   getAll: (): Promise<{ notifications: AppNotification[]; unreadCount: number }> =>
     api.get('/api/notifications'),
-
   getUnreadCount: (): Promise<{ count: number }> =>
     api.get('/api/notifications/unread-count'),
-
   markRead: (id: string): Promise<AppNotification> =>
     api.patch(`/api/notifications/${id}/read`, {}),
-
   markAllRead: (): Promise<{ success: boolean }> =>
     api.post('/api/notifications/read-all', {}),
-
   deleteOne: (id: string): Promise<{ success: boolean }> =>
     api.delete(`/api/notifications/${id}`),
-
   deleteAllRead: (): Promise<{ success: boolean }> =>
     api.delete('/api/notifications/read-all'),
 };

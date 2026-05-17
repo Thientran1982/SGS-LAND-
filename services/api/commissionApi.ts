@@ -1,15 +1,12 @@
 import { api } from './apiClient';
-
 export type PolicyType = 'FLAT' | 'TIERED' | 'MILESTONE';
 export type LedgerStatus = 'PENDING' | 'DUE' | 'PAID' | 'CANCELLED';
-
 export interface FlatConfig { ratePct: number; }
 export interface TierBand { minUnitsThisMonth: number; ratePct: number; }
 export interface TieredConfig { tiers: TierBand[]; }
 export interface MilestoneStep { key: string; label: string; pct: number; offsetDays: number; }
 export interface MilestoneConfig { ratePct: number; milestones: MilestoneStep[]; }
 export type PolicyConfig = FlatConfig | TieredConfig | MilestoneConfig;
-
 export interface CommissionPolicy {
   id: string;
   tenantId: string;
@@ -23,7 +20,6 @@ export interface CommissionPolicy {
   created_at: string;
   updated_at: string;
 }
-
 export interface LedgerItem {
   id: string;
   tenant_id: string;
@@ -50,7 +46,6 @@ export interface LedgerItem {
   sales_user_name?: string | null;
   partner_tenant_name?: string | null;
 }
-
 export interface LedgerListResponse {
   data: LedgerItem[];
   total: number;
@@ -58,7 +53,6 @@ export interface LedgerListResponse {
   pageSize: number;
   totalPages: number;
 }
-
 export interface ProjectCommissionSummary {
   totalCount: number;
   pending: number;
@@ -75,21 +69,16 @@ export interface ProjectCommissionSummary {
     sales:    Array<{ sales_user_id: string | null; sales_name: string | null; units: number; gross: string | number }>;
   };
 }
-
 export const commissionApi = {
   // Policies (admin)
   listPolicies: (projectId: string): Promise<{ data: CommissionPolicy[] }> =>
     api.get(`/api/projects/${projectId}/commission-policies`),
-
   createPolicy: (projectId: string, body: { type: PolicyType; config: PolicyConfig }): Promise<CommissionPolicy> =>
     api.post(`/api/projects/${projectId}/commission-policies`, body),
-
   closeActivePolicy: (projectId: string): Promise<{ closed: number }> =>
     api.post(`/api/projects/${projectId}/commission-policies/close`),
-
   getProjectSummary: (projectId: string): Promise<ProjectCommissionSummary> =>
     api.get(`/api/projects/${projectId}/commission-summary`),
-
   // Ledger
   list: (params: {
     page?: number; pageSize?: number;
@@ -97,13 +86,10 @@ export const commissionApi = {
     status?: LedgerStatus; fromDate?: string; toDate?: string;
   } = {}): Promise<LedgerListResponse> =>
     api.get('/api/commissions', { ...params }),
-
   markPaid: (id: string, note?: string): Promise<LedgerItem> =>
     api.patch(`/api/commissions/${id}/mark-paid`, { note: note || null }),
-
   markPaidBulk: (ids: string[], note?: string): Promise<{ updated: number; requested: number; ids: string[] }> =>
     api.post(`/api/commissions/mark-paid-bulk`, { ids, note: note || null }),
-
   exportXlsxUrl: (params: Record<string, string | undefined> = {}): string => {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);

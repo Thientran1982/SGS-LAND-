@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../services/i18n';
 import { ROUTES } from '../config/routes';
@@ -6,13 +5,11 @@ import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
-
 // -----------------------------------------------------------------------------
 //  LEGAL CONTENT — Comprehensive Vietnamese Law-Compliant Texts
 //  Tuân thủ: NĐ 13/2023/NĐ-CP, Luật ATTT 2018, Luật GDĐT 2023,
 //            Luật BVQLNTD 2023, BLDS 2015, Luật TM 2005, NĐ 52/2013/NĐ-CP
 // -----------------------------------------------------------------------------
-
 const LEGAL_CONTENT = {
     vn: {
         privacy: [
@@ -239,22 +236,17 @@ const LEGAL_CONTENT = {
         ]
     }
 };
-
 // -----------------------------------------------------------------------------
 //  LAYOUT COMPONENT
 // -----------------------------------------------------------------------------
-
 const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpdated: string }> = ({ title, children, lastUpdated }) => {
     const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
@@ -273,25 +265,21 @@ const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpda
                     </button>
                 </div>
             </div>
-
             {/* Content */}
             <div className="max-w-4xl mx-auto px-6 py-12 md:py-20 animate-enter">
                 {/* Disclaimer banner */}
                 <div className="mb-10 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-5 py-4 text-sm text-amber-800 dark:text-amber-300">
                     <strong>Lưu ý pháp lý quan trọng:</strong> Tài liệu này được cung cấp nhằm mục đích thông tin. SGS LAND đã nỗ lực xây dựng nội dung tuân thủ pháp luật Việt Nam hiện hành. Tuy nhiên, đối với các giao dịch có giá trị lớn hoặc tranh chấp pháp lý phức tạp, chúng tôi khuyến nghị bạn tham vấn luật sư có chứng chỉ hành nghề.
                 </div>
-
                 <div className="text-center mb-16">
                     <h1 className="text-3xl md:text-5xl font-black text-[var(--text-primary)] mb-4 tracking-tight">{title}</h1>
                     <p className="text-[var(--text-tertiary)] font-mono text-sm uppercase tracking-widest">{t('legal.last_updated')}: {lastUpdated}</p>
                 </div>
-
                 <div className="bg-[var(--bg-surface)] p-8 md:p-16 rounded-[32px] border border-[var(--glass-border)] shadow-sm">
                     <div className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-p:leading-relaxed prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline prose-li:text-[var(--text-secondary)]">
                         {children}
                     </div>
                 </div>
-
                 {/* Cross-links footer */}
                 <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-slate-500">
                     <button onClick={() => window.location.hash = `#/${ROUTES.PRIVACY}`} className="hover:text-indigo-600 transition-colors">{t('legal.privacy_title')}</button>
@@ -309,15 +297,12 @@ const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpda
         </div>
     );
 };
-
 // -----------------------------------------------------------------------------
 //  PAGES
 // -----------------------------------------------------------------------------
-
 export const PrivacyPolicy: React.FC = () => {
     const { t, language } = useTranslation();
     const content = language === 'vn' ? LEGAL_CONTENT.vn.privacy : LEGAL_CONTENT.en.privacy;
-
     return (
         <>
             <SeoHead
@@ -345,7 +330,6 @@ export const PrivacyPolicy: React.FC = () => {
         </>
     );
 };
-
 export const TermsOfService: React.FC = () => {
     const { t, language } = useTranslation();
     const content = language === 'vn' ? LEGAL_CONTENT.vn.terms : LEGAL_CONTENT.en.terms;
@@ -377,7 +361,6 @@ export const TermsOfService: React.FC = () => {
         </>
     );
 };
-
 export const CookieSettings: React.FC = () => {
     const { t } = useTranslation();
     const [prefs, setPref] = useState({ essential: true, analytics: true, marketing: false });
@@ -387,7 +370,6 @@ export const CookieSettings: React.FC = () => {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
     };
-
     return (
         <LegalLayout title={t('legal.cookies_title')} lastUpdated="01/04/2025">
             <p className="lead">{t('legal.cookie_desc')}</p>
@@ -405,7 +387,6 @@ export const CookieSettings: React.FC = () => {
                         </svg>
                     </div>
                 </div>
-
                 <div className="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--glass-border)] flex justify-between items-center">
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] text-sm mb-1">{t('legal.cookie_analytics')}</h4>
@@ -416,7 +397,6 @@ export const CookieSettings: React.FC = () => {
                         <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--bg-surface)] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                 </div>
-
                 <div className="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--glass-border)] flex justify-between items-center">
                     <div>
                         <h4 className="font-bold text-[var(--text-primary)] text-sm mb-1">{t('legal.cookie_marketing')}</h4>
@@ -428,14 +408,12 @@ export const CookieSettings: React.FC = () => {
                     </label>
                 </div>
             </div>
-
             <button 
                 onClick={handleSave} 
                 className={`px-8 py-3 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 ${saved ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-900 hover:bg-indigo-600'}`}
             >
                 {saved ? t('legal.saved_changes') : t('legal.save_pref')}
             </button>
-
             <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
                 <h3 className="mb-4">{t('legal.cookie_about_title')}</h3>
                 <p>{t('legal.cookie_about_desc')}</p>

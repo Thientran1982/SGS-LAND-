@@ -3,7 +3,6 @@ import { ROUTES } from '../config/routes';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
-
 const LOCATION_SEO_META: Record<string, { title: string; description: string }> = {
     'bat-dong-san-dong-nai': {
         title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2026 — SGS LAND',
@@ -50,7 +49,6 @@ const LOCATION_SEO_META: Record<string, { title: string; description: string }> 
         description: 'Hướng dẫn pháp lý nhà đất: kiểm tra sổ đỏ, quy hoạch, thủ tục mua bán, công chứng và sang tên. SGS LAND kiểm tra pháp lý miễn phí trong 24 giờ.',
     },
 };
-
 interface LocationConfig {
     slug: string;
     name: string;
@@ -64,7 +62,6 @@ interface LocationConfig {
     relatedLocations: { name: string; slug: string }[];
     relatedProjects: { name: string; slug: string }[];
 }
-
 const LOCATION_CONFIG: Record<string, LocationConfig> = {
     'bat-dong-san-dong-nai': {
         slug: 'bat-dong-san-dong-nai',
@@ -953,20 +950,16 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         ],
     },
 };
-
 function navigate(path: string) {
     window.history.pushState(null, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
 }
-
 export default function LocalLandingPage() {
     const { t } = useTranslation();
     const [listings, setListings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-
     const slug = window.location.pathname.replace(/^\//, '').split('/')[0];
     const cfg = LOCATION_CONFIG[slug];
-
     useEffect(() => {
         if (!cfg) return;
         setLoading(true);
@@ -976,7 +969,6 @@ export default function LocalLandingPage() {
             .catch(() => setListings([]))
             .finally(() => setLoading(false));
     }, [cfg?.searchQuery]);
-
     if (!cfg) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)]">
@@ -984,18 +976,15 @@ export default function LocalLandingPage() {
             </div>
         );
     }
-
     const fmtPrice = (p: number) => {
         if (p >= 1e9) return `${(p / 1e9).toFixed(1)} tỷ`;
         if (p >= 1e6) return `${Math.round(p / 1e6)} triệu`;
         return p.toLocaleString('vi-VN');
     };
-
     const seoMeta = LOCATION_SEO_META[slug] ?? {
         title: `Bất Động Sản ${cfg.name} | Nhà Phố, Căn Hộ - SGS LAND`,
         description: cfg.heroDescription.slice(0, 155),
     };
-
     return (
         <>
             <SeoHead
@@ -1097,7 +1086,6 @@ export default function LocalLandingPage() {
                     </button>
                 </div>
             </header>
-
             {/* ── Hero ── */}
             <section className="bg-gradient-to-br from-[var(--primary-600)]/10 via-[var(--bg-surface)] to-[var(--bg-app)] pt-12 pb-10 px-4">
                 <div className="max-w-6xl mx-auto">
@@ -1116,7 +1104,6 @@ export default function LocalLandingPage() {
                     <p className="text-[var(--text-secondary)] text-base md:text-lg max-w-3xl leading-relaxed mb-8">
                         {cfg.heroDescription}
                     </p>
-
                     {/* Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {cfg.stats.map((s, i) => (
@@ -1128,7 +1115,6 @@ export default function LocalLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── Highlights ── */}
             <section className="py-12 px-4 bg-[var(--bg-surface)]">
                 <div className="max-w-6xl mx-auto">
@@ -1151,7 +1137,6 @@ export default function LocalLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── Listings ── */}
             <section className="py-12 px-4 bg-[var(--bg-app)]">
                 <div className="max-w-6xl mx-auto">
@@ -1167,7 +1152,6 @@ export default function LocalLandingPage() {
                             Xem tất cả →
                         </button>
                     </div>
-
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {[...Array(6)].map((_, i) => (
@@ -1222,7 +1206,6 @@ export default function LocalLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── FAQ ── */}
             <section className="py-12 px-4 bg-[var(--bg-surface)]">
                 <div className="max-w-3xl mx-auto">
@@ -1231,7 +1214,6 @@ export default function LocalLandingPage() {
                     <FAQAccordion items={cfg.faqs} />
                 </div>
             </section>
-
             {/* ── Internal Links ── */}
             <section className="py-10 px-4 bg-[var(--bg-app)]">
                 <div className="max-w-6xl mx-auto">
@@ -1258,7 +1240,6 @@ export default function LocalLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── CTA ── */}
             <section className="py-14 px-4 bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-600)]/80 text-white">
                 <div className="max-w-3xl mx-auto text-center">
@@ -1280,7 +1261,6 @@ export default function LocalLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── Footer ── */}
             <footer className="bg-[var(--bg-surface)] border-t border-[var(--glass-border)] py-8 px-4">
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1308,7 +1288,6 @@ export default function LocalLandingPage() {
         </>
     );
 }
-
 function FAQAccordion({ items }: { items: { q: string; a: string }[] }) {
     const [open, setOpen] = useState<number | null>(null);
     return (

@@ -4,12 +4,10 @@ import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import type { PublicListing } from '../api/types';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { formatVnd } from '../utils/format';
-
 interface Props {
   listings: PublicListing[];
   onSelect: (item: PublicListing) => void;
 }
-
 // Default region centred on Ho Chi Minh City (the bulk of inventory). When
 // listings carry coordinates we recompute a region that fits them all.
 const DEFAULT_REGION = {
@@ -18,15 +16,12 @@ const DEFAULT_REGION = {
   latitudeDelta: 0.4,
   longitudeDelta: 0.4,
 };
-
 export const ListingsMap: React.FC<Props> = ({ listings, onSelect }) => {
   const mapRef = useRef<MapView | null>(null);
-
   const pinned = useMemo(
     () => listings.filter((l) => l.coordinates && Number.isFinite(l.coordinates.lat) && Number.isFinite(l.coordinates.lng)),
     [listings],
   );
-
   // Re-fit the map whenever the result set changes — `initialRegion` only
   // applies on first mount, so without this the map stays zoomed on the
   // previous filter when the user changes chips while in Map mode.
@@ -38,7 +33,6 @@ export const ListingsMap: React.FC<Props> = ({ listings, onSelect }) => {
       animated: true,
     });
   }, [pinned]);
-
   const region = useMemo(() => {
     if (pinned.length === 0) return DEFAULT_REGION;
     const lats = pinned.map((l) => l.coordinates!.lat);
@@ -56,7 +50,6 @@ export const ListingsMap: React.FC<Props> = ({ listings, onSelect }) => {
       longitudeDelta: lngDelta,
     };
   }, [pinned]);
-
   if (pinned.length === 0) {
     return (
       <View style={styles.emptyWrap}>
@@ -68,7 +61,6 @@ export const ListingsMap: React.FC<Props> = ({ listings, onSelect }) => {
       </View>
     );
   }
-
   return (
     <View style={styles.container}>
       <MapView
@@ -99,13 +91,11 @@ export const ListingsMap: React.FC<Props> = ({ listings, onSelect }) => {
     </View>
   );
 };
-
 function compactPrice(n: number): string {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(n >= 10_000_000_000 ? 0 : 1)} tỷ`;
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} tr`;
   return String(n);
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgMuted },
   pin: {

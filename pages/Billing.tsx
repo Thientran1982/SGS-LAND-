@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { db, PLANS } from '../services/dbApi';
@@ -7,14 +6,12 @@ import { useTranslation } from '../services/i18n';
 import { PlanTier, Subscription, Invoice, UsageMetrics, Plan } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ROUTES } from '../config/routes';
-
 const ICONS = {
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
     DOWNLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4-4m4 4V4" /></svg>,
     CREDIT_CARD: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>,
     STAR: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
 };
-
 export const Billing: React.FC = () => {
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [usage, setUsage] = useState<UsageMetrics | null>(null);
@@ -23,14 +20,11 @@ export const Billing: React.FC = () => {
     const [processingPlan, setProcessingPlan] = useState<string | null>(null);
     const [upgradeConfirmPlan, setUpgradeConfirmPlan] = useState<PlanTier | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-
     const { t, formatDate, formatCurrency } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     useEffect(() => {
         const load = async () => {
             setLoading(true);
@@ -51,7 +45,6 @@ export const Billing: React.FC = () => {
         };
         load();
     }, []);
-
     const handleUpgrade = async () => {
         if (!upgradeConfirmPlan) return;
         const plan = upgradeConfirmPlan;
@@ -78,7 +71,6 @@ export const Billing: React.FC = () => {
             setProcessingPlan(null);
         }
     };
-
     const handleDownloadInvoice = (invoice: Invoice) => {
         notify(t('billing.downloading'), 'success');
         const anyInv = invoice as any;
@@ -107,11 +99,8 @@ export const Billing: React.FC = () => {
         a.click();
         URL.revokeObjectURL(url);
     };
-
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
-
     const currentPlan = PLANS[subscription?.planId as PlanTier] || PLANS.INDIVIDUAL;
-
     return (
         <>
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
@@ -133,7 +122,6 @@ export const Billing: React.FC = () => {
                     </div>
                 )}
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Current Usage */}
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col">
@@ -143,7 +131,6 @@ export const Billing: React.FC = () => {
                             {t(`billing.plan_${currentPlan.name.toLowerCase()}`)}
                         </span>
                     </h3>
-
                     <div className="space-y-6 flex-1">
                         <div>
                             <div className="flex justify-between text-xs mb-1.5">
@@ -178,7 +165,6 @@ export const Billing: React.FC = () => {
                         {t('billing.renews')}: <span className="font-mono text-[var(--text-secondary)]">{formatDate(subscription?.currentPeriodEnd || '')}</span>
                     </div>
                 </div>
-
                 {/* Plans */}
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                     {(Object.values(PLANS) as Plan[]).map((plan) => {
@@ -217,7 +203,6 @@ export const Billing: React.FC = () => {
                     })}
                 </div>
             </div>
-
             {/* Invoice History */}
             <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('billing.invoice_history')}</h3>
@@ -277,7 +262,6 @@ export const Billing: React.FC = () => {
                     </div>
                 )}
             </div>
-
             <ConfirmModal
                 isOpen={!!upgradeConfirmPlan}
                 title={t('billing.confirm_upgrade_title')}

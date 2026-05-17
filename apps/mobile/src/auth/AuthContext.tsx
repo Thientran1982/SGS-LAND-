@@ -12,7 +12,6 @@
  * tears the session down automatically if the token expires server-side
  * mid-session.
  */
-
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   clearBuyerToken,
@@ -28,7 +27,6 @@ import { syncSavedSearches } from '../storage/savedSearches';
 import { setCachedPushToken } from '../storage/device';
 import { ensurePushRegistration } from '../notifications/registerPushToken';
 import { disconnectRealtime } from '../realtime/socket';
-
 interface AuthContextValue {
   user: BuyerUser | null;
   loading: boolean;
@@ -36,13 +34,10 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
-
 const AuthContext = createContext<AuthContextValue | null>(null);
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<BuyerUser | null>(null);
   const [loading, setLoading] = useState(true);
-
   // Hydrate from cache + validate against /me.
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +67,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, []);
-
   // Listen for cross-cutting 401s from the fetch wrapper.
   useEffect(() => {
     return onApiUnauthorized(() => {
@@ -87,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
     });
   }, []);
-
   const signIn = useCallback(async (token: string, nextUser: BuyerUser) => {
     await setBuyerToken(token);
     const cache: BuyerUserCache = {
@@ -115,7 +108,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []);
-
   const signOut = useCallback(async () => {
     try {
       await buyerAuthApi.logout();
@@ -137,7 +129,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await clearLocalFavorites();
     setUser(null);
   }, []);
-
   const refresh = useCallback(async () => {
     try {
       const me = await buyerAuthApi.me();
@@ -151,15 +142,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }, []);
-
   const value = useMemo<AuthContextValue>(
     () => ({ user, loading, signIn, signOut, refresh }),
     [user, loading, signIn, signOut, refresh],
   );
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');

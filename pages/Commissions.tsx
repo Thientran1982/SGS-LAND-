@@ -2,35 +2,29 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { commissionApi, type LedgerItem, type LedgerStatus } from '../services/api/commissionApi';
 import { db } from '../services/dbApi';
 import { Dropdown } from '../components/Dropdown';
-
 const PAGE_SIZE = 25;
-
 const STATUS_LABEL: Record<LedgerStatus, string> = {
   PENDING:   'Chờ chốt',
   DUE:       'Đến hạn',
   PAID:      'Đã thanh toán',
   CANCELLED: 'Đã huỷ',
 };
-
 const STATUS_COLOR: Record<LedgerStatus, string> = {
   PENDING:   'bg-amber-50 text-amber-700 border-amber-200',
   DUE:       'bg-orange-50 text-orange-700 border-orange-200',
   PAID:      'bg-emerald-50 text-emerald-700 border-emerald-200',
   CANCELLED: 'bg-slate-100 text-slate-600 border-slate-200',
 };
-
 function fmtMoney(v: string | number | null | undefined): string {
   if (v === null || v === undefined) return '—';
   const n = typeof v === 'string' ? Number(v) : v;
   if (!Number.isFinite(n)) return '—';
   return new Intl.NumberFormat('vi-VN').format(Math.round(n)) + ' ₫';
 }
-
 function fmtDate(s: string | null | undefined): string {
   if (!s) return '—';
   try { return new Date(s).toLocaleDateString('vi-VN'); } catch { return s; }
 }
-
 export const Commissions: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
   const [projects, setProjects] = useState<Array<{ id: string; name: string; code: string }>>([]);
@@ -39,31 +33,25 @@ export const Commissions: React.FC = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-
   const [fProjectId, setFProjectId] = useState<string>('');
   const [fStatus, setFStatus] = useState<string>('');
   const [fFrom, setFFrom] = useState<string>('');
   const [fTo, setFTo] = useState<string>('');
-
   const [paying, setPaying] = useState<string | null>(null);
   const [bulkPaying, setBulkPaying] = useState(false);
   const [payNote, setPayNote] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 2500);
     return () => clearTimeout(t);
   }, [toast]);
-
   const isAdmin = !!user && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(user.role);
-
   useEffect(() => {
     db.getCurrentUser().then(setUser).catch(() => setUser(null));
     db.getProjects(1, 200).then((r: any) => setProjects(r?.data || [])).catch(() => {});
   }, []);
-
   const load = useCallback(() => {
     setLoading(true);
     setErr(null);
@@ -78,9 +66,7 @@ export const Commissions: React.FC = () => {
       .catch(e => setErr(e?.message || 'Không tải được danh sách hoa hồng'))
       .finally(() => setLoading(false));
   }, [page, fProjectId, fStatus, fFrom, fTo]);
-
   useEffect(() => { load(); }, [load]);
-
   const totals = useMemo(() => {
     const sum = (key: 'pending' | 'paid') =>
       items
@@ -88,7 +74,6 @@ export const Commissions: React.FC = () => {
         .reduce((acc, i) => acc + Number(i.gross_amount || 0), 0);
     return { pending: sum('pending'), paid: sum('paid') };
   }, [items]);
-
   const handlePaid = async (id: string) => {
     try {
       setPaying(id);
@@ -102,7 +87,6 @@ export const Commissions: React.FC = () => {
       setPaying(null);
     }
   };
-
   const handleBulkPaid = async () => {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
@@ -120,7 +104,6 @@ export const Commissions: React.FC = () => {
       setBulkPaying(false);
     }
   };
-
   const toggleSelect = (id: string) => {
     setSelected(prev => {
       const next = new Set(prev);
@@ -128,7 +111,6 @@ export const Commissions: React.FC = () => {
       return next;
     });
   };
-
   const eligibleIds = items.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').map(i => i.id);
   const allEligibleSelected = eligibleIds.length > 0 && eligibleIds.every(id => selected.has(id));
   const toggleSelectAll = () => {
@@ -143,16 +125,13 @@ export const Commissions: React.FC = () => {
       return next;
     });
   };
-
   const exportUrl = commissionApi.exportXlsxUrl({
     projectId: fProjectId || undefined,
     status:    fStatus || undefined,
     fromDate:  fFrom || undefined,
     toDate:    fTo || undefined,
   });
-
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
   return (
     <div className="p-4 sm:p-6 max-w-[1400px] mx-auto">
       <header className="flex flex-wrap items-end justify-between gap-3 mb-4">
@@ -169,14 +148,12 @@ export const Commissions: React.FC = () => {
           ⬇ Xuất Excel
         </a>
       </header>
-
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <Stat label="Tổng dòng hiện hiển thị" value={String(items.length)} />
         <Stat label="Tổng kết quả" value={String(total)} />
         <Stat label="Đang chờ chi" value={fmtMoney(totals.pending)} />
         <Stat label="Đã thanh toán (trang)" value={fmtMoney(totals.paid)} />
       </div>
-
       <div className="flex flex-wrap items-center gap-2 mb-3 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)]">
         <Dropdown
           value={fProjectId}
@@ -227,7 +204,6 @@ export const Commissions: React.FC = () => {
           {err}
         </div>
       )}
-
       <div className="rounded-2xl border border-[var(--glass-border)] bg-white dark:bg-slate-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -308,7 +284,6 @@ export const Commissions: React.FC = () => {
             </tbody>
           </table>
         </div>
-
         {pageCount > 1 && (
           <div className="flex items-center justify-between px-3 py-2 border-t border-[var(--glass-border)] text-sm">
             <div className="text-[var(--text-tertiary)]">Trang {page} / {pageCount} · Tổng {total}</div>
@@ -321,7 +296,6 @@ export const Commissions: React.FC = () => {
           </div>
         )}
       </div>
-
       {isAdmin && (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
           <span>Ghi chú khi đánh dấu thanh toán:</span>
@@ -345,7 +319,6 @@ export const Commissions: React.FC = () => {
           )}
         </div>
       )}
-
       {toast && (
         <div className={`fixed bottom-6 right-6 px-4 py-2 rounded-xl shadow-lg text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
           {toast.msg}
@@ -354,12 +327,10 @@ export const Commissions: React.FC = () => {
     </div>
   );
 };
-
 const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)]">
     <div className="text-xs text-[var(--text-tertiary)]">{label}</div>
     <div className="text-lg font-extrabold text-[var(--text-primary)] mt-1">{value}</div>
   </div>
 );
-
 export default Commissions;

@@ -4,9 +4,7 @@ import {
   AlertCircle, Info, Globe, Server, Zap, Clock, ChevronDown, ChevronUp,
   X, Check, ShieldAlert, CheckCircle2
 } from 'lucide-react';
-
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 interface ErrorLogEntry {
   id: number;
   type: 'frontend' | 'backend' | 'unhandled_promise' | 'chunk_load';
@@ -23,7 +21,6 @@ interface ErrorLogEntry {
   resolvedBy?: string;
   createdAt: string;
 }
-
 interface ErrorStats {
   total: number;
   unresolved: number;
@@ -31,28 +28,23 @@ interface ErrorStats {
   bySeverity: Record<string, number>;
   trend: { date: string; count: number }[];
 }
-
 // ─── Config maps ──────────────────────────────────────────────────────────────
-
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; dot: string }> = {
   frontend:         { label: 'Giao diện (Frontend)', icon: <Globe size={14} />,    color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10',   dot: 'bg-blue-500' },
   backend:          { label: 'Máy chủ (Backend)',     icon: <Server size={14} />,   color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10', dot: 'bg-purple-500' },
   unhandled_promise:{ label: 'Bất đồng bộ (Promise)', icon: <Zap size={14} />,     color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10', dot: 'bg-amber-500' },
   chunk_load:       { label: 'Tải module (Chunk)',    icon: <RefreshCw size={14} />, color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-500/10',    dot: 'bg-cyan-500' },
 };
-
 const SEVERITY_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; dot: string }> = {
   warning:  { label: 'Cảnh báo',      icon: <Info size={14} />,         color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',     dot: 'bg-amber-400' },
   error:    { label: 'Lỗi',           icon: <AlertCircle size={14} />,  color: 'text-rose-600',  bg: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20',         dot: 'bg-rose-500' },
   critical: { label: 'Nghiêm trọng',  icon: <AlertTriangle size={14} />,color: 'text-red-700',   bg: 'bg-red-50 dark:bg-red-600/10 border-red-300 dark:border-red-500/30',            dot: 'bg-red-600' },
 };
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
 }
-
 function relativeDiff(ms: number): string {
   const s = Math.floor(ms / 1000);
   if (s < 60)  return `${s}s trước`;
@@ -62,9 +54,7 @@ function relativeDiff(ms: number): string {
   if (h < 24)  return `${h} giờ trước`;
   return `${Math.floor(h / 24)} ngày trước`;
 }
-
 // ─── Sparkline 30 ngày ────────────────────────────────────────────────────────
-
 function TrendSparkline({ trend }: { trend: { date: string; count: number }[] }) {
   if (!trend.length) return (
     <div className="flex items-end gap-[2px] h-8 opacity-20">
@@ -88,27 +78,22 @@ function TrendSparkline({ trend }: { trend: { date: string; count: number }[] })
     </div>
   );
 }
-
 // ─── Custom Dropdown ──────────────────────────────────────────────────────────
-
 interface DropdownOption {
   value: string;
   label: string;
   icon?: React.ReactNode;
   dotColor?: string;
 }
-
 interface FilterDropdownProps {
   value: string;
   onChange: (v: string) => void;
   options: DropdownOption[];
   placeholder: string;
 }
-
 function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -116,10 +101,8 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
     if (open) document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, [open]);
-
   const selected = options.find(o => o.value === value);
   const label = selected ? selected.label : placeholder;
-
   return (
     <div ref={ref} className="relative">
       <button
@@ -167,9 +150,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
     </div>
   );
 }
-
 // ─── Options ──────────────────────────────────────────────────────────────────
-
 const TYPE_OPTIONS: DropdownOption[] = [
   { value: '', label: 'Tất cả loại lỗi' },
   { value: 'frontend',          label: 'Giao diện (Frontend)',    icon: <Globe size={14} />,     dotColor: 'bg-blue-500' },
@@ -177,22 +158,18 @@ const TYPE_OPTIONS: DropdownOption[] = [
   { value: 'unhandled_promise', label: 'Bất đồng bộ (Promise)',  icon: <Zap size={14} />,       dotColor: 'bg-amber-500' },
   { value: 'chunk_load',        label: 'Tải module (Chunk)',      icon: <RefreshCw size={14} />, dotColor: 'bg-cyan-500' },
 ];
-
 const SEVERITY_OPTIONS: DropdownOption[] = [
   { value: '',         label: 'Tất cả mức độ' },
   { value: 'warning',  label: 'Cảnh báo',     icon: <Info size={14} />,          dotColor: 'bg-amber-400' },
   { value: 'error',    label: 'Lỗi',          icon: <AlertCircle size={14} />,   dotColor: 'bg-rose-500' },
   { value: 'critical', label: 'Nghiêm trọng', icon: <AlertTriangle size={14} />, dotColor: 'bg-red-600' },
 ];
-
 const STATUS_OPTIONS: DropdownOption[] = [
   { value: 'false', label: 'Chưa xử lý', icon: <ShieldAlert size={14} />,   dotColor: 'bg-rose-500' },
   { value: 'true',  label: 'Đã xử lý',   icon: <CheckCircle2 size={14} />,  dotColor: 'bg-emerald-500' },
   { value: '',      label: 'Tất cả',     icon: <Filter size={14} /> },
 ];
-
 // ─── Main Component ───────────────────────────────────────────────────────────
-
 export default function ErrorMonitor() {
   const [entries, setEntries]           = useState<ErrorLogEntry[]>([]);
   const [stats, setStats]               = useState<ErrorStats | null>(null);
@@ -205,9 +182,7 @@ export default function ErrorMonitor() {
   const [filterResolved, setFilterResolved] = useState<string>('false');
   const [expandedId, setExpandedId]     = useState<number | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-
   const PAGE_SIZE = 30;
-
   const fetchData = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
@@ -216,14 +191,11 @@ export default function ErrorMonitor() {
       if (filterType)     params.set('type',     filterType);
       if (filterSeverity) params.set('severity', filterSeverity);
       if (filterResolved) params.set('resolved', filterResolved);
-
       const [listRes, statsRes] = await Promise.all([
         fetch(`/api/error-logs?${params}`, { credentials: 'include' }),
         fetch('/api/error-logs/stats',      { credentials: 'include' }),
       ]);
-
       if (!listRes.ok || !statsRes.ok) throw new Error('Không có quyền truy cập hoặc lỗi máy chủ');
-
       const [listData, statsData] = await Promise.all([listRes.json(), statsRes.json()]);
       setEntries(listData.items ?? []);
       setTotal(listData.total ?? 0);
@@ -234,9 +206,7 @@ export default function ErrorMonitor() {
       setLoading(false);
     }
   }, [page, filterType, filterSeverity, filterResolved]);
-
   useEffect(() => { fetchData(); }, [fetchData]);
-
   const handleResolve = async (id: number) => {
     setActionLoading(true);
     try {
@@ -246,7 +216,6 @@ export default function ErrorMonitor() {
       setActionLoading(false);
     }
   };
-
   const handleResolveAll = async () => {
     if (!window.confirm('Đánh dấu tất cả lỗi chưa xử lý là đã giải quyết?')) return;
     setActionLoading(true);
@@ -257,7 +226,6 @@ export default function ErrorMonitor() {
       setActionLoading(false);
     }
   };
-
   const handleDeleteResolved = async () => {
     if (!window.confirm('Xóa vĩnh viễn tất cả lỗi đã xử lý? Thao tác không thể hoàn tác.')) return;
     setActionLoading(true);
@@ -268,19 +236,15 @@ export default function ErrorMonitor() {
       setActionLoading(false);
     }
   };
-
   const clearFilters = () => { setFilterType(''); setFilterSeverity(''); setFilterResolved('false'); setPage(1); };
   const hasActiveFilter = filterType !== '' || filterSeverity !== '' || filterResolved === '';
   const totalPages = Math.ceil(total / PAGE_SIZE);
-
   // Derived stats
   const resolved  = stats ? stats.total - stats.unresolved : 0;
   const resolvedPct = stats && stats.total > 0 ? Math.round((resolved / stats.total) * 100) : 0;
   const unresolved = stats?.unresolved ?? 0;
-
   return (
     <div className="min-h-full bg-[var(--bg-app)] text-[var(--text-primary)] p-4 md:p-6 space-y-5">
-
       {/* ── Header ───────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -297,7 +261,6 @@ export default function ErrorMonitor() {
             </span>
           )}
         </div>
-
         <div className="flex items-center gap-2">
           <button
             onClick={fetchData}
@@ -327,7 +290,6 @@ export default function ErrorMonitor() {
           </button>
         </div>
       </div>
-
       {/* ── KPI Cards ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* Tổng lỗi */}
@@ -337,7 +299,6 @@ export default function ErrorMonitor() {
           </div>
           <div className="text-xs text-[var(--text-secondary)] mt-0.5">Tổng lỗi đã ghi nhận</div>
         </div>
-
         {/* Chưa xử lý */}
         <div className={`rounded-2xl p-4 border ${unresolved > 0 ? 'border-rose-200 dark:border-rose-500/20 bg-rose-50/50 dark:bg-rose-500/5' : 'border-[var(--glass-border)] bg-[var(--bg-surface)]'}`}>
           <div className={`text-2xl font-bold ${unresolved > 0 ? 'text-rose-600' : 'text-[var(--text-primary)]'}`}>
@@ -353,7 +314,6 @@ export default function ErrorMonitor() {
             </div>
           )}
         </div>
-
         {/* Đã xử lý */}
         <div className="bg-[var(--bg-surface)] rounded-2xl p-4 border border-[var(--glass-border)]">
           <div className="text-2xl font-bold text-emerald-600">
@@ -374,7 +334,6 @@ export default function ErrorMonitor() {
             </div>
           )}
         </div>
-
         {/* 30-ngày trend */}
         <div className="bg-[var(--bg-surface)] rounded-2xl p-4 border border-[var(--glass-border)]">
           <div className="text-xs font-medium text-[var(--text-secondary)] mb-2">Xu hướng 30 ngày qua</div>
@@ -386,7 +345,6 @@ export default function ErrorMonitor() {
           )}
         </div>
       </div>
-
       {/* ── Breakdown bars ───────────────────────────────────────────── */}
       {stats && (stats.total > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -417,7 +375,6 @@ export default function ErrorMonitor() {
               })}
             </div>
           </div>
-
           {/* Theo mức độ */}
           <div className="bg-[var(--bg-surface)] rounded-2xl p-4 border border-[var(--glass-border)]">
             <div className="text-sm font-semibold text-[var(--text-primary)] mb-3">Phân loại theo mức độ</div>
@@ -448,12 +405,10 @@ export default function ErrorMonitor() {
           </div>
         </div>
       )}
-
       {/* ── Bộ lọc ───────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2 p-3 bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)]">
         <Filter size={13} className="text-[var(--text-secondary)] flex-shrink-0" />
         <span className="text-xs text-[var(--text-secondary)] mr-1">Lọc:</span>
-
         <FilterDropdown
           value={filterType}
           onChange={v => { setFilterType(v); setPage(1); }}
@@ -481,12 +436,10 @@ export default function ErrorMonitor() {
             <X size={12} /> Đặt lại
           </button>
         )}
-
         <span className="ml-auto text-xs text-[var(--text-secondary)]">
           {loading ? '...' : `${total.toLocaleString('vi-VN')} kết quả`}
         </span>
       </div>
-
       {/* ── Thông báo lỗi tải ────────────────────────────────────────── */}
       {fetchError && (
         <div className="flex items-center gap-2 p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl text-rose-600 text-sm">
@@ -494,7 +447,6 @@ export default function ErrorMonitor() {
           {fetchError}
         </div>
       )}
-
       {/* ── Danh sách lỗi ────────────────────────────────────────────── */}
       <div className="space-y-2">
         {loading && !entries.length
@@ -514,7 +466,6 @@ export default function ErrorMonitor() {
               const typ = TYPE_CONFIG[entry.type];
               const isExpanded = expandedId === entry.id;
               const age = Date.now() - new Date(entry.createdAt).getTime();
-
               return (
                 <div
                   key={entry.id}
@@ -532,7 +483,6 @@ export default function ErrorMonitor() {
                     <div className={`mt-0.5 flex-shrink-0 ${sev?.color ?? 'text-[var(--text-secondary)]'}`}>
                       {sev?.icon}
                     </div>
-
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[var(--text-primary)] truncate">{entry.message}</p>
                       <div className="flex flex-wrap items-center gap-1.5 mt-1">
@@ -548,7 +498,6 @@ export default function ErrorMonitor() {
                         )}
                       </div>
                     </div>
-
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="text-xs text-[var(--text-secondary)] hidden sm:flex items-center gap-1">
                         <Clock size={11} />{relativeDiff(age)}
@@ -569,7 +518,6 @@ export default function ErrorMonitor() {
                       }
                     </div>
                   </div>
-
                   {/* Chi tiết mở rộng */}
                   {isExpanded && (
                     <div className="px-3 pb-3 pt-2 border-t border-[var(--glass-border)] space-y-3">
@@ -597,7 +545,6 @@ export default function ErrorMonitor() {
                           </div>
                         )}
                       </div>
-
                       {entry.stack && (
                         <div>
                           <div className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Stack Trace</div>
@@ -606,7 +553,6 @@ export default function ErrorMonitor() {
                           </pre>
                         </div>
                       )}
-
                       {entry.metadata && Object.keys(entry.metadata).length > 0 && (
                         <div>
                           <div className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Dữ liệu bổ sung (Metadata)</div>
@@ -622,7 +568,6 @@ export default function ErrorMonitor() {
             })
         }
       </div>
-
       {/* ── Phân trang ───────────────────────────────────────────────── */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">

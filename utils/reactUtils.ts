@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { captureException, flushErrorsSync } from './errorMonitor';
-
 /**
  * Detect whether an error is a Vite/webpack chunk-load failure (e.g. after redeploy).
  * Chunk errors occur when a hashed JS asset no longer exists on the server.
@@ -18,17 +16,14 @@ function isChunkLoadError(error: unknown): boolean {
         (error as any).name === 'ChunkLoadError'
     );
 }
-
 /**
  * sessionStorage key storing the timestamp (ms) of the last chunk-error reload.
  * Using a timestamp instead of a boolean prevents old guards from blocking
  * reloads triggered by subsequent deployments in the same session.
  */
 const CHUNK_RELOAD_KEY = '__sgs_chunk_reload_ts__';
-
 /** Guard window: allow at most one reload every 45 seconds to prevent infinite loops. */
 const CHUNK_RELOAD_DEBOUNCE_MS = 45_000;
-
 /**
  * Force a hard page reload after a chunk-load failure.
  * Uses a timestamp-based guard so the lock expires after 45 s:
@@ -53,7 +48,6 @@ function reloadOnceForChunkError(error?: unknown, componentName?: string): boole
     window.location.reload();
     return true;
 }
-
 /**
  * Lazy Load Helper with Retry Logic and Error Logging.
  * Adapts named exports (e.g. `export const Page = ...`) to React.lazy's default export expectation.
@@ -99,20 +93,16 @@ export const lazyLoad = <T extends React.ComponentType<any>>(
         });
     });
 };
-
 // ---------------------------------------------------------------------------
 // PREFETCH REGISTRY
 // Allows registering import functions by route key, then calling prefetchRoute()
 // on nav hover to kick off Vite module transform BEFORE the user clicks.
 // ---------------------------------------------------------------------------
-
 const _prefetchDone = new Set<string>();
 const _prefetchRegistry: Record<string, () => Promise<any>> = {};
-
 export const registerPrefetch = (routeKey: string, importFn: () => Promise<any>): void => {
     _prefetchRegistry[routeKey] = importFn;
 };
-
 /**
  * Fire-and-forget: starts the dynamic import for `routeKey` if not already done.
  * Call this onMouseEnter of nav links so the chunk is ready before the click.
@@ -122,7 +112,6 @@ export const prefetchRoute = (routeKey: string): void => {
     _prefetchDone.add(routeKey);
     _prefetchRegistry[routeKey]().catch(() => {});
 };
-
 /**
  * Prefetch multiple routes at once (e.g. top pages after auth).
  */

@@ -1,8 +1,6 @@
 import ExcelJS from 'exceljs';
 import type { Listing } from '../types';
-
 // ─── Mapping tables (VI ↔ API) ───────────────────────────────────────────────
-
 export const TYPE_VI: Record<string, string> = {
     Apartment:  'Căn hộ',
     Penthouse:  'Penthouse',
@@ -15,7 +13,6 @@ export const TYPE_VI: Record<string, string> = {
     Commercial: 'Thương mại',
 };
 const TYPE_FROM_VI = Object.fromEntries(Object.entries(TYPE_VI).map(([k, v]) => [v, k]));
-
 export const STATUS_VI: Record<string, string> = {
     AVAILABLE: 'Đang bán',
     HOLD:      'Giữ chỗ',
@@ -26,13 +23,11 @@ export const STATUS_VI: Record<string, string> = {
     OPENING:   'Đang mở bán',
 };
 const STATUS_FROM_VI = Object.fromEntries(Object.entries(STATUS_VI).map(([k, v]) => [v, k]));
-
 export const TRANSACTION_VI: Record<string, string> = {
     SALE: 'Bán',
     RENT: 'Cho thuê',
 };
 const TRANSACTION_FROM_VI = Object.fromEntries(Object.entries(TRANSACTION_VI).map(([k, v]) => [v, k]));
-
 export const DIRECTION_VI: Record<string, string> = {
     North:     'Bắc',
     South:     'Nam',
@@ -44,7 +39,6 @@ export const DIRECTION_VI: Record<string, string> = {
     SouthWest: 'Tây Nam',
 };
 const DIRECTION_FROM_VI = Object.fromEntries(Object.entries(DIRECTION_VI).map(([k, v]) => [v, k]));
-
 export const FURNITURE_VI: Record<string, string> = {
     FULL:  'Đầy đủ',
     BASIC: 'Cơ bản',
@@ -58,9 +52,7 @@ export const LEGAL_VI: Record<string, string> = {
     Waiting:  'Chờ sổ',
 };
 const LEGAL_FROM_VI = Object.fromEntries(Object.entries(LEGAL_VI).map(([k, v]) => [v, k]));
-
 // ─── Column definitions ───────────────────────────────────────────────────────
-
 const COLS = [
     { key: 'code',              header: 'Mã sản phẩm',        required: true,  width: 16 },
     { key: 'title',             header: 'Tên sản phẩm',       required: true,  width: 30 },
@@ -84,7 +76,6 @@ const COLS = [
     { key: 'roadWidth',         header: 'Lộ giới (m)',         required: false, width: 12 },
     { key: 'notes',             header: 'Ghi chú',             required: false, width: 30 },
 ];
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function triggerDownload(buffer: ArrayBuffer, filename: string): void {
@@ -98,7 +89,6 @@ function triggerDownload(buffer: ArrayBuffer, filename: string): void {
     a.click();
     URL.revokeObjectURL(url);
 }
-
 function buildMainSheet(wb: ExcelJS.Workbook, rows: (string | number)[][], sheetName = 'Danh mục'): ExcelJS.Worksheet {
     const ws = wb.addWorksheet(sheetName);
     ws.addRow(COLS.map(c => c.header));
@@ -106,7 +96,6 @@ function buildMainSheet(wb: ExcelJS.Workbook, rows: (string | number)[][], sheet
     COLS.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
     return ws;
 }
-
 function buildRefSheet(wb: ExcelJS.Workbook): void {
     const ws = wb.addWorksheet('Tham chiếu');
     ws.addRow(['Loại hình', 'Trạng thái', 'Loại GD', 'Hướng', 'Nội thất', 'Pháp lý']);
@@ -122,7 +111,6 @@ function buildRefSheet(wb: ExcelJS.Workbook): void {
     }
     [14, 14, 10, 14, 16, 14].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 }
-
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
 
 function listingToRow(l: Listing): (string | number)[] {
@@ -151,34 +139,27 @@ function listingToRow(l: Listing): (string | number)[] {
         (attr.notes as string) ?? '',
     ];
 }
-
 export async function exportListingsToExcel(listings: Listing[], projectName: string): Promise<void> {
     const wb = new ExcelJS.Workbook();
     buildMainSheet(wb, listings.map(listingToRow));
     buildRefSheet(wb);
-
     const buffer = await wb.xlsx.writeBuffer();
     const safeProject = projectName.replace(/[\\/:*?"<>|]/g, '_').slice(0, 50);
     triggerDownload(buffer as ArrayBuffer, `DanhMuc_${safeProject}.xlsx`);
 }
-
 // ─── IMPORT ───────────────────────────────────────────────────────────────────
-
 export interface ImportRow {
     row: number;
     data?: Record<string, unknown>;
     error?: string;
 }
-
 export interface ImportResult {
     valid: ImportRow[];
     errors: ImportRow[];
 }
-
 function mapValue(key: string, raw: unknown): unknown {
     const v = String(raw ?? '').trim();
     if (!v) return undefined;
-
     switch (key) {
         case 'type':        return TYPE_FROM_VI[v] ?? v;
         case 'status':      return STATUS_FROM_VI[v] ?? v;
@@ -201,36 +182,27 @@ function mapValue(key: string, raw: unknown): unknown {
         default: return v;
     }
 }
-
 export async function parseListingsFromExcel(file: File): Promise<ImportResult> {
     const buffer = await file.arrayBuffer();
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buffer);
-
     const ws = wb.worksheets[0];
     const valid: ImportRow[] = [];
     const errors: ImportRow[] = [];
-
     const headerToKey: Record<string, string> = {};
     COLS.forEach(c => { headerToKey[c.header] = c.key; });
-
     const attrKeys = new Set(['direction', 'tower', 'floor', 'view', 'furniture', 'legalStatus', 'clearArea', 'frontage', 'roadWidth', 'notes']);
-
     let headers: string[] = [];
     let firstRow = true;
-
     ws.eachRow((row, rowNum) => {
         const values = (row.values as ExcelJS.CellValue[]).slice(1);
-
         if (firstRow) {
             headers = values.map(v => String(v ?? '').trim());
             firstRow = false;
             return;
         }
-
         const data: Record<string, unknown> = {};
         const attributes: Record<string, unknown> = {};
-
         headers.forEach((header, i) => {
             const key = headerToKey[header];
             if (!key) return;
@@ -242,13 +214,10 @@ export async function parseListingsFromExcel(file: File): Promise<ImportResult> 
                 data[key] = val;
             }
         });
-
         if (Object.keys(attributes).length > 0) {
             data.attributes = attributes;
         }
-
         if (!data.transaction) data.transaction = 'SALE';
-
         const missing: string[] = [];
         COLS.filter(c => c.required).forEach(c => {
             const key = attrKeys.has(c.key) ? null : c.key;
@@ -256,19 +225,15 @@ export async function parseListingsFromExcel(file: File): Promise<ImportResult> 
                 missing.push(c.header);
             }
         });
-
         if (missing.length > 0) {
             errors.push({ row: rowNum, error: `Thiếu trường bắt buộc: ${missing.join(', ')}` });
         } else {
             valid.push({ row: rowNum, data });
         }
     });
-
     return { valid, errors };
 }
-
 // ─── Download Template ────────────────────────────────────────────────────────
-
 export async function downloadImportTemplate(): Promise<void> {
     const example: (string | number)[] = [
         'CH-01', 'Căn 2PN view sông', 'Q7, TP.HCM',
@@ -285,11 +250,9 @@ export async function downloadImportTemplate(): Promise<void> {
         'Xem sheet Tham chiếu', '', '', '',
         'Xem sheet Tham chiếu', 'Xem sheet Tham chiếu', 'mét', 'mét', '',
     ];
-
     const wb = new ExcelJS.Workbook();
     buildMainSheet(wb, [example, note]);
     buildRefSheet(wb);
-
     const buffer = await wb.xlsx.writeBuffer();
     triggerDownload(buffer as ArrayBuffer, 'MauNhapDanhMuc.xlsx');
 }

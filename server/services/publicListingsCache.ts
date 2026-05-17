@@ -12,17 +12,13 @@
  * - LRU bằng `Map` insertion order: khi đầy, xoá entry cũ nhất; khi hit, xoá
  *   rồi set lại để move cuối order.
  */
-
 const TTL_MS = 5 * 60 * 1000;
 const MAX_ENTRIES = 500;
-
 interface Entry {
   value: any;
   expiresAt: number;
 }
-
 const store = new Map<string, Entry>();
-
 export function getPublicListingsCache(key: string): any | null {
   const entry = store.get(key);
   if (!entry) return null;
@@ -35,7 +31,6 @@ export function getPublicListingsCache(key: string): any | null {
   store.set(key, entry);
   return entry.value;
 }
-
 export function setPublicListingsCache(key: string, value: any): void {
   if (!key) return;
   if (store.has(key)) {
@@ -46,12 +41,10 @@ export function setPublicListingsCache(key: string, value: any): void {
   }
   store.set(key, { value, expiresAt: Date.now() + TTL_MS });
 }
-
 /** Evict ALL entries — gọi từ mọi mutation hook trong listingRoutes. */
 export function evictPublicListingsCache(): void {
   store.clear();
 }
-
 export function publicListingsCacheStats(): { size: number } {
   return { size: store.size };
 }

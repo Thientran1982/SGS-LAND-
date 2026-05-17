@@ -5,7 +5,6 @@ import { TaskDashboardStats, Department } from '../types';
 import { CATEGORY_LABELS } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
 import { SelectDropdown } from '../components/task/SelectDropdown';
-
 interface ProjectReport {
   id: string;
   name: string;
@@ -18,7 +17,6 @@ interface ProjectReport {
   overdue: number;
   completion_rate: number;
 }
-
 interface UserSummary {
   user_id: string;
   name: string;
@@ -29,7 +27,6 @@ interface UserSummary {
   overdue: number;
   completion_rate: number;
 }
-
 function SkeletonKpi() {
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-4 shadow-sm animate-pulse text-center">
@@ -38,7 +35,6 @@ function SkeletonKpi() {
     </div>
   );
 }
-
 function SkeletonSection() {
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm animate-pulse space-y-3">
@@ -55,7 +51,6 @@ function SkeletonSection() {
     </div>
   );
 }
-
 export function TaskReports() {
   const [stats, setStats] = useState<TaskDashboardStats | null>(null);
   const [projects, setProjects] = useState<ProjectReport[]>([]);
@@ -69,13 +64,11 @@ export function TaskReports() {
     try { return new URLSearchParams(window.location.search).get('dept') || ''; } catch { return ''; }
   });
   const fetchRef = useRef(0);
-
   useEffect(() => {
     api.get<{ data: Department[] }>('/api/departments')
       .then(r => setDepartments(r.data || []))
       .catch(() => {});
   }, []);
-
   const load = useCallback(async (silent = false, deptId = departmentId) => {
     const token = ++fetchRef.current;
     if (!silent) setLoading(true);
@@ -102,9 +95,7 @@ export function TaskReports() {
       }
     }
   }, [departmentId]);
-
   useEffect(() => { load(false, departmentId); }, [departmentId, load]);
-
   // URL sync
   useEffect(() => {
     const qs = new URLSearchParams(window.location.search);
@@ -112,7 +103,6 @@ export function TaskReports() {
     const search = qs.toString();
     window.history.replaceState(null, '', window.location.pathname + (search ? '?' + search : ''));
   }, [departmentId]);
-
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -134,10 +124,8 @@ export function TaskReports() {
       setExporting(false);
     }
   };
-
   const totalTasks = stats?.overview.total_tasks ?? 0;
   const completionRate = totalTasks > 0 ? ((stats!.overview.done / totalTasks) * 100).toFixed(1) : '0';
-
   return (
     <div className="h-full overflow-y-auto p-4 md:p-6 space-y-6 animate-enter no-scrollbar">
       {/* Header */}
@@ -182,7 +170,6 @@ export function TaskReports() {
           </button>
         </div>
       </div>
-
       {/* Error */}
       {error && !loading && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -191,7 +178,6 @@ export function TaskReports() {
           <button onClick={() => load(false, departmentId)} className="text-sm text-indigo-500 font-medium">Thử lại</button>
         </div>
       )}
-
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {loading ? (
@@ -210,7 +196,6 @@ export function TaskReports() {
           ))
         )}
       </div>
-
       {/* Category breakdown */}
       {loading ? (
         <SkeletonSection />
@@ -229,7 +214,6 @@ export function TaskReports() {
           </div>
         </div>
       )}
-
       {/* By Project */}
       {loading ? (
         <SkeletonSection />
@@ -265,7 +249,6 @@ export function TaskReports() {
           </div>
         </div>
       )}
-
       {/* User performance summary */}
       {loading ? (
         <SkeletonSection />

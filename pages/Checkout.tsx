@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { billingApi, CheckoutSessionDTO } from '../services/api/billingApi';
-
 const ICONS = {
     LOCK: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +19,6 @@ const ICONS = {
         </svg>
     ),
 };
-
 const PLAN_FEATURES: Record<string, string[]> = {
     TEAM: [
         'Định giá AI 500 lượt/tháng (gấp 10×)',
@@ -37,44 +35,37 @@ const PLAN_FEATURES: Record<string, string[]> = {
         'Hỗ trợ 24/7 qua điện thoại + Zalo',
     ],
 };
-
 function navigateTo(path: string) {
     const target = path.startsWith('/') ? path : `/${path}`;
     window.history.pushState(null, '', target);
     window.dispatchEvent(new PopStateEvent('popstate'));
 }
-
 function getQuery(name: string): string | null {
     try {
         return new URLSearchParams(window.location.search).get(name);
     } catch { return null; }
 }
-
 export const Checkout: React.FC = () => {
     const [session, setSession] = useState<CheckoutSessionDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [done, setDone] = useState(false);
-
     // Mock card form (UI only — payment is simulated server-side)
     const [cardName, setCardName] = useState('');
     const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242');
     const [cardExpiry, setCardExpiry] = useState('12/29');
     const [cardCvc, setCardCvc] = useState('123');
-
     useEffect(() => {
         const sessionId = getQuery('session');
         const stripeSessionId = getQuery('stripe_session_id');
         const planParam = getQuery('plan') as 'TEAM' | 'ENTERPRISE' | null;
-
         const load = async () => {
             try {
                 // Returning from Stripe Checkout — reconcile then load
                 if (stripeSessionId) {
                     try { await billingApi.syncStripe(stripeSessionId); } catch { /* ignore */ }
                 }
-
                 if (sessionId) {
                     const s = await billingApi.getCheckout(sessionId);
                     setSession(s);
@@ -98,7 +89,6 @@ export const Checkout: React.FC = () => {
         };
         load();
     }, []);
-
     const handleConfirm = async () => {
         if (!session) return;
         if (!cardName.trim()) {
@@ -118,14 +108,12 @@ export const Checkout: React.FC = () => {
             setSubmitting(false);
         }
     };
-
     const handleCancel = async () => {
         if (session) {
             try { await billingApi.cancelCheckout(session.sessionId); } catch { /* ignore */ }
         }
         navigateTo(ROUTES.BILLING);
     };
-
     if (loading) {
         return (
             <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">
@@ -133,7 +121,6 @@ export const Checkout: React.FC = () => {
             </div>
         );
     }
-
     if (!session) {
         return (
             <div className="p-6 max-w-xl mx-auto">
@@ -150,12 +137,10 @@ export const Checkout: React.FC = () => {
             </div>
         );
     }
-
     const features = PLAN_FEATURES[session.planId] || [];
     const isPaid = session.status === 'PAID' || done;
     const isExpired = session.status === 'EXPIRED';
     const isCancelled = session.status === 'CANCELLED';
-
     return (
         <div className="p-4 sm:p-6 pb-20 animate-enter">
             <div className="max-w-3xl mx-auto">
@@ -176,7 +161,6 @@ export const Checkout: React.FC = () => {
                             <span className="text-sm font-medium text-[var(--text-secondary)]"> / tháng</span>
                         </div>
                         <div className="text-xs text-[var(--text-tertiary)] mb-5">Hủy bất cứ lúc nào · Không phí ẩn</div>
-
                         <ul className="space-y-2.5">
                             {features.map((f) => (
                                 <li key={f} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
@@ -185,13 +169,11 @@ export const Checkout: React.FC = () => {
                                 </li>
                             ))}
                         </ul>
-
                         <div className="mt-5 pt-4 border-t border-[var(--glass-border)] flex items-center justify-between text-sm">
                             <span className="text-[var(--text-tertiary)]">Tổng thanh toán hôm nay</span>
                             <span className="font-extrabold text-[var(--text-primary)]">${session.amount}.00</span>
                         </div>
                     </div>
-
                     {/* Payment panel */}
                     <div className="md:col-span-3 bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                         {isPaid ? (
@@ -264,7 +246,6 @@ export const Checkout: React.FC = () => {
                                         và quota sẽ được nâng cấp ngay sau khi xác nhận.
                                     </div>
                                 )}
-
                                 <div className="space-y-3">
                                     <div>
                                         <label className="block text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">Tên chủ thẻ</label>
@@ -311,7 +292,6 @@ export const Checkout: React.FC = () => {
                                         {error}
                                     </div>
                                 )}
-
                                 <div className="mt-6 flex flex-col sm:flex-row gap-2">
                                     <button
                                         onClick={handleConfirm}
@@ -340,5 +320,4 @@ export const Checkout: React.FC = () => {
         </div>
     );
 };
-
 export default Checkout;

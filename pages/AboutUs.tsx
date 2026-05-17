@@ -34,7 +34,7 @@ export const AboutUs: React.FC = () => {
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             <SeoHead
                 title="Về SGS LAND | Đội Ngũ & Sứ Mệnh Nền Tảng BĐS AI Việt Nam"
-                description="SGS LAND thành lập 2024 tại TP.HCM, đội ngũ 200+ chuyên gia BĐS, công nghệ AI định giá sai số ±5%. Sứ mệnh: minh bạch hóa thị trường BĐS Việt qua dữ liệu và AI."
+                description="SGS LAND thành lập 2024 tại TP.HCM, đội ngũ 50+ chuyên gia BĐS, công nghệ AI định giá sai số ±5%. Sứ mệnh: minh bạch hóa thị trường BĐS Việt qua dữ liệu và AI."
                 canonicalPath="/about-us"
                 structuredData={[
                     {
@@ -45,7 +45,7 @@ export const AboutUs: React.FC = () => {
                         publisher: {
                             '@type': 'Organization',
                             name: 'SGS LAND',
-                            legalName: 'Công ty Cổ phần SGS Land',
+                            legalName: 'Công ty TNHH SGS Land',
                             taxID: '0312960439',
                             url: 'https://sgsland.vn',
                             foundingDate: '2024',
@@ -91,7 +91,6 @@ export const AboutUs: React.FC = () => {
                     <img src={ASSETS.OFFICE} className="w-full h-full object-cover" alt="Office" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
-
                 <div className="relative z-10 max-w-4xl mx-auto px-6 text-center animate-enter">
                     <span className="inline-block py-1 px-3 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6">
                         {t('about.hero_badge')}

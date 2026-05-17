@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -7,7 +6,6 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { connectorService } from '../services/connectorService';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     SYNC: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
@@ -18,7 +16,6 @@ const ICONS = {
     CLOCK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     PLUG: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>,
 };
-
 const CONNECTOR_ICONS: Record<string, string> = {
     GOOGLE_SHEETS: '📊',
     HUBSPOT: '🟠',
@@ -26,20 +23,16 @@ const CONNECTOR_ICONS: Record<string, string> = {
     SALESFORCE: '☁️',
     WEBHOOK_EXPORT: '🔗',
 };
-
 const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
     const [form, setForm] = useState<Partial<ConnectorConfig>>({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
-
     useEffect(() => {
         if (isOpen) setForm({ type: ConnectorType.GOOGLE_SHEETS, name: '', config: {} });
     }, [isOpen]);
-
     if (!isOpen) return null;
 
     const handleConfigChange = (key: string, value: string) => {
         setForm(prev => ({ ...prev, config: { ...prev.config, [key]: value } }));
     };
-
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-[var(--bg-surface)] w-full max-w-lg rounded-[24px] shadow-2xl">
@@ -71,7 +64,6 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             onChange={e => setForm({ ...form, name: e.target.value })}
                         />
                     </div>
-
                     {form.type === ConnectorType.GOOGLE_SHEETS && (
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.spreadsheet_id')}</label>
@@ -129,7 +121,6 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
         document.body
     );
 };
-
 const StatusBadge = ({ status, t }: { status: SyncStatus; t: any }) => {
     const styles: Record<string, string> = {
         [SyncStatus.COMPLETED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -143,7 +134,6 @@ const StatusBadge = ({ status, t }: { status: SyncStatus; t: any }) => {
         </span>
     );
 };
-
 export const DataPlatform: React.FC = () => {
     const [connectors, setConnectors] = useState<ConnectorConfig[]>([]);
     const [jobs, setJobs] = useState<SyncJob[]>([]);
@@ -153,12 +143,10 @@ export const DataPlatform: React.FC = () => {
     const [syncingId, setSyncingId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const { t, formatDateTime } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3500);
     }, []);
-
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -171,9 +159,7 @@ export const DataPlatform: React.FC = () => {
             setLoading(false);
         }
     }, []);
-
     useEffect(() => { fetchData(); }, [fetchData]);
-
     const handleCreate = async (data: Partial<ConnectorConfig>) => {
         try {
             await connectorService.validateConnection(data.type!, data.config, t);
@@ -185,7 +171,6 @@ export const DataPlatform: React.FC = () => {
             notify(e.message, 'error');
         }
     };
-
     const handleDeleteConnector = async () => {
         if (!deleteConfirmId) return;
         try {
@@ -198,7 +183,6 @@ export const DataPlatform: React.FC = () => {
             setDeleteConfirmId(null);
         }
     };
-
     const handleSync = async (id: string) => {
         setSyncingId(id);
         notify(t('data.sync_started'), 'success');
@@ -213,10 +197,8 @@ export const DataPlatform: React.FC = () => {
             setSyncingId(null);
         }
     };
-
     const activeCount = connectors.filter(c => c.status === 'ACTIVE').length;
     const lastJob = jobs[0];
-
     if (loading) {
         return (
             <div className="p-4 sm:p-6 space-y-6 animate-enter">
@@ -231,11 +213,9 @@ export const DataPlatform: React.FC = () => {
             </div>
         );
     }
-
     return (
         <>
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
-
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -250,7 +230,6 @@ export const DataPlatform: React.FC = () => {
                     {t('data.btn_new')}
                 </button>
             </div>
-
             {/* Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">
@@ -281,17 +260,14 @@ export const DataPlatform: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-
                 {/* Connectors Panel */}
                 <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col max-h-[520px]">
                     <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between shrink-0">
                         <h3 className="font-bold text-[var(--text-primary)]">{t('data.active_connectors')}</h3>
                         <span className="text-xs text-[var(--text-secondary)] bg-[var(--glass-surface)] px-2 py-0.5 rounded-full font-mono">{connectors.length}</span>
                     </div>
-
                     {connectors.length === 0 ? (
                         <div className="p-10 text-center flex flex-col items-center gap-3 flex-1 justify-center">
                             <div className="w-14 h-14 bg-[var(--glass-surface)] rounded-2xl flex items-center justify-center text-[var(--text-tertiary)]">
@@ -353,14 +329,12 @@ export const DataPlatform: React.FC = () => {
                         </div>
                     )}
                 </div>
-
                 {/* Job History Panel */}
                 <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col max-h-[520px]">
                     <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between shrink-0">
                         <h3 className="font-bold text-[var(--text-primary)]">{t('data.sync_history')}</h3>
                         <span className="text-xs text-[var(--text-secondary)] bg-[var(--glass-surface)] px-2 py-0.5 rounded-full font-mono">{jobs.length}</span>
                     </div>
-
                     {jobs.length === 0 ? (
                         <div className="p-8 text-center text-[var(--text-secondary)] flex flex-col items-center justify-center flex-1">
                             <p className="text-2xl mb-2">📋</p>
@@ -401,7 +375,6 @@ export const DataPlatform: React.FC = () => {
                     )}
                 </div>
             </div>
-
             <ConnectorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleCreate} t={t} />
             <ConfirmModal
                 isOpen={!!deleteConfirmId}

@@ -1,6 +1,5 @@
 import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
-
 // ---------------------------------------------------------------------------
 // Queue — Upstash QStash (production) hoặc in-memory (dev/fallback)
 //
@@ -12,17 +11,13 @@ import { logger } from './middleware/logger';
 // Khi không có QSTASH_TOKEN:
 //   - Fallback về in-memory với exponential backoff
 // ---------------------------------------------------------------------------
-
 // ---------------------------------------------------------------------------
 // In-memory fallback
 // ---------------------------------------------------------------------------
-
 const inMemoryJobs: any[] = [];
 let inMemoryProcessor: ((job: any) => Promise<void>) | null = null;
-
 const MAX_IN_MEMORY_ATTEMPTS = 3;
 const IN_MEMORY_BACKOFF_MS = 2000;
-
 function runWithRetry(job: any, attempt = 1): void {
   setTimeout(async () => {
     try {
@@ -38,15 +33,12 @@ function runWithRetry(job: any, attempt = 1): void {
     }
   }, attempt === 1 ? 0 : IN_MEMORY_BACKOFF_MS * Math.pow(2, attempt - 2));
 }
-
 // ---------------------------------------------------------------------------
 // Kiểm tra QStash có được cấu hình không
 // ---------------------------------------------------------------------------
-
 export function isQStashEnabled(): boolean {
   return !!(process.env.QSTASH_TOKEN && process.env.QSTASH_CURRENT_SIGNING_KEY);
 }
-
 function getReceiverUrl(): string {
   if (process.env.QSTASH_RECEIVER_URL) return process.env.QSTASH_RECEIVER_URL;
   const isProduction = process.env.NODE_ENV === 'production';
@@ -59,23 +51,18 @@ function getReceiverUrl(): string {
   if (devDomain) return `https://${devDomain}/api/qstash/process`;
   return 'http://localhost:5000/api/qstash/process';
 }
-
 // ---------------------------------------------------------------------------
 // Queue public API
 // ---------------------------------------------------------------------------
-
 const QSTASH_ENABLED = isQStashEnabled();
-
 if (QSTASH_ENABLED) {
   logger.info('[Queue] Sử dụng Upstash QStash (job bền vững, retry tự động).');
 } else {
   logger.info('[Queue] Sử dụng in-memory queue (fallback). Cấu hình QSTASH_TOKEN để kích hoạt QStash.');
 }
-
 export const webhookQueue = {
   add: async (name: string, data: any) => {
     const job = { name, data, id: `job-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
-
     if (isQStashEnabled()) {
       try {
         const { Client } = await import('@upstash/qstash');
@@ -103,16 +90,13 @@ export const webhookQueue = {
         inMemoryJobs.push(job);
       }
     }
-
     return job;
   },
   close: async () => {},
 };
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
 async function upsertLeadBySocialId(
   tenantId: string,
   channel: 'zalo' | 'facebook',
@@ -120,13 +104,10 @@ async function upsertLeadBySocialId(
   displayName?: string
 ): Promise<any> {
   const { leadRepository } = await import('./repositories/leadRepository');
-
   const existing = await leadRepository.findBySocialId(tenantId, channel, socialId);
   if (existing) return existing;
-
   const sourceName = channel === 'zalo' ? 'Zalo' : 'Facebook';
   const name = displayName?.trim() || `${sourceName} User`;
-
   const lead = await leadRepository.create(tenantId, {
     name,
     phone: '',
@@ -135,15 +116,12 @@ async function upsertLeadBySocialId(
     socialIds: { [channel]: socialId },
     tags: [sourceName],
   });
-
   logger.info(`[Webhook] Tạo lead mới ${lead.id} từ ${sourceName} (socialId: ${socialId})`);
   return lead;
 }
-
 // ---------------------------------------------------------------------------
 // Auto-reply: gọi AI + gửi reply qua kênh tương ứng (fire-and-forget)
 // ---------------------------------------------------------------------------
-
 async function triggerAutoReply(
   io: Server,
   tenantId: string,
@@ -165,12 +143,10 @@ async function triggerAutoReply(
       logger.info(`[AutoReply] Lead ${lead.id} đang ở chế độ HUMAN_TAKEOVER — bỏ qua auto-reply`);
       return;
     }
-
     // 2. Lấy lịch sử hội thoại gần nhất (tối đa 20 tin)
     const { interactionRepository } = await import('./repositories/interactionRepository');
     const allHistory = await interactionRepository.findByLead(tenantId, lead.id);
     const history = allHistory.slice(-20);
-
     // 3. Gọi AI tạo câu trả lời
     // Thử fetch favorites nếu lead có userId liên kết (thường không có với Zalo/Facebook leads)
     let autoReplyFavorites: any[] = [];
@@ -190,7 +166,6 @@ async function triggerAutoReply(
       logger.warn(`[AutoReply] AI không trả về nội dung cho lead ${lead.id}`);
       return;
     }
-
     // 4. Lưu tin trả lời vào DB
     const aiInteraction = await interactionRepository.create(tenantId, {
       leadId: lead.id,
@@ -208,7 +183,6 @@ async function triggerAutoReply(
         userMessage: inboundText?.slice(0, 300),
       },
     });
-
     // 5. Gửi qua kênh thực tế
     if (channel === 'ZALO') {
       const zaloId: string | undefined = lead.socialIds?.zalo;
@@ -248,7 +222,6 @@ async function triggerAutoReply(
         logger.warn(`[AutoReply] Lead ${lead.id} không có địa chỉ email`);
       }
     }
-
     // 6. Phát socket event cho UI cập nhật realtime
     io.to(lead.id).emit('receive_message', {
       room: lead.id,
@@ -261,9 +234,7 @@ async function triggerAutoReply(
       source: channel,
       isAi: true,
     });
-
     logger.info(`[AutoReply] AI đã trả lời lead ${lead.id} qua ${channel} (confidence=${aiResult.confidence})`);
-
     // 7. Nếu AI đề xuất chuyển agent → cập nhật HUMAN_TAKEOVER
     if (aiResult.escalated) {
       await withTenantContext(tenantId, async (client) => {
@@ -282,14 +253,11 @@ async function triggerAutoReply(
     logger.error(`[AutoReply] Lỗi khi tạo auto-reply cho lead ${lead.id} (${channel}):`, err);
   }
 }
-
 // ---------------------------------------------------------------------------
 // Bộ xử lý job — được export để /api/qstash/process gọi trực tiếp
 // ---------------------------------------------------------------------------
-
 export async function processWebhookJob(io: Server, job: any): Promise<void> {
   const { platform, payload } = job.data;
-
   // -------------------------------------------------------------------------
   // ZALO
   // -------------------------------------------------------------------------
@@ -301,7 +269,6 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       logger.warn('[Zalo Webhook] Thiếu recipient.id (OA ID), không xác định được tenant — bỏ qua sự kiện');
       return;
     }
-
     const { enterpriseConfigRepository } = await import('./repositories/enterpriseConfigRepository');
     const foundTenant = await enterpriseConfigRepository.findTenantByZaloOaId(oaId);
     if (!foundTenant) {
@@ -309,13 +276,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       return;
     }
     const tenantId = foundTenant;
-
     const senderId = sender?.id as string | undefined;
     if (!senderId) {
       logger.warn('[Zalo Webhook] Thiếu sender.id trong payload');
       return;
     }
-
     if (event_name === 'follow') {
       const followLead = await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
       logger.info(`[Zalo] Người theo dõi mới ${senderId} → lead đã tạo/tìm thấy`);
@@ -351,14 +316,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       })();
       return;
     }
-
     if (event_name === 'user_send_text') {
       const textContent = message?.text as string;
       if (!textContent) return;
-
       const lead = await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
       const leadId = lead.id;
-
       const { interactionRepository } = await import('./repositories/interactionRepository');
       const savedInteraction = await interactionRepository.create(tenantId, {
         leadId,
@@ -373,19 +335,16 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           originalTimestamp: timestamp,
         },
       });
-
       logger.info(`[Zalo] Tin nhắn từ ${senderId} → lead ${leadId}`);
 
       io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Zalo' });
-
       // Gửi thông báo in-app cho agent phụ trách (hoặc tất cả admin nếu chưa có agent)
       (async () => {
         try {
           const { notificationRepository } = await import('./repositories/notificationRepository');
           const preview = textContent.length > 60 ? textContent.slice(0, 60) + '…' : textContent;
           const title = `Zalo: ${lead.name || senderId}`;
-
           if (lead.assignedTo) {
             await notificationRepository.create({
               tenantId,
@@ -423,7 +382,6 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           logger.warn('[Zalo] Lỗi tạo thông báo agent:', err.message);
         }
       })();
-
       // AI scoring + auto-reply chạy song song trong background
       (async () => {
         try {
@@ -440,17 +398,14 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           logger.error('[Zalo] Lỗi AI scoring:', err);
         }
       })();
-
       // Auto-reply qua Zalo
       triggerAutoReply(io, tenantId, lead, textContent, 'ZALO').catch((err) =>
         logger.error('[Zalo] Lỗi triggerAutoReply:', err)
       );
     }
-
     if (event_name === 'user_send_image') {
       const imgUrl = message?.attachments?.[0]?.payload?.url as string | undefined;
       const lead = await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
-
       const { interactionRepository } = await import('./repositories/interactionRepository');
       const savedInteraction = await interactionRepository.create(tenantId, {
         leadId: lead.id,
@@ -460,17 +415,14 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         content: imgUrl || '[Hình ảnh]',
         metadata: { platform: 'zalo', senderId, oaId, imageUrl: imgUrl },
       });
-
       io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Zalo' });
-
       // Trả lời tự động khi nhận hình ảnh
       triggerAutoReply(io, tenantId, lead, '[Khách gửi hình ảnh]', 'ZALO').catch((err) =>
         logger.error('[Zalo] Lỗi triggerAutoReply (image):', err)
       );
     }
   }
-
   // -------------------------------------------------------------------------
   // FACEBOOK
   // -------------------------------------------------------------------------
@@ -484,7 +436,6 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         logger.warn('[Facebook Webhook] Thiếu pageEntry.id, không xác định được tenant — bỏ qua entry');
         continue;
       }
-
       const { enterpriseConfigRepository } = await import('./repositories/enterpriseConfigRepository');
       const foundTenant = await enterpriseConfigRepository.findTenantByFacebookPageId(pageId);
       if (!foundTenant) {
@@ -492,18 +443,14 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
         continue;
       }
       const tenantId = foundTenant;
-
       const messagingEvents: any[] = pageEntry.messaging || [];
-
       for (const webhookEvent of messagingEvents) {
         const senderId = webhookEvent.sender?.id as string | undefined;
         if (!senderId || senderId === pageId) continue;
-
         const messageText = webhookEvent.message?.text as string | undefined;
         if (messageText) {
           const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
           const leadId = lead.id;
-
           const { interactionRepository } = await import('./repositories/interactionRepository');
           const savedInteraction = await interactionRepository.create(tenantId, {
             leadId,
@@ -518,12 +465,9 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
               mid: webhookEvent.message?.mid,
             },
           });
-
           logger.info(`[Facebook] Tin nhắn từ ${senderId} → lead ${leadId}`);
-
           io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
           io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Facebook' });
-
           // AI scoring chạy background
           (async () => {
             try {
@@ -540,20 +484,17 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
               logger.error('[Facebook] Lỗi AI scoring:', err);
             }
           })();
-
           // Auto-reply qua Facebook Messenger
           triggerAutoReply(io, tenantId, lead, messageText, 'FACEBOOK').catch((err) =>
             logger.error('[Facebook] Lỗi triggerAutoReply:', err)
           );
         }
-
         const attachments = webhookEvent.message?.attachments as any[] | undefined;
         if (attachments?.length && !messageText) {
           const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
           const attachment = attachments[0];
           const contentType = attachment.type === 'image' ? 'IMAGE' : 'FILE';
           const contentText = attachment.payload?.url || `[${attachment.type || 'File'}]`;
-
           const { interactionRepository } = await import('./repositories/interactionRepository');
           const savedInteraction = await interactionRepository.create(tenantId, {
             leadId: lead.id,
@@ -563,16 +504,13 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             content: contentText,
             metadata: { platform: 'facebook', senderId, pageId, attachmentType: attachment.type },
           });
-
           io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
           io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Facebook' });
-
           // Auto-reply cho file/ảnh
           triggerAutoReply(io, tenantId, lead, `[Khách gửi ${attachment.type || 'file'}]`, 'FACEBOOK').catch((err) =>
             logger.error('[Facebook] Lỗi triggerAutoReply (attachment):', err)
           );
         }
-
         const postback = webhookEvent.postback;
         if (postback) {
           const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
@@ -586,7 +524,6 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
             content: pbContent,
             metadata: { platform: 'facebook', senderId, pageId, postbackPayload: postback.payload },
           });
-
           // Auto-reply cho postback
           triggerAutoReply(io, tenantId, lead, pbContent, 'FACEBOOK').catch((err) =>
             logger.error('[Facebook] Lỗi triggerAutoReply (postback):', err)
@@ -595,30 +532,24 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       }
     }
   }
-
   // -------------------------------------------------------------------------
   // EMAIL INBOUND
   // -------------------------------------------------------------------------
   else if (platform === 'email') {
     const { from, fromName, subject, body, to, tenantId: payloadTenantId } = payload;
-
     if (!from) {
       logger.warn('[Email Webhook] Thiếu địa chỉ from');
       return;
     }
-
     if (!payloadTenantId) {
       logger.warn('[Email Webhook] Thiếu tenantId trong payload — bỏ qua sự kiện');
       return;
     }
     const tenantId = payloadTenantId;
-
     const fromEmail = (from.match(/<(.+?)>/) || [])[1] || from.trim();
     const senderName = fromName || (from.match(/^(.+?)\s*</) || [])[1]?.trim() || fromEmail.split('@')[0];
-
     const { leadRepository } = await import('./repositories/leadRepository');
     const { interactionRepository } = await import('./repositories/interactionRepository');
-
     let lead: any;
     try {
       const { withTenantContext } = await import('./db');
@@ -628,7 +559,6 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           [fromEmail]
         );
       });
-
       if (existingResult.rows[0]) {
         const { BaseRepository } = await import('./repositories/baseRepository');
         const br = new BaseRepository('leads');
@@ -649,11 +579,9 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       logger.error('[Email] Lỗi tra cứu/tạo lead:', err);
       return;
     }
-
     const content = subject
       ? `**${subject}**\n\n${body || ''}`
       : (body || '[Email không có nội dung]');
-
     try {
       const savedInteraction = await interactionRepository.create(tenantId, {
         leadId: lead.id,
@@ -669,12 +597,9 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           to,
         },
       });
-
       logger.info(`[Email] Email đến đã lưu thành interaction ${savedInteraction.id}`);
-
       io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Email' });
-
       // Auto-reply qua Email (Brevo)
       const emailBody = subject ? `${body || ''}` : (body || '');
       triggerAutoReply(io, tenantId, lead, emailBody || subject || content, 'EMAIL').catch((err) =>
@@ -685,14 +610,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
     }
   }
 }
-
 // ---------------------------------------------------------------------------
 // Khởi động in-memory worker (dùng khi QStash chưa được cấu hình)
 // ---------------------------------------------------------------------------
-
 export function setupWebhookWorker(io: Server) {
   const processJob = (job: any) => processWebhookJob(io, job);
-
   inMemoryProcessor = processJob;
   while (inMemoryJobs.length > 0) {
     const job = inMemoryJobs.shift();

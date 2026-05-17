@@ -3,7 +3,6 @@ import {
   Loader2, AlertTriangle, UserCheck, Users, RefreshCw, ChevronUp, ChevronDown, AlertCircle,
 } from 'lucide-react';
 import { api } from '../services/api';
-
 interface EmployeeSummary {
   user_id: string;
   name: string;
@@ -17,10 +16,8 @@ interface EmployeeSummary {
   total_assigned: number;
   completion_rate: number;
 }
-
 type SortKey = 'name' | 'total_assigned' | 'done' | 'in_progress' | 'overdue' | 'completion_rate';
 type SortDir = 'asc' | 'desc';
-
 function WorkloadBar({ score }: { score: number }) {
   const max = 20;
   const pct = Math.min(100, (score / max) * 100);
@@ -35,7 +32,6 @@ function WorkloadBar({ score }: { score: number }) {
     </div>
   );
 }
-
 function SkeletonRow() {
   return (
     <div className="px-4 md:px-6 py-4 flex items-center gap-3 animate-pulse">
@@ -48,7 +44,6 @@ function SkeletonRow() {
     </div>
   );
 }
-
 function SortButton({ col, current, dir, onClick }: { col: SortKey; current: SortKey; dir: SortDir; onClick: (c: SortKey) => void }) {
   const active = col === current;
   return (
@@ -59,7 +54,6 @@ function SortButton({ col, current, dir, onClick }: { col: SortKey; current: Sor
     </button>
   );
 }
-
 export function Employees() {
   const [employees, setEmployees] = useState<EmployeeSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +62,6 @@ export function Employees() {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('overdue');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
@@ -83,14 +76,11 @@ export function Employees() {
       setRefreshing(false);
     }
   }, []);
-
   useEffect(() => { load(); }, [load]);
-
   const handleSort = (col: SortKey) => {
     if (col === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(col); setSortDir('desc'); }
   };
-
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     const arr = !q ? employees : employees.filter(e =>
@@ -103,11 +93,9 @@ export function Employees() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [employees, search, sortKey, sortDir]);
-
   const totalOverdue = employees.reduce((s, e) => s + e.overdue, 0);
   const totalDone = employees.reduce((s, e) => s + e.done, 0);
   const avgCompletion = employees.length > 0 ? employees.reduce((s, e) => s + e.completion_rate, 0) / employees.length : 0;
-
   const SortCol = ({ col, label }: { col: SortKey; label: string }) => (
     <button
       onClick={() => handleSort(col)}
@@ -118,7 +106,6 @@ export function Employees() {
         : <ChevronDown size={11} className="opacity-30" />}
     </button>
   );
-
   return (
     <div className="h-full flex flex-col overflow-hidden animate-enter">
       {/* Header */}
@@ -136,7 +123,6 @@ export function Employees() {
           Làm mới
         </button>
       </div>
-
       {/* Summary cards */}
       {!loading && !error && (
         <div className="px-4 md:px-6 py-4 grid grid-cols-3 gap-3 border-b border-[var(--glass-border)] flex-shrink-0">
@@ -154,7 +140,6 @@ export function Employees() {
           </div>
         </div>
       )}
-
       {/* Search */}
       <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0">
         <input
@@ -165,7 +150,6 @@ export function Employees() {
           className="w-full h-[38px] px-3 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         />
       </div>
-
       {/* Sort header */}
       {!loading && !error && employees.length > 0 && (
         <div className="px-4 md:px-6 py-2 border-b border-[var(--glass-border)] flex-shrink-0 hidden md:flex items-center text-xs text-[var(--text-tertiary)] gap-4">
@@ -178,7 +162,6 @@ export function Employees() {
           <div className="w-24 text-right"><SortCol col="completion_rate" label="Hoàn thành" /></div>
         </div>
       )}
-
       {/* Content */}
       <div className="flex-1 overflow-auto no-scrollbar">
         {loading ? (
@@ -203,7 +186,6 @@ export function Employees() {
                   <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
                     {emp.name?.charAt(0).toUpperCase()}
                   </div>
-
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -222,7 +204,6 @@ export function Employees() {
                         </span>
                       </div>
                     </div>
-
                     {/* Task counts + workload */}
                     <div className="flex items-center gap-3 mt-2 flex-wrap">
                       <span className="text-xs text-[var(--text-tertiary)]">Tổng: <b className="text-[var(--text-primary)]">{emp.total_assigned}</b></span>

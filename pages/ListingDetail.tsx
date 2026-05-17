@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { NO_IMAGE_URL } from '../utils/constants';
@@ -19,7 +18,6 @@ import { ListingForm } from '../components/ListingForm';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Lock, Plus, Edit2, Trash2, Download, Upload, Sparkles, MoreVertical } from 'lucide-react';
 import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from '../components/AiCreditBadge';
-
 // Icons with pointer-events-none to prevent click hijacking
 const ICONS = {
     BACK: <svg className="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
@@ -34,31 +32,24 @@ const ICONS = {
     CHART: <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>,
     GRID: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 01-2 2v-2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
 };
-
 const PLACEHOLDER_IMG = "https://placehold.co/800x600?text=No+Image";
-
 // Helper
 const normalizeAddress = (addr: string) => {
     return addr.replace(/,\s*Việt Nam$/, '');
 };
-
 const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => void; t: any }) => {
     const [copied, setCopied] = useState(false);
     const [url, setUrl] = useState('');
-
     // Capture URL exactly when modal opens to ensure accuracy
     useEffect(() => {
         if (isOpen) setUrl(window.location.href);
     }, [isOpen]);
-
     const handleCopy = async () => {
         await copyToClipboard(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
-
     if (!isOpen) return null;
-
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
@@ -68,8 +59,7 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
                     <button onClick={onClose} className="p-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors">
                         {ICONS.CLOSE}
                     </button>
-                </div>
-                
+                </div>                
                 <p className="text-sm text-[var(--text-tertiary)] mb-4 leading-relaxed">
                     {t('common.share_desc')}
                 </p>
@@ -82,7 +72,6 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
                         onClick={(e) => e.currentTarget.select()} // Auto-select on click
                     />
                 </div>
-
                 <button 
                     onClick={handleCopy} 
                     className={`w-full py-3 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
@@ -95,11 +84,9 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
         document.body
     );
 };
-
 // --- Financial Calculator Component ---
 const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, formatCurrency: (val: number) => string, t: any }) => {
     const [mode, setMode] = useState<'LOAN' | 'RENT'>('LOAN');
-
     // ── Loan State ──
     const [ratio, setRatio] = useState(70);
     // String states: cho phép ô trống (tránh nhảy về 0/1 khi xoá hết)
@@ -107,7 +94,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     const [rateStr, setRateStr] = useState('8.5');
     const term = Math.max(1, Number(termStr) || 1);
     const rate = Math.max(0, Number(rateStr) || 0);
-
     // ── Rent/Investment State ──
     // 0.4%/tháng = ~4.8%/năm — mức cho thuê trung bình thị trường Việt Nam
     // Dùng string để cho phép input trống (tránh hiện số 0 khi xoá hết)
@@ -121,7 +107,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     const [appreciation, setAppreciation] = useState(7);
     const [holdingYearsStr, setHoldingYearsStr] = useState('10');
     const holdingYears = Math.max(1, Math.min(50, Number(holdingYearsStr) || 1));
-
     // ── Loan Calculations ──
     const loanAmount = price * (ratio / 100);
     const downPayment = price - loanAmount;
@@ -134,7 +119,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
         : 0;
     const totalPayment = monthlyPayment * totalMonths;
     const totalInterest = totalPayment - loanAmount;
-
     // ── Investment Calculations ──
     // Dòng tiền thuê
     const annualRevenue = monthlyRent * 12 * (occupancy / 100);
@@ -152,7 +136,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     const annualizedReturn = price > 0 && holdingYears > 0
         ? (Math.pow((projectedPrice + totalRentalIncome) / price, 1 / holdingYears) - 1) * 100
         : 0;
-
     return (
         <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden h-full">
             <div className="flex border-b border-[var(--glass-border)]">
@@ -279,7 +262,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                 />
                             </div>
                         </div>
-
                         {/* ── RIGHT: Results ── */}
                         <div className="space-y-3">
                             {/* Card 1: Dòng tiền cho thuê */}
@@ -297,7 +279,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                     </div>
                                 </div>
                             </div>
-
                             {/* Card 2: Tăng giá vốn */}
                             <div className="bg-violet-50 rounded-2xl p-4 border border-violet-100">
                                 <div className="text-xs text-violet-600 font-bold uppercase tracking-wider mb-1">{t('calc.projected_price_label')}</div>
@@ -313,7 +294,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                     </div>
                                 </div>
                             </div>
-
                             {/* Card 3: Tổng lợi nhuận */}
                             <div className="bg-sky-50 rounded-2xl p-4 border border-sky-100">
                                 <div className="text-xs text-sky-600 font-bold uppercase tracking-wider mb-1">{t('calc.total_profit')}</div>
@@ -336,7 +316,6 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
         </div>
     );
 });
-
 const STATUS_CONFIG: Record<string, { color: string, bg: string, border: string }> = {
     BOOKING: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
     OPENING: { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
@@ -346,7 +325,6 @@ const STATUS_CONFIG: Record<string, { color: string, bg: string, border: string 
     RENTED: { color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
     INACTIVE: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
 };
-
 // ─── AssigneeDropdown ─────────────────────────────────────────────────────────
 // Custom dropdown replacing native <select> for unit assignment.
 // Shows avatar + name in trigger; portal panel with full user list.
@@ -366,10 +344,8 @@ const AssigneeDropdown = memo(({
     const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number; width: number }>({ left: 0, width: 0 });
     const triggerRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
-
     const avatarUrl = (n: string, a?: string) =>
         a || `https://ui-avatars.com/api/?name=${encodeURIComponent(n)}&size=28&background=6366f1&color=fff`;
-
     const openMenu = () => {
         if (disabled) return;
         const rect = triggerRef.current?.getBoundingClientRect();
@@ -386,7 +362,6 @@ const AssigneeDropdown = memo(({
         }
         setIsOpen(true);
     };
-
     useEffect(() => {
         if (!isOpen) return;
         const handleOut = (e: MouseEvent) => {
@@ -402,12 +377,10 @@ const AssigneeDropdown = memo(({
             window.removeEventListener('scroll', handleScroll, true);
         };
     }, [isOpen]);
-
     const select = (userId: string | null) => {
         onChange(userId);
         setIsOpen(false);
     };
-
     return (
         <div className="relative inline-flex">
             {/* Trigger button */}
@@ -444,7 +417,6 @@ const AssigneeDropdown = memo(({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-
             {/* Portal dropdown */}
             {isOpen && createPortal(
                 <div
@@ -481,7 +453,6 @@ const AssigneeDropdown = memo(({
                             </svg>
                         )}
                     </button>
-
                     {/* User list */}
                     {users.map(u => {
                         const isSelected = u.id === value;
@@ -519,7 +490,6 @@ const AssigneeDropdown = memo(({
     );
 });
 AssigneeDropdown.displayName = 'AssigneeDropdown';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // UnitActionsMenu — 3-dot kebab menu replacing standalone Edit + Delete buttons
 // ─────────────────────────────────────────────────────────────────────────────
@@ -535,7 +505,6 @@ const UnitActionsMenu = memo(({
     const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number }>({ left: 0 });
     const triggerRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
-
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = triggerRef.current?.getBoundingClientRect();
@@ -552,7 +521,6 @@ const UnitActionsMenu = memo(({
         }
         setIsOpen(v => !v);
     };
-
     useEffect(() => {
         if (!isOpen) return;
         const handleOut = (e: MouseEvent) => {
@@ -614,7 +582,6 @@ const UnitActionsMenu = memo(({
     );
 });
 UnitActionsMenu.displayName = 'UnitActionsMenu';
-
 const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t, formatCurrency, formatCompactNumber }: { projectCode: string, parentLocation?: string, parentContactPhone?: string, t: any, formatCurrency: any, formatCompactNumber: any }) => {
     const [units, setUnits] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
@@ -623,20 +590,17 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string>('');
     const [tenantUsers, setTenantUsers] = useState<User[]>([]); // For assignee dropdown
-    const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null); // Currently saving assignment
-    
+    const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null); // Currently saving assignment    
     // Form State
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingUnit, setEditingUnit] = useState<Listing | null>(null);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [unitToDelete, setUnitToDelete] = useState<Listing | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     /** Returns true if the current user can edit or delete this specific unit */
     const canEditUnit = useCallback((unit: Listing): boolean => {
         if (canManageUnits) return true; // ADMIN / TEAM_LEAD always
@@ -644,7 +608,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         if (userRole !== 'SALES' && userRole !== 'MARKETING') return false;
         return unit.assignedTo === currentUserId || unit.createdBy === currentUserId;
     }, [canManageUnits, currentUserId, userRole]);
-
     useEffect(() => {
         const checkAuth = async () => {
             const user = await db.getCurrentUser();
@@ -666,7 +629,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         };
         checkAuth();
     }, []);
-
     const fetchUnits = useCallback(async () => {
         setLoading(true);
         try {
@@ -686,28 +648,23 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             setLoading(false);
         }
     }, [projectCode]);
-
     useEffect(() => {
         if (projectCode) fetchUnits();
     }, [projectCode, fetchUnits]);
-
     const handleAddUnit = () => {
         setEditingUnit(null);
         setIsFormOpen(true);
     };
-
     const handleEditUnit = (e: React.MouseEvent, unit: Listing) => {
         e.stopPropagation();
         setEditingUnit(unit);
         setIsFormOpen(true);
     };
-
     const handleDeleteClick = (e: React.MouseEvent, unit: Listing) => {
         e.stopPropagation();
         setUnitToDelete(unit);
         setDeleteConfirmOpen(true);
     };
-
     const confirmDelete = async () => {
         if (!unitToDelete) return;
         try {
@@ -722,7 +679,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             setUnitToDelete(null);
         }
     };
-
     const handleFormSubmit = async (data: Partial<Listing>) => {
         try {
             // Force projectCode to be the current project
@@ -740,7 +696,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             notify(e.message || t('common.error'), 'error');
         }
     };
-
     /** ADMIN/TEAM_LEAD only: assign (or unassign with null) a unit to an internal user */
     const handleAssign = useCallback(async (unitId: string, userId: string | null) => {
         setAssigningUnitId(unitId);
@@ -783,7 +738,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             { header: 'Trạng thái', key: 'trangThai', width: 15 },
             { header: 'Vị trí', key: 'viTri', width: 30 },
         ];
-
         units.forEach(unit => {
             ws.addRow({
                 maSP: unit.code,
@@ -797,7 +751,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                 viTri: unit.location,
             });
         });
-
         const buffer = await wb.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
@@ -807,14 +760,12 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         a.click();
         URL.revokeObjectURL(url);
     };
-
     const fileInputRef = useRef<HTMLInputElement>(null);
     const tableContainerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [hasDragged, setHasDragged] = useState(false);
     const [startX, setStartX] = useState(0);
     const [scrollLeft, setScrollLeft] = useState(0);
-
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!tableContainerRef.current) return;
         setIsDragging(true);
@@ -822,15 +773,12 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         setStartX(e.pageX - tableContainerRef.current.offsetLeft);
         setScrollLeft(tableContainerRef.current.scrollLeft);
     };
-
     const handleMouseLeave = () => {
         setIsDragging(false);
     };
-
     const handleMouseUp = () => {
         setIsDragging(false);
     };
-
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isDragging || !tableContainerRef.current) return;
         e.preventDefault();
@@ -841,11 +789,9 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         }
         tableContainerRef.current.scrollLeft = scrollLeft - walk;
     };
-
     const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = async (evt) => {
             try {
@@ -854,7 +800,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                 const wb = new ExcelJS.Workbook();
                 await wb.xlsx.load(arrayBuffer);
                 const ws = wb.worksheets[0];
-
                 const headers: string[] = [];
                 const data: Record<string, string>[] = [];
                 ws.eachRow((row, rowNumber) => {
@@ -868,7 +813,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                         data.push(rowData);
                     }
                 });
-
                 // Process and create listings
                 for (const row of data as any[]) {
                     // Basic mapping, assuming standard columns from export
@@ -887,15 +831,13 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                         },
                         currency: 'VND',
                         transaction: TransactionType.SALE
-                    };
-                    
+                    };                    
                     // Try to map type back
                     const typeStr = row['Loại'];
                     if (typeStr) {
                         const matchedType = Object.values(PropertyType).find(tKey => t(`property.${tKey.toUpperCase()}`) === typeStr);
                         if (matchedType) newListing.type = matchedType as PropertyType;
                     }
-
                     // Try to map status back
                     const statusStr = row['Trạng thái'];
                     if (statusStr) {
@@ -914,8 +856,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                     }
 
                     await db.createListing(newListing as Omit<Listing, 'id'>);
-                }
-                
+                }                
                 fetchUnits();
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 notify(t('inventory.import_success'), 'success');
@@ -926,11 +867,8 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         };
         reader.readAsArrayBuffer(file);
     };
-
     if (loading) return <div className="animate-pulse h-40 bg-[var(--glass-surface-hover)] rounded-[24px] mt-8"></div>;
-
     if (!isAuth) return null;
-
     return (
         <>
         <div className="mt-8 relative">
@@ -974,8 +912,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                         </button>
                     </div>
                 )}
-            </div>
-            
+            </div>            
             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                 {units.length === 0 ? (
                     <div className="flex flex-col items-center gap-4 py-16 px-6 text-center">
@@ -1090,7 +1027,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                 </tbody>
                             </table>
                         </div>
-
                         {/* Mobile Compact View */}
                         <div className="md:hidden divide-y divide-[var(--glass-border)]">
                             {units.map(unit => {
@@ -1166,7 +1102,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                     </>
                 )}
             </div>
-
             {isFormOpen && (
                 <ListingForm 
                     isOpen={isFormOpen} 
@@ -1177,7 +1112,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                     isProjectUnit={true}
                 />
             )}
-
             <ConfirmModal 
                 isOpen={deleteConfirmOpen}
                 onCancel={() => setDeleteConfirmOpen(false)}
@@ -1200,7 +1134,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         </>
     );
 });
-
 export const ListingDetail: React.FC = () => {
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const [listing, setListing] = useState<Listing | null>(null);
@@ -1237,32 +1170,24 @@ export const ListingDetail: React.FC = () => {
     const [showPhone, setShowPhone] = useState(false);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isEditFormOpen, setIsEditFormOpen] = useState(false);
-
     const canViewInternalInfo = useMemo(() => {
-        if (!currentUser || !listing) return false;
-        
+        if (!currentUser || !listing) return false;        
         // Admins and Team Leads
-        if ([UserRole.ADMIN, UserRole.TEAM_LEAD].includes(currentUser.role)) return true;
-        
+        if ([UserRole.ADMIN, UserRole.TEAM_LEAD].includes(currentUser.role)) return true;        
         // Creator of the listing
-        if (listing.createdBy === currentUser.id) return true;
-        
+        if (listing.createdBy === currentUser.id) return true;        
         // Specific permission
-        if (Array.isArray(currentUser.permissions) && currentUser.permissions.includes('VIEW_SENSITIVE_INFO')) return true;
-        
+        if (Array.isArray(currentUser.permissions) && currentUser.permissions.includes('VIEW_SENSITIVE_INFO')) return true;        
         // Explicitly authorized
         if (listing.authorizedAgents?.includes(currentUser.id)) return true;
-
         return false;
     }, [currentUser, listing]);
-
     const canManageListing = useMemo(() => {
         if (!currentUser || !listing) return false;
         if ([UserRole.ADMIN, UserRole.TEAM_LEAD].includes(currentUser.role)) return true;
         if (listing.createdBy === currentUser.id) return true;
         return false;
     }, [currentUser, listing]);
-
     // Get ID from clean URL (/listing/id, /bds/<slug>-<id>) or legacy hash.
     // Accepts both bare UUID and `<slug>-<uuid>` form so SEO-friendly URLs
     // emitted in sitemap (`/bds/<slug>-<uuid>`) resolve to this page.
@@ -1288,7 +1213,6 @@ export const ListingDetail: React.FC = () => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const fetchListingData = useCallback(async () => {
         if (!id || id === 'listing') { setLoading(false); return; }
         setLoading(true);
@@ -1302,12 +1226,10 @@ export const ListingDetail: React.FC = () => {
             if (item) {
                 const normalizedLocation = normalizeAddress(item.location);
                 const simFiltered = (sim || []).filter((s: any) => s.id !== item.id);
-
                 // Show listing immediately — don't block on favorites
                 setListing({ ...item, location: normalizedLocation, isFavorite: false });
                 setSimilarListings(simFiltered);
                 setLoading(false);
-
                 // Fetch favorites in background and patch state
                 if (user) {
                     try {
@@ -1330,7 +1252,6 @@ export const ListingDetail: React.FC = () => {
             setLoading(false);
         }
     }, [id]);
-
     const fetchTeaserData = useCallback(async (loc: string, area: number, type?: string) => {
         if (!loc || area <= 0) return;
         setIsTeaserLoading(true);
@@ -1348,13 +1269,11 @@ export const ListingDetail: React.FC = () => {
             setIsTeaserLoading(false);
         }
     }, []);
-
     useEffect(() => {
         if (listing && listing.type !== PropertyType.PROJECT && listing.area > 0 && listing.location) {
             fetchTeaserData(listing.location, listing.area, listing.attributes?.propertyType as string | undefined);
         }
     }, [listing, fetchTeaserData]);
-
     useEffect(() => {
         if (listing) {
             injectListingSEO({
@@ -1372,11 +1291,9 @@ export const ListingDetail: React.FC = () => {
         }
         return () => { clearDynamicSEO('listing'); };
     }, [listing]);
-
     useEffect(() => {
         fetchListingData();
     }, [fetchListingData]);
-
     const handleBack = useCallback(() => {
         // SMART CONTEXT AWARE BACK BUTTON
         // If user has a session, they are an Agent/Admin -> Go to Inventory
@@ -1387,18 +1304,14 @@ export const ListingDetail: React.FC = () => {
             window.location.hash = `#/${ROUTES.SEARCH}`;
         }
     }, [currentUser]);
-
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-
     const handleShare = () => {
         setShareOpen(true);
     };
-
     const handleBooking = async (date: string, time: string, note: string, name: string, phone: string) => {
         try {
             const currentUrl = window.location.href;
             const leadNotes = `📅 ĐẶT LỊCH XEM NHÀ\n------------------\n📍 Sản phẩm: [${listing?.code}] ${listing?.title}\n⏰ Thời gian: ${time} ngày ${date}\n👤 Khách hàng: ${name}\n📞 SĐT: ${phone}\n📝 Ghi chú: ${note || 'Không có'}\n🔗 Link: ${currentUrl}`;
-
             if (currentUser) {
                 await db.createLead({
                     name,
@@ -1426,7 +1339,6 @@ export const ListingDetail: React.FC = () => {
                     name, phone, notes: leadNotes, source: 'BOOKING', stage: 'NEW',
                 });
             }
-
             notify(t('common.success'), 'success');
         } catch (error) {
             console.error(error);
@@ -1434,7 +1346,6 @@ export const ListingDetail: React.FC = () => {
         }
         setBookingOpen(false);
     };
-
     const handleContact = useCallback(() => {
         setShowPhone(true);
         if (!currentUser && listing?.id) {
@@ -1452,11 +1363,9 @@ export const ListingDetail: React.FC = () => {
     const handleToggleFavorite = async () => {
         if (!listing) return;
         const newStatus = !listing.isFavorite;
-
         // Optimistic Update
         setListing(prev => prev ? ({ ...prev, isFavorite: newStatus }) : null);
         notify(newStatus ? (t('favorites.added') || "Đã thêm vào yêu thích") : (t('favorites.removed') || "Đã xóa khỏi yêu thích"), 'success');
-
         if (currentUser) {
             try {
                 await db.toggleFavorite(listing.id);
@@ -1474,7 +1383,6 @@ export const ListingDetail: React.FC = () => {
             } catch {}
         }
     };
-
     const handleAiValuation = async () => {
         if (!currentUser) {
             notify("Vui lòng đăng nhập để sử dụng tính năng thẩm định AI", 'error');
@@ -1501,7 +1409,6 @@ export const ListingDetail: React.FC = () => {
                     default:                      return 'townhouse_center';
                 }
             })();
-
             // ── Normalize legal status → human-readable Vietnamese ─────────────────
             const legalMap: Record<string, string> = {
                 PinkBook: 'Sổ hồng / Sổ đỏ',
@@ -1509,11 +1416,9 @@ export const ListingDetail: React.FC = () => {
                 Waiting:  'Vi bằng / chờ sổ',
             };
             const legal = legalMap[listing.attributes?.legalStatus as string] || listing.attributes?.legalStatus || 'Sổ hồng';
-
             // ── Build address: prefer title (often more specific) + location ────────
             // Many listings have specific street address in title; combine for better accuracy
             const address = listing.location || listing.title;
-
             const result = await aiService.getRealtimeValuation(
                 address,
                 listing.area,
@@ -1530,7 +1435,6 @@ export const ListingDetail: React.FC = () => {
                     listingId:     listing.id,
                 }
             );
-
             // ── Build reasoning from market trend + top factors ────────────────────
             const topFactors = (result.factors || [])
                 .filter((f: any) => Math.abs(f.impact) >= 3)
@@ -1541,7 +1445,6 @@ export const ListingDetail: React.FC = () => {
                 result.marketTrend,
                 topFactors ? `Các yếu tố điều chỉnh: ${topFactors}.` : ''
             ].filter(Boolean).join(' ');
-
             setValuation({
                 estimatedPrice: result.totalPrice,
                 confidenceScore: result.confidence / 100,
@@ -1555,7 +1458,6 @@ export const ListingDetail: React.FC = () => {
                 isRealtime: result.isRealtime,
             });
             if (result.quota) setValuationQuota(result.quota as QuotaInfo);
-
             notify("Thẩm định AI hoàn tất", 'success');
         } catch (error: any) {
             console.error(error);
@@ -1564,7 +1466,6 @@ export const ListingDetail: React.FC = () => {
             setIsValuating(false);
         }
     };
-
     const handleProjectFormSubmit = async (data: Partial<Listing>) => {
         if (!listing) return;
         await db.updateListing(listing.id, data);
@@ -1572,15 +1473,12 @@ export const ListingDetail: React.FC = () => {
         setIsEditFormOpen(false);
         notify(t('common.success'), 'success');
     };
-
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
     if (!listing) return <div className="p-10 text-center text-[var(--text-secondary)]">{t('common.product_not_found')}</div>;
-
     // --- CONTEXT-AWARE ATTRIBUTE RENDERER ---
     const getAttributes = () => {
         const type = listing.type;
         const attrs = listing.attributes;
-
         if (type === PropertyType.PROJECT) {
             return [
                 { label: t('inventory.label_developer'), value: attrs.developer },
@@ -1589,8 +1487,7 @@ export const ListingDetail: React.FC = () => {
                 { label: t('inventory.label_legal'), value: attrs.legalStatus ? t(`legal.${attrs.legalStatus}`) : '--' },
                 { label: t('inventory.label_status'), value: t(`status.${listing.status}`) },
             ];
-        } 
-        
+        }         
         if (type === PropertyType.LAND) {
             return [
                 { label: t('pub.area'), value: `${listing.area} m²` },
@@ -1600,7 +1497,6 @@ export const ListingDetail: React.FC = () => {
                 { label: t('inventory.label_legal'), value: attrs.legalStatus ? t(`legal.${attrs.legalStatus}`) : '--' },
             ];
         }
-
         if (type === PropertyType.FACTORY || type === PropertyType.COMMERCIAL) {
             return [
                 { label: t('pub.area'), value: `${listing.area} m²` },
@@ -1610,7 +1506,6 @@ export const ListingDetail: React.FC = () => {
                 { label: t('inventory.label_legal'), value: attrs.legalStatus ? t(`legal.${attrs.legalStatus}`) : '--' },
             ];
         }
-
         if (type === PropertyType.TOWNHOUSE || type === PropertyType.VILLA || type === PropertyType.HOUSE) {
             return [
                 { label: t('pub.area'), value: `${listing.area} m²` },
@@ -1621,7 +1516,6 @@ export const ListingDetail: React.FC = () => {
                 { label: t('inventory.label_legal'), value: attrs.legalStatus ? t(`legal.${attrs.legalStatus}`) : '--' },
             ];
         }
-
         if (type === PropertyType.OFFICE) {
             return [
                 { label: t('pub.area'), value: `${listing.area} m²` },
@@ -1631,7 +1525,6 @@ export const ListingDetail: React.FC = () => {
                 { label: t('pub.type'), value: t(`property.${listing.type.toUpperCase()}`) },
             ];
         }
-
         // Default: Apartment / Penthouse
         return [
             { label: t('pub.area'), value: `${listing.area} m²` },
@@ -1641,9 +1534,7 @@ export const ListingDetail: React.FC = () => {
             { label: t('pub.type'), value: t(`property.${listing.type.toUpperCase()}`) },
         ];
     };
-
     const attributes = getAttributes();
-
     // Safe images array (ensure at least one item or empty for logic)
     const images = listing.images && listing.images.length > 0 ? listing.images : [PLACEHOLDER_IMG];
     const hasMoreImages = images.length > 5;
@@ -1653,11 +1544,9 @@ export const ListingDetail: React.FC = () => {
     const displayPhone = listing.contactPhone
         ? listing.contactPhone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3')
         : t('common.contact_on_site');
-
     return (
         <>
         <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-[var(--bg-surface)] pb-28 lg:pb-20 animate-enter relative">
-
             {/* Header */}
             <div className="sticky top-0 z-40 bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--glass-border)] px-4 py-3 md:px-6 md:py-4 flex justify-between items-center gap-2">
                 <button 
@@ -1702,7 +1591,6 @@ export const ListingDetail: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {/* Gallery (Bento Grid) */}
             <div className="max-w-7xl mx-auto px-4 py-5 md:px-6 md:py-8">
                 {/* Dynamic Grid Layout based on image count */}
@@ -1721,7 +1609,6 @@ export const ListingDetail: React.FC = () => {
                         <img src={optimizedImageUrl(displayImages[0] || NO_IMAGE_URL, 1280)} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt="Main" loading="eager" decoding="async" fetchPriority="high" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                         <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors"></div>
                     </div>
-
                     {/* Secondary Images (Right Side) */}
                     {displayImages.length > 1 && (
                         <div className={`hidden md:grid gap-4 h-full
@@ -1742,7 +1629,6 @@ export const ListingDetail: React.FC = () => {
                             ))}
                         </div>
                     )}
-
                     {/* "View All" Button (Floating, visible on Mobile & Desktop) - Updated without ICON */}
                     <button 
                         onClick={() => { setLightboxIndex(0); setLightboxOpen(true); }}
@@ -1752,7 +1638,6 @@ export const ListingDetail: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {/* Content */}
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 <div className="lg:col-span-2 space-y-8">
@@ -1773,7 +1658,6 @@ export const ListingDetail: React.FC = () => {
                             )}
                         </div>
                     </div>
-
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {attributes.map((attr, i) => (
                             <div key={i} className="bg-[var(--glass-surface)] p-4 rounded-2xl border border-[var(--glass-border)] hover:bg-[var(--bg-surface)] hover:shadow-md transition-all duration-300 group">
@@ -1782,36 +1666,30 @@ export const ListingDetail: React.FC = () => {
                             </div>
                         ))}
                     </div>
-
                     <div>
                         <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">{t('detail.info_title')}</h3>
                         <p className="text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
                             {(listing.attributes.description as string) || t('inventory.label_desc')}
                         </p>
                     </div>
-
                     {/* Map — hiển thị luôn khi có địa chỉ; MapView tự geocode qua Nominatim nếu coordinates null */}
                     {listing.location && (
                         <div className="h-80 rounded-[24px] overflow-hidden border border-[var(--glass-border)] shadow-sm relative z-0">
                             <MapView listings={[listing]} onNavigate={() => {}} formatCurrency={formatCurrency} formatUnitPrice={formatUnitPrice} t={t} language={language} />
                         </div>
                     )}
-
                     {/* Project Units - New Section */}
                     {listing.type === PropertyType.PROJECT && (
                         <ProjectUnits projectCode={listing.code} parentLocation={listing.location} parentContactPhone={listing.contactPhone} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} />
                     )}
-
                     {/* Financial Tools & AI Valuation — Plan B */}
                     {listing.type !== PropertyType.PROJECT && (
                         <div className="flex flex-col gap-8 mt-8">
                             <div className="min-w-0">
                                 <FinancialSuite price={listing.price} formatCurrency={formatCurrency} t={t} />
                             </div>
-
                             {/* ── Valuation Card ─────────────────────────────────── */}
                             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col min-w-0">
-
                                 {/* Header */}
                                 <div className="p-5 border-b border-[var(--glass-border)] flex items-center gap-3 bg-gradient-to-r from-indigo-50/40 to-violet-50/20">
                                     <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
@@ -1822,9 +1700,7 @@ export const ListingDetail: React.FC = () => {
                                         <p className="text-xs text-[var(--text-tertiary)]">Dữ liệu thực tế · Cập nhật liên tục</p>
                                     </div>
                                 </div>
-
                                 <div className="p-6 flex-1 space-y-5">
-
                                     {/* ── Step 1: Teaser (market estimate) — shown to everyone ── */}
                                     {isTeaserLoading && (
                                         <div className="space-y-3 animate-pulse">
@@ -1875,10 +1751,8 @@ export const ListingDetail: React.FC = () => {
                                                     <span className="text-[10px] text-[var(--text-tertiary)]">Độ tin cậy {teaserData.confidence}%</span>
                                                 </div>
                                             </div>
-
                                             {/* Divider */}
                                             <div className="border-t border-[var(--glass-border)]"></div>
-
                                             {/* ── Step 2a: Guest CTA ── */}
                                             {!currentUser && (
                                                 <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-5 space-y-3">
@@ -1905,7 +1779,6 @@ export const ListingDetail: React.FC = () => {
                                                     <p className="text-center text-[10px] text-indigo-400">Miễn phí · Không cần thẻ tín dụng</p>
                                                 </div>
                                             )}
-
                                             {/* ── Step 2b: Logged-in user AI valuation ── */}
                                             {currentUser && !valuation && (
                                                 <div className="space-y-3">
@@ -1927,7 +1800,6 @@ export const ListingDetail: React.FC = () => {
                                                     </AiQuotaGate>
                                                 </div>
                                             )}
-
                                             {/* AI valuation loading skeleton */}
                                             {isValuating && (
                                                 <div className="space-y-4 animate-pulse">
@@ -1939,7 +1811,6 @@ export const ListingDetail: React.FC = () => {
                                                     </div>
                                                 </div>
                                             )}
-
                                             {/* Full AI valuation result */}
                                             {valuation && (
                                                 <div className="animate-enter space-y-4">
@@ -1951,7 +1822,6 @@ export const ListingDetail: React.FC = () => {
                                                         </span>
                                                         <span className="text-[10px] text-[var(--text-tertiary)]">Độ tin cậy: {(valuation.confidenceScore * 100).toFixed(0)}%</span>
                                                     </div>
-
                                                     {/* Main price */}
                                                     <div>
                                                         <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1">Giá thẩm định AI</div>
@@ -1962,7 +1832,6 @@ export const ListingDetail: React.FC = () => {
                                                             </div>
                                                         )}
                                                     </div>
-
                                                     {/* Stats row */}
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 min-w-0">
@@ -1976,7 +1845,6 @@ export const ListingDetail: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-
                                                     {/* Market analysis */}
                                                     {valuation.reasoning && (
                                                         <div className="space-y-1">
@@ -1984,7 +1852,6 @@ export const ListingDetail: React.FC = () => {
                                                             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{valuation.reasoning}</p>
                                                         </div>
                                                     )}
-
                                                     {/* Key factors */}
                                                     {valuation.factors && valuation.factors.length > 0 && (
                                                         <div className="space-y-1.5">
@@ -1999,12 +1866,10 @@ export const ListingDetail: React.FC = () => {
                                                             ))}
                                                         </div>
                                                     )}
-
                                                     {/* Credit badge in result view */}
                                                     {valuationQuota && !valuationQuota.isUnlimited && (
                                                         <AiCreditBadge quota={valuationQuota} featureLabel="Thẩm định AI" onUpgradeClick={() => window.open('/pricing', '_blank')} />
                                                     )}
-
                                                     {/* Re-run button */}
                                                     <AiQuotaGate quota={valuationQuota} featureLabel="thẩm định AI" onUpgradeClick={() => window.open('/pricing', '_blank')}>
                                                         <button
@@ -2019,7 +1884,6 @@ export const ListingDetail: React.FC = () => {
                                             )}
                                         </div>
                                     )}
-
                                     {/* No teaser data fallback — show original gate for logged-in users */}
                                     {!isTeaserLoading && !teaserData && (
                                         <div className="space-y-4">
@@ -2055,7 +1919,6 @@ export const ListingDetail: React.FC = () => {
                             </div>
                         </div>
                     )}
-
                     {/* Internal Info - Only for Authenticated Agents */}
                     {canViewInternalInfo && (
                         <div className="bg-slate-900 rounded-[32px] p-8 border border-slate-800 mt-12 shadow-2xl relative overflow-hidden">
@@ -2106,7 +1969,6 @@ export const ListingDetail: React.FC = () => {
                         </div>
                     )}
                 </div>
-
                 {/* Sidebar */}
                 <div className="space-y-6">
                     <div className="bg-[var(--bg-surface)] p-6 rounded-[32px] border border-[var(--glass-border)] shadow-xl sticky top-24">
@@ -2125,7 +1987,6 @@ export const ListingDetail: React.FC = () => {
                                 </div>
                             )}
                         </div>
-
                         {/* Hidden on mobile — replaced by the fixed bottom CTA bar (lg:hidden) */}
                         <div className="hidden lg:block space-y-3">
                         <button onClick={() => setBookingOpen(true)} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2">
@@ -2152,7 +2013,6 @@ export const ListingDetail: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* Similar Listings */}
             {similarListings.length > 0 && (
                 <div className="max-w-7xl mx-auto px-6 py-12 border-t border-[var(--glass-border)] mt-12">
@@ -2195,7 +2055,6 @@ export const ListingDetail: React.FC = () => {
                     </div>
                 </div>
             )}
-
             {/* Modals */}
             {lightboxOpen && (
                 <Lightbox 
@@ -2203,21 +2062,18 @@ export const ListingDetail: React.FC = () => {
                     initialIndex={lightboxIndex} 
                     onClose={() => setLightboxOpen(false)} 
                 />
-            )}
-            
+            )}            
             <BookingModal 
                 isOpen={bookingOpen} 
                 onClose={() => setBookingOpen(false)} 
                 onConfirm={handleBooking} 
                 t={t} 
             />
-
             <ShareModal 
                 isOpen={shareOpen} 
                 onClose={() => setShareOpen(false)} 
                 t={t} 
             />
-
             {isEditFormOpen && listing && (
                 <ListingForm
                     isOpen={isEditFormOpen}

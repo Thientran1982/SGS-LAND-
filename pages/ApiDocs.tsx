@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
@@ -6,23 +5,19 @@ import { useTranslation } from '../services/i18n';
 import { copyToClipboard } from '../utils/clipboard';
 import { db } from '../services/dbApi';
 import { User } from '../types';
-
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     COPY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
     CHECK: <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
 };
-
 const CodeBlock = ({ code, language = 'bash' }: { code: string, language?: string }) => {
     const [copied, setCopied] = useState(false);
     const { t } = useTranslation();
-
     const handleCopy = async () => {
         await copyToClipboard(code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
-
     return (
         <div className="bg-[#1e1e1e] rounded-xl overflow-hidden border border-white/10 my-4 shadow-lg group">
             <div className="flex justify-between items-center px-4 py-2 bg-[var(--bg-surface)]/5 border-b border-white/5">
@@ -38,7 +33,6 @@ const CodeBlock = ({ code, language = 'bash' }: { code: string, language?: strin
         </div>
     );
 };
-
 export const ApiDocs: React.FC = () => {
     const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -46,11 +40,9 @@ export const ApiDocs: React.FC = () => {
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
     const [activeSection, setActiveSection] = useState('intro');
-
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] h-[100dvh] flex flex-col">
             {/* Header */}
@@ -72,7 +64,6 @@ export const ApiDocs: React.FC = () => {
                     )}
                 </div>
             </div>
-
             <div className="flex-1 overflow-hidden flex max-w-[1440px] mx-auto w-full">
                 {/* Sidebar */}
                 <div className="w-64 border-r border-[var(--glass-border)] bg-[var(--bg-surface)] hidden md:block overflow-y-auto py-8 px-6 no-scrollbar">
@@ -90,7 +81,6 @@ export const ApiDocs: React.FC = () => {
                         ))}
                     </ul>
                 </div>
-
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-8 md:p-12 scroll-smooth no-scrollbar">
                     <div className="max-w-3xl">
@@ -98,21 +88,18 @@ export const ApiDocs: React.FC = () => {
                             <h1 className="text-4xl font-black text-[var(--text-primary)] mb-4">{t('api.title')}</h1>
                             <p className="text-lg text-[var(--text-tertiary)] leading-relaxed">{t('api.subtitle')}</p>
                         </div>
-
                         <section id="auth" className="mb-16">
                             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">{t('api.auth')}</h2>
                             <p className="text-[var(--text-secondary)] mb-4">SGS Land API sử dụng API key để xác thực yêu cầu. Bạn có thể xem và quản lý key trong phần Cài đặt Doanh nghiệp.</p>
                             <CodeBlock code={`Authorization: Bearer sgs_live_...`} language="http" />
                         </section>
-
                         <section id="endpoints" className="mb-16">
                             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Endpoint Khách Hàng</h2>
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="px-3 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-lg text-xs font-mono">GET</span>
                                 <code className="text-sm font-mono text-[var(--text-secondary)]">/v1/leads</code>
                             </div>
-                            <p className="text-[var(--text-secondary)] mb-4">Trả về danh sách khách hàng tiềm năng liên kết với tài khoản của bạn.</p>
-                            
+                            <p className="text-[var(--text-secondary)] mb-4">Trả về danh sách khách hàng tiềm năng liên kết với tài khoản của bạn.</p>                           
                             <CodeBlock code={`curl https://api.sgs.vn/v1/leads \\
   -H "Authorization: Bearer sgs_live_..." \\
   -H "Content-Type: application/json"`} />

@@ -13,11 +13,9 @@
  *
  * Run: node seo-geo-audit.mjs   (or `npm run audit`)
  */
-
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import * as cheerio from 'cheerio';
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Config
 // ──────────────────────────────────────────────────────────────────────────────
@@ -29,7 +27,6 @@ const MAX_PAGES = 50;
 const REQUEST_DELAY_MS = 500;
 const REQUEST_TIMEOUT_MS = 20000;
 const USER_AGENT = 'SGSLandAuditBot/1.0 (SEO Audit; contact@sgsland.vn)';
-
 const TARGET_URLS = [
   `${BASE_URL}/`,
   `${BASE_URL}/du-an/aqua-city`,
@@ -46,18 +43,15 @@ const SPECIAL_URLS = [
   `${BASE_URL}/llms.txt`,
   `${BASE_URL}/llms-full.txt`,
 ];
-
 const TARGET_KEYWORDS = [
   'aqua city', 'global city', 'izumi', 'vinhomes hoc mon',
   'masterise', 'bat dong san', 'sgs land', 'sgsland', 
   'thu thiem', 'van phuc city', 'sonkim land', 'sala',
 ];
-
 const ENTITIES = [
   'Novaland', 'Masterise', 'Vinhomes', 'Vingroup', 'Aqua City',
   'Global City', 'Izumi', 'Khu Đông', 'TP.HCM', 'SGS Land',
 ];
-
 const SKIP_PATH_RX = /\/(wp-admin|cart|checkout)|\.(pdf|jpg|jpeg|png|gif|webp|svg|css|js|ico|xml|woff2?|ttf)(\?|$)/i;
 const PRIVATE_PREFIXES = [
   '/login', '/dashboard', '/inventory', '/leads', '/contracts',
@@ -67,7 +61,6 @@ const PRIVATE_PREFIXES = [
   '/routing-rules', '/sequences', '/knowledge', '/scoring-rules',
   '/system', '/favorites', '/p/', '/api/',
 ];
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Tiny ANSI color helper (avoids extra dep)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -80,7 +73,6 @@ const c = {
   bold:   s => `\x1b[1m${s}\x1b[0m`,
   dim:    s => `\x1b[2m${s}\x1b[0m`,
 };
-
 // ──────────────────────────────────────────────────────────────────────────────
 // HTTP
 // ──────────────────────────────────────────────────────────────────────────────
@@ -110,21 +102,18 @@ async function fetchUrl(url) {
     clearTimeout(t);
   }
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Per-page checks (returns { issues: [{level, code, message}], facts: {...} })
 // ──────────────────────────────────────────────────────────────────────────────
 function levelToBucket(level) {
   return { CRITICAL: '🔴', WARN: '🟠', INFO: '🟡', PASS: '🟢' }[level];
 }
-
 function analyzeHtml(pageRes) {
   const issues = [];
   const facts = {};
   const html = pageRes.body || '';
   // scriptingEnabled:false → cheerio parses <noscript> content as DOM (bot's view)
   const $ = cheerio.load(html || '<html></html>', { scriptingEnabled: false });
-
   // HTTP / TTFB
   if (pageRes.status >= 500) issues.push({ level: 'CRITICAL', code: 'http_5xx', message: `HTTP ${pageRes.status}` });
   else if (pageRes.status === 404) issues.push({ level: 'CRITICAL', code: 'http_404', message: 'Page not found (404)' });
@@ -132,9 +121,7 @@ function analyzeHtml(pageRes) {
   if (pageRes.ttfb > 600) issues.push({ level: 'WARN', code: 'slow_ttfb', message: `TTFB ${pageRes.ttfb}ms (>600ms)` });
   facts.ttfb = pageRes.ttfb;
   facts.status = pageRes.status;
-
   if (!html) return { issues, facts };
-
   // Title
   const title = $('title').first().text().trim();
   facts.title = title;
@@ -142,7 +129,6 @@ function analyzeHtml(pageRes) {
   if (!title) issues.push({ level: 'CRITICAL', code: 'no_title', message: 'Missing <title>' });
   else if (title.length < 30) issues.push({ level: 'WARN', code: 'title_short', message: `Title quá ngắn (${title.length} ký tự, nên 50-60)` });
   else if (title.length > 70) issues.push({ level: 'WARN', code: 'title_long', message: `Title quá dài (${title.length} ký tự, nên 50-60)` });
-
   // Meta description
   const desc = ($('meta[name="description"]').attr('content') || '').trim();
   facts.metaDescription = desc;
@@ -150,14 +136,12 @@ function analyzeHtml(pageRes) {
   if (!desc) issues.push({ level: 'CRITICAL', code: 'no_meta_desc', message: 'Thiếu meta description' });
   else if (desc.length < 100) issues.push({ level: 'WARN', code: 'desc_short', message: `Meta description ngắn (${desc.length} ký tự, nên 140-160)` });
   else if (desc.length > 200) issues.push({ level: 'WARN', code: 'desc_long', message: `Meta description quá dài (${desc.length} ký tự, nên 140-160)` });
-
   // H1
   const h1s = $('h1').map((_, el) => $(el).text().trim()).get().filter(Boolean);
   facts.h1Count = h1s.length;
   facts.h1 = h1s;
   if (h1s.length === 0) issues.push({ level: 'CRITICAL', code: 'no_h1', message: 'Thiếu thẻ <h1>' });
   else if (h1s.length > 1) issues.push({ level: 'WARN', code: 'multiple_h1', message: `Có ${h1s.length} thẻ <h1> (nên chỉ 1)` });
-
   // Heading hierarchy (skip if h2 appears before h1, or h3 before h2)
   const headings = $('h1,h2,h3,h4,h5,h6').map((_, el) => Number(el.name[1])).get();
   let lastLevel = 0;
@@ -168,17 +152,14 @@ function analyzeHtml(pageRes) {
   }
   facts.headingHierarchyOk = hierarchyOk;
   if (!hierarchyOk) issues.push({ level: 'INFO', code: 'heading_skip', message: 'Heading hierarchy có skip (h2 → h4)' });
-
   // Canonical
   const canonical = $('link[rel="canonical"]').attr('href') || '';
   facts.canonical = canonical;
   if (!canonical) issues.push({ level: 'WARN', code: 'no_canonical', message: 'Thiếu canonical tag' });
-
   // robots meta
   const robotsMeta = $('meta[name="robots"]').attr('content') || '';
   facts.robotsMeta = robotsMeta;
   if (/noindex/i.test(robotsMeta)) issues.push({ level: 'CRITICAL', code: 'noindex', message: 'Meta robots = noindex — page bị loại khỏi index' });
-
   // Open Graph
   const og = {
     title: $('meta[property="og:title"]').attr('content'),
@@ -190,17 +171,14 @@ function analyzeHtml(pageRes) {
   if (!og.title || !og.description || !og.image) {
     issues.push({ level: 'WARN', code: 'og_incomplete', message: `OG tags thiếu: ${[!og.title&&'title',!og.description&&'description',!og.image&&'image'].filter(Boolean).join(', ')}` });
   }
-
   // Twitter card
   const tw = $('meta[name="twitter:card"]').attr('content');
   facts.twitterCard = tw;
   if (!tw) issues.push({ level: 'INFO', code: 'no_twitter_card', message: 'Thiếu Twitter Card meta' });
-
   // hreflang
   const hreflangs = $('link[rel="alternate"][hreflang]').map((_, el) => $(el).attr('hreflang')).get();
   facts.hreflangs = hreflangs;
   if (hreflangs.length === 0) issues.push({ level: 'INFO', code: 'no_hreflang', message: 'Không có hreflang (vi/en) — bỏ qua nếu chỉ phục vụ thị trường VN' });
-
   // Images
   const imgs = $('img');
   let missingAlt = 0;
@@ -208,7 +186,6 @@ function analyzeHtml(pageRes) {
   facts.imageCount = imgs.length;
   facts.imagesMissingAlt = missingAlt;
   if (missingAlt > 0) issues.push({ level: 'WARN', code: 'img_no_alt', message: `${missingAlt}/${imgs.length} ảnh thiếu thuộc tính alt` });
-
   // Internal links collect (returned via facts)
   const links = new Set();
   $('a[href]').each((_, el) => {
@@ -220,7 +197,6 @@ function analyzeHtml(pageRes) {
     } catch {}
   });
   facts.internalLinks = [...links];
-
   // External authority links
   const externalAuthority = [];
   $('a[href]').each((_, el) => {
@@ -231,7 +207,6 @@ function analyzeHtml(pageRes) {
   });
   facts.externalAuthorityLinks = [...new Set(externalAuthority)];
   if (externalAuthority.length === 0) issues.push({ level: 'INFO', code: 'no_authority_outlinks', message: 'Không có outbound link tới site authoritative (.gov.vn, báo lớn) — giảm trust signal' });
-
   // Social profile links
   const social = {
     facebook: $('a[href*="facebook.com"]').length > 0,
@@ -241,7 +216,6 @@ function analyzeHtml(pageRes) {
     twitter:  ($('a[href*="twitter.com"]').length + $('a[href*="x.com"]').length) > 0,
   };
   facts.socialLinks = social;
-
   // JSON-LD
   const jsonLdBlocks = [];
   $('script[type="application/ld+json"]').each((_, el) => {
@@ -263,7 +237,6 @@ function analyzeHtml(pageRes) {
   // Schema requirements per @type
   const schemaIssues = validateSchemas(jsonLdBlocks);
   for (const si of schemaIssues) issues.push(si);
-
   // Body text + word count
   const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
   const words = bodyText.split(' ').filter(Boolean);
@@ -273,7 +246,6 @@ function analyzeHtml(pageRes) {
   if (isProjectPage && words.length < 300) issues.push({ level: 'WARN', code: 'thin_content_project', message: `Trang dự án mỏng: ${words.length} từ (nên >=300)` });
   if (isBlogPage && words.length > 0 && words.length < 1500) issues.push({ level: 'WARN', code: 'thin_content_blog', message: `Trang blog mỏng: ${words.length} từ (nên >=1500)` });
   if (words.length === 0) issues.push({ level: 'CRITICAL', code: 'no_body_text', message: 'Body không có text — SPA chưa SSR? Bot không chạy JS sẽ thấy trang trống.' });
-
   // Keyword density
   const lower = bodyText.toLowerCase();
   const keywordHits = {};
@@ -282,7 +254,6 @@ function analyzeHtml(pageRes) {
     keywordHits[kw] = (lower.match(re) || []).length;
   }
   facts.keywordHits = keywordHits;
-
   // Entity mentions
   const entityHits = {};
   for (const e of ENTITIES) {
@@ -290,7 +261,6 @@ function analyzeHtml(pageRes) {
     entityHits[e] = (bodyText.match(re) || []).length;
   }
   facts.entityHits = entityHits;
-
   // GEO readiness
   facts.hasAuthorByline   = /\b(by|tác giả|author|biên tập)\b/i.test(bodyText) || $('[rel="author"]').length > 0;
   facts.hasPublicationDate = $('meta[property="article:published_time"]').length > 0
@@ -309,27 +279,22 @@ function analyzeHtml(pageRes) {
   if (!facts.hasFaq && (isProjectPage || pageRes.url === `${BASE_URL}/`)) {
     issues.push({ level: 'WARN', code: 'no_faq', message: 'Không có FAQ section — mất cơ hội xuất hiện trong People-Also-Ask & AI Overviews' });
   }
-
   // Mobile / a11y
   const viewport = $('meta[name="viewport"]').attr('content');
   facts.viewport = viewport;
   if (!viewport) issues.push({ level: 'CRITICAL', code: 'no_viewport', message: 'Thiếu viewport meta — fail mobile-friendly' });
   facts.htmlLang = $('html').attr('lang') || '';
   if (!facts.htmlLang) issues.push({ level: 'WARN', code: 'no_html_lang', message: 'Thiếu thuộc tính lang trên <html>' });
-
   // Bing
   facts.hasBingVerification = $('meta[name="msvalidate.01"]').length > 0;
-
   // LocalBusiness w/ geo
   const hasLocalBiz = facts.schemaTypes.some(t => /LocalBusiness|RealEstateAgent/i.test(t));
   if (!hasLocalBiz && pageRes.url === `${BASE_URL}/`) {
     issues.push({ level: 'WARN', code: 'no_local_biz_schema', message: 'Homepage thiếu LocalBusiness/RealEstateAgent schema' });
   }
   facts.hasLocalBusinessSchema = hasLocalBiz;
-
   return { issues, facts };
 }
-
 function validateSchemas(blocks) {
   const issues = [];
   const flat = [];
@@ -342,7 +307,6 @@ function validateSchemas(blocks) {
     }
   };
   blocks.forEach(flatten);
-
   const requirements = {
     Organization:      ['name', 'url', 'logo', ['contactPoint', 'sameAs']],
     LocalBusiness:     ['name', 'address', 'telephone'],
@@ -353,7 +317,6 @@ function validateSchemas(blocks) {
     Review:            ['author', 'reviewRating', 'reviewBody'],
     Article:           ['headline', 'datePublished', 'author'],
   };
-
   for (const obj of flat) {
     const t = Array.isArray(obj['@type']) ? obj['@type'][0] : obj['@type'];
     const req = requirements[t];
@@ -370,7 +333,6 @@ function validateSchemas(blocks) {
   }
   return issues;
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Robots.txt + sitemap
 // ──────────────────────────────────────────────────────────────────────────────
@@ -385,7 +347,6 @@ function analyzeRobots(robotsRes) {
   facts.bytes = txt.length;
   facts.hasSitemapDeclaration = /sitemap\s*:/i.test(txt);
   if (!facts.hasSitemapDeclaration) issues.push({ level: 'WARN', code: 'robots_no_sitemap', message: 'robots.txt không khai báo Sitemap:' });
-
   // Detect global Disallow / for AI bots
   const aiBots = ['gptbot', 'claudebot', 'google-extended', 'ccbot', 'oai-searchbot', 'chatgpt-user', 'perplexitybot', 'amazonbot', 'applebot-extended', 'bytespider'];
   const blockedAi = [];
@@ -398,7 +359,6 @@ function analyzeRobots(robotsRes) {
   if (blockedAi.length > 0) {
     issues.push({ level: 'CRITICAL', code: 'ai_bots_blocked', message: `AI bots bị chặn trong robots.txt: ${blockedAi.join(', ')} — kiểm tra cài đặt Cloudflare AI Audit / Block AI Crawlers` });
   }
-
   // Googlebot block?
   const gbotRx = /user-agent:\s*googlebot\s*\n([\s\S]*?)(?=user-agent:|$)/i;
   const gm = txt.match(gbotRx);
@@ -407,7 +367,6 @@ function analyzeRobots(robotsRes) {
   }
   return { issues, facts };
 }
-
 function parseSitemap(xml) {
   const urls = [];
   const rx = /<loc>([^<]+)<\/loc>/gi;
@@ -415,7 +374,6 @@ function parseSitemap(xml) {
   while ((m = rx.exec(xml)) !== null) urls.push(m[1].trim());
   return urls;
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Optional Lighthouse
 // ──────────────────────────────────────────────────────────────────────────────
@@ -457,7 +415,6 @@ async function tryLighthouse(urls) {
   }
   return { results };
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Crawler
 // ──────────────────────────────────────────────────────────────────────────────
@@ -472,7 +429,6 @@ function shouldVisit(url, visited) {
     return true;
   } catch { return false; }
 }
-
 async function crawl(seedUrls, max) {
   const queue = [...seedUrls];
   const visited = new Set();
@@ -501,7 +457,6 @@ async function crawl(seedUrls, max) {
   }
   return pages;
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Per-page scoring
 // ──────────────────────────────────────────────────────────────────────────────
@@ -515,7 +470,6 @@ function scorePage(analysis) {
     else if (['title_short','title_long','desc_short','desc_long','no_html_lang'].includes(i.code)) tech -= 2;
   }
   tech = Math.max(0, tech);
-
   // Content quality 25
   let content = 25;
   if (f.wordCount === 0) content = 0;
@@ -523,12 +477,10 @@ function scorePage(analysis) {
   else if (f.wordCount < 800) content -= 6;
   if (f.imagesMissingAlt && f.imageCount) content -= Math.min(6, Math.round(6 * f.imagesMissingAlt / f.imageCount));
   content = Math.max(0, content);
-
   // Structured data 20
   const schemaTypesNeeded = ['Organization', 'WebSite', 'BreadcrumbList', 'FAQPage', 'LocalBusiness', 'RealEstateAgent'];
   const present = (f.schemaTypes || []).filter(t => schemaTypesNeeded.includes(t)).length;
   let schema = Math.min(20, present * 4);
-
   // GEO readiness 15
   let geo = 0;
   if (f.hasAuthorByline) geo += 2;
@@ -538,23 +490,19 @@ function scorePage(analysis) {
   const entityCount = Object.values(f.entityHits || {}).filter(n => n > 0).length;
   geo += Math.min(3, Math.round(entityCount / 3));
   geo = Math.min(15, geo);
-
   // Performance 10 (TTFB-only proxy without Lighthouse)
   let perf = 10;
   if (f.ttfb > 1500) perf -= 6;
   else if (f.ttfb > 600) perf -= 3;
   perf = Math.max(0, perf);
-
   return { total: tech + content + schema + geo + perf, breakdown: { tech, content, schema, geo, perf } };
 }
-
 function scoreLabel(n) {
   if (n >= 90) return c.green(`EXCELLENT (${n}/100)`);
   if (n >= 70) return c.yellow(`GOOD (${n}/100)`);
   if (n >= 50) return c.orange(`NEEDS WORK (${n}/100)`);
   return c.red(`CRITICAL (${n}/100)`);
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Reports
 // ──────────────────────────────────────────────────────────────────────────────
@@ -577,13 +525,11 @@ function buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, ov
     lines.push(`- ${levelToBucket(t.level)} **${t.message}** — ảnh hưởng ${t.affected} trang`);
   }
   lines.push('');
-
   lines.push(`## robots.txt`);
   for (const i of robots.issues) lines.push(`- ${levelToBucket(i.level)} ${i.message}`);
   lines.push(`- Sitemap declaration: ${robots.facts.hasSitemapDeclaration ? '✅' : '❌'}`);
   if (robots.facts.blockedAiBots?.length) lines.push(`- AI bots bị chặn: **${robots.facts.blockedAiBots.join(', ')}**`);
   lines.push('');
-
   lines.push(`## Sitemap`);
   if (sitemapInfo.error) lines.push(`- ${sitemapInfo.error}`);
   else {
@@ -594,7 +540,6 @@ function buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, ov
     }
   }
   lines.push('');
-
   lines.push(`## Core Web Vitals (Lighthouse)`);
   if (lighthouseInfo.skipped) lines.push(`- ${lighthouseInfo.skipped}`);
   else {
@@ -606,7 +551,6 @@ function buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, ov
     }
   }
   lines.push('');
-
   lines.push(`## Per-page report (${perPage.length} pages)`);
   for (const p of perPage) {
     lines.push(`### ${p.url}  —  ${p.score.total}/100`);
@@ -624,10 +568,8 @@ function buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, ov
     }
     lines.push('');
   }
-
   return lines.join('\n');
 }
-
 function buildFixesTodo(perPage, robots, sitemapInfo) {
   const fixes = [];
   // Aggregate by issue code → unique fix entry
@@ -676,7 +618,6 @@ function buildFixesTodo(perPage, robots, sitemapInfo) {
     http_5xx:               'Server lỗi 5xx — kiểm tra log production ngay, có thể do Neon connection pool / Redis / dependency.',
     http_404:               'URL trả 404 — kiểm tra route, redirect 301 sang URL mới nếu đã đổi.',
   };
-
   for (const f of byCode.values()) {
     fixes.push({
       priority: PRIORITY[f.level] || 'P2',
@@ -688,14 +629,12 @@ function buildFixesTodo(perPage, robots, sitemapInfo) {
       impact: f.level === 'CRITICAL' ? 'High' : f.level === 'WARN' ? 'Medium' : 'Low',
     });
   }
-
   fixes.sort((a, b) => {
     const pa = { P0: 0, P1: 1, P2: 2 }[a.priority];
     const pb = { P0: 0, P1: 1, P2: 2 }[b.priority];
     if (pa !== pb) return pa - pb;
     return b.affected - a.affected;
   });
-
   const lines = [];
   lines.push(`# FIXES TODO — SGS Land SEO + GEO Audit`);
   lines.push(`_Generated: ${new Date().toISOString()}_`);
@@ -718,7 +657,6 @@ function buildFixesTodo(perPage, robots, sitemapInfo) {
   }
   return lines.join('\n');
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Main
 // ──────────────────────────────────────────────────────────────────────────────
@@ -736,7 +674,6 @@ async function main() {
               `llms.txt: ${llmsRes.status === 200 ? c.green('✓') : c.red('✗')}  ` +
               `llms-full.txt: ${llmsFullRes.status === 200 ? c.green('✓') : c.red('✗')}`);
   for (const i of robots.issues) console.log(`  ${levelToBucket(i.level)} ${i.message}`);
-
   let sitemapInfo;
   if (sitemapRes.status === 200) {
     const urls = parseSitemap(sitemapRes.body);
@@ -747,12 +684,10 @@ async function main() {
     sitemapInfo = { error: `Sitemap không truy cập được (HTTP ${sitemapRes.status})` };
   }
   console.log('');
-
   // Crawl
   console.log(c.bold(`Crawling (max ${MAX_PAGES} pages, delay ${REQUEST_DELAY_MS}ms)`));
   const pages = await crawl(TARGET_URLS, MAX_PAGES);
   console.log(c.dim(`Crawled ${pages.length} pages.\n`));
-
   // Per-page analysis
   console.log(c.bold(`Analyzing pages…`));
   const perPage = [];
@@ -766,7 +701,6 @@ async function main() {
     const lvlBadge = score.total >= 70 ? c.green('●') : score.total >= 50 ? c.orange('●') : c.red('●');
     console.log(`  ${lvlBadge} ${score.total}/100  ${pageRes.url}`);
   }
-
   // Lighthouse (optional)
   console.log('');
   console.log(c.bold(` Core Web Vitals (Lighthouse)`));
@@ -776,7 +710,6 @@ async function main() {
     if (r.error) console.log(`  ${r.url}: ${r.error}`);
     else console.log(`  ${r.url}  perf=${r.performance} seo=${r.seo} a11y=${r.accessibility} LCP=${Math.round(r.lcp)}ms TTFB=${Math.round(r.ttfb)}ms`);
   }
-
   // Top issues aggregated
   const issueAgg = new Map();
   for (const p of perPage) for (const i of p.issues) {
@@ -790,7 +723,6 @@ async function main() {
       if (lvl[a.level] !== lvl[b.level]) return lvl[a.level] - lvl[b.level];
       return b.affected - a.affected;
     });
-
   // Overall
   const scoresArr = perPage.map(p => p.score.total);
   const avg = scoresArr.length ? Math.round(scoresArr.reduce((a, b) => a + b, 0) / scoresArr.length) : 0;
@@ -802,7 +734,6 @@ async function main() {
     best:  sorted[0]              ? { url: sorted[0].url,              score: sorted[0].score.total }              : { url: '-', score: 0 },
     worst: sorted[sorted.length-1]? { url: sorted[sorted.length-1].url, score: sorted[sorted.length-1].score.total } : { url: '-', score: 0 },
   };
-
   // Reports
   const md = buildMarkdown({ pages, robots, sitemapInfo, lighthouseInfo, perPage, overall, topIssues });
   const todo = buildFixesTodo(perPage, robots, sitemapInfo);
@@ -823,7 +754,6 @@ async function main() {
   await writeFile(jsonFile, JSON.stringify(raw, null, 2));
   await writeFile(mdFile, md);
   await writeFile(todoFile, todo);
-
   console.log('');
   console.log(c.bold(`Site score: ${scoreLabel(avg)}`));
   console.log(`   ${counts.CRITICAL} CRITICAL · ${counts.WARN} WARN · ${counts.INFO} INFO`);
@@ -833,7 +763,6 @@ async function main() {
   console.log(`${todoFile}`);
   console.log('');
 }
-
 main().catch(err => {
   console.error(c.red(`[seo-geo-audit] FATAL: ${err?.stack || err}`));
   process.exit(1);

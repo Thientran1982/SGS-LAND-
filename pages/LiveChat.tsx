@@ -5,11 +5,9 @@ import { Interaction, Channel, Direction } from '../types';
 import { MessageBubble } from '../components/ChatUI';
 import { motion } from 'motion/react';
 import { getSEOOverrides } from '../utils/seo';
-
 // ---------------------------------------------------------------------------
 // Public API helpers — no JWT required, all routes are rate-limited
 // ---------------------------------------------------------------------------
-
 // source: LINK | EMBED | QR | WEB — tracks which embed method the visitor used
 async function publicCreateLead(name: string, phone: string, agentId?: string, source = 'WEB') {
     const res = await fetch('/api/public/leads', {
@@ -20,7 +18,6 @@ async function publicCreateLead(name: string, phone: string, agentId?: string, s
     if (!res.ok) throw new Error('create_lead_failed');
     return res.json() as Promise<{ id: string; success: boolean }>;
 }
-
 async function publicSendMessage(leadId: string, content: string, direction: 'INBOUND' | 'OUTBOUND' = 'INBOUND', metadata?: object) {
     const res = await fetch('/api/public/livechat/message', {
         method: 'POST',
@@ -31,19 +28,15 @@ async function publicSendMessage(leadId: string, content: string, direction: 'IN
     const data = await res.json();
     return data.message as Interaction;
 }
-
 async function publicGetMessages(leadId: string): Promise<{ messages: Interaction[]; lead: { id: string; name: string; assignedTo?: string | null; threadStatus?: string } } | null> {
     const res = await fetch(`/api/public/livechat/messages/${leadId}`);
     if (!res.ok) return null;
     return res.json();
 }
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
 const SYS_CONTENT_PATTERNS = ['đang bận', 'system busy', 'tạm thời không khả dụng', 'temporarily busy'];
-
 // Returns true for AI system-generated error/quota messages that should never
 // be shown to the customer (e.g. "Hệ thống AI đang bận, vui lòng thử lại sau").
 function isSysMessage(msg: Interaction): boolean {
@@ -54,16 +47,13 @@ function isSysMessage(msg: Interaction): boolean {
     }
     return false;
 }
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-
 // Parse query params from URL search (e.g. /livechat?title=...&desc=...)
 function getSearchQueryParams(): URLSearchParams {
     return new URLSearchParams(window.location.search);
 }
-
 export default function LiveChat() {
     const { t, language, setLanguage } = useTranslation();
     const { socket } = useSocket();
@@ -78,7 +68,6 @@ export default function LiveChat() {
     const [modeNotificationCode, setModeNotificationCode] = useState<'HUMAN_TAKEOVER' | 'AI_ACTIVE' | null>(null);
     const [startError, setStartError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
-
     // Resolve title/desc from URL params > window globals (embed) > default translations
     const [chatParams, setChatParams] = useState(() => getSearchQueryParams());
     useEffect(() => {
@@ -86,7 +75,6 @@ export default function LiveChat() {
         window.addEventListener('popstate', handler);
         return () => window.removeEventListener('popstate', handler);
     }, []);
-
     // Apply lang param from URL if present (e.g. ?lang=vn or ?lang=en)
     useEffect(() => {
         const langParam = chatParams.get('lang');
@@ -104,7 +92,6 @@ export default function LiveChat() {
     const agentId   = chatParams.get('agent') || w.SGSLAND_AGENT_ID   || undefined;
     // Source tracking: LINK | EMBED | QR (set by each embed option in the widget modal)
     const chatSource = chatParams.get('source') || w.SGSLAND_CHAT_SOURCE || 'WEB';
-
     // Load lead from localStorage if exists.
     // If the current ?agent= param differs from the agent that created the stored
     // session, discard the old session so a new one is created for the correct agent.
@@ -112,7 +99,6 @@ export default function LiveChat() {
         const savedId    = localStorage.getItem('livechat_lead_id');
         const savedAgent = localStorage.getItem('livechat_agent_id');
         if (!savedId) return;
-
         // Agent mismatch (or no stored agent for a link that requires one)
         // → discard the old session so a fresh one is created for the correct agent
         if (agentId && agentId !== savedAgent) {
@@ -120,7 +106,6 @@ export default function LiveChat() {
             localStorage.removeItem('livechat_agent_id');
             return;
         }
-
         publicGetMessages(savedId).then(data => {
             if (data) {
                 // Server-side agent validation: if the URL specifies an agent but the
@@ -144,11 +129,9 @@ export default function LiveChat() {
             localStorage.removeItem('livechat_agent_id');
         });
     }, []);
-
     useEffect(() => {
         if (!leadId) return;
         socket.emit('join_livechat_room', leadId);
-
         const handleNewMessage = (data: any) => {
             const msg: Interaction = data?.message ?? data;
             if (!msg || msg.leadId !== leadId) return;
@@ -160,7 +143,6 @@ export default function LiveChat() {
             });
             setIsThinking(false);
         };
-
         const handleModeChanged = (data: any) => {
             if (data?.leadId !== leadId) return;
             const toHuman = data.status === 'HUMAN_TAKEOVER';
@@ -168,7 +150,6 @@ export default function LiveChat() {
             setModeNotificationCode(toHuman ? 'HUMAN_TAKEOVER' : 'AI_ACTIVE');
             setIsThinking(false);
         };
-
         socket.on('receive_message', handleNewMessage);
         socket.on('ai_mode_changed', handleModeChanged);
         return () => {
@@ -177,24 +158,19 @@ export default function LiveChat() {
             socket.emit('leave_room', leadId);
         };
     }, [leadId, socket]);
-
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isThinking]);
-
     const handleStartChat = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim() || !phone.trim()) return;
         setStartError('');
-
         try {
             const created = await publicCreateLead(name.trim(), phone.trim(), agentId, chatSource);
             const id = created.id;
-
             // Send welcome message as outbound (agent) — no auth needed
             const welcomeContent = t('livechat.welcome_msg').replace('{name}', name.trim());
             const welcomeMsg = await publicSendMessage(id, welcomeContent, 'OUTBOUND', { isAgent: true });
-
             setLeadId(id);
             setLeadName(name.trim());
             setMessages([welcomeMsg]);
@@ -206,15 +182,11 @@ export default function LiveChat() {
             setStartError(t('auth.error_generic'));
         }
     };
-
     const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
     const handleSend = async () => {
         if (!input.trim() || !leadId) return;
-
         const content = input.trim();
         setInput('');
-
         // 1. Save customer inbound message
         // NOTE: The server broadcasts `receive_message` via socket BEFORE returning
         // the HTTP response, so handleNewMessage may run first and add the message.
@@ -239,7 +211,6 @@ export default function LiveChat() {
             } as any;
             setMessages(prev => [...prev, tempMsg]);
         }
-
         // 2. Call AI reply — skip if a human agent has taken over the conversation
         if (isHumanMode) return;
         setIsThinking(true);
@@ -280,13 +251,11 @@ export default function LiveChat() {
             }
         }, 500);
     };
-
     useEffect(() => {
         return () => {
             if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
         };
     }, []);
-
     const handleEndChat = () => {
         localStorage.removeItem('livechat_lead_id');
         localStorage.removeItem('livechat_agent_id');
@@ -296,7 +265,6 @@ export default function LiveChat() {
         setName('');
         setPhone('');
     };
-
     if (!leadId) {
         return (
             <div className="min-h-full w-full bg-[var(--glass-surface)] flex flex-col p-4 md:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto no-scrollbar">
@@ -313,7 +281,6 @@ export default function LiveChat() {
                             {startError}
                         </div>
                     )}
-
                     <form onSubmit={handleStartChat} className="space-y-4">
                         <div>
                             <label htmlFor="lc-name" className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.name_label')}</label>
@@ -332,7 +299,6 @@ export default function LiveChat() {
             </div>
         );
     }
-
     return (
         <div className="h-full w-full bg-[var(--glass-surface)] flex flex-col max-w-2xl mx-auto shadow-2xl overflow-hidden">
             {/* Header */}
@@ -363,7 +329,6 @@ export default function LiveChat() {
                     {t('livechat.end_chat')}
                 </button>
             </div>
-
             {/* Messages */}
             <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 bg-[var(--glass-surface)]/50">
                 {modeNotificationCode && (
@@ -410,7 +375,6 @@ export default function LiveChat() {
                 )}
                 <div ref={messagesEndRef} />
             </div>
-
             {/* Input */}
             <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-[var(--bg-surface)] border-t border-[var(--glass-border)] shrink-0">
                 <div className="flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-2xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">

@@ -5,11 +5,8 @@
  * Realtime delivery is handled by `src/realtime/socket.ts`; this module is
  * only the persistent REST surface.
  */
-
 import { apiRequest } from './client';
-
 export type SenderKind = 'BUYER' | 'AGENT';
-
 export interface Conversation {
   id: string;
   tenantId: string;
@@ -23,7 +20,6 @@ export interface Conversation {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface ConversationSummary extends Conversation {
   listingTitle: string | null;
   listingCode: string | null;
@@ -35,7 +31,6 @@ export interface ConversationSummary extends Conversation {
   buyerPhone: string | null;
   buyerDisplayName: string | null;
 }
-
 export interface ChatMessage {
   id: string;
   conversationId: string;
@@ -45,7 +40,6 @@ export interface ChatMessage {
   createdAt: string;
   readAt: string | null;
 }
-
 export const conversationsApi = {
   list() {
     return apiRequest<{ conversations: ConversationSummary[] }>('/api/buyer/conversations');

@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 import { db } from '../services/dbApi';
 import { User } from '../types';
-
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     SEARCH: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -20,9 +18,7 @@ const ICONS = {
     THUMB_UP: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>,
     THUMB_DOWN: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06L17 4m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" /></svg>,
 };
-
 type Article = { id: number; q: string; a: string; cat: string };
-
 const ARTICLES: Article[] = [
     // ── 1. MUA BÁN & PHÁP LÝ ─────────────────────────────────────────────
     { id: 1, cat: 'mua-ban-phap-ly',
@@ -45,7 +41,6 @@ const ARTICLES: Article[] = [
         q: 'Vi bằng có giá trị pháp lý như sổ hồng không?',
         a: 'KHÔNG. Vi bằng chỉ là văn bản ghi nhận sự kiện do Thừa phát lại lập, dùng làm chứng cứ tại toà — không xác lập quyền sở hữu BĐS. Mua nhà bằng vi bằng có 4 rủi ro lớn: (1) Không sang tên được. (2) Không vay ngân hàng được. (3) Tranh chấp khi chủ cũ bán cho người khác. (4) Bị thu hồi nếu đất quy hoạch. SGS Land KHÔNG nhận giao dịch vi bằng/giấy tay; mọi sản phẩm đều có sổ hồng hoặc HĐMB chính chủ.',
     },
-
     // ── 2. ĐỊNH GIÁ AI ──────────────────────────────────────────────────
     { id: 6, cat: 'dinh-gia-ai',
         q: 'AI định giá BĐS hoạt động như thế nào?',
@@ -63,7 +58,6 @@ const ARTICLES: Article[] = [
         q: 'AI có định giá được đất nông nghiệp và nhà xưởng không?',
         a: 'Có, hỗ trợ 13 loại BĐS: căn hộ nội đô / ngoại ô, penthouse, biệt thự, shophouse, kho xưởng, văn phòng, đất nông nghiệp, đất KCN, đất ngoại thành, đất thổ cư, off-plan, nhà phố nội đô, nhà phố ngoại thành. Hệ thống tự nhận dạng loại từ địa chỉ; bạn có thể override. Đất nông nghiệp và nhà xưởng có model riêng dùng dữ liệu JLL Industrial + Savills Logistics Q4/2025.',
     },
-
     // ── 3. KÝ GỬI & ĐĂNG TIN ────────────────────────────────────────────
     { id: 10, cat: 'ky-gui',
         q: 'Quy trình ký gửi BĐS qua SGS Land mất bao lâu?',
@@ -81,7 +75,6 @@ const ARTICLES: Article[] = [
         q: 'SGS Land có nhận ký gửi đất nông nghiệp không?',
         a: 'Có, sau khi kiểm tra pháp lý 2 lớp đầy đủ. Tập trung khu vực Đồng Nai (Long Thành, Nhơn Trạch, Xuân Lộc), Bình Dương (Bến Cát, Phú Giáo), Long An (Đức Hoà, Cần Giuộc), Bà Rịa-Vũng Tàu (Châu Đức, Xuyên Mộc). Yêu cầu sổ đỏ rõ ràng, không tranh chấp, không nằm trong vùng quy hoạch chuyển đổi mục đích sử dụng. Phí 2-2,5%, thời gian giao dịch trung bình 60 ngày.',
     },
-
     // ── 4. LÃI SUẤT VAY ─────────────────────────────────────────────────
     { id: 14, cat: 'lai-suat-vay',
         q: 'Lãi suất vay mua nhà 2026 hiện tại là bao nhiêu?',
@@ -99,7 +92,6 @@ const ARTICLES: Article[] = [
         q: 'SGS Land có hỗ trợ làm hồ sơ vay không?',
         a: 'Có, hoàn toàn miễn phí. SGS Land là đối tác chiến lược của 15+ ngân hàng (Vietcombank, BIDV, Techcombank, MB Bank, VPBank, ACB, Sacombank, OCB, TPBank, HDBank…). Quy trình: (1) Chọn dự án/sản phẩm. (2) SGS Land nộp hồ sơ song song 3-5 ngân hàng. (3) Bạn so sánh điều kiện + chọn ngân hàng tốt nhất. (4) Ký công chứng + giải ngân. Thời gian duyệt trung bình 5-10 ngày làm việc.',
     },
-
     // ── 5. KHU VỰC HOT ──────────────────────────────────────────────────
     { id: 18, cat: 'khu-vuc-hot',
         q: 'BĐS Long Thành Đồng Nai có nên đầu tư 2026 không?',
@@ -121,7 +113,6 @@ const ARTICLES: Article[] = [
         q: 'BĐS Bình Dương 2026 nên đầu tư khu nào?',
         a: 'Top 3 khu vực Bình Dương 2026: (1) Thuận An — giáp TP.HCM, giá 40-100 triệu/m², thanh khoản cao nhất tỉnh nhờ kết nối Bình Triệu + Vành đai 3. (2) Dĩ An — gần Metro số 1 + ĐH Quốc Gia, giá 30-90 triệu/m², nhu cầu thuê sinh viên ổn định. (3) TP Mới Bình Dương — quy hoạch bài bản, giá 20-50 triệu/m², tiềm năng tăng giá dài hạn lớn nhất. Phân tích chi tiết tại sgsland.vn/bat-dong-san-binh-duong.',
     },
-
     // ── 6. ĐẶT CỌC & THANH TOÁN ─────────────────────────────────────────
     { id: 23, cat: 'dat-coc',
         q: 'Đặt cọc giữ chỗ và đặt cọc thiện chí khác nhau ra sao?',
@@ -144,7 +135,6 @@ const ARTICLES: Article[] = [
         a: 'Tổng phí + thuế khi sang tên BĐS (theo Luật Thuế TNCN 2007 sửa đổi + Nghị định 10/2022/NĐ-CP về lệ phí trước bạ — văn bản gốc trên thuvienphapluat.vn): (1) Thuế thu nhập cá nhân của bên BÁN: 2% giá trị giao dịch (theo giá ghi trên hợp đồng hoặc bảng giá nhà nước, tuỳ giá nào cao hơn). (2) Lệ phí trước bạ của bên MUA: 0,5% giá trị BĐS. (3) Phí công chứng: 0,1-0,3% giá trị giao dịch (tối đa 70 triệu). (4) Phí thẩm định hồ sơ + cấp sổ: 200k-500k. Thông thường bên bán-mua tự thoả thuận ai chịu phần nào trong HĐĐC. Hỗ trợ tư vấn miễn phí tại sgsland.vn/contact.',
     },
 ];
-
 const CATEGORIES = [
     { id: 'mua-ban-phap-ly', label: 'Mua Bán & Pháp Lý',  color: 'bg-indigo-50 text-indigo-600',  icon: ICONS.HOME },
     { id: 'dinh-gia-ai',     label: 'Định Giá AI',          color: 'bg-emerald-50 text-emerald-600', icon: ICONS.AI },
@@ -153,11 +143,8 @@ const CATEGORIES = [
     { id: 'khu-vuc-hot',     label: 'Khu Vực Hot',          color: 'bg-rose-50 text-rose-600',      icon: ICONS.HOT },
     { id: 'dat-coc',         label: 'Đặt Cọc & Thanh Toán', color: 'bg-violet-50 text-violet-600',  icon: ICONS.DEPOSIT },
 ];
-
 const FEEDBACK_LS_KEY = 'sgs_helpcenter_feedback';
-
 type FeedbackMap = Record<number, 'up' | 'down'>;
-
 function readFeedback(): FeedbackMap {
     try {
         const raw = localStorage.getItem(FEEDBACK_LS_KEY);
@@ -167,23 +154,19 @@ function readFeedback(): FeedbackMap {
 function writeFeedback(map: FeedbackMap): void {
     try { localStorage.setItem(FEEDBACK_LS_KEY, JSON.stringify(map)); } catch { /* noop */ }
 }
-
 export const HelpCenter: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [openArticleId, setOpenArticleId] = useState<number | null>(null);
     const [feedback, setFeedback] = useState<FeedbackMap>({});
-
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
         setFeedback(readFeedback());
     }, []);
-
     const handleHome    = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin   = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
     const handleContact = () => window.location.hash = `#/${ROUTES.CONTACT}`;
-
     const filtered = useMemo(() => {
         let list = ARTICLES;
         if (activeCategory) list = list.filter(a => a.cat === activeCategory);
@@ -193,10 +176,8 @@ export const HelpCenter: React.FC = () => {
         }
         return list;
     }, [searchQuery, activeCategory]);
-
     const toggleArticle = (id: number) =>
         setOpenArticleId(prev => (prev === id ? null : id));
-
     const submitFeedback = (id: number, value: 'up' | 'down') => {
         setFeedback(prev => {
             const next: FeedbackMap = { ...prev, [id]: value };
@@ -204,7 +185,6 @@ export const HelpCenter: React.FC = () => {
             return next;
         });
     };
-
     // ── FAQPage JSON-LD bao trọn 27 Q&A — server-rendered cho AI/Claude ─
     const faqStructuredData = useMemo(() => ({
         '@type': 'FAQPage',
@@ -216,7 +196,6 @@ export const HelpCenter: React.FC = () => {
             acceptedAnswer: { '@type': 'Answer', text: a.a },
         })),
     }), []);
-
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             <SeoHead
@@ -240,7 +219,6 @@ export const HelpCenter: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {/* Hero Search */}
             <section className="bg-slate-900 py-20 px-6 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900" />
@@ -265,7 +243,6 @@ export const HelpCenter: React.FC = () => {
                     </div>
                 </div>
             </section>
-
             {/* User Guide Banner */}
             <div className="bg-gradient-to-r from-emerald-900/60 to-slate-900 border-b border-emerald-800/40">
                 <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
@@ -286,7 +263,6 @@ export const HelpCenter: React.FC = () => {
                     </a>
                 </div>
             </div>
-
             {/* Categories */}
             <div className="max-w-5xl mx-auto px-6 pt-8 relative z-20">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
@@ -304,7 +280,6 @@ export const HelpCenter: React.FC = () => {
                         </button>
                     ))}
                 </div>
-
                 {/* Articles accordion */}
                 <div className="bg-[var(--bg-surface)] rounded-[28px] border border-[var(--glass-border)] shadow-sm overflow-hidden mb-12">
                     <div className="px-8 py-6 border-b border-[var(--glass-border)] flex items-center justify-between">
@@ -392,7 +367,6 @@ export const HelpCenter: React.FC = () => {
                         </div>
                     )}
                 </div>
-
                 {/* CTA */}
                 <div className="text-center mb-6">
                     <p className="text-[var(--text-tertiary)] mb-4 text-sm">Không tìm thấy nội dung bạn cần?</p>

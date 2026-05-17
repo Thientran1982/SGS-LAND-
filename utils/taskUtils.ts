@@ -1,5 +1,4 @@
 import { WfTaskStatus, TaskPriority, TaskCategory } from '../types';
-
 export const STATUS_LABELS: Record<WfTaskStatus, string> = {
   todo: 'Chờ xử lý',
   in_progress: 'Đang làm',
@@ -7,7 +6,6 @@ export const STATUS_LABELS: Record<WfTaskStatus, string> = {
   done: 'Hoàn thành',
   cancelled: 'Đã hủy',
 };
-
 export const STATUS_COLORS: Record<WfTaskStatus, string> = {
   todo: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
   in_progress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
@@ -15,35 +13,30 @@ export const STATUS_COLORS: Record<WfTaskStatus, string> = {
   done: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
   cancelled: 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400',
 };
-
 export const PRIORITY_LABELS: Record<TaskPriority, string> = {
   urgent: 'Khẩn cấp',
   high: 'Cao',
   medium: 'Trung bình',
   low: 'Thấp',
 };
-
 export const PRIORITY_LABELS_SHORT: Record<TaskPriority, string> = {
   urgent: 'Khẩn',
   high: 'Cao',
   medium: 'TB',
   low: 'Thấp',
 };
-
 export const PRIORITY_COLORS: Record<TaskPriority, string> = {
   urgent: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800',
   high: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
   medium: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
   low: 'text-teal-600 bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800',
 };
-
 export const PRIORITY_DOT: Record<TaskPriority, string> = {
   urgent: 'bg-rose-500',
   high: 'bg-orange-500',
   medium: 'bg-amber-500',
   low: 'bg-teal-500',
 };
-
 export const CATEGORY_LABELS: Record<TaskCategory, string> = {
   sales: 'Kinh doanh',
   legal: 'Pháp lý',
@@ -55,15 +48,12 @@ export const CATEGORY_LABELS: Record<TaskCategory, string> = {
   admin: 'Hành chính',
   other: 'Khác',
 };
-
 export const CATEGORY_LABELS_SHORT: Partial<Record<TaskCategory, string>> = {
   sales: 'KD', legal: 'PL', marketing: 'MKT', site_visit: 'TĐ',
   customer_care: 'CSKH', finance: 'TC', construction: 'XD', admin: 'HC', other: '—',
 };
-
 export const ALL_STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
 export const ALL_PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
-
 export const VALID_TRANSITIONS: Record<WfTaskStatus, WfTaskStatus[]> = {
   todo: ['in_progress', 'cancelled'],
   in_progress: ['review', 'todo', 'cancelled'],
@@ -71,7 +61,6 @@ export const VALID_TRANSITIONS: Record<WfTaskStatus, WfTaskStatus[]> = {
   done: [],
   cancelled: ['todo'],
 };
-
 export function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -83,7 +72,6 @@ export function timeAgo(dateStr: string): string {
   if (days < 30) return `${days} ngày trước`;
   return new Date(dateStr).toLocaleDateString('vi-VN');
 }
-
 export function formatDeadlineRelative(
   deadline: string | null | undefined,
   isOverdue: boolean,
@@ -95,7 +83,6 @@ export function formatDeadlineRelative(
   if (days === 1) return 'Còn 1 ngày';
   return `Còn ${days ?? ''} ngày`;
 }
-
 export function formatDeadlineShort(
   deadline: string | null | undefined,
   isOverdue: boolean,
@@ -106,13 +93,10 @@ export function formatDeadlineShort(
   if (days === 0) return 'Hôm nay';
   return `Còn ${days ?? 0}n`;
 }
-
 export type UrgencyLevel = 'overdue' | 'critical' | 'warning' | 'normal';
-
 export function isValidTransition(from: WfTaskStatus, to: WfTaskStatus): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
-
 export function calcUrgency(
   deadline: string | null | undefined,
   status: WfTaskStatus,
@@ -124,12 +108,10 @@ export function calcUrgency(
   if (daysUntil !== null && daysUntil <= 7) return 'warning';
   return 'normal';
 }
-
 export function formatRelativeDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '';
   return timeAgo(dateStr);
 }
-
 export function exportTasksToCSV(tasks: import('../types').WfTask[]): void {
   const headers = ['Tiêu đề', 'Trạng thái', 'Ưu tiên', 'Deadline', 'Dự án', 'Phòng ban', 'Người thực hiện', 'Tạo lúc'];
   const rows = tasks.map(t => [

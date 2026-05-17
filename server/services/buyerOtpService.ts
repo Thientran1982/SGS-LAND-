@@ -18,27 +18,22 @@
  * generate/dispatch/verify primitive so the route can call it deterministically
  * from tests.
  */
-
 import crypto from 'crypto';
 import { Pool } from 'pg';
 import { pool as defaultPool } from '../db';
 import { logger } from '../middleware/logger';
-
 const OTP_TTL_MS = 5 * 60_000; // 5 minutes
 const OTP_MAX_ATTEMPTS = 5;
-
 export interface OtpRequestResult {
   ok: boolean;
   /** Set in development only — surfaces the OTP back to the API caller. */
   devCode?: string;
   error?: string;
 }
-
 export interface OtpVerifyResult {
   ok: boolean;
   error?: string;
 }
-
 /** Canonicalise to 10–11 digit local form ("0XXXXXXXX"). Returns null if invalid. */
 export function normalizeVnPhone(raw: string): string | null {
   if (!raw) return null;
@@ -48,23 +43,18 @@ export function normalizeVnPhone(raw: string): string | null {
   if (!/^0\d{9,10}$/.test(p)) return null;
   return p;
 }
-
 function toE164(phoneVn: string): string {
   // 0XXXXXXXXX → +84XXXXXXXXX
   return '+84' + phoneVn.replace(/^0+/, '');
 }
-
 function generateCode(): string {
   // 6 digits, zero-padded. crypto.randomInt is uniform.
   return String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
 }
-
 function hashCode(code: string): string {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
-
 // ── SMS dispatch ────────────────────────────────────────────────────────────
-
 async function sendViaBrevo(phoneE164: string, message: string): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return false;
@@ -94,21 +84,17 @@ async function sendViaBrevo(phoneE164: string, message: string): Promise<boolean
     return false;
   }
 }
-
 async function dispatchOtp(phoneVn: string, code: string): Promise<{ delivered: boolean }> {
   const message = `[SGS Land] Mã đăng nhập của bạn: ${code}. Hết hạn sau 5 phút. Không chia sẻ mã này với bất kỳ ai.`;
   const provider = (process.env.BUYER_OTP_PROVIDER || '').toLowerCase();
-
   if (provider === 'log') {
     logger.info(`[buyer-otp] (log provider) phone=${phoneVn} code=${code}`);
     return { delivered: true };
   }
-
   if (provider === 'brevo' || (!provider && process.env.BREVO_API_KEY)) {
     const ok = await sendViaBrevo(toE164(phoneVn), message);
     if (ok) return { delivered: true };
   }
-
   // Fallback: log-only. In production with no SMS provider we still issue the
   // OTP so the flow is testable, but the operator has to retrieve it from
   // logs — startup config warning surfaces this gap.
@@ -117,12 +103,9 @@ async function dispatchOtp(phoneVn: string, code: string): Promise<{ delivered: 
   );
   return { delivered: false };
 }
-
 // ── Public API ──────────────────────────────────────────────────────────────
-
 export class BuyerOtpService {
   constructor(private readonly pool: Pool = defaultPool) {}
-
   /** Throttle: 1 OTP / 60s + 5 OTPs / hour per phone. Throws on overflow. */
   async assertCanIssue(phoneVn: string): Promise<void> {
     const r = await this.pool.query(
@@ -145,7 +128,6 @@ export class BuyerOtpService {
       throw e;
     }
   }
-
   async issue(phoneVn: string, ip: string | null): Promise<OtpRequestResult> {
     const code = generateCode();
     const codeHash = hashCode(code);
@@ -155,9 +137,7 @@ export class BuyerOtpService {
        VALUES ($1, $2, $3, $4)`,
       [phoneVn, codeHash, expiresAt, ip ? ip.slice(0, 64) : null],
     );
-
     const dispatch = await dispatchOtp(phoneVn, code);
-
     const result: OtpRequestResult = { ok: true };
     // Surface OTP in non-production responses so devs can integrate without
     // SMS plumbing. Never returned in production builds.
@@ -171,11 +151,9 @@ export class BuyerOtpService {
     }
     return result;
   }
-
   async verify(phoneVn: string, code: string): Promise<OtpVerifyResult> {
     if (!/^\d{4,8}$/.test(code)) return { ok: false, error: 'OTP không hợp lệ' };
     const codeHash = hashCode(code);
-
     // Find the most recent unconsumed, unexpired OTP for this phone.
     const r = await this.pool.query(
       `SELECT id, code_hash, attempts
@@ -189,11 +167,9 @@ export class BuyerOtpService {
     );
     const row = r.rows[0];
     if (!row) return { ok: false, error: 'OTP đã hết hạn hoặc chưa được phát.' };
-
     if (row.attempts >= OTP_MAX_ATTEMPTS) {
       return { ok: false, error: 'OTP đã bị khoá do nhập sai quá nhiều lần. Vui lòng yêu cầu OTP mới.' };
     }
-
     if (row.code_hash !== codeHash) {
       await this.pool.query(
         `UPDATE buyer_otp_log SET attempts = attempts + 1 WHERE id = $1`,
@@ -201,7 +177,6 @@ export class BuyerOtpService {
       );
       return { ok: false, error: 'OTP không đúng. Vui lòng thử lại.' };
     }
-
     await this.pool.query(
       `UPDATE buyer_otp_log SET consumed_at = NOW() WHERE id = $1`,
       [row.id],
@@ -209,5 +184,4 @@ export class BuyerOtpService {
     return { ok: true };
   }
 }
-
 export const buyerOtpService = new BuyerOtpService();

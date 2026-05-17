@@ -5,7 +5,6 @@ import { DEFAULT_TENANT_ID } from '../constants';
 import { isBrevoConfigured, brevoSendEmail } from './brevoService';
 import { logger } from '../middleware/logger';
 import { withRlsBypass } from '../db';
-
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -14,7 +13,6 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;');
 }
-
 interface SmtpConfig {
   enabled: boolean;
   host: string;
@@ -26,7 +24,6 @@ interface SmtpConfig {
   fromName?: string;
   fromAddress?: string;
 }
-
 interface EmailOptions {
   to: string;
   subject: string;
@@ -50,23 +47,19 @@ interface EmailOptions {
   /** Brevo tags (vd: ['campaign:abc', 'variant:A']) — chuyển thẳng xuống provider. */
   tags?: string[];
 }
-
 type EmailStatus =
   | 'sent'
   | 'queued_no_smtp'
   | 'failed'
   | 'deduped'
   | 'quota_exceeded';
-
 interface EmailResult {
   success: boolean;
   status: EmailStatus;
   messageId?: string;
   error?: string;
 }
-
 // ── Quota & dedupe helpers ────────────────────────────────────────────────────
-
 // Hạn mức email/30 ngày theo gói cước (per tenant). Có thể override qua env.
 const PLAN_EMAIL_QUOTA: Record<string, number> = {
   TRIAL: 100,
@@ -75,13 +68,11 @@ const PLAN_EMAIL_QUOTA: Record<string, number> = {
   ENTERPRISE: 20000,
 };
 const DEFAULT_PLAN_QUOTA = 500;
-
 function makeDedupeKey(tenantId: string, opts: EmailOptions): string {
   if (opts.dedupeKey) return opts.dedupeKey;
   const raw = `${tenantId}|${opts.to.toLowerCase().trim()}|${opts.template || ''}|${opts.subject}`;
   return crypto.createHash('sha1').update(raw).digest('hex');
 }
-
 /**
  * Lấy quota email/30 ngày của tenant theo gói cước hiện tại trong subscriptions.
  * Nếu tenant chưa có subscription, dùng mức TRIAL.
@@ -106,7 +97,6 @@ async function getMonthlyEmailQuota(tenantId: string): Promise<number> {
     return DEFAULT_PLAN_QUOTA;
   }
 }
-
 async function findRecentDedupe(
   tenantId: string,
   dedupeKey: string,
@@ -130,7 +120,6 @@ async function findRecentDedupe(
     return false; // fail-open: thà gửi lặp còn hơn nuốt mất email quan trọng
   }
 }
-
 async function countSentLast30Days(tenantId: string): Promise<number> {
   try {
     return await withRlsBypass(async (client) => {
@@ -147,7 +136,6 @@ async function countSentLast30Days(tenantId: string): Promise<number> {
     return 0;
   }
 }
-
 async function logEmail(args: {
   tenantId: string;
   recipient: string;
@@ -182,11 +170,9 @@ async function logEmail(args: {
     logger.warn(`[EmailService] logEmail failed (non-fatal): ${err.message}`);
   }
 }
-
 // ── Shared email base layout ──────────────────────────────────────────────────
 // Table-based layout + @media queries for full mobile responsiveness.
 // Tested compatible with: Gmail (web/app), Apple Mail, Outlook 2016+, iOS Mail, Samsung Mail.
-
 function emailBase(content: string, footerNote?: string): string {
   const year = new Date().getFullYear();
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -217,13 +203,10 @@ function emailBase(content: string, footerNote?: string): string {
   </style>
 </head>
 <body style="margin:0;padding:0;background-color:#F1F5F9;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-
 <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F1F5F9">
   <tr>
     <td align="center" valign="top" class="email-wrapper" style="padding:40px 16px;">
-
       <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
-
         <!-- HEADER -->
         <tr>
           <td class="email-header" bgcolor="#1E293B" style="padding:24px 40px;text-align:center;border-radius:12px 12px 0 0;">
@@ -255,7 +238,6 @@ function emailBase(content: string, footerNote?: string): string {
             ${content}
           </td>
         </tr>
-
         <!-- FOOTER -->
         <tr>
           <td class="email-footer" bgcolor="#F8FAFC" style="padding:18px 40px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
@@ -268,7 +250,6 @@ function emailBase(content: string, footerNote?: string): string {
             </p>
           </td>
         </tr>
-
       </table>
     </td>
   </tr>
@@ -276,7 +257,6 @@ function emailBase(content: string, footerNote?: string): string {
 </body>
 </html>`;
 }
-
 function primaryButton(href: string, label: string): string {
   return `<table class="btn-full" cellpadding="0" cellspacing="0" border="0" align="center" style="min-width:200px;">
   <tr>
@@ -286,14 +266,12 @@ function primaryButton(href: string, label: string): string {
   </tr>
 </table>`;
 }
-
 function divider(): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr><td style="border-top:1px solid #E2E8F0;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:20px;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 }
-
 function linkBox(url: string): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
@@ -304,7 +282,6 @@ function linkBox(url: string): string {
   </tr>
 </table>`;
 }
-
 function warningBox(title: string, body: string): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
@@ -315,7 +292,6 @@ function warningBox(title: string, body: string): string {
   </tr>
 </table>`;
 }
-
 function iconCircle(bgColor: string, emoji: string): string {
   return `<table cellpadding="0" cellspacing="0" border="0" align="center">
   <tr>
@@ -325,13 +301,10 @@ function iconCircle(bgColor: string, emoji: string): string {
   </tr>
 </table>`;
 }
-
 function spacer(h: number): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:${h}px;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 }
-
 // ── SMTP helpers ──────────────────────────────────────────────────────────────
-
 async function getSmtpConfig(tenantId: string): Promise<SmtpConfig> {
   try {
     const config = await enterpriseConfigRepository.getConfig(tenantId);
@@ -340,7 +313,6 @@ async function getSmtpConfig(tenantId: string): Promise<SmtpConfig> {
     return { enabled: false, host: '', port: 587, user: '', password: '' };
   }
 }
-
 function createTransporter(smtp: SmtpConfig): nodemailer.Transporter {
   return nodemailer.createTransport({
     host: smtp.host,
@@ -352,7 +324,6 @@ function createTransporter(smtp: SmtpConfig): nodemailer.Transporter {
     socketTimeout: 15000,
   });
 }
-
 function buildFromAddress(smtp: SmtpConfig): string {
   if (smtp.from) return smtp.from;
   if (smtp.fromAddress) {
@@ -360,9 +331,7 @@ function buildFromAddress(smtp: SmtpConfig): string {
   }
   return `SGS LAND <${smtp.user}>`;
 }
-
 // ── Core sendEmail ────────────────────────────────────────────────────────────
-
 /**
  * Lớp gửi thực sự — gọi Brevo (ưu tiên) rồi fallback SMTP.
  * KHÔNG kiểm tra quota / dedupe — đó là việc của `sendEmail` ở wrapper bên ngoài.
@@ -387,9 +356,7 @@ async function deliverEmail(
     }
     console.warn(`[EmailService] Brevo failed (${result.error}), attempting SMTP fallback.`);
   }
-
   const smtp = await getSmtpConfig(tenantId);
-
   if (!smtp.enabled || !smtp.host || !smtp.user) {
     logger.warn(
       `[EmailService] No email provider configured for tenant ${tenantId}. Email queued (not sent). To: ${options.to}, Subject: ${options.subject}`,
@@ -399,7 +366,6 @@ async function deliverEmail(
       provider: 'none',
     };
   }
-
   try {
     const transporter = createTransporter(smtp);
     const fromAddress = buildFromAddress(smtp);
@@ -423,7 +389,6 @@ async function deliverEmail(
     };
   }
 }
-
 /**
  * Entry point chính cho mọi email gửi đi:
  *   1) Dedupe — bỏ qua nếu cùng (tenant, dedupeKey) đã được gửi trong cửa sổ X phút.
@@ -435,7 +400,6 @@ async function deliverEmail(
 async function sendEmail(tenantId: string, options: EmailOptions): Promise<EmailResult> {
   const dedupeKey = makeDedupeKey(tenantId, options);
   const dedupeWindow = options.dedupeWindowMinutes ?? 10;
-
   // 1) Dedupe
   if (dedupeWindow > 0) {
     const isDup = await findRecentDedupe(tenantId, dedupeKey, dedupeWindow);
@@ -454,7 +418,6 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
       return { success: true, status: 'deduped' };
     }
   }
-
   // 2) Quota
   if (!options.skipQuota) {
     const [quota, sent] = await Promise.all([
@@ -481,10 +444,8 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
       };
     }
   }
-
   // 3) Gửi
   const { result, provider } = await deliverEmail(tenantId, options);
-
   // 4) Log
   await logEmail({
     tenantId,
@@ -497,10 +458,8 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
     messageId: result.messageId,
     error: result.error,
   });
-
   return result;
 }
-
 async function testSmtpConnection(tenantId: string): Promise<EmailResult> {
   const smtp = await getSmtpConfig(tenantId);
   if (!smtp.enabled || !smtp.host || !smtp.user) {
@@ -514,13 +473,10 @@ async function testSmtpConnection(tenantId: string): Promise<EmailResult> {
     return { success: false, status: 'failed', error: error.message };
   }
 }
-
 // ── Email templates ───────────────────────────────────────────────────────────
-
 async function sendVerificationEmail(tenantId: string, to: string, userName: string, verifyUrl: string): Promise<EmailResult> {
   const safeName = escapeHtml(userName);
   const safeUrl  = escapeHtml(verifyUrl);
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#EEF2FF', '&#9993;')}</td></tr>
@@ -546,7 +502,6 @@ async function sendVerificationEmail(tenantId: string, to: string, userName: str
       Link xác minh có hiệu lực trong <strong>24 giờ</strong>.<br />Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email.
     </p>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Xác minh địa chỉ email của bạn',
@@ -558,11 +513,9 @@ async function sendVerificationEmail(tenantId: string, to: string, userName: str
     dedupeKey: `verification:${to.toLowerCase()}:${verifyUrl}`,
   });
 }
-
 async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: string, userName?: string): Promise<EmailResult> {
   const name    = escapeHtml(userName || to.split('@')[0]);
   const safeUrl = escapeHtml(resetUrl);
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#FEF3C7', '&#128274;')}</td></tr>
@@ -587,7 +540,6 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
     ${divider()}
     ${warningBox('&#9888; Lưu ý bảo mật', 'Link này có hiệu lực trong <strong>1 giờ</strong>. Nếu bạn không yêu cầu đặt lại mật khẩu, tài khoản của bạn vẫn an toàn — hãy bỏ qua email này.')}
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Yêu cầu đặt lại mật khẩu',
@@ -598,15 +550,12 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
     dedupeKey: `password_reset:${to.toLowerCase()}:${resetUrl}`,
   });
 }
-
 async function sendWelcomeEmail(tenantId: string, to: string, userName: string): Promise<EmailResult> {
   const safeName = escapeHtml(userName);
-
   const featureRow = (text: string) =>
     `<tr><td style="padding:5px 0;color:#334155;font-size:13px;font-family:Arial,sans-serif;">
       <span style="color:#4F46E5;font-weight:bold;">&#10004;</span>&nbsp;&nbsp;${text}
     </td></tr>`;
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#ECFDF5', '&#127881;')}</td></tr>
@@ -637,7 +586,6 @@ async function sendWelcomeEmail(tenantId: string, to: string, userName: string):
       <tr><td align="center">${primaryButton('https://sgsland.vn', 'Bắt Đầu Ngay')}</td></tr>
     </table>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Chào mừng! Tài khoản của bạn đã sẵn sàng',
@@ -645,11 +593,9 @@ async function sendWelcomeEmail(tenantId: string, to: string, userName: string):
     text: `Chào mừng ${userName}!\n\nTài khoản SGS LAND của bạn đã được kích hoạt thành công.\n\nĐăng nhập tại: https://sgsland.vn\n\n— SGS LAND`,
   });
 }
-
 async function sendInviteEmail(tenantId: string, to: string, userName: string, role: string, loginUrl: string): Promise<EmailResult> {
   const safeUser = escapeHtml(userName);
   const safeUrl  = escapeHtml(loginUrl);
-
   const roleLabels: Record<string, string> = {
     admin: 'Quản trị viên',
     manager: 'Quản lý',
@@ -657,7 +603,6 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
     staff: 'Nhân viên',
   };
   const roleDisplay = roleLabels[role.toLowerCase()] || escapeHtml(role);
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#EEF2FF', '&#128100;')}</td></tr>
@@ -692,7 +637,6 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
       Nếu bạn không mong đợi lời mời này, vui lòng bỏ qua email.
     </p>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: `SGS LAND – Bạn được mời với vai trò ${roleDisplay}`,
@@ -703,16 +647,13 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
     dedupeKey: `invite:${to.toLowerCase()}:${loginUrl}`,
   });
 }
-
 async function sendSequenceEmail(tenantId: string, to: string, subject: string, content: string): Promise<EmailResult> {
   const plainText = content.replace(/<[^>]*>/g, '').trim();
-
   const body = `
     <h2 style="color:#0F172A;font-size:18px;font-weight:bold;margin:0 0 20px;font-family:Arial,sans-serif;">${escapeHtml(subject)}</h2>
     ${divider()}
     <div style="color:#475569;font-size:14px;line-height:1.8;font-family:Arial,sans-serif;">${content}</div>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject,
@@ -720,9 +661,7 @@ async function sendSequenceEmail(tenantId: string, to: string, subject: string, 
     text: plainText,
   });
 }
-
 // ── Contact form — internal notification (to info@sgsland.vn) ─────────────────
-
 async function sendContactNotification(
   name: string,
   email: string,
@@ -733,7 +672,6 @@ async function sendContactNotification(
   const safeEmail   = escapeHtml(email);
   const safeSubject = escapeHtml(subjectLabel);
   const safeMsg     = escapeHtml(message).replace(/\n/g, '<br>');
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#EEF2FF', '&#9993;')}</td></tr>
@@ -779,7 +717,6 @@ async function sendContactNotification(
       <tr><td align="center">${primaryButton(`mailto:${safeEmail}`, 'Phản Hồi Khách Hàng Ngay')}</td></tr>
     </table>
   `;
-
   return sendEmail(DEFAULT_TENANT_ID, {
     to: 'info@sgsland.vn',
     subject: `[Liên Hệ] ${safeSubject} — ${safeName}`,
@@ -787,9 +724,7 @@ async function sendContactNotification(
     text: `Tin nhắn mới từ ${name} <${email}>\nChủ đề: ${subjectLabel}\n\n${message}`,
   });
 }
-
 // ── Contact form — auto-reply to customer ─────────────────────────────────────
-
 const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: string; guidance: string; cta?: { url: string; label: string } }> = {
   support: {
     label: 'Tư vấn Thiết kế & Xây dựng',
@@ -854,7 +789,6 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
     cta: { url: 'https://sgsland.vn/#/contact', label: 'Xem Thêm Thông Tin Liên Hệ' },
   },
 };
-
 async function sendContactAutoReply(
   to: string,
   name: string,
@@ -864,7 +798,6 @@ async function sendContactAutoReply(
   const safeName  = escapeHtml(name);
   const safeMsg   = escapeHtml(message.length > 400 ? message.slice(0, 400) + '...' : message).replace(/\n/g, '<br>');
   const info      = SUBJECT_GUIDANCE[subjectKey] || SUBJECT_GUIDANCE['other'];
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle(info.iconBg, info.icon)}</td></tr>
@@ -882,7 +815,6 @@ async function sendContactAutoReply(
     <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
       Cảm ơn bạn đã liên hệ với <strong>SGS Land</strong>. Chúng tôi đã nhận được yêu cầu của bạn và sẽ phản hồi sớm nhất có thể.
     </p>
-
     <!-- Subject-specific guidance -->
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;margin-bottom:0;">
       <tr><td style="padding:18px 20px;">
@@ -891,7 +823,6 @@ async function sendContactAutoReply(
       </td></tr>
     </table>
     ${spacer(16)}
-
     <!-- Submitted message echo -->
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
@@ -902,20 +833,17 @@ async function sendContactAutoReply(
       </tr>
     </table>
     ${spacer(28)}
-
     ${info.cta ? `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${primaryButton(info.cta.url, info.cta.label)}</td></tr>
     </table>
     ${spacer(20)}
     ` : ''}
-
     <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
       Cần hỗ trợ ngay? Gọi hotline <strong style="color:#0F172A;">0971 132 378</strong> (24/7)<br />
       hoặc email <a href="mailto:info@sgsland.vn" style="color:#4F46E5;text-decoration:none;">info@sgsland.vn</a>
     </p>
   `;
-
   return sendEmail(DEFAULT_TENANT_ID, {
     to,
     subject: `SGS Land – Xác nhận nhận yêu cầu: ${info.label}`,
@@ -923,9 +851,7 @@ async function sendContactAutoReply(
     text: `Xin chào ${name},\n\nCảm ơn bạn đã liên hệ với SGS Land về: ${info.label}.\n\nChúng tôi đã nhận được yêu cầu và sẽ phản hồi sớm nhất.\n\nHotline: 0971 132 378 (24/7)\nEmail: info@sgsland.vn\nWebsite: https://sgsland.vn\n\n— SGS LAND`,
   });
 }
-
 // ── Email tự động theo hành vi người dùng ──────────────────────────────────────
-
 /**
  * NUDGE_A — Gửi cho user đăng ký ≥ 3 ngày nhưng chưa đăng tin nào.
  * Khuyến khích đăng tin bất động sản đầu tiên.
@@ -933,7 +859,6 @@ async function sendContactAutoReply(
 async function sendNudgeA(tenantId: string, to: string, userName: string): Promise<EmailResult> {
   const safeName = escapeHtml(userName || 'bạn');
   const listingUrl = 'https://sgsland.vn/#/dang-tin';
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#EEF2FF', '&#127968;')}</td></tr>
@@ -988,7 +913,6 @@ async function sendNudgeA(tenantId: string, to: string, userName: string): Promi
       Chỉ mất 5 phút để hoàn thành tin đăng đầu tiên của bạn.
     </p>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Đăng tin BĐS đầu tiên của bạn — Hoàn toàn miễn phí',
@@ -996,7 +920,6 @@ async function sendNudgeA(tenantId: string, to: string, userName: string): Promi
     text: `Xin chào ${userName},\n\nBạn chưa đăng tin bất động sản nào trên SGS LAND. Hãy đăng tin đầu tiên hoàn toàn miễn phí tại:\n${listingUrl}\n\nChỉ mất 5 phút!\n\n— SGS LAND`,
   });
 }
-
 /**
  * NUDGE_B — Gửi cho user có đúng 1 listing, tạo ≥ 7 ngày, không còn hoạt động.
  * Nhắc nhở cập nhật tin và đăng thêm.
@@ -1005,7 +928,6 @@ async function sendNudgeB(tenantId: string, to: string, userName: string): Promi
   const safeName = escapeHtml(userName || 'bạn');
   const dashboardUrl = 'https://sgsland.vn/#/tin-dang';
   const listingUrl   = 'https://sgsland.vn/#/dang-tin';
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#FFF7ED', '&#128204;')}</td></tr>
@@ -1064,7 +986,6 @@ async function sendNudgeB(tenantId: string, to: string, userName: string): Promi
     </table>
     ${spacer(20)}
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Tin BĐS của bạn cần được cập nhật để tiếp cận nhiều khách hơn',
@@ -1072,7 +993,6 @@ async function sendNudgeB(tenantId: string, to: string, userName: string): Promi
     text: `Xin chào ${userName},\n\nTin đăng của bạn đã lâu chưa cập nhật. Hãy cập nhật để tăng lượt xem:\n${dashboardUrl}\n\nHoặc đăng thêm tin mới:\n${listingUrl}\n\n— SGS LAND`,
   });
 }
-
 /**
  * NUDGE_C — Gửi cho user không đăng nhập ≥ 30 ngày.
  * Nhắc về thị trường sôi động, kêu gọi quay lại.
@@ -1081,7 +1001,6 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
   const safeName   = escapeHtml(userName || 'bạn');
   const loginUrl   = 'https://sgsland.vn/#/dang-nhap';
   const marketUrl  = 'https://sgsland.vn/#/tim-kiem';
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#F0FDF4', '&#128200;')}</td></tr>
@@ -1140,7 +1059,6 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
     </table>
     ${spacer(20)}
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Thị trường BĐS đang sôi động, cơ hội đang chờ bạn',
@@ -1148,7 +1066,6 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
     text: `Xin chào ${userName},\n\nThị trường BĐS Việt Nam đang có nhiều cơ hội hấp dẫn. Hãy quay lại SGS LAND:\n${loginUrl}\n\nHoặc xem tin không cần đăng nhập:\n${marketUrl}\n\n— SGS LAND`,
   });
 }
-
 /**
  * NUDGE_D — Gửi cho user có ≥ 2 listings, đăng ký ≥ 30 ngày, đăng nhập gần đây.
  * Khuyến khích nâng cấp lên gói Premium để đẩy tin và mở rộng kinh doanh.
@@ -1216,7 +1133,6 @@ async function sendNudgeD(tenantId: string, to: string, userName: string): Promi
       Dùng thử 14 ngày miễn phí — Hủy bất cứ lúc nào.
     </p>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Nâng cấp Premium để đẩy tin & bán BĐS nhanh hơn',
@@ -1224,7 +1140,6 @@ async function sendNudgeD(tenantId: string, to: string, userName: string): Promi
     text: `Xin chào ${userName},\n\nBạn đang là một trong những môi giới tích cực trên SGS LAND. Hãy nâng cấp lên Premium để tận hưởng tin ưu tiên, AI CRM và phân tích nâng cao:\n${upgradeUrl}\n\nDùng thử 14 ngày miễn phí!\n\n— SGS LAND`,
   });
 }
-
 /**
  * NUDGE_E — Gửi cho user đăng ký ≥ 14 ngày, đang hoạt động nhưng chưa khám phá AI.
  * Giới thiệu tính năng AI: định giá, mô tả, chatbot tư vấn.
@@ -1298,7 +1213,6 @@ async function sendNudgeE(tenantId: string, to: string, userName: string): Promi
     </table>
     ${spacer(20)}
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – AI định giá, mô tả & chatbot BĐS dành riêng cho bạn',
@@ -1306,7 +1220,6 @@ async function sendNudgeE(tenantId: string, to: string, userName: string): Promi
     text: `Xin chào ${userName},\n\nSGS LAND tích hợp AI chuyên biệt cho BĐS Việt Nam: định giá, mô tả tin đăng, chatbot 24/7 và phân tích thị trường. Khám phá ngay:\n${aiUrl}\n\n— SGS LAND`,
   });
 }
-
 /**
  * LEAD_NURTURE — Gửi cho lead từ landing page, sau 3 ngày chưa phản hồi.
  * Nhắc nhở và cung cấp thêm thông tin dự án, kêu gọi liên hệ tư vấn.
@@ -1322,7 +1235,6 @@ async function sendLeadNurture(
   const hotline     = '0971132378';
   const hotlineDisp = '0971 132 378';
   const contactUrl  = `https://sgsland.vn/#/lien-he`;
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#F0FDF4', '&#127968;')}</td></tr>
@@ -1390,7 +1302,6 @@ async function sendLeadNurture(
       Tư vấn hoàn toàn miễn phí — Không ràng buộc.
     </p>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: `SGS Land – Thông tin ${safeProject} bạn đang quan tâm`,
@@ -1398,11 +1309,8 @@ async function sendLeadNurture(
     text: `Xin chào ${leadName},\n\nCảm ơn bạn đã quan tâm đến ${projectName}. Đội ngũ SGS Land sẵn sàng cung cấp bảng giá, mặt bằng và chính sách vay ưu đãi.\n\nĐặt lịch tư vấn: ${contactUrl}\nHoặc gọi: ${hotlineDisp} (24/7)\n\n— SGS LAND`,
   });
 }
-
 // ── Billing emails ────────────────────────────────────────────────────────────
-
 type BillingLocale = 'vi' | 'en';
-
 interface BillingReceiptArgs {
   planName: string;
   amount: number;
@@ -1412,7 +1320,6 @@ interface BillingReceiptArgs {
   billingUrl: string;
   locale?: BillingLocale;
 }
-
 const BILLING_I18N = {
   vi: {
     receipt: {
@@ -1489,11 +1396,9 @@ const BILLING_I18N = {
     },
   },
 } as const;
-
 function pickBillingLocale(locale?: BillingLocale): BillingLocale {
   return locale === 'en' ? 'en' : 'vi';
 }
-
 function formatMoney(amount: number, currency: string): string {
   const safeCurrency = (currency || 'USD').toUpperCase();
   if (safeCurrency === 'USD') return `$${amount.toFixed(2)}`;
@@ -1512,7 +1417,6 @@ function formatPaidAt(value: string | Date): string {
   } catch {}
   return String(value);
 }
-
 async function sendBillingReceiptEmail(
   tenantId: string,
   to: string,
@@ -1530,7 +1434,6 @@ async function sendBillingReceiptEmail(
       <td style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${label}</td>
       <td align="right" style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;font-family:Arial,sans-serif;">${value}</td>
     </tr>`;
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#ECFDF5', '&#10004;')}</td></tr>
@@ -1564,7 +1467,6 @@ async function sendBillingReceiptEmail(
       ${t.footer} <a href="mailto:billing@sgsland.vn" style="color:#4F46E5;text-decoration:none;">billing@sgsland.vn</a>.
     </p>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: t.subject(args.planName),
@@ -1575,7 +1477,6 @@ async function sendBillingReceiptEmail(
     dedupeKey: `billing_receipt:${args.sessionId}`,
   });
 }
-
 interface BillingAdminAlertArgs {
   payerEmail: string;
   payerName?: string | null;
@@ -1587,7 +1488,6 @@ interface BillingAdminAlertArgs {
   billingUrl: string;
   locale?: BillingLocale;
 }
-
 async function sendBillingAdminAlertEmail(
   tenantId: string,
   to: string,
@@ -1602,13 +1502,11 @@ async function sendBillingAdminAlertEmail(
   const safeSession = escapeHtml(args.sessionId);
   const safeUrl = escapeHtml(args.billingUrl);
   const payerEmailLink = `<a href="mailto:${safePayer}" style="color:#4F46E5;text-decoration:none;">${safePayer}</a>`;
-
   const detailRow = (label: string, value: string) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${label}</td>
       <td align="right" style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#0F172A;font-size:13px;font-weight:bold;font-family:Arial,sans-serif;">${value}</td>
     </tr>`;
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#EEF2FF', '&#128176;')}</td></tr>
@@ -1641,7 +1539,6 @@ async function sendBillingAdminAlertEmail(
     ${spacer(24)}
     ${linkBox(safeUrl)}
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: t.subject(args.payerEmail),
@@ -1652,7 +1549,6 @@ async function sendBillingAdminAlertEmail(
     dedupeKey: `billing_admin_alert:${args.sessionId}:${to.toLowerCase()}`,
   });
 }
-
 async function sendVendorApprovedEmail(
   tenantId: string,
   to: string,
@@ -1663,7 +1559,6 @@ async function sendVendorApprovedEmail(
   const safeName    = escapeHtml(userName);
   const safeCompany = escapeHtml(companyName);
   const safeUrl     = escapeHtml(loginUrl);
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#ECFDF5', '&#10003;')}</td></tr>
@@ -1697,7 +1592,6 @@ async function sendVendorApprovedEmail(
     ${spacer(16)}
     ${linkBox(safeUrl)}
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Tài khoản của bạn đã được phê duyệt',
@@ -1707,7 +1601,6 @@ async function sendVendorApprovedEmail(
     skipQuota: true,
   });
 }
-
 async function sendVendorRejectedEmail(
   tenantId: string,
   to: string,
@@ -1718,7 +1611,6 @@ async function sendVendorRejectedEmail(
   const safeName    = escapeHtml(userName);
   const safeCompany = escapeHtml(companyName);
   const safeReason  = escapeHtml(reason);
-
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">${iconCircle('#FFF1F2', '&#10007;')}</td></tr>
@@ -1741,7 +1633,6 @@ async function sendVendorRejectedEmail(
       <a href="mailto:support@sgsland.vn" style="color:#4F46E5;">support@sgsland.vn</a>.
     </p>
   `;
-
   return sendEmail(tenantId, {
     to,
     subject: 'SGS LAND – Đăng ký workspace chưa được chấp thuận',
@@ -1751,7 +1642,6 @@ async function sendVendorRejectedEmail(
     skipQuota: true,
   });
 }
-
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export const emailService = {

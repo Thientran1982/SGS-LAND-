@@ -2,15 +2,12 @@
  * Buyer data API client (Task #52) — favorites, leads, saved searches.
  * All endpoints require the buyer JWT, attached automatically by `apiRequest`.
  */
-
 import { apiRequest } from './client';
 import type { SavedSearchFilters } from './push';
-
 export interface ServerFavorite {
   listingId: string;
   createdAt: string;
 }
-
 export interface BuyerLead {
   id: string;
   tenantId: string;
@@ -21,7 +18,6 @@ export interface BuyerLead {
   listingCode: string | null;
   tenantName: string | null;
 }
-
 export interface BuyerSearch {
   id: string;
   label: string;
@@ -31,7 +27,6 @@ export interface BuyerSearch {
   createdAt: string;
   updatedAt: string;
 }
-
 export const buyerApi = {
   // Favorites ----------------------------------------------------------------
   listFavorites() {
@@ -55,12 +50,10 @@ export const buyerApi = {
       { method: 'DELETE' },
     );
   },
-
   // Leads --------------------------------------------------------------------
   listLeads(limit = 50) {
     return apiRequest<{ leads: BuyerLead[] }>('/api/buyer/leads', { params: { limit } });
   },
-
   // Saved searches -----------------------------------------------------------
   listSearches() {
     return apiRequest<{ searches: BuyerSearch[] }>('/api/buyer/searches');

@@ -2,9 +2,7 @@
 //
 // All requests are anonymous and identified by an `x-buyer-device-id` header
 // that the caller is expected to populate from `getDeviceId()`.
-
 import { apiRequest } from './client';
-
 export interface BuyerDevice {
   id: string;
   deviceId: string;
@@ -16,7 +14,6 @@ export interface BuyerDevice {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface SavedSearchFilters {
   type?: string;
   transaction?: string;
@@ -29,7 +26,6 @@ export interface SavedSearchFilters {
   areaMax?: number;
   isVerified?: boolean;
 }
-
 export interface BuyerSavedSearch {
   id: string;
   deviceId: string;
@@ -40,11 +36,9 @@ export interface BuyerSavedSearch {
   createdAt: string;
   updatedAt: string;
 }
-
 function deviceHeaders(deviceId: string): Record<string, string> {
   return { 'x-buyer-device-id': deviceId };
 }
-
 export const pushApi = {
   registerDevice(input: {
     deviceId: string;
@@ -58,7 +52,6 @@ export const pushApi = {
       body: input,
     });
   },
-
   setPreference(deviceId: string, notificationsEnabled: boolean) {
     return apiRequest<{ device: BuyerDevice }>(
       `/api/buyer/devices/${encodeURIComponent(deviceId)}/preferences`,
@@ -69,14 +62,12 @@ export const pushApi = {
       },
     );
   },
-
   listSavedSearches(deviceId: string) {
     return apiRequest<{ searches: BuyerSavedSearch[] }>('/api/buyer/saved-searches', {
       headers: deviceHeaders(deviceId),
       params: { deviceId },
     });
   },
-
   createSavedSearch(input: {
     deviceId: string;
     label: string;
@@ -89,7 +80,6 @@ export const pushApi = {
       body: input,
     });
   },
-
   updateSavedSearch(
     deviceId: string,
     id: string,
@@ -104,7 +94,6 @@ export const pushApi = {
       },
     );
   },
-
   deleteSavedSearch(deviceId: string, id: string) {
     return apiRequest<{ ok: true }>(`/api/buyer/saved-searches/${encodeURIComponent(id)}`, {
       method: 'DELETE',

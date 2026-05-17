@@ -133,7 +133,6 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
         ? data.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : data.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'
         : '';
     const circumference = 2 * Math.PI * 50;
-
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
@@ -209,7 +208,6 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     </p>
                                 </div>
                             </div>
-
                             {/* Lead KPIs */}
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">{t('profile.perf_lead_section')}</p>
@@ -254,7 +252,6 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     </div>
                                 </div>
                             </div>
-
                             {/* Workload */}
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">{t('profile.perf_task_section')}</p>
@@ -694,7 +691,6 @@ export const AdminUsers: React.FC = () => {
     return (
         <>
         <div className="h-full flex flex-col relative animate-enter">
-
             {/* HEADER */}
             <div className="flex flex-col bg-[var(--bg-surface)] border-b border-[var(--glass-border)] shrink-0">
                 {/* Row 1: Số liệu thành viên + nút mời */}
@@ -911,8 +907,7 @@ export const AdminUsers: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
-            
+            </div>            
             {/* FOOTER - Pagination */}
             <div className="shrink-0 py-2 px-4 sm:px-5">
                 <PaginationControl 
@@ -932,7 +927,6 @@ export const AdminUsers: React.FC = () => {
                     t={t}
                 />
             )}
-
             {/* Invite Modal */}
             <InviteUserModal 
                 isOpen={isInviteOpen} 
@@ -942,7 +936,6 @@ export const AdminUsers: React.FC = () => {
                 callerRole={currentUser?.role}
                 departments={departments}
             />
-
             {/* Delete Confirmation Modal */}
             <ConfirmModal 
                 isOpen={!!userToDelete}
@@ -954,7 +947,6 @@ export const AdminUsers: React.FC = () => {
                 onCancel={() => setUserToDelete(null)}
                 variant="danger"
             />
-
              {/* Status Change Confirmation Modal */}
              <ConfirmModal 
                 isOpen={!!userToStatusChange}

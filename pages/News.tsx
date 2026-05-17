@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { ROUTES } from '../config/routes';
@@ -11,14 +10,12 @@ import { copyToClipboard } from '../utils/clipboard';
 import { useTranslation } from '../services/i18n';
 import { injectArticleSEO, clearDynamicSEO } from '../utils/seo';
 import { compressImages } from '../utils/imageCompressor';
-
 const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div', 'figure', 'figcaption', 'footer', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'dl', 'dt', 'dd', 'hr', 'section', 'article', 'small', 'sup', 'sub'],
     ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'rel', 'width', 'height', 'colspan', 'rowspan', 'scope', 'data-faq'],
     ALLOW_DATA_ATTR: false,
     FORCE_BODY: true,
 });
-
 /**
  * Normalize raw article content before rendering.
  * - If the content already contains block-level HTML tags (p, div, h1-h6, ul, ol…),
@@ -37,11 +34,9 @@ const normalizeContent = (content: string): string => {
         .replace(/\n/g, '<br>');
     return `<p>${body}</p>`;
 };
-
 // -----------------------------------------------------------------------------
 // TYPES & MOCK DATA (2026 CONTEXT)
 // -----------------------------------------------------------------------------
-
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     CALENDAR: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
@@ -53,16 +48,13 @@ const ICONS = {
     CHECK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
     ERROR: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 };
-
 // -----------------------------------------------------------------------------
 // NEWS DETAIL COMPONENT
 // -----------------------------------------------------------------------------
-
 const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article: Article; onBack: () => void; onEdit?: (a: Article) => void; onDelete?: (id: string) => Promise<void>; isAdmin?: boolean }) => {
     const { t } = useTranslation();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-
     useEffect(() => {
         window.scrollTo(0, 0);
         injectArticleSEO({
@@ -77,7 +69,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
         });
         return () => { clearDynamicSEO('news'); };
     }, [article]);
-
     const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
     const handleDelete = async () => {
@@ -91,7 +82,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
             setIsConfirmOpen(false);
         }
     };
-
     const handleShare = async () => {
         const url = window.location.href;
         if (navigator.share) {
@@ -106,7 +96,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
             setTimeout(() => setShareFeedback(null), 2500);
         }
     };
-
     return (
         <div className="animate-enter pb-20">
             <ConfirmModal
@@ -143,7 +132,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         </div>
                     )}
                 </div>
-
                 <div className="flex flex-wrap items-center gap-4 mb-6 text-xs font-bold uppercase tracking-wider">
                     <span className="bg-indigo-600 text-white px-3 py-1 rounded-full shadow-md shadow-indigo-200">
                         {article.category}
@@ -155,11 +143,9 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         {ICONS.CLOCK} {article.readTime}
                     </span>
                 </div>
-
                 <h1 className="text-3xl md:text-5xl font-black text-[var(--text-primary)] mb-8 leading-tight break-words">
                     {article.title}
                 </h1>
-
                 <div className="flex items-center justify-between border-t border-b border-[var(--glass-border)] py-6 mb-10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
@@ -182,7 +168,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                     </div>
                 </div>
             </div>
-
             {/* Featured Image */}
             <div className="max-w-5xl mx-auto px-4 md:px-6 mb-12">
                 <div className="aspect-video rounded-[32px] overflow-hidden shadow-2xl relative">
@@ -190,7 +175,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                 </div>
             </div>
-
             {/* Content Body */}
             <div className="max-w-3xl mx-auto px-6">
                 <div className="prose prose-lg prose-slate prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-a:text-indigo-600 hover:prose-a:text-indigo-700 max-w-none">
@@ -199,7 +183,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                     </p>
                     <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(normalizeContent(article.content || '')) }} />
                 </div>
-
                 {/* Media Gallery */}
                 {(article.images?.length || article.videos?.length) ? (
                     <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
@@ -218,7 +201,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         </div>
                     </div>
                 ) : null}
-
                 {/* Tags */}
                 <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
                     <div className="flex flex-wrap gap-2">
@@ -233,7 +215,6 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
         </div>
     );
 };
-
 const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId }: {
     initialData?: Article;
     onSave: (data: Partial<Article>) => void;
@@ -261,7 +242,6 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
         featured: false,
         tags: []
     });
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         setFormData(prev => ({
@@ -269,15 +249,12 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
             [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
         }));
     };
-
     const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t);
         setFormData(prev => ({ ...prev, tags }));
     };
-
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
-
         const allFiles = Array.from(e.target.files);
         const imageFiles = allFiles.filter(f => f.type.startsWith('image/'));
         const videoFiles = allFiles.filter(f => f.type.startsWith('video/'));
@@ -287,7 +264,6 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
 
         setUploadingCount(c => c + uploadableFiles.length);
         e.target.value = '';
-
         try {
             const compressedImages = imageFiles.length > 0 ? await compressImages(imageFiles) : [];
             const fd = new FormData();
@@ -299,17 +275,14 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                 credentials: 'include',
                 body: fd,
             });
-
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || `Upload failed (${res.status})`);
             }
-
             const data = await res.json();
             const uploaded: Array<{ url: string; mimetype: string }> = data.files || [];
             const imgUrls = uploaded.filter(f => f.mimetype?.startsWith('image/')).map(f => f.url);
             const vidUrls = uploaded.filter(f => f.mimetype?.startsWith('video/')).map(f => f.url);
-
             setFormData(prev => ({
                 ...prev,
                 images: [...(prev.images || []), ...imgUrls],
@@ -323,7 +296,6 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
             setUploadingCount(c => c - uploadableFiles.length);
         }
     };
-
     const removeMedia = (type: 'image' | 'video', index: number) => {
         setFormData(prev => {
             if (type === 'image') {
@@ -337,12 +309,10 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
             }
         });
     };
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(formData);
     };
-
     return (
         <form id={formId} onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-surface)] p-8 rounded-2xl shadow-sm border border-[var(--glass-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -370,8 +340,7 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                 <div>
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tags (cách nhau bằng dấu phẩy)</label>
                     <input type="text" value={formData.tags?.join(', ')} onChange={handleTagsChange} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
-                </div>
-                
+                </div>                
                 {/* Media Upload Section */}
                 <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Hình ảnh & Video đính kèm</label>
@@ -399,7 +368,6 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                             )}
                         </div>
                     </div>
-
                     {/* Media Preview */}
                     {(formData.images?.length || formData.videos?.length) ? (
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -430,7 +398,6 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                         </div>
                     ) : null}
                 </div>
-
                 <div className="md:col-span-2 flex items-center gap-3">
                     <input type="checkbox" id="featured" name="featured" checked={formData.featured} onChange={handleChange} className="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500" />
                     <label htmlFor="featured" className="text-sm font-bold text-[var(--text-secondary)] cursor-pointer">Bài viết nổi bật</label>
@@ -445,11 +412,9 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
         </form>
     );
 };
-
 // -----------------------------------------------------------------------------
 // MAIN NEWS COMPONENT (List View)
 // -----------------------------------------------------------------------------
-
 export const News: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
@@ -461,19 +426,16 @@ export const News: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [errorToast, setErrorToast] = useState<string | null>(null);
     const [isArticleUploading, setIsArticleUploading] = useState(false);
-
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const PAGE_SIZE = 6; // Number of articles per page (excluding featured)
     const { t } = useTranslation();
-
     const showError = (msg: string) => {
         setErrorToast(msg);
         setTimeout(() => setErrorToast(null), 3000);
-    };
-    
+    };    
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
@@ -484,24 +446,20 @@ export const News: React.FC = () => {
                 const featuredArticle = allArticles.find((a: Article) => a.featured) || allArticles[0];
                 
                 // Filter out featured article for pagination
-                const otherArticles = allArticles.filter((a: Article) => a.id !== featuredArticle?.id);
-                
+                const otherArticles = allArticles.filter((a: Article) => a.id !== featuredArticle?.id);                
                 // Calculate pagination
                 const total = otherArticles.length;
                 setTotalItems(total);
-                setTotalPages(Math.ceil(total / PAGE_SIZE));
-                
+                setTotalPages(Math.ceil(total / PAGE_SIZE));                
                 // Slice for current page
                 const startIndex = (currentPage - 1) * PAGE_SIZE;
-                const paginatedOthers = otherArticles.slice(startIndex, startIndex + PAGE_SIZE);
-                
+                const paginatedOthers = otherArticles.slice(startIndex, startIndex + PAGE_SIZE);                
                 // Set articles: featured + paginated others
                 if (featuredArticle && currentPage === 1) {
                     setArticles([featuredArticle, ...paginatedOthers]);
                 } else {
                     setArticles(paginatedOthers);
-                }
-                
+                }                
                 const user = await db.getCurrentUser();
                 setCurrentUser(user);
             } catch (error) {
@@ -512,19 +470,15 @@ export const News: React.FC = () => {
         };
         fetchData();
     }, [currentPage]);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
-
     const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
             setSubStatus('ERROR');
             setTimeout(() => setSubStatus('IDLE'), 2000);
             return;
         }
-
         setSubStatus('LOADING');
         try {
             const res = await fetch('/api/public/newsletter/subscribe', {
@@ -541,7 +495,6 @@ export const News: React.FC = () => {
             setTimeout(() => setSubStatus('IDLE'), 3000);
         }
     };
-
     const normalizeCreated = (a: any): Article => ({
         ...a,
         date: a.date || (a.publishedAt
@@ -554,7 +507,6 @@ export const News: React.FC = () => {
         author: a.author || 'SGS Land',
         image: a.image || '',
     });
-
     const handleSaveArticle = async (articleData: Partial<Article>) => {
         try {
             if (editingArticle) {
@@ -570,8 +522,7 @@ export const News: React.FC = () => {
             console.error("Failed to save article", error);
             showError("Có lỗi xảy ra khi lưu bài viết.");
         }
-    };
-    
+    };    
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[var(--glass-surface)] flex items-center justify-center">
@@ -579,7 +530,6 @@ export const News: React.FC = () => {
             </div>
         );
     }
-
     if (isCreating || editingArticle) {
         return (
             <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
@@ -617,11 +567,9 @@ export const News: React.FC = () => {
             </div>
         );
     }
-
     // Derived state
     const featured = articles.find(a => a.featured) || articles[0];
     const others = articles.filter(a => a.id !== featured?.id);
-
     // If an article is selected, render detail view
     if (selectedArticleId !== null) {
         const article = articles.find(a => a.id === selectedArticleId);
@@ -666,12 +614,11 @@ export const News: React.FC = () => {
             );
         }
     }
-
     // Default: List View
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             <SeoHead
-                title="Tin Tức Bất Động Sản 2026 | Phân Tích Thị Trường - SGS LAND"
+                title="Tin Tức Bất Động Sản | Phân Tích Thị Trường - SGS LAND"
                 description="Tin tức BĐS Việt Nam mới nhất: chính sách, dự án, giá thị trường TP.HCM, Đồng Nai, Bình Dương. Phân tích chuyên sâu cập nhật hàng tuần từ chuyên gia SGS LAND."
                 canonicalPath="/news"
                 structuredData={{
@@ -687,8 +634,7 @@ export const News: React.FC = () => {
                 <div className="fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl bg-rose-900/90 border border-rose-500 text-white flex items-center gap-3 animate-enter">
                     <span className="font-bold text-sm">{errorToast}</span>
                 </div>
-            )}
-            
+            )}            
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
@@ -704,7 +650,6 @@ export const News: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             <div className="max-w-6xl mx-auto px-6 py-12 animate-enter">
                 <div className="text-center mb-16 relative">
                     <span className="inline-block py-1 px-3 rounded-full bg-slate-900 text-white text-xs2 font-bold uppercase tracking-widest mb-4">
@@ -728,7 +673,6 @@ export const News: React.FC = () => {
                         </div>
                     )}
                 </div>
-
                 {/* Featured Article */}
                 {featured && (
                     <div 
@@ -760,7 +704,6 @@ export const News: React.FC = () => {
                         </div>
                     </div>
                 )}
-
                 {/* Grid Articles */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
                     {others.map(article => (
@@ -794,7 +737,6 @@ export const News: React.FC = () => {
                         </div>
                     ))}
                 </div>
-
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
                     <div className="flex justify-center items-center gap-2 mb-24 flex-wrap">
@@ -821,7 +763,6 @@ export const News: React.FC = () => {
                                 </button>
                             ))}
                         </div>
-
                         <button 
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
@@ -831,12 +772,10 @@ export const News: React.FC = () => {
                         </button>
                     </div>
                 )}
-
                 {/* Newsletter (Enhanced) */}
                 <div className="bg-slate-900 rounded-[40px] p-8 md:p-20 text-center relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600 rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-600 rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
-                    
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-600 rounded-full blur-[150px] opacity-20 pointer-events-none"></div>                    
                     <div className="relative z-10 max-w-xl mx-auto">
                         <div className="w-16 h-16 bg-[var(--bg-surface)]/10 rounded-2xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm text-white">
                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -844,8 +783,7 @@ export const News: React.FC = () => {
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Đừng bỏ lỡ xu hướng 2026</h2>
                         <p className="text-indigo-200 mb-10 text-lg leading-relaxed">
                             Nhận bản tin phân tích độc quyền hàng tuần từ đội ngũ chuyên gia SGS Land. Không spam, chỉ có giá trị thực.
-                        </p>
-                        
+                        </p>                        
                         <form onSubmit={handleSubscribe} className={`flex flex-col sm:flex-row gap-3 ${subStatus === 'ERROR' ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                             <div className="relative flex-1">
                                 <input 
@@ -864,8 +802,7 @@ export const News: React.FC = () => {
                                         {ICONS.ERROR}
                                     </div>
                                 )}
-                            </div>
-                            
+                            </div>                            
                             <button 
                                 type="submit"
                                 disabled={subStatus === 'LOADING' || subStatus === 'SUCCESS'}
@@ -892,8 +829,7 @@ export const News: React.FC = () => {
                                     </>
                                 )}
                             </button>
-                        </form>
-                        
+                        </form>                        
                         {subStatus === 'ERROR' && (
                             <p className="text-rose-400 text-xs font-bold mt-3 animate-enter text-left pl-4">
                                 Email không hợp lệ. Vui lòng kiểm tra lại.

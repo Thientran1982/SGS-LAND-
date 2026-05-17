@@ -11,25 +11,21 @@
  * Optional env: OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY,
  *               XAI_API_KEY, TARGET_URL (default https://sgsland.vn)
  */
-
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import * as cheerio from 'cheerio';
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Config
 // ──────────────────────────────────────────────────────────────────────────────
 const TARGET_URL = process.env.TARGET_URL || 'https://sgsland.vn';
 const REPORTS_DIR = path.resolve('./reports');
 const TIMESTAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-
 const BRAND_PATTERNS = [
   /sgs\s*[-_]?\s*land/i,
   /sgsland\.vn/i,
   /sgsland/i,
 ];
-
 const GEO_TEST_QUERIES = [
   // Project-specific
   'Aqua City Novaland mua ở đâu uy tín?',
@@ -51,7 +47,6 @@ const GEO_TEST_QUERIES = [
   'sgsland.vn bán những dự án nào?',
   'SGS Land có uy tín không?',
 ];
-
 const COMPETITORS = [
   'batdongsan.com.vn',
   'nhatot.com',
@@ -63,7 +58,6 @@ const COMPETITORS = [
   'iquivietnam.vn',
   'cenland.vn',
 ];
-
 const TARGET_PROJECTS = [
   'Aqua City',
   'The Global City',
@@ -73,7 +67,6 @@ const TARGET_PROJECTS = [
   'Masterise Homes',
   'Lumiere',
 ];
-
 // Tag each query so the gap detector can suggest the right content type
 const QUERY_TOPICS = {
   'Aqua City Novaland mua ở đâu uy tín?':                   ['project:aqua-city', 'distributor'],
@@ -92,7 +85,6 @@ const QUERY_TOPICS = {
   'sgsland.vn bán những dự án nào?':                        ['brand:projects'],
   'SGS Land có uy tín không?':                              ['brand:trust'],
 };
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────────
@@ -100,13 +92,11 @@ function detectMention(text, patterns) {
   if (!text) return false;
   return patterns.some(rx => rx.test(text));
 }
-
 function detectCompetitorMentions(text) {
   if (!text) return [];
   const t = text.toLowerCase();
   return COMPETITORS.filter(c => t.includes(c.toLowerCase()));
 }
-
 async function safeFetch(url, opts = {}, timeoutMs = 15000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -124,7 +114,6 @@ async function safeFetch(url, opts = {}, timeoutMs = 15000) {
     clearTimeout(t);
   }
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Engine adapters — all return { engine, query, response, error, mentioned, competitors }
 // ──────────────────────────────────────────────────────────────────────────────
@@ -154,7 +143,6 @@ async function askGemini(query) {
     return { engine: 'gemini', query, error: String(err?.message || err) };
   }
 }
-
 async function askOpenAI(query) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return { engine: 'openai', query, skipped: 'OPENAI_API_KEY not set' };
@@ -185,7 +173,6 @@ async function askOpenAI(query) {
     return { engine: 'openai', query, error: String(err?.message || err) };
   }
 }
-
 async function askAnthropic(query) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return { engine: 'claude', query, skipped: 'ANTHROPIC_API_KEY not set' };
@@ -218,7 +205,6 @@ async function askAnthropic(query) {
     return { engine: 'claude', query, error: String(err?.message || err) };
   }
 }
-
 async function askGrok(query) {
   const key = process.env.XAI_API_KEY;
   if (!key) return { engine: 'grok', query, skipped: 'XAI_API_KEY not set' };
@@ -249,7 +235,6 @@ async function askGrok(query) {
     return { engine: 'grok', query, error: String(err?.message || err) };
   }
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Site crawl — homepage + key pages for E-E-A-T and entity checks
 // ──────────────────────────────────────────────────────────────────────────────
@@ -263,7 +248,6 @@ async function fetchPage(url) {
     return { url, ok: false, error: String(err?.message || err) };
   }
 }
-
 async function crawlSiteSnapshot() {
   const candidates = [
     `${TARGET_URL}/`,
@@ -277,12 +261,10 @@ async function crawlSiteSnapshot() {
   const pages = await Promise.all(candidates.map(fetchPage));
   return pages;
 }
-
 function evaluateEEAT(homepage, aboutPage) {
   const html = [homepage?.html || '', aboutPage?.html || ''].join('\n');
   const $ = cheerio.load(html || '<html></html>');
   const text = $('body').text().replace(/\s+/g, ' ').toLowerCase();
-
   const checks = [
     { id: 'founder_team', label: 'Tên/ảnh nhà sáng lập hoặc đội ngũ',
       pass: /(nhà sáng lập|founder|ceo|giám đốc|đội ngũ|về chúng tôi|về sgs)/.test(text) },
@@ -308,7 +290,6 @@ function evaluateEEAT(homepage, aboutPage) {
   const score = checks.filter(c => c.pass).length;
   return { score, max: checks.length, checks };
 }
-
 function evaluateEntityConsistency(homepage) {
   const html = homepage?.html || '';
   const $ = cheerio.load(html || '<html></html>');
@@ -327,24 +308,20 @@ function evaluateEntityConsistency(homepage) {
     new RegExp(p.replace(/\s+/g, '\\s+'), 'i').test(text)
   );
   const projectsMissing = TARGET_PROJECTS.filter(p => !projectsFound.includes(p));
-
   return { variants, consistent, projectsFound, projectsMissing };
 }
-
 function evaluateTechnicalIndexability(pages) {
   const robots = pages.find(p => p.url.endsWith('/robots.txt'));
   const llms = pages.find(p => p.url.endsWith('/llms.txt'));
   const llmsFull = pages.find(p => p.url.endsWith('/llms-full.txt'));
   const sitemap = pages.find(p => p.url.endsWith('/sitemap.xml'));
   const robotsHtml = (robots?.html || '').toLowerCase();
-
   const aiBots = ['gptbot', 'oai-searchbot', 'chatgpt-user', 'perplexitybot',
                   'claude-web', 'claudebot', 'google-extended', 'bingbot'];
   const blockedBots = aiBots.filter(b => {
     const rx = new RegExp(`user-agent:\\s*${b}[^\\n]*\\n[\\s\\S]{0,200}?disallow:\\s*/`, 'i');
     return rx.test(robotsHtml);
   });
-
   return {
     hasRobots:    !!robots?.ok,
     hasSitemap:   !!sitemap?.ok,
@@ -353,7 +330,6 @@ function evaluateTechnicalIndexability(pages) {
     blockedAiBots: blockedBots,
   };
 }
-
 function evaluateStructuredData(homepage) {
   const html = homepage?.html || '';
   const ldRx = /<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi;
@@ -378,7 +354,6 @@ function evaluateStructuredData(homepage) {
   const present = wanted.filter(t => types.has(t));
   return { totalBlocks: blocks.length, types: [...types], wanted, present };
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Self-test (always runs) — heuristic answer of whether sgsland.vn would be cited
 // ──────────────────────────────────────────────────────────────────────────────
@@ -386,7 +361,6 @@ function selfTestQuery(query, snapshot) {
   const homepage = snapshot.find(p => p.url === `${TARGET_URL}/`);
   const llmsFull = snapshot.find(p => p.url.endsWith('/llms-full.txt'));
   const corpus = [(homepage?.html || ''), (llmsFull?.html || '')].join('\n').toLowerCase();
-
   const topics = QUERY_TOPICS[query] || [];
   const tokens = query.toLowerCase()
     .replace(/[?,.!]/g, ' ')
@@ -398,7 +372,6 @@ function selfTestQuery(query, snapshot) {
   const likelyCited = brandOnPage && coverage >= 0.5;
   return { topics, coverageRatio: Number(coverage.toFixed(2)), brandOnPage, likelyCited };
 }
-
 function contentGapRecommendation(query, selfTest) {
   const topics = selfTest.topics || [];
   const recs = [];
@@ -426,7 +399,6 @@ function contentGapRecommendation(query, selfTest) {
   }
   return recs;
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Score (0–100)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -441,23 +413,18 @@ function computeGeoScore({ aiResults, eeat, structured, entity, technical }) {
     if (hits.length > 0) mentionPts += 3;
   }
   mentionPts = Math.min(30, mentionPts);
-
   // (2) E-E-A-T — 20 pts
   const eeatPts = Math.round((eeat.score / eeat.max) * 20);
-
   // (3) Structured data — 20 pts
   const structPts = Math.min(20, structured.present.length * 4);
-
   // (4) Entity coverage — 15 pts
   const entityPts = Math.round(
     15 *
       (entity.projectsFound.length / TARGET_PROJECTS.length) *
       (entity.consistent ? 1.0 : 0.7)
   );
-
   // (5) AI-bot indexability — 15 pts
   const indexPts = technical.blockedAiBots.length === 0 ? 15 : Math.max(0, 15 - technical.blockedAiBots.length * 5);
-
   const total = mentionPts + eeatPts + structPts + entityPts + indexPts;
   return {
     total,
@@ -470,7 +437,6 @@ function computeGeoScore({ aiResults, eeat, structured, entity, technical }) {
     },
   };
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Trend file
 // ──────────────────────────────────────────────────────────────────────────────
@@ -485,33 +451,27 @@ async function appendTrend(entry) {
   await writeFile(file, JSON.stringify(trend, null, 2));
   return trend;
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Markdown report
 // ──────────────────────────────────────────────────────────────────────────────
 function buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structured, entity, technical, snapshot }) {
   const enginesUsed = [...new Set(aiResults.filter(r => !r.skipped).map(r => r.engine))];
   const enginesSkipped = [...new Set(aiResults.filter(r => r.skipped).map(r => r.engine))];
-
   const mentionedPairs = aiResults.filter(r => r.mentioned);
   const notMentionedQueries = GEO_TEST_QUERIES.filter(q =>
     !aiResults.some(r => r.query === q && r.mentioned)
   );
-
   const competitorAgg = {};
   for (const r of aiResults) {
     for (const c of (r.competitors || [])) {
       competitorAgg[c] = (competitorAgg[c] || 0) + 1;
     }
   }
-
   const delta = prevScore != null ? score.total - prevScore : null;
   const deltaStr = delta == null ? '— (lần đầu)' : (delta >= 0 ? `+${delta}` : `${delta}`);
-
   const benchmark = score.total >= 70 ? '🟢 Tháng 7-12 (consistent AI mentions)'
                   : score.total >= 50 ? '🟡 Tháng 4-6 (AI bắt đầu cite)'
                   : '🔴 Tháng 1-3 (đang xây nền móng)';
-
   const lines = [];
   lines.push(`# GEO Monitor — SGS Land`);
   lines.push('');
@@ -528,7 +488,6 @@ function buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structur
     lines.push(`| ${k} | ${v.score} | ${v.max} |`);
   }
   lines.push('');
-
   lines.push('## ✅ Queries có cite SGS Land');
   if (mentionedPairs.length === 0) {
     lines.push('_Chưa có engine nào nhắc tên SGS Land trong tuần này._');
@@ -546,7 +505,6 @@ function buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structur
     for (const rec of recs) lines.push(`- ${rec}`);
     lines.push('');
   }
-
   lines.push('## 🥷 Đối thủ xuất hiện trong câu trả lời AI');
   if (Object.keys(competitorAgg).length === 0) {
     lines.push('_Không phát hiện đối thủ nào trong các trả lời AI tuần này._');
@@ -556,20 +514,17 @@ function buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structur
     }
   }
   lines.push('');
-
   lines.push(`## 🛡️ E-E-A-T (${eeat.score}/${eeat.max})`);
   for (const c of eeat.checks) {
     lines.push(`- ${c.pass ? '✅' : '❌'} ${c.label}`);
   }
   lines.push('');
-
   lines.push('## 🧬 Schema có sẵn');
   lines.push(`- Tổng JSON-LD blocks: ${structured.totalBlocks}`);
   lines.push(`- Loại schema phát hiện: ${structured.types.join(', ') || '(none)'}`);
   lines.push(`- Schema mong muốn có: ${structured.wanted.join(', ')}`);
   lines.push(`- Đã có: **${structured.present.join(', ') || '(chưa có)'}**`);
   lines.push('');
-
   lines.push('## 🏷️ Entity / Project coverage');
   lines.push(`- Tên brand đồng nhất: ${entity.consistent ? '✅' : '⚠️ phát hiện biến thể (Sgs Land / SGSLand…)'}`);
   lines.push(`- Đếm biến thể: ${JSON.stringify(entity.variants)}`);
@@ -578,7 +533,6 @@ function buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structur
     lines.push(`- ⚠️ Dự án CÒN THIẾU trên homepage: **${entity.projectsMissing.join(', ')}**`);
   }
   lines.push('');
-
   lines.push('## 🤖 AI bot indexability');
   lines.push(`- robots.txt: ${technical.hasRobots ? '✅' : '❌'}`);
   lines.push(`- sitemap.xml: ${technical.hasSitemap ? '✅' : '❌'}`);
@@ -586,7 +540,6 @@ function buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structur
   lines.push(`- llms-full.txt: ${technical.hasLlmsFull ? '✅' : '❌'}`);
   lines.push(`- AI bots bị chặn trong robots.txt: ${technical.blockedAiBots.length === 0 ? '✅ Không có bot bị chặn' : `⚠️ ${technical.blockedAiBots.join(', ')}`}`);
   lines.push('');
-
   lines.push('## 🎯 Top 3 hành động ưu tiên tuần này');
   const actions = priorityActions({ score, eeat, structured, entity, technical, notMentionedQueries });
   for (const a of actions.slice(0, 3)) lines.push(`1. ${a}`);
@@ -596,7 +549,6 @@ function buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structur
   lines.push('_Chạy lại mỗi sáng Thứ Hai. Mục tiêu: GEO Score ≥ 70 vào Tháng 6._');
   return lines.join('\n');
 }
-
 function priorityActions({ score, eeat, structured, entity, technical, notMentionedQueries }) {
   const actions = [];
   if (technical.blockedAiBots.length > 0) {
@@ -625,7 +577,6 @@ function priorityActions({ score, eeat, structured, entity, technical, notMentio
   if (actions.length === 0) actions.push('GEO foundation đã ổn — duy trì cập nhật nội dung & freshness signals hàng tuần.');
   return actions;
 }
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Main
 // ──────────────────────────────────────────────────────────────────────────────
@@ -637,15 +588,12 @@ async function run() {
   for (const p of snapshot) {
     console.log(`  ${p.ok ? '✓' : '✗'} ${p.url}${p.ok ? '' : ' — ' + (p.error || `HTTP ${p.status}`)}`);
   }
-
   const homepage = snapshot.find(p => p.url === `${TARGET_URL}/`);
   const aboutPage = snapshot.find(p => /\/about|gioi-thieu/.test(p.url) && p.ok) || homepage;
-
   const eeat       = evaluateEEAT(homepage, aboutPage);
   const entity     = evaluateEntityConsistency(homepage);
   const technical  = evaluateTechnicalIndexability(snapshot);
   const structured = evaluateStructuredData(homepage);
-
   console.log(`[geo-monitor] Querying AI engines for ${GEO_TEST_QUERIES.length} prompts…`);
   const aiResults = [];
   for (const q of GEO_TEST_QUERIES) {
@@ -671,7 +619,6 @@ async function run() {
       selfTest: st,
     });
   }
-
   // Build content gap recs for queries where NO engine mentioned the brand
   const gaps = {};
   for (const q of GEO_TEST_QUERIES) {
@@ -680,9 +627,7 @@ async function run() {
       gaps[q] = contentGapRecommendation(q, aiResults.find(r => r.query === q && r.engine === 'self-test')?.selfTest || { topics: QUERY_TOPICS[q] || [] });
     }
   }
-
   const score = computeGeoScore({ aiResults, eeat, structured, entity, technical });
-
   // Trend
   const trendFile = path.join(REPORTS_DIR, 'geo-trend.json');
   let prevScore = null;
@@ -692,7 +637,6 @@ async function run() {
       prevScore = prev[prev.length - 1]?.score?.total ?? null;
     } catch {}
   }
-
   const raw = {
     timestamp: new Date().toISOString(),
     target: TARGET_URL,
@@ -705,15 +649,12 @@ async function run() {
     gaps,
     snapshotUrls: snapshot.map(p => ({ url: p.url, ok: p.ok, status: p.status, error: p.error })),
   };
-
   const md = buildMarkdownReport({ score, prevScore, aiResults, gaps, eeat, structured, entity, technical, snapshot });
-
   const jsonFile = path.join(REPORTS_DIR, `geo-monitor-${TIMESTAMP}.json`);
   const mdFile = path.join(REPORTS_DIR, `geo-monitor-${TIMESTAMP}.md`);
   await writeFile(jsonFile, JSON.stringify(raw, null, 2));
   await writeFile(mdFile, md);
   await appendTrend({ timestamp: raw.timestamp, score });
-
   console.log('');
   console.log(`✅ GEO Score: ${score.total}/100  (prev: ${prevScore ?? 'n/a'})`);
   console.log(`📝 ${mdFile}`);
@@ -722,7 +663,6 @@ async function run() {
   console.log('');
   console.log('Schedule: Run every Monday morning. Goal: GEO Score ≥ 70 by Month 6.');
 }
-
 run().catch(err => {
   console.error('[geo-monitor] FATAL:', err);
   process.exit(1);

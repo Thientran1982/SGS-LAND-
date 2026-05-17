@@ -6,30 +6,22 @@
  *  2. RETRIEVAL:  Query → embed() → cosine similarity search → top-K chunks
  *  3. GENERATION: Context chunks + user query → Gemini → câu trả lời có căn cứ
  */
-
 import { pool } from '../db';
-
 // ── Constants ──────────────────────────────────────────────────────────────
-
 const EMBEDDING_MODEL   = 'models/gemini-embedding-001'; // 3072 dims, reduced to 768
 const EMBEDDING_DIMS    = 768;                           // outputDimensionality
 const CHUNK_SIZE        = 600;   // characters per chunk (≈ 150 tokens)
 const CHUNK_OVERLAP     = 100;   // overlap để không mất context
 const DEFAULT_TOP_K     = 5;     // số chunk trả về khi search
 const MIN_SIMILARITY    = 0.35;  // loại chunk quá xa
-
 // ── Embedding cache (in-memory, TTL 10 min) ───────────────────────────────
-
 const embedCache = new Map<string, { vec: number[]; exp: number }>();
-
 async function embedText(text: string): Promise<number[]> {
   const key = text.slice(0, 200);
   const cached = embedCache.get(key);
   if (cached && Date.now() < cached.exp) return cached.vec;
-
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY;
   if (!apiKey) throw new Error('[RAG] GEMINI_API_KEY chưa được cấu hình');
-
   const url = `https://generativelanguage.googleapis.com/v1beta/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: 'POST',
@@ -40,12 +32,10 @@ async function embedText(text: string): Promise<number[]> {
       outputDimensionality: EMBEDDING_DIMS,
     }),
   });
-
   if (!res.ok) {
     const errBody = await res.text();
     throw new Error(`[RAG] Embedding API lỗi ${res.status}: ${errBody.slice(0, 200)}`);
   }
-
   const data = await res.json() as { embedding?: { values?: number[] } };
   const vec = data.embedding?.values;
   if (!vec?.length) throw new Error('[RAG] Embedding trống — kiểm tra API key và quota');
@@ -57,9 +47,7 @@ async function embedText(text: string): Promise<number[]> {
   }
   return vec;
 }
-
 // ── Text chunking ──────────────────────────────────────────────────────────
-
 /**
  * Chia văn bản thành các chunk có overlap.
  * Ưu tiên cắt tại dấu chấm câu / xuống dòng để giữ ngữ nghĩa.
@@ -67,11 +55,9 @@ async function embedText(text: string): Promise<number[]> {
 export function chunkText(text: string, title?: string): string[] {
   const clean = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   if (!clean) return [];
-
   const prefix = title ? `[${title}] ` : '';
   const chunks: string[] = [];
   let start = 0;
-
   while (start < clean.length) {
     let end = start + CHUNK_SIZE;
     if (end < clean.length) {
@@ -94,9 +80,7 @@ export function chunkText(text: string, title?: string): string[] {
   }
   return chunks;
 }
-
 // ── Indexing ───────────────────────────────────────────────────────────────
-
 export interface IndexOptions {
   tenantId: string;
   sourceType: string;
@@ -105,7 +89,6 @@ export interface IndexOptions {
   content: string;
   metadata?: Record<string, any>;
 }
-
 /**
  * Index một tài liệu: chunk → embed → upsert vào knowledge_chunks.
  * Xóa chunks cũ trước để tránh duplicate.
@@ -123,7 +106,6 @@ export async function indexDocument(opts: IndexOptions): Promise<number> {
     );
     return 0;
   }
-
   // Embed tất cả chunks (sequential để tránh rate limit)
   const embeddings: number[][] = [];
   for (const chunk of chunks) {
@@ -134,17 +116,14 @@ export async function indexDocument(opts: IndexOptions): Promise<number> {
       embeddings.push(new Array(768).fill(0)); // zero vector fallback
     }
   }
-
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
     // Xóa chunks cũ của cùng source
     await client.query(
       `DELETE FROM knowledge_chunks WHERE tenant_id=$1 AND source_type=$2 AND source_id=$3`,
       [tenantId, sourceType, sourceId]
     );
-
     // Insert chunks mới
     for (let i = 0; i < chunks.length; i++) {
       const vec = `[${embeddings[i].join(',')}]`;
@@ -158,7 +137,6 @@ export async function indexDocument(opts: IndexOptions): Promise<number> {
         [tenantId, sourceType, sourceId, i, chunks[i], vec, JSON.stringify({ ...metadata, title })]
       );
     }
-
     await client.query('COMMIT');
     console.log(`[RAG] Indexed ${chunks.length} chunks — ${sourceType}:${sourceId} (tenant:${tenantId.slice(0,8)})`);
     return chunks.length;
@@ -169,9 +147,7 @@ export async function indexDocument(opts: IndexOptions): Promise<number> {
     client.release();
   }
 }
-
 // ── Retrieval ──────────────────────────────────────────────────────────────
-
 export interface SearchResult {
   sourceType: string;
   sourceId: string;
@@ -180,7 +156,6 @@ export interface SearchResult {
   similarity: number;
   metadata: Record<string, any>;
 }
-
 /**
  * Tìm kiếm các chunks gần nhất với query bằng cosine similarity.
  * Sử dụng pgvector operator `<=>` (cosine distance).
@@ -214,7 +189,6 @@ export async function semanticSearch(
     const dmIdx = params.length;
     extraFilters += ` AND (source_type = ANY($${stIdx}::text[]) OR metadata->>'domain' = ANY($${dmIdx}::text[]))`;
   }
-
   const result = await pool.query(
     `SELECT
        source_type, source_id, chunk_index, content, metadata,
@@ -226,7 +200,6 @@ export async function semanticSearch(
      LIMIT $3`,
     params
   );
-
   return result.rows
     .filter((r: any) => r.similarity >= MIN_SIMILARITY)
     .map((r: any) => ({
@@ -238,7 +211,6 @@ export async function semanticSearch(
       metadata: r.metadata || {},
     }));
 }
-
 // ── Context builder (cho AI prompt) ───────────────────────────────────────
 
 /**
@@ -254,7 +226,6 @@ export async function buildRagContext(
   const { context } = await buildRagContextWithSources(tenantId, query, topK, opts);
   return context;
 }
-
 /**
  * Trả về context + sources riêng biệt — dùng cho citation post-processor
  * trong WRITER node để inject "[Nguồn:" footer khi LLM quên.
@@ -273,7 +244,6 @@ export async function buildRagContextWithSources(
       const title = r.metadata?.title ? `[${r.metadata.title}]` : `[${r.sourceType}:${r.sourceId}]`;
       return `--- Nguồn ${i + 1} ${title} (độ liên quan: ${(r.similarity * 100).toFixed(0)}%) ---\n${r.content}`;
     });
-
     return {
       context: `\n[KNOWLEDGE BASE — thông tin nội bộ đã xác minh]\n${parts.join('\n\n')}\n[END KNOWLEDGE BASE]\n`,
       sources: results,
@@ -283,7 +253,6 @@ export async function buildRagContextWithSources(
     return { context: '', sources: [] };
   }
 }
-
 /**
  * Format sources thành footer "[Nguồn: ...]" gọn, dùng khi WRITER quên cite.
  * Trả về chuỗi rỗng nếu không có source.
@@ -296,9 +265,7 @@ export function formatSourcesFooter(sources: SearchResult[], max = 3): string {
   });
   return top.join(' ');
 }
-
 // ── Stats & management ─────────────────────────────────────────────────────
-
 export async function getIndexStats(tenantId: string): Promise<{
   total: number;
   byType: Record<string, number>;
@@ -319,7 +286,6 @@ export async function getIndexStats(tenantId: string): Promise<{
   }
   return { total, byType, sources };
 }
-
 export async function deleteSource(tenantId: string, sourceType: string, sourceId: string): Promise<number> {
   const result = await pool.query(
     `DELETE FROM knowledge_chunks WHERE tenant_id=$1 AND source_type=$2 AND source_id=$3`,

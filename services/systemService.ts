@@ -1,10 +1,8 @@
 import { HealthStatus, SystemHealth, EnvCheckResult, LogEntry, LogSource } from '../types';
 import { db } from './dbApi';
-
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION
 // -----------------------------------------------------------------------------
-
 const SYS_CONFIG = {
     VERSION: '4.2.0-ent',
     LOGS: {
@@ -24,18 +22,15 @@ const SYS_CONFIG = {
         PROBABILITY: 0.6 // 60% chance to generate traffic per tick
     }
 } as const;
-
 const SIMULATION_ROUTES = [
     { method: 'GET', path: '/api/auth/me', weight: 0.3 },
     { method: 'POST', path: '/api/ai/score-lead', weight: 0.2 },
     { method: 'GET', path: '/api/health', weight: 0.3 },
     { method: 'POST', path: '/api/ai/valuation', weight: 0.2 }
 ];
-
 // -----------------------------------------------------------------------------
 // 2. ENVIRONMENT ABSTRACTION
 // -----------------------------------------------------------------------------
-
 const getEnv = (key: string, defaultValue: string = ''): string => {
     // 1. Try Vite/Modern Bundlers
     // Cast import.meta to any to avoid TS error: Property 'env' does not exist on type 'ImportMeta'
@@ -48,7 +43,6 @@ const getEnv = (key: string, defaultValue: string = ''): string => {
     }
     return defaultValue;
 };
-
 const ENV_VARS = {
     NODE_ENV: getEnv('NODE_ENV', 'production'),
     DATABASE_URL: getEnv('DATABASE_URL', 'postgres://mock:5432/db'),
@@ -56,22 +50,18 @@ const ENV_VARS = {
     EMAIL_SERVICE_KEY: getEnv('EMAIL_SERVICE_KEY', ''),
     PUBLIC_BASE_URL: typeof window !== 'undefined' ? window.location.origin : '',
 };
-
 // -----------------------------------------------------------------------------
 // 3. SERVICE IMPLEMENTATION
 // -----------------------------------------------------------------------------
-
 class SystemService {
     private readonly startTime: number = Date.now();
     private logBuffer: LogEntry[] = new Array(SYS_CONFIG.LOGS.MAX_BUFFER);
     private logHead = 0;
     private logCount = 0;
-    private trafficIntervalId: ReturnType<typeof setInterval> | null = null;
-    
+    private trafficIntervalId: ReturnType<typeof setInterval> | null = null;   
     // Alert Monitoring Stats
     private errorCountLastMinute = 0;
     private lastErrorCheck = Date.now();
-
     /**
      *  CHECK HEALTH
      *  Fetches real health data from /api/health for accurate status.
@@ -81,7 +71,6 @@ class SystemService {
         let dbConnected = false;
         let latency = 0;
         let serverHealth: any = null;
-
         try {
             const res = await fetch('/api/health', { credentials: 'include' });
             latency = Date.now() - startPing;
@@ -92,7 +81,6 @@ class SystemService {
         } catch (e) {
             dbConnected = false;
         }
-
         // Build config checks from real server health data
         const configChecks: EnvCheckResult[] = serverHealth ? [
             {
@@ -135,7 +123,6 @@ class SystemService {
             const value = (ENV_VARS as any)[key];
             return { key, exists: !!value, status: value ? 'OK' : 'MISSING', maskedValue: key.includes('KEY') || key.includes('SECRET') ? '********' : value };
         });
-
         // Status Determination Logic
         let status = HealthStatus.HEALTHY;
 
@@ -145,10 +132,8 @@ class SystemService {
         } else if (latency > SYS_CONFIG.HEALTH.LATENCY_THRESHOLD_MS || this.errorCountLastMinute > SYS_CONFIG.LOGS.ERROR_THRESHOLD_PER_MIN) {
             status = HealthStatus.DEGRADED;
         }
-
         const serverUptime = serverHealth?.uptime ?? Math.floor((Date.now() - this.startTime) / 1000);
         const serverEnv = serverHealth?.environment ?? (ENV_VARS.NODE_ENV === 'development' ? 'DEV' : 'PROD');
-
         return {
             status,
             uptime: serverUptime,
@@ -164,14 +149,12 @@ class SystemService {
             config: configChecks
         };
     }
-
     /**
      *  STRUCTURED LOGGER
      *  Handles log rotation and filtering.
      */
     log(level: 'INFO' | 'WARN' | 'ERROR', message: string, context?: Record<string, any>, tenantId?: string, source: LogSource = 'USER') {
-        const now = Date.now();
-        
+        const now = Date.now();        
         // Rotate Error Counter
         if (now - this.lastErrorCheck > SYS_CONFIG.LOGS.RETENTION_MS) {
             this.errorCountLastMinute = 0;
@@ -189,20 +172,17 @@ class SystemService {
             source,
             traceId: context?.traceId || `trace_${now}`
         };
-
         // Circular Buffer Rotation O(1)
         this.logHead = (this.logHead - 1 + SYS_CONFIG.LOGS.MAX_BUFFER) % SYS_CONFIG.LOGS.MAX_BUFFER;
         this.logBuffer[this.logHead] = entry;
         if (this.logCount < SYS_CONFIG.LOGS.MAX_BUFFER) {
             this.logCount++;
         }
-
         // Dev Console (Filtered to reduce noise in DevTools)
         if (ENV_VARS.NODE_ENV === 'development' && level === 'ERROR') {
             console.error(`[${source}] ${message}`, context);
         }
     }
-
     getRecentLogs(): LogEntry[] {
         const result: LogEntry[] = [];
         for (let i = 0; i < this.logCount; i++) {
@@ -210,13 +190,11 @@ class SystemService {
         }
         return result;
     }
-
     clearLogs() {
         this.logBuffer = new Array(SYS_CONFIG.LOGS.MAX_BUFFER);
         this.logHead = 0;
         this.logCount = 0;
     }
-
     /**
      *  BACKUP & RESTORE LOGIC
      */
@@ -238,15 +216,13 @@ class SystemService {
             throw e;
         }
     }
-
     async processRestoreFile(file: File): Promise<void> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 try {
                     const content = ev.target?.result as string;
-                    if (!content) throw new Error("Empty file content");
-                    
+                    if (!content) throw new Error("Empty file content");                    
                     // Basic Validation
                     let parsed;
                     try {
@@ -254,11 +230,9 @@ class SystemService {
                     } catch {
                         throw new Error("Invalid Backup Format: Malformed JSON.");
                     }
-
                     if (!parsed || typeof parsed !== 'object') {
                         throw new Error("Invalid Backup Format: Not an object.");
                     }
-
                     await db.restoreBackup(content);
                     this.log('WARN', `System restored from backup file: ${file.name}`, undefined, undefined, 'SYSTEM');
                     resolve();
@@ -271,21 +245,17 @@ class SystemService {
             reader.readAsText(file);
         });
     }
-
     /**
      *  TRAFFIC GENERATOR
      *  Simulates system load for observability testing.
      */
     startTrafficSimulation(shouldFail: boolean, failureRate: number) {
         if (this.trafficIntervalId) return;
-
         this.trafficIntervalId = setInterval(() => {
             // Only generate traffic X% of ticks to vary load naturally
-            if (Math.random() > (1 - SYS_CONFIG.TRAFFIC.PROBABILITY)) { 
-                
+            if (Math.random() > (1 - SYS_CONFIG.TRAFFIC.PROBABILITY)) {                 
                 const route = SIMULATION_ROUTES[Math.floor(Math.random() * SIMULATION_ROUTES.length)];
                 const latency = Math.floor(Math.random() * 100) + 20; // 20-120ms base latency
-
                 if (shouldFail && Math.random() < failureRate) {
                     this.log('ERROR', `HTTP 500: Internal Server Error - ${route.method} ${route.path}`, { error: 'Chaos Injection' }, undefined, 'CHAOS');
                 } else {
@@ -297,7 +267,6 @@ class SystemService {
             }
         }, SYS_CONFIG.TRAFFIC.INTERVAL_MS);
     }
-
     stopTrafficSimulation() {
         if (this.trafficIntervalId) {
             clearInterval(this.trafficIntervalId);
@@ -305,5 +274,4 @@ class SystemService {
         }
     }
 }
-
 export const systemService = new SystemService();

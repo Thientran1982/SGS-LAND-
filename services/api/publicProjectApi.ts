@@ -4,7 +4,6 @@
  * Sử dụng `fetch` trực tiếp (không qua apiClient.ts) để tránh dispatch
  * `auth:unauthorized` event nếu user chưa login. Mini-site luôn public.
  */
-
 export interface PublicListing {
   id: string;
   code: string | null;
@@ -22,7 +21,6 @@ export interface PublicListing {
   images: string[];
   attributes: Record<string, any>;
 }
-
 export interface PublicProject {
   id: string;
   name: string;
@@ -43,7 +41,6 @@ export interface PublicProject {
     website: string | null;
   };
 }
-
 export interface PublicProjectPayload {
   ok: true;
   project: PublicProject;
@@ -61,7 +58,6 @@ export interface PublicProjectPayload {
   captcha: { provider: 'turnstile'; siteKey: string } | null;
   cachedAt: string;
 }
-
 export interface PublicMicrositeBranding {
   logoUrl: string | null;
   faviconUrl: string | null;
@@ -73,7 +69,6 @@ export interface PublicMicrositeBranding {
   fbPixelId: string | null;
   gtmId: string | null;
 }
-
 export interface LeadAttributionPayload {
   visitorId?: string;
   utm?: {
@@ -88,7 +83,6 @@ export interface LeadAttributionPayload {
   gclid?: string;
   fbclid?: string;
 }
-
 export interface PublicLeadInput {
   name: string;
   phone: string;
@@ -102,7 +96,6 @@ export interface PublicLeadInput {
   /** Marketing attribution (first-click + visitorId). */
   attribution?: LeadAttributionPayload;
 }
-
 export interface PublicLeadResponse {
   ok: boolean;
   leadId?: string | null;
@@ -110,9 +103,7 @@ export interface PublicLeadResponse {
   message?: string;
   error?: string;
 }
-
 const BASE = '/api/public/projects';
-
 export const publicProjectApi = {
   async fetchProject(code: string): Promise<PublicProjectPayload> {
     const url = `${BASE}/${encodeURIComponent(code)}`;
@@ -131,7 +122,6 @@ export const publicProjectApi = {
     }
     return res.json();
   },
-
   async submitLead(code: string, input: PublicLeadInput): Promise<PublicLeadResponse> {
     const url = `${BASE}/${encodeURIComponent(code)}/leads`;
     const res = await fetch(url, {

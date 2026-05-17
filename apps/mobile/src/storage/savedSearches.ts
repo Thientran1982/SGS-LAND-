@@ -10,14 +10,11 @@
  * the buyer's account and deletes the device-scoped originals so they don't
  * appear twice or leak to another buyer who later signs in on this device.
  */
-
 import { getDeviceId } from './device';
 import { getBuyerToken } from './auth';
 import { pushApi, type BuyerSavedSearch, type SavedSearchFilters } from '../api/push';
 import { buyerApi, type BuyerSearch } from '../api/buyer';
-
 export type { SavedSearchFilters } from '../api/push';
-
 /** Normalized shape used by the UI — works for both anonymous and buyer. */
 export interface SavedSearch {
   id: string;
@@ -28,7 +25,6 @@ export interface SavedSearch {
   createdAt: string;
   updatedAt: string;
 }
-
 function fromDevice(s: BuyerSavedSearch): SavedSearch {
   return {
     id: s.id,
@@ -40,7 +36,6 @@ function fromDevice(s: BuyerSavedSearch): SavedSearch {
     updatedAt: s.updatedAt,
   };
 }
-
 function fromBuyer(s: BuyerSearch): SavedSearch {
   return {
     id: s.id,
@@ -52,7 +47,6 @@ function fromBuyer(s: BuyerSearch): SavedSearch {
     updatedAt: s.updatedAt,
   };
 }
-
 export async function listSavedSearches(): Promise<SavedSearch[]> {
   const token = await getBuyerToken();
   if (token) {
@@ -63,7 +57,6 @@ export async function listSavedSearches(): Promise<SavedSearch[]> {
   const res = await pushApi.listSavedSearches(deviceId);
   return res.searches.map(fromDevice);
 }
-
 export async function createSavedSearch(input: {
   label: string;
   filters: SavedSearchFilters;
@@ -78,7 +71,6 @@ export async function createSavedSearch(input: {
   const res = await pushApi.createSavedSearch({ deviceId, ...input });
   return fromDevice(res.search);
 }
-
 export async function deleteSavedSearch(id: string): Promise<void> {
   const token = await getBuyerToken();
   if (token) {
@@ -88,7 +80,6 @@ export async function deleteSavedSearch(id: string): Promise<void> {
   const deviceId = await getDeviceId();
   await pushApi.deleteSavedSearch(deviceId, id);
 }
-
 export async function toggleSavedSearchNotifications(
   id: string,
   enabled: boolean,
@@ -102,7 +93,6 @@ export async function toggleSavedSearchNotifications(
   const res = await pushApi.updateSavedSearch(deviceId, id, { notificationsEnabled: enabled });
   return fromDevice(res.search);
 }
-
 /**
  * Migrate any device-scoped searches into the signed-in buyer's account.
  * Best-effort: failures are swallowed and the device-scoped row is left in
@@ -117,7 +107,6 @@ export async function syncSavedSearches(): Promise<void> {
   } catch {
     return;
   }
-
   let deviceSearches: BuyerSavedSearch[] = [];
   try {
     const r = await pushApi.listSavedSearches(deviceId);
@@ -126,7 +115,6 @@ export async function syncSavedSearches(): Promise<void> {
     return; // nothing we can do without a device list
   }
   if (!deviceSearches.length) return;
-
   for (const s of deviceSearches) {
     try {
       await buyerApi.createSearch({

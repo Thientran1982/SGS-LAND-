@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
@@ -12,7 +11,6 @@ import { ROUTES } from '../config/routes';
 import { smartMatch, formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
 import MapView from '../components/MapView';
 import { motion } from 'motion/react';
-
 // --- ICONS ---
 const ICONS = {
     SEARCH: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -29,17 +27,14 @@ const ICONS = {
     FILTER: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
-
 // --- HOOK: DRAGGABLE SCROLL ---
 const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
         if (!node) return;
-
         let isDown = false;
         let startX = 0;
         let scrollLeft = 0;
-
         const onMouseDown = (e: MouseEvent) => {
             if ((e.target as HTMLElement).closest('button, input, select')) return;
             isDown = true;
@@ -49,7 +44,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             startX = e.pageX - node.offsetLeft;
             scrollLeft = node.scrollLeft;
         };
-
         const onMouseLeave = () => {
             if (!isDown) return;
             isDown = false;
@@ -57,7 +51,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             node.classList.add('cursor-grab');
             node.classList.add('snap-x');
         };
-
         const onMouseUp = () => {
             if (!isDown) return;
             isDown = false;
@@ -65,7 +58,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             node.classList.add('cursor-grab');
             node.classList.add('snap-x');
         };
-
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
             e.preventDefault();
@@ -73,14 +65,11 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             const walk = (x - startX) * 2;
             node.scrollLeft = scrollLeft - walk;
         };
-
         node.addEventListener('mousedown', onMouseDown);
         node.addEventListener('mouseleave', onMouseLeave);
         node.addEventListener('mouseup', onMouseUp);
-        node.addEventListener('mousemove', onMouseMove);
-        
+        node.addEventListener('mousemove', onMouseMove);        
         node.classList.add('cursor-grab');
-
         return () => {
             node.removeEventListener('mousedown', onMouseDown);
             node.removeEventListener('mouseleave', onMouseLeave);
@@ -89,9 +78,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         };
     }, [ref, trigger]);
 };
-
 type ViewMode = 'GRID' | 'LIST' | 'BOARD' | 'MAP';
-
 const CursorPaginationControl = memo(({ totalItems, hasPrev, hasNext, onPrev, onNext, t }: {
     totalItems: number; hasPrev: boolean; hasNext: boolean;
     onPrev: () => void; onNext: () => void; t: any;
@@ -113,7 +100,6 @@ const CursorPaginationControl = memo(({ totalItems, hasPrev, hasNext, onPrev, on
         </div>
     );
 });
-
 export const ProductSearch: React.FC = () => {
     const { t, formatCurrency, language, formatCompactNumber } = useTranslation();
     const [listings, setListings] = useState<Listing[]>([]);
@@ -135,13 +121,10 @@ export const ProductSearch: React.FC = () => {
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         try { return (localStorage.getItem('sgs_public_view') as ViewMode) || 'GRID'; } catch { return 'GRID'; }
     });
-
     const filterContainerRef = useRef<HTMLDivElement>(null);
     const boardContainerRef = useRef<HTMLDivElement>(null);
-
     useDraggableScroll(filterContainerRef, viewMode);
     useDraggableScroll(boardContainerRef, viewMode);
-
     const [query, setQuery] = useState('');
     const [debouncedQuery, setDebouncedQuery] = useState('');
     const [selectedType, setSelectedType] = useState('ALL');
@@ -150,14 +133,11 @@ export const ProductSearch: React.FC = () => {
     const [priceFilter, setPriceFilter] = useState('ALL');
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
-
     useEffect(() => { localStorage.setItem('sgs_public_view', viewMode); }, [viewMode]);
-
     useEffect(() => {
         const t = setTimeout(() => setDebouncedQuery(query), 300);
         return () => clearTimeout(t);
     }, [query]);
-
     useEffect(() => {
         const search = window.location.search;
         if (search) {
@@ -166,11 +146,9 @@ export const ProductSearch: React.FC = () => {
             if (q) setQuery(decodeURIComponent(q));
         }
     }, []);
-
     useEffect(() => {
         return () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); };
     }, []);
-
     // One-time init: user, favorites, available locations
     useEffect(() => {
         const init = async () => {
@@ -188,7 +166,6 @@ export const ProductSearch: React.FC = () => {
         };
         init();
     }, []);
-
     // Cursor-based fetch for GRID/LIST views
     const fetchListingsPage = useCallback(async (cursor: string | undefined) => {
         setLoading(true);
@@ -238,7 +215,6 @@ export const ProductSearch: React.FC = () => {
             setBoardLoading(false);
         }
     }, [selectedType, selectedTransaction, selectedLocation, debouncedQuery, showVerifiedOnly, priceFilter]);
-
     // Trigger fetches based on viewMode
     useEffect(() => {
         if (viewMode === 'GRID' || viewMode === 'LIST') {
@@ -247,7 +223,6 @@ export const ProductSearch: React.FC = () => {
             fetchBoardListings();
         }
     }, [viewMode, currentCursor, fetchListingsPage, fetchBoardListings]);
-
     // Reset cursor when filters change
     useEffect(() => {
         setCursorStack([]);
@@ -255,14 +230,12 @@ export const ProductSearch: React.FC = () => {
         setNextCursor(null);
         setHasNext(false);
     }, [debouncedQuery, selectedType, selectedTransaction, selectedLocation, priceFilter, showVerifiedOnly]);
-
     // Cursor navigation handlers
     const handleCursorNext = useCallback(() => {
         if (!nextCursor) return;
         setCursorStack(prev => [...prev, currentCursor ?? '']);
         setCurrentCursor(nextCursor);
     }, [nextCursor, currentCursor]);
-
     const handleCursorPrev = useCallback(() => {
         setCursorStack(prev => {
             const stack = [...prev];
@@ -271,7 +244,6 @@ export const ProductSearch: React.FC = () => {
             return stack;
         });
     }, []);
-
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
     // SEO-friendly URL: /bds/<slug>-<uuid>. Slug is best-effort from the
@@ -289,29 +261,24 @@ export const ProductSearch: React.FC = () => {
         const slug = slugify(item?.title || item?.code || item?.location || 'bat-dong-san') || 'bat-dong-san';
         window.location.hash = `#/${ROUTES.LISTING_BDS}/${slug}-${id}`;
     };
-
     // GRID/LIST: current page from server, apply client-side favorites filter
     const visibleListings = useMemo(() => {
         if (!showFavoritesOnly) return listings;
         return listings.filter(l => favorites.has(l.id));
     }, [listings, showFavoritesOnly, favorites]);
-
     // BOARD/MAP: from boardListings (full fetch), apply favorites filter
     const filteredListings = useMemo(() => {
         if (!showFavoritesOnly) return boardListings;
         return boardListings.filter(l => favorites.has(l.id));
     }, [boardListings, showFavoritesOnly, favorites]);
-
     const handleToggleFavorite = async (id: string) => {
         const isFav = favorites.has(id);
         const newSet = new Set(favorites);
         if (isFav) newSet.delete(id); else newSet.add(id);
         setFavorites(newSet);
-
         setToast({ msg: isFav ? t('favorites.removed') : t('favorites.added'), type: 'success' });
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         toastTimerRef.current = setTimeout(() => setToast(null), 2000);
-
         if (currentUser) {
             try {
                 await db.toggleFavorite(id);
@@ -327,9 +294,7 @@ export const ProductSearch: React.FC = () => {
             } catch {}
         }
     };
-
     const uniqueLocations = useMemo(() => availableLocations, [availableLocations]);
-
     const typeOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_types') }, ...Object.values(PropertyType).map(tKey => ({ value: tKey, label: t(`property.${tKey.toUpperCase()}`) }))], [t]);
     const transactionOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_transactions') }, ...Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) }))], [t]);
     const priceOptions = useMemo(() => [
@@ -340,9 +305,7 @@ export const ProductSearch: React.FC = () => {
         { value: 'OVER_10', label: t('search.price_over_10b') },
     ], [t]);
     const locationOptions = useMemo(() => [{ value: 'ALL', label: t('search.all_locations') }, ...uniqueLocations.map(loc => ({ value: loc, label: loc }))], [uniqueLocations, t]);
-
     const hasActiveFilters = query || selectedType !== 'ALL' || selectedTransaction !== 'ALL' || selectedLocation !== 'ALL' || priceFilter !== 'ALL' || showFavoritesOnly || showVerifiedOnly;
-
     const clearFilters = () => {
         setQuery('');
         setDebouncedQuery('');
@@ -353,7 +316,6 @@ export const ProductSearch: React.FC = () => {
         setShowFavoritesOnly(false);
         setShowVerifiedOnly(false);
     };
-
     const groupedListings = useMemo(() => {
         const groups: Record<string, Listing[]> = {};
         [PropertyType.APARTMENT, PropertyType.VILLA, PropertyType.TOWNHOUSE, PropertyType.LAND, PropertyType.PROJECT].forEach(type => {
@@ -365,7 +327,6 @@ export const ProductSearch: React.FC = () => {
         });
         return groups;
     }, [filteredListings]);
-
     return (
         <div className="h-[100dvh] flex flex-col bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] overflow-hidden relative">
             {toast && (
@@ -374,7 +335,6 @@ export const ProductSearch: React.FC = () => {
                     {toast.msg}
                 </div>
             )}
-
             {/* HEADER (Sticky) */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/95 backdrop-blur-xl z-50 border-b border-[var(--glass-border)] shrink-0">
                 <div className="max-w-[1920px] mx-auto">
@@ -384,13 +344,11 @@ export const ProductSearch: React.FC = () => {
                         <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0">
                             {ICONS.BACK}
                         </button>
-
                         {/* Logo — icon only on mobile, icon+name on desktop */}
                         <div onClick={handleHome} className="cursor-pointer shrink-0 flex items-center gap-2">
                             <Logo className="w-6 h-6 md:w-7 md:h-7 text-indigo-600" />
                             <span className="font-bold text-base tracking-tight hidden md:inline">SGS<span className="text-slate-400">MARKET</span></span>
                         </div>
-
                         {/* Search bar — flex-1, fills remaining space */}
                         <div className="flex-1 min-w-0 relative group">
                             <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
@@ -410,19 +368,15 @@ export const ProductSearch: React.FC = () => {
                                 </div>
                             )}
                         </div>
-
                         {/* Login / Dashboard button */}
                         <button onClick={handleLogin} className="px-3 md:px-5 py-2 min-h-[40px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
                             {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                         </button>
                     </div>
-
                     {/* Bottom Row: Toolbar (Filters & Views) */}
-                    <div className="px-4 md:px-6 h-16 flex items-center border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">
-                        
+                    <div className="px-4 md:px-6 h-16 flex items-center border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">                        
                         {/* Scrollable Container for EVERYTHING */}
-                        <div ref={filterContainerRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full cursor-grab active:cursor-grabbing select-none pr-4">
-                            
+                        <div ref={filterContainerRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full cursor-grab active:cursor-grabbing select-none pr-4">                            
                             {/* 1. View Switcher */}
                             <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-lg shrink-0 mr-2">
                                 <button onClick={() => setViewMode('GRID')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_GRID}</button>
@@ -430,15 +384,12 @@ export const ProductSearch: React.FC = () => {
                                 <button onClick={() => setViewMode('BOARD')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_BOARD}</button>
                                 <button onClick={() => setViewMode('MAP')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_MAP}</button>
                             </div>
-
                             <div className="w-px h-6 bg-slate-200 mx-2 shrink-0"></div>
-
                             {/* 2. Filters */}
                             <div className="min-w-[130px] shrink-0"><Dropdown value={selectedTransaction} onChange={(v) => setSelectedTransaction(v as string)} options={transactionOptions} className="text-xs h-11" placement="bottom" /></div>
                             <div className="min-w-[130px] shrink-0"><Dropdown value={selectedType} onChange={(v) => setSelectedType(v as string)} options={typeOptions} className="text-xs h-11" placement="bottom" /></div>
                             <div className="min-w-[150px] shrink-0"><Dropdown value={selectedLocation} onChange={(v) => setSelectedLocation(v as string)} options={locationOptions} className="text-xs h-11" placement="bottom" /></div>
-                            <div className="min-w-[130px] shrink-0"><Dropdown value={priceFilter} onChange={(v) => setPriceFilter(v as string)} options={priceOptions} className="text-xs h-11" placement="bottom" /></div>
-                            
+                            <div className="min-w-[130px] shrink-0"><Dropdown value={priceFilter} onChange={(v) => setPriceFilter(v as string)} options={priceOptions} className="text-xs h-11" placement="bottom" /></div>                                       
                             <button 
                                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} 
                                 className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showFavoritesOnly ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--glass-border)]'}`}
@@ -446,11 +397,9 @@ export const ProductSearch: React.FC = () => {
                                 {showFavoritesOnly ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE} 
                                 <span className="hidden sm:inline">{t('favorites.title')}</span>
                             </button>
-
                             <button onClick={() => setShowVerifiedOnly(!showVerifiedOnly)} className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showVerifiedOnly ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--glass-border)]'}`}>
                                 {ICONS.VERIFIED} <span className="hidden sm:inline">{t('inventory.verified')}</span>
                             </button>
-
                             {hasActiveFilters && (
                                 <button onClick={clearFilters} className="px-4 h-11 text-rose-600 font-bold text-xs bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors whitespace-nowrap shrink-0 flex items-center gap-1">
                                     {ICONS.X} {t('search.clear_filters')}
@@ -460,7 +409,6 @@ export const ProductSearch: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* LOCATION QUICK-LINKS — SEO internal linking */}
             <div className="shrink-0 bg-[var(--bg-surface)]/80 border-b border-[var(--glass-border)] px-4 md:px-6 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
                 <span className="text-[var(--text-tertiary)] text-xs shrink-0 font-medium hidden sm:inline">{t('search.all_locations')}:</span>
@@ -492,7 +440,6 @@ export const ProductSearch: React.FC = () => {
                     </a>
                 ))}
             </div>
-
             {/* FETCH ERROR */}
             {fetchError && (
                 <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
@@ -506,10 +453,8 @@ export const ProductSearch: React.FC = () => {
                     </button>
                 </div>
             )}
-
             {/* CONTENT VIEWPORT */}
             {!fetchError && <div className="flex-1 overflow-hidden relative flex flex-col">
-
                 {/* MAP VIEW — rendered outside overflow-y-auto so Leaflet gets a real height */}
                 {viewMode === 'MAP' && (
                     <div className="flex-1 min-h-0 p-4 md:p-6">
@@ -540,7 +485,6 @@ export const ProductSearch: React.FC = () => {
                         </div>
                     </div>
                 )}
-
                 <div className={`flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar${viewMode === 'MAP' ? ' hidden' : ''}`}>
                     {/* 1. GRID VIEW */}
                     {viewMode === 'GRID' && (
@@ -587,7 +531,6 @@ export const ProductSearch: React.FC = () => {
                             </div>
                         )
                     )}
-
                     {/* 2. LIST VIEW */}
                     {viewMode === 'LIST' && (
                         <>
@@ -682,7 +625,6 @@ export const ProductSearch: React.FC = () => {
                                     </table>
                                 </div>
                             </div>
-
                             {/* MOBILE LIST */}
                             <div className="md:hidden space-y-3 pb-6">
                                 {loading && [1,2,3,4,5,6].map(i => (
@@ -745,7 +687,6 @@ export const ProductSearch: React.FC = () => {
                             </div>
                         </>
                     )}
-
                     {/* 3. BOARD VIEW */}
                     {viewMode === 'BOARD' && (
                         <div ref={boardContainerRef} className="h-full overflow-x-auto pb-4 no-scrollbar flex gap-6 snap-x cursor-grab active:cursor-grabbing">
@@ -823,7 +764,6 @@ export const ProductSearch: React.FC = () => {
                             })}
                         </div>
                     )}
-
                     {/* Pagination — BOARD/MAP renders all filtered items so cursor pagination only applies to GRID/LIST */}
                     {(viewMode === 'GRID' || viewMode === 'LIST') && !loading && (
                         <div className="mt-6">
@@ -842,7 +782,6 @@ export const ProductSearch: React.FC = () => {
         </div>
     );
 };
-
 const EmptyState = ({ t, onClear }: any) => (
     <div className="col-span-full py-20 text-center flex flex-col items-center">
         <svg className="w-20 h-20 text-slate-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

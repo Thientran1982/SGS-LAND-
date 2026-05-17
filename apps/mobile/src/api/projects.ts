@@ -6,9 +6,7 @@
  * 5 minutes — we additionally let TanStack Query treat it as fresh for
  * 5 minutes, which is plenty for a marketing surface.
  */
-
 import { apiRequest } from './client';
-
 export interface PublicProjectSummary {
   id: string;
   name: string;
@@ -20,12 +18,10 @@ export interface PublicProjectSummary {
   description: string | null;
   developer: string | null;
 }
-
 export interface FeaturedProjectsResponse {
   ok: true;
   projects: PublicProjectSummary[];
 }
-
 export const projectsApi = {
   featured(opts: { limit?: number; signal?: AbortSignal } = {}) {
     const { limit = 8, signal } = opts;

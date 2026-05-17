@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -6,7 +5,6 @@ import { Sequence, LeadStage } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 // ── Template types (mirrors server/sequenceTemplates.ts) ──────────────────────
 interface SequenceTemplate {
     id: string;
@@ -24,7 +22,6 @@ interface SequenceTemplate {
         taskTitle?: string;
     }>;
 }
-
 // -----------------------------------------------------------------------------
 // TYPES
 // -----------------------------------------------------------------------------
@@ -37,7 +34,6 @@ interface Step {
     content?: string;
     taskTitle?: string;
 }
-
 // -----------------------------------------------------------------------------
 // ASSETS
 // -----------------------------------------------------------------------------
@@ -54,7 +50,6 @@ const ICONS = {
     CLOSE: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     SAVE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
 };
-
 const getStepIcon = (type: string) => {
     if (type === 'WAIT') return ICONS.WAIT;
     if (type === 'CREATE_TASK') return ICONS.TASK;
@@ -62,7 +57,6 @@ const getStepIcon = (type: string) => {
     if (type === 'ZALO') return ICONS.ZALO;
     return ICONS.EMAIL;
 };
-
 const getStepColor = (type: string): string => {
     if (type === 'WAIT') return 'bg-slate-100 border-slate-200';
     if (type === 'CREATE_TASK') return 'bg-indigo-50 border-indigo-100';
@@ -70,12 +64,10 @@ const getStepColor = (type: string): string => {
     if (type === 'ZALO') return 'bg-blue-50 border-blue-100';
     return 'bg-amber-50 border-amber-100';
 };
-
 // -----------------------------------------------------------------------------
 // STEP MODAL
 // -----------------------------------------------------------------------------
 type TFn = (key: string) => string;
-
 const STEP_TYPE_OPTIONS = (t: TFn) => [
     { value: 'EMAIL', label: t('seq.step_type_email') },
     { value: 'SMS', label: t('seq.step_type_sms') },
@@ -83,7 +75,6 @@ const STEP_TYPE_OPTIONS = (t: TFn) => [
     { value: 'WAIT', label: t('seq.step_type_wait') },
     { value: 'CREATE_TASK', label: t('seq.step_type_task') },
 ];
-
 interface StepModalProps {
     isOpen: boolean;
     step: Step | null;
@@ -91,7 +82,6 @@ interface StepModalProps {
     onSave: (step: Step) => void;
     t: TFn;
 }
-
 const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t }) => {
     const [form, setForm] = useState<Step>({
         id: '',
@@ -101,7 +91,6 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
         content: '',
         taskTitle: '',
     });
-
     useEffect(() => {
         if (isOpen && step) {
             setForm({ ...step });
@@ -123,9 +112,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
         if (!form.id) form.id = crypto.randomUUID();
         onSave(form);
     };
-
     const isMessage = form.type === 'EMAIL' || form.type === 'SMS' || form.type === 'ZALO';
-
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" role="dialog" aria-modal="true">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
@@ -138,7 +125,6 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                         {ICONS.CLOSE}
                     </button>
                 </div>
-
                 <div className="space-y-4">
                     <div>
                         <Dropdown
@@ -148,7 +134,6 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                             options={STEP_TYPE_OPTIONS(t)}
                         />
                     </div>
-
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">
                             {t('seq.step_delay_label')}
@@ -161,7 +146,6 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                             className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-[var(--glass-surface)] transition-all"
                         />
                     </div>
-
                     {isMessage && (
                         <>
                             {form.type === 'EMAIL' && (
@@ -192,7 +176,6 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                             </div>
                         </>
                     )}
-
                     {form.type === 'CREATE_TASK' && (
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">
@@ -208,7 +191,6 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                         </div>
                     )}
                 </div>
-
                 <div className="flex gap-3 mt-6">
                     <button
                         onClick={onClose}
@@ -229,7 +211,6 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
         document.body
     );
 };
-
 // -----------------------------------------------------------------------------
 // SUB-COMPONENTS
 // -----------------------------------------------------------------------------
@@ -239,7 +220,6 @@ const StatPill = ({ label, value, color = "bg-[var(--glass-surface-hover)] text-
         <span className="text-xs2 uppercase font-bold tracking-wider opacity-70">{label}</span>
     </div>
 );
-
 const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index: number, onEdit: () => void, onDelete: () => void, t: TFn }) => {
     const getStepLabel = () => {
         if (step.type === 'WAIT') return t('seq.step_wait');
@@ -248,7 +228,6 @@ const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index
         if (step.type === 'ZALO') return t('seq.step_zalo');
         return t('seq.step_email');
     };
-
     const getStepDetail = () => {
         if (step.type === 'WAIT') return `${step.delayHours} ${t('seq.hours')}`;
         if (step.type === 'CREATE_TASK') return step.taskTitle || '—';
@@ -256,15 +235,12 @@ const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index
         if (step.content) return step.content.substring(0, 60) + (step.content.length > 60 ? '...' : '');
         return '—';
     };
-
     return (
         <div className="flex gap-4 relative group/step">
             <div className="absolute left-6 top-12 bottom-[-24px] w-0.5 bg-slate-200 dark:bg-slate-700"></div>
-
             <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm z-10 shrink-0 border-2 ${getStepColor(step.type)}`}>
                 {getStepIcon(step.type)}
             </div>
-
             <div className="flex-1 bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--glass-border)] shadow-sm mb-6 hover:border-indigo-200 transition-colors">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -298,7 +274,6 @@ const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // SEQUENCE DRAWER
 // -----------------------------------------------------------------------------
@@ -310,18 +285,15 @@ interface SequenceDrawerProps {
     t: TFn;
     notify: (msg: string, type: 'success' | 'error') => void;
 }
-
 const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequence, onSaved, t, notify }) => {
     const [name, setName] = useState('');
     const [triggerStage, setTriggerStage] = useState<LeadStage>(LeadStage.NEW);
     const [isActive, setIsActive] = useState(false);
     const [steps, setSteps] = useState<Step[]>([]);
     const [saving, setSaving] = useState(false);
-
     const [stepModalOpen, setStepModalOpen] = useState(false);
     const [editingStep, setEditingStep] = useState<Step | null>(null);
     const [stepToDelete, setStepToDelete] = useState<string | null>(null);
-
     useEffect(() => {
         if (isOpen && sequence) {
             setName(sequence.name);
@@ -332,19 +304,15 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
     }, [isOpen, sequence]);
 
     if (!isOpen || !sequence) return null;
-
     const stageOptions = Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }));
-
     const handleAddStep = () => {
         setEditingStep(null);
         setStepModalOpen(true);
     };
-
     const handleEditStep = (step: Step) => {
         setEditingStep(step);
         setStepModalOpen(true);
     };
-
     const handleSaveStep = (step: Step) => {
         setSteps(prev => {
             const idx = prev.findIndex(s => s.id === step.id);
@@ -357,13 +325,11 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
         });
         setStepModalOpen(false);
     };
-
     const handleDeleteStep = () => {
         if (!stepToDelete) return;
         setSteps(prev => prev.filter(s => s.id !== stepToDelete));
         setStepToDelete(null);
     };
-
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -381,7 +347,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
             setSaving(false);
         }
     };
-
     return createPortal(
         <div className="fixed inset-0 z-[100] flex justify-end">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose} />
@@ -409,7 +374,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                         {ICONS.CLOSE}
                     </button>
                 </div>
-
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-6 no-scrollbar space-y-6">
                     {/* Stats (if available) */}
@@ -421,7 +385,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                             <StatPill label={t('seq.stats_click_rate')} value={`${sequence.stats.clickRate}%`} color="bg-amber-50 text-amber-700" />
                         </div>
                     )}
-
                     {/* Trigger */}
                     <div className="bg-[var(--bg-surface)] p-5 rounded-xl border border-[var(--glass-border)] shadow-sm">
                         <Dropdown
@@ -431,7 +394,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                             options={stageOptions}
                         />
                     </div>
-
                     {/* Step Builder */}
                     <div>
                         <div className="flex items-center justify-between mb-4">
@@ -446,7 +408,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                                 {t('seq.add_step')}
                             </button>
                         </div>
-
                         <div className="relative pl-2">
                             {steps.length === 0 ? (
                                 <div
@@ -482,7 +443,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                         </div>
                     </div>
                 </div>
-
                 {/* Footer */}
                 <div className="bg-[var(--bg-surface)] p-4 border-t border-[var(--glass-border)] shrink-0">
                     <button
@@ -495,7 +455,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                     </button>
                 </div>
             </div>
-
             {/* Step modal */}
             <StepModal
                 isOpen={stepModalOpen}
@@ -504,7 +463,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                 onSave={handleSaveStep}
                 t={t}
             />
-
             {/* Delete step confirm */}
             <ConfirmModal
                 isOpen={!!stepToDelete}
@@ -520,7 +478,6 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
         document.body
     );
 };
-
 // -----------------------------------------------------------------------------
 // TEMPLATE GALLERY
 // -----------------------------------------------------------------------------
@@ -530,14 +487,12 @@ const CATEGORY_LABELS: Record<string, string> = {
     closing: 'Chốt Deal',
     retention: 'Giữ Chân',
 };
-
 const CATEGORY_COLORS: Record<string, string> = {
     lead: 'bg-blue-50 text-blue-700 border-blue-100',
     nurture: 'bg-amber-50 text-amber-700 border-amber-100',
     closing: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     retention: 'bg-purple-50 text-purple-700 border-purple-100',
 };
-
 interface TemplateGalleryProps {
     isOpen: boolean;
     templates: SequenceTemplate[];
@@ -545,22 +500,17 @@ interface TemplateGalleryProps {
     onClose: () => void;
     onUse: (template: SequenceTemplate) => void;
 }
-
 const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, loading, onClose, onUse }) => {
     const [filter, setFilter] = useState<string>('all');
-
     useEffect(() => {
         if (!isOpen) return;
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
         document.addEventListener('keydown', handler);
         return () => document.removeEventListener('keydown', handler);
     }, [isOpen, onClose]);
-
     if (!isOpen) return null;
-
     const categories = ['all', 'lead', 'nurture', 'closing', 'retention'];
     const filtered = filter === 'all' ? templates : templates.filter(t => t.category === filter);
-
     return createPortal(
         <div className="fixed inset-0 z-[120] flex items-start justify-end" role="dialog" aria-modal="true">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
@@ -575,7 +525,6 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
                         {ICONS.CLOSE}
                     </button>
                 </div>
-
                 {/* Filter tabs */}
                 <div className="flex gap-2 px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0 overflow-x-auto">
                     {categories.map(cat => (
@@ -595,7 +544,6 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
                         </button>
                     ))}
                 </div>
-
                 {/* Template list */}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                     {loading ? (
@@ -621,7 +569,6 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
                                     Dùng Mẫu
                                 </button>
                             </div>
-
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className={`px-2.5 py-1 text-xs font-bold rounded-lg border ${CATEGORY_COLORS[tpl.category] || 'bg-slate-50 text-slate-600 border-slate-100'}`}>
                                     {CATEGORY_LABELS[tpl.category] || tpl.category}
@@ -646,7 +593,6 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
         document.body
     );
 };
-
 // -----------------------------------------------------------------------------
 // SEQUENCE CARD
 // -----------------------------------------------------------------------------
@@ -676,7 +622,6 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
                 </div>
             </div>
         </div>
-
         <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-slate-50 my-4">
             <div className="text-center">
                 <div className="text-lg font-bold text-[var(--text-primary)]">{sequence.stats?.enrolled || 0}</div>
@@ -698,7 +643,6 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
         </div>
     </div>
 ));
-
 // -----------------------------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
@@ -712,12 +656,10 @@ export const Sequences: React.FC = () => {
     const [templates, setTemplates] = useState<SequenceTemplate[]>([]);
     const [templatesLoading, setTemplatesLoading] = useState(false);
     const { t, formatDate } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -729,9 +671,7 @@ export const Sequences: React.FC = () => {
             setLoading(false);
         }
     }, [t, notify]);
-
     useEffect(() => { fetchData(); }, [fetchData]);
-
     const openTemplateGallery = useCallback(async () => {
         setShowTemplates(true);
         if (templates.length > 0) return;
@@ -745,7 +685,6 @@ export const Sequences: React.FC = () => {
             setTemplatesLoading(false);
         }
     }, [templates.length, notify]);
-
     const handleUseTemplate = useCallback(async (tpl: SequenceTemplate) => {
         setShowTemplates(false);
         try {
@@ -763,7 +702,6 @@ export const Sequences: React.FC = () => {
             notify(t('common.error'), 'error');
         }
     }, [t, notify]);
-
     const handleDelete = async () => {
         if (!itemToDelete) return;
         try {
@@ -776,7 +714,6 @@ export const Sequences: React.FC = () => {
             setItemToDelete(null);
         }
     };
-
     const handleCreate = async () => {
         try {
             const newSeq = await db.createSequence({
@@ -795,9 +732,7 @@ export const Sequences: React.FC = () => {
         setSequences(prev => prev.map(s => s.id === updated.id ? updated : s));
         setSelectedSeq(null);
     };
-
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
-
     return (
         <>
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
@@ -819,7 +754,6 @@ export const Sequences: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {sequences.length === 0 ? (
                 <div className="text-center py-20 px-8 bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
                     <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4 text-indigo-400">
@@ -855,7 +789,6 @@ export const Sequences: React.FC = () => {
                     ))}
                 </div>
             )}
-
             <SequenceDrawer
                 isOpen={!!selectedSeq}
                 sequence={selectedSeq}
@@ -864,7 +797,6 @@ export const Sequences: React.FC = () => {
                 t={t}
                 notify={notify}
             />
-
             <TemplateGallery
                 isOpen={showTemplates}
                 templates={templates}
@@ -872,7 +804,6 @@ export const Sequences: React.FC = () => {
                 onClose={() => setShowTemplates(false)}
                 onUse={handleUseTemplate}
             />
-
             <ConfirmModal
                 isOpen={!!itemToDelete}
                 title={t('common.delete')}

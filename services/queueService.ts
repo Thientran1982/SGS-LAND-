@@ -1,7 +1,5 @@
 import { withRetry } from '../utils/aiUtils';
-
 export type TaskStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
-
 export interface QueueTask<T = any, R = any> {
     id: string;
     type: string;
@@ -14,7 +12,6 @@ export interface QueueTask<T = any, R = any> {
     completedAt?: number;
     retries: number;
 }
-
 /**
  * A simple in-memory Queue System for processing heavy AI tasks in the background.
  * Supports concurrency limits and automatic retries via Exponential Backoff.
@@ -25,14 +22,12 @@ class QueueService {
     private concurrencyLimit: number = 2; // Process max 2 tasks concurrently to avoid rate limits
     private activeTasks: number = 0;
     private handlers: Map<string, (payload: any) => Promise<any>> = new Map();
-
     /**
      * Register a handler function for a specific task type.
      */
     registerHandler(type: string, handler: (payload: any) => Promise<any>) {
         this.handlers.set(type, handler);
     }
-
     /**
      * Add a new task to the queue.
      */
@@ -45,30 +40,24 @@ class QueueService {
             status: 'PENDING',
             createdAt: Date.now(),
             retries: 0
-        };
-        
-        this.queue.push(task);
-        
+        };        
+        this.queue.push(task);        
         // Start processing if not already running
-        this.processQueue();
-        
+        this.processQueue();        
         return id;
     }
-
     /**
      * Get the status of a specific task.
      */
     getTaskStatus(id: string): QueueTask | undefined {
         return this.queue.find(t => t.id === id);
     }
-
     /**
      * Get all tasks in the queue.
      */
     getAllTasks(): QueueTask[] {
         return [...this.queue];
     }
-
     /**
      * Process the queue with concurrency limits.
      */
@@ -76,9 +65,7 @@ class QueueService {
         if (this.isProcessing && this.activeTasks >= this.concurrencyLimit) {
             return;
         }
-
         this.isProcessing = true;
-
         while (this.queue.some(t => t.status === 'PENDING') && this.activeTasks < this.concurrencyLimit) {
             const taskIndex = this.queue.findIndex(t => t.status === 'PENDING');
             if (taskIndex === -1) break;
@@ -87,19 +74,16 @@ class QueueService {
             task.status = 'PROCESSING';
             task.startedAt = Date.now();
             this.activeTasks++;
-
             // Process task asynchronously without awaiting here to allow concurrency
             this.executeTask(task).finally(() => {
                 this.activeTasks--;
                 this.processQueue(); // Trigger next task
             });
         }
-
         if (this.activeTasks === 0) {
             this.isProcessing = false;
         }
     }
-
     /**
      * Execute a single task with retry logic.
      */
@@ -111,7 +95,6 @@ class QueueService {
             task.completedAt = Date.now();
             return;
         }
-
         try {
             const result = await withRetry(
                 () => handler(task.payload),
@@ -126,8 +109,7 @@ class QueueService {
             task.error = error.message || 'Unknown error';
             task.completedAt = Date.now();
         }
-    }
-    
+    }    
     /**
      * Clear completed and failed tasks from memory.
      */
@@ -135,5 +117,4 @@ class QueueService {
         this.queue = this.queue.filter(t => t.status === 'PENDING' || t.status === 'PROCESSING');
     }
 }
-
 export const queueService = new QueueService();

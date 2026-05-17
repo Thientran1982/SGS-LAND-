@@ -6,20 +6,16 @@
  *
  * Docs: https://developers.facebook.com/docs/messenger-platform/send-messages
  */
-
 import { logger } from '../middleware/logger';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { withRetry, isTransientError } from '../utils/retry';
-
 const FB_GRAPH_API = 'https://graph.facebook.com/v19.0/me/messages';
-
 export interface FacebookSendResult {
   success: boolean;
   messageId?: string;
   recipientId?: string;
   error?: string;
 }
-
 /**
  * Send a text message to a Facebook user via Page Messenger.
  * @param pageAccessToken - Page Access Token (stored in enterprise config)
@@ -37,7 +33,6 @@ export async function sendFacebookTextMessage(
       message: { text: text.slice(0, 2000) },
       messaging_type: 'RESPONSE',
     };
-
     const url = `${FB_GRAPH_API}?access_token=${encodeURIComponent(pageAccessToken)}`;
 
     const json: any = await withRetry(
@@ -58,7 +53,6 @@ export async function sendFacebookTextMessage(
       2000,
       isTransientError
     );
-
     if (json.error) {
       logger.warn(`[Facebook] Send failed: code=${json.error.code} message=${json.error.message}`);
       return {
@@ -66,7 +60,6 @@ export async function sendFacebookTextMessage(
         error: `Facebook API error ${json.error.code}: ${json.error.message}`,
       };
     }
-
     logger.info(`[Facebook] Message sent to ${recipientId}, msgId=${json.message_id}`);
     return {
       success: true,
@@ -78,7 +71,6 @@ export async function sendFacebookTextMessage(
     return { success: false, error: err.message };
   }
 }
-
 /**
  * Find the Page Access Token for a given Facebook Page ID from enterprise config.
  * Returns null if the page is not configured or has no access token.
@@ -96,7 +88,6 @@ export async function getFacebookPageAccessToken(
     return null;
   }
 }
-
 /**
  * Find any configured Facebook Page for this tenant.
  * Returns the first page that has an access token (for tenants with a single page).

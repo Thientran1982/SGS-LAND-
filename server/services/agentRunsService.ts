@@ -9,23 +9,18 @@
  * Failures inside the audit layer must NEVER break the agent — every DB
  * write is wrapped in try/catch and logged via `logger.warn`.
  */
-
 import type { Pool } from 'pg';
 import { logger } from '../middleware/logger';
-
 export type AgentRunStatus = 'success' | 'error' | 'skipped';
-
 export interface AgentRunResult<T> {
   status: AgentRunStatus;
   summary?: Record<string, any>;
   result?: T;
 }
-
 export interface RecordAgentRunOpts {
   /** Where the run was triggered from (qstash, in_process, manual_admin, manual_cli, ...) */
   triggerSource?: string;
 }
-
 export async function startAgentRun(
   pool: Pool,
   agentName: string,
@@ -44,7 +39,6 @@ export async function startAgentRun(
     return null;
   }
 }
-
 export async function finishAgentRun(
   pool: Pool,
   runId: string | null,
@@ -70,7 +64,6 @@ export async function finishAgentRun(
     logger.warn(`[agent_runs] finishRun failed (${runId}): ${err?.message || err}`);
   }
 }
-
 /**
  * Wrap an async agent handler with an `agent_runs` audit row.
  *
@@ -92,7 +85,6 @@ export async function recordAgentRun<T>(
   const triggerSource = opts.triggerSource || 'unknown';
   const startedMs = Date.now();
   const runId = await startAgentRun(pool, agentName, triggerSource);
-
   try {
     const out = await fn();
 
@@ -108,7 +100,6 @@ export async function recordAgentRun<T>(
       await finishAgentRun(pool, runId, r.status, r.summary, null, startedMs);
       return r.result;
     }
-
     await finishAgentRun(pool, runId, 'success', {}, null, startedMs);
     return out as T;
   } catch (err: any) {

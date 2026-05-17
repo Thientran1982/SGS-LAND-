@@ -1,8 +1,6 @@
-
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Trend } from 'k6/metrics';
-
 /**
  *  K6 LOAD TEST SUITE: SGS LAND ENTERPRISE
  * -----------------------------------------------------------------------------
@@ -14,10 +12,8 @@ import { Trend } from 'k6/metrics';
  *  3. Robust SPA Checks.
  * -----------------------------------------------------------------------------
  */
-
 // --- 1. METRICS ---
 const waitingTime = new Trend('waiting_time'); // Time to first byte (TTFB)
-
 // --- 2. CONFIGURATION ---
 const CONFIG = {
     BASE_URL: __ENV.BASE_URL || 'http://localhost:3000',
@@ -25,13 +21,11 @@ const CONFIG = {
     TOKEN: __ENV.TOKEN || 'mock_token_123', 
     PROFILE: __ENV.PROFILE || 'average'
 };
-
 const HEADERS = {
     'User-Agent': 'k6-load-test/2.0 (SGS-Land-Enterprise)',
     'Accept': 'text/html,application/xhtml+xml,application/json',
     'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
 };
-
 // --- 3. SCENARIOS ---
 const SCENARIOS = {
     average: {
@@ -66,7 +60,6 @@ const SCENARIOS = {
         ],
     }
 };
-
 export const options = {
     scenarios: {
         workload: SCENARIOS[CONFIG.PROFILE] || SCENARIOS.average
@@ -77,22 +70,17 @@ export const options = {
         http_req_failed: ['rate<0.01'],                 // Error rate < 1%
     },
 };
-
 // --- 4. TEST EXECUTION ---
 export default function () {
-    const url = `${CONFIG.BASE_URL}/#/p/${CONFIG.TOKEN}`; // Note: Testing Hash Router URL logic
-    
+    const url = `${CONFIG.BASE_URL}/#/p/${CONFIG.TOKEN}`; // Note: Testing Hash Router URL logic    
     // Inject correlation ID for observability
     const iterHeaders = {
         ...HEADERS,
         'X-Correlation-ID': `k6-${__VU}-${__ITER}-${Date.now()}`
     };
-
     const res = http.get(url, { headers: iterHeaders, tags: { name: 'GetPublicProposal' } });
-
     // Custom Metrics
     waitingTime.add(res.timings.waiting);
-
     // --- 5. ASSERTIONS ---
     check(res, {
         'status is 200': (r) => r.status === 200,
@@ -102,7 +90,6 @@ export default function () {
         // Security headers check (simulated)
         'no server errors': (r) => r.status < 500
     });
-
     // Randomized user think time (1s - 3s)
     sleep(Math.random() * 2 + 1);
 }

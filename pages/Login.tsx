@@ -1,15 +1,12 @@
-
 import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { AreaChart, Area, YAxis, ResponsiveContainer } from 'recharts';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
 import { ROUTES } from '../config/routes';
-
 interface LoginProps {
   onLoginSuccess: () => void;
 }
-
 // -----------------------------------------------------------------------------
 //  CONSTANTS & CONFIG
 // -----------------------------------------------------------------------------
@@ -20,7 +17,6 @@ const AUTH_CONFIG = {
     BG_IMAGE: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop",
     PASSWORD_MIN_LENGTH: 8
 };
-
 // Mock Data for the Marketing Chart (Simulating Market Trends)
 const CHART_DATA = [
     { value: 4000 }, { value: 3000 }, { value: 2000 }, { value: 2780 },
@@ -28,7 +24,6 @@ const CHART_DATA = [
     { value: 3800 }, { value: 5000 }, { value: 4600 }, { value: 5500 },
     { value: 6000 }
 ];
-
 // -----------------------------------------------------------------------------
 //  UTILITIES
 // -----------------------------------------------------------------------------
@@ -41,12 +36,10 @@ const calculatePasswordStrength = (password: string): number => {
     if (/[0-9]/.test(password)) score++;
     return score;
 };
-
 // -----------------------------------------------------------------------------
 //  SUB-COMPONENT: MARKETING COLUMN (ENHANCED)
 // -----------------------------------------------------------------------------
-const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
-    
+const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {    
     const content = useMemo(() => {
         const prefix = view === 'REGISTER' ? 'register' : view.startsWith('FORGOT') ? 'reset' : 'login';
         return {
@@ -54,7 +47,6 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
             desc: t(`auth.marketing_${prefix}_desc`)
         };
     }, [view, t]);
-
     return (
         <div className="flex-1 hidden lg:flex relative items-center justify-center overflow-hidden bg-[#050505]" aria-hidden="true">
             {/* Background with Overlay */}
@@ -68,15 +60,13 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-transparent to-transparent"></div>
             </div>
 
-            <div className="relative z-10 w-[550px] flex flex-col gap-8">
-                
+            <div className="relative z-10 w-[550px] flex flex-col gap-8">                
                 {/* 1. GLASS BENTO CARD - LIVE ANALYTICS */}
                 <div className="bg-[var(--bg-surface)]/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden relative group">
                     {/* Primary orb — top-right */}
                     <div className="absolute -top-10 -right-10 w-48 h-48 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none"></div>
                     {/* Secondary accent orb — bottom-left */}
-                    <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-violet-500/15 rounded-full blur-2xl pointer-events-none"></div>
-                    
+                    <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-violet-500/15 rounded-full blur-2xl pointer-events-none"></div>                    
                     <div className="p-6 border-b border-white/5 flex justify-between items-center">
                         <div>
                             <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('auth.market_velocity')}</div>
@@ -91,7 +81,6 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                         </div>
                     </div>
-
                     <div className="h-48 w-full relative">
                         <ResponsiveContainer width="100%" height={192} minHeight={150} minWidth={150}>
                             <AreaChart data={CHART_DATA}>
@@ -115,13 +104,11 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                         </ResponsiveContainer>
                     </div>
                 </div>
-
                 {/* 2. TEXT CONTENT */}
                 <div className="pl-4 border-l-2 border-indigo-500 animate-enter" key={view}>
                     <h2 className="text-3xl font-bold text-white mb-3 tracking-tight leading-tight">{content.title}</h2>
                     <p className="text-gray-400 text-sm leading-relaxed max-w-md">{content.desc}</p>
                 </div>
-
                 {/* 3. TRUST SIGNALS */}
                 <div className="flex items-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500 pt-4">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('auth.trusted_by')}</span>
@@ -133,13 +120,11 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 //  MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY' | 'VERIFY_EMAIL' | 'PENDING_APPROVAL' | 'TENANT_REJECTED'>('LOGIN');
-  
+  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY' | 'VERIFY_EMAIL' | 'PENDING_APPROVAL' | 'TENANT_REJECTED'>('LOGIN');  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -147,8 +132,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [registerMode, setRegisterMode] = useState<'SALES' | 'VENDOR'>('SALES');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
-  
+  const [rememberMe, setRememberMe] = useState(true);  
   // UX State
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [globalError, setGlobalError] = useState('');
@@ -167,10 +151,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resendingReset, setResendingReset] = useState(false);
   const [resentResetMsg, setResentResetMsg] = useState('');
   const [showManualToken, setShowManualToken] = useState(false);
-  const [manualToken, setManualToken] = useState('');
-  
+  const [manualToken, setManualToken] = useState('');  
   const { t, language, setLanguage } = useTranslation();
-
   const localizeServerError = (msg: string): string => {
       if (!msg) return t('auth.error_generic');
       const m = msg.toLowerCase();
@@ -191,11 +173,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (/^[a-zA-Z0-9\s.,!?'"-]+$/.test(msg) && msg.length < 120) return t('auth.error_generic');
       return msg;
   };
-
   const handleHashTokens = useCallback((hash: string) => {
       // Support both legacy hash URLs and clean URLs.
       // After App.tsx converts #/xxx → /xxx, tokens move from hash to pathname/search.
-
       // 1. Email verification: #/verify-email/{token} → /verify-email/{token}
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const verifyFromPath = pathParts[0] === 'verify-email' && pathParts[1] ? pathParts[1] : null;
@@ -222,7 +202,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               });
           return true;
       }
-
       // 2. Password reset: #/login?reset_token={token} → /login?reset_token={token}
       const resetFromSearch = new URLSearchParams(window.location.search).get('reset_token');
       const resetMatch = hash.match(/reset_token=([a-f0-9]+)/) || (resetFromSearch ? [null, resetFromSearch] : null);
@@ -235,17 +214,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           window.history.replaceState(null, '', `/${ROUTES.LOGIN}`);
           return true;
       }
-
       return false;
   }, [t, onLoginSuccess]);
-
   useEffect(() => {
       const savedEmail = localStorage.getItem('sgs_last_email');
       if (savedEmail) setEmail(savedEmail);
-
       handleHashTokens(window.location.hash);
   }, [handleHashTokens]);
-
   // Re-check hash on every hashchange — fixes the case where the user is
   // already on the Login page (e.g. FORGOT_REQUEST view) and then clicks
   // the reset link in their email, which changes the hash without unmounting
@@ -255,7 +230,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       window.addEventListener('hashchange', onHashChange);
       return () => window.removeEventListener('hashchange', onHashChange);
   }, [handleHashTokens]);
-
   // Real-time B2B Email Check
   useEffect(() => {
       if (email.includes('@')) {
@@ -271,20 +245,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setShake(true);
       setTimeout(() => setShake(false), 500);
   };
-
   const validate = () => {
-      const errors: Record<string, string> = {};
-      
+      const errors: Record<string, string> = {};      
       // Common Email Validation
       if (view !== 'FORGOT_VERIFY') {
           const trimmedEmail = email.trim();
           if (!trimmedEmail) errors.email = t('auth.error_email_required');
           else if (!AUTH_CONFIG.EMAIL_REGEX.test(trimmedEmail)) errors.email = t('auth.error_email_invalid');
       }
-
       // Login Validation
       if (view === 'LOGIN' && !isSsoMode && !password) errors.password = t('auth.error_password_required');
-
       // Registration Validation
       if (view === 'REGISTER') {
           if (!name.trim()) errors.name = t('auth.error_name_required');
@@ -295,17 +265,14 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           if (!password) errors.password = t('auth.error_password_required');
           else if (calculatePasswordStrength(password) < 2) errors.password = t('auth.error_password_weak');
       }
-
       // Forgot Password Validation
       if (view === 'FORGOT_VERIFY') {
           if (!otp.trim()) errors.otp = t('auth.error_token_required');
           if (!newPassword) errors.newPassword = t('auth.error_password_required');
           else if (calculatePasswordStrength(newPassword) < 2) errors.newPassword = t('auth.error_password_weak');
       }
-
       return errors;
   };
-
   const handleResendReset = async () => {
       if (resendingReset || !email) return;
       setResendingReset(true);
@@ -322,22 +289,18 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           setResendingReset(false);
       }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
     setGlobalError('');
-    setSuccessMsg('');
-    
+    setSuccessMsg('');    
     const errors = validate();
     if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
         triggerShake();
         return;
     }
-
-    setLoading(true);
-    
+    setLoading(true);    
     try {
       const trimmedEmail = email.trim();
       if (view === 'FORGOT_REQUEST') {
@@ -356,12 +319,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           setLoading(false);
           return;
       }
-
       if (view === 'FORGOT_VERIFY') {
           const resetResult = await db.resetPassword(otp, newPassword);
           const resetEmail = (resetResult as any)?.email || email.trim();
           setOtp('');
-
           // Auto-login immediately after successful password reset
           if (resetEmail) {
               setSuccessMsg(t('auth.pass_changed_success'));
@@ -392,7 +353,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           }
           return;
       }
-
       // 3. SSO LOGIN
       if (isSsoMode) {
           await db.authenticateViaSSO(trimmedEmail);
@@ -419,15 +379,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       // 5. STANDARD LOGIN
       else {
         await db.authenticate(trimmedEmail, password);
-      }
-      
+      }      
       if (rememberMe) {
         localStorage.setItem('sgs_last_email', trimmedEmail);
       } else {
         localStorage.removeItem('sgs_last_email');
       }
       onLoginSuccess();
-
     } catch (err: any) {
       // Special case: login blocked because email not yet verified
       if (err?.code === 'EMAIL_NOT_VERIFIED') {
@@ -457,7 +415,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setLoading(false);
     }
   };
-
   const handleResendVerification = async () => {
     const targetEmail = registeredEmail || email.trim();
     if (!targetEmail) return;
@@ -472,25 +429,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setResending(false);
     }
   };
-
   const handleGoogleLogin = () => {
     setGlobalError(t('auth.google_coming_soon'));
     triggerShake();
   };
-
   const getInputClass = useCallback((hasError: boolean) => {
       return `w-full bg-white/5 border rounded-xl pl-10 pr-4 py-3 text-[16px] focus:ring-2 transition-all outline-none text-white placeholder-white/25
       ${hasError 
           ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 bg-rose-500/5' 
           : 'border-white/10 focus:border-indigo-500/50 focus:ring-indigo-500/50 focus:bg-white/8'}`;
   }, []);
-
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-hidden relative">
-      
+    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-hidden relative">      
       {/* FORM COLUMN */}
-      <div className="w-full lg:w-[520px] xl:w-[600px] flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">
-        
+      <div className="w-full lg:w-[520px] xl:w-[600px] flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">        
         {/* Top Bar */}
         <div className="p-8 flex justify-between items-center">
              <div className="flex items-center gap-3">
@@ -514,9 +466,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </button>
              </div>
         </div>
-
-        <div className="flex-1 flex flex-col px-8 md:px-14 justify-center min-h-[600px]">
-            
+        <div className="flex-1 flex flex-col px-8 md:px-14 justify-center min-h-[600px]">            
             <div className="space-y-2 mb-8">
                 <h1 className="text-3xl font-bold tracking-tight text-white animate-enter">
                     {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : view === 'PENDING_APPROVAL' ? t('auth.pending_approval_title') : view === 'TENANT_REJECTED' ? t('auth.rejected_title') : t('auth.welcome')}
@@ -531,7 +481,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                      view === 'TENANT_REJECTED' ? t('auth.rejected_subtitle') : t('auth.login_subtitle')}
                 </p>
             </div>
-
             {/* ── VERIFY EMAIL VIEW ─────────────────────────── */}
             {view === 'VERIFY_EMAIL' && (
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
@@ -542,7 +491,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         <p className="text-white font-bold text-base mb-4 break-all">{registeredEmail}</p>
                         <p className="text-xs text-indigo-300 leading-relaxed">{t('auth.verify_email_instruction')}</p>
                     </div>
-
                     {/* Dev mode: show raw token for testing without email */}
                     {devVerifyInfo && (
                         <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/30 animate-enter">
@@ -552,7 +500,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </a>
                         </div>
                     )}
-
                     {/* Resend button */}
                     {resentSuccess ? (
                         <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 text-center" role="status">
@@ -570,7 +517,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     )}
                 </div>
             )}
-
             {/* ── PENDING APPROVAL VIEW ─────────────────────── */}
             {view === 'PENDING_APPROVAL' && (
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
@@ -598,7 +544,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                 </div>
             )}
-
             {/* ── TENANT REJECTED VIEW ──────────────────────── */}
             {view === 'TENANT_REJECTED' && (
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
@@ -622,7 +567,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                 </div>
             )}
-
             {/* ── AUTH FORMS (all other views) ──────────────── */}
             <form onSubmit={handleSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''} ${(view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? 'hidden' : ''}`} style={{animationDelay: '0.2s'}}>
                 {/* Global Feedback */}
@@ -635,8 +579,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 flex items-start" role="status">
                         {successMsg}
                     </div>
-                )}
-                
+                )}                
                 {/* --- REGISTRATION FIELDS --- */}
                 {view === 'REGISTER' && (
                     <>
@@ -667,7 +610,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 {t('auth.register_tab_vendor') || 'Công ty'}
                             </button>
                         </div>
-
                         {/* Họ tên — luôn hiển thị */}
                         <div className="space-y-1.5 group">
                             <label htmlFor="auth-name" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_name')}</label>
@@ -677,7 +619,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </div>
                             {fieldErrors.name && <p id="err-name" className="text-xs2 text-rose-400 ml-1">{fieldErrors.name}</p>}
                         </div>
-
                         {/* Tên doanh nghiệp/đội nhóm — chỉ hiển thị khi VENDOR */}
                         {registerMode === 'VENDOR' && (
                             <div className="space-y-1.5 group">
@@ -689,7 +630,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 {fieldErrors.company && <p id="err-company" className="text-xs2 text-rose-400 ml-1">{fieldErrors.company}</p>}
                             </div>
                         )}
-
                         {/* Hint theo loại tài khoản */}
                         {registerMode === 'VENDOR' ? (
                             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
@@ -703,8 +643,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </div>
                         )}
                     </>
-                )}
-                
+                )}                
                 {/* --- EMAIL INPUT (Shared) --- */}
                 {view !== 'FORGOT_VERIFY' && (
                     <div className="space-y-1.5 group">
@@ -713,8 +652,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></span>
                             <input id="auth-email" type="email" value={email} onChange={e => setEmail(e.target.value)} className={getInputClass(!!fieldErrors.email)} placeholder={t('auth.placeholder_email')} autoComplete="email" aria-describedby={fieldErrors.email ? 'err-email' : undefined} />
                         </div>
-                        {fieldErrors.email && <p id="err-email" className="text-xs2 text-rose-400 ml-1">{fieldErrors.email}</p>}
-                        
+                        {fieldErrors.email && <p id="err-email" className="text-xs2 text-rose-400 ml-1">{fieldErrors.email}</p>}                        
                         {/* B2B Nudge */}
                         {isPersonalEmail && view === 'REGISTER' && (
                             <div className="flex items-center gap-2 mt-1 ml-1 text-amber-400">
@@ -724,7 +662,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         )}
                     </div>
                 )}
-
                 {/* --- FORGOT PASSWORD VERIFY STEP --- */}
                 {view === 'FORGOT_VERIFY' && (
                     <>
@@ -740,7 +677,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                     {t('auth.check_email_instruction')}
                                 </p>
                                 <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam')}</p>
-
                                 {/* Dev mode: hiện link reset trực tiếp khi email không thật */}
                                 {devResetInfo && (
                                     <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/30 text-left">
@@ -759,7 +695,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                         <p className="text-xs2 text-amber-400/60 mt-1">↑ Click để điền token vào form</p>
                                     </div>
                                 )}
-
                                 {resentResetMsg ? (
                                     <p className={`text-xs2 font-semibold ${resentResetMsg === t('auth.resend_reset_sent') ? 'text-emerald-400' : 'text-rose-400'}`}>{resentResetMsg}</p>
                                 ) : (
@@ -772,7 +707,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                         {resendingReset ? t('auth.resend_reset_sending') : t('auth.resend_reset_email')}
                                     </button>
                                 )}
-
                                 {/* Manual token paste — fallback khi email vào spam hoặc không nhận được */}
                                 <div className="pt-2 border-t border-white/10">
                                     {!showManualToken ? (
@@ -825,7 +759,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         )}
                     </>
                 )}
-
                 {/* --- PASSWORD INPUT --- */}
                 {(view !== 'FORGOT_REQUEST' && !isSsoMode && !(view === 'FORGOT_VERIFY' && !tokenFromUrl)) && (
                     <div className="space-y-1.5 group">
@@ -883,8 +816,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </div>
                         )}
                     </div>
-                )}
-                
+                )}                
                 {/* Remember Me Checkbox for Login */}
                 {view === 'LOGIN' && !isSsoMode && (
                     <div className="flex items-center gap-2">
@@ -898,7 +830,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         <label htmlFor="remember" className="text-xs text-gray-400 cursor-pointer select-none">{t('auth.remember_me')}</label>
                     </div>
                 )}
-
                 {!(view === 'FORGOT_VERIFY' && !tokenFromUrl) && (
                 <button 
                     type="submit" 
@@ -914,7 +845,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </button>
                 )}
             </form>
-
             {/* ACTION FOOTER */}
             {view === 'LOGIN' && (
                 <div className="animate-enter mt-6" style={{animationDelay: '0.3s'}}>
@@ -922,12 +852,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10"></span></div>
                         <div className="relative flex-1 justify-center text-xs2 uppercase font-bold tracking-widest text-center"><span className="bg-[#09090b] px-3 text-gray-500">{t('auth.or')}</span></div>
                     </div>
-
                     <div className="space-y-3">
                         <button type="button" onClick={() => { setIsSsoMode(!isSsoMode); setGlobalError(''); }} className="w-full bg-white/5 border border-white/10 text-white/70 font-bold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all flex justify-center items-center gap-3">
                             {isSsoMode ? t('auth.password_login') : t('auth.sso_login')}
-                        </button>
-                        
+                        </button>                        
                         {!isSsoMode && (
                             <button
                                 type="button"
@@ -942,7 +870,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </div>
                 </div>
             )}
-
             <div className="mt-auto py-8 text-center text-sm font-medium text-gray-500 animate-enter">
                 {view === 'REGISTER' ? t('auth.has_account') : (view.startsWith('FORGOT') || view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? '' : t('auth.no_account')}
                 
@@ -950,8 +877,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         {view === 'REGISTER' ? t('auth.login_link') : t('auth.register_link')}
                     </button>
-                )}
-                
+                )}                
                 {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
                     <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         ← {t('auth.verify_email_back_login')}
@@ -960,7 +886,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </div>
         </div>
       </div>
-
       <MarketingColumn view={view} t={t} />
     </div>
   );

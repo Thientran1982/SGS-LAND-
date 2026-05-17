@@ -3,7 +3,6 @@
  * Bắt tất cả lỗi JavaScript chưa được xử lý và báo cáo về server.
  * Hoạt động ngầm, không ảnh hưởng UX người dùng.
  */
-
 interface ErrorReport {
   type: 'frontend' | 'unhandled_promise' | 'chunk_load';
   severity: 'error' | 'warning' | 'critical';
@@ -13,7 +12,6 @@ interface ErrorReport {
   path?: string;
   metadata?: Record<string, any>;
 }
-
 const ENDPOINT = '/api/error-logs';
 const MAX_QUEUE = 20;
 // Short debounce so the first crash gets reported quickly. Critically, if a
@@ -22,16 +20,13 @@ const MAX_QUEUE = 20;
 // listener below which uses `navigator.sendBeacon` for guaranteed delivery.
 const DEBOUNCE_MS = 500;
 const DEDUP_WINDOW_MS = 30_000;
-
 // Deduplicate: track last-seen messages to avoid flooding same error
 const _seen = new Map<string, number>();
 let _queue: ErrorReport[] = [];
 let _flushTimer: ReturnType<typeof setTimeout> | null = null;
-
 function dedupKey(msg: string, path?: string) {
   return `${path ?? ''}::${msg.slice(0, 120)}`;
 }
-
 function shouldSkip(report: ErrorReport): boolean {
   const key = dedupKey(report.message, report.path);
   const now = Date.now();
@@ -45,19 +40,16 @@ function shouldSkip(report: ErrorReport): boolean {
   }
   return false;
 }
-
 function scheduleFlush() {
   if (_flushTimer) return;
   _flushTimer = setTimeout(flush, DEBOUNCE_MS);
 }
-
 function buildPayload(report: ErrorReport) {
   return JSON.stringify({
     ...report,
     path: report.path ?? window.location.pathname,
   });
 }
-
 // Best-effort delivery during page unload. `sendBeacon` is queued by the
 // browser even after the document is destroyed, so it survives a reload
 // triggered by the very crash we're trying to report.
@@ -70,12 +62,10 @@ function sendBeacon(report: ErrorReport): boolean {
     return false;
   }
 }
-
 async function flush() {
   _flushTimer = null;
   if (_queue.length === 0) return;
   const batch = _queue.splice(0, MAX_QUEUE);
-
   for (const report of batch) {
     try {
       await fetch(ENDPOINT, {
@@ -92,7 +82,6 @@ async function flush() {
     }
   }
 }
-
 // Synchronous, fire-and-forget flush used during `pagehide`/`beforeunload`.
 // Uses `sendBeacon` first (most reliable during unload), falls back to a
 // keepalive fetch if beacon refused (e.g. payload too large).
@@ -101,7 +90,6 @@ async function flush() {
 export function flushErrorsSync() {
   flushSync();
 }
-
 function flushSync() {
   if (_flushTimer) {
     clearTimeout(_flushTimer);
@@ -125,23 +113,19 @@ function flushSync() {
     }
   }
 }
-
 export function captureError(report: ErrorReport) {
   if (shouldSkip(report)) return;
   if (_queue.length >= MAX_QUEUE) return;
   _queue.push(report);
   scheduleFlush();
 }
-
 export function captureException(error: unknown, context?: { component?: string; metadata?: Record<string, any> }) {
   const err = error instanceof Error ? error : new Error(String(error));
-
   const isChunk =
     err.message.includes('Failed to fetch dynamically imported module') ||
     err.message.includes('Importing a module script failed') ||
     err.message.includes('dynamically imported module') ||
     (err as any).name === 'ChunkLoadError';
-
   captureError({
     type: isChunk ? 'chunk_load' : 'frontend',
     severity: isChunk ? 'warning' : 'error',
@@ -151,13 +135,10 @@ export function captureException(error: unknown, context?: { component?: string;
     metadata: context?.metadata,
   });
 }
-
 let _initialized = false;
-
 export function initErrorMonitor() {
   if (_initialized || typeof window === 'undefined') return;
   _initialized = true;
-
   // Bắt lỗi JavaScript toàn cục
   window.addEventListener('error', (event) => {
     if (!event.error && !event.message) return;
@@ -169,7 +150,6 @@ export function initErrorMonitor() {
       },
     });
   });
-
   // Bắt Promise bị từ chối chưa xử lý
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
@@ -187,7 +167,6 @@ export function initErrorMonitor() {
       stack: reason instanceof Error ? reason.stack : undefined,
     });
   });
-
   // Flush any queued errors on unload. `pagehide` fires more reliably than
   // `beforeunload` on mobile and during back/forward navigation. This is
   // essential for catching the "table renders → blank page" bug, where a

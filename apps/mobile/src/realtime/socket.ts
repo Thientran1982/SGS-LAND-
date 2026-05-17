@@ -12,12 +12,10 @@
  * while the user is browsing listings and only opens it on the messages
  * surface.
  */
-
 import { io as createSocket, type Socket } from 'socket.io-client';
 import { getApiBaseUrl } from '../api/client';
 import { getBuyerToken } from '../storage/auth';
 import type { ChatMessage, Conversation } from '../api/conversations';
-
 export interface IncomingMessageEvent {
   conversationId: string;
   message: ChatMessage;
@@ -28,11 +26,9 @@ export interface ConversationReadEvent {
   side: 'BUYER' | 'AGENT';
   conversation: Conversation | null;
 }
-
 let socket: Socket | null = null;
 let connectingPromise: Promise<Socket> | null = null;
 const refCount = new Map<string, number>(); // conversation room → subscriber count
-
 async function ensureSocket(): Promise<Socket> {
   if (socket && socket.connected) return socket;
   if (connectingPromise) return connectingPromise;
@@ -80,7 +76,6 @@ async function ensureSocket(): Promise<Socket> {
     connectingPromise = null;
   }
 }
-
 function maybeShutdown() {
   if (refCount.size === 0 && socket) {
     try {
@@ -91,12 +86,10 @@ function maybeShutdown() {
     socket = null;
   }
 }
-
 export interface ConversationSubscriptionHandlers {
   onMessage?: (e: IncomingMessageEvent) => void;
   onRead?: (e: ConversationReadEvent) => void;
 }
-
 /**
  * Subscribe to realtime events for a single conversation. Returns an
  * unsubscribe function. Opens (and closes) the underlying socket on
@@ -115,16 +108,13 @@ export function subscribeToConversation(
     if (!active || e.conversationId !== conversationId) return;
     handlers.onRead?.(e);
   };
-
   refCount.set(conversationId, (refCount.get(conversationId) || 0) + 1);
-
   void ensureSocket().then((s) => {
     if (!active) return;
     s.emit('buyer:join_conversation', conversationId);
     s.on('conversation:message', messageHandler);
     s.on('conversation:read', readHandler);
   });
-
   return () => {
     if (!active) return;
     active = false;
@@ -140,7 +130,6 @@ export function subscribeToConversation(
     maybeShutdown();
   };
 }
-
 /**
  * Force-disconnect (e.g. on sign-out) so the next subscriber re-opens with
  * a fresh handshake / token.

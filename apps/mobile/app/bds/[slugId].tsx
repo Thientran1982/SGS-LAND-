@@ -42,10 +42,8 @@ import {
   statusLabel,
   transactionLabel,
 } from '../../src/utils/format';
-
 const SCREEN_W = Dimensions.get('window').width;
 const HOTLINE_FALLBACK = '+84971132378';
-
 // `slugId` looks like "vinhomes-grand-park-<uuid>" or just "<uuid>". Server
 // extracts the trailing UUID itself, so the mobile client just forwards the
 // raw segment.
@@ -53,44 +51,36 @@ function extractIdSuffix(slugId: string): string {
   const m = String(slugId || '').match(/[0-9a-f-]{36}$/i);
   return m ? m[0] : slugId;
 }
-
 export default function ListingDetailScreen() {
   const { slugId } = useLocalSearchParams<{ slugId: string }>();
   const router = useRouter();
   const id = extractIdSuffix(String(slugId || ''));
-
   const [imgIdx, setImgIdx] = useState(0);
   const [isFav, setIsFav] = useState(false);
   const [leadModalOpen, setLeadModalOpen] = useState(false);
   const [chatOpening, setChatOpening] = useState(false);
   const { user: buyerUser } = useAuth();
-
   // Load favorite state for this listing on mount.
   useEffect(() => {
     if (!id) return;
     loadFavorites().then((s) => setIsFav(s.has(id)));
   }, [id]);
-
   const detailQuery = useQuery({
     queryKey: ['listings', 'detail', id],
     queryFn: ({ signal }) => listingsApi.detail(String(slugId), signal),
     enabled: !!id,
   });
-
   const similarQuery = useQuery({
     queryKey: ['listings', 'similar', id],
     queryFn: ({ signal }) => listingsApi.similar(String(slugId), signal),
     enabled: !!detailQuery.data,
   });
-
   const item = detailQuery.data;
-
   // Branding-aware accent color (white-label support — task #28 piggyback).
   const accent = item?.branding?.primaryColor || colors.brand;
   const hotline = item?.branding?.hotline || item?.contactPhone || HOTLINE_FALLBACK;
   const hotlineDisplay = item?.branding?.hotlineDisplay || hotline;
   const zalo = item?.branding?.zalo || `https://zalo.me/${hotline.replace(/^\+?84/, '0').replace(/\D/g, '')}`;
-
   const handleShare = useCallback(async () => {
     if (!item) return;
     const slug = slugify(item.title || item.code || item.location || 'bat-dong-san') || 'bat-dong-san';
@@ -101,14 +91,12 @@ export default function ListingDetailScreen() {
       /* user cancelled */
     }
   }, [item]);
-
   const handleToggleFav = useCallback(async () => {
     if (!id) return;
     Haptics.selectionAsync().catch(() => {});
     const next = await toggleFavorite(id);
     setIsFav(next.has(id));
   }, [id]);
-
   const handleSimilarOpen = useCallback(
     (other: PublicListing) => {
       const slug = slugify(other.title || other.code || other.location || 'bat-dong-san') || 'bat-dong-san';
@@ -116,7 +104,6 @@ export default function ListingDetailScreen() {
     },
     [router],
   );
-
   if (detailQuery.isLoading) {
     return (
       <SafeAreaView style={styles.center} edges={['top']}>
@@ -145,10 +132,8 @@ export default function ListingDetailScreen() {
       </SafeAreaView>
     );
   }
-
   const cover = item.images?.[imgIdx] || item.images?.[0];
   const unit = formatUnitPrice(item.price, item.area);
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgBase }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
@@ -173,7 +158,6 @@ export default function ListingDetailScreen() {
               />
             ))}
           </ScrollView>
-
           {item.images && item.images.length > 1 ? (
             <View style={styles.dots}>
               {item.images.map((_, i) => (
@@ -181,7 +165,6 @@ export default function ListingDetailScreen() {
               ))}
             </View>
           ) : null}
-
           <SafeAreaView edges={['top']} style={styles.heroBar} pointerEvents="box-none">
             <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={8}>
               <Text style={styles.iconBtnText}>←</Text>
@@ -195,7 +178,6 @@ export default function ListingDetailScreen() {
             </Pressable>
           </SafeAreaView>
         </View>
-
         {/* ── Title + price ───────────────────────────────────────── */}
         <View style={styles.section}>
           <View style={styles.statusRow}>
@@ -216,7 +198,6 @@ export default function ListingDetailScreen() {
             <Text style={[styles.price, { color: accent }]}>{formatVnd(item.price)}</Text>
             {unit ? <Text style={styles.unitPrice}>{unit}</Text> : null}
           </View>
-
           {item.location ? (
             <View style={styles.metaItem}>
               <Text style={styles.metaIcon}>📍</Text>
@@ -224,7 +205,6 @@ export default function ListingDetailScreen() {
             </View>
           ) : null}
         </View>
-
         {/* ── Quick specs ─────────────────────────────────────────── */}
         <View style={styles.specGrid}>
           <SpecCell label="Loại" value={propertyTypeLabel(item.type)} />
@@ -236,7 +216,6 @@ export default function ListingDetailScreen() {
           {item.direction ? <SpecCell label="Hướng" value={item.direction} /> : null}
           {item.legalStatus ? <SpecCell label="Pháp lý" value={item.legalStatus} /> : null}
         </View>
-
         {/* ── Description ─────────────────────────────────────────── */}
         {item.description ? (
           <View style={styles.section}>
@@ -244,20 +223,16 @@ export default function ListingDetailScreen() {
             <Text style={styles.descText}>{item.description.trim()}</Text>
           </View>
         ) : null}
-
         {/* ── AI market insights ─────────────────────────────────── */}
         <MarketInsights item={item} similar={similarQuery.data} accent={accent} />
-
         {/* ── Financial calculator ───────────────────────────────── */}
         <PaymentCalculator price={item.price} accent={accent} />
-
         {/* ── Vendor brand card ──────────────────────────────────── */}
         <VendorBrandCard
           branding={item.branding}
           fallbackContact={{ name: item.contactName, phone: item.contactPhone }}
           accent={accent}
         />
-
         {/* ── Similar ─────────────────────────────────────────────── */}
         {similarQuery.data && similarQuery.data.length > 0 ? (
           <View style={styles.section}>
@@ -268,7 +243,6 @@ export default function ListingDetailScreen() {
           </View>
         ) : null}
       </ScrollView>
-
       {/* ── Bottom CTA bar (Zalo / Gọi / Nhắn tin / Quan tâm) ──── */}
       <SafeAreaView edges={['bottom']} style={styles.ctaBarWrap}>
         <View style={styles.ctaBar}>
@@ -350,7 +324,6 @@ export default function ListingDetailScreen() {
           Hotline: {hotlineDisplay}
         </Text>
       </SafeAreaView>
-
       {/* ── Lead form modal ─────────────────────────────────────── */}
       <LeadFormModal
         visible={leadModalOpen}
@@ -361,7 +334,6 @@ export default function ListingDetailScreen() {
     </View>
   );
 }
-
 // ─── Spec cell ────────────────────────────────────────────────────────────
 const SpecCell: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <View style={styles.specCell}>
@@ -371,7 +343,6 @@ const SpecCell: React.FC<{ label: string; value: string }> = ({ label, value }) 
     </Text>
   </View>
 );
-
 // ─── Lead form modal ─────────────────────────────────────────────────────
 interface LeadFormModalProps {
   visible: boolean;
@@ -379,13 +350,11 @@ interface LeadFormModalProps {
   listing: PublicListing;
   accent: string;
 }
-
 const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing, accent }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
-
   const mutation = useMutation({
     mutationFn: () =>
       listingsApi.submitLead(listing.id, {
@@ -403,9 +372,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
       Alert.alert('Gửi không thành công', msg);
     },
   });
-
   const canSubmit = useMemo(() => name.trim().length >= 2 && isValidVnPhone(phone), [name, phone]);
-
   // Reset form whenever the modal closes so reopening starts fresh.
   useEffect(() => {
     if (!visible) {
@@ -419,7 +386,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
       return () => clearTimeout(t);
     }
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <Modal
       visible={visible}
@@ -434,7 +400,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
             <Text style={styles.modalCloseText}>✕</Text>
           </Pressable>
         </View>
-
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1 }}
@@ -448,7 +413,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
               </Text>
               <Text style={[styles.summaryPrice, { color: accent }]}>{formatVnd(listing.price)}</Text>
             </View>
-
             {submitted ? (
               <View style={styles.successBox}>
                 <Text style={styles.successIcon}>✅</Text>
@@ -465,7 +429,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
                 <Text style={styles.formHint}>
                   Để lại thông tin, chuyên viên sẽ liên hệ trong vòng 30 phút.
                 </Text>
-
                 <Text style={styles.fieldLabel}>Họ và tên *</Text>
                 <TextInput
                   style={styles.input}
@@ -476,7 +439,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
                   autoCapitalize="words"
                   returnKeyType="next"
                 />
-
                 <Text style={styles.fieldLabel}>Số điện thoại *</Text>
                 <TextInput
                   style={styles.input}
@@ -487,7 +449,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
                   keyboardType="phone-pad"
                   returnKeyType="next"
                 />
-
                 <Text style={styles.fieldLabel}>Ghi chú (tuỳ chọn)</Text>
                 <TextInput
                   style={[styles.input, styles.inputMultiline]}
@@ -498,7 +459,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
                   multiline
                   numberOfLines={3}
                 />
-
                 <Pressable
                   onPress={() => mutation.mutate()}
                   disabled={!canSubmit || mutation.isPending}
@@ -522,7 +482,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ visible, onClose, listing
     </Modal>
   );
 };
-
 const styles = StyleSheet.create({
   center: {
     flex: 1,
@@ -533,7 +492,6 @@ const styles = StyleSheet.create({
   errorHeader: { position: 'absolute', top: 16, left: 16, zIndex: 10 },
   backBtn: { padding: spacing.sm },
   backBtnText: { color: colors.brand, fontSize: typography.base, fontWeight: '600' },
-
   heroWrap: { position: 'relative', backgroundColor: colors.bgDark },
   heroBar: {
     position: 'absolute',
@@ -620,7 +578,6 @@ const styles = StyleSheet.create({
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaIcon: { fontSize: 14 },
   metaText: { fontSize: typography.sm, color: colors.textSecondary, flex: 1 },
-
   specGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -644,7 +601,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   specValue: { fontSize: typography.base, fontWeight: '700', color: colors.textPrimary },
-
   sectionTitle: {
     fontSize: typography.lg,
     fontWeight: '800',
@@ -656,7 +612,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 22,
   },
-
   ctaBarWrap: {
     backgroundColor: colors.bgSurface,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -691,7 +646,6 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: 'center',
   },
-
   // Lead modal
   modalRoot: { flex: 1, backgroundColor: colors.bgBase },
   modalHeader: {
@@ -715,7 +669,6 @@ const styles = StyleSheet.create({
   },
   modalCloseText: { fontSize: 16, color: colors.textPrimary, fontWeight: '700' },
   modalBody: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-
   summaryCard: {
     backgroundColor: colors.bgSurface,
     borderWidth: 1,
@@ -734,7 +687,6 @@ const styles = StyleSheet.create({
   },
   summaryTitle: { fontSize: typography.base, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   summaryPrice: { fontSize: typography.lg, fontWeight: '800' },
-
   formHint: {
     fontSize: typography.sm,
     color: colors.textTertiary,
@@ -772,7 +724,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitText: { color: 'white', fontWeight: '800', fontSize: typography.base },
-
   successBox: {
     alignItems: 'center',
     paddingVertical: spacing.xxxl,

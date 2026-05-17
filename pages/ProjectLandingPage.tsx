@@ -3,7 +3,6 @@ import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 import ProjectDirectory from './ProjectDirectory';
-
 const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
     'aqua-city': {
         title: 'Aqua City Novaland | Nhà Phố, Biệt Thự Đồng Nai - SGS LAND',
@@ -54,7 +53,6 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
         description: 'Diamond Sky Vạn Phúc City: tháp căn hộ hạng sang 20 tầng trong KĐT 198ha của Tập đoàn Vạn Phúc, Hiệp Bình Phước TP Thủ Đức (giáp Thuận An, Bình Dương). 1–3PN view sông Sài Gòn, từ 9,6 tỷ (~192 triệu/m²), sổ hồng lâu dài. Bảng giá & ưu đãi 2026 tại SGS LAND.',
     },
 };
-
 // E-E-A-T: last content review date (bump when project data is updated)
 const LAST_UPDATED_ISO = '2026-04-18';
 const LAST_UPDATED_DISPLAY = new Date(LAST_UPDATED_ISO).toLocaleDateString('vi-VN', {
@@ -79,7 +77,6 @@ const PROJECT_OFFERS: Record<string, { lowPrice: number; highPrice: number; offe
     'vinhomes-can-gio':          { lowPrice: 12_000_000_000,  highPrice: 200_000_000_000, offerCount: 100 },
     'diamond-sky-van-phuc-city': { lowPrice: 9_600_000_000,   highPrice: 25_000_000_000,  offerCount: 80  },
 };
-
 interface ProjectConfig {
     slug: string;
     name: string;
@@ -95,7 +92,6 @@ interface ProjectConfig {
     projectType: string;
     scale: string;
 }
-
 const PROJECT_CONFIG: Record<string, ProjectConfig> = {
     'aqua-city': {
         slug: 'aqua-city',
@@ -1440,7 +1436,6 @@ export default function ProjectLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── Project Details ── */}
             <section className="py-12 px-4 bg-[var(--bg-surface)]">
                 <div className="max-w-6xl mx-auto">
@@ -1465,7 +1460,6 @@ export default function ProjectLandingPage() {
                     </dl>
                 </div>
             </section>
-
             {/* ── Amenities ── */}
             <section className="py-12 px-4 bg-[var(--bg-app)]">
                 <div className="max-w-6xl mx-auto">
@@ -1490,7 +1484,6 @@ export default function ProjectLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── FAQ ── */}
             <section className="py-12 px-4 bg-[var(--bg-surface)]">
                 <div className="max-w-3xl mx-auto">
@@ -1528,7 +1521,6 @@ export default function ProjectLandingPage() {
                     </aside>
                 </div>
             </section>
-
             {/* ── Internal Links ── */}
             <section className="py-10 px-4 bg-[var(--bg-app)]">
                 <div className="max-w-6xl mx-auto">
@@ -1548,7 +1540,6 @@ export default function ProjectLandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* ── CTA ── */}
             <section className="py-14 px-4 bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-600)]/80 text-white">
                 <div className="max-w-3xl mx-auto text-center">
@@ -1581,7 +1572,6 @@ export default function ProjectLandingPage() {
                     </p>
                 </div>
             </section>
-
             {/* ── Footer ── */}
             <footer className="bg-[var(--bg-surface)] border-t border-[var(--glass-border)] py-8 px-4">
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1605,7 +1595,6 @@ export default function ProjectLandingPage() {
         </>
     );
 }
-
 function FAQAccordion({ items }: { items: { q: string; a: string }[] }) {
     const [open, setOpen] = useState<number | null>(null);
     return (

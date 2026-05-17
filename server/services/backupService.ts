@@ -5,7 +5,6 @@
  * Giữ tối đa N file gần nhất, tự động xóa file cũ.
  * Gửi email báo cáo cho admin sau mỗi lần backup.
  */
-
 import { spawn } from 'child_process';
 import { createGzip } from 'zlib';
 import { createWriteStream, promises as fs } from 'fs';
@@ -13,11 +12,9 @@ import path from 'path';
 import { pipeline } from 'stream/promises';
 import { logger } from '../middleware/logger';
 import { brevoSendEmail, isBrevoConfigured } from './brevoService';
-
 const BACKUP_DIR = process.env.BACKUP_DIR || '/tmp/backups';
 const MAX_BACKUPS = parseInt(process.env.BACKUP_MAX_FILES || '7', 10);
 const ADMIN_EMAIL = process.env.BACKUP_ADMIN_EMAIL || 'info@sgsland.vn';
-
 export interface BackupResult {
   ok: boolean;
   filename: string;
@@ -27,7 +24,6 @@ export interface BackupResult {
   error?: string;
   rotatedFiles?: string[];
 }
-
 /**
  * Lấy connection string DB hiện tại (cùng logic db.ts).
  */
@@ -41,7 +37,6 @@ function getDbUrl(): string {
     .replace(/\?&/, '?')
     .replace(/\?$/, '');
 }
-
 /**
  * Chạy pg_dump → gzip → file. Trả về kích thước file kết quả.
  */
@@ -56,31 +51,25 @@ async function pgDumpToFile(dbUrl: string, outPath: string): Promise<number> {
     '--if-exists',
     '--format=plain',
   ], { stdio: ['ignore', 'pipe', 'pipe'] });
-
   const errChunks: Buffer[] = [];
   dump.stderr.on('data', (c: Buffer) => errChunks.push(c));
-
   const gzip = createGzip({ level: 6 });
   const out = createWriteStream(outPath);
-
   try {
     await pipeline(dump.stdout, gzip, out);
   } catch (err: any) {
     dump.kill('SIGTERM');
     throw new Error(`pg_dump pipeline failed: ${err.message}`);
   }
-
   // Đợi pg_dump thoát hẳn
   const exitCode: number = await new Promise((resolve) => dump.on('close', resolve));
   if (exitCode !== 0) {
     const errMsg = Buffer.concat(errChunks).toString('utf8').slice(0, 1000);
     throw new Error(`pg_dump exited ${exitCode}: ${errMsg}`);
   }
-
   const stat = await fs.stat(outPath);
   return stat.size;
 }
-
 /**
  * Xóa file backup cũ, chỉ giữ MAX_BACKUPS file gần nhất.
  */
@@ -101,14 +90,12 @@ async function rotateBackups(): Promise<string[]> {
     return [];
   }
 }
-
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
-
 /**
  * Chạy backup đầy đủ + gửi email báo cáo. Là entrypoint cho cron + manual trigger.
  */
@@ -117,20 +104,16 @@ export async function runBackup(): Promise<BackupResult> {
   const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const filename = `backup-${ts}.sql.gz`;
   const filepath = path.join(BACKUP_DIR, filename);
-
   logger.info(`[Backup] Bắt đầu backup → ${filepath}`);
-
   try {
     const dbUrl = getDbUrl();
     const sizeBytes = await pgDumpToFile(dbUrl, filepath);
     const rotatedFiles = await rotateBackups();
     const durationMs = Date.now() - start;
-
     logger.info(
       `[Backup] ✓ Hoàn thành ${filename} — ${formatSize(sizeBytes)} trong ${durationMs}ms` +
       (rotatedFiles.length ? ` (xóa ${rotatedFiles.length} file cũ)` : '')
     );
-
     // Gửi email báo cáo (best-effort, không fail backup nếu email lỗi)
     if (isBrevoConfigured()) {
       try {
@@ -154,12 +137,10 @@ export async function runBackup(): Promise<BackupResult> {
         logger.warn(`[Backup] Email báo cáo lỗi: ${e.message}`);
       }
     }
-
     return { ok: true, filename, filepath, sizeBytes, durationMs, rotatedFiles };
   } catch (err: any) {
     const durationMs = Date.now() - start;
     logger.error(`[Backup] ✗ Thất bại sau ${durationMs}ms: ${err.message}`);
-
     if (isBrevoConfigured()) {
       try {
         await brevoSendEmail({
@@ -169,14 +150,12 @@ export async function runBackup(): Promise<BackupResult> {
         });
       } catch { /* ignore */ }
     }
-
     // Xóa file backup dở dang
     await fs.unlink(filepath).catch(() => null);
 
     return { ok: false, filename, filepath, sizeBytes: 0, durationMs, error: err.message };
   }
 }
-
 /**
  * Liệt kê tất cả backup hiện có.
  */
@@ -196,7 +175,6 @@ export async function listBackups(): Promise<{ filename: string; sizeBytes: numb
     return [];
   }
 }
-
 export function getBackupFilePath(filename: string): string | null {
   // Prevent path traversal
   if (!/^backup-[\w\-]+\.sql\.gz$/.test(filename)) return null;

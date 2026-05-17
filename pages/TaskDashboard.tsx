@@ -5,13 +5,10 @@ import { TaskDashboardStats, Department } from '../types';
 import { ROUTES } from '../config/routes';
 import { STATUS_LABELS, PRIORITY_LABELS, PRIORITY_DOT } from '../utils/taskUtils';
 import { SelectDropdown } from '../components/task/SelectDropdown';
-
 interface Props {
   onNavigate?: (route: string) => void;
 }
-
 const navigateTo = (route: string) => { window.location.hash = `#/${route}`; };
-
 const STATUS_BAR_COLORS: Record<string, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-indigo-500',
@@ -19,7 +16,6 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   done: 'bg-emerald-500',
   cancelled: 'bg-rose-400',
 };
-
 function StatCard({ label, value, sub, color, icon }: { label: string; value: number | string; sub?: string; color: string; icon: React.ReactNode }) {
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl p-5 border border-[var(--glass-border)] flex items-start gap-4 shadow-sm">
@@ -34,7 +30,6 @@ function StatCard({ label, value, sub, color, icon }: { label: string; value: nu
     </div>
   );
 }
-
 function SkeletonCard() {
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl p-5 border border-[var(--glass-border)] flex items-start gap-4 shadow-sm animate-pulse">
@@ -46,7 +41,6 @@ function SkeletonCard() {
     </div>
   );
 }
-
 function SkeletonSection() {
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm animate-pulse space-y-3">
@@ -63,7 +57,6 @@ function SkeletonSection() {
     </div>
   );
 }
-
 export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
   const onNavigate = onNavigateProp ?? navigateTo;
   const [stats, setStats] = useState<TaskDashboardStats | null>(null);
@@ -75,13 +68,11 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
     try { return new URLSearchParams(window.location.search).get('dept') || ''; } catch { return ''; }
   });
   const fetchRef = useRef(0);
-
   useEffect(() => {
     api.get<{ data: Department[] }>('/api/departments')
       .then(r => setDepartments(r.data || []))
       .catch(() => {});
   }, []);
-
   const load = useCallback(async (silent = false, deptId = departmentId) => {
     const token = ++fetchRef.current;
     if (!silent) setLoading(true);
@@ -102,9 +93,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
       }
     }
   }, [departmentId]);
-
   useEffect(() => { load(false, departmentId); }, [departmentId, load]);
-
   // URL sync
   useEffect(() => {
     const qs = new URLSearchParams(window.location.search);
@@ -112,11 +101,9 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
     const search = qs.toString();
     window.history.replaceState(null, '', window.location.pathname + (search ? '?' + search : ''));
   }, [departmentId]);
-
   const { overview } = stats ?? {};
   const completionRate = overview && overview.total_tasks > 0
     ? Math.round((overview.done / overview.total_tasks) * 100) : 0;
-
   return (
     <div className="h-full overflow-y-auto p-4 md:p-6 space-y-6 animate-enter no-scrollbar">
       {/* Header */}
@@ -154,7 +141,6 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
           </button>
         </div>
       </div>
-
       {/* Error */}
       {error && !loading && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -163,7 +149,6 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
           <button onClick={() => load(false, departmentId)} className="text-sm text-indigo-500 font-medium">Thử lại</button>
         </div>
       )}
-
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {loading ? (
@@ -177,7 +162,6 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
           </>
         ) : null}
       </div>
-
       {/* Status breakdown + Priority */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? (
@@ -208,7 +192,6 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
                 })}
               </div>
             </div>
-
             {/* Priority breakdown */}
             <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
               <h3 className="font-semibold text-[var(--text-primary)] mb-4">Theo độ ưu tiên (đang mở)</h3>
@@ -234,7 +217,6 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
           </>
         )}
       </div>
-
       {/* Workload by User */}
       {!loading && stats?.workload_by_user && stats.workload_by_user.length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
@@ -286,7 +268,6 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
           </div>
         </div>
       )}
-
       {/* Upcoming Deadlines */}
       {!loading && stats?.upcoming_deadlines && stats.upcoming_deadlines.length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
