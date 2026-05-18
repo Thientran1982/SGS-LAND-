@@ -1,7 +1,5 @@
-
 import React, { memo, useMemo } from 'react';
 import { useTranslation } from '../services/i18n';
-
 interface SkeletonProps {
     className?: string;
     variant?: 'text' | 'circular' | 'rectangular' | 'rounded';
@@ -10,11 +8,9 @@ interface SkeletonProps {
     style?: React.CSSProperties; // Allow custom styles overrides safely
     count?: number;
 }
-
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & STYLES
 // -----------------------------------------------------------------------------
-
 const STYLES = {
     BASE: "relative overflow-hidden bg-slate-200/50 dark:bg-white/5 backdrop-blur-sm",
     SHIMMER: "after:absolute after:inset-0 after:-translate-x-full after:animate-[shimmer_1.5s_infinite] after:bg-gradient-to-r after:from-transparent after:via-white/60 dark:after:via-white/10 after:to-transparent",
@@ -26,11 +22,9 @@ const STYLES = {
     },
     CARD_CONTAINER: "p-6 md:p-8 rounded-[24px] border border-white/20 dark:border-white/5 bg-[var(--bg-surface)]/40 dark:bg-white/5 shadow-sm h-[240px] flex flex-col"
 };
-
 // -----------------------------------------------------------------------------
 // 2. ATOMIC COMPONENT
 // -----------------------------------------------------------------------------
-
 export const Skeleton: React.FC<SkeletonProps> = memo(({ 
     className = "", 
     variant = 'rounded', 
@@ -39,14 +33,12 @@ export const Skeleton: React.FC<SkeletonProps> = memo(({
     style,
     count = 1
 }) => {
-    const { t } = useTranslation();
-    
+    const { t } = useTranslation();    
     const combinedStyle: React.CSSProperties = useMemo(() => ({
         height,
         width,
         ...style
     }), [height, width, style]);
-
     if (count === 1) {
         return (
             <div 
@@ -58,7 +50,6 @@ export const Skeleton: React.FC<SkeletonProps> = memo(({
             />
         );
     }
-
     return (
         <>
             {Array.from({ length: count }).map((_, i) => (
@@ -74,13 +65,10 @@ export const Skeleton: React.FC<SkeletonProps> = memo(({
         </>
     );
 });
-
 Skeleton.displayName = 'Skeleton';
-
 // -----------------------------------------------------------------------------
 // 3. DASHBOARD SKELETON (Configuration Driven)
 // -----------------------------------------------------------------------------
-
 const GRID_CONFIG = [
     { id: 'stats_1', span: 'col-span-1', type: 'STATS' },
     { id: 'stats_2', span: 'col-span-1', type: 'STATS' },
@@ -88,9 +76,7 @@ const GRID_CONFIG = [
     { id: 'list_1', span: 'col-span-1', type: 'LIST' },
     { id: 'list_2', span: 'col-span-1', type: 'LIST_AVATAR' },
 ] as const;
-
-export const DashboardSkeleton: React.FC = memo(() => {
-    
+export const DashboardSkeleton: React.FC = memo(() => {    
     // Render helpers to keep JSX clean
     const renderContent = (type: string) => {
         switch (type) {
@@ -147,7 +133,6 @@ export const DashboardSkeleton: React.FC = memo(() => {
             default: return null;
         }
     };
-
     return (
         <div className="space-y-6 pb-12 animate-enter">
             {/* Filter Bar */}
@@ -155,7 +140,6 @@ export const DashboardSkeleton: React.FC = memo(() => {
                 <Skeleton width={120} height="100%" className="rounded-xl" />
                 <Skeleton width={40} height="100%" className="rounded-xl" />
             </div>
-
             {/* Bento Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 {GRID_CONFIG.map((item) => (
@@ -167,5 +151,4 @@ export const DashboardSkeleton: React.FC = memo(() => {
         </div>
     );
 });
-
 DashboardSkeleton.displayName = 'DashboardSkeleton';

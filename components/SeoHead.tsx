@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-
 const SITE_URL = 'https://sgsland.vn';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
-
 function usePathname(): string {
   const [pathname, setPathname] = useState(() => window.location.pathname);
   useEffect(() => {
@@ -15,7 +13,6 @@ function usePathname(): string {
   }, []);
   return pathname;
 }
-
 interface SeoHeadProps {
   title: string;
   description: string;
@@ -26,7 +23,6 @@ interface SeoHeadProps {
   structuredData?: object | object[];
   noindex?: boolean;
 }
-
 export function SeoHead({
   title,
   description,
@@ -44,7 +40,6 @@ export function SeoHead({
   const robotsContent = noindex
     ? 'noindex, follow'
     : 'index, follow, max-image-preview:large, max-snippet:-1';
-
   // Update the single canonical element that lives in index.html (id="canonical-url").
   // We do NOT put <link rel="canonical"> inside Helmet because Helmet removes the
   // existing element (losing its id) and creates a new one — which causes a duplicate
@@ -53,7 +48,6 @@ export function SeoHead({
     const el = document.getElementById('canonical-url') as HTMLLinkElement | null;
     if (el) el.href = canonicalUrl;
   }, [canonicalUrl]);
-
   // Manage JSON-LD via direct DOM manipulation so it does not duplicate on navigation.
   // Helmet re-renders <script> tags as new nodes on every route change; updating
   // textContent on a stable element avoids that duplication.
@@ -63,7 +57,6 @@ export function SeoHead({
       if (existing) existing.remove();
       return;
     }
-
     if (process.env.NODE_ENV === 'development') {
       if (!Array.isArray(structuredData) && '@context' in (structuredData as Record<string, unknown>)) {
         console.warn(
@@ -72,11 +65,9 @@ export function SeoHead({
         );
       }
     }
-
     const payload = Array.isArray(structuredData)
       ? { '@context': 'https://schema.org', '@graph': structuredData }
       : { '@context': 'https://schema.org', ...(structuredData as Record<string, unknown>) };
-
     let script = document.getElementById('json-ld-schema') as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement('script');
@@ -86,7 +77,6 @@ export function SeoHead({
     }
     script.textContent = JSON.stringify(payload);
   }, [structuredData]);
-
   return (
     <Helmet>
       <title>{title}</title>

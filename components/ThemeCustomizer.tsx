@@ -9,11 +9,9 @@ import {
   applyCustomTheme,
   clearCustomTheme,
 } from '../services/themeConfig';
-
 interface ThemeCustomizerProps {
   notify: (msg: string, type: 'success' | 'error') => void;
 }
-
 const PRESET_COLORS = [
   { value: '#4F46E5', label: 'Indigo' },
   { value: '#7C3AED', label: 'Violet' },
@@ -24,7 +22,6 @@ const PRESET_COLORS = [
   { value: '#DC2626', label: 'Red' },
   { value: '#0D9488', label: 'Teal' },
 ];
-
 function ColorSwatch({ color, selected, onClick }: { color: string; selected: boolean; onClick: () => void }) {
   return (
     <button
@@ -36,7 +33,6 @@ function ColorSwatch({ color, selected, onClick }: { color: string; selected: bo
     />
   );
 }
-
 function ColorField({
   label,
   hint,
@@ -58,7 +54,6 @@ function ColorField({
     else if (v === '') onChange('');
     else setText(value);
   };
-
   return (
     <div>
       <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{label}</label>
@@ -99,7 +94,6 @@ function ColorField({
     </div>
   );
 }
-
 export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
   const [config, setConfig] = useState<CustomThemeConfig>({ ...DEFAULT_CUSTOM_THEME });
   const [original, setOriginal] = useState<CustomThemeConfig>({ ...DEFAULT_CUSTOM_THEME });
@@ -107,7 +101,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-
   useEffect(() => {
     setLoading(true);
     db.getThemeConfig().then((data: any) => {
@@ -125,7 +118,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
-
   const getThemeStorageKey = () => {
     try {
       const raw = localStorage.getItem('sgs_custom_theme');
@@ -136,7 +128,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
     } catch (_) {}
     return 'sgs_custom_theme';
   };
-
   const updateConfig = useCallback((patch: Partial<CustomThemeConfig>) => {
     setConfig(prev => {
       const next = { ...prev, ...patch };
@@ -145,7 +136,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
       return next;
     });
   }, []);
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -167,7 +157,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
       setSaving(false);
     }
   };
-
   const handleReset = async () => {
     setResetting(true);
     try {
@@ -183,13 +172,11 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
       setResetting(false);
     }
   };
-
   const handleDiscard = () => {
     setConfig({ ...original });
     applyCustomTheme(original);
     setIsDirty(false);
   };
-
   if (loading) {
     return (
       <div className="animate-enter max-w-4xl">
@@ -202,7 +189,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
   const previewSize = FONT_SCALE_OPTIONS.find(s => s.value === config.fontScale)?.size ?? '15px';
   const previewBgApp = config.bgApp || 'var(--bg-app)';
   const previewBgSurface = config.bgSurface || 'var(--bg-surface)';
-
   return (
     <div className="animate-enter max-w-4xl space-y-6">
       {/* Header */}
@@ -221,7 +207,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
           <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
             <h4 className="text-sm font-bold text-[var(--text-primary)] mb-1">Màu chủ đạo</h4>
             <p className="text-xs text-[var(--text-tertiary)] mb-4">Màu này áp dụng cho các nút, liên kết và điểm nhấn trong toàn bộ ứng dụng (cả light và dark mode).</p>
-
             <div className="flex flex-wrap gap-2 mb-4">
               {PRESET_COLORS.map(p => (
                 <ColorSwatch
@@ -265,12 +250,10 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
               />
             </div>
           </div>
-
           {/* Background colors (light mode only) */}
           <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
             <h4 className="text-sm font-bold text-[var(--text-primary)] mb-1">Màu nền (Light mode)</h4>
             <p className="text-xs text-[var(--text-tertiary)] mb-5">Tùy chỉnh màu nền cho chế độ sáng. Để trống để dùng màu mặc định. Dark mode không bị ảnh hưởng.</p>
-
             <div className="space-y-5">
               <ColorField
                 label="Nền ứng dụng"
@@ -295,7 +278,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
               />
             </div>
           </div>
-
           {/* Font Family */}
           <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
             <h4 className="text-sm font-bold text-[var(--text-primary)] mb-1">Kiểu chữ</h4>
@@ -324,7 +306,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
               ))}
             </div>
           </div>
-
           {/* Font Scale */}
           <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
             <h4 className="text-sm font-bold text-[var(--text-primary)] mb-1">Kích thước chữ</h4>
@@ -345,13 +326,11 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
             </div>
           </div>
         </div>
-
         {/* Right: Live Preview */}
         <div className="lg:col-span-1">
           <div className="sticky top-6 space-y-3">
             <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
               <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wide mb-4">Xem trước</h4>
-
               <div
                 className="rounded-xl overflow-hidden border border-[var(--glass-border)]"
                 style={{ fontFamily: previewFont, fontSize: previewSize }}
@@ -387,12 +366,10 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
                   </div>
                 </div>
               </div>
-
               <div className="mt-3 text-xs2 text-[var(--text-tertiary)] text-center">
                 Xem trước trực tiếp với cấu hình hiện tại
               </div>
             </div>
-
             <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">Màu chính</span>
@@ -422,7 +399,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
           </div>
         </div>
       </div>
-
       {/* Action bar */}
       <div className="flex items-center gap-3 flex-wrap pt-2">
         <button
@@ -466,5 +442,4 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
     </div>
   );
 };
-
 export default ThemeCustomizer;

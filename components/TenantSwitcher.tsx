@@ -1,12 +1,9 @@
 import React from 'react';
 import { useTenant } from '../services/tenantContext';
-
 export const TenantSwitcher: React.FC = () => {
     const { tenant } = useTenant();
-
     if (!import.meta.env.DEV) return null;
     if (!tenant) return null;
-
     return (
         <div className="flex items-center space-x-2 px-4 py-2 bg-[var(--glass-surface-hover)] dark:bg-white/5 rounded-xl border border-[var(--glass-border)] dark:border-white/10">
             <div className="flex flex-col">

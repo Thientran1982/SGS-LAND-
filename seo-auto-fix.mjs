@@ -142,9 +142,11 @@ function buildSchemaBlocks() {
       addressRegion: p.loc.split(',').pop()?.trim(),
       addressCountry: 'VN',
     },
-    offers: { '@type': 'Offer', price: p.priceFrom, priceCurrency: 'VND', availability: 'https://schema.org/InStock' },
-    numberOfRooms: '1-5',
-    floorSize: { '@type': 'QuantitativeValue', value: p.scale.replace(/[^\d.,]/g, '') || '0', unitText: 'ha' },
+    offers: p.priceFrom.match(/^\d/)
+      ? { '@type': 'Offer', price: p.priceFrom, priceCurrency: 'VND', availability: 'https://schema.org/InStock' }
+      : { '@type': 'Offer', description: p.priceFrom, priceCurrency: 'VND' },
+    numberOfRooms: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 5 },
+    floorSize: { '@type': 'QuantitativeValue', value: parseFloat(p.scale.replace(/\./g, '').replace(',', '.')) || 0, unitText: 'ha' },
   }));
   const breadcrumbs = [
     { label: 'Homepage',   items: [['Trang Chủ', `${APP_URL}/`]] },
@@ -164,7 +166,7 @@ function buildSchemaBlocks() {
     name: '[Tên video — VD: Tổng quan Aqua City Novaland 4K Drone]',
     description: '[Mô tả 100-200 ký tự về nội dung video, mention rõ tên dự án và CĐT]',
     thumbnailUrl: ['https://i.ytimg.com/vi/[VIDEO_ID]/maxresdefault.jpg'],
-    uploadDate: '2026-01-15',
+    uploadDate: '[YYYY-MM-DD]',
     duration: 'PT3M45S',
     contentUrl: 'https://www.youtube.com/watch?v=[VIDEO_ID]',
     embedUrl: 'https://www.youtube.com/embed/[VIDEO_ID]',
@@ -337,7 +339,8 @@ Production sitemaps already live at:
 This template demonstrates the IDEAL structure: sitemap-index → 4 child sitemaps.
 Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
 -->
-<!-- ============== sitemap-index.xml ============== -->
+<!-- ===== FILE: sitemap-index.xml ===== -->
+<!-- (paste into public/sitemap-index.xml) -->
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
@@ -357,13 +360,17 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
     <lastmod>${TODAY}</lastmod>
   </sitemap>
 </sitemapindex>
-<!-- ============== sitemap-projects.xml ============== -->
+
+<!-- ===== FILE: sitemap-projects.xml ===== -->
+<!-- (paste into public/sitemap-projects.xml) -->
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${projects}
 </urlset>
-<!-- ============== sitemap-blog.xml (template) ============== -->
+
+<!-- ===== FILE: sitemap-blog.xml (template) ===== -->
+<!-- (paste into public/sitemap-blog.xml — replace with real blog URLs) -->
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -373,7 +380,8 @@ ${projects}
     <priority>0.7</priority>
   </url>
 </urlset>
-<!-- ============== sitemap-images.xml (existing) ============== -->
+
+<!-- ===== FILE: sitemap-images.xml (existing) ===== -->
 <!-- Already live at ${APP_URL}/sitemap-images.xml — see public/sitemap-images.xml -->
 `;
 }
@@ -509,6 +517,7 @@ async function main() {
     const todo = await readFile(path.join(ROOT, 'reports', 'FIXES-TODO.md'), 'utf-8');
     const m = todo.match(/P0[^*]*\*\*(\d+)\*\*[^P]*P1[^*]*\*\*(\d+)\*\*[^P]*P2[^*]*\*\*(\d+)\*\*/s);
     if (m) todoSummary = `Latest audit: ${m[1]} P0 · ${m[2]} P1 · ${m[3]} P2`;
+    else todoSummary = '(FIXES-TODO.md found but format unrecognised — check regex)';
   } catch {}
   const produced = [
     { name: 'schema-blocks.html',       content: buildSchemaBlocks(),        purpose: 'JSON-LD reference (Org/LocalBiz/FAQ/Listing/Breadcrumb/Video)', status: 'Already injected per-route by metaInjector.ts' },
