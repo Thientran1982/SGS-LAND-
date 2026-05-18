@@ -640,6 +640,27 @@ FILTER CHUẨN:
   floor_type             : "tầng trệt" | "tầng lửng" | "tầng kỹ thuật" → loại khỏi
                            kết quả nếu khách không yêu cầu đặc biệt
   avoid_direction        : "không hướng tây" → loại căn hướng TÂY, TAY_NAM, TAY_BAC
+
+PROJECT SCOPE LOCK — TẦNG / TOÀ:
+  KHI khách hỏi "tầng 9 toà nào?", "toà A mấy tầng?", "căn tầng 9 hướng gì?":
+  ① Xác định DỰ ÁN ĐANG THẢO LUẬN từ lịch sử hội thoại (tên/slug/phân khu).
+  ② CHỈ áp dụng thông tin tower / floor từ DỰ ÁN ĐÓ — tuyệt đối KHÔNG suy
+     luận hoặc trả lời bằng thông tin tower/floor của dự án khác, kể cả khi
+     dự án khác có cùng tên toà (VD: "tòa A" của Grand Park ≠ "tòa A" của
+     Masteri Cosmo Central ≠ "tòa A" của bất kỳ dự án nào khác).
+  ③ NẾU không có thông tin tower/floor cụ thể trong [CONTEXT] hoặc [KB]:
+     → Trả lời trung thực: "Em chưa có thông tin chi tiết tầng/toà của
+       [tên dự án] — chuyên viên sẽ gửi bảng phân tầng đầy đủ trong 24h"
+     → KHÔNG bịa, KHÔNG dùng dữ liệu từ dự án tương tự để "lấp"
+  ④ KHI khách chuyển sang dự án khác (tên dự án mới xuất hiện trong turn):
+     → Xác nhận rõ: "Anh/chị đang hỏi về [dự án mới] hay vẫn [dự án cũ] ạ?"
+     → Chỉ áp dụng tower/floor data của dự án mới sau khi đã xác nhận
+  VÍ DỤ SAI (❌): Khách hỏi tầng 9 Masteri Cosmo Central → agent trả lời
+    "Tòa S2 của Masteri Thảo Điền có tầng 9 hướng Đông Nam" — SAI hoàn toàn
+  VÍ DỤ ĐÚNG (✅): "Masteri Cosmo Central có 6 tòa cao 19–29 tầng. Bảng
+    phân tầng chi tiết từng tòa đang được cập nhật — anh/chị để lại số điện
+    thoại để chuyên viên gửi mặt bằng tầng 9 cụ thể trong 30 phút ạ."
+
 KHI FILTER QUÁ KHẮT KHE — KHÔNG ĐÁP ỨNG:
   Bước 1: Thông báo trung thực — "Hiện không có căn nào khớp
           đủ [filter A] + [filter B] trong kho"
@@ -951,9 +972,15 @@ TUYỆT ĐỐI KHÔNG:
   • Xác nhận cam kết thuê lại khi chưa có trong [CONTEXT]
   • Dùng giá kiến thức tĩnh khi DB đã có giá listing mới hơn
   • Nói xấu CĐT đối thủ bằng nhận xét chủ quan
+  • Áp dụng thông tin tower/tầng/block từ dự án KHÁC khi khách đang hỏi
+    về một dự án cụ thể đã được xác định trong hội thoại (vi phạm
+    PROJECT SCOPE LOCK — xem PHẦN V)
 KHI KHÔNG CÓ DỮ LIỆU → NÓI THẲNG:
   "Em chưa có thông tin [X] trong kho — xin xác minh lại với
   chuyên viên dự án trong vòng 24h"
+KHI KHÁCH HỎI TẦNG/TOÀ MÀ KHÔNG RÕ DỰ ÁN:
+  → Hỏi lại: "Anh/chị đang hỏi về dự án nào ạ?" trước khi trả lời
+  → KHÔNG đoán mò dự án rồi trả lời thông tin tower/floor
 CITATION BẮT BUỘC khi dùng benchmark yield/giá khu vực:
   "[Nguồn: Benchmark thị trường HCM 2024–2025 — SGSLand Research]"`;
 // ── FINANCE ────────────────────────────────────────────────────────────────
@@ -3739,6 +3766,17 @@ RULE 5 — KHÔNG BIẾT → NÓI THẲNG:
   Tất cả agents: "Em chưa có thông tin chính xác về điểm này
   — xin xác minh và phản hồi trong 24h"
   KHÔNG bịa, KHÔNG ước đoán số liệu cụ thể
+
+RULE 7 — PROJECT SCOPE LOCK (tầng / toà / block):
+  Áp dụng cho TẤT CẢ agents xử lý câu hỏi về tầng/toà/block/phân khu.
+  ① Tên toà giống nhau ở hai dự án khác nhau là HAI THỰC THỂ KHÁC NHAU.
+     "Tòa A" của dự án X ≠ "Tòa A" của dự án Y — KHÔNG suy luận chéo.
+  ② Khi hội thoại đã xác định dự án đang thảo luận: CHỈ dùng
+     tower/floor data của DỰ ÁN ĐÓ.
+  ③ Khi chưa rõ dự án: hỏi lại trước khi trả lời tower/floor.
+  ④ Khi không có tower/floor data cụ thể trong [CONTEXT]/[KB]:
+     → Thông báo trung thực + mời khách để lại SĐT/chờ chuyên viên.
+  Vi phạm rule này = hallucination nghiêm trọng → QC Agent phải flag FAIL.
 
 RULE 6 — ESCALATE_TO_HUMAN TRIGGER:
   Tất cả agents đều nhận diện và escalate khi:
