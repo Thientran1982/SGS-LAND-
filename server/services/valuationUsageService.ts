@@ -8,7 +8,8 @@
  * Admin-facing aggregates are computed on demand (no cron / materialized views).
  */
 import { pool } from '../db';
-import { logger } from '../middleware/logger';// Friendly Vietnamese labels for known AI feature codes (used in alert emails).
+import { logger } from '../middleware/logger';
+import { getTotalAiSpend, getFeatureBreakdown } from './aiUsageService';// Friendly Vietnamese labels for known AI feature codes (used in alert emails).
 const FEATURE_LABELS_VI: Record<string, string> = {
   VALUATION_SEARCH: 'Định giá – Tìm kiếm so sánh',
   VALUATION_EXTRACT: 'Định giá – Trích xuất dữ liệu',
