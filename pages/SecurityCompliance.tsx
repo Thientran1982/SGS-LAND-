@@ -1,11 +1,9 @@
-
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { ComplianceConfig, DlpRule, SecuritySession } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
-
 const ICONS = {
     LOCK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
     SHIELD: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
@@ -13,24 +11,19 @@ const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
-
 const ACTION_ICONS = {
     REDACT: <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     BLOCK:  <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
     LOG_ONLY: <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
 };
-
 const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
     const [form, setForm] = useState({ name: '', pattern: '', action: 'REDACT' });
-
     const actionOptions = useMemo(() => [
         { value: 'REDACT',   label: t('security.action_redact'), icon: ACTION_ICONS.REDACT },
         { value: 'BLOCK',    label: t('security.action_block'),  icon: ACTION_ICONS.BLOCK },
         { value: 'LOG_ONLY', label: t('security.action_log'),    icon: ACTION_ICONS.LOG_ONLY },
     ], [t]);
-
     if (!isOpen) return null;
-
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-[var(--bg-surface)] w-full max-w-md rounded-[24px] shadow-2xl p-6">
@@ -62,7 +55,6 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
         document.body
     );
 };
-
 export const SecurityCompliance: React.FC = () => {
     const [config, setConfig] = useState<ComplianceConfig | null>(null);
     const [sessions, setSessions] = useState<SecuritySession[]>([]);
@@ -70,14 +62,12 @@ export const SecurityCompliance: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'POLICIES' | 'ACCESS'>('POLICIES');
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-
     const { t, formatDateTime } = useTranslation();
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-
     useEffect(() => {
         const load = async () => {
             setLoading(true);
@@ -98,7 +88,6 @@ export const SecurityCompliance: React.FC = () => {
         };
         load();
     }, [notify, t]);
-
     const handleSaveConfig = async () => {
         if (!config) return;
         try {
@@ -106,7 +95,6 @@ export const SecurityCompliance: React.FC = () => {
             notify(t('security.alert_save_success'), 'success');
         } catch (e) { notify(t('common.error'), 'error'); }
     };
-
     const handleRevokeSession = async (id: string) => {
         try {
             await db.revokeSession(id);
@@ -114,19 +102,16 @@ export const SecurityCompliance: React.FC = () => {
             notify(t('security.alert_session_revoked'), 'success');
         } catch (e) { notify(t('common.error'), 'error'); }
     };
-
     const toggleRule = (id: string) => {
         if (!config) return;
         const rules = (config.dlpRules || []).map(r => r.id === id ? { ...r, enabled: !r.enabled } : r);
         setConfig({ ...config, dlpRules: rules });
     };
-
     const handleDeleteRule = (id: string) => {
         if (!config) return;
         const rules = (config.dlpRules || []).filter(r => r.id !== id);
         setConfig({ ...config, dlpRules: rules });
     };
-
     const handleAddRule = (rule: Partial<DlpRule>) => {
         if (!config) return;
         const buf = new Uint32Array(2);
@@ -136,7 +121,6 @@ export const SecurityCompliance: React.FC = () => {
         setConfig({ ...config, dlpRules: [...(config.dlpRules || []), newRule] });
         setIsEditorOpen(false);
     };
-
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
@@ -153,7 +137,6 @@ export const SecurityCompliance: React.FC = () => {
                     <button onClick={() => setActiveTab('ACCESS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'ACCESS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_access')}</button>
                 </div>
             </div>
-
             {activeTab === 'POLICIES' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-enter">
                     {/* Retention Policy */}
@@ -191,7 +174,6 @@ export const SecurityCompliance: React.FC = () => {
                             <button onClick={handleSaveConfig} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95">{t('security.save_policy')}</button>
                         </div>
                     </div>
-
                     {/* DLP Rules */}
                     <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                         <div className="flex justify-between items-center mb-6">
@@ -222,7 +204,6 @@ export const SecurityCompliance: React.FC = () => {
                     </div>
                 </div>
             )}
-
             {activeTab === 'ACCESS' && (
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
                     <h3 className="font-bold text-[var(--text-primary)] mb-6">{t('security.active_sessions')}</h3>
@@ -258,7 +239,6 @@ export const SecurityCompliance: React.FC = () => {
                     </div>
                 </div>
             )}
-
             <RuleEditor isOpen={isEditorOpen} onClose={() => setIsEditorOpen(false)} onSave={handleAddRule} t={t} />
         </div>
         {createPortal(

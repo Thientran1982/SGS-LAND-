@@ -7,11 +7,9 @@
  *
  * Mounted as a portal-style modal from ProjectListingsPanel's admin menu.
  */
-
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { floorPlanApi, FloorPlanSummary, FloorPlanUploadResponse } from '../services/api/floorPlanApi';
-
 export interface FloorPlanManagerModalProps {
   projectId: string;
   projectName: string;
@@ -21,7 +19,6 @@ export interface FloorPlanManagerModalProps {
   onChanged?: () => void;
   t: (k: string) => string;
 }
-
 export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
   projectId,
   projectName,
@@ -33,7 +30,6 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
   const [plans, setPlans] = useState<FloorPlanSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   // Upload form
   const [tower, setTower] = useState('');
   const [floor, setFloor] = useState('');
@@ -42,10 +38,8 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<FloorPlanUploadResponse | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   // Delete confirm
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
   const reload = async () => {
     setLoading(true);
     setError(null);
@@ -58,7 +52,6 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
       setLoading(false);
     }
   };
-
   useEffect(() => {
     if (!isOpen) return;
     reload();
@@ -70,14 +63,12 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, projectId]);
-
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !uploading) onClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, uploading, onClose]);
-
   const handleUpload = async () => {
     if (!file) {
       setError(t('floorplan.pick_file') || 'Vui lòng chọn file SVG');
@@ -103,7 +94,6 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
       setUploading(false);
     }
   };
-
   const handleDelete = async (planId: string) => {
     if (!window.confirm(t('floorplan.confirm_delete') || 'Xoá sa bàn này?')) return;
     setDeletingId(planId);
@@ -117,14 +107,11 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
       setDeletingId(null);
     }
   };
-
   const sortedPlans = useMemo(
     () => [...plans].sort((a, b) => a.tower.localeCompare(b.tower) || a.floor.localeCompare(b.floor)),
     [plans],
   );
-
   if (!isOpen) return null;
-
   return createPortal(
     <div
       className="fixed inset-0 z-[10002] flex items-stretch sm:items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4"
@@ -204,7 +191,6 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
                 />
               </div>
             </div>
-
             <div className="mt-3 flex items-center gap-3 flex-wrap">
               <input
                 ref={fileInputRef}
@@ -229,7 +215,6 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
                   'Chỉ chấp nhận file SVG (≤ 2MB). Mỗi tháp+tầng chỉ có 1 sa bàn — tải lại sẽ thay thế.'}
               </p>
             </div>
-
             {/* Diff result after upload */}
             {uploadResult && (
               <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-3 space-y-2 text-sm">
@@ -295,7 +280,6 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
               </div>
             )}
           </section>
-
           {/* Existing plans */}
           <section>
             <h3 className="text-sm font-bold text-[var(--text-primary)] mb-2">
@@ -337,7 +321,6 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
               </ul>
             )}
           </section>
-
           {error && (
             <div className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</div>
           )}
@@ -347,5 +330,4 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
     document.body,
   );
 };
-
 export default FloorPlanManagerModal;

@@ -1,4 +1,3 @@
-
 import React, { useState, memo, useCallback, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Listing, PropertyType, TransactionType, ListingStatus } from '../types';
@@ -7,7 +6,6 @@ import { NO_IMAGE_URL } from '../utils/constants';
 import { copyToClipboard } from '../utils/clipboard';
 import { ROUTES } from '../config/routes';
 import { formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
-
 // Encapsulated Icons
 export const LISTING_ICONS = {
     HEART_FILLED: <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3.25 7.688 3.25c1.544 0 3.04.99 3.812 2.55.242.49.878.49 1.12 0C13.272 4.24 14.768 3.25 16.312 3.25c2.974 0 5.438 2.072 5.438 5.002 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>,
@@ -29,8 +27,6 @@ export const LISTING_ICONS = {
     FIRE: <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>,
     EYE: <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
 };
-
-
 function toThumbnailUrl(src: string, width = 800): string {
     // Làm tròn lên bội số 64 để khớp cache với utils/imageUrl.ts (LazyImage,
     // optimizedImageUrl) — tránh sinh ra nhiều biến thể gần nhau (vd 800/801/810)
@@ -41,29 +37,24 @@ function toThumbnailUrl(src: string, width = 800): string {
     }
     return src;
 }
-
 const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [imgError, setImgError] = useState(false);
     const hasImages = images && images.length > 0 && !imgError;
-
     const nextImage = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!images?.length) return;
         setImgError(false);
         setCurrentIndex((prev) => (prev + 1) % images!.length);
     };
-
     const prevImage = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!images?.length) return;
         setImgError(false);
         setCurrentIndex((prev) => (prev - 1 + images!.length) % images!.length);
     };
-
     const isHot = (bookingCount || 0) > 100;
     const isRent = transaction === 'RENT';
-
     return (
         <div className="relative aspect-[4/3] w-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 group overflow-hidden cursor-pointer isolate z-0" onClick={onClick}>
             {/* Status Badges - Z-index elevated */}
@@ -73,7 +64,6 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     <div className={`flex items-center gap-1.5 text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-purple-600/90' : 'bg-blue-600/90'}`}>
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
-
                     {isVerified && (
                         <div className="flex items-center gap-1.5 bg-emerald-600/95 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
                             {LISTING_ICONS.VERIFIED}
@@ -81,15 +71,13 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                         </div>
                     )}
                 </div>
-
                 <div className="flex gap-1.5">
                     {bookingCount !== undefined && bookingCount > 0 && (
                         <div className={`flex items-center gap-1.5 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 ${isHot ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' : 'bg-slate-900/80'}`}>
                             {isHot ? LISTING_ICONS.FIRE : LISTING_ICONS.USER}
                             <span>{bookingCount}</span>
                         </div>
-                    )}
-                    
+                    )}                    
                     {(viewCount || 0) > 0 && (
                         <div className="flex items-center gap-1.5 bg-black/60 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
                             {LISTING_ICONS.EYE}
@@ -98,7 +86,6 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     )}
                 </div>
             </div>
-
             <button
                 onClick={onToggleFavorite}
                 className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all active:scale-95 pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
@@ -107,7 +94,6 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             >
                 {isFavorite ? LISTING_ICONS.HEART_FILLED : LISTING_ICONS.HEART_OUTLINE}
             </button>
-
             {hasImages ? (
                 <>
                     <img
@@ -137,18 +123,15 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     {LISTING_ICONS.IMAGE_PLACEHOLDER}
                     <span className="text-xs text-[var(--text-tertiary)] dark:text-slate-500">Chưa có ảnh</span>
                 </div>
-            )}
-            
+            )}            
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 pointer-events-none z-10"></div>
         </div>
     );
 });
-
 export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDuplicate, t }: { listing: Listing, onEdit: () => void, onDelete: () => void, onCopy?: (code: string) => void, onDuplicate: () => void, t: any }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number }>({ left: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
-
     const toggleMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (isOpen) {
@@ -164,7 +147,6 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
             setIsOpen(true);
         }
     };
-
     useEffect(() => {
         if (!isOpen) return;
         const close = () => setIsOpen(false);
@@ -177,7 +159,6 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
             window.removeEventListener('click', close);
         };
     }, [isOpen]);
-
     const handleCopyCode = async () => {
         if (onCopy) {
             const success = await copyToClipboard(listing.code);
@@ -185,7 +166,6 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
         }
         setIsOpen(false);
     };
-
     return (
         <>
             <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-secondary)] hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}>{LISTING_ICONS.ACTION}</button>
@@ -206,7 +186,6 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
         </>
     );
 });
-
 interface ListingCardProps {
     item: Listing;
     t: any;
@@ -219,30 +198,24 @@ interface ListingCardProps {
     onClick?: () => void;
     showActions?: boolean;
 }
-
 export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, onEdit, onDelete, onCopy, onDuplicate, onClick, showActions }: ListingCardProps) => {
     // 1. Guard Clause: Essential for crash prevention if data is malformed
     if (!item) return null;
-
     const viewCount = item.viewCount || 0;
     const isProject = item.type === PropertyType.PROJECT;
-
     const handleCardClick = useCallback(() => {
         if (onClick) {
             onClick();
         }
     }, [item.id, onClick]);
-
     const attributeGrid = useMemo(() => {
-        if (!item) return null;
-        
+        if (!item) return null;        
         const GridItem = ({ label, value }: { label: string, value: string | number }) => (
             <div className="text-center overflow-hidden">
                 <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase truncate" title={label}>{label}</div>
                 <div className="text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 truncate mt-0.5" title={String(value)}>{value}</div>
             </div>
         );
-
         const wrapperClass = "grid grid-cols-3 gap-2 py-2 border-t border-b border-slate-50 dark:border-white/5 mb-2";
         const attrs = item.attributes || {}; 
 
@@ -274,10 +247,8 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     }, [item, t]);
 
     if (!item) return null;
-
     const shouldShowActions = showActions !== undefined ? showActions : !onClick;
     const attrs = item.attributes || {};
-
     return (
         <div 
             onClick={handleCardClick}
@@ -299,7 +270,6 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                     onClick={handleCardClick}
                 />
             </div>
-
             <div className="p-4 flex flex-col flex-1 bg-[var(--bg-surface)] dark:bg-slate-900 relative z-10 min-h-0">
                 <div className="flex justify-between items-start mb-1">
                     <div className="min-w-0 flex-1 mr-2">
@@ -316,14 +286,11 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                         </h3>
                     </div>
                 </div>
-
                 <div className="flex items-center gap-1 text-xs3 text-[var(--text-tertiary)] dark:text-slate-400 mb-3 truncate">
                     {LISTING_ICONS.LOCATION}
                     <span className="truncate">{item.location}</span>
                 </div>
-
                 {attributeGrid}
-
                 <div className="flex justify-between items-center mt-auto pt-1 gap-2">
                     <div className="min-w-0 flex-1">
                         <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase mb-0.5">
@@ -337,8 +304,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                                 {formatUnitPrice(item.price, item.area, t)}
                             </div>
                         )}
-                    </div>
-                    
+                    </div>                    
                     <div className="flex items-center gap-2 shrink-0">
                         {attrs.legalStatus && (
                             <div className="flex flex-col items-end">

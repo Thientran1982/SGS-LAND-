@@ -5,7 +5,6 @@ import { Contract, ContractType, ContractStatus, PaymentMilestone } from '../typ
 import { db } from '../services/dbApi';
 import { Dropdown } from './Dropdown';
 import { PaymentScheduleEditor } from './PaymentScheduleEditor';
-
 const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const formatVNDFull = (n: number): string => {
     if (!n || n === 0) return '';
@@ -22,7 +21,6 @@ const formatVNDFull = (n: number): string => {
     }
     return formatted;
 };
-
 interface CurrencyInputProps {
     label: string;
     value: number | undefined;
@@ -31,7 +29,6 @@ interface CurrencyInputProps {
     inputClass: string;
     labelClass: string;
 }
-
 const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, required, inputClass, labelClass }) => {
     const { t } = useTranslation();
     const preview = value && value > 0 ? formatVNDFull(value) : null;
@@ -65,7 +62,6 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, r
         </div>
     );
 };
-
 interface ContractModalProps {
     contract?: Contract | null;
     initialData?: Partial<Contract>;
@@ -73,9 +69,7 @@ interface ContractModalProps {
     onClose: () => void;
     onSuccess: () => void;
 }
-
 type TabId = 'parties' | 'property' | 'terms' | 'schedule';
-
 interface Tab {
     id: TabId;
     labelKey: string;
@@ -83,7 +77,6 @@ interface Tab {
     activeColor: string;
     icon: React.ReactNode;
 }
-
 const TABS: Tab[] = [
     {
         id: 'parties',
@@ -130,7 +123,6 @@ const TABS: Tab[] = [
         ),
     },
 ];
-
 export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialData, initialTab, onClose, onSuccess }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
@@ -188,22 +180,18 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
         paymentTerms: '',
         ...initialData,
     });
-
     const handleChange = (field: keyof Contract, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
-
     const handleTabChange = (tab: TabId) => {
         setActiveTab(tab);
         if (contentRef.current) {
             contentRef.current.scrollTop = 0;
         }
     };
-
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.changedTouches[0].clientX;
     };
-
     const handleTouchEnd = (e: React.TouchEvent) => {
         const diff = touchStartX.current - e.changedTouches[0].clientX;
         if (Math.abs(diff) < 50) return;
@@ -214,7 +202,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
             handleTabChange(TABS[currentIndex - 1].id);
         }
     };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -240,7 +227,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
             setLoading(false);
         }
     };
-
     const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
     const labelClass = "block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1";
 
@@ -295,7 +281,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-
                 {/* Tab Bar — hidden for Reservation type */}
                 {formData.type !== ContractType.RESERVATION && (
                 <div className="border-b border-[var(--glass-border)] shrink-0">
@@ -329,7 +314,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                     </div>
                 </div>
                 )}
-
                 {/* Content — swipeable on touch devices */}
                 <div
                     ref={contentRef}
@@ -362,12 +346,10 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     />
                                 </div>
                                 )}
-
                                 {/* SECTION 1: KHÁCH HÀNG */}
                                 <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
                                     <h3 className="font-bold text-violet-600 flex items-center gap-2 text-sm border-b border-violet-100 pb-2">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        {t('contracts.reservation_customer_title')}
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>                                        {t('contracts.reservation_customer_title')}
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
@@ -398,12 +380,10 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         <input value={formData.partyBAddress || ''} onChange={e => handleChange('partyBAddress', e.target.value)} className={inputClass} placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
                                     </div>
                                 </div>
-
                                 {/* SECTION 2: BĐS GIỮ CHỖ */}
                                 <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
                                     <h3 className="font-bold text-amber-600 flex items-center gap-2 text-sm border-b border-amber-100 pb-2">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                                        {t('contracts.reservation_property_title')}
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>                                        {t('contracts.reservation_property_title')}
                                     </h3>
                                     <div>
                                         <label className={labelClass}>{t('contracts.reservation_project')} <span className="text-rose-500">*</span></label>
@@ -443,7 +423,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         labelClass={labelClass}
                                     />
                                 </div>
-
                                 {/* SECTION 3: ĐIỀU KHOẢN GIỮ CHỖ */}
                                 <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
                                     <h3 className="font-bold text-rose-600 flex items-center gap-2 text-sm border-b border-rose-100 pb-2">
@@ -490,7 +469,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         />
                                     </div>
                                 </div>
-
                                 {/* BÊN A (Bên bán / Chủ đầu tư) — gọn */}
                                 <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
                                     <h3 className="font-bold text-indigo-600 flex items-center gap-2 text-sm border-b border-indigo-100 pb-2">
@@ -520,7 +498,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 </div>
                             </div>
                         )}
-
                         {/* TAB: PARTIES */}
                         {formData.type !== ContractType.RESERVATION && activeTab === 'parties' && (
                             <div className="space-y-6">
@@ -587,7 +564,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-emerald-600 border-b border-emerald-100 pb-2">{t('contracts.party_b_title')}</h3>
                                     <div>
@@ -632,7 +608,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                             </div>
                             </div>
                         )}
-
                         {/* TAB: PROPERTY */}
                         {formData.type !== ContractType.RESERVATION && activeTab === 'property' && (
                             <div className="space-y-6">
@@ -728,11 +703,9 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 </div>
                             </div>
                         )}
-
                         {/* TAB: TERMS */}
                         {formData.type !== ContractType.RESERVATION && activeTab === 'terms' && (
                             <div className="space-y-6">
-
                                 {/* ── PHẦN 1: THÔNG TIN KÝ KẾT ── */}
                                 <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50/60 p-4 space-y-4">
                                     <h3 className="font-bold text-indigo-700 flex items-center gap-2 text-sm">
@@ -826,7 +799,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 </div>
                             </div>
                         )}
-
                         {/* TAB: PAYMENT SCHEDULE */}
                         {formData.type !== ContractType.RESERVATION && activeTab === 'schedule' && (
                             <div className="space-y-4">
@@ -861,7 +833,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         )}
                     </form>
                 </div>
-
                 {/* Footer */}
                 {savedContractId ? (
                     <div className="px-4 sm:px-6 py-4 border-t border-[var(--glass-border)] bg-emerald-50 rounded-b-2xl shrink-0">

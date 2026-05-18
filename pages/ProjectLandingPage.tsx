@@ -61,7 +61,6 @@ const LAST_UPDATED_DISPLAY = new Date(LAST_UPDATED_ISO).toLocaleDateString('vi-V
 const HOTLINE_DISPLAY = '+84 971 132 378';
 const HOTLINE_TEL = '+84971132378';
 const SUPPORT_EMAIL = 'info@sgsland.vn';
-
 // Per-project price data for AggregateOffer JSON-LD (Google requires lowPrice/highPrice/offerCount)
 const PROJECT_OFFERS: Record<string, { lowPrice: number; highPrice: number; offerCount: number }> = {
     'aqua-city':                 { lowPrice: 6_500_000_000,   highPrice: 50_000_000_000,  offerCount: 200 },

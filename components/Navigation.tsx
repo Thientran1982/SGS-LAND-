@@ -1,10 +1,8 @@
-
 import React, { useState, memo, useMemo, useRef, useEffect } from 'react';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTES } from '../config/routes';
 import { AppNotification } from '../services/api/notificationApi';
-
 interface CommandCenterProps {
     title: string;
     user: User;
@@ -19,11 +17,9 @@ interface CommandCenterProps {
     onDeleteNotification?: (id: string) => void;
     onDeleteAllRead?: () => void;
 }
-
 // -----------------------------------------------------------------------------
 // 1. ASSETS
 // -----------------------------------------------------------------------------
-
 const ICONS = {
     MENU: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
     SEARCH: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -33,11 +29,9 @@ const ICONS = {
     CHECK_ALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7M3 17l4 4L19 5" /></svg>,
     TRASH: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
 };
-
 // -----------------------------------------------------------------------------
 // 2. HELPERS
 // -----------------------------------------------------------------------------
-
 function relativeTime(iso: string, t: (k: string) => string): string {
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60000);
@@ -48,16 +42,13 @@ function relativeTime(iso: string, t: (k: string) => string): string {
     const days = Math.floor(hrs / 24);
     return `${days} ${t('notif.days_ago')}`;
 }
-
 // -----------------------------------------------------------------------------
 // 3. NOTIFICATION ICON MAP
 // -----------------------------------------------------------------------------
 const STAR_ICON = <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>;
 const PERSON_ICON = <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
 const ARROW_ICON = <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>;
-
 const ZALO_ICON = <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.11-1.35A9.96 9.96 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm1.5 14.5H8a.5.5 0 010-1h3.5V14H8.5a.5.5 0 010-1h3a1 1 0 011 1v1.5a1 1 0 01-1 1zm2-4H8a.5.5 0 010-1h7.5a.5.5 0 010 1zm0-2.5H8a.5.5 0 010-1h7.5a.5.5 0 010 1z"/></svg>;
-
 const NOTIF_ICON: Record<string, React.ReactNode> = {
     PROPOSAL_INTEREST: ICONS.HEART,
     PROPOSAL_APPROVED: STAR_ICON,
@@ -65,20 +56,15 @@ const NOTIF_ICON: Record<string, React.ReactNode> = {
     STAGE_CHANGE:      ARROW_ICON,
     ZALO_MESSAGE:      ZALO_ICON,
 };
-
 // -----------------------------------------------------------------------------
 // 4. SUB-COMPONENTS
 // -----------------------------------------------------------------------------
-
 const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean }) => {
     const [imgError, setImgError] = useState(false);
-
     React.useEffect(() => {
         setImgError(false);
     }, [user.avatar]);
-
     const hasAvatar = !!user.avatar && !imgError;
-
     return (
         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
             ${isActive 
@@ -100,7 +86,6 @@ const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean })
         </div>
     );
 });
-
 // Notification panel dropdown
 const NotificationPanel = memo(({ 
     notifications, 
@@ -123,7 +108,6 @@ const NotificationPanel = memo(({
 }) => {
     const hasRead = notifications.some(n => !!n.readAt);
     const hasUnread = notifications.some(n => !n.readAt);
-
     return (
         <div className="absolute right-0 top-full mt-2 w-80 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl shadow-slate-200/60 dark:shadow-slate-900/60 z-50 overflow-hidden">
             {/* Header */}
@@ -152,7 +136,6 @@ const NotificationPanel = memo(({
                     )}
                 </div>
             </div>
-
             {/* List */}
             <div className="max-h-80 overflow-y-auto no-scrollbar">
                 {notifications.length === 0 ? (
@@ -170,7 +153,6 @@ const NotificationPanel = memo(({
                             <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
                                 {NOTIF_ICON[notif.type] ?? ICONS.BELL}
                             </div>
-
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
@@ -207,7 +189,6 @@ const NotificationPanel = memo(({
                                     )}
                                 </div>
                             </div>
-
                             {/* Action buttons: mark read + delete */}
                             <div className="flex flex-col items-center gap-1 shrink-0 mt-0.5">
                                 {!notif.readAt && (
@@ -234,11 +215,9 @@ const NotificationPanel = memo(({
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // 5. MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const CommandCenter: React.FC<CommandCenterProps> = memo(({ 
     title, 
     user, 
@@ -256,7 +235,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
     const { t } = useTranslation();
     const [panelOpen, setPanelOpen] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
-
     // Close panel on outside click
     useEffect(() => {
         if (!panelOpen) return;
@@ -267,8 +245,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
-    }, [panelOpen]);
-    
+    }, [panelOpen]);    
     return (
         <div className="h-12 sm:h-14 px-4 sm:px-6 md:px-8 flex items-center justify-between relative z-30 transition-all duration-300 group/header rounded-none sm:rounded-t-[24px] -mx-[1px] -mt-[1px]">
             {/* Background Blur Layer */}
@@ -286,14 +263,12 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         {ICONS.MENU}
                     </span>
                 </button>
-
                 {/* Mobile Page Title */}
                 {title && (
                     <span className="md:hidden flex-1 min-w-0 text-sm font-bold text-[var(--text-primary)] truncate">
                         {title}
                     </span>
                 )}
-
                 {/* Global Search Trigger (Desktop) */}
                 <div className="hidden md:flex flex-1 max-w-lg relative z-10">
                     <button 
@@ -308,7 +283,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     </button>
                 </div>
             </div>
-
             {/* RIGHT: Notification Bell + Actions & Profile */}
             <div className="flex items-center gap-2 sm:gap-3 relative z-10 shrink-0">
                 {/* Mobile Search Icon */}
@@ -321,7 +295,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         {ICONS.SEARCH_MOBILE}
                     </span>
                 </button>
-
                 {/* Notification Bell */}
                 <div ref={panelRef} className="relative">
                     <button
@@ -338,7 +311,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                             )}
                         </span>
                     </button>
-
                     {panelOpen && (
                         <NotificationPanel
                             notifications={notifications}
@@ -352,7 +324,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         />
                     )}
                 </div>
-
                 {/* Profile */}
                 <button
                     onClick={() => onNavigate(ROUTES.PROFILE)}
@@ -367,13 +338,11 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         <div className="text-xs2 text-[var(--text-tertiary)] font-medium">
                             {t(`role.${user.role?.toUpperCase()}`) || user.role}
                         </div>
-                    </div>
-                    
+                    </div>                    
                     <UserAvatar user={user} isActive={isProfileActive} />
                 </button>
             </div>
         </div>
     );
 });
-
 CommandCenter.displayName = 'CommandCenter';

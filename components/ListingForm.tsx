@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Listing, PropertyType, ListingStatus, TransactionType } from '../types';
@@ -8,7 +7,6 @@ import { VN_PHONE_REGEX } from '../types'; // Reuse regex from types/constants i
 import { useTranslation } from '../services/i18n';
 import { buildVNGeoQueries } from '../utils/vnAddress';
 import { compressImages } from '../utils/imageCompressor';
-
 interface ListingFormProps {
     isOpen: boolean;
     onClose: () => void;
@@ -17,21 +15,18 @@ interface ListingFormProps {
     t: any;
     isProjectUnit?: boolean;
 }
-
 const ICONS = {
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     IMAGE_ADD: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
     DELETE: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     VERIFIED: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M11.379 1.665a3 3 0 00-3.14.318 3.001 3.001 0 00-2.117 2.376 3 3 0 00-2.827 1.398 3 3 0 00-.884 3.056A3.001 3.001 0 002 11.25a3 3 0 00.411 2.439 3 3 0 00.884 3.055 3.001 3.001 0 002.827 1.398 3 3 0 002.117 2.376 3 3 0 003.14.318 3 3 0 003.242 0 3 3 0 003.14-.318 3.001 3.001 0 002.117-2.376 3 3 0 002.827-1.398 3 3 0 00.884-3.056A3.001 3.001 0 0022 11.25a3 3 0 00-.411-2.439 3 3 0 00-.884-3.055 3.001 3.001 0 00-2.827-1.398 3 3 0 00-2.117-2.376 3 3 0 00-3.14-.318 3 3 0 00-3.242 0zM9.53 13.03a.75.75 0 001.06 1.06l4.25-4.25a.75.75 0 00-1.06-1.06L10.06 12.5 8.47 10.91a.75.75 0 00-1.06 1.06l2.12 2.12z" clipRule="evenodd" /></svg>
 };
-
 // Pricing Units
 const getUnits = (t: any) => ({
     BILLION: { value: 1_000_000_000, label: t('format.billion') },
     MILLION: { value: 1_000_000, label: t('format.million') },
     ONE: { value: 1, label: 'VND' }
 });
-
 export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, onSubmit, initialData, t, isProjectUnit = false }) => {
     const { formatCurrency } = useTranslation();
     // Default State
@@ -53,12 +48,10 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         contactPhone: '',
         ownerName: '',
         ownerPhone: '',
-        commission: 2,
+        commission: '',
         commissionUnit: 'PERCENT'
     };
-
     const UNITS = useMemo(() => getUnits(t), [t]);
-
     const [formData, setFormData] = useState<Partial<Listing>>(defaultState);
     const [images, setImages] = useState<string[]>([]);
     const [projects, setProjects] = useState<{value: string, label: string}[]>([]);
@@ -71,11 +64,9 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [dragIdx, setDragIdx] = useState<number | null>(null);
     const [geocoding, setGeocoding] = useState(false);
     const [geocodeMsg, setGeocodeMsg] = useState<string>('');
-
     // Split Price State for UX
     const [priceShort, setPriceShort] = useState<string>('');
     const [priceUnit, setPriceUnit] = useState<number>(UNITS.BILLION.value);
-
     // Shared geocoding helper — returns { lat, lng } or null.
     // Uses buildVNGeoQueries which:
     //   • Restores diacritics for HCMC district/ward names typed without dấu
@@ -103,7 +94,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         }
         return null;
     };
-
     const autoGeocode = async () => {
         const addr = formData.location?.trim();
         if (!addr) { setGeocodeMsg(t('inventory.geocode_no_addr') || 'Vui lòng nhập địa chỉ trước'); return; }
@@ -118,9 +108,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         }
         setGeocoding(false);
     };
-
     const fileInputRef = useRef<HTMLInputElement>(null);
-
     // Escape key + body scroll lock
     useEffect(() => {
         if (!isOpen) return;
@@ -132,7 +120,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             document.body.style.overflow = '';
         };
     }, [isOpen, isSubmitting, onClose]);
-
     // Initialization & Data Conversion
     useEffect(() => {
         if (isOpen) {
@@ -151,8 +138,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
 
             if (initialData && initialData.id) {
                 setFormData(JSON.parse(JSON.stringify(initialData)));
-                setImages(initialData.images || []);
-                
+                setImages(initialData.images || []);                
                 // Smart Price Reverse Logic — dùng toFixed(6) rồi parseFloat để loại FP noise
                 const val = Math.round(Number(initialData.price) || 0);
                 if (val >= 1_000_000_000) {
@@ -169,8 +155,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 // Initialize for NEW listing
                 const initNew = async () => {
                     // Fetch current user to pre-fill contact phone
-                    const user = await db.getCurrentUser();
-                    
+                    const user = await db.getCurrentUser();                    
                     setFormData({
                         ...defaultState,
                         ...initialData,
@@ -186,25 +171,20 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             }
         }
     }, [isOpen, initialData]);
-
     const uploadImageFiles = async (files: File[]) => {
         const imageFiles = files.filter(f => f.type.startsWith('image/'));
         if (imageFiles.length === 0) return;
-
         setUploadError('');
-
         if (images.length + imageFiles.length > 10) {
             setUploadError(t('inventory.max_images'));
             return;
         }
-
         const MAX_SIZE = 10 * 1024 * 1024;
         const oversized = imageFiles.find(f => f.size > MAX_SIZE);
         if (oversized) {
             setUploadError(t('inventory.upload_error_size'));
             return;
         }
-
         setIsUploading(true);
         try {
             const compressed = await compressImages(imageFiles);
@@ -218,33 +198,27 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
-
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             await uploadImageFiles(Array.from(e.target.files));
         }
     };
-
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(true);
     };
-
     const handleDragLeave = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
     };
-
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const droppedFiles = Array.from(e.dataTransfer.files) as File[];
             await uploadImageFiles(droppedFiles);
         }
     };
-
     const handleImageReorder = (fromIdx: number, toIdx: number) => {
         setImages(prev => {
             const updated = [...prev];
@@ -253,29 +227,23 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             return updated;
         });
     };
-
     const removeImage = (index: number) => {
         setImages(prev => prev.filter((_, i) => i !== index));
     };
-
     const updateAttribute = (key: string, value: any) => {
         setFormData(prev => ({
             ...prev,
             attributes: { ...prev.attributes, [key]: value }
         }));
     };
-
     const validate = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.title?.trim()) newErrors.title = t('validation.title_required');
-        if (!isProjectUnit && !formData.location?.trim()) newErrors.location = t('validation.location_required');
-        
+        if (!isProjectUnit && !formData.location?.trim()) newErrors.location = t('validation.location_required');        
         // Price Validation based on calculated value
         const calculatedPrice = parseFloat(priceShort) * priceUnit;
-        if (!priceShort || isNaN(calculatedPrice) || calculatedPrice <= 0) newErrors.price = t('validation.price_invalid');
-        
-        if (!formData.area || formData.area <= 0) newErrors.area = t('validation.area_invalid');
-        
+        if (!priceShort || isNaN(calculatedPrice) || calculatedPrice <= 0) newErrors.price = t('validation.price_invalid');        
+        if (!formData.area || formData.area <= 0) newErrors.area = t('validation.area_invalid');        
         // Contact Phone Validation — skip for project units (inherited from parent)
         if (!isProjectUnit) {
             if (!formData.contactPhone?.trim()) {
@@ -284,29 +252,23 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 newErrors.contactPhone = t('validation.phone_invalid');
             }
         }
-
         // Owner Phone Validation (optional field — only validate if filled)
         if (!isProjectUnit && formData.ownerPhone?.trim() && !VN_PHONE_REGEX.test(formData.ownerPhone)) {
             newErrors.ownerPhone = t('validation.owner_phone_invalid');
-        }
-        
+        }        
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
     const handleSubmit = async () => {
         if (!validate()) return;
         setIsSubmitting(true);
-
         // Calculate final raw price for DB — Math.round loại bỏ lỗi floating-point
         const finalPrice = Math.round(parseFloat(priceShort) * priceUnit);
-
         // Auto-geocode if coordinates are missing — this ensures every listing
         // is stored with real coordinates so the map pin is always accurate.
         let coordinates = formData.coordinates;
         const hasCoords = coordinates?.lat != null && coordinates?.lng != null &&
             (coordinates.lat !== 0 || coordinates.lng !== 0);
-
         if (!hasCoords && formData.location?.trim()) {
             setGeocodeMsg('Đang tự động lấy toạ độ...');
             const result = await geocodeAddress(formData.location.trim());
@@ -318,11 +280,9 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 setGeocodeMsg('');
             }
         }
-
         // Auto-generate code if user left it blank (required by server)
         const finalCode = formData.code?.trim() ||
             `SGS-${Date.now().toString(36).toUpperCase()}`;
-
         try {
             await onSubmit({
                 ...formData,
@@ -335,7 +295,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             setIsSubmitting(false);
         }
     };
-
     // --- OPTIONS MEMOIZATION ---
     const directionOptions = useMemo(() => [
         { value: 'North', label: t('direction.North') },
@@ -347,13 +306,11 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         { value: 'SouthEast', label: t('direction.SouthEast') },
         { value: 'SouthWest', label: t('direction.SouthWest') },
     ], [t]);
-
     const legalOptions = useMemo(() => [
         { value: 'PinkBook', label: t('legal.PinkBook') },
         { value: 'Contract', label: t('legal.Contract') },
         { value: 'Waiting', label: t('legal.Waiting') },
     ], [t]);
-
     const landTypeOptions = useMemo(() => ['ONT', 'ODT', 'CLN', 'LUK', 'SKK', 'TMD'].map(type => ({ value: type, label: type })), []);
     const typeOptions = useMemo(() => Object.values(PropertyType)
         .filter(tKey => !isProjectUnit || tKey !== PropertyType.PROJECT)
@@ -361,25 +318,21 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const statusOptions = useMemo(() => Object.values(ListingStatus).map(s => ({ value: s, label: t(`status.${s}`) })), [t]);
     const transactionOptions = useMemo(() => Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) })), [t]);
     const priceUnitOptions = useMemo(() => Object.values(UNITS).map(u => ({ value: u.value, label: u.label })), [UNITS]);
-
     const commissionUnitOptions = useMemo(() => [
         { value: 'PERCENT', label: '%' },
         { value: 'FIXED', label: 'VND' }
     ], []);
-
     const furnitureOptions = useMemo(() => [
         { value: 'FULL', label: t('furniture.FULL') },
         { value: 'BASIC', label: t('furniture.BASIC') },
         { value: 'NONE', label: t('furniture.NONE') },
     ], [t]);
-
     // --- DYNAMIC FIELDS LOGIC ---
     const isProject = formData.type === PropertyType.PROJECT;
     const isLand = [PropertyType.LAND, PropertyType.FACTORY, PropertyType.COMMERCIAL, PropertyType.TOWNHOUSE, PropertyType.VILLA].includes(formData.type as PropertyType);
     const isApartmentLike = [PropertyType.APARTMENT, PropertyType.PENTHOUSE].includes(formData.type as PropertyType);
     const BUILT_AREA_TYPES = [PropertyType.TOWNHOUSE, PropertyType.VILLA, PropertyType.HOUSE, PropertyType.OFFICE, PropertyType.FACTORY, PropertyType.COMMERCIAL];
     const hasBuiltArea = BUILT_AREA_TYPES.includes(formData.type as PropertyType);
-
     const renderDynamicFields = () => {
         if (isProject) {
             return (
@@ -406,8 +359,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                     </div>
                 </div>
             );
-        }
-        
+        }        
         if (isLand) {
             return (
                 <div className="grid grid-cols-2 gap-4">
@@ -446,7 +398,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 </div>
             );
         }
-
         // Apartment / Penthouse — full 9-field 3×3 grid
         if (isApartmentLike) {
             return (
@@ -501,7 +452,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 </div>
             );
         }
-
         // Default: House / Office (bedrooms, bathrooms, floor, direction, furniture, legal)
         return (
             <div className="grid grid-cols-3 gap-4">
@@ -544,9 +494,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             </div>
         );
     };
-
     if (!isOpen) return null;
-
     return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="listing-form-title">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!isSubmitting ? onClose : undefined} />
@@ -558,8 +506,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                     <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors">
                         {ICONS.CLOSE}
                     </button>
-                </div>
-                
+                </div>                
                 {/* Scroll Container: Added no-scrollbar */}
                 <div className="flex-1 overflow-y-auto p-6 bg-[var(--glass-surface)]/50 overscroll-contain no-scrollbar">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -604,8 +551,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         placeholder={isProject ? t('inventory.placeholder_title_project') : t('inventory.placeholder_title_unit')} 
                                     />
                                     {errors.title && <p className="text-xs2 text-rose-500 mt-1">{errors.title}</p>}
-                                </div>
-                                
+                                </div>                                
                                 {/* CONTACT PHONE — hidden for project units */}
                                 {!isProjectUnit && (
                                 <div>
@@ -621,7 +567,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     {errors.contactPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.contactPhone}</p>}
                                 </div>
                                 )}
-
                                 {/* CONSIGNMENT INFO (OWNER & COMMISSION) — hidden for project units */}
                                 {!isProjectUnit && (
                                 <div className="p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] space-y-4">
@@ -672,7 +617,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     </div>
                                 </div>
                                 )}
-
                                 {/* LOCATION + COORDINATES — hidden for project units (inherited from parent) */}
                                 {!isProjectUnit && (
                                 <div>
@@ -812,7 +756,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         </div>
                                         {errors.area && <p className="text-xs2 text-rose-500 mt-1">{errors.area}</p>}
                                     </div>
-
                                     {/* CLEAR AREA (DT thông thủy) — cùng hàng với Diện tích, chỉ hiển thị cho Căn hộ / Penthouse */}
                                     {isApartmentLike && (
                                     <div className="col-span-1">
@@ -831,7 +774,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     </div>
                                     )}
                                 </div>
-
                                 {/* BUILT AREA — chỉ hiển thị cho: Nhà phố, Biệt thự, Nhà riêng, Văn phòng, Nhà xưởng, Thương mại */}
                                 {hasBuiltArea && (
                                 <div>
@@ -848,7 +790,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     </div>
                                 </div>
                                 )}
-
                                 {/* DESCRIPTION — hidden for project units */}
                                 {!isProjectUnit && (
                                 <div>
@@ -914,8 +855,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         />
                                     </div>
                                 </div>
-                            </div>
-                            
+                            </div>                            
                             {/* IMAGES SECTION */}
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex-1">
                                 <div className="flex justify-between items-center mb-4">
@@ -971,8 +911,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                             </div>
                         </div>
                     </div>
-                </div>
-                
+                </div>                
                 <div className="p-6 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] rounded-b-[24px] flex gap-3 shrink-0">
                     <button onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-70">{t('common.cancel')}</button>
                     <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all hover:-translate-y-0.5 disabled:opacity-70 flex items-center justify-center gap-2">

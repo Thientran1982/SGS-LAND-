@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -6,11 +5,9 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from './Dropdown';
 import { Lead, LEAD_SOURCES, VN_PHONE_REGEX, LeadStage } from '../types';
 import { useSocket } from '../services/websocket';
-
 const ICONS = {
     DUPLICATE: <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 00-2-2v-2" /></svg>
 };
-
 const FormInput = ({ label, value, onChange, placeholder, required, type = 'text', autoFocus, error, className = "" }: any) => (
     <div className={`space-y-1 ${className}`}>
         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 block">
@@ -28,7 +25,6 @@ const FormInput = ({ label, value, onChange, placeholder, required, type = 'text
         {error && <p className="text-xs2 text-rose-500 font-bold ml-1">{error}</p>}
     </div>
 );
-
 const FormTextArea = ({ label, value, onChange, placeholder }: any) => (
     <div className="space-y-1">
         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 block">{label}</label>
@@ -40,12 +36,10 @@ const FormTextArea = ({ label, value, onChange, placeholder }: any) => (
         />
     </div>
 );
-
 interface CreateLeadModalProps {
     onClose: () => void;
     onSuccess: () => void;
 }
-
 export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuccess }) => {
     const [step, setStep] = useState<'FORM' | 'MERGE'>('FORM');
     // Enhanced State to match Lead Type
@@ -59,8 +53,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         tags: '', // Managed as string for input, converted to array on save
         notes: '',
         assignedTo: ''
-    });
-    
+    });    
     const [loading, setLoading] = useState(false);
     const [duplicateLead, setDuplicateLead] = useState<Lead | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -72,13 +65,11 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
     const emailCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { t, formatDate } = useTranslation();
     const { socket } = useSocket();
-
     const updateField = (key: string, value: string | LeadStage) => {
         setFormData(prev => ({ ...prev, [key]: value }));
         // Clear error on type
         if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
     };
-
     const [users, setUsers] = useState<{value: string, label: string}[]>([]);
 
     React.useEffect(() => {
@@ -95,7 +86,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         };
         fetchUsers();
     }, [t]);
-
     // Debounced phone duplicate check — fires 600ms after the user stops typing a valid VN phone
     useEffect(() => {
         if (phoneCheckRef.current) clearTimeout(phoneCheckRef.current);
@@ -118,7 +108,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         }, 600);
         return () => { if (phoneCheckRef.current) clearTimeout(phoneCheckRef.current); };
     }, [formData.phone]);
-
     // Debounced email duplicate check — fires 700ms after the user stops typing a valid email
     useEffect(() => {
         if (emailCheckRef.current) clearTimeout(emailCheckRef.current);
@@ -141,10 +130,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         }, 700);
         return () => { if (emailCheckRef.current) clearTimeout(emailCheckRef.current); };
     }, [formData.email]);
-
     const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
+        e.preventDefault();        
         // 1. Validation
         const newErrors: Record<string, string> = {};
         if (!formData.name.trim()) {
@@ -155,26 +142,21 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         }
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = t('validation.email_invalid');
-        }
-        
+        }        
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
         }
-
-        setLoading(true);
-        
+        setLoading(true);        
         try {
             // Use pre-detected phone warning if available, otherwise check API
-            const existing = phoneWarning ?? await db.checkDuplicateLead(formData.phone);
-            
+            const existing = phoneWarning ?? await db.checkDuplicateLead(formData.phone);            
             if (existing) {
                 setDuplicateLead(existing);
                 setStep('MERGE');
                 setLoading(false);
                 return;
             }
-
             // Prepare payload
             const payload = {
                 ...formData,
@@ -182,7 +164,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                 // Enhanced tag processing: Split by comma, trim spaces, remove empty strings
                 tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
             };
-
             const createdLead = await db.createLead(payload);
             socket?.emit("lead_created", createdLead);
             onSuccess();
@@ -200,13 +181,11 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             setLoading(false);
         }
     };
-
     const handleMerge = async () => {
         if (!duplicateLead) return;
         setLoading(true);
         try {
             const newTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-
             // Additive-only: never send name (identity), only send fields the existing lead is missing
             const mergePayload: Record<string, any> = {
                 tags: newTags,
@@ -218,7 +197,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             if (formData.notes) {
                 mergePayload.notes = `${duplicateLead.notes || ''}\n[Merge ${formatDate(new Date().toISOString())}]: ${formData.notes}`.trim();
             }
-
             const updatedLead = await db.mergeLead(duplicateLead.id, mergePayload);
             socket?.emit("lead_updated", updatedLead ?? { ...duplicateLead, ...mergePayload });
             onSuccess();
@@ -226,7 +204,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             setLoading(false);
         }
     };
-
     // Compute what the merge will actually contribute — shown in the preview
     const mergePreview = duplicateLead ? (() => {
         const items: string[] = [];
@@ -238,7 +215,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         if (addedTags.length > 0) items.push(`Tags: +${addedTags.join(', ')}`);
         return items;
     })() : [];
-
     // Use memoized options with translation
     const sourceOptions = useMemo(() => 
         LEAD_SOURCES.map(s => ({ 
@@ -246,11 +222,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             label: t(`source.${s}`) !== `source.${s}` ? t(`source.${s}`) : s
         }))
     , [t]);
-
     const stageOptions = useMemo(() => 
         Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))
     , [t]);
-
     // Escape key + body scroll lock
     React.useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && !loading) onClose(); };
@@ -261,12 +235,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             document.body.style.overflow = '';
         };
     }, [loading, onClose]);
-
     return createPortal(
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="create-lead-title">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!loading ? onClose : undefined} />
-            
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!loading ? onClose : undefined} />            
             {/* Modal */}
             <div className="bg-[var(--bg-surface)] w-full max-w-2xl rounded-[24px] p-8 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[90vh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-6">
@@ -275,10 +247,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                     </h3>
                     <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">✕</button>
                 </div>
-
                 {step === 'FORM' ? (
-                    <form onSubmit={handleCreate} className="space-y-5">
-                        
+                    <form onSubmit={handleCreate} className="space-y-5">                        
                         {/* Row 1: Identity */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <FormInput 
@@ -316,7 +286,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 )}
                             </div>
                         </div>
-
                         {/* Row 2: Contact & Location */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
@@ -351,7 +320,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 placeholder={t('leads.placeholder_address')}
                             />
                         </div>
-
                         {/* Row 3: Status & Classification */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
@@ -371,7 +339,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 />
                             </div>
                         </div>
-
                         {/* Row 4: Tags & AssignedTo */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <FormInput 
@@ -389,7 +356,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 />
                             </div>
                         </div>
-
                         {/* Row 5: Notes */}
                         <FormTextArea 
                             label={t('leads.notes')}
@@ -397,7 +363,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             onChange={(v: string) => updateField('notes', v)}
                             placeholder={t('leads.placeholder_notes')}
                         />
-
                         <div className="pt-4 flex gap-3 border-t border-[var(--glass-border)] mt-2">
                             <button 
                                 type="button" 
@@ -425,8 +390,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     <p className="font-bold mb-1">{t('leads.duplicate_msg')}</p>
                                     <p className="text-xs opacity-90 leading-relaxed">{t('leads.merge_confirm')}</p>
                                 </div>
-                            </div>
-                            
+                            </div>                            
                             <div className="bg-[var(--bg-surface)]/60 p-3 rounded-lg mt-3 text-xs border border-amber-200/50">
                                 <div className="grid grid-cols-[60px_1fr] gap-1">
                                     <span className="text-amber-700/60 font-bold">{t('leads.name')}:</span>
@@ -437,8 +401,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                         {duplicateLead?.phone
                                             ? duplicateLead.phone.slice(0, 3) + '****' + duplicateLead.phone.slice(-3)
                                             : '—'}
-                                    </span>
-                                    
+                                    </span>                                    
                                     <span className="text-amber-700/60 font-bold">{t('common.owner')}:</span>
                                     <span>
                                         {duplicateLead?.assignedToName
@@ -447,7 +410,6 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     </span>
                                 </div>
                             </div>
-
                             {/* What will actually be added */}
                             <div className="mt-3 pt-2 border-t border-amber-200/40">
                                 <p className="text-xs font-bold text-amber-700/80 mb-1.5">Thông tin sẽ bổ sung vào hồ sơ:</p>
@@ -463,8 +425,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     <p className="text-xs text-amber-600/70 italic">Không có thông tin mới để bổ sung — chỉ gộp hồ sơ.</p>
                                 )}
                             </div>
-                        </div>
-                        
+                        </div>                        
                         <div className="pt-2 flex gap-3">
                             <button 
                                 type="button" 

@@ -17,10 +17,8 @@
  * CSP header (script-src 'none'). We still set the inner HTML inside an
  * isolated container; we never execute remote SVG code.
  */
-
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { floorPlanApi, FloorPlanDetail, FloorPlanListingDetail } from '../services/api/floorPlanApi';
-
 export interface FloorPlanRendererProps {
   projectId: string;
   planId: string;
@@ -33,7 +31,6 @@ export interface FloorPlanRendererProps {
   /** Translation function (project page passes its own t()). */
   t?: (k: string) => string;
 }
-
 // status → fill colors per Task #26 spec.
 //   AVAILABLE = green, BOOKING = yellow, SOLD = red, OPENING = purple,
 //   INACTIVE = gray. HOLD/RENTED keep amber/violet (consistent with the
@@ -58,7 +55,6 @@ const STATUS_STROKE: Record<string, string> = {
 };
 const UNMAPPED_FILL = '#e2e8f0';
 const UNMAPPED_STROKE = '#94a3b8';
-
 function fmtArea(a: number | null | undefined): string {
   if (a == null || !isFinite(a) || a <= 0) return '—';
   return `${a.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} m²`;
@@ -69,9 +65,7 @@ function fmtPriceShort(p: number | null | undefined): string {
   if (p >= 1_000_000) return `${(p / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr`;
   return p.toLocaleString('vi-VN');
 }
-
 const tDefault = (k: string) => k;
-
 export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
   projectId,
   planId,
@@ -92,15 +86,12 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
     price: number | null;
     title: string | null;
   } | null>(null);
-
   // Pan/zoom transform state
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
-
   const svgHostRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-
   // ── Initial load (detail JSON + SVG markup in parallel) ─────────────────
   useEffect(() => {
     let aborted = false;
@@ -131,7 +122,6 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       aborted = true;
     };
   }, [projectId, planId, t]);
-
   // ── 30s poll (statuses only) ────────────────────────────────────────────
   useEffect(() => {
     if (!detail) return;
@@ -150,13 +140,11 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       window.clearInterval(id);
     };
   }, [detail?.plan?.id, projectId, planId, pollIntervalMs]);
-
   // ── Color paths whenever detail or markup changes ───────────────────────
   useEffect(() => {
     if (!svgHostRef.current || !detail) return;
     const root = svgHostRef.current.querySelector('svg');
     if (!root) return;
-
     // Make sure SVG fills the wrapper
     root.removeAttribute('width');
     root.removeAttribute('height');
@@ -165,17 +153,14 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
     if (!root.getAttribute('preserveAspectRatio')) {
       root.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     }
-
     const els = root.querySelectorAll<SVGElement>('[data-code]');
     els.forEach((el) => {
       const rawCode = el.getAttribute('data-code') || '';
       const code = rawCode.trim().toUpperCase();
       const listingId = detail.mapping[code] || null;
       const status = listingId ? detail.statuses[listingId] : null;
-
       const fill = status && STATUS_FILL[status] ? STATUS_FILL[status] : UNMAPPED_FILL;
       const stroke = status && STATUS_STROKE[status] ? STATUS_STROKE[status] : UNMAPPED_STROKE;
-
       el.setAttribute('fill', fill);
       el.setAttribute('fill-opacity', listingId ? '0.7' : '0.35');
       el.setAttribute('stroke', stroke);
@@ -184,7 +169,6 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       // is typed as CSSStyleDeclaration in lib.dom.d.ts.
       el.style.cursor = listingId ? 'pointer' : 'not-allowed';
       el.style.transition = 'fill-opacity 120ms ease';
-
       // Tooltip via <title> child (only set once)
       if (!el.querySelector('title')) {
         const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
@@ -200,12 +184,10 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       }
     });
   }, [svgMarkup, detail, t]);
-
   // ── Event delegation: hover + click on bound paths ──────────────────────
   useEffect(() => {
     const host = svgHostRef.current;
     if (!host || !detail) return;
-
     function findCodeEl(target: EventTarget | null): SVGElement | null {
       let node = target as Element | null;
       while (node && node !== host) {
@@ -216,7 +198,6 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       }
       return null;
     }
-
     const handleClick = (e: MouseEvent) => {
       const el = findCodeEl(e.target);
       if (!el) return;
@@ -226,7 +207,6 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       e.stopPropagation();
       onSelectListing?.(listingId, code);
     };
-
     const handleMove = (e: MouseEvent) => {
       const el = findCodeEl(e.target);
       if (!el) {
@@ -248,9 +228,7 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
         title: lDetail?.title ?? null,
       });
     };
-
     const handleLeave = () => setHovered(null);
-
     host.addEventListener('click', handleClick);
     host.addEventListener('mousemove', handleMove);
     host.addEventListener('mouseleave', handleLeave);
@@ -260,7 +238,6 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       host.removeEventListener('mouseleave', handleLeave);
     };
   }, [detail, onSelectListing]);
-
   // ── Pan + zoom (wheel + pointer + pinch) ────────────────────────────────
   const handleWheel = useCallback(
     (e: React.WheelEvent<HTMLDivElement>) => {
@@ -270,18 +247,15 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
     },
     [scale],
   );
-
   // Pointer-based pan + 2-pointer pinch
   const ptrState = useRef<{
     pointers: Map<number, { x: number; y: number }>;
     panStart: { x: number; y: number; tx: number; ty: number } | null;
     pinchStart: { dist: number; scale: number } | null;
   }>({ pointers: new Map(), panStart: null, pinchStart: null });
-
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
     ptrState.current.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
     if (ptrState.current.pointers.size === 1) {
       ptrState.current.panStart = { x: e.clientX, y: e.clientY, tx, ty };
     } else if (ptrState.current.pointers.size === 2) {
@@ -293,12 +267,10 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       ptrState.current.panStart = null;
     }
   };
-
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const ps = ptrState.current.pointers;
     if (!ps.has(e.pointerId)) return;
     ps.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
     if (ps.size === 2 && ptrState.current.pinchStart) {
       const pts = Array.from(ps.values());
       const dx = pts[0].x - pts[1].x;
@@ -314,19 +286,16 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       setTy(ptrState.current.panStart.ty + dy);
     }
   };
-
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     ptrState.current.pointers.delete(e.pointerId);
     if (ptrState.current.pointers.size < 2) ptrState.current.pinchStart = null;
     if (ptrState.current.pointers.size === 0) ptrState.current.panStart = null;
   };
-
   const resetView = () => {
     setScale(1);
     setTx(0);
     setTy(0);
   };
-
   // Stats summary (for legend / counts)
   const summary = useMemo(() => {
     if (!detail) return null;
@@ -386,7 +355,6 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
           </button>
         </div>
       </div>
-
       {/* SVG canvas */}
       <div
         ref={wrapperRef}
@@ -422,7 +390,6 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
             }}
           />
         )}
-
         {/* Hover badge — code + status + area + price (Task #26 spec) */}
         {hovered && (
           <div className="pointer-events-none absolute bottom-3 left-3 px-3 py-2 rounded-lg bg-black/85 text-white text-xs font-semibold shadow-lg max-w-[260px]">
@@ -456,5 +423,4 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
     </div>
   );
 };
-
 export default FloorPlanRenderer;

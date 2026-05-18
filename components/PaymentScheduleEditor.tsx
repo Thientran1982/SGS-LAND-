@@ -1,23 +1,19 @@
 import React, { useCallback } from 'react';
 import { PaymentMilestone, PaymentStatus } from '../types';
 import { useTranslation } from '../services/i18n';
-
 interface PaymentScheduleEditorProps {
     milestones: PaymentMilestone[];
     totalPrice: number;
     onChange: (milestones: PaymentMilestone[]) => void;
     readOnly?: boolean;
 }
-
 const STATUS_CONFIG: Record<PaymentStatus, { label_key: string; color: string; bg: string; dot: string }> = {
     [PaymentStatus.PENDING]:  { label_key: 'payment.status_PENDING',  color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200',   dot: 'bg-amber-400' },
     [PaymentStatus.PAID]:     { label_key: 'payment.status_PAID',     color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
     [PaymentStatus.OVERDUE]:  { label_key: 'payment.status_OVERDUE',  color: 'text-rose-700',   bg: 'bg-rose-50 border-rose-200',     dot: 'bg-rose-500 animate-pulse' },
     [PaymentStatus.WAIVED]:   { label_key: 'payment.status_WAIVED',   color: 'text-slate-500',  bg: 'bg-slate-50 border-slate-200',   dot: 'bg-slate-400' },
 };
-
 const generateId = () => `ms_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
-
 const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const formatVND = (n: number) => {
     if (!n) return '0';
@@ -25,7 +21,6 @@ const formatVND = (n: number) => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} Tr`;
     return fmtDots(n);
 };
-
 export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
     milestones,
     totalPrice,
@@ -33,7 +28,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
     readOnly = false,
 }) => {
     const { t } = useTranslation();
-
     const totalScheduled    = milestones.reduce((s, m) => s + (m.amount || 0), 0);
     const totalPaid         = milestones.filter(m => m.status === PaymentStatus.PAID).reduce((s, m) => s + (m.paidAmount ?? m.amount ?? 0), 0);
     const overdueCount      = milestones.filter(m => m.status === PaymentStatus.OVERDUE || (m.status === PaymentStatus.PENDING && m.dueDate && new Date(m.dueDate) < new Date())).length;
@@ -41,7 +35,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
     const totalAllocatedPct = Math.round(milestones.reduce((s, m) => s + (m.percentage || 0), 0) * 10) / 10;
     const remainingPct      = Math.round((100 - totalAllocatedPct) * 10) / 10;
     const isOverAllocated   = totalAllocatedPct > 100.05;
-
     const addMilestone = useCallback(() => {
         const existing = milestones.length + 1;
         const alreadyAllocatedPct = milestones.reduce((s, m) => s + (m.percentage || 0), 0);
@@ -56,7 +49,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
         };
         onChange([...milestones, newMs]);
     }, [milestones, onChange, totalPrice, t]);
-
     const updateField = useCallback(<K extends keyof PaymentMilestone>(id: string, field: K, value: PaymentMilestone[K]) => {
         onChange(milestones.map(m => {
             if (m.id !== id) return m;
@@ -71,13 +63,11 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
             return updated;
         }));
     }, [milestones, onChange, totalPrice]);
-
     const removeMilestone = useCallback((id: string) => {
         onChange(milestones.filter(m => m.id !== id));
     }, [milestones, onChange]);
 
     const inputCls = "w-full border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] disabled:opacity-60 disabled:cursor-not-allowed";
-
     return (
         <div className="space-y-4">
             {/* Summary bar */}
@@ -123,7 +113,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                     )}
                 </div>
             )}
-
             {/* Milestone rows */}
             {milestones.length === 0 ? (
                 <div className="text-center py-8 text-xs text-[var(--text-tertiary)] border-2 border-dashed border-[var(--glass-border)] rounded-2xl">
@@ -166,7 +155,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                         </button>
                                     )}
                                 </div>
-
                                 {/* Fields grid */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                     <div>
@@ -226,7 +214,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                         </select>
                                     </div>
                                 </div>
-
                                 {/* Paid section — show when PAID or WAIVED */}
                                 {(ms.status === PaymentStatus.PAID || ms.status === PaymentStatus.WAIVED) && (
                                     <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[var(--glass-border)]">
@@ -265,7 +252,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                         </div>
                                     </div>
                                 )}
-
                                 {/* Note */}
                                 <div>
                                     <input
@@ -277,7 +263,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                         aria-label={t('payment.note')}
                                     />
                                 </div>
-
                                 {/* Formatted amount display */}
                                 {ms.amount > 0 && (
                                     <div className="text-right text-xs font-bold text-indigo-600">
@@ -290,7 +275,6 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                     })}
                 </div>
             )}
-
             {/* Add button */}
             {!readOnly && (
                 <button

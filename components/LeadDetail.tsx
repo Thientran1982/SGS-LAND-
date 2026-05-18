@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Lead, LeadStage, Interaction, Channel, Direction, LEAD_SOURCES, VN_PHONE_REGEX, ContractStatus, ContractType, Contract, PaymentMilestone } from '../types';
@@ -10,9 +9,7 @@ import { Dropdown } from './Dropdown';
 import { ContractModal } from './ContractModal';
 import { useSocket } from '../services/websocket';
 import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from './AiCreditBadge';
-
 const fmtDots = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
 const stripMarkdown = (text: string): string =>
     text
         .replace(/\*\*(.+?)\*\*/g, '$1')
@@ -22,11 +19,9 @@ const stripMarkdown = (text: string): string =>
         .replace(/__(.+?)__/g, '$1')
         .replace(/`(.+?)`/g, '$1')
         .trim();
-
 const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: any) => (
     <div className="bg-white p-5 rounded-2xl mb-8 border border-indigo-100 shadow-sm animate-enter relative group overflow-hidden">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none"></div>
-
         <div className="flex justify-between items-center mb-4 relative z-10">
             <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200">
@@ -48,14 +43,12 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: an
                 </button>
             </AiQuotaGate>
         </div>
-
         {/* Credit badge — only shown when quota is limited and not unlimited */}
         {quota && !quota.isUnlimited && (
             <div className="mb-3 relative z-10">
                 <AiCreditBadge quota={quota} featureLabel="Phân tích ARIA" onUpgradeClick={onUpgrade} />
             </div>
         )}
-
         {loading ? (
             <div className="space-y-2.5 py-1 relative z-10">
                 <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-full"></div>
@@ -79,7 +72,6 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: an
         )}
     </div>
 );
-
 const DetailField = ({ label, children, className, error }: any) => (
     <div className={`space-y-1 ${className}`}>
         <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase ml-1 block tracking-wide">{label}</label>
@@ -87,7 +79,6 @@ const DetailField = ({ label, children, className, error }: any) => (
         {error && <p className="text-xs2 text-rose-500 font-bold ml-1">{error}</p>}
     </div>
 );
-
 const TimelineItem = ({ item, t, formatDateTime }: any) => {
     const isSystem = item.type === 'SYSTEM' || item.metadata?.systemType;
 
@@ -102,7 +93,6 @@ const TimelineItem = ({ item, t, formatDateTime }: any) => {
             </div>
         );
     }
-
     return (
         <div className="flex gap-4 pb-6 border-l border-[var(--glass-border)] ml-2 pl-6 relative animate-enter">
             <div className={`absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white ${item.direction === Direction.OUTBOUND ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
@@ -125,7 +115,6 @@ const TimelineItem = ({ item, t, formatDateTime }: any) => {
         </div>
     );
 };
-
 const ICONS = {
     SEND: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
     ZALO: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
@@ -133,19 +122,16 @@ const ICONS = {
     SMS: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
     EDIT_PEN: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
 };
-
 const STYLES = {
     INPUT: "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all",
     INPUT_ERROR: "w-full border border-rose-300 bg-rose-50 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
 };
-
 interface LeadDetailProps {
     lead: Lead;
     onClose: () => void;
     onUpdate: (lead: Lead) => Promise<void>;
     isModal?: boolean;
 }
-
 export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate, isModal }) => {
     const { socket } = useSocket();
     const [formData, setFormData] = useState<Lead>({ ...lead });
@@ -174,9 +160,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const [loadingEditContract, setLoadingEditContract] = useState(false);
     const [activeViewers, setActiveViewers] = useState<any[]>([]);
     const { t, formatDateTime, language } = useTranslation();
-
     const [users, setUsers] = useState<{value: string, label: string}[]>([]);
-
     const refreshAiSummary = async () => {
         setIsThinking(true);
         try {
@@ -190,18 +174,15 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             setIsThinking(false);
         }
     };
-
     useEffect(() => {
         setFormData({ ...lead });
         setErrors({});
         setAiSummary("");
         setLocalContractSchedule(null);
-        setLocalContractInfo(null);
-        
+        setLocalContractInfo(null);        
         const load = async () => {
             const history = await db.getInteractions(lead.id);
-            setInteractions(history.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
-            
+            setInteractions(history.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));            
             try {
                 const res = await db.getMembers();
                 setUsers([
@@ -214,11 +195,9 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         };
         load();
     }, [lead, language]);
-
     // Collaboration Presence Tracking
     useEffect(() => {
         if (!lead.id) return;
-
         const setupPresence = async () => {
             try {
                 const currentUser = await db.getCurrentUser();
@@ -229,21 +208,16 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                 console.error("Failed to get current user for presence", e);
             }
         };
-
         setupPresence();
-
         const handleActiveViewers = (viewers: any[]) => {
             setActiveViewers(viewers);
         };
-
         socket?.on("active_viewers", handleActiveViewers);
-
         return () => {
             socket?.emit("leave_lead", { leadId: lead.id });
             socket?.off("active_viewers", handleActiveViewers);
         };
     }, [lead.id, socket]);
-
     const handleSendMessage = async () => {
         if (!messageContent.trim()) return;
         setIsSending(true);
@@ -259,11 +233,9 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             setIsSending(false);
         }
     };
-
     const handleCreateContract = () => {
         setIsContractModalOpen(true);
     };
-
     const handleSave = async () => {
         setIsSaving(true);
         try {
@@ -272,12 +244,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         } finally {
             setIsSaving(false);
         }
-    };
-    
+    };    
     const handleInputChange = (field: keyof Lead, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
-
     const handleScoreLead = async () => {
         if (!formData.id || isScoring) return;
         setIsScoring(true);
@@ -294,24 +264,20 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             setIsScoring(false);
         }
     };
-
     const stageOptions = Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }));
     // Fix: Translate raw source values if they are simple English words, or keep as is if proper nouns (Facebook/Zalo)
     const sourceOptions = LEAD_SOURCES.map(s => ({ 
         value: s, 
         label: t(`source.${s}`) !== `source.${s}` ? t(`source.${s}`) : s 
-    }));
-    
+    }));    
     const scoreColor = (score: number) => {
         if (score >= 70) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
         if (score >= 40) return 'text-amber-600 bg-amber-50 border-amber-100';
         return 'text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] border-[var(--glass-border)]';
     };
-
     // --- RENDER CONTENT ---
     const content = (
-        <div className={`bg-[var(--bg-surface)] ${isModal ? 'fixed inset-0 z-[70] md:inset-y-4 md:inset-x-auto md:right-4 md:w-[80vw] lg:w-[900px] md:rounded-3xl md:shadow-2xl animate-slide-in-right border border-[var(--glass-border)] overflow-y-auto no-scrollbar' : 'h-full flex flex-col'}`}>
-            
+        <div className={`bg-[var(--bg-surface)] ${isModal ? 'fixed inset-0 z-[70] md:inset-y-4 md:inset-x-auto md:right-4 md:w-[80vw] lg:w-[900px] md:rounded-3xl md:shadow-2xl animate-slide-in-right border border-[var(--glass-border)] overflow-y-auto no-scrollbar' : 'h-full flex flex-col'}`}>            
             {/* Header - sticky at top when modal */}
             <div className={`flex justify-between items-center p-4 md:p-6 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm ${isModal ? 'sticky top-0 z-20' : 'flex-none relative z-20'}`}>
                 <div className="flex-1 mr-4 flex items-center gap-4">
@@ -319,7 +285,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xl border-2 border-white shadow-sm shrink-0">
                         {formData.name ? formData.name.charAt(0).toUpperCase() : '?'}
                     </div>
-
                     <div className="flex-1 min-w-0">
                         <div className="group relative">
                             <input 
@@ -365,8 +330,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                                 )}
                                 {isScoring ? t('detail.scoring') : t('detail.score_btn')}
-                            </button>
-                            
+                            </button>                            
                             {/* Active Viewers Collaboration */}
                             {activeViewers.length > 1 && (
                                 <div className="flex items-center ml-2">
@@ -390,7 +354,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-
             {/* Scrollable Body */}
             <div className={`p-4 md:p-6 bg-[var(--glass-surface)]/30 ${!isModal ? 'flex-1 min-h-0 overflow-y-auto no-scrollbar' : ''}`}>
                     <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} quota={ariaQuota} onUpgrade={() => window.open('/pricing', '_blank')} />
@@ -453,14 +416,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             />
                         </DetailField>
                     </div>
-
                     {(() => {
                         const effectiveContractId = localContractInfo?.contractId ?? lead.contractId;
                         const effectiveStatus = localContractInfo?.contractStatus ?? lead.contractStatus;
                         const effectiveType = localContractInfo?.contractType ?? lead.contractType;
                         const effectiveValue = localContractInfo?.contractValue ?? lead.contractValue;
                         const effectiveNumber = localContractInfo?.contractNumber ?? lead.contractNumber;
-
                         if (!effectiveContractId) {
                             return (
                                 <div className="mb-8">
@@ -486,7 +447,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 </div>
                             );
                         }
-
                         const schedule: PaymentMilestone[] = localContractSchedule ?? localContractInfo?.contractPaymentSchedule ?? lead.contractPaymentSchedule ?? [];
                         const paidCount = schedule.filter(m => m.status === 'PAID').length;
                         const total = schedule.length;
@@ -604,7 +564,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             </div>
                         );
                     })()}
-
                     <div className="mb-8 bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm">
                         <div className="flex items-center gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
                             {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
@@ -629,7 +588,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             </div>
                         </div>
                     </div>
-
                     <div>
                         <div className="flex items-center gap-2 mb-4 md:mb-6">
                             <h4 className="font-bold text-xs text-[var(--text-secondary)] uppercase tracking-widest">{t('detail.history')}</h4>
@@ -641,7 +599,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         </div>
                     </div>
             </div>
-
             <div className={`p-4 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] flex gap-3 ${isModal ? 'sticky bottom-0 z-20' : 'flex-none relative z-20'}`}>
                 {(() => {
                     const existingContractId = localContractInfo?.contractId ?? lead.contractId;
@@ -738,7 +695,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         )}
         </div>
     );
-
     // Use Portal for Modal Mode to break out of stacking contexts and ensure it's on top
     if (isModal) {
         return createPortal(
@@ -749,6 +705,5 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             document.body
         );
     }
-
     return content;
 };

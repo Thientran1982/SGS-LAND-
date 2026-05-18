@@ -1,13 +1,11 @@
 import React, { memo } from 'react';
 import { useTranslation } from '../services/i18n';
-
 interface LogoProps {
     className?: string;
     strokeWidth?: number;
     fill?: string;
     'aria-label'?: string;
 }
-
 export const Logo: React.FC<LogoProps> = memo(({ 
     className = "w-6 h-6", 
     strokeWidth = 2, 
@@ -17,7 +15,6 @@ export const Logo: React.FC<LogoProps> = memo(({
     const { t } = useTranslation();
     // Fallback localization for accessibility
     const label = ariaLabel || t('nav.logo_label');
-
     return (
         <svg 
             className={`transition-transform duration-300 ${className}`}
@@ -43,5 +40,4 @@ export const Logo: React.FC<LogoProps> = memo(({
         </svg>
     );
 });
-
 Logo.displayName = 'Logo';

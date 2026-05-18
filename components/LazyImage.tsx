@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
-
 interface LazyImageProps {
   src: string | null | undefined;
   alt?: string;
@@ -19,7 +18,6 @@ interface LazyImageProps {
   /** Đặt true cho ảnh hero/above-the-fold để bỏ lazy + tăng fetchpriority. */
   eager?: boolean;
 }
-
 /**
  * LazyImage — optimised for inventory lists with 100k+ entries.
  *
@@ -45,13 +43,11 @@ const LazyImage = memo(({
   const [error,  setError]        = useState(false);
   const [visible, setVisible]     = useState(false);
   const containerRef              = useRef<HTMLDivElement>(null);
-
   // Observe when image is near the viewport (bỏ qua nếu eager=true).
   useEffect(() => {
     if (eager) { setVisible(true); return; }
     const el = containerRef.current;
     if (!el) return;
-
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -61,14 +57,11 @@ const LazyImage = memo(({
       },
       { rootMargin }
     );
-
     io.observe(el);
     return () => io.disconnect();
   }, [rootMargin, eager]);
-
   const rawSrc = error ? fallback : (src || fallback);
   const resolvedSrc = visible ? optimizedImageUrl(rawSrc, width) : undefined;
-
   // CRITICAL: the wrapper MUST always be `position: relative` so the
   // `absolute inset-0` skeleton below is contained within this 44×44-ish
   // image cell. Previously, callers passing `wrapperClassName="w-full h-full"`
@@ -93,7 +86,6 @@ const LazyImage = memo(({
           className="absolute inset-0 bg-gradient-to-r from-[var(--glass-surface)] via-[var(--glass-surface-hover)] to-[var(--glass-surface)] bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite] rounded-[inherit] pointer-events-none"
         />
       )}
-
       {resolvedSrc && (
         <img
           src={resolvedSrc}
@@ -109,6 +101,5 @@ const LazyImage = memo(({
     </div>
   );
 });
-
 LazyImage.displayName = 'LazyImage';
 export default LazyImage;

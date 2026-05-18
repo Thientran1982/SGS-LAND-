@@ -11,14 +11,12 @@ import {
   type MilestoneStep,
   type PolicyConfig,
 } from '../services/api/commissionApi';
-
 interface Props {
   projectId: string;
   projectName: string;
   isAdmin: boolean;
   onClose: () => void;
 }
-
 function fmtMoney(v: string | number | null | undefined) {
   if (v === null || v === undefined) return '—';
   const n = typeof v === 'string' ? Number(v) : v;
@@ -29,11 +27,9 @@ function fmtDate(s: string | null | undefined) {
   if (!s) return '—';
   try { return new Date(s).toLocaleDateString('vi-VN'); } catch { return s; }
 }
-
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Chờ chốt', DUE: 'Đến hạn', PAID: 'Đã trả', CANCELLED: 'Huỷ',
 };
-
 export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName, isAdmin, onClose }) => {
   const [policies, setPolicies] = useState<CommissionPolicy[]>([]);
   const [summary, setSummary] = useState<ProjectCommissionSummary | null>(null);
@@ -42,7 +38,6 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
   const [err, setErr] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [working, setWorking] = useState(false);
-
   const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
@@ -63,11 +58,8 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
       setLoading(false);
     }
   }, [projectId, isAdmin]);
-
   useEffect(() => { load(); }, [load]);
-
   const active = policies.find(p => !p.active_to);
-
   const handleCreate = async (type: PolicyType, config: PolicyConfig) => {
     try {
       setWorking(true);
@@ -80,7 +72,6 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
       setWorking(false);
     }
   };
-
   const handleClose = async () => {
     if (!window.confirm('Đóng chính sách hoa hồng đang hiệu lực? Các giao dịch SOLD sau thời điểm này sẽ không sinh hoa hồng cho tới khi tạo chính sách mới.')) return;
     try {
@@ -93,7 +84,6 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
       setWorking(false);
     }
   };
-
   return createPortal(
     <div className="fixed inset-0 z-[10002] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-y-auto"
          onClick={onClose}>
@@ -108,9 +98,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </header>
-
         {err && <div className="m-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">{err}</div>}
-
         <section className="p-5 space-y-5">
           {/* Active policy */}
           <div className="rounded-xl border border-[var(--glass-border)] p-4">
@@ -131,7 +119,6 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
                 </div>
               )}
             </div>
-
             <div className="mt-3">
               {loading ? (
                 <div className="text-sm text-[var(--text-tertiary)]">Đang tải…</div>
@@ -141,13 +128,11 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
                 <div className="text-sm text-[var(--text-tertiary)]">Chưa có chính sách hoa hồng. {isAdmin ? 'Hãy tạo chính sách mới.' : 'Liên hệ quản trị viên.'}</div>
               )}
             </div>
-
             {isAdmin && showEditor && (
               <div className="mt-4 pt-4 border-t border-[var(--glass-border)]">
                 <PolicyEditor onSubmit={handleCreate} working={working} />
               </div>
             )}
-
             {policies.length > 1 && (
               <details className="mt-3">
                 <summary className="text-xs text-[var(--text-tertiary)] cursor-pointer hover:text-[var(--text-secondary)]">
@@ -167,7 +152,6 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
               </details>
             )}
           </div>
-
           {/* Summary stats */}
           {isAdmin && summary && (
             <>
@@ -183,7 +167,6 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
               </div>
             </>
           )}
-
           {/* Leaderboard */}
           {isAdmin && summary && (summary.leaderboard.partners.length > 0 || summary.leaderboard.sales.length > 0) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -191,7 +174,6 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
               <Leaderboard title="Top sale" rows={summary.leaderboard.sales.map(r => ({ name: r.sales_name || '—', units: r.units, gross: r.gross }))} />
             </div>
           )}
-
           {/* Ledger */}
           <div className="rounded-xl border border-[var(--glass-border)]">
             <div className="px-4 py-2 border-b border-[var(--glass-border)] flex items-center justify-between">
@@ -239,14 +221,12 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
     document.body,
   );
 };
-
 const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)]">
     <div className="text-xs text-[var(--text-tertiary)]">{label}</div>
     <div className="text-base font-extrabold text-[var(--text-primary)] mt-1">{value}</div>
   </div>
 );
-
 const Leaderboard: React.FC<{ title: string; rows: Array<{ name: string; units: number; gross: string | number }> }> = ({ title, rows }) => (
   <div className="rounded-xl border border-[var(--glass-border)] p-3">
     <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-2">{title}</h4>
@@ -264,7 +244,6 @@ const Leaderboard: React.FC<{ title: string; rows: Array<{ name: string; units: 
     )}
   </div>
 );
-
 const PolicyView: React.FC<{ policy: CommissionPolicy }> = ({ policy }) => {
   const cfg: any = policy.config;
   return (
@@ -300,7 +279,6 @@ const PolicyView: React.FC<{ policy: CommissionPolicy }> = ({ policy }) => {
     </div>
   );
 };
-
 const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig) => void; working: boolean }> = ({ onSubmit, working }) => {
   const [type, setType] = useState<PolicyType>('FLAT');
   const [flatRate, setFlatRate] = useState('2.0');
@@ -315,7 +293,6 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
     { key: 'contract', label: 'Ký HĐMB', pct: 40, offsetDays: 30 },
     { key: 'handover', label: 'Bàn giao', pct: 30, offsetDays: 90 },
   ]);
-
   const submit = () => {
     if (type === 'FLAT') {
       const r = Number(flatRate);
@@ -333,7 +310,6 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
       onSubmit('MILESTONE', { ratePct: r, milestones });
     }
   };
-
   return (
     <div className="text-sm space-y-3">
       <div className="flex gap-2">
@@ -344,7 +320,6 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
           </button>
         ))}
       </div>
-
       {type === 'FLAT' && (
         <label className="flex items-center gap-2">
           <span className="w-32">Tỷ lệ %:</span>
@@ -352,7 +327,6 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
             className="h-9 px-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-app)] w-32" />
         </label>
       )}
-
       {type === 'TIERED' && (
         <div className="space-y-2">
           {tiers.map((tier, i) => (
@@ -374,7 +348,6 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
             className="text-xs font-bold text-emerald-700 hover:underline">+ Thêm bậc</button>
         </div>
       )}
-
       {type === 'MILESTONE' && (
         <div className="space-y-2">
           <label className="flex items-center gap-2">
@@ -406,7 +379,6 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
             className="text-xs font-bold text-emerald-700 hover:underline">+ Thêm mốc</button>
         </div>
       )}
-
       <div className="pt-2 border-t border-[var(--glass-border)]">
         <button type="button" onClick={submit} disabled={working}
           className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50">
@@ -419,5 +391,4 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
     </div>
   );
 };
-
 export default ProjectCommissionPanel;

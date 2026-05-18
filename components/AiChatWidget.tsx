@@ -8,7 +8,6 @@
  *   GET  /api/public/livechat/messages/:leadId
  * Real-time via socket.io (join_livechat_room / receive_message / ai_mode_changed)
  */
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, Bot, Sparkles, User, RefreshCw } from 'lucide-react';
@@ -16,9 +15,7 @@ import { useSocket } from '../services/websocket';
 import { useTranslation } from '../services/i18n';
 import { MessageBubble } from './ChatUI';
 import { Interaction, Channel, Direction } from '../types';
-
 // ─── Public API helpers ────────────────────────────────────────────────────────
-
 async function publicCreateLead(name: string, phone: string, source = 'WIDGET') {
     const res = await fetch('/api/public/leads', {
         method: 'POST',
@@ -28,7 +25,6 @@ async function publicCreateLead(name: string, phone: string, source = 'WIDGET') 
     if (!res.ok) throw new Error('create_lead_failed');
     return res.json() as Promise<{ id: string; success: boolean }>;
 }
-
 async function publicSendMessage(
     leadId: string,
     content: string,
@@ -44,7 +40,6 @@ async function publicSendMessage(
     const data = await res.json();
     return data.message as Interaction;
 }
-
 async function publicGetMessages(leadId: string) {
     const res = await fetch(`/api/public/livechat/messages/${leadId}`);
     if (!res.ok) return null;
@@ -53,9 +48,7 @@ async function publicGetMessages(leadId: string) {
         lead: { id: string; name: string; assignedTo?: string | null; threadStatus?: string };
     }>;
 }
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const SYS_PATTERNS = ['đang bận', 'system busy', 'tạm thời không khả dụng', 'temporarily busy'];
 
 function isSysMsg(msg: Interaction): boolean {
@@ -66,20 +59,16 @@ function isSysMsg(msg: Interaction): boolean {
     }
     return false;
 }
-
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface AiChatWidgetProps {
     isOpen: boolean;
     onClose: () => void;
 }
-
 // ─── Component ────────────────────────────────────────────────────────────────
-
 export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
     const { t, language } = useTranslation();
     const { socket } = useSocket();
-
     const [leadId, setLeadId] = useState<string | null>(null);
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
@@ -89,11 +78,9 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
     const [isThinking, setIsThinking] = useState(false);
     const [isHumanMode, setIsHumanMode] = useState(false);
     const [modeNotice, setModeNotice] = useState<'HUMAN_TAKEOVER' | 'AI_ACTIVE' | null>(null);
-
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const autoReplyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
     // ── Restore session from localStorage ──
     useEffect(() => {
         const savedId = localStorage.getItem('widget_lead_id');
@@ -108,19 +95,16 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
             }
         }).catch(() => localStorage.removeItem('widget_lead_id'));
     }, []);
-
     // ── Socket: join room & handle events ──
     useEffect(() => {
         if (!leadId) return;
         socket.emit('join_livechat_room', leadId);
-
         const onMsg = (data: any) => {
             const msg: Interaction = data?.message ?? data;
             if (!msg || msg.leadId !== leadId) return;
             setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
             setIsThinking(false);
         };
-
         const onMode = (data: any) => {
             if (data?.leadId !== leadId) return;
             const toHuman = data.status === 'HUMAN_TAKEOVER';
@@ -128,7 +112,6 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
             setModeNotice(toHuman ? 'HUMAN_TAKEOVER' : 'AI_ACTIVE');
             setIsThinking(false);
         };
-
         socket.on('receive_message', onMsg);
         socket.on('ai_mode_changed', onMode);
         return () => {
@@ -137,19 +120,16 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
             socket.emit('leave_room', leadId);
         };
     }, [leadId, socket]);
-
     // ── Scroll to bottom ──
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isThinking]);
-
     // ── Focus input when opened & chat already started ──
     useEffect(() => {
         if (isOpen && leadId) {
             setTimeout(() => inputRef.current?.focus(), 300);
         }
     }, [isOpen, leadId]);
-
     // ── Start chat ──
     const handleStart = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -171,13 +151,11 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
             setStartError('Không thể kết nối. Vui lòng thử lại.');
         }
     };
-
     // ── Send message ──
     const handleSend = useCallback(async () => {
         if (!input.trim() || !leadId) return;
         const content = input.trim();
         setInput('');
-
         let msg: Interaction | null = null;
         try {
             msg = await publicSendMessage(leadId, content, 'INBOUND');
@@ -197,7 +175,6 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
             } as any;
             setMessages(prev => [...prev, temp]);
         }
-
         if (isHumanMode) return;
         setIsThinking(true);
         if (autoReplyTimer.current) clearTimeout(autoReplyTimer.current);
@@ -241,12 +218,9 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
         setIsHumanMode(false);
         setModeNotice(null);
     };
-
     // ── Cleanup timer on unmount ──
     useEffect(() => () => { if (autoReplyTimer.current) clearTimeout(autoReplyTimer.current); }, []);
-
     // ─── Render ─────────────────────────────────────────────────────────────────
-
     return (
         <AnimatePresence>
             {isOpen && (
@@ -304,7 +278,6 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                             </button>
                         </div>
                     </div>
-
                     {/* ── Body: registration OR chat ── */}
                     {!leadId ? (
                         /* Registration form */
@@ -395,7 +368,6 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                 )}
                                 <div ref={messagesEndRef} />
                             </div>
-
                             {/* Input */}
                             <div className="shrink-0 p-3 bg-[var(--bg-surface)] border-t border-[var(--glass-border)]">
                                 <div className="flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
