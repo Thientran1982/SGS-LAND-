@@ -10,24 +10,20 @@
  *
  * Backed by `tenantApi`. ADMIN/SUPER_ADMIN of tenant only — backend cũng enforce RBAC.
  */
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   tenantApi,
   type TenantBrandingFields,
   type TenantBrandingResponse,
 } from '../../services/api/tenantApi';
-
 interface MicrositeProject {
   id: string;
   code: string;
   name: string;
 }
-
 interface Props {
   notify: (msg: string, type?: 'success' | 'error') => void;
 }
-
 const EMPTY: TenantBrandingFields = {
   logoUrl: null,
   faviconUrl: null,
@@ -38,7 +34,6 @@ const EMPTY: TenantBrandingFields = {
   zalo: null,
   messenger: null,
 };
-
 const TEXT_FIELDS: { key: keyof TenantBrandingFields; label: string; placeholder: string; help?: string }[] = [
   { key: 'displayName',    label: 'Tên hiển thị (CĐT)', placeholder: 'VD: Công ty CP Bất động sản ABC', help: 'Hiển thị trên mini-site, footer email lead.' },
   { key: 'hotline',        label: 'Hotline (số)',       placeholder: '0901234567', help: 'Chỉ chữ số. Dùng cho `tel:` link.' },
@@ -46,27 +41,21 @@ const TEXT_FIELDS: { key: keyof TenantBrandingFields; label: string; placeholder
   { key: 'zalo',           label: 'Link Zalo',          placeholder: 'https://zalo.me/0901234567 hoặc số' },
   { key: 'messenger',      label: 'Link Messenger',     placeholder: 'https://m.me/yourpage' },
 ];
-
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
-
 const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const [data, setData]       = useState<TenantBrandingResponse | null>(null);
   const [form, setForm]       = useState<TenantBrandingFields>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
-
   const [slugInput, setSlugInput] = useState('');
   const [slugBusy, setSlugBusy]   = useState(false);
-
   const [hostInput, setHostInput] = useState('');
   const [hostBusy, setHostBusy]   = useState(false);
   const [verifyBusy, setVerifyBusy] = useState(false);
-
   // Upload state per asset key
   const [uploading, setUploading] = useState<Partial<Record<'logoUrl' | 'faviconUrl', boolean>>>({});
   const logoInputRef    = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
-
   // Live mini-site preview (task #36) — chọn 1 dự án public-microsite của tenant
   // và nhúng iframe `/p/<code>?preview=1`. Khi user sửa form (màu/displayName/...),
   // gửi postMessage `sgs:branding-preview` để iframe overlay mà không cần lưu DB.
@@ -76,7 +65,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const [iframeKey, setIframeKey] = useState(0); // tăng để force reload iframe
   const previewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const previewReadyRef  = useRef(false);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -91,9 +79,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setLoading(false);
     }
   }, [notify]);
-
   useEffect(() => { load(); }, [load]);
-
   // Tải danh sách dự án public-microsite của tenant để CĐT chọn dự án preview.
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +109,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
     })();
     return () => { cancelled = true; };
   }, []);
-
   // Snapshot branding hiện trên form (gồm cả thay đổi chưa lưu) để gửi sang iframe.
   const previewBrandingSnapshot = useMemo(() => ({
     logoUrl:      form.logoUrl ?? null,
@@ -132,7 +117,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
     displayName:  form.displayName ?? null,
     messenger:    form.messenger ?? null,
   }), [form.logoUrl, form.faviconUrl, form.primaryColor, form.displayName, form.messenger]);
-
   // Lắng nghe `sgs:preview-ready` từ iframe để biết lúc nào nó sẵn sàng nhận
   // postMessage. Sau khi ready, push snapshot ngay.
   useEffect(() => {
@@ -155,7 +139,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
 
   // Reset ready flag khi đổi dự án hoặc reload iframe.
   useEffect(() => { previewReadyRef.current = false; }, [previewCode, iframeKey]);
-
   // Debounce: khi form thay đổi, gửi snapshot sang iframe (nếu đã ready).
   useEffect(() => {
     if (!previewCode) return;
@@ -170,11 +153,9 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
     }, 200);
     return () => clearTimeout(t);
   }, [previewBrandingSnapshot, previewCode]);
-
   const updateField = (key: keyof TenantBrandingFields, value: string) => {
     setForm((f) => ({ ...f, [key]: value.trim() === '' ? null : value }));
   };
-
   // Upload ảnh trực tiếp qua multipart endpoint /api/upload (auth bằng JWT
   // hiện tại — apiClient tự gắn token). Server đã compress/resize ảnh & trả URL.
   const handleUploadAsset = async (key: 'logoUrl' | 'faviconUrl', file: File) => {
@@ -209,7 +190,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setUploading((u) => ({ ...u, [key]: false }));
     }
   };
-
   const handleSaveBranding = async () => {
     // Normalize primaryColor: nếu nhập sai format thì không lưu
     if (form.primaryColor && !HEX_RE.test(form.primaryColor)) {
@@ -228,7 +208,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setSaving(false);
     }
   };
-
   const handleSetSubdomain = async () => {
     if (!slugInput.trim()) return;
     setSlugBusy(true);
@@ -242,7 +221,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setSlugBusy(false);
     }
   };
-
   const handleRemoveSubdomain = async () => {
     if (!confirm('Gỡ subdomain? Mini-site sẽ chỉ truy cập được qua sgsland.vn.')) return;
     setSlugBusy(true);
@@ -257,7 +235,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setSlugBusy(false);
     }
   };
-
   const handleSetCustomDomain = async () => {
     if (!hostInput.trim()) return;
     setHostBusy(true);
@@ -271,7 +248,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setHostBusy(false);
     }
   };
-
   const handleVerifyCustomDomain = async () => {
     setVerifyBusy(true);
     try {
@@ -285,7 +261,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setVerifyBusy(false);
     }
   };
-
   const handleRemoveCustomDomain = async () => {
     if (!confirm('Gỡ custom domain?')) return;
     setHostBusy(true);
@@ -300,19 +275,16 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
       setHostBusy(false);
     }
   };
-
   if (loading) {
     return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">Đang tải…</div>;
   }
   if (!data) {
     return <div className="p-10 text-center text-rose-600">Không tải được dữ liệu thương hiệu.</div>;
   }
-
   const apex = data.binding.apexDomain;
   const txt  = data.binding.customDomainTxtRecord;
   const verified = !!data.binding.customDomainVerifiedAt;
   const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : '#4F46E5';
-
   // ── Custom-domain health (task #34) ─────────────────────────────────────────
   // Cron 5 phút re-verify cả domain đã verified. Có 2 trạng thái cần cảnh báo:
   //   • lostVerification: trước đây verified nhưng bản ghi TXT đã biến mất quá
@@ -329,7 +301,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   // badge phụ + banner để CĐT biết và liên hệ ops hoàn tất bước này.
   const emailSenderReady = data.binding.emailSenderReady === true;
   const verifiedButSenderNotReady = verified && !emailSenderReady && !!data.binding.customDomain;
-
   return (
     <div className="space-y-6">
       {/* ── LIVE MINI-SITE PREVIEW (task #36) ─────────────────────────── */}
@@ -377,7 +348,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             )}
           </div>
         </header>
-
         {micrositeProjects === null ? (
           <div className="h-[480px] flex items-center justify-center text-sm text-[var(--text-tertiary)] font-mono animate-pulse border border-dashed border-[var(--glass-border)] rounded-xl">
             Đang tìm dự án mini-site…
@@ -399,7 +369,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
           </div>
         )}
       </section>
-
       {/* ── BRANDING FIELDS ───────────────────────────────────────────── */}
       <section className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm">
         <header className="mb-4">
@@ -409,7 +378,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             Cập nhật có hiệu lực trong vòng 30 giây.
           </p>
         </header>
-
         {/* Logo & favicon — upload trực tiếp */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {/* LOGO */}
@@ -454,7 +422,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               </div>
             </div>
           </div>
-
           {/* FAVICON */}
           <div className="flex flex-col gap-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-elevated)]/60">
             <div className="flex items-center justify-between">
@@ -498,7 +465,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             </div>
           </div>
         </div>
-
         {/* Color picker + text fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1 text-sm">
@@ -522,7 +488,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             </div>
             <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ #4F46E5.</span>
           </label>
-
           {TEXT_FIELDS.map(({ key, label, placeholder, help }) => (
             <label key={key} className="flex flex-col gap-1 text-sm">
               <span className="font-semibold text-[var(--text-secondary)]">{label}</span>
@@ -537,7 +502,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             </label>
           ))}
         </div>
-
         {/* Live preview */}
         <div className="mt-5 p-4 rounded-xl border border-dashed border-[var(--glass-border)] flex items-center gap-3">
           <div className="text-xs text-[var(--text-tertiary)] uppercase font-bold tracking-wider">Xem nhanh:</div>
@@ -553,7 +517,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             {form.hotlineDisplay || form.hotline || 'Hotline'}
           </span>
         </div>
-
         <div className="mt-4 flex justify-end">
           <button
             type="button"
@@ -565,7 +528,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
           </button>
         </div>
       </section>
-
       {/* ── SUBDOMAIN ─────────────────────────────────────────────────── */}
       <section className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm">
         <header className="mb-4">
@@ -617,7 +579,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
           </p>
         )}
       </section>
-
       {/* ── CUSTOM DOMAIN ─────────────────────────────────────────────── */}
       <section className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm">
         <header className="mb-4">
@@ -627,7 +588,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             Hệ thống tự kiểm tra lại bản ghi mỗi 5 phút — nếu bản ghi biến mất, mini-site qua tên miền sẽ tạm dừng để bảo vệ bạn.
           </p>
         </header>
-
         {lostVerification && (
           <div className="mb-4 p-4 rounded-xl border-2 border-rose-300 bg-rose-50 text-rose-800">
             <div className="flex items-start gap-3">
@@ -642,7 +602,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             </div>
           </div>
         )}
-
         {verifiedButFailing && (
           <div className="mb-4 p-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-800">
             <div className="text-sm font-bold">Cảnh báo sớm: bản ghi TXT có thể đã bị xoá</div>
@@ -651,7 +610,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             </p>
           </div>
         )}
-
         {/* Task #43: TXT verify chỉ chứng minh ownership. Để email gửi từ
             noreply@<customDomain> thực sự "đậu", ops phải onboard SPF/DKIM trên
             Brevo và thêm domain vào allowlist. Trong giai đoạn chờ, hệ thống
@@ -701,7 +659,6 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             </button>
           )}
         </div>
-
         {txt && (
           <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
             <div className={`text-sm font-bold ${verified ? 'text-emerald-700' : 'text-amber-700'}`}>
@@ -770,5 +727,4 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
     </div>
   );
 };
-
 export default BrandingPanel;

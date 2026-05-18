@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
-
 interface ActivityUser {
   userId: string;
   userName: string;
@@ -16,7 +15,6 @@ interface ActivityUser {
   topPage: string | null;
   totalSessions: number;
 }
-
 interface PageStat {
   path: string;
   pageLabel: string;
@@ -24,7 +22,6 @@ interface PageStat {
   firstVisit: string;
   lastVisit: string;
 }
-
 interface RecentVisit {
   id: string;
   path: string;
@@ -32,21 +29,17 @@ interface RecentVisit {
   visitedAt: string;
   ipAddress: string | null;
 }
-
 type DateRange = 'today' | '7d' | '30d' | 'all' | 'custom';
-
 function formatDateTime(iso: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso);
   return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
-
 function formatDateShort(iso: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso);
   return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
-
 function getPresetFromDate(range: Exclude<DateRange, 'custom'>): string | undefined {
   if (range === 'all') return undefined;
   const now = new Date();
@@ -58,7 +51,6 @@ function getPresetFromDate(range: Exclude<DateRange, 'custom'>): string | undefi
   const past = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
   return past.toISOString();
 }
-
 function RoleChip({ role }: { role: string }) {
   const map: Record<string, string> = {
     ADMIN: 'bg-violet-100 text-violet-700',
@@ -80,7 +72,6 @@ function RoleChip({ role }: { role: string }) {
     </span>
   );
 }
-
 function UserAvatar({ name, avatar }: { name: string; avatar?: string }) {
   if (avatar) {
     return <img src={avatar} alt={name} className="w-8 h-8 rounded-full object-cover shrink-0" />;
@@ -92,21 +83,18 @@ function UserAvatar({ name, avatar }: { name: string; avatar?: string }) {
     </div>
   );
 }
-
 interface UserDetailDrawerProps {
   user: ActivityUser;
   fromDate?: string;
   toDate?: string;
   onClose: () => void;
 }
-
 function UserDetailDrawer({ user, fromDate, toDate, onClose }: UserDetailDrawerProps) {
   const { data: detail, isLoading } = useQuery<{ pageStats: PageStat[]; recentVisits: RecentVisit[] }>({
     queryKey: ['user-activity-detail', user.userId, fromDate, toDate],
     queryFn: () => db.getUserActivityDetail(user.userId, fromDate, toDate),
     staleTime: 60_000,
   });
-
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
@@ -130,7 +118,6 @@ function UserDetailDrawer({ user, fromDate, toDate, onClose }: UserDetailDrawerP
             </svg>
           </button>
         </div>
-
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-[var(--glass-surface)] rounded-xl p-3 text-center border border-[var(--glass-border)]">
@@ -146,7 +133,6 @@ function UserDetailDrawer({ user, fromDate, toDate, onClose }: UserDetailDrawerP
               <div className="text-xs text-[var(--text-tertiary)]">Phiên đăng nhập</div>
             </div>
           </div>
-
           {isLoading ? (
             <div className="space-y-3 animate-pulse">
               {[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-[var(--glass-surface)] rounded-xl" />)}
@@ -183,7 +169,6 @@ function UserDetailDrawer({ user, fromDate, toDate, onClose }: UserDetailDrawerP
                   </div>
                 )}
               </div>
-
               <div>
                 <h4 className="text-sm font-bold text-[var(--text-primary)] mb-3">Lịch Sử Truy Cập Gần Đây</h4>
                 {detail.recentVisits.length === 0 ? (
@@ -216,21 +201,17 @@ function UserDetailDrawer({ user, fromDate, toDate, onClose }: UserDetailDrawerP
     </div>
   );
 }
-
 export function UserActivityPanel() {
   const [range, setRange] = useState<DateRange>('30d');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [selectedUser, setSelectedUser] = useState<ActivityUser | null>(null);
-
   const fromDate: string | undefined = range === 'custom'
     ? (customFrom ? new Date(customFrom).toISOString() : undefined)
     : getPresetFromDate(range as Exclude<DateRange, 'custom'>);
-
   const toDate: string | undefined = range === 'custom' && customTo
     ? new Date(new Date(customTo).getTime() + 24 * 60 * 60 * 1000 - 1).toISOString()
     : undefined;
-
   const { data: users = [], isLoading } = useQuery<ActivityUser[]>({
     queryKey: ['activity-summary', fromDate, toDate],
     queryFn: () => db.getActivitySummary(fromDate, toDate),
@@ -238,7 +219,6 @@ export function UserActivityPanel() {
     retry: false,
     enabled: range !== 'custom' || !!customFrom,
   });
-
   const isCustomRangeActive = range === 'custom' && !!customFrom;
   const showRangeCount = range !== 'all' && (range !== 'custom' || isCustomRangeActive);
 
@@ -249,7 +229,6 @@ export function UserActivityPanel() {
     { key: 'all', label: 'Tất cả' },
     { key: 'custom', label: 'Tùy chọn' },
   ];
-
   return (
     <div className="animate-enter max-w-5xl">
       <div className="flex flex-col gap-4 mb-6">
@@ -276,7 +255,6 @@ export function UserActivityPanel() {
             ))}
           </div>
         </div>
-
         {range === 'custom' && (
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
@@ -304,7 +282,6 @@ export function UserActivityPanel() {
           </div>
         )}
       </div>
-
       {isLoading ? (
         <div className="space-y-3 animate-pulse">
           {[...Array(5)].map((_, i) => (
@@ -435,7 +412,6 @@ export function UserActivityPanel() {
           </div>
         </div>
       )}
-
       {selectedUser && (
         <UserDetailDrawer
           user={selectedUser}

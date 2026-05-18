@@ -2,22 +2,18 @@ import React, { useState, useCallback } from 'react';
 import { useTranslation } from '../services/i18n';
 import { motion, AnimatePresence } from 'motion/react';
 import { Wand2, CheckCheck, MessageSquare, Loader2, Sparkles, X, CheckCircle, AlertCircle } from 'lucide-react';
-
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
-
 export const SmartVietnameseEditor: React.FC = () => {
     const { t } = useTranslation();
     const [text, setText] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [activeAction, setActiveAction] = useState<string | null>(null);
     const [toasts, setToasts] = useState<Toast[]>([]);
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         const id = Date.now();
         setToasts(prev => [...prev, { id, msg, type }]);
         setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
     }, []);
-
     const processText = async (prompt: string, actionName: string) => {
         if (!text.trim()) return;
         setIsProcessing(true);
@@ -52,21 +48,18 @@ export const SmartVietnameseEditor: React.FC = () => {
             setActiveAction(null);
         }
     };
-
     const handleRestoreDiacritics = () => {
         processText(
             t('editor.prompt_diacritics') || 'Bạn là một chuyên gia ngôn ngữ tiếng Việt. Hãy thêm dấu tiếng Việt chuẩn xác cho đoạn văn bản không dấu sau đây. Chỉ trả về văn bản đã được thêm dấu, không giải thích gì thêm. Giữ nguyên định dạng dòng.',
             'diacritics'
         );
     };
-
     const handleFixGrammar = () => {
         processText(
             t('editor.prompt_grammar') || 'Bạn là một biên tập viên chuyên nghiệp. Hãy sửa các lỗi chính tả, lỗi ngữ pháp tiếng Việt trong đoạn văn bản sau. Làm cho câu văn trôi chảy hơn nhưng giữ nguyên ý nghĩa gốc. Chỉ trả về văn bản đã sửa, không giải thích.',
             'grammar'
         );
     };
-
     const handleChangeTone = (tone: 'formal' | 'friendly' | 'persuasive') => {
         const tonePrompts = {
             formal: t('editor.prompt_formal') || 'Viết lại đoạn văn bản sau theo phong cách trang trọng, chuyên nghiệp, lịch sự (phù hợp cho email B2B, hợp đồng). Chỉ trả về văn bản đã viết lại.',
@@ -75,7 +68,6 @@ export const SmartVietnameseEditor: React.FC = () => {
         };
         processText(tonePrompts[tone], `tone-${tone}`);
     };
-
     return (
     <>
         <div className="w-full max-w-4xl mx-auto bg-[var(--bg-surface)] dark:bg-slate-900 rounded-2xl shadow-sm border border-[var(--glass-border)] dark:border-slate-800 overflow-hidden">
@@ -83,8 +75,7 @@ export const SmartVietnameseEditor: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-500" />
                     <span className="font-semibold text-[var(--text-secondary)] dark:text-slate-200 text-sm">Smart VN Editor</span>
-                </div>
-                
+                </div>                
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={handleRestoreDiacritics}
@@ -105,7 +96,6 @@ export const SmartVietnameseEditor: React.FC = () => {
                     </button>
 
                     <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 self-center"></div>
-
                     <div className="flex bg-[var(--glass-surface-hover)] dark:bg-slate-800 p-0.5 rounded-lg border border-[var(--glass-border)] dark:border-slate-700">
                         <button
                             onClick={() => handleChangeTone('formal')}
@@ -131,7 +121,6 @@ export const SmartVietnameseEditor: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             <div className="relative">
                 <textarea
                     value={text}
@@ -139,8 +128,7 @@ export const SmartVietnameseEditor: React.FC = () => {
                     placeholder={t('editor.placeholder') || "Nhập văn bản tiếng Việt (có thể gõ không dấu: 'toi muon mua can ho 3 phong ngu')..."}
                     className="w-full h-64 p-6 bg-transparent border-none resize-none focus:ring-0 text-[var(--text-secondary)] dark:text-slate-200 placeholder:text-[var(--text-muted)] dark:placeholder:text-[var(--text-secondary)] text-base leading-relaxed"
                     spellCheck={false}
-                />
-                
+                />                
                 {isProcessing && (
                     <motion.div 
                         initial={{ opacity: 0 }}
@@ -153,8 +141,7 @@ export const SmartVietnameseEditor: React.FC = () => {
                         </div>
                     </motion.div>
                 )}
-            </div>
-            
+            </div>            
             <div className="px-4 py-3 border-t border-[var(--glass-border)] dark:border-slate-800 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 flex justify-between items-center text-xs text-[var(--text-tertiary)]">
                 <span>{text.length} {t('editor.chars') || 'ký tự'} | {text.split(/\s+/).filter(w => w.length > 0).length} {t('editor.words') || 'từ'}</span>
                 <span className="flex items-center gap-1">
@@ -162,7 +149,6 @@ export const SmartVietnameseEditor: React.FC = () => {
                 </span>
             </div>
         </div>
-
         {/* Toast notifications */}
         <AnimatePresence>
             {toasts.map(toast => (

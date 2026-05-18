@@ -1,44 +1,43 @@
 <!--
 SGS LAND — Sitemap Reference Template
-Generated: 2026-04-18
-
+Generated: 2026-05-18
 Production sitemaps already live at:
   https://sgsland.vn/sitemap.xml         (root)
   https://sgsland.vn/sitemap-static.xml  (static pages)
   https://sgsland.vn/sitemap-images.xml  (images)
-
 This template demonstrates the IDEAL structure: sitemap-index → 4 child sitemaps.
 Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
 -->
-
-<!-- ============== sitemap-index.xml ============== -->
+<!-- ===== FILE: sitemap-index.xml ===== -->
+<!-- (paste into public/sitemap-index.xml) -->
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>https://sgsland.vn/sitemap-static.xml</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://sgsland.vn/sitemap-projects.xml</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://sgsland.vn/sitemap-blog.xml</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://sgsland.vn/sitemap-images.xml</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
   </sitemap>
 </sitemapindex>
 
-<!-- ============== sitemap-projects.xml ============== -->
+<!-- ===== FILE: sitemap-projects.xml ===== -->
+<!-- (paste into public/sitemap-projects.xml) -->
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://sgsland.vn/du-an/aqua-city</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -49,7 +48,7 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/the-global-city</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -60,7 +59,7 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/izumi-city</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -71,7 +70,7 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/vinhomes-can-gio</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -82,7 +81,7 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/masterise-homes</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -93,7 +92,7 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/vinhomes-grand-park</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -104,7 +103,7 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/vinhomes-central-park</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -115,16 +114,17 @@ Use as reference when adding new sitemap shards (e.g. /sitemap-blog.xml).
   </url>
 </urlset>
 
-<!-- ============== sitemap-blog.xml (template) ============== -->
+<!-- ===== FILE: sitemap-blog.xml (template) ===== -->
+<!-- (paste into public/sitemap-blog.xml — replace with real blog URLs) -->
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://sgsland.vn/news/slug-cua-bai-viet</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 </urlset>
 
-<!-- ============== sitemap-images.xml (existing) ============== -->
+<!-- ===== FILE: sitemap-images.xml (existing) ===== -->
 <!-- Already live at https://sgsland.vn/sitemap-images.xml — see public/sitemap-images.xml -->

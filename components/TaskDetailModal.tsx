@@ -39,7 +39,6 @@ const VALID_TRANSITIONS: Record<WfTaskStatus, WfTaskStatus[]> = {
   done: [],
   cancelled: ['todo'],
 };
-
 interface Props {
   taskId: string | null;
   onClose: () => void;
@@ -47,7 +46,6 @@ interface Props {
   onDeleted?: (id: string) => void;
   onOpenFullPage?: (id: string) => void;
 }
-
 function Avatar({ name, size = 7 }: { name: string; size?: number }) {
   const sizeClass = `w-${size} h-${size}`;
   return (
@@ -56,7 +54,6 @@ function Avatar({ name, size = 7 }: { name: string; size?: number }) {
     </div>
   );
 }
-
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -68,29 +65,23 @@ function timeAgo(dateStr: string): string {
   if (days < 30) return `${days} ngày trước`;
   return new Date(dateStr).toLocaleDateString('vi-VN');
 }
-
 export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenFullPage }: Props) {
   const [task, setTask] = useState<WfTask | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [activity, setActivity] = useState<TaskActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<WfTask>>({});
   const [saving, setSaving] = useState(false);
-
   const [newComment, setNewComment] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
-
   const [changingStatus, setChangingStatus] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
-
   const [activeTab, setActiveTab] = useState<'comments' | 'activity'>('comments');
   const [deleting, setDeleting] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null);
-
   const load = useCallback(async (id: string) => {
     setLoading(true);
     setError(null);
@@ -109,13 +100,11 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     if (!taskId) return;
     load(taskId);
     api.get<{ data: Department[] }>('/api/departments').then(r => setDepartments(r.data || [])).catch(() => {});
   }, [taskId, load]);
-
   useEffect(() => {
     if (!taskId) return;
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -126,7 +115,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       document.body.style.overflow = '';
     };
   }, [taskId, onClose]);
-
   const startEdit = () => {
     if (!task) return;
     setEditData({
@@ -140,7 +128,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
     });
     setEditing(true);
   };
-
   const saveEdit = async () => {
     if (!task) return;
     setSaving(true);
@@ -155,7 +142,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       setSaving(false);
     }
   };
-
   const changeStatus = async (newStatus: WfTaskStatus) => {
     if (!task) return;
     setStatusMenuOpen(false);
@@ -172,7 +158,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       setChangingStatus(false);
     }
   };
-
   const sendComment = async () => {
     if (!task || !newComment.trim()) return;
     setSendingComment(true);
@@ -186,7 +171,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       setSendingComment(false);
     }
   };
-
   const handleDelete = async () => {
     if (!task) return;
     if (!confirm('Bạn có chắc muốn xóa công việc này?')) return;
@@ -200,13 +184,11 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       setDeleting(false);
     }
   };
-
   if (!taskId) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-stretch justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
       <div className="relative z-10 w-full max-w-2xl bg-[var(--bg-surface)] shadow-2xl flex flex-col animate-slide-in-right overflow-hidden border-l border-[var(--glass-border)]">
         {loading && (
           <div className="flex-1 flex items-center justify-center">
@@ -263,7 +245,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                 </button>
               </div>
             </div>
-
             <div className="flex-1 overflow-y-auto no-scrollbar">
               <div className="p-5 space-y-5">
                 {/* Title */}
@@ -276,7 +257,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                 ) : (
                   <h2 className="text-xl font-bold text-[var(--text-primary)] leading-tight">{task.title}</h2>
                 )}
-
                 {/* Meta grid */}
                 <div className="grid grid-cols-2 gap-3">
                   {/* Priority */}
@@ -298,7 +278,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       <span className={`inline-flex text-xs px-2 py-0.5 rounded-md border font-medium ${PRIORITY_COLORS[task.priority]}`}>{PRIORITY_LABELS[task.priority]}</span>
                     )}
                   </div>
-
                   {/* Deadline */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Calendar size={11} /> Deadline</label>
@@ -311,7 +290,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       </span>
                     )}
                   </div>
-
                   {/* Category */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Tag size={11} /> Danh mục</label>
@@ -330,7 +308,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       <span className="text-sm text-[var(--text-secondary)]">{task.category ? CATEGORY_LABELS[task.category] : '—'}</span>
                     )}
                   </div>
-
                   {/* Estimated hours */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Clock size={11} /> Giờ ước tính</label>
@@ -341,7 +318,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       <span className="text-sm text-[var(--text-secondary)]">{task.estimated_hours ? `${task.estimated_hours}h` : '—'}</span>
                     )}
                   </div>
-
                   {/* Department */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><User2 size={11} /> Phòng ban</label>
@@ -360,14 +336,12 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       <span className="text-sm text-[var(--text-secondary)]">{task.department_name || '—'}</span>
                     )}
                   </div>
-
                   {/* Project */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)]">Dự án</label>
                     <span className="text-sm text-[var(--text-secondary)]">{task.project_name || '—'}</span>
                   </div>
                 </div>
-
                 {/* Description */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-[var(--text-tertiary)]">Mô tả</label>
@@ -385,7 +359,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     </p>
                   )}
                 </div>
-
                 {/* Status change (not in edit mode) */}
                 {!editing && VALID_TRANSITIONS[task.status].length > 0 && (
                   <div className="relative">
@@ -404,7 +377,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     </div>
                   </div>
                 )}
-
                 {/* Assignees */}
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-[var(--text-tertiary)]">Người thực hiện</label>
@@ -422,7 +394,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     <p className="text-sm text-[var(--text-tertiary)] italic">Chưa giao việc</p>
                   )}
                 </div>
-
                 {/* Created info */}
                 <div className="text-xs text-[var(--text-tertiary)] pt-2 border-t border-[var(--glass-border)]">
                   Tạo bởi <span className="font-medium text-[var(--text-secondary)]">{task.created_by_name || 'Hệ thống'}</span>
@@ -430,7 +401,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                   {task.actual_hours && <> · Thực tế: <span className="font-medium">{task.actual_hours}h</span></>}
                 </div>
               </div>
-
               {/* Comments / Activity Tabs */}
               <div className="border-t border-[var(--glass-border)]">
                 <div className="flex px-5 pt-1 gap-4 border-b border-[var(--glass-border)]">
@@ -441,7 +411,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     </button>
                   ))}
                 </div>
-
                 <div className="p-5 space-y-4">
                   {activeTab === 'comments' && (
                     <>
@@ -460,7 +429,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                           </div>
                         </div>
                       ))}
-
                       {/* New comment */}
                       <div className="flex gap-2.5 pt-2">
                         <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
@@ -486,7 +454,6 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       </div>
                     </>
                   )}
-
                   {activeTab === 'activity' && (
                     <>
                       {activity.length === 0 && (

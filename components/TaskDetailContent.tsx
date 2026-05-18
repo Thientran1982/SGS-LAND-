@@ -17,13 +17,10 @@ import {
   STATUS_LABELS, STATUS_COLORS, PRIORITY_LABELS, PRIORITY_COLORS,
   CATEGORY_LABELS, VALID_TRANSITIONS, timeAgo, formatDeadlineRelative,
 } from '../utils/taskUtils';
-
 const ACTIVITY_PAGE_SIZE = 20;
-
 function relativeDeadline(deadline: string | null | undefined, isOverdue: boolean, days: number | null): string {
   return formatDeadlineRelative(deadline, isOverdue, days) || '';
 }
-
 const AVATAR_PX: Record<number, number> = { 6: 24, 7: 28, 8: 32, 9: 36, 10: 40 };
 function Avatar({ name, size = 8 }: { name: string; size?: number }) {
   const px = AVATAR_PX[size] ?? 32;
@@ -34,21 +31,17 @@ function Avatar({ name, size = 8 }: { name: string; size?: number }) {
     </div>
   );
 }
-
 function WorkloadBadge({ score }: { score: number }) {
   const color = score >= 80 ? 'text-rose-500' : score >= 50 ? 'text-amber-500' : 'text-emerald-500';
   const label = score >= 80 ? 'Quá tải' : score >= 50 ? 'Bận' : 'Ổn';
   return <span className={`text-[10px] font-semibold ${color}`}>{label} ({score}%)</span>;
 }
-
 interface SimpleUser { id: string; name: string; email?: string; }
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
-
 interface Props {
   taskId: string;
   onBack: () => void;
 }
-
 export function TaskDetailContent({ taskId, onBack }: Props) {
   const [task, setTask] = useState<WfTask | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
@@ -61,41 +54,33 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
-
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     const id = ++toastId.current;
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   }, []);
-
   const [editingTitle, setEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [savingTitle, setSavingTitle] = useState(false);
-
   const [editingDesc, setEditingDesc] = useState(false);
   const [editDesc, setEditDesc] = useState('');
   const [savingDesc, setSavingDesc] = useState(false);
-
   const [editingMeta, setEditingMeta] = useState(false);
   const [editMeta, setEditMeta] = useState<Partial<WfTask>>({});
   const [savingMeta, setSavingMeta] = useState(false);
-
   const [changingStatus, setChangingStatus] = useState(false);
   const [statusConfirm, setStatusConfirm] = useState<{ status: WfTaskStatus } | null>(null);
   const [actualHours, setActualHours] = useState('');
   const [completionNote, setCompletionNote] = useState('');
   const [cancelNote, setCancelNote] = useState('');
   const [cancelNoteError, setCancelNoteError] = useState('');
-
   const [deletingTask, setDeletingTask] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   const [newComment, setNewComment] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
-
   const [assigneeSearch, setAssigneeSearch] = useState('');
   const [userResults, setUserResults] = useState<SimpleUser[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
@@ -107,10 +92,8 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   const [removingAssigneeId, setRemovingAssigneeId] = useState<string | null>(null);
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null);
   const [removePrimaryConfirm, setRemovePrimaryConfirm] = useState<{ id: string; name: string } | null>(null);
-
   const commentRef = useRef<HTMLTextAreaElement>(null);
   const userPickerRef = useRef<HTMLDivElement>(null);
-
   const load = useCallback(async (id: string) => {
     setLoading(true);
     setError(null);
@@ -131,15 +114,12 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     api.get<{ data: Department[] }>('/api/departments').then(r => setDepartments(r.data || [])).catch(() => {});
   }, []);
-
   useEffect(() => {
     if (taskId) load(taskId);
   }, [taskId, load]);
-
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (userPickerRef.current && !userPickerRef.current.contains(e.target as Node)) {
@@ -149,7 +129,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-
   const loadMoreActivity = async () => {
     if (!task) return;
     const nextPage = activityPage + 1;
@@ -165,7 +144,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setLoadingMoreActivity(false);
     }
   };
-
   const saveTitle = async () => {
     if (!task || !editTitle.trim() || editTitle.trim() === task.title) {
       setEditingTitle(false);
@@ -187,7 +165,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setSavingTitle(false);
     }
   };
-
   const saveDesc = async () => {
     if (!task) { setEditingDesc(false); return; }
     setSavingDesc(true);
@@ -202,7 +179,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setSavingDesc(false);
     }
   };
-
   const saveMeta = async () => {
     if (!task) return;
     setSavingMeta(true);
@@ -217,7 +193,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setSavingMeta(false);
     }
   };
-
   const initiateStatusChange = (status: WfTaskStatus) => {
     if (status === 'done' || status === 'cancelled') {
       setActualHours('');
@@ -229,7 +204,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       changeStatus(status);
     }
   };
-
   const changeStatus = async (newStatus: WfTaskStatus, extraData?: { actual_hours?: number; completion_note?: string }) => {
     if (!task) return;
     setChangingStatus(true);
@@ -248,7 +222,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setChangingStatus(false);
     }
   };
-
   const confirmStatusChange = () => {
     if (!statusConfirm) return;
     if (statusConfirm.status === 'cancelled' && !cancelNote.trim()) {
@@ -265,7 +238,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     }
     changeStatus(statusConfirm.status, extra);
   };
-
   const deleteTask = async () => {
     if (!task) return;
     setDeletingTask(true);
@@ -280,7 +252,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setShowDeleteConfirm(false);
     }
   };
-
   const sendComment = async () => {
     if (!task || !newComment.trim()) return;
     setSendingComment(true);
@@ -295,7 +266,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setSendingComment(false);
     }
   };
-
   const saveComment = async (commentId: string) => {
     if (!task || !editCommentText.trim()) return;
     try {
@@ -307,7 +277,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       showToast('Không thể cập nhật bình luận', 'error');
     }
   };
-
   const deleteComment = async (commentId: string) => {
     if (!task) return;
     setDeletingCommentId(commentId);
@@ -321,7 +290,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setDeletingCommentId(null);
     }
   };
-
   const searchUsers = useCallback(async (q: string) => {
     if (!q.trim()) { setUserResults([]); return; }
     setSearchingUsers(true);
@@ -334,7 +302,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setSearchingUsers(false);
     }
   }, []);
-
   useEffect(() => {
     const t = setTimeout(() => searchUsers(assigneeSearch), 300);
     return () => clearTimeout(t);
@@ -347,7 +314,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setWorkloads(prev => ({ ...prev, [userId]: w }));
     } catch {}
   };
-
   const selectPendingAssignee = (user: SimpleUser) => {
     if (!task || task.assignees?.some(a => a.id === user.id)) return;
     setPendingAssignee(user);
@@ -355,7 +321,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     setAssigneeSearch('');
     setUserResults([]);
   };
-
   const addAssignee = async () => {
     if (!task || !pendingAssignee) return;
     setAddingAssignee(true);
@@ -371,7 +336,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setAddingAssignee(false);
     }
   };
-
   const removeAssignee = async (userId: string, userName: string, isPrimary: boolean) => {
     if (!task) return;
     if (isPrimary) {
@@ -380,7 +344,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     }
     await doRemoveAssignee(userId, userName);
   };
-
   const doRemoveAssignee = async (userId: string, userName: string) => {
     if (!task) return;
     setRemovingAssigneeId(userId);
@@ -395,7 +358,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setRemovingAssigneeId(null);
     }
   };
-
   const setPrimaryAssignee = async (userId: string, userName: string) => {
     if (!task) return;
     setSettingPrimaryId(userId);
@@ -409,7 +371,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setSettingPrimaryId(null);
     }
   };
-
   if (loading) {
     return <TaskDetailSkeleton />;
   }
@@ -428,10 +389,8 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       </div>
     );
   }
-
   const transitions = VALID_TRANSITIONS[task.status];
   const activityHasMore = activity.length < activityTotal;
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Top Bar */}
@@ -451,12 +410,10 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
           </button>
         </div>
       </div>
-
       {/* 2-column layout */}
       <div className="flex-1 overflow-hidden flex">
         {/* Left column — 70% */}
         <div className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-6 space-y-6 min-w-0">
-
           {/* Title — inline edit, auto-save on blur */}
           <div>
             {editingTitle ? (
@@ -481,7 +438,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             )}
           </div>
-
           {/* Metadata Grid */}
           <div className="bg-[var(--glass-surface-hover)] rounded-2xl p-4 border border-[var(--glass-border)]">
             <div className="flex items-center justify-between mb-3">
@@ -601,7 +557,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             )}
           </div>
-
           {/* Description — inline edit, auto-save on blur */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -634,7 +589,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             )}
           </div>
-
           {/* Status Workflow */}
           {transitions.length > 0 && (
             <div className="bg-[var(--glass-surface-hover)] rounded-2xl p-4 border border-[var(--glass-border)]">
@@ -657,7 +611,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             </div>
           )}
-
           {/* Assignees */}
           <div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Người thực hiện</h3>
@@ -696,7 +649,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 ))}
               </div>
             )}
-
             {/* Add assignee: search picker */}
             <div className="relative" ref={userPickerRef}>
               <div className="relative">
@@ -730,7 +682,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 </div>
               )}
             </div>
-
             {/* Pending assignee: due_note + confirm */}
             {pendingAssignee && (
               <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 space-y-2">
@@ -753,7 +704,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             )}
           </div>
-
           {/* Comments */}
           <div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
@@ -817,7 +767,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             </div>
           </div>
-
           {/* Meta footer */}
           <div className="text-xs text-[var(--text-tertiary)] border-t border-[var(--glass-border)] pt-4">
             Tạo bởi <span className="font-medium text-[var(--text-secondary)]">{task.created_by_name || 'Hệ thống'}</span>
@@ -825,7 +774,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
             {' '}· Cập nhật: {new Date(task.updated_at).toLocaleDateString('vi-VN')}
           </div>
         </div>
-
         {/* Right column — activity timeline */}
         <div className="w-72 xl:w-80 border-l border-[var(--glass-border)] overflow-y-auto no-scrollbar p-4 flex-shrink-0">
           <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -863,7 +811,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
           )}
         </div>
       </div>
-
       {/* Status Confirm Popup */}
       {statusConfirm && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -914,7 +861,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
           </div>
         </div>
       )}
-
       {/* Delete Confirm Popup */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -939,7 +885,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
           </div>
         </div>
       )}
-
       {/* Remove Primary Assignee Confirm Dialog */}
       {removePrimaryConfirm && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
@@ -966,7 +911,6 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
           </div>
         </div>
       )}
-
       {/* Toast Notifications */}
       <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-2 pointer-events-none">
         {toasts.map(toast => (
