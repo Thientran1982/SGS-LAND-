@@ -48,7 +48,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         contactPhone: '',
         ownerName: '',
         ownerPhone: '',
-        commission: '',
+        commission: undefined,
         commissionUnit: 'PERCENT'
     };
     const UNITS = useMemo(() => getUnits(t), [t]);
