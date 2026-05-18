@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { NO_IMAGE_URL } from '../utils/constants';
@@ -8,18 +7,15 @@ import { useTranslation } from '../services/i18n';
 import { smartMatch } from '../utils/textUtils';
 import { copyToClipboard } from '../utils/clipboard';
 import { Dropdown, DropdownOption } from './Dropdown';
-
 interface FlashProposalModalProps {
     lead: Lead;
     listings: Listing[];
     onClose: () => void;
     onSuccess: () => void;
 }
-
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & ASSETS
 // -----------------------------------------------------------------------------
-
 const DEAL_CONFIG = {
     DEFAULT_DEPOSIT: 50000000,
     VALIDITY_OPTIONS: [1, 3, 7, 15, 30],
@@ -28,7 +24,6 @@ const DEAL_CONFIG = {
     DEBOUNCE_MS: 300,
     LATENCY_SIM: 800
 } as const;
-
 const ICONS = {
     CLOSE: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     SEARCH: <svg className="w-5 h-5 absolute left-3 top-3 text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -40,11 +35,9 @@ const ICONS = {
     SUCCESS: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
     COPY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
 };
-
 // -----------------------------------------------------------------------------
 // 2. HOOKS
 // -----------------------------------------------------------------------------
-
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
     useEffect(() => {
@@ -53,17 +46,14 @@ function useDebounce<T>(value: T, delay: number): T {
     }, [value, delay]);
     return debouncedValue;
 }
-
 // -----------------------------------------------------------------------------
 // 3. MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lead, listings, onClose, onSuccess }) => {
     // UI Flow State
     const [step, setStep] = useState<'SELECT' | 'CONFIRM' | 'DONE' | 'PENDING' | 'APPROVED'>('SELECT');
     const [processing, setProcessing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    
+    const [error, setError] = useState<string | null>(null);   
     // Data State
     const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
     const [discountType, setDiscountType] = useState<'PERCENT' | 'AMOUNT'>('PERCENT');
@@ -71,12 +61,10 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
     const [validityDays, setValidityDays] = useState<number>(3); 
     const [depositAmount, setDepositAmount] = useState<number>(DEAL_CONFIG.DEFAULT_DEPOSIT);
     const [note, setNote] = useState<string>('');
-    const [generatedLink, setGeneratedLink] = useState('');
-    
+    const [generatedLink, setGeneratedLink] = useState('');    
     // Payment Schedule State
     const [proposedSchedule, setProposedSchedule] = useState<Array<{id: string; label: string; daysFromNow: number; percentage: number}>>([]);
     const [showScheduleBuilder, setShowScheduleBuilder] = useState(false);
-
     const applySchedulePreset = (percents: number[]) => {
         const defaultLabels = ['Đặt cọc', 'Đợt 2', 'Đợt 3', 'Đợt 4', 'Đợt 5'];
         const defaultDays   = [0, 30, 90, 180, 270];
@@ -86,13 +74,11 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             daysFromNow: defaultDays[i] ?? (i * 30),
             percentage: pct,
         })));
-    };
-    
+    };    
     // Search State
     const [searchQuery, setSearchQuery] = useState('');
     const debouncedSearch = useDebounce(searchQuery, DEAL_CONFIG.DEBOUNCE_MS);
     const searchInputRef = useRef<HTMLInputElement>(null);
-
     // Escape key + body scroll lock
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && !processing && step !== 'DONE') onClose(); };
@@ -102,8 +88,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = '';
         };
-    }, [processing, step, onClose]);
-    
+    }, [processing, step, onClose]);    
     const { t, formatCurrency, formatDate } = useTranslation();
 
     // Check for existing APPROVED proposal for this lead on mount
@@ -119,7 +104,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
         }).catch(() => {});
         return () => { cancelled = true; };
     }, [lead.id]);
-
     // Reset config on listing selection
     useEffect(() => {
         if (selectedListing) {
@@ -136,7 +120,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             setTimeout(() => searchInputRef.current?.focus(), 50);
         }
     }, [step]);
-
     // Filter Listings
     const availableListings = useMemo(() => {
         return listings.filter(l => 
@@ -144,11 +127,9 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             smartMatch(l.title + l.code + l.location, debouncedSearch)
         ).slice(0, DEAL_CONFIG.SEARCH_LIMIT); 
     }, [listings, debouncedSearch]);
-
     // Financial Math
     const finalCalculations = useMemo(() => {
-        if (!selectedListing) return { discountAmt: 0, finalPrice: 0 };
-        
+        if (!selectedListing) return { discountAmt: 0, finalPrice: 0 };       
         let discountAmt = 0;
         if (discountType === 'PERCENT') {
             const pct = Math.min(Math.max(0, discountValue), 100);
@@ -156,26 +137,22 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
         } else {
             discountAmt = Math.min(Math.max(0, discountValue), selectedListing.price);
         }
-
         return {
             discountAmt,
             finalPrice: Math.max(0, selectedListing.price - discountAmt)
         };
     }, [selectedListing, discountType, discountValue]);
-
     // Expiry Date Calc
     const expiryDate = useMemo(() => {
         const d = new Date();
         d.setDate(d.getDate() + validityDays);
         return formatDate(d.toISOString());
     }, [validityDays, formatDate]);
-
     // Action Handlers
     const handleCreate = async () => {
         if (!selectedListing) return;
         setProcessing(true);
-        setError(null);
-        
+        setError(null);        
         try {
             const proposal = await db.createProposal({
                 leadId: lead.id,
@@ -198,10 +175,8 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         }))
                     } : {})
                 }
-            });
-            
+            });            
             await new Promise(r => setTimeout(r, DEAL_CONFIG.LATENCY_SIM));
-
             if (proposal.status === ProposalStatus.PENDING_APPROVAL) {
                 setStep('PENDING');
             } else {
@@ -214,13 +189,11 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             setProcessing(false); 
         }
     };
-
     const handleCopy = async () => {
         const text = t('proposal.generated_msg', { name: lead.name, link: generatedLink });
         await copyToClipboard(text);
         onSuccess(); // Triggers data refresh in parent
     };
-
     // Render Steps
     const renderSelectionStep = () => (
         <div className="flex flex-col h-full overflow-hidden">
@@ -244,8 +217,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         </div>
                     )}
                 </div>
-            </div>
-            
+            </div>            
             <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
                 {availableListings.length === 0 ? (
                     <div className="text-center py-20 text-[var(--text-secondary)] italic">{t('inventory.empty')}</div>
@@ -276,20 +248,17 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             </div>
         </div>
     );
-
     const renderConfirmStep = () => {
         if (!selectedListing) return null;
         return (
             <div className="flex flex-col h-full animate-slide-in-right overflow-hidden">
-                <div className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto no-scrollbar">
-                    
+                <div className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto no-scrollbar">                    
                     {error && (
                         <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-600 font-bold flex items-center gap-2">
                             {ICONS.WARNING}
                             {error}
                         </div>
                     )}
-
                     {/* Listing Preview */}
                     <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex gap-4 items-start">
                         <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-200 rounded-xl flex-shrink-0 overflow-hidden">
@@ -308,7 +277,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             </button>
                         </div>
                     </div>
-
                     {/* Configuration */}
                     <div className="bg-[var(--bg-surface)] p-4 md:p-6 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-6">
                         <div className="flex items-center justify-between">
@@ -324,8 +292,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                        
+                        </div>                        
                         <div>
                             <div className="flex items-center gap-3">
                                 <div className="relative flex-1">
@@ -357,7 +324,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 </div>
                             )}
                         </div>
-
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Dropdown
@@ -384,7 +350,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 />
                             </div>
                         </div>
-
                         <div>
                             <label className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('proposal.label_note')}</label>
                             <textarea 
@@ -395,7 +360,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500 resize-none"
                             />
                         </div>
-
                         {/* Payment Schedule Builder */}
                         <div className="border border-[var(--glass-border)] rounded-xl overflow-hidden">
                             <button
@@ -412,7 +376,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 </div>
                                 <svg className={`w-4 h-4 text-[var(--text-tertiary)] transition-transform ${showScheduleBuilder ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </button>
-
                             {showScheduleBuilder && (
                                 <div className="p-3 space-y-3 border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">
                                     {/* Preset templates */}
@@ -431,7 +394,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                             >{label}</button>
                                         ))}
                                     </div>
-
                                     {/* Installment list */}
                                     {proposedSchedule.length > 0 && (
                                         <div className="space-y-1.5">
@@ -488,7 +450,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                             </div>
                                         </div>
                                     )}
-
                                     <button
                                         type="button"
                                         onClick={() => setProposedSchedule(s => [...s, { id: `m-${Date.now()}`, label: `Đợt ${s.length + 1}`, daysFromNow: s.length * 30, percentage: 0 }])}
@@ -500,7 +461,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 </div>
                             )}
                         </div>
-
                         {/* Breakdown */}
                         <div className="bg-[var(--glass-surface)] rounded-xl p-4 space-y-2 border border-[var(--glass-border)]/60">
                             <div className="flex justify-between text-xs">
@@ -521,7 +481,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         </div>
                     </div>
                 </div>
-
                 <div className="p-4 bg-[var(--bg-surface)] border-t border-[var(--glass-border)] shrink-0 safe-area-pb">
                     <button 
                         onClick={handleCreate} 
@@ -535,16 +494,13 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             </div>
         );
     };
-
     // Use React Portal to render at document.body to avoid z-index stacking context issues with parent transforms
     return createPortal(
         <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="flash-proposal-title" onClick={!processing ? onClose : undefined}>
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" aria-hidden="true" />
-            
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" aria-hidden="true" />            
             {/* Modal Content */}
-            <div className="bg-[var(--bg-surface)] w-full max-w-2xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl shadow-slate-900/20 border border-white/20 relative flex flex-col max-h-[85vh] sm:max-h-[90vh] animate-scale-up z-10" onClick={e => e.stopPropagation()}>
-                
+            <div className="bg-[var(--bg-surface)] w-full max-w-2xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl shadow-slate-900/20 border border-white/20 relative flex flex-col max-h-[85vh] sm:max-h-[90vh] animate-scale-up z-10" onClick={e => e.stopPropagation()}>                
                 {/* Header */}
                 <div className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
                     <div>
@@ -577,7 +533,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         {ICONS.CLOSE}
                     </button>
                 </div>
-
                 {/* Content */}
                 <div className="flex-1 overflow-hidden flex flex-col bg-[var(--glass-surface)]/50 min-h-0">
                     {step === 'SELECT' && renderSelectionStep()}
@@ -594,7 +549,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <button onClick={() => { onClose(); onSuccess(); }} className="px-6 py-2.5 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl text-sm transition-colors">{t('common.close')}</button>
                         </div>
                     )}
-
                     {step === 'APPROVED' && (
                         <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center animate-enter h-full overflow-y-auto no-scrollbar">
                             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
@@ -622,14 +576,12 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             </button>
                         </div>
                     )}
-
                     {step === 'DONE' && (
                         <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center animate-enter h-full overflow-y-auto no-scrollbar">
                             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
                                 {ICONS.SUCCESS}
                             </div>
-                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('common.success')}</h3>
-                            
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('common.success')}</h3>                            
                             <div className="w-full bg-[var(--glass-surface)] p-4 rounded-xl mt-6 border border-[var(--glass-border)] relative group">
                                 <div className="text-xs2 uppercase font-bold text-[var(--text-secondary)] mb-1 text-left">{t('proposal.public_link_label')}</div>
                                 <div className="flex items-center gap-2">
@@ -641,7 +593,6 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     />
                                 </div>
                             </div>
-
                             <button onClick={handleCopy} className="mt-6 w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
                                 {ICONS.COPY}
                                 {t('proposal.btn_copy_close')}

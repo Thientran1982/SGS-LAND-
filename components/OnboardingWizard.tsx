@@ -1,15 +1,12 @@
-
 import React, { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { OnboardingState, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTES } from '../config/routes';
-
 // -----------------------------------------------------------------------------
 // 1. STEP CONFIGURATION
 // -----------------------------------------------------------------------------
-
 const STEP_CONFIG = [
     {
         id: 'TEAM',
@@ -92,17 +89,14 @@ const STEP_CONFIG = [
         ),
     },
 ] as const;
-
 // -----------------------------------------------------------------------------
 // 2. SUB-COMPONENTS
 // -----------------------------------------------------------------------------
-
 const ProgressRing = memo(({ percentage, size = 44, stroke = 3 }: { percentage: number, size?: number, stroke?: number }) => {
     const radius = (size - stroke * 2) / 2;
     const circumference = radius * 2 * Math.PI;
     const strokeDashoffset = circumference - (percentage / 100) * circumference;
     const color = percentage < 30 ? '#f43f5e' : percentage < 70 ? '#f59e0b' : '#10b981';
-
     return (
         <div className="relative flex items-center justify-center">
             <svg height={size} width={size} className="transform -rotate-90">
@@ -123,28 +117,23 @@ const ProgressRing = memo(({ percentage, size = 44, stroke = 3 }: { percentage: 
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // 3. MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const OnboardingWizard: React.FC = () => {
     const [state, setState] = useState<OnboardingState | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const { t, language } = useTranslation();
-
     useEffect(() => {
         let mounted = true;
         const load = async () => {
             try {
                 const user = await db.getCurrentUser();
                 if (user?.role !== UserRole.ADMIN) return;
-
                 // Only show once per user — if already seen in this browser, skip
                 const seenKey = `sgs_onboarding_seen_${user.id}`;
                 const alreadySeen = localStorage.getItem(seenKey);
-
                 const config = await db.getEnterpriseConfig();
                 if (mounted && config?.onboarding) {
                     setState(config.onboarding);
@@ -161,13 +150,11 @@ export const OnboardingWizard: React.FC = () => {
         load();
         return () => { mounted = false; };
     }, []);
-
     const handleDismiss = useCallback(async (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsVisible(false);
         try { await db.dismissOnboarding(); } catch { /* silent */ }
     }, []);
-
     const handleStepComplete = useCallback(async (stepId: string) => {
         if (!state) return;
         const nextSteps = [...state.completedSteps, stepId];
@@ -175,12 +162,9 @@ export const OnboardingWizard: React.FC = () => {
         setState(prev => prev ? { ...prev, completedSteps: nextSteps, percentage: nextPercent } : null);
         try { await db.updateOnboardingProgress(Number(stepId)); } catch { /* silent */ }
     }, [state]);
-
     const doneCount = useMemo(() => state?.completedSteps.length ?? 0, [state]);
     const totalCount = STEP_CONFIG.length;
-
     if (!isVisible || !state) return null;
-
     // ── Minimized floating button ──────────────────────────────────────────────
     if (isMinimized) {
         return createPortal(
@@ -199,17 +183,14 @@ export const OnboardingWizard: React.FC = () => {
             document.body
         );
     }
-
     // ── Full panel ─────────────────────────────────────────────────────────────
     return createPortal(
         <div className="fixed bottom-6 right-6 z-50 w-[320px] flex flex-col shadow-2xl rounded-2xl overflow-hidden animate-enter border border-[var(--glass-border)]/80 dark:border-slate-700/60 bg-[var(--bg-surface)] dark:bg-slate-900">
-
             {/* ── HEADER ── */}
             <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 pt-4 pb-5 overflow-hidden">
                 {/* Decorative blobs */}
                 <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
                 <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-violet-500/20 rounded-full blur-xl pointer-events-none" />
-
                 <div className="relative flex justify-between items-start mb-3">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -234,7 +215,6 @@ export const OnboardingWizard: React.FC = () => {
                         </button>
                     </div>
                 </div>
-
                 {/* Progress bar */}
                 <div className="relative">
                     <div className="flex justify-between items-center mb-1.5">
@@ -258,7 +238,6 @@ export const OnboardingWizard: React.FC = () => {
                     </div>
                 </div>
             </div>
-
             {/* ── STEPS LIST ── */}
             <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--glass-surface)]/80 dark:bg-slate-900/80 p-2 space-y-1.5">
                 {STEP_CONFIG.map((step, idx) => {
@@ -287,7 +266,6 @@ export const OnboardingWizard: React.FC = () => {
                                     : step.icon
                                 }
                             </div>
-
                             {/* Text */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -304,7 +282,6 @@ export const OnboardingWizard: React.FC = () => {
                                     {language === 'en' ? step.desc_en : step.desc_vn}
                                 </p>
                             </div>
-
                             {/* Arrow */}
                             {!isDone && (
                                 <div className={`shrink-0 pt-1 ${step.iconColor} opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all`}>
@@ -317,7 +294,6 @@ export const OnboardingWizard: React.FC = () => {
                     );
                 })}
             </div>
-
             {/* ── FOOTER ── */}
             <div className="px-4 py-3 bg-[var(--bg-surface)] dark:bg-slate-900 border-t border-[var(--glass-border)] dark:border-slate-800/60 flex items-center justify-between">
                 <span className="text-xs2 text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">

@@ -4,33 +4,27 @@ import { X, Loader2, Plus, Search, XCircle } from 'lucide-react';
 import { api } from '../services/api';
 import { WfTask, TaskPriority, TaskCategory, Department } from '../types';
 import { SelectDropdown } from './task/SelectDropdown';
-
 const CATEGORY_LABELS: Record<TaskCategory, string> = {
   sales: 'Kinh doanh', legal: 'Pháp lý', marketing: 'Marketing',
   site_visit: 'Đi thực địa', customer_care: 'CSKH', finance: 'Tài chính',
   construction: 'Xây dựng', admin: 'Hành chính', other: 'Khác',
 };
-
 const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Thấp', dot: 'bg-slate-400' },
   { value: 'medium', label: 'Trung bình', dot: 'bg-blue-400' },
   { value: 'high', label: 'Cao', dot: 'bg-amber-400' },
   { value: 'urgent', label: 'Khẩn cấp', dot: 'bg-rose-500' },
 ];
-
 const CATEGORY_OPTIONS = [
   { value: '', label: 'Chưa chọn' },
   ...Object.entries(CATEGORY_LABELS).map(([k, v]) => ({ value: k, label: v })),
 ];
-
 interface SimpleUser { id: string; name: string; email?: string; role?: string; }
-
 interface Props {
   onClose: () => void;
   onCreated: (task: WfTask) => void;
   defaultDeptId?: string;
 }
-
 export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
   const [form, setForm] = useState({
     title: '',
@@ -51,7 +45,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<SimpleUser[]>([]);
-
   useEffect(() => {
     api.get<{ data: Department[] }>('/api/departments').then(r => setDepartments(r.data || [])).catch(() => {});
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -62,7 +55,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
       document.body.style.overflow = '';
     };
   }, [onClose]);
-
   const searchUsers = useCallback(async (q: string) => {
     setSearchingUsers(true);
     try {
@@ -77,12 +69,10 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
       setSearchingUsers(false);
     }
   }, []);
-
   useEffect(() => {
     const t = setTimeout(() => searchUsers(assigneeSearch), 300);
     return () => clearTimeout(t);
   }, [assigneeSearch, searchUsers]);
-
   const toggleAssignee = (user: SimpleUser) => {
     if (assigneeIds.includes(user.id)) {
       setAssigneeIds(prev => prev.filter(id => id !== user.id));
@@ -92,12 +82,10 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
       setSelectedUsers(prev => [...prev, user]);
     }
   };
-
   const removeAssignee = (userId: string) => {
     setAssigneeIds(prev => prev.filter(id => id !== userId));
     setSelectedUsers(prev => prev.filter(u => u.id !== userId));
   };
-
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.title.trim() || form.title.trim().length < 5) errs.title = 'Tiêu đề phải có ít nhất 5 ký tự';
@@ -113,7 +101,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -130,7 +117,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
       if (form.category) payload.category = form.category;
       if (form.department_id) payload.department_id = form.department_id;
       if (form.project_id) payload.project_id = form.project_id;
-
       const task = await api.post<WfTask>('/api/tasks', payload);
       onCreated(task);
       onClose();
@@ -140,14 +126,11 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
       setSaving(false);
     }
   };
-
   const inputCls = (field: string) =>
     `w-full h-[38px] px-3 text-[16px] bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${errors[field] ? 'border-rose-400' : 'border-[var(--glass-border)] focus:border-indigo-400'}`;
-
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
       <div className="relative z-10 w-full max-w-lg bg-[var(--bg-surface)] rounded-[20px] shadow-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh] animate-scale-up">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--glass-border)] flex-shrink-0">
@@ -156,7 +139,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
             <X size={16} />
           </button>
         </div>
-
         <form id="create-task-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-4">
           {/* Title */}
           <div className="space-y-1">
@@ -169,7 +151,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
             />
             {errors.title && <p className="text-xs text-rose-500">{errors.title}</p>}
           </div>
-
           {/* Description */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-[var(--text-secondary)]">Mô tả</label>
@@ -181,7 +162,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               className="w-full px-3 py-2.5 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none transition-colors"
             />
           </div>
-
           {/* Priority + Deadline row */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -199,7 +179,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               {errors.deadline && <p className="text-xs text-rose-500">{errors.deadline}</p>}
             </div>
           </div>
-
           {/* Category + Hours row */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -217,7 +196,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               {errors.estimated_hours && <p className="text-xs text-rose-500">{errors.estimated_hours}</p>}
             </div>
           </div>
-
           {/* Department */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-[var(--text-secondary)]">Phòng ban</label>
@@ -235,11 +213,9 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               <p className="text-[11px] text-[var(--text-tertiary)]">Phòng ban chưa được thiết lập cho tenant này.</p>
             )}
           </div>
-
           {/* Assignees */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-[var(--text-secondary)]">Người thực hiện</label>
-
             {selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {selectedUsers.map(u => (
@@ -252,7 +228,6 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
                 ))}
               </div>
             )}
-
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
               <input
@@ -285,14 +260,12 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               )}
             </div>
           </div>
-
           {errors.submit && (
             <div className="p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl">
               <p className="text-sm text-rose-600 dark:text-rose-400">{errors.submit}</p>
             </div>
           )}
         </form>
-
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-[var(--glass-border)] flex-shrink-0">
           <button type="button" onClick={onClose} className="h-[38px] px-4 text-sm font-medium border border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors">

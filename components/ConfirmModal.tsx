@@ -1,7 +1,5 @@
-
 import React, { memo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-
 interface ConfirmModalProps {
     isOpen: boolean;
     title: string;
@@ -13,7 +11,6 @@ interface ConfirmModalProps {
     processing?: boolean;
     variant?: 'danger' | 'warning' | 'info' | 'success';
 }
-
 export const ConfirmModal: React.FC<ConfirmModalProps> = memo(({ 
     isOpen, 
     title, 
@@ -38,9 +35,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = memo(({
             document.body.style.overflow = '';
         };
     }, [isOpen, processing, onCancel]);
-
     if (!isOpen) return null;
-
     const btnColor = variant === 'danger' ? 'bg-rose-600 hover:bg-rose-700' : variant === 'warning' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700';
 
     return createPortal(
@@ -49,8 +44,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = memo(({
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
                 onClick={!processing ? onCancel : undefined}
-            />
-            
+            />            
             {/* Modal */}
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex flex-col items-center text-center">

@@ -3,9 +3,7 @@
  * Shows remaining credits, reset date, and upgrade CTA when low.
  * Used in LeadDetail (ARIA) and ListingDetail (Valuation).
  */
-
 import React from 'react';
-
 export interface QuotaInfo {
   used: number;
   limit: number;
@@ -14,50 +12,41 @@ export interface QuotaInfo {
   resetAt: string;
   isUnlimited: boolean;
 }
-
 interface Props {
   quota: QuotaInfo | null;
   featureLabel: string;
   className?: string;
   onUpgradeClick?: () => void;
 }
-
 function daysUntil(isoDate: string): number {
   const now = Date.now();
   const target = new Date(isoDate).getTime();
   return Math.max(0, Math.ceil((target - now) / 86_400_000));
 }
-
 export const AiCreditBadge: React.FC<Props> = ({ quota, featureLabel, className = '', onUpgradeClick }) => {
   if (!quota) return null;
   if (quota.isUnlimited) return null;
-
   const { used, limit, remaining, resetAt } = quota;
   const pct = limit > 0 ? Math.min(100, (remaining / limit) * 100) : 0;
   const daysLeft = daysUntil(resetAt);
   const isExhausted = remaining <= 0;
   const isLow = !isExhausted && remaining <= Math.max(1, Math.floor(limit * 0.3));
-
   const barColor = isExhausted
     ? 'bg-rose-500'
     : isLow
       ? 'bg-amber-400'
       : 'bg-emerald-500';
-
   const textColor = isExhausted
     ? 'text-rose-700'
     : isLow
       ? 'text-amber-700'
       : 'text-emerald-700';
-
   const bgColor = isExhausted
     ? 'bg-rose-50 border-rose-200'
     : isLow
       ? 'bg-amber-50 border-amber-200'
       : 'bg-emerald-50 border-emerald-200';
-
   const resetLabel = daysLeft <= 1 ? 'Reset hôm nay' : daysLeft <= 7 ? `Reset sau ${daysLeft} ngày` : `Reset ${new Date(resetAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`;
-
   return (
     <div className={`rounded-xl border px-3 py-2 space-y-1.5 ${bgColor} ${className}`}>
       <div className="flex items-center justify-between gap-2">
@@ -68,7 +57,6 @@ export const AiCreditBadge: React.FC<Props> = ({ quota, featureLabel, className 
           {isExhausted ? '0' : remaining}/{limit} lượt
         </span>
       </div>
-
       {/* Progress bar */}
       <div className="h-1.5 bg-white/60 rounded-full overflow-hidden border border-white/80">
         <div
@@ -76,7 +64,6 @@ export const AiCreditBadge: React.FC<Props> = ({ quota, featureLabel, className 
           style={{ width: `${pct}%` }}
         />
       </div>
-
       <div className="flex items-center justify-between gap-2">
         <span className="text-[9px] text-slate-500">{resetLabel}</span>
         {(isExhausted || isLow) && onUpgradeClick && (
@@ -95,7 +82,6 @@ export const AiCreditBadge: React.FC<Props> = ({ quota, featureLabel, className 
     </div>
   );
 };
-
 /**
  * AiQuotaGate — blocks a CTA when quota is exhausted,
  * shows upgrade panel instead; otherwise renders children.
@@ -106,11 +92,9 @@ interface GateProps {
   children: React.ReactNode;
   onUpgradeClick?: () => void;
 }
-
 export const AiQuotaGate: React.FC<GateProps> = ({ quota, featureLabel, children, onUpgradeClick }) => {
   const isExhausted = quota && !quota.isUnlimited && quota.remaining <= 0;
   const daysLeft = quota?.resetAt ? daysUntil(quota.resetAt) : 0;
-
   if (isExhausted) {
     return (
       <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 space-y-3 animate-enter">
@@ -142,6 +126,5 @@ export const AiQuotaGate: React.FC<GateProps> = ({ quota, featureLabel, children
       </div>
     );
   }
-
   return <>{children}</>;
 };

@@ -1,27 +1,22 @@
-
 import React, { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Lead, Listing, User } from '../types';
 import { normalizeForSearch } from '../utils/textUtils';
 import { ROUTES } from '../config/routes';
-
 // -----------------------------------------------------------------------------
 // TYPES & UTILS
 // -----------------------------------------------------------------------------
-
 interface GlobalSearchProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (type: string, id: string) => void;
 }
-
 type SearchItem = 
     | { type: 'LEAD'; id: string; title: string; subtitle: string; icon: 'LEAD' }
     | { type: 'LISTING'; id: string; title: string; subtitle: string; icon: 'LISTING' }
     | { type: 'USER'; id: string; title: string; subtitle: string; icon: 'USER' }
     | { type: 'ACTION'; id: string; title: string; subtitle: string; icon: 'ACTION'; route?: string; action?: () => void };
-
 const ICONS = {
     SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     LOADING: <div className="w-4 h-4 border-2 border-indigo-500/40 border-t-indigo-500 rounded-full animate-spin"></div>,
@@ -32,17 +27,14 @@ const ICONS = {
     HISTORY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     CLEAR: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
-
 // -----------------------------------------------------------------------------
 // SUB-COMPONENTS
 // -----------------------------------------------------------------------------
-
 const SectionLabel = memo(({ label }: { label: string }) => (
     <div className="px-4 py-1.5 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest bg-[var(--bg-app)]/60 sticky top-0 backdrop-blur-md z-10 select-none border-b border-[var(--glass-border)]/50">
         {label}
     </div>
 ));
-
 const HighlightedText = memo(({ text, query }: { text: string, query: string }) => {
     if (!query || !text) return <span>{text}</span>;
     const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
@@ -56,11 +48,9 @@ const HighlightedText = memo(({ text, query }: { text: string, query: string }) 
         </span>
     );
 });
-
 // -----------------------------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
-
 export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onNavigate }) => {
     const [query, setQuery] = useState('');
     const [rawResults, setRawResults] = useState<{ leads: Lead[], listings: Listing[], users: User[] }>({ leads: [], listings: [], users: [] });
@@ -69,11 +59,9 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
     const [history, setHistory] = useState<SearchItem[]>(() => {
         try { return JSON.parse(localStorage.getItem('sgs_search_history') || '[]'); } catch { return []; }
     });
-
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const { t } = useTranslation();
-
     // 1. QUICK ACTIONS
     const quickActions: SearchItem[] = useMemo(() => [
         { type: 'ACTION', id: 'act_dash', title: t('menu.dashboard'), subtitle: t('search.quick_actions'), icon: 'ACTION', route: ROUTES.DASHBOARD },
@@ -81,7 +69,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         { type: 'ACTION', id: 'act_inv', title: t('inventory.create_title'), subtitle: t('search.quick_actions'), icon: 'ACTION', route: ROUTES.INVENTORY },
         { type: 'ACTION', id: 'act_rep', title: t('menu.reports'), subtitle: t('search.quick_actions'), icon: 'ACTION', route: ROUTES.REPORTS },
     ], [t]);
-
     // 2. FLATTEN RESULTS
     const flatResults = useMemo<SearchItem[]>(() => {
         if (!query.trim()) {
@@ -104,7 +91,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         }));
         return items;
     }, [query, rawResults, history, quickActions]);
-
     // 3. RESET & FOCUS
     useEffect(() => {
         if (isOpen) {
@@ -115,7 +101,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
             setRawResults({ leads: [], listings: [], users: [] });
         }
     }, [isOpen]);
-
     // 4. SEARCH EXECUTION (debounced 200ms)
     useEffect(() => {
         if (!query.trim()) {
@@ -137,7 +122,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         }, 200);
         return () => clearTimeout(handler);
     }, [query]);
-
     // 5. SELECT HANDLER
     const handleSelect = useCallback((item: SearchItem) => {
         if (item.type !== 'ACTION') {
@@ -152,13 +136,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         }
         onClose();
     }, [onNavigate, onClose, history]);
-
     const clearHistory = (e: React.MouseEvent) => {
         e.stopPropagation();
         setHistory([]);
         localStorage.removeItem('sgs_search_history');
     };
-
     // 6. KEYBOARD NAVIGATION
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (!isOpen) return;
@@ -181,21 +163,17 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                 break;
         }
     };
-
     // Auto-scroll selected into view
     useEffect(() => {
         const el = listRef.current?.querySelector(`[data-index="${selectedIndex}"]`);
         el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }, [selectedIndex]);
-
     if (!isOpen) return null;
-
     // --- RENDER ROW ---
     const renderRow = (item: SearchItem, idx: number) => {
         const isSelected = idx === selectedIndex;
         const Icon = ICONS[item.icon] || ICONS.SEARCH;
         const isHistory = (item as any).isHistory;
-
         return (
             <div 
                 key={`${item.type}-${item.id}-${idx}`} 
@@ -234,20 +212,16 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
             </div>
         );
     };
-
     const totalResults = (rawResults.leads?.length || 0) + (rawResults.listings?.length || 0) + (rawResults.users?.length || 0);
-
     return (
         <div className="fixed inset-0 z-[150] flex items-start justify-center pt-[8vh] sm:pt-[10vh] px-4" onKeyDown={handleKeyDown}>
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" 
                 onClick={onClose} 
-            />
-            
+            />            
             {/* Modal */}
-            <div className="w-full max-w-2xl bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[70vh] animate-scale-up ring-1 ring-black/10 dark:ring-white/10">
-                
+            <div className="w-full max-w-2xl bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[70vh] animate-scale-up ring-1 ring-black/10 dark:ring-white/10">                
                 {/* SEARCH INPUT */}
                 <div className="flex items-center gap-3 px-4 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] group">
                     <div className={`shrink-0 transition-colors ${loading ? 'text-indigo-500' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>
@@ -275,7 +249,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                         </kbd>
                     </div>
                 </div>
-
                 {/* RESULTS LIST */}
                 <div ref={listRef} className="overflow-y-auto flex-1 bg-[var(--bg-surface)] scroll-smooth relative min-h-[100px] no-scrollbar">
                     
@@ -286,7 +259,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                             <p>{t('search.try_searching')}</p>
                         </div>
                     )}
-
                     {/* History + Quick Actions (empty query) */}
                     {!query && (
                         <>
@@ -314,7 +286,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                             )}
                         </>
                     )}
-
                     {/* Search Results */}
                     {query && (
                         <>
@@ -345,7 +316,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                         </>
                     )}
                 </div>
-
                 {/* FOOTER */}
                 <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] flex justify-between items-center select-none">
                     <div className="flex items-center gap-3 text-xs2 text-[var(--text-muted)]">

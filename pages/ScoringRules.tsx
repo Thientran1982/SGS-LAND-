@@ -1,10 +1,8 @@
-
 import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { ScoringConfig } from '../types';
 import { useTranslation } from '../services/i18n';
-
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & CONFIG
 // -----------------------------------------------------------------------------
@@ -13,7 +11,6 @@ const CONSTANTS = {
     BUDGET_MAX_SCORE: 50,
     TOAST_DURATION: 3000
 };
-
 // -----------------------------------------------------------------------------
 // 2. SUB-COMPONENT: SCORING SLIDER (MEMOIZED)
 // -----------------------------------------------------------------------------
@@ -25,11 +22,9 @@ interface ScoringSliderProps {
     onChange: (field: string, val: number) => void;
     t: (k: string) => string;
 }
-
 const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field, max = CONSTANTS.DEFAULT_MAX_SCORE, onChange, t }) => {
     // Calculate percentage for background gradient
-    const percent = (value / max) * 100;
-    
+    const percent = (value / max) * 100;    
     return (
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-all hover:shadow-md group">
             <div className="flex justify-between mb-4 items-center">
@@ -52,7 +47,6 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
                     }}
                 />
             </div>
-
             <div className="flex justify-between mt-1">
                 <span className="text-xs2 text-[var(--text-secondary)] font-medium">0</span>
                 <p className="text-xs2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">{t('scoring.max_weight')}: {max}</p>
@@ -60,7 +54,6 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // 3. MAIN COMPONENT
 // -----------------------------------------------------------------------------
@@ -71,14 +64,11 @@ export const ScoringRules: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [weights, setWeights] = useState<Record<string, number>>({ engagement: 0, completeness: 0, budgetFit: 0, velocity: 0 });
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-
     const { t } = useTranslation();
-
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), CONSTANTS.TOAST_DURATION);
     }, []);
-
     const loadData = useCallback(async () => {
         setLoading(true);
         setLoadError(false);
@@ -93,15 +83,12 @@ export const ScoringRules: React.FC = () => {
             setLoading(false);
         }
     }, []);
-
     useEffect(() => {
         loadData();
     }, [loadData]);
-
     const handleWeightChange = useCallback((field: string, val: number) => {
         setWeights(prev => ({ ...prev, [field]: val }));
     }, []);
-
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -124,12 +111,10 @@ export const ScoringRules: React.FC = () => {
             setSaving(false);
         }
     };
-
     // Calculate Total Max Score based on current weights
     const totalMaxScore = useMemo(() => {
         return Object.values(weights || {}).reduce((a: number, b: number) => a + b, 0);
     }, [weights]);
-
     // Live Preview Calculation (Mock Logic for simulation)
     const simulatedScore = useMemo(() => {
         if (!weights) return 0;
@@ -141,7 +126,6 @@ export const ScoringRules: React.FC = () => {
         });
         return Math.min(100, Math.round((score / (totalMaxScore || 1)) * 100)) || 0;
     }, [weights, totalMaxScore]);
-
     // Configuration for Fields (Data-Driven UI)
     const SCORING_FIELDS = useMemo(() => [
         { key: 'engagement', max: CONSTANTS.DEFAULT_MAX_SCORE },
@@ -149,9 +133,7 @@ export const ScoringRules: React.FC = () => {
         { key: 'budgetFit', max: CONSTANTS.BUDGET_MAX_SCORE },
         { key: 'velocity', max: CONSTANTS.DEFAULT_MAX_SCORE },
     ], []);
-
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
-
     if (loadError) return (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
             <div className="w-14 h-14 bg-rose-50 text-rose-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
@@ -163,7 +145,6 @@ export const ScoringRules: React.FC = () => {
             </button>
         </div>
     );
-
     if (!config) return (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
             <div className="w-14 h-14 bg-indigo-50 text-indigo-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
@@ -173,7 +154,6 @@ export const ScoringRules: React.FC = () => {
             <p className="text-sm text-[var(--text-secondary)] max-w-xs">{t('scoring.empty_desc')}</p>
         </div>
     );
-
     return (
         <>
         <div className="p-4 sm:p-6 space-y-6 pb-20 relative animate-enter">
@@ -188,7 +168,6 @@ export const ScoringRules: React.FC = () => {
                     <div className="font-mono text-lg font-bold text-[var(--text-primary)]">v{config.version ?? 1}.0</div>
                 </div>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Sliders Area */}
@@ -205,18 +184,15 @@ export const ScoringRules: React.FC = () => {
                         />
                     ))}
                 </div>
-
                 {/* Live Preview Card */}
                 <div className="bg-gradient-to-br from-slate-900 to-indigo-900 text-white p-6 rounded-[24px] shadow-xl flex flex-col justify-between relative overflow-hidden h-[300px]">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--bg-surface)]/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10"></div>
-                    
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--bg-surface)]/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10"></div>                    
                     <div>
                         <h3 className="font-bold text-lg mb-1">{t('scoring.sim_title')}</h3>
                         <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                             {t('scoring.sim_desc')}
                         </p>
                     </div>
-
                     <div className="text-center my-6 relative z-10">
                         <div className="text-5xl font-extrabold tracking-tighter mb-2 transition-all duration-300">
                             {simulatedScore}
@@ -226,14 +202,12 @@ export const ScoringRules: React.FC = () => {
                             {simulatedScore >= 80 ? t('scoring.status_hot') : simulatedScore >= 50 ? t('scoring.status_warm') : t('scoring.status_cold')}
                         </div>
                     </div>
-
                     <div className="border-t border-white/10 pt-4 flex justify-between text-xs font-mono opacity-60">
                         <span>{t('scoring.total_max')}: {totalMaxScore}</span>
                         <span>{t('scoring.num_criteria')}: {Object.keys(weights || {}).length}</span>
                     </div>
                 </div>
             </div>
-
             <div className="bg-[var(--glass-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-start gap-4">
                     <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] text-amber-500 shadow-sm">

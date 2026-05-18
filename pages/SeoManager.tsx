@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -11,7 +10,6 @@ import { Dropdown } from '../components/Dropdown';
 import {
     LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
-
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const ICONS = {
     GLOBE:    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -23,7 +21,6 @@ const ICONS = {
     EXT:      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>,
     SAVE:     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
 };
-
 // ── Types ──────────────────────────────────────────────────────────────────────
 type TabId = 'SERP' | 'META' | 'HEALTH' | 'SCHEMA' | 'GEO';
 
@@ -33,7 +30,6 @@ interface HealthResult {
     status: 'pass' | 'warn' | 'fail';
     detail: string;
 }
-
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 // Human-readable labels for each ROUTE_SEO key.
@@ -62,13 +58,11 @@ const ROUTE_LABELS: Record<string, string> = {
     'seo-manager':    'Quản Lý SEO (admin)',
     livechat:         'Live Chat (trang chat công khai)',
 };
-
 // Derived from ROUTE_SEO so it's always in sync — no hardcoding.
 const ALL_ROUTES: { key: string; label: string }[] = Object.keys(ROUTE_SEO).map(key => ({
     key,
     label: ROUTE_LABELS[key] ?? key,
 }));
-
 // Public-facing routes only (exclude noIndex routes and auth pages like login/register/root).
 const PUBLIC_ROUTES: { key: string; label: string }[] = ALL_ROUTES.filter(({ key }) => {
     const cfg = ROUTE_SEO[key];
@@ -80,22 +74,18 @@ function getEffectiveCfg(routeKey: string, overrides: Record<string, { title: st
     const ov = overrides[routeKey];
     return { ...base, title: ov?.title ?? base.title, description: ov?.description ?? base.description };
 }
-
 function charStatus(len: number, min: number, max: number): 'green' | 'amber' | 'red' {
     if (len >= min && len <= max) return 'green';
     if (len > max) return 'amber';
     return 'red';
 }
-
 const CharCount: React.FC<{ value: string; min: number; max: number }> = ({ value, min, max }) => {
     const len = value.length;
     const st = charStatus(len, min, max);
     const cls = st === 'green' ? 'text-emerald-600' : st === 'amber' ? 'text-amber-500' : 'text-rose-500';
     return <span className={`text-2xs font-bold tabular-nums ${cls}`}>{len}/{max}</span>;
 };
-
 // ── SERP Status Helpers ────────────────────────────────────────────────────────
-
 function getSerpStatus(title: string, desc: string): 'green' | 'amber' | 'red' {
     const tLen = title.length;
     const dLen = desc.length;
@@ -103,17 +93,13 @@ function getSerpStatus(title: string, desc: string): 'green' | 'amber' | 'red' {
     if (tLen > 0 && dLen > 0) return 'amber';
     return 'red';
 }
-
 function statusDotClass(status: 'green' | 'amber' | 'red') {
     return status === 'green' ? 'bg-emerald-500' : status === 'amber' ? 'bg-amber-400' : 'bg-rose-500';
 }
-
 function statusRingClass(status: 'green' | 'amber' | 'red') {
     return status === 'green' ? 'ring-emerald-200 dark:ring-emerald-800' : status === 'amber' ? 'ring-amber-200 dark:ring-amber-800' : 'ring-rose-200 dark:ring-rose-800';
 }
-
 // ── SerpPageDropdown ────────────────────────────────────────────────────────────
-
 const SerpPageDropdown: React.FC<{
     value: string;
     onChange: (key: string) => void;
@@ -131,11 +117,9 @@ const SerpPageDropdown: React.FC<{
     }>({ left: 0, width: 0, maxH: 400, openUp: false });
     const btnRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
-
     const selected = routes.find(r => r.key === value) ?? routes[0];
     const selectedCfg = getEffectiveCfg(value, overrides);
     const selectedStatus = getSerpStatus(selectedCfg.title, selectedCfg.description);
-
     const openMenu = () => {
         if (btnRef.current) {
             const rect = btnRef.current.getBoundingClientRect();
@@ -147,7 +131,6 @@ const SerpPageDropdown: React.FC<{
             const spaceBelow = window.innerHeight - rect.bottom - GAP - 8;
             const spaceAbove = rect.top - GAP - 8;
             const openUp = spaceBelow < 220 && spaceAbove > spaceBelow;
-
             if (openUp) {
                 setCoords({
                     bottom: window.innerHeight - rect.top + GAP,
@@ -170,7 +153,6 @@ const SerpPageDropdown: React.FC<{
         }
         setIsOpen(true);
     };
-
     useEffect(() => {
         if (!isOpen) return;
         const handle = (e: MouseEvent) => {
@@ -198,7 +180,6 @@ const SerpPageDropdown: React.FC<{
             window.removeEventListener('resize', handleResize);
         };
     }, [isOpen]);
-
     return (
         <div className="relative">
             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide block mb-1.5">Chọn trang</label>
@@ -218,7 +199,6 @@ const SerpPageDropdown: React.FC<{
                         sgsland.vn{selectedCfg.path || '/'}
                     </div>
                 </div>
-
                 {/* Chevron */}
                 <svg
                     className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-500' : 'text-[var(--text-secondary)]'}`}
@@ -227,7 +207,6 @@ const SerpPageDropdown: React.FC<{
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-
             {isOpen && createPortal(
                 <div
                     ref={menuRef}
@@ -292,7 +271,6 @@ const SerpPageDropdown: React.FC<{
         </div>
     );
 };
-
 // ── Derive a relevant search query from the effective page title ─────────────────
 // Always reflects the CURRENT title (including admin overrides) so the Google
 // SERP mockup search bar stays in sync after each meta edit + save.
@@ -303,7 +281,6 @@ function deriveSearchQuery(title: string): string {
         // Strip trailing " | SGS LAND" or " - SGS LAND" (other pages format)
         .replace(/\s*[|–\-]\s*SGS\s+LAND\s*$/i, '')
         .trim();
-
     // If there's still a "|" separator, take only the first segment (the main topic)
     const pipe = q.indexOf('|');
     if (pipe > 15) q = q.slice(0, pipe).trim();
@@ -311,7 +288,6 @@ function deriveSearchQuery(title: string): string {
     // Lowercase, collapse spaces, cap at 55 chars
     return q.toLowerCase().replace(/\s+/g, ' ').slice(0, 55).trim();
 }
-
 // ── Tab: SERP Preview ──────────────────────────────────────────────────────────
 const SerpPreview: React.FC<{
     selectedKey: string;
@@ -327,7 +303,6 @@ const SerpPreview: React.FC<{
     const searchQuery = deriveSearchQuery(cfg.title);
     // Use window.location.origin so the link works in dev preview AND on the live domain
     const pageHref = `${window.location.origin}${cfg.path || '/'}`;
-
     return (
         <div className="space-y-6">
             <SerpPageDropdown
@@ -336,7 +311,6 @@ const SerpPreview: React.FC<{
                 routes={PUBLIC_ROUTES}
                 overrides={overrides}
             />
-
             {/* Google SERP Mockup */}
             <div className="bg-white dark:bg-slate-900 border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm font-sans">
                 <div className="flex items-center gap-2 mb-3">
@@ -351,7 +325,6 @@ const SerpPreview: React.FC<{
                         {searchQuery}
                     </div>
                 </div>
-
                 {/* Search Result Card */}
                 <div className="max-w-2xl">
                     <div className="flex items-center gap-2 mb-1">
@@ -388,7 +361,6 @@ const SerpPreview: React.FC<{
                     </p>
                 </div>
             </div>
-
             {/* Character Counters */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-[var(--glass-surface-hover)] rounded-xl p-4 border border-[var(--glass-border)]">
@@ -422,7 +394,6 @@ const SerpPreview: React.FC<{
                     </div>
                 </div>
             </div>
-
             {/* Tips */}
             <div className="bg-indigo-50/60 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-4 text-xs text-indigo-700 dark:text-indigo-300 space-y-1">
                 <p className="font-bold mb-1">💡 Hướng dẫn tối ưu</p>
@@ -433,7 +404,6 @@ const SerpPreview: React.FC<{
         </div>
     );
 };
-
 // ── Tab: Meta Editor ───────────────────────────────────────────────────────────
 const MetaEditor: React.FC<{
     overrides: Record<string, { title: string; description: string }>;
@@ -445,14 +415,11 @@ const MetaEditor: React.FC<{
     const [previewing, setPreviewing] = useState<string | null>(null);
     const [serverSaving, setServerSaving] = useState<string | null>(null);
     const [serverError, setServerError] = useState<string | null>(null);
-
     const getTitle = (key: string) => edits[key]?.title ?? overrides[key]?.title ?? ROUTE_SEO[key]?.title ?? ROUTE_SEO[''].title;
     const getDesc  = (key: string) => edits[key]?.description ?? overrides[key]?.description ?? ROUTE_SEO[key]?.description ?? ROUTE_SEO[''].description;
-
     const handleChange = (key: string, field: 'title' | 'description', val: string) => {
         setEdits(prev => ({ ...prev, [key]: { ...(prev[key] ?? { title: getTitle(key), description: getDesc(key) }), [field]: val } }));
     };
-
     const handleSave = async (key: string) => {
         const t = getTitle(key);
         const d = getDesc(key);
@@ -478,7 +445,6 @@ const MetaEditor: React.FC<{
             setSaved(null);
         }, 3000);
     };
-
     const handleReset = async (key: string) => {
         try {
             await seoApi.remove(key);
@@ -488,7 +454,6 @@ const MetaEditor: React.FC<{
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
         updatePageSEO('seo-manager');
     };
-
     const handlePreview = useCallback((key: string) => {
         setPreviewing(key);
         // Apply the edited route's SEO to the DOM for 3s so the admin can verify the title/description in the browser tab
@@ -499,24 +464,20 @@ const MetaEditor: React.FC<{
             setPreviewing(null);
         }, 3000);
     }, []);
-
     const isDirty = (key: string) => !!edits[key];
     const isOverridden = (key: string) => !!overrides[key];
-
     return (
         <div className="space-y-4">
             <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được <strong className="font-semibold text-emerald-600">lưu lên server</strong> — Google và mạng xã hội sẽ thấy meta mới khi crawl lại.</p>
             {serverError && (
                 <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl px-3 py-2">{serverError}</div>
             )}
-
             {PUBLIC_ROUTES.map(({ key, label }) => {
                 const dirty = isDirty(key);
                 const overridden = isOverridden(key);
                 const title = getTitle(key);
                 const desc = getDesc(key);
                 const cfg = ROUTE_SEO[key];
-
                 return (
                     <div key={key} className={`bg-[var(--bg-surface)] border rounded-2xl p-4 shadow-sm transition-all ${dirty ? 'border-indigo-300 shadow-indigo-100/50 dark:shadow-indigo-900/20' : 'border-[var(--glass-border)]'}`}>
                         <div className="flex items-center justify-between mb-3">
@@ -527,7 +488,6 @@ const MetaEditor: React.FC<{
                             </div>
                             <span className="text-2xs font-mono text-[var(--text-muted)]">/{key}</span>
                         </div>
-
                         <div className="space-y-2.5">
                             <div>
                                 <div className="flex justify-between mb-1">
@@ -595,34 +555,28 @@ const MetaEditor: React.FC<{
         </div>
     );
 };
-
 // ── Tab: SEO Health ────────────────────────────────────────────────────────────
 const HealthChecklist: React.FC = () => {
     const [results, setResults] = useState<HealthResult[]>([]);
     const [loading, setLoading] = useState(true);
-
     const run = useCallback(async () => {
         setLoading(true);
         const checks: HealthResult[] = [];
-
         const check = (id: string, label: string, pass: boolean, warn?: boolean, detail?: string): HealthResult => ({
             id, label,
             status: pass ? 'pass' : warn ? 'warn' : 'fail',
             detail: detail ?? (pass ? 'OK' : 'Cần kiểm tra'),
         });
-
         // 1. Canonical present
         const canonical = document.getElementById('canonical-url') as HTMLLinkElement | null;
         const hasCanonical = !!canonical?.href && canonical.href !== window.location.origin + '/';
         checks.push(check('canonical', 'Thẻ Canonical', hasCanonical, false,
             hasCanonical ? canonical!.href : 'Thẻ canonical không có href'));
-
         // 2. OG image is hosted HTTPS URL
         const ogImg = document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content ?? '';
         const ogImgOk = ogImg.startsWith('https://') && !ogImg.startsWith('data:');
         checks.push(check('og-image', 'Ảnh OG (HTTPS URL)', ogImgOk, false,
             ogImgOk ? ogImg.slice(0, 60) + '...' : `Giá trị: ${ogImg.slice(0, 40)}...`));
-
         // 3. Hreflang declared
         const hreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
         const hreflangOk = hreflangs.length >= 2;
@@ -639,26 +593,22 @@ const HealthChecklist: React.FC = () => {
             ? (isCurrentPageNoIndex ? 'noindex (đúng với trang admin)' : '⚠ Trang admin thiếu noindex!')
             : (robotsMeta || 'Không tìm thấy');
         checks.push(check('robots', 'Thẻ Meta Robots', robotsOk, false, robotsDetail));
-
         // 5. Structured data count
         const jsonLdCount = document.querySelectorAll('script[type="application/ld+json"]').length;
         const jsonLdOk = jsonLdCount >= 5;
         checks.push(check('jsonld', 'Dữ Liệu Có Cấu Trúc (JSON-LD)', jsonLdOk, jsonLdCount >= 3,
             `${jsonLdCount} schema(s) (khuyến nghị ≥ 5)`));
-
         // 6. Page title length
         const titleLen = document.title.length;
         const titleOk = titleLen >= 30 && titleLen <= 60;
         checks.push(check('title-len', 'Độ Dài Tiêu Đề (30–60 ký tự)', titleOk, titleLen <= 70,
             `${titleLen} ký tự: "${document.title.slice(0, 50)}..."`));
-
         // 7. Meta description length
         const descContent = document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? '';
         const descLen = descContent.length;
         const descOk = descLen >= 120 && descLen <= 160;
         checks.push(check('desc-len', 'Độ Dài Mô Tả (120–160 ký tự)', descOk, descLen >= 80,
             `${descLen} ký tự`));
-
         // 8. Manifest reachable
         try {
             const r = await fetch('/manifest.json', { method: 'HEAD' });
@@ -666,7 +616,6 @@ const HealthChecklist: React.FC = () => {
         } catch {
             checks.push({ id: 'manifest', label: 'manifest.json Truy Cập Được', status: 'fail', detail: 'Không thể truy cập' });
         }
-
         // 9. Sitemap reachable
         try {
             const r = await fetch('/sitemap.xml', { method: 'HEAD' });
@@ -674,15 +623,12 @@ const HealthChecklist: React.FC = () => {
         } catch {
             checks.push({ id: 'sitemap', label: 'sitemap.xml Truy Cập Được', status: 'fail', detail: 'Không thể truy cập' });
         }
-
         // 10. apple-touch-icon
         const ati = document.querySelector('link[rel="apple-touch-icon"]');
         checks.push(check('ati', 'Apple Touch Icon', !!ati, false, ati ? 'Khai báo trong <head>' : 'Thiếu <link rel="apple-touch-icon">'));
-
         // 11. theme-color
         const tc = document.querySelector('meta[name="theme-color"]');
         checks.push(check('theme-color', 'Thẻ Meta Theme Color', !!tc, false, tc ? (tc as HTMLMetaElement).content : 'Thiếu thẻ theme-color'));
-
         // 12. noindex check — only a problem when a public-facing route is inadvertently noindexed
         const robotsContent12 = document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.content ?? '';
         const isNoIndexed = robotsContent12.includes('noindex');
@@ -693,34 +639,28 @@ const HealthChecklist: React.FC = () => {
             checks.push(check('noindex-pub', 'Trang Công Khai Không Bị Noindex', !isNoIndexed, false,
                 isNoIndexed ? '⚠ Trang hiện tại đang bị noindex!' : 'Đúng — không bị noindex'));
         }
-
         setResults(checks);
         setLoading(false);
     }, []);
 
     useEffect(() => { run(); }, [run]);
-
     const passCount = results.filter(r => r.status === 'pass').length;
     const score = results.length ? Math.round((passCount / results.length) * 100) : 0;
     const scoreColor = score >= 90 ? 'text-emerald-600' : score >= 70 ? 'text-amber-500' : 'text-rose-500';
-
     const statusIcon = (s: 'pass' | 'warn' | 'fail') =>
         s === 'pass' ? <span className="text-emerald-500">{ICONS.CHECK}</span>
         : s === 'warn' ? <span className="text-amber-500">{ICONS.WARN}</span>
         : <span className="text-rose-500">{ICONS.ERROR}</span>;
-
     const statusBg = (s: 'pass' | 'warn' | 'fail') =>
         s === 'pass' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
         : s === 'warn' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30'
         : 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30';
-
     if (loading) return (
         <div className="flex items-center justify-center py-16 gap-3 text-[var(--text-secondary)]">
             <div className="w-5 h-5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
             <span className="text-sm font-medium">Đang kiểm tra 12 tín hiệu SEO...</span>
         </div>
     );
-
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -735,7 +675,6 @@ const HealthChecklist: React.FC = () => {
                     {ICONS.RESET} Kiểm tra lại
                 </button>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {results.map(r => (
                     <div key={r.id} className={`flex items-start gap-3 p-3 rounded-xl border ${statusBg(r.status)}`}>
@@ -750,7 +689,6 @@ const HealthChecklist: React.FC = () => {
         </div>
     );
 };
-
 // ── JSON Syntax Highlighter ────────────────────────────────────────────────────
 const highlightJson = (json: string): string => {
     return json.replace(
@@ -778,7 +716,6 @@ const highlightJson = (json: string): string => {
         }
     );
 };
-
 const StructuredData: React.FC = () => {
     const [schemas, setSchemas] = useState<{ type: string; json: string }[]>([]);
     const [copied, setCopied] = useState<number | null>(null);
@@ -796,7 +733,6 @@ const StructuredData: React.FC = () => {
         });
         setSchemas(parsed);
     }, []);
-
     useEffect(() => { readSchemas(); }, [readSchemas]);
 
     const handleCopy = async (json: string, idx: number) => {
@@ -804,7 +740,6 @@ const StructuredData: React.FC = () => {
         setCopied(idx);
         setTimeout(() => setCopied(null), 2000);
     };
-
     const typeColor = (type: string) => {
         if (type.includes('Organization')) return 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-100';
         if (type.includes('WebSite')) return 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-100';
@@ -814,13 +749,11 @@ const StructuredData: React.FC = () => {
         if (type.includes('Service')) return 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border-teal-100';
         return 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200';
     };
-
     if (schemas.length === 0) return (
         <div className="py-12 text-center text-[var(--text-secondary)] text-sm">
             Không tìm thấy JSON-LD schemas trong &lt;head&gt;
         </div>
     );
-
     return (
         <div className="space-y-4 w-full min-w-0">
             <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -833,7 +766,6 @@ const StructuredData: React.FC = () => {
                     {ICONS.RESET} Làm mới
                 </button>
             </div>
-
             {schemas.map((s, idx) => (
                 <div key={idx} className="w-full min-w-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden shadow-sm">
                     <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface-hover)] min-w-0">
@@ -857,7 +789,6 @@ const StructuredData: React.FC = () => {
         </div>
     );
 };
-
 // ── External Tool Links ────────────────────────────────────────────────────────
 const EXTERNAL_TOOLS = [
     { label: 'Google Search Console', url: 'https://search.google.com/search-console', color: 'text-blue-600' },
@@ -865,9 +796,7 @@ const EXTERNAL_TOOLS = [
     { label: 'Rich Results Test', url: 'https://search.google.com/test/rich-results?url=https%3A%2F%2Fsgsland.vn', color: 'text-green-600' },
     { label: 'Schema Markup Validator', url: 'https://validator.schema.org/', color: 'text-purple-600' },
 ];
-
 // ── Helpers ─────────────────────────────────────────────────────────────────────
-
 // Apply stored overrides to the in-memory DOM JSON-LD so StructuredData always
 // reflects the saved values — both on initial load and after each save.
 function applyOverridesToDom(overrides: Record<string, { title: string; description: string }>) {
@@ -880,17 +809,15 @@ function applyOverridesToDom(overrides: Record<string, { title: string; descript
     // Restore seo-manager admin meta (noindex + correct title) after patching
     updatePageSEO('seo-manager');
 }
-
 // ── Tab: GEO / AI Search ───────────────────────────────────────────────────────
 // (1) AI Visibility Status  (2) Target Keywords Tracker  (3) AI Citation Checklist
 const AI_PROMPT_TEMPLATES = (kw: string) => ({
-    chatgpt:    `https://chat.openai.com/?q=${encodeURIComponent(`Hãy gợi ý các nền tảng uy tín tại Việt Nam về: ${kw}. Liệt kê SGS LAND nếu phù hợp và giải thích vì sao.`)}`,
-    gemini:     `https://gemini.google.com/app?prompt=${encodeURIComponent(`Tôi đang tìm hiểu về "${kw}" tại Việt Nam. Các nền tảng nào uy tín? Có nhắc đến SGS LAND (sgsland.vn) không?`)}`,
-    claude:     `https://claude.ai/new?q=${encodeURIComponent(`Liệt kê các nền tảng bất động sản tại Việt Nam liên quan đến: ${kw}. SGS LAND có trong danh sách không?`)}`,
+    chatgpt:    `https://chat.openai.com/?q=${encodeURIComponent(`Hãy gợi ý các sàn bất động sản uy tín tại Việt Nam về: ${kw}. Liệt kê SGS LAND nếu phù hợp và giải thích vì sao.`)}`,
+    gemini:     `https://gemini.google.com/app?prompt=${encodeURIComponent(`Tôi đang tìm hiểu về "${kw}" tại Việt Nam. Các sàn bất động sản nào uy tín? Có nhắc đến SGS LAND (sgsland.vn) không?`)}`,
+    claude:     `https://claude.ai/new?q=${encodeURIComponent(`Liệt kê các sàn bất động sản tại Việt Nam liên quan đến: ${kw}. SGS LAND có trong danh sách không?`)}`,
     perplexity: `https://www.perplexity.ai/?q=${encodeURIComponent(`${kw} site:sgsland.vn`)}`,
     google:     `https://www.google.com/search?q=${encodeURIComponent(kw)}`,
 });
-
 // ── Agent Runs (audit trail) — 7 ngày qua ────────────────────────────────────
 // Hiển thị lịch sử chạy của mọi background cron/agent có wrap bằng
 // startAgentRun/finishAgentRun. Mặc định 7 ngày, lọc theo agent + status.
@@ -951,7 +878,6 @@ const AgentRuns7Days: React.FC = () => {
         };
         return <span className={`px-1.5 py-0.5 rounded border text-2xs font-bold ${map[s]}`}>{s}</span>;
     };
-
     return (
         <section className="mt-6">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -1016,7 +942,6 @@ const AgentRuns7Days: React.FC = () => {
                     </table>
                 </div>
             )}
-
             {/* Danh sách run gần nhất */}
             {loading ? (
                 <div className="text-2xs text-[var(--text-tertiary)]">Đang tải...</div>
@@ -1074,7 +999,6 @@ const AgentRuns7Days: React.FC = () => {
         </section>
     );
 };
-
 // ── GEO Monitor (last 30 days) — Sprint #64 follow-up ─────────────────────────
 // Charts daily AI mention rate per engine + best SERP position deltas, fed by
 // QStash daily cron writing into seo_geo_snapshots.
@@ -1084,7 +1008,6 @@ const GeoMonitor30Days: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [running, setRunning] = useState(false);
     const [err, setErr] = useState<string | null>(null);
-
     const load = useCallback(() => {
         setLoading(true);
         setErr(null);
@@ -1094,7 +1017,6 @@ const GeoMonitor30Days: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
     useEffect(() => { load(); }, [load]);
-
     const runNow = async () => {
         if (running) return;
         setRunning(true);
@@ -1108,7 +1030,6 @@ const GeoMonitor30Days: React.FC = () => {
             setRunning(false);
         }
     };
-
     // ── Build chart data ────────────────────────────────────────────────────
     const ENGINES = ['gemini', 'chatgpt', 'claude', 'perplexity', 'grok'] as const;
     const mentionData = snaps.map((s) => {
@@ -1123,7 +1044,6 @@ const GeoMonitor30Days: React.FC = () => {
             : null;
         return row;
     });
-
     // Track best position over time for the 5 keywords with most recent data.
     const trackedKws: string[] = (() => {
         const last = snaps[snaps.length - 1];
@@ -1139,13 +1059,11 @@ const GeoMonitor30Days: React.FC = () => {
         }
         return row;
     });
-
     const latest = snaps[snaps.length - 1];
     const previous = snaps[snaps.length - 2];
     const delta = (latest && previous && latest.aiMentions?.totals?.rate != null && previous.aiMentions?.totals?.rate != null)
         ? Math.round(((latest.aiMentions.totals.rate - previous.aiMentions.totals.rate) as number) * 100)
         : null;
-
     const COLORS: Record<string, string> = {
         gemini: '#4285f4', chatgpt: '#10a37f', claude: '#cc785c', perplexity: '#1f6feb', grok: '#1f2937', overall: '#6366f1',
     };
@@ -1179,7 +1097,6 @@ const GeoMonitor30Days: React.FC = () => {
             </div>
 
             {err && <div className="text-2xs text-rose-700 font-bold mb-2">❌ {err}</div>}
-
             {loading ? (
                 <div className="text-xs text-[var(--text-tertiary)] animate-pulse">Đang tải snapshots...</div>
             ) : snaps.length === 0 ? (
@@ -1209,7 +1126,6 @@ const GeoMonitor30Days: React.FC = () => {
                             </ResponsiveContainer>
                         </div>
                     </div>
-
                     {/* SERP position deltas (lower = better) */}
                     <div className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
                         <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">
@@ -1236,7 +1152,6 @@ const GeoMonitor30Days: React.FC = () => {
                             </div>
                         )}
                     </div>
-
                     {/* Latest engine breakdown */}
                     {latest?.aiMentions?.engines && (
                         <div className="lg:col-span-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
@@ -1268,7 +1183,6 @@ const GeoMonitor30Days: React.FC = () => {
                             </div>
                         </div>
                     )}
-
                     {/* Latest competitor backlinks snapshot */}
                     {latest?.backlinks?.competitors?.length > 0 && (
                         <div className="lg:col-span-2 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
@@ -1319,7 +1233,6 @@ const GeoMonitor30Days: React.FC = () => {
         </section>
     );
 };
-
 const GeoAiSearch: React.FC = () => {
     const [status, setStatus] = useState<AiVisibilityStatus | null>(null);
     const [statusLoading, setStatusLoading] = useState(true);
@@ -1331,12 +1244,10 @@ const GeoAiSearch: React.FC = () => {
     const [auditing, setAuditing] = useState(false);
     const [auditResult, setAuditResult] = useState<{ target: string; fetchedAt: string; items: any[] } | null>(null);
     const [auditError, setAuditError] = useState<string | null>(null);
-
     const [draft, setDraft] = useState({ keyword: '', targetUrl: '', currentPosition: '', targetPosition: '3', searchVolume: '', notes: '' });
     const [saving, setSaving] = useState(false);
     const [saveMsg, setSaveMsg] = useState<string | null>(null);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
-
     const loadStatus = useCallback(() => {
         setStatusLoading(true);
         seoApi.aiVisibilityStatus()
@@ -1344,7 +1255,6 @@ const GeoAiSearch: React.FC = () => {
             .catch(() => setStatus(null))
             .finally(() => setStatusLoading(false));
     }, []);
-
     const loadKeywords = useCallback(() => {
         setKwLoading(true);
         seoApi.listKeywords()
@@ -1352,9 +1262,7 @@ const GeoAiSearch: React.FC = () => {
             .catch(() => setKeywords([]))
             .finally(() => setKwLoading(false));
     }, []);
-
     useEffect(() => { loadStatus(); loadKeywords(); }, [loadStatus, loadKeywords]);
-
     const submitDraft = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!draft.keyword.trim()) { setSaveMsg('Vui lòng nhập từ khóa'); return; }
@@ -1379,7 +1287,6 @@ const GeoAiSearch: React.FC = () => {
             setTimeout(() => setSaveMsg(null), 2500);
         }
     };
-
     const updateAiFlag = async (kw: TargetKeyword, engine: 'chatgpt' | 'gemini' | 'claude' | 'perplexity', value: boolean | null) => {
         if (updatingId) return;
         setUpdatingId(kw.id);
@@ -1398,19 +1305,16 @@ const GeoAiSearch: React.FC = () => {
         } catch { /* noop */ }
         finally { setUpdatingId(null); }
     };
-
     const removeKeyword = async (id: string) => {
         if (!confirm('Xoá từ khóa này?')) return;
         try { await seoApi.deleteKeyword(id); loadKeywords(); } catch { /* noop */ }
     };
-
     // ── AI Citation Checklist (client-side, runs against current DOM) ────────
     type CheckItem = { id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string; tip?: string };
     const [checklist, setChecklist] = useState<CheckItem[]>([]);
     const runChecklist = useCallback(() => {
         const items: CheckItem[] = [];
         const head = document.head;
-
         const desc = head.querySelector<HTMLMetaElement>('meta[name="description"]')?.content || '';
         items.push({
             id: 'desc-len', label: 'Meta description giàu thông tin (140-200 ký tự)',
@@ -1418,14 +1322,12 @@ const GeoAiSearch: React.FC = () => {
             detail: `${desc.length} ký tự`,
             tip: 'LLM trích description nguyên văn cho 1 số snippet.',
         });
-
         const title = document.title || '';
         items.push({
             id: 'title-len', label: 'Title 30-65 ký tự, có thương hiệu SGS LAND',
             status: title.length >= 30 && title.length <= 65 && /SGS\s*LAND/i.test(title) ? 'pass' : 'warn',
             detail: `${title.length} ký tự — ${title || '(trống)'}`,
         });
-
         const ogImg = head.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content || '';
         items.push({
             id: 'og-image', label: 'Có Open Graph image',
@@ -1433,21 +1335,18 @@ const GeoAiSearch: React.FC = () => {
             detail: ogImg || 'Chưa khai báo',
             tip: 'AI Overview của Google + Perplexity hay đính kèm ảnh OG.',
         });
-
         const canonical = head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href || '';
         items.push({
             id: 'canonical', label: 'Có canonical URL',
             status: canonical ? 'pass' : 'fail',
             detail: canonical || 'Chưa khai báo',
         });
-
         const jsonLds = Array.from(head.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]'));
         items.push({
             id: 'jsonld-count', label: 'Có ≥ 3 JSON-LD schema',
             status: jsonLds.length >= 3 ? 'pass' : (jsonLds.length >= 1 ? 'warn' : 'fail'),
             detail: `${jsonLds.length} schema`,
         });
-
         const types = jsonLds.map((s) => { try { return JSON.parse(s.textContent || '{}')['@type']; } catch { return null; } }).filter(Boolean);
         const hasFaq = types.some((t) => String(t).includes('FAQPage'));
         items.push({
@@ -1467,7 +1366,6 @@ const GeoAiSearch: React.FC = () => {
             status: hasBreadcrumb ? 'pass' : 'warn',
             detail: hasBreadcrumb ? 'Đã có' : 'Giúp Google hiển thị breadcrumb trong SERP',
         });
-
         const author = head.querySelector<HTMLMetaElement>('meta[name="author"]')?.content || '';
         items.push({
             id: 'author', label: 'Có meta author (E-E-A-T)',
@@ -1479,7 +1377,6 @@ const GeoAiSearch: React.FC = () => {
             id: 'modified', label: 'Có article:modified_time (giúp AI biết tin mới)',
             status: articleModified ? 'pass' : 'warn', detail: articleModified || 'Chưa khai báo',
         });
-
         const bodyText = document.body.innerText || '';
         const wordCount = bodyText.trim().split(/\s+/).length;
         items.push({
@@ -1487,7 +1384,6 @@ const GeoAiSearch: React.FC = () => {
             status: wordCount >= 800 ? 'pass' : (wordCount >= 400 ? 'warn' : 'fail'),
             detail: `${wordCount.toLocaleString()} từ`,
         });
-
         const mentionsBrand = (bodyText.match(/SGS\s*LAND/gi) || []).length;
         items.push({
             id: 'brand-anchors', label: 'Có "SGS LAND" xuất hiện ≥ 3 lần (citation anchor)',
@@ -1495,11 +1391,9 @@ const GeoAiSearch: React.FC = () => {
             detail: `${mentionsBrand} lần`,
             tip: 'Mỗi đoạn nên có "Theo SGS LAND..." để LLM dễ trích nguồn.',
         });
-
         setChecklist(items);
     }, []);
     useEffect(() => { runChecklist(); }, [runChecklist]);
-
     // ── Render helpers ───────────────────────────────────────────────────────
     const StatusBadge: React.FC<{ ok: boolean; label?: string }> = ({ ok, label }) => (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold ${
@@ -1507,10 +1401,8 @@ const GeoAiSearch: React.FC = () => {
                : 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300'
         }`}>{ok ? ICONS.CHECK : ICONS.ERROR}{label ?? (ok ? 'OK' : 'Thiếu')}</span>
     );
-
     const passCount = checklist.filter((c) => c.status === 'pass').length;
     const totalCount = checklist.length;
-
     return (
         <div className="space-y-6">
             {/* ── 1. AI Visibility Status ─────────────────────────────────── */}
@@ -1560,7 +1452,6 @@ const GeoAiSearch: React.FC = () => {
                     </div>
                 )}
             </section>
-
             {/* ── 1.5 GEO Monitor (last 30 days) — Sprint #64 follow-up ───── */}
             <GeoMonitor30Days />
 
@@ -1573,7 +1464,6 @@ const GeoAiSearch: React.FC = () => {
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">2. Theo Dõi Từ Khóa Mục Tiêu (Top 3)</h3>
                     <span className="text-2xs text-[var(--text-tertiary)]">{keywords.length} từ khóa</span>
                 </div>
-
                 {keywords.length === 0 && !kwLoading && (
                     <div className="mb-3 p-3 rounded-xl border border-indigo-300 bg-indigo-50/70 dark:bg-indigo-900/15 flex items-start gap-3">
                         <div className="flex-1 text-xs text-indigo-900 dark:text-indigo-200">
@@ -1597,7 +1487,6 @@ const GeoAiSearch: React.FC = () => {
                         </button>
                     </div>
                 )}
-
                 <form onSubmit={submitDraft} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mb-4 p-3 rounded-xl bg-[var(--glass-surface-hover)] border border-[var(--glass-border)]">
                     <input type="text" value={draft.keyword} onChange={(e) => setDraft({ ...draft, keyword: e.target.value })}
                         placeholder="Từ khóa (vd: căn hộ Aqua City)" maxLength={300}
@@ -1621,7 +1510,6 @@ const GeoAiSearch: React.FC = () => {
                         {saving ? 'Đang lưu...' : (saveMsg || 'Thêm / Cập nhật')}
                     </button>
                 </form>
-
                 {kwLoading ? (
                     <div className="text-xs text-[var(--text-tertiary)] animate-pulse">Đang tải...</div>
                 ) : keywords.length === 0 ? (
@@ -1704,7 +1592,6 @@ const GeoAiSearch: React.FC = () => {
                     </div>
                 )}
             </section>
-
             {/* ── 3. AI Citation Checklist ───────────────────────────────── */}
             {(() => {
                 const displayItems: any[] = auditResult ? auditResult.items : checklist;
@@ -1716,7 +1603,6 @@ const GeoAiSearch: React.FC = () => {
                             <h3 className="text-sm font-bold text-[var(--text-primary)]">3. Checklist Sẵn Sàng Cho AI Trích Dẫn ({dPass}/{dTotal})</h3>
                             <button onClick={() => { setAuditResult(null); setAuditError(null); runChecklist(); }} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Chạy lại / Quay về DOM admin</button>
                         </div>
-
                         {/* URL Audit input — kiểm tra trang công khai bất kỳ */}
                         <div className="p-3 mb-3 rounded-lg border border-indigo-300 bg-indigo-50/70 dark:bg-indigo-900/15">
                             <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200 mb-2">🔎 Kiểm tra trang công khai (server-side fetch + parse HTML thật)</div>
@@ -1753,7 +1639,6 @@ const GeoAiSearch: React.FC = () => {
                                 </div>
                             )}
                         </div>
-
                         {!auditResult && (
                             <div className="p-3 mb-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-900/15 text-2xs text-amber-900 dark:text-amber-200">
                                 <div className="font-bold mb-1">⚠️ Đang xem: DOM của trang admin này</div>
@@ -1787,7 +1672,6 @@ const GeoAiSearch: React.FC = () => {
         </div>
     );
 };
-
 // ── Main Component ─────────────────────────────────────────────────────────────
 export const SeoManager: React.FC = () => {
     const { t } = useTranslation();
@@ -1838,7 +1722,6 @@ export const SeoManager: React.FC = () => {
         { id: 'SCHEMA', label: 'Dữ Liệu Cấu Trúc' },
         { id: 'GEO',    label: 'GEO / AI Search' },
     ];
-
     if (loading) return (
         <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>
     );
@@ -1852,7 +1735,6 @@ export const SeoManager: React.FC = () => {
             <p className="text-sm text-[var(--text-secondary)]">{t('common.admin_only')}</p>
         </div>
     );
-
     return (
         <div className="space-y-5 pb-20 animate-enter p-4 sm:p-6">
 
@@ -1883,7 +1765,6 @@ export const SeoManager: React.FC = () => {
                         ))}
                     </div>
                 </div>
-
                 {/* Tab Bar — mobile: dropdown, desktop: pill tabs */}
                 {/* Mobile dropdown */}
                 <div className="sm:hidden mt-4">
@@ -1911,7 +1792,6 @@ export const SeoManager: React.FC = () => {
                     ))}
                 </div>
             </div>
-
             {/* ── Tab Content ─────────────────────────────────────────────── */}
             <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[20px] shadow-sm p-4 sm:p-6 w-full min-w-0 overflow-x-hidden">
                 {activeTab === 'SERP'   && <SerpPreview selectedKey={serpSelectedKey} onSelect={setSerpSelectedKey} overrides={overrides} />}

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
@@ -6,7 +5,6 @@ import { RoutingRule, RoutingStrategy, User, Team, LEAD_SOURCES } from '../types
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
-
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
@@ -14,7 +12,6 @@ const ICONS = {
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     PLAY: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>,
 };
-
 const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
     const [form, setForm] = useState<Partial<RoutingRule>>({});
     const [validationError, setValidationError] = useState('');
@@ -33,7 +30,6 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
     }, [isOpen, rule]);
 
     if (!isOpen) return null;
-
     const handleSave = () => {
         if (!form.name?.trim() || !form.action?.targetId) {
             setValidationError(t('routing.validate_required'));
@@ -42,15 +38,13 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
         setValidationError('');
         onSave(form);
     };
-
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-[var(--bg-surface)] w-full max-w-lg rounded-[24px] shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('routing.modal_title')}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)]">{ICONS.CLOSE}</button>
-                </div>
-                
+                </div>               
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.rule_name')}</label>
@@ -59,8 +53,7 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.priority')}</label>
                         <input type="number" className="w-full border rounded-xl px-4 py-2.5 text-[16px] focus:border-indigo-500 outline-none" value={form.priority} onChange={e => setForm({...form, priority: Number(e.target.value)})} />
-                    </div>
-                    
+                    </div>                    
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                         <h4 className="font-bold text-sm text-[var(--text-secondary)] mb-3">{t('routing.conditions')}</h4>
                         <div className="grid grid-cols-2 gap-4">
@@ -86,7 +79,6 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                             </div>
                         </div>
                     </div>
-
                     <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                         <h4 className="font-bold text-sm text-indigo-900 mb-3">{t('routing.action')}</h4>
                         <div className="space-y-3">
@@ -114,7 +106,6 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                         </div>
                     </div>
                 </div>
-
                 {validationError && (
                     <div className="mt-4 px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl font-medium">
                         {validationError}
@@ -129,7 +120,6 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
         document.body
     );
 };
-
 export const RoutingRules: React.FC = () => {
     const [rules, setRules] = useState<RoutingRule[]>([]);
     const [users, setUsers] = useState<User[]>([]);
@@ -139,8 +129,7 @@ export const RoutingRules: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<RoutingRule | undefined>(undefined);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
-    
+    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);    
     // Sim State
     const [simInput, setSimInput] = useState({ source: 'Facebook', region: 'HCM', budget: 5000000000 });
     const [simResult, setSimResult] = useState<{ matchedRule?: RoutingRule, assigned?: string } | null>(null);
@@ -168,7 +157,6 @@ export const RoutingRules: React.FC = () => {
             setLoadError(true);
         } finally { setLoading(false); }
     }, []);
-
     useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleDelete = async () => {
@@ -183,7 +171,6 @@ export const RoutingRules: React.FC = () => {
             setDeleteConfirmId(null);
         }
     };
-
     const handleSave = async (rule: Partial<RoutingRule>) => {
         try {
             if (editingRule) {
@@ -198,7 +185,6 @@ export const RoutingRules: React.FC = () => {
             notify(t('common.error'), 'error');
         }
     };
-
     const runSimulation = () => {
         // Simple client-side simulation logic
         const matched = (rules || []).find(r => {
@@ -207,7 +193,6 @@ export const RoutingRules: React.FC = () => {
             if (r.conditions.budgetMin && simInput.budget < r.conditions.budgetMin) return false;
             return true;
         });
-
         let assigned = t('routing.sim_unassigned');
         if (matched) {
             if (matched.action.type === 'ASSIGN_USER') {
@@ -218,7 +203,6 @@ export const RoutingRules: React.FC = () => {
                 assigned = tm ? tm.name : matched.action.targetId;
             }
         }
-
         setSimResult({ matchedRule: matched, assigned });
     };
 
@@ -235,7 +219,6 @@ export const RoutingRules: React.FC = () => {
             </button>
         </div>
     );
-
     // Map raw condition keys to translation keys
     const condLabel = (key: string) => {
         const map: Record<string, string> = {
@@ -251,7 +234,6 @@ export const RoutingRules: React.FC = () => {
         };
         return map[key] ?? key;
     };
-
     // Translate raw condition values — DB stores source as string OR array
     const condValue = (key: string, v: unknown): string => {
         if (key === 'source') {
@@ -267,7 +249,6 @@ export const RoutingRules: React.FC = () => {
         }
         return Array.isArray(v) ? v.join(', ') : String(v);
     };
-
     return (
         <>
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
@@ -281,7 +262,6 @@ export const RoutingRules: React.FC = () => {
                     {ICONS.ADD} {t('routing.btn_add')}
                 </button>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* RULES LIST */}
                 <div className="lg:col-span-2 space-y-4">
@@ -314,8 +294,7 @@ export const RoutingRules: React.FC = () => {
                                     <button onClick={() => { setEditingRule(rule); setIsModalOpen(true); }} className="p-2 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
                                     <button onClick={() => setDeleteConfirmId(rule.id)} className="p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
                                 </div>
-                            </div>
-                            
+                            </div>                            
                             <div className="grid grid-cols-2 gap-4 text-xs">
                                 <div className="bg-[var(--glass-surface)] p-3 rounded-xl">
                                     <div className="font-bold text-[var(--text-tertiary)] uppercase text-xs2 mb-1">{t('routing.conditions')}</div>
@@ -346,7 +325,6 @@ export const RoutingRules: React.FC = () => {
                         </div>
                     ))}
                 </div>
-
                 {/* SIMULATOR */}
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm h-fit">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('routing.tab_sim')}</h3>
@@ -375,7 +353,6 @@ export const RoutingRules: React.FC = () => {
                             {ICONS.PLAY} {t('routing.sim_btn_run')}
                         </button>
                     </div>
-
                     {simResult && (
                         <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)] animate-enter">
                             <div className="text-xs font-bold text-[var(--text-secondary)] uppercase mb-2">{t('routing.sim_result')}</div>
@@ -397,7 +374,6 @@ export const RoutingRules: React.FC = () => {
                     )}
                 </div>
             </div>
-
             <RuleModal 
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)}

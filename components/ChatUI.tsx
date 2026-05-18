@@ -1,10 +1,8 @@
-
 import React, { memo, useState, useMemo, useRef } from 'react';
 import { Interaction, AgentArtifact, GroundingMetadata, AgentTraceStep, BookingDraftData, LoanScheduleData, Channel, Direction } from '../types';
 import Markdown from 'react-markdown';
 import { useTranslation } from '../services/i18n';
 import { resolveContent } from '../utils/i18nUtils';
-
 // Icons
 const CHAT_ICONS = {
     LOAN: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 3.659c0 3.074-1.8 5.529-4.29 6.226 1.01.83 1.87 1.96 2.42 3.26M9 15.409C10.45 14.83 11.4 13.513 11.4 12c0-1.572-1.201-2.849-2.73-2.951"/></svg>,
@@ -25,13 +23,10 @@ const CHAT_ICONS = {
     AI_SPARK: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09-3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>,
     CHECK_SMALL: <svg className="w-2.5 h-2.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
 };
-
 // Components
-
 export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t: any }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     if (!steps || steps.length === 0) return null;
-
     return (
         <div className="mb-3 w-full max-w-full flex justify-end">
             <button 
@@ -44,8 +39,7 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
                     <span className="truncate">{t('inbox.thinking_process')} ({steps.length})</span>
                 </span>
                 <svg className={`w-3 h-3 transition-transform duration-300 text-indigo-400 shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            
+            </button>            
             {isExpanded && (
                 <div className="mt-2 pl-2 space-y-2 animate-enter py-1 w-full">
                     {steps.map((step, idx) => {
@@ -80,7 +74,6 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
         </div>
     );
 });
-
 export const LoanScheduleWidget = memo(({ data, t, formatCurrency }: { data: LoanScheduleData, t: any, formatCurrency: any }) => (
     <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] overflow-hidden shadow-sm my-2 max-w-sm w-full">
         <div className="bg-[var(--glass-surface)] px-4 py-3 border-b border-[var(--glass-border)] flex justify-between items-center gap-2">
@@ -102,8 +95,7 @@ export const LoanScheduleWidget = memo(({ data, t, formatCurrency }: { data: Loa
                     <div className="text-xs2 text-[var(--text-secondary)] uppercase font-bold">{t('inbox.loan_total_interest')}</div>
                     <div className="text-sm font-bold text-[var(--text-secondary)]">{formatCurrency(data.totalInterest)}</div>
                 </div>
-            </div>
-            
+            </div>            
             <div className="border rounded-lg overflow-hidden text-xs2 overflow-x-auto no-scrollbar">
                 <table className="w-full text-left min-w-[250px]">
                     <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold">
@@ -132,7 +124,6 @@ export const LoanScheduleWidget = memo(({ data, t, formatCurrency }: { data: Loa
         </div>
     </div>
 ));
-
 export const BookingWidget = memo(({ data, t, formatDateTime }: { data: BookingDraftData, t: any, formatDateTime: any }) => (
     <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] overflow-hidden shadow-sm my-2 max-w-sm w-full">
         <div className="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex items-center gap-2 min-w-0">
@@ -160,10 +151,8 @@ export const BookingWidget = memo(({ data, t, formatDateTime }: { data: BookingD
         </div>
     </div>
 ));
-
 export const GroundingPill = memo(({ sources, t }: { sources: GroundingMetadata, t: any }) => {
     if (!sources.groundingChunks || sources.groundingChunks.length === 0) return null;
-
     return (
         <div className="mt-2 flex flex-wrap gap-2 justify-end max-w-full">
             <div className="flex items-center gap-1.5 text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider shrink-0">
@@ -189,7 +178,6 @@ export const GroundingPill = memo(({ sources, t }: { sources: GroundingMetadata,
         </div>
     );
 });
-
 export const AudioBubble = memo(({ duration }: { duration: number }) => {
     const { t } = useTranslation();
     const bars = useMemo(() => Array.from({ length: 12 }, () => Math.random() * 16 + 4), []);
@@ -209,7 +197,6 @@ export const AudioBubble = memo(({ duration }: { duration: number }) => {
         </div>
     );
 });
-
 export const FileBubble = memo(({ name, size, url }: { name: string, size?: number, url?: string }) => {
     const { t } = useTranslation();
     return (
@@ -229,7 +216,6 @@ export const FileBubble = memo(({ name, size, url }: { name: string, size?: numb
         </div>
     );
 });
-
 const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (rating: -1 | 1, correction?: string) => Promise<boolean> }) => {
     const [feedbackState, setFeedbackState] = useState<-1 | 0 | 1>(0);
     const [showCorrection, setShowCorrection] = useState(false);
@@ -249,7 +235,6 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
         setSubmitting(false);
         if (ok) setFeedbackState(rating);
     };
-
     const submitCorrection = async () => {
         setSubmitting(true);
         const ok = await onFeedback(-1, correction || undefined);
@@ -259,7 +244,6 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
             setShowCorrection(false);
         }
     };
-
     if (feedbackState !== 0 && !showCorrection) {
         return (
             <div className="flex items-center gap-1 mt-1">
@@ -269,7 +253,6 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
             </div>
         );
     }
-
     return (
         <div className="flex flex-col items-end gap-1 mt-1">
             {!showCorrection ? (
@@ -338,8 +321,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                         {formatDate(msg.timestamp)}
                     </span>
                 </div>
-            )}
-            
+            )}            
             <div className={`flex gap-2 max-w-[82%] md:max-w-[74%] ${isOutbound ? 'flex-row-reverse' : 'flex-row'}`}>
                 {/* Avatar Column */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm border overflow-hidden
@@ -354,7 +336,6 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                         CHAT_ICONS.CUSTOMER
                     )}
                 </div>
-
                 <div className={`flex flex-col ${isOutbound ? 'items-end' : 'items-start'} min-w-0 flex-1`}>
                     {/* Trace Visualization (Only for AI Messages) */}
                     {isAgent && trace && <ThinkingProcess steps={trace} t={t} />}
@@ -380,7 +361,6 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                                 <Markdown>{resolveContent(msg.content, t)}</Markdown>
                             </div>
                         )}
-
                         {/* Artifact Rendering (Usually only for AI/Outbound) */}
                         {artifact && (
                             <div className="mt-3 pt-3 border-t border-dashed border-current/20 max-w-full overflow-hidden">
@@ -389,7 +369,6 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                             </div>
                         )}
                     </div>
-
                     {/* Metadata & Grounding */}
                     <div className="mt-1 flex flex-col gap-1 w-full">
                         <div className={`flex items-center gap-2 text-xs2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
@@ -399,11 +378,9 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                                     {msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? t('inbox.status_read') : t('inbox.status_received')}
                                 </span>
                             )}
-                        </div>
-                        
+                        </div>                        
                         {/* Grounding Sources (Usually AI) */}
                         {grounding && <GroundingPill sources={grounding} t={t} />}
-
                         {/* RLHF Feedback (AI messages only) */}
                         {isAgent && (
                             <AiFeedbackButtons
@@ -417,5 +394,4 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
         </div>
     );
 });
-
 MessageBubble.displayName = 'MessageBubble';

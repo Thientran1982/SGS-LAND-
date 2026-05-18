@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
@@ -12,11 +11,9 @@ import { OnboardingWizard } from './OnboardingWizard';
 import { prefetchRoute } from '../utils/reactUtils';
 import { notificationApi, AppNotification } from '../services/api/notificationApi';
 import { socket } from '../services/websocket';
-
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & ASSETS
 // -----------------------------------------------------------------------------
-
 import {
     LayoutDashboard, Users, FileText, Package, Inbox, Star, CheckSquare,
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
@@ -24,7 +21,6 @@ import {
     User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home, Globe,
     ClipboardList, Kanban, ListTodo, UserCheck, PieChart, Bug, Rss, Building2, Mail, Briefcase
 } from 'lucide-react';
-
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
 const NAV_ICONS: Record<string, React.ReactNode> = {
     // Core
@@ -34,8 +30,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.CONTRACTS]: <FileText size={20} strokeWidth={2} />,
     [ROUTES.INVENTORY]: <Package size={20} strokeWidth={2} />,
     [ROUTES.PROJECTS]: <Briefcase size={20} strokeWidth={2} />,
-    [ROUTES.INBOX]: <Inbox size={20} strokeWidth={2} />,
-    
+    [ROUTES.INBOX]: <Inbox size={20} strokeWidth={2} />,   
     // Ops
     [ROUTES.FAVORITES]: <Star size={20} strokeWidth={2} />,
     [ROUTES.APPROVALS]: <CheckSquare size={20} strokeWidth={2} />,
@@ -45,10 +40,8 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.ROUTING_RULES]: <Share2 size={20} strokeWidth={2} />,
     [ROUTES.KNOWLEDGE]: <BookOpen size={20} strokeWidth={2} />,
     [ROUTES.REPORTS]: <BarChart2 size={20} strokeWidth={2} />,
-
     // Search / Marketplace
     [ROUTES.SEARCH]: <Building2 size={20} strokeWidth={2} />,
-
     // Ecosystem
     [ROUTES.MARKETPLACE]: <Store size={20} strokeWidth={2} />,
     [ROUTES.AI_GOVERNANCE]: <Shield size={20} strokeWidth={2} />,
@@ -62,14 +55,12 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.SEO_MANAGER]: <Globe size={20} strokeWidth={2} />,
     [ROUTES.ERROR_MONITOR]: <Bug size={20} strokeWidth={2} />,
     [ROUTES.SCRAPER]: <Rss size={20} strokeWidth={2} />,
-
     // Task Management
     [ROUTES.TASK_DASHBOARD]: <ClipboardList size={20} strokeWidth={2} />,
     [ROUTES.TASK_KANBAN]: <Kanban size={20} strokeWidth={2} />,
     [ROUTES.TASKS]: <ListTodo size={20} strokeWidth={2} />,
     [ROUTES.EMPLOYEES]: <UserCheck size={20} strokeWidth={2} />,
     [ROUTES.TASK_REPORTS]: <PieChart size={20} strokeWidth={2} />,
-
     // Other
     'mobile_app': <Smartphone size={20} strokeWidth={2} />,
     'profile': <UserIcon size={20} strokeWidth={2} />,
@@ -79,11 +70,9 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     'toggle': <ChevronLeft size={20} strokeWidth={2} />,
     'chevron': <ChevronDown size={20} strokeWidth={2} />
 };
-
 // -----------------------------------------------------------------------------
 // 2. ISOLATED SUB-COMPONENTS
 // -----------------------------------------------------------------------------
-
 const LogoutModal = ({ isOpen, onClose, onConfirm, t }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; t: any }) => {
     if (!isOpen) return null;
     return (
@@ -108,7 +97,6 @@ const LogoutModal = ({ isOpen, onClose, onConfirm, t }: { isOpen: boolean; onClo
         </div>
     );
 };
-
 interface SidebarContentProps {
     activePage: string;
     onNavigate: (path: string) => void;
@@ -123,7 +111,6 @@ interface SidebarContentProps {
     menuGroups: NavGroup[];
     t: (k: string) => string;
 }
-
 const Sidebar = memo(({ 
     activePage, 
     onNavigate, 
@@ -138,8 +125,7 @@ const Sidebar = memo(({
     menuGroups,
     t 
 }: SidebarContentProps) => {
-    const isCollapsed = !isMobile && collapsed;
-    
+    const isCollapsed = !isMobile && collapsed;    
     // Persist open groups
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
         try {
@@ -147,11 +133,9 @@ const Sidebar = memo(({
             return saved ? JSON.parse(saved) : {};
         } catch { return {}; }
     });
-
     useEffect(() => {
         localStorage.setItem('sgs_nav_groups', JSON.stringify(openGroups));
     }, [openGroups]);
-
     // Initialize all groups to open by default
     useEffect(() => {
         if (menuGroups && menuGroups.length > 0 && Object.keys(openGroups).length === 0) {
@@ -160,7 +144,6 @@ const Sidebar = memo(({
             setOpenGroups(initial);
         }
     }, [menuGroups]);
-
     // Auto-expand group containing active page
     useEffect(() => {
         if (!menuGroups || menuGroups.length === 0) return;
@@ -169,11 +152,9 @@ const Sidebar = memo(({
             setOpenGroups(prev => ({ ...prev, [activeGroup.id]: true }));
         }
     }, [activePage, menuGroups]);
-
     const toggleGroup = (groupId: string) => {
         setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
     };
-
     return (
         <div className="flex flex-col h-full w-full">
             {/* 1. Brand Header */}
@@ -194,8 +175,7 @@ const Sidebar = memo(({
                             {t('nav.brand_subtitle')}
                         </span>
                     </div>
-                </button>
-                
+                </button>                
                 {isCollapsed && (
                     <button
                         onClick={() => onNavigate(ROUTES.DASHBOARD)}
@@ -204,8 +184,7 @@ const Sidebar = memo(({
                     >
                         <Logo className="w-full h-full" />
                     </button>
-                )}
-                
+                )}                
                 {!isMobile && (
                     <button
                         onClick={onToggleCollapse}
@@ -216,13 +195,11 @@ const Sidebar = memo(({
                     </button>
                 )}
             </div>
-
             {/* 2. Navigation Items (Scrollable) */}
             <nav className="flex-1 overflow-y-auto no-scrollbar py-4 px-3 overscroll-contain min-h-0 space-y-4">
                 {menuGroups?.map((group) => {
                     const isOpen = openGroups[group.id] || isCollapsed; 
                     const hasActiveChild = group.items?.some(i => i.route === activePage);
-
                     return (
                         <div key={group.id} className="relative">
                             {/* Group Header */}
@@ -238,14 +215,12 @@ const Sidebar = memo(({
                                         {NAV_ICONS['chevron']}
                                     </div>
                                 </button>
-                            )}
-                            
+                            )}                            
                             {/* Group Items (Accordion Body) */}
                             <div className={`space-y-1 transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
                                 {group.items?.map((item) => {
                                     const isActive = activePage === item.route;
                                     const Icon = NAV_ICONS[item.iconKey] || NAV_ICONS[ROUTES.DASHBOARD]; // Fallback
-
                                     return (
                                         <button
                                             key={item.id}
@@ -262,14 +237,12 @@ const Sidebar = memo(({
                                         >
                                             <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'} ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
                                                 {Icon}
-                                            </div>
-                                            
+                                            </div>                                            
                                             {!isCollapsed && (
                                                 <span className={`text-xs font-medium truncate ${isActive ? 'font-bold' : ''}`}>
                                                     {t(item.labelKey)}
                                                 </span>
-                                            )}
-                                            
+                                            )}                                            
                                             {isCollapsed && (
                                                 <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-slate-800 text-white text-xs2 font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl transition-opacity delay-75" aria-hidden="true">
                                                     {t(item.labelKey)}
@@ -284,7 +257,6 @@ const Sidebar = memo(({
                 })}
                 <div className="h-10 w-full shrink-0"></div>
             </nav>
-
             {/* 3. Footer Controls */}
             <div className="px-2 py-1.5 border-t border-[var(--glass-border)] space-y-1 shrink-0 bg-[var(--bg-surface)] z-20 rounded-b-[24px]">
                 <div className={`grid ${isCollapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-1`}>
@@ -311,7 +283,6 @@ const Sidebar = memo(({
                         </span>
                     </button>
                 </div>
-
                 <button
                     onClick={onLogoutClick}
                     className={`w-full flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors border border-transparent hover:border-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer ${!isCollapsed ? 'gap-2' : ''}`}
@@ -325,23 +296,19 @@ const Sidebar = memo(({
         </div>
     );
 });
-
 // -----------------------------------------------------------------------------
 // 3. MAIN LAYOUT COMPONENT
 // -----------------------------------------------------------------------------
-
 interface LayoutProps {
     children: React.ReactNode;
     activePage: string;
     onNavigate: (path: string) => void;
     onLogout: () => void;
 }
-
 export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNavigate, onLogout }) => {
     const [desktopCollapsed, setDesktopCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-    
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);    
     const [user, setUser] = useState<User | null>(null);
     const [menuGroups, setMenuGroups] = useState<NavGroup[]>([]);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -349,17 +316,14 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
     const [unreadCount, setUnreadCount] = useState(0);
     const { t, language, setLanguage } = useTranslation();
     const { theme, toggleTheme } = useTheme();
-
     useEffect(() => {
         let pollInterval: ReturnType<typeof setInterval> | null = null;
-
         const fetchNotifications = () => {
             notificationApi.getAll().then(({ notifications: n, unreadCount: c }) => {
                 setNotifications(n);
                 setUnreadCount(c);
             }).catch(() => {});
         };
-
         const loadUser = async () => {
             const u = await db.getCurrentUser();
             setUser(u);
@@ -377,7 +341,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                 if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
             }
         };
-
         loadUser();
         window.addEventListener('user-updated', loadUser);
         return () => {
@@ -385,7 +348,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
             if (pollInterval) clearInterval(pollInterval);
         };
     }, []);
-
     // Real-time: add new notification to top when proposal_interest fires
     useEffect(() => {
         const handleInterest = (data: { proposalId: string; leadId: string; leadName: string; listingTitle: string }) => {
@@ -404,7 +366,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         socket.on('proposal_interest', handleInterest);
         return () => { socket.off('proposal_interest', handleInterest); };
     }, []);
-
     // Real-time: update bell badge when proposal is approved
     useEffect(() => {
         const handleApproved = (data: { proposalId: string; leadId: string; token: string }) => {
@@ -423,7 +384,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         socket.on('proposal_approved', handleApproved);
         return () => { socket.off('proposal_approved', handleApproved); };
     }, []);
-
     const handleMarkRead = useCallback(async (id: string) => {
         if (id.startsWith('temp-')) {
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));
@@ -436,7 +396,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
             setUnreadCount(prev => Math.max(0, prev - 1));
         } catch {}
     }, []);
-
     const handleMarkAllRead = useCallback(async () => {
         try {
             await notificationApi.markAllRead();
@@ -444,7 +403,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
             setUnreadCount(0);
         } catch {}
     }, []);
-
     const handleDeleteNotification = useCallback(async (id: string) => {
         try {
             await notificationApi.deleteOne(id);
@@ -455,32 +413,26 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
             });
         } catch {}
     }, []);
-
     const handleDeleteAllRead = useCallback(async () => {
         try {
             await notificationApi.deleteAllRead();
             setNotifications(prev => prev.filter(n => !n.readAt));
         } catch {}
     }, []);
-
     const handleNavigate = useCallback((path: string) => {
         onNavigate(path);
         setMobileMenuOpen(false);
     }, [onNavigate]);
-
     // Replaced native window.confirm with Modal state trigger
     const handleLogoutClick = useCallback(() => {
         setShowLogoutConfirm(true);
         setMobileMenuOpen(false); // Close drawer to prevent visual glitch
     }, []);
-
     const handleLogoutConfirm = useCallback(() => {
         setShowLogoutConfirm(false);
         onLogout();
     }, [onLogout]);
-
     const pageTitle = t(`menu.${activePage}`) || activePage;
-
     const sidebarProps = useMemo(() => ({
         activePage,
         onNavigate: handleNavigate,
@@ -492,10 +444,8 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         menuGroups,
         t
     }), [activePage, handleNavigate, handleLogoutClick, toggleTheme, language, theme, menuGroups, t, setLanguage]);
-
     return (
-        <div className="fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-indigo-500/30">
-            
+        <div className="fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-indigo-500/30">            
             {/* SIDEBAR ISLAND (Desktop/Tablet) */}
             <aside 
                 className={`
@@ -514,14 +464,12 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                     onToggleCollapse={() => setDesktopCollapsed(!desktopCollapsed)} 
                 />
             </aside>
-
             {/* MOBILE DRAWER (Overlay) */}
             <div 
                 className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] md:hidden transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 onClick={() => setMobileMenuOpen(false)}
                 aria-hidden="true"
-            />
-            
+            />            
             <div
                 className={`fixed inset-y-0 left-0 w-72 bg-[var(--bg-surface)] shadow-2xl z-[101] md:hidden transition-transform duration-300 ease-out transform flex flex-col no-scrollbar ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 role="dialog"
@@ -535,7 +483,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                     onToggleCollapse={() => {}} 
                 />
             </div>
-
             {/* MAIN CONTENT ISLAND */}
             <main 
                 className={`
@@ -564,15 +511,13 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                             onDeleteAllRead={handleDeleteAllRead}
                         />
                     )}
-                </div>
-                
+                </div>                
                 {/* Content Area — each page mounts as absolute inset-0 inside children
                     and manages its own overflow/scrolling via overflow-y-auto. */}
                 <div className="flex-1 relative w-full min-h-0">
                     {children}
                 </div>
             </main>
-
             <GlobalSearch 
                 isOpen={isSearchOpen} 
                 onClose={() => setIsSearchOpen(false)} 
@@ -583,7 +528,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                     else if (type === 'ROUTE') onNavigate(id); // For direct routes
                 }}
             />
-
             <LogoutModal 
                 isOpen={showLogoutConfirm} 
                 onClose={() => setShowLogoutConfirm(false)} 
@@ -594,5 +538,4 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         </div>
     );
 });
-
 Layout.displayName = 'Layout';

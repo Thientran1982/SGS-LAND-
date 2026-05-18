@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
-
 // ── Types ─────────────────────────────────────────────────────────────────────
-
 type Tab = 'market' | 'projects' | 'leads';
-
 // -- Market tab
 interface SourceStatus  { id: string; name: string; status: 'active' | 'blocked'; note: string; listings: string; }
 interface ScrapeResult  { source: string; ok: boolean; count: number; error?: string; warning?: string; durationMs: number; }
@@ -17,7 +14,6 @@ interface ExternalListing {
 }
 interface StatusResponse { sources: SourceStatus[]; cacheValid: boolean; cacheAge: number | null; cacheTtlMin: number; scraperApiConfigured: boolean; }
 interface RunResponse    { ok: boolean; results: ScrapeResult[]; listings: ExternalListing[]; totalListings: number; scrapedAt: string; }
-
 // -- Projects tab
 interface ProjectCatalog {
   id: string; name: string; siteUrl: string; note: string;
@@ -39,9 +35,7 @@ interface ProjectRunResponse {
   ok: boolean; results: ProjectResultSummary[];
   units: ProjectUnit[]; totalUnits: number; scrapedAt: string;
 }
-
 // ── Icons (SVG inline) ────────────────────────────────────────────────────────
-
 const ICONS = {
   PLAY: (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -91,13 +85,11 @@ const ICONS = {
     </svg>
   ),
 };
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmtDuration(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
 }
-
 function fmtRelative(ts: string | null): string {
   if (!ts) return '—';
   const diff = Math.round((Date.now() - new Date(ts).getTime()) / 1000);
@@ -105,7 +97,6 @@ function fmtRelative(ts: string | null): string {
   if (diff < 3600) return `${Math.round(diff / 60)} phút trước`;
   return `${Math.round(diff / 3600)} giờ trước`;
 }
-
 function fmtPrice(price: number, display: string): string {
   if (display && display !== '0') return display;
   if (!price) return 'Liên hệ';
@@ -113,14 +104,12 @@ function fmtPrice(price: number, display: string): string {
   if (price >= 1e6) return `${(price / 1e6).toFixed(0)} triệu`;
   return price.toLocaleString('vi-VN');
 }
-
 function Badge({ ok, label }: { ok: boolean; label?: string }) {
   const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold';
   return ok
     ? <span className={`${base} bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400`}><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"/>OK</span>
     : <span className={`${base} bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400`}><span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"/>{label ?? 'Lỗi'}</span>;
 }
-
 const PROJECT_COLOR_MAP: Record<string, string> = {
   indigo:  'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700',
   emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700',
@@ -139,23 +128,19 @@ const PROJECT_COLOR_MAP: Record<string, string> = {
   lime:    'bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300 border-lime-200 dark:border-lime-700',
   yellow:  'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700',
 };
-
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   available: { label: 'Còn hàng',  cls: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   sold:      { label: 'Đã bán',    cls: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 line-through' },
   reserved:  { label: 'Đang giữ',  cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
   unknown:   { label: 'Liên hệ',   cls: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
 };
-
 // ── ─────────────── MARKET TAB ──────────────────────────────────────────────
-
 const SOURCE_COLORS: Record<string, string> = {
   'Chợ Tốt':   'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
   'AlonNhaDat':'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
   'BatDongSan':'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
   'Muaban':    'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
 };
-
 function MarketTab() {
   const [status,    setStatus]    = useState<StatusResponse | null>(null);
   const [results,   setResults]   = useState<ScrapeResult[]>([]);
@@ -169,14 +154,12 @@ function MarketTab() {
   const [filter,    setFilter]    = useState('');
   const [txFilter,  setTxFilter]  = useState('all');
   const [sortKey,   setSortKey]   = useState('price');
-
   const loadStatus = useCallback(async () => {
     try {
       const res = await fetch('/api/scraper/status', { credentials: 'include' });
       if (res.ok) setStatus(await res.json());
     } catch { /* ignore */ }
   }, []);
-
   const loadResults = useCallback(async () => {
     setLoading(true);
     try {
@@ -190,9 +173,7 @@ function MarketTab() {
     } catch { /* ignore */ }
     setLoading(false);
   }, []);
-
   useEffect(() => { loadStatus(); loadResults(); }, [loadStatus, loadResults]);
-
   const handleRun = async () => {
     if (running || !selected.length) return;
     setRunning(true); setError(null);
@@ -211,7 +192,6 @@ function MarketTab() {
     } catch (err) { setError(String(err)); }
     setRunning(false);
   };
-
   const toggleSource = (id: string) =>
     setSelected(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
 
@@ -219,9 +199,7 @@ function MarketTab() {
     .filter(l => txFilter === 'all' || l.transaction === txFilter)
     .filter(l => !filter || l.title.toLowerCase().includes(filter.toLowerCase()) || l.location.toLowerCase().includes(filter.toLowerCase()))
     .sort((a: any, b: any) => b[sortKey] - a[sortKey]);
-
   const totalListings = results.reduce((s, r) => s + r.count, 0);
-
   return (
     <div className="space-y-4">
       {/* Source status cards */}
@@ -243,7 +221,6 @@ function MarketTab() {
           ))}
         </div>
       )}
-
       {/* Run panel */}
       <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-5">
         <h2 className="text-sm font-bold text-[var(--text-primary)] mb-4">Chạy Scraper</h2>
@@ -298,7 +275,6 @@ function MarketTab() {
           </div>
         )}
       </div>
-
       {/* Summary */}
       {results.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -327,7 +303,6 @@ function MarketTab() {
           ))}
         </div>
       )}
-
       {/* Listings table */}
       {listings.length > 0 && (
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden">
@@ -411,7 +386,6 @@ function MarketTab() {
           </div>
         </div>
       )}
-
       {!loading && listings.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-400 flex items-center justify-center mb-4">{ICONS.GLOBE}</div>
@@ -422,9 +396,7 @@ function MarketTab() {
     </div>
   );
 }
-
 // ── ──────────────── PROJECTS TAB ───────────────────────────────────────────
-
 function ProjectsTab() {
   const [catalog,    setCatalog]    = useState<ProjectCatalog[]>([]);
   const [results,    setResults]    = useState<ProjectResultSummary[]>([]);
@@ -438,7 +410,6 @@ function ProjectsTab() {
   const [projFilter, setProjFilter] = useState('all');
   const [sortKey,    setSortKey]    = useState('price');
   const [statusFilter, setStatusFilter] = useState('all');
-
   const loadCatalog = useCallback(async () => {
     try {
       const res = await fetch('/api/scraper/projects/catalog', { credentials: 'include' });
@@ -463,9 +434,7 @@ function ProjectsTab() {
     } catch { /* ignore */ }
     setLoading(false);
   }, []);
-
   useEffect(() => { loadCatalog(); loadResults(); }, [loadCatalog, loadResults]);
-
   const handleRun = async () => {
     if (running || !selected.length) return;
     setRunning(true); setError(null);
@@ -484,18 +453,14 @@ function ProjectsTab() {
     } catch (err) { setError(String(err)); }
     setRunning(false);
   };
-
   const toggleProject = (id: string) =>
     setSelected(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
-
   const projOptions = [{ value: 'all', label: 'Tất cả dự án' }, ...catalog.map(p => ({ value: p.id, label: p.name }))];
-
   const displayed = units
     .filter(u => projFilter === 'all' || u.projectId === projFilter)
     .filter(u => statusFilter === 'all' || u.status === statusFilter)
     .filter(u => !filter || u.type.toLowerCase().includes(filter.toLowerCase()) || u.block.toLowerCase().includes(filter.toLowerCase()))
     .sort((a: any, b: any) => sortKey === 'price' ? b.price - a.price : sortKey === 'area' ? b.area - a.area : b.pricePerM2 - a.pricePerM2);
-
   return (
     <div className="space-y-4">
       {/* Project cards */}
@@ -520,7 +485,6 @@ function ProjectsTab() {
                 <div className={`absolute top-3 right-3 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-[var(--glass-border)]'}`}>
                   {isSelected && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><polyline points="20 6 9 17 4 12"/></svg>}
                 </div>
-
                 <div className="flex items-start gap-3 pr-5 mb-3">
                   <span className={`text-[10px] font-bold leading-none w-10 h-10 rounded-xl flex items-center justify-center border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>
                   <div className="min-w-0">
@@ -536,7 +500,6 @@ function ProjectsTab() {
                     </a>
                   </div>
                 </div>
-
                 <p className="text-xs text-[var(--text-tertiary)] leading-relaxed mb-3">{proj.note}</p>
 
                 <div className="flex items-center justify-between">
@@ -547,7 +510,6 @@ function ProjectsTab() {
                     <span className="flex items-center gap-1 text-xs text-rose-500">{ICONS.LOCK} API</span>
                   )}
                 </div>
-
                 {resultInfo?.error && (
                   <p className="text-xs text-rose-500 mt-2 leading-relaxed line-clamp-2">{resultInfo.error}</p>
                 )}
@@ -559,7 +521,6 @@ function ProjectsTab() {
           })}
         </div>
       )}
-
       {/* Run panel */}
       <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-5">
         <div className="flex flex-wrap items-center gap-4">
@@ -599,7 +560,6 @@ function ProjectsTab() {
           </div>
         )}
       </div>
-
       {/* Units table */}
       {units.length > 0 && (
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden">
@@ -705,7 +665,6 @@ function ProjectsTab() {
           </div>
         </div>
       )}
-
       {!loading && !running && units.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-400 flex items-center justify-center mb-4 text-3xl">🏗️</div>
@@ -716,9 +675,7 @@ function ProjectsTab() {
     </div>
   );
 }
-
 // ── ──────────────── LEADS TAB ──────────────────────────────────────────────
-
 type LeadInterest = 'seller' | 'buyer' | 'renter' | 'investor' | 'unknown';
 
 interface ProjectLead {
@@ -733,12 +690,10 @@ interface LeadResultSummary {
   projectId: string; project: string;
   ok: boolean; count: number; error?: string; durationMs: number;
 }
-
 interface LeadRunResponse {
   ok: boolean; results: LeadResultSummary[];
   leads: ProjectLead[]; totalLeads: number; scrapedAt: string;
 }
-
 const INTEREST_LABELS: Record<LeadInterest, { label: string; cls: string }> = {
   seller:   { label: 'Người bán',    cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
   buyer:    { label: 'Người mua',    cls: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
@@ -746,7 +701,6 @@ const INTEREST_LABELS: Record<LeadInterest, { label: string; cls: string }> = {
   investor: { label: 'Nhà đầu tư',   cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
   unknown:  { label: 'Chưa xác định',cls: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400' },
 };
-
 const SOURCE_DISPLAY: Record<string, { label: string; cls: string }> = {
   sgsland_db:    { label: 'DB nội bộ',    cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' },
   batdongsan:    { label: 'BatDongSan',   cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
@@ -763,9 +717,7 @@ const SOURCE_DISPLAY: Record<string, { label: string; cls: string }> = {
   tiktok:        { label: 'TikTok',       cls: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200' },
   zalo:          { label: 'Zalo OA',      cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400' },
 };
-
 interface SocialCfg { fbToken: string; fbPage: string; ttToken: string; ttAdv: string; zlToken: string; }
-
 function LeadsTab() {
   const [catalog,        setCatalog]        = useState<ProjectCatalog[]>([]);
   const [results,        setResults]        = useState<LeadResultSummary[]>([]);
@@ -786,7 +738,6 @@ function LeadsTab() {
   const [extError,       setExtError]       = useState<string | null>(null);
   const [socialCfg,      setSocialCfg]      = useState<SocialCfg>({ fbToken: '', fbPage: '', ttToken: '', ttAdv: '', zlToken: '' });
   const [showCfg,        setShowCfg]        = useState(false);
-
   const loadCatalog = useCallback(async () => {
     try {
       const res = await fetch('/api/scraper/projects/catalog', { credentials: 'include' });
@@ -811,9 +762,7 @@ function LeadsTab() {
     } catch { /* ignore */ }
     setLoading(false);
   }, []);
-
   useEffect(() => { loadCatalog(); loadResults(); }, [loadCatalog, loadResults]);
-
   const handleRun = async () => {
     if (running || !selected.length) return;
     setRunning(true); setError(null);
@@ -831,7 +780,6 @@ function LeadsTab() {
     } catch (err) { setError(String(err)); }
     setRunning(false);
   };
-
   const handleImport = async (lead: ProjectLead) => {
     setImporting(prev => new Set(prev).add(lead.id));
     try {
@@ -846,7 +794,6 @@ function LeadsTab() {
     } catch { /* ignore */ }
     setImporting(prev => { const n = new Set(prev); n.delete(lead.id); return n; });
   };
-
   const handleBulkImport = async () => {
     const toImport = displayed.filter(l => !imported.has(l.id));
     if (!toImport.length) return;
@@ -861,7 +808,6 @@ function LeadsTab() {
       alert(`✅ Import ${data.imported} lead, bỏ qua ${data.skipped} trùng SĐT`);
     }
   };
-
   const handleRunChotot = async () => {
     setExtRunning('chotot'); setExtError(null);
     try {
@@ -875,7 +821,6 @@ function LeadsTab() {
     } catch (err) { setExtError(String(err)); }
     setExtRunning(null);
   };
-
   const handleRunSocial = async (source: string) => {
     setExtRunning(source); setExtError(null);
     try {
@@ -890,7 +835,6 @@ function LeadsTab() {
     } catch (err) { setExtError(String(err)); }
     setExtRunning(null);
   };
-
   const handleExportCSV = () => {
     const all = [...displayed, ...extDisplayed];
     if (!all.length) return;
@@ -908,12 +852,10 @@ function LeadsTab() {
     const a    = document.createElement('a'); a.href = url; a.download = `leads_${new Date().toISOString().slice(0,10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
   };
-
   const toggleProject = (id: string) =>
     setSelected(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
 
   const projOptions = [{ value: 'all', label: 'Tất cả dự án' }, ...catalog.map(p => ({ value: p.id, label: p.name }))];
-
   const matchFilter = (l: ProjectLead) => !filter
     || l.name.toLowerCase().includes(filter.toLowerCase())
     || l.phone.includes(filter)
@@ -923,7 +865,6 @@ function LeadsTab() {
     .filter(l => projFilter  === 'all' || l.projectId === projFilter)
     .filter(l => interFilter === 'all' || l.interest   === interFilter)
     .filter(matchFilter);
-
   const extDisplayed = extLeads.filter(matchFilter);
 
   return (
@@ -961,7 +902,6 @@ function LeadsTab() {
           </div>
         </div>
       )}
-
       {/* External / Social sources */}
       <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-4">
         <div className="flex items-center justify-between mb-3">
@@ -974,7 +914,6 @@ function LeadsTab() {
             Cấu hình API
           </button>
         </div>
-
         {/* Config panel */}
         {showCfg && (
           <div className="mb-4 p-4 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1000,7 +939,6 @@ function LeadsTab() {
             </div>
           </div>
         )}
-
         <div className="flex flex-wrap gap-2">
           {[
             { id: 'chotot',   label: 'ChợTốt',      onRun: handleRunChotot,             needsKey: true,  hasToken: true },
@@ -1043,7 +981,6 @@ function LeadsTab() {
           </div>
         )}
       </div>
-
       {/* Run panel */}
       <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-5">
         <div className="flex flex-wrap items-center gap-4">
@@ -1090,7 +1027,6 @@ function LeadsTab() {
           </div>
         )}
       </div>
-
       {/* Summary row */}
       {results.length > 0 && (
         <div className="flex flex-wrap gap-3">
@@ -1103,7 +1039,6 @@ function LeadsTab() {
           ))}
         </div>
       )}
-
       {/* Leads table */}
       {leads.length > 0 && (
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden">
@@ -1299,7 +1234,6 @@ function LeadsTab() {
           )}
         </div>
       )}
-
       {/* External leads (ChợTốt / Social) */}
       {extDisplayed.length > 0 && (
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden">
@@ -1347,7 +1281,6 @@ function LeadsTab() {
           </div>
         </div>
       )}
-
       {!loading && !running && leads.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center mb-4 text-3xl">📞</div>
@@ -1361,7 +1294,6 @@ function LeadsTab() {
     </div>
   );
 }
-
 // ── ─────────────── MAIN PAGE ────────────────────────────────────────────────
 
 export default function ScraperDashboard() {
@@ -1374,7 +1306,6 @@ export default function ScraperDashboard() {
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     },
   ];
-
   return (
     <div className="flex flex-col h-full overflow-auto bg-[var(--bg-base)]">
       {/* Header */}
@@ -1388,7 +1319,6 @@ export default function ScraperDashboard() {
             <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Thu thập dữ liệu từ các sàn BĐS & dự án ngoài thị trường</p>
           </div>
         </div>
-
         {/* Tab bar */}
         <div className="flex gap-1 border-b border-[var(--glass-border)]">
           {tabs.map(t => (
@@ -1407,7 +1337,6 @@ export default function ScraperDashboard() {
           ))}
         </div>
       </div>
-
       {/* Tab content */}
       <div className="flex-1 px-6 py-5 overflow-auto min-h-0">
         {tab === 'market'   && <MarketTab />}
