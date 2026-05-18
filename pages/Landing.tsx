@@ -31,7 +31,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đại Đô Thị Sinh Thái',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/landing/aqua-city/hero.jpg',
+        img: '/landing/aqua-city/hero-opt.jpg',
         href: '/landing/aqua-city/',
     },
     {
@@ -44,7 +44,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đại Đô Thị Thương Mại',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/images/projects/the-global-city.png',
+        img: '/images/projects/the-global-city.webp',
     },
     {
         slug: 'izumi-city',
@@ -56,7 +56,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đô Thị Chuẩn Nhật',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/images/projects/izumi-city.png',
+        img: '/images/projects/izumi-city.webp',
     },
     {
         slug: 'vinhomes-can-gio',
@@ -68,7 +68,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Siêu Đô Thị Lấn Biển',
         badge: 'Đang bán',
         badgeColor: 'indigo',
-        img: '/images/projects/vinhomes-can-gio.png',
+        img: '/images/projects/vinhomes-can-gio.webp',
     },
     {
         slug: 'diamond-sky-van-phuc-city',
@@ -80,7 +80,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Căn hộ cao tầng view sông',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/images/projects/diamond-sky-van-phuc-city.jpg',
+        img: '/images/projects/diamond-sky-van-phuc-city.webp',
     },
     {
         slug: 'vinhomes-grand-park',
@@ -92,7 +92,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Siêu Đô Thị Tích Hợp',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/images/projects/vinhomes-grand-park.png',
+        img: '/images/projects/vinhomes-grand-park.webp',
     },
     {
         slug: 'vinhomes-hoc-mon',
@@ -302,10 +302,10 @@ const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string,
 };
 const FeatureBento = ({ title, desc, icon, className = "", iconBg = "bg-[var(--glass-surface-hover)] dark:bg-slate-700", onClick, ctaLabel, delay = 0 }: any) => (
     <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 0.5, delay }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.45, delay }}
         onClick={onClick}
         className={`relative p-6 md:p-8 rounded-[32px] overflow-hidden group border border-[var(--glass-border)] dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] transition-all duration-500 bg-[var(--bg-surface)] dark:bg-slate-800 flex flex-col justify-between cursor-pointer ${className}`}
     >
@@ -348,7 +348,7 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
     <motion.article
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: '-40px' }}
+        viewport={{ once: true, amount: 0.05 }}
         transition={{ duration: 0.35 }}
         onClick={onClick}
         className="relative rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 bg-[var(--bg-surface)] dark:bg-slate-800 hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 flex flex-col overflow-hidden"
