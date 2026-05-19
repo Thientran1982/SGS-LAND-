@@ -245,8 +245,18 @@ export const ProductSearch: React.FC = () => {
             return stack;
         });
     }, []);
-    const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
-    const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
+    // Use pushState + synthetic popstate instead of hash navigation so that
+    // ExitIntentPopup's Signal 7 (pushState intercept) can block the navigation
+    // and show the popup before the user actually leaves the page.
+    const handleHome = () => {
+        window.history.pushState(null, '', `/${ROUTES.LANDING}`);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+    };
+    const handleLogin = () => {
+        const dest = currentUser ? `/${ROUTES.DASHBOARD}` : `/${ROUTES.LOGIN}`;
+        window.history.pushState(null, '', dest);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+    };
     // SEO-friendly URL: /bds/<slug>-<uuid>. Slug is best-effort from the
     // listing title/code/location so Googlebot indexes a human-readable URL;
     // server only uses the trailing UUID for lookup.

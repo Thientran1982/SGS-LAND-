@@ -1299,13 +1299,17 @@ export const ListingDetail: React.FC = () => {
         // SMART CONTEXT AWARE BACK BUTTON
         // If user has a session, they are an Agent/Admin -> Go to Inventory
         // If no session, they are a Public Guest -> Go to Marketplace Search
-        if (currentUser) {
-            window.location.hash = `#/${ROUTES.INVENTORY}`;
-        } else {
-            window.location.hash = `#/${ROUTES.SEARCH}`;
-        }
+        // Use pushState + synthetic popstate so ExitIntentPopup's Signal 7
+        // (pushState intercept) can block the navigation and show the popup.
+        const dest = currentUser ? `/${ROUTES.INVENTORY}` : `/${ROUTES.SEARCH}`;
+        window.history.pushState(null, '', dest);
+        window.dispatchEvent(new PopStateEvent('popstate'));
     }, [currentUser]);
-    const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
+    const handleLogin = () => {
+        const dest = currentUser ? `/${ROUTES.DASHBOARD}` : `/${ROUTES.LOGIN}`;
+        window.history.pushState(null, '', dest);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+    };
     const handleShare = () => {
         setShareOpen(true);
     };
