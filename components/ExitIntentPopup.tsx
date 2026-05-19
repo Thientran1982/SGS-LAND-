@@ -268,135 +268,120 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
   return createPortal(
     <AnimatePresence>
       {visible && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={handleDismiss}
-          />
-
-          {/* Panel
-              Mobile  : full-width sheet slides up from bottom-0
-              Desktop : centered card, max-w-md
-              Both    : motion.div is the height-capped flex container so
-                        the gradient header stays fixed and only the body scrolls.
-          */}
-          <motion.div
-            className="fixed z-[201] left-0 right-0 bottom-0 flex flex-col sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md sm:px-4"
-            style={{ maxHeight: 'min(92vh, 640px)', overflow: 'hidden' }}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-          >
-            {/* flex-1 min-h-0: lets the card shrink inside the capped motion.div */}
-            <div
-              className="flex-1 min-h-0 bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl flex flex-col overflow-hidden"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        /*
+          Floating card — bottom-right corner, fixed 320 px wide.
+          Never full-width, never a sheet. Fits in any viewport ≥ 300 px tall.
+          Slides up from below on entry; no backdrop so page stays readable.
+        */
+        <motion.div
+          className="fixed z-[200] bottom-4 right-4 w-80 rounded-2xl shadow-2xl overflow-hidden"
+          style={{ boxShadow: '0 8px 40px 0 rgba(99,102,241,0.25), 0 2px 12px 0 rgba(0,0,0,0.12)' }}
+          initial={{ y: 60, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 60, opacity: 0 }}
+          transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+        >
+          {/* ── Gradient header ── */}
+          <div className="relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-4 pt-4 pb-5">
+            {/* Close */}
+            <button
+              onClick={handleDismiss}
+              className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/35 transition-colors"
+              aria-label="Đóng"
             >
-              {/* ── Compact gradient header — shrink-0, never scrolls ── */}
-              <div className="shrink-0 relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-5 pt-5 pb-8 rounded-t-[28px] sm:rounded-t-[28px]">
-                <button
-                  onClick={handleDismiss}
-                  className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
-                  aria-label="Đóng"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
 
-                {/* Compact header: inline icon + title on same row */}
-                <div className="flex items-center gap-3 mb-1.5">
-                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                  </div>
-                  <h2 className="text-lg font-extrabold text-white leading-tight pr-8">{headline}</h2>
-                </div>
-                <p className="text-sm text-indigo-100 leading-snug line-clamp-2">{subtext}</p>
+            {/* Title row */}
+            <div className="flex items-center gap-2.5 mb-1 pr-8">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
               </div>
+              <h2 className="text-sm font-extrabold text-white leading-snug">{headline}</h2>
+            </div>
+            <p className="text-xs text-indigo-100 leading-snug line-clamp-2 pl-[1.875rem]">{subtext}</p>
+          </div>
 
-              {/* ── Scrollable body ── */}
-              <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-5 pb-5 -mt-5 relative">
-                {/* Benefits card */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-5 space-y-3">
-                  <BenefitRow icon={<IcoZap />}       text="Nhận danh sách BĐS phù hợp trong vòng 30 phút" />
-                  <BenefitRow icon={<IcoTrendingUp />} text="Tư vấn giá thị trường & định giá miễn phí" />
-                  <BenefitRow icon={<IcoShield />}     text="Thông tin bảo mật tuyệt đối, không spam" />
-                </div>
+          {/* ── White body ── */}
+          <div className="bg-white px-4 pt-3 pb-4">
 
-                {!success ? (
-                  <form onSubmit={handleSubmit} className="space-y-3">
-                    <input
-                      ref={nameRef}
-                      type="text"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      placeholder="Họ tên của bạn (không bắt buộc)"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
-                      style={{ fontSize: '16px' }}
-                    />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
-                      placeholder="Số điện thoại *"
-                      required
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
-                      style={{ fontSize: '16px' }}
-                    />
-
-                    {error && (
-                      <p className="text-xs text-red-500 font-medium px-1">{error}</p>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={submitting || !phone.trim()}
-                      className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {submitting ? (
-                        <><IcoSpinner />Đang gửi...</>
-                      ) : (
-                        <><IcoSend />Nhận tư vấn miễn phí ngay</>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleDismiss}
-                      className="w-full py-2 text-xs text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      Không cảm ơn, tôi tự tìm được
-                    </button>
-                  </form>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-6"
-                  >
-                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-1.5">Đã nhận được thông tin!</h3>
-                    <p className="text-sm text-slate-500">
-                      Chuyên gia SGS LAND sẽ liên hệ với bạn trong thời gian sớm nhất. Cảm ơn bạn!
-                    </p>
-                  </motion.div>
-                )}
+            {/* 2 compact benefit rows */}
+            <div className="flex flex-col gap-1.5 mb-3">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <IcoZap /><span>Tư vấn trong 30 phút, định giá miễn phí</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <IcoShield /><span>Thông tin bảo mật, không spam</span>
               </div>
             </div>
-          </motion.div>
-        </>
+
+            {!success ? (
+              <form onSubmit={handleSubmit} className="space-y-2">
+                {/* Name — optional, compact */}
+                <input
+                  ref={nameRef}
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Họ tên (không bắt buộc)"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                  style={{ fontSize: '16px' }}
+                />
+
+                {/* Phone */}
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
+                  placeholder="Số điện thoại *"
+                  required
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                  style={{ fontSize: '16px' }}
+                />
+
+                {error && (
+                  <p className="text-xs text-red-500 font-medium">{error}</p>
+                )}
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={submitting || !phone.trim()}
+                  className="w-full py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {submitting ? <><IcoSpinner />Đang gửi...</> : <><IcoSend />Nhận tư vấn ngay</>}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  className="w-full py-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  Không cảm ơn
+                </button>
+              </form>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-4"
+              >
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-sm font-bold text-slate-800 mb-1">Đã nhận được thông tin!</p>
+                <p className="text-xs text-slate-500">Chuyên gia SGS LAND sẽ liên hệ sớm nhất.</p>
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>,
     document.body,
