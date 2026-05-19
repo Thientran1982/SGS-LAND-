@@ -115,15 +115,12 @@ export function createFollowUpCronRouter(pool: Pool, cronSecret: string): Router
       }
     } catch (err: any) {
       logger.error('[FollowUpCron] Fatal error:', err);
-      await finishAgentRun(pool, runId, 'failed', {
-        error: err.message,
-        durationMs: Date.now() - startedMs,
-      });
+      await finishAgentRun(pool, runId, 'error', { error: err.message }, err.message, startedMs);
       return res.status(500).json({ error: err.message });
     }
 
     const durationMs = Date.now() - startedMs;
-    await finishAgentRun(pool, runId, 'success', { stats, durationMs });
+    await finishAgentRun(pool, runId, 'success', { stats, durationMs }, null, startedMs);
 
     logger.info(
       `[FollowUpCron] Hoàn tất — sent=${stats.sent} failed=${stats.failed} skipped=${stats.skipped} (${durationMs}ms)`,

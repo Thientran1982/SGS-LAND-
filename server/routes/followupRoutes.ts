@@ -47,10 +47,11 @@ export function createFollowUpRoutes(pool: Pool, authenticateToken: any): Router
       }
 
       // Resolve tenant: from JWT (authenticated) → body → X-Tenant-Id header
+      const rawTenantHeader = req.headers['x-tenant-id'];
       const tenantId =
         getTenantId(req) ||
         bodyTenantId ||
-        (req.headers['x-tenant-id'] as string | undefined) ||
+        (Array.isArray(rawTenantHeader) ? rawTenantHeader[0] : rawTenantHeader) ||
         null;
 
       if (!tenantId) {
@@ -152,7 +153,7 @@ export function createFollowUpRoutes(pool: Pool, authenticateToken: any): Router
     authenticateToken,
     async (req: Request, res: Response) => {
       try {
-        const sends = await followupSequenceRepository.getSends(pool, req.params.id);
+        const sends = await followupSequenceRepository.getSends(pool, String(req.params.id));
         return res.json(sends);
       } catch (err: any) {
         logger.error('[FollowUp] get sends error:', err);
