@@ -245,6 +245,52 @@ export class AnalyticsRepository extends BaseRepository {
           `)
         : { rows: [{ revenue: '0' }] };
 
+      // ── SIGNED contract commission ──────────────────────────────────────────
+      // Counts SIGNED contracts with property_price (or value fallback) that are NOT
+      // already covered by an APPROVED proposal from a WON lead, to avoid double-counting.
+      const contractUserFilter = isSalesScope && safeUserId
+        ? `AND c.lead_id IN (SELECT id FROM leads WHERE ${TENANT_FILTER} AND assigned_to = '${safeUserId}'::uuid)`
+        : '';
+      const contractDedup = `
+        AND (
+          c.proposal_id IS NULL
+          OR c.proposal_id NOT IN (
+            SELECT p.id FROM proposals p
+            INNER JOIN leads lrev2 ON p.lead_id = lrev2.id
+              AND lrev2.tenant_id = p.tenant_id
+              AND lrev2.stage = 'WON'
+            WHERE p.tenant_id = c.tenant_id
+              AND p.status = 'APPROVED'
+          )
+        )
+      `;
+      const contractRevenueResult = await client.query(`
+        SELECT COALESCE(SUM(COALESCE(c.property_price, c.value) * $1), 0)::numeric as revenue
+        FROM contracts c
+        WHERE c.${TENANT_FILTER}
+          AND c.status = 'SIGNED'
+          AND COALESCE(c.property_price, c.value) IS NOT NULL
+          AND COALESCE(c.property_price, c.value) > 0
+          ${contractDedup}
+          ${contractUserFilter}
+          ${useTimeFilter ? `AND c.signed_at >= NOW() - INTERVAL '${days} days'` : ''}
+      `, [commissionRate]);
+
+      const prevContractRevenueResult = useTimeFilter
+        ? await client.query(`
+            SELECT COALESCE(SUM(COALESCE(c.property_price, c.value) * $1), 0)::numeric as revenue
+            FROM contracts c
+            WHERE c.${TENANT_FILTER}
+              AND c.status = 'SIGNED'
+              AND COALESCE(c.property_price, c.value) IS NOT NULL
+              AND COALESCE(c.property_price, c.value) > 0
+              ${contractDedup}
+              ${contractUserFilter}
+              AND c.signed_at >= NOW() - INTERVAL '${days * 2} days'
+              AND c.signed_at < NOW() - INTERVAL '${days} days'
+          `, [commissionRate])
+        : { rows: [{ revenue: '0' }] };
+
       // Pipeline value: total expected value of currently open deals, weighted by AI grade probability.
       // Apply the same period filter as other metrics so the delta compares equal windows
       // (new pipeline created this period vs new pipeline created last period).
@@ -510,6 +556,23 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 12
       `, [commissionRate]);
 
+      // SIGNED contract commission by month (deduped same as contractRevenueResult)
+      const contractRevenueByMonthResult = await client.query(`
+        SELECT
+          TO_CHAR(COALESCE(c.signed_at, c.updated_at), 'YYYY-MM') as month,
+          SUM(COALESCE(c.property_price, c.value) * $1)::numeric as revenue
+        FROM contracts c
+        WHERE c.${TENANT_FILTER}
+          AND c.status = 'SIGNED'
+          AND COALESCE(c.property_price, c.value) IS NOT NULL
+          AND COALESCE(c.property_price, c.value) > 0
+          ${contractDedup}
+          ${contractUserFilter}
+        GROUP BY TO_CHAR(COALESCE(c.signed_at, c.updated_at), 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT 12
+      `, [commissionRate]);
+
       // SOLD listing commission by month (merged into revenueByMonth below)
       const listingRevenueByMonthResult = await client.query(`
         SELECT
@@ -570,9 +633,11 @@ export class AnalyticsRepository extends BaseRepository {
       const contractStats = contractsResult.rows[0];
 
       const revenue = (parseFloat(revenueResult.rows[0].revenue) || 0)
-                    + (parseFloat(listingRevenueResult.rows[0].revenue) || 0);
+                    + (parseFloat(listingRevenueResult.rows[0].revenue) || 0)
+                    + (parseFloat(contractRevenueResult.rows[0].revenue) || 0);
       const prevRevenue = (parseFloat(prevRevenueResult.rows[0].revenue) || 0)
-                        + (parseFloat(prevListingRevenueResult.rows[0].revenue) || 0);
+                        + (parseFloat(prevListingRevenueResult.rows[0].revenue) || 0)
+                        + (parseFloat(prevContractRevenueResult.rows[0].revenue) || 0);
 
       // Keep 1 decimal place so sub-day velocities (e.g., 0.08 days) show as "0.1" instead of 0.
       const salesVelocity = Math.round((parseFloat(salesVelocityResult.rows[0].avg_days) || 0) * 10) / 10;
@@ -685,6 +750,9 @@ export class AnalyticsRepository extends BaseRepository {
             map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
           }
           for (const r of listingRevenueByMonthResult.rows) {
+            map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
+          }
+          for (const r of contractRevenueByMonthResult.rows) {
             map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
           }
           return Array.from(map.entries())
