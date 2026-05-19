@@ -286,8 +286,8 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
                         the gradient header stays fixed and only the body scrolls.
           */}
           <motion.div
-            className="fixed z-[201] left-0 right-0 bottom-0 flex flex-col md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md md:px-4"
-            style={{ maxHeight: 'min(92vh, 680px)', overflow: 'hidden' }}
+            className="fixed z-[201] left-0 right-0 bottom-0 flex flex-col sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md sm:px-4"
+            style={{ maxHeight: 'min(92vh, 640px)', overflow: 'hidden' }}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -295,14 +295,14 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
           >
             {/* flex-1 min-h-0: lets the card shrink inside the capped motion.div */}
             <div
-              className="flex-1 min-h-0 bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl flex flex-col overflow-hidden"
+              className="flex-1 min-h-0 bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl flex flex-col overflow-hidden"
               style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-              {/* ── Gradient header — shrink-0, never scrolls ── */}
-              <div className="shrink-0 relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-6 pt-6 pb-10 rounded-t-[28px] md:rounded-t-[28px]">
+              {/* ── Compact gradient header — shrink-0, never scrolls ── */}
+              <div className="shrink-0 relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-5 pt-5 pb-8 rounded-t-[28px] sm:rounded-t-[28px]">
                 <button
                   onClick={handleDismiss}
-                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+                  className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
                   aria-label="Đóng"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,18 +310,20 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
                   </svg>
                 </button>
 
-                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
+                {/* Compact header: inline icon + title on same row */}
+                <div className="flex items-center gap-3 mb-1.5">
+                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-extrabold text-white leading-tight pr-8">{headline}</h2>
                 </div>
-
-                <h2 className="text-xl font-extrabold text-white leading-tight mb-1.5">{headline}</h2>
                 <p className="text-sm text-indigo-100 leading-snug line-clamp-2">{subtext}</p>
               </div>
 
               {/* ── Scrollable body ── */}
-              <div className="flex-1 overflow-y-auto px-6 pt-5 pb-6 -mt-6 relative">
+              <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-5 pb-5 -mt-5 relative">
                 {/* Benefits card */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-5 space-y-3">
                   <BenefitRow icon={<IcoZap />}       text="Nhận danh sách BĐS phù hợp trong vòng 30 phút" />
