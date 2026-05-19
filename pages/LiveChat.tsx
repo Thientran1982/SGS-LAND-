@@ -284,11 +284,11 @@ export default function LiveChat() {
                     <form onSubmit={handleStartChat} className="space-y-4">
                         <div>
                             <label htmlFor="lc-name" className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.name_label')}</label>
-                            <input id="lc-name" type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.name_placeholder')} />
+                            <input id="lc-name" type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.name_placeholder')} />
                         </div>
                         <div>
                             <label htmlFor="lc-phone" className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.phone_label')}</label>
-                            <input id="lc-phone" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.phone_placeholder')} />
+                            <input id="lc-phone" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.phone_placeholder')} />
                         </div>
                         <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors shadow-md shadow-indigo-200 mt-2">
                             {t('livechat.start_chat')}

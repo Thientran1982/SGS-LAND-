@@ -572,7 +572,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                     value={name}
                                     onChange={e => setName(e.target.value)}
                                     placeholder={t('livechat.name_placeholder')}
-                                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
                                 />
                                 <input
                                     type="tel"
@@ -580,7 +580,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('livechat.phone_placeholder')}
-                                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
                                 />
                                 <button
                                     type="submit"
@@ -719,7 +719,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                             value={captureData.name}
                                                             onChange={e => setCaptureData(d => ({ ...d, name: e.target.value }))}
                                                             placeholder="Tên của bạn"
-                                                            className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                            className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
                                                         />
                                                     )}
                                                     <input
@@ -728,14 +728,14 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                         value={captureData.phone}
                                                         onChange={e => setCaptureData(d => ({ ...d, phone: e.target.value }))}
                                                         placeholder="Số điện thoại *"
-                                                        className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                        className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
                                                     />
                                                     <textarea
                                                         value={captureData.notes}
                                                         onChange={e => setCaptureData(d => ({ ...d, notes: e.target.value }))}
                                                         placeholder="Ghi chú thêm (tùy chọn)"
                                                         rows={2}
-                                                        className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
+                                                        className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
                                                     />
                                                     <button
                                                         type="submit"
