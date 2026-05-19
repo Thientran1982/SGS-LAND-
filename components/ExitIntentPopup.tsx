@@ -286,23 +286,16 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
                         the gradient header stays fixed and only the body scrolls.
           */}
           <motion.div
-            className="
-              fixed z-[201]
-              left-0 right-0 bottom-0
-              flex flex-col
-              md:inset-auto md:top-1/2 md:left-1/2
-              md:-translate-x-1/2 md:-translate-y-1/2
-              md:w-full md:max-w-md md:px-4
-            "
-            style={{ maxHeight: 'min(92dvh, 680px)' }}
+            className="fixed z-[201] left-0 right-0 bottom-0 flex flex-col md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md md:px-4"
+            style={{ maxHeight: 'min(92vh, 680px)', overflow: 'hidden' }}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           >
-            {/* White card — flex column so header is shrink-0 and body scrolls */}
+            {/* flex-1 min-h-0: lets the card shrink inside the capped motion.div */}
             <div
-              className="bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl flex flex-col overflow-hidden"
+              className="flex-1 min-h-0 bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl flex flex-col overflow-hidden"
               style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
               {/* ── Gradient header — shrink-0, never scrolls ── */}
