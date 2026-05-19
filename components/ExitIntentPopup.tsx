@@ -155,20 +155,27 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
     // Signal 4: Idle timer
     const idleTimer = setTimeout(fire, delayMs);
 
-    // Signal 5: Browser back button via popstate.
+    // Signal 5: Browser back button via popstate — "intercept & restore" pattern.
     //
-    // Strategy: push a sentinel entry on mount so the FIRST back-click pops it
-    // and keeps the user on this page (URL stays the same, custom router does
-    // nothing).  Any popstate event — whether it pops the sentinel or a real
-    // history entry — means the user is navigating away, so we fire immediately.
+    // On mount we push a sentinel entry (same URL).  When user clicks Back:
+    //   1. Browser pops sentinel, URL stays the same → custom router does nothing.
+    //   2. popstate fires synchronously.
+    //   3. If popup hasn't fired yet: IMMEDIATELY re-push sentinel before React
+    //      renders (keeps user on the page) then call fire().
+    //   4. If popup already fired (user dismissed): do NOT re-push — let the next
+    //      back press navigate normally so the user isn't trapped.
     //
-    // We deliberately do NOT guard on e.state because the app's custom router
-    // always pushes state=null, making state checks unreliable.  popstate only
-    // fires on browser back/forward, never on pushState calls, so false-positives
-    // from in-app navigation are not possible.
-    const sentinelUrl = window.location.pathname + window.location.search;
-    try { window.history.pushState({ __exitIntentSentinel: true }, '', sentinelUrl); } catch {}
+    // "Immediately" is the key: the re-push is synchronous inside the event
+    // handler, which means it runs before the app's custom router (also a
+    // popstate listener) reads window.location, so the URL is always /marketplace
+    // for the duration of the popup.
+    try { window.history.pushState({ __exitIntentSentinel: true }, '', window.location.pathname + window.location.search); } catch {}
     const onPopState = () => {
+      if (!firedRef.current && !isSuppressed()) {
+        // Intercept: restore sentinel so user stays on this page while popup shows
+        try { window.history.pushState({ __exitIntentSentinel: true }, '', window.location.pathname + window.location.search); } catch {}
+      }
+      // fire() is a no-op when firedRef.current === true or isSuppressed()
       fire();
     };
     window.addEventListener('popstate', onPopState);
