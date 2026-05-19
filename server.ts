@@ -52,6 +52,7 @@ import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
 import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
+import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createVisitorTrackingRoutes } from "./server/routes/visitorTrackingRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
@@ -3553,6 +3554,7 @@ async function startServer() {
   // Public lead capture for static landing pages (no auth)
   app.use('/api/landing-leads', apiRateLimit, createLandingLeadRoutes());
   app.use('/api/landing-ai', aiRateLimit, createLandingAiRoutes());
+  app.use('/api/live-chat', createLiveChatAgentRoutes(authenticateToken, aiRateLimit, apiRateLimit));
 
   // Lightweight health probe for deployment infrastructure (no DB call)
   app.get("/health", (_req, res) => {
