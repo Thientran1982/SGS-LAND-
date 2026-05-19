@@ -212,37 +212,96 @@ export class AnalyticsRepository extends BaseRepository {
         : { rows: [{ revenue: '0' }] };
 
       // ── SOLD listing commission (stored directly on listing, not via proposals) ──
-      // commission_unit = 'PERCENT': revenue = price * commission / 100
-      // commission_unit = 'FIXED' or other: revenue = commission (fixed amount)
+      // Priority: explicit commission field → fallback: price × commissionRate.
+      // This ensures listings marked SOLD without a commission value still contribute
+      // to revenue (e.g. agents who mark a listing SOLD without filling in commission).
       const listingUserFilter = isSalesScope && safeUserId
         ? `AND (l.assigned_to = '${safeUserId}'::uuid OR l.created_by = '${safeUserId}'::uuid)`
         : '';
+      const listingCommissionExpr = `
+        CASE
+          WHEN l.commission IS NOT NULL AND l.commission > 0 AND l.commission_unit = 'PERCENT'
+            THEN l.price * l.commission / 100
+          WHEN l.commission IS NOT NULL AND l.commission > 0
+            THEN l.commission
+          WHEN l.price IS NOT NULL AND l.price > 0
+            THEN l.price * $1
+          ELSE 0
+        END
+      `;
       const listingRevenueResult = await client.query(`
-        SELECT COALESCE(SUM(
-          CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
-               ELSE l.commission END
-        ), 0)::numeric as revenue
+        SELECT COALESCE(SUM(${listingCommissionExpr}), 0)::numeric as revenue
         FROM listings l
         WHERE l.${TENANT_FILTER}
           AND l.status = 'SOLD'
-          AND l.commission IS NOT NULL AND l.commission > 0
+          AND (l.commission > 0 OR (l.price IS NOT NULL AND l.price > 0))
           ${listingUserFilter}
           ${useTimeFilter ? `AND l.updated_at >= NOW() - INTERVAL '${days} days'` : ''}
-      `);
+      `, [commissionRate]);
       const prevListingRevenueResult = useTimeFilter
         ? await client.query(`
-            SELECT COALESCE(SUM(
-              CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
-                   ELSE l.commission END
-            ), 0)::numeric as revenue
+            SELECT COALESCE(SUM(${listingCommissionExpr}), 0)::numeric as revenue
             FROM listings l
             WHERE l.${TENANT_FILTER}
               AND l.status = 'SOLD'
-              AND l.commission IS NOT NULL AND l.commission > 0
+              AND (l.commission > 0 OR (l.price IS NOT NULL AND l.price > 0))
               ${listingUserFilter}
               AND l.updated_at >= NOW() - INTERVAL '${days * 2} days'
               AND l.updated_at < NOW() - INTERVAL '${days} days'
-          `)
+          `, [commissionRate])
+        : { rows: [{ revenue: '0' }] };
+
+      // ── WON leads without an APPROVED proposal ────────────────────────────────
+      // When an agent marks a lead WON but the proposal is still PENDING_APPROVAL
+      // (or never formally approved), revenue would otherwise show 0.
+      // Fix: also count the latest proposal (any status) per WON lead that does NOT
+      // already have an APPROVED proposal counted in revenueResult.
+      const wonNoApprovalJoin = isSalesScope && safeUserId
+        ? `INNER JOIN leads lwon ON p.lead_id = lwon.id AND lwon.tenant_id = p.tenant_id AND lwon.stage = 'WON' AND lwon.assigned_to = '${safeUserId}'::uuid`
+        : `INNER JOIN leads lwon ON p.lead_id = lwon.id AND lwon.tenant_id = p.tenant_id AND lwon.stage = 'WON'`;
+      const wonNoApprovalResult = await client.query(`
+        SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
+        FROM proposals p
+        ${wonNoApprovalJoin}
+        WHERE p.${TENANT_FILTER}
+          AND p.final_price IS NOT NULL AND p.final_price > 0
+          AND p.status <> 'REJECTED'
+          AND lwon.id NOT IN (
+            SELECT DISTINCT p2.lead_id FROM proposals p2
+            WHERE p2.tenant_id = p.tenant_id
+              AND p2.status = 'APPROVED'
+              AND p2.lead_id IS NOT NULL
+          )
+          AND p.updated_at = (
+            SELECT MAX(p3.updated_at) FROM proposals p3
+            WHERE p3.lead_id = p.lead_id AND p3.tenant_id = p.tenant_id
+              AND p3.final_price IS NOT NULL AND p3.final_price > 0 AND p3.status <> 'REJECTED'
+          )
+          ${useTimeFilter ? `AND COALESCE(lwon.won_at, lwon.updated_at) >= NOW() - INTERVAL '${days} days'` : ''}
+      `, [commissionRate]);
+
+      const prevWonNoApprovalResult = useTimeFilter
+        ? await client.query(`
+            SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
+            FROM proposals p
+            ${wonNoApprovalJoin}
+            WHERE p.${TENANT_FILTER}
+              AND p.final_price IS NOT NULL AND p.final_price > 0
+              AND p.status <> 'REJECTED'
+              AND lwon.id NOT IN (
+                SELECT DISTINCT p2.lead_id FROM proposals p2
+                WHERE p2.tenant_id = p.tenant_id
+                  AND p2.status = 'APPROVED'
+                  AND p2.lead_id IS NOT NULL
+              )
+              AND p.updated_at = (
+                SELECT MAX(p3.updated_at) FROM proposals p3
+                WHERE p3.lead_id = p.lead_id AND p3.tenant_id = p.tenant_id
+                  AND p3.final_price IS NOT NULL AND p3.final_price > 0 AND p3.status <> 'REJECTED'
+              )
+              AND COALESCE(lwon.won_at, lwon.updated_at) >= NOW() - INTERVAL '${days * 2} days'
+              AND COALESCE(lwon.won_at, lwon.updated_at) < NOW() - INTERVAL '${days} days'
+          `, [commissionRate])
         : { rows: [{ revenue: '0' }] };
 
       // ── SIGNED contract commission ──────────────────────────────────────────
@@ -573,23 +632,46 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 12
       `, [commissionRate]);
 
-      // SOLD listing commission by month (merged into revenueByMonth below)
+      // SOLD listing commission by month — same fallback logic as listingRevenueResult
       const listingRevenueByMonthResult = await client.query(`
         SELECT
           TO_CHAR(l.updated_at, 'YYYY-MM') as month,
-          SUM(
-            CASE WHEN l.commission_unit = 'PERCENT' THEN l.price * l.commission / 100
-                 ELSE l.commission END
-          )::numeric as revenue
+          SUM(${listingCommissionExpr})::numeric as revenue
         FROM listings l
         WHERE l.${TENANT_FILTER}
           AND l.status = 'SOLD'
-          AND l.commission IS NOT NULL AND l.commission > 0
+          AND (l.commission > 0 OR (l.price IS NOT NULL AND l.price > 0))
           ${listingUserFilter}
         GROUP BY TO_CHAR(l.updated_at, 'YYYY-MM')
         ORDER BY month DESC
         LIMIT 12
-      `);
+      `, [commissionRate]);
+
+      // WON leads without APPROVED proposal — by month
+      const wonNoApprovalByMonthResult = await client.query(`
+        SELECT
+          TO_CHAR(COALESCE(lwon.won_at, lwon.updated_at), 'YYYY-MM') as month,
+          SUM(p.final_price * $1)::numeric as revenue
+        FROM proposals p
+        ${wonNoApprovalJoin}
+        WHERE p.${TENANT_FILTER}
+          AND p.final_price IS NOT NULL AND p.final_price > 0
+          AND p.status <> 'REJECTED'
+          AND lwon.id NOT IN (
+            SELECT DISTINCT p2.lead_id FROM proposals p2
+            WHERE p2.tenant_id = p.tenant_id
+              AND p2.status = 'APPROVED'
+              AND p2.lead_id IS NOT NULL
+          )
+          AND p.updated_at = (
+            SELECT MAX(p3.updated_at) FROM proposals p3
+            WHERE p3.lead_id = p.lead_id AND p3.tenant_id = p.tenant_id
+              AND p3.final_price IS NOT NULL AND p3.final_price > 0 AND p3.status <> 'REJECTED'
+          )
+        GROUP BY TO_CHAR(COALESCE(lwon.won_at, lwon.updated_at), 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT 12
+      `, [commissionRate]);
 
       // ── Compute aggregates ────────────────────────────────────────────────
       let pipelineValue = 0;
@@ -634,10 +716,12 @@ export class AnalyticsRepository extends BaseRepository {
 
       const revenue = (parseFloat(revenueResult.rows[0].revenue) || 0)
                     + (parseFloat(listingRevenueResult.rows[0].revenue) || 0)
-                    + (parseFloat(contractRevenueResult.rows[0].revenue) || 0);
+                    + (parseFloat(contractRevenueResult.rows[0].revenue) || 0)
+                    + (parseFloat(wonNoApprovalResult.rows[0].revenue) || 0);
       const prevRevenue = (parseFloat(prevRevenueResult.rows[0].revenue) || 0)
                         + (parseFloat(prevListingRevenueResult.rows[0].revenue) || 0)
-                        + (parseFloat(prevContractRevenueResult.rows[0].revenue) || 0);
+                        + (parseFloat(prevContractRevenueResult.rows[0].revenue) || 0)
+                        + (parseFloat(prevWonNoApprovalResult.rows[0].revenue) || 0);
 
       // Keep 1 decimal place so sub-day velocities (e.g., 0.08 days) show as "0.1" instead of 0.
       const salesVelocity = Math.round((parseFloat(salesVelocityResult.rows[0].avg_days) || 0) * 10) / 10;
@@ -753,6 +837,9 @@ export class AnalyticsRepository extends BaseRepository {
             map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
           }
           for (const r of contractRevenueByMonthResult.rows) {
+            map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
+          }
+          for (const r of wonNoApprovalByMonthResult.rows) {
             map.set(r.month, (map.get(r.month) || 0) + (parseFloat(r.revenue) || 0));
           }
           return Array.from(map.entries())
