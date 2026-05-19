@@ -2357,6 +2357,97 @@ async function startServer() {
     }
   });
 
+  // GET /api/public/livechat/project-listings — get listings by project with filters (PN/price/tower)
+  app.get('/api/public/livechat/project-listings', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { projectCode, bedrooms, pn, priceMin, priceMax, tower, block, status, limit, page, noCache } = req.query;
+      if (!projectCode) return res.status(400).json({ error: 'projectCode bắt buộc' }) as any;
+
+      const result = await liveChatEngine.callTool('get_project_listings', {
+        tenantId:    PUBLIC_TENANT,
+        projectCode: String(projectCode),
+        bedrooms:    bedrooms ?? pn,
+        priceMin:    priceMin ? Number(priceMin) : undefined,
+        priceMax:    priceMax ? Number(priceMax) : undefined,
+        tower:       tower ?? block,
+        status:      status || 'AVAILABLE',
+        limit:       limit  ? Math.min(Number(limit), 100) : 50,
+        page:        page   ? Number(page) : 1,
+        noCache:     noCache === 'true',
+      });
+      res.json(result);
+    } catch (error) {
+      logger.error('Project listings error:', error as Error);
+      res.status(500).json({ error: 'Không thể tải danh sách sản phẩm' });
+    }
+  });
+
+  // GET /api/public/livechat/search-dynamic — real-time cross-marketplace listing search
+  app.get('/api/public/livechat/search-dynamic', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { query, area, type, bedrooms, priceMin, priceMax, status, limit, page, noCache } = req.query;
+
+      const result = await liveChatEngine.callTool('search_listings_dynamic', {
+        tenantId: PUBLIC_TENANT,
+        query:    query    ? String(query)    : undefined,
+        area:     area     ? String(area)     : undefined,
+        type:     type     ? String(type)     : undefined,
+        bedrooms: bedrooms ? Number(bedrooms) : undefined,
+        priceMin: priceMin ? Number(priceMin) : undefined,
+        priceMax: priceMax ? Number(priceMax) : undefined,
+        status:   status   || 'AVAILABLE',
+        limit:    limit    ? Math.min(Number(limit), 20) : 10,
+        page:     page     ? Number(page) : 1,
+        noCache:  noCache  === 'true',
+      });
+      res.json(result);
+    } catch (error) {
+      logger.error('Search dynamic error:', error as Error);
+      res.status(500).json({ error: 'Không thể tìm kiếm BĐS' });
+    }
+  });
+
+  // GET /api/public/livechat/project-info/:code — fetch any project by code + listing stats
+  app.get('/api/public/livechat/project-info/:code', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { withListings, listingLimit, listingStatus, noCache } = req.query;
+
+      const result = await liveChatEngine.callTool('get_project_dynamic', {
+        tenantId:      PUBLIC_TENANT,
+        projectCode:   req.params.code,
+        withListings:  withListings  !== 'false',
+        listingLimit:  listingLimit  ? Math.min(Number(listingLimit), 100) : 20,
+        listingStatus: listingStatus || 'AVAILABLE',
+        noCache:       noCache       === 'true',
+      });
+      if (!result.found) return res.status(404).json(result) as any;
+      res.json(result);
+    } catch (error) {
+      logger.error('Project dynamic error:', error as Error);
+      res.status(500).json({ error: 'Không thể tải thông tin dự án' });
+    }
+  });
+
+  // POST /api/internal/livechat/refresh-kb — admin-only: force sync KB cache
+  app.post('/api/internal/livechat/refresh-kb', async (req: express.Request, res: express.Response) => {
+    const secret = req.headers['x-internal-secret'] || req.body?.secret;
+    if (secret !== process.env.GEO_MONITOR_CRON_SECRET && secret !== process.env.JWT_SECRET) {
+      return res.status(401).json({ error: 'Unauthorized' }) as any;
+    }
+    try {
+      const { scope, projectCode } = req.body || {};
+      const result = await liveChatEngine.callTool('refresh_knowledge_base', {
+        tenantId: PUBLIC_TENANT,
+        scope:    scope || 'all',
+        projectCode,
+      });
+      res.json(result);
+    } catch (error) {
+      logger.error('Refresh KB error:', error as Error);
+      res.status(500).json({ error: 'Refresh thất bại' });
+    }
+  });
+
   // Normalise DB article entity → Article shape expected by the frontend
   const normalizeArticle = (a: any) => {
     const textContent = (a.content || '').replace(/<[^>]+>/g, '');

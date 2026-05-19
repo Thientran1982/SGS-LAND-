@@ -33,6 +33,30 @@ function getGemini(): GoogleGenAI {
 }
 
 // ---------------------------------------------------------------------------
+// Dynamic KB in-memory cache (TTL-based, module-level)
+// ---------------------------------------------------------------------------
+interface KBCacheEntry { data: any; fetchedAt: number; ttlMs: number; }
+const KB_CACHE = new Map<string, KBCacheEntry>();
+const KB_TTL_DEFAULT  = 30 * 60 * 1000; // 30 min
+const KB_TTL_SHORT    =  5 * 60 * 1000; //  5 min (listings — more volatile)
+
+function kbGet(key: string): any | null {
+    const e = KB_CACHE.get(key);
+    if (!e) return null;
+    if (Date.now() - e.fetchedAt > e.ttlMs) { KB_CACHE.delete(key); return null; }
+    return e.data;
+}
+function kbSet(key: string, data: any, ttlMs = KB_TTL_DEFAULT): void {
+    KB_CACHE.set(key, { data, fetchedAt: Date.now(), ttlMs });
+}
+function kbClear(prefix?: string): number {
+    if (!prefix) { const n = KB_CACHE.size; KB_CACHE.clear(); return n; }
+    let n = 0;
+    for (const k of KB_CACHE.keys()) { if (k.startsWith(prefix)) { KB_CACHE.delete(k); n++; } }
+    return n;
+}
+
+// ---------------------------------------------------------------------------
 // Tool manifest: name + description + required params
 // ---------------------------------------------------------------------------
 export interface ToolDefinition {
@@ -306,6 +330,72 @@ const TOOL_MANIFEST: ToolDefinition[] = [
             dateText:  { type: 'string', required: true,  description: 'Ngày tự nhiên: "ngày mai", "cuối tuần", "thứ 7", "tuần sau"' },
             listingId: { type: 'string', required: false, description: 'Listing ID muốn xem (optional)' },
             notes:     { type: 'string', required: false, description: 'Ghi chú thêm' },
+        },
+    },
+    // ── DYNAMIC KNOWLEDGE TOOLS (NEW v3) ─────────────────────────────────────
+    {
+        name: 'get_project_listings',
+        description: 'Lấy danh sách căn hộ/sản phẩm theo dự án với lọc thông minh: số PN, giá, tháp/block, trạng thái. Hỗ trợ live API cho mọi dự án mới.',
+        category: 'listing',
+        params: {
+            tenantId:    { type: 'string', required: false, description: 'Tenant ID (default: public)' },
+            projectCode: { type: 'string', required: true,  description: 'Mã dự án. VD: aqua-city, the-global-city, masteri-cosmo' },
+            bedrooms:    { type: 'number', required: false, description: 'Số phòng ngủ tối thiểu (PN). Alias: pn, beds' },
+            priceMin:    { type: 'number', required: false, description: 'Giá tối thiểu (VNĐ). VD: 2000000000' },
+            priceMax:    { type: 'number', required: false, description: 'Giá tối đa (VNĐ). VD: 5000000000' },
+            tower:       { type: 'string', required: false, description: 'Tên tháp/block. VD: S1, T2, Pearl, Topaz' },
+            status:      { type: 'string', required: false, description: 'AVAILABLE|HOLD|SOLD|ALL (default: AVAILABLE)' },
+            limit:       { type: 'number', required: false, description: 'Số kết quả (default 50, max 100)' },
+            page:        { type: 'number', required: false, description: 'Trang (default 1)' },
+            noCache:     { type: 'boolean', required: false, description: 'Force refresh (default false)' },
+        },
+    },
+    {
+        name: 'refresh_knowledge_base',
+        description: 'Force-sync KB: xoá cache cũ, re-seed từ DB. Dùng khi vừa import dự án mới hoặc cập nhật sản phẩm.',
+        category: 'chat',
+        params: {
+            tenantId:    { type: 'string',  required: false, description: 'Tenant ID (default: public)' },
+            scope:       { type: 'string',  required: false, description: 'all|project|listings (default: all)' },
+            projectCode: { type: 'string',  required: false, description: 'Chỉ refresh dự án cụ thể (dùng với scope=project)' },
+        },
+    },
+    {
+        name: 'search_listings_dynamic',
+        description: 'Tìm BĐS real-time từ toàn kho với nhiều filter kết hợp + enriched result (giá/m², ảnh, priceFormatted). Cross-marketplace support.',
+        category: 'listing',
+        params: {
+            tenantId:  { type: 'string',  required: false, description: 'Tenant ID (default: public)' },
+            query:     { type: 'string',  required: false, description: 'Từ khoá tìm kiếm (tên dự án, khu vực...)' },
+            area:      { type: 'string',  required: false, description: 'Khu vực/quận/huyện' },
+            type:      { type: 'string',  required: false, description: 'Loại BĐS (căn hộ, nhà phố, đất...)' },
+            bedrooms:  { type: 'number',  required: false, description: 'Số PN tối thiểu' },
+            priceMin:  { type: 'number',  required: false, description: 'Giá tối thiểu (VNĐ)' },
+            priceMax:  { type: 'number',  required: false, description: 'Giá tối đa (VNĐ)' },
+            status:    { type: 'string',  required: false, description: 'AVAILABLE|ALL (default: AVAILABLE)' },
+            limit:     { type: 'number',  required: false, description: 'Số kết quả (default 10, max 20)' },
+            page:      { type: 'number',  required: false, description: 'Trang (default 1)' },
+            noCache:   { type: 'boolean', required: false, description: 'Force refresh (default false)' },
+        },
+    },
+    {
+        name: 'get_cache_status',
+        description: 'Kiểm tra sức khỏe Knowledge Base: cache entries, TTL còn lại, Redis ping, số tools đang hoạt động.',
+        category: 'chat',
+        params: {},
+    },
+    {
+        name: 'get_project_dynamic',
+        description: 'Fetch bất kỳ dự án mới theo code/name từ DB — không cần có trong KB tĩnh. Trả về info dự án + thống kê sản phẩm.',
+        category: 'project',
+        params: {
+            tenantId:      { type: 'string',  required: false, description: 'Tenant ID (default: public)' },
+            projectCode:   { type: 'string',  required: false, description: 'Code dự án. VD: aqua-city' },
+            projectName:   { type: 'string',  required: false, description: 'Tên dự án (nếu không có code)' },
+            withListings:  { type: 'boolean', required: false, description: 'Kèm danh sách căn (default true)' },
+            listingLimit:  { type: 'number',  required: false, description: 'Số căn trả về (default 20)' },
+            listingStatus: { type: 'string',  required: false, description: 'AVAILABLE|ALL (default: AVAILABLE)' },
+            noCache:       { type: 'boolean', required: false, description: 'Force refresh (default false)' },
         },
     },
     // ── LIVE CHAT TOOLS (NEW) ─────────────────────────────────────────────────
@@ -1108,6 +1198,12 @@ const HANDLERS: Record<string, ToolHandler> = {
     handle_live_chat:           handle_live_chat,
     analyze_chat_session:       handle_analyze_chat_session,
     get_platform_knowledge:     handle_get_platform_knowledge,
+    // Dynamic knowledge tools v3
+    get_project_listings:       handle_get_project_listings,
+    refresh_knowledge_base:     handle_refresh_knowledge_base,
+    search_listings_dynamic:    handle_search_listings_dynamic,
+    get_cache_status:           handle_get_cache_status,
+    get_project_dynamic:        handle_get_project_dynamic,
     // MCP widget tools v2
     capture_lead:               handle_capture_lead,
     escalate_to_human:          handle_escalate_to_human,
@@ -1312,6 +1408,294 @@ async function handle_book_viewing_appointment(args: Record<string, any>): Promi
 }
 
 // ---------------------------------------------------------------------------
+// Dynamic Knowledge Tools — v3 handlers
+// ---------------------------------------------------------------------------
+
+async function handle_get_project_listings(args: Record<string, any>): Promise<any> {
+    const {
+        tenantId = DEFAULT_TENANT_ID,
+        projectCode, bedrooms, pn, beds,
+        priceMin, priceMax, tower, block,
+        status = 'AVAILABLE', limit = 50, page = 1, noCache = false,
+    } = args;
+    if (!projectCode) return { error: 'projectCode bắt buộc. Ví dụ: aqua-city, the-global-city, masteri-cosmo' };
+
+    const bedroomsVal = bedrooms ?? pn ?? beds;
+    const towerVal    = tower ?? block;
+    const cacheKey    = `project_listings:${tenantId}:${projectCode}:${bedroomsVal}:${priceMin}:${priceMax}:${towerVal}:${status}:${page}`;
+
+    if (!noCache) {
+        const cached = kbGet(cacheKey);
+        if (cached) return { ...cached, fromCache: true };
+    }
+
+    const filters: Record<string, any> = { projectCode: String(projectCode).toUpperCase() };
+    if (status && status !== 'ALL') filters.status = status;
+    if (bedroomsVal != null)  filters.bedrooms_gte = Number(bedroomsVal);
+    if (priceMin != null)     filters.price_gte    = Number(priceMin);
+    if (priceMax != null)     filters.price_lte    = Number(priceMax);
+    if (towerVal)             filters.tower        = String(towerVal);
+
+    const result = await listingRepository.findListings(
+        tenantId,
+        { page: Number(page) || 1, pageSize: Math.min(Number(limit) || 50, 100) },
+        filters,
+    );
+
+    const prices = result.data.map((l: any) => l.price || 0).filter(Boolean).sort((a: number, b: number) => a - b);
+    const median = prices.length ? prices[Math.floor(prices.length / 2)] : null;
+
+    const response = {
+        projectCode,
+        appliedFilters: { bedrooms: bedroomsVal ?? null, priceMin: priceMin ?? null, priceMax: priceMax ?? null, tower: towerVal ?? null, status },
+        stats: {
+            total: result.total,
+            shown: result.data.length,
+            priceMin: prices[0] ?? null,
+            priceMax: prices[prices.length - 1] ?? null,
+            priceMedian: median,
+            priceMedianFormatted: median ? `${(median / 1e9).toFixed(2)} tỷ` : null,
+        },
+        listings: result.data.map((l: any) => ({
+            id: l.id, code: l.code, title: l.title,
+            price: l.price,
+            priceFormatted: l.price ? (l.price >= 1e9 ? `${(l.price / 1e9).toFixed(2)} tỷ` : `${(l.price / 1e6).toFixed(0)} triệu`) : 'Liên hệ',
+            area: l.area, bedrooms: l.bedrooms, bathrooms: l.bathrooms,
+            status: l.status,
+            tower: l.attributes?.tower ?? null,
+            floor: l.attributes?.floor ?? null,
+            unit: l.attributes?.unit ?? l.code ?? null,
+        })),
+        page: Number(page),
+        totalPages: result.totalPages,
+        fromCache: false,
+        fetchedAt: new Date().toISOString(),
+    };
+    kbSet(cacheKey, response, KB_TTL_SHORT);
+    return response;
+}
+
+async function handle_refresh_knowledge_base(args: Record<string, any>): Promise<any> {
+    const { tenantId = DEFAULT_TENANT_ID, scope = 'all', projectCode } = args;
+    const t0 = Date.now();
+
+    const cleared = scope === 'project' && projectCode
+        ? kbClear(`project_listings:${tenantId}:${String(projectCode).toUpperCase()}`)
+            + kbClear(`project_dynamic:${tenantId}:${projectCode}`)
+        : scope === 'listings'
+        ? kbClear('project_listings:') + kbClear('dynamic:')
+        : kbClear();
+
+    let projectCount = 0;
+    let listingTotal = 0;
+    try {
+        const ps = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 50 }, { status: 'ACTIVE' });
+        projectCount = ps.total;
+        kbSet(`projects:${tenantId}:active`, ps.data, KB_TTL_DEFAULT);
+
+        // Prime listing counts for top-5 projects
+        for (const p of ps.data.slice(0, 5)) {
+            const code = p.code || p.name;
+            if (!code) continue;
+            const lr = await listingRepository.findListings(tenantId, { page: 1, pageSize: 1 }, { projectCode: String(code).toUpperCase() });
+            listingTotal += lr.total;
+            kbSet(`listings_count:${tenantId}:${code}`, { total: lr.total }, KB_TTL_SHORT);
+        }
+    } catch { /* graceful — non-critical */ }
+
+    return {
+        success: true,
+        scope,
+        clearedEntries: cleared,
+        seeded: { projects: projectCount, listingsScanned: listingTotal },
+        cacheEntriesNow: KB_CACHE.size,
+        durationMs: Date.now() - t0,
+        refreshedAt: new Date().toISOString(),
+        message: `KB đồng bộ xong — ${cleared} cache cũ xoá, ${projectCount} dự án, ${listingTotal} sản phẩm scan trong ${Date.now() - t0}ms.`,
+    };
+}
+
+async function handle_search_listings_dynamic(args: Record<string, any>): Promise<any> {
+    const {
+        tenantId = DEFAULT_TENANT_ID, query, area, type,
+        bedrooms, priceMin, priceMax,
+        status = 'AVAILABLE', limit = 10, page = 1, noCache = false,
+    } = args;
+
+    const cacheKey = `dynamic:${tenantId}:${query}:${area}:${type}:${bedrooms}:${priceMin}:${priceMax}:${status}:${page}`;
+    if (!noCache) {
+        const cached = kbGet(cacheKey);
+        if (cached) return { ...cached, fromCache: true };
+    }
+
+    const filters: Record<string, any> = {};
+    if (status && status !== 'ALL') filters.status = status;
+    if (query || area)   filters.search      = query || area;
+    if (type)            filters.type        = type;
+    if (bedrooms)        filters.bedrooms_gte = Number(bedrooms);
+    if (priceMin)        filters.price_gte   = Number(priceMin);
+    if (priceMax)        filters.price_lte   = Number(priceMax);
+
+    const result = await listingRepository.findListings(
+        tenantId,
+        { page: Number(page) || 1, pageSize: Math.min(Number(limit) || 10, 20) },
+        filters,
+    );
+
+    const enriched = result.data.map((l: any) => ({
+        id: l.id, code: l.code, title: l.title,
+        price: l.price,
+        priceFormatted: l.price
+            ? (l.price >= 1e9 ? `${(l.price / 1e9).toFixed(2)} tỷ` : `${(l.price / 1e6).toFixed(0)} triệu`)
+            : 'Liên hệ',
+        pricePerM2: l.price && l.area ? Math.round(l.price / l.area) : null,
+        area: l.area, bedrooms: l.bedrooms, type: l.type,
+        status: l.status, location: l.location, projectCode: l.projectCode,
+        image: Array.isArray(l.images) ? l.images[0] ?? null : null,
+    }));
+
+    const response = {
+        query: query ?? area ?? '',
+        total: result.total,
+        shown: enriched.length,
+        page: Number(page),
+        totalPages: result.totalPages,
+        filters: { area: area ?? null, type: type ?? null, bedrooms: bedrooms ?? null, priceMin: priceMin ?? null, priceMax: priceMax ?? null, status },
+        listings: enriched,
+        fromCache: false,
+        searchedAt: new Date().toISOString(),
+        tip: result.total === 0
+            ? 'Không tìm thấy BĐS phù hợp. Thử bỏ bớt filter hoặc tìm khu vực rộng hơn. Hotline: 0971 132 378.'
+            : `Tìm thấy ${result.total} BĐS, hiển thị ${enriched.length} kết quả.`,
+    };
+    kbSet(cacheKey, response, KB_TTL_SHORT);
+    return response;
+}
+
+async function handle_get_cache_status(_args: Record<string, any>): Promise<any> {
+    const now = Date.now();
+
+    // Inventory live cache
+    const live: { key: string; ttlRemainingS: number; ageS: number }[] = [];
+    let expiredCleaned = 0;
+    for (const [key, e] of KB_CACHE.entries()) {
+        const age = now - e.fetchedAt;
+        const rem = e.ttlMs - age;
+        if (rem <= 0) { KB_CACHE.delete(key); expiredCleaned++; continue; }
+        live.push({ key, ttlRemainingS: Math.ceil(rem / 1000), ageS: Math.ceil(age / 1000) });
+    }
+    live.sort((a, b) => a.ttlRemainingS - b.ttlRemainingS);
+
+    // Redis probe
+    let redisStatus: 'ok' | 'error' | 'not_configured' = 'not_configured';
+    let redisPingMs: number | null = null;
+    const rUrl   = process.env.UPSTASH_REDIS_REST_URL;
+    const rToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (rUrl && rToken) {
+        const t0 = Date.now();
+        try {
+            const { Redis } = await import('@upstash/redis');
+            const redis = new Redis({ url: rUrl, token: rToken });
+            await redis.ping();
+            redisPingMs  = Date.now() - t0;
+            redisStatus  = 'ok';
+        } catch { redisStatus = 'error'; }
+    }
+
+    return {
+        inMemoryKB: {
+            liveEntries:    live.length,
+            expiredCleaned,
+            entries:        live.slice(0, 30),
+        },
+        staticKB: {
+            priceIndexZones: Object.keys(PRICE_INDEX_KB).length,
+            bankRates:       'loaded',
+            longthanh:       'loaded',
+            legalRules:      'loaded',
+        },
+        redis: { status: redisStatus, pingMs: redisPingMs },
+        toolEngine: {
+            handlers:  Object.keys(HANDLERS).length,
+            manifest:  TOOL_MANIFEST.length,
+            synced:    Object.keys(HANDLERS).length === TOOL_MANIFEST.length,
+        },
+        checkedAt: new Date().toISOString(),
+    };
+}
+
+async function handle_get_project_dynamic(args: Record<string, any>): Promise<any> {
+    const {
+        tenantId = DEFAULT_TENANT_ID, projectCode, projectName,
+        withListings = true, listingLimit = 20, listingStatus = 'AVAILABLE',
+        noCache = false,
+    } = args;
+    if (!projectCode && !projectName) return { error: 'projectCode hoặc projectName bắt buộc' };
+
+    const search   = String(projectCode || projectName || '');
+    const cacheKey = `project_dynamic:${tenantId}:${search}`;
+    if (!noCache) {
+        const cached = kbGet(cacheKey);
+        if (cached) return { ...cached, fromCache: true };
+    }
+
+    const ps = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 5 }, { search });
+    if (ps.total === 0) {
+        return { found: false, query: search, message: `Không tìm thấy dự án "${search}". Thử tên đầy đủ hoặc code khác.` };
+    }
+
+    const exact = ps.data.find((p: any) =>
+        (p.code ?? '').toLowerCase() === search.toLowerCase() ||
+        (p.name ?? '').toLowerCase().includes(search.toLowerCase())
+    ) ?? ps.data[0];
+
+    let listings: any[] = [];
+    let listingStats: Record<string, any> = {};
+
+    if (withListings) {
+        const code = exact.code ?? exact.name ?? search;
+        const lr   = await listingRepository.findListings(
+            tenantId,
+            { page: 1, pageSize: Math.min(Number(listingLimit) || 20, 100) },
+            { projectCode: String(code).toUpperCase(), status: listingStatus !== 'ALL' ? listingStatus : undefined },
+        );
+        const prices = lr.data.map((l: any) => l.price || 0).filter(Boolean).sort((a: number, b: number) => a - b);
+        listings     = lr.data.map((l: any) => ({
+            id: l.id, code: l.code, title: l.title,
+            price: l.price,
+            priceFormatted: l.price ? `${(l.price / 1e9).toFixed(2)} tỷ` : 'Liên hệ',
+            area: l.area, bedrooms: l.bedrooms, status: l.status,
+            tower: l.attributes?.tower ?? null,
+            floor: l.attributes?.floor ?? null,
+        }));
+        listingStats = {
+            total: lr.total, shown: listings.length,
+            available: (lr as any).available_count ?? listings.filter(l => l.status === 'AVAILABLE').length,
+            priceMin:    prices[0] ?? null,
+            priceMax:    prices[prices.length - 1] ?? null,
+            priceMedian: prices.length ? prices[Math.floor(prices.length / 2)] : null,
+            priceMedianFormatted: prices.length ? `${(prices[Math.floor(prices.length / 2)] / 1e9).toFixed(2)} tỷ` : null,
+        };
+    }
+
+    const response = {
+        found: true,
+        project: {
+            id: exact.id, code: exact.code, name: exact.name,
+            location: exact.location, status: exact.status,
+            totalUnits: exact.totalUnits, openDate: exact.openDate,
+            handoverDate: exact.handoverDate, listingCount: exact.listing_count,
+        },
+        listingStats,
+        listings,
+        fromCache: false,
+        fetchedAt: new Date().toISOString(),
+    };
+    kbSet(cacheKey, response, KB_TTL_SHORT);
+    return response;
+}
+
+// ---------------------------------------------------------------------------
 // Public interface
 // ---------------------------------------------------------------------------
 export const liveChatEngine = {
@@ -1325,7 +1709,7 @@ export const liveChatEngine = {
         return result;
     },
 
-    /** List all 22 tool definitions. */
+    /** List all 31 tool definitions. */
     listTools(): ToolDefinition[] {
         return TOOL_MANIFEST;
     },
@@ -1335,7 +1719,7 @@ export const liveChatEngine = {
         return toolName in HANDLERS;
     },
 
-    /** Verify all 22 tools are registered (integrity check). */
+    /** Verify all 31 tools are registered (integrity check). */
     verify(): { ok: boolean; registered: number; manifest: number; missing: string[] } {
         const registered = Object.keys(HANDLERS);
         const manifest = TOOL_MANIFEST.map(t => t.name);
