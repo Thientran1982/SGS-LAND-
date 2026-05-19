@@ -850,6 +850,47 @@ export function createListingRoutes(authenticateToken: any) {
         ));
       }
 
+      // ── Commission engine: bidirectional hooks on SOLD transitions (PUT path) ─
+      // Mirrors the same logic in PATCH /:id/status so that full-record updates
+      // (e.g. bulk edit, import) also trigger commission lifecycle correctly.
+      if (safeBody.status && oldStatus && oldStatus !== (listing.status as string)) {
+        const newStatus = listing.status as string;
+        if (newStatus === 'SOLD' && oldStatus !== 'SOLD') {
+          setImmediate(async () => {
+            try {
+              const { generateLedgerOnSold } = await import('../services/commissionHook');
+              const lst = listing as {
+                id: string; price: number | string | null | undefined;
+                project_id?: string | null; projectId?: string | null;
+                assigned_to?: string | null; assignedTo?: string | null;
+              };
+              await generateLedgerOnSold({
+                tenantId: user.tenantId,
+                listing: {
+                  id: lst.id, price: lst.price,
+                  project_id: lst.project_id ?? null, projectId: lst.projectId ?? null,
+                  assigned_to: lst.assigned_to ?? null, assignedTo: lst.assignedTo ?? null,
+                },
+                actorUserId: user.id,
+              });
+            } catch (e) { console.error('[commission hook forward/PUT] failed:', e); }
+          });
+        } else if (oldStatus === 'SOLD' && newStatus !== 'SOLD') {
+          setImmediate(async () => {
+            try {
+              const { voidLedgerOnReverted } = await import('../services/commissionHook');
+              await voidLedgerOnReverted({
+                tenantId:    user.tenantId,
+                listingId:   String(req.params.id),
+                actorUserId: user.id,
+                fromStatus:  oldStatus,
+                toStatus:    newStatus,
+              });
+            } catch (e) { console.error('[commission hook reverse/PUT] failed:', e); }
+          });
+        }
+      }
+
       res.json(listing);
     } catch (error) {
       console.error('Error updating listing:', error);
@@ -916,9 +957,10 @@ export function createListingRoutes(authenticateToken: any) {
         user.name || user.email,
       ));
 
-      // ── Commission engine v1: auto-sinh ledger entry khi → SOLD ──────────
-      // Idempotent: trùng listing_id sẽ no-op qua UNIQUE constraint.
-      // Best-effort: lỗi không chặn response status update.
+      // ── Commission engine: bidirectional hooks on SOLD transitions ──────────
+      // Forward  (→ SOLD):    auto-generate ledger entry (idempotent).
+      // Reverse  (SOLD → *):  void ledger entry (PENDING/DUE only; PAID untouched).
+      // Both are best-effort: errors do NOT fail the status-update response.
       if (status === 'SOLD' && oldStatus !== 'SOLD') {
         setImmediate(async () => {
           try {
@@ -942,7 +984,22 @@ export function createListingRoutes(authenticateToken: any) {
               actorUserId: user.id,
             });
           } catch (e) {
-            console.error('[commission hook] failed:', e);
+            console.error('[commission hook forward] failed:', e);
+          }
+        });
+      } else if (oldStatus === 'SOLD' && status !== 'SOLD') {
+        setImmediate(async () => {
+          try {
+            const { voidLedgerOnReverted } = await import('../services/commissionHook');
+            await voidLedgerOnReverted({
+              tenantId:    user.tenantId,
+              listingId:   String(req.params.id),
+              actorUserId: user.id,
+              fromStatus:  oldStatus,
+              toStatus:    status,
+            });
+          } catch (e) {
+            console.error('[commission hook reverse] failed:', e);
           }
         });
       }

@@ -225,6 +225,31 @@ export const commissionLedgerRepository = {
     });
   },
 
+  /**
+   * Void a ledger entry when a listing is un-SOLD (status reverted from SOLD).
+   * Only cancels entries that are still PENDING or DUE — PAID entries are never touched
+   * because the commission may have already been disbursed.
+   * Returns { voided: true } when an entry was cancelled, { voided: false } otherwise.
+   */
+  async voidOnReverted(
+    tenantId: string,
+    listingId: string,
+  ): Promise<{ voided: boolean; ledgerId?: string; reason?: string }> {
+    return withTenantContext(tenantId, async (c: PoolClient) => {
+      const { rows } = await c.query(
+        `UPDATE commission_ledger
+            SET status = 'CANCELLED', updated_at = NOW()
+          WHERE listing_id = $1
+            AND tenant_id = $2
+            AND status IN ('PENDING', 'DUE')
+          RETURNING id`,
+        [listingId, tenantId],
+      );
+      if (rows.length > 0) return { voided: true, ledgerId: rows[0].id };
+      return { voided: false, reason: 'not-found-or-already-settled' };
+    });
+  },
+
   async findById(tenantId: string, id: string): Promise<LedgerRow | null> {
     return withTenantContext(tenantId, async (c: PoolClient) => {
       const { rows } = await c.query(
