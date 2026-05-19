@@ -29,7 +29,8 @@ const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;  // 7 days
 const SUBMIT_TTL_MS  = 24 * 60 * 60 * 1000;        // 24 hours
 const IDLE_TRIGGER_MS        = 45_000;              // 45 s on page
 const SCROLL_VEL_THRESHOLD   = 12;                  // px/frame upward
-const MOUSE_Y_THRESHOLD      = 10;                  // px from top of viewport
+const MOUSE_Y_THRESHOLD      = 20;                  // px from top — used by mousemove leading detector
+const MOUSE_MOVE_Y_UP        = -3;                  // movementY < this = moving upward
 
 // ── Context types ─────────────────────────────────────────────────────────────
 
@@ -113,9 +114,20 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
   useEffect(() => {
     if (isSuppressed()) return;
 
-    // Signal 1: Mouseleave to browser chrome
+    // Signal 1a: mousemove leading detector — fires BEFORE the cursor exits the
+    // viewport. Catches the intent the moment the mouse heads toward browser chrome
+    // (back/forward buttons, address bar, tab bar).  Condition: within the top
+    // MOUSE_Y_THRESHOLD pixels AND moving upward fast enough to filter micro-jitter.
+    const onMouseMove = (e: MouseEvent) => {
+      if (e.clientY < MOUSE_Y_THRESHOLD && e.movementY < MOUSE_MOVE_Y_UP) fire();
+    };
+    document.addEventListener('mousemove', onMouseMove);
+
+    // Signal 1b: mouseleave backup — fires once the cursor has actually left the
+    // document. No clientY restriction here; if the user's pointer left the page,
+    // any direction toward browser chrome counts (clientY ≤ 0 or very small).
     const onMouseLeave = (e: MouseEvent) => {
-      if (e.clientY < MOUSE_Y_THRESHOLD) fire();
+      if (e.clientY <= MOUSE_Y_THRESHOLD) fire();
     };
     document.addEventListener('mouseleave', onMouseLeave);
 
@@ -160,6 +172,7 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
     window.addEventListener('pagehide', onPageHide);
 
     return () => {
+      document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseleave', onMouseLeave);
       window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVisibility);
