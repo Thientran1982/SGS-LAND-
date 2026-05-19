@@ -249,13 +249,23 @@ export const ProductSearch: React.FC = () => {
     // ExitIntentPopup's Signal 7 (pushState intercept) can block the navigation
     // and show the popup before the user actually leaves the page.
     const handleHome = () => {
+        const prev = window.location.pathname;
         window.history.pushState(null, '', `/${ROUTES.LANDING}`);
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        // Only notify the router if Signal 7 let the navigation through.
+        // If it was intercepted (URL unchanged), the exit-intent popup will show;
+        // dispatching popstate in that case would cause a same-route re-render
+        // that batches with setTriggered(true) and prevents the effect from firing.
+        if (window.location.pathname !== prev) {
+            window.dispatchEvent(new PopStateEvent('popstate'));
+        }
     };
     const handleLogin = () => {
         const dest = currentUser ? `/${ROUTES.DASHBOARD}` : `/${ROUTES.LOGIN}`;
+        const prev = window.location.pathname;
         window.history.pushState(null, '', dest);
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        if (window.location.pathname !== prev) {
+            window.dispatchEvent(new PopStateEvent('popstate'));
+        }
     };
     // SEO-friendly URL: /bds/<slug>-<uuid>. Slug is best-effort from the
     // listing title/code/location so Googlebot indexes a human-readable URL;
