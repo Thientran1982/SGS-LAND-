@@ -288,13 +288,17 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           >
             {/*
-              White card — NO overflow-hidden so rounded bottom corners aren't clipped.
-              Gradient header handles its own top rounding.
+              White card — max-height + overflow-y-auto so content is always reachable.
+              NO overflow-hidden on the outer card (would clip bottom corners on mobile).
+              Gradient header scopes its own overflow-hidden for top-corner clipping.
               Safe-area padding prevents home-bar overlap on notched iPhones.
             */}
             <div
-              className="bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+              className="bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl overflow-y-auto"
+              style={{
+                maxHeight: 'min(90dvh, 640px)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              }}
             >
               {/* Gradient header — overflow-hidden scoped here for corner clipping */}
               <div className="overflow-hidden rounded-t-[28px] md:rounded-t-[28px]">
