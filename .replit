@@ -21,6 +21,10 @@ args = "Start application"
 task = "workflow.run"
 args = "typecheck"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Next.js Frontend"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -44,9 +48,21 @@ args = "npm run lint"
 [workflows.workflow.metadata]
 isValidation = true
 
+[[workflows.workflow]]
+name = "Next.js Frontend"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd apps/nextjs && node_modules/.bin/next start --port 3000 --hostname 0.0.0.0"
+waitForPort = 3000
+
 [[ports]]
-localPort = 5000
-externalPort = 80
+localPort = 3000
+externalPort = 3000
 
 [[ports]]
 localPort = 23636
