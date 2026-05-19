@@ -416,7 +416,7 @@ function getTenantIdFromCookie(): string | null {
     }
 }
 export const Dashboard: React.FC = () => {
-    const [timeRange, setTimeRange] = useState('30d');
+    const [timeRange, setTimeRange] = useState('all');
     const [isExporting, setIsExporting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {

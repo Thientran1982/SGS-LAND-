@@ -215,8 +215,9 @@ export class AnalyticsRepository extends BaseRepository {
       // Priority: explicit commission field → fallback: price × commissionRate.
       // This ensures listings marked SOLD without a commission value still contribute
       // to revenue (e.g. agents who mark a listing SOLD without filling in commission).
+      // created_by is VARCHAR(255) — compare as plain text, no ::uuid cast needed.
       const listingUserFilter = isSalesScope && safeUserId
-        ? `AND (l.assigned_to = '${safeUserId}'::uuid OR l.created_by = '${safeUserId}'::uuid)`
+        ? `AND (l.assigned_to = '${safeUserId}'::uuid OR l.created_by = '${safeUserId}')`
         : '';
       const listingCommissionExpr = `
         CASE
