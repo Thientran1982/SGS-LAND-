@@ -146,6 +146,34 @@ async function startServer() {
   app.use(sanitizeInput);
   app.use(requestLogger);
 
+  // Inject X-Robots-Tag on every HTML response — covers both the Vite dev-server
+  // path (where sendMeta() is not called) and the prod SSR fallback catch block.
+  // Private/auth routes get noindex; all public routes get index,follow.
+  const NOINDEX_PREFIXES = [
+    '/login', '/dashboard', '/inventory', '/leads', '/contracts', '/reports',
+    '/inbox', '/approvals', '/projects', '/admin-users', '/billing', '/profile',
+    '/settings', '/enterprise-settings', '/security', '/ai-governance',
+    '/seo-manager', '/data-platform', '/marketplace-apps', '/routing-rules',
+    '/sequences', '/knowledge', '/scoring-rules', '/system', '/favorites',
+    '/checkout', '/vendor-management', '/task-dashboard', '/task-kanban',
+    '/tasks', '/employees', '/task-reports', '/scraper', '/error-monitor',
+  ];
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const isPrivate = NOINDEX_PREFIXES.some(
+      p => req.path === p || req.path.startsWith(p + '/')
+    );
+    // Set early — before any middleware flushes headers. Production SSR routes
+    // (sendMeta) will override per-page when needed. X-Robots-Tag on non-HTML
+    // responses (API JSON, images) is harmless; crawlers only honour it for HTML.
+    res.setHeader(
+      'X-Robots-Tag',
+      isPrivate
+        ? 'noindex, nofollow'
+        : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+    );
+    next();
+  });
+
   // Disable HTTP caching for all API routes — prevents browser 304/ETag issues
   // where fresh data after mutations is served as "not modified" from browser cache
   app.use('/api', (_req, res, next) => {
