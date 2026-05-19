@@ -63,6 +63,22 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * When URL contains ?exit_intent_debug=1, clear all suppression keys so the
+ * popup can fire again immediately. Useful during development / QA without
+ * needing to open DevTools.
+ */
+function clearSuppressionIfDebug(): void {
+  try {
+    if (new URLSearchParams(window.location.search).get('exit_intent_debug') === '1') {
+      localStorage.removeItem(DISMISSED_KEY);
+      localStorage.removeItem(SUBMITTED_KEY);
+      localStorage.removeItem(LEAD_KEY);
+      console.log('[ExitIntent] debug mode: suppression keys cleared');
+    }
+  } catch {}
+}
+
 function isSuppressed(): boolean {
   try {
     const dismissed = localStorage.getItem(DISMISSED_KEY);
@@ -213,6 +229,8 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
   ({ context = { type: 'generic' }, delayMs = IDLE_TRIGGER_MS }, ref) => {
     // Whether the popup has already been triggered this session
     const firedRef      = useRef(false);
+    // Ref-mirror of visible state so trigger() can read it synchronously
+    const visibleRef    = useRef(false);
     // URL to navigate to after the user dismisses/submits (set by trigger())
     const pendingNavRef = useRef<string | null>(null);
 
@@ -225,20 +243,43 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
     const [error,      setError]      = useState('');
     const nameRef = useRef<HTMLInputElement>(null);
 
+    // On mount: clear suppression keys if ?exit_intent_debug=1 is in the URL
+    useEffect(() => { clearSuppressionIfDebug(); }, []);
+
+    // Keep visibleRef in sync with the visible state
+    useEffect(() => { visibleRef.current = visible; }, [visible]);
+
     // Core fire() — marks as fired and shows the popup
     const fire = useCallback(() => {
       if (firedRef.current || isSuppressed()) return;
       firedRef.current = true;
+      visibleRef.current = true;
       setVisible(true);
     }, []);
 
     // Passive signals (mouse, scroll, idle, popstate, pagehide)
     usePassiveExitSignals(fire, firedRef, delayMs);
 
-    // Imperative handle — called by back-button click handlers in page components
+    // Imperative handle — called by back-button click handlers in page components.
+    // Three cases:
+    //   1. Suppressed (dismissed/submitted recently): return false → caller navigates.
+    //   2. Popup already visible (passive signal fired just before click): store
+    //      pending URL so dismiss/submit will still navigate; return true to block
+    //      the concurrent click-triggered navigation.
+    //   3. Fresh (not fired yet): fire popup, store pending URL, return true.
     useImperativeHandle(ref, () => ({
       trigger: (pendingUrl: string): boolean => {
-        if (firedRef.current || isSuppressed()) return false;
+        if (isSuppressed()) return false;
+        if (firedRef.current) {
+          // Popup is already visible (passive signal fired before click landed).
+          // Override pendingNav so dismiss will navigate to the right place.
+          if (visibleRef.current) {
+            pendingNavRef.current = pendingUrl;
+            return true; // block the click-triggered navigation
+          }
+          // Popup was already shown AND dismissed — let navigation proceed.
+          return false;
+        }
         pendingNavRef.current = pendingUrl;
         fire();
         return true;
