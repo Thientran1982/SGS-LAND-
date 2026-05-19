@@ -291,6 +291,12 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
             setMessages([welcome]);
             saveSessionMsgs([welcome]);
             localStorage.setItem(LEAD_KEY, id);
+            // Schedule D+1/3/5/7 multi-channel follow-up (fire-and-forget)
+            fetch('/api/followup/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leadId: id, leadName: name.trim(), leadPhone: phone.trim(), source: 'LIVE_CHAT' }),
+            }).catch(() => {});
         } catch {
             setStartError('Không thể kết nối. Vui lòng thử lại.');
         }
@@ -409,6 +415,19 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                 phone: captureData.phone,
                 notes: captureData.notes || undefined,
             });
+            // Schedule follow-up sequence if not already done (idempotent)
+            if (leadId) {
+                fetch('/api/followup/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        leadId,
+                        leadName: captureData.name || userName || name,
+                        leadPhone: captureData.phone,
+                        source: 'LIVE_CHAT_CAPTURE',
+                    }),
+                }).catch(() => {});
+            }
             if (captureMode === 'ESCALATION' && leadId) {
                 await apiEscalateToHuman(leadId, 'user_requested', 'high');
                 const sysMsg = await publicSendMessage(

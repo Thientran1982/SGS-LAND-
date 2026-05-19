@@ -175,6 +175,12 @@ export default function LiveChat() {
             setLeadName(name.trim());
             setMessages([welcomeMsg]);
             localStorage.setItem('livechat_lead_id', id);
+            // Schedule D+1/3/5/7 multi-channel follow-up (fire-and-forget)
+            fetch('/api/followup/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leadId: id, leadName: name.trim(), leadPhone: phone.trim(), source: 'LIVE_CHAT' }),
+            }).catch(() => {});
             // Remember which agent this session belongs to so we can detect mismatches later
             if (agentId) localStorage.setItem('livechat_agent_id', agentId);
             else localStorage.removeItem('livechat_agent_id');

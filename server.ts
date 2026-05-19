@@ -66,6 +66,8 @@ import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRef
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
 import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
 import { createGeoMonitorCronRouter } from "./server/routes/geoMonitorCronRoutes";
+import { createFollowUpRoutes } from "./server/routes/followupRoutes";
+import { createFollowUpCronRouter, startFollowUpCron } from "./server/routes/followupCronRoutes";
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
 import { createBuyerAuthRoutes } from "./server/routes/buyerAuthRoutes";
 import { createBuyerRoutes } from "./server/routes/buyerRoutes";
@@ -4258,6 +4260,27 @@ async function startServer() {
       process.env.JWT_SECRET?.slice(0, 32) ||
       '';
     app.use(createChatFollowUpCronRouter(pool, chatFollowUpSecret, io));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Follow-up Agent — multi-channel D+1/3/5/7 sequences (Zalo → SMS → Email)
+  // POST /api/followup/schedule  — schedule sequence for a lead (called by widget)
+  // POST /api/followup/cancel    — cancel active sequence
+  // GET  /api/followup/sequences — dashboard list (authenticated)
+  // POST /api/internal/followup-cron — QStash hourly dispatcher
+  // ---------------------------------------------------------------------------
+  app.use(apiRateLimit, createFollowUpRoutes(pool, authenticateToken));
+  {
+    const followUpCronSecret =
+      process.env.FOLLOWUP_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createFollowUpCronRouter(pool, followUpCronSecret));
+    try {
+      startFollowUpCron(pool, followUpCronSecret);
+    } catch (err: any) {
+      logger.warn(`[FollowUpCron] Không thể khởi động in-process cron: ${err?.message || err}`);
+    }
   }
 
   // ---------------------------------------------------------------------------

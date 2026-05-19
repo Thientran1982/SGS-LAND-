@@ -123,6 +123,7 @@ import m102 from './102_seo_geo_snapshots';
 import m103 from './103_agent_runs';
 import m104 from './104_lead_email_log';
 import m105 from './105_sequence_tracking';
+import m106 from './106_followup_sequences';
 
 dotenv.config();
 
@@ -242,6 +243,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '103_agent_runs.ts': m103,
   '104_lead_email_log.ts': m104,
   '105_sequence_tracking.ts': m105,
+  '106_followup_sequences.ts': m106,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
