@@ -101,9 +101,16 @@ const IcoSpinner = () => (
 
 // ── useExitIntent hook ────────────────────────────────────────────────────────
 
-function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
+/**
+ * Returns [triggered, releaseNavigation].
+ *   triggered          — becomes true when an exit signal fires
+ *   releaseNavigation  — call this from the dismiss/submit handler to execute
+ *                        any navigation that was blocked by Signal 7
+ */
+function useExitIntent(delayMs = IDLE_TRIGGER_MS): [boolean, () => void] {
   const [triggered, setTriggered] = useState(false);
-  const firedRef = useRef(false);
+  const firedRef       = useRef(false);
+  const pendingNavRef  = useRef<(() => void) | null>(null);
 
   const fire = useCallback(() => {
     if (firedRef.current || isSuppressed()) return;
@@ -111,21 +118,32 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
     setTriggered(true);
   }, []);
 
+  // Call from the popup's dismiss/submit handler so any blocked pushState
+  // navigation is completed after the user has interacted with the popup.
+  // After executing the stored pushState we dispatch a synthetic popstate so
+  // the app's custom router (which listens for popstate to call setRoute)
+  // picks up the new URL and actually renders the target page.
+  const releaseNavigation = useCallback(() => {
+    const nav = pendingNavRef.current;
+    pendingNavRef.current = null;
+    if (nav) {
+      nav(); // execute the stored origPushState — URL changes
+      window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+    }
+  }, []);
+
   useEffect(() => {
     if (isSuppressed()) return;
 
     // Signal 1a: mousemove leading detector — fires BEFORE the cursor exits the
-    // viewport. Zone is the top 60px (generous enough to catch fast swipes).
-    // movementY < -1 filters micro-jitter without missing real upward intent.
+    // viewport. Zone is top 60px, movementY < -1 filters micro-jitter.
     const onMouseMove = (e: MouseEvent) => {
       if (e.clientY < 60 && e.movementY < -1) fire();
     };
     document.addEventListener('mousemove', onMouseMove);
 
-    // Signal 1b: mouseleave — fires once the cursor has actually left the document.
-    // Use 150px threshold (top ~15-20% of typical viewport) to catch fast swipes:
-    // a rapid flick to the back button can leave the viewport with the last reported
-    // clientY as high as 80-120px before the mouseleave event fires.
+    // Signal 1b: mouseleave backup — 150px threshold catches fast swipes where
+    // the last reported clientY before exit can be 80-120px.
     const onMouseLeave = (e: MouseEvent) => {
       if (e.clientY < 150) fire();
     };
@@ -156,33 +174,48 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
     const idleTimer = setTimeout(fire, delayMs);
 
     // Signal 5: Browser back button via popstate — "intercept & restore" pattern.
-    //
-    // On mount we push a sentinel entry (same URL).  When user clicks Back:
-    //   1. Browser pops sentinel, URL stays the same → custom router does nothing.
-    //   2. popstate fires synchronously.
-    //   3. If popup hasn't fired yet: IMMEDIATELY re-push sentinel before React
-    //      renders (keeps user on the page) then call fire().
-    //   4. If popup already fired (user dismissed): do NOT re-push — let the next
-    //      back press navigate normally so the user isn't trapped.
-    //
-    // "Immediately" is the key: the re-push is synchronous inside the event
-    // handler, which means it runs before the app's custom router (also a
-    // popstate listener) reads window.location, so the URL is always /marketplace
-    // for the duration of the popup.
-    try { window.history.pushState({ __exitIntentSentinel: true }, '', window.location.pathname + window.location.search); } catch {}
+    // Push sentinel so first back-click pops it (URL unchanged, custom router
+    // does nothing). Re-push sentinel synchronously in handler to keep the user
+    // on the page while the popup is visible.
+    const sentinelPush = () => {
+      try { window.history.pushState({ __exitIntentSentinel: true }, '', window.location.pathname + window.location.search); } catch {}
+    };
+    sentinelPush();
     const onPopState = () => {
-      if (!firedRef.current && !isSuppressed()) {
-        // Intercept: restore sentinel so user stays on this page while popup shows
-        try { window.history.pushState({ __exitIntentSentinel: true }, '', window.location.pathname + window.location.search); } catch {}
-      }
-      // fire() is a no-op when firedRef.current === true or isSuppressed()
+      if (!firedRef.current && !isSuppressed()) sentinelPush(); // re-arm
       fire();
     };
     window.addEventListener('popstate', onPopState);
 
-    // Signal 6: pagehide — actual page unload / tab close / back on non-SPA
+    // Signal 6: pagehide — actual tab close / hard navigation
     const onPageHide = () => fire();
     window.addEventListener('pagehide', onPageHide);
+
+    // Signal 7: pushState intercept — the app's navigate() calls pushState
+    // directly without dispatching popstate, so Signal 5 alone misses in-app
+    // back-navigation (e.g. clicking a ← Back link, logo, or nav item).
+    // We wrap pushState: if the base route changes AND popup hasn't fired yet,
+    // save the navigation as pending and show the popup instead of navigating.
+    // releaseNavigation() (called on dismiss/submit) executes the saved call.
+    const origPushState = window.history.pushState as typeof window.history.pushState;
+    window.history.pushState = function (
+      state: unknown, title: string, url?: string | URL | null,
+    ) {
+      // Never intercept our own sentinel pushes
+      if (state && (state as Record<string, unknown>).__exitIntentSentinel) {
+        return origPushState.call(window.history, state, title, url);
+      }
+      const nextPath    = url ? String(url) : window.location.pathname;
+      const currentBase = window.location.pathname.split('/').filter(Boolean)[0] ?? '';
+      const nextBase    = nextPath.replace(/^\//, '').split('/')[0] ?? '';
+      // Intercept only when navigating to a DIFFERENT section (base route)
+      if (nextBase !== currentBase && !firedRef.current && !isSuppressed()) {
+        pendingNavRef.current = () => origPushState.call(window.history, state, title, url);
+        fire();
+        return; // block navigation until popup is dismissed
+      }
+      return origPushState.call(window.history, state, title, url);
+    } as typeof window.history.pushState;
 
     return () => {
       document.removeEventListener('mousemove', onMouseMove);
@@ -192,10 +225,12 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('pagehide', onPageHide);
       clearTimeout(idleTimer);
+      // Restore the original pushState so it doesn't persist after unmount
+      window.history.pushState = origPushState;
     };
   }, [fire, delayMs]);
 
-  return triggered;
+  return [triggered, releaseNavigation];
 }
 
 // ── BenefitRow ────────────────────────────────────────────────────────────────
@@ -212,7 +247,7 @@ function BenefitRow({ icon, text }: { icon: React.ReactNode; text: string }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }, delayMs }) => {
-  const triggered = useExitIntent(delayMs);
+  const [triggered, releaseNavigation] = useExitIntent(delayMs);
   const [visible,    setVisible]    = useState(false);
   const [name,       setName]       = useState('');
   const [phone,      setPhone]      = useState('');
@@ -233,7 +268,9 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
   const handleDismiss = useCallback(() => {
     setVisible(false);
     try { localStorage.setItem(DISMISSED_KEY, String(Date.now())); } catch {}
-  }, []);
+    // Complete any navigation that was blocked by Signal 7 (pushState intercept)
+    releaseNavigation();
+  }, [releaseNavigation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,7 +318,8 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
 
       try { localStorage.setItem(SUBMITTED_KEY, String(Date.now())); } catch {}
       setSuccess(true);
-      setTimeout(() => setVisible(false), 3000);
+      // After showing thank-you for 3s, close popup and complete any blocked navigation
+      setTimeout(() => { setVisible(false); releaseNavigation(); }, 3000);
     } catch {
       setError('Có lỗi xảy ra, vui lòng thử lại sau.');
     } finally {
