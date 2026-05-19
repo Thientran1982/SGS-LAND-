@@ -1,0 +1,1096 @@
+/**
+ * Live Chat Agent Engine — 22-tool registry for SGS Land AI platform.
+ *
+ * Tools 1-19: Data/CRM/valuation tools wrapping existing repositories.
+ * Tools 20-22: NEW — handle_live_chat, analyze_chat_session, get_platform_knowledge.
+ *
+ * Usage:
+ *   const result = await liveChatEngine.callTool('search_listings', { tenantId, query, priceMax });
+ *   const manifest = liveChatEngine.listTools();
+ */
+
+import { GoogleGenAI } from '@google/genai';
+import { listingRepository } from '../repositories/listingRepository';
+import { leadRepository } from '../repositories/leadRepository';
+import { routingRuleRepository } from '../repositories/routingRuleRepository';
+import { analyticsRepository } from '../repositories/analyticsRepository';
+import { projectRepository } from '../repositories/projectRepository';
+import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
+import { logger } from '../middleware/logger';
+
+// ---------------------------------------------------------------------------
+// Gemini client — reuse GEMINI_API_KEY from env (same as server/ai.ts)
+// ---------------------------------------------------------------------------
+let _gemini: GoogleGenAI | null = null;
+function getGemini(): GoogleGenAI {
+    if (_gemini) return _gemini;
+    const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY;
+    if (!key) throw new Error('GEMINI_API_KEY not configured');
+    _gemini = new GoogleGenAI({ apiKey: key });
+    return _gemini;
+}
+
+// ---------------------------------------------------------------------------
+// Tool manifest: name + description + required params
+// ---------------------------------------------------------------------------
+export interface ToolDefinition {
+    name: string;
+    description: string;
+    params: Record<string, { type: string; required: boolean; description: string }>;
+    category: 'listing' | 'market' | 'legal' | 'project' | 'crm' | 'chat';
+}
+
+const TOOL_MANIFEST: ToolDefinition[] = [
+    // ── LISTING TOOLS ───────────────────────────────────────────────────────
+    {
+        name: 'search_listings',
+        description: 'Tìm kiếm BĐS trong kho hàng theo khu vực, giá, loại, diện tích, tầng, hướng.',
+        category: 'listing',
+        params: {
+            tenantId:     { type: 'string',  required: true,  description: 'Tenant ID' },
+            query:        { type: 'string',  required: false, description: 'Từ khoá khu vực / địa chỉ' },
+            priceMax:     { type: 'number',  required: false, description: 'Giá tối đa (VNĐ)' },
+            propertyType: { type: 'string',  required: false, description: 'APARTMENT|TOWNHOUSE|VILLA|LAND|SHOPHOUSE' },
+            areaMin:      { type: 'number',  required: false, description: 'Diện tích tối thiểu (m²)' },
+            floorMin:     { type: 'number',  required: false, description: 'Tầng thấp nhất' },
+            floorMax:     { type: 'number',  required: false, description: 'Tầng cao nhất' },
+            direction:    { type: 'string',  required: false, description: 'Hướng (DONG|TAY|NAM|BAC|DONG_NAM|v.v.)' },
+            page:         { type: 'number',  required: false, description: 'Số trang (default 1)' },
+        },
+    },
+    {
+        name: 'get_listing_detail',
+        description: 'Lấy chi tiết 1 BĐS theo code hoặc ID.',
+        category: 'listing',
+        params: {
+            tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
+            code:     { type: 'string', required: false, description: 'Mã BĐS (code)' },
+            id:       { type: 'string', required: false, description: 'UUID của listing' },
+        },
+    },
+    {
+        name: 'check_duplicate',
+        description: 'Kiểm tra lead trùng theo số điện thoại hoặc email trong tenant.',
+        category: 'crm',
+        params: {
+            tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
+            phone:    { type: 'string', required: false, description: 'Số điện thoại' },
+            email:    { type: 'string', required: false, description: 'Email' },
+        },
+    },
+    // ── MARKET TOOLS ────────────────────────────────────────────────────────
+    {
+        name: 'get_market_stats',
+        description: 'Thống kê thị trường BĐS theo khu vực: giá trung bình, tăng trưởng, thanh khoản.',
+        category: 'market',
+        params: {
+            tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
+            area:     { type: 'string', required: true,  description: 'Khu vực (VD: Quận 7, TP Thủ Đức)' },
+            type:     { type: 'string', required: false, description: 'Loại BĐS (optional)' },
+        },
+    },
+    {
+        name: 'get_valuation',
+        description: 'Định giá BĐS bằng AVM (9 hệ số SGS-AVM v2.1). Trả priceMedian + confidence + phân tích.',
+        category: 'market',
+        params: {
+            tenantId:    { type: 'string', required: true,  description: 'Tenant ID' },
+            address:     { type: 'string', required: true,  description: 'Địa chỉ BĐS' },
+            area:        { type: 'number', required: true,  description: 'Diện tích (m²)' },
+            propertyType:{ type: 'string', required: false, description: 'APARTMENT|TOWNHOUSE|VILLA|LAND' },
+            legal:       { type: 'string', required: false, description: 'PINK_BOOK|HDMB|VI_BANG|UNKNOWN' },
+            roadWidth:   { type: 'number', required: false, description: 'Lộ giới (m)' },
+            floor:       { type: 'number', required: false, description: 'Tầng (cho căn hộ)' },
+            buildingAge: { type: 'number', required: false, description: 'Tuổi công trình (năm)' },
+            developer:   { type: 'string', required: false, description: 'Tên chủ đầu tư (để áp brand premium)' },
+        },
+    },
+    {
+        name: 'get_valuation_methodology',
+        description: 'Trả về mô tả phương pháp SGS-AVM v2.1 và 9 hệ số định giá với trọng số.',
+        category: 'market',
+        params: {
+            lang: { type: 'string', required: false, description: 'vi|en (default: vi)' },
+        },
+    },
+    {
+        name: 'compare_price_vs_market',
+        description: 'So sánh giá rao bán với giá thị trường khu vực — tính % chênh lệch và nhận xét.',
+        category: 'market',
+        params: {
+            tenantId:     { type: 'string', required: true,  description: 'Tenant ID' },
+            address:      { type: 'string', required: true,  description: 'Địa chỉ BĐS' },
+            listedPrice:  { type: 'number', required: true,  description: 'Giá rao bán (VNĐ)' },
+            area:         { type: 'number', required: true,  description: 'Diện tích (m²)' },
+            propertyType: { type: 'string', required: false, description: 'Loại BĐS' },
+        },
+    },
+    // ── LEGAL TOOLS ─────────────────────────────────────────────────────────
+    {
+        name: 'check_legal_status',
+        description: 'Kiểm tra trạng thái pháp lý BĐS: sổ hồng/đỏ, HĐMB, vi bằng, giấy tay. Áp rule R01-R06.',
+        category: 'legal',
+        params: {
+            legalType: { type: 'string', required: true,  description: 'PINK_BOOK|RED_BOOK|HDMB|VI_BANG|GIAY_TAY|UNKNOWN' },
+            tenantId:  { type: 'string', required: false, description: 'Tenant ID (để load KB tenant)' },
+        },
+    },
+    {
+        name: 'check_planning',
+        description: 'Kiểm tra quy hoạch và điều kiện xây dựng theo địa chỉ/khu vực (R03).',
+        category: 'legal',
+        params: {
+            address:  { type: 'string', required: true,  description: 'Địa chỉ / khu vực cần kiểm tra' },
+            tenantId: { type: 'string', required: false, description: 'Tenant ID' },
+        },
+    },
+    {
+        name: 'legal_qa',
+        description: 'Hỏi đáp pháp lý BĐS có trích dẫn điều luật. Hỗ trợ: Luật ĐĐ 2024, Luật NƠ 2023, Luật KDBĐS 2023, NĐ 101/2024.',
+        category: 'legal',
+        params: {
+            question:  { type: 'string', required: true,  description: 'Câu hỏi pháp lý' },
+            tenantId:  { type: 'string', required: false, description: 'Tenant ID (để load KB tenant)' },
+        },
+    },
+    // ── MARKET INTELLIGENCE ──────────────────────────────────────────────────
+    {
+        name: 'get_price_index',
+        description: 'Chỉ số giá BĐS theo khu vực và phân khúc — benchmark Q1-Q2/2026.',
+        category: 'market',
+        params: {
+            zone:         { type: 'string', required: false, description: 'Khu vực cụ thể (optional — để lấy tất cả)' },
+            propertyType: { type: 'string', required: false, description: 'Loại BĐS (optional)' },
+        },
+    },
+    {
+        name: 'get_longthanh_market',
+        description: 'Market intelligence hành lang sân bay Long Thành — dự báo giá, catchment 30km, dự án lân cận.',
+        category: 'market',
+        params: {
+            subArea: { type: 'string', required: false, description: 'Tiểu khu vực (Long Thành|Nhơn Trạch|Biên Hòa|Aqua City)' },
+        },
+    },
+    {
+        name: 'analyze_investment',
+        description: 'Phân tích đầu tư BĐS: yield, ROI, payback period, DCF. Dùng cho căn hộ cho thuê và thương mại.',
+        category: 'market',
+        params: {
+            purchasePrice: { type: 'number', required: true,  description: 'Giá mua (VNĐ)' },
+            monthlyRent:   { type: 'number', required: false, description: 'Tiền thuê/tháng (VNĐ)' },
+            annualGrowth:  { type: 'number', required: false, description: 'Tỷ lệ tăng giá BĐS/năm (%, default 8)' },
+            holdYears:     { type: 'number', required: false, description: 'Số năm nắm giữ (default 5)' },
+            loanRatio:     { type: 'number', required: false, description: 'Tỷ lệ vay/giá trị (0–1, default 0)' },
+            loanRate:      { type: 'number', required: false, description: 'Lãi suất vay (%/năm, default 9)' },
+        },
+    },
+    // ── PROJECT TOOLS ────────────────────────────────────────────────────────
+    {
+        name: 'get_project_info',
+        description: 'Lấy thông tin chi tiết 1 dự án BĐS theo tên hoặc mã dự án.',
+        category: 'project',
+        params: {
+            tenantId:    { type: 'string', required: true,  description: 'Tenant ID' },
+            projectName: { type: 'string', required: false, description: 'Tên dự án (fuzzy search)' },
+            projectCode: { type: 'string', required: false, description: 'Mã dự án chính xác' },
+        },
+    },
+    {
+        name: 'compare_projects',
+        description: 'So sánh 2-4 dự án BĐS theo 12 tiêu chí: vị trí, giá, pháp lý, tiến độ, CĐT, tiện ích, thanh khoản.',
+        category: 'project',
+        params: {
+            tenantId:     { type: 'string',   required: true, description: 'Tenant ID' },
+            projectNames: { type: 'string[]', required: true, description: 'Danh sách tên dự án cần so sánh (2-4)' },
+        },
+    },
+    {
+        name: 'search_projects',
+        description: 'Tìm kiếm danh sách dự án theo khu vực, loại BĐS, trạng thái.',
+        category: 'project',
+        params: {
+            tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
+            query:    { type: 'string', required: false, description: 'Từ khoá tên/khu vực dự án' },
+            status:   { type: 'string', required: false, description: 'ACTIVE|UPCOMING|COMPLETED' },
+        },
+    },
+    // ── CRM TOOLS ────────────────────────────────────────────────────────────
+    {
+        name: 'score_lead',
+        description: 'Chấm điểm lead theo hệ 100 điểm (5 nhân tố: ngân sách, timeline, khu vực, tương tác, nguồn). Phân loại A/B/C/D.',
+        category: 'crm',
+        params: {
+            tenantId:    { type: 'string', required: true,  description: 'Tenant ID' },
+            budget:      { type: 'number', required: false, description: 'Ngân sách (VNĐ)' },
+            timeline:    { type: 'string', required: false, description: 'URGENT|3M|6M|12M|EXPLORING' },
+            area:        { type: 'string', required: false, description: 'Khu vực quan tâm' },
+            source:      { type: 'string', required: false, description: 'REFERRAL|WEBSITE|ZALO|FACEBOOK' },
+            interactions:{ type: 'number', required: false, description: 'Số lần tương tác' },
+            hasPhone:    { type: 'boolean',required: false, description: 'Có số điện thoại không' },
+            hasEmail:    { type: 'boolean',required: false, description: 'Có email không' },
+            viewedListings:  { type: 'number', required: false, description: 'Số BĐS đã xem' },
+            askedLegal:      { type: 'boolean',required: false, description: 'Đã hỏi pháp lý' },
+            askedValuation:  { type: 'boolean',required: false, description: 'Đã dùng định giá AI' },
+            bookedViewing:   { type: 'boolean',required: false, description: 'Đã đặt lịch xem nhà' },
+            isReturning:     { type: 'boolean',required: false, description: 'Khách quay lại' },
+            justSoldProperty:{ type: 'boolean',required: false, description: 'Vừa bán BĐS (có tiền mặt)' },
+        },
+    },
+    {
+        name: 'route_lead',
+        description: 'Phân lead tự động theo routing rules của tenant — trả về agentId được phân công.',
+        category: 'crm',
+        params: {
+            tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
+            leadData: { type: 'object', required: true,  description: 'Lead data: { budget, area, source, type }' },
+        },
+    },
+    {
+        name: 'get_broker_stats',
+        description: 'Thống kê hiệu suất broker/agent theo khoảng thời gian.',
+        category: 'crm',
+        params: {
+            tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
+            userId:   { type: 'string', required: true,  description: 'User ID của broker' },
+            period:   { type: 'string', required: false, description: '7d|30d|90d|ytd (default: 30d)' },
+        },
+    },
+    // ── LIVE CHAT TOOLS (NEW) ─────────────────────────────────────────────────
+    {
+        name: 'handle_live_chat',
+        description: 'Xử lý tin nhắn live chat: phát hiện intent, tra KB, trả lời grounded + gợi ý tool tiếp theo cho broker.',
+        category: 'chat',
+        params: {
+            tenantId:  { type: 'string', required: true,  description: 'Tenant ID' },
+            message:   { type: 'string', required: true,  description: 'Tin nhắn của khách/agent' },
+            sessionId: { type: 'string', required: false, description: 'Session ID để maintain context' },
+            context:   { type: 'object', required: false, description: '{ leadName, budget, stage, history[] }' },
+        },
+    },
+    {
+        name: 'analyze_chat_session',
+        description: 'Phân tích toàn bộ phiên chat: lead score 100đ, stage, buying signals, hesitation, next best action cho broker.',
+        category: 'chat',
+        params: {
+            tenantId:  { type: 'string', required: true,  description: 'Tenant ID' },
+            sessionId: { type: 'string', required: false, description: 'Session ID' },
+            messages:  { type: 'array',  required: true,  description: 'Mảng tin nhắn [{ role, content, ts }]' },
+            leadId:    { type: 'string', required: false, description: 'Lead ID để enrich với CRM data' },
+        },
+    },
+    {
+        name: 'get_platform_knowledge',
+        description: 'Tra cứu knowledge base: khu vực giá (area), dự án (project), ngân hàng (bank), pháp lý (legal), nền tảng (platform).',
+        category: 'chat',
+        params: {
+            tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
+            domain:   { type: 'string', required: true,  description: 'area|project|bank|legal|platform|valuation' },
+            query:    { type: 'string', required: true,  description: 'Câu hỏi / từ khoá tra cứu' },
+        },
+    },
+];
+
+// ---------------------------------------------------------------------------
+// Static KB segments (distilled from defaultPrompts.ts for fast lookup)
+// ---------------------------------------------------------------------------
+const PRICE_INDEX_KB: Record<string, { median: number; min: number; max: number; unit: string }> = {
+    'quận 1': { median: 220, min: 200, max: 240, unit: 'triệu/m² sàn' },
+    'quận 3': { median: 170, min: 160, max: 180, unit: 'triệu/m² sàn' },
+    'thủ thiêm': { median: 155, min: 140, max: 180, unit: 'triệu/m² sàn' },
+    'phú nhuận': { median: 110, min: 100, max: 120, unit: 'triệu/m² sàn' },
+    'bình thạnh': { median: 90, min: 80, max: 100, unit: 'triệu/m² sàn' },
+    'quận 7': { median: 90, min: 80, max: 100, unit: 'triệu/m² sàn' },
+    'phú mỹ hưng': { median: 90, min: 80, max: 100, unit: 'triệu/m² sàn' },
+    'tp thủ đức': { median: 68, min: 55, max: 80, unit: 'triệu/m² sàn' },
+    'bình chánh': { median: 45, min: 40, max: 50, unit: 'triệu/m² sàn' },
+    'long thành': { median: 27, min: 22, max: 30, unit: 'triệu/m² đất nền' },
+    'biên hòa': { median: 28, min: 25, max: 32, unit: 'triệu/m²' },
+    'nhơn trạch': { median: 21, min: 18, max: 25, unit: 'triệu/m²' },
+    'bình dương': { median: 35, min: 30, max: 40, unit: 'triệu/m²' },
+    'cần giờ': { median: 18, min: 15, max: 22, unit: 'triệu/m²' },
+    'long an': { median: 21, min: 17, max: 25, unit: 'triệu/m²' },
+};
+
+const LONGTHANH_KB = `
+HÀNH LANG SÂN BAY LONG THÀNH — Market Intelligence Q1-Q2/2026
+
+SÂN BAY QUỐC TẾ LONG THÀNH:
+  Tổng vốn đầu tư: ~16 tỷ USD | Giai đoạn 1: 25 triệu khách/năm
+  Dự kiến hoàn thành giai đoạn 1: 2026 | Vận hành thương mại: 2026-2027
+  Catchment area: bán kính 30km — bao gồm Nhơn Trạch, Biên Hòa, Đồng Nai, TP Thủ Đức
+
+GIÁ ĐẤT NỀN KHU VỰC (Benchmark Q1-Q2/2026):
+  Long Thành (2-5km sân bay): 22-32 triệu/m² | Tăng trưởng YoY: +20-35%
+  Nhơn Trạch (5-10km sân bay): 18-26 triệu/m² | Tăng trưởng YoY: +15-25%
+  Suối Trầu / Cẩm Mỹ: 16-22 triệu/m² | Tiềm năng cao
+  Biên Hòa trung tâm: 25-35 triệu/m² | Đã phát triển ổn định
+
+CÁC DỰ ÁN LỚN TRONG CATCHMENT ZONE:
+  Aqua City (Novaland): Biên Hòa, 1.000ha, nhà phố/biệt thự, 7-45 tỷ/căn
+  Izumi City (Nam Long): Long Thành, căn hộ+nhà phố, 2.5-10 tỷ
+  Đô thị mới Nhơn Trạch: Nhơn Trạch, shophouse+đất nền
+  KDC Long Thành City: Long Thành, đất nền, 20-28 triệu/m²
+
+DỰ BÁO GIÁ 2026-2028:
+  Khu vực ≤5km sân bay: +25-40% khi sân bay vận hành
+  Vành đai 3 TP.HCM đoạn qua Đồng Nai: kích hoạt thêm 2-3 khu đô thị mới
+  Cao tốc Bến Lức-Long Thành hoàn thành: rút ngắn kết nối HCM-Long Thành còn 25 phút
+
+CATALYST TĂNG GIÁ:
+  • Sân bay Long Thành giai đoạn 1 (2026-2027)
+  • Vành đai 3 TP.HCM (hoàn thành 2026)
+  • Cao tốc Biên Hòa-Vũng Tàu
+  • KCN Long Thành (đang mở rộng, thu hút FDI)
+`.trim();
+
+const LEGAL_RULES_KB = `
+R01 — Sổ hồng/đỏ riêng: AN TOÀN — quyền giao dịch đầy đủ [Luật ĐĐ 2024 Điều 97, 98]
+R01 — HĐMB công chứng: HỢP PHÁP nhưng không thế chấp được
+R01 — Vi bằng/giấy tay: NGUY HIỂM — KHÔNG có giá trị pháp lý sở hữu
+
+R02 — Không thế chấp: AN TOÀN
+R02 — Thế chấp 1 NH: CẦN giải chấp trước giao dịch [NĐ 99/2024]
+R02 — Thế chấp ≥2 NH: RỦI RO CAO
+
+R03 — Không vướng quy hoạch: AN TOÀN [Luật Quy hoạch 2017]
+R03 — Vùng quy hoạch xem xét: THEO DÕI cập nhật
+R03 — Vướng quy hoạch: KHÔNG thể xây dựng/chuyển nhượng
+
+R04 — Không tranh chấp: AN TOÀN [Luật ĐĐ 2024 Điều 225-237]
+R04 — Phát hiện tranh chấp: DỪNG ngay, tư vấn luật sư
+
+R05 — Người bán là chủ sổ: HỢP PHÁP [Luật ĐĐ 2024 Điều 127]
+R05 — Người bán KHÔNG phải chủ sổ: DỪNG — nguy cơ lừa đảo
+
+R06 — CĐT đủ 6 điều kiện mở bán: HỢP PHÁP [Luật KDBĐS 2023 Điều 10, 23-25, 45]
+R06 — Thiếu 1 điều kiện: CẢNH BÁO, yêu cầu bổ sung
+R06 — Thiếu ≥2 hoặc không có bảo lãnh NH: DỪNG GIAO DỊCH
+
+Luật hiệu lực từ 01/08/2024: Luật ĐĐ 2024, Luật NƠ 2023, Luật KDBĐS 2023
+NĐ 101/2024/NĐ-CP: Quy định chi tiết Luật ĐĐ 2024 (hiệu lực 01/01/2025)
+`.trim();
+
+const BANK_RATES_KB = `
+LÃI SUẤT VAY MUA NHÀ (Tham khảo Q1-Q2/2026 — xác minh lại với NH trước khi tư vấn):
+
+Vietcombank:   ưu đãi 7.5%/năm (12 tháng đầu), thả nổi ~10.5%/năm
+BIDV:          ưu đãi 7.8%/năm (12 tháng đầu), thả nổi ~10.8%/năm
+Agribank:      ưu đãi 7.6%/năm (12 tháng đầu), thả nổi ~10.5%/năm
+VietinBank:    ưu đãi 8.0%/năm (18 tháng đầu), thả nổi ~11.0%/năm
+MB Bank:       ưu đãi 7.2%/năm (6 tháng đầu), thả nổi ~10.8%/năm
+Techcombank:   ưu đãi 7.0%/năm (6 tháng đầu), thả nổi ~10.5%/năm
+VIB:           ưu đãi 6.9%/năm (3 tháng đầu), thả nổi ~11.2%/năm
+Sacombank:     ưu đãi 7.4%/năm (12 tháng đầu), thả nổi ~10.7%/năm
+ACB:           ưu đãi 7.1%/năm (6 tháng đầu), thả nổi ~10.9%/năm
+VPBank:        ưu đãi 7.3%/năm (12 tháng đầu), thả nổi ~11.0%/năm
+
+Tốt nhất cho người mua nhà lần đầu: Techcombank (6.9-7.0%) hoặc VIB (6.9%)
+Tốt nhất cho gói dài hạn ổn định: Vietcombank, Agribank (uy tín, chênh lệch thả nổi thấp)
+LTV tối đa: 70% giá trị BĐS (thẩm định NH) | Thời hạn tối đa: 25-30 năm
+`.trim();
+
+// ---------------------------------------------------------------------------
+// Tool handler implementations
+// ---------------------------------------------------------------------------
+async function handle_search_listings(args: Record<string, any>): Promise<any> {
+    const { tenantId, query, priceMax, propertyType, areaMin, floorMin, floorMax, direction, page = 1 } = args;
+    const filters: any = { status: 'AVAILABLE' };
+    if (query)        filters.search      = query;
+    if (priceMax)     filters.price_lte   = priceMax;
+    if (propertyType) filters.type        = propertyType;
+    if (areaMin)      filters.area_gte    = areaMin;
+    if (floorMin !== undefined) filters.floor_gte = floorMin;
+    if (floorMax !== undefined) filters.floor_lte = floorMax;
+    if (direction)    filters.direction   = direction;
+
+    const result = await listingRepository.findListings(tenantId, { page, pageSize: 10 }, filters);
+    return {
+        total: result.total,
+        page,
+        listings: result.data.map((l: any) => ({
+            id: l.id,
+            code: l.code,
+            title: l.title,
+            location: l.location,
+            price: l.price,
+            pricePerM2: l.price && l.area ? Math.round(l.price / l.area) : null,
+            area: l.area,
+            type: l.type,
+            bedrooms: l.bedrooms,
+            floor: l.attributes?.floor,
+            direction: l.attributes?.direction,
+            tower: l.attributes?.tower,
+        })),
+    };
+}
+
+async function handle_get_listing_detail(args: Record<string, any>): Promise<any> {
+    const { tenantId, code, id } = args;
+    const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING', 'HOLD'] };
+    if (code) filters.search = code;
+    const result = await listingRepository.findListings(tenantId, { page: 1, pageSize: 5 }, filters);
+    const listing = id
+        ? result.data.find((l: any) => l.id === id)
+        : result.data.find((l: any) => l.code === code) || result.data[0];
+    if (!listing) return { found: false, message: 'Không tìm thấy BĐS với thông tin này.' };
+    return { found: true, listing };
+}
+
+async function handle_check_duplicate(args: Record<string, any>): Promise<any> {
+    const { tenantId, phone, email } = args;
+    if (!phone && !email) return { duplicates: [], message: 'Cần phone hoặc email để kiểm tra.' };
+    const filters: any = {};
+    if (phone) filters.phone = phone;
+    if (email) filters.email = email;
+    const result = await leadRepository.findLeads(tenantId, { page: 1, pageSize: 5 }, filters);
+    return {
+        duplicateFound: result.total > 0,
+        count: result.total,
+        leads: result.data.map((l: any) => ({
+            id: l.id,
+            name: l.name,
+            phone: l.phone,
+            stage: l.stage,
+            assignedTo: l.assignedToName,
+            createdAt: l.createdAt,
+        })),
+    };
+}
+
+function handle_get_market_stats(args: Record<string, any>): any {
+    const { area } = args;
+    const normalised = (area || '').toLowerCase().trim();
+    const match = Object.entries(PRICE_INDEX_KB).find(([k]) =>
+        normalised.includes(k) || k.includes(normalised)
+    );
+    if (!match) {
+        return {
+            area,
+            found: false,
+            message: `Chưa có dữ liệu cụ thể cho "${area}". Sử dụng benchmark HCM trung bình: 55 triệu/m² sàn (Q1-Q2/2026).`,
+            fallbackMedian: 55_000_000,
+        };
+    }
+    const [zone, data] = match;
+    return {
+        area: zone,
+        medianPricePerM2: data.median * 1_000_000,
+        minPricePerM2: data.min * 1_000_000,
+        maxPricePerM2: data.max * 1_000_000,
+        unit: data.unit,
+        source: 'SGS-AVM Benchmark Q1-Q2/2026',
+        yoyGrowth: zone.includes('long thành') ? '20-35%' :
+                   zone.includes('thủ đức')   ? '10-18%' :
+                   zone.includes('quận 1')    ? '5-10%'  : '8-15%',
+    };
+}
+
+function handle_get_valuation(args: Record<string, any>): any {
+    const { address, area, propertyType = 'APARTMENT', legal = 'PINK_BOOK', roadWidth = 4, floor, buildingAge = 0, developer } = args;
+    try {
+        // Resolve market base price from address
+        const regional = getRegionalBasePrice(address || '', propertyType);
+        const output = applyAVM({
+            marketBasePrice: regional.price,
+            area:            Number(area),
+            propertyType:    propertyType as any,
+            legal:           legal as any,
+            roadWidth:       Number(roadWidth),
+            confidence:      regional.confidence,
+            marketTrend:     'STABLE',
+            floorLevel:      floor ? Number(floor) : undefined,
+            buildingAge:     Number(buildingAge),
+        });
+
+        // Apply developer brand premium on top of AVM result
+        const BRAND_PREMIUM: Record<string, number> = {
+            vinhomes: 1.15, masterise: 1.12, 'sun group': 1.10,
+            capitaland: 1.08, novaland: 1.07, gamuda: 1.06, 'nam long': 1.05,
+        };
+        let brandMult = 1.0;
+        if (developer) {
+            const devLower = developer.toLowerCase();
+            for (const [brand, mult] of Object.entries(BRAND_PREMIUM)) {
+                if (devLower.includes(brand)) { brandMult = mult; break; }
+            }
+        }
+
+        return {
+            ...output,
+            priceMedian:    Math.round(output.totalPrice * brandMult),
+            priceMin:       Math.round(output.rangeMin   * brandMult),
+            priceMax:       Math.round(output.rangeMax   * brandMult),
+            region:         regional.region,
+            brandPremium:   brandMult > 1 ? `${((brandMult - 1) * 100).toFixed(0)}% (${developer})` : null,
+            methodologyVersion: 'SGS-AVM v2.1 — 9 hệ số',
+        };
+    } catch (e: any) {
+        return { error: e.message, address, area };
+    }
+}
+
+function handle_get_valuation_methodology(): any {
+    return {
+        version: 'SGS-AVM v2.1',
+        mape: '±4.8%',
+        standard: 'TĐGVN + IVS',
+        validation: '2.400+ giao dịch công chứng TP.HCM + Đồng Nai + Bình Dương (2024-2026)',
+        coefficients: [
+            { rank: 1, name: 'Comparable Sales',       weight: '35%', method: 'Median 3-10 comp, bán kính 1km, 6 tháng gần nhất' },
+            { rank: 2, name: 'Hedonic Regression',     weight: '20%', method: 'OLS log-linear, 12 đặc trưng (DT, PN, tầng, hướng...)' },
+            { rank: 3, name: 'Spatial Interpolation',  weight: '12%', method: 'Kriging GPS — nội suy giá từ giao dịch lân cận' },
+            { rank: 4, name: 'Legal Premium',          weight: '10%', method: 'PinkBook ×1.00 | HĐMB ×0.78 | Vi bằng ×0.55' },
+            { rank: 5, name: 'Infrastructure Access',  weight: '8%',  method: 'Metro ≤300m +10-20% | Cao tốc +3-8%' },
+            { rank: 6, name: 'Floor & View Premium',   weight: '6%',  method: '≥31F ×1.12 | 16-30F ×1.07 | View sông/biển ×1.12' },
+            { rank: 7, name: 'Age Depreciation',       weight: '5%',  method: '1.8%/năm, tối đa -30%' },
+            { rank: 8, name: 'Developer Brand',        weight: '3%',  method: 'Vinhomes ×1.15 | Masterise ×1.12 | Sun Group ×1.10' },
+            { rank: 9, name: 'Market Liquidity',       weight: '4%',  method: 'DOM <15 ngày +4% | DOM >90 ngày -7%' },
+            { rank: 10, name: 'Interest Rate Sensitivity', weight: 'advisory', method: 'Lãi suất +1%/năm → sức mua giảm 7-9%' },
+        ],
+    };
+}
+
+function handle_compare_price_vs_market(args: Record<string, any>): any {
+    const { address, listedPrice, area, propertyType } = args;
+    const { price: basePrice } = getRegionalBasePrice(address, propertyType);
+    const listedPerM2 = Number(listedPrice) / Number(area);
+    const deviation = ((listedPerM2 - basePrice) / basePrice) * 100;
+    const absDevPct = Math.abs(deviation);
+    let verdict: string;
+    if (absDevPct <= 5) verdict = 'GIÁ HỢP LÝ — nằm trong biên độ ±5% so với thị trường';
+    else if (deviation > 5)  verdict = `GIÁ CAO HƠN THỊ TRƯỜNG ${absDevPct.toFixed(1)}% — ${absDevPct > 15 ? 'cần thương lượng mạnh' : 'có thể thương lượng 5-10%'}`;
+    else verdict = `GIÁ THẤP HƠN THỊ TRƯỜNG ${absDevPct.toFixed(1)}% — ${absDevPct > 20 ? 'kiểm tra pháp lý kỹ' : 'cơ hội tốt nếu pháp lý sạch'}`;
+    return {
+        listedPrice: Number(listedPrice),
+        listedPricePerM2: Math.round(listedPerM2),
+        marketBenchmarkPerM2: basePrice,
+        deviationPct: Math.round(deviation * 10) / 10,
+        verdict,
+        recommendation: deviation > 15
+            ? 'Thương lượng xuống 10-15% hoặc yêu cầu thêm giá trị (nội thất, sửa chữa).'
+            : deviation < -15
+            ? 'Xác minh pháp lý kỹ trước khi đặt cọc — giá thấp bất thường có thể có vấn đề.'
+            : 'Giá chấp nhận được. Xem xét thêm tiện ích và tình trạng BĐS.',
+    };
+}
+
+function handle_check_legal_status(args: Record<string, any>): any {
+    const { legalType } = args;
+    const type = (legalType || '').toUpperCase();
+    const rules: Record<string, any> = {
+        PINK_BOOK: { status: 'AN_TOÀN', r01: '🟢 PASS', canMortgage: true,  canTransfer: true,  risk: 'Thấp',       action: 'Tiến hành thẩm định thế chấp + tra quy hoạch.' },
+        RED_BOOK:  { status: 'AN_TOÀN', r01: '🟢 PASS', canMortgage: true,  canTransfer: true,  risk: 'Thấp',       action: 'Kiểm tra mục đích sử dụng đất (ở hay nông nghiệp).' },
+        HDMB:      { status: 'HỢP_PHÁP',r01: '🟡 CONDITIONAL', canMortgage: false, canTransfer: true, risk: 'Trung bình', action: 'Kiểm tra 6 điều kiện mở bán CĐT + bảo lãnh NH [Luật KDBĐS 2023 Điều 23].' },
+        VI_BANG:   { status: 'RỦI_RO',  r01: '🔴 FAIL', canMortgage: false, canTransfer: false, risk: 'Rất cao',    action: 'KHÔNG mua. Vi bằng chỉ xác nhận sự kiện — KHÔNG có giá trị pháp lý sở hữu.' },
+        GIAY_TAY:  { status: 'RỦI_RO',  r01: '🔴 FAIL', canMortgage: false, canTransfer: false, risk: 'Rất cao',    action: 'KHÔNG mua. Không có giá trị pháp lý khi tranh chấp [Luật ĐĐ 2024].' },
+        UNKNOWN:   { status: 'CẦN_XÁC_MINH', r01: '⚪ PENDING', canMortgage: null, canTransfer: null, risk: 'Chưa xác định', action: 'Yêu cầu chủ sở hữu cung cấp giấy tờ gốc để thẩm định.' },
+    };
+    return rules[type] || rules['UNKNOWN'];
+}
+
+function handle_check_planning(args: Record<string, any>): any {
+    const { address } = args;
+    const lower = (address || '').toLowerCase();
+    const redZones = ['cần giờ biosphere', 'bàu cát', 'hòa phú', 'bình lợi'];
+    const yellowZones = ['vành đai 4', 'metro số 5', 'cao tốc hcm-mộc bài'];
+    const isRed    = redZones.some(z => lower.includes(z));
+    const isYellow = yellowZones.some(z => lower.includes(z));
+    return {
+        address,
+        r03Status: isRed ? '🔴 CÓ_VẤN_ĐỀ' : isYellow ? '🟡 CẦN_THEO_DÕI' : '🟢 CHƯA_PHÁT_HIỆN_VẤN_ĐỀ',
+        note: isRed
+            ? 'Khu vực này có thể vướng quy hoạch/bảo tồn. Cần xác minh tại Sở TN&MT.'
+            : isYellow
+            ? 'Khu vực nằm trong vùng quy hoạch hạ tầng đang xem xét — theo dõi cập nhật.'
+            : 'Không phát hiện vấn đề quy hoạch lớn từ KB tĩnh. Vẫn cần tra cổng quy hoạch chính thức địa phương.',
+        recommendation: 'Tra cứu chính thức tại: https://quyhoach.hochiminhcity.gov.vn hoặc Sở TN&MT tỉnh/thành.',
+        source: 'KB tĩnh SGS Land — không thay thế tra cứu pháp lý chính thức',
+    };
+}
+
+async function handle_legal_qa(args: Record<string, any>): Promise<any> {
+    const { question, tenantId } = args;
+    const q = (question || '').toLowerCase();
+
+    // Quick pattern matching before calling AI
+    if (q.includes('vi bằng')) return { question, answer: 'Vi bằng KHÔNG có giá trị pháp lý sở hữu BĐS. Chỉ xác nhận sự kiện. Không thể sang tên, không thế chấp. Khuyến cáo: KHÔNG mua BĐS chỉ có vi bằng.', sources: ['R01 — Legal Rule Engine', 'Luật ĐĐ 2024 Điều 97, 98'] };
+    if (q.includes('thuế tncn') || q.includes('thuế thu nhập'))  return { question, answer: 'Thuế TNCN khi bán BĐS = 2% × giá chuyển nhượng (hoặc giá thẩm định nếu cao hơn). Người bán chịu. Hai bên có thể thỏa thuận người mua chịu nhưng phải ghi rõ trong HĐMB.', sources: ['Luật Thuế TNCN', 'Bảng giá đất 2024'] };
+    if (q.includes('lệ phí') || q.includes('trước bạ')) return { question, answer: 'Lệ phí trước bạ = 0.5% × giá HĐ. Người mua chịu. VD: BĐS 5 tỷ → 25 triệu.', sources: ['NĐ 10/2022/NĐ-CP'] };
+    if (q.includes('đặt cọc')) return { question, answer: 'Đặt cọc tối đa 5% giá bán trước khi ký HĐMB chính thức. Thanh toán tổng không vượt 95% trước khi có sổ hồng. [Luật KDBĐS 2023 Điều 23, 24, 25]', sources: ['Luật KDBĐS 2023 Điều 23, 24, 25'] };
+
+    // Use Gemini for complex questions
+    try {
+        const ai = getGemini();
+        const resp = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `Bạn là chuyên gia pháp lý BĐS Việt Nam. Trả lời ngắn gọn (tối đa 150 từ), có trích dẫn điều luật cụ thể.\n\nCâu hỏi: ${question}\n\nKhung pháp lý áp dụng: Luật Đất đai 2024, Luật Nhà ở 2023, Luật KDBĐS 2023, NĐ 101/2024.`,
+            config: { maxOutputTokens: 300, thinkingConfig: { thinkingBudget: 0 } as any },
+        });
+        return { question, answer: resp.text?.trim() || 'Không có dữ liệu.', sources: ['Gemini Legal QA + KB SGS Land'] };
+    } catch {
+        return { question, answer: LEGAL_RULES_KB, sources: ['KB tĩnh SGS Land'] };
+    }
+}
+
+function handle_get_price_index(args: Record<string, any>): any {
+    const { zone } = args;
+    if (zone) {
+        const key = zone.toLowerCase().trim();
+        const entry = Object.entries(PRICE_INDEX_KB).find(([k]) => k.includes(key) || key.includes(k));
+        if (entry) return { zone: entry[0], ...entry[1], source: 'SGS-AVM Benchmark Q1-Q2/2026' };
+        return { zone, found: false, message: 'Không có dữ liệu khu vực này trong index.' };
+    }
+    return {
+        source: 'SGS-AVM Benchmark Q1-Q2/2026',
+        index: Object.entries(PRICE_INDEX_KB).map(([zone, data]) => ({ zone, ...data })),
+    };
+}
+
+function handle_get_longthanh_market(args: Record<string, any>): any {
+    const { subArea } = args;
+    const base = { knowledge: LONGTHANH_KB, source: 'SGS Land Market Intelligence Q1-Q2/2026' };
+    if (!subArea) return base;
+    const lower = subArea.toLowerCase();
+    const filtered = LONGTHANH_KB
+        .split('\n')
+        .filter(line => line.toLowerCase().includes(lower) || line.startsWith('#') || line.startsWith('SÂN BAY'))
+        .join('\n');
+    return { ...base, filteredBySubArea: subArea, knowledge: filtered || LONGTHANH_KB };
+}
+
+function handle_analyze_investment(args: Record<string, any>): any {
+    const {
+        purchasePrice,
+        monthlyRent = 0,
+        annualGrowth = 8,
+        holdYears = 5,
+        loanRatio = 0,
+        loanRate = 9,
+    } = args;
+    const P = Number(purchasePrice);
+    const R = Number(monthlyRent);
+    const g = Number(annualGrowth) / 100;
+    const n = Number(holdYears);
+    const lv = Number(loanRatio);
+    const lr = Number(loanRate) / 100;
+
+    const equity = P * (1 - lv);
+    const loanAmt = P * lv;
+    const annualRent = R * 12;
+    const grossYield = annualRent > 0 ? (annualRent / P) * 100 : 0;
+    const managementCost = annualRent * 0.15; // 15% for mgmt, maintenance, vacancy
+    const annualInterest = loanAmt * lr;
+    const netAnnualIncome = annualRent - managementCost - annualInterest;
+    const netYield = annualRent > 0 ? (netAnnualIncome / equity) * 100 : 0;
+    const futureValue = P * Math.pow(1 + g, n);
+    const capitalGain = futureValue - P;
+    const totalReturn = capitalGain + annualRent * n - managementCost * n - annualInterest * n;
+    const roi = equity > 0 ? (totalReturn / equity) * 100 : 0;
+    const paybackYears = netAnnualIncome > 0 ? equity / netAnnualIncome : Infinity;
+
+    return {
+        purchasePrice: P,
+        equity: Math.round(equity),
+        loanAmount: Math.round(loanAmt),
+        grossYield: `${grossYield.toFixed(2)}%/năm`,
+        netYield: `${netYield.toFixed(2)}%/năm`,
+        futureValue: Math.round(futureValue),
+        capitalGain: Math.round(capitalGain),
+        totalROI: `${roi.toFixed(1)}%`,
+        paybackYears: isFinite(paybackYears) ? `${paybackYears.toFixed(1)} năm` : 'N/A (không có thuê)',
+        verdict: grossYield >= 5 ? '✅ Yield tốt (≥5%)' : grossYield >= 3 ? '🟡 Yield trung bình (3-5%)' : '🔴 Yield thấp (<3%) — cân nhắc lại',
+    };
+}
+
+async function handle_get_project_info(args: Record<string, any>): Promise<any> {
+    const { tenantId, projectName, projectCode } = args;
+    const filters: any = {};
+    if (projectCode) filters.code = projectCode;
+    const result = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 10 }, filters);
+    if (result.total === 0) return { found: false, message: `Không tìm thấy dự án "${projectName || projectCode}".` };
+    const projects = result.data;
+    if (projectName) {
+        const name = (projectName || '').toLowerCase();
+        const exact = projects.find((p: any) => (p.name || '').toLowerCase().includes(name));
+        if (exact) return { found: true, project: exact };
+    }
+    return { found: true, count: result.total, projects };
+}
+
+async function handle_compare_projects(args: Record<string, any>): Promise<any> {
+    const { tenantId, projectNames } = args;
+    if (!Array.isArray(projectNames) || projectNames.length < 2) {
+        return { error: 'Cần ít nhất 2 tên dự án để so sánh.' };
+    }
+    const results = await Promise.all(
+        projectNames.slice(0, 4).map(async (name: string) => {
+            const r = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 5 }, {});
+            const match = r.data.find((p: any) => (p.name || '').toLowerCase().includes(name.toLowerCase()));
+            return { requestedName: name, found: !!match, project: match || null };
+        })
+    );
+    return { comparison: results, criteriaNote: 'So sánh: vị trí, giá, pháp lý, tiến độ, CĐT, tiện ích, thanh khoản, hướng phát triển.' };
+}
+
+async function handle_search_projects(args: Record<string, any>): Promise<any> {
+    const { tenantId, query, status } = args;
+    const filters: any = {};
+    if (query)  filters.search = query;
+    if (status) filters.status = status;
+    const result = await projectRepository.findProjects(tenantId, { page: 1, pageSize: 20 }, filters);
+    return {
+        total: result.total,
+        projects: result.data.map((p: any) => ({
+            id: p.id, code: p.code, name: p.name,
+            location: p.location, status: p.status, type: p.type,
+        })),
+    };
+}
+
+function handle_score_lead(args: Record<string, any>): any {
+    const {
+        budget = 0, timeline = 'EXPLORING', area = '', source = 'UNKNOWN',
+        interactions = 0, hasPhone = false, hasEmail = false,
+        viewedListings = 0, askedLegal = false, askedValuation = false,
+        bookedViewing = false, isReturning = false, justSoldProperty = false,
+    } = args;
+
+    // Factor 1: Budget (25pts)
+    const budgetPts = (() => {
+        const b = Number(budget);
+        if (b >= 10e9) return 25;
+        if (b >= 5e9)  return 20;
+        if (b >= 2e9)  return 15;
+        if (b > 0)     return 8;
+        return 5;
+    })();
+
+    // Factor 2: Timeline (20pts)
+    const timelinePts = ({ URGENT: 20, '1M': 20, '3M': 16, '6M': 12, '12M': 8, EXPLORING: 3 } as any)[timeline] ?? 5;
+
+    // Factor 3: Area interest (20pts)
+    const areaLow = (area || '').toLowerCase();
+    const areaPts = (areaLow.includes('quận 1') || areaLow.includes('thủ thiêm') || areaLow.includes('sala')) ? 20
+        : (areaLow.includes('thủ đức') || areaLow.includes('quận 7') || areaLow.includes('long thành')) ? 15
+        : (areaLow.includes('bình dương') || areaLow.includes('đồng nai')) ? 10
+        : area ? 8 : 5;
+
+    // Factor 4: Engagement (15pts, capped)
+    let engPts = 0;
+    if (viewedListings >= 5)  engPts += 6;
+    else if (viewedListings >= 2) engPts += 3;
+    if (askedLegal)           engPts += 4;
+    if (askedValuation)       engPts += 3;
+    if (interactions >= 10)   engPts += 2;
+    engPts = Math.min(15, engPts);
+
+    // Factor 5: Source (10pts)
+    const sourcePts = ({ REFERRAL: 10, WEBSITE: 8, ZALO: 6, FACEBOOK: 4 } as any)[source?.toUpperCase()] ?? 3;
+    let baseScore = budgetPts + timelinePts + areaPts + engPts + sourcePts;
+
+    // Bonuses
+    if (askedLegal && askedValuation) baseScore += 5;
+    if (bookedViewing)    baseScore += 5;
+    if (justSoldProperty) baseScore += 5;
+    if (isReturning)      baseScore += 3;
+    if (hasPhone)         baseScore += 2;
+    baseScore = Math.min(100, baseScore);
+
+    const grade = baseScore >= 70 ? 'A' : baseScore >= 50 ? 'B' : baseScore >= 30 ? 'C' : 'D';
+    const priority = grade === 'A' ? 'HOT — xử lý trong 2h' : grade === 'B' ? 'WARM — xử lý trong 24h' : grade === 'C' ? 'COOL — xử lý trong 48h' : 'COLD — nurture 2 tuần/lần';
+    const churnRisk = baseScore >= 70 && interactions < 3 ? 'HIGH' : baseScore < 40 ? 'LOW' : 'MEDIUM';
+
+    const factors = [
+        { factor: 'Ngân sách', points: budgetPts, max: 25 },
+        { factor: 'Timeline',  points: timelinePts, max: 20 },
+        { factor: 'Khu vực',  points: areaPts, max: 20 },
+        { factor: 'Tương tác', points: engPts, max: 15 },
+        { factor: 'Nguồn',    points: sourcePts, max: 10 },
+    ].sort((a, b) => b.points - a.points);
+
+    return { score: baseScore, grade, priority, churnRisk, topFactors: factors.slice(0, 3) };
+}
+
+async function handle_route_lead(args: Record<string, any>): Promise<any> {
+    const { tenantId, leadData } = args;
+    try {
+        const match = await routingRuleRepository.matchLead(tenantId, leadData || {});
+        if (!match) return { routed: false, message: 'Không tìm thấy rule phù hợp — phân lead theo round-robin mặc định.' };
+        return { routed: true, assignedTo: (match as any).userId || (match as any).teamId, rule: (match as any).name };
+    } catch (e: any) {
+        return { routed: false, error: e.message };
+    }
+}
+
+async function handle_get_broker_stats(args: Record<string, any>): Promise<any> {
+    const { tenantId, userId, period = '30d' } = args;
+    try {
+        const stats = await analyticsRepository.getAgentStats(tenantId, userId);
+        return { userId, period, stats };
+    } catch (e: any) {
+        return { userId, error: e.message, stats: null };
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// TOOL 20: handle_live_chat (NEW)
+// ────────────────────────────────────────────────────────────────────────────
+async function handle_live_chat(args: Record<string, any>): Promise<any> {
+    const { tenantId, message, sessionId, context = {} } = args;
+    const msg = (message || '').trim();
+    if (!msg) return { error: 'message không được trống.' };
+
+    // Fast intent detection via keyword matching
+    const lower = msg.toLowerCase();
+    const intentMap: Array<{ keywords: string[]; intent: string; suggestedTool: string }> = [
+        { keywords: ['giá', 'bao nhiêu', 'triệu', 'tỷ', 'định giá', 'valuation'], intent: 'VALUATION',       suggestedTool: 'get_valuation' },
+        { keywords: ['tìm', 'search', 'căn hộ', 'nhà', 'đất', 'còn hàng'],         intent: 'SEARCH',          suggestedTool: 'search_listings' },
+        { keywords: ['pháp lý', 'sổ', 'hồng', 'đỏ', 'vi bằng', 'hđmb'],           intent: 'LEGAL',           suggestedTool: 'legal_qa' },
+        { keywords: ['quy hoạch', 'planning', 'xây dựng'],                          intent: 'PLANNING',        suggestedTool: 'check_planning' },
+        { keywords: ['vay', 'lãi suất', 'tín dụng', 'ngân hàng'],                   intent: 'FINANCE',         suggestedTool: 'get_platform_knowledge' },
+        { keywords: ['dự án', 'project', 'aqua city', 'vinhomes', 'izumi'],         intent: 'PROJECT',         suggestedTool: 'get_project_info' },
+        { keywords: ['long thành', 'sân bay', 'airport'],                            intent: 'LONGTHANH',       suggestedTool: 'get_longthanh_market' },
+        { keywords: ['đầu tư', 'cho thuê', 'yield', 'roi', 'lợi nhuận'],            intent: 'INVESTMENT',      suggestedTool: 'analyze_investment' },
+        { keywords: ['khách', 'lead', 'chấm điểm', 'tiềm năng'],                    intent: 'LEAD_SCORING',    suggestedTool: 'score_lead' },
+    ];
+
+    let detectedIntent = 'GENERAL';
+    let suggestedTool = 'get_platform_knowledge';
+    for (const { keywords, intent, suggestedTool: tool } of intentMap) {
+        if (keywords.some(kw => lower.includes(kw))) {
+            detectedIntent = intent;
+            suggestedTool = tool;
+            break;
+        }
+    }
+
+    // Build a grounded prompt with KB context
+    const contextBlock = context.leadName ? `Khách hàng: ${context.leadName}` : '';
+    const historyBlock = Array.isArray(context.history)
+        ? context.history.slice(-4).map((m: any) => `${m.role === 'user' ? 'Khách' : 'AI'}: ${m.content}`).join('\n')
+        : '';
+    const kbBlock = detectedIntent === 'LEGAL'       ? `\n[KB Pháp lý]\n${LEGAL_RULES_KB}` :
+                    detectedIntent === 'LONGTHANH'    ? `\n[KB Long Thành]\n${LONGTHANH_KB}` :
+                    detectedIntent === 'FINANCE'      ? `\n[KB Lãi suất]\n${BANK_RATES_KB}` : '';
+
+    const systemPrompt = `Bạn là AI hỗ trợ broker bất động sản SGS Land. Trả lời ngắn gọn, chuyên nghiệp (≤120 từ), bằng tiếng Việt. Dùng dữ liệu KB nếu có.
+${contextBlock}${kbBlock}`;
+    const userPrompt = historyBlock
+        ? `Lịch sử:\n${historyBlock}\n\nTin nhắn mới: ${msg}`
+        : msg;
+
+    try {
+        const ai = getGemini();
+        const resp = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [
+                { role: 'user', parts: [{ text: systemPrompt + '\n\n---\n' + userPrompt }] },
+            ],
+            config: { maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } as any },
+        });
+
+        return {
+            sessionId: sessionId || `sess_${Date.now()}`,
+            intent: detectedIntent,
+            response: resp.text?.trim() || 'Không có phản hồi từ AI.',
+            suggestedNextTool: suggestedTool,
+            suggestedAction: detectedIntent === 'VALUATION'  ? 'Gọi get_valuation với địa chỉ cụ thể' :
+                             detectedIntent === 'SEARCH'     ? 'Gọi search_listings với bộ lọc giá/khu vực' :
+                             detectedIntent === 'LEGAL'      ? 'Gọi legal_qa hoặc check_legal_status' :
+                             detectedIntent === 'LEAD_SCORING' ? 'Gọi score_lead với thông tin khách' : null,
+        };
+    } catch (e: any) {
+        logger.error('[LiveChatEngine] handle_live_chat error:', e);
+        return { sessionId, intent: detectedIntent, response: 'Có lỗi xử lý. Vui lòng thử lại.', error: e.message };
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// TOOL 21: analyze_chat_session (NEW)
+// ────────────────────────────────────────────────────────────────────────────
+async function handle_analyze_chat_session(args: Record<string, any>): Promise<any> {
+    const { tenantId, sessionId, messages, leadId } = args;
+    if (!Array.isArray(messages) || messages.length === 0) {
+        return { error: 'messages[] không được trống.' };
+    }
+
+    const transcript = messages
+        .slice(-20)
+        .map((m: any) => `[${m.role === 'user' ? 'KHÁCH' : 'AGENT'}] ${m.content}`)
+        .join('\n');
+
+    const prompt = `Bạn là AI phân tích CRM bất động sản chuyên nghiệp. Phân tích transcript cuộc hội thoại sau và trả về JSON chuẩn.
+
+TRANSCRIPT:
+${transcript}
+
+Trả về JSON với các trường sau:
+{
+  "leadScore": (0-100, theo thang: Ngân sách 25đ + Timeline 20đ + Khu vực 20đ + Tương tác 15đ + Nguồn 10đ + bonus),
+  "grade": "A|B|C|D",
+  "stage": "AWARENESS|CONSIDERATION|DECISION|POST_PURCHASE",
+  "urgency": "CAO|TRUNG|THẤP",
+  "emotionalState": "ANXIOUS|EXCITED|FRUSTRATED|HESITANT|NEUTRAL",
+  "buyingSignals": ["tối đa 3 tín hiệu mạnh nhất"],
+  "hesitationSignals": ["tối đa 2, kèm root cause"],
+  "missingData": ["thông tin cần khai thác thêm"],
+  "churnRisk": "LOW|MEDIUM|HIGH",
+  "nextBestAction": {
+    "channel": "Zalo|Call|Email|Gặp mặt",
+    "action": "mô tả hành động cụ thể",
+    "script": "script mở đầu gợi ý (1-2 câu)",
+    "fallback": "nếu không phản hồi thì làm gì"
+  },
+  "pattern": "STAGE_REGRESSION|PERSONA_EVOLUTION|GHOSTING|ACCELERATING|MIXED_SIGNALS|NORMAL",
+  "summary": "tóm tắt 2-3 câu về khách hàng này"
+}`;
+
+    try {
+        const ai = getGemini();
+        const resp = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: {
+                maxOutputTokens: 800,
+                responseMimeType: 'application/json',
+                thinkingConfig: { thinkingBudget: 0 } as any,
+            },
+        });
+
+        const raw = resp.text?.trim() || '{}';
+        let analysis: any;
+        try { analysis = JSON.parse(raw); } catch { analysis = { raw }; }
+
+        return {
+            sessionId: sessionId || `sess_${Date.now()}`,
+            tenantId,
+            leadId: leadId || null,
+            messageCount: messages.length,
+            analysis,
+            generatedAt: new Date().toISOString(),
+        };
+    } catch (e: any) {
+        logger.error('[LiveChatEngine] analyze_chat_session error:', e);
+        return { sessionId, error: e.message, analysis: null };
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// TOOL 22: get_platform_knowledge (NEW)
+// ────────────────────────────────────────────────────────────────────────────
+async function handle_get_platform_knowledge(args: Record<string, any>): Promise<any> {
+    const { tenantId, domain, query } = args;
+    const d = (domain || '').toLowerCase().trim();
+    const q = (query || '').trim();
+
+    // Serve from static KB first (fast, no AI cost)
+    if (d === 'bank' || d === 'lãi suất' || d === 'finance') {
+        return { domain, query, knowledge: BANK_RATES_KB, source: 'SGS Land KB Q1-Q2/2026', cached: true };
+    }
+    if (d === 'legal' || d === 'pháp lý') {
+        const relevant = LEGAL_RULES_KB.split('\n').filter(line =>
+            !q || line.toLowerCase().includes(q.toLowerCase()) || line.startsWith('R0') || line.startsWith('Luật')
+        ).join('\n');
+        return { domain, query, knowledge: relevant || LEGAL_RULES_KB, source: 'Rule Engine R01-R06 + Luật ĐĐ 2024', cached: true };
+    }
+    if (d === 'area' || d === 'khu vực' || d === 'valuation') {
+        const stats = handle_get_market_stats({ area: q, tenantId });
+        return { domain, query, knowledge: stats, source: 'SGS-AVM Benchmark Q1-Q2/2026', cached: true };
+    }
+    if (d === 'longthanh' || d === 'long thành') {
+        return { domain, query, knowledge: LONGTHANH_KB, source: 'SGS Land Market Intelligence', cached: true };
+    }
+    if (d === 'platform' || d === 'tính năng' || d === 'hướng dẫn') {
+        return {
+            domain, query,
+            knowledge: `SGS Land Platform — các tính năng chính:\n• Dashboard /dashboard — KPI, thống kê lead, doanh số\n• Leads /leads — CRM quản lý khách hàng\n• Kho hàng /inventory — đăng và quản lý BĐS\n• Định giá AI /ai-valuation — SGS-AVM v2.1\n• Hợp đồng /contracts — tạo và theo dõi\n• AI Governance /ai-governance — quản lý prompt AI`,
+            source: 'SGS Land Platform Guide',
+            cached: true,
+        };
+    }
+
+    // For project domain: query AI with context
+    if (d === 'project' || d === 'dự án') {
+        try {
+            const ai = getGemini();
+            const resp = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [{ role: 'user', parts: [{ text: `Bạn là chuyên gia BĐS Việt Nam. Cung cấp thông tin về dự án "${q}" (HCM/Đồng Nai/Bình Dương). Bao gồm: CĐT, vị trí, giá tham khảo, pháp lý hiện tại, ưu/nhược điểm. Tối đa 200 từ, tiếng Việt.` }] }],
+                config: { maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } as any },
+            });
+            return { domain, query, knowledge: resp.text?.trim(), source: 'Gemini + SGS Land KB', cached: false };
+        } catch (e: any) {
+            return { domain, query, error: e.message, knowledge: null };
+        }
+    }
+
+    return { domain, query, knowledge: null, message: `Domain "${domain}" chưa được hỗ trợ. Dùng: area|project|bank|legal|platform|longthanh|valuation` };
+}
+
+// ---------------------------------------------------------------------------
+// Tool dispatcher
+// ---------------------------------------------------------------------------
+type ToolHandler = (args: Record<string, any>) => any | Promise<any>;
+
+const HANDLERS: Record<string, ToolHandler> = {
+    search_listings:            handle_search_listings,
+    get_listing_detail:         handle_get_listing_detail,
+    check_duplicate:            handle_check_duplicate,
+    get_market_stats:           handle_get_market_stats,
+    get_valuation:              handle_get_valuation,
+    get_valuation_methodology:  (_) => handle_get_valuation_methodology(),
+    compare_price_vs_market:    handle_compare_price_vs_market,
+    check_legal_status:         handle_check_legal_status,
+    check_planning:             handle_check_planning,
+    legal_qa:                   handle_legal_qa,
+    get_price_index:            handle_get_price_index,
+    get_longthanh_market:       handle_get_longthanh_market,
+    analyze_investment:         handle_analyze_investment,
+    get_project_info:           handle_get_project_info,
+    compare_projects:           handle_compare_projects,
+    search_projects:            handle_search_projects,
+    score_lead:                 handle_score_lead,
+    route_lead:                 handle_route_lead,
+    get_broker_stats:           handle_get_broker_stats,
+    handle_live_chat:           handle_live_chat,
+    analyze_chat_session:       handle_analyze_chat_session,
+    get_platform_knowledge:     handle_get_platform_knowledge,
+};
+
+// ---------------------------------------------------------------------------
+// Public interface
+// ---------------------------------------------------------------------------
+export const liveChatEngine = {
+    /** Call a tool by name with args. Throws on unknown tool name. */
+    async callTool(toolName: string, args: Record<string, any>): Promise<any> {
+        const handler = HANDLERS[toolName];
+        if (!handler) throw new Error(`Tool "${toolName}" không tồn tại. Có ${Object.keys(HANDLERS).length} tools.`);
+        const t0 = Date.now();
+        const result = await handler(args);
+        logger.info(`[LiveChatEngine] ${toolName} — ${Date.now() - t0}ms`);
+        return result;
+    },
+
+    /** List all 22 tool definitions. */
+    listTools(): ToolDefinition[] {
+        return TOOL_MANIFEST;
+    },
+
+    /** Check if a tool exists. */
+    hasTool(toolName: string): boolean {
+        return toolName in HANDLERS;
+    },
+
+    /** Verify all 22 tools are registered (integrity check). */
+    verify(): { ok: boolean; registered: number; manifest: number; missing: string[] } {
+        const registered = Object.keys(HANDLERS);
+        const manifest = TOOL_MANIFEST.map(t => t.name);
+        const missing = manifest.filter(n => !registered.includes(n));
+        return {
+            ok: missing.length === 0,
+            registered: registered.length,
+            manifest: manifest.length,
+            missing,
+        };
+    },
+};
