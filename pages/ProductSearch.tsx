@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
+import { ExitIntentPopup } from '../components/ExitIntentPopup';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
 import { db } from '../services/dbApi';
@@ -779,6 +780,16 @@ export const ProductSearch: React.FC = () => {
                     )}
                 </div>
             </div>}
+
+            {/* Exit-intent popup — triggered when visitor moves to leave */}
+            <ExitIntentPopup
+                context={{
+                    type: 'search',
+                    query: debouncedQuery || undefined,
+                    location: selectedLocation !== 'ALL' ? selectedLocation : undefined,
+                    propertyType: selectedType !== 'ALL' ? selectedType : undefined,
+                }}
+            />
         </div>
     );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { ExitIntentPopup } from '../components/ExitIntentPopup';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
 import { db } from '../services/dbApi';
@@ -2122,6 +2123,16 @@ export const ListingDetail: React.FC = () => {
             ) : null,
             document.body
         )}
+
+        {/* Exit-intent popup — triggered when visitor moves to leave */}
+        <ExitIntentPopup
+            context={{
+                type: 'listing',
+                title: listing?.title,
+                location: listing?.location,
+                price: listing?.price,
+            }}
+        />
         </>
     );
 };
