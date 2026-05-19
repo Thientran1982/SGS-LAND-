@@ -12,9 +12,11 @@
 import { GoogleGenAI } from '@google/genai';
 import { listingRepository } from '../repositories/listingRepository';
 import { leadRepository } from '../repositories/leadRepository';
+import { interactionRepository } from '../repositories/interactionRepository';
 import { routingRuleRepository } from '../repositories/routingRuleRepository';
 import { analyticsRepository } from '../repositories/analyticsRepository';
 import { projectRepository } from '../repositories/projectRepository';
+import { DEFAULT_TENANT_ID } from '../constants';
 import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
 import { logger } from '../middleware/logger';
 
@@ -253,6 +255,57 @@ const TOOL_MANIFEST: ToolDefinition[] = [
             tenantId: { type: 'string', required: true,  description: 'Tenant ID' },
             userId:   { type: 'string', required: true,  description: 'User ID của broker' },
             period:   { type: 'string', required: false, description: '7d|30d|90d|ytd (default: 30d)' },
+        },
+    },
+    // ── MCP WIDGET TOOLS (NEW v2) ────────────────────────────────────────────
+    {
+        name: 'capture_lead',
+        description: 'Tạo lead mới từ widget với auto-score 0-100 theo trọng số. Áp dụng khi khách để lại SĐT qua form live chat.',
+        category: 'crm',
+        params: {
+            tenantId:  { type: 'string', required: false, description: 'Tenant ID (default: public)' },
+            name:      { type: 'string', required: true,  description: 'Tên khách hàng' },
+            phone:     { type: 'string', required: true,  description: 'Số điện thoại' },
+            notes:     { type: 'string', required: false, description: 'Ghi chú thêm' },
+            source:    { type: 'string', required: false, description: 'WIDGET_CAPTURE|WIDGET_ESCALATION|WEBSITE (default: WIDGET_CAPTURE)' },
+            budget:    { type: 'number', required: false, description: 'Ngân sách ước tính (VNĐ)' },
+            area:      { type: 'string', required: false, description: 'Khu vực quan tâm' },
+            timeline:  { type: 'string', required: false, description: 'URGENT|3M|6M|12M|EXPLORING' },
+        },
+    },
+    {
+        name: 'escalate_to_human',
+        description: 'Chuyển hội thoại sang tư vấn viên thật với 3 mức ưu tiên. Tạo tin nhắn hệ thống xác nhận cho khách.',
+        category: 'crm',
+        params: {
+            tenantId: { type: 'string', required: false, description: 'Tenant ID (default: public)' },
+            leadId:   { type: 'string', required: true,  description: 'Lead ID của phiên chat' },
+            reason:   { type: 'string', required: false, description: 'user_requested|complaint|complex_question|booking' },
+            priority: { type: 'string', required: false, description: 'normal|high|urgent (default: normal)' },
+        },
+    },
+    {
+        name: 'suggest_properties',
+        description: 'Gợi ý BĐS phù hợp real-time từ kho hàng + static fallback khi không có kết quả.',
+        category: 'listing',
+        params: {
+            tenantId: { type: 'string', required: false, description: 'Tenant ID' },
+            area:     { type: 'string', required: false, description: 'Khu vực quan tâm' },
+            budget:   { type: 'number', required: false, description: 'Ngân sách tối đa (VNĐ)' },
+            type:     { type: 'string', required: false, description: 'Loại BĐS' },
+            limit:    { type: 'number', required: false, description: 'Số kết quả trả về (default 4)' },
+        },
+    },
+    {
+        name: 'book_viewing_appointment',
+        description: 'Đặt lịch xem nhà — parse ngày tiếng Việt tự nhiên (ngày mai/cuối tuần/thứ 7), tạo VIEW_* ID và ghi vào lịch sử chat.',
+        category: 'crm',
+        params: {
+            tenantId:  { type: 'string', required: false, description: 'Tenant ID' },
+            leadId:    { type: 'string', required: true,  description: 'Lead ID' },
+            dateText:  { type: 'string', required: true,  description: 'Ngày tự nhiên: "ngày mai", "cuối tuần", "thứ 7", "tuần sau"' },
+            listingId: { type: 'string', required: false, description: 'Listing ID muốn xem (optional)' },
+            notes:     { type: 'string', required: false, description: 'Ghi chú thêm' },
         },
     },
     // ── LIVE CHAT TOOLS (NEW) ─────────────────────────────────────────────────
@@ -1055,7 +1108,208 @@ const HANDLERS: Record<string, ToolHandler> = {
     handle_live_chat:           handle_live_chat,
     analyze_chat_session:       handle_analyze_chat_session,
     get_platform_knowledge:     handle_get_platform_knowledge,
+    // MCP widget tools v2
+    capture_lead:               handle_capture_lead,
+    escalate_to_human:          handle_escalate_to_human,
+    suggest_properties:         handle_suggest_properties,
+    book_viewing_appointment:   handle_book_viewing_appointment,
 };
+
+// ---------------------------------------------------------------------------
+// MCP Widget Tools — v2 handlers
+// ---------------------------------------------------------------------------
+
+async function handle_capture_lead(args: Record<string, any>): Promise<any> {
+    const {
+        tenantId = DEFAULT_TENANT_ID, name, phone, notes, source = 'WIDGET_CAPTURE',
+        budget = 0, area = '', timeline = 'EXPLORING',
+    } = args;
+    if (!phone) return { error: 'phone bắt buộc' };
+
+    const score = handle_score_lead({
+        budget, timeline, area, source: 'WEBSITE',
+        hasPhone: true, interactions: 1,
+    });
+
+    const lead = await leadRepository.create(tenantId, {
+        name: String(name || 'Khách hàng').trim().slice(0, 100),
+        phone: String(phone).trim().slice(0, 20),
+        notes: notes
+            ? String(notes).slice(0, 2000)
+            : `Captured via widget. Score: ${score.score}${area ? ` | Khu vực: ${area}` : ''}`,
+        source,
+        stage: 'NEW',
+        score: { total: score.score, grade: score.grade, capturedAt: new Date().toISOString() },
+    });
+    return {
+        success: true,
+        leadId: lead.id,
+        score: score.score,
+        grade: score.grade,
+        priority: score.priority,
+    };
+}
+
+async function handle_escalate_to_human(args: Record<string, any>): Promise<any> {
+    const { tenantId = DEFAULT_TENANT_ID, leadId, reason = 'user_requested', priority = 'normal' } = args;
+    if (!leadId) return { error: 'leadId bắt buộc' };
+
+    const waitMap: Record<string, number> = { urgent: 5, high: 15, normal: 30 };
+    const wait = waitMap[priority] ?? 30;
+
+    const content = priority === 'urgent'
+        ? `🚨 Đang kết nối tư vấn viên — ưu tiên khẩn. Vui lòng chờ khoảng ${wait} phút.`
+        : `✅ Đã ghi nhận yêu cầu kết nối tư vấn viên (${reason}). Phản hồi trong ~${wait} phút. 🙏`;
+
+    const msg = await interactionRepository.create(tenantId, {
+        leadId,
+        channel: 'WEB' as any,
+        direction: 'OUTBOUND' as any,
+        type: 'TEXT',
+        content,
+        metadata: {
+            isAgent: true,
+            escalation: true,
+            priority,
+            reason,
+            escalatedAt: new Date().toISOString(),
+        },
+    });
+    return {
+        escalated: true,
+        priority,
+        reason,
+        messageId: msg.id,
+        estimatedWaitMinutes: wait,
+    };
+}
+
+async function handle_suggest_properties(args: Record<string, any>): Promise<any> {
+    const { tenantId = DEFAULT_TENANT_ID, area, budget, type, limit = 4 } = args;
+
+    const filters: Record<string, any> = { status: 'AVAILABLE' };
+    if (area)   filters.search    = area;
+    if (budget) filters.price_lte = budget;
+    if (type)   filters.type      = type;
+
+    const result = await listingRepository.findListings(tenantId, { page: 1, pageSize: Math.min(Number(limit) || 4, 8) }, filters);
+
+    if (!result || result.total === 0) {
+        return {
+            total: 0,
+            listings: [],
+            fallback: true,
+            suggestion: `Hiện tại chưa có BĐS phù hợp trong kho${area ? ` tại ${area}` : ''}. Liên hệ hotline 0971 132 378 để được tư vấn dự án phù hợp.`,
+        };
+    }
+    return {
+        total: result.total,
+        shown: result.data.length,
+        listings: (result.data as any[]).map((l: any) => ({
+            id: l.id, code: l.code, title: l.title,
+            price: l.price, area: l.area, type: l.type,
+            pricePerM2: l.price && l.area ? Math.round(l.price / l.area) : null,
+            location: l.location, bedrooms: l.bedrooms,
+        })),
+    };
+}
+
+function parseVietnameseDate(text: string): Date {
+    const now  = new Date();
+    const base = new Date(now);
+    const lc   = (text || '').toLowerCase();
+
+    if (lc.includes('hôm nay') || lc.includes('hom nay')) {
+        base.setHours(14, 0, 0, 0);
+        return base;
+    }
+    if (lc.includes('ngày mai') || lc.includes('ngay mai')
+        || (lc.includes('mai') && !lc.includes('mai nhà') && !lc.includes('mai sau'))) {
+        base.setDate(base.getDate() + 1);
+        base.setHours(10, 0, 0, 0);
+        return base;
+    }
+    if (lc.includes('cuối tuần') || lc.includes('thứ 7') || lc.includes('thứ bảy')
+        || lc.includes('thu 7') || lc.includes('thu bay') || lc.includes('t7')) {
+        const diff = (6 - base.getDay() + 7) % 7 || 7;
+        base.setDate(base.getDate() + diff);
+        base.setHours(10, 0, 0, 0);
+        return base;
+    }
+    if (lc.includes('chủ nhật') || lc.includes('chu nhat') || lc.includes('cn')) {
+        const diff = (7 - base.getDay()) % 7 || 7;
+        base.setDate(base.getDate() + diff);
+        base.setHours(10, 0, 0, 0);
+        return base;
+    }
+    const dayMap: [string[], number][] = [
+        [['thứ 2', 'thứ hai', 'thu 2', 'thu hai', 't2'], 1],
+        [['thứ 3', 'thứ ba',  'thu 3', 'thu ba',  't3'], 2],
+        [['thứ 4', 'thứ tư',  'thu 4', 'thu tu',  't4'], 3],
+        [['thứ 5', 'thứ năm', 'thu 5', 'thu nam', 't5'], 4],
+        [['thứ 6', 'thứ sáu', 'thu 6', 'thu sau', 't6'], 5],
+    ];
+    for (const [aliases, targetDay] of dayMap) {
+        if (aliases.some(a => lc.includes(a))) {
+            let diff = targetDay - base.getDay();
+            if (diff <= 0) diff += 7;
+            base.setDate(base.getDate() + diff);
+            base.setHours(10, 0, 0, 0);
+            return base;
+        }
+    }
+    if (lc.includes('tuần sau') || lc.includes('tuan sau')) {
+        base.setDate(base.getDate() + 7);
+        base.setHours(10, 0, 0, 0);
+        return base;
+    }
+    // Default: 2 days from now at 10:00
+    base.setDate(base.getDate() + 2);
+    base.setHours(10, 0, 0, 0);
+    return base;
+}
+
+async function handle_book_viewing_appointment(args: Record<string, any>): Promise<any> {
+    const { tenantId = DEFAULT_TENANT_ID, leadId, dateText, listingId, notes } = args;
+    if (!leadId) return { error: 'leadId bắt buộc' };
+
+    const scheduledAt = parseVietnameseDate(dateText || 'cuối tuần');
+    const dateStr     = scheduledAt.toISOString().slice(0, 10).replace(/-/g, '');
+    const rand        = Math.random().toString(36).slice(2, 7).toUpperCase();
+    const viewingId   = `VIEW_${dateStr}_${rand}`;
+
+    const lines = [
+        '📅 Đặt lịch xem nhà thành công!',
+        `Mã lịch hẹn: **${viewingId}**`,
+        `Thời gian: ${scheduledAt.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })} lúc ${scheduledAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`,
+    ];
+    if (notes) lines.push(`Ghi chú: ${notes}`);
+    lines.push('Tư vấn viên sẽ xác nhận trong vòng 30 phút.');
+
+    const msg = await interactionRepository.create(tenantId, {
+        leadId,
+        channel: 'WEB' as any,
+        direction: 'OUTBOUND' as any,
+        type: 'TEXT',
+        content: lines.join('\n'),
+        metadata: {
+            isAgent: true,
+            viewingId,
+            scheduledAt: scheduledAt.toISOString(),
+            listingId: listingId || null,
+            type: 'BOOKING_CONFIRMATION',
+        },
+    });
+    return {
+        success: true,
+        viewingId,
+        scheduledAt: scheduledAt.toISOString(),
+        scheduledAtFormatted: scheduledAt.toLocaleDateString('vi-VN', {
+            weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+        }),
+        messageId: msg.id,
+    };
+}
 
 // ---------------------------------------------------------------------------
 // Public interface

@@ -53,6 +53,7 @@ import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createLandingLeadRoutes } from "./server/routes/landingLeadRoutes";
 import { createLandingAiRoutes } from "./server/routes/landingAiRoutes";
 import { createLiveChatAgentRoutes } from "./server/routes/liveChatAgentRoutes";
+import { liveChatEngine } from "./server/ai/liveChatEngine";
 import { createPublicProjectRoutes } from "./server/routes/publicProjectRoutes";
 import { createVisitorTrackingRoutes } from "./server/routes/visitorTrackingRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
@@ -2243,6 +2244,116 @@ async function startServer() {
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);
       res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });
+    }
+  });
+
+  // POST /api/public/livechat/capture-lead — widget lead capture with auto-score
+  app.post('/api/public/livechat/capture-lead', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { leadId, name, phone, notes, source } = req.body;
+      if (!phone) return res.status(400).json({ error: 'phone bắt buộc' }) as any;
+
+      const result = await liveChatEngine.callTool('capture_lead', {
+        tenantId: PUBLIC_TENANT,
+        name:   String(name  || 'Khách hàng').trim(),
+        phone:  String(phone).trim(),
+        notes:  notes  ? String(notes).slice(0, 2000) : undefined,
+        source: source || 'WIDGET_CAPTURE',
+      });
+
+      // If there is an existing leadId session, send a confirmation message into that thread
+      if (leadId && typeof leadId === 'string' && /^[0-9a-f-]{36}$/i.test(leadId)) {
+        const confirmMsg = await interactionRepository.create(PUBLIC_TENANT, {
+          leadId,
+          channel: 'WEB' as any,
+          direction: 'OUTBOUND' as any,
+          type: 'TEXT',
+          content: '✅ Đã ghi nhận! Tư vấn viên sẽ gọi lại cho bạn trong **15 phút** ⚡',
+          metadata: { isAgent: true, captureConfirm: true },
+        });
+        broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: confirmMsg });
+      }
+
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
+        id: result.leadId, name: String(name || phone), source: source || 'WIDGET_CAPTURE',
+      });
+      res.status(201).json({ id: result.leadId, score: result.score, grade: result.grade, success: true });
+    } catch (error) {
+      logger.error('Capture lead error:', error as Error);
+      res.status(500).json({ error: 'Không thể lưu thông tin, vui lòng thử lại' });
+    }
+  });
+
+  // POST /api/public/livechat/escalate — escalate thread to human agent
+  app.post('/api/public/livechat/escalate', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { leadId, reason, priority } = req.body;
+      if (!leadId || typeof leadId !== 'string' || !/^[0-9a-f-]{36}$/i.test(leadId)) {
+        return res.status(400).json({ error: 'leadId không hợp lệ' }) as any;
+      }
+
+      const result = await liveChatEngine.callTool('escalate_to_human', {
+        tenantId: PUBLIC_TENANT,
+        leadId,
+        reason:   reason   || 'user_requested',
+        priority: priority || 'normal',
+      });
+
+      // Update thread_status in DB
+      await withTenantContext(PUBLIC_TENANT, async (client) => {
+        await client.query(
+          `UPDATE leads SET thread_status = 'HUMAN_TAKEOVER', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+          [leadId],
+        );
+      });
+
+      // Broadcast socket events
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('ai_mode_changed', {
+        leadId, status: 'HUMAN_TAKEOVER', priority: result.priority, reason: result.reason,
+      });
+      if (result.messageId) {
+        const msgs = await interactionRepository.findByLead(PUBLIC_TENANT, leadId).catch(() => [] as any[]);
+        const msg = (msgs as any[]).find((m: any) => m.id === result.messageId);
+        if (msg) broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: msg });
+      }
+
+      res.json({ success: true, estimatedWaitMinutes: result.estimatedWaitMinutes, priority: result.priority });
+    } catch (error) {
+      logger.error('Escalate error:', error as Error);
+      res.status(500).json({ error: 'Không thể kết nối tư vấn viên, vui lòng thử lại' });
+    }
+  });
+
+  // POST /api/public/livechat/book-viewing — book a property viewing appointment
+  app.post('/api/public/livechat/book-viewing', livechatRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { leadId, dateText, listingId, notes } = req.body;
+      if (!leadId || typeof leadId !== 'string' || !/^[0-9a-f-]{36}$/i.test(leadId)) {
+        return res.status(400).json({ error: 'leadId không hợp lệ' }) as any;
+      }
+      if (!dateText) return res.status(400).json({ error: 'dateText bắt buộc' }) as any;
+
+      const result = await liveChatEngine.callTool('book_viewing_appointment', {
+        tenantId:  PUBLIC_TENANT,
+        leadId,
+        dateText:  String(dateText).slice(0, 100),
+        listingId: listingId || undefined,
+        notes:     notes     ? String(notes).slice(0, 500) : undefined,
+      });
+
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('viewing_booked', {
+        leadId, viewingId: result.viewingId, scheduledAt: result.scheduledAt,
+      });
+
+      res.json({
+        success:              true,
+        viewingId:            result.viewingId,
+        scheduledAt:          result.scheduledAt,
+        scheduledAtFormatted: result.scheduledAtFormatted,
+      });
+    } catch (error) {
+      logger.error('Book viewing error:', error as Error);
+      res.status(500).json({ error: 'Không thể đặt lịch, vui lòng thử lại' });
     }
   });
 
