@@ -143,10 +143,28 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
     // Signal 4: Idle timer
     const idleTimer = setTimeout(fire, delayMs);
 
+    // Signal 5: Browser back button (popstate sentinel).
+    // Push a dummy history state on mount. When user presses Back, the browser
+    // pops this sentinel entry → popstate fires → we show the popup and re-arm.
+    try { window.history.pushState({ __exitIntentSentinel: true }, ''); } catch {}
+    const onPopState = (e: PopStateEvent) => {
+      if ((e.state as any)?.__exitIntentSentinel) return; // landed on sentinel
+      fire();
+      // Re-arm: push another sentinel so a second Back press is caught too
+      try { window.history.pushState({ __exitIntentSentinel: true }, ''); } catch {}
+    };
+    window.addEventListener('popstate', onPopState);
+
+    // Signal 6: pagehide — actual page unload / tab close / back on non-SPA
+    const onPageHide = () => fire();
+    window.addEventListener('pagehide', onPageHide);
+
     return () => {
       document.removeEventListener('mouseleave', onMouseLeave);
       window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('pagehide', onPageHide);
       clearTimeout(idleTimer);
     };
   }, [fire, delayMs]);
@@ -172,6 +190,7 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
   const [visible,    setVisible]    = useState(false);
   const [name,       setName]       = useState('');
   const [phone,      setPhone]      = useState('');
+  const [email,      setEmail]      = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success,    setSuccess]    = useState(false);
   const [error,      setError]      = useState('');
@@ -213,6 +232,7 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
         body: JSON.stringify({
           name:   name.trim() || 'Khách hàng',
           phone:  phone.trim(),
+          email:  email.trim() || undefined,
           source: 'EXIT_INTENT',
           notes,
         }),
@@ -322,7 +342,7 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
 
             {!success ? (
               <form onSubmit={handleSubmit} className="space-y-2">
-                {/* Name — optional, compact */}
+                {/* Name — optional */}
                 <input
                   ref={nameRef}
                   type="text"
@@ -340,6 +360,16 @@ export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }
                   onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
                   placeholder="Số điện thoại *"
                   required
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                  style={{ fontSize: '16px' }}
+                />
+
+                {/* Email — optional, enables confirmation email */}
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="Email (để nhận xác nhận)"
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
                   style={{ fontSize: '16px' }}
                 />

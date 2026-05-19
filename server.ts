@@ -2113,7 +2113,7 @@ async function startServer() {
 
   app.post('/api/public/leads', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { name, phone, notes, source, stage, agentId } = req.body;
+      const { name, phone, email, notes, source, stage, agentId } = req.body;
       if (!name || !phone) return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
 
       // Resolve assigned agent: validate agentId belongs to this tenant to prevent spoofing
@@ -2125,18 +2125,88 @@ async function startServer() {
         if (agentCheck.rows.length > 0) assignedTo = agentId;
       }
 
+      const safeName  = String(name).trim().slice(0, 100);
+      const safePhone = String(phone).trim().slice(0, 20);
+      const safeEmail = email && typeof email === 'string' && email.includes('@') ? email.trim().slice(0, 200) : undefined;
+      const safeNotes = notes ? String(notes).slice(0, 2000) : undefined;
+      const safeSource = source || 'WEBSITE';
+
       const lead = await leadRepository.create(PUBLIC_TENANT, {
-        name: String(name).trim().slice(0, 100),
-        phone: String(phone).trim().slice(0, 20),
-        notes: notes ? String(notes).slice(0, 2000) : undefined,
-        source: source || 'WEBSITE',
+        name: safeName,
+        phone: safePhone,
+        notes: safeNotes,
+        source: safeSource,
         stage: stage || 'NEW',
         assignedTo,
       });
+
       // Notify Inbox in real-time so the new thread appears without a page refresh
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
         id: lead.id, name: lead.name, assignedTo: lead.assignedTo,
       });
+
+      // ── Email notifications (fire-and-forget, never block the response) ──────
+      if (safeSource === 'EXIT_INTENT') {
+        const adminInbox = process.env.LEAD_NOTIFY_EMAIL || 'info@sgsland.vn';
+        const sourceLabel = safeNotes?.startsWith('Quan tâm:') ? safeNotes.slice(0, 120)
+          : safeNotes?.startsWith('Tìm kiếm:') ? safeNotes.slice(0, 120)
+          : 'Khách ghé thăm marketplace';
+
+        // 1. Admin notification
+        emailService.sendEmail(DEFAULT_TENANT_ID, {
+          to: adminInbox,
+          subject: `[Exit Intent] Lead mới: ${safeName} – ${safePhone}`,
+          template: 'exit_intent_admin_notify',
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+              <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px;text-align:center;">
+                <h1 style="color:#fff;font-size:18px;margin:0;">🏠 Lead Exit Intent Mới</h1>
+              </div>
+              <div style="padding:24px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                  <tr><td style="padding:8px 0;color:#64748b;font-size:12px;font-weight:bold;text-transform:uppercase;width:100px;">Họ tên</td><td style="padding:8px 0;font-size:14px;color:#0f172a;font-weight:bold;">${safeName}</td></tr>
+                  <tr><td style="padding:8px 0;color:#64748b;font-size:12px;font-weight:bold;text-transform:uppercase;">Điện thoại</td><td style="padding:8px 0;"><a href="tel:${safePhone}" style="color:#4f46e5;font-size:14px;font-weight:bold;">${safePhone}</a></td></tr>
+                  ${safeEmail ? `<tr><td style="padding:8px 0;color:#64748b;font-size:12px;font-weight:bold;text-transform:uppercase;">Email</td><td style="padding:8px 0;"><a href="mailto:${safeEmail}" style="color:#4f46e5;font-size:14px;">${safeEmail}</a></td></tr>` : ''}
+                  <tr><td style="padding:8px 0;color:#64748b;font-size:12px;font-weight:bold;text-transform:uppercase;vertical-align:top;">Nguồn</td><td style="padding:8px 0;font-size:14px;color:#1e293b;">${sourceLabel}</td></tr>
+                </table>
+                <div style="margin-top:20px;padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#64748b;">
+                  Lead đã được tạo trong CRM — ID: <code style="background:#eef2ff;color:#4f46e5;padding:2px 6px;border-radius:4px;">${lead.id.slice(0, 8)}</code>
+                </div>
+              </div>
+            </div>`,
+        }).catch(() => {});
+
+        // 2. Confirmation to lead (only if they provided email)
+        if (safeEmail) {
+          emailService.sendEmail(DEFAULT_TENANT_ID, {
+            to: safeEmail,
+            subject: 'SGS LAND – Chúng tôi đã nhận được yêu cầu của bạn',
+            template: 'exit_intent_lead_confirm',
+            dedupeKey: `exit-intent-confirm:${lead.id}`,
+            html: `
+              <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 24px;text-align:center;">
+                  <h1 style="color:#fff;font-size:22px;margin:0 0 8px;">Đã nhận được yêu cầu!</h1>
+                  <p style="color:#c7d2fe;font-size:14px;margin:0;">SGS LAND sẽ liên hệ với bạn trong thời gian sớm nhất</p>
+                </div>
+                <div style="padding:28px 24px;">
+                  <p style="font-size:15px;color:#1e293b;line-height:1.7;">Xin chào <strong>${safeName}</strong>,</p>
+                  <p style="font-size:14px;color:#475569;line-height:1.7;">Chúng tôi đã ghi nhận yêu cầu tư vấn của bạn qua số điện thoại <strong>${safePhone}</strong>. Chuyên gia SGS LAND sẽ liên hệ với bạn trong vòng <strong>30 phút</strong> (trong giờ hành chính).</p>
+                  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:20px 0;">
+                    <p style="font-size:13px;color:#166534;font-weight:bold;margin:0 0 6px;">✅ Bạn sẽ nhận được:</p>
+                    <ul style="font-size:13px;color:#166534;margin:0;padding-left:18px;line-height:2;">
+                      <li>Danh sách BĐS phù hợp với nhu cầu</li>
+                      <li>Phân tích giá thị trường miễn phí</li>
+                      <li>Hỗ trợ pháp lý &amp; thủ tục</li>
+                    </ul>
+                  </div>
+                  <p style="font-size:13px;color:#94a3b8;text-align:center;margin-top:24px;">SGS LAND – Bất động sản tin cậy</p>
+                </div>
+              </div>`,
+          }).catch(() => {});
+        }
+      }
+
       // Return only non-sensitive confirmation — never expose PII to anonymous callers
       res.status(201).json({ id: lead.id, success: true });
     } catch (error) {
