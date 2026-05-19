@@ -115,19 +115,19 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
     if (isSuppressed()) return;
 
     // Signal 1a: mousemove leading detector — fires BEFORE the cursor exits the
-    // viewport. Catches the intent the moment the mouse heads toward browser chrome
-    // (back/forward buttons, address bar, tab bar).  Condition: within the top
-    // MOUSE_Y_THRESHOLD pixels AND moving upward fast enough to filter micro-jitter.
+    // viewport. Zone is the top 60px (generous enough to catch fast swipes).
+    // movementY < -1 filters micro-jitter without missing real upward intent.
     const onMouseMove = (e: MouseEvent) => {
-      if (e.clientY < MOUSE_Y_THRESHOLD && e.movementY < MOUSE_MOVE_Y_UP) fire();
+      if (e.clientY < 60 && e.movementY < -1) fire();
     };
     document.addEventListener('mousemove', onMouseMove);
 
-    // Signal 1b: mouseleave backup — fires once the cursor has actually left the
-    // document. No clientY restriction here; if the user's pointer left the page,
-    // any direction toward browser chrome counts (clientY ≤ 0 or very small).
+    // Signal 1b: mouseleave — fires once the cursor has actually left the document.
+    // Use 150px threshold (top ~15-20% of typical viewport) to catch fast swipes:
+    // a rapid flick to the back button can leave the viewport with the last reported
+    // clientY as high as 80-120px before the mouseleave event fires.
     const onMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= MOUSE_Y_THRESHOLD) fire();
+      if (e.clientY < 150) fire();
     };
     document.addEventListener('mouseleave', onMouseLeave);
 
@@ -155,15 +155,21 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): boolean {
     // Signal 4: Idle timer
     const idleTimer = setTimeout(fire, delayMs);
 
-    // Signal 5: Browser back button (popstate sentinel).
-    // Push a dummy history state on mount. When user presses Back, the browser
-    // pops this sentinel entry → popstate fires → we show the popup and re-arm.
-    try { window.history.pushState({ __exitIntentSentinel: true }, ''); } catch {}
-    const onPopState = (e: PopStateEvent) => {
-      if ((e.state as any)?.__exitIntentSentinel) return; // landed on sentinel
+    // Signal 5: Browser back button via popstate.
+    //
+    // Strategy: push a sentinel entry on mount so the FIRST back-click pops it
+    // and keeps the user on this page (URL stays the same, custom router does
+    // nothing).  Any popstate event — whether it pops the sentinel or a real
+    // history entry — means the user is navigating away, so we fire immediately.
+    //
+    // We deliberately do NOT guard on e.state because the app's custom router
+    // always pushes state=null, making state checks unreliable.  popstate only
+    // fires on browser back/forward, never on pushState calls, so false-positives
+    // from in-app navigation are not possible.
+    const sentinelUrl = window.location.pathname + window.location.search;
+    try { window.history.pushState({ __exitIntentSentinel: true }, '', sentinelUrl); } catch {}
+    const onPopState = () => {
       fire();
-      // Re-arm: push another sentinel so a second Back press is caught too
-      try { window.history.pushState({ __exitIntentSentinel: true }, ''); } catch {}
     };
     window.addEventListener('popstate', onPopState);
 
