@@ -32,12 +32,78 @@ interface Props {
 
 // ─── Static Data ──────────────────────────────────────────
 const FEATURED_PROJECTS: FeaturedProject[] = [
-  { slug: "aqua-city", name: "Aqua City Novaland", dev: "Novaland", loc: "Biên Hòa, Đồng Nai", scale: "1.000 ha", priceFrom: "Từ 6,5 tỷ", type: "Đại Đô Thị Sinh Thái", badge: "Đang bàn giao", badgeColor: "emerald", img: "/images/projects/aqua-city.jpg" },
-  { slug: "the-global-city", name: "The Global City", dev: "Masterise Homes", loc: "An Phú, TP Thủ Đức", scale: "117 ha", priceFrom: "Từ 15 tỷ", type: "Đại Đô Thị Thương Mại", badge: "Đang mở bán", badgeColor: "indigo", img: "/images/projects/the-global-city.jpg" },
-  { slug: "izumi-city", name: "Izumi City Nam Long", dev: "Nam Long Group", loc: "Biên Hòa, Đồng Nai", scale: "170 ha", priceFrom: "Từ 8,4 tỷ", type: "Đô Thị Chuẩn Nhật", badge: "Đang mở bán", badgeColor: "indigo", img: "/images/projects/izumi-city.jpg" },
-  { slug: "vinhomes-can-gio", name: "Vinhomes Cần Giờ", dev: "Vinhomes", loc: "Cần Giờ, TP.HCM", scale: "2.870 ha", priceFrom: "Từ 12 tỷ", type: "Siêu Đô Thị Lấn Biển", badge: "Đang bán", badgeColor: "indigo", img: "/images/projects/vinhomes-can-gio.jpg" },
-  { slug: "vinhomes-grand-park", name: "Vinhomes Grand Park", dev: "Vinhomes", loc: "TP Thủ Đức, TP.HCM", scale: "271 ha", priceFrom: "Từ 4,5 tỷ", type: "Siêu Đô Thị Đa Năng", badge: "Đang bàn giao", badgeColor: "emerald", img: "/images/projects/vinhomes-grand-park.jpg" },
-  { slug: "mcc", name: "Masteri Cosmo Central", dev: "Masterise Homes", loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn", priceFrom: "Từ 6,43 tỷ", type: "Căn Hộ Cao Cấp", badge: "Còn hàng", badgeColor: "emerald", img: "/images/projects/masteri-cosmo.jpg" },
+  {
+    slug: "aqua-city",
+    name: "Aqua City Novaland",
+    dev: "Novaland",
+    loc: "Biên Hòa, Đồng Nai",
+    scale: "1.000 ha",
+    priceFrom: "Từ 6,5 tỷ",
+    type: "Đại Đô Thị Sinh Thái",
+    badge: "Đang bàn giao",
+    badgeColor: "emerald",
+    img: "/landing/aqua-city/hero-opt.jpg",
+  },
+  {
+    slug: "the-global-city",
+    name: "The Global City",
+    dev: "Masterise Homes",
+    loc: "An Phú, TP Thủ Đức",
+    scale: "117 ha",
+    priceFrom: "Từ 15 tỷ",
+    type: "Đại Đô Thị Thương Mại",
+    badge: "Đang mở bán",
+    badgeColor: "indigo",
+    img: "/images/projects/the-global-city.webp",
+  },
+  {
+    slug: "izumi-city",
+    name: "Izumi City Nam Long",
+    dev: "Nam Long Group",
+    loc: "Biên Hòa, Đồng Nai",
+    scale: "170 ha",
+    priceFrom: "Từ 8,4 tỷ",
+    type: "Đô Thị Chuẩn Nhật",
+    badge: "Đang mở bán",
+    badgeColor: "indigo",
+    img: "/images/projects/izumi-city.webp",
+  },
+  {
+    slug: "mcc",
+    name: "Masteri Cosmo Central",
+    dev: "Masterise Homes",
+    loc: "Đỗ Xuân Hợp, Thủ Đức",
+    scale: "20 căn",
+    priceFrom: "Từ 6,43 tỷ",
+    type: "Căn Hộ Cao Cấp",
+    badge: "Còn hàng",
+    badgeColor: "emerald",
+    img: "/landing/masteri-cosmo-central/hero.jpg",
+  },
+  {
+    slug: "vinhomes-hoc-mon",
+    name: "Vinhomes Hóc Môn",
+    dev: "Vinhomes",
+    loc: "Hóc Môn, TP.HCM",
+    scale: "200 ha",
+    priceFrom: "Từ 3,5 tỷ",
+    type: "Đô Thị Vệ Tinh",
+    badge: "Sắp mở bán",
+    badgeColor: "amber",
+    img: "/landing/vinhomes-hoc-mon/hero.jpg",
+  },
+  {
+    slug: "legacy-66",
+    name: "Legacy 66",
+    dev: "Trần Anh Group",
+    loc: "Long An",
+    scale: "30 ha",
+    priceFrom: "Từ 2,1 tỷ",
+    type: "Nhà Phố Thương Mại",
+    badge: "Đang mở bán",
+    badgeColor: "indigo",
+    img: "/landing/legacy-66/hero.jpg",
+  },
 ];
 
 const STATS = [
@@ -184,11 +250,19 @@ export function LandingPage({ featuredListings, stats }: Props) {
                 className="group rounded-2xl overflow-hidden transition-all hover:-translate-y-1 hover:shadow-token-lg"
                 style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
               >
-                {/* Image placeholder */}
+                {/* Project image */}
                 <div className="relative h-44 overflow-hidden bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/20">
-                  <div className="absolute inset-0 flex items-center justify-center opacity-20">
-                    <Building2 className="w-20 h-20" style={{ color: "var(--primary-600)" }} />
-                  </div>
+                  <Image
+                    src={proj.img}
+                    alt={proj.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      // Fallback: hide broken image, show gradient behind
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
                   <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold ${BADGE_COLORS[proj.badgeColor]}`}>
                     {proj.badge}
                   </span>

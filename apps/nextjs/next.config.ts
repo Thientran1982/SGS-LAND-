@@ -53,10 +53,13 @@ const nextConfig: NextConfig = {
   // ─── API Proxy Rewrites → Express backend ──────────────
   async rewrites() {
     return [
-      { source: "/api/:path*",      destination: `${BACKEND_URL}/api/:path*` },
-      { source: "/socket.io/:path*",destination: `${BACKEND_URL}/socket.io/:path*` },
-      { source: "/yjs/:path*",      destination: `${BACKEND_URL}/yjs/:path*` },
-      { source: "/uploads/:path*",  destination: `${BACKEND_URL}/uploads/:path*` },
+      { source: "/api/:path*",        destination: `${BACKEND_URL}/api/:path*` },
+      { source: "/socket.io/:path*",  destination: `${BACKEND_URL}/socket.io/:path*` },
+      { source: "/yjs/:path*",        destination: `${BACKEND_URL}/yjs/:path*` },
+      { source: "/uploads/:path*",    destination: `${BACKEND_URL}/uploads/:path*` },
+      // Proxy static media from Express public folder
+      { source: "/images/:path*",     destination: `${BACKEND_URL}/images/:path*` },
+      { source: "/landing/:path*",    destination: `${BACKEND_URL}/landing/:path*` },
     ];
   },
 
