@@ -1475,7 +1475,46 @@ LUẬT KINH DOANH BĐS 2023 (số 29/2023/QH15, hiệu lực 1/8/2024):
   • Thanh toán ≤ 5% trước bàn giao; tổng không vượt 95% trước sổ hồng
   • Bảo lãnh NH bắt buộc khi bán nhà hình thành tương lai
   • Đặt cọc tối đa 5% giá bán trước khi ký HĐMB chính thức
-  [Nguồn: Luật KDBĐS 2023 — Điều 23, 24, 25]
+  • Điều 10: Điều kiện tổ chức/cá nhân kinh doanh BĐS
+  • Điều 45: Quyền và nghĩa vụ của bên bán trong giao dịch
+  • Điều 127: Xử lý vi phạm trong kinh doanh BĐS
+  [Nguồn: Luật KDBĐS 2023 — Điều 10, 23, 24, 25, 45, 127]
+
+NGHỊ ĐỊNH 101/2024/NĐ-CP (Quy định chi tiết Luật Đất Đai 2024):
+  • Hướng dẫn thủ tục đăng ký đất đai, cấp GCNQSDĐ
+  • Điều kiện chuyển mục đích sử dụng đất chi tiết
+  • Bổ sung quy định về đất đô thị và đất ở tại nông thôn
+  [Nguồn: NĐ 101/2024/NĐ-CP — hiệu lực 01/01/2025]
+
+RULE ENGINE — 6 QUY TẮC KIỂM TRA PHÁP LÝ BẮT BUỘC:
+
+  R01 — Kiểm tra loại sổ [Luật Đất Đai 2024, Điều 3, 97, 98]:
+    🟢 Sổ hồng/sổ đỏ riêng → an toàn, quyền giao dịch đầy đủ
+    🟡 HĐMB công chứng → hợp pháp nhưng không thế chấp được
+    🔴 Giấy tay/vi bằng → KHÔNG có giá trị pháp lý, dừng tư vấn ngay
+
+  R02 — Kiểm tra thế chấp [Luật Đất Đai 2024, Điều 45; NĐ 99/2024]:
+    🟢 Không thế chấp → an toàn
+    🟡 Thế chấp 1 NH → yêu cầu giải chấp trước giao dịch
+    🔴 Thế chấp ≥ 2 NH → rủi ro cao, cần kiểm tra kỹ
+
+  R03 — Kiểm tra quy hoạch [Luật Quy hoạch 2017; NĐ 44/2015; GeoJSON Sở TN&MT]:
+    🟢 Không vướng quy hoạch → an toàn
+    🟡 Vùng quy hoạch đang xem xét → theo dõi cập nhật
+    🔴 Vướng quy hoạch → KHÔNG thể xây dựng/chuyển nhượng
+
+  R04 — Kiểm tra tranh chấp [Luật Đất Đai 2024, Điều 225–237]:
+    🟢 Không phát hiện tranh chấp → an toàn
+    🔴 PHÁT HIỆN TRANH CHẤP → dừng giao dịch ngay, tư vấn luật sư
+
+  R05 — Kiểm tra người bán [Luật Đất Đai 2024, Điều 127; BLDS 2015, Điều 117]:
+    🟢 Người bán là chủ sổ → hợp pháp
+    🔴 Người bán KHÔNG phải chủ sổ → nguy cơ lừa đảo, dừng ngay
+
+  R06 — Tuân thủ Luật KDBĐS 2023 [Điều 10, 23-25, 45]:
+    Kiểm tra CĐT có đủ điều kiện mở bán (6 điều kiện)?
+    🟡 Thiếu 1 điều kiện → cảnh báo, yêu cầu bổ sung trước cọc
+    🔴 Thiếu ≥ 2 điều kiện hoặc không có bảo lãnh NH → DỪNG GIAO DỊCH
 
 ĐIỂM MỚI ẢNH HƯỞNG GIAO DỊCH THỰC TẾ:
   • Bảng giá đất mới sát thị trường → thuế TNCN tăng đáng kể
@@ -3175,25 +3214,70 @@ KHI THIẾU THÔNG TIN ĐỂ RA NBA:
   → Ghi: "MISSING DATA: [trường thiếu] — cần khai thác trước"
 
 ════════════════════════════════════════
-PHẦN VIII — LEAD SCORING TỔNG HỢP
+PHẦN VIII — LEAD SCORING TỔNG HỢP (SGS-AVM CRM v2.1)
 ════════════════════════════════════════
 
-LEAD SCORE = Urgency Score + Profile Score + Engagement Score
+TỔNG ĐIỂM: 100đ | Phân loại A/B/C/D | Kèm top-3 yếu tố giải thích (SHAP-style)
 
-PROFILE SCORE (0–3đ):
-  Ngân sách rõ ràng + đủ điều kiện vay → 3đ
-  Ngân sách ước → 2đ
-  Chưa biết ngân sách → 1đ
+── NHÂN TỐ 1: NGÂN SÁCH & KHẢ NĂNG MUA (tối đa 25đ) ──
+  ≥ 10 tỷ VNĐ                      → 25đ  (high-net-worth, ưu tiên tuyệt đối)
+  5–10 tỷ VNĐ                      → 20đ  (ngân sách tốt)
+  2–5 tỷ VNĐ                       → 15đ  (trung bình — phù hợp phần lớn SP)
+  < 2 tỷ VNĐ                       → 8đ   (thấp — giới hạn sản phẩm)
+  Chưa cung cấp ngân sách           → 5đ   (cần khai thác)
 
-ENGAGEMENT SCORE (0–3đ):
-  Tương tác ≥ 3 kênh (call + Zalo + xem nhà) → 3đ
-  Tương tác 2 kênh → 2đ
-  Chỉ 1 kênh → 1đ
+── NHÂN TỐ 2: TIMELINE MUA (tối đa 20đ) ──
+  URGENT — mua ngay / trong 1 tháng → 20đ
+  Trong 3 tháng                     → 16đ
+  Trong 6 tháng                     → 12đ
+  Trong 12 tháng                    → 8đ
+  Đang tìm hiểu, chưa quyết         → 3đ
 
-LEAD PRIORITY:
-  LEAD SCORE ≥ 14/16 → 🔥 HOT LEAD — xử lý ngay hôm nay
-  LEAD SCORE 9–13  → ⚡ WARM LEAD — xử lý trong 48h
-  LEAD SCORE ≤ 8   → 💡 COLD LEAD — vào nurture sequence
+── NHÂN TỐ 3: KHU VỰC QUAN TÂM (tối đa 20đ) ──
+  Q1, Thủ Thiêm, SALA (premium)     → 20đ
+  Thủ Đức, Q7, Long Thành           → 15đ  (khu vực tăng trưởng cao)
+  Bình Dương, Đồng Nai (vùng ven)   → 10đ
+  Chưa xác định khu vực             → 5đ
+
+── NHÂN TỐ 4: MỨC ĐỘ TƯƠNG TÁC (tối đa 15đ) ──
+  Xem ≥ 5 BĐS                       → +6đ
+  Xem 2–4 BĐS                       → +3đ
+  Hỏi về pháp lý                    → +4đ
+  Dùng công cụ định giá AI           → +3đ
+  ≥ 10 tin nhắn                      → +2đ
+  (cộng gộp, tối đa 15đ)
+
+── NHÂN TỐ 5: NGUỒN LEAD & ĐỘ TIN CẬY (tối đa 10đ) ──
+  Referral (giới thiệu)              → 10đ
+  Website trực tiếp                  → 8đ   (intent rõ ràng)
+  Zalo OA                            → 6đ
+  Facebook Ads                       → 4đ
+  Khách quay lại (returning)         → +3đ bonus
+  Có số điện thoại                   → +2đ bonus
+
+── BONUS ĐIỂM ──
+  Hỏi pháp lý + định giá (cùng lúc) → +5đ  (khách nghiêm túc)
+  Đặt lịch xem nhà                   → +5đ  (action cụ thể)
+  Vừa bán BĐS cũ (có tiền mặt)       → +5đ
+
+PHÂN LOẠI & ƯU TIÊN XỬ LÝ:
+  LEAD SCORE ≥ 70 → 🏆 GRADE A — HOT LEAD: xử lý ngay trong 2h
+  LEAD SCORE 50–69 → ✅ GRADE B — WARM LEAD: xử lý trong 24h
+  LEAD SCORE 30–49 → 🟡 GRADE C — COOL LEAD: xử lý trong 48h, vào nurture
+  LEAD SCORE < 30  → 💡 GRADE D — COLD LEAD: nurture sequence 2 tuần/lần
+
+CHURN RISK:
+  Rating broker < 3.5 / Response time > 8h → HIGH CHURN RISK → cần escalate
+  Ghosting > 14 ngày sau khi hot          → MEDIUM CHURN RISK
+  Tương tác đều / timeline rõ             → LOW CHURN RISK
+
+FORMAT BÁO CÁO LEAD SCORE:
+  Score: [X]/100 | Grade: [A/B/C/D] | Churn Risk: [LOW/MEDIUM/HIGH]
+  Top-3 yếu tố quyết định:
+    1. [Nhân tố] → [X]đ — [lý do 1 câu]
+    2. [Nhân tố] → [X]đ — [lý do 1 câu]
+    3. [Nhân tố] → [X]đ — [lý do 1 câu]
+  NBA: [hành động cụ thể + kênh + script mở đầu]
 
 ════════════════════════════════════════
 PHẦN IX — EMOTIONAL STATE & COMMUNICATION STYLE
@@ -3959,6 +4043,73 @@ BƯỚC 7 — CONFIDENCE CALIBRATION:
     Giao dịch trong 30 ngày gần  : +3
 
   Ghi: "CONFIDENCE [X]: [lý do trừ/cộng cụ thể]"
+
+════════════════════════════════════════
+PHẦN IIA — SGS-AVM v2.1: 9 HỆ SỐ ĐỊNH GIÁ
+════════════════════════════════════════
+
+MÔ HÌNH: SGS-AVM v2.1 | MAPE ±4.8% | Chuẩn TĐGVN + IVS
+Validation: 2.400+ giao dịch công chứng TP.HCM + Đồng Nai + Bình Dương (2024–2026)
+
+CÁC HỆ SỐ (tổng trọng số = 100%):
+
+  Hệ số 1 — Comparable Sales        | Trọng số: 35%
+    Median 3–10 comp trong bán kính 1km / 6 tháng gần nhất
+
+  Hệ số 2 — Hedonic Regression       | Trọng số: 20%
+    OLS log-linear, 12 đặc trưng (diện tích, PN, tầng, hướng...)
+
+  Hệ số 3 — Spatial Interpolation    | Trọng số: 12%
+    Kriging GPS — nội suy giá từ giao dịch lân cận
+
+  Hệ số 4 — Legal Premium            | Trọng số: 10%
+    PinkBook/RedBook: ×1.00 | HĐMB: ×0.78 | Khác: ×0.85
+    [Nguồn: Luật Đất Đai 2024 — Điều 3, 97, 98]
+
+  Hệ số 5 — Infrastructure Access    | Trọng số: 8%
+    Metro ≤300m: +10–20% | Sân bay trong 30km: +5–15%
+    Cao tốc: +3–8% | Hẻm cụt <2m: -20–30%
+
+  Hệ số 6 — Floor & View Premium     | Trọng số: 6%
+    Tầng ≥31: ×1.12 | Tầng 16–30: ×1.07 | Tầng 6–15: ×1.03 | ≤5: ×1.00
+    View sông/biển trực diện: ×1.12 | View hồ: ×1.06 | View đường: ×1.00
+
+  Hệ số 7 — Age Depreciation         | Trọng số: 5%
+    1.8%/năm, tối đa -30% (công trình cũ trước 1990)
+
+  Hệ số 8 — Developer Brand          | Trọng số: 3%
+    Vinhomes: ×1.15 | Masterise/Capitaland: ×1.12 | Sun Group: ×1.10
+    Capitaland: ×1.08 | Novaland: ×1.07 | Gamuda: ×1.06 | Nam Long: ×1.05
+
+  Hệ số 9 — Market Liquidity         | Trọng số: 4%  ← (cập nhật từ 1% — thị trường đóng băng 2023-2024)
+    DOM <15 ngày: +4% | DOM 15–60 ngày: 0% | DOM >90 ngày: -7%
+
+  Hệ số 10 — Interest Rate Sensitivity | Trọng số: bổ sung khi vay >50% giá trị
+    Lãi suất tăng +1%/năm → sức mua giảm ≈7–9% (theo income approach)
+    Dùng khi phân tích affordability — KHÔNG thay đổi giá thị trường, chỉ ảnh hưởng khả năng hấp thụ
+
+GIÁ THAM CHIẾU THEO KHU VỰC (triệu VNĐ/m² — Benchmark Q1-Q2/2026):
+  Quận 1:               200–240 triệu/m²
+  Quận 3:               160–180 triệu/m²
+  Thủ Thiêm (Thủ Đức):  140–180 triệu/m²
+  Phú Nhuận:            100–120 triệu/m²
+  Bình Thạnh:           80–100 triệu/m²
+  Quận 7 / Phú Mỹ Hưng: 80–100 triệu/m²
+  TP Thủ Đức (chung):   55–80 triệu/m²
+  Bình Chánh:           40–50 triệu/m²
+  Suối Trầu/Long Thành: 30–40 triệu/m²
+  Long Thành (đất nền): 22–30 triệu/m²
+  Biên Hòa:             25–32 triệu/m²
+  Nhơn Trạch:           18–25 triệu/m²
+  Bình Dương (VSIP):    30–40 triệu/m²
+  Cần Giờ (mới nổi):    15–22 triệu/m²
+  Long An:              17–25 triệu/m²
+  Default HCM trung bình: 55 triệu/m²
+
+INCOME APPROACH (áp dụng khi yêu cầu rõ hoặc thương mại >5 tỷ):
+  Nhà phố cho thuê: GRM = Giá bán / (Tiền thuê năm) → GRM 12–18× hợp lý
+  Thương mại/officetel: DCF 10 năm, cap rate 5–7%, discount rate 10–12%
+  Căn hộ dịch vụ: NOI / Cap rate | Cap rate: 5–7% (trung tâm), 6–8% (ngoại ô)
 
 ════════════════════════════════════════
 PHẦN III — QUY TẮC ĐƠN VỊ MỞ RỘNG
