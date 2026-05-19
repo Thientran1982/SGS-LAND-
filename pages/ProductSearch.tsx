@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
-import { ExitIntentPopup } from '../components/ExitIntentPopup';
+import { ExitIntentPopup, ExitIntentHandle } from '../components/ExitIntentPopup';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
 import { db } from '../services/dbApi';
@@ -117,7 +117,8 @@ export const ProductSearch: React.FC = () => {
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [fetchError, setFetchError] = useState(false);
-    const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const toastTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const exitIntentRef   = useRef<ExitIntentHandle>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         try { return (localStorage.getItem('sgs_public_view') as ViewMode) || 'GRID'; } catch { return 'GRID'; }
@@ -245,27 +246,22 @@ export const ProductSearch: React.FC = () => {
             return stack;
         });
     }, []);
-    // Use pushState + synthetic popstate instead of hash navigation so that
-    // ExitIntentPopup's Signal 7 (pushState intercept) can block the navigation
-    // and show the popup before the user actually leaves the page.
+    // Use the imperative ref to trigger ExitIntentPopup before navigating.
+    // trigger() returns true (intercepted) or false (suppressed/already fired).
+    // When intercepted: popup shows and will call releaseNavigation() on dismiss.
+    // When not intercepted: navigate immediately.
+    const navigate = (dest: string) => {
+        window.history.pushState(null, '', dest);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+    };
     const handleHome = () => {
-        const prev = window.location.pathname;
-        window.history.pushState(null, '', `/${ROUTES.LANDING}`);
-        // Only notify the router if Signal 7 let the navigation through.
-        // If it was intercepted (URL unchanged), the exit-intent popup will show;
-        // dispatching popstate in that case would cause a same-route re-render
-        // that batches with setTriggered(true) and prevents the effect from firing.
-        if (window.location.pathname !== prev) {
-            window.dispatchEvent(new PopStateEvent('popstate'));
-        }
+        const intercepted = exitIntentRef.current?.trigger(`/${ROUTES.LANDING}`);
+        if (!intercepted) navigate(`/${ROUTES.LANDING}`);
     };
     const handleLogin = () => {
         const dest = currentUser ? `/${ROUTES.DASHBOARD}` : `/${ROUTES.LOGIN}`;
-        const prev = window.location.pathname;
-        window.history.pushState(null, '', dest);
-        if (window.location.pathname !== prev) {
-            window.dispatchEvent(new PopStateEvent('popstate'));
-        }
+        const intercepted = exitIntentRef.current?.trigger(dest);
+        if (!intercepted) navigate(dest);
     };
     // SEO-friendly URL: /bds/<slug>-<uuid>. Slug is best-effort from the
     // listing title/code/location so Googlebot indexes a human-readable URL;
@@ -803,6 +799,7 @@ export const ProductSearch: React.FC = () => {
 
             {/* Exit-intent popup — triggered when visitor moves to leave */}
             <ExitIntentPopup
+                ref={exitIntentRef}
                 context={{
                     type: 'search',
                     query: debouncedQuery || undefined,

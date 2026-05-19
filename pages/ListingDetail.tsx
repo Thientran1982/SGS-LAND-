@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ExitIntentPopup } from '../components/ExitIntentPopup';
+import { ExitIntentPopup, ExitIntentHandle } from '../components/ExitIntentPopup';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
 import { db } from '../services/dbApi';
@@ -1171,6 +1171,7 @@ export const ListingDetail: React.FC = () => {
     const [showPhone, setShowPhone] = useState(false);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+    const exitIntentRef = useRef<ExitIntentHandle>(null);
     const canViewInternalInfo = useMemo(() => {
         if (!currentUser || !listing) return false;        
         // Admins and Team Leads
@@ -1295,28 +1296,21 @@ export const ListingDetail: React.FC = () => {
     useEffect(() => {
         fetchListingData();
     }, [fetchListingData]);
-    const handleBack = useCallback(() => {
-        // SMART CONTEXT AWARE BACK BUTTON
-        // If user has a session, they are an Agent/Admin -> Go to Inventory
-        // If no session, they are a Public Guest -> Go to Marketplace Search
-        // Use pushState so ExitIntentPopup's Signal 7 can intercept.
-        // Only dispatch popstate if Signal 7 let the navigation through
-        // (URL changed); if blocked (URL unchanged) the popup will render
-        // naturally without the extra re-render that prevents the effect.
-        const dest = currentUser ? `/${ROUTES.INVENTORY}` : `/${ROUTES.SEARCH}`;
-        const prev = window.location.pathname;
+    const navTo = (dest: string) => {
         window.history.pushState(null, '', dest);
-        if (window.location.pathname !== prev) {
-            window.dispatchEvent(new PopStateEvent('popstate'));
-        }
+        window.dispatchEvent(new PopStateEvent('popstate'));
+    };
+    const handleBack = useCallback(() => {
+        // Smart context-aware: agents go to Inventory, public guests go to Marketplace.
+        // Try to intercept with exit-intent popup first.
+        const dest = currentUser ? `/${ROUTES.INVENTORY}` : `/${ROUTES.SEARCH}`;
+        const intercepted = exitIntentRef.current?.trigger(dest);
+        if (!intercepted) navTo(dest);
     }, [currentUser]);
     const handleLogin = () => {
         const dest = currentUser ? `/${ROUTES.DASHBOARD}` : `/${ROUTES.LOGIN}`;
-        const prev = window.location.pathname;
-        window.history.pushState(null, '', dest);
-        if (window.location.pathname !== prev) {
-            window.dispatchEvent(new PopStateEvent('popstate'));
-        }
+        const intercepted = exitIntentRef.current?.trigger(dest);
+        if (!intercepted) navTo(dest);
     };
     const handleShare = () => {
         setShareOpen(true);
@@ -2138,6 +2132,7 @@ export const ListingDetail: React.FC = () => {
 
         {/* Exit-intent popup — triggered when visitor moves to leave */}
         <ExitIntentPopup
+            ref={exitIntentRef}
             context={{
                 type: 'listing',
                 title: listing?.title,

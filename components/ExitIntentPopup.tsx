@@ -4,10 +4,15 @@
  * Giữ chân khách truy cập trước khi họ rời trang marketplace.
  *
  * Signals phát hiện ý định thoát:
- *   1. mouseleave trên document khi clientY < 10px (chuột lên thanh tab/nút đóng)
- *   2. Cuộn nhanh lên (scroll velocity > ngưỡng) — dấu hiệu "đã xong"
- *   3. visibilitychange (chuyển tab — mobile + desktop)
- *   4. Timer 45s sau lần đầu vào trang (cho người dùng đã đọc lâu mà chưa hành động)
+ *   1a. mousemove leading detector — top 60px zone, movementY < -3
+ *   1b. mouseleave backup — clientY < 150px
+ *   2.  Rapid upward scroll velocity
+ *   3.  visibilitychange (chuyển tab — mobile + desktop)
+ *   4.  Timer 45s sau lần đầu vào trang
+ *   5.  Browser back button (popstate sentinel pattern)
+ *   6.  pagehide (tab close / hard navigation)
+ *   IMPERATIVE: trigger(url) — called directly from in-app back buttons
+ *               via the forwarded ref; no pushState monkey-patching needed.
  *
  * Chống spam:
  *   - Không hiện nếu đã dismiss trong 7 ngày qua
@@ -16,7 +21,10 @@
  *   - Mỗi page load chỉ kích hoạt 1 lần
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, {
+  useEffect, useRef, useState, useCallback,
+  forwardRef, useImperativeHandle,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -29,8 +37,6 @@ const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;  // 7 days
 const SUBMIT_TTL_MS  = 24 * 60 * 60 * 1000;        // 24 hours
 const IDLE_TRIGGER_MS        = 45_000;              // 45 s on page
 const SCROLL_VEL_THRESHOLD   = 12;                  // px/frame upward
-const MOUSE_Y_THRESHOLD      = 20;                  // px from top — used by mousemove leading detector
-const MOUSE_MOVE_Y_UP        = -3;                  // movementY < this = moving upward
 
 // ── Context types ─────────────────────────────────────────────────────────────
 
@@ -38,6 +44,17 @@ export type ExitIntentContext =
   | { type: 'listing'; title?: string | null; location?: string | null; price?: number | null }
   | { type: 'search';  query?: string; location?: string; propertyType?: string }
   | { type: 'generic' };
+
+/** Imperative handle exposed via forwardRef — call trigger() from back buttons. */
+export interface ExitIntentHandle {
+  /**
+   * Try to intercept an in-app navigation.
+   * @param pendingUrl  The URL to navigate to after the user dismisses/submits.
+   * @returns           true if the popup was shown (navigation blocked),
+   *                    false if suppressed / already fired (caller should navigate normally).
+   */
+  trigger: (pendingUrl: string) => boolean;
+}
 
 interface Props {
   context?:  ExitIntentContext;
@@ -63,18 +80,11 @@ function formatPrice(price: number): string {
   return price.toLocaleString('vi-VN');
 }
 
-// ── Inline SVG icons (no external dep needed) ─────────────────────────────────
+// ── Inline SVG icons ──────────────────────────────────────────────────────────
 
 const IcoZap = () => (
   <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-  </svg>
-);
-
-const IcoTrendingUp = () => (
-  <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M23 6l-9.5 9.5-5-5L1 18" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M17 6h6v6" />
   </svg>
 );
 
@@ -99,51 +109,28 @@ const IcoSpinner = () => (
   </svg>
 );
 
-// ── useExitIntent hook ────────────────────────────────────────────────────────
-
+// ── usePassiveExitSignals hook ────────────────────────────────────────────────
 /**
- * Returns [triggered, releaseNavigation].
- *   triggered          — becomes true when an exit signal fires
- *   releaseNavigation  — call this from the dismiss/submit handler to execute
- *                        any navigation that was blocked by Signal 7
+ * Registers passive exit-intent signals (mouse, scroll, visibility, idle, popstate).
+ * Calls `fire()` when any signal triggers.
+ * Does NOT include Signal 7 (pushState intercept) — that is handled imperatively
+ * via the ExitIntentHandle.trigger() ref method in the component.
  */
-function useExitIntent(delayMs = IDLE_TRIGGER_MS): [boolean, () => void] {
-  const [triggered, setTriggered] = useState(false);
-  const firedRef       = useRef(false);
-  const pendingNavRef  = useRef<(() => void) | null>(null);
-
-  const fire = useCallback(() => {
-    if (firedRef.current || isSuppressed()) return;
-    firedRef.current = true;
-    setTriggered(true);
-  }, []);
-
-  // Call from the popup's dismiss/submit handler so any blocked pushState
-  // navigation is completed after the user has interacted with the popup.
-  // After executing the stored pushState we dispatch a synthetic popstate so
-  // the app's custom router (which listens for popstate to call setRoute)
-  // picks up the new URL and actually renders the target page.
-  const releaseNavigation = useCallback(() => {
-    const nav = pendingNavRef.current;
-    pendingNavRef.current = null;
-    if (nav) {
-      nav(); // execute the stored origPushState — URL changes
-      window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
-    }
-  }, []);
-
+function usePassiveExitSignals(
+  fire: () => void,
+  firedRef: React.MutableRefObject<boolean>,
+  delayMs: number,
+) {
   useEffect(() => {
     if (isSuppressed()) return;
 
-    // Signal 1a: mousemove leading detector — fires BEFORE the cursor exits the
-    // viewport. Zone is top 60px, movementY < -1 filters micro-jitter.
+    // Signal 1a: mousemove leading detector
     const onMouseMove = (e: MouseEvent) => {
       if (e.clientY < 60 && e.movementY < -1) fire();
     };
     document.addEventListener('mousemove', onMouseMove);
 
-    // Signal 1b: mouseleave backup — 150px threshold catches fast swipes where
-    // the last reported clientY before exit can be 80-120px.
+    // Signal 1b: mouseleave backup
     const onMouseLeave = (e: MouseEvent) => {
       if (e.clientY < 150) fire();
     };
@@ -164,7 +151,7 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): [boolean, () => void] {
     };
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    // Signal 3: Tab visibility change (mobile-friendly)
+    // Signal 3: Tab visibility change
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') fire();
     };
@@ -173,49 +160,29 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): [boolean, () => void] {
     // Signal 4: Idle timer
     const idleTimer = setTimeout(fire, delayMs);
 
-    // Signal 5: Browser back button via popstate — "intercept & restore" pattern.
-    // Push sentinel so first back-click pops it (URL unchanged, custom router
-    // does nothing). Re-push sentinel synchronously in handler to keep the user
-    // on the page while the popup is visible.
+    // Signal 5: Browser back button — sentinel pattern.
+    // Push a sentinel history entry so the first back-click pops it without
+    // changing the visible URL. The popstate listener fires, re-arms the sentinel
+    // (while popup hasn't shown), and triggers fire().
     const sentinelPush = () => {
-      try { window.history.pushState({ __exitIntentSentinel: true }, '', window.location.pathname + window.location.search); } catch {}
+      try {
+        window.history.pushState(
+          { __exitIntentSentinel: true },
+          '',
+          window.location.pathname + window.location.search,
+        );
+      } catch {}
     };
     sentinelPush();
     const onPopState = () => {
-      if (!firedRef.current && !isSuppressed()) sentinelPush(); // re-arm
+      if (!firedRef.current && !isSuppressed()) sentinelPush();
       fire();
     };
     window.addEventListener('popstate', onPopState);
 
-    // Signal 6: pagehide — actual tab close / hard navigation
+    // Signal 6: pagehide (tab close / hard navigation)
     const onPageHide = () => fire();
     window.addEventListener('pagehide', onPageHide);
-
-    // Signal 7: pushState intercept — the app's navigate() calls pushState
-    // directly without dispatching popstate, so Signal 5 alone misses in-app
-    // back-navigation (e.g. clicking a ← Back link, logo, or nav item).
-    // We wrap pushState: if the base route changes AND popup hasn't fired yet,
-    // save the navigation as pending and show the popup instead of navigating.
-    // releaseNavigation() (called on dismiss/submit) executes the saved call.
-    const origPushState = window.history.pushState as typeof window.history.pushState;
-    window.history.pushState = function (
-      state: unknown, title: string, url?: string | URL | null,
-    ) {
-      // Never intercept our own sentinel pushes
-      if (state && (state as Record<string, unknown>).__exitIntentSentinel) {
-        return origPushState.call(window.history, state, title, url);
-      }
-      const nextPath    = url ? String(url) : window.location.pathname;
-      const currentBase = window.location.pathname.split('/').filter(Boolean)[0] ?? '';
-      const nextBase    = nextPath.replace(/^\//, '').split('/')[0] ?? '';
-      // Intercept only when navigating to a DIFFERENT section (base route)
-      if (nextBase !== currentBase && !firedRef.current && !isSuppressed()) {
-        pendingNavRef.current = () => origPushState.call(window.history, state, title, url);
-        fire();
-        return; // block navigation until popup is dismissed
-      }
-      return origPushState.call(window.history, state, title, url);
-    } as typeof window.history.pushState;
 
     return () => {
       document.removeEventListener('mousemove', onMouseMove);
@@ -225,12 +192,8 @@ function useExitIntent(delayMs = IDLE_TRIGGER_MS): [boolean, () => void] {
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('pagehide', onPageHide);
       clearTimeout(idleTimer);
-      // Restore the original pushState so it doesn't persist after unmount
-      window.history.pushState = origPushState;
     };
-  }, [fire, delayMs]);
-
-  return [triggered, releaseNavigation];
+  }, [fire, firedRef, delayMs]);
 }
 
 // ── BenefitRow ────────────────────────────────────────────────────────────────
@@ -246,238 +209,255 @@ function BenefitRow({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export const ExitIntentPopup: React.FC<Props> = ({ context = { type: 'generic' }, delayMs }) => {
-  const [triggered, releaseNavigation] = useExitIntent(delayMs);
-  const [visible,    setVisible]    = useState(false);
-  const [name,       setName]       = useState('');
-  const [phone,      setPhone]      = useState('');
-  const [email,      setEmail]      = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [success,    setSuccess]    = useState(false);
-  const [error,      setError]      = useState('');
-  const nameRef = useRef<HTMLInputElement>(null);
+export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
+  ({ context = { type: 'generic' }, delayMs = IDLE_TRIGGER_MS }, ref) => {
+    // Whether the popup has already been triggered this session
+    const firedRef      = useRef(false);
+    // URL to navigate to after the user dismisses/submits (set by trigger())
+    const pendingNavRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (triggered && !isSuppressed()) setVisible(true);
-  }, [triggered]);
+    const [visible,    setVisible]    = useState(false);
+    const [name,       setName]       = useState('');
+    const [phone,      setPhone]      = useState('');
+    const [email,      setEmail]      = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [success,    setSuccess]    = useState(false);
+    const [error,      setError]      = useState('');
+    const nameRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (visible) setTimeout(() => nameRef.current?.focus(), 350);
-  }, [visible]);
+    // Core fire() — marks as fired and shows the popup
+    const fire = useCallback(() => {
+      if (firedRef.current || isSuppressed()) return;
+      firedRef.current = true;
+      setVisible(true);
+    }, []);
 
-  const handleDismiss = useCallback(() => {
-    setVisible(false);
-    try { localStorage.setItem(DISMISSED_KEY, String(Date.now())); } catch {}
-    // Complete any navigation that was blocked by Signal 7 (pushState intercept)
-    releaseNavigation();
-  }, [releaseNavigation]);
+    // Passive signals (mouse, scroll, idle, popstate, pagehide)
+    usePassiveExitSignals(fire, firedRef, delayMs);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phone.trim() || phone.trim().length < 9) {
-      setError('Vui lòng nhập số điện thoại hợp lệ');
-      return;
-    }
-    setSubmitting(true);
-    setError('');
-    try {
-      let notes = 'Từ Exit Intent Popup';
-      if (context.type === 'listing' && context.title) {
-        notes = `Quan tâm: ${context.title}${context.location ? ` — ${context.location}` : ''}${context.price ? ` — ${formatPrice(context.price)}` : ''}`;
-      } else if (context.type === 'search') {
-        const parts = [context.query, context.location, context.propertyType].filter(Boolean);
-        if (parts.length) notes = `Tìm kiếm: ${parts.join(', ')}`;
+    // Imperative handle — called by back-button click handlers in page components
+    useImperativeHandle(ref, () => ({
+      trigger: (pendingUrl: string): boolean => {
+        if (firedRef.current || isSuppressed()) return false;
+        pendingNavRef.current = pendingUrl;
+        fire();
+        return true;
+      },
+    }), [fire]);
+
+    useEffect(() => {
+      if (visible) setTimeout(() => nameRef.current?.focus(), 350);
+    }, [visible]);
+
+    // Execute any pending navigation stored by trigger() or Signal 5
+    const releaseNavigation = useCallback(() => {
+      const url = pendingNavRef.current;
+      pendingNavRef.current = null;
+      if (url) {
+        window.history.pushState(null, '', url);
+        window.dispatchEvent(new PopStateEvent('popstate'));
       }
+    }, []);
 
-      const res = await fetch('/api/public/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name:   name.trim() || 'Khách hàng',
-          phone:  phone.trim(),
-          email:  email.trim() || undefined,
-          source: 'EXIT_INTENT',
-          notes,
-        }),
-      });
-      if (!res.ok) throw new Error('Server error');
+    const handleDismiss = useCallback(() => {
+      setVisible(false);
+      try { localStorage.setItem(DISMISSED_KEY, String(Date.now())); } catch {}
+      releaseNavigation();
+    }, [releaseNavigation]);
 
-      const data = await res.json();
-      if (data?.id) {
-        fetch('/api/followup/schedule', {
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!phone.trim() || phone.trim().length < 9) {
+        setError('Vui lòng nhập số điện thoại hợp lệ');
+        return;
+      }
+      setSubmitting(true);
+      setError('');
+      try {
+        let notes = 'Từ Exit Intent Popup';
+        if (context.type === 'listing' && context.title) {
+          notes = `Quan tâm: ${context.title}${context.location ? ` — ${context.location}` : ''}${context.price ? ` — ${formatPrice(context.price)}` : ''}`;
+        } else if (context.type === 'search') {
+          const parts = [context.query, context.location, context.propertyType].filter(Boolean);
+          if (parts.length) notes = `Tìm kiếm: ${parts.join(', ')}`;
+        }
+
+        const res = await fetch('/api/public/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            leadId:    data.id,
-            leadName:  name.trim() || 'Khách hàng',
-            leadPhone: phone.trim(),
-            source:    'EXIT_INTENT',
+            name:   name.trim() || 'Khách hàng',
+            phone:  phone.trim(),
+            email:  email.trim() || undefined,
+            source: 'EXIT_INTENT',
+            notes,
           }),
-        }).catch(() => {});
+        });
+        if (!res.ok) throw new Error('Server error');
+
+        const data = await res.json();
+        if (data?.id) {
+          fetch('/api/followup/schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              leadId:    data.id,
+              leadName:  name.trim() || 'Khách hàng',
+              leadPhone: phone.trim(),
+              source:    'EXIT_INTENT',
+            }),
+          }).catch(() => {});
+        }
+
+        try { localStorage.setItem(SUBMITTED_KEY, String(Date.now())); } catch {}
+        setSuccess(true);
+        setTimeout(() => { setVisible(false); releaseNavigation(); }, 3000);
+      } catch {
+        setError('Có lỗi xảy ra, vui lòng thử lại sau.');
+      } finally {
+        setSubmitting(false);
       }
-
-      try { localStorage.setItem(SUBMITTED_KEY, String(Date.now())); } catch {}
-      setSuccess(true);
-      // After showing thank-you for 3s, close popup and complete any blocked navigation
-      setTimeout(() => { setVisible(false); releaseNavigation(); }, 3000);
-    } catch {
-      setError('Có lỗi xảy ra, vui lòng thử lại sau.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const { headline, subtext } = (() => {
-    if (context.type === 'listing' && context.title) {
-      return {
-        headline: 'Khoan đã! Căn này đang được nhiều người hỏi',
-        subtext:  context.title + (context.price ? ` · ${formatPrice(context.price)}` : ''),
-      };
-    }
-    if (context.type === 'search' && (context.query || context.location)) {
-      const desc = [context.query, context.location].filter(Boolean).join(' tại ');
-      return {
-        headline: 'Chưa tìm được gì ưng ý?',
-        subtext:  `Để lại số điện thoại — chuyên gia sẽ tìm BĐS ${desc} phù hợp nhất cho bạn`,
-      };
-    }
-    return {
-      headline: 'Chờ một chút!',
-      subtext:  'Để lại thông tin — đội tư vấn SGS LAND sẽ gửi cho bạn những BĐS hot nhất hôm nay',
     };
-  })();
 
-  if (!visible) return null;
+    const { headline, subtext } = (() => {
+      if (context.type === 'listing' && context.title) {
+        return {
+          headline: 'Khoan đã! Căn này đang được nhiều người hỏi',
+          subtext:  context.title + (context.price ? ` · ${formatPrice(context.price)}` : ''),
+        };
+      }
+      if (context.type === 'search' && (context.query || context.location)) {
+        const desc = [context.query, context.location].filter(Boolean).join(' tại ');
+        return {
+          headline: 'Chưa tìm được gì ưng ý?',
+          subtext:  `Để lại số điện thoại — chuyên gia sẽ tìm BĐS ${desc} phù hợp nhất cho bạn`,
+        };
+      }
+      return {
+        headline: 'Chờ một chút!',
+        subtext:  'Để lại thông tin — đội tư vấn SGS LAND sẽ gửi cho bạn những BĐS hot nhất hôm nay',
+      };
+    })();
 
-  return createPortal(
-    <AnimatePresence>
-      {visible && (
-        /*
-          Floating card — bottom-right corner, fixed 320 px wide.
-          Never full-width, never a sheet. Fits in any viewport ≥ 300 px tall.
-          Slides up from below on entry; no backdrop so page stays readable.
-        */
-        <motion.div
-          className="fixed z-[200] bottom-4 right-4 w-80 rounded-2xl shadow-2xl overflow-hidden"
-          style={{ boxShadow: '0 8px 40px 0 rgba(99,102,241,0.25), 0 2px 12px 0 rgba(0,0,0,0.12)' }}
-          initial={{ y: 60, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 60, opacity: 0 }}
-          transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-        >
-          {/* ── Gradient header ── */}
-          <div className="relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-4 pt-4 pb-5">
-            {/* Close */}
-            <button
-              onClick={handleDismiss}
-              className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/35 transition-colors"
-              aria-label="Đóng"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    if (!visible) return null;
 
-            {/* Title row */}
-            <div className="flex items-center gap-2.5 mb-1 pr-8">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-              <h2 className="text-sm font-extrabold text-white leading-snug">{headline}</h2>
-            </div>
-            <p className="text-xs text-indigo-100 leading-snug line-clamp-2 pl-[1.875rem]">{subtext}</p>
-          </div>
-
-          {/* ── White body ── */}
-          <div className="bg-white px-4 pt-3 pb-4">
-
-            {/* 2 compact benefit rows */}
-            <div className="flex flex-col gap-1.5 mb-3">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <IcoZap /><span>Tư vấn trong 30 phút, định giá miễn phí</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <IcoShield /><span>Thông tin bảo mật, không spam</span>
-              </div>
-            </div>
-
-            {!success ? (
-              <form onSubmit={handleSubmit} className="space-y-2">
-                {/* Name — optional */}
-                <input
-                  ref={nameRef}
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Họ tên (không bắt buộc)"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
-                  style={{ fontSize: '16px' }}
-                />
-
-                {/* Phone */}
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
-                  placeholder="Số điện thoại *"
-                  required
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
-                  style={{ fontSize: '16px' }}
-                />
-
-                {/* Email — optional, enables confirmation email */}
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Email (để nhận xác nhận)"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
-                  style={{ fontSize: '16px' }}
-                />
-
-                {error && (
-                  <p className="text-xs text-red-500 font-medium">{error}</p>
-                )}
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={submitting || !phone.trim()}
-                  className="w-full py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {submitting ? <><IcoSpinner />Đang gửi...</> : <><IcoSend />Nhận tư vấn ngay</>}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDismiss}
-                  className="w-full py-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  Không cảm ơn
-                </button>
-              </form>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-4"
+    return createPortal(
+      <AnimatePresence>
+        {visible && (
+          <motion.div
+            className="fixed z-[200] bottom-4 right-4 w-80 rounded-2xl shadow-2xl overflow-hidden"
+            style={{ boxShadow: '0 8px 40px 0 rgba(99,102,241,0.25), 0 2px 12px 0 rgba(0,0,0,0.12)' }}
+            initial={{ y: 60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 60, opacity: 0 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+          >
+            {/* ── Gradient header ── */}
+            <div className="relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-4 pt-4 pb-5">
+              <button
+                onClick={handleDismiss}
+                className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/35 transition-colors"
+                aria-label="Đóng"
               >
-                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              <div className="flex items-center gap-2.5 mb-1 pr-8">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
                 </div>
-                <p className="text-sm font-bold text-slate-800 mb-1">Đã nhận được thông tin!</p>
-                <p className="text-xs text-slate-500">Chuyên gia SGS LAND sẽ liên hệ sớm nhất.</p>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>,
-    document.body,
-  );
-};
+                <h2 className="text-sm font-extrabold text-white leading-snug">{headline}</h2>
+              </div>
+              <p className="text-xs text-indigo-100 leading-snug line-clamp-2 pl-[1.875rem]">{subtext}</p>
+            </div>
+
+            {/* ── White body ── */}
+            <div className="bg-white px-4 pt-3 pb-4">
+              <div className="flex flex-col gap-1.5 mb-3">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <IcoZap /><span>Tư vấn trong 30 phút, định giá miễn phí</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <IcoShield /><span>Thông tin bảo mật, không spam</span>
+                </div>
+              </div>
+
+              {!success ? (
+                <form onSubmit={handleSubmit} className="space-y-2">
+                  <input
+                    ref={nameRef}
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Họ tên (không bắt buộc)"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    style={{ fontSize: '16px' }}
+                  />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
+                    placeholder="Số điện thoại *"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    style={{ fontSize: '16px' }}
+                  />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="Email (để nhận xác nhận)"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    style={{ fontSize: '16px' }}
+                  />
+
+                  {error && (
+                    <p className="text-xs text-red-500 font-medium">{error}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitting || !phone.trim()}
+                    className="w-full py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {submitting ? <><IcoSpinner />Đang gửi...</> : <><IcoSend />Nhận tư vấn ngay</>}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDismiss}
+                    className="w-full py-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    Không cảm ơn
+                  </button>
+                </form>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-4"
+                >
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-bold text-slate-800 mb-1">Đã nhận được thông tin!</p>
+                  <p className="text-xs text-slate-500">Chuyên gia SGS LAND sẽ liên hệ sớm nhất.</p>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body,
+    );
+  },
+);
+
+ExitIntentPopup.displayName = 'ExitIntentPopup';
