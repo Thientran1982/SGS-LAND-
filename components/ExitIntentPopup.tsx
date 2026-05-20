@@ -85,7 +85,8 @@ function isSuppressed(): boolean {
     if (dismissed && Date.now() - Number(dismissed) < DISMISS_TTL_MS) return true;
     const submitted = localStorage.getItem(SUBMITTED_KEY);
     if (submitted && Date.now() - Number(submitted) < SUBMIT_TTL_MS)  return true;
-    if (localStorage.getItem(LEAD_KEY)) return true;
+    // Note: LEAD_KEY (live chat session) is intentionally NOT checked here.
+    // A user who opened live chat may still benefit from seeing the exit-intent popup.
   } catch {}
   return false;
 }
@@ -138,7 +139,37 @@ function usePassiveExitSignals(
   delayMs: number,
 ) {
   useEffect(() => {
-    if (isSuppressed()) return;
+    // Signal 5: Browser back button — sentinel pattern.
+    // ALWAYS push the sentinel regardless of suppression so the back button is
+    // intercepted even for users who previously dismissed the popup or submitted.
+    // App.tsx handlePopState skips setRoute() when URL hasn't changed, giving
+    // ExitIntentPopup exclusive control over same-URL popstate events.
+    const sentinelPush = () => {
+      try {
+        window.history.pushState(
+          { __exitIntentSentinel: true },
+          '',
+          window.location.pathname + window.location.search,
+        );
+      } catch {}
+    };
+    sentinelPush();
+
+    const onPopState = () => {
+      if (isSuppressed()) {
+        // User already dismissed/submitted — let the next back-click navigate
+        // naturally by NOT re-arming the sentinel and NOT showing the popup.
+        return;
+      }
+      if (!firedRef.current) sentinelPush(); // re-arm while popup hasn't shown yet
+      fire();
+    };
+    window.addEventListener('popstate', onPopState);
+
+    // Other passive signals only make sense when not suppressed
+    if (isSuppressed()) {
+      return () => window.removeEventListener('popstate', onPopState);
+    }
 
     // Signal 1a: mousemove leading detector
     const onMouseMove = (e: MouseEvent) => {
@@ -175,26 +206,6 @@ function usePassiveExitSignals(
 
     // Signal 4: Idle timer
     const idleTimer = setTimeout(fire, delayMs);
-
-    // Signal 5: Browser back button — sentinel pattern.
-    // Push a sentinel history entry so the first back-click pops it without
-    // changing the visible URL. The popstate listener fires, re-arms the sentinel
-    // (while popup hasn't shown), and triggers fire().
-    const sentinelPush = () => {
-      try {
-        window.history.pushState(
-          { __exitIntentSentinel: true },
-          '',
-          window.location.pathname + window.location.search,
-        );
-      } catch {}
-    };
-    sentinelPush();
-    const onPopState = () => {
-      if (!firedRef.current && !isSuppressed()) sentinelPush();
-      fire();
-    };
-    window.addEventListener('popstate', onPopState);
 
     // Signal 6: pagehide (tab close / hard navigation)
     const onPageHide = () => fire();

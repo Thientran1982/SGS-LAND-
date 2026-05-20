@@ -406,6 +406,11 @@ const useRouter = () => {
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Track the last URL we intentionally navigated to so handlePopState can
+    // distinguish real browser-back events (URL changes) from ExitIntent sentinel
+    // pops (same URL — ExitIntentPopup handles those itself).
+    const lastNavPathRef = useRef(window.location.pathname + window.location.search);
+
     useEffect(() => {
         // Intercept legacy hash navigation (window.location.hash = '#/xxx') and convert to clean URLs
         const handleHashChange = () => {
@@ -415,11 +420,20 @@ const useRouter = () => {
                 const sepIdx = after.indexOf('?');
                 const pathPart = sepIdx >= 0 ? after.slice(0, sepIdx) : after;
                 const queryPart = sepIdx >= 0 ? after.slice(sepIdx) : '';
-                window.history.replaceState(null, '', '/' + pathPart + queryPart);
+                const newPath = '/' + pathPart + queryPart;
+                window.history.replaceState(null, '', newPath);
+                lastNavPathRef.current = newPath;
                 setRoute(getPathData());
             }
         };
-        const handlePopState = () => setRoute(getPathData());
+        const handlePopState = () => {
+            const newPath = window.location.pathname + window.location.search;
+            // If URL hasn't changed this is an ExitIntent sentinel pop at the same URL.
+            // ExitIntentPopup's own popstate listener handles it — skip route update.
+            if (newPath === lastNavPathRef.current) return;
+            lastNavPathRef.current = newPath;
+            setRoute(getPathData());
+        };
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('popstate', handlePopState);
         return () => {
@@ -433,6 +447,7 @@ const useRouter = () => {
     const navigate = useCallback((path: string) => {
         const target = path.startsWith('/') ? path : `/${path}`;
         window.history.pushState(null, '', target);
+        lastNavPathRef.current = target;
         setRoute(getPathData());
     }, [getPathData]);
     return { route, navigate };
