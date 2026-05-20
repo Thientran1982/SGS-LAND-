@@ -1448,7 +1448,8 @@ async function startServer() {
   logger.info("Socket.io using in-memory adapter (Upstash REST — no TCP pub/sub needed for single-instance).");
 
   // Initialize DB schema via migration runner (with retry for cold-start DB wakeup)
-  if (process.env.DATABASE_URL) {
+  // Check any DB URL — NEON_DATABASE_URL takes priority (see server/db.ts), DATABASE_URL is fallback
+  if (process.env.NEON_DATABASE_URL || process.env.PROD_DATABASE_URL || process.env.DATABASE_URL) {
     const MAX_MIGRATION_ATTEMPTS = 3;
     let migrationOk = false;
     for (let attempt = 1; attempt <= MAX_MIGRATION_ATTEMPTS; attempt++) {
@@ -1489,7 +1490,7 @@ async function startServer() {
     priceCalibrationService.init(pool);
     logger.info('[PriceCalibration] Self-learning calibration engine initialized');
   } else {
-    console.warn("DATABASE_URL not set. Skipping database migrations.");
+    console.warn("No database URL configured (NEON_DATABASE_URL / DATABASE_URL). Skipping migrations.");
   }
 
   const PUBLIC_TENANT = DEFAULT_TENANT_ID;
