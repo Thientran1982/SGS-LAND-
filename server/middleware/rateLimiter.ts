@@ -58,7 +58,16 @@ async function getUpstashClient(): Promise<any | null> {
 async function upstashIncr(client: any, key: string, windowSecs: number): Promise<number> {
   const count = await client.incr(key);
   if (count === 1) {
+    // New key — set TTL for the window.
     await client.expire(key, windowSecs);
+  } else {
+    // Guard against "zombie" keys that exist without a TTL (can happen when
+    // the process crashed between INCR and EXPIRE, or the key was manually
+    // inserted without an expiry). TTL=-1 means key exists but never expires.
+    const ttl: number = await client.ttl(key);
+    if (ttl === -1) {
+      await client.expire(key, windowSecs);
+    }
   }
   return count as number;
 }
@@ -152,10 +161,14 @@ export const authRateLimit = rateLimit({
   message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau 15 phút.',
 });
 
+// 2 000 req/min per user (authenticated) or per IP (anonymous).
+// A CRM page load triggers 5-10 API calls; rapid multi-page navigation + multiple
+// browser tabs can easily exceed a tighter limit, especially in Replit's
+// proxied environment where many sessions share the same egress IP.
 export const apiRateLimit = rateLimit({
   name: 'api',
   windowMs: 60_000,
-  maxRequests: 600,
+  maxRequests: 2000,
 });
 
 export const webhookRateLimit = rateLimit({
