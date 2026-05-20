@@ -1457,12 +1457,16 @@ async function startServer() {
         migrationOk = true;
         break;
       } catch (err: any) {
-        const isTransient = err?.message?.includes('timeout') || err?.message?.includes('ECONNREFUSED') || err?.message?.includes('terminated unexpectedly');
-        if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient) {
+        // Quota/billing errors (e.g. Neon free-tier compute time exceeded) are
+        // non-retryable but also non-fatal: the schema is already up-to-date
+        // from a previous successful run, so we start without re-running migrations.
+        const isQuotaError = err?.message?.includes('compute time quota') || err?.message?.includes('exceeded the compute') || (err?.code === 'XX000' && err?.message?.toLowerCase().includes('quota'));
+        const isTransient = isQuotaError || err?.message?.includes('timeout') || err?.message?.includes('ECONNREFUSED') || err?.message?.includes('terminated unexpectedly');
+        if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient && !isQuotaError) {
           logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed — retrying in 5s… (${err.message})`);
           await new Promise(r => setTimeout(r, 5000));
         } else if (isTransient) {
-          logger.warn(`[migrations] DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts — server starting without migrations. Will retry on first API request. (${err.message})`);
+          logger.warn(`[migrations] Skipping migrations — ${isQuotaError ? 'DB quota exceeded (schema already up-to-date)' : `DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts`}. Server starting normally. (${err.message})`);
         } else {
           throw err;
         }

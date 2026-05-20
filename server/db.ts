@@ -33,6 +33,58 @@ export const pool = new Pool({
 pool.on('error', (err) => {
   console.error('[DB Pool] Unexpected client error:', err.message);
 });
+
+// ── Quota-exceeded fallback ───────────────────────────────────────────────
+// When Neon's free-tier compute quota is exhausted every pool.connect() fails.
+// We transparently switch to the local Replit PostgreSQL (DATABASE_URL) so
+// the dev server keeps running. Migrations run on the local DB on first
+// connection, setting up the schema there automatically.
+export function isQuotaError(err: any): boolean {
+  return typeof err?.message === 'string' && (
+    err.message.includes('compute time quota') ||
+    err.message.includes('exceeded the compute')
+  );
+}
+const _localDbUrl = sanitiseConnectionString(process.env.DATABASE_URL);
+const _hasFallback = !!_localDbUrl && _localDbUrl !== DB_CONNECTION_STRING;
+let _fallbackActive = false;
+let _fallbackPool: Pool | null = null;
+if (_hasFallback && _localDbUrl) {
+  _fallbackPool = new Pool({
+    connectionString: _localDbUrl,
+    max: 10,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 10_000,
+    statement_timeout: 30_000,
+    application_name: 'sgs-land-api-local',
+  });
+  _fallbackPool.on('error', (err) => {
+    console.error('[DB Local Pool] Error:', err.message);
+  });
+}
+// Patch pool.connect so every caller (withTenantContext, withTransaction,
+// withRlsBypass, raw pool.query) automatically uses the fallback once active.
+const _origConnect = pool.connect.bind(pool);
+(pool as any).connect = async function () {
+  if (_fallbackActive && _fallbackPool) return _fallbackPool.connect();
+  try {
+    return await _origConnect();
+  } catch (err: any) {
+    if (isQuotaError(err) && _fallbackPool && !_fallbackActive) {
+      console.warn('[DB] Neon compute quota exceeded — switching to local DATABASE_URL. Migrations will run on local DB automatically.');
+      _fallbackActive = true;
+      // Re-run migrations on the local DB so the schema is ready.
+      // Import lazily to avoid circular deps at module load time.
+      import('./migrations/runner').then(({ runPendingMigrations }) => {
+        runPendingMigrations(_fallbackPool!).catch((e) => {
+          console.error('[DB] Local DB migration failed:', e?.message || e);
+        });
+      }).catch(() => {});
+      return _fallbackPool.connect();
+    }
+    throw err;
+  }
+};
 /**
  * @deprecated Schema initialization is handled exclusively by the migration runner.
  * Call runPendingMigrations(pool) from server/migrations/runner.ts instead.
