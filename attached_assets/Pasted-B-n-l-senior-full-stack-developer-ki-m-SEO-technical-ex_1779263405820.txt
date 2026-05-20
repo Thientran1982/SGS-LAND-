@@ -1,0 +1,146 @@
+Bạn là senior full-stack developer kiêm SEO technical expert.
+
+Nhiệm vụ: Thêm đầy đủ Schema.org Structured Data (JSON-LD) vào website sgsland.vn — một nền tảng bất động sản AI tại Việt Nam (Next.js / React).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## THÔNG TIN THỰC TẾ CỦA WEBSITE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Tên công ty:** SGS Land Corp  
+**Website:** https://sgsland.vn  
+**Địa chỉ:** TP. Hồ Chí Minh, Việt Nam  
+**Tọa độ:** 10.776920, 106.700981  
+**Hotline:** +84 971 132 378  
+**Email:** info@sgsland.vn  
+**Thành lập:** 2024  
+**Rating:** 4.8/5 từ 127 đánh giá  
+
+**Dự án phân phối:**
+1. Aqua City – https://sgsland.vn/du-an/aqua-city – 1000ha, Nhơn Trạch, Đồng Nai – Novaland – từ 3 tỷ VND
+2. The Global City – https://sgsland.vn/du-an/the-global-city – 117ha, TP Thủ Đức – Masterise Homes
+3. Izumi City – https://sgsland.vn/du-an/izumi-city – 170ha, Biên Hòa, Đồng Nai – Nam Long
+4. Vinhomes Grand Park – https://sgsland.vn/du-an/vinhomes-grand-park – 271ha, TP Thủ Đức – Vinhomes – từ 2.5 tỷ VND
+5. Vinhomes Cần Giờ – https://sgsland.vn/du-an/vinhomes-can-gio – 2870ha, Cần Giờ – Vinhomes
+6. Masterise Homes – https://sgsland.vn/du-an/masterise-homes – TP.HCM
+
+**Đội ngũ:**
+- Trần Minh Thiện – Founder & CEO
+- Nguyễn Hoàng Nam – CTO
+- Lê Thị Hoa – COO
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## YÊU CẦU: TẠO CÁC FILE SCHEMA SAU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### File 1: `lib/schema/organization.ts`
+Tạo hàm `getOrganizationSchema()` trả về JSON-LD object gồm:
+- @type: ["Organization", "RealEstateAgent", "LocalBusiness"]
+- name, url, logo, description, foundingDate
+- address (PostalAddress: TP.HCM, VN)
+- geo (GeoCoordinates: 10.776920, 106.700981)
+- contactPoint (telephone, contactType: "customer service", availableLanguage: "Vietnamese")
+- sameAs: LinkedIn, Facebook nếu có
+- aggregateRating: ratingValue 4.8, reviewCount 127, bestRating 5
+- numberOfEmployees: 15000
+- areaServed: ["TP. Hồ Chí Minh", "Đồng Nai", "Bình Dương"]
+- knowsAbout: ["Bất động sản", "Định giá AI", "CRM bất động sản"]
+
+### File 2: `lib/schema/website.ts`
+Tạo hàm `getWebsiteSchema()` trả về JSON-LD với:
+- @type: WebSite
+- SearchAction (potentialAction) trỏ về https://sgsland.vn/tim-kiem?q={search_term_string}
+- publisher trỏ về Organization @id
+
+### File 3: `lib/schema/realestate-listing.ts`
+Tạo hàm `getRealEstateListingSchema(project)` nhận object dự án, trả về:
+- @type: RealEstateListing
+- name, description, url
+- address (PostalAddress đầy đủ)
+- geo (GeoCoordinates)
+- offers: Offer với price, priceCurrency: "VND", availability
+- floorSize: QuantitativeValue (m²)
+- numberOfRooms nếu có
+- image
+- provider: Organization @id
+
+### File 4: `lib/schema/faq.ts`
+Tạo hàm `getFAQSchema(items: {question: string, answer: string}[])` trả về:
+- @type: FAQPage
+- mainEntity: mảng Question với acceptedAnswer
+
+Kèm theo, tạo sẵn `FAQ_HOMEPAGE` constant với 8 câu hỏi thực tế:
+1. "SGS Land là gì?" → mô tả nền tảng BĐS AI
+2. "SGS Land phân phối những dự án nào?" → liệt kê 6 dự án
+3. "Định giá bất động sản AI của SGS Land có chính xác không?" → sai số ±5%
+4. "Làm sao liên hệ SGS Land?" → hotline + email
+5. "SGS Land có uy tín không?" → đối tác Vinhomes, Masterise, Novaland, rating 4.8/5
+6. "Aqua City Novaland giá bao nhiêu?" → từ 3 tỷ VND
+7. "Vinhomes Grand Park có gì nổi bật?" → 271ha, Metro số 1, Vinschool, Vinmec
+8. "SGS Land hỗ trợ vay ngân hàng không?" → có, hỗ trợ BIDV và các ngân hàng đối tác
+
+### File 5: `lib/schema/breadcrumb.ts`
+Tạo hàm `getBreadcrumbSchema(items: {name: string, url: string}[])` trả về BreadcrumbList schema.
+
+### File 6: `lib/schema/person.ts`
+Tạo hàm `getFoundersSchema()` trả về mảng Person schema cho 3 founders:
+- Trần Minh Thiện: jobTitle "Founder & CEO", worksFor SGS Land, sameAs LinkedIn
+- Nguyễn Hoàng Nam: jobTitle "Chief Technology Officer"  
+- Lê Thị Hoa: jobTitle "Chief Operating Officer"
+
+### File 7: `lib/schema/index.ts`
+Export tất cả các hàm trên từ một file duy nhất.
+
+### File 8: `components/SchemaScript.tsx`
+Tạo React component nhận prop `schemas: object[]`, render mảng `<script type="application/ld+json">` trong `<Head>` (Next.js) hoặc dùng `dangerouslySetInnerHTML`. Đảm bảo:
+- Mỗi schema một thẻ `<script>` riêng (Google khuyến nghị)
+- JSON.stringify với indent=2 để dễ debug
+- TypeScript strict mode
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## TÍCH HỢP VÀO CÁC TRANG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### Trang chủ (`app/page.tsx` hoặc `pages/index.tsx`)
+Thêm vào `<head>` hoặc trong component:
+```tsx
+<SchemaScript schemas={[
+  getOrganizationSchema(),
+  getWebsiteSchema(),
+  getFAQSchema(FAQ_HOMEPAGE),
+]} />
+```
+
+### Trang dự án (`app/du-an/[slug]/page.tsx`)
+Thêm:
+```tsx
+<SchemaScript schemas={[
+  getRealEstateListingSchema(projectData),
+  getBreadcrumbSchema([
+    { name: "Trang chủ", url: "https://sgsland.vn" },
+    { name: "Dự án", url: "https://sgsland.vn/du-an" },
+    { name: projectData.name, url: projectData.url },
+  ]),
+]} />
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## YÊU CẦU KỸ THUẬT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **TypeScript** toàn bộ, khai báo interface đầy đủ cho từng schema type
+2. Mỗi schema có `@context: "https://schema.org"` và `@id` duy nhất (dùng URL làm ID)
+3. Dùng `@id` để reference giữa các schema (Organization → Person, Listing → Organization)
+4. Không hardcode string lặp lại — dùng constant `SITE_URL = "https://sgsland.vn"` và `SITE_NAME = "SGS LAND"`
+5. Sau khi tạo xong file, chạy lệnh validate:
+```bash
+   npx schema-dts-gen --check 2>/dev/null || echo "schema-dts not installed, skipping type check"
+```
+6. Tạo file `__tests__/schema.test.ts` với test cases:
+   - Organization schema có đủ required fields (name, url, @type)
+   - RealEstateListing schema output hợp lệ JSON
+   - FAQ schema đúng cấu trúc mainEntity/acceptedAnswer
+   - BreadcrumbList có đúng số item
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## CẤU TRÚC FILE SAU KHI HOÀN THÀNH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

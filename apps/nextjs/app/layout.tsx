@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/Providers";
+import { SchemaScript } from "@/components/SchemaScript";
+import { getOrganizationSchema, getWebsiteSchema } from "@/lib/schema";
 
 // ─── Font ─────────────────────────────────────────────────
 const inter = Inter({
@@ -117,62 +119,6 @@ export const viewport: Viewport = {
   ],
 };
 
-// ─── JSON-LD: WebSite + Organization ──────────────────────
-const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      "@id": "https://sgsland.vn/#website",
-      name: "SGS LAND",
-      alternateName: ["SGSID", "SGS Land Corp", "SGS Land Enterprise"],
-      url: "https://sgsland.vn",
-      inLanguage: ["vi", "en"],
-      description:
-        "Nền tảng quản lý bất động sản thế hệ mới với AI định giá, CRM đa kênh và quản lý kho hàng toàn diện.",
-      potentialAction: {
-        "@type": "SearchAction",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: "https://sgsland.vn/marketplace?q={search_term_string}",
-        },
-        "query-input": "required name=search_term_string",
-      },
-      publisher: { "@id": "https://sgsland.vn/#organization" },
-    },
-    {
-      "@type": "Organization",
-      "@id": "https://sgsland.vn/#organization",
-      name: "SGS LAND",
-      alternateName: "SGS Land Corp",
-      legalName: "Công ty Cổ phần SGS Land",
-      url: "https://sgsland.vn",
-      logo: {
-        "@type": "ImageObject",
-        "@id": "https://sgsland.vn/#logo",
-        url: "https://sgsland.vn/icon-512.png",
-        width: 512,
-        height: 512,
-        caption: "SGS LAND Logo",
-      },
-      image: { "@type": "ImageObject", url: "https://sgsland.vn/og-image.jpg" },
-      contactPoint: {
-        "@type": "ContactPoint",
-        telephone: "+84-971-132-378",
-        contactType: "customer service",
-        areaServed: "VN",
-        availableLanguage: ["Vietnamese", "English"],
-      },
-      address: {
-        "@type": "PostalAddress",
-        addressCountry: "VN",
-        addressLocality: "Hồ Chí Minh",
-      },
-      sameAs: ["https://www.linkedin.com/company/sgsland"],
-    },
-  ],
-};
-
 // ─── Root Layout ───────────────────────────────────────────
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -183,11 +129,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://sgsland.vn" />
 
-        {/* JSON-LD Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
+        {/* Sitewide JSON-LD: WebSite (SearchAction) + Organization (E-E-A-T) */}
+        <SchemaScript schemas={[getWebsiteSchema(), getOrganizationSchema()]} />
       </head>
       <body className={`${inter.variable} font-sans antialiased`} style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}>
         <Providers>{children}</Providers>

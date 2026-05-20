@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectDetailPage } from "@/components/public/ProjectDetailPage";
+import { SchemaScript } from "@/components/SchemaScript";
+import { getRealEstateListingSchema, getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
 
 // ─── Static project data (SEO seed) ──────────────────────
 const PROJECT_META: Record<string, { name: string; dev: string; loc: string; desc: string }> = {
@@ -87,5 +89,28 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     slug,
   };
 
-  return <ProjectDetailPage project={projectData} slug={slug} />;
+  const listingSchema = getRealEstateListingSchema({
+    name: projectData.name,
+    slug,
+    description: projectData.description,
+    location: projectData.location,
+    developer: projectData.developer,
+    images: projectData.images,
+    amenities: projectData.amenities,
+    total_units: projectData.total_units ?? projectData.listing_count,
+  });
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Trang chủ", url: SITE_URL },
+    { name: "Dự án BĐS", url: `${SITE_URL}/du-an` },
+    { name: projectData.name, url: `${SITE_URL}/du-an/${slug}` },
+  ]);
+
+  return (
+    <>
+      {/* Page-specific JSON-LD: RealEstateListing + BreadcrumbList */}
+      <SchemaScript schemas={[listingSchema, breadcrumbSchema]} />
+      <ProjectDetailPage project={projectData} slug={slug} />
+    </>
+  );
 }
