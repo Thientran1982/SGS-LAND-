@@ -1,0 +1,449 @@
+Bạn là senior full-stack developer kiêm Content Strategist chuyên về SEO cho lĩnh vực YMYL (Your Money Your Life).
+
+Nhiệm vụ: Xây dựng hệ thống nội dung chuyên sâu + E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) cho sgsland.vn — nền tảng bất động sản AI tại Việt Nam. Website đã có trang tin tức nhưng thiếu bài viết chuyên sâu, hướng dẫn pháp lý, và các tín hiệu authority mà Google yêu cầu với lĩnh vực BĐS.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## BỐI CẢNH THỰC TẾ SGSLAND.VN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Công ty: SGS Land Corp | sgsland.vn | TP.HCM | Thành lập 2024
+- Founders: Trần Minh Thiện (CEO), Nguyễn Hoàng Nam (CTO), Lê Thị Hoa (COO)
+- Đối tác: Novaland, Masterise Homes, Nam Long, Vinhomes
+- Giải thưởng: Top Proptech Việt Nam 2025
+- Tuân thủ: Luật Đất Đai 2024, Luật Nhà Ở 2023, Luật Kinh Doanh BĐS 2023, NĐ 13/2023
+- Dự án: Aqua City, The Global City, Izumi City, Vinhomes Grand Park, Vinhomes Cần Giờ
+- Rating: 4.8/5 từ 127 đánh giá
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PHẦN 1 — HỆ THỐNG DỮ LIỆU NỘI DUNG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### Tạo file `data/authors.ts`
+Định nghĩa interface Author và mảng AUTHORS với thông tin thực tế:
+
+```typescript
+export interface Author {
+  id: string
+  slug: string
+  name: string
+  title: string           // Chức danh chuyên môn
+  credentials: string[]   // Bằng cấp, chứng chỉ
+  expertise: string[]     // Lĩnh vực chuyên môn
+  yearsExperience: number
+  bio: string             // 2-3 câu giới thiệu
+  bioFull: string         // 4-5 đoạn đầy đủ
+  avatar: string          // /images/authors/[slug].jpg
+  linkedIn: string
+  articlesCount: number
+  sameAs: string[]        // URLs cho Person schema
+}
+```
+
+Tạo 4 authors mẫu dựa trên thực tế SGS Land:
+1. `tran-minh-thien` — Founder & CEO, 5+ năm BĐS, chuyên gia thị trường Đông Nam Bộ
+2. `nguyen-hoang-nam` — CTO, chuyên gia Proptech & định giá AI
+3. `le-thi-hoa` — COO, 8+ năm quản lý giao dịch BĐS, am hiểu pháp lý
+4. `chuyen-gia-phap-ly` — Legal Expert (fictitious but credible): Luật sư tư vấn BĐS, am hiểu Luật Đất Đai 2024
+
+### Tạo file `data/categories.ts`
+Định nghĩa các chuyên mục bài viết:
+
+```typescript
+export const CATEGORIES = [
+  {
+    id: 'phan-tich-thi-truong',
+    name: 'Phân tích thị trường',
+    slug: 'phan-tich-thi-truong',
+    description: 'Báo cáo và phân tích xu hướng BĐS TP.HCM, Đồng Nai, Bình Dương',
+    icon: 'chart-bar',
+    color: '#312E81',
+  },
+  {
+    id: 'huong-dan-phap-ly',
+    name: 'Hướng dẫn pháp lý',
+    slug: 'huong-dan-phap-ly',
+    description: 'Thủ tục, quy trình pháp lý mua bán BĐS theo Luật Đất Đai 2024',
+    icon: 'file-certificate',
+    color: '#065F46',
+  },
+  {
+    id: 'kien-thuc-dau-tu',
+    name: 'Kiến thức đầu tư',
+    slug: 'kien-thuc-dau-tu',
+    description: 'Chiến lược đầu tư BĐS, dòng tiền, đòn bẩy tài chính',
+    icon: 'trending-up',
+    color: '#92400E',
+  },
+  {
+    id: 'du-an-noi-bat',
+    name: 'Dự án nổi bật',
+    slug: 'du-an-noi-bat',
+    description: 'Review chuyên sâu và cập nhật tiến độ các dự án lớn',
+    icon: 'building-estate',
+    color: '#1E40AF',
+  },
+  {
+    id: 'thi-truong-tai-chinh',
+    name: 'Tài chính & Vay mua nhà',
+    slug: 'tai-chinh-vay-mua-nha',
+    description: 'Lãi suất, gói vay, kinh nghiệm vay mua BĐS ngân hàng',
+    icon: 'credit-card',
+    color: '#7C3AED',
+  },
+]
+```
+
+### Tạo file `data/articles.ts`
+Tạo 12 bài viết mẫu đầy đủ metadata (KHÔNG cần body content đầy đủ — chỉ cần metadata + excerpt + outline):
+
+Mỗi article có:
+```typescript
+export interface Article {
+  id: string
+  slug: string
+  title: string
+  excerpt: string          // 2-3 câu tóm tắt
+  category: string         // category slug
+  author: string           // author slug
+  publishedAt: string      // ISO date
+  updatedAt: string
+  readTime: number         // phút
+  wordCount: number
+  tags: string[]
+  coverImage: string
+  featured: boolean
+  outline: string[]        // H2/H3 sections
+  sources: Source[]        // Nguồn tham khảo uy tín
+  relatedSlugs: string[]
+  seo: {
+    metaTitle: string      // ≤60 chars
+    metaDescription: string // ≤160 chars
+    focusKeyword: string
+    secondaryKeywords: string[]
+  }
+}
+
+interface Source {
+  name: string             // "Bộ Xây dựng", "Vinhomes", "CafeLand"
+  url: string
+  publishedYear: number
+  type: 'official' | 'news' | 'research' | 'legal'
+}
+```
+
+**12 bài viết mẫu (đủ metadata):**
+
+**Nhóm Pháp lý (4 bài):**
+1. `huong-dan-kiem-tra-phap-ly-truoc-khi-mua-nha-dat-2024`
+   - Title: "Hướng dẫn kiểm tra pháp lý trước khi mua nhà đất theo Luật Đất Đai 2024"
+   - Author: chuyen-gia-phap-ly
+   - Outline: [Tại sao pháp lý là bước số 1, 7 loại giấy tờ cần kiểm tra, Cách tra cứu quy hoạch trực tuyến, Red flags cần tránh, Checklist tải về]
+   - Sources: Luật Đất Đai 2024, Bộ TN&MT, Cổng dịch vụ công quốc gia
+
+2. `so-do-la-gi-cac-loai-so-do-sgsland`
+   - Title: "Sổ đỏ vs Sổ hồng vs Sổ trắng: Phân biệt và giá trị pháp lý 2024"
+   - Author: le-thi-hoa
+
+3. `thu-tuc-mua-ban-can-ho-chung-cu-tphcm-2024`
+   - Title: "Quy trình mua bán căn hộ chung cư TP.HCM: 8 bước từ A đến Z (2024)"
+   - Author: le-thi-hoa
+
+4. `luat-kinh-doanh-bat-dong-san-2023-nhung-diem-moi`
+   - Title: "Luật Kinh Doanh BĐS 2023: 5 thay đổi quan trọng nhà đầu tư phải biết"
+   - Author: chuyen-gia-phap-ly
+
+**Nhóm Phân tích thị trường (4 bài):**
+5. `thi-truong-bat-dong-san-dong-nam-bo-2025-2026`
+   - Title: "Thị trường BĐS Đông Nam Bộ 2025–2026: Phân tích xu hướng và cơ hội đầu tư"
+   - Author: tran-minh-thien
+   - Featured: true
+
+6. `aqua-city-novaland-tiem-nang-tang-gia-2025`
+   - Title: "Aqua City Novaland: Đánh giá tiềm năng tăng giá sau khi cầu Nhơn Trạch thông xe"
+   - Author: tran-minh-thien
+
+7. `vinhomes-grand-park-co-nen-mua-de-o-hay-cho-thue`
+   - Title: "Vinhomes Grand Park: Mua để ở hay cho thuê? Phân tích ROI thực tế 2025"
+   - Author: tran-minh-thien
+
+8. `gia-bat-dong-san-tphcm-du-bao-2026`
+   - Title: "Dự báo giá BĐS TP.HCM năm 2026: Kịch bản nào có khả năng xảy ra nhất?"
+   - Author: tran-minh-thien
+
+**Nhóm Kiến thức đầu tư & Tài chính (4 bài):**
+9. `cach-vay-mua-nha-lai-suat-thap-2024`
+   - Title: "Vay mua nhà lãi suất thấp 2024: So sánh 5 gói vay tốt nhất từ BIDV, Vietcombank, VPBank"
+   - Author: nguyen-hoang-nam
+
+10. `dinh-gia-bat-dong-san-bang-ai-sgsland`
+    - Title: "Định giá BĐS bằng AI: Cách SGS Land đạt độ chính xác ±5% và ứng dụng thực tế"
+    - Author: nguyen-hoang-nam
+    - Featured: true
+
+11. `dau-tu-bat-dong-san-cho-nguoi-moi-bat-dau`
+    - Title: "Đầu tư BĐS cho người mới: 7 nguyên tắc vàng tránh mất tiền oan"
+    - Author: tran-minh-thien
+
+12. `dong-tien-cho-thue-can-ho-tphcm-2025`
+    - Title: "Dòng tiền cho thuê căn hộ TP.HCM 2025: Khu nào sinh lời cao nhất?"
+    - Author: le-thi-hoa
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PHẦN 2 — COMPONENTS E-E-A-T
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### `components/content/AuthorCard.tsx`
+Component hiển thị thông tin tác giả — QUAN TRỌNG cho E-E-A-T:
+- Avatar tròn (ảnh thật hoặc placeholder với initials)
+- Tên + chức danh
+- Badge credentials (ví dụ: "5+ năm kinh nghiệm", "Chuyên gia pháp lý")
+- Bio ngắn 2 câu
+- Link LinkedIn (opens new tab)
+- Số bài đã viết
+- Hai biến thể: `variant="inline"` (trong bài viết) và `variant="full"` (trang tác giả)
+
+Ví dụ output HTML (để tham khảo cấu trúc):
+```
+[Avatar] Trần Minh Thiện
+         Founder & CEO, SGS Land
+         ★ 5+ năm kinh nghiệm BĐS | Top Proptech VN 2025
+         "Chuyên gia thị trường BĐS Đông Nam Bộ, đã tư vấn 500+ giao dịch..."
+         [LinkedIn ↗]  •  12 bài viết
+```
+
+### `components/content/ArticleHeader.tsx`
+Header bài viết chuẩn E-E-A-T gồm:
+- Breadcrumb (Trang chủ > Kiến thức > [Category] > [Title])
+- H1 title
+- Metadata row: [Category badge] · [Ngày đăng] · [Cập nhật] · [X phút đọc] · [X từ]
+- AuthorCard variant="inline"
+- **ExpertReview badge**: "Đã xem xét bởi chuyên gia pháp lý" (nếu bài pháp lý)
+- **LastUpdated notice**: "Cập nhật theo Luật Đất Đai 2024, hiệu lực 01/08/2024"
+- Featured image với alt text đầy đủ và caption
+
+### `components/content/ArticleFooter.tsx`
+Footer bài viết chuẩn E-E-A-T gồm:
+- **Sources section**: Danh sách nguồn tham khảo với link, phân loại (official/news/research/legal), năm
+- **Author bio full**: AuthorCard variant="full"
+- **Editorial policy notice**: 1 câu ngắn + link /chinh-sach-bien-tap
+- **Fact-check notice** (cho bài pháp lý): "Thông tin pháp lý trong bài được kiểm tra tháng [MM/YYYY]"
+- **Related articles**: 3 bài liên quan cùng category
+- **CTA**: "Cần tư vấn BĐS miễn phí?" → link liên hệ
+
+### `components/content/TrustBadges.tsx`
+Component hiển thị trust signals — đặt ở sidebar hoặc cuối bài:
+- "Thông tin được kiểm chứng"
+- "Cập nhật theo luật hiện hành"
+- "Chuyên gia SGS Land biên soạn"
+- Logo đối tác: Novaland, Vinhomes, Masterise Homes, Nam Long (dạng grayscale)
+- Giải thưởng: "Top Proptech Việt Nam 2025"
+
+### `components/content/LegalDisclaimer.tsx`
+Component hiển thị disclaimer cho bài pháp lý (YMYL):
+```
+⚖️ Lưu ý pháp lý
+Nội dung bài viết này mang tính chất tham khảo chung, không thay thế 
+tư vấn pháp lý chuyên nghiệp. Quy định pháp luật có thể thay đổi. 
+Vui lòng liên hệ luật sư hoặc chuyên gia pháp lý để được tư vấn 
+cụ thể cho trường hợp của bạn.
+Cập nhật lần cuối: [tháng/năm] theo [tên luật].
+```
+
+### `components/content/ArticleSchema.tsx`
+Component inject JSON-LD cho bài viết, tự động tạo:
+```json
+{
+  "@type": "Article",
+  "headline": "...",
+  "author": { "@type": "Person", "name": "...", "url": "...", "sameAs": [...] },
+  "publisher": { "@type": "Organization", "@id": "https://sgsland.vn/#org" },
+  "datePublished": "...",
+  "dateModified": "...",
+  "wordCount": 2800,
+  "citation": [ sources array ],
+  "about": { "@type": "Thing", "name": "Bất động sản Việt Nam" },
+  "inLanguage": "vi-VN",
+  "image": { "@type": "ImageObject", ... }
+}
+```
+Với bài pháp lý, thêm `"reviewedBy"` và `"legislationIdentifier"`.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PHẦN 3 — CÁC TRANG CẦN TẠO / CẢI THIỆN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### Trang `/tin-tuc` (cải thiện trang đã có)
+Cập nhật layout thêm:
+- Filter bar: All | Pháp lý | Thị trường | Đầu tư | Dự án | Tài chính
+- Sort: Mới nhất | Phổ biến nhất | Được đọc nhiều
+- Featured article (bài nổi bật) chiếm full width trên cùng
+- Grid bài viết: hiển thị rõ author avatar + tên + category badge + read time
+- Sidebar: "Tác giả chuyên gia" — mini profile 4 authors
+- Pagination hoặc infinite scroll
+- Schema: CollectionPage + ItemList
+
+### Trang `/tin-tuc/[slug]` (trang bài viết — nếu chưa có)
+Layout chuẩn E-E-A-T:
+```
+[ArticleHeader]
+[LegalDisclaimer — chỉ với bài pháp lý]
+[TrustBadges — sidebar sticky]
+[Nội dung bài viết với proper H2/H3/H4]
+[InlineCTA — "Xem dự án liên quan"]
+[ArticleFooter]
+[ArticleSchema — JSON-LD inject vào <head>]
+```
+
+### Trang `/tac-gia/[slug]` (trang tác giả — tạo mới)
+Trang E-E-A-T quan trọng nhất:
+- Hero section: ảnh lớn, tên, chức danh, bio đầy đủ
+- Credentials section: kinh nghiệm, chứng chỉ, thành tựu
+- "Chuyên môn" tags
+- Danh sách tất cả bài đã viết
+- Schema: Person với sameAs LinkedIn
+
+### Trang `/chinh-sach-bien-tap` (tạo mới — E-E-A-T critical)
+Trang này Google cực kỳ coi trọng cho lĩnh vực YMYL:
+- Quy trình biên soạn nội dung SGS Land
+- Tiêu chí kiểm tra thông tin (fact-checking process)
+- Quy trình review bài pháp lý (có chuyên gia kiểm tra)
+- Chính sách cập nhật bài viết khi luật thay đổi
+- Thông tin liên hệ ban biên tập
+- Tần suất rà soát nội dung
+
+### Trang `/ve-chung-toi` (cải thiện nếu đã có)
+Thêm các section E-E-A-T:
+- Timeline lịch sử công ty (2024 → nay)
+- Số liệu thực: 15.000 môi giới, 45.000 sản phẩm, 2 tỷ USD giao dịch
+- Đội ngũ lãnh đạo với ảnh thật + bio + LinkedIn
+- Đối tác chính thức (logo + năm hợp tác)
+- Giải thưởng + chứng nhận
+- Tuân thủ pháp lý: NĐ 13/2023, Luật Đất Đai 2024
+- Schema: AboutPage + Organization
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PHẦN 4 — INTERNAL LINKING SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### `lib/content/related-articles.ts`
+Tạo hàm `getRelatedArticles(currentSlug, category, tags, limit=3)`:
+- Ưu tiên cùng category
+- Tránh trùng slug hiện tại
+- Sắp xếp theo publishedAt mới nhất
+- Return tối đa `limit` articles
+
+### `lib/content/internal-links.ts`
+Tạo map keyword → URL để auto-link trong nội dung:
+```typescript
+export const KEYWORD_LINKS: Record<string, string> = {
+  'Luật Đất Đai 2024': '/tin-tuc/luat-dat-dai-2024-nhung-diem-moi',
+  'Aqua City': '/du-an/aqua-city',
+  'Vinhomes Grand Park': '/du-an/vinhomes-grand-park',
+  'định giá AI': '/dinh-gia-bat-dong-san',
+  'sổ hồng': '/tin-tuc/so-do-la-gi-cac-loai-so-do-sgsland',
+  // ... thêm 20 entries
+}
+```
+
+Tạo hàm `autoLink(content: string): string` replace first occurrence của mỗi keyword thành `<a href="...">keyword</a>`.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PHẦN 5 — SEO UTILITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### `lib/seo/article-meta.ts`
+Hàm `generateArticleMeta(article: Article)` trả về Next.js Metadata object:
+- title: `${article.seo.metaTitle} | SGS Land`
+- description: article.seo.metaDescription
+- openGraph với image, type: "article", publishedTime, modifiedTime, authors
+- twitter card
+- canonical URL
+
+### `lib/seo/reading-time.ts`
+Hàm `calculateReadingTime(wordCount: number): number` — 200 từ/phút, min 1 phút.
+
+### `lib/seo/breadcrumbs.ts`
+Hàm `generateBreadcrumbs(pathname: string): BreadcrumbItem[]` — tự động từ URL path, map sang tên tiếng Việt.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PHẦN 6 — CẤU TRÚC FILE HOÀN CHỈNH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+```
+data/
+  authors.ts
+  categories.ts
+  articles.ts
+
+components/
+  content/
+    AuthorCard.tsx
+    ArticleHeader.tsx
+    ArticleFooter.tsx
+    TrustBadges.tsx
+    LegalDisclaimer.tsx
+    ArticleSchema.tsx
+    RelatedArticles.tsx
+    CategoryFilter.tsx
+
+lib/
+  content/
+    related-articles.ts
+    internal-links.ts
+  seo/
+    article-meta.ts
+    reading-time.ts
+    breadcrumbs.ts
+
+app/ (hoặc pages/)
+  tin-tuc/
+    page.tsx              ← cải thiện trang đã có
+    [slug]/
+      page.tsx            ← trang bài viết
+  tac-gia/
+    [slug]/
+      page.tsx            ← trang tác giả MỚI
+  chinh-sach-bien-tap/
+    page.tsx              ← trang editorial policy MỚI
+  ve-chung-toi/
+    page.tsx              ← cải thiện trang đã có
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## YÊU CẦU KỸ THUẬT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. TypeScript strict, interface đầy đủ cho mọi data type
+2. Tất cả dates dùng ISO 8601 format
+3. Mọi component nhận className prop cho flexibility
+4. `ArticleSchema` dùng `dangerouslySetInnerHTML` — sanitize JSON.stringify output
+5. Author avatar fallback: hiển thị initials nếu không có ảnh
+6. Bài viết pháp lý (`category === 'huong-dan-phap-ly'`) tự động thêm `LegalDisclaimer` và `reviewedBy` trong schema
+7. Tất cả external links trong Sources section: `target="_blank" rel="noopener noreferrer"`
+8. `autoLink` chỉ link lần xuất hiện ĐẦU TIÊN của mỗi keyword, skip nếu đã trong thẻ `<a>`
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## SAU KHI XONG — IN HƯỚNG DẪN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+```
+✅ Hệ thống E-E-A-T đã được cài đặt!
+
+CHECKLIST GOOGLE E-E-A-T CHO SGSLAND.VN:
+✓ Experience  — Author profiles với số năm kinh nghiệm thực tế
+✓ Expertise   — Credentials, chức danh, chuyên môn rõ ràng  
+✓ Authority   — Trang tác giả, đối tác, giải thưởng, citations
+✓ Trust       — Editorial policy, legal disclaimer, sources list, cập nhật luật
+
+BƯỚC TIẾP THEO (thực hiện thủ công):
+1. Thêm ảnh thật của 3 founders vào /public/images/authors/
+2. Viết 2 bài đầu tiên thực sự (ưu tiên bài pháp lý)
+3. Đăng ký Google Search Console và submit /tin-tuc/ sitemap
+4. Liên hệ CafeF/CafeLand để được trích dẫn với backlink về sgsland.vn
+5. Tạo LinkedIn posts cho mỗi bài viết mới (social signals)
+
+KIỂM TRA E-E-A-T:
+→ Google Search Console: Coverage > check tin-tuc/* được index
+→ Search "sgsland.vn [tên bài]" để confirm Google đã index
+→ Dùng Ahrefs/SEMrush đo Domain Rating sau 3 tháng
+```
