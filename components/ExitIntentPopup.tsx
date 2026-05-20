@@ -22,7 +22,7 @@
  */
 
 import React, {
-  useEffect, useRef, useState, useCallback,
+  useEffect, useLayoutEffect, useRef, useState, useCallback,
   forwardRef, useImperativeHandle,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -85,8 +85,8 @@ function isSuppressed(): boolean {
     if (dismissed && Date.now() - Number(dismissed) < DISMISS_TTL_MS) return true;
     const submitted = localStorage.getItem(SUBMITTED_KEY);
     if (submitted && Date.now() - Number(submitted) < SUBMIT_TTL_MS)  return true;
-    // Note: LEAD_KEY (live chat session) is intentionally NOT checked here.
-    // A user who opened live chat may still benefit from seeing the exit-intent popup.
+    const lead = localStorage.getItem(LEAD_KEY);
+    if (lead) return true;
   } catch {}
   return false;
 }
@@ -138,12 +138,26 @@ function usePassiveExitSignals(
   firedRef: React.MutableRefObject<boolean>,
   delayMs: number,
 ) {
+  // Push the sentinel BEFORE the first browser paint (useLayoutEffect runs
+  // synchronously after React commits to the DOM, before the browser renders
+  // any pixels). This eliminates the race condition where a user presses the
+  // back button (or swipes back on iOS) before useEffect has had a chance to
+  // run — without this, the sentinel would not exist yet and the URL would
+  // change, causing App.tsx to navigate away before the popup could appear.
+  useLayoutEffect(() => {
+    try {
+      window.history.pushState(
+        { __exitIntentSentinel: true },
+        '',
+        window.location.pathname + window.location.search,
+      );
+    } catch {}
+  }, []); // mount only — re-arming is handled in the popstate handler below
+
   useEffect(() => {
     // Signal 5: Browser back button — sentinel pattern.
-    // ALWAYS push the sentinel regardless of suppression so the back button is
-    // intercepted even for users who previously dismissed the popup or submitted.
-    // App.tsx handlePopState skips setRoute() when URL hasn't changed, giving
-    // ExitIntentPopup exclusive control over same-URL popstate events.
+    // The initial sentinel was pushed synchronously in useLayoutEffect above.
+    // Here we only define the re-arm helper and the popstate handler.
     const sentinelPush = () => {
       try {
         window.history.pushState(
@@ -153,7 +167,6 @@ function usePassiveExitSignals(
         );
       } catch {}
     };
-    sentinelPush();
 
     const onPopState = () => {
       if (isSuppressed()) {
