@@ -30,12 +30,12 @@ name = "Start application"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "webview"
+outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
+args = "PORT=3001 npm run dev"
+waitForPort = 3001
 
 [[workflows.workflow]]
 name = "typecheck"
@@ -53,16 +53,20 @@ name = "Next.js Frontend"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "console"
+outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd apps/nextjs && node_modules/.bin/next start --port 3000 --hostname 0.0.0.0"
-waitForPort = 3000
+args = "cd apps/nextjs && node_modules/.bin/next start --port 5000 --hostname 0.0.0.0"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3000
 externalPort = 3001
+
+[[ports]]
+localPort = 3001
+externalPort = 5000
 
 [[ports]]
 localPort = 5000
