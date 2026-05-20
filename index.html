@@ -404,11 +404,13 @@
     <link rel="preload" href="/critical.css" as="style" />
     <link rel="preload" href="/theme-init.js" as="script" />
 
-    <!-- Google Fonts — async (non-blocking) load via print-media swap.
-         Critical UI uses system-font stack from critical.css until Inter loads. -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" /></noscript>
+    <!-- Google Fonts — preload hint + blocking stylesheet so hero headings
+         (font-black / font-extrabold = weight 800-900) always render with the
+         real Inter rather than a browser-synthesised bold fallback.
+         Weights 300-900 are required: headings use 800/900 (font-black) which
+         was previously missing, causing the "thick system font" appearance. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
     <link rel="stylesheet" href="/critical.css" />
     <!-- CRITICAL: Hydration Script (Prevents FOUC) -->
     <script src="/theme-init.js"></script>
