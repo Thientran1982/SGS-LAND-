@@ -1,16 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/Providers";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getOrganizationSchema, getWebsiteSchema } from "@/lib/schema";
 
-// ─── Font ─────────────────────────────────────────────────
+// ─── Fonts (self-hosted by next/font — no Google Fonts request at runtime) ──
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
   variable: "--font-inter",
   display: "swap",
   weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+  weight: ["400", "500"],
 });
 
 // ─── Global Metadata ───────────────────────────────────────
@@ -124,15 +131,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
-        {/* Preconnect for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* next/font self-hosts Inter + JetBrains Mono — no external font request needed */}
         <link rel="dns-prefetch" href="https://sgsland.vn" />
 
         {/* Sitewide JSON-LD: WebSite (SearchAction) + Organization (E-E-A-T) */}
         <SchemaScript schemas={[getWebsiteSchema(), getOrganizationSchema()]} />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`} style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}>
+      <body
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

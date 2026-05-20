@@ -89,10 +89,13 @@
 
 /* ─── TailwindCSS v4 Theme Extension ─────────────────────── */
 @theme {
-  /* Font families */
-  --font-sans:    "Inter", sans-serif;
-  --font-display: "Inter", sans-serif;
-  --font-mono:    "JetBrains Mono", monospace;
+  /* Font families — use CSS variables injected by next/font so the
+     self-hosted font files are resolved correctly in production.
+     Falling back to the literal name "Inter" causes production failures
+     because next/font serves Inter under a hashed internal name. */
+  --font-sans:    var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* Custom font sizes (compact scale) */
   --font-size-3xs: 7px;
