@@ -416,6 +416,8 @@
     <script src="/theme-init.js"></script>
     <!-- Microsoft Clarity — https://sgsland.vn/ -->
     <script src="/clarity-init.js"></script>
+    <!-- Chunk-load self-heal: if React hasn't mounted after 10s, hard-reload once to bust stale cache -->
+    <script src="/startup-guard.js"></script>
 </head>
   <body>
     <div id="app-background"></div>
