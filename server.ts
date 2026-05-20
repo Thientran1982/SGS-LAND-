@@ -5122,7 +5122,14 @@ async function startServer() {
         );
         res.send(html);
       } catch {
-        res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+        // getBaseHtml() or injectMeta() failed — serve raw cached shell (no disk IO).
+        try {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.send(getBaseHtml());
+        } catch {
+          res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+        }
       }
     };
 
@@ -5476,13 +5483,21 @@ async function startServer() {
       }
 
       // Regular users → SPA shell with DB-backed meta overrides
+      // Cap the SEO override lookup at 2 s so a slow/suspended Neon compute
+      // (quota exceeded) never makes the HTML response hang for the user.
       try {
         const routeKey = pathname.replace(/^\//, '').split('/')[0] || '';
-        const result = await pool.query(
-          'SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1',
-          [routeKey]
+        const seoTimeout = new Promise<null>((_, reject) =>
+          setTimeout(() => reject(new Error('seo_query_timeout')), 2000)
         );
-        const row = result.rows[0];
+        const result = await Promise.race([
+          pool.query(
+            'SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1',
+            [routeKey]
+          ),
+          seoTimeout,
+        ]);
+        const row = (result as any)?.rows?.[0];
         const meta = buildStaticPageMeta(
           row?.title,
           row?.description,
@@ -5491,8 +5506,16 @@ async function startServer() {
         );
         sendMeta(res, meta, false);
       } catch {
+        // Fallback: serve the pre-cached in-memory HTML shell so we never hit
+        // disk (avoids transient EIO errors on the Replit deployment filesystem).
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('X-Robots-Tag', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+        try {
+          res.send(getBaseHtml());
+        } catch {
+          res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+        }
       }
     });
   }
