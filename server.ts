@@ -2340,6 +2340,20 @@ async function startServer() {
       broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
 
+      // Auto-escalate to human when AI quota/auth errors triggered isSysMsg+escalated.
+      // This switches the thread to HUMAN_TAKEOVER so subsequent messages skip AI
+      // entirely (caught by the threadStatus check above) until an agent resets it.
+      if (result.isSysMsg && result.escalated) {
+        try {
+          await leadRepository.update(PUBLIC_TENANT, leadId, { thread_status: 'HUMAN_TAKEOVER' } as any);
+          broadcastIo?.to(leadId).emit('ai_mode_changed', { room: leadId, mode: 'HUMAN_TAKEOVER', reason: 'ai_quota_exceeded' });
+          broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('escalate_to_human', { leadId, reason: 'ai_quota_exceeded' });
+          logger.warn(`[LiveChat] Auto-escalated lead ${leadId} to HUMAN_TAKEOVER — AI quota exceeded`);
+        } catch (escalateErr) {
+          logger.warn('[LiveChat] Auto-escalation update failed:', escalateErr as Error);
+        }
+      }
+
       res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);

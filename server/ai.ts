@@ -3050,12 +3050,15 @@ ${dataFreshnessNote}`;
             const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429');
             const isAuth = msg.includes('API key not valid') || msg.includes('API_KEY_INVALID');
             logger.error('[AI] processMessage error:', error);
+            // For quota/auth errors: mark as system message + escalate to human so
+            // the conversation is handed off and further messages skip AI processing.
+            // The customer-facing message avoids exposing technical details.
             return {
                 agent: 'SGS_AGENT',
                 content: isQuota
                     ? (lang === 'en'
-                        ? 'The AI assistant is temporarily unavailable due to high demand. Please try again in a few minutes.'
-                        : 'Trợ lý AI hiện đang bận do lượng truy cập cao. Vui lòng thử lại sau ít phút.')
+                        ? 'Our AI assistant is temporarily at capacity. A live advisor will continue this conversation for you shortly. 🤝'
+                        : 'Xin lỗi vì sự bất tiện! Tư vấn viên SGS Land sẽ tiếp tục hỗ trợ bạn ngay. Vui lòng chờ trong giây lát! 🤝')
                     : isAuth
                     ? (lang === 'en'
                         ? 'AI service configuration error. Please contact your system administrator.'
@@ -3068,6 +3071,10 @@ ${dataFreshnessNote}`;
                 confidence: 0,
                 sentiment: 'NEUTRAL',
                 suggestedAction: 'NONE',
+                // Auto-escalate on quota/auth so the lead switches to HUMAN_TAKEOVER
+                // and subsequent messages no longer attempt AI processing.
+                escalated: isQuota || isAuth,
+                isSysMsg: isQuota || isAuth,
             };
         }
     }
