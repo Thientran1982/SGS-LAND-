@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
 
 // Absolute paths to THIS workspace's node_modules
 // — prevents dual-React-instance errors when root workspace has React 18
