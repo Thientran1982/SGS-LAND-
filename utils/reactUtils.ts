@@ -22,13 +22,30 @@ function isChunkLoadError(error: unknown): boolean {
  * reloads triggered by subsequent deployments in the same session.
  */
 const CHUNK_RELOAD_KEY = '__sgs_chunk_reload_ts__';
-/** Guard window: allow at most one reload every 45 seconds to prevent infinite loops. */
-const CHUNK_RELOAD_DEBOUNCE_MS = 45_000;
+/**
+ * Guard window: allow at most one reload every 10 seconds.
+ * 10 s is enough to prevent infinite-reload loops while still allowing a
+ * second chunk error (from a different page) to trigger its own reload
+ * when the user navigates rapidly between pages.
+ */
+const CHUNK_RELOAD_DEBOUNCE_MS = 10_000;
+
+/**
+ * Sentinel error thrown when a chunk fails AND the reload debounce is active.
+ * The ErrorBoundary checks for this name to show a "Reload page" prompt
+ * instead of the generic "unexpected error" message.
+ */
+export class ChunkStaleError extends Error {
+    constructor() {
+        super('Chunk load failed — please reload the page.');
+        this.name = 'ChunkStaleError';
+    }
+}
 /**
  * Force a hard page reload after a chunk-load failure.
- * Uses a timestamp-based guard so the lock expires after 45 s:
+ * Uses a timestamp-based guard so the lock expires after 10 s:
  *   • Two rapid back-to-back chunk errors (e.g. slow network) → only one reload.
- *   • A second deployment in the same browser session → new reload allowed after 45 s.
+ *   • A second deployment in the same browser session → new reload allowed after 10 s.
  */
 function reloadOnceForChunkError(error?: unknown, componentName?: string): boolean {
     const lastReload = parseInt(sessionStorage.getItem(CHUNK_RELOAD_KEY) || '0', 10);
@@ -85,7 +102,10 @@ export const lazyLoad = <T extends React.ComponentType<any>>(
                             }
                             // If reload was triggered, Promise hangs — the page will reload anyway.
                         } else {
-                            reject(error);
+                            // Reload debounce active (rapid multi-page navigation).
+                            // Throw a named sentinel so the ErrorBoundary shows a
+                            // "reload" prompt instead of the generic error message.
+                            reject(new ChunkStaleError());
                         }
                     });
             };

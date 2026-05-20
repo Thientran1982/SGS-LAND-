@@ -300,18 +300,17 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
         // so that multiple consecutive deployments in the same browser session each
         // trigger their own reload instead of being blocked by a stale boolean flag.
         const isChunk =
+            error.name === 'ChunkStaleError' ||
             error.message?.includes('Failed to fetch dynamically imported module') ||
             error.message?.includes('Importing a module script failed') ||
             error.message?.includes('dynamically imported module') ||
             (error as any).name === 'ChunkLoadError';
         if (isChunk) {
             const RELOAD_KEY = '__sgs_chunk_reload_ts__';
-            const DEBOUNCE_MS = 45_000;
+            const DEBOUNCE_MS = 10_000; // sync with reactUtils.ts
             const lastReload = parseInt(sessionStorage.getItem(RELOAD_KEY) || '0', 10);
             if (Date.now() - lastReload >= DEBOUNCE_MS) {
-                // Capture + sync-flush the chunk error BEFORE reloading,
-                // otherwise the report is lost and we have no diagnostic data
-                // to debug recurring blank-page bugs after the reload.
+                // Capture + sync-flush the chunk error BEFORE reloading.
                 captureException(error, {
                     component: errorInfo.componentStack?.trim().split('\n')[1]?.trim() ?? 'ChunkLoad',
                     metadata: {
@@ -333,8 +332,11 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     }
     render() {
         if (this.state.hasError) {
+            const isChunkStale = this.state.error?.name === 'ChunkStaleError';
             const lang = typeof window !== 'undefined' ? localStorage.getItem('sgs_lang') : 'vn';
-            const msg = lang === 'en' ? 'An unexpected error has occurred.' : 'Đã xảy ra lỗi không mong muốn.';
+            const msg = isChunkStale
+                ? (lang === 'en' ? 'Page content is outdated. Please reload.' : 'Nội dung trang cần được tải lại.')
+                : (lang === 'en' ? 'An unexpected error has occurred.' : 'Đã xảy ra lỗi không mong muốn.');
             return <ErrorState message={msg} onRetry={() => window.location.reload()} />;
         }
         return this.props.children;

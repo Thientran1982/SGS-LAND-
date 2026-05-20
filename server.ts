@@ -5362,6 +5362,50 @@ async function startServer() {
       }
     });
 
+    // ── Serve hashed JS/CSS chunks with EIO retry ─────────────────────────────
+    // Replit's production filesystem occasionally returns transient EIO (I/O error)
+    // when reading built chunk files. express.static propagates this as a 500, which
+    // causes the browser's dynamic import to fail and triggers the ErrorBoundary.
+    // This middleware intercepts /assets/* requests and retries up to 3 times
+    // (150 ms apart) before falling back to the global error handler.
+    app.use('/assets', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const filePath = path.join(process.cwd(), 'dist', 'assets', req.path);
+      const ext = path.extname(req.path).toLowerCase();
+      const CT: Record<string, string> = {
+        '.js': 'application/javascript; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+        '.map': 'application/json',
+        '.woff2': 'font/woff2',
+        '.woff': 'font/woff',
+        '.ttf': 'font/ttf',
+        '.svg': 'image/svg+xml',
+        '.png': 'image/png',
+        '.webp': 'image/webp',
+      };
+      let attempts = 0;
+      const tryServe = () => {
+        attempts++;
+        const headers: Record<string, string> = {
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        };
+        if (CT[ext]) headers['Content-Type'] = CT[ext];
+        res.sendFile(filePath, { headers }, (err) => {
+          if (err) {
+            const code = (err as NodeJS.ErrnoException).code;
+            if ((code === 'EIO' || code === 'EAGAIN') && attempts < 4) {
+              setTimeout(tryServe, 150 * attempts);
+            } else if (code === 'ENOENT') {
+              // File not found — fall through to express.static for 404 handling
+              next();
+            } else {
+              next(err);
+            }
+          }
+        });
+      };
+      tryServe();
+    });
+
     // All other SPA routes → inject admin-saved override or fallback to defaults
     // Long-lived cache for hashed assets (JS/CSS chunks have content hash in filename)
     app.use(express.static("dist", {
