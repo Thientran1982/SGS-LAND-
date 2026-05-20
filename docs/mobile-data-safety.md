@@ -1,4 +1,4 @@
-# Google Play Data Safety form — SGS Land (vn.sgsland.mobile)
+# Google Play Data Safety form — SGS Land (vn.sgsland.buyer)
 
 > Phiên bản tài liệu: Sprint 7 (#57). Dùng làm script điền vào Play Console
 > → **Policy → App content → Data safety**. Nguồn truth của các quyền là

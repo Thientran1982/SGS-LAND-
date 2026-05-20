@@ -1,6 +1,6 @@
 # SGS Land — App Store / Google Play listing (VI)
 
-> **Bundle:** `vn.sgsland.mobile` · **Version:** 0.1.0
+> **Bundle:** `vn.sgsland.buyer` · **Version:** 0.1.0
 > **Phiên bản tài liệu:** Sprint 7 (#57)
 
 ## Tên app

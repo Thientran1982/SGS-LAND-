@@ -7,10 +7,10 @@
 | Mục | Cách lấy |
 |---|---|
 | Apple Developer membership ($99/yr) | https://developer.apple.com/programs |
-| App Store Connect app record (`vn.sgsland.mobile`) | App Store Connect → My Apps → "+" |
+| App Store Connect app record (`vn.sgsland.buyer`) | App Store Connect → My Apps → "+" |
 | `ascAppId` + `appleTeamId` | App Store Connect → App Info / Membership |
 | Google Play Console account ($25 lifetime) | https://play.google.com/console |
-| Play Console app record (`vn.sgsland.mobile`) | Create app → Closed testing → Internal |
+| Play Console app record (`vn.sgsland.buyer`) | Create app → Closed testing → Internal |
 | Service account JSON cho `eas submit -p android` | Play Console → Setup → API access |
 | EAS account + project ID | `npx eas-cli login` → `npx eas-cli init` (dán vào `app.json` `extra.eas.projectId`) |
 | Sentry project + DSN (optional) | sentry.io → Projects → Create → React Native → set `EXPO_PUBLIC_SENTRY_DSN` |

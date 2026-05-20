@@ -15,8 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "vn.sgsland.mobile",
-      "buildNumber": "2",
+      "bundleIdentifier": "vn.sgsland.buyer",
+      "buildNumber": "3",
       "associatedDomains": ["applinks:sgsland.vn"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -28,8 +28,8 @@
       }
     },
     "android": {
-      "package": "vn.sgsland.mobile",
-      "versionCode": 2,
+      "package": "vn.sgsland.buyer",
+      "versionCode": 3,
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
