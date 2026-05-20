@@ -254,9 +254,13 @@ export const ProductSearch: React.FC = () => {
         window.history.pushState(null, '', dest);
         window.dispatchEvent(new PopStateEvent('popstate'));
     };
+    // Authenticated users go to Dashboard (stays in AUTH block, avoids PUBLIC→AUTH
+    // Layout mount race that can trigger the outer ErrorBoundary).
+    // Guest users go to the public Landing page.
     const handleHome = () => {
-        const intercepted = exitIntentRef.current?.trigger(`/${ROUTES.LANDING}`);
-        if (!intercepted) navigate(`/${ROUTES.LANDING}`);
+        const dest = currentUser ? `/${ROUTES.DASHBOARD}` : `/${ROUTES.LANDING}`;
+        const intercepted = exitIntentRef.current?.trigger(dest);
+        if (!intercepted) navigate(dest);
     };
     const handleLogin = () => {
         const dest = currentUser ? `/${ROUTES.DASHBOARD}` : `/${ROUTES.LOGIN}`;

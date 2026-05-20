@@ -81,6 +81,7 @@ import m059 from './059_fix_department_uuid';
 import m060 from './060_ai_agents';
 import m061 from './061_valuation_agent';
 import m062 from './062_valuation_usage_log';
+import m063 from './063_payment_transactions';
 import m064 from './064_valuation_cost_alerts_early_warning';
 import m065 from './065_ai_usage_log';
 import m066 from './066_ai_cost_plan_quotas';
@@ -201,6 +202,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '060_ai_agents.ts': m060,
   '061_valuation_agent.ts': m061,
   '062_valuation_usage_log.ts': m062,
+  '063_payment_transactions.ts': m063,
   '064_valuation_cost_alerts_early_warning.ts': m064,
   '065_ai_usage_log.ts': m065,
   '066_ai_cost_plan_quotas.ts': m066,
