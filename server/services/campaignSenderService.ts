@@ -9,6 +9,7 @@ import { createHmac } from 'crypto';
 import { logger } from '../middleware/logger';
 import { isBrevoConfigured } from './brevoService';
 import { emailService } from './emailService';
+import { withTenantContext } from '../db';
 export function signTrackingUrl(recipientId: string, url: string): string {
   const secret = process.env.JWT_SECRET || 'dev-secret';
   return createHmac('sha256', secret)
@@ -43,6 +44,8 @@ interface AudienceRow {
 }
 /**
  * Đếm số người sẽ nhận chiến dịch (dùng cho UI preview).
+ * Dùng withTenantContext để đảm bảo RLS policy được áp dụng đúng
+ * khi pool kết nối với role sgs_app.
  */
 export async function countAudience(
   pool: Pool,
@@ -50,11 +53,19 @@ export async function countAudience(
   filter: AudienceFilter,
 ): Promise<number> {
   const { sql, params } = buildAudienceQuery(tenantId, filter, true);
-  const r = await pool.query(sql, params);
-  return Number(r.rows[0]?.count || 0);
+  try {
+    return await withTenantContext(tenantId, async (client) => {
+      const r = await client.query(sql, params);
+      return Number(r.rows[0]?.count ?? 0);
+    });
+  } catch {
+    const r = await pool.query(sql, params);
+    return Number(r.rows[0]?.count ?? 0);
+  }
 }
 /**
  * Build danh sách người nhận thực tế.
+ * Dùng withTenantContext để đảm bảo RLS policy được áp dụng đúng.
  */
 export async function buildAudience(
   pool: Pool,
@@ -63,8 +74,15 @@ export async function buildAudience(
   limit = 5000,
 ): Promise<AudienceRow[]> {
   const { sql, params } = buildAudienceQuery(tenantId, filter, false, limit);
-  const r = await pool.query(sql, params);
-  return r.rows as AudienceRow[];
+  try {
+    return await withTenantContext(tenantId, async (client) => {
+      const r = await client.query(sql, params);
+      return r.rows as AudienceRow[];
+    });
+  } catch {
+    const r = await pool.query(sql, params);
+    return r.rows as AudienceRow[];
+  }
 }
 /**
  * Build SQL từ filter — chỉ dùng tham số hoá + whitelist enum.
@@ -130,6 +148,66 @@ function buildAudienceQuery(
     params,
   };
 }
+/**
+ * Bọc HTML fragment của campaign trong một HTML document đầy đủ.
+ * Đảm bảo email client (Outlook, Gmail, Apple Mail) render HTML đúng
+ * thay vì hiển thị thẻ HTML thô khi nhận fragment thiếu DOCTYPE/html/body.
+ */
+function wrapCampaignHtml(bodyHtml: string): string {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="vi">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGS LAND</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px 32px;">
+              <p style="margin:0;color:#ffffff;font-size:18px;font-weight:700;font-family:Arial,sans-serif;">SGS LAND</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;color:#334155;font-size:14px;line-height:1.7;font-family:Arial,sans-serif;">
+              ${bodyHtml}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 24px;border-top:1px solid #E2E8F0;text-align:center;">
+              <p style="margin:0;color:#94a3b8;font-size:11px;font-family:Arial,sans-serif;">SGS LAND — Bất động sản chuyên nghiệp</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+/**
+ * Strip HTML tags để tạo plain-text fallback từ HTML body.
+ */
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 /**
  * Inject tracking pixel + rewrite link cho email body.
  */
@@ -210,13 +288,18 @@ export async function runCampaign(
     const bodyTpl = rec.variant === 'B' && ab.variant_b_body_html ? ab.variant_b_body_html : c.body_html;
     const personalised = bodyTpl.replace(/\{\{name\}\}/g, escapeHtml(rec.name || 'bạn'));
     const decorated = decorateBody(personalised, rec.id, publicBaseUrl);
+    // Bọc trong HTML document đầy đủ để email client render HTML đúng
+    const htmlEmail = wrapCampaignHtml(decorated);
+    // Tạo plain-text fallback để Brevo gửi multipart (html + text)
+    const textEmail = htmlToPlainText(personalised);
     try {
       // Đi qua emailService.sendEmail để cùng được kiểm tra dedupe + quota
       // (theo gói cước tenant) và ghi nhận vào email_log như mọi email khác.
       const result = await emailService.sendEmail(c.tenant_id, {
         to: rec.email,
         subject,
-        html: decorated,
+        html: htmlEmail,
+        text: textEmail,
         template: 'campaign',
         // Mỗi (campaign, recipient_row) là duy nhất ⇒ dedupe ngăn gửi lặp do retry
         dedupeKey: `campaign:${campaignId}:${rec.id}`,
