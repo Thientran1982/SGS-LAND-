@@ -1,6 +1,7 @@
 import express from "express";
 import compression from "compression";
 import path from "path";
+import fs from "fs";
 import { Server } from "socket.io";
 import http from "http";
 import cookieParser from "cookie-parser";
@@ -5011,8 +5012,10 @@ async function startServer() {
       res.sendFile(filePath, { headers }, (err) => {
         if (!err) return;
         const code = (err as NodeJS.ErrnoException).code;
-        if ((code === 'EIO' || code === 'EAGAIN') && attempts < 4) {
-          setTimeout(tryServe, 150 * attempts);
+        if ((code === 'EIO' || code === 'EAGAIN') && attempts < 8) {
+          // Replit VM filesystem: newly-built files can EIO for up to ~15 min post-deploy.
+          // Exponential backoff: 300 500 700 900 1100 1300 1500 ms (total ~6.3s max)
+          setTimeout(tryServe, Math.min(300 + (attempts - 1) * 200, 1500));
         } else if (code === 'ENOENT') {
           next();
         } else {
@@ -5133,6 +5136,37 @@ async function startServer() {
 
     // Preload the base HTML once at startup to avoid repeated disk reads.
     try { getBaseHtml(); } catch { /* dist not ready in some edge cases */ }
+
+    // Warm up the production filesystem cache for all static assets.
+    // Replit's VM deployment has a window (up to ~15 min) after a fresh build where
+    // reading newly-written files returns EIO. Pre-reading every file in dist/assets/
+    // and public/ populates the OS buffer cache so subsequent sendFile() calls hit
+    // RAM instead of the raw disk, bypassing the transient EIO window entirely.
+    (async () => {
+      try {
+        const assetsDir = path.join(process.cwd(), 'dist', 'assets');
+        const publicDir = path.join(process.cwd(), 'public');
+        const [assetFiles, publicFiles] = await Promise.all([
+          fs.promises.readdir(assetsDir).catch(() => [] as string[]),
+          fs.promises.readdir(publicDir).catch(() => [] as string[]),
+        ]);
+        const allFiles = [
+          ...assetFiles.map(f => path.join(assetsDir, f)),
+          ...publicFiles.map(f => path.join(publicDir, f)),
+        ];
+        let warmed = 0;
+        await Promise.all(
+          allFiles.map(fp =>
+            fs.promises.readFile(fp)
+              .then(() => { warmed++; })
+              .catch(() => null)
+          )
+        );
+        logger.info(`[Warmup] OS buffer cache primed — ${warmed}/${allFiles.length} files read into cache`);
+      } catch (err) {
+        logger.warn('[Warmup] Asset warmup failed (non-critical):', err);
+      }
+    })();
 
     // Helper that sends injected HTML.
     // SEO routes (/listing/:id, /news/:id) use cache=true (60s CDN-friendly).
@@ -5440,8 +5474,10 @@ async function startServer() {
         res.sendFile(filePath, { headers }, (err) => {
           if (err) {
             const code = (err as NodeJS.ErrnoException).code;
-            if ((code === 'EIO' || code === 'EAGAIN') && attempts < 4) {
-              setTimeout(tryServe, 150 * attempts);
+            if ((code === 'EIO' || code === 'EAGAIN') && attempts < 8) {
+              // Replit VM filesystem: newly-built files can EIO for up to ~15 min post-deploy.
+              // Exponential backoff: 300 500 700 900 1100 1300 1500 ms (total ~6.3s max)
+              setTimeout(tryServe, Math.min(300 + (attempts - 1) * 200, 1500));
             } else if (code === 'ENOENT') {
               // File not found — fall through to express.static for 404 handling
               next();
