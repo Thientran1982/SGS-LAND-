@@ -124,8 +124,7 @@ export function AiChatWidget() {
         >
           {/* Header */}
           <div
-            className="flex items-center gap-3 px-4 py-3 shrink-0 cursor-pointer"
-            style={{ background: "var(--primary-600)" }}
+            className="flex items-center gap-3 px-4 py-3 shrink-0 cursor-pointer bg-indigo-600 hover:bg-indigo-700 transition-colors"
             onClick={() => setMinimized((v) => !v)}
           >
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
