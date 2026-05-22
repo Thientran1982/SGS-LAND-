@@ -410,45 +410,49 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
       <AnimatePresence>
         {visible && (
           <motion.div
-            className="fixed z-[200] bottom-4 right-4 w-80 rounded-2xl shadow-2xl overflow-hidden"
-            style={{ boxShadow: '0 8px 40px 0 rgba(99,102,241,0.25), 0 2px 12px 0 rgba(0,0,0,0.12)' }}
+            className="bg-white border border-slate-200 shadow-lg rounded-2xl w-[360px] fixed bottom-4 right-4 z-[200] overflow-hidden"
             initial={{ y: 60, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 60, opacity: 0 }}
             transition={{ type: 'spring', damping: 26, stiffness: 300 }}
           >
-            {/* ── Gradient header ── */}
-            <div className="relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-4 pt-4 pb-5">
+            {/* ── Clean top bar ── */}
+            <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
+              <div className="flex items-start gap-2.5 pr-4">
+                <svg className="w-4 h-4 text-indigo-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <div>
+                  <p className="font-semibold text-slate-800 text-[15px] leading-snug">{headline}</p>
+                  <p className="text-slate-500 text-sm mt-0.5 leading-snug">{subtext}</p>
+                </div>
+              </div>
               <button
                 onClick={handleDismiss}
-                className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/35 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors shrink-0 mt-0.5"
                 aria-label="Đóng"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-
-              <div className="flex items-center gap-2.5 mb-1 pr-8">
-                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                </div>
-                <h2 className="text-sm font-extrabold text-white leading-snug">{headline}</h2>
-              </div>
-              <p className="text-xs text-indigo-100 leading-snug line-clamp-2 pl-[1.875rem]">{subtext}</p>
             </div>
 
-            {/* ── White body ── */}
-            <div className="bg-white px-4 pt-3 pb-4">
+            {/* ── Body ── */}
+            <div className="px-5 pt-3 pb-4">
               <div className="flex flex-col gap-1.5 mb-3">
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <IcoZap /><span>Tư vấn trong 30 phút, định giá miễn phí</span>
+                  <svg className="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Tư vấn trong 30 phút, định giá miễn phí</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <IcoShield /><span>Thông tin bảo mật, không spam</span>
+                  <svg className="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Thông tin bảo mật, không spam</span>
                 </div>
               </div>
 
@@ -460,7 +464,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Họ tên (không bắt buộc)"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
                     style={{ fontSize: '16px' }}
                   />
                   <input
@@ -469,7 +473,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                     onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
                     placeholder="Số điện thoại *"
                     required
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
                     style={{ fontSize: '16px' }}
                   />
                   <input
@@ -477,7 +481,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="Email (để nhận xác nhận)"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
                     style={{ fontSize: '16px' }}
                   />
 
@@ -488,7 +492,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                   <button
                     type="submit"
                     disabled={submitting || !phone.trim()}
-                    className="w-full py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-lg font-medium text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {submitting ? <><IcoSpinner />Đang gửi...</> : <><IcoSend />Nhận tư vấn ngay</>}
                   </button>
@@ -496,7 +500,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                   <button
                     type="button"
                     onClick={handleDismiss}
-                    className="w-full py-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                    className="w-full py-1 text-xs text-slate-400 hover:text-slate-600 transition-colors text-center"
                   >
                     Không cảm ơn
                   </button>
@@ -507,8 +511,8 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-4"
                 >
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
