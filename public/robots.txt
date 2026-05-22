@@ -188,7 +188,15 @@ Allow: /api/public/
 User-agent: Bytespider
 Allow: /
 Allow: /llms.txt
+Allow: /llms-full.txt
 Allow: /data/
+
+User-agent: cohere-ai
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
 
 Sitemap: https://sgsland.vn/sitemap.xml
 Sitemap: https://sgsland.vn/sitemap-static.xml
