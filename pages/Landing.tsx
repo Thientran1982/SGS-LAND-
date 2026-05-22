@@ -1077,8 +1077,7 @@ export const Landing: React.FC = () => {
             <button
                 onClick={() => setChatOpen(prev => !prev)}
                 aria-label="Mở trợ lý AI tư vấn bất động sản"
-                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform select-none"
-                style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
+                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all select-none"
             >
                 {chatOpen
                     ? <X className="w-6 h-6 text-white" />
@@ -1096,8 +1095,7 @@ export const Landing: React.FC = () => {
                 </a>
                 <button
                     onClick={() => setChatOpen(prev => !prev)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
-                    style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 active:scale-95 text-white rounded-xl text-sm font-bold transition-all bg-indigo-600 hover:bg-indigo-700"
                 >
                     {chatOpen
                         ? <X className="w-4 h-4 shrink-0" />
