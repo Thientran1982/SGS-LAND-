@@ -286,27 +286,45 @@
   <!-- ══ LANDING PAGES DỰ ÁN ══ -->
   <url>
     <loc>https://sgsland.vn/du-an/aqua-city</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/aqua-city" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/aqua-city" />
+    <image:image>
+      <image:loc>https://sgsland.vn/images/aqua-city.jpg</image:loc>
+      <image:title>Aqua City Novaland — SGS LAND</image:title>
+      <image:caption>Hình ảnh dự án Aqua City Novaland tại Long Thành, Đồng Nai</image:caption>
+      <image:geo_location>Long Thành, Đồng Nai</image:geo_location>
+    </image:image>
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/izumi-city</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/izumi-city" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/izumi-city" />
+    <image:image>
+      <image:loc>https://sgsland.vn/images/izumi-city.jpg</image:loc>
+      <image:title>Izumi City Nam Long — SGS LAND</image:title>
+      <image:caption>Hình ảnh dự án Izumi City Nam Long chuẩn Nhật Bản 170ha tại Biên Hòa, Đồng Nai</image:caption>
+      <image:geo_location>Biên Hòa, Đồng Nai</image:geo_location>
+    </image:image>
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/vinhomes-grand-park</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/vinhomes-grand-park" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/vinhomes-grand-park" />
+    <image:image>
+      <image:loc>https://sgsland.vn/images/vinhomes-grand-park.jpg</image:loc>
+      <image:title>Vinhomes Grand Park — SGS LAND</image:title>
+      <image:caption>Hình ảnh dự án Vinhomes Grand Park 271ha tại TP. Thủ Đức, TP.HCM</image:caption>
+      <image:geo_location>TP. Thủ Đức, TP.HCM</image:geo_location>
+    </image:image>
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/vinhomes-central-park</loc>
@@ -350,11 +368,17 @@
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/nha-pho-trung-tam</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/nha-pho-trung-tam" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/nha-pho-trung-tam" />
+    <image:image>
+      <image:loc>https://sgsland.vn/images/nha-pho-trung-tam.jpg</image:loc>
+      <image:title>Nhà Phố Trung Tâm TP.HCM — SGS LAND</image:title>
+      <image:caption>Hình ảnh nhà phố mặt tiền và shophouse trung tâm TP.HCM</image:caption>
+      <image:geo_location>TP.HCM</image:geo_location>
+    </image:image>
   </url>
   <url>
     <loc>https://sgsland.vn/du-an/manhattan</loc>
@@ -387,6 +411,35 @@
     <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/sala" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/sala" />
+  </url>
+
+  <url>
+    <loc>https://sgsland.vn/du-an/masteri-cosmo-central</loc>
+    <lastmod>2026-05-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/masteri-cosmo-central" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/masteri-cosmo-central" />
+    <image:image>
+      <image:loc>https://sgsland.vn/images/masteri-cosmo-central.jpg</image:loc>
+      <image:title>Masteri Cosmo Central — SGS LAND</image:title>
+      <image:caption>Hình ảnh dự án Masteri Cosmo Central tại TP. Thủ Đức, TP.HCM</image:caption>
+      <image:geo_location>TP. Thủ Đức, TP.HCM</image:geo_location>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/vinhomes-hoc-mon</loc>
+    <lastmod>2026-05-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/vinhomes-hoc-mon" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/vinhomes-hoc-mon" />
+    <image:image>
+      <image:loc>https://sgsland.vn/images/vinhomes-hoc-mon.jpg</image:loc>
+      <image:title>Vinhomes Hóc Môn — SGS LAND</image:title>
+      <image:caption>Hình ảnh dự án Vinhomes Hóc Môn Smart City 4.0 tại Hóc Môn, TP.HCM</image:caption>
+      <image:geo_location>Hóc Môn, TP.HCM</image:geo_location>
+    </image:image>
   </url>
 
   <!-- ══ CHÍNH SÁCH PHÁP LÝ ══ -->
