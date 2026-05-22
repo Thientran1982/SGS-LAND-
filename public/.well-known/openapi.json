@@ -1,0 +1,45 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SGS LAND Real Estate API",
+    "description": "API cho AI agents tra cứu bất động sản, định giá và pháp lý tại TP.HCM",
+    "version": "1.0.0",
+    "contact": {
+      "name": "SGS LAND",
+      "url": "https://sgsland.vn",
+      "email": "info@sgsland.vn"
+    }
+  },
+  "servers": [{ "url": "https://sgsland.vn/api" }],
+  "paths": {
+    "/public/listings": {
+      "get": {
+        "summary": "Tìm kiếm danh sách bất động sản",
+        "description": "Tìm dự án và căn hộ theo khu vực, giá, loại hình tại TP.HCM và vùng ven",
+        "parameters": [
+          { "name": "area", "in": "query", "description": "Khu vực (thu-duc, hoc-mon, long-thanh, binh-duong)", "schema": { "type": "string" } },
+          { "name": "minPrice", "in": "query", "description": "Giá tối thiểu (VND)", "schema": { "type": "integer" } },
+          { "name": "maxPrice", "in": "query", "description": "Giá tối đa (VND)", "schema": { "type": "integer" } },
+          { "name": "type", "in": "query", "description": "Loại hình (can-ho, nha-pho, dat-nen)", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Danh sách bất động sản phù hợp" }
+        }
+      }
+    },
+    "/valuations/estimate": {
+      "get": {
+        "summary": "Định giá AI bất động sản",
+        "description": "Ước tính giá trị bất động sản sử dụng AVM 9 hệ số, sai số ±5%",
+        "parameters": [
+          { "name": "address", "in": "query", "description": "Địa chỉ bất động sản", "schema": { "type": "string" } },
+          { "name": "area", "in": "query", "description": "Diện tích (m²)", "schema": { "type": "number" } },
+          { "name": "floor", "in": "query", "description": "Tầng", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Kết quả định giá AI với khoảng tin cậy 95%" }
+        }
+      }
+    }
+  }
+}

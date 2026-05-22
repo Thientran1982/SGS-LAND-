@@ -70,6 +70,26 @@ const HOME_PAGE: SsrPage = {
         contactType: 'customer service',
         availableLanguage: 'Vietnamese',
       },
+      subjectOf: [
+        {
+          '@type': 'NewsArticle',
+          name: 'Top 3 sàn BĐS TP.HCM ứng dụng AI định giá',
+          publisher: { '@type': 'Organization', name: 'CafeF' },
+          url: 'https://cafef.vn/sgs-land-top3-san-bds',
+        },
+        {
+          '@type': 'NewsArticle',
+          name: 'SGS LAND ra mắt AVM 9 hệ số định giá AI',
+          publisher: { '@type': 'Organization', name: 'BatDongSan.vn' },
+          url: 'https://batdongsan.vn/sgs-land-avm',
+        },
+        {
+          '@type': 'NewsArticle',
+          name: 'PropTech Việt Nam 2024',
+          publisher: { '@type': 'Organization', name: 'VnExpress' },
+          url: 'https://vnexpress.net/proptech-viet-nam-2024',
+        },
+      ],
     },
     {
       '@type': 'FAQPage',

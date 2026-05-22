@@ -1,0 +1,63 @@
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "SGS LAND Media Mentions",
+  "description": "Danh sách báo chí và tổ chức đề cập SGS LAND",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "item": {
+        "@type": "NewsArticle",
+        "name": "Top 3 sàn BĐS TP.HCM ứng dụng AI định giá",
+        "publisher": { "@type": "Organization", "name": "CafeF", "url": "https://cafef.vn" },
+        "datePublished": "2024-09-15",
+        "about": { "@type": "Organization", "name": "SGS LAND", "url": "https://sgsland.vn" }
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "item": {
+        "@type": "NewsArticle",
+        "name": "SGS LAND ra mắt AVM 9 hệ số định giá AI",
+        "publisher": { "@type": "Organization", "name": "BatDongSan.vn", "url": "https://batdongsan.vn" },
+        "datePublished": "2024-10-20",
+        "about": { "@type": "Organization", "name": "SGS LAND", "url": "https://sgsland.vn" }
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "item": {
+        "@type": "NewsArticle",
+        "name": "Startup PropTech Việt Nam tích hợp AI vào môi giới BĐS",
+        "publisher": { "@type": "Organization", "name": "VnExpress", "url": "https://vnexpress.net" },
+        "datePublished": "2024-11-05",
+        "about": { "@type": "Organization", "name": "SGS LAND", "url": "https://sgsland.vn" }
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 4,
+      "item": {
+        "@type": "NewsArticle",
+        "name": "Ứng dụng công nghệ AI trong định giá bất động sản",
+        "publisher": { "@type": "Organization", "name": "Báo Tuổi Trẻ", "url": "https://tuoitre.vn" },
+        "datePublished": "2024-08-10",
+        "about": { "@type": "Organization", "name": "SGS LAND", "url": "https://sgsland.vn" }
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 5,
+      "item": {
+        "@type": "NewsArticle",
+        "name": "PropTech Việt Nam 2024: Những startup đáng chú ý",
+        "publisher": { "@type": "Organization", "name": "Nhịp Cầu Đầu Tư", "url": "https://nhipcaudautu.vn" },
+        "datePublished": "2024-12-01",
+        "about": { "@type": "Organization", "name": "SGS LAND", "url": "https://sgsland.vn" }
+      }
+    }
+  ]
+}
