@@ -56,7 +56,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
     const isHot = (bookingCount || 0) > 100;
     const isRent = transaction === 'RENT';
     return (
-        <div className="relative aspect-[4/3] w-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 group overflow-hidden cursor-pointer isolate z-0" onClick={onClick}>
+        <div className="relative aspect-[4/3] w-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 group overflow-hidden cursor-pointer" onClick={onClick}>
             {/* Status Badges - Z-index elevated */}
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
@@ -252,8 +252,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     return (
         <div 
             onClick={handleCardClick}
-            className="bg-[var(--bg-surface)] dark:bg-slate-900 rounded-[24px] shadow-sm group h-full relative overflow-hidden transform-gpu will-change-transform transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 isolate cursor-pointer flex flex-col"
-            style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
+            className="bg-[var(--bg-surface)] dark:bg-slate-900 rounded-[24px] shadow-sm group h-full relative overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 cursor-pointer flex flex-col"
         >
             <div className="shrink-0">
                 <ImageCarousel 
