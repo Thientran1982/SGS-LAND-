@@ -505,30 +505,26 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 24, scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-                    className="fixed bottom-24 md:bottom-28 right-4 md:right-6 z-[60] w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-[var(--glass-border)] flex flex-col"
+                    className="fixed bottom-24 md:bottom-28 right-4 md:right-6 z-[60] w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-white flex flex-col"
                     style={{
                         height: '540px',
                         maxHeight: 'calc(100dvh - 8rem)',
-                        boxShadow: '0 24px 64px rgba(99,102,241,0.18), 0 4px 16px rgba(0,0,0,0.12)',
                     }}
                 >
                     {/* ── Header ── */}
-                    <div
-                        className="shrink-0 flex items-center justify-between px-4 py-3 text-white"
-                        style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
-                    >
+                    <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white">
                         <div className="flex items-center gap-2.5 min-w-0">
                             {/* Avatar */}
                             <div className="relative shrink-0">
-                                <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+                                <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                                     {isHumanMode ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                                 </div>
                                 {/* Online indicator */}
                                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
                             </div>
                             <div className="min-w-0">
-                                <p className="font-bold text-sm leading-tight">SGS LAND AI</p>
-                                <p className="text-white/75 text-xs leading-tight">
+                                <p className="font-semibold text-sm text-slate-800 leading-tight">SGS LAND AI</p>
+                                <p className="text-slate-500 text-xs leading-tight">
                                     {isHumanMode ? 'Tư vấn viên đang hỗ trợ' : 'Đang hoạt động · Phản hồi ngay'}
                                 </p>
                             </div>
@@ -538,7 +534,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                             <a
                                 href={`tel:${HOTLINE}`}
                                 title={`Gọi hotline ${HOTLINE_DISPLAY}`}
-                                className="w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"
+                                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center justify-center"
                                 aria-label="Gọi hotline"
                             >
                                 <Phone className="w-3.5 h-3.5" />
@@ -548,7 +544,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                     type="button"
                                     onClick={handleReset}
                                     title="Cuộc trò chuyện mới"
-                                    className="w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"
+                                    className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center justify-center"
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
                                 </button>
@@ -556,7 +552,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"
+                                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center justify-center"
                                 aria-label="Đóng chat"
                             >
                                 <X className="w-4 h-4" />
@@ -569,8 +565,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                         /* Registration form */
                         <div className="flex-1 overflow-y-auto bg-[var(--bg-surface)] flex flex-col justify-center p-5">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0"
-                                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
                                     <Sparkles className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -603,8 +598,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                 />
                                 <button
                                     type="submit"
-                                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 active:scale-95"
-                                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all"
                                 >
                                     {t('livechat.start_chat')}
                                 </button>
@@ -710,14 +704,14 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
+                                                <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                                                     <div>
-                                                        <p className="font-bold text-sm text-indigo-900">
+                                                        <p className="font-semibold text-sm text-slate-800">
                                                             {captureMode === 'ESCALATION'
                                                                 ? '🙋 Kết nối tư vấn viên thật'
                                                                 : '📞 Được gọi lại miễn phí'}
                                                         </p>
-                                                        <p className="text-xs text-indigo-600 mt-0.5">
+                                                        <p className="text-xs text-slate-500 mt-0.5">
                                                             {captureMode === 'ESCALATION'
                                                                 ? 'Tư vấn viên sẽ liên hệ bạn trong 15 phút'
                                                                 : 'Để lại số điện thoại — tư vấn viên gọi lại trong 15 phút'}
@@ -726,7 +720,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                     <button
                                                         type="button"
                                                         onClick={() => { setCaptureMode(null); setCaptureData({ name: '', phone: '', notes: '' }); }}
-                                                        className="w-6 h-6 rounded-full bg-white/60 flex items-center justify-center text-indigo-400 hover:text-indigo-700"
+                                                        className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600"
                                                     >
                                                         <X className="w-3.5 h-3.5" />
                                                     </button>
@@ -759,8 +753,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                     <button
                                                         type="submit"
                                                         disabled={captureSubmitting || !captureData.phone.trim()}
-                                                        className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                                                        style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                                                        className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50"
                                                     >
                                                         {captureSubmitting ? 'Đang gửi...' : (
                                                             captureMode === 'ESCALATION' ? 'Kết nối tư vấn viên' : 'Gửi yêu cầu gọi lại'
@@ -787,7 +780,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                     key={btn.action}
                                                     type="button"
                                                     onClick={() => handleActionButton(btn.action)}
-                                                    className="text-xs px-3 py-1.5 rounded-full border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors font-medium whitespace-nowrap"
+                                                    className="text-xs px-3 py-1.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors font-medium whitespace-nowrap"
                                                 >
                                                     {btn.label}
                                                 </button>
@@ -812,8 +805,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                 <div className="flex items-end gap-2">
                                     {/* User avatar */}
                                     <div
-                                        className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm mb-1"
-                                        style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}
+                                        className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold bg-slate-600 shadow-sm mb-1"
                                     >
                                         {userInitial}
                                     </div>
@@ -836,8 +828,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                             type="button"
                                             onClick={() => handleSend()}
                                             disabled={!input.trim() || isThinking}
-                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white shrink-0 disabled:opacity-40 transition-all active:scale-95"
-                                            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white bg-indigo-600 hover:bg-indigo-700 shrink-0 disabled:opacity-40 transition-all active:scale-95"
                                             aria-label="Gửi"
                                         >
                                             <Send className="w-4 h-4" />
