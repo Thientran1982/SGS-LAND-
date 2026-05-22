@@ -4987,6 +4987,42 @@ async function startServer() {
     }
   });
 
+  // EIO retry for top-level static files in public/ — Replit production filesystem
+  // occasionally returns transient EIO errors for these files. The existing retry
+  // middleware only covers /assets/* (hashed chunks). This extends the same pattern
+  // to startup-guard.js, theme-init.js, clarity-init.js, manifest.json.
+  const PUBLIC_EIO_FILES = new Set(['startup-guard.js', 'theme-init.js', 'clarity-init.js', 'manifest.json', 'widget.js']);
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const filename = req.path.replace(/^\//, '');
+    if (!PUBLIC_EIO_FILES.has(filename)) return next();
+    const filePath = path.join(process.cwd(), 'public', filename);
+    const ext = path.extname(filename).toLowerCase();
+    const CT: Record<string, string> = {
+      '.js': 'application/javascript; charset=utf-8',
+      '.json': 'application/manifest+json',
+    };
+    let attempts = 0;
+    const tryServe = () => {
+      attempts++;
+      const headers: Record<string, string> = {
+        'Cache-Control': filename === 'manifest.json' ? 'public, max-age=3600' : 'public, max-age=0, must-revalidate',
+      };
+      if (CT[ext]) headers['Content-Type'] = CT[ext];
+      res.sendFile(filePath, { headers }, (err) => {
+        if (!err) return;
+        const code = (err as NodeJS.ErrnoException).code;
+        if ((code === 'EIO' || code === 'EAGAIN') && attempts < 4) {
+          setTimeout(tryServe, 150 * attempts);
+        } else if (code === 'ENOENT') {
+          next();
+        } else {
+          next(err);
+        }
+      });
+    };
+    tryServe();
+  });
+
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
@@ -5451,6 +5487,13 @@ async function startServer() {
       res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
       res.setHeader('X-Robots-Tag', 'index, follow, max-image-preview:large, max-snippet:-1');
       res.send(html);
+    });
+
+    // Canonical redirect: /home → / (duplicate content — same meta, same component)
+    // Client-side navigate('/home') is unaffected (React Router, no server round-trip).
+    // Bots and direct browser requests get 301 → canonical homepage.
+    app.get('/home', (_req: express.Request, res: express.Response) => {
+      res.redirect(301, '/');
     });
 
     // ---------------------------------------------------------------------------
