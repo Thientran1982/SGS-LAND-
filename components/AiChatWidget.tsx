@@ -11,7 +11,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Bot, Sparkles, User, RefreshCw, Phone, Calendar, PhoneCall } from 'lucide-react';
+import { X, Send, Bot, User, RefreshCw, Phone, Calendar, PhoneCall } from 'lucide-react';
 import { useSocket } from '../services/websocket';
 import { useTranslation } from '../services/i18n';
 import { MessageBubble } from './ChatUI';
@@ -565,7 +565,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                         <div className="flex-1 overflow-y-auto bg-[var(--bg-surface)] flex flex-col justify-center p-5">
                             <div className="flex items-center gap-2 mb-4">
                                 <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                                    <Sparkles className="w-5 h-5" />
+                                    <Bot className="w-5 h-5" />
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm text-[var(--text-primary)]">Trợ lý AI bất động sản</p>
