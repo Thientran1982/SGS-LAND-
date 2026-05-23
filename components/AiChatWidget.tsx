@@ -505,10 +505,9 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 24, scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-                    className="fixed bottom-24 md:bottom-28 right-4 md:right-6 z-[200] w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-white flex flex-col"
+                    className="fixed top-[4.5rem] bottom-24 md:bottom-28 right-4 md:right-6 z-[200] w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-white flex flex-col"
                     style={{
-                        height: '540px',
-                        maxHeight: 'calc(100dvh - 8rem)',
+                        maxHeight: 'calc(100dvh - 9rem)',
                     }}
                 >
                     {/* ── Header ── */}
