@@ -21,6 +21,7 @@ import { Interaction, Channel, Direction } from '../types';
 const HOTLINE = '0971132378';
 const HOTLINE_DISPLAY = '0971 132 378';
 const LEAD_KEY = 'widget_lead_id';
+const SESSION_KEY = 'widget_session_id';
 const SESSION_MSGS_KEY = 'widget_msgs_v2';
 const MAX_SESSION_MSGS = 30;
 
@@ -193,6 +194,10 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
     const [actionBtnsDismissed, setActionBtnsDismissed] = useState(false);
     const [wasEverOpen, setWasEverOpen] = useState(false);
 
+    // ── Tier 2 Session Memory ──
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [userProfile, setUserProfile] = useState<{ budget?: string; district?: string; purpose?: string }>({});
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const autoReplyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -200,6 +205,8 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
     // ── Restore session ──
     useEffect(() => {
         const savedId = localStorage.getItem(LEAD_KEY);
+        const savedSessionId = localStorage.getItem(SESSION_KEY);
+        if (savedSessionId) setSessionId(savedSessionId);
         if (!savedId) return;
         const cached = loadSessionMsgs();
         if (cached.length > 0) setMessages(cached.filter(m => !isSysMsg(m)));
@@ -214,10 +221,12 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                 setUserMsgCount(filtered.filter(m => m.direction === 'INBOUND').length);
             } else {
                 localStorage.removeItem(LEAD_KEY);
+                localStorage.removeItem(SESSION_KEY);
                 clearSessionMsgs();
             }
         }).catch(() => {
             localStorage.removeItem(LEAD_KEY);
+            localStorage.removeItem(SESSION_KEY);
             clearSessionMsgs();
         });
     }, []);
@@ -286,6 +295,10 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                 'OUTBOUND',
                 { isAgent: true },
             );
+            // Generate stable sessionId for this chat session (Tier 2 memory)
+            const newSessionId = crypto.randomUUID ? crypto.randomUUID() : `sess_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            setSessionId(newSessionId);
+            localStorage.setItem(SESSION_KEY, newSessionId);
             setLeadId(id);
             setUserName(name.trim());
             setMessages([welcome]);
@@ -373,11 +386,14 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                 const res = await fetch('/api/public/ai/livechat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ leadId, message: content, lang: language }),
+                    body: JSON.stringify({ leadId, message: content, lang: language, sessionId }),
                 });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.noReply) return;
+                    if (data.userProfile && Object.keys(data.userProfile).length > 0) {
+                        setUserProfile(prev => ({ ...prev, ...data.userProfile }));
+                    }
                     const aiMsg: Interaction = data.reply;
                     if (aiMsg) {
                         setMessages(prev => {
@@ -471,8 +487,11 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
     // ── Reset session ──
     const handleReset = () => {
         localStorage.removeItem(LEAD_KEY);
+        localStorage.removeItem(SESSION_KEY);
         clearSessionMsgs();
         setLeadId(null);
+        setSessionId(null);
+        setUserProfile({});
         setMessages([]);
         setName('');
         setPhone('');
@@ -625,6 +644,27 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                 ? t('livechat.agent_takeover_notice')
                                                 : t('livechat.ai_resume_notice')}
                                         </span>
+                                    </div>
+                                )}
+
+                                {/* Tier 2 Session Memory: User profile chips */}
+                                {(userProfile.budget || userProfile.district || userProfile.purpose) && (
+                                    <div className="flex flex-wrap gap-1.5 px-1 pb-1">
+                                        {userProfile.budget && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                                💰 {userProfile.budget}
+                                            </span>
+                                        )}
+                                        {userProfile.district && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                📍 {userProfile.district}
+                                            </span>
+                                        )}
+                                        {userProfile.purpose && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                🏠 {userProfile.purpose}
+                                            </span>
+                                        )}
                                     </div>
                                 )}
 

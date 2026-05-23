@@ -500,6 +500,9 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
         if (diffDays > 0) parts.push(`Lần cuối tương tác: ${diffDays} ngày trước`);
     }
 
+    // Session-level profile extracted from Tier 2 memory
+    if (lead.preferences?._sessionDistrict) parts.push(`Khu vực phiên này: ${lead.preferences._sessionDistrict}`);
+
     let favoritesBlock = '';
     if (userFavorites && userFavorites.length > 0) {
         const favLines = userFavorites.slice(0, 8).map((f, i) => {
@@ -509,6 +512,11 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
             return `  ${i + 1}. [ID:${f.id}] ${label}${area ? ' — ' + area : ''} — ${price}${f.propertyType ? ' (' + f.propertyType + ')' : ''}`;
         }).join('\n');
         favoritesBlock = `\n[WATCHLIST KHÁCH HÀNG — ${userFavorites.length} BĐS đã lưu]:\n${favLines}\n→ Ưu tiên đề xuất BĐS KHÁC với watchlist. Nếu khách hỏi về BĐS đã lưu, hãy nhắc tên/địa chỉ cụ thể.`;
+    }
+
+    // Tier 1 Core Memory: inject SOUL identity at top of system context
+    if (lead.preferences?._soulContext) {
+        return `[AGENT_IDENTITY]:\n${lead.preferences._soulContext}\n---\n` + parts.join(' | ') + favoritesBlock;
     }
 
     return parts.join(' | ') + favoritesBlock;

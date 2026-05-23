@@ -100,6 +100,38 @@ import { sendAiError, parseAiError } from "./server/utils/aiErrorHandler";
 let broadcastIo: any = null;
 
 /** Server-side translation helper — looks up actual strings from the shared DICTIONARY */
+// Load SGS LAND Agent SOUL once at startup (Tier 1 Core Memory)
+let AGENT_SOUL = '';
+try {
+  AGENT_SOUL = fs.readFileSync(path.join(process.cwd(), 'SGSLAND_SOUL.md'), 'utf-8');
+} catch {
+  console.warn('[LiveChat] SGSLAND_SOUL.md not found — running without SOUL identity injection.');
+}
+
+// Extract user_profile signals from conversation messages
+function extractUserProfile(messages: any[], existing: Record<string, string> = {}): Record<string, string> {
+  const profile = { ...existing };
+  const userText = messages
+    .filter((m: any) => m.direction === 'INBOUND')
+    .map((m: any) => m.content || '')
+    .join(' ')
+    .toLowerCase();
+
+  const budgetMatch = userText.match(/(\d+(?:[.,]\d+)?)\s*tỷ/i);
+  if (budgetMatch) profile.budget = `${budgetMatch[1].replace(',', '.')} tỷ`;
+
+  const districtMatch = userText.match(/(quận\s*\d+|thủ đức|bình thạnh|gò vấp|tân bình|phú nhuận|bình chánh|nhà bè|hóc môn|củ chi|cần giờ|long an|bình dương|đồng nai)/i);
+  if (districtMatch) profile.district = districtMatch[1].trim();
+
+  if (userText.includes('đầu tư') || userText.includes('cho thuê')) {
+    profile.purpose = 'đầu tư';
+  } else if (!profile.purpose && (userText.includes('ở thực') || userText.includes('để ở'))) {
+    profile.purpose = 'ở thực';
+  }
+
+  return profile;
+}
+
 const serverT = (lang: string = 'vn') => (key: string): string => {
   const dict = (DICTIONARY as any)[lang] || (DICTIONARY as any)['vn'] || {};
   return dict[key] ?? key;
@@ -2300,7 +2332,7 @@ async function startServer() {
   // Public AI endpoint: LiveChat widget AI reply (no auth required — uses rate limiting only)
   app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { leadId, message, lang } = req.body;
+      const { leadId, message, lang, sessionId } = req.body;
       if (!leadId || !String(message || '').trim()) {
         return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
       }
@@ -2310,21 +2342,50 @@ async function startServer() {
       if (!lead) return res.status(404).json({ error: 'Lead not found' }) as any;
 
       // If a human agent has taken over this conversation, skip AI processing entirely.
-      // The agent will reply manually via the Inbox; the widget should wait silently.
       const threadStatus = (lead as any).thread_status || 'AI_ACTIVE';
       if (threadStatus === 'HUMAN_TAKEOVER') {
         return res.json({ noReply: true }) as any;
       }
 
-      // The client already saved the visitor's inbound message via /api/public/livechat/message
-      // before calling this endpoint, so fetch history directly — it already contains that message.
-      // This avoids persisting a duplicate INBOUND record.
+      // Tier 2: Load session memory from chat_sessions
+      let sessionProfile: Record<string, string> = {};
+      let sessionIntentHistory: string[] = [];
+      const validSessionId = sessionId && typeof sessionId === 'string' && sessionId.length <= 64;
+      if (validSessionId) {
+        try {
+          const sessionRow = await pool.query(
+            'SELECT user_profile, intent_history FROM chat_sessions WHERE session_id = $1',
+            [sessionId],
+          );
+          if (sessionRow.rows.length > 0) {
+            sessionProfile = sessionRow.rows[0].user_profile || {};
+            sessionIntentHistory = sessionRow.rows[0].intent_history || [];
+          }
+        } catch { /* non-fatal — proceed without session data */ }
+      }
+
+      // Fetch history and limit to last 10 messages (token budget)
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
-      const historyWithLatest = history; // includes the already-saved visitor message
+      const limitedHistory = history.slice(-10);
+
+      // Tier 1 Core Memory: inject SOUL + Tier 2 session profile into lead context
+      const enrichedLead = {
+        ...lead,
+        preferences: {
+          ...(lead as any).preferences,
+          ...(AGENT_SOUL ? { _soulContext: AGENT_SOUL } : {}),
+          ...(sessionProfile.budget
+            ? { budgetMax: parseFloat(sessionProfile.budget) * 1e9 }
+            : {}),
+          ...(sessionProfile.district
+            ? { _sessionDistrict: sessionProfile.district }
+            : {}),
+        },
+      } as any;
 
       const { aiService } = await import('./server/ai');
       const t = serverT(lang || 'vn');
-      const result = await aiService.processMessage(lead, msgContent, historyWithLatest, t, PUBLIC_TENANT, lang || 'vn');
+      const result = await aiService.processMessage(enrichedLead, msgContent, limitedHistory, t, PUBLIC_TENANT, lang || 'vn');
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,
@@ -2332,24 +2393,42 @@ async function startServer() {
         direction: 'OUTBOUND',
         type: 'TEXT',
         content: result.content,
-        // Fix G: đánh dấu rõ tin nhắn AI để filter trong analytics + Inbox UI
         metadata: {
           isAi: true,
           isAgent: true,
-          intent: result.intent,
+          intent: (result as any).intent,
           aiConfidence: result.confidence,
-          escalated: result.escalated ?? false,
-          ...(result.isSysMsg ? { isSysMsg: true } : {}),
+          escalated: (result as any).escalated ?? false,
+          ...((result as any).isSysMsg ? { isSysMsg: true } : {}),
         },
       });
-      // Notify Inbox of the AI reply so agents see the outgoing response too
+
       broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
       broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
 
-      // Auto-escalate to human when AI quota/auth errors triggered isSysMsg+escalated.
-      // This switches the thread to HUMAN_TAKEOVER so subsequent messages skip AI
-      // entirely (caught by the threadStatus check above) until an agent resets it.
-      if (result.isSysMsg && result.escalated) {
+      // Tier 2: Extract user profile signals and persist session async (fire-and-forget)
+      if (validSessionId) {
+        const updatedProfile = extractUserProfile(limitedHistory, sessionProfile);
+        const updatedIntents = [...sessionIntentHistory, (result as any).intent]
+          .filter(Boolean)
+          .slice(-20);
+        pool.query(
+          `INSERT INTO chat_sessions (session_id, lead_id, messages, user_profile, intent_history)
+           VALUES ($1, $2, '[]'::jsonb, $3::jsonb, $4::jsonb)
+           ON CONFLICT (session_id) DO UPDATE
+             SET lead_id       = EXCLUDED.lead_id,
+                 user_profile  = $3::jsonb,
+                 intent_history= $4::jsonb,
+                 updated_at    = CURRENT_TIMESTAMP`,
+          [sessionId, leadId, JSON.stringify(updatedProfile), JSON.stringify(updatedIntents)],
+        ).then(() => {
+          // Merge updated profile back as sessionProfile for response
+          Object.assign(sessionProfile, updatedProfile);
+        }).catch(() => {});
+      }
+
+      // Auto-escalate when AI quota exceeded
+      if ((result as any).isSysMsg && (result as any).escalated) {
         try {
           await leadRepository.update(PUBLIC_TENANT, leadId, { thread_status: 'HUMAN_TAKEOVER' } as any);
           broadcastIo?.to(leadId).emit('ai_mode_changed', { room: leadId, mode: 'HUMAN_TAKEOVER', reason: 'ai_quota_exceeded' });
@@ -2360,7 +2439,8 @@ async function startServer() {
         }
       }
 
-      res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
+      const userProfileToReturn = Object.keys(sessionProfile).length > 0 ? sessionProfile : undefined;
+      res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction, userProfile: userProfileToReturn });
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);
       res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });

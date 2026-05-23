@@ -236,6 +236,10 @@ export interface LeadPreferences {
     _lifeEvents?: string[];           // e.g. ["sắp có em bé", "vừa bán nhà xong"]
     _lastUrgency?: 'HIGH' | 'MEDIUM' | 'LOW';
     _lastEmotionalState?: 'ANXIOUS' | 'FRUSTRATED' | 'EXCITED' | 'NEUTRAL';
+    // Tier 1 Core Memory: SOUL identity injected per-request by livechat handler
+    _soulContext?: string;
+    // Tier 2 Session Memory: district extracted from current session
+    _sessionDistrict?: string;
 }
 export type AmlStatus = 'PENDING' | 'CLEAR' | 'FLAGGED' | 'BLOCKED';
 export interface Lead {
