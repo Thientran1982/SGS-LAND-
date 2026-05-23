@@ -1077,7 +1077,7 @@ export const Landing: React.FC = () => {
             <button
                 onClick={() => setChatOpen(prev => !prev)}
                 aria-label="Mở trợ lý AI tư vấn bất động sản"
-                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all select-none"
+                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-[201] w-14 h-14 rounded-full flex items-center justify-center shadow-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all select-none"
             >
                 {chatOpen
                     ? <X className="w-6 h-6 text-white" />
