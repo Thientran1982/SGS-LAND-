@@ -1077,7 +1077,7 @@ export const Landing: React.FC = () => {
             <button
                 onClick={() => setChatOpen(prev => !prev)}
                 aria-label="Mở trợ lý AI tư vấn bất động sản"
-                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-[201] w-14 h-14 rounded-full flex items-center justify-center shadow-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all select-none"
+                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-[201] w-14 h-14 rounded-full hidden md:flex items-center justify-center shadow-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all select-none"
             >
                 {chatOpen
                     ? <X className="w-6 h-6 text-white" />
@@ -1088,26 +1088,26 @@ export const Landing: React.FC = () => {
             <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-[var(--glass-border)] dark:border-slate-800 px-3 py-2 flex gap-2 shadow-2xl">
                 <a
                     href="tel:+84971132378"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
+                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all"
                 >
-                    <Phone className="w-4 h-4 shrink-0" />
+                    <Phone className="w-3.5 h-3.5 shrink-0" />
                     <span>Gọi ngay</span>
                 </a>
                 <button
                     onClick={() => setChatOpen(prev => !prev)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 active:scale-95 text-white rounded-xl text-sm font-bold transition-all bg-indigo-600 hover:bg-indigo-700"
+                    className="flex-1 flex items-center justify-center gap-1 py-2 active:scale-95 text-white rounded-xl text-xs font-bold transition-all bg-indigo-600 hover:bg-indigo-700"
                 >
                     {chatOpen
-                        ? <X className="w-4 h-4 shrink-0" />
-                        : <Sparkles className="w-4 h-4 shrink-0" />
+                        ? <X className="w-3.5 h-3.5 shrink-0" />
+                        : <Bot className="w-3.5 h-3.5 shrink-0" />
                     }
                     <span>{chatOpen ? 'Đóng' : 'Hỏi AI'}</span>
                 </button>
                 <button
                     onClick={() => navigateTo(ROUTES.CONTACT)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[var(--glass-surface-hover)] dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 text-[var(--text-primary)] dark:text-white rounded-xl text-sm font-bold border border-[var(--glass-border)] dark:border-slate-600 transition-all"
+                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-[var(--glass-surface-hover)] dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 text-[var(--text-primary)] dark:text-white rounded-xl text-xs font-bold border border-[var(--glass-border)] dark:border-slate-600 transition-all"
                 >
-                    <Scale className="w-4 h-4 shrink-0" />
+                    <Scale className="w-3.5 h-3.5 shrink-0" />
                     <span>Tư vấn</span>
                 </button>
             </div>
