@@ -39,18 +39,15 @@ function toThumbnailUrl(src: string, width = 800): string {
 }
 const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [imgError, setImgError] = useState(false);
-    const hasImages = images && images.length > 0 && !imgError;
+    const hasImages = images && images.length > 0;
     const nextImage = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!images?.length) return;
-        setImgError(false);
         setCurrentIndex((prev) => (prev + 1) % images!.length);
     };
     const prevImage = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!images?.length) return;
-        setImgError(false);
         setCurrentIndex((prev) => (prev - 1 + images!.length) % images!.length);
     };
     const isHot = (bookingCount || 0) > 100;
@@ -102,7 +99,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         loading="lazy"
                         decoding="async"
-                        onError={() => setImgError(true)}
+                        onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }}
                     />
                     {images!.length > 1 && (
                         <>
