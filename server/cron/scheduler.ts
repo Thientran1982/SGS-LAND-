@@ -1,33 +1,22 @@
 /**
- * GEPA cron scheduler — pure ESM setInterval (no node-cron dependency).
- * node-cron uses CJS dynamic require('events') which breaks ESM bundling.
+ * GEPA cron scheduler — pure ESM setInterval, zero external dependencies.
+ * Replaces node-cron which uses CJS dynamic require('events') incompatible with ESM.
  *
- * Job 1: Daily at 02:00 Asia/Ho_Chi_Minh — GEPA optimizer for all agents
- * Job 2: Every 1 hour                    — expire idle chat sessions (>2h)
- * Job 3: Every 6 hours                   — log GEPA + session stats
+ * Job 1: GEPA optimizer    — every 24h  (86400000ms), first run after 5s
+ * Job 2: Expire sessions   — every 1h   (3600000ms),  first run after 5s
+ * Job 3: Log GEPA stats    — every 6h   (21600000ms), first run after 5s
  */
 import { pool } from '../db';
 import { logger } from '../middleware/logger';
 import { runGEPAOptimizer } from '../gepa/optimizer';
 import { AGENT_PROFILES } from '../agents/profiles';
 
-const MS_HOUR  = 60 * 60 * 1000;
-const MS_6H    = 6  * MS_HOUR;
-const MS_DAY   = 24 * MS_HOUR;
+const INITIAL_DELAY_MS = 5_000;
+const DAILY_MS         = 86_400_000;
+const HOURLY_MS        = 3_600_000;
+const SIX_HOUR_MS      = 21_600_000;
 
-/** Returns ms until the next occurrence of HH:MM in Asia/Ho_Chi_Minh (UTC+7). */
-function msUntilNextHCM(hour: number, minute = 0): number {
-    const nowUtcMs = Date.now();
-    // HCM is UTC+7
-    const nowHCM = new Date(nowUtcMs + 7 * MS_HOUR);
-    const target = new Date(nowHCM);
-    target.setUTCHours(hour, minute, 0, 0);
-    let diffMs = target.getTime() - nowHCM.getTime();
-    if (diffMs <= 0) diffMs += MS_DAY; // already passed today → schedule tomorrow
-    return diffMs;
-}
-
-// ── Job 1: GEPA daily optimizer at 02:00 HCM ─────────────────────────────────
+// ── Job 1: GEPA daily optimizer ───────────────────────────────────────────────
 async function runDailyOptimizer(): Promise<void> {
     logger.info('[Cron] GEPA daily optimizer started');
     for (const agent of AGENT_PROFILES) {
@@ -38,7 +27,7 @@ async function runDailyOptimizer(): Promise<void> {
     logger.info('[Cron] GEPA daily optimizer complete');
 }
 
-// ── Job 2: Expire idle sessions every hour ────────────────────────────────────
+// ── Job 2: Expire idle chat sessions (>2h) ────────────────────────────────────
 async function runSessionExpiry(): Promise<void> {
     try {
         const result = await pool.query(
@@ -55,7 +44,7 @@ async function runSessionExpiry(): Promise<void> {
     }
 }
 
-// ── Job 3: Log GEPA + session stats every 6 hours ────────────────────────────
+// ── Job 3: Log GEPA + session stats ──────────────────────────────────────────
 async function runStatsLogger(): Promise<void> {
     try {
         const { rows } = await pool.query(`
@@ -85,20 +74,19 @@ async function runStatsLogger(): Promise<void> {
 
 // ── Public init ───────────────────────────────────────────────────────────────
 export function initCronJobs(): void {
-    // Job 1: fire once at next 02:00 HCM, then repeat every 24h
-    const delayToMidnight = msUntilNextHCM(2, 0);
     setTimeout(() => {
+        // Job 1 — GEPA daily optimizer every 24h
         runDailyOptimizer();
-        setInterval(runDailyOptimizer, MS_DAY);
-    }, delayToMidnight);
+        setInterval(runDailyOptimizer, DAILY_MS);
 
-    // Job 2: fire immediately then every hour
-    runSessionExpiry();
-    setInterval(runSessionExpiry, MS_HOUR);
+        // Job 2 — expire idle sessions every 1h
+        runSessionExpiry();
+        setInterval(runSessionExpiry, HOURLY_MS);
 
-    // Job 3: fire immediately then every 6 hours
-    runStatsLogger();
-    setInterval(runStatsLogger, MS_6H);
+        // Job 3 — log stats every 6h
+        runStatsLogger();
+        setInterval(runStatsLogger, SIX_HOUR_MS);
 
-    logger.info('[Cron] 3 GEPA cron jobs initialized (GEPA optimizer, session expiry, stats logger)');
+        logger.info('[Cron] 3 GEPA cron jobs initialized (GEPA optimizer, session expiry, stats logger)');
+    }, INITIAL_DELAY_MS);
 }
