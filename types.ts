@@ -824,6 +824,27 @@ export interface AgentTraceStep {
     tokensEstimate?: number;
     costEstimate?: number;
 }
+export type UserIntent =
+    | 'tim_mua'
+    | 'tim_thue'
+    | 'dinh_gia'
+    | 'hoi_phap_ly'
+    | 'can_vay'
+    | 'dau_tu'
+    | 'hoi_du_an'
+    | 'unknown';
+
+export interface IntentResult {
+    primary: UserIntent;
+    confidence: number;
+    extractedEntities: {
+        projectName?: string;
+        district?: string;
+        budget?: string;
+        propertyType?: string;
+    };
+}
+
 export interface AgentTraceResponse {
     agent: string;
     content: string;
@@ -837,6 +858,7 @@ export interface AgentTraceResponse {
     isSysMsg?: boolean;
     intent?: string;
     userMessage?: string;
+    detectedIntent?: IntentResult;
 }
 export interface GraphState {
     messages: { role: 'user' | 'model' | 'system'; content: string; name?: string }[];

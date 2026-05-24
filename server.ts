@@ -2440,7 +2440,13 @@ async function startServer() {
       }
 
       const userProfileToReturn = Object.keys(sessionProfile).length > 0 ? sessionProfile : undefined;
-      res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction, userProfile: userProfileToReturn });
+      res.json({
+        reply: aiReply,
+        artifact: result.artifact,
+        suggestedAction: result.suggestedAction,
+        userProfile: userProfileToReturn,
+        detectedIntent: (result as any).detectedIntent,
+      });
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);
       res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });

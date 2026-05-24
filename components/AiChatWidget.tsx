@@ -198,6 +198,9 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [userProfile, setUserProfile] = useState<{ budget?: string; district?: string; purpose?: string }>({});
 
+    // ── Phase 2 Domain Intelligence: detected intent badge ──
+    const [detectedIntent, setDetectedIntent] = useState<{ primary: string; confidence: number } | null>(null);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const autoReplyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -394,6 +397,9 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                     if (data.userProfile && Object.keys(data.userProfile).length > 0) {
                         setUserProfile(prev => ({ ...prev, ...data.userProfile }));
                     }
+                    if (data.detectedIntent && data.detectedIntent.primary !== 'unknown') {
+                        setDetectedIntent(data.detectedIntent);
+                    }
                     const aiMsg: Interaction = data.reply;
                     if (aiMsg) {
                         setMessages(prev => {
@@ -492,6 +498,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
         setLeadId(null);
         setSessionId(null);
         setUserProfile({});
+        setDetectedIntent(null);
         setMessages([]);
         setName('');
         setPhone('');
@@ -646,6 +653,31 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                         </span>
                                     </div>
                                 )}
+
+                                {/* Phase 2 Domain Intelligence: Intent badge */}
+                                {detectedIntent && detectedIntent.primary !== 'unknown' && (() => {
+                                    const INTENT_LABELS: Record<string, { label: string; color: string }> = {
+                                        tim_mua:    { label: '🏡 Tìm mua',     color: 'bg-blue-50 text-blue-700 border-blue-200' },
+                                        tim_thue:   { label: '🔑 Tìm thuê',    color: 'bg-purple-50 text-purple-700 border-purple-200' },
+                                        dinh_gia:   { label: '📊 Định giá',    color: 'bg-orange-50 text-orange-700 border-orange-200' },
+                                        hoi_phap_ly:{ label: '⚖️ Pháp lý',     color: 'bg-red-50 text-red-700 border-red-200' },
+                                        can_vay:    { label: '🏦 Vay vốn',     color: 'bg-teal-50 text-teal-700 border-teal-200' },
+                                        dau_tu:     { label: '📈 Đầu tư',      color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+                                        hoi_du_an:  { label: '🏗️ Dự án',       color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+                                    };
+                                    const meta = INTENT_LABELS[detectedIntent.primary];
+                                    if (!meta) return null;
+                                    return (
+                                        <div className="flex items-center gap-1.5 px-1 pb-0.5">
+                                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${meta.color}`}>
+                                                {meta.label}
+                                            </span>
+                                            <span className="text-[9px] text-[var(--text-tertiary)]">
+                                                {Math.round(detectedIntent.confidence * 100)}% tin cậy
+                                            </span>
+                                        </div>
+                                    );
+                                })()}
 
                                 {/* Tier 2 Session Memory: User profile chips */}
                                 {(userProfile.budget || userProfile.district || userProfile.purpose) && (

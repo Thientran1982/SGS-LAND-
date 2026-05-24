@@ -1,5 +1,7 @@
 import { GoogleGenAI, GenerateContentResponse, Type, Schema } from "@google/genai";
-import { Lead, Interaction, AgentTraceStep, AgentArtifact, AgentTraceResponse } from '../types';
+import { Lead, Interaction, AgentTraceStep, AgentArtifact, AgentTraceResponse, UserIntent, IntentResult } from '../types';
+import { PROPERTY_PROJECTS, findProjectByKeyword } from './data/properties';
+import { getLegalChecklist } from './data/legalChecklist';
 import { listingRepository, ListingFilters } from './repositories/listingRepository';
 import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT, LegalStatus } from './valuationEngine';
 import type { PropertyType } from './valuationEngine';
@@ -452,8 +454,114 @@ function detectVietnameseGender(name: string): 'MALE' | 'FEMALE' | 'UNKNOWN' {
     return 'UNKNOWN';
 }
 
+// ─── Intent Classifier (keyword + regex, no ML) ───────────────────────────────
+export function classifyIntent(message: string): IntentResult {
+    const msg = message.toLowerCase();
+    const entities: IntentResult['extractedEntities'] = {};
+
+    // Extract district
+    const districtMatch = msg.match(/(quận \d+|q\.?\d+|thủ đức|bình thạnh|nhà bè|gò vấp|tân bình|phú nhuận|bình chánh|hóc môn|củ chi|bình tân|tân phú|cần giờ)/i);
+    if (districtMatch) entities.district = districtMatch[1];
+
+    // Extract budget  
+    const budgetMatch = msg.match(/(\d+[\.,]?\d*)\s*(tỷ|ty|trăm triệu|triệu)/i);
+    if (budgetMatch) entities.budget = `${budgetMatch[1]} ${budgetMatch[2]}`;
+
+    // Extract property type
+    if (/căn hộ|chung cư|apartment/i.test(msg)) entities.propertyType = 'can_ho';
+    else if (/nhà phố|nhà riêng|townhouse/i.test(msg)) entities.propertyType = 'nha_pho';
+    else if (/đất nền|đất phân lô/i.test(msg)) entities.propertyType = 'dat_nen';
+    else if (/biệt thự|villa/i.test(msg)) entities.propertyType = 'biet_thu';
+    else if (/shophouse|nhà phố thương mại/i.test(msg)) entities.propertyType = 'shophouse';
+
+    // Extract project name
+    const projectNames = [
+        'vinhomes grand park', 'vinhomes', 'akari city', 'akari',
+        'the global city', 'global city', 'masteri centre point', 'masteri',
+        'one verandah', 'verandah',
+    ];
+    for (const pn of projectNames) {
+        if (msg.includes(pn)) { entities.projectName = pn; break; }
+    }
+
+    // Classify primary intent
+    type Candidate = { intent: UserIntent; score: number };
+    const candidates: Candidate[] = [];
+
+    if (/\b(mua|tìm mua|muốn mua|cần mua|mua nhà|mua căn|tìm nhà|tìm căn)\b/.test(msg))
+        candidates.push({ intent: 'tim_mua', score: 0.85 });
+
+    if (/\b(thuê|tìm thuê|muốn thuê|cần thuê|phòng trọ|nhà thuê)\b/.test(msg))
+        candidates.push({ intent: 'tim_thue', score: 0.85 });
+
+    if (/\b(định giá|thẩm định|giá trị|giá nhà|giá bao nhiêu|định giá bất động sản|đánh giá giá)\b/.test(msg))
+        candidates.push({ intent: 'dinh_gia', score: 0.8 });
+
+    if (/\b(pháp lý|sổ đỏ|sổ hồng|hợp đồng|tranh chấp|quyền sở hữu|giấy tờ|thủ tục|pháp lí|sang tên|chuyển nhượng|kiểm tra pháp)\b/.test(msg))
+        candidates.push({ intent: 'hoi_phap_ly', score: 0.85 });
+
+    if (/\b(vay|lãi suất|ngân hàng|tín dụng|vay mua nhà|vay ngân hàng|hỗ trợ vay|điều kiện vay)\b/.test(msg))
+        candidates.push({ intent: 'can_vay', score: 0.8 });
+
+    if (/\b(đầu tư|sinh lời|lợi nhuận|cho thuê lại|tiềm năng|tăng giá|return|roi|yield)\b/.test(msg))
+        candidates.push({ intent: 'dau_tu', score: 0.8 });
+
+    if (entities.projectName || /\b(dự án|project|vinhomes|akari|masteri|verandah|global city)\b/.test(msg))
+        candidates.push({ intent: 'hoi_du_an', score: entities.projectName ? 0.9 : 0.7 });
+
+    if (candidates.length === 0) {
+        return { primary: 'unknown', confidence: 0, extractedEntities: entities };
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    return { primary: candidates[0].intent, confidence: candidates[0].score, extractedEntities: entities };
+}
+
+// ─── Domain context builder (called by buildSystemContext) ────────────────────
+function buildDomainContext(intent: IntentResult): string {
+    const blocks: string[] = [];
+
+    if (intent.primary === 'hoi_phap_ly') {
+        const propType = intent.extractedEntities.propertyType || 'can_ho';
+        const checklist = getLegalChecklist(propType);
+        const highRisk = checklist.filter(c => c.risk === 'cao' && c.required);
+        const lines = highRisk.map(c => `  • [${c.risk.toUpperCase()}] ${c.title}: ${c.description}`).join('\n');
+        blocks.push(`## PHÁP LÝ BẤT ĐỘNG SẢN — Checklist ưu tiên cao:\n${lines}\n→ Hãy dẫn dắt khách qua từng mục kiểm tra này.`);
+    }
+
+    if (intent.primary === 'hoi_du_an' && intent.extractedEntities.projectName) {
+        const project = findProjectByKeyword(intent.extractedEntities.projectName);
+        if (project) {
+            const priceStr = `${project.priceRange.min}–${project.priceRange.max} ${project.priceRange.unit === 'ty' ? 'tỷ' : 'triệu/m²'}`;
+            blocks.push(
+                `## DỮ LIỆU DỰ ÁN — ${project.name}:\n` +
+                `  Chủ đầu tư: ${project.developer}\n` +
+                `  Vị trí: ${project.district}, ${project.city}\n` +
+                `  Loại: ${project.type} | Tình trạng: ${project.status}\n` +
+                `  Giá: ${priceStr}\n` +
+                `  Pháp lý: ${project.legalStatus.type} — ${project.legalStatus.note}\n` +
+                `  Bàn giao: ${project.handoverDate}\n` +
+                `  Điểm nổi bật: ${project.highlights.join('; ')}\n` +
+                `  Ngân hàng hỗ trợ: ${project.bankPartners.join(', ')}\n` +
+                `→ Dùng dữ liệu này để trả lời chính xác. Không bịa thêm thông tin.`,
+            );
+        }
+    }
+
+    if (intent.extractedEntities.district) {
+        const districtProjects = PROPERTY_PROJECTS.filter(p =>
+            p.district.toLowerCase().includes(intent.extractedEntities.district!.toLowerCase()),
+        );
+        if (districtProjects.length > 0 && intent.primary !== 'hoi_du_an') {
+            const names = districtProjects.map(p => p.name).join(', ');
+            blocks.push(`## DỰ ÁN KHU VỰC ${intent.extractedEntities.district.toUpperCase()}: ${names}`);
+        }
+    }
+
+    return blocks.length > 0 ? '\n\n## DOMAIN CONTEXT\n' + blocks.join('\n\n') : '';
+}
+
 // Module-level system context builder (no recreation per call)
-function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]): string {
+function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[], latestMessage?: string): string {
     if (!lead) return 'Khách vãng lai — chưa có hồ sơ.';
     const parts = [`Khách hàng: ${lead.name}`];
     // Extract Vietnamese first name (last word) for personalized addressing
@@ -514,12 +622,19 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
         favoritesBlock = `\n[WATCHLIST KHÁCH HÀNG — ${userFavorites.length} BĐS đã lưu]:\n${favLines}\n→ Ưu tiên đề xuất BĐS KHÁC với watchlist. Nếu khách hỏi về BĐS đã lưu, hãy nhắc tên/địa chỉ cụ thể.`;
     }
 
-    // Tier 1 Core Memory: inject SOUL identity at top of system context
-    if (lead.preferences?._soulContext) {
-        return `[AGENT_IDENTITY]:\n${lead.preferences._soulContext}\n---\n` + parts.join(' | ') + favoritesBlock;
+    // Domain Intelligence: inject intent-driven domain context (Phase 2)
+    let domainBlock = '';
+    if (latestMessage) {
+        const intentResult = classifyIntent(latestMessage);
+        domainBlock = buildDomainContext(intentResult);
     }
 
-    return parts.join(' | ') + favoritesBlock;
+    // Tier 1 Core Memory: inject SOUL identity at top of system context
+    if (lead.preferences?._soulContext) {
+        return `[AGENT_IDENTITY]:\n${lead.preferences._soulContext}\n---\n` + parts.join(' | ') + favoritesBlock + domainBlock;
+    }
+
+    return parts.join(' | ') + favoritesBlock + domainBlock;
 }
 
 // Typed Router plan output
@@ -3020,7 +3135,7 @@ ${dataFreshnessNote}`;
             userMessage,
             history: fullHistory,
             trace: [],
-            systemContext: buildSystemContext(lead, compactFavorites) + memoryDigest,
+            systemContext: buildSystemContext(lead, compactFavorites, userMessage) + memoryDigest,
             finalResponse: "",
             suggestedAction: 'NONE',
             t,
@@ -3040,6 +3155,7 @@ ${dataFreshnessNote}`;
             const nodeCount = finalState.trace.filter(s => s.status === 'DONE').length;
             const pipelineMultiplier = Math.max(1, nodeCount);
             writeSafetyLog(effectiveTenantId, 'CHAT', usedModel, latencyMs, userMessage, finalState.finalResponse, pipelineMultiplier).catch(() => {});
+            const detectedIntent = classifyIntent(userMessage || '');
             return { 
                 agent: 'SGS_AGENT',
                 content: finalState.finalResponse, 
@@ -3052,6 +3168,7 @@ ${dataFreshnessNote}`;
                 isSysMsg: finalState.isSysMsg,
                 intent: finalState.plan?.next_step,
                 userMessage: userMessage?.slice(0, 300),
+                detectedIntent: detectedIntent.primary !== 'unknown' ? detectedIntent : undefined,
             };
         } catch (error: any) {
             const msg = error?.message || String(error);
