@@ -629,12 +629,18 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
         domainBlock = buildDomainContext(intentResult);
     }
 
-    // Tier 1 Core Memory: inject SOUL identity at top of system context
-    if (lead.preferences?._soulContext) {
-        return `[AGENT_IDENTITY]:\n${lead.preferences._soulContext}\n---\n` + parts.join(' | ') + favoritesBlock + domainBlock;
+    // Phase 4 Multi-Agent: inject routed agent soul prompt as specialization layer
+    let agentBlock = '';
+    if (lead.preferences?._agentSoulPrompt) {
+        agentBlock = `\n\n[AGENT_SPECIALIZATION]:\n${lead.preferences._agentSoulPrompt}`;
     }
 
-    return parts.join(' | ') + favoritesBlock + domainBlock;
+    // Tier 1 Core Memory: inject SOUL identity at top of system context
+    if (lead.preferences?._soulContext) {
+        return `[AGENT_IDENTITY]:\n${lead.preferences._soulContext}\n---\n` + parts.join(' | ') + favoritesBlock + domainBlock + agentBlock;
+    }
+
+    return parts.join(' | ') + favoritesBlock + domainBlock + agentBlock;
 }
 
 // Typed Router plan output

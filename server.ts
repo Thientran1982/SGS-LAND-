@@ -96,6 +96,9 @@ import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
 import { sendAiError, parseAiError } from "./server/utils/aiErrorHandler";
+import { initCronJobs } from "./server/cron/scheduler";
+import { classifyIntent } from "./server/ai";
+import { routeToAgent } from "./server/agents/router";
 
 let broadcastIo: any = null;
 
@@ -2347,21 +2350,44 @@ async function startServer() {
         return res.json({ noReply: true }) as any;
       }
 
-      // Tier 2: Load session memory from chat_sessions
+      // Tier 2: Load session memory from chat_sessions (including turn count for safety cap)
       let sessionProfile: Record<string, string> = {};
       let sessionIntentHistory: string[] = [];
+      let turnCount = 0;
+      let sessionStatus = 'active';
       const validSessionId = sessionId && typeof sessionId === 'string' && sessionId.length <= 64;
       if (validSessionId) {
         try {
           const sessionRow = await pool.query(
-            'SELECT user_profile, intent_history FROM chat_sessions WHERE session_id = $1',
+            'SELECT user_profile, intent_history, turn_count, session_status FROM chat_sessions WHERE session_id = $1',
             [sessionId],
           );
           if (sessionRow.rows.length > 0) {
             sessionProfile = sessionRow.rows[0].user_profile || {};
             sessionIntentHistory = sessionRow.rows[0].intent_history || [];
+            turnCount = sessionRow.rows[0].turn_count ?? 0;
+            sessionStatus = sessionRow.rows[0].session_status ?? 'active';
           }
         } catch { /* non-fatal — proceed without session data */ }
+      }
+
+      // B4: 90-turn safety cap
+      if (sessionStatus === 'completed') {
+        return res.json({ reply: null, noReply: true, sessionExpired: true }) as any;
+      }
+      if (turnCount >= 90) {
+        if (validSessionId) {
+          pool.query(
+            `UPDATE chat_sessions SET session_status = 'completed', updated_at = NOW() WHERE session_id = $1`,
+            [sessionId],
+          ).catch(() => {});
+        }
+        const expiredMsg = await interactionRepository.create(PUBLIC_TENANT, {
+          leadId, channel: 'WEB', direction: 'OUTBOUND', type: 'TEXT',
+          content: 'Phiên chat đã đạt 90 lượt — vui lòng bắt đầu phiên mới để tiếp tục.',
+          metadata: { isAi: true, isAgent: true, isSysMsg: true },
+        });
+        return res.json({ reply: expiredMsg, sessionExpired: true }) as any;
       }
 
       // Fetch history and limit to last 10 messages (token budget)
@@ -2369,17 +2395,27 @@ async function startServer() {
       const limitedHistory = history.slice(-10);
 
       // Tier 1 Core Memory: inject SOUL + Tier 2 session profile into lead context
+      // B4: Agent routing — classify intent then route to specialist
+      const msgIntent = classifyIntent(msgContent);
+      const routing = routeToAgent(msgIntent, msgContent);
+
+      // B4: >=85 turns — inject handoff warning into system context
+      const turnWarning = turnCount >= 85
+        ? `\n[CẢNH BÁO]: Phiên này còn ${90 - turnCount} lượt chat. Hãy khuyến khích khách để lại thông tin liên hệ.`
+        : '';
+
       const enrichedLead = {
         ...lead,
         preferences: {
           ...(lead as any).preferences,
-          ...(AGENT_SOUL ? { _soulContext: AGENT_SOUL } : {}),
+          ...(AGENT_SOUL ? { _soulContext: AGENT_SOUL + turnWarning } : {}),
           ...(sessionProfile.budget
             ? { budgetMax: parseFloat(sessionProfile.budget) * 1e9 }
             : {}),
           ...(sessionProfile.district
             ? { _sessionDistrict: sessionProfile.district }
             : {}),
+          _agentSoulPrompt: routing.agent.soulPrompt,
         },
       } as any;
 
@@ -2413,12 +2449,13 @@ async function startServer() {
           .filter(Boolean)
           .slice(-20);
         pool.query(
-          `INSERT INTO chat_sessions (session_id, lead_id, messages, user_profile, intent_history)
-           VALUES ($1, $2, '[]'::jsonb, $3::jsonb, $4::jsonb)
+          `INSERT INTO chat_sessions (session_id, lead_id, messages, user_profile, intent_history, turn_count)
+           VALUES ($1, $2, '[]'::jsonb, $3::jsonb, $4::jsonb, 1)
            ON CONFLICT (session_id) DO UPDATE
              SET lead_id       = EXCLUDED.lead_id,
                  user_profile  = $3::jsonb,
                  intent_history= $4::jsonb,
+                 turn_count    = chat_sessions.turn_count + 1,
                  updated_at    = CURRENT_TIMESTAMP`,
           [sessionId, leadId, JSON.stringify(updatedProfile), JSON.stringify(updatedIntents)],
         ).then(() => {
@@ -2446,6 +2483,12 @@ async function startServer() {
         suggestedAction: result.suggestedAction,
         userProfile: userProfileToReturn,
         detectedIntent: (result as any).detectedIntent,
+        activeAgent: {
+          id: routing.agent.id,
+          name: routing.agent.name,
+          role: routing.agent.role,
+        },
+        turnCount: turnCount + 1,
       });
     } catch (error) {
       logger.error('Public AI livechat error:', error as Error);
@@ -5687,6 +5730,9 @@ async function startServer() {
   }
 
   app.use(errorHandler);
+
+  // B5: GEPA cron jobs (GEPA optimizer, session expiry, stats logger)
+  try { initCronJobs(); } catch (e: any) { logger.warn('[Cron] initCronJobs failed:', e?.message); }
 
   server.listen(PORT, "0.0.0.0", async () => {
     logger.info(`Server running on http://localhost:${PORT}`);

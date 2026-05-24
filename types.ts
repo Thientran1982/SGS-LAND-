@@ -240,6 +240,8 @@ export interface LeadPreferences {
     _soulContext?: string;
     // Tier 2 Session Memory: district extracted from current session
     _sessionDistrict?: string;
+    // Phase 4 Multi-Agent: routed agent soul prompt injected per-request
+    _agentSoulPrompt?: string;
 }
 export type AmlStatus = 'PENDING' | 'CLEAR' | 'FLAGGED' | 'BLOCKED';
 export interface Lead {
