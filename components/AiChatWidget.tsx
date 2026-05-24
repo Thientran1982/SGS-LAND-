@@ -18,6 +18,16 @@ import { MessageBubble } from './ChatUI';
 import { Interaction, Channel, Direction } from '../types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
+
+// Phase 4 B6: Agent badge display config
+const AGENT_BADGE: Record<string, { label: string; color: string }> = {
+    broker:  { label: '🏠 Minh - Môi Giới',   color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    legal:   { label: '⚖️ Hà - Pháp Lý',      color: 'bg-red-50 text-red-700 border-red-200' },
+    analyst: { label: '📊 Khoa - Phân Tích',   color: 'bg-purple-50 text-purple-700 border-purple-200' },
+    finance: { label: '🏦 Hương - Tài Chính',  color: 'bg-teal-50 text-teal-700 border-teal-200' },
+    project: { label: '🏗️ Long - Dự Án',       color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+};
+
 const HOTLINE = '0971132378';
 const HOTLINE_DISPLAY = '0971 132 378';
 const LEAD_KEY = 'widget_lead_id';
@@ -115,6 +125,21 @@ async function apiCaptureLead(leadId: string | null, data: { name: string; phone
     return res.json() as Promise<{ id: string; score: number; success: boolean }>;
 }
 
+// Phase 4 B6: GEPA feedback — fire-and-forget
+function apiSendFeedback(payload: {
+    sessionId: string;
+    messageId: string;
+    agentId: string;
+    variantId: string;
+    rating: number;
+}) {
+    fetch('/api/public/ai/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    }).catch(() => {});
+}
+
 async function apiEscalateToHuman(leadId: string, reason: string, priority: 'normal' | 'high' | 'urgent' = 'normal') {
     const res = await fetch('/api/public/livechat/escalate', {
         method: 'POST',
@@ -200,6 +225,11 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
 
     // ── Phase 2 Domain Intelligence: detected intent badge ──
     const [detectedIntent, setDetectedIntent] = useState<{ primary: string; confidence: number } | null>(null);
+
+    // ── Phase 4 B6: active agent + turn counter + GEPA feedback ──
+    const [activeAgent, setActiveAgent] = useState<{ id: string; name: string; role: string } | null>(null);
+    const [turnCount, setTurnCount] = useState(0);
+    const [feedbackSent, setFeedbackSent] = useState<Record<string, 'up' | 'down'>>({});
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -400,6 +430,8 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                     if (data.detectedIntent && data.detectedIntent.primary !== 'unknown') {
                         setDetectedIntent(data.detectedIntent);
                     }
+                    if (data.activeAgent) setActiveAgent(data.activeAgent);
+                    if (typeof data.turnCount === 'number') setTurnCount(data.turnCount);
                     const aiMsg: Interaction = data.reply;
                     if (aiMsg) {
                         setMessages(prev => {
@@ -499,6 +531,9 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
         setSessionId(null);
         setUserProfile({});
         setDetectedIntent(null);
+        setActiveAgent(null);
+        setTurnCount(0);
+        setFeedbackSent({});
         setMessages([]);
         setName('');
         setPhone('');
@@ -555,6 +590,18 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                             </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
+                            {/* B6: Turn counter */}
+                            {turnCount > 0 && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border select-none ${
+                                    turnCount >= 85
+                                        ? 'bg-red-50 text-red-600 border-red-200'
+                                        : turnCount >= 75
+                                            ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                                            : 'bg-slate-50 text-slate-500 border-slate-200'
+                                }`}>
+                                    Lượt {turnCount}/90
+                                </span>
+                            )}
                             {/* Hotline call button */}
                             <a
                                 href={`tel:${HOTLINE}`}
@@ -584,6 +631,15 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                             </button>
                         </div>
                     </div>
+
+                    {/* B6: Agent badge — below header, hidden when no active agent */}
+                    {activeAgent && AGENT_BADGE[activeAgent.id] && (
+                        <div className="shrink-0 flex items-center px-4 py-1 border-b border-slate-100 bg-slate-50/70">
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${AGENT_BADGE[activeAgent.id].color}`}>
+                                {AGENT_BADGE[activeAgent.id].label}
+                            </span>
+                        </div>
+                    )}
 
                     {/* ── Body ── */}
                     {!leadId ? (
@@ -724,18 +780,55 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                 )}
 
                                 {/* Message list */}
-                                {messages.map((msg, idx, arr) => (
-                                    <MessageBubble
-                                        key={msg.id}
-                                        msg={msg}
-                                        t={t}
-                                        formatTime={(iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        formatDate={(iso: string) => new Date(iso).toLocaleDateString()}
-                                        formatCurrency={(v: number) => v.toLocaleString() + 'đ'}
-                                        formatDateTime={(iso: string) => new Date(iso).toLocaleString()}
-                                        showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(arr[idx - 1].timestamp).getDate()}
-                                    />
-                                ))}
+                                {messages.map((msg, idx, arr) => {
+                                    const isAiMsg = msg.direction === 'OUTBOUND' && (msg as any).metadata?.isAgent;
+                                    const fbKey = String(idx);
+                                    const fb = feedbackSent[fbKey];
+                                    return (
+                                        <div key={msg.id}>
+                                            <MessageBubble
+                                                msg={msg}
+                                                t={t}
+                                                formatTime={(iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                formatDate={(iso: string) => new Date(iso).toLocaleDateString()}
+                                                formatCurrency={(v: number) => v.toLocaleString() + 'đ'}
+                                                formatDateTime={(iso: string) => new Date(iso).toLocaleString()}
+                                                showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(arr[idx - 1].timestamp).getDate()}
+                                            />
+                                            {/* B6: GEPA feedback buttons — AI messages only, hidden while loading */}
+                                            {isAiMsg && !isThinking && sessionId && (
+                                                <div className="flex gap-1 justify-end mt-0.5 pr-1">
+                                                    <button
+                                                        type="button"
+                                                        disabled={fb !== undefined}
+                                                        onClick={() => {
+                                                            if (fb !== undefined || !sessionId) return;
+                                                            setFeedbackSent(prev => ({ ...prev, [fbKey]: 'up' }));
+                                                            apiSendFeedback({ sessionId, messageId: fbKey, agentId: activeAgent?.id ?? 'broker', variantId: 'default', rating: 1 });
+                                                        }}
+                                                        title="Hữu ích"
+                                                        className={`w-4 h-4 flex items-center justify-center rounded text-[10px] bg-transparent border-none transition-all cursor-pointer disabled:cursor-default ${
+                                                            fb === 'up' ? 'text-emerald-600' : fb === 'down' ? 'opacity-25' : 'text-slate-400 hover:text-emerald-500'
+                                                        }`}
+                                                    >👍</button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={fb !== undefined}
+                                                        onClick={() => {
+                                                            if (fb !== undefined || !sessionId) return;
+                                                            setFeedbackSent(prev => ({ ...prev, [fbKey]: 'down' }));
+                                                            apiSendFeedback({ sessionId, messageId: fbKey, agentId: activeAgent?.id ?? 'broker', variantId: 'default', rating: 0 });
+                                                        }}
+                                                        title="Không hữu ích"
+                                                        className={`w-4 h-4 flex items-center justify-center rounded text-[10px] bg-transparent border-none transition-all cursor-pointer disabled:cursor-default ${
+                                                            fb === 'down' ? 'text-rose-600' : fb === 'up' ? 'opacity-25' : 'text-slate-400 hover:text-rose-500'
+                                                        }`}
+                                                    >👎</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
 
                                 {/* Typing dots animation */}
                                 {isThinking && (
