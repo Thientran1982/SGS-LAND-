@@ -22,9 +22,9 @@ function formatPrice(price: number | null, currency: string | null): string {
   if (cur === 'VND') {
     if (price >= 1_000_000_000) {
       const v = price / 1_000_000_000;
-      return `${v.toFixed(v >= 10 ? 0 : 2).replace(/\.?0+$/, '')} tỷ`;
+      return `${v.toLocaleString('vi-VN', { maximumFractionDigits: 2, minimumFractionDigits: 0 })} tỷ`;
     }
-    if (price >= 1_000_000) return `${Math.round(price / 1_000_000)} triệu`;
+    if (price >= 1_000_000) return `${Math.round(price / 1_000_000).toLocaleString('vi-VN')} triệu`;
     return price.toLocaleString('vi-VN') + ' đ';
   }
   return `${price.toLocaleString('vi-VN')} ${cur}`;

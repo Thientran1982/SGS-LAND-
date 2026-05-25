@@ -977,8 +977,11 @@ export default function LocalLandingPage() {
         );
     }
     const fmtPrice = (p: number) => {
-        if (p >= 1e9) return `${(p / 1e9).toFixed(1)} tỷ`;
-        if (p >= 1e6) return `${Math.round(p / 1e6)} triệu`;
+        if (p >= 1e9) {
+            const val = Math.round((p / 1e9) * 10) / 10;
+            return `${val.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tỷ`;
+        }
+        if (p >= 1e6) return `${Math.round(p / 1e6).toLocaleString('vi-VN')} triệu`;
         return p.toLocaleString('vi-VN');
     };
     const seoMeta = LOCATION_SEO_META[slug] ?? {

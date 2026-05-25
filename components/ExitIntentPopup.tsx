@@ -92,8 +92,11 @@ function isSuppressed(): boolean {
 }
 
 function formatPrice(price: number): string {
-  if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(1)} tỷ`;
-  if (price >= 1_000_000)     return `${(price / 1_000_000).toFixed(0)} triệu`;
+  if (price >= 1_000_000_000) {
+    const val = Math.round((price / 1_000_000_000) * 10) / 10;
+    return `${val.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tỷ`;
+  }
+  if (price >= 1_000_000) return `${Math.round(price / 1_000_000).toLocaleString('vi-VN')} triệu`;
   return price.toLocaleString('vi-VN');
 }
 

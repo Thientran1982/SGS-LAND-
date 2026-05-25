@@ -224,14 +224,16 @@ function formatPrice(price: number, language: string, _ignored?: (v: number) => 
     const isVn = language === 'vn';
     if (price >= 1_000_000_000) {
         const val  = Math.round(price / 100_000_000) / 10;
-        const disp = Number.isInteger(val) ? String(val) : val.toFixed(1);
+        // Integer values (e.g. 25197) get dot-separated thousands via vi-VN locale.
+        // Decimal values (e.g. 16.4) keep the existing dot decimal — fine for small pins.
+        const disp = Number.isInteger(val) ? val.toLocaleString('vi-VN') : val.toFixed(1);
         const unit = isVn ? (t?.('format.billion') || 'Tỷ') : 'B';
         return `${disp} ${unit}`;
     }
     if (price >= 1_000_000) {
         const val  = Math.round(price / 1_000_000);
         const unit = isVn ? 'Tr' : 'M';
-        return `${val} ${unit}`;
+        return `${val.toLocaleString('vi-VN')} ${unit}`;
     }
     return price.toLocaleString();
 }
