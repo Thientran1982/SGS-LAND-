@@ -91,13 +91,13 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             if (language === 'vn') {
                 if (amount >= 1_000_000_000) {
-                    // Manual: 1 decimal max, comma as decimal separator (VN convention)
+                    // toLocaleString('vi-VN') adds thousand separators (.) and decimal comma (,)
                     const val = Math.round((amount / 1_000_000_000) * 10) / 10;
-                    return `${val.toString().replace('.', ',')} ${t('format.billion')}`;
+                    return `${val.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('format.billion')}`;
                 }
                 if (amount >= 1_000_000) {
                     const val = Math.round((amount / 1_000_000) * 10) / 10;
-                    return `${val.toString().replace('.', ',')} ${t('format.million')}`;
+                    return `${val.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('format.million')}`;
                 }
             }
             return new Intl.NumberFormat('en-US', { 
