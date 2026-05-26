@@ -169,6 +169,7 @@ const MobileApp = () => {
 const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     // Public
     [ROUTES.LANDING]: Landing,
+    'landing': Landing,
     [ROUTES.SEARCH]: ProductSearch,
     [ROUTES.AI_VALUATION]: AiValuation, 
     [ROUTES.CRM_SOLUTION]: CrmLanding,

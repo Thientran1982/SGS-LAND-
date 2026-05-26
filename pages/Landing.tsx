@@ -31,7 +31,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đại Đô Thị Sinh Thái',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/landing/aqua-city/hero-opt.jpg',
+        img: '/images/projects/aqua-city.png',
         href: '/landing/aqua-city/',
     },
     {
@@ -44,7 +44,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đại Đô Thị Thương Mại',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/images/projects/the-global-city.webp',
+        img: '/images/projects/the-global-city.png',
     },
     {
         slug: 'izumi-city',
@@ -56,7 +56,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đô Thị Chuẩn Nhật',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/images/projects/izumi-city.webp',
+        img: '/images/projects/izumi-city.png',
     },
     {
         slug: 'vinhomes-can-gio',
@@ -68,7 +68,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Siêu Đô Thị Lấn Biển',
         badge: 'Đang bán',
         badgeColor: 'indigo',
-        img: '/images/projects/vinhomes-can-gio.webp',
+        img: '/images/projects/vinhomes-can-gio.png',
     },
     {
         slug: 'diamond-sky-van-phuc-city',
@@ -80,7 +80,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Căn hộ cao tầng view sông',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/images/projects/diamond-sky-van-phuc-city.webp',
+        img: '/images/projects/diamond-sky-van-phuc-city.jpg',
     },
     {
         slug: 'vinhomes-grand-park',
@@ -92,7 +92,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Siêu Đô Thị Tích Hợp',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/images/projects/vinhomes-grand-park.webp',
+        img: '/images/projects/vinhomes-grand-park.png',
     },
     {
         slug: 'vinhomes-hoc-mon',
