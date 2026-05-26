@@ -25,4 +25,16 @@
     <lastmod>2026-05-02</lastmod>
   </sitemap>
 
+  <!-- Sitemap GEO: Q&A BĐS cho AI citation engines -->
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-answers.xml</loc>
+    <lastmod>2026-05-26</lastmod>
+  </sitemap>
+
+  <!-- Sitemap GEO: khu vực & chỉ số giá thị trường -->
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-areas.xml</loc>
+    <lastmod>2026-05-26</lastmod>
+  </sitemap>
+
 </sitemapindex>
