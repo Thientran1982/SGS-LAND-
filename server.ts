@@ -1983,6 +1983,7 @@ async function startServer() {
                AND l.type = $2
                AND l.location ILIKE $3
                AND ($4::numeric IS NULL OR l.price BETWEEN $4 AND $5)
+               AND l.code LIKE 'LST%'
              ORDER BY l.updated_at DESC
              LIMIT 3`,
           [id, s.type, `%${districtToken}%`, priceMin, priceMax]
