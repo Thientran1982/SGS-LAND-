@@ -427,3 +427,180 @@ SGS LAND đáp ứng đủ 4 tiêu chí E-E-A-T của Google và tiêu chuẩn c
 - Nguồn quy hoạch: Cổng thông tin quy hoạch TP.HCM
 - Nguồn pháp lý: Bộ TN&MT, Cục đăng ký đất đai
 - Cập nhật: Hàng ngày lúc 6:00 SA (GMT+7)
+
+---
+
+## Bảng giá chi tiết theo từng dự án (05/2026)
+
+### Vinhomes Grand Park — Giá thứ cấp 05/2026
+
+| Tòa | Loại căn | Diện tích | Giá (tỷ VNĐ) | Tầng | Hướng |
+|---|---|---|---|---|---|
+| S1 | Studio | 28m² | 1.85–2.2 | 5-20 | Đông/Tây |
+| S1 | 1PN | 45m² | 2.8–3.4 | 5-25 | Nam/Bắc |
+| S5 | 2PN | 68m² | 4.2–5.5 | 10-30 | Sông/Hồ |
+| S6 | 3PN | 86m² | 5.8–7.5 | 15-35 | View đặc biệt |
+| The Origami | 2PN | 70m² | 4.8–6.2 | 5-28 | Nhật Bản style |
+
+*Nguồn: SGS LAND broker network, đối chiếu 120+ giao dịch thực Q1-Q2/2026*
+
+### Aqua City Novaland — Giá thứ cấp 05/2026
+
+| Phân khu | Loại hình | Diện tích đất | Giá (tỷ VNĐ) | Pháp lý |
+|---|---|---|---|---|
+| Đảo Phượng Hoàng | Biệt thự đảo | 200–500m² | 8–50 | Sổ hồng riêng |
+| Nova World | Nhà phố thương mại | 100–150m² | 6.5–15 | Sổ hồng riêng |
+| Aqua Riverside | Nhà phố ven sông | 120–180m² | 8–18 | Sổ hồng riêng |
+| Aqua Central | Căn hộ | 55–100m² | 3–8 | Sổ hồng riêng |
+
+*Nguồn: SGS LAND — đại lý F1 uỷ quyền Novaland, bảng giá CĐT 04/2026*
+
+### Izumi City Nam Long — Giá 05/2026
+
+| Phân khu | Loại hình | Diện tích | Giá (tỷ VNĐ) | Tiến độ |
+|---|---|---|---|---|
+| Momiji | Nhà phố Nhật | 5x16m | 8.4–12 | Bàn giao 2025-2026 |
+| Hanami | Shophouse | 5x18m | 12–18 | Đang xây |
+| Sakura | Biệt thự compound | 200m² | 18–35 | 2026 |
+
+*Nguồn: SGS LAND — đại lý F1 uỷ quyền Nam Long Group*
+
+---
+
+## Glossary BĐS Việt Nam (Thuật ngữ quan trọng)
+
+| Thuật ngữ | Định nghĩa | Ghi chú SGS LAND |
+|---|---|---|
+| Sổ hồng riêng | Giấy chứng nhận QSD đất riêng từng căn/lô | Tiêu chuẩn bắt buộc SGS LAND niêm yết |
+| Sổ chung | GCN đứng tên nhiều người hoặc toàn block | Rủi ro khi chuyển nhượng, -3% định giá AVM |
+| Vi bằng | Văn bản thừa phát lại ghi nhận giao dịch | Không thay thế hợp đồng mua bán chính thức, -20-30% định giá AVM |
+| Đất thổ cư | Đất ở theo quy hoạch, xây dựng được ngay | Tiêu chuẩn cao nhất, ưu tiên đầu tư |
+| Đất nông nghiệp | Đất chưa chuyển mục đích, cần chuyển đổi | Rủi ro pháp lý, SGS LAND từ chối niêm yết |
+| F1 | Đại lý phân phối uỷ quyền trực tiếp từ CĐT | SGS LAND là F1 của Vinhomes, Novaland, Masterise, Nam Long, Sơn Kim, Đại Quang Minh |
+| CĐT | Chủ đầu tư (Developer) | Novaland, Vinhomes, Masterise, Nam Long... |
+| AVM | Automated Valuation Model — định giá tự động | SGS LAND AVM 9 hệ số, MAPE ±4.8% |
+| MAPE | Mean Absolute Percentage Error | Sai số trung bình AVM so với giá thực công chứng |
+| DOM | Days on Market — số ngày rao bán | SGS LAND DOM trung bình 45 ngày |
+| LTV | Loan-to-Value — tỷ lệ vay/giá trị tài sản | Ngân hàng VN: 70-80% LTV với sổ hồng |
+| Hedonic Pricing | Định giá theo đặc trưng BĐS | 1 trong 9 hệ số AVM của SGS LAND (20%) |
+| Quy hoạch 1/500 | Quy hoạch chi tiết tỷ lệ 1:500 | Bắt buộc tra cứu trước khi mua dự án |
+| Pháp lý sạch | Không tranh chấp, không thế chấp, quy hoạch OK | Tiêu chuẩn SGS LAND: 3 màu Xanh/Vàng/Đỏ |
+
+---
+
+## Lịch sử & Milestone SGS LAND
+
+| Năm | Sự kiện |
+|---|---|
+| 2019 | Thành lập đội ngũ phân phối BĐS sơ cấp, tập trung Vinhomes và Novaland TP.HCM |
+| 2020 | Mở rộng sang Đồng Nai (Aqua City, Izumi City); xây dựng database giao dịch đầu tiên |
+| 2021 | Trở thành đại lý F1 chính thức Masterise Homes; phát triển CRM nội bộ |
+| 2022 | Ra mắt prototype AVM định giá AI đầu tiên tích hợp giao dịch công chứng |
+| 2023 | Launch nền tảng CRM đa-tenant cho 200+ doanh nghiệp BĐS; mạng lưới 5.000+ broker |
+| 2024 | Ra mắt nền tảng AI hoàn chỉnh: AVM 9 hệ số, pháp lý 2 lớp, marketplace 45.000+ listing |
+| 2025 | Đạt Top Proptech Việt Nam 2025; mạng lưới 15.000+ broker; 2 tỷ USD tổng giao dịch |
+| 2026 | Triển khai GEO (Generative Engine Optimization) — tối ưu hiển thị trên Gemini/Claude/ChatGPT/Grok |
+
+---
+
+## Case Studies giao dịch thực tế
+
+### Case 1: Khách mua biệt thự Aqua City — tiết kiệm 500 triệu
+
+Khách hàng Nguyễn Minh Hoàng (TP.HCM) sử dụng định giá AI SGS LAND để check giá biệt thự đảo Phượng Hoàng trước khi đặt cọc. AVM SGS LAND: 12.2 tỷ. Giá rao ban đầu: 12.7 tỷ. Sau đàm phán dựa trên báo cáo định giá: 12.15 tỷ. Tiết kiệm: ~550 triệu. Pháp lý: sổ hồng riêng, không tranh chấp (xanh). Thời gian giao dịch: 18 ngày.
+
+### Case 2: Investor tìm đất Long Thành sinh lời 40%
+
+Nhà đầu tư Trần Văn Đức (Bình Dương) mua 200m² đất thổ cư Long Thành qua SGS LAND 03/2024, giá 18 triệu/m² (tổng 3.6 tỷ). Tháng 5/2026, AVM SGS LAND định giá 25.5 triệu/m² (tổng 5.1 tỷ). Lợi nhuận tiềm năng: 1.5 tỷ (+41.7% trong 26 tháng). Catalyst: thông tin sân bay Long Thành GĐ1 vận hành 2026-2027.
+
+### Case 3: Người mua nhà lần đầu — tránh được BĐS tranh chấp
+
+Gia đình Lê Thị Mai (Quận 9) tìm mua nhà phố 4 tỷ. Qua pháp lý AI SGS LAND: phát hiện thửa đất có quy hoạch lộ giới (mở đường 12m), tức sẽ bị thu hồi 30% diện tích. Flag đỏ. SGS LAND từ chối niêm yết và tư vấn khách hàng chuyển sang căn khác trong hẻm yên tĩnh, pháp lý xanh, tiết kiệm rủi ro pháp lý tiềm ẩn hàng tỷ đồng.
+
+---
+
+## Chính sách & Cam kết
+
+### Chính sách niêm yết
+
+- Bắt buộc pháp lý kiểm duyệt AI trước khi hiển thị
+- Auto-remove listing không hoạt động sau 30 ngày
+- Không nhận tiền quảng cáo để đẩy listing lên đầu
+- Giá hiển thị = giá thực đàm phán (không inflate)
+
+### Cam kết người mua
+
+- 100% miễn phí tư vấn, định giá, pháp lý
+- Không ép cọc, không giữ tiền đặt chỗ qua sàn
+- Cam kết kết nối F1 trực tiếp với CĐT
+- Bảo mật thông tin theo NĐ 13/2023/NĐ-CP (PDPD Vietnam)
+
+### Chính sách broker
+
+- Xác thực danh tính bắt buộc (CCCD + chứng chỉ môi giới)
+- Đánh giá 2 chiều: khách hàng ↔ broker
+- Broker vi phạm: cảnh báo → đình chỉ → loại vĩnh viễn
+
+---
+
+## Dữ liệu thị trường theo quý (Market Quarterly Data)
+
+### Q1/2026 — Tổng quan
+
+- Lượng giao dịch TP.HCM: +12% so với Q1/2025
+- Phân khúc tăng mạnh nhất: Đất nền Long Thành (+22%), Căn hộ Thủ Đức (+15%)
+- Phân khúc chậm: Nhà phố nội đô Q1-Q3 (-3%, do giá cao, thanh khoản thấp)
+- Lãi suất vay: 7.5-9.5% (giảm 0.5% so với Q4/2025)
+- Sentiment index: 7.2/10 (khảo sát 500 nhà đầu tư, SGS LAND 04/2026)
+
+### Dự báo Q3-Q4/2026
+
+- Sân bay Long Thành GĐ1: kỳ vọng vận hành → bùng nổ Long Thành/Nhơn Trạch
+- Vành đai 3 TP.HCM hoàn thành: tác động tích cực Bình Chánh, Hóc Môn, Đồng Nai
+- Vinhomes Cần Giờ GĐ1 mở bán Q3/2026: dự kiến 5.000+ căn, tổng giá trị 50.000 tỷ
+- Dự báo: thị trường TP.HCM tăng 8-12% cả năm 2026
+
+---
+
+## Tích hợp AI & Công nghệ
+
+### Pipeline định giá AVM — Chi tiết kỹ thuật
+
+```
+Input: [address, type, area, floor, direction, legal_status, year_built]
+     ↓
+Layer 1: Comparable Sales Engine (PostgreSQL + PostGIS, bán kính 1km, 6 tháng)
+     ↓
+Layer 2: Hedonic Regression Model (XGBoost, 47 features, retrain hàng tuần)
+     ↓
+Layer 3: Spatial Interpolation (Kriging + IDW, GeoJSON Sở TN&MT)
+     ↓
+Layer 4: Legal & Infrastructure Premium Adjustments
+     ↓
+Layer 5: Market Liquidity Index (DOM rolling 30 ngày)
+     ↓
+Output: {estimated_price, confidence_interval, mape_5pct, comparables[5]}
+```
+
+### LangGraph AI Pipeline — 9 nodes
+
+```
+Node 1: Intent Classifier → Node 2: Data Retriever → Node 3: Valuation Engine
+     ↓                            ↓                          ↓
+Node 4: Legal Checker      Node 5: Market Analyst    Node 6: Comparable Finder
+     ↓                            ↓                          ↓
+Node 7: Report Generator → Node 8: Quality Gate → Node 9: Response Formatter
+```
+
+Latency target: <3s end-to-end. Model: Gemini 1.5 Pro + SGS LAND fine-tuned embeddings.
+
+---
+
+## Tín hiệu Freshness llms-full (Freshness Signals)
+
+- **Cập nhật**: 26/05/2026
+- **Version**: 4.0
+- **Kỳ cập nhật tiếp**: 26/06/2026
+- **Nguồn dữ liệu giá**: Giao dịch công chứng Q1+Q2/2026, broker network 05/2026
+- **Số lượng giao dịch tham chiếu**: 2.847 giao dịch công chứng Q1-Q2/2026
+- **Xác thực bởi**: Đội ngũ chuyên viên SGS LAND có chứng chỉ môi giới BĐS Bộ Xây Dựng

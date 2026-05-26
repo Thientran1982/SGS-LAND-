@@ -198,9 +198,39 @@ Allow: /llms-full.txt
 Allow: /data/
 Allow: /api/public/
 
+User-agent: xAI-Bot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
+
+User-agent: Grok
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
+
+User-agent: DuckAssistBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
+
+User-agent: MistralBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /data/
+Allow: /api/public/
+
 Sitemap: https://sgsland.vn/sitemap.xml
 Sitemap: https://sgsland.vn/sitemap-static.xml
 Sitemap: https://sgsland.vn/sitemap-images.xml
 Sitemap: https://sgsland.vn/sitemap-news.xml
 Sitemap: https://sgsland.vn/sitemap-listings.xml
 Sitemap: https://sgsland.vn/sitemap-projects.xml
+Sitemap: https://sgsland.vn/sitemap-answers.xml
+Sitemap: https://sgsland.vn/sitemap-areas.xml
