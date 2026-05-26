@@ -661,7 +661,7 @@ export const News: React.FC = () => {
                     <p className="text-[var(--text-tertiary)] text-lg max-w-2xl mx-auto">
                         Thông tin thị trường, xu hướng công nghệ PropTech và phân tích dữ liệu AI độc quyền từ SGS Land.
                     </p>
-                    {currentUser?.role === UserRole.ADMIN && (
+                    {(['SUPER_ADMIN', 'ADMIN'] as string[]).includes(currentUser?.role ?? '') && (
                         <div className="mt-8 flex justify-center md:absolute md:top-0 md:right-0 md:mt-0">
                             <button 
                                 onClick={() => setIsCreating(true)}
