@@ -1233,6 +1233,207 @@ const GeoMonitor30Days: React.FC = () => {
         </section>
     );
 };
+// ── GEO Tier Dashboard ─────────────────────────────────────────────────────────
+
+interface TierDimension {
+    id: string;
+    label: string;
+    description: string;
+    score: number;
+    tier: 'S' | 'A' | 'B' | 'C';
+    actionItems: string[];
+}
+
+interface TierStatus {
+    brand: string;
+    overallScore: number;
+    overallTier: 'S' | 'A' | 'B' | 'C';
+    dimensions: TierDimension[];
+    capturedAt: string;
+}
+
+const TIER_COLORS: Record<'S' | 'A' | 'B' | 'C', string> = {
+    S: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border border-violet-300 dark:border-violet-700',
+    A: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700',
+    B: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-300 dark:border-amber-700',
+    C: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border border-rose-300 dark:border-rose-700',
+};
+
+const TIER_BAR_COLORS: Record<'S' | 'A' | 'B' | 'C', string> = {
+    S: 'bg-violet-500',
+    A: 'bg-emerald-500',
+    B: 'bg-amber-400',
+    C: 'bg-rose-500',
+};
+
+const DIMENSION_ICONS: Record<string, string> = {
+    llm_content: '🧠',
+    eeat_signals: '🏅',
+    rich_schema: '🗂️',
+    ai_discovery: '🔌',
+    citations: '🔗',
+    competitive: '📊',
+};
+
+const GeoTierDashboard: React.FC = () => {
+    const [status, setStatus] = useState<TierStatus | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadTierStatus = useCallback(() => {
+        setLoading(true);
+        setError(null);
+        fetch('/api/geo/tier-status')
+            .then((r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            })
+            .then((data: TierStatus) => setStatus(data))
+            .catch((e) => setError(e?.message || 'Không tải được GEO Tier Status'))
+            .finally(() => setLoading(false));
+    }, []);
+
+    useEffect(() => { loadTierStatus(); }, [loadTierStatus]);
+
+    if (loading) {
+        return (
+            <div className="mb-6 p-4 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                <div className="animate-pulse space-y-3">
+                    <div className="h-5 bg-[var(--glass-border)] rounded w-1/3" />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="h-24 bg-[var(--glass-border)] rounded-xl" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !status) {
+        return (
+            <div className="mb-6 p-4 rounded-2xl border border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-900/10">
+                <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-xs font-bold mb-1">{ICONS.ERROR} GEO Tier Dashboard</div>
+                <p className="text-xs text-rose-500">{error || 'Không có dữ liệu. Chỉ SUPER_ADMIN host tenant mới truy cập được.'}</p>
+            </div>
+        );
+    }
+
+    return (
+        <section className="mb-6 space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                        🌐 GEO Tier Dashboard — Mức độ tối ưu AI Search
+                    </h3>
+                    <p className="text-2xs text-[var(--text-tertiary)] mt-0.5">
+                        Cập nhật {new Date(status.capturedAt).toLocaleString('vi-VN')}
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="text-center">
+                        <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl text-xl font-black shadow-sm ${TIER_COLORS[status.overallTier]}`}>
+                            {status.overallTier}
+                        </div>
+                        <div className="text-2xs text-[var(--text-tertiary)] mt-1 font-bold">{status.overallScore}/100</div>
+                    </div>
+                    <button
+                        onClick={loadTierStatus}
+                        className="p-2 rounded-lg bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors"
+                        title="Tải lại"
+                    >
+                        {ICONS.RESET}
+                    </button>
+                </div>
+            </div>
+
+            {/* Overall progress */}
+            <div className="h-2 w-full rounded-full bg-[var(--glass-surface-hover)] overflow-hidden">
+                <div
+                    className={`h-full rounded-full transition-all ${TIER_BAR_COLORS[status.overallTier]}`}
+                    style={{ width: `${status.overallScore}%` }}
+                />
+            </div>
+
+            {/* Tier legend */}
+            <div className="flex flex-wrap gap-2 text-2xs">
+                {(['S', 'A', 'B', 'C'] as const).map((t) => (
+                    <span key={t} className={`px-2 py-0.5 rounded-md font-bold ${TIER_COLORS[t]}`}>
+                        {t} {t === 'S' ? '≥90' : t === 'A' ? '75–89' : t === 'B' ? '55–74' : '<55'}
+                    </span>
+                ))}
+            </div>
+
+            {/* 6 Dimension Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {status.dimensions.map((dim) => (
+                    <div
+                        key={dim.id}
+                        className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)] space-y-2"
+                    >
+                        {/* Card header */}
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-base leading-none">{DIMENSION_ICONS[dim.id] || '📌'}</span>
+                                <span className="text-xs font-bold text-[var(--text-primary)]">{dim.label}</span>
+                            </div>
+                            <span className={`text-xs font-black px-2 py-0.5 rounded-lg shrink-0 ${TIER_COLORS[dim.tier]}`}>
+                                {dim.tier} · {dim.score}
+                            </span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-2xs text-[var(--text-tertiary)] leading-relaxed">{dim.description}</p>
+
+                        {/* Progress bar */}
+                        <div className="h-1.5 w-full rounded-full bg-[var(--bg-surface)] overflow-hidden">
+                            <div
+                                className={`h-full rounded-full ${TIER_BAR_COLORS[dim.tier]} transition-all`}
+                                style={{ width: `${dim.score}%` }}
+                            />
+                        </div>
+
+                        {/* Action items */}
+                        {dim.actionItems.length > 0 && (
+                            <div className="space-y-1 pt-1 border-t border-[var(--glass-border)]">
+                                {dim.actionItems.map((item, i) => (
+                                    <div key={i} className="flex items-start gap-1 text-2xs text-amber-600 dark:text-amber-400">
+                                        <span className="shrink-0 mt-0.5">→</span>
+                                        <span>{item}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Quick links */}
+            <div className="flex flex-wrap gap-2 pt-1 border-t border-[var(--glass-border)]">
+                {[
+                    { label: 'OpenAPI Spec', url: '/api/openapi.json' },
+                    { label: 'ai-plugin.json', url: '/.well-known/ai-plugin.json' },
+                    { label: 'llms.txt', url: '/llms.txt' },
+                    { label: 'llms-full.txt', url: '/llms-full.txt' },
+                    { label: 'Structured Answers', url: '/api/geo/structured-answers' },
+                ].map((link) => (
+                    <a
+                        key={link.url}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2.5 py-1 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg text-2xs font-bold text-indigo-600 dark:text-indigo-400 hover:border-indigo-400 transition-all"
+                    >
+                        {link.label} {ICONS.EXT}
+                    </a>
+                ))}
+            </div>
+        </section>
+    );
+};
+
+// ── GEO AI Search ───────────────────────────────────────────────────────────────
 const GeoAiSearch: React.FC = () => {
     const [status, setStatus] = useState<AiVisibilityStatus | null>(null);
     const [statusLoading, setStatusLoading] = useState(true);
@@ -1804,7 +2005,7 @@ export const SeoManager: React.FC = () => {
                 }} onAfterSave={setSerpSelectedKey} />}
                 {activeTab === 'HEALTH' && <HealthChecklist />}
                 {activeTab === 'SCHEMA' && <StructuredData key={schemaVersion} />}
-                {activeTab === 'GEO'    && <GeoAiSearch />}
+                {activeTab === 'GEO'    && <><GeoTierDashboard /><GeoAiSearch /></>}
             </div>
 
         </div>

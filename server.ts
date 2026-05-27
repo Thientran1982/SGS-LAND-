@@ -67,6 +67,7 @@ import { createListingPriceRefreshRouter } from "./server/routes/listingPriceRef
 import { createTaskReminderCronRouter } from "./server/routes/taskReminderCronRoutes";
 import { createCampaignSchedulerCronRouter, startCampaignSchedulerCron } from "./server/routes/campaignSchedulerCronRoutes";
 import { createGeoMonitorCronRouter } from "./server/routes/geoMonitorCronRoutes";
+import { createOpenApiRoutes } from "./server/routes/openApiRoutes";
 import { createFollowUpRoutes } from "./server/routes/followupRoutes";
 import { createFollowUpCronRouter, startFollowUpCron } from "./server/routes/followupCronRoutes";
 import { createBuyerPushRoutes } from "./server/routes/buyerPushRoutes";
@@ -4006,6 +4007,7 @@ async function startServer() {
   // Public lead capture for static landing pages (no auth)
   app.use('/api/landing-leads', apiRateLimit, createLandingLeadRoutes());
   app.use('/api/landing-ai', aiRateLimit, createLandingAiRoutes());
+  app.use(createOpenApiRoutes(pool, authenticateToken));
   app.use('/api/live-chat', createLiveChatAgentRoutes(authenticateToken, aiRateLimit, apiRateLimit));
 
   // Lightweight health probe for deployment infrastructure (no DB call)
