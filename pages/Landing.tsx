@@ -92,7 +92,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Siêu Đô Thị Tích Hợp',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/images/projects/vinhomes-grand-park.webp',
+        img: '/vinhomes-grand-park.jpg',
     },
     {
         slug: 'vinhomes-hoc-mon',
