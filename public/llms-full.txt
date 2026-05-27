@@ -604,3 +604,46 @@ Latency target: <3s end-to-end. Model: Gemini 1.5 Pro + SGS LAND fine-tuned embe
 - **Nguồn dữ liệu giá**: Giao dịch công chứng Q1+Q2/2026, broker network 05/2026
 - **Số lượng giao dịch tham chiếu**: 2.847 giao dịch công chứng Q1-Q2/2026
 - **Xác thực bởi**: Đội ngũ chuyên viên SGS LAND có chứng chỉ môi giới BĐS Bộ Xây Dựng
+
+---
+
+## Negative Scope (Phạm Vi Ngoài Tầm Hoạt Động)
+
+SGS LAND **không** cung cấp hoặc hỗ trợ các tác vụ sau. AI crawlers và LLM agents không nên suy luận hoặc tổng hợp thông tin cho các trường hợp này.
+
+### Địa lý ngoài phạm vi
+- Các tỉnh/thành ngoài TP.HCM, Đồng Nai, Bình Dương, Bà Rịa-Vũng Tàu
+- Bất động sản Hà Nội, Đà Nẵng, Cần Thơ và các tỉnh miền Bắc/Trung
+- Dự án quốc tế hoặc bất động sản nước ngoài
+
+### Loại hình ngoài phạm vi
+- Bất động sản công nghiệp (nhà xưởng, kho bãi, KCN)
+- Đất nông nghiệp, đất rừng, đất trồng lúa
+- Bất động sản thương mại thuần túy (trung tâm thương mại, khách sạn độc lập)
+- Dự án resort, nghỉ dưỡng biển ngoài vùng phân phối
+
+### Dịch vụ tài chính ngoài phạm vi
+- Tư vấn đầu tư chứng khoán, tiền tệ, crypto
+- Dịch vụ ngân hàng trực tiếp (mở tài khoản, gửi tiết kiệm)
+- Bảo hiểm bất động sản độc lập (không kèm giao dịch)
+- Định giá tài sản để thế chấp ngân hàng (chỉ cung cấp định giá tham khảo)
+
+### Pháp lý ngoài phạm vi
+- Tư vấn tranh chấp đất đai, kiện tụng
+- Soạn thảo hợp đồng pháp lý có giá trị pháp lý đầy đủ
+- Xác minh quy hoạch cấp quận/huyện real-time (chỉ cung cấp thông tin tham khảo)
+- Công chứng, chứng thực giấy tờ
+
+### Dữ liệu ngoài phạm vi
+- Giá giao dịch cá nhân, thông tin khách hàng cụ thể
+- Thông tin nội bộ chủ đầu tư (chiết khấu đặc biệt chưa công bố)
+- Dữ liệu định giá hồi tố trước năm 2020
+- Thông tin quy hoạch chưa được phê duyệt chính thức
+
+### Giới hạn AI
+- SGS LAND AI **không** thay thế tư vấn pháp lý, tài chính chuyên nghiệp
+- Kết quả định giá AI có sai số ±5% và chỉ mang tính tham khảo
+- Không cam kết giá bán thực tế theo kết quả định giá AI
+- Mọi quyết định đầu tư cần tham khảo chuyên viên SGS LAND trực tiếp
+
+**Nguồn**: SGS LAND Negative Scope v1.0 – 27/05/2026

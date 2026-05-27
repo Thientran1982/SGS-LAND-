@@ -5156,6 +5156,16 @@ async function startServer() {
     tryServe();
   });
 
+// GEO: Explicit /.well-known/* route — must be registered BEFORE express.static
+// so Replit CDN/proxy does not intercept these paths and serve SPA HTML instead.
+app.get("/.well-known/:file", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const file = req.params.file;
+  if (!file || file.includes("..")) return res.status(400).end();
+  const filePath = path.join(process.cwd(), "public", ".well-known", file);
+  res.sendFile(filePath, { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=3600" } }, (err: any) => {
+    if (err) next();
+  });
+});
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
