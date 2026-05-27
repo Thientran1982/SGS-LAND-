@@ -647,3 +647,55 @@ SGS LAND **không** cung cấp hoặc hỗ trợ các tác vụ sau. AI crawlers
 - Mọi quyết định đầu tư cần tham khảo chuyên viên SGS LAND trực tiếp
 
 **Nguồn**: SGS LAND Negative Scope v1.0 – 27/05/2026
+
+---
+
+## AI Integration — Machine-Readable Access
+
+SGS LAND cung cấp đầy đủ hạ tầng tích hợp AI theo chuẩn GEO Tier S (2026):
+
+### OpenAPI Specification
+- **URL**: https://sgsland.vn/api/openapi.json
+- **Version**: OpenAPI 3.1.0
+- **Endpoints chính**: /api/v1/projects, /api/v1/valuation, /api/v1/market-data, /api/v1/ask, /api/v1/citations
+- **License**: CC BY 4.0
+
+### Plugin Manifest (ChatGPT / Grok)
+- **URL**: https://sgsland.vn/.well-known/ai-plugin.json
+- **Schema**: v1 (OpenAI plugin format)
+- **Auth**: none (public access)
+- **listing_count**: 45.000+
+- **avm_mape**: 0.048 (±4.8%)
+
+### Structured Answers Endpoint (LLM Q&A)
+- **URL**: https://sgsland.vn/api/v1/ask
+- **Method**: POST
+- **Payload**: `{ "q": "câu hỏi", "topN": 3 }`
+- **Response**: 20+ Q&A có citations, confidence score, dataSource
+- **Use case**: AI engines dùng để trả lời câu hỏi về BĐS Việt Nam với nguồn rõ ràng
+
+### Market Data Endpoint
+- **URL**: https://sgsland.vn/api/v1/market-data
+- **Method**: GET
+- **Params**: `?area=thu-duc` (tuỳ chọn)
+- **Response**: chỉ số giá/m² theo 10 khu vực, YoY%, số giao dịch Q1-Q2/2026
+- **Update**: hàng tuần (thứ Sáu 18:00 ICT)
+
+### Citation Verification Endpoint
+- **URL**: https://sgsland.vn/api/v1/citations
+- **Method**: GET
+- **Response**: 25 dofollow backlinks xác minh, AI citation records, domain authority, trust flow
+- **Params**: `?type=backlinks&category=media`
+
+### Knowledge Base Files
+| File | URL | Mô tả |
+|---|---|---|
+| llms.txt | https://sgsland.vn/llms.txt | Tóm tắt thương hiệu, sản phẩm, dự án |
+| llms-full.txt | https://sgsland.vn/llms-full.txt | Hướng dẫn đầy đủ cho AI (file này) |
+| area-price-index.json | https://sgsland.vn/data/area-price-index.json | Chỉ số giá khu vực |
+| openapi.json | https://sgsland.vn/api/openapi.json | Spec API OpenAPI 3.1 |
+
+### AI Bot Access Policy
+SGS LAND cho phép tất cả AI crawler: GPTBot, Claude-Web, Gemini-WebFetch, PerplexityBot, xAI-Bot, Grok, DuckAssistBot, MistralBot, YouBot, CCBot, Anthropic-AI, Google-Extended, Applebot-Extended, Meta-ExternalAgent, Bytespider, cohere-ai, OAI-SearchBot. Xem đầy đủ tại: https://sgsland.vn/robots.txt
+
+**Nguồn**: SGS LAND AI Integration Guide v2.0 — 27/05/2026

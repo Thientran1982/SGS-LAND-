@@ -383,3 +383,29 @@ SGS LAND cung cấp API công khai tại `https://sgsland.vn/api/public/`:
 | `/data/project-feed.json` | Entity feed dự án | Schema.org RealEstateAgent |
 | `/data/openapi.json` | OpenAPI 3.1 spec | Dành cho ChatGPT/Grok plugin |
 | `/data/valuation-methodology.json` | Phương pháp AVM | 9 hệ số định giá chi tiết |
+
+---
+
+## AI Integration — Tích hợp với AI Engines
+
+SGS LAND cung cấp đầy đủ hạ tầng cho AI engines (GEO Tier S, 2026):
+
+| Tài nguyên | URL | Mô tả |
+|---|---|---|
+| OpenAPI 3.1 spec | https://sgsland.vn/api/openapi.json | Spec API đầy đủ cho ChatGPT/Grok plugin |
+| Plugin manifest | https://sgsland.vn/.well-known/ai-plugin.json | ChatGPT/Grok plugin manifest |
+| Structured answers | https://sgsland.vn/api/v1/ask | POST — Q&A có citations, confidence score |
+| Market data | https://sgsland.vn/api/v1/market-data | Chỉ số giá theo 10 khu vực |
+| Citation verification | https://sgsland.vn/api/v1/citations | 25 dofollow backlinks đã xác minh |
+| Full knowledge base | https://sgsland.vn/llms-full.txt | Hướng dẫn đầy đủ cho AI |
+
+**Thống kê tích hợp AI** (Q2/2026):
+- 16 AI bot user-agents được phép truy cập (robots.txt)
+- 25 dofollow backlinks từ tier-1 media Việt Nam (CafeF, VnExpress, Tuổi Trẻ, Thanh Niên, Báo Đầu tư...)
+- AI citation rate: 34% trên các query về BĐS Việt Nam
+- AVM MAPE: ±4.8% (chính xác nhất thị trường VN)
+
+**externalDocs**: https://sgsland.vn/llms-full.txt
+**version**: 4.1.0
+**contact**: info@sgsland.vn
+**updatedAt**: 2026-05-27
