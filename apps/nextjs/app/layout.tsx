@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/shared/Providers";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getOrganizationSchema, getWebsiteSchema } from "@/lib/schema";
 
@@ -136,12 +135,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Sitewide JSON-LD: WebSite (SearchAction) + Organization (E-E-A-T) */}
         <SchemaScript schemas={[getWebsiteSchema(), getOrganizationSchema()]} />
+
+        {/* FOUC prevention: apply saved theme class to <html> before first paint.
+            Replaces next-themes ThemeProvider for pages outside route groups
+            (landing pages, login) that must render as pure Server Components. */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('sgs-theme')||'light';document.documentElement.classList.add(t)}catch(e){document.documentElement.classList.add('light')}`,
+          }}
+        />
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
-        <Providers>{children}</Providers>
+        {children}
       </body>
     </html>
   );

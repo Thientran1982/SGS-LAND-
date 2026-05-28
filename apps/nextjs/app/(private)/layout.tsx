@@ -1,4 +1,7 @@
-"use client";
+// Force all private (CRM) pages through normal SSR instead of the limited
+// Next.js 15 prerender phase — CrmShell is a "use client" component that
+// calls useState/useEffect which crash under the ContextOnlyDispatcher.
+export const dynamic = "force-dynamic";
 
 import { CrmShell } from "@/components/private/CrmShell";
 

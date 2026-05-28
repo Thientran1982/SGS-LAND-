@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export const revalidate = false;
+// LoginPage is "use client" with hooks — must use SSR not the prerender phase
+export const dynamic = "force-dynamic";
 
 export default function LoginRoute() {
   return (

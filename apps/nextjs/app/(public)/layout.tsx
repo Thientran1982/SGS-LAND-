@@ -1,3 +1,8 @@
+// Force all public pages through normal SSR instead of the limited Next.js 15
+// prerender phase — PublicHeader is "use client" and calls useState/useEffect
+// which crash under the ContextOnlyDispatcher.
+export const dynamic = "force-dynamic";
+
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { AiChatWidgetWrapper } from "@/components/public/AiChatWidgetWrapper";
