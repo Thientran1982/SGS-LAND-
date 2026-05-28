@@ -786,7 +786,7 @@ export const Landing: React.FC = () => {
                                 project={p}
                                 onClick={() => {
                                     if (p.href) window.location.href = p.href;
-                                    else navigateTo(`/du-an/${p.slug}`);
+                                    else navigateTo(`${ROUTES.DU_AN}/${p.slug}`);
                                 }}
                             />
                         ))}

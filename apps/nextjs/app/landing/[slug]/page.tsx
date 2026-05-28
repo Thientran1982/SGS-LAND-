@@ -16,7 +16,11 @@ import {
   SITE_URL,
 } from "@/lib/schema";
 
-import { LANDING_PROJECTS, LANDING_SLUGS } from "@/data/landing-projects";
+import {
+  LANDING_PROJECTS,
+  LANDING_SLUGS,
+  type LandingProject,
+} from "@/data/landing-projects";
 import LandingPageClient from "../LandingPageClient";
 import "../landing.css";
 
@@ -64,6 +68,37 @@ export async function generateMetadata({
       images: [`/landing/${slug}/hero.jpg`],
     },
   };
+}
+
+// ─── Noscript helper ───────────────────────────────────────────────────────
+// React 19 cannot hydrate JSX children inside <noscript>: when JS is enabled,
+// browsers do NOT parse <noscript> content as DOM nodes — the content stays as
+// a raw text node.  React's strict hydration then sees a structural mismatch
+// (<div> expected, text node found) and throws.  Building the HTML string and
+// using dangerouslySetInnerHTML makes React treat the content as opaque,
+// avoiding the mismatch without removing the GEO crawler fallback layer.
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function buildNoscriptHtml(p: LandingProject): string {
+  const paras = p.overviewParas.map((t) => `<p>${esc(t)}</p>`).join("");
+  const faqs = p.faq
+    .map((f) => `<div><h3>${esc(f.q)}</h3><p>${esc(f.a)}</p></div>`)
+    .join("");
+  return [
+    '<div class="lp-noscript"><article>',
+    `<h1>${esc(p.schemaName)}</h1>`,
+    `<p>Chủ đầu tư: ${esc(p.schemaDev)} | Địa điểm: ${esc(p.schemaLocality)}, ${esc(p.schemaRegion)} | Đại lý ủy quyền: SGS Land — sgsland.vn</p>`,
+    p.schemaAreaHa != null ? `<p>Quy mô: ${p.schemaAreaHa} ha</p>` : "",
+    paras,
+    `<h2>Câu hỏi thường gặp về ${esc(p.schemaName)}</h2>`,
+    faqs,
+    "</article></div>",
+  ].join("");
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────
@@ -171,28 +206,12 @@ export default async function LandingProjectPage({
       <SchemaScript schemas={schemas} />
 
       {/* ── GEO noscript fallback layer (AI crawlers with JS disabled) ──── */}
-      <noscript>
-        <div className="lp-noscript">
-          <article>
-            <h1>{project.schemaName}</h1>
-            <p>
-              Chủ đầu tư: {project.schemaDev} | Địa điểm: {project.schemaLocality},{" "}
-              {project.schemaRegion} | Đại lý ủy quyền: SGS Land — sgsland.vn
-            </p>
-            {project.schemaAreaHa && <p>Quy mô: {project.schemaAreaHa} ha</p>}
-            {project.overviewParas.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-            <h2>Câu hỏi thường gặp về {project.schemaName}</h2>
-            {project.faq.map((f, i) => (
-              <div key={i}>
-                <h3>{f.q}</h3>
-                <p>{f.a}</p>
-              </div>
-            ))}
-          </article>
-        </div>
-      </noscript>
+      {/* dangerouslySetInnerHTML prevents React 19 hydration mismatch: browsers
+          with JS enabled do not parse <noscript> content as DOM nodes, so React
+          would find a text node where it expects a <div> child element. */}
+      <noscript
+        dangerouslySetInnerHTML={{ __html: buildNoscriptHtml(project) }}
+      />
 
       {/* ── Main page wrapper — CSS custom properties injected here ─────── */}
       <div className="lp-page" style={themeVars}>
