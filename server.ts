@@ -5168,6 +5168,40 @@ app.get("/.well-known/:file", (req: express.Request, res: express.Response, next
     if (err) next();
   });
 });
+  // Next.js SSG landing pages — proxy /landing/:slug to Next.js (port 3000) before
+  // express.static can serve old public/landing/*/index.html files.
+  // Sub-path assets (/landing/:slug/hero.jpg) fall through to express.static below.
+  const NEXTJS_LANDING_SLUGS = new Set(['aqua-city', 'legacy-66', 'masteri-cosmo-central', 'vinhomes-hoc-mon']);
+  const NEXTJS_PORT = process.env.NEXTJS_PORT ? parseInt(process.env.NEXTJS_PORT, 10) : 3000;
+
+  app.get(['/landing/:slug', '/landing/:slug/'], (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { slug } = req.params;
+    if (!NEXTJS_LANDING_SLUGS.has(slug)) return next();
+    const proxyReq = http.request(
+      { hostname: 'localhost', port: NEXTJS_PORT, path: `/landing/${slug}`, method: 'GET', headers: { ...req.headers, host: `localhost:${NEXTJS_PORT}` } },
+      (proxyRes) => {
+        res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
+        proxyRes.pipe(res, { end: true });
+      }
+    );
+    proxyReq.on('error', () => next());
+    proxyReq.end();
+  });
+
+  // Proxy /_next/* static chunks (CSS/JS) that Next.js landing pages reference.
+  // Browser resolves /_next/ against the Express origin (port 5000), so we forward here.
+  app.use('/_next', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const proxyReq = http.request(
+      { hostname: 'localhost', port: NEXTJS_PORT, path: `/_next${req.url}`, method: req.method, headers: req.headers },
+      (proxyRes) => {
+        res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
+        proxyRes.pipe(res, { end: true });
+      }
+    );
+    proxyReq.on('error', () => next());
+    req.pipe(proxyReq, { end: true });
+  });
+
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 

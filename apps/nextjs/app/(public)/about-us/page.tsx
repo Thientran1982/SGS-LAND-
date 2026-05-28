@@ -8,7 +8,7 @@ import { getBreadcrumbSchema, getOrganizationSchema, SITE_URL, ORG_ID } from "@/
 export const metadata: Metadata = {
   title: "Về SGS LAND | Nền tảng BĐS AI hàng đầu Việt Nam",
   description:
-    "SGS LAND — Công ty Cổ phần SGS Land, thành lập 2024. Đại lý uỷ quyền Vinhomes, Novaland, Masterise, Nam Long. 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD giao dịch. Top Proptech VN 2025.",
+    "SGS LAND — Công ty TNHH SGS Land, thành lập 2024. Đại lý uỷ quyền Vinhomes, Novaland, Masterise, Nam Long. 15.000+ môi giới, 45.000+ sản phẩm, 200 triệu USD giao dịch. Top Proptech VN 2025.",
   alternates: { canonical: `${SITE_URL}/about-us` },
 };
 
@@ -22,7 +22,7 @@ const STATS = [
 ];
 
 const TIMELINE = [
-  { year: "T1/2024", event: "Thành lập SGS Land Corp tại TP. Hồ Chí Minh" },
+  { year: "T1/2024", event: "Thành lập SGS Land Co.,ltd tại TP. Hồ Chí Minh" },
   { year: "T3/2024", event: "Ra mắt nền tảng marketplace BĐS và hệ thống CRM đa kênh" },
   { year: "T6/2024", event: "Ký kết đối tác phân phối uỷ quyền với Novaland và Nam Long" },
   { year: "T8/2024", event: "Triển khai hệ thống định giá AVM — độ chính xác ±5%" },
@@ -86,10 +86,10 @@ export default function AboutUsPage() {
             Về SGS LAND
           </h1>
           <p className="text-lg leading-relaxed mb-2" style={{ color: "var(--text-secondary)" }}>
-            <strong>SGS LAND</strong> (Công ty Cổ phần SGS Land) là nền tảng quản lý &amp; phân phối bất
+            <strong>SGS LAND</strong> (Công ty TNHH SGS Land) là nền tảng quản lý &amp; phân phối bất
             động sản AI thế hệ mới, thành lập năm 2024 tại TP. Hồ Chí Minh, Việt Nam. Tính đến tháng
             5/2025, SGS LAND vận hành mạng lưới <strong>15.000+ môi giới</strong> được xác thực,
-            kho hàng <strong>45.000+ sản phẩm</strong> và đã xử lý hơn <strong>2 tỷ USD</strong> giá trị
+            kho hàng <strong>45.000+ sản phẩm</strong> và đã xử lý hơn <strong>200 triệu USD</strong> giá trị
             giao dịch.
           </p>
         </section>

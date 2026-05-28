@@ -59,7 +59,10 @@ const nextConfig: NextConfig = {
       { source: "/uploads/:path*",    destination: `${BACKEND_URL}/uploads/:path*` },
       // Proxy static media from Express public folder
       { source: "/images/:path*",     destination: `${BACKEND_URL}/images/:path*` },
-      { source: "/landing/:path*",    destination: `${BACKEND_URL}/landing/:path*` },
+      // Proxy only landing *sub-paths* (hero.jpg, etc.) to Express.
+      // The root /landing/:slug path is handled by the Next.js SSG page — do NOT
+      // rewrite it, or Express would serve the old static HTML instead.
+      { source: "/landing/:slug/:path+", destination: `${BACKEND_URL}/landing/:slug/:path+` },
       // GEO: /.well-known/ served by Express for ai-plugin.json, openapi.json
       // Next.js Route Handler at app/.well-known/ai-plugin.json/route.ts takes
       // precedence for ai-plugin.json; this proxy is fallback for other files.
