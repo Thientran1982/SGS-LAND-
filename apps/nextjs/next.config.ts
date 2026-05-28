@@ -60,6 +60,10 @@ const nextConfig: NextConfig = {
       // Proxy static media from Express public folder
       { source: "/images/:path*",     destination: `${BACKEND_URL}/images/:path*` },
       { source: "/landing/:path*",    destination: `${BACKEND_URL}/landing/:path*` },
+      // GEO: /.well-known/ served by Express for ai-plugin.json, openapi.json
+      // Next.js Route Handler at app/.well-known/ai-plugin.json/route.ts takes
+      // precedence for ai-plugin.json; this proxy is fallback for other files.
+      { source: "/.well-known/:path*", destination: `${BACKEND_URL}/.well-known/:path*` },
     ];
   },
 
