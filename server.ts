@@ -5175,7 +5175,7 @@ app.get("/.well-known/:file", (req: express.Request, res: express.Response, next
   const NEXTJS_PORT = process.env.NEXTJS_PORT ? parseInt(process.env.NEXTJS_PORT, 10) : 3000;
 
   app.get(['/landing/:slug', '/landing/:slug/'], (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const { slug } = req.params;
+    const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
     if (!NEXTJS_LANDING_SLUGS.has(slug)) return next();
     const proxyReq = http.request(
       { hostname: 'localhost', port: NEXTJS_PORT, path: `/landing/${slug}`, method: 'GET', headers: { ...req.headers, host: `localhost:${NEXTJS_PORT}` } },
