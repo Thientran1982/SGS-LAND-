@@ -5190,6 +5190,8 @@ app.get("/.well-known/:file", (req: express.Request, res: express.Response, next
 
   // Proxy /_next/* static chunks (CSS/JS) that Next.js landing pages reference.
   // Browser resolves /_next/ against the Express origin (port 5000), so we forward here.
+  // Always call proxyReq.end() for GET/HEAD — req body is empty and piping a consumed
+  // stream would leave the proxy request open indefinitely (causing 408 timeouts).
   app.use('/_next', (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const proxyReq = http.request(
       { hostname: 'localhost', port: NEXTJS_PORT, path: `/_next${req.url}`, method: req.method, headers: req.headers },
@@ -5199,7 +5201,11 @@ app.get("/.well-known/:file", (req: express.Request, res: express.Response, next
       }
     );
     proxyReq.on('error', () => next());
-    req.pipe(proxyReq, { end: true });
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      proxyReq.end();
+    } else {
+      req.pipe(proxyReq, { end: true });
+    }
   });
 
   // Serve public assets (widget.js, QR codes, etc.) in all environments
