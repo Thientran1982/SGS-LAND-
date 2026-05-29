@@ -22,6 +22,9 @@ const PROJECTS = [
   { slug: "thu-thiem", name: "Thủ Thiêm", dev: "Nhiều chủ đầu tư", loc: "TP Thủ Đức, TP.HCM", scale: "657 ha", price: "Từ 20 tỷ", type: "Trung tâm tài chính mới", badge: "Đang phát triển", hot: false },
   { slug: "son-kim-land", name: "Sơn Kim Land", dev: "Sơn Kim Group", loc: "TP.HCM", scale: "Nhiều dự án", price: "Từ 6 tỷ", type: "BĐS cao cấp", badge: "Đang bán", hot: false },
   { slug: "manhattan", name: "Manhattan", dev: "Hưng Thịnh Land", loc: "Quận 7, TP.HCM", scale: "5,1 ha", price: "Từ 4,5 tỷ", type: "Căn hộ cao tầng", badge: "Thứ cấp", hot: false },
+  { slug: "vinhomes-hoc-mon", name: "Vinhomes Hóc Môn", dev: "Vinhomes", loc: "Hóc Môn, TP.HCM", scale: "Đang phát triển", price: "Dự kiến từ 3-10 tỷ", type: "Đại đô thị", badge: "Sắp mở bán", hot: true },
+  { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central", dev: "Masterise Homes", loc: "TP. Thủ Đức", scale: "117 ha", price: "Từ 5 tỷ", type: "Căn hộ cao cấp", badge: "Đang bán", hot: true },
+  { slug: "legacy-66", name: "Legacy 66", dev: "Nhiều chủ đầu tư", loc: "TP.HCM", scale: "Đang phát triển", price: "Liên hệ để biết giá", type: "Bất động sản cao cấp", badge: "Thứ cấp", hot: false },
 ];
 
 export default function DuAnPage() {

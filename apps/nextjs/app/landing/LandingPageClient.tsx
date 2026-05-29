@@ -1,4 +1,5 @@
-"use client";
+-n 'aqua-city\|vinhomes-hoc\|masteri-cosmo\|legacy-66\|ROUTES\.PROJECT\|ROUTES\.PROJECTS' pages/Dashboard.tsx 2>/dev/null | head -10 && grep -rn 'aqua-city\|vinhomes-hoc\|masteri-cosmo\|legacy-66' pages/ --include='*.tsx' | grep -v 'Landing\|LocalLanding\|ProjectLanding\|Proposal' | head -15
+  "use client";
 
 import { useEffect, useRef } from "react";
 
