@@ -1270,143 +1270,165 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         ],
     },
 
-  'vinhomes-hoc-mon': {
-    slug: 'vinhomes-hoc-mon',
-    name: 'Vinhomes Hóc Môn',
-    developer: 'Vinhomes',
-    location: 'Hóc Môn, TP.HCM',
-    locationSlug: 'bat-dong-san-tp-hcm',
-    heroDescription: 'Vinhomes Hóc Môn là đại đô thị sinh thái quy mô lớn phía Tây Bắc TP.HCM, mang lại cuộc sống hiện đại với hệ thống tiện ích đẳng cấp quốc tế.',
-    priceRange: 'Dự kiến từ 3-10 tỷ',
-    projectType: 'Đại đô thị',
-    scale: 'Đang phát triển',
-    heroImage: '/landing/vinhomes-hoc-mon/hero.jpg',
-    details: [
-      { label: 'Chủ đầu tư', value: 'Vinhomes' },
-      { label: 'Vị trí', value: 'Hóc Môn, TP.HCM' },
-      { label: 'Loại hình', value: 'Đại đô thị' },
-      { label: 'Giá dự kiến', value: 'Từ 3-10 tỷ' },
-    ],
-    highlights: [
-      'Đại đô thị sinh thái phía Tây Bắc TP.HCM',
-      'Hệ thống tiện ích đẳng cấp quốc tế',
-      'Kết nối giao thông thuận tiện',
-      'Môi trường sống xanh, sạch, an toàn',
-    ],
-    amenities: [
-      'Trung tâm thương mại Vincom',
-      'Trường học Vinschool',
-      'Bệnh viện Vinmec',
-      'Công viên sinh thái rộng lớn',
-      'Hồ bơi và khu thể thao',
-    ],
-    faqs: [
-      {
-        q: 'Vinhomes Hóc Môn ở đâu?',
-        a: 'Dự án tọa lạc tại huyện Hóc Môn, TP.HCM, cách trung tâm thành phố khoảng 20-25 km.',
-      },
-      {
-        q: 'Giá bán dự kiến của Vinhomes Hóc Môn là bao nhiêu?',
-        a: 'Giá dự kiến từ 3-10 tỷ đồng tùy vị trí và loại hình bất động sản. Liên hệ SGS LAND để cập nhật giá mới nhất.',
-      },
-    ],
-    relatedProjects: [
-      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
-      { name: 'Aqua City Novaland', slug: 'aqua-city' },
-      { name: 'The Global City', slug: 'the-global-city' },
-    ],
-  },
-  'masteri-cosmo-central': {
-    slug: 'masteri-cosmo-central',
-    name: 'Masteri Cosmo Central',
-    developer: 'Masterise Homes',
-    location: 'TP. Thủ Đức, TP.HCM',
-    locationSlug: 'bat-dong-san-thu-duc',
-    heroDescription: 'Masteri Cosmo Central là dự án căn hộ cao cấp tại TP. Thủ Đức, được thiết kế theo phong cách Cosmo hiện đại với đầy đủ tiện ích cao cấp.',
-    priceRange: 'Từ 5 tỷ',
-    projectType: 'Căn hộ cao cấp',
-    scale: '117 ha',
-    heroImage: '/landing/masteri-cosmo-central/hero.jpg',
-    details: [
-      { label: 'Chủ đầu tư', value: 'Masterise Homes' },
-      { label: 'Vị trí', value: 'TP. Thủ Đức, TP.HCM' },
-      { label: 'Loại hình', value: 'Căn hộ cao cấp' },
-      { label: 'Diện tích', value: '117 ha' },
-      { label: 'Giá từ', value: 'Từ 5 tỷ đồng' },
-    ],
-    highlights: [
-      'Vị trí trung tâm TP. Thủ Đức năng động',
-      'Thiết kế Cosmo hiện đại đẳng cấp',
-      'Hệ sinh thái tiện ích toàn diện',
-      'Pháp lý rõ ràng, sổ đỏ từ́ng căn',
-    ],
-    amenities: [
-      'Hồ bơi vô cực trên cao',
-      'Phòng Gym & Spa đẳng cấp',
-      'Khu vui chơi trẻ em',
-      'Trung tâm thương mại nội khu',
-      'Căn hộ văn phòng đa năng',
-    ],
-    faqs: [
-      {
-        q: 'Masteri Cosmo Central ở đâu?',
-        a: 'Dự án tọa lạc tại TP. Thủ Đức, TP.HCM - khu vực đang phát triển mạnh mẽ với nhiều tiện ích hiện đại.',
-      },
-      {
-        q: 'Giá căn hộ Masteri Cosmo Central là bao nhiêu?',
-        a: 'Giá căn hộ từ 5 tỷ đồng. Liên hệ SGS LAND để nhận tư vấn chi tiết và cập nhật giá mới nhất.',
-      },
-    ],
-    relatedProjects: [
-      { name: 'The Global City', slug: 'the-global-city' },
-      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
-      { name: 'BDS Thủ Đức', slug: 'bat-dong-san-thu-duc' },
-    ],
-  },
-  'legacy-66': {
-    slug: 'legacy-66',
-    name: 'Legacy 66',
-    developer: 'Nhiều chủ đầu tư',
-    location: 'TP.HCM',
-    locationSlug: 'bat-dong-san-tp-hcm',
-    heroDescription: 'Legacy 66 là dự án bất động sản cao cấp tại TP.HCM, cung cấp nhiều lựa chọn đa dạng từ căn hộ, nhà phố đến biệt thự sang trọng.',
-    priceRange: 'Liên hệ để biết giá',
-    projectType: 'Bất động sản cao cấp',
-    scale: 'Đang phát triển',
-    heroImage: '/landing/legacy-66/hero.jpg',
-    details: [
-      { label: 'Vị trí', value: 'TP.HCM' },
-      { label: 'Loại hình', value: 'Bất động sản cao cấp' },
-      { label: 'Trạng thái', value: 'Thứ cấp' },
-    ],
-    highlights: [
-      'Sản phẩm đa dạng, phù hợp nhiều nhu cầu',
-      'Vị trí chiến lược tại TP.HCM',
-      'Tiềm năng tăng giá cao',
-      'Pháp lý đầy đủ, rõ ràng',
-    ],
-    amenities: [
-      'Hệ thống an ninh 24/7',
-      'Cảnh quan cây xanh',
-      'Khu vực sinh hoạt cộng đồng',
-      'Bãi đỗ xe rộng rãi',
-    ],
-    faqs: [
-      {
-        q: 'Legacy 66 có những loại hình bất động sản nào?',
-        a: 'Legacy 66 cung cấp đa dạng sản phẩm gồm căn hộ chưng cư, nhà phố liền kề và biệt thự cao cấp. Liên hệ SGS LAND để nhận tư vấn chi tiết.',
-      },
-      {
-        q: 'Giá bán tại Legacy 66 là bao nhiêu?',
-        a: 'Giá thứ cấp phụ thuộc vào loại hình và vị trí cụ thể. Vui lòng liên hệ SGS LAND để được tư vấn và nhận bảng giá mới nhất.',
-      },
-    ],
-    relatedProjects: [
-      { name: 'Aqua City Novaland', slug: 'aqua-city' },
-      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
-      { name: 'The Global City', slug: 'the-global-city' },
-    ],
-  },
+    'vinhomes-hoc-mon': {
+        slug: 'vinhomes-hoc-mon',
+        name: 'Vinhomes Hóc Môn',
+        developer: 'Vinhomes (Vingroup)',
+        location: 'Hóc Môn, TP.HCM',
+        locationSlug: 'bat-dong-san-tp-hcm',
+        heroDescription: 'Vinhomes Hóc Môn là đại đô thị sinh thái quy mô 10.000ha tại Hóc Môn, TP.HCM – dự án trọng điểm quốc gia với hệ thống tiện ích 5 sao.',
+        priceRange: 'Đang cập nhật',
+        projectType: 'Đại Đô Thị Sinh Thái',
+        scale: '10.000 ha',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Vinhomes (Vingroup)' },
+            { label: 'Vị trí', value: 'Hóc Môn, TP.HCM' },
+            { label: 'Quy mô', value: '10.000 ha' },
+            { label: 'Pháp lý', value: 'Đang triển khai' },
+            { label: 'Loại hình', value: 'Đại đô thị sinh thái' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích đẳng cấp',
+                items: [
+                    'Trường học liên cấp chuẩn quốc tế',
+                    'Bệnh viện đa khoa hiện đại',
+                    'Trung tâm thương mại nội khu',
+                    'Công viên cây xanh rộng lớn',
+                    'Hồ điều hòa sinh thái',
+                ],
+            },
+            {
+                title: 'Kết nối giao thông',
+                items: [
+                    'Kết nối Vành đai 3 TP.HCM',
+                    'Gần cao tốc TP.HCM – Mộc Bài',
+                    'Metro số 2 đang quy hoạch',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Vinhomes Hóc Môn ở đâu?',
+                a: 'Dự án tọa lạc tại huyện Hóc Môn, TP.HCM – khu vực đang được quy hoạch phát triển mạnh mẽ.',
+            },
+            {
+                q: 'Giá bất động sản tại Vinhomes Hóc Môn?',
+                a: 'Dự án đang trong giai đoạn triển khai. Vui lòng liên hệ SGS LAND để nhận thông tin giá mới nhất.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'The Global City', slug: 'the-global-city' },
+        ],
+    },
+    'masteri-cosmo-central': {
+        slug: 'masteri-cosmo-central',
+        name: 'Masteri Cosmo Central',
+        developer: 'Masterise Homes',
+        location: 'Thủ Đức, TP.HCM',
+        locationSlug: 'bat-dong-san-tp-hcm',
+        heroDescription: 'Masteri Cosmo Central là tổ hợp căn hộ cao cấp tại TP. Thủ Đức – trung tâm kinh tế mới của TP.HCM với thiết kế hiện đại, tiện ích đẳng cấp 5 sao.',
+        priceRange: 'Từ 5 tỷ',
+        projectType: 'Căn Hộ Cao Cấp',
+        scale: 'Đang cập nhật',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Masterise Homes' },
+            { label: 'Vị trí', value: 'Thủ Đức, TP.HCM' },
+            { label: 'Loại hình', value: 'Căn hộ cao cấp' },
+            { label: 'Giá từ', value: '5 tỷ đồng' },
+            { label: 'Pháp lý', value: 'Sổ hồng lâu dài' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích nội khu',
+                items: [
+                    'Hồ bơi vô cực trên cao',
+                    'Phòng Gym & Spa đẳng cấp',
+                    'Khu vui chơi trẻ em',
+                    'Trung tâm thương mại nội khu',
+                    'Căn hộ văn phòng đa năng',
+                ],
+            },
+            {
+                title: 'Kết nối hạ tầng',
+                items: [
+                    'Gần Metro Bình Thái',
+                    'Kết nối đại lộ Mai Chí Thọ',
+                    'Gần trung tâm tài chính Thủ Đức',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Masteri Cosmo Central ở đâu?',
+                a: 'Dự án tọa lạc tại TP. Thủ Đức, TP.HCM – khu vực đang phát triển mạnh mẽ với nhiều tiện ích hiện đại.',
+            },
+            {
+                q: 'Giá căn hộ Masteri Cosmo Central là bao nhiêu?',
+                a: 'Giá căn hộ từ 5 tỷ đồng. Liên hệ SGS LAND để nhận tư vấn chi tiết và cập nhật giá mới nhất.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'The Global City', slug: 'the-global-city' },
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+        ],
+    },
+    'legacy-66': {
+        slug: 'legacy-66',
+        name: 'Legacy 66',
+        developer: 'Nhiều chủ đầu tư',
+        location: 'TP.HCM',
+        locationSlug: 'bat-dong-san-tp-hcm',
+        heroDescription: 'Legacy 66 là tổ hợp bất động sản đẳng cấp tại TP.HCM với căn hộ chung cư và shophouse, pháp lý minh bạch, thiết kế tinh tế.',
+        priceRange: 'Đang cập nhật',
+        projectType: 'Căn Hộ Cao Cấp + Shophouse',
+        scale: '3.956,60 m² · 348 căn',
+        details: [
+            { label: 'Vị trí', value: '66 Tân Thành, Chợ Lớn, TP.HCM' },
+            { label: 'Quy mô', value: '3.956,60 m² · 348 căn' },
+            { label: 'Loại hình', value: 'Căn hộ cao cấp + Shophouse' },
+            { label: 'Pháp lý', value: 'Sổ hồng lâu dài' },
+            { label: 'Bãi đỗ xe', value: 'Rộng rãi' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích nội khu',
+                items: [
+                    'Hồ bơi và khu thể thao',
+                    'Gym & Spa hiện đại',
+                    'Khu vui chơi trẻ em',
+                    'Shophouse thương mại tầng trệt',
+                    'Bãi đỗ xe rộng rãi',
+                ],
+            },
+            {
+                title: 'Vị trí thuận tiện',
+                items: [
+                    'Ngay trung tâm Chợ Lớn',
+                    'Gần chợ An Đông và Bình Tây',
+                    'Kết nối Quận 1, 5, 6 dễ dàng',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Legacy 66 có những loại hình bất động sản nào?',
+                a: 'Legacy 66 cung cấp đa dạng sản phẩm gồm căn hộ chung cư, nhà phố liền kề và biệt thư cao cấp.',
+            },
+            {
+                q: 'Giá bán tại Legacy 66 là bao nhiêu?',
+                a: 'Giá thứ cấp phụ thuộc vào loại hình và vị trí cụ thể. Liên hệ SGS LAND để nhận bảng giá mới nhất.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'The Global City', slug: 'the-global-city' },
+        ],
+    },
 };
 
 function navigate(path: string) {
