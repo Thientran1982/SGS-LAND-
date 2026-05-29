@@ -69,7 +69,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
     img: "/images/projects/izumi-city.webp",
   },
   {
-    slug: "mcc",
+    slug: "masteri-cosmo-central",
     name: "Masteri Cosmo Central",
     dev: "Masterise Homes",
     loc: "Đỗ Xuân Hợp, Thủ Đức",
@@ -246,7 +246,7 @@ export function LandingPage({ featuredListings, stats }: Props) {
             {FEATURED_PROJECTS.map((proj) => (
               <Link
                 key={proj.slug}
-                href={proj.slug === "mcc" ? `/p/${proj.slug}` : `/du-an/${proj.slug}`}
+                href={`/du-an/${proj.slug}`}
                 className="group rounded-2xl overflow-hidden transition-all hover:-translate-y-1 hover:shadow-token-lg"
                 style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
               >
