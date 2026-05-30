@@ -1270,165 +1270,282 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         ],
     },
 
-    'vinhomes-hoc-mon': {
+  'vinhomes-hoc-mon': {
         slug: 'vinhomes-hoc-mon',
         name: 'Vinhomes Hóc Môn',
         developer: 'Vinhomes (Vingroup)',
         location: 'Hóc Môn, TP.HCM',
         locationSlug: 'bat-dong-san-tp-hcm',
-        heroDescription: 'Vinhomes Hóc Môn là đại đô thị sinh thái quy mô 10.000ha tại Hóc Môn, TP.HCM – dự án trọng điểm quốc gia với hệ thống tiện ích 5 sao.',
-        priceRange: 'Đang cập nhật',
-        projectType: 'Đại Đô Thị Sinh Thái',
+        heroDescription: 'Vinhomes Hóc Môn là siêu dự án đại đô thị sinh thái quy mô 10.000ha do Vinhomes (Vingroup) phát triển tại Hóc Môn, TP.HCM – nằm trong quy hoạch Thành phố phía Tây Bắc, dự án trọng điểm quốc gia với hệ thống tiện ích 5 sao, vị trí kết nối Vành đai 3 và cao tốc Mộc Bài. SGS LAND là đại lý phân phối chính thức.',
+        priceRange: 'Đang cập nhật (dự kiến từ 3,5 tỷ – 50+ tỷ đồng)',
+        projectType: 'Đại Đô Thị Sinh Thái 4.0',
         scale: '10.000 ha',
         details: [
-            { label: 'Chủ đầu tư', value: 'Vinhomes (Vingroup)' },
-            { label: 'Vị trí', value: 'Hóc Môn, TP.HCM' },
-            { label: 'Quy mô', value: '10.000 ha' },
-            { label: 'Pháp lý', value: 'Đang triển khai' },
-            { label: 'Loại hình', value: 'Đại đô thị sinh thái' },
+          { label: 'Chủ đầu tư', value: 'Vinhomes (Vingroup)' },
+          { label: 'Quy mô', value: '10.000 ha' },
+          { label: 'Vị trí', value: 'Hóc Môn, TP.HCM' },
+          { label: 'Loại hình', value: 'Đại đô thị sinh thái' },
+          { label: 'Pháp lý', value: 'Đang triển khai' },
+          { label: 'Tiến độ', value: 'Đang lập quy hoạch chi tiết 1/500' },
+          { label: 'Dự kiến mở bán', value: '2026–2027' },
+          { label: 'Ngân hàng hỗ trợ', value: 'Techcombank, VCB, BIDV, MB' },
         ],
         amenities: [
-            {
-                title: 'Tiện ích đẳng cấp',
-                items: [
-                    'Trường học liên cấp chuẩn quốc tế',
-                    'Bệnh viện đa khoa hiện đại',
-                    'Trung tâm thương mại nội khu',
-                    'Công viên cây xanh rộng lớn',
-                    'Hồ điều hòa sinh thái',
-                ],
-            },
-            {
-                title: 'Kết nối giao thông',
-                items: [
-                    'Kết nối Vành đai 3 TP.HCM',
-                    'Gần cao tốc TP.HCM – Mộc Bài',
-                    'Metro số 2 đang quy hoạch',
-                ],
-            },
+          {
+            title: 'Tiện ích đẳng cấp',
+            items: [
+              'Trường học liên cấp chuẩn quốc tế (Vinschool)',
+              'Bệnh viện đa khoa Vinmec tiêu chuẩn 5 sao',
+              'TTTM Vincom Mega Mall quy mô lớn',
+              'Công viên cây xanh rộng lớn, hồ điều hòa sinh thái',
+              'Sân golf, khu thể thao ngoài trời',
+              'Hệ thống an ninh 24/7, camera AI',
+              'Smart home tich hợp công nghệ 4.0',
+            ],
+          },
+          {
+            title: 'Kết nối giao thông',
+            items: [
+              'Kết nối Vành đai 3 TP.HCM (đang xây dựng)',
+              'Gần cao tốc TP.HCM – Mộc Bài (khởi công 2026)',
+              'Metro số 2 đang quy hoạch chạy qua Hóc Môn',
+              'Quốc lộ 22 mở rộng, kết nối Quận 12, Gò Vấp',
+              'Cầu vượt, nút giao Vành đai 3 – QL22 kết nối toàn vùng',
+            ],
+          },
         ],
         faqs: [
-            {
-                q: 'Vinhomes Hóc Môn ở đâu?',
-                a: 'Dự án tọa lạc tại huyện Hóc Môn, TP.HCM – khu vực đang được quy hoạch phát triển mạnh mẽ.',
-            },
-            {
-                q: 'Giá bất động sản tại Vinhomes Hóc Môn?',
-                a: 'Dự án đang trong giai đoạn triển khai. Vui lòng liên hệ SGS LAND để nhận thông tin giá mới nhất.',
-            },
+          {
+            q: 'Vinhomes Hóc Môn ở đâu, quy mô thế nào?',
+            a: 'Vinhomes Hóc Môn nằm tại huyện Hóc Môn, TP.HCM, quy mô 10.000ha – là dự án đại đô thị lớn nhất Việt Nam do Vinhomes (Vingroup) phát triển. Dự án thuộc khu vực Tây Bắc TP.HCM, trong quy hoạch Thành phố phía Tây Bắc trực thuộc TP.HCM.',
+          },
+          {
+            q: 'Giá bất động sản tại Vinhomes Hóc Môn dự kiến bao nhiêu?',
+            a: 'Giá chính thức chưa công bố do dự án đang trong giai đoạn triển khai quy hoạch. Dự kiến phân khúc đa dạng từ căn hộ khoảng 3,5 tỷ đến nhà phố, biệt thự hàng chục tỷ đồng. Liên hệ SGS LAND 0971 132 378 để đăng ký nhận thông báo mở bán sớm nhất.',
+          },
+          {
+            q: 'Tiến độ triển khai Vinhomes Hóc Môn hiện tại ra sao?',
+            a: 'Dự án đang trong giai đoạn lập quy hoạch chi tiết 1/500, Vingroup đã hon 5.000ha đất. Dự kiến phê duyệt quy hoạch 2026, mở bán phân khủ đầu tiên 2027. Định kỳ SGS LAND cập nhật tiến độ cho khách hàng đã đăng ký.',
+          },
+          {
+            q: 'Pháp lý Vinhomes Hóc Môn có đảm bảo không?',
+            a: 'Vinhomes là thương hiệu bds uy tín hàng đầu Việt Nam, thuộc Tập đoàn Vingroup. Các dự án Vinhomes đều có hồ sơ pháp lý rõ ràng, sổ hồng riêng từng căn. Tuy nhiên, dự án Hóc Môn còn đang giai đoạn quy hoạch nên pháp lý chi tiết sẽ công bố khi mở bán.',
+          },
+          {
+            q: 'Vinhomes Hóc Môn có mấy loại sản phẩm?',
+            a: 'Dự kiến triển khai đa dạng: căn hộ chung cư, nhà phố liền kề, biệt thự đơn lập và shophouse mặt tiền. Phân khủ giá rẻ hướng đến người ở thực lẫn phân khúc hạng sang phù hợp nhà đầu tư. Sản phẩm cụ thể sẽ công bố khi ra hàng chính thức.',
+          },
+          {
+            q: 'Tại sao nên quan tâm Vinhomes Hóc Môn ngay từ bây giờ?',
+            a: 'Tâm điểm kết nối Vành đai 3 + cao tốc Mộc Bài + Metro số 2 sẽ biến Hóc Môn thành trung tâm kinh tế Tây Bắc TP.HCM. Giá đất khu vực đang tăng mạnh, những người đăng ký sớm sẽ có lợi thế chọn ưu tiên và giá tốt hơn khi mở bán chính thức.',
+          },
+          {
+            q: 'Vinhomes Hóc Môn có sổ hồng riêng không?',
+            a: 'Vinhomes cam kết cấp Sổ hồng riêng từng căn cho người mua theo đúng quy định pháp luật. Tuy nhiên, dự án đang giai đoạn quy hoạch nên căn cụ thể sẽ xác nhận khi có hồ sơ phần khủ mở bán.',
+          },
+          {
+            q: 'So sánh Vinhomes Hóc Môn và Vinhomes Cần Giờ?',
+            a: 'Vinhomes Hóc Môn (10.000ha) lớn hơn nhưng gần trung tâm hơn, phù hợp cả ở thực lẫn đầu tư. Vinhomes Cần Giờ (2.870ha) nằm ven biển, phù hợp resort/nghỉ dưỡng. Hóc Môn tiếm năng tăng giá nhưng cần đợi quy hoạch hoàn tất. Liên hệ SGS LAND để tư vấn chi tiết theo mục tiêu tài chính của bạn.',
+          },
+          {
+            q: 'SGS LAND có thể tư vấn đầu tư Vinhomes Hóc Môn không?',
+            a: 'SGS LAND là đại lý phân phối chính thức Vinhomes, có hơn 50 chuyên viên giàu kinh nghiệm. Chúng tôi cung cấp tư vấn miễn phí, phân tích tổng thể thị trường và hỗ trợ thủ tục mua bán, vay vốn. Liên hệ 0971 132 378.',
+          },
+          {
+            q: 'Mất bao lâu từ trung tâm TP.HCM đến Vinhomes Hóc Môn?',
+            a: 'Từ Quận 1, TP.HCM đến Hóc Môn mất khoảng 30–40 phút qua Quốc lộ 22. Khi Vành đai 3 hoàn thành (2025–2026), thời gian kết nối rút ngắn xuống 20–25 phút. Cao tốc Mộc Bài (tương lai) sẽ tăng cường kết nối vùng.',
+          },
         ],
         relatedProjects: [
-            { name: 'Aqua City Novaland', slug: 'aqua-city' },
-            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
-            { name: 'The Global City', slug: 'the-global-city' },
+          { name: 'Aqua City Novaland', slug: 'aqua-city' },
+          { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+          { name: 'The Global City', slug: 'the-global-city' },
         ],
-    },
-    'masteri-cosmo-central': {
+      },
+  'masteri-cosmo-central': {
         slug: 'masteri-cosmo-central',
         name: 'Masteri Cosmo Central',
         developer: 'Masterise Homes',
         location: 'Thủ Đức, TP.HCM',
         locationSlug: 'bat-dong-san-tp-hcm',
-        heroDescription: 'Masteri Cosmo Central là tổ hợp căn hộ cao cấp tại TP. Thủ Đức – trung tâm kinh tế mới của TP.HCM với thiết kế hiện đại, tiện ích đẳng cấp 5 sao.',
-        priceRange: 'Từ 5 tỷ',
-        projectType: 'Căn Hộ Cao Cấp',
-        scale: 'Đang cập nhật',
+        heroDescription: 'Masteri Cosmo Central là tổ hợp căn hộ cao cấp All-in-One tại TP. Thủ Đức – trung tâm kinh tế mới của TP.HCM. Dự án gồm 6 tòa tháp 19–29 tầng do Foster & Partners (Anh Quốc) thiết kế, mô hình All-in-One với kênh nhạc nước lớn nhất Đông Nam Á. Giá từ 6,429 tỷ, đang mở bán. SGS LAND là đại lý phân phối chính thức, liên hệ 0971 132 378.',
+        priceRange: 'Từ 6,429 tỷ đồng (1PN ~50m²)',
+        projectType: 'Căn Hộ Cao Cấp All-in-One',
+        scale: '6 tòa tháp, ~3.000 căn hộ',
         details: [
-            { label: 'Chủ đầu tư', value: 'Masterise Homes' },
-            { label: 'Vị trí', value: 'Thủ Đức, TP.HCM' },
-            { label: 'Loại hình', value: 'Căn hộ cao cấp' },
-            { label: 'Giá từ', value: '5 tỷ đồng' },
-            { label: 'Pháp lý', value: 'Sổ hồng lâu dài' },
+          { label: 'Chủ đầu tư', value: 'Masterise Homes' },
+          { label: 'Vị trí', value: 'Thủ Đức, TP.HCM' },
+          { label: 'Quy mô', value: '6 tòa tháp 19–29 tầng, ~3.000 căn' },
+          { label: 'Diện tích căn hộ', value: '50 – 150 m² (1PN, 2PN, 3PN, Penthouse, Duplex)' },
+          { label: 'Giá từ', value: '6,429 tỷ/căn (1PN ~50m²)' },
+          { label: 'Pháp lý', value: 'Sổ hồng riêng lâu dài' },
+          { label: 'Tiến độ', value: 'Mở bán từ 01/2026' },
+          { label: 'Bàn giao', value: 'Dự kiến Q4/2028' },
+          { label: 'Ngân hàng hỗ trợ', value: 'Techcombank, VCB, BIDV – LS 0% giai đoạn đầu' },
         ],
         amenities: [
-            {
-                title: 'Tiện ích nội khu',
-                items: [
-                    'Hồ bơi vô cực trên cao',
-                    'Phòng Gym & Spa đẳng cấp',
-                    'Khu vui chơi trẻ em',
-                    'Trung tâm thương mại nội khu',
-                    'Căn hộ văn phòng đa năng',
-                ],
-            },
-            {
-                title: 'Kết nối hạ tầng',
-                items: [
-                    'Gần Metro Bình Thái',
-                    'Kết nối đại lộ Mai Chí Thọ',
-                    'Gần trung tâm tài chính Thủ Đức',
-                ],
-            },
+          {
+            title: 'Tiện ích nội khu đẳng cấp',
+            items: [
+              'Hồ bơi vô cực trên cao (tumô thương hiệu hàng đầu)',
+              'Kênh nhạc nước lớn nhất Đông Nam Á ngay nội khu',
+              'Sky Lounge, Bar thiên văn và vườn trên cao',
+              'Phòng gym & yoga chuẩn quốc tế 24/7',
+              'Khu vui chơi trẻ em và công viên nội khu',
+              'TTTM Cosmo Mall bán lẻ và ẩm thực cao cấp',
+              'Căn hộ văn phòng (Office-tel) có sổ hồng',
+              'Smart home, an ninh 24/7, công nghệ AI thông minh',
+            ],
+          },
+          {
+            title: 'Kết nối hạ tầng chiến lược',
+            items: [
+              'Gần Metro số 1 trạm Bình Thái (chỉ 1km)',
+              'Kết nối đại lộ Mai Chí Thọ và vành đai sông Sài Gòn',
+              'Gần trung tâm tài chính Thủ Đức (Khu công nghệ cao)',
+              '~15 phút về Quận 1 qua hầm Thủ Thiêm',
+              '~25 phút sân bay Tân Sơn Nhất',
+            ],
+          },
         ],
         faqs: [
-            {
-                q: 'Masteri Cosmo Central ở đâu?',
-                a: 'Dự án tọa lạc tại TP. Thủ Đức, TP.HCM – khu vực đang phát triển mạnh mẽ với nhiều tiện ích hiện đại.',
-            },
-            {
-                q: 'Giá căn hộ Masteri Cosmo Central là bao nhiêu?',
-                a: 'Giá căn hộ từ 5 tỷ đồng. Liên hệ SGS LAND để nhận tư vấn chi tiết và cập nhật giá mới nhất.',
-            },
+          {
+            q: 'Masteri Cosmo Central ở đâu?',
+            a: 'Masteri Cosmo Central nằm tại TP. Thủ Đức, TP.HCM – khu vực được mệnh danh "Silicon Valley của Việt Nam". Dự án tỏa lạc gần đại lộ Mai Chí Thọ, cách Metro số 1 trạm Bình Thái khoảng 1km.',
+          },
+          {
+            q: 'Giá căn hộ Masteri Cosmo Central là bao nhiêu?',
+            a: 'Giá từ 6,429 tỷ/căn đối với căn hộ 1PN ~50m². Căn 2PN từ 9 – 12 tỷ, 3PN từ 14 tỷ. Penthouse và Duplex từ 20–30+ tỷ. Giá khoảng 128–150 triệu/m². Liên hệ SGS LAND 0971 132 378 nhận bảng giá và chính sách ưu đãi mới nhất.',
+          },
+          {
+            q: 'Masteri Cosmo Central có bao nhiêu loại căn hộ?',
+            a: 'Dự án có 5 loại: 1PN (50–65m²), 2PN (75–95m²), 3PN (100–120m²), Penthouse (150–200m²) và Duplex. Ngoài ra có Office-tel có sổ hồng, phù hợp cho thuê hoặc làm văn phòng.',
+          },
+          {
+            q: 'Tiến độ xây dựng và bàn giao Masteri Cosmo Central?',
+            a: 'Dự án mở bán từ tháng 01/2026. Dự kiến khởi công Q2/2026 và bàn giao Q4/2028. Masterise Homes có lịch sử bàn giao đúng tiến độ tại các dự án trước như Masteri Centre Point, The Global City.',
+          },
+          {
+            q: 'Pháp lý Masteri Cosmo Central có an toàn không?',
+            a: 'Căn hộ có Sổ hồng riêng lâu dài từng căn theo quy định Luật Nhà ở 2023. Masterise Homes (HSX: MML) là công ty BDS niêm yết, minh bạch pháp lý. SGS LAND kiểm tra 2 lớp pháp lý trước khi tư vấn.',
+          },
+          {
+            q: 'Ngân hàng nào hỗ trợ vay mua Masteri Cosmo Central?',
+            a: 'Techcombank là ngân hàng liên kết chính, hỗ trợ vay đến 70% giá trị căn, lãi suất 0% 24 tháng đầu. Ngoài ra VCB, BIDV, MB có gói hỗ trợ tương tự. SGS LAND hỗ trợ hồ sơ vay miễn phí.',
+          },
+          {
+            q: 'Masteri Cosmo Central có tiềm năng cho thuê không?',
+            a: 'Rất cao. Thủ Đức là khu tập trung nhiều công ty ngoại, chuyên gia nước ngoài. Căn 1PN cho thuê 15–20 triệu/tháng, 2PN từ 20–28 triệu/tháng. Tỷ lệ lấp đầy cao do gần KCN công nghệ cao, ĐHQG TP.HCM và các tập đoàn lớn.',
+          },
+          {
+            q: 'Foster & Partners thiết kế Masteri Cosmo Central như thế nào?',
+            a: 'Foster & Partners (London, Anh) – công ty thiết kế đoạt giải Pritzker, tỷ lệ không gian xanh >60%, mặt tiền kính màu chống UV, tều chuyẻn tự nhiên. Kênh nhạc nước lớn nhất ĐNA do hãng này thiết kế tạo điểm nhấn đẳng cấp cho toàn khu.',
+          },
+          {
+            q: 'So sánh Masteri Cosmo Central và The Global City?',
+            a: 'Cả 2 đều do Masterise Homes phát triển tại Thủ Đức. The Global City (117ha) là đại đô thị thương mại, giá từ 15 tỷ. Cosmo Central là căn hộ All-in-One, giá từ 6,4 tỷ phù hợp nhiều người mua hơn. Chọn theo ngân sách và mục tiêu \ ở thực hay đầu tư.',
+          },
+          {
+            q: 'SGS LAND có đúng là đại lý chính thức Masteri Cosmo Central không?',
+            a: 'Có. SGS LAND là đại lý phân phối uỷ quyền chính thức của Masterise Homes. Khách hàng mua qua SGS LAND nhận được giá gốc từ chủ đầu tư, không phụ thu đầu vào có hậu mãi. Hotline 0971 132 378.',
+          },
         ],
         relatedProjects: [
-            { name: 'The Global City', slug: 'the-global-city' },
-            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
-            { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+          { name: 'The Global City', slug: 'the-global-city' },
+          { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+          { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
         ],
-    },
-    'legacy-66': {
+      },
+  'legacy-66': {
         slug: 'legacy-66',
         name: 'Legacy 66',
-        developer: 'Nhiều chủ đầu tư',
-        location: 'TP.HCM',
+        developer: 'Novaland & Hợp Tác Xã Sự Nghiệp',
+        location: 'Chợ Lớn, TP.HCM',
         locationSlug: 'bat-dong-san-tp-hcm',
-        heroDescription: 'Legacy 66 là tổ hợp bất động sản đẳng cấp tại TP.HCM với căn hộ chung cư và shophouse, pháp lý minh bạch, thiết kế tinh tế.',
+        heroDescription: 'Legacy 66 là tổ hợp bất động sản đẳng cấp tại 66 Tân Thành, Chợ Lớn, TP.HCM với 348 căn hộ chung cư và shophouse. Thiết kế tinh tế, pháp lý sổ hồng lâu dài, vị trí trung tâm Chợ Lớn kết nối Quận 1, 5, 6. SGS LAND là đại lý phân phối chính thức, liên hệ 0971 132 378 nhận bảng giá mới nhất.',
         priceRange: 'Đang cập nhật',
         projectType: 'Căn Hộ Cao Cấp + Shophouse',
         scale: '3.956,60 m² · 348 căn',
         details: [
-            { label: 'Vị trí', value: '66 Tân Thành, Chợ Lớn, TP.HCM' },
-            { label: 'Quy mô', value: '3.956,60 m² · 348 căn' },
-            { label: 'Loại hình', value: 'Căn hộ cao cấp + Shophouse' },
-            { label: 'Pháp lý', value: 'Sổ hồng lâu dài' },
-            { label: 'Bãi đỗ xe', value: 'Rộng rãi' },
+          { label: 'Vị trí', value: '66 Tân Thành, Chợ Lớn, TP.HCM' },
+          { label: 'Quy mô', value: '3.956,60 m² · 348 căn hộ + Shophouse' },
+          { label: 'Loại hình', value: 'Căn hộ cao cấp + Shophouse thương mại' },
+          { label: 'Pháp lý', value: 'Sổ hồng lâu dài từng căn' },
+          { label: 'Bãi đỗ xe', value: 'Rộng rãi' },
+          { label: 'Dân số', value: 'Khu vực trung tâm, mật độ cao' },
+          { label: 'Ngân hàng hỗ trợ', value: 'VCB, BIDV, Sacombank, TP Bank' },
         ],
         amenities: [
-            {
-                title: 'Tiện ích nội khu',
-                items: [
-                    'Hồ bơi và khu thể thao',
-                    'Gym & Spa hiện đại',
-                    'Khu vui chơi trẻ em',
-                    'Shophouse thương mại tầng trệt',
-                    'Bãi đỗ xe rộng rãi',
-                ],
-            },
-            {
-                title: 'Vị trí thuận tiện',
-                items: [
-                    'Ngay trung tâm Chợ Lớn',
-                    'Gần chợ An Đông và Bình Tây',
-                    'Kết nối Quận 1, 5, 6 dễ dàng',
-                ],
-            },
+          {
+            title: 'Tiện ích nội khu',
+            items: [
+              'Hồ bơi và khu thể thao hiện đại',
+              'Gym & Spa đẳng cấp 5 sao',
+              'Khu vui chơi trẻ em an toàn',
+              'Shophouse thương mại tầng trệt (lưu phú, cấm phố)',
+              'Bãi đỗ xe rộng rãi trong tòa nhà',
+              'Sân vườn trên cao, kúu vực ngoại cảnh',
+            ],
+          },
+          {
+            title: 'Vị trí thuận tiện',
+            items: [
+              'Ngay trung tâm Chợ Lớn, khu ẩm thực & thương mại sầm uất',
+              'Gần chợ An Đông và Bình Tây (chợ sỉ nổi tiếng)',
+              'Kết nối Quận 1, 5, 6 dễ dàng',
+              'Gần bệnh viện Chợ Rẫy, Bảo An',
+              'Tiện đường vào cao tốc TP.HCM – Trung Lương',
+            ],
+          },
         ],
         faqs: [
-            {
-                q: 'Legacy 66 có những loại hình bất động sản nào?',
-                a: 'Legacy 66 cung cấp đa dạng sản phẩm gồm căn hộ chung cư, nhà phố liền kề và biệt thư cao cấp.',
-            },
-            {
-                q: 'Giá bán tại Legacy 66 là bao nhiêu?',
-                a: 'Giá thứ cấp phụ thuộc vào loại hình và vị trí cụ thể. Liên hệ SGS LAND để nhận bảng giá mới nhất.',
-            },
+          {
+            q: 'Legacy 66 có những loại hình bất động sản nào?',
+            a: 'Legacy 66 củng cấp đa dạng sản phẩm gồm căn hộ chung cư cao cấp và shophouse mặt tiền. Căn hộ từ 1–3 phòng ngủ, diện tích đa dạng phù hợp nhu cầu ở thực và đầu tư. Shophouse tầng trệt lý tưởng kinh doanh ở vị trí đắt giá Chợ Lớn.',
+          },
+          {
+            q: 'Giá bán tại Legacy 66 là bao nhiêu?',
+            a: 'Giá chính thức đang cập nhật theo giá thương lượng và loại hình căn. Liên hệ SGS LAND 0971 132 378 hoặc đăng ký online để nhận bảng giá chi tiết, căn cụ thể và chính sách thanh toán hiện hành.',
+          },
+          {
+            q: 'Vị trí Legacy 66 có thuận lợi không?',
+            a: 'Rất thuận lợi. 66 Tân Thành nằm ngay trung tâm Chợ Lớn – khu thương mại nổi tiếng nhất TP.HCM. Gần chợ An Đông, chợ Bình Tây, bệnh viện Chợ Rẫy. Dễ di chuyển vào Quận 1 qua ngã Tân Phước hoặc cầu Chởm.',
+          },
+          {
+            q: 'Pháp lý Legacy 66 có rõ ràng không?',
+            a: 'Legacy 66 có pháp lý sổ hồng lâu dài từng căn, đây là lợi thế lớn tại khu vực trung tâm nơi nhiều dự án chưa có sổ riêng. SGS LAND kiểm tra và xác minh hồ sơ pháp lý trước khi tư vấn.',
+          },
+          {
+            q: 'Legacy 66 có thang máy và bãi đậu xe riêng không?',
+            a: 'Có. Tòa nhà trang bị thang máy cao cấp, bãi đậu xe trong tòa rộng rãi và hệ thống an ninh 24/7. Tiện nghi hù hợp với cư dân có nhu cầu sinh hoạt cao cấp ngay trung tâm.',
+          },
+          {
+            q: 'Chọn Legacy 66 shophouse có tốt không?',
+            a: 'Rất tiềm năng. Shophouse mặt tiền tại Chợ Lớn có lưu lượng khách hàng cao, mật độ dân cư lớn, phù hợp kinh doanh ẩm thực, bán lẻ, nhà thuốc, cơ sở y tế. Liên hệ SGS LAND để phân tích tỷ suất sinh lời.',
+          },
+          {
+            q: 'Mua Legacy 66 với mục đích đầu tư có hiệu quả không?',
+            a: 'Vị trí trung tâm, sổ hồng riêng, kết nối nhiều quận giúp tản sản khó giảm giá. Căn hộ cho thuê tốt nhờ nhu cầu cư trú giao thương cáo. Shophouse tiềm năng bán lại lãi khi khu vực phát triển hạ tầng.',
+          },
+          {
+            q: 'Nguyện vọng được dự tính bàn giao căn hộ Legacy 66 là khi nào?',
+            a: 'Tiến độ bàn giao đang được cập nhật. Liên hệ SGS LAND 0971 132 378 hoặc đăng ký nhận thông tin tiến độ và bảng giá mới nhất qua email/Zalo.',
+          },
+          {
+            q: 'Chính sách thanh toán Legacy 66 như thế nào?',
+            a: 'Chính sách thanh toán linh hoạt theo nhiều đợt (thường 5–10 đợt), hỗ trợ vay ngân hàng đến 70% giá trị căn. SGS LAND hỗ trợ thủ tục vay vốn và phân tích tài chính miễn phí, giúp bạn chọn phương thức thanh toán tối ưu.',
+          },
+          {
+            q: 'So sánh Legacy 66 với các dự án căn hộ khác ở trung tâm TP.HCM?',
+            a: 'Legacy 66 nổi bật nhờ sổ hồng lâu dài từng căn (hiếm gặp khu Chợ Lớn), tích hợp shophouse, vị trí trung tâm với mật độ thương mại cao. So sánh tương đương các dự án căn hộ hạng B tại Quận 5, 6. Liên hệ SGS LAND để so sánh chi tiết.',
+          },
         ],
         relatedProjects: [
-            { name: 'Aqua City Novaland', slug: 'aqua-city' },
-            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
-            { name: 'The Global City', slug: 'the-global-city' },
+          { name: 'Aqua City Novaland', slug: 'aqua-city' },
+          { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+          { name: 'The Global City', slug: 'the-global-city' },
         ],
-    },
+      },
 };
 
 function navigate(path: string) {
