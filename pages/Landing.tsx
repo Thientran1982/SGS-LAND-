@@ -32,7 +32,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
         img: '/aqua-city.jpg',
-        href: '/landing/aqua-city/',
+        href: '/du-an/aqua-city',
     },
     {
         slug: 'the-global-city',
@@ -105,7 +105,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         badge: 'Sắp mở bán 2026',
         badgeColor: 'amber',
         img: '/landing/vinhomes-hoc-mon/hero.jpg',
-        href: '/landing/vinhomes-hoc-mon/',
+        href: '/du-an/vinhomes-hoc-mon',
     },
     {
         slug: 'masteri-cosmo-central',
@@ -118,7 +118,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         badge: 'Đang mở bán',
         badgeColor: 'blue',
         img: '/landing/masteri-cosmo-central/hero.jpg?v=3',
-        href: '/landing/masteri-cosmo-central/',
+        href: '/du-an/masteri-cosmo-central',
     },
     {
         slug: 'legacy-66',
@@ -131,7 +131,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         badge: 'Bàn giao Q2/2027',
         badgeColor: 'emerald',
         img: '/landing/legacy-66/hero.jpg',
-        href: '/landing/legacy-66/',
+        href: '/du-an/legacy-66',
     },
 ];
 const HOME_FAQ = [
