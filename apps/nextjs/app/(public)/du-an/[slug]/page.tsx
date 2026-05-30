@@ -7,6 +7,7 @@ import {
   getBreadcrumbSchema,
   getOrganizationSchema,
   getFAQSchema,
+  getApartmentComplexSchema,
   SITE_URL,
 } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
@@ -259,6 +260,39 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
   ];
 }
 
+// —— Apartment Complex SEO Meta (GEO Tier S) ——————————————————————————
+const APARTMENT_COMPLEX_META: Record<string, {
+  amenities: string[];
+  numberOfRooms: string;
+  priceRange: string;
+}> = {
+  "aqua-city": {
+    amenities: ["Bãi tắm riêng", "Marina & du thuyền", "Bệnh viện 5 sao", "Trường học quốc tế", "Công viên chủ đề", "Sân golf 18 lỗ", "Trung tâm thương mại"],
+    numberOfRooms: "1-5",
+    priceRange: "VND 6000000000-50000000000",
+  },
+  "diamond-sky-van-phuc-city": {
+    amenities: ["Hồ bơi vô cực tầng thượng", "Sky lounge", "Phòng gym 24/7", "Công viên nội khu", "Trường mầm non quốc tế", "Siêu thị nội khu", "Bãi đậu xe thông minh"],
+    numberOfRooms: "1-3",
+    priceRange: "VND 2500000000-9000000000",
+  },
+  "vinhomes-hoc-mon": {
+    amenities: ["Hồ sinh thái trung tâm", "Công viên xanh 50ha", "Trường học liên cấp Vinschool", "Vinmec clinic", "Vincom mega mall", "Hệ thống an ninh 24/7", "Vinhomes Smart City app"],
+    numberOfRooms: "2-5",
+    priceRange: "VND 3500000000-50000000000",
+  },
+  "masteri-cosmo-central": {
+    amenities: ["Smart home Loxone", "Hồ bơi vô cực tầng 38", "Sky gym & yoga deck", "Co-working lounge", "Trực tiếp Metro số 1", "BBQ terrace", "Electric car charging"],
+    numberOfRooms: "1-4",
+    priceRange: "VND 2800000000-14000000000",
+  },
+  "legacy-66": {
+    amenities: ["Full nội thất cao cấp bàn giao", "Hồ bơi tầng trệt & tầng thượng", "Phòng gym hiện đại", "Clubhouse 5 sao", "Kết nối Vsip 3 & Aeon Mall", "Trường học nội khu", "CCTV 24/7 AI"],
+    numberOfRooms: "1-3",
+    priceRange: "VND 2100000000-5500000000",
+  },
+};
+
 // ─── Generate static paths ────────────────────────────────
 export async function generateStaticParams() {
   return Object.keys(PROJECT_META).map((slug) => ({ slug }));
@@ -375,7 +409,22 @@ export default async function ProjectPage({
   const faqSchema = getFAQSchema(faqItems, `${SITE_URL}/du-an/${slug}#faq`);
 
   // Serialised JSON for noscript layer
-  const schemasJson = JSON.stringify([listingSchema, breadcrumbSchema, orgSchema, faqSchema], null, 2);
+  const aptMeta = APARTMENT_COMPLEX_META[slug];
+  const apartmentSchema = aptMeta ? getApartmentComplexSchema({
+    name: projectData.name,
+    url: `${SITE_URL}/du-an/${slug}`,
+    description: projectData.description,
+    location: projectData.location,
+    developer: projectData.developer,
+    numberOfRooms: aptMeta.numberOfRooms,
+    amenities: aptMeta.amenities,
+    priceRange: aptMeta.priceRange,
+  }) : null;
+
+  const schemasJson = JSON.stringify(
+    [listingSchema, breadcrumbSchema, orgSchema, faqSchema, ...(apartmentSchema ? [apartmentSchema] : [])],
+    null, 2
+  );
 
   return (
     <>

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * SSG landing pages for 4 flagship projects.
  * GEO Tier S: SSR/SSG, JSON-LD (WebPage + RealEstateListing + FAQPage +

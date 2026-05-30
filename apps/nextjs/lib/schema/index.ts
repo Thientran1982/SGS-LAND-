@@ -11,3 +11,5 @@ export { getBreadcrumbSchema } from "./breadcrumb";
 export type { BreadcrumbSchema, BreadcrumbItem } from "./breadcrumb";
 export { getFoundersSchema } from "./person";
 export type { PersonSchema } from "./person";
+export { getApartmentComplexSchema } from "./realestate-listing";
+export type { ApartmentComplexInput } from "./realestate-listing";

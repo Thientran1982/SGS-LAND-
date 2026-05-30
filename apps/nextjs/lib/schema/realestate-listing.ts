@@ -137,3 +137,51 @@ export function getRealEstateListingSchema(project: RealEstateProject): RealEsta
     dateModified: new Date().toISOString().split("T")[0],
   };
 }
+
+export interface ApartmentComplexInput {
+  name: string;
+  url: string;
+  description: string;
+  location: string;
+  developer: string;
+  numberOfRooms?: string;
+  floorLevel?: string;
+  amenities?: string[];
+  priceRange?: string;
+  image?: string;
+}
+
+export function getApartmentComplexSchema(input: ApartmentComplexInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ApartmentComplex",
+    "name": input.name,
+    "url": input.url,
+    "description": input.description,
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": input.location,
+      "addressCountry": "VN"
+    },
+    "brand": {
+      "@type": "Brand",
+      "name": input.developer
+    },
+    ...(input.numberOfRooms ? { "numberOfRooms": input.numberOfRooms } : {}),
+    ...(input.amenities && input.amenities.length > 0 ? {
+      "amenityFeature": input.amenities.map(a => ({
+        "@type": "LocationFeatureSpecification",
+        "name": a,
+        "value": true
+      }))
+    } : {}),
+    ...(input.priceRange ? { "priceRange": input.priceRange } : {}),
+    "hasMap": `https://maps.google.com/?q=${encodeURIComponent(input.location)}`,
+    "provider": {
+      "@type": "RealEstateAgent",
+      "name": "SGS LAND",
+      "telephone": "+84-971-132-378",
+      "url": "https://sgsland.vn"
+    }
+  };
+}

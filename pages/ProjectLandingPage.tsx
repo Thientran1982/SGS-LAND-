@@ -90,6 +90,8 @@ interface ProjectConfig {
     priceRange: string;
     projectType: string;
     scale: string;
+  priceTable?: { loaiCan: string; dienTich: string; gia: string; ghiChu?: string }[];
+  paymentPolicy?: string;
 }
 const PROJECT_CONFIG: Record<string, ProjectConfig> = {
     'aqua-city': {
@@ -103,6 +105,13 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         priceRange: 'Từ 6,5 tỷ đồng',
         projectType: 'Đại Đô Thị Sinh Thái',
         scale: '1.000 ha',
+        priceTable: [
+          { loaiCan: 'Nhà Phố Thương Mại', dienTich: '90–120 m²', gia: 'Từ 6 tỷ', ghiChu: 'Pháp lý sổ hồng' },
+          { loaiCan: 'Biệt Thự Đơn Lập', dienTich: '200–400 m²', gia: 'Từ 15 tỷ', ghiChu: 'Ven sông, công viên' },
+          { loaiCan: 'Biệt Thự Song Lập', dienTich: '150–250 m²', gia: 'Từ 10 tỷ', ghiChu: 'Mặt tiền hồ' },
+          { loaiCan: 'Shophouse Mặt Tiền', dienTich: '100–150 m²', gia: 'Từ 8 tỷ', ghiChu: 'Kinh doanh tầng trệt' },
+        ],
+        paymentPolicy: 'Thanh toán 30% ký HĐMB, 70% còn lại trong 24 tháng. Hỗ trợ vay 70% giá trị, lãi suất 0% 18 tháng đầu.',
         details: [
             { label: 'Chủ đầu tư', value: 'Novaland Group' },
             { label: 'Quy mô', value: '1.000 ha' },
@@ -1760,6 +1769,44 @@ export default function ProjectLandingPage() {
                     </div>
                 </div>
             </section>
+                {/* — Price Table — */}
+                {cfg.priceTable && cfg.priceTable.length > 0 && (
+                  <section className="py-12 px-4 bg-[var(--bg-surface)]">
+                    <div className="max-w-6xl mx-auto">
+                      <h2 className="text-2xl font-bold mb-2 text-[var(--text-primary)]">Bảng Giá {cfg.name}</h2>
+                      <p className="text-sm text-[var(--text-secondary)] mb-6">Giá tham khảo tháng 5/2026 — liên hệ SGS LAND để nhận báo giá chính xác nhất.</p>
+                      <div className="overflow-x-auto rounded-2xl border border-[var(--glass-border)]">
+                        <table className="w-full text-sm" itemScope itemType="https://schema.org/ItemList">
+                          <thead>
+                            <tr className="bg-[var(--primary-600)] text-white">
+                              <th className="px-4 py-3 text-left font-semibold">Loại Căn</th>
+                              <th className="px-4 py-3 text-left font-semibold">Diện Tích</th>
+                              <th className="px-4 py-3 text-left font-semibold">Mức Giá</th>
+                              <th className="px-4 py-3 text-left font-semibold hidden sm:table-cell">Ghi Chú</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cfg.priceTable.map((row, idx) => (
+                              <tr key={idx} className={idx % 2 === 0 ? 'bg-[var(--bg-surface)]' : 'bg-[var(--bg-app)]'} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+                                <td className="px-4 py-3 font-medium text-[var(--text-primary)]" itemProp="name">{row.loaiCan}</td>
+                                <td className="px-4 py-3 text-[var(--text-secondary)]">{row.dienTich}</td>
+                                <td className="px-4 py-3 font-semibold text-[var(--primary-600)]" itemProp="description">{row.gia}</td>
+                                <td className="px-4 py-3 text-[var(--text-secondary)] hidden sm:table-cell">{row.ghiChu || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {cfg.paymentPolicy && (
+                        <div className="mt-6 p-4 bg-[var(--bg-app)] rounded-2xl border border-[var(--glass-border)]">
+                          <h3 className="font-semibold text-[var(--text-primary)] mb-1">Chính Sách Thanh Toán</h3>
+                          <p className="text-sm text-[var(--text-secondary)]">{cfg.paymentPolicy}</p>
+                        </div>
+                      )}
+                      <p className="mt-4 text-xs text-[var(--text-secondary)] italic">* Giá có thể thay đổi theo thời điểm. Liên hệ hotline <strong className="text-[var(--primary-600)]">+84 971 132 378</strong> để nhận bảng giá cập nhật nhất.</p>
+                    </div>
+                  </section>
+                )}
             {/* ── FAQ ── */}
             <section className="py-12 px-4 bg-[var(--bg-surface)]">
                 <div className="max-w-3xl mx-auto">
