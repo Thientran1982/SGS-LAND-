@@ -217,7 +217,7 @@ const PROJECT_META: Record<
     name: "Masteri Cosmo Central",
     dev: "Masterise Homes",
     loc: "TP. Thủ Đức, TP.HCM",
-    desc: "Căn hộ cao cấp tại The Global City – Thủ Đức.",
+    desc: "Masteri Cosmo Central: căn hộ All-in-One tại Thủ Đức, 6 tòa tháp ~3.000 căn, giá từ 6,429 tỷ/căn. Mở bán 2026.",
     priceRange: "Từ 5 tỷ VNĐ",
     scale: "117 ha",
     areaHa: 117,
@@ -328,7 +328,19 @@ export default async function ProjectPage({
     location: meta?.loc ?? "",
     description: meta?.desc ?? "",
     slug,
-  };
+  
+  "diamond-sky-van-phuc-city": {
+    name: "Diamond Sky – Vạn Phúc City",
+    dev: "Tập đoàn Vạn Phúc (Van Phuc Group)",
+    loc: "KDĐT Vạn Phúc City, Hiệp Bình Phước, TP Thủ Đức, TP.HCM",
+    desc: "Diamond Sky Vạn Phúc City: táp căn hộ hạng sang 20 tầng trong KDĐT 198ha, view sông Sài Gòn. 1–3PN, từ 9,6 tỷ, sổ hồng lâu dài. Mở bán Q3/2026.",
+    priceRange: "Từ 9,6 tỷ (1PN ~50m²) – Từ 192 triệu/m²",
+    scale: "20 tầng, ~520 căn hộ",
+    areaHa: 198,
+    priceLow: 9_600_000_000,
+    priceHigh: 30_000_000_000,
+  },
+};
 
   // ─── JSON-LD schemas ──────────────────────────────────
   const listingSchema = getRealEstateListingSchema({
