@@ -31,7 +31,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đại Đô Thị Sinh Thái',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/aqua-city.jpg',
+        img: 'https://sgsland.vn/aqua-city.jpg',
         href: '/du-an/aqua-city',
     },
     {
@@ -44,7 +44,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đại Đô Thị Thương Mại',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/global-city.jpg',
+        img: 'https://sgsland.vn/global-city.jpg',
     },
     {
         slug: 'izumi-city',
@@ -56,7 +56,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Đô Thị Chuẩn Nhật',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/izumi-city.jpg',
+        img: 'https://sgsland.vn/izumi-city.jpg',
     },
     {
         slug: 'vinhomes-can-gio',
@@ -68,7 +68,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Siêu Đô Thị Lấn Biển',
         badge: 'Đang bán',
         badgeColor: 'indigo',
-        img: '/vinhomes-can-gio.jpg',
+        img: 'https://sgsland.vn/vinhomes-can-gio.jpg',
     },
     {
         slug: 'diamond-sky-van-phuc-city',
@@ -80,7 +80,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Căn hộ cao tầng view sông',
         badge: 'Đang mở bán',
         badgeColor: 'indigo',
-        img: '/diamond-sky.jpg',
+        img: 'https://sgsland.vn/diamond-sky.jpg',
     },
     {
         slug: 'vinhomes-grand-park',
@@ -92,7 +92,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Siêu Đô Thị Tích Hợp',
         badge: 'Đang bàn giao',
         badgeColor: 'emerald',
-        img: '/vinhomes-grand-park.jpg',
+        img: 'https://sgsland.vn/vinhomes-grand-park.jpg',
     },
     {
         slug: 'vinhomes-hoc-mon',
@@ -100,11 +100,11 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         dev: 'Vinhomes',
         loc: 'Huyện Hóc Môn, TP.HCM',
         scale: '1.080 ha',
-        priceFrom: 'Đang cập nhật',
+        priceFrom: 'Từ 5,4 tỷ',
         type: 'Siêu Đô Thị Smart City 4.0',
         badge: 'Sắp mở bán 2026',
         badgeColor: 'amber',
-        img: '/landing/vinhomes-hoc-mon/hero.jpg',
+        img: 'https://sgsland.vn/landing/vinhomes-hoc-mon/hero.jpg',
         href: '/du-an/vinhomes-hoc-mon',
     },
     {
@@ -130,7 +130,7 @@ const FEATURED_PROJECTS: FeaturedProject[] = [
         type: 'Căn hộ cao cấp + Shophouse',
         badge: 'Bàn giao Q2/2027',
         badgeColor: 'emerald',
-        img: '/landing/legacy-66/hero.jpg',
+        img: 'https://sgsland.vn/landing/legacy-66/hero.jpg',
         href: '/du-an/legacy-66',
     },
 ];

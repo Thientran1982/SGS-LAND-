@@ -3019,6 +3019,26 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
     html = html.replace('</head>', `${jsonLd}\n</head>`);
   }
 
+    // GEO Task 4: Inject <link rel="alternate" type="application/json"> for data discovery
+  // Helps AI agents (GPT, Gemini, Claude) find machine-readable data endpoints
+  const appUrlBase = APP_URL || 'https://sgsland.vn';
+  const pagePath = (m.url || '').replace(appUrlBase, '');
+  const altLinks: string[] = [];
+  if (pagePath === '/' || pagePath === '/home' || pagePath === '') {
+    altLinks.push(`<link rel="alternate" type="application/json" title="SGS LAND Project Feed (GEO)" href="${appUrlBase}/api/public/project-feed">`);
+    altLinks.push(`<link rel="alternate" type="application/json" title="SGS LAND Area Price Index" href="${appUrlBase}/data/area-price-index.json">`);
+    altLinks.push(`<link rel="alternate" type="application/json" title="OpenAPI Specification" href="${appUrlBase}/api/openapi.json">`);
+  }
+  const projectSlugAlt = pagePath.match(/^\/du-an\/([^/]+)/)?.[1];
+  if (projectSlugAlt) {
+    altLinks.push(`<link rel="alternate" type="application/json" title="Dự án JSON Data" href="${appUrlBase}/api/v1/projects/${projectSlugAlt}">`);
+    altLinks.push(`<link rel="alternate" type="application/json" title="SGS LAND Project Feed" href="${appUrlBase}/api/public/project-feed">`);
+  }
+  if (altLinks.length > 0) {
+    html = html.replace('</head>', `  ${altLinks.join('\n  ')}
+</head>`);
+  }
+
   return html;
 }
 
@@ -3030,4 +3050,98 @@ export function getBaseHtml(): string {
     _cachedHtml = readFileSync(distPath, 'utf-8');
   }
   return _cachedHtml;
+}
+
+
+// GEO: Dataset schema markup for AI agents and Google Dataset Search
+// Enables structured data discovery for all data endpoints
+export const DATASET_SCHEMAS = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    '@id': 'https://sgsland.vn/data/area-price-index.json',
+    name: 'SGS LAND Area Price Index TP.HCM',
+    description: 'Chỉ số giá bất động sản theo khu vực tại TP.HCM và các tỉnh lân cận. Cập nhật hàng tuần.',
+    url: 'https://sgsland.vn/data/area-price-index.json',
+    license: 'https://creativecommons.org/licenses/by/4.0/',
+    isAccessibleForFree: true,
+    creator: {
+      '@type': 'Organization',
+      name: 'SGS LAND',
+      url: 'https://sgsland.vn',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SGS LAND',
+      url: 'https://sgsland.vn',
+    },
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'application/json',
+        contentUrl: 'https://sgsland.vn/data/area-price-index.json',
+      },
+    ],
+    temporalCoverage: '2019/..',
+    spatialCoverage: {
+      '@type': 'Place',
+      name: 'TP. Hồ Chí Minh, Đồng Nai, Bình Dương, Việt Nam',
+    },
+    keywords: ['bất động sản', 'giá nhà đất', 'TP.HCM', 'Đồng Nai', 'chỉ số giá', 'PropTech'],
+    variableMeasured: 'Bất động sản: giá nhà phố, căn hộ, đất nền (VND/m²)',
+    measurementTechnique: 'AVM (Automated Valuation Model) - mô hình định giá tự động huấn luyện từ dữ liệu giao dịch thực tế',
+    dateModified: new Date().toISOString().slice(0, 10),
+    inLanguage: 'vi-VN',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    '@id': 'https://sgsland.vn/api/public/project-feed',
+    name: 'SGS LAND Project Feed - Dự án BĐS',
+    description: 'Danh sách các dự án bất động sản lớn tại TP.HCM và vùng lân cận, bao gồm thông tin giá, pháp lý, tiện ích.',
+    url: 'https://sgsland.vn/api/public/project-feed',
+    license: 'https://creativecommons.org/licenses/by/4.0/',
+    isAccessibleForFree: true,
+    creator: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'application/json',
+        contentUrl: 'https://sgsland.vn/api/public/project-feed',
+      },
+    ],
+    temporalCoverage: '2019/..',
+    keywords: ['dự án bất động sản', 'căn hộ', 'nhà phố', 'biệt thự', 'TP.HCM', 'Vinhomes', 'Novaland'],
+    dateModified: new Date().toISOString().slice(0, 10),
+    inLanguage: 'vi-VN',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    '@id': 'https://sgsland.vn/api/v1/market-data',
+    name: 'SGS LAND Market Data - Dữ liệu Thị Trường BĐS',
+    description: 'Dữ liệu thị trường bất động sản real-time: tốc độ hấp thụ, biến động giá, xu hướng theo quý.',
+    url: 'https://sgsland.vn/api/v1/market-data',
+    license: 'https://creativecommons.org/licenses/by/4.0/',
+    isAccessibleForFree: true,
+    creator: { '@type': 'Organization', name: 'SGS LAND', url: 'https://sgsland.vn' },
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'application/json',
+        contentUrl: 'https://sgsland.vn/api/v1/market-data',
+      },
+    ],
+    temporalCoverage: '2019/..',
+    keywords: ['thị trường bất động sản', 'giá nhà TP.HCM', 'báo cáo thị trường', 'AVM'],
+    dateModified: new Date().toISOString().slice(0, 10),
+    inLanguage: 'vi-VN',
+  },
+];
+
+// Inject Dataset schema into homepage and data pages
+export function buildDatasetSchemaHtml(): string {
+  return DATASET_SCHEMAS.map(
+    (schema) => `<script type="application/ld+json">${JSON.stringify(schema)}</script>`
+  ).join('\n');
 }

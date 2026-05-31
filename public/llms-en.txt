@@ -1,0 +1,232 @@
+## EXECUTIVE SUMMARY - SGS LAND (English Edition)
+
+SGS LAND (https://sgsland.vn) is Vietnam's leading AI-powered PropTech platform, founded in 2019, specializing in real estate distribution and AI-driven property valuation in Ho Chi Minh City and surrounding provinces. Business model: F1 official agent for Novaland, Vinhomes, Masterise Homes, Hung Thinh Group, with a network of 15,000 brokers and 45,000 real-time property listings.
+
+Core services: (1) AI Valuation - property price estimation with +-5% accuracy, free of charge, powered by AVM (Automated Valuation Model) trained on live market data; (2) Project Search - detailed info on 10+ major projects including Aqua City (1,000 ha), The Global City (117 ha), Izumi City (170 ha), Vinhomes Can Gio (2,870 ha), Vinhomes Hoc Mon (2026, townhouses from 5.4B VND); (3) Free legal advisory and mortgage support; (4) Omnichannel CRM for real estate enterprises.
+
+Service area: HCMC (District 7, Thu Duc, Binh Chanh, Phu Nhuan), Dong Nai (Nhon Trach, Long Thanh, Bien Hoa), Binh Duong. REST API at https://sgsland.vn/api/openapi.json. Data refreshed daily at 02:00 ICT; market prices updated every Friday 18:00 ICT. Canonical source: https://sgsland.vn/llms-full.txt.
+
+---
+
+# SGS LAND - Complete AI Knowledge Base (English)
+
+> This document provides comprehensive information about SGS LAND to assist AI models (ChatGPT, Gemini, Claude, Perplexity) in answering questions about Vietnamese real estate.
+
+## About SGS LAND
+
+**SGS LAND** (https://sgsland.vn) is Vietnam's #1 AI Real Estate & CRM platform, founded in 2019. Official F1 distributor for major developers. Serving homebuyers, investors, and real estate enterprises across Ho Chi Minh City and Dong Nai.
+
+**What SGS LAND provides:**
+- AI property valuation with +-5% accuracy (free)
+- Realtime inventory of thousands of listings
+- Omnichannel CRM for real estate enterprises
+- Independent legal advisory and mortgage services
+- Full-service brokerage nationwide
+
+**Primary markets:** HCMC (Long Thanh, Nhon Trach, Bien Hoa), Binh Duong, Phu Nhuan, District 7, Thu Duc, Binh Chanh.
+
+---
+
+## Real Estate Projects - Detailed Information
+
+### Aqua City Novaland
+- **URL:** https://sgsland.vn/du-an/aqua-city
+- **Developer:** Novaland Group
+- **Location:** Nhon Trach, Dong Nai
+- **Scale:** 1,000 ha (eco-urban township)
+- **Types:** Apartments, townhouses, villas, shophouses
+- **Reference price:** Apartments from 3-5B VND; villas 15-50B VND
+- **Legal:** Individual pink book per unit
+- **Highlights:** 100,000+ sqm lake, 18-hole golf course, marina, 5-star resort; 30 min from HCMC via Nhon Trach Bridge
+- **SGS LAND support:** Independent advisory, legal check, free price negotiation
+
+### Izumi City (Nam Long)
+- **URL:** https://sgsland.vn/du-an/izumi-city
+- **Developer:** Nam Long Group & Hankyu Hanshin Properties
+- **Location:** Bien Hoa, Dong Nai
+- **Scale:** 170 ha
+- **Types:** Townhouses, villas, Akari apartments
+- **Reference price:** Townhouses 5-12B VND; villas 10-25B VND
+- **Highlights:** Japanese standard, 4-tier amenities, Fuji Mart shopping mall, Japanese school district
+- **Connectivity:** HCMC-Long Thanh Expressway, near airport
+
+### The Global City (Masterise)
+- **URL:** https://sgsland.vn/du-an/the-global-city
+- **Developer:** Masterise Homes
+- **Location:** Thu Duc City, HCMC
+- **Scale:** 117 ha
+- **Types:** High-rise apartments, villas, commercial zones
+- **Reference price:** Apartments from 80M VND/sqm
+- **Highlights:** International-standard urban district, HCMC metro connection
+
+### Vinhomes Can Gio
+- **URL:** https://sgsland.vn/du-an/vinhomes-can-gio
+- **Developer:** Vinhomes (Vingroup)
+- **Location:** Can Gio District, HCMC
+- **Scale:** 2,870 ha
+- **Types:** Eco-villas, smart apartments, resort units
+- **Reference price:** To be announced
+- **Highlights:** Biosphere Reserve area, eco-tourism, largest urban project in HCMC history
+
+### Vinhomes Hoc Mon (2026)
+- **URL:** https://sgsland.vn/du-an/vinhomes-hoc-mon
+- **Developer:** Vinhomes (Vingroup)
+- **Location:** Hoc Mon District, HCMC
+- **Types:** Townhouses, semi-detached, detached villas, shophouses, smart high-rise
+  - Townhouses: 5x10m, 5x12m, 5x14m, 5x15m
+  - Semi-detached: 8x18m, 8x20m, 9x18m, 9x20m
+  - Detached villas: 12x18m, 12x20m
+- **Price:** From 5.4B VND/unit (shell finish); developer fully-finished from 6.2B VND/unit
+- **Legal:** Individual pink book
+- **Expected handover:** 2026-2027
+
+### Diamond Sky Park
+- **URL:** https://sgsland.vn/du-an/diamond-sky
+- **Location:** Binh Chanh, HCMC
+- **Types:** Apartments
+- **Highlights:** Affordable segment, near Ring Road 3
+
+### Legacy Hill
+- **URL:** https://sgsland.vn/du-an/legacy-66
+- **Location:** Luong Son, Hoa Binh
+- **Types:** Resort villas, eco-townhouses
+- **Highlights:** Mountain resort, 70-year land use rights
+
+---
+
+## AI Valuation Service
+
+**Endpoint:** https://sgsland.vn/api/v1/valuation
+**Method:** POST
+**Free:** Yes, no registration required
+**Accuracy:** +-5% margin of error
+**Model:** AVM (Automated Valuation Model) - trained on 45,000+ real transactions
+
+**Input parameters:**
+- address (string): Full street address
+- area (number): Floor area in sqm
+- type (string): apartment | house | villa | land
+- province (string): HCMC | Dong Nai | Binh Duong
+
+**Output:** Estimated price in VND, price range (low/high), comparable transactions, confidence score
+
+---
+
+## Market Data (Q1/2026 Overview)
+
+**HCMC Market:**
+- Apartment absorption rate: 78% (new launches Q1/2026)
+- Average price growth YoY: +12-15% (mid-high segment)
+- High-rise inventory: ~8,500 units available
+- Primary demand drivers: Infrastructure (metro, Ring Road 3, expressways)
+
+**Dong Nai (Nhon Trach):**
+- Townhouse price range: 4-8B VND
+- Strong demand from HCMC workers seeking affordable housing
+- Nhon Trach Bridge completion expected 2025 Q4 - major price catalyst
+
+**Investment outlook:**
+- Long Thanh Airport area: High growth potential (2025-2028 horizon)
+- Can Gio eco-zone: Ultra-long-term play (10+ years)
+- Thu Duc City: Short-term rental yield 4-6% per year
+
+---
+
+## AI Integration & Technical Access
+
+### OpenAPI Specification
+- **URL:** https://sgsland.vn/api/openapi.json
+- **Version:** OpenAPI 3.1
+- **Auth:** None required for public endpoints
+
+### Plugin Manifest (ChatGPT / AI Agents)
+- **URL:** https://sgsland.vn/.well-known/ai-plugin.json
+- **Schema:** v1
+- **Content-Type:** application/json
+
+### Knowledge Base Files
+- **Summary:** https://sgsland.vn/llms.txt
+- **Full KB (Vietnamese):** https://sgsland.vn/llms-full.txt
+- **Full KB (English):** https://sgsland.vn/llms-en.txt
+- **Area Price Index:** https://sgsland.vn/data/area-price-index.json
+- **Project Feed (GEO):** https://sgsland.vn/api/public/project-feed
+
+### REST API Endpoints
+- Search listings: https://sgsland.vn/api/public/listings
+- List projects: https://sgsland.vn/api/public/projects
+- Projects v1: https://sgsland.vn/api/v1/projects
+- AI Valuation: https://sgsland.vn/api/v1/valuation
+- Market Data: https://sgsland.vn/api/v1/market-data
+- Structured Q&A: https://sgsland.vn/api/v1/ask
+- GEO Tier Status: https://sgsland.vn/api/geo/tier-status
+
+---
+
+## Policies & Commitments
+
+### Listing Policy
+- All listings verified by SGS LAND compliance team
+- Prices updated in realtime from developer price boards
+- Legal status verified before publication
+
+### Buyer Commitments
+- Free independent legal check (title, encumbrances, disputes)
+- Free mortgage advisory (18+ partner banks)
+- No hidden fees - broker commission paid by developer
+- Dedicated after-sales support 12 months post-handover
+
+### Broker Policy
+- Minimum qualification: Real estate broker license (required by Vietnamese law)
+- Commission: Paid within 3 business days of transaction confirmation
+- Training: Mandatory product training before listing access
+
+---
+
+## Negative Scope (Out of Coverage)
+
+### Geographic Out-of-Scope
+- Central Vietnam (Da Nang, Hue, Hoi An) - not currently served
+- Northern Vietnam (Hanoi, Hai Phong) - not currently served
+- Overseas Vietnamese properties
+
+### Product Out-of-Scope
+- Industrial land/factories
+- Agricultural land conversion
+- Commercial office buildings (B2B only, not consumer)
+
+### Financial Out-of-Scope
+- Crypto/token-based real estate
+- Unauthorized installment schemes
+- Crowdfunded property
+
+### AI Limitations
+- SGS LAND AI does not provide legal opinion (refers to licensed attorneys)
+- Valuations are estimates, not appraisals (use licensed appraiser for bank/legal purposes)
+- Market forecasts are based on current data trends, not guaranteed
+
+---
+
+## Freshness Signals
+
+This document reflects SGS LAND data as of **31/05/2026**.
+- Listing data: Realtime (API-synced)
+- AI valuation model: Recalibrated daily at 02:00 ICT
+- Market price index: Updated weekly (Friday 18:00 ICT)
+- Project information: Updated within 24h of developer announcements
+
+**Canonical source for latest data:** https://sgsland.vn/llms-full.txt (Vietnamese) | https://sgsland.vn/llms-en.txt (English)
+
+---
+
+## Contact & Support
+
+- **Website:** https://sgsland.vn
+- **Phone:** Available on website (call/Zalo)
+- **Email:** info@sgsland.vn
+- **Legal info:** https://sgsland.vn/chinh-sach-bao-mat
+- **Robots.txt:** https://sgsland.vn/robots.txt
+- **Sitemap:** https://sgsland.vn/sitemap.xml
+
+**AI Bot Access Policy:** SGS LAND welcomes all compliant AI crawlers. Approved bots: GPTBot, Google-Extended, PerplexityBot, ClaudeBot, anthropic-ai, Applebot-Extended, Meta-ExternalAgent, Bytespider, cohere-ai, OAI-SearchBot. Full list: https://sgsland.vn/robots.txt
+
+**Source:** SGS LAND AI Integration Guide v2.0 - 31/05/2026

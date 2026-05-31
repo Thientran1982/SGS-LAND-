@@ -5158,6 +5158,77 @@ async function startServer() {
     tryServe();
   });
 
+// GEO: CORS + Last-Modified headers for all data JSON endpoints
+// Enables cross-origin AI agent access and HTTP caching with freshness signals
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const isDataEndpoint = (
+    req.path.startsWith('/data/') ||
+    req.path.startsWith('/api/v1/market-data') ||
+    req.path.startsWith('/api/public/project-feed') ||
+    req.path.startsWith('/api/v1/valuation') ||
+    req.path.startsWith('/llms') ||
+    req.path === '/api/openapi.json'
+  );
+  if (isDataEndpoint) {
+    // Allow AI agents and crawlers from any origin
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.setHeader('Vary', 'Accept-Encoding');
+    // Last-Modified: use current Friday 18:00 ICT for market data, daily 02:00 for listings
+    const now = new Date();
+    const lastModified = new Date(now);
+    // Set to last Monday 02:00 ICT (UTC+7) as baseline for weekly data
+    const dayOfWeek = now.getUTCDay(); // 0=Sun, 5=Fri
+    const daysToLastFriday = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
+    lastModified.setUTCDate(now.getUTCDate() - daysToLastFriday);
+    lastModified.setUTCHours(11, 0, 0, 0); // 18:00 ICT = 11:00 UTC
+    res.setHeader('Last-Modified', lastModified.toUTCString());
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    // Handle OPTIONS preflight
+    if (req.method === 'OPTIONS') {
+      res.status(204).end();
+      return;
+    }
+  }
+  next();
+}); // data-json-cors
+
+// GEO: Serve /data/*.json files with explicit JSON Content-Type + CORS
+app.get('/data/:filename', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const filename = req.params.filename;
+  if (!filename || !filename.endsWith('.json') || filename.includes('..')) {
+    return next();
+  }
+  const filePath = path.join(process.cwd(), 'public', 'data', filename);
+  res.sendFile(filePath, {
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  }, (err: any) => {
+    if (err) next();
+  });
+});
+
+// GEO: Specific route for ai-plugin.json - returns true JSON (not sendFile)
+// This ensures AI agents (GPT, Gemini, Perplexity) receive valid JSON with correct Content-Type
+app.get("/.well-known/ai-plugin.json", (_req: express.Request, res: express.Response) => {
+  try {
+    const pluginData = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "public", ".well-known", "ai-plugin.json"), "utf-8")
+    );
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.json(pluginData);
+  } catch (err) {
+    res.status(500).json({ error: "ai-plugin.json not found" });
+  }
+});
+
 // GEO: Explicit /.well-known/* route — must be registered BEFORE express.static
 // so Replit CDN/proxy does not intercept these paths and serve SPA HTML instead.
 app.get("/.well-known/:file", (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -5310,7 +5381,7 @@ app.get("/.well-known/:file", (req: express.Request, res: express.Response, next
   } else {
     // ── Production: SSR meta-tag injection ────────────────────────────────────
     // Import the injector lazily so it is never bundled when running in dev mode.
-    const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta } =
+    const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta, buildDatasetSchemaHtml } =
       await import('./server/seo/metaInjector');
     const { renderSsrPage, generateBotHTML } = await import('./server/ssr-renderer');
     const { isAIBot, isSocialBot, isBot } = await import('./server/bot-detector');
@@ -5356,7 +5427,9 @@ app.get("/.well-known/:file", (req: express.Request, res: express.Response, next
     // fresh HTML after a redeploy, preventing ChunkLoadError from stale chunk hashes.
     const sendMeta = (res: express.Response, meta: Parameters<typeof injectMeta>[1], cache = true) => {
       try {
-        const html = injectMeta(getBaseHtml(), meta);
+        let html = injectMeta(getBaseHtml(), meta);
+        // GEO: Inject Dataset schema for homepage
+        try { html = html.replace('</head>', buildDatasetSchemaHtml() + '</head>'); } catch (_) {}
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader(
           'Cache-Control',
