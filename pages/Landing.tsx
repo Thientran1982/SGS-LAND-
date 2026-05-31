@@ -687,7 +687,7 @@ export const Landing: React.FC = () => {
                                 guarantees single-line so the text never wraps on narrow viewports */}
                             <span className="invisible select-none whitespace-nowrap" aria-hidden="true">{t('landing.typewriter')}</span>
                             {/* Visible animated text overlaid — whitespace-nowrap keeps it on one line */}
-                            <span className="absolute inset-0 whitespace-nowrap">{text}<span className="animate-blink text-indigo-500">|</span></span>
+                            <span className="absolute inset-0 whitespace-nowrap">{text}<span className="animate-blink text-indigo-500" aria-hidden="true">|</span></span>
                         </motion.h1>
                         <motion.p 
                             initial={{ opacity: 0, y: 20 }}

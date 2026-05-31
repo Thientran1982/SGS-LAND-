@@ -285,6 +285,8 @@ export interface ListingForSEO {
   id: string;
   title: string;
   location: string;
+  latitude?: number;
+  longitude?: number;
   price: number;
   currency: 'VND' | 'USD';
   area: number;
@@ -302,6 +304,8 @@ export interface ArticleForSEO {
   author?: string;
   date?: string;
   category?: string;
+  keywords?: string;
+  wordCount?: number;
 }
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -347,6 +351,13 @@ export function injectListingSEO(listing: ListingForSEO): void {
       streetAddress: listing.location,
       addressCountry: 'VN',
     },
+    ...(listing.latitude && listing.longitude ? {
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: listing.latitude,
+        longitude: listing.longitude,
+      },
+    } : {}),
     price: listing.price,
     priceCurrency: listing.currency,
     floorSize: {
@@ -437,6 +448,8 @@ export function injectArticleSEO(article: ArticleForSEO): void {
     mainEntityOfPage: fullUrl,
     url: fullUrl,
     ...(article.category ? { articleSection: article.category } : {}),
+    ...(article.wordCount ? { wordCount: article.wordCount } : {}),
+    ...(article.keywords ? { keywords: article.keywords } : {}),
   };
   const graph: Array<Record<string, unknown>> = [articleNode, personNode];
   const faqs = extractFaqs(article.body || '');

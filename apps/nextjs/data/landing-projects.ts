@@ -480,7 +480,7 @@ const VINHOMES_HOC_MON: LandingProject = {
     { k: "Địa chỉ", v: "Huyện Hóc Môn, Thành phố Hồ Chí Minh" },
     { k: "Quy mô", v: "1.080 hecta — lớn nhất lịch sử Vinhomes" },
     { k: "Dân cư dự kiến", v: "~150.000 cư dân" },
-    { k: "Loại hình sản phẩm", v: "Nhà phố, biệt thự đơn/song lập, shophouse, chung cư cao tầng smart" },
+    { k: "Loại hình sản phẩm", v: "Liền kề (5x10, 5x12, 5x14, 5x15m) • Song lập (8x18, 8x20, 9x18, 9x20m) • Đơn lập (12x18, 12x20m) • Shophouse • Chung cư smart" },
     { k: "Phân khu", v: "6 phân khu chức năng" },
     { k: "Hệ sinh thái", v: "Vinschool, Vinmec, Vincom, VinFast, công viên 4 mùa, hồ điều hòa" },
     { k: "Kết nối", v: "QL22; Vành đai 3; Metro số 2 (Bến Thành – Tham Lương – Hóc Môn)" },
@@ -515,7 +515,7 @@ const VINHOMES_HOC_MON: LandingProject = {
     },
     {
       q: "Giá bán Vinhomes Hóc Môn 2026 là bao nhiêu?",
-      a: "Bảng giá chính thức Vinhomes Hóc Môn 2026 hiện đang được chủ đầu tư cập nhật và chưa công bố mức giá tham khảo cụ thể. Khách hàng vui lòng đăng ký nhận thông tin để được gửi bảng giá sớm nhất ngay khi Vinhomes JSC chính thức mở bán từng phân khu.",
+      a: "Giá Vinhomes Hóc Môn 2026 — Nhà liền kề thô từ 5,4 tỷđ/căn; Giá CDT hoàn thiện từ 6,2 tỷđ/căn. Loại hình: Liền kề (5x10, 5x12, 5x14, 5x15m), Song lập (8x18, 8x20, 9x18, 9x20m), Đơn lập (12x18, 12x20m). SGS LAND tư vấn miễn phí, cập nhật bảng giá mới nhất.",
     },
     {
       q: "Vinhomes Hóc Môn bàn giao năm nào?",
