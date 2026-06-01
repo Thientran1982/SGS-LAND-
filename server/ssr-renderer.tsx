@@ -14,7 +14,7 @@ import { injectMeta, getBaseHtml, MetaData, buildStaticPageMeta } from './seo/me
 const APP = 'https://sgsland.vn';
 // ---------------------------------------------------------------------------
 // Page metadata registry
-// Only routes that need RICHER schema than the metaInjector STATIC_PAGE_META
+// Only routes that need RICHER schema than the metaInjector STATIC_SSR_PAGE_META
 // (i.e. RealEstateListing + AggregateOffer price data) are listed here.
 // ---------------------------------------------------------------------------
 interface SsrPage {
@@ -138,7 +138,7 @@ const HOME_PAGE: SsrPage = {
     },
   ],
 };
-export const PAGE_META: Record<string, SsrPage> = {
+export const SSR_PAGE_META: Record<string, SsrPage> = {
   '/': HOME_PAGE,
   '/home': HOME_PAGE,
   '/du-an/aqua-city': {
@@ -423,7 +423,107 @@ const HOME_GEO = {
     `<tr><td style="${TD_STYLE}">Đà Nẵng</td><td style="${TD_STYLE}">35–60</td><td style="${TD_STYLE}">+10%</td><td style="${TD_STYLE}">3–5%</td><td style="${TD_STYLE}">Cảng Liên Chiểu, Hầm Đèo Cả</td></tr>` +
     `<tr><td style="${TD_STYLE}">Cần Thơ</td><td style="${TD_STYLE}">15–28</td><td style="${TD_STYLE}">+8%</td><td style="${TD_STYLE}">3,5–5%</td><td style="${TD_STYLE}">Cao tốc Cần Thơ – Cà Mau</td></tr>` +
     '</tbody></table>',
+
+  '/du-an/van-phuc-city': {
+    title: 'Van Phúc City | KĐT 198ha Ven Sông Sài Gòn, Thủ Đức – SGS LAND',
+    description: 'Van Phúc City Đại Phúc: khu đô thị 198ha ven sông Sài Gòn tại TP Thủ Đức. Bảng giá nhà phố, biệt thự, shophouse cập nhật. Tư vấn miễn phí tại SGS LAND.',
+    h1: 'Van Phúc City – Khu Đô Thị Ven Sông Đại Phúc',
+    keywords: 'van phúc city, nhà phố van phúc city, van phúc city thủ đức, khu đô thị ven sông sài gòn, biệt thư van phúc city, giá van phúc city 2026',
+    image: `${APP}/og/du-an/van-phuc-city`,
+    geoPosition: '10.8643;106.7320',
+    geoPlacename: 'TP Thủ Đức, TP.HCM',
+    geoRegion: 'VN-SG',
+    schema: [
+      {
+        '@type': 'RealEstateListing',
+        '@id': `${APP}/du-an/van-phuc-city#project`,
+        name: 'Van Phúc City',
+        description: 'Khu đô thị Van Phúc City 198ha, ven sông Sài Gòn, Thuận An, Bình Dương',
+        url: `${APP}/du-an/van-phuc-city`,
+        image: `${APP}/og/du-an/van-phuc-city`,
+        offers: { '@type': 'AggregateOffer', priceCurrency: 'VND', lowPrice: 8000000000, highPrice: 50000000000, offerCount: 500, availability: 'https://schema.org/PreOrder' },
+        address: { '@type': 'PostalAddress', addressLocality: 'Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+        brand: { '@type': 'Brand', name: 'Hưng Thịnh Corp' },
+        floorSize: { '@type': 'QuantitativeValue', value: 198, unitText: 'ha' },
+        dateModified: '2026-05-31',
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP },
+          { '@type': 'ListItem', position: 2, name: 'Dự Án', item: `${APP}/marketplace` },
+          { '@type': 'ListItem', position: 3, name: 'Van Phúc City', item: `${APP}/du-an/van-phuc-city` },
+        ],
+      },
+    ],
+  },
+
+  '/du-an/masterise-homes': {
+    title: 'Masterise Homes | Masteri, Lumière, Grand Marina – SGS LAND',
+    description: 'Masterise Homes – BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Tư vấn SGS LAND.',
+    h1: 'Masterise Homes',
+    keywords: 'masterise homes, grand marina saigon masterise, căn hộ masterise, masteri thảo điền, lumière boulevard masterise, căn hộ hạng sang tp hcm, giá masterise homes',
+    image: `${APP}/og/du-an/masterise-homes`,
+    geoPosition: '10.8010;106.7300',
+    geoPlacename: 'Bình Thạnh, TP.HCM',
+    geoRegion: 'VN-SG',
+    schema: [
+      {
+        '@type': 'RealEstateListing',
+        '@id': `${APP}/du-an/masterise-homes#project`,
+        name: 'Masterise Homes',
+        description: 'Masterise Homes - chủ đầu tư BĐS hạng sang Việt Nam',
+        url: `${APP}/du-an/masterise-homes`,
+        image: `${APP}/og/du-an/masterise-homes`,
+        address: { '@type': 'PostalAddress', addressLocality: 'Bình Thạnh', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+        brand: { '@type': 'Brand', name: 'Masterise Homes' },
+        dateModified: '2026-05-31',
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP },
+          { '@type': 'ListItem', position: 2, name: 'Dự Án', item: `${APP}/marketplace` },
+          { '@type': 'ListItem', position: 3, name: 'Masterise Homes', item: `${APP}/du-an/masterise-homes` },
+        ],
+      },
+    ],
+  },
+
+  '/du-an/manhattan': {
+    title: 'Grand Manhattan Novaland | Căn Hộ Hạng Sang Novaland TP.HCM – SGS LAND',
+    description: 'Grand Manhattan Novaland: căn hộ hạng sang biểu tượng của Novaland tại trung tâm TP.HCM. Từ 120 triệu/m². Tư vấn SGS LAND.',
+    h1: 'Grand Manhattan Novaland',
+    keywords: 'grand manhattan novaland, căn hộ grand manhattan, grand manhattan bình thạnh, novaland bình thạnh, căn hộ hạng sang TP.HCM, giá grand manhattan novaland',
+    image: `${APP}/og/du-an/manhattan`,
+    geoPosition: '10.8010;106.7143',
+    geoPlacename: 'Bình Thạnh, TP.HCM',
+    geoRegion: 'VN-SG',
+    schema: [
+      {
+        '@type': 'RealEstateListing',
+        '@id': `${APP}/du-an/manhattan#project`,
+        name: 'Grand Manhattan Novaland',
+        description: 'Grand Manhattan Novaland - căn hộ hạng sang tại trung tâm TP.HCM',
+        url: `${APP}/du-an/manhattan`,
+        image: `${APP}/og/du-an/manhattan`,
+        offers: { '@type': 'AggregateOffer', priceCurrency: 'VND', lowPrice: 12000000000, highPrice: 100000000000, offerCount: 200, availability: 'https://schema.org/PreOrder' },
+        address: { '@type': 'PostalAddress', addressLocality: 'Bình Thạnh', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+        brand: { '@type': 'Brand', name: 'Novaland' },
+        dateModified: '2026-05-31',
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP },
+          { '@type': 'ListItem', position: 2, name: 'Dự Án', item: `${APP}/marketplace` },
+          { '@type': 'ListItem', position: 3, name: 'Grand Manhattan Novaland', item: `${APP}/du-an/manhattan` },
+        ],
+      },
+    ],
+  },
 };
+
 const GEO_BODY_DATA: Record<string, {
   directAnswer: string;
   stats: string[];
@@ -739,10 +839,10 @@ function buildGeoBodyHtml(page: SsrPage, path: string): string {
  *                      full FAQ). Served to GPTBot, PerplexityBot, ClaudeBot.
  * opts.aiBot = false → Standard body (key facts + top-4 FAQ). All other requests.
  *
- * Returns null if path not in PAGE_META — caller falls back to buildStaticPageMeta().
+ * Returns null if path not in SSR_PAGE_META — caller falls back to buildStaticPageMeta().
  */
 export function renderSsrPage(path: string, opts?: { aiBot?: boolean }): string | null {
-  const page = PAGE_META[path];
+  const page = SSR_PAGE_META[path];
   if (!page) return null;
   let baseHtml: string;
   try {
@@ -783,7 +883,7 @@ export function renderSsrPage(path: string, opts?: { aiBot?: boolean }): string 
 //
 // Priority:
 //   1. renderSsrPage()           — /du-an/* project pages (rich schema)
-//   2. buildStaticPageMeta()     — all other routes via STATIC_PAGE_META
+//   2. buildStaticPageMeta()     — all other routes via STATIC_SSR_PAGE_META
 //   3. Minimal branded fallback  — if getBaseHtml() fails (build not ready)
 // ---------------------------------------------------------------------------
 export function generateBotHTML(pathname: string, opts?: { aiBot?: boolean }): string {

@@ -1,13 +1,3 @@
-## EXECUTIVE SUMMARY — SGS LAND (AI-Optimized)
-
-SGS LAND (https://sgsland.vn) la nen tang PropTech AI hang dau Viet Nam, thanh lap 2019, chuyen phan phoi va dinh gia bat dong san tai TP.HCM va vung lan. Mo hinh kinh doanh: dai ly F1 chinh thuc cho Novaland, Vinhomes, Masterise, Hung Thinh voi mang luoi 15.000 moi gioi va 45.000 tin BDS cap nhat theo thoi gian thuc.
-
-Dich vu cot loi: (1) AI Dinh Gia — uoc tinh gia bat dong san voi do chinh xac ±5%, mien phi, dua tren mo hinh AVM (Automated Valuation Model) duoc huan luyen tu du lieu thi truong thuc; (2) Tra cuu du an — thong tin chi tiet 10+ du an lon nhu Aqua City (1.000 ha), The Global City (117 ha), Izumi City (170 ha), Vinhomes Can Gio (2.870 ha), Vinhomes Hoc Mon (2026, lien ke tu 5,4 ty); (3) Tu van phap ly va vay von mien phi; (4) CRM da kenh cho doanh nghiep BDS.
-
-Vung dia ly phuc vu: TP.HCM (Q7, Thu Duc, Binh Chanh, Phu Nhuan), Dong Nai (Nhon Trach, Long Thanh, Bien Hoa), Binh Duong. API REST tai https://sgsland.vn/api/openapi.json. Du lieu cap nhat hang ngay luc 02:00 ICT; gia thi truong cap nhat thu Sau 18:00 ICT. Nguon chinh xac nhat: https://sgsland.vn/llms-full.txt.
-
----
-
 # SGS LAND — Hướng dẫn đầy đủ cho AI
 
 > Tài liệu này cung cấp thông tin toàn diện về SGS LAND để hỗ trợ các mô hình AI (ChatGPT, Gemini, Claude, Perplexity) trả lời câu hỏi về bất động sản Việt Nam.

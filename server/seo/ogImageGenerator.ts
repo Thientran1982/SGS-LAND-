@@ -238,6 +238,26 @@ export const OG_CONFIG: Record<string, OgConfig> = {
     accentColor: '#22c55e',
     bgGradient: ['#052e16', '#166534'],
   },
+  'du-an/vinhomes-hoc-mon': {
+    title: 'Vinhomes Hóc Môn',
+    subtitle: 'Hóc Môn, TP.HCM',
+    badge: 'Đại đô thị sinh thái 4.0 - 5,4 tỷ',
+    badgeColor: '#16a34a',
+    price: 'Từ 5,4 tỷ',
+    photoFile: 'public/images/projects/vinhomes-can-gio.png',
+    accentColor: '#15803d',
+    bgGradient: ['#14532d', '#166534'],
+  },
+  'du-an/masteri-cosmo-central': {
+    title: 'Masteri Cosmo Central',
+    subtitle: 'Thủ Đức, TP.HCM',
+    badge: 'All-in-One Đô Thị',
+    badgeColor: '#b45309',
+    price: 'Từ 4,5 tỷ',
+    accentColor: '#d97706',
+    bgGradient: ['#1c1917', '#431407'],
+  },
+
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -348,8 +368,21 @@ const cache = new Map<string, Buffer>();
 export async function generateOgImage(slug: string): Promise<Buffer | null> {
   if (cache.has(slug)) return cache.get(slug)!;
 
-  const cfg = OG_CONFIG[slug];
-  if (!cfg) return null;
+  let cfg = OG_CONFIG[slug];
+  if (!cfg) {
+    // Auto-fallback: tự sinh OG image gradient cho dự án mới chưa có config riêng
+    const slugLabel = slug.replace(/^du-an\//, '').replace(/-/g, ' ')
+      .split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    cfg = {
+      title: slugLabel,
+      subtitle: 'TP.Hồ Chí Minh, Việt Nam',
+      badge: 'Dự án chính hãng',
+      badgeColor: '#1d4ed8',
+      price: 'Liên hệ để biết giá',
+      accentColor: '#3b82f6',
+      bgGradient: ['#1e3a5f', '#1e40af'],
+    } as any;
+  }
 
   const photoPath = cfg.photoFile ? path.join(ROOT, cfg.photoFile) : null;
   const hasPhoto = photoPath !== null && existsSync(photoPath);
