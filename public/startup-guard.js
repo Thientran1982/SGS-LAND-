@@ -1,7 +1,7 @@
 (function () {
   var RELOAD_KEY = '__sgs_startup_reload__';
-  var DEBOUNCE_MS = 30000;
-  var TIMEOUT_MS = 10000;
+  var DEBOUNCE_MS = 60000;
+  var TIMEOUT_MS = 25000;
   setTimeout(function () {
     try {
       var root = document.getElementById('root');
