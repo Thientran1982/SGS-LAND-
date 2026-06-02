@@ -62,6 +62,8 @@ const Consignment = lazyLoad(() => import('./pages/Consignment'), 'Consignment')
 const BankRates = lazyLoad(() => import('./pages/BankRates'), 'BankRates');
 const LocalLandingPage = lazyLoad(() => import('./pages/LocalLandingPage'), 'LocalLandingPage');
 const ProjectLandingPage = lazyLoad(() => import('./pages/ProjectLandingPage'), 'ProjectLandingPage');
+const HoiDap = lazyLoad(() => import('./pages/HoiDap'), 'HoiDap');
+const HoiDapDetail = lazyLoad(() => import('./pages/HoiDapDetail'), 'HoiDapDetail');
 // Private Pages - Core
 const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
 const Leads = lazyLoad(() => import('./pages/Leads'), 'Leads');
@@ -199,6 +201,8 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.DAU_TU_BDS]: LocalLandingPage,
     [ROUTES.PHAP_LY_NHA_DAT]: LocalLandingPage,
     [ROUTES.DU_AN]: ProjectLandingPage,
+        [ROUTES.HOI_DAP]: HoiDap,
+        '/hoi-dap/:slug': HoiDapDetail,
     [ROUTES.LOGIN]: Login,
     [ROUTES.LISTING]: ListingDetail, 
     [ROUTES.LISTING_BDS]: ListingDetail,

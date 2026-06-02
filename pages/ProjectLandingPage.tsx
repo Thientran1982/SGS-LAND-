@@ -3,6 +3,7 @@ import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 import ProjectDirectory from './ProjectDirectory';
+import { FAQ_DATA } from '../server/seo/faqData';
 const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
     'aqua-city': {
         title: 'Aqua City Novaland | Nhà Phố, Biệt Thự Đồng Nai - SGS LAND',
@@ -2404,6 +2405,39 @@ export default function ProjectLandingPage() {
                     <h2 className="text-2xl font-bold mb-2 text-[var(--text-primary)]">Câu Hỏi Thường Gặp — {cfg.name}</h2>
                     <p className="text-sm text-[var(--text-secondary)] mb-8">Giải đáp các thắc mắc phổ biến về dự án {cfg.name}.</p>
                     <FAQAccordion items={cfg.faqs} />
+              {/* --- Related FAQ internal links --- */}
+              {(() => {
+                const related = FAQ_DATA.filter(f =>
+                  f.relatedProjects && f.relatedProjects.includes(cfg.slug)
+                ).slice(0, 6);
+                if (related.length === 0) return null;
+                return (
+                  <div className="mt-8 p-5 bg-[var(--bg-app)] border border-[var(--glass-border)] rounded-2xl">
+                    <h3 className="text-base font-bold text-[var(--primary-600)] mb-3">
+                      Cau hoi lien quan tai SGS LAND
+                    </h3>
+                    <ul className="space-y-2">
+                      {related.map(faq => (
+                        <li key={faq.slug}>
+                          <a
+                            href={'/hoi-dap/' + faq.slug}
+                            className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--primary-600)] transition-colors group"
+                          >
+                            <span className="w-5 h-5 flex-shrink-0 rounded-full bg-[var(--primary-600)] text-white text-xs flex items-center justify-center">?</span>
+                            <span className="group-hover:underline">{faq.question}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <a
+                      href="/hoi-dap"
+                      className="mt-4 inline-block text-xs text-[var(--primary-600)] hover:underline font-medium"
+                    >
+                      Xem tat ca cau hoi thuong gap
+                    </a>
+                  </div>
+                );
+              })()}
 
                     {/* ── E-E-A-T author byline ── */}
                     <aside

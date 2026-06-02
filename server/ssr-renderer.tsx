@@ -12,6 +12,7 @@
 // Returns null for unknown paths — caller falls back to buildStaticPageMeta.
 import { injectMeta, getBaseHtml, MetaData, buildStaticPageMeta } from './seo/metaInjector';
 const APP = 'https://sgsland.vn';
+const TODAY_ISO = new Date().toISOString().split('T')[0]; // fresh content
 // ---------------------------------------------------------------------------
 // Page metadata registry
 // Only routes that need RICHER schema than the metaInjector STATIC_SSR_PAGE_META
@@ -522,8 +523,1344 @@ const HOME_GEO = {
       },
     ],
   },
-};
 
+
+  '/hoi-dap': {
+    title: 'Hỏi Đáp Bất Động Sản 2026 – 60 Câu Hỏi Chuyên Gia | SGS LAND',
+    description: '60 câu hỏi hỏi đáp BĐS TP.HCM 2026: giá cả, đầu tư, vay vốn, pháp lý – chính xác từ chuyên gia SGS LAND.',
+    h1: 'Hỏi Đáp Bất Động Sản 2026',
+    keywords: 'hỏi đáp bất động sản, giá nhà TP.HCM, mua bán bất động sản 2026',
+    image: `${APP}/og-image.jpg`,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Hỏi Đáp Bất Động Sản 2026',
+      url: `${APP}/hoi-dap`,
+    }),
+  },
+  // === FAQ pages /hoi-dap/ ===
+  '/hoi-dap/vinhomes-hoc-mon-gia-bao-nhieu': {
+    title: 'Vinhomes Hóc Môn giá bao nhiêu 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vinhomes Hóc Môn giá bao nhiêu 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vinhomes Hóc Môn giá bao nhiêu 2026?',
+    keywords: 'Vinhomes Hóc Môn giá bao nhiêu 2026, Vinhomes Hóc Môn giá bao nhiêu 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vinhomes Hóc Môn giá bao nhiêu 2026?',
+      url: `${APP}/hoi-dap/vinhomes-hoc-mon-gia-bao-nhieu`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vinhomes Hóc Môn giá bao nhiêu 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vinhomes Hóc Môn giá bao nhiêu 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-vinhomes-grand-park-2026': {
+    title: 'Giá Vinhomes Grand Park 2026 mới nhất? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Giá Vinhomes Grand Park 2026 mới nhất? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Giá Vinhomes Grand Park 2026 mới nhất?',
+    keywords: 'Giá Vinhomes Grand Park 2026 mới nhất, Giá Vinhomes Grand Park 2026 mới nhất 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Giá Vinhomes Grand Park 2026 mới nhất?',
+      url: `${APP}/hoi-dap/gia-vinhomes-grand-park-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Giá Vinhomes Grand Park 2026 mới nhất?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Giá Vinhomes Grand Park 2026 mới nhất? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-masteri-cosmo-central-2026': {
+    title: 'Masteri Cosmo Central giá bao nhiêu 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Masteri Cosmo Central giá bao nhiêu 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Masteri Cosmo Central giá bao nhiêu 2026?',
+    keywords: 'Masteri Cosmo Central giá bao nhiêu 2026, Masteri Cosmo Central giá bao nhiêu 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Masteri Cosmo Central giá bao nhiêu 2026?',
+      url: `${APP}/hoi-dap/gia-masteri-cosmo-central-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Masteri Cosmo Central giá bao nhiêu 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Masteri Cosmo Central giá bao nhiêu 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-vinhomes-central-park-2026': {
+    title: 'Vinhomes Central Park giá bao nhiêu 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vinhomes Central Park giá bao nhiêu 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vinhomes Central Park giá bao nhiêu 2026?',
+    keywords: 'Vinhomes Central Park giá bao nhiêu 2026, Vinhomes Central Park giá bao nhiêu 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vinhomes Central Park giá bao nhiêu 2026?',
+      url: `${APP}/hoi-dap/gia-vinhomes-central-park-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vinhomes Central Park giá bao nhiêu 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vinhomes Central Park giá bao nhiêu 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-manhattan-novaland': {
+    title: 'Giá Grand Manhattan Novaland 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Giá Grand Manhattan Novaland 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Giá Grand Manhattan Novaland 2026?',
+    keywords: 'Giá Grand Manhattan Novaland 2026, Giá Grand Manhattan Novaland 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Giá Grand Manhattan Novaland 2026?',
+      url: `${APP}/hoi-dap/gia-manhattan-novaland`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Giá Grand Manhattan Novaland 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Giá Grand Manhattan Novaland 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-van-phuc-city-2026': {
+    title: 'Van Phúc City Thu Dầu Một giá bao nhiêu? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Van Phúc City Thu Dầu Một giá bao nhiêu? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Van Phúc City Thu Dầu Một giá bao nhiêu?',
+    keywords: 'Van Phúc City Thu Dầu Một giá bao nhiêu, Van Phúc City Thu Dầu Một giá bao nhiêu 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Van Phúc City Thu Dầu Một giá bao nhiêu?',
+      url: `${APP}/hoi-dap/gia-van-phuc-city-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Van Phúc City Thu Dầu Một giá bao nhiêu?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Van Phúc City Thu Dầu Một giá bao nhiêu? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-dat-nen-hoc-mon-2026': {
+    title: 'Giá đất nền Hóc Môn 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Giá đất nền Hóc Môn 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Giá đất nền Hóc Môn 2026?',
+    keywords: 'Giá đất nền Hóc Môn 2026, Giá đất nền Hóc Môn 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Giá đất nền Hóc Môn 2026?',
+      url: `${APP}/hoi-dap/gia-dat-nen-hoc-mon-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Giá đất nền Hóc Môn 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Giá đất nền Hóc Môn 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-can-ho-binh-duong-2026': {
+    title: 'Giá căn hộ Bình Dương 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Giá căn hộ Bình Dương 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Giá căn hộ Bình Dương 2026?',
+    keywords: 'Giá căn hộ Bình Dương 2026, Giá căn hộ Bình Dương 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Giá căn hộ Bình Dương 2026?',
+      url: `${APP}/hoi-dap/gia-can-ho-binh-duong-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Giá căn hộ Bình Dương 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Giá căn hộ Bình Dương 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-nha-pho-thu-thiem': {
+    title: 'Giá nhà phố Thủ Thiêm 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Giá nhà phố Thủ Thiêm 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Giá nhà phố Thủ Thiêm 2026?',
+    keywords: 'Giá nhà phố Thủ Thiêm 2026, Giá nhà phố Thủ Thiêm 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Giá nhà phố Thủ Thiêm 2026?',
+      url: `${APP}/hoi-dap/gia-nha-pho-thu-thiem`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Giá nhà phố Thủ Thiêm 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Giá nhà phố Thủ Thiêm 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/gia-penthouse-saigon-2026': {
+    title: 'Giá penthouse Sài Gòn 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Giá penthouse Sài Gòn 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Giá penthouse Sài Gòn 2026?',
+    keywords: 'Giá penthouse Sài Gòn 2026, Giá penthouse Sài Gòn 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Giá penthouse Sài Gòn 2026?',
+      url: `${APP}/hoi-dap/gia-penthouse-saigon-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Giá penthouse Sài Gòn 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Giá penthouse Sài Gòn 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vinhomes-hoc-mon-co-nen-mua-khong': {
+    title: 'Vinhomes Hóc Môn có nên mua không 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vinhomes Hóc Môn có nên mua không 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vinhomes Hóc Môn có nên mua không 2026?',
+    keywords: 'Vinhomes Hóc Môn có nên mua không 2026, Vinhomes Hóc Môn có nên mua không 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vinhomes Hóc Môn có nên mua không 2026?',
+      url: `${APP}/hoi-dap/vinhomes-hoc-mon-co-nen-mua-khong`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vinhomes Hóc Môn có nên mua không 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vinhomes Hóc Môn có nên mua không 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/mua-can-ho-dau-tu-cho-thue': {
+    title: 'Mua căn hộ đầu tư cho thuê nên chọn dự án nào? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Mua căn hộ đầu tư cho thuê nên chọn dự án nào? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Mua căn hộ đầu tư cho thuê nên chọn dự án nào?',
+    keywords: 'Mua căn hộ đầu tư cho thuê nên chọn dự án nào, Mua căn hộ đầu tư cho thuê nên chọn dự án nào 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Mua căn hộ đầu tư cho thuê nên chọn dự án nào?',
+      url: `${APP}/hoi-dap/mua-can-ho-dau-tu-cho-thue`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Mua căn hộ đầu tư cho thuê nên chọn dự án nào?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Mua căn hộ đầu tư cho thuê nên chọn dự án nào? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/ty-suat-sinh-loi-bds-hcm-2026': {
+    title: 'Tỷ suất sinh lời BĐS TP.HCM 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Tỷ suất sinh lời BĐS TP.HCM 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Tỷ suất sinh lời BĐS TP.HCM 2026?',
+    keywords: 'Tỷ suất sinh lời BĐS TP.HCM 2026, Tỷ suất sinh lời BĐS TP.HCM 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Tỷ suất sinh lời BĐS TP.HCM 2026?',
+      url: `${APP}/hoi-dap/ty-suat-sinh-loi-bds-hcm-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Tỷ suất sinh lời BĐS TP.HCM 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Tỷ suất sinh lời BĐS TP.HCM 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/dau-tu-bds-vung-ven-hay-trung-tam': {
+    title: 'Đầu tư BĐS vùng ven hay trung tâm? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Đầu tư BĐS vùng ven hay trung tâm? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Đầu tư BĐS vùng ven hay trung tâm?',
+    keywords: 'Đầu tư BĐS vùng ven hay trung tâm, Đầu tư BĐS vùng ven hay trung tâm 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Đầu tư BĐS vùng ven hay trung tâm?',
+      url: `${APP}/hoi-dap/dau-tu-bds-vung-ven-hay-trung-tam`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Đầu tư BĐS vùng ven hay trung tâm?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Đầu tư BĐS vùng ven hay trung tâm? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/mua-biet-thu-hay-can-ho-dau-tu': {
+    title: 'Mua biệt thự hay căn hộ đầu tư 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Mua biệt thự hay căn hộ đầu tư 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Mua biệt thự hay căn hộ đầu tư 2026?',
+    keywords: 'Mua biệt thự hay căn hộ đầu tư 2026, Mua biệt thự hay căn hộ đầu tư 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Mua biệt thự hay căn hộ đầu tư 2026?',
+      url: `${APP}/hoi-dap/mua-biet-thu-hay-can-ho-dau-tu`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Mua biệt thự hay căn hộ đầu tư 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Mua biệt thự hay căn hộ đầu tư 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/roi-khi-mua-bds-o-hinh-thanh': {
+    title: 'Rủi ro khi mua BĐS off-plan? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Rủi ro khi mua BĐS off-plan? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Rủi ro khi mua BĐS off-plan?',
+    keywords: 'Rủi ro khi mua BĐS off-plan, Rủi ro khi mua BĐS off-plan 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Rủi ro khi mua BĐS off-plan?',
+      url: `${APP}/hoi-dap/roi-khi-mua-bds-o-hinh-thanh`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Rủi ro khi mua BĐS off-plan?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Rủi ro khi mua BĐS off-plan? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vinhomes-grand-park-co-tang-gia-khong': {
+    title: 'Vinhomes Grand Park có tăng giá nữa không? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vinhomes Grand Park có tăng giá nữa không? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vinhomes Grand Park có tăng giá nữa không?',
+    keywords: 'Vinhomes Grand Park có tăng giá nữa không, Vinhomes Grand Park có tăng giá nữa không 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vinhomes Grand Park có tăng giá nữa không?',
+      url: `${APP}/hoi-dap/vinhomes-grand-park-co-tang-gia-khong`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vinhomes Grand Park có tăng giá nữa không?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vinhomes Grand Park có tăng giá nữa không? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/nen-mua-masteri-hay-vinhomes': {
+    title: 'Nên mua Masteri hay Vinhomes 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Nên mua Masteri hay Vinhomes 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Nên mua Masteri hay Vinhomes 2026?',
+    keywords: 'Nên mua Masteri hay Vinhomes 2026, Nên mua Masteri hay Vinhomes 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Nên mua Masteri hay Vinhomes 2026?',
+      url: `${APP}/hoi-dap/nen-mua-masteri-hay-vinhomes`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Nên mua Masteri hay Vinhomes 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Nên mua Masteri hay Vinhomes 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/dau-tu-shophouse-co-sinh-loi-khong': {
+    title: 'Đầu tư shophouse có sinh lời không? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Đầu tư shophouse có sinh lời không? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Đầu tư shophouse có sinh lời không?',
+    keywords: 'Đầu tư shophouse có sinh lời không, Đầu tư shophouse có sinh lời không 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Đầu tư shophouse có sinh lời không?',
+      url: `${APP}/hoi-dap/dau-tu-shophouse-co-sinh-loi-khong`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Đầu tư shophouse có sinh lời không?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Đầu tư shophouse có sinh lời không? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/bds-vung-ven-hcm-2026': {
+    title: 'BĐS vùng ven TP.HCM tiềm năng nhất 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: BĐS vùng ven TP.HCM tiềm năng nhất 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'BĐS vùng ven TP.HCM tiềm năng nhất 2026?',
+    keywords: 'BĐS vùng ven TP.HCM tiềm năng nhất 2026, BĐS vùng ven TP.HCM tiềm năng nhất 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'BĐS vùng ven TP.HCM tiềm năng nhất 2026?',
+      url: `${APP}/hoi-dap/bds-vung-ven-hcm-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'BĐS vùng ven TP.HCM tiềm năng nhất 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'BĐS vùng ven TP.HCM tiềm năng nhất 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vay-mua-nha-vinhomes-hoc-mon-nhu-the-nao': {
+    title: 'Vay mua nhà Vinhomes Hóc Môn như thế nào? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vay mua nhà Vinhomes Hóc Môn như thế nào? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vay mua nhà Vinhomes Hóc Môn như thế nào?',
+    keywords: 'Vay mua nhà Vinhomes Hóc Môn như thế nào, Vay mua nhà Vinhomes Hóc Môn như thế nào 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vay mua nhà Vinhomes Hóc Môn như thế nào?',
+      url: `${APP}/hoi-dap/vay-mua-nha-vinhomes-hoc-mon-nhu-the-nao`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vay mua nhà Vinhomes Hóc Môn như thế nào?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vay mua nhà Vinhomes Hóc Môn như thế nào? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vay-ngan-hang-mua-can-ho': {
+    title: 'Vay ngân hàng mua căn hộ cần điều kiện gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vay ngân hàng mua căn hộ cần điều kiện gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vay ngân hàng mua căn hộ cần điều kiện gì?',
+    keywords: 'Vay ngân hàng mua căn hộ cần điều kiện gì, Vay ngân hàng mua căn hộ cần điều kiện gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vay ngân hàng mua căn hộ cần điều kiện gì?',
+      url: `${APP}/hoi-dap/vay-ngan-hang-mua-can-ho`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vay ngân hàng mua căn hộ cần điều kiện gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vay ngân hàng mua căn hộ cần điều kiện gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/lai-suat-vay-mua-nha-2026': {
+    title: 'Lãi suất vay mua nhà 2026 bao nhiêu? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Lãi suất vay mua nhà 2026 bao nhiêu? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Lãi suất vay mua nhà 2026 bao nhiêu?',
+    keywords: 'Lãi suất vay mua nhà 2026 bao nhiêu, Lãi suất vay mua nhà 2026 bao nhiêu 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Lãi suất vay mua nhà 2026 bao nhiêu?',
+      url: `${APP}/hoi-dap/lai-suat-vay-mua-nha-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Lãi suất vay mua nhà 2026 bao nhiêu?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Lãi suất vay mua nhà 2026 bao nhiêu? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vay-70-percent-gia-tri-can-ho': {
+    title: 'Có thể vay 70% giá trị căn hộ? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Có thể vay 70% giá trị căn hộ? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Có thể vay 70% giá trị căn hộ?',
+    keywords: 'Có thể vay 70% giá trị căn hộ, Có thể vay 70% giá trị căn hộ 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Có thể vay 70% giá trị căn hộ?',
+      url: `${APP}/hoi-dap/vay-70-percent-gia-tri-can-ho`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Có thể vay 70% giá trị căn hộ?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Có thể vay 70% giá trị căn hộ? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/so-sanh-lai-suat-ngan-hang-mua-nha': {
+    title: 'So sánh lãi suất ngân hàng mua nhà 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: So sánh lãi suất ngân hàng mua nhà 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'So sánh lãi suất ngân hàng mua nhà 2026?',
+    keywords: 'So sánh lãi suất ngân hàng mua nhà 2026, So sánh lãi suất ngân hàng mua nhà 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'So sánh lãi suất ngân hàng mua nhà 2026?',
+      url: `${APP}/hoi-dap/so-sanh-lai-suat-ngan-hang-mua-nha`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'So sánh lãi suất ngân hàng mua nhà 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'So sánh lãi suất ngân hàng mua nhà 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/thu-tuc-vay-mua-nha-lan-dau': {
+    title: 'Thủ tục vay mua nhà lần đầu cần giấy tờ gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Thủ tục vay mua nhà lần đầu cần giấy tờ gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Thủ tục vay mua nhà lần đầu cần giấy tờ gì?',
+    keywords: 'Thủ tục vay mua nhà lần đầu cần giấy tờ gì, Thủ tục vay mua nhà lần đầu cần giấy tờ gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Thủ tục vay mua nhà lần đầu cần giấy tờ gì?',
+      url: `${APP}/hoi-dap/thu-tuc-vay-mua-nha-lan-dau`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Thủ tục vay mua nhà lần đầu cần giấy tờ gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Thủ tục vay mua nhà lần đầu cần giấy tờ gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/cach-tinh-tien-tra-ngan-hang': {
+    title: 'Cách tính tiền trả ngân hàng hàng tháng? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Cách tính tiền trả ngân hàng hàng tháng? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Cách tính tiền trả ngân hàng hàng tháng?',
+    keywords: 'Cách tính tiền trả ngân hàng hàng tháng, Cách tính tiền trả ngân hàng hàng tháng 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Cách tính tiền trả ngân hàng hàng tháng?',
+      url: `${APP}/hoi-dap/cach-tinh-tien-tra-ngan-hang`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Cách tính tiền trả ngân hàng hàng tháng?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Cách tính tiền trả ngân hàng hàng tháng? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vay-mua-nha-thu-nhap-bao-nhieu': {
+    title: 'Thu nhập bao nhiêu thì vay mua nhà được? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Thu nhập bao nhiêu thì vay mua nhà được? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Thu nhập bao nhiêu thì vay mua nhà được?',
+    keywords: 'Thu nhập bao nhiêu thì vay mua nhà được, Thu nhập bao nhiêu thì vay mua nhà được 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Thu nhập bao nhiêu thì vay mua nhà được?',
+      url: `${APP}/hoi-dap/vay-mua-nha-thu-nhap-bao-nhieu`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Thu nhập bao nhiêu thì vay mua nhà được?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Thu nhập bao nhiêu thì vay mua nhà được? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vay-goi-uu-dai-nha-o-xa-hoi': {
+    title: 'Vay gói ưu đãi mua nhà xã hội 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vay gói ưu đãi mua nhà xã hội 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vay gói ưu đãi mua nhà xã hội 2026?',
+    keywords: 'Vay gói ưu đãi mua nhà xã hội 2026, Vay gói ưu đãi mua nhà xã hội 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vay gói ưu đãi mua nhà xã hội 2026?',
+      url: `${APP}/hoi-dap/vay-goi-uu-dai-nha-o-xa-hoi`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vay gói ưu đãi mua nhà xã hội 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vay gói ưu đãi mua nhà xã hội 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/techcombank-vay-mua-nha-vinhomes': {
+    title: 'Techcombank vay mua nhà Vinhomes điều kiện gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Techcombank vay mua nhà Vinhomes điều kiện gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Techcombank vay mua nhà Vinhomes điều kiện gì?',
+    keywords: 'Techcombank vay mua nhà Vinhomes điều kiện gì, Techcombank vay mua nhà Vinhomes điều kiện gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Techcombank vay mua nhà Vinhomes điều kiện gì?',
+      url: `${APP}/hoi-dap/techcombank-vay-mua-nha-vinhomes`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Techcombank vay mua nhà Vinhomes điều kiện gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Techcombank vay mua nhà Vinhomes điều kiện gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/so-hong-vinhomes-hoc-mon': {
+    title: 'Sổ hồng Vinhomes Hóc Môn đã có chưa? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Sổ hồng Vinhomes Hóc Môn đã có chưa? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Sổ hồng Vinhomes Hóc Môn đã có chưa?',
+    keywords: 'Sổ hồng Vinhomes Hóc Môn đã có chưa, Sổ hồng Vinhomes Hóc Môn đã có chưa 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Sổ hồng Vinhomes Hóc Môn đã có chưa?',
+      url: `${APP}/hoi-dap/so-hong-vinhomes-hoc-mon`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Sổ hồng Vinhomes Hóc Môn đã có chưa?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Sổ hồng Vinhomes Hóc Môn đã có chưa? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/kiem-tra-so-do-truoc-mua-dat': {
+    title: 'Kiểm tra sổ đỏ trước khi mua đất? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Kiểm tra sổ đỏ trước khi mua đất? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Kiểm tra sổ đỏ trước khi mua đất?',
+    keywords: 'Kiểm tra sổ đỏ trước khi mua đất, Kiểm tra sổ đỏ trước khi mua đất 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Kiểm tra sổ đỏ trước khi mua đất?',
+      url: `${APP}/hoi-dap/kiem-tra-so-do-truoc-mua-dat`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Kiểm tra sổ đỏ trước khi mua đất?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Kiểm tra sổ đỏ trước khi mua đất? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/mua-nha-hinh-thanh-trong-tuong-lai': {
+    title: 'Mua nhà hình thành trong tương lai rủi ro? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Mua nhà hình thành trong tương lai rủi ro? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Mua nhà hình thành trong tương lai rủi ro?',
+    keywords: 'Mua nhà hình thành trong tương lai rủi ro, Mua nhà hình thành trong tương lai rủi ro 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Mua nhà hình thành trong tương lai rủi ro?',
+      url: `${APP}/hoi-dap/mua-nha-hinh-thanh-trong-tuong-lai`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Mua nhà hình thành trong tương lai rủi ro?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Mua nhà hình thành trong tương lai rủi ro? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/phan-biet-so-hong-so-do': {
+    title: 'Phân biệt sổ hồng và sổ đỏ? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Phân biệt sổ hồng và sổ đỏ? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Phân biệt sổ hồng và sổ đỏ?',
+    keywords: 'Phân biệt sổ hồng và sổ đỏ, Phân biệt sổ hồng và sổ đỏ 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Phân biệt sổ hồng và sổ đỏ?',
+      url: `${APP}/hoi-dap/phan-biet-so-hong-so-do`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Phân biệt sổ hồng và sổ đỏ?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Phân biệt sổ hồng và sổ đỏ? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/hop-dong-mua-ban-nha-can-co-gi': {
+    title: 'Hợp đồng mua bán nhà cần có những gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Hợp đồng mua bán nhà cần có những gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Hợp đồng mua bán nhà cần có những gì?',
+    keywords: 'Hợp đồng mua bán nhà cần có những gì, Hợp đồng mua bán nhà cần có những gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Hợp đồng mua bán nhà cần có những gì?',
+      url: `${APP}/hoi-dap/hop-dong-mua-ban-nha-can-co-gi`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Hợp đồng mua bán nhà cần có những gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Hợp đồng mua bán nhà cần có những gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/phi-cong-chung-sang-ten-nha': {
+    title: 'Phí công chứng sang tên nhà đất? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Phí công chứng sang tên nhà đất? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Phí công chứng sang tên nhà đất?',
+    keywords: 'Phí công chứng sang tên nhà đất, Phí công chứng sang tên nhà đất 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Phí công chứng sang tên nhà đất?',
+      url: `${APP}/hoi-dap/phi-cong-chung-sang-ten-nha`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Phí công chứng sang tên nhà đất?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Phí công chứng sang tên nhà đất? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/thue-thu-nhap-ca-nhan-ban-nha': {
+    title: 'Thuế thu nhập cá nhân khi bán nhà 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Thuế thu nhập cá nhân khi bán nhà 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Thuế thu nhập cá nhân khi bán nhà 2026?',
+    keywords: 'Thuế thu nhập cá nhân khi bán nhà 2026, Thuế thu nhập cá nhân khi bán nhà 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Thuế thu nhập cá nhân khi bán nhà 2026?',
+      url: `${APP}/hoi-dap/thue-thu-nhap-ca-nhan-ban-nha`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Thuế thu nhập cá nhân khi bán nhà 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Thuế thu nhập cá nhân khi bán nhà 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/dat-nen-phap-ly-an-toan': {
+    title: 'Đất nền có pháp lý an toàn cần kiểm tra gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Đất nền có pháp lý an toàn cần kiểm tra gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Đất nền có pháp lý an toàn cần kiểm tra gì?',
+    keywords: 'Đất nền có pháp lý an toàn cần kiểm tra gì, Đất nền có pháp lý an toàn cần kiểm tra gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Đất nền có pháp lý an toàn cần kiểm tra gì?',
+      url: `${APP}/hoi-dap/dat-nen-phap-ly-an-toan`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Đất nền có pháp lý an toàn cần kiểm tra gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Đất nền có pháp lý an toàn cần kiểm tra gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/nguoi-nuoc-ngoai-mua-nha-viet-nam': {
+    title: 'Người nước ngoài mua nhà Việt Nam được không? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Người nước ngoài mua nhà Việt Nam được không? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Người nước ngoài mua nhà Việt Nam được không?',
+    keywords: 'Người nước ngoài mua nhà Việt Nam được không, Người nước ngoài mua nhà Việt Nam được không 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Người nước ngoài mua nhà Việt Nam được không?',
+      url: `${APP}/hoi-dap/nguoi-nuoc-ngoai-mua-nha-viet-nam`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Người nước ngoài mua nhà Việt Nam được không?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Người nước ngoài mua nhà Việt Nam được không? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/thua-ke-nha-dat-thu-tuc': {
+    title: 'Thừa kế nhà đất thủ tục như thế nào? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Thừa kế nhà đất thủ tục như thế nào? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Thừa kế nhà đất thủ tục như thế nào?',
+    keywords: 'Thừa kế nhà đất thủ tục như thế nào, Thừa kế nhà đất thủ tục như thế nào 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Thừa kế nhà đất thủ tục như thế nào?',
+      url: `${APP}/hoi-dap/thua-ke-nha-dat-thu-tuc`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Thừa kế nhà đất thủ tục như thế nào?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Thừa kế nhà đất thủ tục như thế nào? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vinhomes-hoc-mon-tien-do': {
+    title: 'Tiến độ xây dựng Vinhomes Hóc Môn 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Tiến độ xây dựng Vinhomes Hóc Môn 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Tiến độ xây dựng Vinhomes Hóc Môn 2026?',
+    keywords: 'Tiến độ xây dựng Vinhomes Hóc Môn 2026, Tiến độ xây dựng Vinhomes Hóc Môn 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Tiến độ xây dựng Vinhomes Hóc Môn 2026?',
+      url: `${APP}/hoi-dap/vinhomes-hoc-mon-tien-do`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Tiến độ xây dựng Vinhomes Hóc Môn 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Tiến độ xây dựng Vinhomes Hóc Môn 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vinhomes-grand-park-ban-giao': {
+    title: 'Vinhomes Grand Park bao giờ bàn giao? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vinhomes Grand Park bao giờ bàn giao? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vinhomes Grand Park bao giờ bàn giao?',
+    keywords: 'Vinhomes Grand Park bao giờ bàn giao, Vinhomes Grand Park bao giờ bàn giao 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vinhomes Grand Park bao giờ bàn giao?',
+      url: `${APP}/hoi-dap/vinhomes-grand-park-ban-giao`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vinhomes Grand Park bao giờ bàn giao?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vinhomes Grand Park bao giờ bàn giao? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/masteri-cosmo-central-tien-do': {
+    title: 'Masteri Cosmo Central tiến độ bao giờ xong? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Masteri Cosmo Central tiến độ bao giờ xong? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Masteri Cosmo Central tiến độ bao giờ xong?',
+    keywords: 'Masteri Cosmo Central tiến độ bao giờ xong, Masteri Cosmo Central tiến độ bao giờ xong 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Masteri Cosmo Central tiến độ bao giờ xong?',
+      url: `${APP}/hoi-dap/masteri-cosmo-central-tien-do`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Masteri Cosmo Central tiến độ bao giờ xong?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Masteri Cosmo Central tiến độ bao giờ xong? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/van-phuc-city-tien-do-2026': {
+    title: 'Van Phúc City bao giờ hoàn thành? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Van Phúc City bao giờ hoàn thành? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Van Phúc City bao giờ hoàn thành?',
+    keywords: 'Van Phúc City bao giờ hoàn thành, Van Phúc City bao giờ hoàn thành 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Van Phúc City bao giờ hoàn thành?',
+      url: `${APP}/hoi-dap/van-phuc-city-tien-do-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Van Phúc City bao giờ hoàn thành?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Van Phúc City bao giờ hoàn thành? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/metro-hoc-mon-khi-nao-xong': {
+    title: 'Metro Hóc Môn bao giờ hoạt động? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Metro Hóc Môn bao giờ hoạt động? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Metro Hóc Môn bao giờ hoạt động?',
+    keywords: 'Metro Hóc Môn bao giờ hoạt động, Metro Hóc Môn bao giờ hoạt động 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Metro Hóc Môn bao giờ hoạt động?',
+      url: `${APP}/hoi-dap/metro-hoc-mon-khi-nao-xong`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Metro Hóc Môn bao giờ hoạt động?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Metro Hóc Môn bao giờ hoạt động? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vanh-dai-3-hoc-mon-tien-do': {
+    title: 'Vành đai 3 qua Hóc Môn bao giờ xong? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vành đai 3 qua Hóc Môn bao giờ xong? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vành đai 3 qua Hóc Môn bao giờ xong?',
+    keywords: 'Vành đai 3 qua Hóc Môn bao giờ xong, Vành đai 3 qua Hóc Môn bao giờ xong 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vành đai 3 qua Hóc Môn bao giờ xong?',
+      url: `${APP}/hoi-dap/vanh-dai-3-hoc-mon-tien-do`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vành đai 3 qua Hóc Môn bao giờ xong?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vành đai 3 qua Hóc Môn bao giờ xong? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/thu-thiem-quy-hoach-2030': {
+    title: 'Thủ Thiêm quy hoạch 2030 như thế nào? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Thủ Thiêm quy hoạch 2030 như thế nào? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Thủ Thiêm quy hoạch 2030 như thế nào?',
+    keywords: 'Thủ Thiêm quy hoạch 2030 như thế nào, Thủ Thiêm quy hoạch 2030 như thế nào 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Thủ Thiêm quy hoạch 2030 như thế nào?',
+      url: `${APP}/hoi-dap/thu-thiem-quy-hoach-2030`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Thủ Thiêm quy hoạch 2030 như thế nào?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Thủ Thiêm quy hoạch 2030 như thế nào? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/quan-9-thu-duc-phat-trien': {
+    title: 'Quận 9 - TP Thủ Đức phát triển 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Quận 9 - TP Thủ Đức phát triển 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Quận 9 - TP Thủ Đức phát triển 2026?',
+    keywords: 'Quận 9 - TP Thủ Đức phát triển 2026, Quận 9 - TP Thủ Đức phát triển 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Quận 9 - TP Thủ Đức phát triển 2026?',
+      url: `${APP}/hoi-dap/quan-9-thu-duc-phat-trien`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Quận 9 - TP Thủ Đức phát triển 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Quận 9 - TP Thủ Đức phát triển 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/binh-duong-ha-tang-2026': {
+    title: 'Hạ tầng Bình Dương 2026 có gì mới? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Hạ tầng Bình Dương 2026 có gì mới? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Hạ tầng Bình Dương 2026 có gì mới?',
+    keywords: 'Hạ tầng Bình Dương 2026 có gì mới, Hạ tầng Bình Dương 2026 có gì mới 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Hạ tầng Bình Dương 2026 có gì mới?',
+      url: `${APP}/hoi-dap/binh-duong-ha-tang-2026`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Hạ tầng Bình Dương 2026 có gì mới?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Hạ tầng Bình Dương 2026 có gì mới? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/sun-thu-thiem-tien-do': {
+    title: 'Sun Thủ Thiêm tiến độ 2026? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Sun Thủ Thiêm tiến độ 2026? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Sun Thủ Thiêm tiến độ 2026?',
+    keywords: 'Sun Thủ Thiêm tiến độ 2026, Sun Thủ Thiêm tiến độ 2026 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Sun Thủ Thiêm tiến độ 2026?',
+      url: `${APP}/hoi-dap/sun-thu-thiem-tien-do`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Sun Thủ Thiêm tiến độ 2026?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Sun Thủ Thiêm tiến độ 2026? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vinhomes-hoc-mon-tien-ich': {
+    title: 'Vinhomes Hóc Môn có tiện ích gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vinhomes Hóc Môn có tiện ích gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vinhomes Hóc Môn có tiện ích gì?',
+    keywords: 'Vinhomes Hóc Môn có tiện ích gì, Vinhomes Hóc Môn có tiện ích gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vinhomes Hóc Môn có tiện ích gì?',
+      url: `${APP}/hoi-dap/vinhomes-hoc-mon-tien-ich`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vinhomes Hóc Môn có tiện ích gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vinhomes Hóc Môn có tiện ích gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/vinhomes-grand-park-cong-vien': {
+    title: 'Công viên Vinhomes Grand Park có gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Công viên Vinhomes Grand Park có gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Công viên Vinhomes Grand Park có gì?',
+    keywords: 'Công viên Vinhomes Grand Park có gì, Công viên Vinhomes Grand Park có gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Công viên Vinhomes Grand Park có gì?',
+      url: `${APP}/hoi-dap/vinhomes-grand-park-cong-vien`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Công viên Vinhomes Grand Park có gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Công viên Vinhomes Grand Park có gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/truong-hoc-benhvien-vinhomes': {
+    title: 'Trường học bệnh viện Vinhomes có đáng tin? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Trường học bệnh viện Vinhomes có đáng tin? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Trường học bệnh viện Vinhomes có đáng tin?',
+    keywords: 'Trường học bệnh viện Vinhomes có đáng tin, Trường học bệnh viện Vinhomes có đáng tin 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Trường học bệnh viện Vinhomes có đáng tin?',
+      url: `${APP}/hoi-dap/truong-hoc-benhvien-vinhomes`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Trường học bệnh viện Vinhomes có đáng tin?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Trường học bệnh viện Vinhomes có đáng tin? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/van-phuc-city-tien-ich': {
+    title: 'Van Phúc City tiện ích nội khu có những gì? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Van Phúc City tiện ích nội khu có những gì? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Van Phúc City tiện ích nội khu có những gì?',
+    keywords: 'Van Phúc City tiện ích nội khu có những gì, Van Phúc City tiện ích nội khu có những gì 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Van Phúc City tiện ích nội khu có những gì?',
+      url: `${APP}/hoi-dap/van-phuc-city-tien-ich`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Van Phúc City tiện ích nội khu có những gì?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Van Phúc City tiện ích nội khu có những gì? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/masteri-ho-boi-gym': {
+    title: 'Masteri Cosmo Central có hồ bơi gym cao cấp? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Masteri Cosmo Central có hồ bơi gym cao cấp? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Masteri Cosmo Central có hồ bơi gym cao cấp?',
+    keywords: 'Masteri Cosmo Central có hồ bơi gym cao cấp, Masteri Cosmo Central có hồ bơi gym cao cấp 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Masteri Cosmo Central có hồ bơi gym cao cấp?',
+      url: `${APP}/hoi-dap/masteri-ho-boi-gym`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Masteri Cosmo Central có hồ bơi gym cao cấp?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Masteri Cosmo Central có hồ bơi gym cao cấp? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/mua-nha-gan-truong-hoc-hcm': {
+    title: 'Mua nhà gần trường học tốt nhất TP.HCM? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Mua nhà gần trường học tốt nhất TP.HCM? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Mua nhà gần trường học tốt nhất TP.HCM?',
+    keywords: 'Mua nhà gần trường học tốt nhất TP.HCM, Mua nhà gần trường học tốt nhất TP.HCM 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Mua nhà gần trường học tốt nhất TP.HCM?',
+      url: `${APP}/hoi-dap/mua-nha-gan-truong-hoc-hcm`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Mua nhà gần trường học tốt nhất TP.HCM?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Mua nhà gần trường học tốt nhất TP.HCM? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/an-ninh-khu-do-thi-vinhomes': {
+    title: 'An ninh khu đô thị Vinhomes tốt không? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: An ninh khu đô thị Vinhomes tốt không? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'An ninh khu đô thị Vinhomes tốt không?',
+    keywords: 'An ninh khu đô thị Vinhomes tốt không, An ninh khu đô thị Vinhomes tốt không 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'An ninh khu đô thị Vinhomes tốt không?',
+      url: `${APP}/hoi-dap/an-ninh-khu-do-thi-vinhomes`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'An ninh khu đô thị Vinhomes tốt không?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'An ninh khu đô thị Vinhomes tốt không? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/phi-dich-vu-chung-cu-vinhomes': {
+    title: 'Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng?',
+    keywords: 'Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng, Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng?',
+      url: `${APP}/hoi-dap/phi-dich-vu-chung-cu-vinhomes`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Phí dịch vụ chung cư Vinhomes bao nhiêu/tháng? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/khu-do-thi-co-cho-dau-xe': {
+    title: 'Khu đô thị Vinhomes có chỗ đậu xe? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Khu đô thị Vinhomes có chỗ đậu xe? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Khu đô thị Vinhomes có chỗ đậu xe?',
+    keywords: 'Khu đô thị Vinhomes có chỗ đậu xe, Khu đô thị Vinhomes có chỗ đậu xe 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Khu đô thị Vinhomes có chỗ đậu xe?',
+      url: `${APP}/hoi-dap/khu-do-thi-co-cho-dau-xe`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Khu đô thị Vinhomes có chỗ đậu xe?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Khu đô thị Vinhomes có chỗ đậu xe? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+  '/hoi-dap/pet-friendly-vinhomes': {
+    title: 'Vinhomes có cho nuôi thú cưng không? – SGS LAND',
+    description: 'Chuyên gia SGS LAND giải đáp: Vinhomes có cho nuôi thú cưng không? Cập nhật 2026 với số liệu thực tế.',
+    h1: 'Vinhomes có cho nuôi thú cưng không?',
+    keywords: 'Vinhomes có cho nuôi thú cưng không, Vinhomes có cho nuôi thú cưng không 2026, SGS LAND, bất động sản TP.HCM',
+    image: `${APP}/og-image.jpg`,
+        dateModified: TODAY_ISO,
+    schema: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Vinhomes có cho nuôi thú cưng không?',
+      url: `${APP}/hoi-dap/pet-friendly-vinhomes`,
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'Vinhomes có cho nuôi thú cưng không?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Vinhomes có cho nuôi thú cưng không? – Xem chi tiết tại SGS LAND.'
+        }
+      }]
+    }),
+  },
+
+};
 const GEO_BODY_DATA: Record<string, {
   directAnswer: string;
   stats: string[];

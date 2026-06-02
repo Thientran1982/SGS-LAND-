@@ -34,6 +34,7 @@ export const ROUTES = {
     DAU_TU_BDS: 'dau-tu-bat-dong-san',
     PHAP_LY_NHA_DAT: 'phap-ly-nha-dat',
     DU_AN: 'du-an',
+  HOI_DAP: 'hoi-dap',
 
     // Legal Pages
     PRIVACY: 'privacy-policy',

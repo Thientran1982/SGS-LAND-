@@ -5705,7 +5705,38 @@ app.get("/.well-known/:file", (req: express.Request, res: express.Response, next
     // causes the browser's dynamic import to fail and triggers the ErrorBoundary.
     // This middleware intercepts /assets/* requests and retries up to 3 times
     // (150 ms apart) before falling back to the global error handler.
-    app.use('/assets', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    
+    // FAQ pages /hoi-dap/:slug - SSR meta injection
+    app.get('/hoi-dap/:faqSlug', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const pagePath = `/hoi-dap/${req.params.faqSlug}`;
+      const ua = String(req.headers['user-agent'] || '');
+      const aiBot = isAIBot(ua);
+      const ssrHtml = renderSsrPage(pagePath, { aiBot });
+      if (ssrHtml) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader(
+          'Cache-Control',
+          aiBot ? 'no-store' : 'public, max-age=300, stale-while-revalidate=3600'
+        );
+        res.send(ssrHtml);
+        return;
+      }
+      // Fall through to SPA for unknown FAQ slugs
+      return next();
+    });
+
+    // FAQ index /hoi-dap - SSR meta injection
+    app.get('/hoi-dap', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const ssrHtml = renderSsrPage('/hoi-dap', { aiBot: false });
+      if (ssrHtml) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(ssrHtml);
+        return;
+      }
+      return next();
+    });
+
+app.use('/assets', (req: express.Request, res: express.Response, next: express.NextFunction) => {
       const filePath = path.join(process.cwd(), 'dist', 'assets', req.path);
       const ext = path.extname(req.path).toLowerCase();
       const CT: Record<string, string> = {
