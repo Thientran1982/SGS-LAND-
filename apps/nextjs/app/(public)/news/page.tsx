@@ -16,6 +16,19 @@ export const metadata: Metadata = {
   description:
     "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý Luật Đất Đai 2024, kiến thức đầu tư từ chuyên gia SGS LAND. 12+ bài viết E-E-A-T chất lượng cao.",
   alternates: { canonical: `${SITE_URL}/news` },
+  openGraph: {
+    type: "article",
+    url: `${SITE_URL}/news`,
+    siteName: "SGS LAND",
+    locale: "vi_VN",
+    title: "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND",
+    description:
+      "Phân tích thị trường BĐS chuyên sâu, hướng dẫn pháp lý Luật Đất Đai 2024, kiến thức đầu tư từ chuyên gia SGS LAND.",
+    images: [{ url: "https://sgsland.vn/og-image.jpg", width: 1200, height: 630 }],
+    // article:published_time and article:modified_time for AI/news crawler signals
+    publishedTime: "2024-03-01T00:00:00.000Z",
+    modifiedTime: new Date().toISOString(),
+  },
 };
 
 export const revalidate = 1800;

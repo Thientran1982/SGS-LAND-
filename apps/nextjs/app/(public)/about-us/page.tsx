@@ -66,9 +66,26 @@ export default function AboutUsPage() {
     about: { "@id": ORG_ID },
   };
 
+  // Person JSON-LD for each leader (GEO Tier S: E-E-A-T named authorship)
+  const personSchemas = AUTHORS.slice(0, 3).map((author) => ({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": `${SITE_URL}/tac-gia/${author.slug}#person`,
+    name: author.name,
+    jobTitle: author.title,
+    url: `${SITE_URL}/tac-gia/${author.slug}`,
+    sameAs: [author.linkedIn, ...author.sameAs].filter(Boolean),
+    worksFor: {
+      "@type": "Organization",
+      "@id": ORG_ID,
+      name: "SGS Land Corp",
+      url: SITE_URL,
+    },
+  }));
+
   return (
     <>
-      <SchemaScript schemas={[breadcrumb, aboutSchema, getOrganizationSchema()]} />
+      <SchemaScript schemas={[breadcrumb, aboutSchema, getOrganizationSchema(), ...personSchemas]} />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Breadcrumb */}

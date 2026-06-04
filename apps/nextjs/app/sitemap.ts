@@ -42,6 +42,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "vinhomes-grand-park", "vinhomes-central-park", "masterise-homes",
     "lumiere", "waterpoint", "the-privia", "van-phuc-city", "sala",
     "thu-thiem", "manhattan", "son-kim-land",
+    // New 2026 GEO Tier S projects
+    "vinhomes-hoc-mon", "masteri-cosmo-central",
   ];
 
   const projectRoutes: MetadataRoute.Sitemap = projectSlugs.map((slug) => ({

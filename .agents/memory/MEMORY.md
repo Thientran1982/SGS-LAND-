@@ -1,0 +1,2 @@
+- [Next.js 15.5 prerender fix](nextjs15-prerender-fix.md) — force-dynamic on root layout prevents /_not-found OuterLayoutRouter.useContext null crash
+- [GEO Tier S file locations](geo-tier-s.md) — llms.txt/llms-full.txt/llms-en.txt in public/, sitemap subs as route handlers, area-price-index in public/data/

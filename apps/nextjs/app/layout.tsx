@@ -125,6 +125,12 @@ export const viewport: Viewport = {
   ],
 };
 
+// Force SSR on every page — prevents the /_not-found static-prerender crash
+// where Next.js 15's ContextOnlyDispatcher returns null for OuterLayoutRouter.
+// All user-facing pages are already under force-dynamic group layouts so this
+// only affects the not-found route; it has no impact on performance.
+export const dynamic = "force-dynamic";
+
 // ─── Root Layout ───────────────────────────────────────────
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
