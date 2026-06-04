@@ -60,5 +60,6 @@
     "openapi_spec": "https://sgsland.vn/api/openapi.json",
     "geo_tier_status": "https://sgsland.vn/api/geo/tier-status",
     "knowledge_full_en": "https://sgsland.vn/llms-en.txt"
-  }
+  },
+  "updated_at": "2026-06-04"
 }

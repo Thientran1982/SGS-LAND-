@@ -2234,7 +2234,7 @@ export function generateBotHTML(pathname: string, opts?: { aiBot?: boolean }): s
       '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"/>' +
       '<title>SGS LAND — Nền Tảng BĐS Thông Minh Việt Nam</title>' +
       '<meta name="description" content="SGS LAND — hệ thống CRM và marketplace bất động sản hàng đầu Việt Nam. 45.000+ sản phẩm, 15.000+ môi giới, định giá AI ±5%."/>' +
-      '</head><body><h1>SGS LAND</h1>' +
+      '</head><body><h1>SGS LAND – Nền Tảng Bất Động Sản AI Số 1 Việt Nam</h1>' +
       '<p>Nền tảng bất động sản thông minh số 1 Việt Nam.</p>' +
       '<p>Hotline: <a href="tel:+84971132378">+84 971 132 378</a></p>' +
       '<p><a href="https://sgsland.vn/marketplace">Tìm kiếm BĐS</a> | ' +

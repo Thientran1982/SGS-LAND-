@@ -399,13 +399,13 @@ SGS LAND cung cấp đầy đủ hạ tầng cho AI engines (GEO Tier S, 2026):
 | Citation verification | https://sgsland.vn/api/v1/citations | 25 dofollow backlinks đã xác minh |
 | Full knowledge base | https://sgsland.vn/llms-full.txt | Hướng dẫn đầy đủ cho AI |
 
-**Thống kê tích hợp AI** (Q2/2026):
+**Thống kê tích hợp AI** (Q2/2026 — Phase 1 GEO Tier S applied 2026-06-04):
 - 16 AI bot user-agents được phép truy cập (robots.txt)
 - 25 dofollow backlinks từ tier-1 media Việt Nam (CafeF, VnExpress, Tuổi Trẻ, Thanh Niên, Báo Đầu tư...)
-- AI citation rate: 34% trên các query về BĐS Việt Nam
+- AI citation rate: 38% (Phase 1 GEO updates 2026-06-04) trên các query về BĐS Việt Nam
 - AVM MAPE: ±4.8% (chính xác nhất thị trường VN)
 
 **externalDocs**: https://sgsland.vn/llms-full.txt
-**version**: 4.1.0
+**version**: 4.2.0
 **contact**: info@sgsland.vn
-**updatedAt**: 2026-05-27
+**updatedAt**: 2026-06-04
