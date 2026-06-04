@@ -464,48 +464,7 @@ const STATIC_PAGE_META: Record<string, {
           ],
           aggregateRating: SGS_RATING,
         },
-      ,
-        {
-            '@type': 'Person',
-            '@id': '${APP_URL}/#person-ceo',
-            name: 'Tran Minh Thien',
-            jobTitle: 'CEO & Founder',
-            worksFor: { '@id': '${APP_URL}/#org' },
-            url: '${APP_URL}/about-us',
-            sameAs: [
-                'https://www.linkedin.com/company/sgsland',
-                'https://www.facebook.com/sgsland.vn'
-            ],
-            knowsAbout: ['Bat dong san TPHCM', 'Dinh gia AI', 'Phan phoi BDS so cap', 'Vinhomes', 'Novaland'],
-            description: 'CEO SGS LAND voi 10+ nam kinh nghiem phan phoi BDS so cap TPHCM - Dong Nam Bo. Dai ly F1 uy quyen Novaland tu 2017, Vinhomes tu 2019, Masterise Homes tu 2021.'
-        },
-        {
-            '@type': 'Person',
-            '@id': '${APP_URL}/#person-cto',
-            name: 'Nguyen Hoang Nam',
-            jobTitle: 'CTO - Chief Technology Officer',
-            worksFor: { '@id': '${APP_URL}/#org' },
-            url: '${APP_URL}/about-us',
-            sameAs: [
-                'https://www.linkedin.com/company/sgsland'
-            ],
-            knowsAbout: ['AI dinh gia bat dong san', 'AVM system', 'PropTech', 'LangGraph', 'CRM da-tenant'],
-            description: 'CTO SGS LAND voi 10+ nam phat trien phan mem fintech va proptech. Tac gia he thong AVM dinh gia AI chinh xac +/-5%, kien truc CRM da-tenant phuc vu 200+ doanh nghiep BDS.'
-        },
-        {
-            '@type': 'Person',
-            '@id': '${APP_URL}/#person-coo',
-            name: 'Le Thi Hoa',
-            jobTitle: 'COO - Chief Operating Officer',
-            worksFor: { '@id': '${APP_URL}/#org' },
-            url: '${APP_URL}/about-us',
-            sameAs: [
-                'https://www.linkedin.com/company/sgsland'
-            ],
-            knowsAbout: ['Van hanh san giao dich BDS', 'Phap ly bat dong san', 'Quan ly mang luoi moi gioi', 'Chung chi moi gioi Bo Xay Dung'],
-            description: 'COO SGS LAND voi 15+ nam van hanh san giao dich BDS. Chung chi moi gioi BDS Bo Xay Dung. Thiet ke quy trinh kiem duyet phap ly 2 lop (AI + chuyen vien), quan ly mang 15.000+ moi gioi.'
-        }
-        ],
+      ],
     },
   },
   news: {
@@ -930,22 +889,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class='project-overview'>
-<h2>Aqua City Novaland – Đại Đô Thị Sinh Thái 1.000ha Đồng Nai</h2>
-<p>Aqua City là đại đô thị sinh thái ven sông do Novaland phát triển tại Long Hưng, Biên Hòa, Đồng Nai – cách TP.HCM 30 phút qua cầu Nhơn Trạch. Tổng diện tích 1.000 ha với hơn 100.000 m2 mặt nước, sân golf 18 lỗ, marina quốc tế, resort 5 sao và trung tâm thương mại.</p>
-<p>Pháp lý: Aqua City có sổ hồng riêng từng căn. Novaland Group niêm yết HOSE (mã NVL). SGS LAND là đại lý F1 ủy quyền – hỗ trợ vay ngân hàng LTV 70%, lãi suất 0% 18–24 tháng đầu, kiểm tra pháp lý miễn phí.</p>
-<h3>Bảng Giá 2026</h3>
-<table>
-<tr><td>Căn hộ The Aqua</td><td>45–65 m2</td><td>3,5 tỷ</td><td>5,2 tỷ</td></tr><tr><td>Nhà phố thương mại</td><td>80–120 m2</td><td>8 tỷ</td><td>15 tỷ</td></tr><tr><td>Biệt thự song lập</td><td>200–300 m2</td><td>18 tỷ</td><td>28 tỷ</td></tr><tr><td>Biệt thự đơn lập</td><td>300–500 m2</td><td>25 tỷ</td><td>50 tỷ</td></tr></table>
-<h3>Tiện Ích</h3>
-<ul>
-<li>Marina và bến du thuyền quốc tế</li><li>Sân golf 18 lỗ tiêu chuẩn quốc tế</li><li>Resort 5 sao Nova World Aqua City</li><li>Trường học liên cấp quốc tế</li><li>Bệnh viện đa khoa hiện đại</li><li>Trung tâm thương mại Aqua Mall</li></ul>
-<h3>Phân Tích Đầu Tư</h3>
-<p>AVM SGS LAND (sai so +/-5%): gia dat Aqua City tang 12–15%/nam 2021–2024. Cao toc Ben Luc–Long Thanh hoan thien 2026 va cau Nhon Trach thong xe: du bao tang gia 10–18%/nam den 2028. Ty suat cho thue biet thu 4,2%/nam, can ho 4–5%/nam.</p>
-</section>
-        `
-    },
+  },
   'du-an/manhattan': {
     title: 'Grand Manhattan Novaland | Căn Hộ Hạng Sang Novaland TP.HCM - SGS LAND',
     description: 'Grand Manhattan Novaland: căn hộ hạng sang biểu tượng của Novaland tại trung tâm TP.HCM, từ 120 triệu/m². Xem bảng giá, penthouse và sky villa tại SGS LAND.',
@@ -994,22 +938,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Grand Manhattan Novaland – Can Ho Hang Sang Quan 1 TP.HCM</h2>
-<p>Grand Manhattan la to hop can ho hang sang 5 sao Novaland tai Quan 1, TP.HCM. Toa lac mat tien duong Co Giang va Nguyen Thai Hoc, 2 thap 36-42 tang voi 500+ can ho cao cap va penthouse chuan 5 sao quoc te.</p>
-<p>Phap ly: So hong rieng vinh vien. Novaland HOSE (NVL). Ho tro vay 70% LTV, lai suat 0% 24 thang. SGS LAND dai ly F1 uy quyen – tu van phap ly mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Studio</td><td>35-45m2</td><td>120tr/m2</td><td>4,2-5,4 ty</td></tr><tr><td>1PN</td><td>50-65m2</td><td>115-125tr/m2</td><td>5,8-8,1 ty</td></tr><tr><td>2PN</td><td>75-95m2</td><td>120-130tr/m2</td><td>9-12,4 ty</td></tr><tr><td>3PN</td><td>110-135m2</td><td>125-140tr/m2</td><td>13,8-18,9 ty</td></tr><tr><td>Penthouse</td><td>200-350m2</td><td>150+tr/m2</td><td>30-52 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Sky lounge rooftop infinity pool tang 40</li><li>Gym Spa 5 sao</li><li>Concierge service 24/7</li><li>SmartHome tich hop</li><li>Ham xe thong minh 3 tang</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Vi tri Quan 1 khan hiem quy dat – mot trong so it du an can ho moi phe duyet tai loi trung tam TPHCM sau 2020. Ty suat cho thue 5-6%/nam, tang gia 10-15%/nam. AVM SGS LAND tu van dau tu mien phi.</p>
-</section>
-        `
-    },
+  },
 
   'du-an/vinhomes-can-gio': {
     title: 'Vinhomes Cần Giờ 2.870ha — Siêu Đô Thị Biển Lớn Nhất VN | SGS LAND',
@@ -1176,22 +1105,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Vinhomes Can Gio – Sieu Do Thi Bien 2.870ha Can Gio TPHCM</h2>
-<p>Vinhomes Can Gio (Green Paradise) la sieu do thi ven bien lon nhat Viet Nam 2.870ha tai huyen Can Gio, TPHCM. Bien 7km, Vinwonders, golf, marina, resort 5 sao. Tu 12 ty. Dat cho uu tien tai SGS LAND.</p>
-<p>Phap ly: Novaland hop tac Vinhomes. Du an dang trong giai doan phe duyet chinh sach nha o bien. SGS LAND cap nhat tien do phap ly realtime, ho tro dat cho uu tien mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Biet thu bien</td><td>200-500m2</td><td>Tu 12 ty</td><td>Dang dat cho</td></tr><tr><td>Nha pho bien</td><td>100-200m2</td><td>Tu 8 ty</td><td>Dang dat cho</td></tr><tr><td>Can ho view bien</td><td>45-120m2</td><td>Tu 3 ty</td><td>Dang dat cho</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Bien nhan tao 7km</li><li>Vinwonders Can Gio</li><li>Golf course 18 lo</li><li>Marina quoc te</li><li>Resort 5 sao Vinpearl</li><li>Trung tam thuong mai Can Gio</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Can Gio chi cach TPHCM 45 phut qua duong ham Binh Khanh (2026). Gia dat Can Gio tang 30-50%/nam sau khi cong bo quy hoach. Tiem nang dau tu lon nhat TPHCM 2026-2030.</p>
-</section>
-        `
-    },
+  },
   'du-an/van-phuc-city': {
     title: 'Vạn Phúc City | Khu Đô Thị 198ha Ven Sông Sài Gòn, Thủ Đức — SGS LAND',
     description: 'Vạn Phúc City Đại Phúc: khu đô thị 198ha ven sông Sài Gòn tại TP Thủ Đức. Bảng giá nhà phố, biệt thự, shophouse cập nhật, sổ hồng riêng. Tư vấn miễn phí tại SGS LAND.',
@@ -1237,22 +1151,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Van Phuc City Hung Thinh – Dai Do Thi Quoc Te 198ha Thu Duc</h2>
-<p>Van Phuc City 198ha tai TP Thu Duc (truoc la Q.Thu Duc) do Hung Thinh Corp phat trien. To hop khu do thi quoc te ven song Sai Gon voi 9.000+ can ho, nha pho, biet thu, khach san 5 sao va trung tam tai chinh.</p>
-<p>Phap ly: So hong rieng. Hung Thinh Corp co kinh nghiem 30+ nam, uy tin hang dau mien Nam. SGS LAND dai ly F1 ho tro phap ly va vay ngan hang mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Can ho</td><td>45-120m2</td><td>2,5-8 ty</td><td>Nhieu phan khu</td></tr><tr><td>Nha pho</td><td>80-150m2</td><td>8-20 ty</td><td>Hang pho thuong mai</td></tr><tr><td>Biet thu song lap</td><td>200-400m2</td><td>15-35 ty</td><td>Ven song</td></tr><tr><td>Penthouse</td><td>200-300m2</td><td>25-50 ty</td><td>View song Sai Gon</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>View song Sai Gon panorama</li><li>Cong vien 40ha ven song</li><li>Vincom Van Phuc</li><li>Truong quoc te</li><li>Khach san 5 sao</li><li>Marina ben tau</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Van Phuc City huong loi tu Metro so 1 (ga Thu Duc cach 500m) va cau Phu My noi Q7. Gia tang 10-15%/nam. Ty suat cho thue 5-6%/nam do vi tri dep ven song.</p>
-</section>
-        `
-    },
+  },
   'du-an/sala': {
     title: 'Sala Đại Quang Minh | Khu Đô Thị Sala Thủ Thiêm 257ha — SGS LAND',
     description: 'Khu đô thị Sala Đại Quang Minh tại Thủ Thiêm: căn hộ Sarica, Sarimi, Sadora, Sapphire; nhà phố, biệt thự cao cấp. Bảng giá, pháp lý, định giá AI miễn phí tại SGS LAND.',
@@ -1299,22 +1198,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Sala Do Thi Dai Quang Minh – Do Thi Xanh 4.0 Thu Thiem Q2</h2>
-<p>Sala la khu do thi xanh 4.0 tai Thu Thiem, Quan 2, TP Thu Duc do Dai Quang Minh phat trien. Vi tri dat vang trung tam moi TP.HCM (Thu Thiem), sieu toc do phat trien ha tang va gia dat.</p>
-<p>Phap ly: So hong rieng. Dai Quang Minh uy tin. Sala Sarimi, Sarica, Sadora da ban giao day du phap ly. SGS LAND ho tro phap ly va vay mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Sarica Sala</td><td>70-165m2</td><td>70-100tr/m2</td><td>5-16 ty</td></tr><tr><td>Sadora</td><td>60-145m2</td><td>65-95tr/m2</td><td>4-14 ty</td></tr><tr><td>Sarimi</td><td>55-130m2</td><td>65-90tr/m2</td><td>3,5-12 ty</td></tr><tr><td>Biet thu Sala</td><td>250-450m2</td><td>150-250tr/m2</td><td>37-113 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Cong vien 5ha cay xanh</li><li>Ho boi lon nhat Q2</li><li>Quan cafe view dep</li><li>Sieu thi Co.opmart</li><li>Truong quoc te ISHCMC</li><li>Vinmec Q2</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Sala Thu Thiem tang gia 15-20%/nam tu 2019. Thu Thiem la trung tam tai chinh moi TPHCM. Cho thue can ho 20-35 trieu/thang, biet thu 80-150 trieu/thang. AVM SGS LAND chinh xac tung can.</p>
-</section>
-        `
-    },
+  },
 
   // ─── New Location Landing Pages ─────────────────────────────────────────────
   'bat-dong-san-thu-duc': {
@@ -1992,22 +1876,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Izumi City Nam Long – Do Thi Nhat Ban 170ha Dong Nai</h2>
-<p>Izumi City la khu do thi kieu Nhat 170ha tai Long Thanh, Dong Nai do Nam Long Group phat trien hop tac tap doan Nhon Ban Nishi Nippon Railroad. Ca do thi thiet ke theo phong cach Nhat Ban tinh te, ben vung.</p>
-<p>Phap ly: So hong rieng. Nam Long Group niem yet HSX. SGS LAND ho tro phap ly va vay ngan hang mien phi. Toa lac gan cao toc HCM - Long Thanh - Dau Giay.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Can ho Akari</td><td>50-90m2</td><td>2-4 ty</td><td>Da ban giao</td></tr><tr><td>Nha pho Valora</td><td>100-180m2</td><td>5-12 ty</td><td>Da ban giao</td></tr><tr><td>Biet thu Kikyo</td><td>200-350m2</td><td>12-22 ty</td><td>Dang ban giao</td></tr><tr><td>Shophouse</td><td>80-120m2</td><td>6-12 ty</td><td>Mo ban</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Vuon Nhat Ban Izumi 8ha</li><li>Ho dieu hoa 4ha</li><li>Trung tam thuong mai</li><li>Truong Nhat-Viet lien cap</li><li>Benh vien Nhat Ban</li><li>Cong vien the thao 12ha</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Izumi City tang gia 12-18%/nam nho cao toc Long Thanh va san bay quoc te Long Thanh (2025). Ty suat cho thue 4-5%/nam. Gia dat vung giao Dong Nai - TPHCM tang nhanh nhat mien Nam.</p>
-</section>
-        `
-    },
+  },
   'du-an/vinhomes-grand-park': {
     title: 'Vinhomes Grand Park | Siêu Đô Thị 271ha Thủ Đức - SGS LAND',
     description: 'Vinhomes Grand Park Quận 9 TP Thủ Đức: căn hộ, shophouse, biệt thự siêu đô thị 271ha. Công viên 36ha, Metro số 1, Vinmec, Vinschool. Bảng giá tại SGS LAND.',
@@ -2087,22 +1956,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Vinhomes Grand Park – Dai Do Thi Thong Minh 271ha Thu Duc TPHCM</h2>
-<p>Vinhomes Grand Park 271ha tai TP Thu Duc do Vinhomes phat trien – dai do thi lon nhat TPHCM voi 43.000+ can ho nha pho, he sinh thai song hoan chinh: truong hoc, benh vien, Vincom, cong vien 36ha, ho dieu hoa 6,7ha.</p>
-<p>Phap ly: So hong rieng tung phan khu. VHM niem yet HNX. Techcombank cho vay 80% LTV lai suat 8,5%/nam co dinh 3 nam. SGS LAND dai ly F1 Vinhomes – ho tro phap ly vay ngan hang mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>The Rainbow</td><td>1-3PN</td><td>2,1 ty</td><td>Da ban giao</td></tr><tr><td>The Origami</td><td>1-3PN Nhat</td><td>2,5 ty</td><td>Da ban giao</td></tr><tr><td>The Beverly</td><td>Cao cap</td><td>3,2 ty</td><td>Dang ban giao</td></tr><tr><td>The Beverly Solari</td><td>Cao cap</td><td>3,5 ty</td><td>Dang mo ban</td></tr><tr><td>Manhattan Glory</td><td>Nha pho biet thu</td><td>15 ty</td><td>Da ban giao</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Metro so 1 (Ben Thanh - Suoi Tien): ga Grand Park 2026</li><li>Cao toc Long Thanh – Dau Giay: 15 phut san bay</li><li>Vincom Mega Mall</li><li>Bao vat Vinmec</li><li>VinSchool lien cap</li><li>Xa lo Ha Noi mo rong 8 lan</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Ty suat cho thue 4,5-5,5%/nam. Gia tang TB 8-12%/nam tu 2019. Metro so 1 hoan thanh se keo gia tang them 15-20%. AVM SGS LAND co du lieu realtime cho tung block tang view.</p>
-</section>
-        `
-    },
+  },
   'du-an/vinhomes-central-park': {
     title: 'Vinhomes Central Park | Căn Hộ Cao Cấp Bình Thạnh Landmark 81 - SGS LAND',
     description: 'Vinhomes Central Park Bình Thạnh: 44 tòa cao tầng, Landmark 81, bể bơi vô cực ven sông Sài Gòn. Căn hộ từ 50 triệu/m², cho thuê 15-60 triệu/tháng. Tư vấn tại SGS LAND.',
@@ -2152,22 +2006,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Vinhomes Central Park – Do Thi Cao Cap 43,9ha Binh Thanh</h2>
-<p>Vinhomes Central Park 43,9ha tai Quan Binh Thanh, TP.HCM do Vinhomes phat trien. To hop 10 toa cao oc 33-45 tang voi Landmark 81 (nha cao nhat VN) va cong vien 36ha lon nhat noi o TPHCM.</p>
-<p>Phap ly: So hong rieng. Vinhomes VHM niem yet HNX. Vietcombank cho vay 70% LTV. Da ban giao day du. SGS LAND ho tro tim phong cho thue, chuyen nhuong nhanh nhat.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Park 1-7 Can ho</td><td>50-135m2</td><td>50-80tr/m2</td><td>2,5-11 ty</td></tr><tr><td>Landmark Plus</td><td>45-110m2</td><td>65-95tr/m2</td><td>3-10 ty</td></tr><tr><td>Landmark 81 Sky</td><td>80-250m2</td><td>120-180tr/m2</td><td>10-45 ty</td></tr><tr><td>Biet thu Villa Park</td><td>300-500m2</td><td>150+tr/m2</td><td>45-75 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Cong vien 36ha lon nhat noi o TPHCM</li><li>Landmark 81 nha cao nhat VN</li><li>VinKE va VinSchool</li><li>Vincom Landmark 81</li><li>Ho boi Olympic</li><li>Bus nhanh BRT den Q1 chi 10 phut</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Vinhomes Central Park tang gia 8-12%/nam. Ty suat cho thue cao nhat TPHCM: 5-7%/nam. Landmark 81 la bieu tuong khu vuc, gia dat khu nay khong giam bat ke thi truong. Thu hut expat lon nhat TPHCM.</p>
-</section>
-        `
-    },
+  },
   'du-an/thu-thiem': {
     title: 'Khu Đô Thị Thủ Thiêm | BĐS Hạng Sang Trung Tâm Tài Chính - SGS LAND',
     description: 'Bất động sản Khu Đô Thị Mới Thủ Thiêm 657ha — trung tâm tài chính tương lai TP.HCM. Empire City, Metropole, The River. Giá từ 80 triệu/m². Tư vấn tại SGS LAND.',
@@ -2216,22 +2055,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Du An Thu Thiem Quan 2 – Trung Tam Tai Chinh Moi TP.HCM</h2>
-<p>Thu Thiem la ban dao 657ha doi dien Q1 qua song Sai Gon, duoc quy hoach tro thanh trung tam tai chinh - dich vu quoc te moi cua TP.HCM tuong duong Pudong (Thuong Hai) hay Marina Bay (Singapore).</p>
-<p>Phap ly: Khu vuc quy hoach chinh phu, ha tang dau tu tu ngan sach nha nuoc. Cac du an nha o da co so hong rieng. SGS LAND cap nhat tien do quy hoach va cac lo dat dau gia Thu Thiem.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Dai lo Thu Thiem - MT</td><td>100-500m2</td><td>200-500tr/m2</td><td>Theo lo dat</td></tr><tr><td>Can ho cao cap</td><td>50-200m2</td><td>100-200tr/m2</td><td>Tu 5 ty</td></tr><tr><td>Biet thu</td><td>300-1000m2</td><td>200+tr/m2</td><td>Tu 60 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Quang truong trung tam 3ha</li><li>Cau Tran Thi Ly</li><li>Ham vuot song Thu Thiem 1,2</li><li>Dai lo ven song 11km</li><li>Trung tam trinh dien nghe thuat</li><li>Opera House Thu Thiem</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Thu Thiem: gia dat tang 500-1000% tu 2010 den 2024. Do an quy hoach 1/2000 moi 2025 mo ra co hoi lon. AVM SGS LAND dinh gia chinh xac tung lo dat Thu Thiem theo vi tri mat tien.</p>
-</section>
-        `
-    },
+  },
   'du-an/son-kim-land': {
     title: 'Sơn Kim Land | BĐS Thương Mại Cao Cấp TP.HCM & Hà Nội - SGS LAND',
     description: 'Sơn Kim Land — danh mục BĐS cao cấp: Gem Riverside Q4, Metropole Thủ Thiêm, Seasons Avenue HN. GEM Center, GS25. Giá 40-150 triệu/m². Tư vấn tại SGS LAND.',
@@ -2281,22 +2105,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Son Kim Land – Bat Dong San Cao Cap Thu Duc TPHCM</h2>
-<p>Son Kim Land la chu dau tu bat dong san cao cap hang dau TPHCM voi cac du an Nassim Thao Dien, The Nassim, Holm Residences tai TP Thu Duc. Huong den phan khuc cao cap, chuyen gia nuoc ngoai va nguoi Viet nuoc ngoai.</p>
-<p>Phap ly: So hong rieng. Son Kim Land uy tin 20+ nam. SGS LAND dai ly F1 tu van phap ly mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Nassim Thao Dien</td><td>95-280m2</td><td>120-180tr/m2</td><td>11-50 ty</td></tr><tr><td>The Nassim</td><td>80-250m2</td><td>110-170tr/m2</td><td>9-43 ty</td></tr><tr><td>Holm Residences</td><td>65-200m2</td><td>90-140tr/m2</td><td>6-28 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>View song Sai Gon</li><li>Giao thong thuan tien Thao Dien</li><li>Cong vien xanh</li><li>Concierge 24/7</li><li>Ho boi ngoai troi</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Thao Dien la khu expat dat nhat TPHCM. Cho thue can ho 30-80 trieu/thang. Tang gia 10-15%/nam. Son Kim Land thuong hieu cuu cap, chat luong xay dung hang dau Viet Nam.</p>
-</section>
-        `
-    },
+  },
   'du-an/masterise-homes': {
     title: 'Masterise Homes | Masteri, Lumière, Grand Marina — SGS LAND',
     description: 'Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.',
@@ -2346,22 +2155,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Masterise Homes – Cac Du An Cao Cap Tai TPHCM</h2>
-<p>Masterise Homes (thanh vien Techcombank Group) la chu dau tu bat dong san cao cap voi portfolio 10+ du an lon tai TPHCM. Cac du an noi bat: Masteri Thao Dien, Masteri An Phu, Masteri Lumiere, The Global City.</p>
-<p>Phap ly: So hong rieng. Techcombank cho vay 80% LTV lai suat uu dai. SGS LAND dai ly F1 chinh thuc Masterise Homes, ho tro phap ly va vay ngan hang mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Masteri Thao Dien</td><td>50-200m2</td><td>60-120tr/m2</td><td>3-24 ty</td></tr><tr><td>Masteri An Phu</td><td>50-185m2</td><td>55-90tr/m2</td><td>2,8-17 ty</td></tr><tr><td>Masteri Lumiere</td><td>55-175m2</td><td>70-110tr/m2</td><td>3,9-19 ty</td></tr><tr><td>Grand Marina SG</td><td>75-300m2</td><td>150+tr/m2</td><td>11-45 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Thuong hieu Masterise 5 sao</li><li>Techcombank tai chinh uu viet</li><li>Phap ly minh bach</li><li>CQL chuyyen nghiep</li><li>Smarthome toan bo</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Masterise Homes tang gia binh quan 10-14%/nam. Ty suat cho thue 5-6%/nam. Brand cao cap nhat Viet Nam sau Vinhomes. AVM SGS LAND dinh gia tung can chinh xac +/-5%.</p>
-</section>
-        `
-    },
+  },
   'du-an/the-global-city': {
     title: 'The Global City Masterise | Đại Đô Thị 117ha An Phú Thủ Đức - SGS LAND',
     description: 'The Global City Masterise Homes An Phú Thủ Đức: đại đô thị 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Tư vấn tại SGS LAND.',
@@ -2410,22 +2204,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>The Global City Masterise Homes – Do Thi Quoc Te 117ha Thu Duc</h2>
-<p>The Global City 117ha tai TP Thu Duc do Masterise Homes phat trien hop tac Keppel Land Singapore. Huong den 50.000 cu dan quoc te voi tieu chuan thiet ke va tien ich ngang tam Singapore, Hong Kong.</p>
-<p>Phap ly: So hong rieng. Masterise Homes (Techcombank Group). Techcombank cho vay 80% LTV lai suat 0% 24 thang. SGS LAND dai ly F1 tu van mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Lumiere Boulevard</td><td>Can ho cao cap</td><td>55-120m2</td><td>Tu 5 ty</td></tr><tr><td>Lumiere Riverside</td><td>View song</td><td>60-135m2</td><td>Tu 6,2 ty</td></tr><tr><td>Grand Marina</td><td>Hang sang</td><td>80-200m2</td><td>Tu 12 ty</td></tr><tr><td>Townhouse</td><td>Nha pho</td><td>120-160m2</td><td>Tu 20 ty</td></tr><tr><td>Villa</td><td>Biet thu</td><td>300-500m2</td><td>Tu 45 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>International School (RMIT, BIS, SNA)</li><li>FV Hospital co so 2</li><li>Trung tam thuong mai chuan Singapore</li><li>Marina Club ben du thuyen</li><li>Golf Club 9 lo trong long do thi</li><li>Business Hub 20ha</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Ty suat cho thue du bao 5-6,5%/nam (cao nhat TPHCM). Gia 60-100tr/m2 se tang len 90-140tr/m2 khi hoan thien 2027-2028. Metro so 1 ga Thu Duc cach 2km, cau Cat Lai ket noi Dong Nai.</p>
-</section>
-        `
-    },
+  },
   'du-an/nha-pho-trung-tam': {
     title: 'Nhà Phố Trung Tâm TP.HCM | Mặt Tiền, Nhà Hẻm, Shophouse - SGS LAND',
     description: 'Mua bán nhà phố trung tâm TP.HCM: mặt tiền Q1 từ 500 triệu/m², nhà hẻm Q3 từ 100 triệu/m². Định giá AI miễn phí, kiểm tra pháp lý độc lập tại SGS LAND.',
@@ -2479,22 +2258,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Nha Pho Trung Tam TPHCM – Shophouse Mat Tien Quan 1 3 Binh Thanh</h2>
-<p>Nha pho mat tien trung tam TPHCM (Quan 1, 3, Binh Thanh, Phu Nhuan) la phan khuc dau tu sinh loi cao nhat: ket hop o va kinh doanh, cho thue tang tren, khai thac thuong mai. Gia dat tang lien tuc theo quy hoach do thi.</p>
-<p>SGS LAND chuyen cung cap nha pho mat tien trung tam: Nguyen Thi Minh Khai, Vo Van Tan, Le Van Sy, Hai Ba Trung, Dinh Tien Hoang... Phap ly sach, gia chinh hang, tham van phap ly mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Nha pho Quan 1 MT</td><td>4x15m - 6x20m</td><td>200-500tr/m2</td><td>12-60 ty</td></tr><tr><td>Nha pho Quan 3</td><td>4x16m - 5x20m</td><td>150-300tr/m2</td><td>10-30 ty</td></tr><tr><td>Nha pho Binh Thanh</td><td>4x16m - 6x22m</td><td>80-150tr/m2</td><td>5-20 ty</td></tr><tr><td>Shophouse cao cap</td><td>5x20m - 8x25m</td><td>100-250tr/m2</td><td>10-50 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Mat tien thuong mai chinh</li><li>Khu vuc mua sam dong duc</li><li>Ket noi giao thong tot</li><li>Cho thue tang tren</li><li>Tang gia theo quy hoach metro</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Nha pho mat tien trung tam TPHCM: cho thue 30-200 trieu/thang, ty suat 3-5%/nam, tang gia 8-12%/nam. Quy dat ngay cang khan hiem do khong con quy hoach moi. SGS LAND co database 500+ nha pho mat tien.</p>
-</section>
-        `
-    },
+  },
 
 
   'du-an/masteri-cosmo-central': {
@@ -2550,22 +2314,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Masteri Cosmo Central – Can Ho Hang Sang Binh Thanh TPHCM</h2>
-<p>Masteri Cosmo Central tai duong Dien Bien Phu, Quan Binh Thanh do Masterise Homes phat trien. Thap can ho 45 tang voi 1.500+ can tu studio den penthouse, tam nhin panorama toan TPHCM.</p>
-<p>Phap ly: So hong rieng. Masterise Homes (Techcombank Group). Techcombank cho vay 80% LTV lai suat 0% 24 thang. SGS LAND dai ly F1 ho tro phap ly mien phi.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Studio</td><td>28-35m2</td><td>90-100tr/m2</td><td>2,5-3,5 ty</td></tr><tr><td>1PN</td><td>45-55m2</td><td>88-98tr/m2</td><td>4-5,4 ty</td></tr><tr><td>2PN</td><td>65-85m2</td><td>85-95tr/m2</td><td>5,5-8 ty</td></tr><tr><td>3PN</td><td>90-115m2</td><td>88-100tr/m2</td><td>8-11,5 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Vi tri dat vang Dien Bien Phu</li><li>View Q1 Q3 Phu Nhuan</li><li>Truong QT German School</li><li>BV FV 5 sao</li><li>Ket noi metro so 2 (2027)</li><li>Cong vien 3/2</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Binh Thanh la cua ngo Q1, gia dat tang 12-18%/nam. Ty suat cho thue 5-6%/nam thu hut expat. Cosmo Central: vi tri mat tien Dien Bien Phu - tuyen duong thuong mai dat nhat Binh Thanh.</p>
-</section>
-        `
-    },
+  },
 
   'du-an/vinhomes-hoc-mon': {
     title: 'Vinhomes Hóc Môn | Smart City 4.0 Tây Bắc TP.HCM - SGS LAND',
@@ -2620,22 +2369,7 @@ const STATIC_PAGE_META: Record<string, {
         },
       ],
     },
-        bodyHtml: `
-<section class="project-overview">
-<h2>Vinhomes Hoc Mon – Khu Do Thi Sinh Thai Tay Bac TPHCM</h2>
-<p>Vinhomes Hoc Mon la du an khu do thi sinh thai quy mo lon tai huyen Hoc Mon, TPHCM do Vinhomes phat trien. Huong toi phan khuc nha o gia ca phai chang cho nguoi thu nhap trung binh khu vuc Tay Bac TPHCM.</p>
-<p>Phap ly: Dang trong giai doan phe duyet. SGS LAND cap nhat tien do phap ly va dat cho uu tien som nhat. Vinhomes la chu dau tu uy tin so 1 Viet Nam.</p>
-<h3>Bang Gia 2026</h3>
-<table>
-<tr><td>Can ho</td><td>45-90m2</td><td>30-55tr/m2</td><td>1,4-5 ty</td></tr><tr><td>Nha pho</td><td>80-150m2</td><td>40-70tr/m2</td><td>3,2-10,5 ty</td></tr><tr><td>Biet thu</td><td>200-400m2</td><td>50-80tr/m2</td><td>10-32 ty</td></tr></table>
-<h3>Tien Ich</h3>
-<ul>
-<li>Cong vien sinh thai 50ha</li><li>Truong hoc Vinschool</li><li>Vinmec benh vien</li><li>Vincom TTTM</li><li>Ho boi chuan Olympic</li><li>Ho dieu hoa 10ha</li></ul>
-<h3>Phan Tich Dau Tu</h3>
-<p>Hoc Mon: gia dat tang 20-30%/nam 2022-2025 nho cao toc Vành dai 3 TPHCM (2025). Vi tri ket noi nhanh den Tan Son Nhat, Binh Duong, Long An. Tiem nang tang gia lon nhat vung ngoai vi TPHCM.</p>
-</section>
-        `
-    },
+  },
 };
 
 // '/home' route serves identical content to '/'. Assigned here instead of duplicating
