@@ -344,6 +344,12 @@ const badgeStyles: Record<string, string> = {
 };
 const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: () => void }) => {
     const [imgLoaded, setImgLoaded] = React.useState(false);
+  const imgRef = React.useRef<HTMLImageElement>(null);
+  React.useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      setImgLoaded(true);
+    }
+  }, []);
     return (
     <motion.article
         initial={{ opacity: 0 }}
@@ -361,6 +367,7 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
                 className={`absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite] transition-opacity duration-300 pointer-events-none ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
             />
             <img
+                        ref={imgRef}
                 src={project.img}
                 alt={`${project.name} - ${project.type} ${project.loc}`}
                 width={640}
@@ -660,7 +667,7 @@ export const Landing: React.FC = () => {
                         opacity: [0.4, 0.6, 0.4]
                     }}
                     transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[1200px] h-[600px] md:h-[800px] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-100/40 via-transparent to-transparent dark:from-indigo-900/20 rounded-full blur-3xl -z-10 pointer-events-none"
+                    className="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[1200px] h-[600px] md:h-[800px] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-100/40 via-transparent to-transparent dark:from-indigo-900/20 rounded-full blur-3xl -z-10 pointer-events-none"
                 ></motion.div>                
                 <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
                     {/* Left Column: Text & Search */}

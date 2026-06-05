@@ -544,7 +544,7 @@ export default async function LandingProjectPage({
                   <li><Link href="/landing/aqua-city">Aqua City Novaland</Link></li>
                   <li><Link href="/landing/legacy-66">Legacy 66</Link></li>
                   <li><Link href="/landing/masteri-cosmo-central">Masteri Cosmo Central</Link></li>
-                  <li><Link href="/landing/vinhomes-hoc-mon">Vinhomes Hóc Môn</Link></li>
+                  <li><Link href="/du-an/vinhomes-hoc-mon">Vinhomes Hóc Môn</Link></li>
                   <li><Link href="/du-an">Tất cả dự án →</Link></li>
                 </ul>
               </div>
