@@ -29,11 +29,28 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Qwen-Bot",
         allow: ["/", "/llms.txt", "/llms-full.txt"],
       },
+      // Microsoft Copilot + Bing
+      {
+        userAgent: "CopilotBot",
+        allow: ["/", "/llms.txt", "/llms-full.txt"],
+      },
+      {
+        userAgent: "BingPreview",
+        allow: ["/", "/llms.txt", "/llms-full.txt"],
+      },
+      // LinkedIn crawler (professional network citations)
+      {
+        userAgent: "LinkedInBot",
+        allow: ["/", "/llms.txt"],
+      },
     ],
     sitemap: [
       "https://sgsland.vn/sitemap.xml",
       "https://sgsland.vn/sitemap-answers.xml",
       "https://sgsland.vn/sitemap-areas.xml",
+      "https://sgsland.vn/sitemap-faq.xml",
+      "https://sgsland.vn/sitemap-local.xml",
+      "https://sgsland.vn/geo-sitemap.xml",
     ],
     host: "https://sgsland.vn",
   };

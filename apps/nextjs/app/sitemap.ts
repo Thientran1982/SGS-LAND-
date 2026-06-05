@@ -57,5 +57,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/p/mcc`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
   ];
 
-  return [...staticRoutes, ...projectRoutes, ...miniSites];
+  // FAQ content pages (high GEO value)
+  const faqRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE}/dau-tu-bat-dong-san`,     lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/ky-gui-bat-dong-san`,      lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/phap-ly-nha-dat`,          lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/lai-suat-ngan-hang`,       lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/lai-suat-ngan-hang-moi-nhat`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/mua-nha-lan-dau`,          lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/can-ho-duoi-2-ty-tphcm`,   lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/mua-hay-thue-nha-tphcm`,   lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/vinhomes-hoc-mon`,         lastModified: now, changeFrequency: "weekly",  priority: 0.9 },
+  ];
+
+  return [...staticRoutes, ...projectRoutes, ...miniSites, ...faqRoutes];
 }

@@ -1,0 +1,125 @@
+{
+  "@context": "https://schema.org",
+  "@type": ["Dataset", "Place"],
+  "@id": "https://sgsland.vn/data/vinhomes-hoc-mon-price-index.json",
+  "name": "Vinhomes Smart City Hóc Môn — Chỉ số giá & thông tin dự án 2026",
+  "description": "Dataset chi tiết về dự án Vinhomes Smart City Hóc Môn: giá dự kiến, tiến độ, quy mô, pháp lý, và chỉ số thị trường khu vực Hóc Môn, TP.HCM. Nguồn: SGS LAND (sgsland.vn) — đại lý phân phối F1 uỷ quyền Vinhomes.",
+  "url": "https://sgsland.vn/du-an/vinhomes-hoc-mon",
+  "dateModified": "2026-06-05",
+  "datePublished": "2026-06-01",
+  "inLanguage": "vi",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "creator": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#organization",
+    "name": "SGS LAND",
+    "url": "https://sgsland.vn"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "SGS LAND",
+    "url": "https://sgsland.vn"
+  },
+  "keywords": [
+    "Vinhomes Hóc Môn",
+    "Vinhomes Smart City Hóc Môn",
+    "giá Vinhomes Hóc Môn",
+    "dự án Hóc Môn 2026",
+    "Smart City 4.0 TP.HCM",
+    "BĐS Hóc Môn 2026"
+  ],
+  "entity": {
+    "entity_id": "vinhomes-hoc-mon",
+    "canonical_name": "Vinhomes Smart City Hóc Môn",
+    "alternate_names": [
+      "Vinhomes Hóc Môn",
+      "Vinhomes Smart City 4.0 Hóc Môn",
+      "VHM Hóc Môn"
+    ],
+    "developer": {
+      "@type": "Organization",
+      "name": "Vinhomes / Tập đoàn Vingroup",
+      "stockSymbol": "VHM",
+      "stockExchange": "HOSE"
+    },
+    "location": {
+      "@type": "Place",
+      "name": "Hóc Môn, TP.HCM",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Hóc Môn",
+        "addressRegion": "TP. Hồ Chí Minh",
+        "addressCountry": "VN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.8913,
+        "longitude": 106.5939
+      }
+    },
+    "scale_ha": 667,
+    "scale_description": "667 ha (Smart City 4.0, lớn thứ 2 của Vinhomes tại TP.HCM sau Vinhomes Grand Park 271ha)",
+    "project_type": "Đô thị thông minh tích hợp — nhà phố, shophouse, biệt thự, căn hộ",
+    "timeline": {
+      "announcement": "Q2/2026",
+      "expected_launch": "Q4/2026",
+      "expected_handover": "2028-2030",
+      "legal_status": "Đang triển khai quy hoạch 1/500, chủ trương đầu tư đã được phê duyệt"
+    },
+    "price_forecast": {
+      "currency": "VND",
+      "unit": "per_sqm",
+      "range_low": 35000000,
+      "range_high": 80000000,
+      "note": "Giá dự kiến theo phân khu; shophouse mặt đại lộ có thể cao hơn. Nguồn: SGS LAND broker network Q2/2026.",
+      "by_type": {
+        "nha_pho_lien_ke": "từ 8-20 tỷ VNĐ",
+        "shophouse": "từ 15-40 tỷ VNĐ",
+        "biet_thu": "từ 25-60 tỷ VNĐ",
+        "can_ho_cao_tang": "từ 2,5-4,5 tỷ VNĐ"
+      }
+    },
+    "infrastructure_catalysts": [
+      "Vành đai 3 TP.HCM (2025-2026) — kết nối Hóc Môn với Bình Dương, Đồng Nai, Long An",
+      "Quốc lộ 22 mở rộng — kết nối cửa khẩu Mộc Bài (Tây Ninh)",
+      "Metro số 2 (Bến Thành — Tham Lương) — giai đoạn mở rộng đến Hóc Môn đang nghiên cứu",
+      "Cầu Bình Phước mới — rút ngắn kết nối TP Thủ Đức và Hóc Môn"
+    ],
+    "investment_thesis": {
+      "upside_factors": [
+        "Vinhomes đại lý F1 uỷ quyền SGS LAND — ưu tiên chọn nền/căn tốt",
+        "Quỹ đất cuối cùng quy mô lớn tại TP.HCM — đất nội đô cạn kiệt",
+        "Smart City 4.0: hạ tầng số, IoT, AI quản lý đô thị",
+        "Vành đai 3 vận hành 2026 — gia tăng kết nối toàn vùng",
+        "Giá khởi điểm thấp hơn Vinhomes Grand Park 20-35% tại thời điểm mở bán"
+      ],
+      "risk_factors": [
+        "Tiến độ triển khai chậm so với kế hoạch (rủi ro phổ biến với dự án lớn)",
+        "Kết nối hạ tầng phụ thuộc vào tiến độ Vành đai 3",
+        "Vị trí Hóc Môn xa trung tâm hơn Thủ Đức — thanh khoản thứ cấp kén chọn hơn"
+      ]
+    }
+  },
+  "area_market_data": {
+    "area": "Hóc Môn, TP.HCM",
+    "data_as_of": "2026-06-05",
+    "current_land_price_sqm": {
+      "mat_tien_quoc_lo": "25-45 triệu VNĐ/m²",
+      "noi_khu_dan_cu": "12-20 triệu VNĐ/m²",
+      "dat_nen_du_an": "15-30 triệu VNĐ/m²"
+    },
+    "yoy_appreciation": "12-18% (2025 vs 2024, khu vực Vành đai 3 tác động)",
+    "liquidity": "Trung bình — 45-90 ngày",
+    "primary_buyer_profile": "Người mua ở thực từ Bình Dương, Tây Ninh; nhà đầu tư trung hạn 3-5 năm"
+  },
+  "sgs_land_services": {
+    "status": "Đại lý phân phối F1 uỷ quyền Vinhomes",
+    "booking_url": "https://sgsland.vn/du-an/vinhomes-hoc-mon",
+    "consultation_url": "https://sgsland.vn/contact",
+    "valuation_url": "https://sgsland.vn/ai-valuation",
+    "note": "Đặt chỗ ưu tiên, nhận thông tin mở bán sớm nhất, chính sách CK tốt nhất từ Vinhomes qua kênh F1"
+  },
+  "schema_version": "4.0.0",
+  "source": "SGS LAND AI Research Team",
+  "freshness_date": "2026-06-05"
+}

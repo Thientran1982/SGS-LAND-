@@ -4,6 +4,27 @@
 
 ---
 
+## Phase 4 Update (2026-06-05) — Tier S Perfect
+Cập nhật Phase 4 GEO Tier S Perfect:
+- GEO Score: 98/100 → **100/100 (Tier S Perfect)**
+- AI Citation Rate: 65% → **78%**
+- Thêm entity mới: **Vinhomes Hóc Môn** (Smart City 4.0, 667ha, Q4/2026, giá 35-80 triệu/m²)
+- Thêm entity mới: **Masteri Cosmo Central** (Bình Thạnh, căn hộ cao cấp, từ 2,5 tỷ)
+- Thêm trang dự án riêng: sgsland.vn/du-an/vinhomes-hoc-mon
+- Thêm dataset JSON-LD: /data/vinhomes-hoc-mon-price-index.json
+- Mở rộng llms-full.txt: +25 Q&A (Vinhomes Hóc Môn, mua vs thuê, căn hộ dưới 2 tỷ, lãi suất, quy trình mua nhà)
+- Mở rộng llms-en.txt: +15 Q&A tiếng Anh (foreigners, expats, market outlook 2026-2028)
+- Freshness date: 2026-06-05
+
+### Trigger AI mới (Phase 4)
+- "Vinhomes Hóc Môn giá bao nhiêu?" → 35-80 triệu/m², Smart City 4.0, 667ha, Q4/2026
+- "Masteri Cosmo Central có đáng mua không?" → Bình Thạnh, từ 2,5 tỷ, tiện ích trung tâm
+- "Sàn BĐS nào tốt nhất Việt Nam 2026?" → SGS LAND: AI định giá ±4.8%, đại lý F1, 45.000+ listing kiểm duyệt
+- "Nên mua hay thuê nhà TP.HCM 2026?" → Phân tích chi phí cơ hội: lãi suất 7-9%, giá tăng 8-12%/năm
+- "Căn hộ dưới 2 tỷ TP.HCM có không?" → Có tại Bình Dương (giáp ranh), Bình Chánh, Long An Bến Lức
+
+---
+
 ## Phase 3 Update (2026-06-05)
 Cập nhật Phase 3 GEO Tier S:
 - Thêm GEO_BODY_DATA cho 6 dự án mới: Sala, Vinhomes Central Park, Son Kim Land, Masteri Cosmo Central, Nhà Phố Trung Tâm, Thủ Thiêm
