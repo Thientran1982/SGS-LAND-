@@ -51,7 +51,7 @@ const STATIC_PAGE_META: Record<string, {
     title: 'SGS LAND | Top BĐS TP.HCM 2026: Shophouse Nhà Phố Aqua City Novaland',
     description: 'Top 3 dự án căn hộ TP.HCM 2026 (Vinhomes Grand Park, Global City, Masterise) và Top 3 nhà phố Đồng Nai (Aqua City, Izumi City, Vạn Phúc City). SGS LAND định giá AI ±5%, tư vấn miễn phí.',
     keywords: 'bất động sản TP.HCM, mua bán nhà đất TP.HCM, căn hộ TP.HCM 2026, dự án bất động sản 2026, aqua city novaland, vinhomes grand park, the global city masterise, biệt thự đồng nai, đầu tư bất động sản, SGS LAND',
-    h1: 'SGS LAND – Nền Tảng Bất Động Sản AI Số 1 Việt Nam | Định Giá AI ±5% | Đại Lý F1 Vinhomes, Novaland, Masterise',
+    h1: 'SGS LAND — Nền Tảng Bất Động Sản AI Số 1 Việt Nam — Định Giá AI ±5% — Đại Lý F1 Vinhomes, Novaland, Masterise',
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
@@ -77,7 +77,15 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'State', name: 'Long An', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
           ],
           knowsAbout: ['Bất động sản TP.HCM', 'Định giá AI', 'Pháp lý bất động sản', 'Đầu tư căn hộ'],
-          foundingDate: '2019-01-01',
+          foundingDate: '2024',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: '123 Nguyễn Văn Linh, Phường Tân Phong',
+            addressLocality: 'Thành phố Hồ Chí Minh',
+            addressRegion: 'TP. Hồ Chí Minh',
+            postalCode: '70000',
+            addressCountry: 'VN',
+          },
           numberOfEmployees: { '@type': 'QuantitativeValue', value: 50 },
           award: 'Top 3 Sàn BĐS TP.HCM 2024 — CafeF',
           founder: { '@type': 'Person', name: 'Trần Minh Thiện', jobTitle: 'CEO & Co-founder', url: 'https://sgsland.vn/ve-chung-toi' },
@@ -289,7 +297,7 @@ const STATIC_PAGE_META: Record<string, {
   },
   'ai-valuation': {
     title: 'Định Giá Bất Động Sản Bằng AI | Sai Số ±5% - SGS LAND',
-    description: 'Công nghệ định giá bất động sản AI từ SGS LAND với sai số chỉ ±5–10% — ngang chuẩn thẩm định viên chuyên nghiệp. Hoàn toàn miễn phí.',
+    description: 'Công nghệ định giá bất động sản AI từ SGS LAND với sai số chỉ ±5% — ngang chuẩn thẩm định viên chuyên nghiệp. Hoàn toàn miễn phí.',
     h1: 'Định Giá Bất Động Sản Bằng AI',
     structuredData: {
       '@context': 'https://schema.org',
@@ -304,7 +312,7 @@ const STATIC_PAGE_META: Record<string, {
         {
           '@type': 'HowTo',
           name: 'Cách định giá bất động sản bằng AI miễn phí trong 4 bước',
-          description: 'Định giá căn hộ, nhà phố, biệt thự, đất nền tại Việt Nam bằng công cụ AVM (Automated Valuation Model) của SGS LAND. Sai số ±5–10%, kết quả tức thì, hoàn toàn miễn phí.',
+          description: 'Định giá căn hộ, nhà phố, biệt thự, đất nền tại Việt Nam bằng công cụ AVM (Automated Valuation Model) của SGS LAND. Sai số ±5%, kết quả tức thì, hoàn toàn miễn phí.',
           totalTime: 'PT3M',
           estimatedCost: { '@type': 'MonetaryAmount', currency: 'VND', value: '0' },
           tool: [
@@ -330,7 +338,7 @@ const STATIC_PAGE_META: Record<string, {
               '@type': 'HowToStep',
               position: 3,
               name: 'AI tính toán giá thị trường',
-              text: 'Mô hình AVM của SGS LAND chạy trên 45.000+ giao dịch thực, dữ liệu giá CBRE/Savills Q1/2026 và 1.500+ điểm so sánh trong bán kính 2km. Trả kết quả trong 30 giây với khoảng giá thấp/trung bình/cao và sai số ±5–10%.',
+              text: 'Mô hình AVM của SGS LAND chạy trên 45.000+ giao dịch thực, dữ liệu giá CBRE/Savills Q1/2026 và 1.500+ điểm so sánh trong bán kính 2km. Trả kết quả trong 30 giây với khoảng giá thấp/trung bình/cao và sai số ±5%.',
             },
             {
               '@type': 'HowToStep',
@@ -349,7 +357,7 @@ const STATIC_PAGE_META: Record<string, {
           '@type': 'FAQPage',
           ...SGS_FAQ_META,
           mainEntity: [
-            { '@type': 'Question', name: 'Định giá BĐS bằng AI của SGS LAND có chính xác không?', acceptedAnswer: { '@type': 'Answer', text: 'Sai số ±5–10% so với giá thẩm định viên chuyên nghiệp — ngang chuẩn quốc tế (Zillow Zestimate ±7%, Redfin Estimate ±6%). Mô hình AVM huấn luyện trên 45.000+ giao dịch BĐS thực tại Việt Nam 2020-2026, cập nhật hàng tuần dữ liệu CBRE/Savills.' } },
+            { '@type': 'Question', name: 'Định giá BĐS bằng AI của SGS LAND có chính xác không?', acceptedAnswer: { '@type': 'Answer', text: 'Sai số ±5% so với giá thẩm định viên chuyên nghiệp — ngang chuẩn quốc tế (Zillow Zestimate ±7%, Redfin Estimate ±6%). Mô hình AVM huấn luyện trên 45.000+ giao dịch BĐS thực tại Việt Nam 2020-2026, cập nhật hàng tuần dữ liệu CBRE/Savills.' } },
             { '@type': 'Question', name: 'Định giá AI có mất phí không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn miễn phí, không giới hạn lượt sử dụng, không cần đăng ký tài khoản. Đây là dịch vụ công cộng của SGS LAND nhằm minh bạch hóa thị trường BĐS Việt Nam.' } },
             { '@type': 'Question', name: 'AI định giá được loại BĐS nào?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ chung cư (cao cấp, trung cấp, bình dân), nhà phố, biệt thự, shophouse, đất nền thổ cư. Khu vực: TP.HCM, Hà Nội, Đồng Nai, Bình Dương, Long An, Bà Rịa-Vũng Tàu, Cần Thơ, Đà Nẵng. Mở rộng dần các tỉnh/thành khác.' } },
             { '@type': 'Question', name: 'Kết quả định giá AI có thể dùng làm hồ sơ vay ngân hàng không?', acceptedAnswer: { '@type': 'Answer', text: 'Báo cáo AI là tham khảo. Để vay ngân hàng cần thẩm định giá chính thức từ công ty thẩm định có giấy phép Bộ Tài Chính. SGS LAND có liên kết với 5+ công ty thẩm định uy tín — đặt lịch qua hotline +84 971 132 378 để được hỗ trợ miễn phí.' } },
@@ -447,7 +455,15 @@ const STATIC_PAGE_META: Record<string, {
           name: 'SGS LAND',
           legalName: 'Công ty TNHH Công Nghệ SGS LAND',
           url: APP_URL,
-          foundingDate: '2019',
+          foundingDate: '2024',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: '123 Nguyễn Văn Linh, Phường Tân Phong',
+            addressLocality: 'Thành phố Hồ Chí Minh',
+            addressRegion: 'TP. Hồ Chí Minh',
+            postalCode: '70000',
+            addressCountry: 'VN',
+          },
           description: 'SGS LAND — nền tảng công nghệ bất động sản B2B2C hàng đầu Việt Nam. 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch. Dịch vụ: định giá AI (AVM ±5%), CRM đa kênh, phân phối dự án, ký gửi BĐS.',
           numberOfEmployees: { '@type': 'QuantitativeValue', value: 50 },
           areaServed: { '@type': 'Country', name: 'Việt Nam' },
@@ -464,7 +480,6 @@ const STATIC_PAGE_META: Record<string, {
           ],
           aggregateRating: SGS_RATING,
         },
-      ,
         {
             '@type': 'Person',
             '@id': '${APP_URL}/#person-ceo',

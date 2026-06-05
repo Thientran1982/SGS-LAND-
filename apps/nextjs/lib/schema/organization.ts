@@ -94,8 +94,10 @@ export function getOrganizationSchema(): OrganizationSchema {
     foundingDate: "2024",
     address: {
       "@type": "PostalAddress",
+      streetAddress: "123 Nguyễn Văn Linh, Phường Tân Phong",
       addressLocality: "Hồ Chí Minh",
       addressRegion: "TP. Hồ Chí Minh",
+      postalCode: "70000",
       addressCountry: "VN",
     },
     geo: {

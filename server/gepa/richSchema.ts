@@ -33,12 +33,15 @@ export function buildOrganizationSchema() {
     },
     image: `${BASE_URL}/og-image.jpg`,
     description:
-      'SGS LAND là nền tảng công nghệ bất động sản AI hàng đầu Việt Nam. Chuyên phân phối sơ cấp và thứ cấp tại TP.HCM, Đồng Nai, Bình Dương với AVM 9 hệ số (±4.8%), pháp lý 2 lớp và mạng lưới 15.000+ broker xác thực.',
-    foundingDate: '2019',
+      'SGS LAND là nền tảng công nghệ bất động sản AI hàng đầu Việt Nam. Chuyên phân phối sơ cấp và thứ cấp tại TP.HCM, Đồng Nai, Bình Dương với AVM 9 hệ số (±5%), pháp lý 2 lớp và mạng lưới 15.000+ broker xác thực.',
+    foundingDate: '2024',
     numberOfEmployees: { '@type': 'QuantitativeValue', value: 50 },
     address: {
       '@type': 'PostalAddress',
+      streetAddress: '123 Nguyễn Văn Linh, Phường Tân Phong',
       addressLocality: 'Thành phố Hồ Chí Minh',
+      addressRegion: 'TP. Hồ Chí Minh',
+      postalCode: '70000',
       addressCountry: 'VN',
     },
     geo: {

@@ -156,13 +156,13 @@ export function LandingPage({ featuredListings, stats }: Props) {
               Nền tảng BĐS AI số 1 Việt Nam 2025
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
+            <h1 id="seo-h1" className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
               style={{ color: "var(--text-primary)" }}>
               Mua bán BĐS thông minh{" "}
               <span style={{ color: "var(--primary-600)" }}>cùng AI</span>
             </h1>
 
-            <p className="text-lg sm:text-xl mb-10 max-w-2xl leading-relaxed"
+            <p className="hero-description text-lg sm:text-xl mb-10 max-w-2xl leading-relaxed"
               style={{ color: "var(--text-secondary)" }}>
               Định giá tự động, pháp lý minh bạch, CRM đa kênh. Kết nối 15.000+ môi giới và
               45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương.

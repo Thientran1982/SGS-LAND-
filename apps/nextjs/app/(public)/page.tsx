@@ -7,7 +7,7 @@ import { getFAQSchema, getBreadcrumbSchema, getFoundersSchema, FAQ_HOMEPAGE, SIT
 export const metadata: Metadata = {
   title: "Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
   description:
-    "SGS LAND — Marketplace BĐS, định giá AI tự động ±4.8%, CRM đa kênh. Khám phá 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương. Đại lý F1: Vinhomes Hóc Môn, Vinhomes Cần Giờ, Aqua City.",
+    "SGS LAND — Marketplace BĐS, định giá AI tự động ±5%, CRM đa kênh. Khám phá 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương. Đại lý F1: Vinhomes Hóc Môn, Vinhomes Cần Giờ, Aqua City.",
   alternates: { canonical: "https://sgsland.vn/" },
 };
 
@@ -92,21 +92,6 @@ const DATASET_VHM = {
   },
 };
 
-const SPEAKABLE_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "@id": `${SITE_URL}/#speakable`,
-  name: "SGS LAND — Nền tảng BĐS AI số 1 Việt Nam",
-  url: SITE_URL,
-  speakable: {
-    "@type": "SpeakableSpecification",
-    cssSelector: ["h1", "h2", ".hero-description", "[data-speakable]"],
-    xpath: [
-      "/html/head/title",
-      "/html/head/meta[@name='description']/@content",
-    ],
-  },
-};
 
 export default async function HomePage() {
   // Fetch featured listings & stats at build/revalidation time
@@ -142,7 +127,6 @@ export default async function HomePage() {
         SPECIAL_ANNOUNCEMENT_VCG,
         DATASET_AREA_PRICE_INDEX,
         DATASET_VHM,
-        SPEAKABLE_SCHEMA,
       ]} />
       <LandingPage featuredListings={featuredListings} stats={stats} />
     </>

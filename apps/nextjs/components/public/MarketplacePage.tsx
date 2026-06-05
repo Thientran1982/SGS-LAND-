@@ -130,6 +130,11 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
         <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
           {totalCount.toLocaleString()} bất động sản phù hợp
         </p>
+        {!sp.q && (
+          <h2 className="text-sm font-semibold mt-1" style={{ color: "var(--text-secondary)" }}>
+            Kho Hàng BDS Cập Nhật Realtime
+          </h2>
+        )}
       </div>
 
       {/* Search bar */}
