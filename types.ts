@@ -18,6 +18,7 @@ export const VN_PHONE_REGEX = /^(03|05|07|08|09)([0-9]{8})$/;
 
 export interface Article {
     id: string;
+    slug?: string;
     title: string;
     excerpt: string;
     content: string; // HTML string
