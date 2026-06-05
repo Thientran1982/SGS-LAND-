@@ -22,9 +22,18 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const canonicalUrl = `https://sgsland.vn/news/${slug}`;
   const article = getArticleBySlug(slug);
-  if (!article) return { title: "Bài viết không tìm thấy | SGS LAND" };
-  return generateArticleMeta(article);
+  if (!article) {
+    return {
+      title: "Bài viết không tìm thấy | SGS LAND",
+      alternates: { canonical: canonicalUrl },
+    };
+  }
+  return {
+    ...generateArticleMeta(article),
+    alternates: { canonical: canonicalUrl },
+  };
 }
 
 export const revalidate = 3600;
