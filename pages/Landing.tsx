@@ -533,7 +533,7 @@ export const Landing: React.FC = () => {
         </li>
     );
     return (
-        <div className="bg-[var(--bg-surface)] dark:bg-slate-900 text-[var(--text-primary)] dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-clip min-h-[100dvh] transition-colors duration-300">
+        <div className="bg-[var(--bg-surface)] dark:bg-slate-900 text-[var(--text-primary)] dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden min-h-[100dvh] transition-colors duration-300">
             <SeoHead
                 title="SGS LAND | Định Giá AI & CRM Bất Động Sản Số 1 Việt Nam"
                 description="Nền tảng BĐS AI hàng đầu Việt Nam: Định giá ±5%, CRM đa kênh Zalo/Facebook/Email, kho 2.000+ tin thật, pháp lý kiểm duyệt 2 lớp. Dùng thử miễn phí 14 ngày."

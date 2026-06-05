@@ -407,9 +407,6 @@ const useRouter = () => {
             const queryPart = sepIdx >= 0 ? after.slice(sepIdx) : '';
             window.history.replaceState(null, '', '/' + pathPart + queryPart);
             setRoute(getPathData());
-        } else if (pathname === '/' || pathname === '') {
-            window.history.replaceState(null, '', `/${ROUTES.LANDING}`);
-            setRoute(getPathData());
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
