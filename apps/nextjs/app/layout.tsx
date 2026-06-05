@@ -136,8 +136,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
-        {/* next/font self-hosts Inter + JetBrains Mono — no external font request needed */}
-        <link rel="dns-prefetch" href="https://sgsland.vn" />
+        {/* Preconnect to key third-party origins for LCP improvement */}
+        <link rel="preconnect" href="https://c.clarity.ms" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+        <link rel="dns-prefetch" href="https://c.clarity.ms" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
         {/* Sitewide JSON-LD: WebSite (SearchAction) + Organization (E-E-A-T) */}
         <SchemaScript schemas={[getWebsiteSchema(), getOrganizationSchema()]} />

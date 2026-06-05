@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/dau-tu-bat-dong-san`,         lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
     { url: `${BASE}/phap-ly-nha-dat`,             lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
     { url: `${BASE}/about-us`,                    lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/chuyen-gia`,                  lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/contact`,                     lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/careers`,                     lastModified: now, changeFrequency: "weekly",  priority: 0.6 },
     { url: `${BASE}/help-center`,                 lastModified: now, changeFrequency: "weekly",  priority: 0.6 },
