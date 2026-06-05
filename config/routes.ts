@@ -31,6 +31,7 @@ export const ROUTES = {
     BDS_BINH_CHANH: 'bat-dong-san-binh-chanh',
     BDS_BINH_THANH: 'bat-dong-san-binh-thanh',
     BDS_LONG_AN: 'bat-dong-san-long-an',
+    BDS_CAN_GIO: 'bat-dong-san-can-gio',
     DAU_TU_BDS: 'dau-tu-bat-dong-san',
     PHAP_LY_NHA_DAT: 'phap-ly-nha-dat',
     DU_AN: 'du-an',

@@ -975,7 +975,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.attributes?.direction ? (t(`direction.${unit.attributes.direction}`) || unit.attributes.direction) : '--'}</td>
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.area} <span className="text-xs2 text-[var(--text-secondary)]">m²</span></td>
                                                 <td className="px-4 py-3 text-xs3 text-[var(--text-tertiary)] text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
-                                                <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{formatCurrency(unit.price)}</td>
+                                                <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{formatCompactNumber(unit.price)}</td>
                                                 {/* Assignee column */}
                                                 <td className="px-4 py-3 min-w-[160px]" onClick={e => e.stopPropagation()}>
                                                     {canManageUnits ? (
@@ -1063,7 +1063,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 <div className="italic">{formatUnitPrice(unit.price, unit.area, t)}</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-base font-black text-[var(--text-primary)]">{formatCurrency(unit.price)}</div>
+                                                <div className="text-base font-black text-[var(--text-primary)]">{formatCompactNumber(unit.price)}</div>
                                             </div>
                                         </div>
                                         {/* Assignee display (mobile) */}

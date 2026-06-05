@@ -8,7 +8,10 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const code = slug.split("-").pop() ?? slug; // e.g. "can-ho-aqua-city-LST123" → "LST123"
+  // Extract trailing UUID (e.g. "can-ho-abc-a1b2c3d4-e5f6-7890-abcd-123456789012" → full UUID)
+  const TRAILING_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidMatch = slug.match(TRAILING_UUID);
+  const code = uuidMatch ? uuidMatch[0] : (slug.split("-").pop() ?? slug);
 
   let listing: Listing | null = null;
   try {
@@ -20,7 +23,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   } catch {}
 
   if (!listing) {
-    return { title: "Bất động sản | SGS LAND" };
+    return {
+      title: "Bất động sản | SGS LAND",
+      alternates: { canonical: `https://sgsland.vn/bds/${slug}` },
+      openGraph: { url: `https://sgsland.vn/bds/${slug}` },
+    };
   }
 
   const price = listing.price >= 1e9
@@ -42,11 +49,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ListingDetailRoute({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const parts = slug.split("-");
-  // Last part is the listing code (LST123456)
-  const code = parts[parts.length - 1].startsWith("LST") || parts[parts.length - 1].startsWith("MCC")
-    ? parts[parts.length - 1]
-    : slug;
+  // Extract trailing UUID (same logic as generateMetadata)
+  const TRAILING_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidMatch = slug.match(TRAILING_UUID);
+  const code = uuidMatch ? uuidMatch[0] : (slug.split("-").pop() ?? slug);
 
   let listing: Listing | null = null;
   let similarListings: Listing[] = [];

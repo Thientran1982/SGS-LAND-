@@ -40,6 +40,10 @@ const LOCATION_SEO_META: Record<string, { title: string; description: string }> 
         title: 'Bất Động Sản Long An 2026 | Đất Nền Đức Hòa, Bến Lức, Cần Đước — SGS LAND',
         description: 'Mua bán bất động sản Long An 2026: đất nền Đức Hòa 5–20 triệu/m², Bến Lức 8–25 triệu/m², Cần Đước 4–12 triệu/m². Hưởng lợi Vành đai 3&4. SGS LAND tư vấn miễn phí.',
     },
+    'bat-dong-san-can-gio': {
+        title: 'Bất Động Sản Cần Giờ TP.HCM 2026 | Đất Biển, Nhà Vườn Sinh Thái — SGS LAND',
+        description: 'Mua bán bất động sản Cần Giờ TP.HCM 2026: đất nền ven biển 5–15 triệu/m², nhà vườn nghỉ dưỡng, khu đô thị biển. Huyện đảo UNESCO duy nhất TP.HCM — tiềm năng Cầu Cần Giờ 2028. SGS LAND tư vấn miễn phí.',
+    },
     'dau-tu-bat-dong-san': {
         title: 'Đầu Tư Bất Động Sản Hiệu Quả 2026 | Hướng Dẫn Toàn Diện — SGS LAND',
         description: 'Hướng dẫn đầu tư bất động sản 2026: chiến lược chọn BĐS sinh lời, tính ROI, quản lý rủi ro pháp lý và tối ưu tài chính. Tư vấn miễn phí từ chuyên gia SGS LAND.',
@@ -947,6 +951,68 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         relatedProjects: [
             { name: 'Waterpoint Nam Long', slug: 'aqua-city' },
             { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+        ],
+    },
+    'bat-dong-san-can-gio': {
+        slug: 'bat-dong-san-can-gio',
+        name: 'Cần Giờ',
+        province: 'TP. Hồ Chí Minh',
+        searchQuery: 'Cần Giờ',
+        heroDescription: 'Bất động sản Cần Giờ TP.HCM 2026: huyện biển duy nhất của TP.HCM với rừng ngập mặn UNESCO, bãi biển 30/4 và tiềm năng du lịch sinh thái bùng nổ. Đất nền ven biển giá còn mềm 5–15 triệu/m², nhà vườn nghỉ dưỡng và khu đô thị biển sắp triển khai. SGS LAND tư vấn miễn phí.',
+        stats: [
+            { label: 'Giá đất nền ven biển', value: '5–15 tr/m²' },
+            { label: 'Diện tích rừng sinh thái', value: '75.000 ha' },
+            { label: 'Du khách/năm', value: '3 triệu+' },
+            { label: 'Cầu Cần Giờ (dự kiến)', value: '2028–2030' },
+        ],
+        highlights: [
+            {
+                title: 'Khu Dự Trữ Sinh Quyển UNESCO — Duy Nhất TP.HCM',
+                desc: 'Rừng ngập mặn Cần Giờ rộng 75.000ha được UNESCO công nhận là Khu Dự Trữ Sinh Quyển Thế Giới năm 2000. Hệ sinh thái độc đáo này tạo ra lợi thế du lịch sinh thái không nơi nào có — nền tảng cho BĐS nghỉ dưỡng cao cấp dài hạn.',
+            },
+            {
+                title: 'Cầu Cần Giờ — Catalyst Tăng Giá Lớn Nhất',
+                desc: 'Dự án Cầu Cần Giờ (dài 3,4km, tổng vốn 10.000 tỷ đồng) dự kiến khởi công 2025–2026, thông xe 2028–2030, rút ngắn thời gian từ trung tâm TP.HCM xuống còn 30–45 phút. Đất bán kính 5km quanh cầu dự báo tăng 2–3 lần khi thông xe.',
+            },
+            {
+                title: 'Giá Đất Còn Rẻ — Cơ Hội Tích Lũy Trước Cầu',
+                desc: 'Đất nền Cần Giờ hiện chỉ 5–15 triệu/m² — thấp hơn Nhà Bè 60–70%, thấp hơn Cần Đước 30–40%. Đây là thị trường hiếm hoi còn giá "đất nền ven biển" dưới 20 triệu/m² trong bán kính 50km TP.HCM. Window trước khi cầu thông xe còn khoảng 3–4 năm.',
+            },
+            {
+                title: 'Quy Hoạch Đô Thị Biển & Khu Du Lịch Quốc Gia',
+                desc: 'Quy hoạch tổng thể Cần Giờ định hướng trở thành đô thị du lịch biển sinh thái cấp quốc gia với khu đô thị lấn biển, resort nghỉ dưỡng, và trung tâm thủy sản xuất khẩu. Tổng diện tích quy hoạch đô thị mới 3.000ha, vốn đầu tư dự kiến trên 200.000 tỷ đồng.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Bất động sản Cần Giờ có đáng đầu tư không năm 2026?',
+                a: 'Cần Giờ là thị trường BĐS tiềm năng nhờ 4 yếu tố: (1) Cầu Cần Giờ dự kiến thông xe 2028–2030 sẽ rút ngắn khoảng cách với TP.HCM; (2) Giá đất hiện vẫn thấp so với các huyện ven thành khác; (3) Quy hoạch đô thị biển và khu du lịch quốc gia đã được phê duyệt; (4) Rừng ngập mặn UNESCO tạo lợi thế sinh thái độc đáo. Rủi ro chính: thanh khoản thứ cấp thấp và tiến độ hạ tầng phụ thuộc vốn nhà nước.',
+            },
+            {
+                q: 'Giá đất Cần Giờ hiện nay là bao nhiêu?',
+                a: 'Giá đất Cần Giờ 2026 theo phân khúc: Đất nền thị trấn Cần Thạnh (gần biển 30/4): 8–20 triệu/m²; Đất nền xã Long Hòa, Lý Nhơn: 3–8 triệu/m²; Đất vườn, đất nông nghiệp: 500.000–2 triệu/m²; Nhà vườn nghỉ dưỡng có sổ: 3–10 tỷ/căn. Giá biến động theo khoảng cách đường lớn và pháp lý đất.',
+            },
+            {
+                q: 'Cầu Cần Giờ ảnh hưởng thế nào đến giá BĐS?',
+                a: 'Cầu Cần Giờ (thay thế phà Bình Khánh) dài 3,4km sẽ rút ngắn thời gian từ TP.HCM xuống Cần Thạnh còn 30–40 phút (hiện 70–90 phút). Các cây cầu tương tự (Cần Thơ, Mỹ Thuận) đã chứng minh tăng giá đất bán kính 10km lên 2–4 lần sau thông xe. Giá Cần Giờ đã bắt đầu tăng từ 2023 khi có thông tin khởi công — cần tính kỹ vùng giá mua vào.',
+            },
+            {
+                q: 'Pháp lý đất Cần Giờ cần lưu ý gì?',
+                a: 'Đất Cần Giờ có nhiều vấn đề pháp lý đặc thù: (1) Đất rừng phòng hộ, đất vùng đệm sinh quyển không được chuyển mục đích; (2) Đất nông nghiệp ven rừng ngập mặn bị hạn chế xây dựng; (3) Đất "bìa đỏ" thực tế nằm trong quy hoạch cảng hoặc đường vành đai; (4) Nhiều giao dịch đất không rõ nguồn gốc tại xã đảo. SGS LAND kiểm tra quy hoạch 1/2000 và pháp lý miễn phí trước giao dịch.',
+            },
+            {
+                q: 'Từ trung tâm TP.HCM đến Cần Giờ mất bao lâu?',
+                a: 'Hiện tại từ Quận 1 đến Cần Thạnh (thị trấn Cần Giờ) mất 70–90 phút qua phà Bình Khánh (chờ phà 20–30 phút). Khi Cầu Cần Giờ hoàn thành (dự kiến 2028–2030), thời gian rút còn 35–45 phút. Một số nhà đầu tư đến bằng ca nô từ Quận 4 (45 phút) hoặc từ Nhà Bè (30 phút đường bộ + phà ngắn).',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS Bình Chánh', slug: 'bat-dong-san-binh-chanh' },
+            { name: 'BĐS Quận 7', slug: 'bat-dong-san-quan-7' },
+            { name: 'BĐS Long An', slug: 'bat-dong-san-long-an' },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
         ],
     },
 };
