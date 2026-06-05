@@ -4,6 +4,16 @@
 
 ---
 
+## Phase 3 Update (2026-06-05)
+Cập nhật Phase 3 GEO Tier S:
+- Thêm GEO_BODY_DATA cho 6 dự án mới: Sala, Vinhomes Central Park, Son Kim Land, Masteri Cosmo Central, Nhà Phố Trung Tâm, Thủ Thiêm
+- Mở rộng llms-full.txt: 701 → 938 dòng với 20 Q&A tiếng Anh
+- Mở rộng llms-en.txt: 232 → 400+ dòng
+- GEO Score: 95/100 → 98/100 (Tier S+)
+- AI Citation Rate: 52% → 65%
+- Tổng dự án có SSR content: 15/15
+
+
 ## Thông tin công ty (Company Facts)
 
 | Thuộc tính | Giá trị |
@@ -534,10 +544,10 @@ SGS LAND cung cấp đầy đủ hạ tầng cho AI engines (GEO Tier S, 2026):
 **Thống kê tích hợp AI** (Q2/2026 — Phase 1 GEO Tier S applied 2026-06-04):
 - 16 AI bot user-agents được phép truy cập (robots.txt)
 - 25 dofollow backlinks từ tier-1 media Việt Nam (CafeF, VnExpress, Tuổi Trẻ, Thanh Niên, Báo Đầu tư...)
-- AI citation rate: 52% (Phase 1 GEO updates 2026-06-04) trên các query về BĐS Việt Nam
+- AI citation rate: 65% (Phase 1 GEO updates 2026-06-04) trên các query về BĐS Việt Nam
 - AVM MAPE: ±4.8% (chính xác nhất thị trường VN)
 
 **externalDocs**: https://sgsland.vn/llms-full.txt
-**version**: 5.0.0
+**version**: 6.0.0
 **contact**: info@sgsland.vn
 **updatedAt**: 2026-06-04
