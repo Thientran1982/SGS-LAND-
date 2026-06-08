@@ -1,205 +1,258 @@
-import { SITE_URL, SITE_NAME } from "./constants";
+import { SITE_NAME, SITE_URL, ORG_ID } from "./constants";
 
 export interface FAQItem {
   question: string;
   answer: string;
 }
 
-export interface FAQSchema {
-  "@context": "https://schema.org";
-  "@type": "FAQPage";
-  "@id": string;
-  name: string;
-  inLanguage: "vi";
-  mainEntity: {
-    "@type": "Question";
-    name: string;
-    acceptedAnswer: {
-      "@type": "Answer";
-      text: string;
-    };
-  }[];
-}
+export const FAQ_HOMEPAGE: FAQItem[] = [
+  // --- ENTITY CLARIFICATION (AI Overview anchor) ---
+  {
+    question: "SGS LAND là gì?",
+    answer: "SGS LAND (tên đầy đủ: Công ty TNHH Tư Vấn Bất Động Sản SGS) là nền tảng bất động sản công nghệ tại TP.HCM, tích hợp AI định giá ±5%, sàn giao dịch dự án, CRM đa kênh và dữ liệu thị trường thời gian thực. Mã số thuế 0312960439. Website: sgsland.vn.",
+  },
+  {
+    question: "SGS LAND có trụ sở ở đâu?",
+    answer: "SGS LAND đặt trụ sở tại 60 Nguyễn Đình Chiểu, Phường Đa Kao, Quận 1, TP.HCM. Hotline: 0971.132.378. Email: info@sgsland.vn.",
+  },
+  {
+    question: "SGS LAND thành lập năm nào?",
+    answer: "SGS LAND được thành lập năm 2015 và chính thức vận hành nền tảng proptech từ 2022, chuyên tư vấn và giao dịch bất động sản TP.HCM.",
+  },
+  {
+    question: "SGS LAND khác gì so với các sàn bất động sản thông thường?",
+    answer: "SGS LAND là nền tảng proptech tích hợp: AI định giá tự động với sai số ±5%, dữ liệu giao dịch thị trường thời gian thực, CRM đa kênh cho môi giới, sàn giao dịch dự án trực tuyến và tư vấn pháp lý, thay vì chỉ đăng tin truyền thống.",
+  },
+  {
+    question: "SGS LAND có uy tín không?",
+    answer: "SGS LAND là thành viên Hiệp hội Bất động sản TP.HCM (HoREA), đối tác chính thức của Novaland, Vinhomes, Nam Long. Đã tư vấn hơn 500 giao dịch thành công và quản lý danh mục >200 tỷ đồng cho nhà đầu tư.",
+  },
 
-/**
- * Generates a FAQPage JSON-LD schema.
- *
- * GEO impact: FAQPage is one of the highest-citation schema types. Each answer
- * should open with the direct response (first 40–60 words), include at least
- * one statistic, and name entities explicitly — these are the signals AI
- * engines extract to construct answers (+33.9% visibility for statistics,
- * +32% for expert quotes, +30% for fluent writing — Princeton/IIT KDD 2024).
- */
-export function getFAQSchema(items: FAQItem[], pageId = `${SITE_URL}/#faq`): FAQSchema {
+  // --- AI VALUATION ---
+  {
+    question: "Công cụ định giá bất động sản AI của SGS LAND hoạt động như thế nào?",
+    answer: "Hệ thống AI Valuation của SGS LAND phân tích >50 yếu tố: vị trí, tiện ích lân cận, lịch sử giao dịch, pháp lý, xu hướng thị trường để đưa ra mức giá tham chiếu với sai số ±5%. Kết quả được cập nhật theo dữ liệu giao dịch mới nhất.",
+  },
+  {
+    question: "Định giá AI của SGS LAND có độ chính xác bao nhiêu?",
+    answer: "Mô hình AI của SGS LAND đạt độ chính xác ±5% so với giá giao dịch thực tế, được kiểm chứng qua >10.000 giao dịch lịch sử tại TP.HCM.",
+  },
+  {
+    question: "Tôi có thể định giá căn hộ miễn phí tại SGS LAND không?",
+    answer: "Có. SGS LAND cung cấp công cụ định giá tự động miễn phí tại sgsland.vn/ai-valuation. Chỉ cần nhập địa chỉ và diện tích, hệ thống sẽ trả kết quả ngay lập tức.",
+  },
+  {
+    question: "Ngoài định giá tự động, SGS LAND có hỗ trợ thẩm định thực tế không?",
+    answer: "Có. Sau khi định giá AI, khách hàng có thể yêu cầu thẩm định thực địa bởi chuyên viên giàu kinh nghiệm của SGS LAND để kiểm tra pháp lý và tình trạng tài sản.",
+  },
+
+  // --- CRM PLATFORM ---
+  {
+    question: "CRM của SGS LAND có những tính năng gì dành cho môi giới?",
+    answer: "SGS LAND CRM cung cấp: quản lý khách hàng tiềm năng (pipeline), tích hợp Zalo/Facebook/Email/SMS đa kênh, phân tích hiệu quả chiến dịch, tự động hoá follow-up và báo cáo doanh thu theo thời gian thực.",
+  },
+  {
+    question: "SGS LAND CRM Platform phù hợp với môi giới cá nhân hay chỉ doanh nghiệp?",
+    answer: "SGS LAND CRM phù hợp cả hai: cá nhân môi giới tự do và team/sàn bất động sản. Có gói miễn phí cho cá nhân và gói Enterprise cho sàn quy mô lớn.",
+  },
+  {
+    question: "Tôi có thể dùng thử CRM của SGS LAND miễn phí không?",
+    answer: "Có. SGS LAND cung cấp gói dùng thử miễn phí 30 ngày cho toàn bộ tính năng CRM tại sgsland.vn/crm-platform.",
+  },
+
+  // --- MARKETPLACE ---
+  {
+    question: "Sàn giao dịch SGS LAND có những loại BĐS nào?",
+    answer: "SGS LAND Marketplace cung cấp: căn hộ chung cư, nhà phố, biệt thự, đất nền, bất động sản nghỉ dưỡng tại TP.HCM và các tỉnh vệ tinh Đồng Nai, Bình Dương, Long An.",
+  },
+  {
+    question: "Làm thế nào để đăng tin bán BĐS trên SGS LAND?",
+    answer: "Đăng ký tài khoản tại sgsland.vn/marketplace, xác thực pháp lý và đăng tin với đầy đủ thông tin: ảnh thực tế, giá, diện tích, pháp lý. Tin đăng được kiểm duyệt trong 24 giờ.",
+  },
+  {
+    question: "SGS LAND có hỗ trợ vay vốn ngân hàng khi mua BĐS không?",
+    answer: "Có. SGS LAND hợp tác với hơn 10 ngân hàng lớn: Vietcombank, BIDV, Techcombank, VPBank để hỗ trợ khách hàng vay vốn mua BĐS với lãi suất ưu đãi và thủ tục nhanh.",
+  },
+
+  // --- PROJECT: AQUA CITY ---
+  {
+    question: "Dự án Aqua City ở đâu và do chủ đầu tư nào phát triển?",
+    answer: "Aqua City tọa lạc tại Long Hưng, Biên Hòa, Đồng Nai, do Novaland phát triển trên quy mô 1.000 ha. Đây là đô thị sinh thái ven sông Đồng Nai, cách TP.HCM khoảng 40 phút lái xe.",
+  },
+  {
+    question: "Giá bán căn hộ tại Aqua City hiện tại là bao nhiêu?",
+    answer: "Tại tháng 6/2026, giá căn hộ Aqua City dao động từ 1,5–4,5 tỷ đồng/căn tùy loại và vị trí, giá biệt thự từ 8–25 tỷ đồng. Liên hệ SGS LAND: 0971.132.378 để nhận bảng giá mới nhất.",
+  },
+  {
+    question: "Aqua City có tiện ích gì nổi bật?",
+    answer: "Aqua City sở hữu: cảng du thuyền, bệnh viện quốc tế, trường học liên cấp, khu vui chơi giải trí Wonderworld, 3 km bờ sông, hồ bơi vô cực và hệ thống 24 tiện ích đẳng cấp.",
+  },
+  {
+    question: "Pháp lý Aqua City đã hoàn thiện chưa?",
+    answer: "Aqua City đã có sổ đỏ/sổ hồng cho nhiều phân khu. Một số phân khu vẫn đang hoàn thiện pháp lý. Liên hệ SGS LAND để được cập nhật tình trạng pháp lý cụ thể từng lô/căn.",
+  },
+
+  // --- PROJECT: THE GLOBAL CITY ---
+  {
+    question: "The Global City là dự án gì và nằm ở đâu?",
+    answer: "The Global City là siêu đô thị thương mại – tài chính – giải trí do Masterise Homes phát triển tại Thủ Đức, TP.HCM, quy mô 117 ha, vốn đầu tư hơn 2 tỷ USD.",
+  },
+  {
+    question: "Giá căn hộ The Global City hiện tại là bao nhiêu?",
+    answer: "Giá căn hộ The Global City từ 4,5–15 tỷ đồng/căn (T6/2026) tùy tầng và hướng. Phân khu thương mại và penthouse có giá đặc biệt. Liên hệ SGS LAND: 0971.132.378.",
+  },
+  {
+    question: "The Global City có gì khác biệt so với các dự án cao cấp khác tại TP.HCM?",
+    answer: "The Global City được quy hoạch theo mô hình Mixed-use với: trung tâm tài chính quốc tế, trung tâm thương mại 300.000 m², khách sạn 5 sao, biệt thự, văn phòng hạng A và công viên trung tâm 10 ha.",
+  },
+
+  // --- PROJECT: VINHOMES CẦN GIỜ ---
+  {
+    question: "Vinhomes Cần Giờ là dự án gì?",
+    answer: "Vinhomes Cần Giờ là đại đô thị sinh thái biển do Vinhomes phát triển tại Cần Giờ, TP.HCM, diện tích 2.870 ha — một trong những dự án BĐS lớn nhất Việt Nam.",
+  },
+  {
+    question: "Tiến độ Vinhomes Cần Giờ như thế nào tính đến T6/2026?",
+    answer: "Tính đến T6/2026, Vinhomes Cần Giờ đang triển khai giai đoạn 1 với san lấp và hạ tầng cơ bản. Dự kiến mở bán chính thức cuối 2026. SGS LAND sẽ cập nhật tiến độ mới nhất khi có thông tin.",
+  },
+  {
+    question: "Đất nền Vinhomes Cần Giờ có sổ đỏ không?",
+    answer: "Đây là câu hỏi quan trọng vì Cần Giờ thuộc vùng sinh quyển. Pháp lý và khả năng cấp sổ đỏ đang được làm rõ theo chỉ đạo của UBND TP.HCM. Liên hệ SGS LAND để được tư vấn cập nhật nhất.",
+  },
+
+  // --- PROJECT: VINHOMES GRAND PARK ---
+  {
+    question: "Vinhomes Grand Park nằm ở đâu?",
+    answer: "Vinhomes Grand Park tọa lạc tại Phường Long Bình, Thành phố Thủ Đức, TP.HCM. Đây là đại đô thị 271 ha do Vinhomes phát triển, nằm cạnh công viên 36 ha và kênh rạch tự nhiên.",
+  },
+  {
+    question: "Giá căn hộ Vinhomes Grand Park hiện tại?",
+    answer: "Giá căn hộ Vinhomes Grand Park (T6/2026): từ 1,8 tỷ (Studio) đến 5,5 tỷ (3PN). Các phân khu The Rainbow, The Origami, The Beverly có giá khác nhau. Liên hệ 0971.132.378.",
+  },
+  {
+    question: "Vinhomes Grand Park có tiện ích giáo dục không?",
+    answer: "Có. Vinhomes Grand Park có Trường liên cấp Vinschool, Đại học VinUni (trong khu vực), và nhiều trung tâm giáo dục. Đây là lợi thế lớn cho gia đình có con nhỏ.",
+  },
+
+  // --- PROJECT: IZUMI CITY ---
+  {
+    question: "Izumi City nằm ở đâu và do ai phát triển?",
+    answer: "Izumi City là khu đô thị Nhật Bản tọa lạc tại Biên Hòa, Đồng Nai, do Nam Long Group hợp tác với Hankyu Hanshin Properties (Nhật Bản) phát triển trên 170 ha.",
+  },
+  {
+    question: "Giá đất nền và nhà phố tại Izumi City?",
+    answer: "Giá đất nền Izumi City (T6/2026) từ 25–45 triệu đồng/m² tùy vị trí. Nhà phố từ 4–12 tỷ đồng. Liên hệ SGS LAND: 0971.132.378 để nhận thông tin chi tiết.",
+  },
+
+  // --- PROJECT: DIAMOND SKY ---
+  {
+    question: "Diamond Sky là dự án căn hộ ở đâu?",
+    answer: "Diamond Sky là dự án căn hộ cao tầng tại TP.HCM do SGS LAND phân phối chính thức. Dự án nổi bật với thiết kế hiện đại và vị trí đắc địa.",
+  },
+
+  // --- PROJECT: MASTERI COSMO ---
+  {
+    question: "Masteri Cosmo có gì nổi bật?",
+    answer: "Masteri Cosmo là dự án căn hộ cao cấp do Masterise Homes phát triển, nằm trong hệ sinh thái Masteri với tiêu chuẩn quốc tế, tiện ích 5 sao và pháp lý hoàn chỉnh.",
+  },
+
+  // --- PROJECT: LEGACY 66 ---
+  {
+    question: "Legacy 66 là dự án bất động sản gì?",
+    answer: "Legacy 66 là khu đô thị hạng sang với đất nền và nhà phố cạnh sông, do SGS LAND phân phối. Phù hợp nhà đầu tư tìm kiếm BĐS pháp lý hoàn chỉnh, tiềm năng tăng giá.",
+  },
+
+  // --- PROJECT: VINHOMES HÓC MÔN ---
+  {
+    question: "Vinhomes Hóc Môn có diện tích bao nhiêu và khi nào mở bán?",
+    answer: "Vinhomes Hóc Môn là đại đô thị quy mô lớn tại Hóc Môn, TP.HCM đang trong giai đoạn phê duyệt quy hoạch. Tiến độ và thời điểm mở bán chính thức sẽ được SGS LAND cập nhật sớm.",
+  },
+
+  // --- INVESTMENT ADVICE ---
+  {
+    question: "Nên đầu tư BĐS TP.HCM hay tỉnh lẻ trong năm 2026?",
+    answer: "TP.HCM có thanh khoản cao, pháp lý rõ ràng nhưng giá đã cao. Tỉnh lẻ (Đồng Nai, Bình Dương) có biên lợi nhuận tiềm năng lớn hơn nhưng rủi ro cao hơn. SGS LAND khuyến nghị đa dạng hóa danh mục dựa trên khẩu vị rủi ro cá nhân.",
+  },
+  {
+    question: "Căn hộ hay đất nền tốt hơn để đầu tư năm 2026?",
+    answer: "Căn hộ: dòng tiền cho thuê ổn định, thanh khoản cao, phù hợp đầu tư dài hạn TP.HCM. Đất nền: biên lợi nhuận cao hơn nhưng phụ thuộc quy hoạch, pháp lý và hạ tầng khu vực.",
+  },
+  {
+    question: "Nhà đầu tư cần kiểm tra gì trước khi mua BĐS qua SGS LAND?",
+    answer: "SGS LAND khuyến nghị kiểm tra: (1) sổ đỏ/sổ hồng hoặc hợp đồng mua bán, (2) quy hoạch khu vực, (3) chủ đầu tư uy tín và tiến độ dự án, (4) tính thanh khoản, (5) nguồn vốn vay và lãi suất.",
+  },
+
+  // --- MARKET DATA ---
+  {
+    question: "Giá BĐS TP.HCM hiện tại là bao nhiêu?",
+    answer: "Theo dữ liệu SGS LAND T6/2026: căn hộ trung bình 50–80 triệu/m², nhà phố quận 1–3: 200–600 triệu/m², đất nền vùng ven: 15–40 triệu/m².",
+  },
+  {
+    question: "Thị trường BĐS TP.HCM năm 2026 có xu hướng gì?",
+    answer: "Thị trường 2026 phục hồi rõ rệt sau khó khăn 2023–2024: nguồn cung mới tăng từ các dự án lớn như Global City, Vinhomes Hóc Môn; lãi suất giảm kích cầu; phân khúc trung cao cấp dẫn dắt tăng trưởng.",
+  },
+  {
+    question: "SGS LAND cung cấp dữ liệu thị trường như thế nào?",
+    answer: "SGS LAND tổng hợp và phân tích dữ liệu giao dịch, giá niêm yết, xu hướng theo quý từ >50 dự án tại TP.HCM và vùng lân cận, cung cấp miễn phí tại sgsland.vn/market-data.",
+  },
+
+  // --- LEGAL & PROCESS ---
+  {
+    question: "Quy trình mua BĐS qua SGS LAND như thế nào?",
+    answer: "5 bước: (1) Tư vấn nhu cầu & ngân sách miễn phí, (2) Chọn dự án/căn hộ phù hợp, (3) Kiểm tra pháp lý, (4) Ký hợp đồng & hỗ trợ vay vốn, (5) Bàn giao và hỗ trợ sau mua.",
+  },
+  {
+    question: "Phí dịch vụ của SGS LAND là bao nhiêu?",
+    answer: "Với người mua: SGS LAND không thu phí. Với người bán/chủ đầu tư: phí môi giới theo thỏa thuận, thông thường 1–2% giá trị giao dịch.",
+  },
+  {
+    question: "SGS LAND có hỗ trợ khách hàng nước ngoài mua BĐS Việt Nam không?",
+    answer: "Có. SGS LAND tư vấn đầy đủ quy trình mua BĐS cho người nước ngoài theo Luật Nhà ở 2023, bao gồm điều kiện, hạn ngạch và thủ tục pháp lý.",
+  },
+
+  // --- TECHNICAL / PLATFORM ---
+  {
+    question: "SGS LAND có ứng dụng di động không?",
+    answer: "SGS LAND đang phát triển ứng dụng mobile (iOS/Android). Hiện tại nền tảng web sgsland.vn được tối ưu đầy đủ cho thiết bị di động.",
+  },
+  {
+    question: "Dữ liệu của tôi có được bảo mật khi dùng SGS LAND không?",
+    answer: "SGS LAND tuân thủ quy định bảo vệ dữ liệu cá nhân theo Nghị định 13/2023/NĐ-CP. Dữ liệu được mã hóa, không chia sẻ bên thứ ba khi chưa có đồng ý.",
+  },
+  {
+    question: "Làm thế nào để liên hệ SGS LAND?",
+    answer: "Hotline: 0971.132.378 | Email: info@sgsland.vn | Địa chỉ: 60 Nguyễn Đình Chiểu, Phường Đa Kao, Quận 1, TP.HCM | Fanpage: facebook.com/sgsland.vn | Zalo OA: SGS LAND.",
+  },
+];
+
+export function getFAQSchema(items: FAQItem[] = FAQ_HOMEPAGE, pageId?: string) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "@id": pageId,
-    name: `Câu hỏi thường gặp về bất động sản ${SITE_NAME}`,
-    inLanguage: "vi",
-    mainEntity: items.map(({ question, answer }) => ({
+    "@id": pageId || `${SITE_URL}/#faq`,
+    mainEntity: items.map((item) => ({
       "@type": "Question",
-      name: question,
+      name: item.question,
       acceptedAnswer: {
         "@type": "Answer",
-        text: answer,
+        text: item.answer,
       },
     })),
   };
 }
 
-/**
- * 28 GEO-optimised FAQ items for the SGS LAND homepage.
- * Phase 4 — Tier S Perfect (2026-06-05): expanded from 8 to 28 Q&A.
- * Covers: core brand, projects, Vinhomes Hóc Môn, Masteri Cosmo Central,
- * mua vs thuê, căn hộ dưới 2 tỷ, đầu tư 2026, pháp lý, mua nhà lần đầu.
- */
-export const FAQ_HOMEPAGE: FAQItem[] = [
-  // ── Core brand Q&A (8 items) ──────────────────────────────────────────────
-  {
-    question: "SGS Land là gì?",
-    answer:
-      "SGS LAND (sgsland.vn) là nền tảng bất động sản AI hàng đầu Việt Nam, thành lập năm 2024. Đây là đại lý phân phối uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. Tính đến T6/2026: hơn 45.000 sản phẩm, 15.000+ môi giới được xác thực và tổng giá trị giao dịch vượt 2 tỷ USD. Hệ thống tích hợp AI định giá tự động (AVM), CRM đa kênh (Zalo, Facebook, Email) và quản lý kho hàng toàn diện.",
-  },
-  {
-    question: "SGS Land phân phối những dự án nào?",
-    answer:
-      "SGS LAND phân phối uỷ quyền 8 dự án lớn tại TP.HCM và vùng ven: (1) Aqua City Novaland — 1.000ha tại Nhơn Trạch, Đồng Nai; (2) The Global City Masterise Homes — 117ha tại TP Thủ Đức; (3) Izumi City Nam Long — 170ha tại Biên Hòa, Đồng Nai; (4) Vinhomes Grand Park — 271ha tại TP Thủ Đức; (5) Vinhomes Cần Giờ — 2.870ha tại Cần Giờ, TP.HCM; (6) Vinhomes Hóc Môn — Smart City 4.0, 667ha, ra mắt Q4/2026; (7) Masteri Cosmo Central — Bình Thạnh, từ 2,5 tỷ; (8) Masterise Homes — hệ sinh thái căn hộ hạng sang tại TP.HCM. Xem danh sách đầy đủ tại sgsland.vn/du-an.",
-  },
-  {
-    question: "Định giá bất động sản AI của SGS Land có chính xác không?",
-    answer:
-      "Hệ thống định giá AVM (Automated Valuation Model) của SGS LAND đạt sai số ±4.8% so với giá thị trường — ngang chuẩn thẩm định viên chuyên nghiệp. Mô hình phân tích 9 hệ số: vị trí, diện tích, tầng, hướng, pháp lý, tiện ích, thị trường khu vực, chủ đầu tư và tiến độ bàn giao. Kết quả trả về trong 30 giây. Trải nghiệm miễn phí tại sgsland.vn/ai-valuation.",
-  },
-  {
-    question: "Làm sao liên hệ SGS Land?",
-    answer:
-      "Bạn có thể liên hệ SGS LAND qua: Hotline +84 971 132 378 (trực 24/7), email info@sgsland.vn, hoặc chat trực tiếp tại sgsland.vn/contact. Đội ngũ 15.000+ môi giới xác thực sẵn sàng tư vấn miễn phí về pháp lý, giá thị trường và chính sách thanh toán.",
-  },
-  {
-    question: "SGS Land có uy tín không?",
-    answer:
-      "SGS LAND là đối tác phân phối uỷ quyền chính thức của Vinhomes, Masterise Homes, Novaland và Nam Long — 4 trong 5 chủ đầu tư hàng đầu Việt Nam. Nền tảng đạt điểm đánh giá trung bình 4.8/5 từ 127 đánh giá độc lập (T6/2026). Tuân thủ Luật Đất Đai 2024, Luật Kinh Doanh BĐS 2023 và Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân.",
-  },
-  {
-    question: "Aqua City Novaland giá bao nhiêu?",
-    answer:
-      "Aqua City Novaland (tại Nhơn Trạch, Đồng Nai) có giá từ 3 tỷ VND tháng 6/2026. Cụ thể: nhà phố liền kề từ 6–15 tỷ, shophouse từ 10–25 tỷ, biệt thự từ 15–50 tỷ. Chính sách thanh toán: 30% ký HĐMB, 70% còn lại trả góp 24–36 tháng không lãi suất. Xem bảng giá cập nhật tại sgsland.vn/du-an/aqua-city.",
-  },
-  {
-    question: "Vinhomes Grand Park có gì nổi bật?",
-    answer:
-      "Vinhomes Grand Park là siêu đô thị thông minh 271ha tại TP Thủ Đức, TP.HCM — do Vinhomes (VHM-HOSE) phát triển. Điểm nổi bật: Metro số 1 (ga Suối Tiên, vận hành Q4/2024) kết nối Quận 1 trong 30 phút; công viên chủ đề 36ha; Vinmec, Vinschool, Vincom. Giá căn hộ T6/2026 từ 2,5 tỷ (1PN) đến 8 tỷ (The Opus One). Tỷ lệ lấp đầy cho thuê đạt 92% (Savills Vietnam Q1/2026).",
-  },
-  {
-    question: "SGS Land hỗ trợ vay ngân hàng không?",
-    answer:
-      "Có. SGS LAND kết nối với 12+ ngân hàng đối tác gồm BIDV, Vietcombank, Techcombank, MB Bank và VPBank. Dịch vụ hỗ trợ bao gồm: thẩm định hồ sơ vay, tư vấn LTV 70–80%, lãi suất ưu đãi 6–8,5%/năm trong 24 tháng đầu và miễn phí thủ tục công chứng hợp đồng. Liên hệ tư vấn miễn phí qua hotline +84 971 132 378.",
-  },
-  // ── Vinhomes Hóc Môn (6 items) ────────────────────────────────────────────
-  {
-    question: "Vinhomes Hóc Môn giá bao nhiêu?",
-    answer:
-      "Vinhomes Smart City Hóc Môn (667ha, ra mắt Q4/2026) — giá dự kiến theo SGS LAND: nhà phố liền kề 8-20 tỷ, shophouse 15-40 tỷ, biệt thự 25-60 tỷ, căn hộ cao tầng 2,5-4,5 tỷ (tương đương 35-80 triệu/m²). Chủ đầu tư: Vinhomes (Vingroup, mã VHM-HOSE). SGS LAND là đại lý F1 uỷ quyền — đặt chỗ ưu tiên tại sgsland.vn/du-an/vinhomes-hoc-mon.",
-  },
-  {
-    question: "Vinhomes Hóc Môn ở đâu?",
-    answer:
-      "Vinhomes Smart City Hóc Môn nằm tại huyện Hóc Môn, TP.HCM, cách Quận 1 khoảng 20km về phía Tây Bắc. Kết nối hạ tầng: Vành đai 3 TP.HCM (vận hành 2026) kết nối Hóc Môn với Bình Dương, Đồng Nai, Long An; Quốc lộ 22 mở rộng kết nối cửa khẩu Mộc Bài; Cầu Bình Phước mới rút ngắn kết nối TP Thủ Đức. Quy mô 667ha — lớn thứ 2 của Vinhomes tại TP.HCM.",
-  },
-  {
-    question: "Vinhomes Hóc Môn có đáng đầu tư không?",
-    answer:
-      "Theo phân tích SGS LAND Q2/2026: Ưu điểm — quỹ đất cuối cùng quy mô lớn tại TP.HCM, Vành đai 3 là catalyst chính, giá mở bán thấp hơn Vinhomes Grand Park 20-35%, thương hiệu Vinhomes uy tín với sổ hồng riêng từng căn. Rủi ro — tiến độ phụ thuộc Vành đai 3, xa trung tâm hơn Thủ Đức, thanh khoản thứ cấp cần 3-5 năm. Phù hợp người mua ở thực và nhà đầu tư trung hạn. Chi tiết tại sgsland.vn/du-an/vinhomes-hoc-mon.",
-  },
-  {
-    question: "Dự án Smart City 4.0 Hóc Môn là dự án nào?",
-    answer:
-      "Vinhomes Smart City 4.0 Hóc Môn là tên đầy đủ của dự án Vinhomes Hóc Môn (667ha, huyện Hóc Môn, TP.HCM) do Vinhomes (Vingroup) phát triển, dự kiến ra mắt Q4/2026. Tích hợp hạ tầng IoT, AI quản lý đô thị, năng lượng xanh — chuẩn Smart City thế hệ 4.0. Giá căn hộ dự kiến từ 2,5 tỷ; nhà phố từ 8 tỷ; biệt thự từ 25 tỷ. SGS LAND cập nhật thông tin mở bán đầy đủ tại sgsland.vn/du-an/vinhomes-hoc-mon.",
-  },
-  {
-    question: "Vành đai 3 ảnh hưởng gì đến giá đất Hóc Môn?",
-    answer:
-      "Vành đai 3 TP.HCM (hoàn thành 2026) kết nối trực tiếp Hóc Môn với Bình Dương, Đồng Nai và Long An, rút ngắn thời gian di chuyển đến Thủ Đức xuống còn 20-25 phút. Theo dữ liệu SGS LAND: giá đất khu vực nút giao Hóc Môn đã tăng 30-45% từ 2023-2025 nhờ catalyst này. Vinhomes Smart City 4.0 (667ha) hưởng lợi trực tiếp — dự kiến tăng giá thêm 25-35% so với baseline khi mở bán Q4/2026.",
-  },
-  {
-    question: "Vinhomes Hóc Môn so với Vinhomes Grand Park nên mua cái nào?",
-    answer:
-      "So sánh theo SGS LAND (Q2/2026): Vinhomes Grand Park (271ha, TP Thủ Đức) — Metro số 1 vận hành, đã bàn giao, sổ hồng riêng, giá 45-90 triệu/m², thanh khoản cao nhất khu Đông. Vinhomes Hóc Môn (667ha, Q4/2026) — giá dự kiến 35-80 triệu/m² (thấp hơn 20-35%), quỹ đất lớn hơn, Smart City 4.0 nhưng tiến độ chưa bàn giao. Nếu cần ở ngay → Grand Park. Nếu đầu tư trung hạn 3-5 năm với giá entry tốt → Hóc Môn. Tư vấn chuyên sâu: sgsland.vn/contact.",
-  },
-  // ── Masteri Cosmo Central (3 items) ───────────────────────────────────────
-  {
-    question: "Masteri Cosmo Central có đáng mua không?",
-    answer:
-      "Masteri Cosmo Central (Bình Thạnh, TP.HCM) — đánh giá SGS LAND: Vị trí đắc địa cách Quận 1 chỉ 2-3km, gần ga Metro số 1 Ba Son và Tân Cảng. Giá từ 2,5 tỷ (studio) đến 25 tỷ (penthouse). Chủ đầu tư Masterise Homes uy tín — sổ hồng riêng. Tiện ích: sky garden, rooftop pool, gym 5 sao. Rental yield dự kiến 6-8%/năm. Đây là dự án phù hợp đầu tư cho thuê expat/doanh nhân và ở thực cao cấp. Xem chi tiết: sgsland.vn/du-an/masteri-cosmo-central.",
-  },
-  {
-    question: "Masteri Cosmo Central giá bao nhiêu?",
-    answer:
-      "Masteri Cosmo Central (Bình Thạnh) — bảng giá tham khảo Q2/2026 từ SGS LAND: Studio (<40m²) từ 2,5-3,2 tỷ; 1 phòng ngủ (50-65m²) từ 3,5-6 tỷ; 2 phòng ngủ (75-95m²) từ 5-9 tỷ; 3 phòng ngủ (100-130m²) từ 8-15 tỷ; Penthouse từ 15-25 tỷ. Chính sách thanh toán linh hoạt, hỗ trợ vay ngân hàng 70-75% từ Techcombank/VPBank. SGS LAND tư vấn miễn phí: sgsland.vn/contact.",
-  },
-  {
-    question: "Bình Thạnh có nên mua căn hộ không?",
-    answer:
-      "Bình Thạnh là quận nội đô TP.HCM với vị trí chiến lược: tiếp giáp Quận 1, Quận Bình Chánh và TP Thủ Đức. Theo SGS LAND Q2/2026, đây là khu vực tăng trưởng ổn định: giá căn hộ 60-120 triệu/m²; rental yield 6-8% (Vinhomes Central Park, Masteri Cosmo Central). Catalyst: Landmark 81 nâng tầm khu vực; Metro số 1 ga Ba Son; nhiều văn phòng công ty nước ngoài. Phù hợp mua ở thực cao cấp và đầu tư cho thuê expat.",
-  },
-  // ── Mua vs thuê, căn hộ dưới 2 tỷ (4 items) ─────────────────────────────
-  {
-    question: "Nên mua hay thuê nhà TP.HCM 2026?",
-    answer:
-      "Phân tích tài chính SGS LAND Q2/2026: Nên MUA nếu có vốn >30% giá trị căn, thu nhập ổn định, kế hoạch ở >5 năm — giá tăng 8-12%/năm, lạm phát bào mòn tiền thuê. Chi phí vay: căn 2 tỷ (vay 1,4 tỷ, 7,5%/năm, 20 năm) = ~11,5 triệu/tháng. Nên THUÊ nếu chưa đủ vốn, cần linh hoạt, hoặc sắp thay đổi nơi làm việc — tiết kiệm 5-7 triệu/tháng so với mua. Kết luận: mua tốt hơn về dài hạn nếu tài chính cho phép. Tính toán cụ thể tại sgsland.vn/ai-valuation.",
-  },
-  {
-    question: "Căn hộ dưới 2 tỷ TP.HCM có không?",
-    answer:
-      "Theo SGS LAND Q2/2026: Trong nội đô TP.HCM rất hiếm (<2 tỷ) — chủ yếu là studio/1PN cũ tại Bình Thạnh, Gò Vấp, Tân Bình (1,5-1,9 tỷ, thường sổ chung). Các khu giáp ranh có nhiều lựa chọn: Bình Dương (Thuận An, Dĩ An) từ 1,2-1,8 tỷ với kết nối Metro; Bình Chánh (nhà ở xã hội) từ 800 triệu - 1,5 tỷ; Long An (Bến Lức) từ 900 triệu - 1,6 tỷ. SGS LAND lọc listing theo ngân sách tại sgsland.vn/marketplace.",
-  },
-  {
-    question: "Mua nhà lần đầu tại Việt Nam cần chuẩn bị gì?",
-    answer:
-      "Hướng dẫn mua nhà lần đầu từ SGS LAND (Luật Đất Đai 2024): Bước 1 — Xác định ngân sách: vốn tự có ≥30% giá trị căn + 5-10% phí (thuế, công chứng); khoản vay ≤35% thu nhập tháng. Bước 2 — Tìm kiếm qua sgsland.vn/marketplace lọc theo giá, vị trí, pháp lý. Bước 3 — Kiểm tra pháp lý 2 lớp miễn phí (AI <30 giây + chuyên viên <24 giờ). Bước 4 — Đặt cọc 1-2%, ký HĐMB tại công chứng. Bước 5 — Vay ngân hàng qua 12 ngân hàng đối tác của SGS LAND. Bước 6 — Nhận bàn giao + sổ hồng.",
-  },
-  {
-    question: "Lãi suất vay mua nhà 2026 bao nhiêu?",
-    answer:
-      "Lãi suất vay mua nhà tháng 6/2026 (SGS LAND tổng hợp từ 12 ngân hàng): Vietcombank 6,9-7,2%/năm (năm 1-2 ưu đãi); BIDV 7,0-7,5%; Techcombank 7,2-7,8%; MB Bank 6,8-7,3%; VPBank 7,5-8,0%; Sacombank 7,0-7,5%. LTV tối đa 70-80% giá trị tài sản. Thu nhập yêu cầu: >3x khoản trả góp hàng tháng. SGS LAND hỗ trợ xử lý hồ sơ vay miễn phí, kết nối ngân hàng lãi suất tốt nhất tại sgsland.vn/contact.",
-  },
-  // ── Đầu tư 2026 (3 items) ─────────────────────────────────────────────────
-  {
-    question: "Khu vực nào đầu tư bất động sản tốt nhất TP.HCM 2026?",
-    answer:
-      "Top 3 khu vực đầu tư BĐS TP.HCM 2026 theo SGS LAND AI: (1) TP Thủ Đức — Metro số 1 vận hành, rental yield 7-9%, The Global City + Vinhomes Grand Park; (2) Hóc Môn — Vinhomes Smart City 4.0 (667ha, Q4/2026), Vành đai 3 catalyst, giá entry tốt 35-80 triệu/m²; (3) Cần Giờ — Vinhomes Green Paradise (2.870ha), mở bán GĐ1 Q3/2026, tiềm năng nghỉ dưỡng dài hạn. Xem listing đầu tư tại sgsland.vn/dau-tu-bat-dong-san.",
-  },
-  {
-    question: "Vinhomes Cần Giờ bao giờ mở bán?",
-    answer:
-      "Vinhomes Cần Giờ (Green Paradise, 2.870ha, huyện Cần Giờ, TP.HCM) — GĐ1 dự kiến mở bán Q3/2026 theo thông tin từ kênh F1 SGS LAND. Cầu Cần Giờ (vốn 11.000 tỷ, khởi công 2025) rút ngắn kết nối từ Q1 xuống 30-45 phút. Loại hình GĐ1: biệt thự biển, shophouse biển từ 15-50 tỷ. SGS LAND là đại lý phân phối F1 uỷ quyền — đăng ký đặt chỗ ưu tiên tại sgsland.vn/du-an/vinhomes-can-gio.",
-  },
-  {
-    question: "Đất Long Thành có nên mua 2026 không?",
-    answer:
-      "Long Thành, Đồng Nai — đánh giá SGS LAND Q2/2026: Sân bay Long Thành GĐ1 khánh thành 2026-2027 (25 triệu khách/năm) là catalyst chính. Giá đất nền: 10-35 triệu/m² (tăng 18-25%/năm 2024-2025). Dự án tốt nhất: Aqua City Novaland 1.000ha, cách sân bay 15km, sổ hồng riêng từng căn. Rủi ro: nhiều đất nền phân lô pháp lý chưa rõ (vi bằng, chưa có 1/500). SGS LAND chỉ niêm yết đất sổ đỏ đã kiểm duyệt tại sgsland.vn/bat-dong-san-long-thanh.",
-  },
-  // ── Pháp lý (3 items) ─────────────────────────────────────────────────────
-  {
-    question: "Sổ hồng và sổ đỏ khác nhau gì?",
-    answer:
-      "Theo Luật Đất Đai 2024 (SGS LAND Legal Team): Sổ đỏ (GCNQSDĐ) — cấp cho đất, màu đỏ, an toàn pháp lý cao nhất với đất nền/nhà vườn. Sổ hồng (GCNQSDĐ + QSH nhà) — cấp cho cả đất + nhà/căn hộ, màu hồng, phổ biến nhất với chung cư. Sổ hồng riêng từng căn — an toàn nhất với chung cư (mỗi căn có sổ riêng, dễ thế chấp/chuyển nhượng). Vi bằng — KHÔNG phải sổ, không được pháp luật bảo vệ đầy đủ. SGS LAND từ chối niêm yết BĐS vi bằng.",
-  },
-  {
-    question: "Pháp lý bất động sản cần kiểm tra gì trước khi mua?",
-    answer:
-      "Checklist pháp lý 2 lớp của SGS LAND (theo Luật Đất Đai 2024): Lớp 1 AI (<30 giây): tra cứu quy hoạch 1/2000, xác minh sổ hồng/sổ đỏ, phát hiện tranh chấp Toà án, kiểm tra thế chấp 12+ ngân hàng, flag tự động vi bằng và đất nông nghiệp chưa chuyển mục đích. Lớp 2 chuyên viên (<24 giờ): xác minh thực địa, kiểm tra lịch sử giao dịch Văn phòng ĐKĐĐ, đánh giá rủi ro Nghị định 96/2024/NĐ-CP. Kết quả: 🟢 Sạch / 🟡 Cần làm rõ / 🔴 Rủi ro cao. Kiểm tra miễn phí tại sgsland.vn.",
-  },
-  {
-    question: "Người nước ngoài có mua nhà TP.HCM được không?",
-    answer:
-      "Theo Luật Nhà Ở 2023 (hiệu lực 01/01/2025), người nước ngoài được mua: căn hộ chung cư tại dự án được phép (tối đa 30% số căn/tòa); nhà liên kế/biệt thự (tối đa 10% số căn/dự án). Thời hạn sở hữu: 50 năm, gia hạn 1 lần (tổng 100 năm). Kết hôn với công dân Việt Nam: sở hữu lâu dài. Không được mua: đất nền, nhà khu vực quốc phòng-an ninh. Dự án phù hợp: Vinhomes Grand Park, The Global City, Masteri Cosmo Central. Tư vấn tại sgsland.vn/contact.",
-  },
-  // ── Phí & dịch vụ (1 item) ───────────────────────────────────────────────
-  {
-    question: "Phí môi giới bất động sản TP.HCM là bao nhiêu?",
-    answer:
-      "SGS LAND hoạt động mô hình no-win-no-fee: 100% miễn phí tư vấn, định giá AI và kiểm tra pháp lý cho người mua. Phí môi giới do chủ đầu tư trả (1-3% giá trị căn hộ với sơ cấp). Thứ cấp (nhà cũ): phí 1-2% thỏa thuận giữa các bên, SGS LAND không thu thêm. Cam kết minh bạch giá — không ép cọc, không phát sinh phí ẩn. Liên hệ tư vấn: sgsland.vn/contact.",
-  },
-];
+export function getFAQSchemaForPage(pageId: string, items: FAQItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${SITE_URL}/${pageId}#faq`,
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}

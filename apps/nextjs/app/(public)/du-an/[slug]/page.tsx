@@ -4,6 +4,8 @@ import { ProjectDetailPage } from "@/components/public/ProjectDetailPage";
 import { SchemaScript } from "@/components/SchemaScript";
 import {
   getRealEstateListingSchema,
+  getVideoSchema,
+  getSpecialAnnouncementSchema,
   getBreadcrumbSchema,
   getOrganizationSchema,
   getFAQSchema,
@@ -588,6 +590,8 @@ export default async function ProjectPage({
     meta?.priceRange || "Liên hệ SGS LAND để biết giá cập nhật"
   );
   const faqSchema = getFAQSchema(faqItems, `${SITE_URL}/du-an/${slug}#faq`);
+  const videoSchema = getVideoSchema(slug);
+  const announcementSchema = getSpecialAnnouncementSchema(slug);
 
   // Serialised JSON for noscript layer
   const aptMeta = APARTMENT_COMPLEX_META[slug];
@@ -610,7 +614,7 @@ export default async function ProjectPage({
   return (
     <>
       {/* ── JSON-LD schemas: SSR-rendered, visible in raw HTML ── */}
-      <SchemaScript schemas={[listingSchema, breadcrumbSchema, orgSchema, faqSchema]} />
+      <SchemaScript schemas={[listingSchema, breadcrumbSchema, orgSchema, faqSchema, ...(videoSchema ? [videoSchema] : []), ...(announcementSchema ? [announcementSchema] : [])]} />
 
       {/*
        * ── noscript fallback layer ──────────────────────────────

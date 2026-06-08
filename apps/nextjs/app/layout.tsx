@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SchemaScript } from "@/components/SchemaScript";
-import { getOrganizationSchema, getWebsiteSchema, getEntityDisambiguationSchema, getMetricsSchema, getLocalBusinessSchema } from "@/lib/schema";
+import { getOrganizationSchema, getWebsiteSchema, getEntityDisambiguationSchema, getMetricsSchema, getLocalBusinessSchema, getAggregateRatingSchema } from "@/lib/schema";
 
 // ─── Fonts (self-hosted by next/font — no Google Fonts request at runtime) ──
 const inter = Inter({
@@ -150,6 +150,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             getLocalBusinessSchema(),
             getEntityDisambiguationSchema(),
             getMetricsSchema(),
+            getAggregateRatingSchema(),
           ]} />
 
         {/* FOUC prevention: apply saved theme class to <html> before first paint.

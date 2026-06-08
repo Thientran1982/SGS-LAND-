@@ -144,6 +144,9 @@ export function getOrganizationSchema(): OrganizationSchema {
       "https://www.tiktok.com/@sgsland.vn",
       "https://www.instagram.com/sgsland.vn",
       "https://maps.app.goo.gl/sgsland",
+      "https://www.crunchbase.com/organization/sgs-land",
+      "https://vi.wikipedia.org/wiki/SGS_Land",
+      "https://www.wikidata.org/wiki/Q130519839",
     ],
     inLanguage: ["vi", "en"],
     knowsAbout: [
