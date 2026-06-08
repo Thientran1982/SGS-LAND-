@@ -13,3 +13,11 @@ export { getFoundersSchema } from "./person";
 export type { PersonSchema } from "./person";
 export { getApartmentComplexSchema } from "./realestate-listing";
 export type { ApartmentComplexInput } from "./realestate-listing";
+
+export {
+  getEntityDisambiguationSchema,
+  getMetricsSchema,
+  getLocalBusinessSchema,
+  getProjectAnnouncementSchema,
+  FAQ_KNOWLEDGE_GRAPH,
+} from "./knowledge-graph";

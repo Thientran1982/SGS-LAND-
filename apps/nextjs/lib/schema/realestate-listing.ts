@@ -109,8 +109,8 @@ export function getRealEstateListingSchema(project: RealEstateProject): RealEsta
     ...(project.geo && {
       geo: {
         "@type": "GeoCoordinates",
-        latitude: project.geo.latitude,
-        longitude: project.geo.longitude,
+        latitude: (project.geo as any).lat ?? project.geo.latitude,
+        longitude: (project.geo as any).lng ?? project.geo.longitude,
       },
     }),
     offers: {

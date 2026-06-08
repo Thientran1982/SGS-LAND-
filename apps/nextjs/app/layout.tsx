@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SchemaScript } from "@/components/SchemaScript";
-import { getOrganizationSchema, getWebsiteSchema } from "@/lib/schema";
+import { getOrganizationSchema, getWebsiteSchema, getEntityDisambiguationSchema, getMetricsSchema, getLocalBusinessSchema } from "@/lib/schema";
 
 // ─── Fonts (self-hosted by next/font — no Google Fonts request at runtime) ──
 const inter = Inter({
@@ -144,7 +144,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
         {/* Sitewide JSON-LD: WebSite (SearchAction) + Organization (E-E-A-T) */}
-        <SchemaScript schemas={[getWebsiteSchema(), getOrganizationSchema()]} />
+        <SchemaScript schemas={[
+            getWebsiteSchema(),
+            getOrganizationSchema(),
+            getLocalBusinessSchema(),
+            getEntityDisambiguationSchema(),
+            getMetricsSchema(),
+          ]} />
 
         {/* FOUC prevention: apply saved theme class to <html> before first paint.
             Replaces next-themes ThemeProvider for pages outside route groups
