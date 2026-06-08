@@ -284,7 +284,7 @@ const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string,
     return (
         <motion.div 
             ref={cardRef} 
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
@@ -302,7 +302,7 @@ const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string,
 };
 const FeatureBento = ({ title, desc, icon, className = "", iconBg = "bg-[var(--glass-surface-hover)] dark:bg-slate-700", onClick, ctaLabel, delay = 0 }: any) => (
     <motion.div 
-        initial={{ opacity: 0 }}
+        initial={false}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.45, delay }}
@@ -352,7 +352,7 @@ const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: 
   }, []);
     return (
     <motion.article
-        initial={{ opacity: 0 }}
+        initial={false}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, amount: 0.05 }}
         transition={{ duration: 0.35 }}
@@ -673,7 +673,7 @@ export const Landing: React.FC = () => {
                     {/* Left Column: Text & Search */}
                     <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
                         <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={false}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5 }}
                             className="inline-flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-full bg-indigo-50/80 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-500/30 shadow-sm mb-6 md:mb-8 backdrop-blur-sm"
@@ -685,7 +685,7 @@ export const Landing: React.FC = () => {
                             <span className="text-2xs md:text-xs2 font-bold text-indigo-700 dark:text-indigo-300 tracking-widest uppercase">{t('landing.badge_tech')}</span>
                         </motion.div>
                         <motion.h1 
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={false}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.1 }}
                             className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] dark:text-white tracking-tight mb-8 md:mb-10 leading-[1.1] drop-shadow-sm"
@@ -693,7 +693,7 @@ export const Landing: React.FC = () => {
                             {text}<span className="animate-blink text-indigo-500" aria-hidden="true">|</span>
                         </motion.h1>
                         <motion.p 
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={false}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
                             className="text-base md:text-xl text-[var(--text-secondary)] dark:text-slate-300 max-w-2xl mb-10 md:mb-12 font-medium leading-relaxed"
@@ -701,7 +701,7 @@ export const Landing: React.FC = () => {
                             {t('landing.hero_desc')}
                         </motion.p>
                         <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={false}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.3 }}
                             className="w-full max-w-xl relative group z-20"
@@ -737,7 +737,7 @@ export const Landing: React.FC = () => {
                     </div>
                 </div>
                 <motion.div 
-                    initial={{ opacity: 0 }}
+                    initial={false}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1, delay: 0.6 }}
                     className="mt-8 md:mt-12 pt-6 w-full max-w-5xl mx-auto text-center"
@@ -769,7 +769,7 @@ export const Landing: React.FC = () => {
             <section className="py-14 md:py-20 px-6 relative overflow-hidden bg-[var(--bg-surface)] dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto">
                     <motion.div
-                        initial={{ opacity: 0 }}
+                        initial={false}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
                         className="mb-12 md:mb-16"
@@ -809,7 +809,7 @@ export const Landing: React.FC = () => {
             <section className="py-14 md:py-20 px-6 relative overflow-hidden bg-[var(--bg-surface)] dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto">
                     <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={false}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         className="mb-12 md:mb-20 text-center md:text-left"
@@ -906,7 +906,7 @@ export const Landing: React.FC = () => {
                             <motion.div
                                 key={item.id}
                                 className="min-h-full"
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={false}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-50px" }}
                                 transition={{ duration: 0.5, delay: Math.min(index, 5) * 0.1 }}
@@ -940,7 +940,7 @@ export const Landing: React.FC = () => {
             <section className="py-14 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800">
                 <div className="max-w-7xl mx-auto">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={false}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         className="mb-12 md:mb-16 text-center"
@@ -964,7 +964,7 @@ export const Landing: React.FC = () => {
                             return (
                                 <motion.article
                                     key={list.title}
-                                    initial={{ opacity: 0, y: 20 }}
+                                    initial={false}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: listIdx * 0.1 }}
@@ -1009,7 +1009,7 @@ export const Landing: React.FC = () => {
             <section className="py-14 md:py-20 px-6 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 border-t border-[var(--glass-border)] dark:border-slate-800">
                 <div className="max-w-4xl mx-auto">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={false}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         className="mb-12 md:mb-16"
@@ -1043,7 +1043,7 @@ export const Landing: React.FC = () => {
                     className="absolute bottom-0 left-0 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen"
                 ></motion.div>                
                 <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={false}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
