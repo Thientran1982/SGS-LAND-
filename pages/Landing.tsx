@@ -32,12 +32,12 @@ const FEATURES = [
 ];
 
 const PROJECTS = [
-  { slug: 'aqua-city',  image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',                 name: 'Aqua City',            dev: 'Novaland',    loc: 'Biên Hòa, Đồng Nai',     scale: '1.000 ha',   price: 'Từ 2,5 tỷ',  badge: 'Hot',        gradient: 'from-emerald-800 to-teal-600',     type: 'Đô Thị Sinh Thái' },
-  { slug: 'the-global-city',  image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80',           name: 'The Global City',      dev: 'Masterise',   loc: 'Thủ Đức, TP.HCM',        scale: '117 ha',     price: 'Từ 4,5 tỷ',  badge: 'Cao Cấp',    gradient: 'from-blue-900 to-indigo-700',      type: 'Đô Thị Tài Chính' },
-  { slug: 'vinhomes-can-gio',  image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',          name: 'Vinhomes Cần Giờ',     dev: 'Vinhomes',    loc: 'Cần Giờ, TP.HCM',        scale: '2.870 ha',   price: 'Từ 12 tỷ',   badge: 'Siêu Dự Án', gradient: 'from-cyan-900 to-blue-700',        type: 'Đô Thị Biển' },
-  { slug: 'izumi-city',  image: 'https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&q=80',                name: 'Izumi City',           dev: 'Nam Long',    loc: 'Biên Hòa, Đồng Nai',     scale: '170 ha',     price: 'Từ 8,4 tỷ',  badge: 'Nhật Bản',   gradient: 'from-rose-900 to-pink-700',        type: 'Đô Thị Chuẩn Nhật' },
-  { slug: 'vinhomes-grand-park',  image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',       name: 'Vinhomes Grand Park',  dev: 'Vinhomes',    loc: 'Thủ Đức, TP.HCM',        scale: '271 ha',     price: 'Từ 1,8 tỷ',  badge: 'Best Seller', gradient: 'from-violet-900 to-purple-700',   type: 'Đại Đô Thị' },
-  { slug: 'diamond-sky-van-phuc-city',  image: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&q=80', name: 'Diamond Sky',          dev: 'Van Phúc',    loc: 'TP Thủ Đức, TP.HCM',     scale: '198 ha',     price: 'Từ 9,6 tỷ',  badge: 'Cao Cấp',    gradient: 'from-amber-900 to-orange-700',     type: 'Căn Hộ View Sông' },
+  { slug: 'aqua-city',  image: 'https://sgsland.vn/aqua-city.jpg',                 name: 'Aqua City',            dev: 'Novaland',    loc: 'Biên Hòa, Đồng Nai',     scale: '1.000 ha',   price: 'Từ 2,5 tỷ',  badge: 'Hot',        gradient: 'from-emerald-800 to-teal-600',     type: 'Đô Thị Sinh Thái' },
+  { slug: 'the-global-city',  image: 'https://sgsland.vn/global-city.jpg',           name: 'The Global City',      dev: 'Masterise',   loc: 'Thủ Đức, TP.HCM',        scale: '117 ha',     price: 'Từ 4,5 tỷ',  badge: 'Cao Cấp',    gradient: 'from-blue-900 to-indigo-700',      type: 'Đô Thị Tài Chính' },
+  { slug: 'vinhomes-can-gio',  image: 'https://sgsland.vn/vinhomes-can-gio.jpg',          name: 'Vinhomes Cần Giờ',     dev: 'Vinhomes',    loc: 'Cần Giờ, TP.HCM',        scale: '2.870 ha',   price: 'Từ 12 tỷ',   badge: 'Siêu Dự Án', gradient: 'from-cyan-900 to-blue-700',        type: 'Đô Thị Biển' },
+  { slug: 'izumi-city',  image: 'https://sgsland.vn/izumi-city.jpg',                name: 'Izumi City',           dev: 'Nam Long',    loc: 'Biên Hòa, Đồng Nai',     scale: '170 ha',     price: 'Từ 8,4 tỷ',  badge: 'Nhật Bản',   gradient: 'from-rose-900 to-pink-700',        type: 'Đô Thị Chuẩn Nhật' },
+  { slug: 'vinhomes-grand-park',  image: 'https://sgsland.vn/vinhomes-grand-park.jpg',       name: 'Vinhomes Grand Park',  dev: 'Vinhomes',    loc: 'Thủ Đức, TP.HCM',        scale: '271 ha',     price: 'Từ 1,8 tỷ',  badge: 'Best Seller', gradient: 'from-violet-900 to-purple-700',   type: 'Đại Đô Thị' },
+  { slug: 'diamond-sky-van-phuc-city',  image: 'https://sgsland.vn/diamond-sky.jpg', name: 'Diamond Sky',          dev: 'Van Phúc',    loc: 'TP Thủ Đức, TP.HCM',     scale: '198 ha',     price: 'Từ 9,6 tỷ',  badge: 'Cao Cấp',    gradient: 'from-amber-900 to-orange-700',     type: 'Căn Hộ View Sông' },
 ];
 
 const TESTIMONIALS = [
@@ -177,6 +177,8 @@ export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [scrolled, setScrolled] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [lang, setLang] = useState<'vi'|'en'>('vi');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -208,7 +210,7 @@ export default function Landing() {
         <div className="flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
           <a href={`/${ROUTES.LANDING}`} className="flex items-center gap-2.5 shrink-0 group">
-            <Logo className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" style={{ color: GOLD } as React.CSSProperties} />
+            <Logo className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" />
             <span className="font-bold text-lg tracking-tight text-white">
               SGS <span style={{ color: GOLD }}>LAND</span>
             </span>
@@ -243,6 +245,27 @@ export default function Landing() {
             >
               Dùng thử miễn phí
             </a>
+            {/* Language switcher */}
+            <button
+              onClick={() => setLang(l => l === 'vi' ? 'en' : 'vi')}
+              className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white border border-white/20 hover:border-white/40 rounded-lg transition-all duration-200"
+              title="Chuyển ngôn ngữ"
+            >
+              <span className="text-sm">{lang === 'vi' ? '🇻🇳' : '🇺🇸'}</span>
+              <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
+            </button>
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode(d => !d)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-white border border-white/20 hover:border-white/40 transition-all duration-200"
+              title={darkMode ? 'Chế độ sáng' : 'Chế độ tối'}
+            >
+              {darkMode ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
             <button
               onClick={() => setMenuOpen(o => !o)}
               className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
@@ -449,13 +472,13 @@ export default function Landing() {
 
   // ── FEATURES ───────────────────────────────────────────────────────────────
   const features = (
-    <section className="py-20 bg-white">
+    <section className={`py-20 ${darkMode ? 'bg-[#0D1525]' : 'bg-white'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1 mb-4">
             <span className="text-indigo-600 text-xs font-bold uppercase tracking-widest">Nền Tảng Công Nghệ</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Công Cụ Proptech Hàng Đầu</h2>
+          <h2 className={`text-3xl sm:text-4xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Công Cụ Proptech Hàng Đầu</h2>
           <p className="text-gray-500 max-w-2xl mx-auto leading-relaxed">SGS LAND tích hợp AI, dữ liệu thị trường và CRM trong một nền tảng duy nhất.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -471,8 +494,8 @@ export default function Landing() {
               >
                 {f.icon}
               </div>
-              <h3 className="font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">{f.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed mb-4">{f.desc}</p>
+              <h3 className={`font-bold mb-2 group-hover:text-indigo-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900 group-hover:text-indigo-600'}`}>{f.title}</h3>
+              <p className={`text-sm leading-relaxed mb-4 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>{f.desc}</p>
               <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: f.color }}>
                 <span>Khám phá</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -486,7 +509,7 @@ export default function Landing() {
 
   // ── PROJECTS ───────────────────────────────────────────────────────────────
   const projects = (
-    <section className="py-20 bg-gray-50">
+    <section className={`py-20 ${darkMode ? 'bg-[#0A0F1E]' : 'bg-gray-50'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
@@ -494,7 +517,7 @@ export default function Landing() {
               <span className="text-indigo-600 text-xs font-bold uppercase tracking-widest">11+ Dự Án Lớn</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Dự Án SGS LAND Phân Phối</h2>
-            <p className="text-gray-500 mt-2">Chỉ phân phối dự án uy tín, pháp lý hoàn chỉnh</p>
+            <p className={`mt-2 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Chỉ phân phối dự án uy tín, pháp lý hoàn chỉnh</p>
           </div>
           <a href={`/${ROUTES.DU_AN}`} className="inline-flex items-center gap-2 text-indigo-600 font-semibold text-sm hover:text-indigo-700 transition-colors shrink-0">
             Xem tất cả dự án <ArrowRight className="w-4 h-4" />
@@ -505,7 +528,7 @@ export default function Landing() {
             <a
               key={i}
               href={`/${ROUTES.DU_AN}/${p.slug}`}
-              className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-50 transition-all duration-300 hover:-translate-y-0.5"
+              className={`group rounded-2xl overflow-hidden border hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 ${darkMode ? 'bg-[#131D35] border-white/10 hover:border-indigo-500/30 hover:shadow-indigo-900/20' : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-indigo-50'}`}
             >
                   <div className="aspect-[4/3] relative overflow-hidden">
                     <img
@@ -521,7 +544,7 @@ export default function Landing() {
               </div>
               <div className="p-5">
                 <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">{p.type}</div>
-                <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">{p.name}</h3>
+                <h3 className={`font-bold text-lg mb-1 group-hover:text-amber-500 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>{p.name}</h3>
                 <div className="text-sm text-gray-500 mb-4">{p.dev} · {p.loc}</div>
                 <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                   <div>
@@ -564,7 +587,7 @@ export default function Landing() {
 
   // ── AI CTA ─────────────────────────────────────────────────────────────────
   const aiCta = (
-    <section className="py-20 bg-white">
+    <section className={`py-20 ${darkMode ? 'bg-[#0D1525]' : 'bg-white'}`}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           className="rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden"
@@ -604,11 +627,11 @@ export default function Landing() {
 
   // ── TESTIMONIALS ───────────────────────────────────────────────────────────
   const testimonials = (
-    <section className="py-20 bg-gray-50">
+    <section className={`py-20 ${darkMode ? 'bg-[#0A0F1E]' : 'bg-gray-50'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Khách Hàng Nói Gì?</h2>
-          <p className="text-gray-500">Đánh giá thực từ nhà đầu tư và môi giới BĐS</p>
+          <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Khách Hàng Nói Gì?</h2>
+          <p className={`${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Đánh giá thực từ nhà đầu tư và môi giới BĐS</p>
         </div>
         <div className="grid sm:grid-cols-3 gap-6">
           {TESTIMONIALS.map((t, i) => (
@@ -623,7 +646,7 @@ export default function Landing() {
               </div>
               <p className="text-gray-700 text-sm leading-relaxed mb-5 italic">"{t.content}"</p>
               <div>
-                <div className="font-semibold text-gray-900 text-sm">{t.name}</div>
+                <div className={`font-semibold text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{t.name}</div>
                 <div className="text-gray-400 text-xs">{t.role}</div>
               </div>
             </div>
@@ -690,10 +713,10 @@ export default function Landing() {
 
   // ── CONTACT CTA ────────────────────────────────────────────────────────────
   const contactCta = (
-    <section className="py-16 bg-white border-t border-gray-100">
+    <section className={`py-16 border-t ${darkMode ? 'bg-[#0D1525] border-white/10' : 'bg-white border-gray-100'}`}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">Cần Tư Vấn BĐS Miễn Phí?</h2>
-        <p className="text-gray-500 mb-8">Chuyên viên SGS LAND hỗ trợ 7 ngày/tuần. Hotline: 0971.132.378</p>
+        <h2 className={`text-3xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Cần Tư Vấn BĐS Miễn Phí?</h2>
+        <p className={`mb-8 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Chuyên viên SGS LAND hỗ trợ 7 ngày/tuần. Hotline: 0971.132.378</p>
         <div className="flex flex-wrap justify-center gap-3">
           <a
             href="tel:+84971132378"
@@ -727,7 +750,7 @@ export default function Landing() {
           {/* Brand col — spans 2 on lg */}
           <div className="col-span-2 lg:col-span-2">
             <a href={`/${ROUTES.LANDING}`} className="flex items-center gap-2 mb-4 group w-fit">
-              <Logo className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" style={{ color: GOLD } as React.CSSProperties} />
+              <Logo className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
               <span className="font-bold text-base tracking-tight text-white">
                 SGS <span style={{ color: GOLD }}>LAND</span>
               </span>
@@ -881,7 +904,7 @@ export default function Landing() {
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className={`min-h-screen font-sans antialiased transition-colors duration-300 ${darkMode ? 'bg-[#0A0F1E] text-slate-100' : 'bg-white text-gray-900'}`}>
       {header}
       {hero}
       {partners}
