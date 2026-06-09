@@ -25,10 +25,10 @@ const STATS = [
 const PARTNERS = ['Vinhomes', 'Novaland', 'Nam Long', 'Masterise', 'Van Phúc', 'Khang Điền', 'Sơn Kim Land'];
 
 const FEATURES = [
-  { icon: <Zap className="w-6 h-6" />,       title: 'AI Định Giá ±5%',     desc: 'Định giá tự động bất kỳ BĐS nào tại TP.HCM với sai số chỉ ±5%. Kết quả trong 3 giây.',                        href: `/${ROUTES.AI_VALUATION}`,  color: '#6366f1' },
-  { icon: <Globe2 className="w-6 h-6" />,    title: 'Sàn Giao Dịch',       desc: 'Hàng nghìn căn hộ, đất nền, nhà phố được xác minh pháp lý. Kết nối trực tiếp với chủ đầu tư.',            href: `/${ROUTES.SEARCH}`,        color: '#8b5cf6' },
-  { icon: <BarChart3 className="w-6 h-6" />, title: 'Dữ Liệu Thị Trường',  desc: 'Báo cáo biến động giá theo quý, xu hướng đầu tư từ 50+ dự án lớn tại TP.HCM.',                             href: '/market-data',             color: '#3b82f6' },
-  { icon: <Users className="w-6 h-6" />,     title: 'CRM Đa Kênh',         desc: 'Quản lý khách hàng, tích hợp Zalo/Facebook/Email. Dùng thử miễn phí 30 ngày.',                               href: `/${ROUTES.CRM_SOLUTION}`,  color: '#0ea5e9' },
+  { icon: <Zap className="w-6 h-6" />,       title: 'AI Định Giá ±5%',     desc: 'Định giá tự động bất kỳ BĐS nào tại TP.HCM với sai số chỉ ±5%. Kết quả trong 3 giây.',                        href: `/${ROUTES.AI_VALUATION}`,  color: '#D4A843' },
+  { icon: <Globe2 className="w-6 h-6" />,    title: 'Sàn Giao Dịch',       desc: 'Hàng nghìn căn hộ, đất nền, nhà phố được xác minh pháp lý. Kết nối trực tiếp với chủ đầu tư.',            href: `/${ROUTES.SEARCH}`,        color: '#D4A843' },
+  { icon: <BarChart3 className="w-6 h-6" />, title: 'Dữ Liệu Thị Trường',  desc: 'Báo cáo biến động giá theo quý, xu hướng đầu tư từ 50+ dự án lớn tại TP.HCM.',                             href: '/market-data',             color: '#D4A843' },
+  { icon: <Users className="w-6 h-6" />,     title: 'CRM Đa Kênh',         desc: 'Quản lý khách hàng, tích hợp Zalo/Facebook/Email. Dùng thử miễn phí 30 ngày.',                               href: `/${ROUTES.CRM_SOLUTION}`,  color: '#D4A843' },
 ];
 
 const PROJECTS = [
@@ -312,13 +312,13 @@ export default function Landing() {
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Primary glow — indigo left */}
         <div className="absolute -top-20 left-1/4 w-[700px] h-[700px] rounded-full opacity-25"
-          style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)', filter: 'blur(60px)' }} />
+          style={{ background: 'radial-gradient(circle, #D4A843 0%, transparent 70%)', filter: 'blur(60px)' }} />
         {/* Secondary glow — gold right */}
         <div className="absolute top-1/3 right-0 w-[500px] h-[500px] rounded-full opacity-20"
           style={{ background: 'radial-gradient(circle, #D4A843 0%, transparent 70%)', filter: 'blur(80px)' }} />
         {/* Tertiary glow — cyan bottom-left */}
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle, #0ea5e9 0%, transparent 70%)', filter: 'blur(100px)' }} />
+          style={{ background: 'radial-gradient(circle, #D4A843 0%, transparent 70%)', filter: 'blur(100px)' }} />
         {/* Grid pattern */}
         <div className="absolute inset-0 opacity-[0.06]"
           style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)`, backgroundSize: '48px 48px' }} />
@@ -463,7 +463,7 @@ export default function Landing() {
         <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest shrink-0">Đối tác chính thức</span>
           {PARTNERS.map(p => (
-            <span key={p} className="text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors cursor-default">{p}</span>
+            <span key={p} className="text-sm font-semibold text-gray-500 hover:text-amber-600 transition-colors cursor-default">{p}</span>
           ))}
         </div>
       </div>
@@ -475,8 +475,8 @@ export default function Landing() {
     <section className={`py-20 ${darkMode ? 'bg-[#0D1525]' : 'bg-white'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1 mb-4">
-            <span className="text-indigo-600 text-xs font-bold uppercase tracking-widest">Nền Tảng Công Nghệ</span>
+          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-4 py-1 mb-4">
+            <span className="text-amber-700 text-xs font-bold uppercase tracking-widest">Nền Tảng Công Nghệ</span>
           </div>
           <h2 className={`text-3xl sm:text-4xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Công Cụ Proptech Hàng Đầu</h2>
           <p className="text-gray-500 max-w-2xl mx-auto leading-relaxed">SGS LAND tích hợp AI, dữ liệu thị trường và CRM trong một nền tảng duy nhất.</p>
@@ -486,7 +486,7 @@ export default function Landing() {
             <a
               key={i}
               href={f.href}
-              className="group p-6 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-50 transition-all duration-300 bg-white hover:-translate-y-1"
+              className="group p-6 rounded-2xl border border-gray-100 hover:border-amber-200 hover:shadow-xl hover:shadow-indigo-50 transition-all duration-300 bg-white hover:-translate-y-1"
             >
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-colors duration-300"
@@ -494,7 +494,7 @@ export default function Landing() {
               >
                 {f.icon}
               </div>
-              <h3 className={`font-bold mb-2 group-hover:text-indigo-400 transition-colors ${darkMode ? 'text-white' : 'text-gray-900 group-hover:text-indigo-600'}`}>{f.title}</h3>
+              <h3 className={`font-bold mb-2 group-hover:text-amber-500 transition-colors ${darkMode ? 'text-white' : 'text-gray-900 group-hover:text-amber-600'}`}>{f.title}</h3>
               <p className={`text-sm leading-relaxed mb-4 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>{f.desc}</p>
               <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: f.color }}>
                 <span>Khám phá</span>
@@ -513,13 +513,13 @@ export default function Landing() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1 mb-3">
-              <span className="text-indigo-600 text-xs font-bold uppercase tracking-widest">11+ Dự Án Lớn</span>
+            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-4 py-1 mb-3">
+              <span className="text-amber-700 text-xs font-bold uppercase tracking-widest">11+ Dự Án Lớn</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Dự Án SGS LAND Phân Phối</h2>
             <p className={`mt-2 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Chỉ phân phối dự án uy tín, pháp lý hoàn chỉnh</p>
           </div>
-          <a href={`/${ROUTES.DU_AN}`} className="inline-flex items-center gap-2 text-indigo-600 font-semibold text-sm hover:text-indigo-700 transition-colors shrink-0">
+          <a href={`/${ROUTES.DU_AN}`} className="inline-flex items-center gap-2 text-amber-600 font-semibold text-sm hover:text-amber-700 transition-colors shrink-0">
             Xem tất cả dự án <ArrowRight className="w-4 h-4" />
           </a>
         </div>
@@ -528,7 +528,7 @@ export default function Landing() {
             <a
               key={i}
               href={`/${ROUTES.DU_AN}/${p.slug}`}
-              className={`group rounded-2xl overflow-hidden border hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 ${darkMode ? 'bg-[#131D35] border-white/10 hover:border-indigo-500/30 hover:shadow-indigo-900/20' : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-indigo-50'}`}
+              className={`group rounded-2xl overflow-hidden border hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 ${darkMode ? 'bg-[#131D35] border-white/10 hover:border-amber-500/30 hover:shadow-amber-900/20' : 'bg-white border-gray-100 hover:border-amber-200 hover:shadow-amber-50/50'}`}
             >
                   <div className="aspect-[4/3] relative overflow-hidden">
                     <img
@@ -543,7 +543,7 @@ export default function Landing() {
                 </div>
               </div>
               <div className="p-5">
-                <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">{p.type}</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-1">{p.type}</div>
                 <h3 className={`font-bold text-lg mb-1 group-hover:text-amber-500 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>{p.name}</h3>
                 <div className="text-sm text-gray-500 mb-4">{p.dev} · {p.loc}</div>
                 <div className="flex items-center justify-between pt-3 border-t border-gray-50">
@@ -553,7 +553,7 @@ export default function Landing() {
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-400 mb-0.5">Giá từ</div>
-                    <div className="text-sm font-bold text-indigo-600">{p.price}</div>
+                    <div className="text-sm font-bold text-amber-600">{p.price}</div>
                   </div>
                 </div>
               </div>
@@ -595,7 +595,7 @@ export default function Landing() {
         >
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-15" style={{ background: GOLD, filter: 'blur(80px)' }} />
-            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10" style={{ background: '#6366f1', filter: 'blur(60px)' }} />
+            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10" style={{ background: '#D4A843', filter: 'blur(60px)' }} />
           </div>
           <div className="relative">
             <div
@@ -637,7 +637,7 @@ export default function Landing() {
           {TESTIMONIALS.map((t, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-indigo-100 hover:shadow-lg transition-all duration-300"
+              className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-amber-200 hover:shadow-lg transition-all duration-300"
             >
               <div className="flex gap-0.5 mb-4">
                 {[...Array(t.rating)].map((_, j) => (
@@ -728,7 +728,7 @@ export default function Landing() {
           </a>
           <a
             href={`/${ROUTES.SEARCH}`}
-            className="inline-flex items-center gap-2 px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:border-indigo-200 hover:text-indigo-600 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:border-amber-200 hover:text-amber-600 transition-colors"
           >
             Xem Sàn Giao Dịch
             <ArrowRight className="w-4 h-4" />
@@ -864,7 +864,7 @@ export default function Landing() {
               href="https://www.facebook.com/sgslandvn"
               target="_blank"
               rel="noreferrer"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-blue-600 transition-all duration-200"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-amber-600 transition-all duration-200"
               style={{ background: 'rgba(255,255,255,0.06)' }}
               aria-label="Facebook"
             >
@@ -876,7 +876,7 @@ export default function Landing() {
               href="https://linkedin.com"
               target="_blank"
               rel="noreferrer"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-blue-700 transition-all duration-200"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-amber-700 transition-all duration-200"
               style={{ background: 'rgba(255,255,255,0.06)' }}
               aria-label="LinkedIn"
             >
