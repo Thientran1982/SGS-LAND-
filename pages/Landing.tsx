@@ -32,12 +32,12 @@ const FEATURES = [
 ];
 
 const PROJECTS = [
-  { slug: 'aqua-city',                 name: 'Aqua City',            dev: 'Novaland',    loc: 'Biên Hòa, Đồng Nai',     scale: '1.000 ha',   price: 'Từ 2,5 tỷ',  badge: 'Hot',        gradient: 'from-emerald-800 to-teal-600',     type: 'Đô Thị Sinh Thái' },
-  { slug: 'the-global-city',           name: 'The Global City',      dev: 'Masterise',   loc: 'Thủ Đức, TP.HCM',        scale: '117 ha',     price: 'Từ 4,5 tỷ',  badge: 'Cao Cấp',    gradient: 'from-blue-900 to-indigo-700',      type: 'Đô Thị Tài Chính' },
-  { slug: 'vinhomes-can-gio',          name: 'Vinhomes Cần Giờ',     dev: 'Vinhomes',    loc: 'Cần Giờ, TP.HCM',        scale: '2.870 ha',   price: 'Từ 12 tỷ',   badge: 'Siêu Dự Án', gradient: 'from-cyan-900 to-blue-700',        type: 'Đô Thị Biển' },
-  { slug: 'izumi-city',                name: 'Izumi City',           dev: 'Nam Long',    loc: 'Biên Hòa, Đồng Nai',     scale: '170 ha',     price: 'Từ 8,4 tỷ',  badge: 'Nhật Bản',   gradient: 'from-rose-900 to-pink-700',        type: 'Đô Thị Chuẩn Nhật' },
-  { slug: 'vinhomes-grand-park',       name: 'Vinhomes Grand Park',  dev: 'Vinhomes',    loc: 'Thủ Đức, TP.HCM',        scale: '271 ha',     price: 'Từ 1,8 tỷ',  badge: 'Best Seller', gradient: 'from-violet-900 to-purple-700',   type: 'Đại Đô Thị' },
-  { slug: 'diamond-sky-van-phuc-city', name: 'Diamond Sky',          dev: 'Van Phúc',    loc: 'TP Thủ Đức, TP.HCM',     scale: '198 ha',     price: 'Từ 9,6 tỷ',  badge: 'Cao Cấp',    gradient: 'from-amber-900 to-orange-700',     type: 'Căn Hộ View Sông' },
+  { slug: 'aqua-city',  image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',                 name: 'Aqua City',            dev: 'Novaland',    loc: 'Biên Hòa, Đồng Nai',     scale: '1.000 ha',   price: 'Từ 2,5 tỷ',  badge: 'Hot',        gradient: 'from-emerald-800 to-teal-600',     type: 'Đô Thị Sinh Thái' },
+  { slug: 'the-global-city',  image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80',           name: 'The Global City',      dev: 'Masterise',   loc: 'Thủ Đức, TP.HCM',        scale: '117 ha',     price: 'Từ 4,5 tỷ',  badge: 'Cao Cấp',    gradient: 'from-blue-900 to-indigo-700',      type: 'Đô Thị Tài Chính' },
+  { slug: 'vinhomes-can-gio',  image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',          name: 'Vinhomes Cần Giờ',     dev: 'Vinhomes',    loc: 'Cần Giờ, TP.HCM',        scale: '2.870 ha',   price: 'Từ 12 tỷ',   badge: 'Siêu Dự Án', gradient: 'from-cyan-900 to-blue-700',        type: 'Đô Thị Biển' },
+  { slug: 'izumi-city',  image: 'https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&q=80',                name: 'Izumi City',           dev: 'Nam Long',    loc: 'Biên Hòa, Đồng Nai',     scale: '170 ha',     price: 'Từ 8,4 tỷ',  badge: 'Nhật Bản',   gradient: 'from-rose-900 to-pink-700',        type: 'Đô Thị Chuẩn Nhật' },
+  { slug: 'vinhomes-grand-park',  image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',       name: 'Vinhomes Grand Park',  dev: 'Vinhomes',    loc: 'Thủ Đức, TP.HCM',        scale: '271 ha',     price: 'Từ 1,8 tỷ',  badge: 'Best Seller', gradient: 'from-violet-900 to-purple-700',   type: 'Đại Đô Thị' },
+  { slug: 'diamond-sky-van-phuc-city',  image: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&q=80', name: 'Diamond Sky',          dev: 'Van Phúc',    loc: 'TP Thủ Đức, TP.HCM',     scale: '198 ha',     price: 'Từ 9,6 tỷ',  badge: 'Cao Cấp',    gradient: 'from-amber-900 to-orange-700',     type: 'Căn Hộ View Sông' },
 ];
 
 const TESTIMONIALS = [
@@ -285,103 +285,102 @@ export default function Landing() {
       className="relative min-h-screen flex items-center overflow-hidden pt-16"
       style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0d1535 55%, #0f1840 100%)` }}
     >
-      {/* Background glows */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] rounded-full opacity-20" style={{ background: '#6366f1', filter: 'blur(140px)' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full opacity-15" style={{ background: '#D4A843', filter: 'blur(120px)' }} />
-        {/* Subtle grid */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
-        />
-        {/* Gold line accent top */}
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}60, transparent)` }} />
+      {/* Background — glow orbs + grid pattern */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Primary glow — indigo left */}
+        <div className="absolute -top-20 left-1/4 w-[700px] h-[700px] rounded-full opacity-25"
+          style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        {/* Secondary glow — gold right */}
+        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, #D4A843 0%, transparent 70%)', filter: 'blur(80px)' }} />
+        {/* Tertiary glow — cyan bottom-left */}
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-15"
+          style={{ background: 'radial-gradient(circle, #0ea5e9 0%, transparent 70%)', filter: 'blur(100px)' }} />
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-[0.06]"
+          style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)`, backgroundSize: '48px 48px' }} />
+        {/* Diagonal accent lines */}
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'linear-gradient(45deg, rgba(212,168,67,0.6) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
+        {/* Gold top border */}
+        <div className="absolute top-0 left-0 right-0 h-[2px]"
+          style={{ background: `linear-gradient(90deg, transparent 0%, ${GOLD}80 30%, ${GOLD} 50%, ${GOLD}80 70%, transparent 100%)` }} />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 w-full">
-        <div className="grid lg:grid-cols-2 gap-14 items-center">
-          {/* Left: Copy */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 lg:pt-32 lg:pb-20 w-full">
+        <div className="grid lg:grid-cols-[1fr_420px] gap-12 xl:gap-16 items-center">
+
+          {/* ── Left: Copy ── */}
           <div>
-            {/* Badge */}
-            <div
-              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7 text-sm font-medium"
-              style={{ background: `${GOLD}18`, border: `1px solid ${GOLD}45`, color: GOLD }}
-            >
+            {/* Eyebrow badge */}
+            <div className="inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 mb-8 text-xs font-bold uppercase tracking-widest"
+              style={{ background: `linear-gradient(135deg, ${GOLD}20, ${GOLD}08)`, border: `1px solid ${GOLD}50`, color: GOLD }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: GOLD }} />
               Nền Tảng Proptech #1 TP.HCM
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.08] tracking-tight mb-5">
-              Tìm Kiếm &{' '}
-              <span
-                className="inline-block"
-                style={{ background: `linear-gradient(135deg, ${GOLD}, #f0c040)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
-              >
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.04] tracking-tighter mb-6">
+              <span className="text-white block">Tìm Kiếm &</span>
+              <span className="block" style={{
+                background: `linear-gradient(135deg, #f5d78e 0%, ${GOLD} 40%, #e8a020 100%)`,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                filter: 'drop-shadow(0 0 30px rgba(212,168,67,0.4))',
+              }}>
                 Đầu Tư BĐS
               </span>
-              {' '}Thông Minh
+              <span className="text-white block">Thông Minh</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg text-slate-300 leading-relaxed mb-8 max-w-xl">
-              SGS LAND phân phối <strong className="text-white font-semibold">11+ dự án lớn</strong> tại TP.HCM —
+            <p className="text-lg text-slate-300 leading-relaxed mb-8 max-w-lg">
+              SGS LAND phân phối <strong className="text-white">11+ dự án lớn</strong> tại TP.HCM —
               Aqua City, The Global City, Vinhomes Cần Giờ.
-              Định giá AI sai số <strong style={{ color: GOLD }}>±5%</strong>. Tư vấn & vay vốn miễn phí.
+              Định giá AI sai số <strong style={{ color: GOLD }}>±5%</strong>. Tư vấn &amp; vay vốn miễn phí.
             </p>
 
-            {/* Search */}
-            <form onSubmit={handleSearch} className="flex gap-2 mb-7 max-w-xl">
+            {/* Glassmorphism search bar */}
+            <form onSubmit={handleSearch} className="flex gap-0 mb-8 max-w-xl rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
               <div className="flex-1 relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Tìm dự án, khu vực, loại hình..."
-                  className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all"
-                  style={{
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    focusRingColor: GOLD,
-                  }}
+                  className="w-full bg-transparent pl-11 pr-4 py-4 text-sm text-white placeholder-slate-500 focus:outline-none"
                 />
               </div>
-              <button
-                type="submit"
-                className="px-5 py-3.5 font-bold rounded-xl transition-all duration-200 hover:brightness-110 text-sm whitespace-nowrap shadow-lg"
-                style={{ background: GOLD, color: NAVY }}
-              >
+              <button type="submit"
+                className="px-6 py-4 font-bold text-sm transition-all duration-200 hover:brightness-110 shrink-0"
+                style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #e8a020 100%)`, color: NAVY }}>
                 Tìm kiếm
               </button>
             </form>
 
-            {/* CTAs */}
-            <div className="flex flex-wrap gap-3 mb-9">
-              <a
-                href={`/${ROUTES.AI_VALUATION}`}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200 hover:opacity-90 shadow-lg"
-                style={{ background: '#ffffff', color: NAVY }}
-              >
-                <Zap className="w-4 h-4" style={{ color: GOLD }} />
+            {/* Primary CTA — gold + outline */}
+            <div className="flex flex-wrap gap-3 mb-8">
+              <a href={`/${ROUTES.AI_VALUATION}`}
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 hover:brightness-110 shadow-xl"
+                style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #e8a020 100%)`, color: NAVY, boxShadow: `0 8px 32px ${GOLD}40` }}>
+                <Zap className="w-4 h-4" />
                 Định Giá AI Miễn Phí
               </a>
-              <a
-                href={`/${ROUTES.DU_AN}`}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm text-white transition-all duration-200 hover:bg-white/15"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)' }}
-              >
+              <a href={`/${ROUTES.DU_AN}`}
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.20)', backdropFilter: 'blur(8px)' }}>
                 Xem Dự Án
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
 
-            {/* Trust badges */}
-            <div className="flex flex-wrap items-center gap-5 text-xs text-slate-400">
+            {/* Trust signals */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
               {[
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Đối tác Vinhomes' },
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Pháp lý minh bạch' },
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Tư vấn 0đ' },
+                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Đối tác chính thức Vinhomes' },
+                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Pháp lý 2 lớp kiểm duyệt' },
+                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Tư vấn & vay vốn 0đ' },
               ].map(b => (
                 <div key={b.text} className="flex items-center gap-1.5">
                   {b.icon}
@@ -391,29 +390,46 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Right: Stats cards */}
-          <div className="hidden lg:grid grid-cols-2 gap-4">
+          {/* ── Right: Stats cards glassmorphism ── */}
+          <div className="hidden lg:grid grid-cols-2 gap-3">
             {STATS.map((s, i) => (
-              <div
-                key={i}
-                className="rounded-2xl p-6 hover:scale-[1.02] transition-all duration-300"
+              <div key={i}
+                className="rounded-2xl p-5 hover:scale-[1.03] transition-all duration-300 cursor-default"
                 style={{
-                  background: i % 2 === 0 ? 'rgba(255,255,255,0.05)' : `${GOLD}10`,
-                  border: `1px solid ${i % 2 === 1 ? `${GOLD}30` : 'rgba(255,255,255,0.09)'}`,
-                  backdropFilter: 'blur(8px)',
-                }}
-              >
-                <div className="text-4xl font-black text-white mb-1 tracking-tight" style={i % 2 === 1 ? { color: GOLD } : {}}>{s.value}</div>
-                <div className="text-sm font-bold mb-1" style={{ color: GOLD }}>{s.label}</div>
-                <div className="text-xs text-slate-400 leading-relaxed">{s.sub}</div>
+                  background: i % 2 === 0
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)'
+                    : `linear-gradient(135deg, ${GOLD}18 0%, ${GOLD}08 100%)`,
+                  border: `1px solid ${i % 2 === 1 ? `${GOLD}35` : 'rgba(255,255,255,0.10)'}`,
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  boxShadow: i % 2 === 1 ? `0 4px 24px ${GOLD}20` : '0 4px 24px rgba(0,0,0,0.3)',
+                }}>
+                <div className="text-3xl font-black mb-1 tracking-tight"
+                  style={{ color: i % 2 === 1 ? GOLD : 'white', textShadow: i % 2 === 1 ? `0 0 20px ${GOLD}60` : 'none' }}>
+                  {s.value}
+                </div>
+                <div className="text-xs font-bold mb-1 uppercase tracking-wider" style={{ color: GOLD }}>{s.label}</div>
+                <div className="text-xs text-slate-500 leading-relaxed">{s.sub}</div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Mobile stats row */}
+        <div className="lg:hidden grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10">
+          {STATS.map((s, i) => (
+            <div key={i} className="rounded-xl px-4 py-3 text-center"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}>
+              <div className="text-2xl font-black" style={{ color: i % 2 === 1 ? GOLD : 'white' }}>{s.value}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.02) 100%)' }} />
+      {/* Bottom gradient fade to white */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.015))' }} />
     </section>
   );
 
@@ -491,10 +507,13 @@ export default function Landing() {
               href={`/${ROUTES.DU_AN}/${p.slug}`}
               className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-50 transition-all duration-300 hover:-translate-y-0.5"
             >
-              <div className={`aspect-[4/3] bg-gradient-to-br ${p.gradient} relative overflow-hidden`}>
-                <div className="absolute inset-0 flex items-end p-5">
-                  <span className="text-white/20 text-5xl font-black tracking-tighter leading-none">{p.name.split(' ')[0]}</span>
-                </div>
+                  <div className="aspect-[4/3] relative overflow-hidden">
+                    <img
+                      src={(p as any).image}
+                      alt={p.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 {/* Badge */}
                 <div className="absolute top-3 left-3">
                   <span className="px-2.5 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold rounded-full border border-white/30">{p.badge}</span>
