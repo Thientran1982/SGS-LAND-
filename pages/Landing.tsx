@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../services/i18n';
 import {
   Search, ArrowRight, Zap, BarChart3, Globe2, Users,
   CheckCircle2, Star, Menu, X, Phone, Mail, MapPin, ChevronRight
@@ -178,7 +179,8 @@ export default function Landing() {
   const [search, setSearch] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [lang, setLang] = useState<'vi'|'en'>('vi');
+  const { language, setLanguage } = useTranslation();
+  const lang = language === 'vn' ? 'vi' : 'en';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -193,6 +195,13 @@ export default function Landing() {
   };
 
   // ── HEADER ─────────────────────────────────────────────────────────────────
+  const EN_NAV: Record<string, string> = {
+    'Dự Án': 'Projects',
+    'Sàn Giao Dịch': 'Exchange', 
+    'Định Giá AI': 'AI Valuation',
+    'Dữ Liệu TT': 'Market Data',
+    'CRM Platform': 'CRM Platform',
+  };
   const header = (
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
@@ -210,9 +219,9 @@ export default function Landing() {
         <div className="flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
           <a href={`/${ROUTES.LANDING}`} className="flex items-center gap-2.5 shrink-0 group">
-            <Logo className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" />
-            <span className="font-bold text-lg tracking-tight text-white">
-              SGS <span style={{ color: GOLD }}>LAND</span>
+            <Logo className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" stroke={GOLD} />
+            <span className="font-bold text-lg tracking-tight">
+              <span style={{ color: GOLD }}>SGS</span>&nbsp;<span style={{ color: GOLD }}>LAND</span>
             </span>
           </a>
 
@@ -224,7 +233,7 @@ export default function Landing() {
                 href={l.href}
                 className="px-3.5 py-2 text-sm font-medium text-slate-300 hover:text-white rounded-lg hover:bg-white/8 transition-all duration-200"
               >
-                {l.label}
+                {lang==='vi' ? l.label : (EN_NAV[l.label] || l.label)}
               </a>
             ))}
           </nav>
@@ -236,22 +245,21 @@ export default function Landing() {
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg border transition-all duration-200 hover:bg-white/10"
               style={{ borderColor: `${GOLD}60` }}
             >
-              Đăng nhập
+              {lang==='vi'?'Đăng nhập':'Login'}
             </a>
             <a
               href={`/${ROUTES.CRM_SOLUTION}`}
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 hover:brightness-110 shadow-lg"
               style={{ background: GOLD, color: NAVY }}
             >
-              Dùng thử miễn phí
+              {lang==='vi'?'Dùng thử miễn phí':'Free Trial'}
             </a>
             {/* Language switcher */}
             <button
-              onClick={() => setLang(l => l === 'vi' ? 'en' : 'vi')}
-              className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white border border-white/20 hover:border-white/40 rounded-lg transition-all duration-200"
+              onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
+              className="hidden sm:flex items-center px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white border border-white/20 hover:border-white/40 rounded-md transition-all duration-200 tracking-wider"
               title="Chuyển ngôn ngữ"
             >
-              <span className="text-sm">{lang === 'vi' ? '🇻🇳' : '🇺🇸'}</span>
               <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
             </button>
             {/* Dark mode toggle */}
@@ -285,15 +293,15 @@ export default function Landing() {
                 className="block px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/8 rounded-lg transition-all"
                 onClick={() => setMenuOpen(false)}
               >
-                {l.label}
+                {lang==='vi' ? l.label : (EN_NAV[l.label] || l.label)}
               </a>
             ))}
             <div className="pt-2 flex flex-col gap-2 px-1">
               <a href={`/${ROUTES.LOGIN}`} className="block text-center py-2.5 text-sm font-semibold text-white border border-white/20 rounded-lg hover:bg-white/10 transition-colors">
-                Đăng nhập
+                {lang==='vi'?'Đăng nhập':'Login'}
               </a>
               <a href={`/${ROUTES.CRM_SOLUTION}`} className="block text-center py-2.5 text-sm font-bold rounded-lg hover:brightness-110 transition-all" style={{ background: GOLD, color: NAVY }}>
-                Dùng thử miễn phí
+                {lang==='vi'?'Dùng thử miễn phí':'Free Trial'}
               </a>
             </div>
           </div>
@@ -344,15 +352,15 @@ export default function Landing() {
 
             {/* Headline */}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.04] tracking-tighter mb-6">
-              <span className="text-white block">Tìm Kiếm &</span>
+              <span className="text-white block">{lang==='vi'?'Tìm Kiếm &':'Search &'}</span>
               <span className="block" style={{
                 background: `linear-gradient(135deg, #f5d78e 0%, ${GOLD} 40%, #e8a020 100%)`,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                 filter: 'drop-shadow(0 0 30px rgba(212,168,67,0.4))',
               }}>
-                Đầu Tư BĐS
+                {lang==='vi'?'Đầu Tư BĐS':'Invest in Real Estate'}
               </span>
-              <span className="text-white block">Thông Minh</span>
+              <span className="text-white block">{lang==='vi'?'Thông Minh':'Intelligently'}</span>
             </h1>
 
             {/* Subheadline */}
@@ -371,7 +379,7 @@ export default function Landing() {
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="Tìm dự án, khu vực, loại hình..."
+                  placeholder={lang==='vi'?'Tìm dự án, khu vực, loại hình...':'Search project, area, type...'}
                   className="w-full bg-transparent pl-11 pr-4 py-4 text-sm text-white placeholder-slate-500 focus:outline-none"
                 />
               </div>
@@ -388,12 +396,12 @@ export default function Landing() {
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 hover:brightness-110 shadow-xl"
                 style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #e8a020 100%)`, color: NAVY, boxShadow: `0 8px 32px ${GOLD}40` }}>
                 <Zap className="w-4 h-4" />
-                Định Giá AI Miễn Phí
+                {lang==='vi'?'Định Giá AI Miễn Phí':'Free AI Valuation'}
               </a>
               <a href={`/${ROUTES.DU_AN}`}
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200"
                 style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.20)', backdropFilter: 'blur(8px)' }}>
-                Xem Dự Án
+                {lang==='vi'?'Xem Dự Án':'View Projects'}
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
@@ -401,8 +409,8 @@ export default function Landing() {
             {/* Trust signals */}
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
               {[
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Đối tác chính thức Vinhomes' },
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Pháp lý 2 lớp kiểm duyệt' },
+                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: lang==='vi'?'Đối tác chính thức Vinhomes':'Official Vinhomes Partner' },
+                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: lang==='vi'?'Pháp lý 2 lớp kiểm duyệt':'Dual-layer Legal Review' },
                 { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Tư vấn & vay vốn 0đ' },
               ].map(b => (
                 <div key={b.text} className="flex items-center gap-1.5">
@@ -750,9 +758,9 @@ export default function Landing() {
           {/* Brand col — spans 2 on lg */}
           <div className="col-span-2 lg:col-span-2">
             <a href={`/${ROUTES.LANDING}`} className="flex items-center gap-2 mb-4 group w-fit">
-              <Logo className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
+              <Logo className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" stroke={GOLD} />
               <span className="font-bold text-base tracking-tight text-white">
-                SGS <span style={{ color: GOLD }}>LAND</span>
+                <span style={{ color: GOLD }}>SGS</span>&nbsp;<span style={{ color: GOLD }}>LAND</span>
               </span>
             </a>
             <p className="text-slate-500 leading-relaxed text-sm mb-6 max-w-xs">
@@ -762,18 +770,18 @@ export default function Landing() {
             <ul className="space-y-2.5 text-sm text-slate-500">
               <li>
                 <a href="tel:+84971132378" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
-                  <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD }} />
+                  <Phone className="w-3.5 h-3.5 shrink-0" stroke={GOLD} />
                   0971.132.378
                 </a>
               </li>
               <li>
                 <a href="mailto:info@sgsland.vn" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
-                  <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD }} />
+                  <Mail className="w-3.5 h-3.5 shrink-0" stroke={GOLD} />
                   info@sgsland.vn
                 </a>
               </li>
               <li className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: GOLD }} />
+                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" stroke={GOLD} />
                 <span>TP. Hồ Chí Minh, Việt Nam</span>
               </li>
             </ul>

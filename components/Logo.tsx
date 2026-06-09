@@ -4,12 +4,16 @@ interface LogoProps {
     className?: string;
     strokeWidth?: number;
     fill?: string;
+    stroke?: string;
+    style?: React.CSSProperties;
     'aria-label'?: string;
 }
 export const Logo: React.FC<LogoProps> = memo(({ 
     className = "w-6 h-6", 
     strokeWidth = 2, 
     fill = "none",
+    stroke,
+    style,
     'aria-label': ariaLabel
 }) => {
     const { t } = useTranslation();
@@ -22,11 +26,12 @@ export const Logo: React.FC<LogoProps> = memo(({
             width="24"
             height="24"
             fill={fill}
-            stroke="currentColor" 
+            stroke={stroke || "currentColor"} 
             strokeWidth={strokeWidth}
             strokeLinecap="round" 
             strokeLinejoin="round"
             role="img"
+            style={style}
             aria-label={label}
             xmlns="http://www.w3.org/2000/svg"
         >
