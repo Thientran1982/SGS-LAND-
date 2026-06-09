@@ -68,6 +68,9 @@ export interface OrganizationSchema {
   };
   priceRange?: string;
   currenciesAccepted?: string;
+  partnerOf?: { "@type": string; name: string; url?: string; sameAs?: string }[];
+  additionalType?: string[];
+  memberOf?: { "@type": string; name: string; url?: string; sameAs?: string }[];
 }
 
 export function getOrganizationSchema(): OrganizationSchema {
@@ -96,7 +99,7 @@ export function getOrganizationSchema(): OrganizationSchema {
       height: 630,
       alt: "SGS LAND - Hệ điều hành bất động sản thế hệ mới",
     },
-    foundingDate: "2024",
+    foundingDate: "2015",
     areaServed: [
       "TP. Hồ Chí Minh",
       "Đồng Nai",
@@ -198,5 +201,16 @@ export function getOrganizationSchema(): OrganizationSchema {
     },
     priceRange: "Tư vấn miễn phí",
     currenciesAccepted: "VND",
+    partnerOf: [
+      { "@type": "Organization", name: "Vinhomes", url: "https://vinhomes.vn", sameAs: "https://www.wikidata.org/wiki/Q17021968" },
+      { "@type": "Organization", name: "Novaland", url: "https://novaland.com.vn", sameAs: "https://www.wikidata.org/wiki/Q17021970" },
+      { "@type": "Organization", name: "Nam Long Group", url: "https://namlonggroup.com", sameAs: "https://www.wikidata.org/wiki/Q107439987" },
+      { "@type": "Organization", name: "Masterise Homes", url: "https://masterisehomes.com" },
+    ],
+    additionalType: [
+      "https://www.wikidata.org/wiki/Q1424372",
+      "https://schema.org/ProfessionalService",
+      "https://schema.org/RealEstateAgent",
+    ],
   };
 }

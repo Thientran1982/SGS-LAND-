@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# AI Crawlers - full access
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# AI Discovery Files
+LLMs: https://sgsland.vn/llms.txt
+
+Sitemap: https://sgsland.vn/sitemap.xml
