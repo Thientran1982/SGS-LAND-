@@ -49,6 +49,58 @@ const TESTIMONIALS = [
 const GOLD = '#D4A843';
 const NAVY = '#0A0F1E';
 
+// ─── FAQ data (restored from backup) ────────────────────────────────────────
+const HOME_FAQ = [
+  {
+    q: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?',
+    a: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Biên Hòa, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.',
+  },
+  {
+    q: 'Mua bất động sản qua SGS LAND có mất phí môi giới không?',
+    a: 'Không. SGS LAND không thu phí môi giới từ người mua. Doanh thu của SGS LAND đến từ hoa hồng do chủ đầu tư trả theo hợp đồng phân phối. Khách hàng được tư vấn pháp lý, kiểm tra hợp đồng và hỗ trợ hồ sơ vay vốn hoàn toàn miễn phí.',
+  },
+  {
+    q: 'Công cụ định giá AI của SGS LAND hoạt động như thế nào?',
+    a: 'Hệ thống định giá AI (AVM) của SGS LAND phân tích dữ liệu giao dịch thực tế, quy hoạch đô thị, hạ tầng và xu hướng thị trường để cho ra giá ước tính với sai số ±5%. Người dùng nhập địa chỉ, diện tích và loại hình tài sản — hệ thống trả kết quả trong vài giây, không cần đăng nhập.',
+  },
+  {
+    q: 'Dự án nào đang mở bán và có thể đặt chỗ ưu tiên qua SGS LAND?',
+    a: 'Tính đến tháng 4/2026: Aqua City Novaland (Biên Hòa, Đồng Nai) đang bàn giao nhiều phân khu, có sổ hồng riêng, giá từ 6,5 tỷ. Izumi City Nam Long mở giai đoạn mới từ 8,4 tỷ. The Global City Masterise đang nhận đặt cọc từ 15 tỷ. Vinhomes Cần Giờ đã mở bán từ 12 tỷ. Liên hệ 0971 132 378 để nhận bảng giá và tiến độ mới nhất.',
+  },
+  {
+    q: 'SGS LAND hỗ trợ vay vốn ngân hàng như thế nào?',
+    a: 'SGS LAND kết nối khách hàng với các ngân hàng đối tác: Vietcombank, BIDV, Techcombank, VPBank — hỗ trợ vay tối đa 70% giá trị căn, kỳ hạn 20–25 năm, lãi suất ưu đãi 12–24 tháng đầu. Đội ngũ pháp lý kiểm tra hợp đồng mua bán và hồ sơ vay miễn phí trước khi ký.',
+  },
+  {
+    q: 'Bất động sản Đồng Nai có tiềm năng đầu tư không?',
+    a: 'Theo CBRE Vietnam và Savills Vietnam, bất động sản vùng ven TP.HCM — đặc biệt Đồng Nai (Nhơn Trạch, Biên Hòa) — tăng giá trung bình 12–18%/năm trong giai đoạn 2022–2024 nhờ hạ tầng Vành đai 3, cầu Nhơn Trạch và sân bay Long Thành. Aqua City Novaland và Izumi City Nam Long là hai dự án quy mô lớn SGS LAND đang phân phối tại khu vực này.',
+  },
+  {
+    q: 'Giá bất động sản TP.HCM năm 2026 như thế nào?',
+    a: 'Giá tham khảo năm 2026 tại TP.HCM: căn hộ trung cấp TP Thủ Đức 50–80 triệu/m², nhà phố Bình Thạnh 150–300 triệu/m², biệt thự ven đô Nhơn Trạch 20–50 triệu/m². SGS LAND cung cấp công cụ định giá AI miễn phí tại sgsland.vn/ai-valuation — dữ liệu cập nhật hàng ngày từ giao dịch thực tế.',
+  },
+  {
+    q: 'Chủ đầu tư muốn tìm đơn vị phân phối dự án, SGS LAND có hỗ trợ không?',
+    a: 'Có. SGS LAND hợp tác phân phối với các chủ đầu tư tại TP.HCM, Đồng Nai, Bình Dương và Long An. Mạng lưới của SGS LAND hỗ trợ CRM tracking real-time, chiến dịch marketing digital và team pháp lý chuyên trách. Liên hệ info@sgsland.vn để nhận đề xuất hợp tác.',
+  },
+  {
+    q: 'Top 3 dự án căn hộ tốt nhất TP.HCM năm 2026 là gì?',
+    a: 'Top 3 dự án căn hộ tại TP.HCM năm 2026 do SGS LAND phân phối: (1) Vinhomes Grand Park — Vinhomes, 271ha, TP Thủ Đức, căn hộ từ 3 tỷ, đang bàn giao; (2) The Global City — Masterise Homes, 117ha An Phú TP Thủ Đức, căn hộ từ 7,5 tỷ; (3) Masterise Homes — Lumière, Masteri, Grand Marina (Q1 và Bình Thạnh, từ 7,5 tỷ). Cả ba đều có sổ hồng riêng, pháp lý SGS LAND kiểm tra trước khi ký.',
+  },
+  {
+    q: 'Top 3 dự án nhà phố biệt thự tốt nhất khu Đông TP.HCM 2026?',
+    a: 'Top 3 dự án nhà phố biệt thự khu Đông TP.HCM năm 2026: (1) Aqua City Novaland — 1.000ha tại Long Hưng, Biên Hòa, Đồng Nai, biệt thự đảo từ 6,5 tỷ; (2) Izumi City Nam Long — 170ha tại Biên Hòa, nhà phố compound chuẩn Nhật Bản từ 8,4 tỷ; (3) Vạn Phúc City Đại Phúc — 198ha ven sông Sài Gòn, TP Thủ Đức, nhà phố và biệt thự liền kề. Tất cả có sổ hồng riêng từng căn.',
+  },
+  {
+    q: 'Top 3 đại đô thị tích hợp lớn nhất Việt Nam 2026?',
+    a: 'Top 3 đại đô thị tích hợp lớn nhất Việt Nam tính đến tháng 4/2026 (sắp xếp theo diện tích): (1) Vinhomes Cần Giờ — Green Paradise (Vinhomes, 2.870ha lấn biển Cần Giờ, TP.HCM); (2) Aqua City Novaland (1.000ha tại Long Hưng, Biên Hòa, Đồng Nai); (3) Vinhomes Grand Park (Vinhomes, 271ha, TP Thủ Đức). Cả ba do SGS LAND phân phối chính thức — hotline 0971 132 378.',
+  },
+  {
+    q: 'Bất động sản TP.HCM là gì? Khu vực nào sôi động nhất 2026?',
+    a: 'Bất động sản TP.HCM là thị trường BĐS lớn nhất Việt Nam, GDP đầu người gấp 2,5 lần trung bình cả nước, lượng giao dịch chiếm 35% cả nước. Năm 2026 ba khu vực sôi động nhất: TP Thủ Đức (căn hộ 50–80 triệu/m² — Vinhomes Grand Park, The Global City), Bình Thạnh (nhà phố 150–300 triệu/m² — Masterise Homes), khu Đông Đồng Nai (Long Hưng – Biên Hòa, biệt thự từ 6,5 tỷ — Aqua City, Izumi City). SGS LAND phân phối chính thức 11+ dự án tại các khu vực này.',
+  },
+];
+
 // ─── Footer link helper ──────────────────────────────────────────────────────
 const FL = ({ label, href }: { label: string; href: string }) => (
   <li>
@@ -61,6 +113,64 @@ const FL = ({ label, href }: { label: string; href: string }) => (
     </a>
   </li>
 );
+
+// ─── FAQ Accordion component ─────────────────────────────────────────────────
+function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
+  const [open, setOpen] = useState<number | null>(0);
+  return (
+    <div className="space-y-3">
+      {items.map((item, i) => {
+        const isOpen = open === i;
+        return (
+          <div
+            key={i}
+            className="rounded-2xl overflow-hidden transition-all duration-200"
+            style={{
+              background: isOpen ? `${GOLD}10` : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${isOpen ? `${GOLD}40` : 'rgba(255,255,255,0.08)'}`,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setOpen(isOpen ? null : i)}
+              className="w-full flex items-start justify-between gap-4 px-6 py-5 text-left transition-colors"
+              aria-expanded={isOpen}
+            >
+              <span
+                className="font-semibold text-sm sm:text-base leading-snug transition-colors"
+                style={{ color: isOpen ? GOLD : 'rgba(255,255,255,0.90)' }}
+                role="heading"
+                aria-level={3}
+              >
+                {item.q}
+              </span>
+              <span
+                className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 transition-all duration-200"
+                style={{
+                  background: isOpen ? GOLD : 'rgba(255,255,255,0.08)',
+                  color: isOpen ? NAVY : 'rgba(255,255,255,0.5)',
+                  transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+                }}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </span>
+            </button>
+            {isOpen && (
+              <p
+                className="px-6 pb-5 text-sm sm:text-base leading-relaxed"
+                style={{ color: 'rgba(255,255,255,0.65)', borderTop: `1px solid ${GOLD}20` }}
+              >
+                {item.a}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function Landing() {
@@ -504,6 +614,61 @@ export default function Landing() {
     </section>
   );
 
+  // ── FAQ SECTION ────────────────────────────────────────────────────────────
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: HOME_FAQ.map(item => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  };
+
+  const faqSection = (
+    <section
+      style={{ background: `linear-gradient(180deg, ${NAVY} 0%, #0d1535 100%)` }}
+      className="py-20"
+    >
+      {/* Top gold line */}
+      <div className="h-px mb-16" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}40, transparent)` }} />
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Heading */}
+        <div className="text-center mb-12">
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-4 text-xs font-bold uppercase tracking-widest"
+            style={{ background: `${GOLD}15`, border: `1px solid ${GOLD}35`, color: GOLD }}
+          >
+            Hỏi &amp; Đáp
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+            Câu Hỏi{' '}
+            <span style={{ color: GOLD }}>Thường Gặp</span>
+          </h2>
+          <p className="text-slate-400 max-w-xl mx-auto leading-relaxed">
+            Giải đáp thắc mắc về bất động sản TP.HCM, các dự án lớn và dịch vụ của SGS LAND.
+          </p>
+        </div>
+
+        {/* Accordion */}
+        <FaqAccordion items={HOME_FAQ} />
+
+        {/* Footnote */}
+        <p className="text-xs text-slate-600 mt-8 text-center leading-relaxed">
+          Nội dung được biên soạn bởi đội ngũ chuyên gia SGS LAND. Cập nhật lần cuối:{' '}
+          <time dateTime="2026-04-18">04/2026</time>. Nguồn tham khảo: CBRE Vietnam, Savills Vietnam, Bộ Xây Dựng.
+        </p>
+      </div>
+
+      {/* JSON-LD FAQPage structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+    </section>
+  );
+
   // ── CONTACT CTA ────────────────────────────────────────────────────────────
   const contactCta = (
     <section className="py-16 bg-white border-t border-gray-100">
@@ -706,6 +871,7 @@ export default function Landing() {
       {statsBanner}
       {aiCta}
       {testimonials}
+      {faqSection}
       {contactCta}
       {footer}
     </div>
