@@ -40,14 +40,14 @@ const IC = {
     CONTRACT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>,
 };
 const STATUS_COLOR: Record<string, string> = {
-    ACTIVE: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    ACTIVE: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]',
     COMPLETED: 'bg-sky-100 text-sky-700 border-sky-200',
     ON_HOLD: 'bg-amber-100 text-amber-700 border-amber-200',
     SUSPENDED: 'bg-rose-100 text-rose-700 border-rose-200',
     BOOKING: 'bg-violet-100 text-violet-700 border-violet-200',
 };
 const ACCESS_COLOR: Record<string, string> = {
-    ACTIVE: 'bg-emerald-100 text-emerald-700',
+    ACTIVE: 'bg-[#FDF6E3] text-[#B8860B]',
     REVOKED: 'bg-rose-100 text-rose-700',
     EXPIRED: 'bg-slate-100 text-slate-500',
 };
@@ -564,7 +564,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 // Project Listings Panel  (Danh mục sản phẩm trong dự án)
 // ─────────────────────────────────────────────────────────────────────────────
 const STATUS_LISTING_COLOR: Record<string, string> = {
-    AVAILABLE: 'bg-emerald-100 text-emerald-700',
+    AVAILABLE: 'bg-[#FDF6E3] text-[#B8860B]',
     BOOKING:   'bg-sky-100 text-sky-700',
     OPENING:   'bg-[#F5E6B8] text-[#B8860B]',
     HOLD:      'bg-amber-100 text-amber-700',
@@ -602,7 +602,7 @@ interface ListingDetailPanelProps {
 const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
     { value: 'BOOKING',  idle: 'bg-sky-50    text-sky-600    border border-sky-200'   },
     { value: 'OPENING',  idle: 'bg-[#FDF6E3] text-[#C9A84C] border border-[#E8D4A0]'},
-    { value: 'AVAILABLE',idle: 'bg-emerald-50 text-emerald-600 border border-emerald-200'},
+    { value: 'AVAILABLE',idle: 'bg-[#FDF6E3] text-[#C9A84C] border border-[#C9A84C]'},
     { value: 'HOLD',     idle: 'bg-amber-50  text-amber-600  border border-amber-200' },
     { value: 'SOLD',     idle: 'bg-slate-100 text-slate-500  border border-slate-200' },
     { value: 'RENTED',   idle: 'bg-violet-50 text-violet-600 border border-violet-200'},
@@ -647,7 +647,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--glass-border)] shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shrink-0">
+                        <div className="w-8 h-8 rounded-xl bg-[#FDF6E3] dark:bg-[#B8860B]/30 flex items-center justify-center text-[#C9A84C] shrink-0">
                             {IC.HOME}
                         </div>
                         <div className="min-w-0">
@@ -704,7 +704,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                                             key={i}
                                             type="button"
                                             onClick={() => setActiveImg(i)}
-                                            className={`w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${i === activeImg ? 'border-emerald-500 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100 hover:border-[var(--glass-border)]'}`}
+                                            className={`w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${i === activeImg ? 'border-[#C9A84C]0 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100 hover:border-[var(--glass-border)]'}`}
                                         >
                                             <img src={img} alt="" className="w-full h-full object-cover" />
                                         </button>
@@ -722,9 +722,9 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     )}
                     {/* Price cards */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-800">
-                            <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
-                            <p className="text-xl font-bold text-emerald-700">{fmtPrice(listing.price)}</p>
+                        <div className="bg-[#FDF6E3] dark:bg-[#B8860B]/20 rounded-xl p-3.5 border border-[#C9A84C] dark:border-[#B8860B]">
+                            <p className="text-xs text-[#C9A84C] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
+                            <p className="text-xl font-bold text-[#B8860B]">{fmtPrice(listing.price)}</p>
                         </div>
                         <div className="bg-[var(--glass-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
                             <p className="text-xs text-[var(--text-tertiary)] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_unit_price')}</p>
@@ -849,7 +849,7 @@ function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
     return (
         <div ref={ref} className="relative">
             <button type="button" onClick={() => setOpen(o => !o)}
-                className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400 flex items-center justify-between gap-1 hover:border-emerald-400 transition-colors">
+                className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C] flex items-center justify-between gap-1 hover:border-[#C9A84C] transition-colors">
                 <span className="truncate">{labelMap[value] ?? value ?? placeholder ?? '—'}</span>
                 <svg className={`w-3.5 h-3.5 shrink-0 text-[var(--text-tertiary)] transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -860,7 +860,7 @@ function SelectDropdown({ value, onChange, options, labelMap, placeholder }: {
                     {options.map(opt => (
                         <button key={opt} type="button"
                             onClick={() => { onChange(opt); setOpen(false); }}
-                            className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-emerald-50 hover:text-emerald-700 ${value === opt ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-[var(--text-primary)]'}`}>
+                            className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-[#FDF6E3] hover:text-[#B8860B] ${value === opt ? 'bg-[#FDF6E3] text-[#B8860B] font-semibold' : 'text-[var(--text-primary)]'}`}>
                             {labelMap[opt] ?? opt}
                         </button>
                     ))}
@@ -939,14 +939,14 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
             <div className="w-full max-w-3xl bg-[var(--bg-surface)] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-[var(--glass-border)]">
-                    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <svg className="w-5 h-5 text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-sm font-bold text-[var(--text-primary)] truncate">Bảng Giá — {project.name}</h2>
                         <p className="text-xs text-[var(--text-secondary)] mt-0.5">Giá theo tầng · hướng · loại phòng</p>
                     </div>
                     {canEdit && (
                         <button type="button" onClick={() => { setForm({ ...EMPTY_ROW }); setEditId(null); }}
-                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#C9A84C] hover:bg-[#B8860B] text-white text-xs font-bold rounded-xl transition-colors">
                             {IC.PLUS} Thêm dòng
                         </button>
                     )}
@@ -962,17 +962,17 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tòa / Tower</label>
                                 <input value={form.tower ?? ''} onChange={e => setForm((f: any) => ({ ...f, tower: e.target.value }))}
                                     placeholder="A, B, C... (bỏ trống = tất cả)"
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C]" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng từ</label>
                                 <input type="number" min={1} max={200} value={form.floor_from} onChange={e => setForm((f: any) => ({ ...f, floor_from: e.target.value }))}
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C]" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng đến</label>
                                 <input type="number" min={1} max={200} value={form.floor_to} onChange={e => setForm((f: any) => ({ ...f, floor_to: e.target.value }))}
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C]" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Hướng</label>
@@ -996,19 +996,19 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Giá gốc (tr/m²)</label>
                                 <input type="number" min={0} step={0.01} value={form.base_price_sqm} onChange={e => setForm((f: any) => ({ ...f, base_price_sqm: e.target.value }))}
                                     placeholder="VD: 85.5"
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C]" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Điều chỉnh (%)</label>
                                 <input type="number" step={0.1} value={form.adjustment_pct} onChange={e => setForm((f: any) => ({ ...f, adjustment_pct: e.target.value }))}
                                     placeholder="0"
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C]" />
                             </div>
                             <div className="col-span-2 sm:col-span-2">
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Ghi chú</label>
                                 <input value={form.notes ?? ''} onChange={e => setForm((f: any) => ({ ...f, notes: e.target.value }))}
                                     placeholder="VD: Tầng cao view kênh đào, tăng giá 5%"
-                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                                    className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C]" />
                             </div>
                         </div>
                         <div className="flex gap-2 mt-3 justify-end">
@@ -1017,7 +1017,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                 Hủy
                             </button>
                             <button type="button" onClick={handleSave} disabled={saving}
-                                className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-1.5">
+                                className="px-4 py-1.5 text-xs font-bold bg-[#C9A84C] hover:bg-[#B8860B] text-white rounded-lg disabled:opacity-50 flex items-center gap-1.5">
                                 {saving ? <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : null}
                                 {editId ? 'Lưu thay đổi' : 'Thêm dòng'}
                             </button>
@@ -1028,11 +1028,11 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                     {loading ? (
                         <div className="flex items-center justify-center h-32">
-                            <div className="w-6 h-6 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+                            <div className="w-6 h-6 border-4 border-[#C9A84C] border-t-[#C9A84C]0 rounded-full animate-spin" />
                         </div>
                     ) : rows.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-48 text-[var(--text-secondary)]">
-                            <svg className="w-10 h-10 mb-3 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <svg className="w-10 h-10 mb-3 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             <p className="text-sm font-semibold">Chưa có bảng giá</p>
                             {canEdit && <p className="text-xs mt-1">Nhấn "Thêm dòng" để bắt đầu nhập giá</p>}
                         </div>
@@ -1046,7 +1046,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                     <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Loại</th>
                                     <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Giá gốc</th>
                                     <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Điều chỉnh</th>
-                                    <th className="text-right px-3 py-2 font-semibold text-emerald-600">Giá hiệu lực</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-[#C9A84C]">Giá hiệu lực</th>
                                     <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Ghi chú</th>
                                     {canEdit && <th className="px-3 py-2" />}
                                 </tr>
@@ -1064,11 +1064,11 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                             <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-[#FDF6E3] text-[#B8860B] rounded font-medium">{BEDROOM_LABEL[row.bedroom_type] ?? row.bedroom_type}</span></td>
                                             <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmtSqm(base)}</td>
                                             <td className="px-3 py-2 text-right">
-                                                <span className={adj === 0 ? 'text-[var(--text-tertiary)]' : adj > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
+                                                <span className={adj === 0 ? 'text-[var(--text-tertiary)]' : adj > 0 ? 'text-[#C9A84C] font-semibold' : 'text-rose-500 font-semibold'}>
                                                     {adj >= 0 ? '+' : ''}{adj}%
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2 text-right font-bold text-emerald-700">{fmtSqm(eff)}</td>
+                                            <td className="px-3 py-2 text-right font-bold text-[#B8860B]">{fmtSqm(eff)}</td>
                                             <td className="px-3 py-2 text-[var(--text-tertiary)] max-w-[160px] truncate">{row.notes || '—'}</td>
                                             {canEdit && (
                                                 <td className="px-3 py-2">
@@ -1090,7 +1090,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                 </div>
                 {/* Toast */}
                 {toast && createPortal(
-                    <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+                    <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold ${toast.type === 'success' ? 'bg-[#C9A84C] text-white' : 'bg-rose-600 text-white'}`}>
                         {toast.msg}
                     </div>,
                     document.body
@@ -1458,7 +1458,7 @@ function BulkImageUploadModal({
                                             </div>
                                             <div className="shrink-0 w-44">
                                                 {effectiveCode ? (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-mono border border-emerald-200 max-w-full truncate" title={effectiveCode}>
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#FDF6E3] text-[#B8860B] text-xs font-mono border border-[#C9A84C] max-w-full truncate" title={effectiveCode}>
                                                         <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                                                         <span className="truncate">{effectiveCode}</span>
                                                     </span>
@@ -1505,14 +1505,14 @@ function BulkImageUploadModal({
                     {/* Result */}
                     {result && summary && (
                         <div className="space-y-3">
-                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                                <div className="text-sm font-bold text-emerald-700">
+                            <div className="rounded-xl border border-[#C9A84C] bg-[#FDF6E3] px-4 py-3">
+                                <div className="text-sm font-bold text-[#B8860B]">
                                     {t('project.bulk_images_summary')
                                         .replace('{ok}', String(summary.uploaded))
                                         .replace('{total}', String(summary.total))
                                         .replace('{n}', String(summary.listingsUpdated))}
                                 </div>
-                                <div className="text-xs text-emerald-700/80 mt-1">
+                                <div className="text-xs text-[#B8860B]/80 mt-1">
                                     {t('project.bulk_images_summary_skipped')
                                         .replace('{nomatch}', String(summary.skippedNoMatch))
                                         .replace('{full}', String(summary.skippedMaxImages))
@@ -1534,7 +1534,7 @@ function BulkImageUploadModal({
                                             || r.status === 'skipped_no_permission'
                                             || r.status === 'skipped_max_images';
                                         const badgeCls = ok
-                                            ? 'bg-emerald-100 text-emerald-700'
+                                            ? 'bg-[#FDF6E3] text-[#B8860B]'
                                             : isWarn
                                                 ? 'bg-amber-100 text-amber-700'
                                                 : 'bg-rose-100 text-rose-700';
@@ -1544,7 +1544,7 @@ function BulkImageUploadModal({
                                         return (
                                             <li key={i} className="px-3 py-1.5 flex flex-col gap-0.5">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] ${ok ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                                    <span className={`shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] ${ok ? 'bg-[#FDF6E3]0 text-white' : 'bg-rose-500 text-white'}`}>
                                                         {ok ? '✓' : '✗'}
                                                     </span>
                                                     <span className="font-mono text-[var(--text-primary)] truncate flex-1" title={r.filename}>{r.filename}</span>
@@ -1997,7 +1997,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         {/* Top row */}
                         <div className="flex items-center justify-between gap-3 px-5 py-3.5">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0 text-emerald-600">
+                                <div className="w-8 h-8 rounded-xl bg-[#FDF6E3] dark:bg-[#B8860B]/30 flex items-center justify-center shrink-0 text-[#C9A84C]">
                                     {IC.LIST}
                                 </div>
                                 <div className="min-w-0">
@@ -2187,9 +2187,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                             onClick={it.onClick}
                                                             disabled={it.disabled}
                                                             title={it.title}
-                                                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] ${it.accent === 'emerald' ? 'text-emerald-700 dark:text-emerald-300 font-semibold' : 'text-[var(--text-primary)]'}`}
+                                                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--glass-surface-hover)] ${it.accent === 'emerald' ? 'text-[#B8860B] dark:text-[#C9A84C] font-semibold' : 'text-[var(--text-primary)]'}`}
                                                         >
-                                                            <span className={`shrink-0 ${it.accent === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-secondary)]'}`}>{it.icon}</span>
+                                                            <span className={`shrink-0 ${it.accent === 'emerald' ? 'text-[#C9A84C] dark:text-[#C9A84C]' : 'text-[var(--text-secondary)]'}`}>{it.icon}</span>
                                                             <span className="flex-1 truncate">{it.label}</span>
                                                         </button>
                                                     ))}
@@ -2202,7 +2202,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
-                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
+                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] transition-colors">
                                         {IC.PLUS} <span className="hidden sm:inline">{t('project.add_listing')}</span>
                                     </button>
                                 )}
@@ -2214,7 +2214,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                             <div className="flex items-center gap-2 px-5 pb-3 overflow-x-auto no-scrollbar">
                                 {([
                                     { key: 'totalCount',     label: t('project.stat_total'),    cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
-                                    { key: 'availableCount', label: t('project.stat_available'), cls: 'bg-emerald-100 text-emerald-700' },
+                                    { key: 'availableCount', label: t('project.stat_available'), cls: 'bg-[#FDF6E3] text-[#B8860B]' },
                                     { key: 'openingCount',   label: t('project.stat_opening'),   cls: 'bg-[#F5E6B8] text-[#B8860B]' },
                                     { key: 'bookingCount',   label: t('project.stat_booking'),   cls: 'bg-sky-100 text-sky-700' },
                                     { key: 'holdCount',      label: t('project.stat_hold'),      cls: 'bg-amber-100 text-amber-700' },
@@ -2241,7 +2241,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('list')}
-                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-[#C9A84C] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
                                     aria-pressed={viewMode === 'list'}
                                 >
                                     {t('floorplan.view_list') || 'Danh sách'}
@@ -2249,7 +2249,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('floorplan')}
-                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${viewMode === 'floorplan' ? 'bg-emerald-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                    className={`px-2.5 h-[30px] rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${viewMode === 'floorplan' ? 'bg-[#C9A84C] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'}`}
                                     aria-pressed={viewMode === 'floorplan'}
                                     title={t('floorplan.view_floorplan') || 'Sa bàn tương tác'}
                                 >
@@ -2279,13 +2279,13 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                     placeholder={t('common.search') + '...'}
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
-                                    className="w-full pl-9 pr-3 py-2 h-[36px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full pl-9 pr-3 py-2 h-[36px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A84C]0"
                                 />
                             </div>
                             {/* Bulk actions — visible when rows selected */}
                             {selected.size > 0 && isAdmin && (
                                 <>
-                                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl whitespace-nowrap">
+                                    <span className="text-xs font-semibold text-[#B8860B] bg-[#FDF6E3] border border-[#C9A84C] px-2.5 py-1.5 rounded-xl whitespace-nowrap">
                                         {selected.size} {t('project.bulk_selected_suffix')}
                                     </span>
                                     <Dropdown
@@ -2319,7 +2319,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         <div className="overflow-hidden bg-white dark:bg-slate-900 flex flex-col">
                             {!floorPlansLoaded ? (
                                 <div className="flex items-center justify-center h-40">
-                                    <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+                                    <div className="w-7 h-7 border-4 border-[#C9A84C] border-t-[#C9A84C] rounded-full animate-spin" />
                                 </div>
                             ) : floorPlans.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-60 text-[var(--text-secondary)] text-center px-6">
@@ -2328,7 +2328,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         <button
                                             type="button"
                                             onClick={() => setShowFloorPlanManager(true)}
-                                            className="mt-3 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700"
+                                            className="mt-3 px-4 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B]"
                                         >
                                             {t('floorplan.upload_btn') || 'Tải lên SVG'}
                                         </button>
@@ -2371,14 +2371,14 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         )}
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
-                                <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+                                <div className="w-7 h-7 border-4 border-[#C9A84C] border-t-[#C9A84C] rounded-full animate-spin" />
                             </div>
                         ) : filtered.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 text-[var(--text-secondary)]">
                                 <p className="font-semibold mb-1">{t('project.no_listings')}</p>
                                 {canCreate && !search && (
                                     <button type="button" onClick={() => setShowCreate(true)}
-                                        className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                                        className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B]">
                                         {IC.PLUS} {t('project.add_listing')}
                                     </button>
                                 )}
@@ -2394,7 +2394,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 checked={allSelected}
                                                 ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
                                                 onChange={toggleAll}
-                                                className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                                                className="w-4 h-4 rounded accent-[#C9A84C] cursor-pointer"
                                             />
                                         </div>
                                     )}
@@ -2438,7 +2438,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                     type="checkbox"
                                                     checked={selected.has(l.id)}
                                                     onChange={() => toggleOne(l.id)}
-                                                    className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                                                    className="w-4 h-4 rounded accent-[#C9A84C] cursor-pointer"
                                                 />
                                             </div>
                                         )}
@@ -2544,7 +2544,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <span className="font-bold text-[var(--text-secondary)]">{filtered.length}</span> {t('project.listing_count')}
                             </span>
                             {selected.size > 0 && (
-                                <span className="text-emerald-600 font-semibold">
+                                <span className="text-[#C9A84C] font-semibold">
                                     · {selected.size} {t('project.bulk_selected_suffix')}
                                 </span>
                             )}
@@ -2653,7 +2653,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         <button
                             type="button"
                             onClick={() => { setMenuOpenId(null); setContractTarget(menuListing); }}
-                            className="w-full text-left px-3 py-2 text-xs text-emerald-700 hover:bg-emerald-50 flex items-center gap-2"
+                            className="w-full text-left px-3 py-2 text-xs text-[#B8860B] hover:bg-[#FDF6E3] flex items-center gap-2"
                         >
                             {IC.CONTRACT} {t('detail.create_contract') || 'Hợp đồng'}
                         </button>
@@ -2728,9 +2728,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         </div>
                         {/* Summary */}
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-center">
-                                <div className="text-2xl font-extrabold text-emerald-700">{importPreview.valid.length}</div>
-                                <div className="text-xs text-emerald-600 font-semibold mt-0.5">Hợp lệ — sẽ được tạo</div>
+                            <div className="rounded-xl bg-[#FDF6E3] dark:bg-[#B8860B]/20 px-4 py-3 text-center">
+                                <div className="text-2xl font-extrabold text-[#B8860B]">{importPreview.valid.length}</div>
+                                <div className="text-xs text-[#C9A84C] font-semibold mt-0.5">Hợp lệ — sẽ được tạo</div>
                             </div>
                             <div className={`rounded-xl px-4 py-3 text-center ${importPreview.errors.length > 0 ? 'bg-rose-50 dark:bg-rose-900/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
                                 <div className={`text-2xl font-extrabold ${importPreview.errors.length > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{importPreview.errors.length}</div>
@@ -2776,12 +2776,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-6 max-w-sm w-full space-y-4">
                         <div className="text-center">
-                            <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 mx-auto mb-3">
+                            <div className="w-14 h-14 rounded-full bg-[#FDF6E3] dark:bg-[#B8860B]/30 flex items-center justify-center text-[#C9A84C] mx-auto mb-3">
                                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                             </div>
                             <h3 className="font-bold text-[var(--text-primary)] text-lg">Nhập hoàn tất</h3>
                             <p className="text-sm text-[var(--text-secondary)] mt-1">
-                                Đã tạo thành công <span className="font-bold text-emerald-700">{importDone.created}</span> sản phẩm
+                                Đã tạo thành công <span className="font-bold text-[#B8860B]">{importDone.created}</span> sản phẩm
                                 {importDone.errors.length > 0 && (
                                     <>, <span className="font-bold text-rose-600">{importDone.errors.length}</span> lỗi bỏ qua</>
                                 )}
@@ -2799,7 +2799,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         <button
                             type="button"
                             onClick={() => setImportDone(null)}
-                            className="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+                            className="w-full px-4 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] transition-colors"
                         >
                             Đóng
                         </button>
@@ -2812,8 +2812,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 <div
                     className={`fixed z-[20000] transition-all
                         ${panelToast.celebration
-                            ? 'bottom-8 left-1/2 -translate-x-1/2 px-8 py-5 rounded-3xl shadow-2xl text-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white max-w-xs w-[90vw]'
-                            : `bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white ${panelToast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`
+                            ? 'bottom-8 left-1/2 -translate-x-1/2 px-8 py-5 rounded-3xl shadow-2xl text-center bg-gradient-to-r from-[#C9A84C]0 to-[#C9A84C]0 text-white max-w-xs w-[90vw]'
+                            : `bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white ${panelToast.type === 'error' ? 'bg-rose-600' : 'bg-[#C9A84C]'}`
                         }`}
                     style={{ textAlign: 'center' }}
                 >
@@ -3180,7 +3180,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                     )}
                     {project.listingCount != null && (
                         <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
                                 <span className="font-semibold text-[var(--text-secondary)]">{project.listingCount}</span> {t('project.listing_count')}
                             </span>
@@ -3213,12 +3213,12 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 <button
                     type="button"
                     onClick={onListings}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-emerald-700 text-sm font-semibold rounded-xl transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-[#FDF6E3] dark:hover:bg-[#B8860B]/20 border border-[var(--glass-border)] hover:border-[#C9A84C] text-[var(--text-secondary)] hover:text-[#B8860B] text-sm font-semibold rounded-xl transition-all"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                     {t('project.view_listings')}
                     {(project.listingCount || 0) > 0 && (
-                        <span className="ml-auto px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                        <span className="ml-auto px-2 py-0.5 bg-[#FDF6E3] text-[#B8860B] text-xs font-bold rounded-full">
                             {project.listingCount}
                         </span>
                     )}
@@ -3667,7 +3667,7 @@ export function Projects() {
                 document.body
             )}
             {toast && createPortal(
-                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-[#C9A84C] text-white' : 'bg-rose-600 text-white'}`}>
                     {toast.type === 'success'
                         ? <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
                         : <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>

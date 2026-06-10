@@ -2282,7 +2282,7 @@ export default function ProjectLandingPage() {
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-600)]/10 text-[var(--primary-600)] border border-[var(--primary-600)]/20">
                             {cfg.projectType}
                         </span>
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#C9A84C]/10 text-[#C9A84C] border border-[#C9A84C]/20">
                             {cfg.priceRange}
                         </span>
                     </div>
@@ -2349,7 +2349,7 @@ export default function ProjectLandingPage() {
                                 <ul className="space-y-2.5">
                                     {group.items.map((item, ii) => (
                                         <li key={ii} className="flex items-start gap-2.5 text-sm text-[var(--text-secondary)]">
-                                            <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg className="w-4 h-4 text-[#C9A84C] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                             </svg>
                                             {item}

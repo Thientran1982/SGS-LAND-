@@ -58,7 +58,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
                     {/* Transaction Type Badge - FIX for Ambiguous Status */}
-                    <div className={`flex items-center gap-1.5 text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-[#C9A84C]/90' : 'bg-blue-600/90'}`}>
+                    <div className={`flex items-center gap-1.5 text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-[#C9A84C]/90' : 'bg-[#C9A84C]/90'}`}>
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
                     {isVerified && (

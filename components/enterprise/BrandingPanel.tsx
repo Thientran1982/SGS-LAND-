@@ -193,7 +193,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const handleSaveBranding = async () => {
     // Normalize primaryColor: nếu nhập sai format thì không lưu
     if (form.primaryColor && !HEX_RE.test(form.primaryColor)) {
-      notify('Màu thương hiệu phải là mã hex 6 ký tự, ví dụ #4F46E5.', 'error');
+      notify('Màu thương hiệu phải là mã hex 6 ký tự, ví dụ #C9A84C.', 'error');
       return;
     }
     setSaving(true);
@@ -284,7 +284,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const apex = data.binding.apexDomain;
   const txt  = data.binding.customDomainTxtRecord;
   const verified = !!data.binding.customDomainVerifiedAt;
-  const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : '#4F46E5';
+  const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : '#C9A84C';
   // ── Custom-domain health (task #34) ─────────────────────────────────────────
   // Cron 5 phút re-verify cả domain đã verified. Có 2 trạng thái cần cảnh báo:
   //   • lostVerification: trước đây verified nhưng bản ghi TXT đã biến mất quá
@@ -318,7 +318,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <select
                 value={previewCode}
                 onChange={(e) => setPreviewCode(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[260px]"
+                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 max-w-[260px]"
                 aria-label="Chọn dự án xem trước"
               >
                 {micrositeProjects.map((p) => (
@@ -397,7 +397,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={!!uploading.logoUrl}
-                  className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50 self-start"
+                  className="px-3 py-1.5 rounded bg-[#C9A84C] hover:bg-[#C9A84C] text-white text-xs font-bold disabled:opacity-50 self-start"
                 >
                   {uploading.logoUrl ? 'Đang tải…' : (form.logoUrl ? 'Thay logo' : 'Tải logo lên')}
                 </button>
@@ -439,7 +439,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                   type="button"
                   onClick={() => faviconInputRef.current?.click()}
                   disabled={!!uploading.faviconUrl}
-                  className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50 self-start"
+                  className="px-3 py-1.5 rounded bg-[#C9A84C] hover:bg-[#C9A84C] text-white text-xs font-bold disabled:opacity-50 self-start"
                 >
                   {uploading.faviconUrl ? 'Đang tải…' : (form.faviconUrl ? 'Thay favicon' : 'Tải favicon lên')}
                 </button>
@@ -480,13 +480,13 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <input
                 type="text"
                 value={form.primaryColor || ''}
-                placeholder="#4F46E5"
+                placeholder="#C9A84C"
                 maxLength={7}
                 onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-mono text-sm uppercase"
+                className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 font-mono text-sm uppercase"
               />
             </div>
-            <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ #4F46E5.</span>
+            <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ #C9A84C.</span>
           </label>
           {TEXT_FIELDS.map(({ key, label, placeholder, help }) => (
             <label key={key} className="flex flex-col gap-1 text-sm">
@@ -496,7 +496,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                 value={(form[key] as string) || ''}
                 placeholder={placeholder}
                 onChange={(e) => updateField(key, e.target.value)}
-                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30"
               />
               {help && <span className="text-xs text-[var(--text-tertiary)]">{help}</span>}
             </label>
@@ -522,7 +522,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             type="button"
             onClick={handleSaveBranding}
             disabled={saving}
-            className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-50"
+            className="px-5 py-2 rounded-lg bg-[#C9A84C] hover:bg-[#C9A84C] text-white text-sm font-bold disabled:opacity-50"
           >
             {saving ? 'Đang lưu…' : 'Lưu thương hiệu'}
           </button>
@@ -554,7 +554,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             type="button"
             onClick={handleSetSubdomain}
             disabled={slugBusy || !slugInput.trim()}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#C9A84C] hover:bg-[#C9A84C] text-white text-sm font-bold disabled:opacity-50"
           >
             {slugBusy ? '…' : 'Đăng ký / Cập nhật'}
           </button>
@@ -573,7 +573,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
           <p className="mt-3 text-sm">
             Đang hoạt động:{' '}
             <a href={data.binding.subdomainUrl} target="_blank" rel="noopener noreferrer"
-               className="font-mono text-indigo-600 hover:underline">
+               className="font-mono text-[#C9A84C] hover:underline">
               {data.binding.subdomainUrl}
             </a>
           </p>
@@ -638,13 +638,13 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             value={hostInput}
             placeholder="brand.example.com"
             onChange={(e) => setHostInput(e.target.value.toLowerCase())}
-            className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-sm"
+            className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 text-sm"
           />
           <button
             type="button"
             onClick={handleSetCustomDomain}
             disabled={hostBusy || !hostInput.trim()}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#C9A84C] hover:bg-[#C9A84C] text-white text-sm font-bold disabled:opacity-50"
           >
             {hostBusy ? '…' : 'Lưu tên miền'}
           </button>
@@ -661,7 +661,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
         </div>
         {txt && (
           <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
-            <div className={`text-sm font-bold ${verified ? 'text-emerald-700' : 'text-amber-700'}`}>
+            <div className={`text-sm font-bold ${verified ? 'text-[#B8860B]' : 'text-amber-700'}`}>
               {verified
                 ? 'Đã xác thực — tên miền đang hoạt động.'
                 : 'Bước 1: Tạo bản ghi TXT để xác thực'}
@@ -670,11 +670,11 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                 gửi email" — vì TXT chỉ chứng minh ownership, chưa cấu hình SPF/DKIM. */}
             {verified && (
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FDF6E3] text-[#B8860B] text-[11px] font-bold border border-[#C9A84C]">
                   ✓ Đã xác thực sở hữu (TXT)
                 </span>
                 {emailSenderReady ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FDF6E3] text-[#B8860B] text-[11px] font-bold border border-[#C9A84C]">
                     ✉️ Đã sẵn sàng gửi email (SPF/DKIM)
                   </span>
                 ) : (
@@ -716,7 +716,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <p className="text-sm">
                 Mở:{' '}
                 <a href={`https://${data.binding.customDomain}`} target="_blank" rel="noopener noreferrer"
-                   className="font-mono text-indigo-600 hover:underline">
+                   className="font-mono text-[#C9A84C] hover:underline">
                   https://{data.binding.customDomain}
                 </a>
               </p>

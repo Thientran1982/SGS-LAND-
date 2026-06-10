@@ -339,15 +339,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_developer')}</label>
-                        <input value={formData.attributes?.developer || ''} onChange={e => updateAttribute('developer', e.target.value)} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input value={formData.attributes?.developer || ''} onChange={e => updateAttribute('developer', e.target.value)} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_total_units')}</label>
-                        <input type="number" value={formData.totalUnits || ''} onChange={e => setFormData({...formData, totalUnits: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="number" value={formData.totalUnits || ''} onChange={e => setFormData({...formData, totalUnits: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_handover')}</label>
-                        <input value={formData.attributes?.handoverYear || ''} onChange={e => updateAttribute('handoverYear', e.target.value)} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" placeholder="YYYY" />
+                        <input value={formData.attributes?.handoverYear || ''} onChange={e => updateAttribute('handoverYear', e.target.value)} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" placeholder="YYYY" />
                     </div>
                     <div>
                         <Dropdown
@@ -365,11 +365,11 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_frontage')} (m)</label>
-                        <input type="number" value={(formData.attributes?.frontage as number) || ''} onChange={e => updateAttribute('frontage', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="number" value={(formData.attributes?.frontage as number) || ''} onChange={e => updateAttribute('frontage', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_road_width')} (m)</label>
-                        <input type="number" value={(formData.attributes?.roadWidth as number) || ''} onChange={e => updateAttribute('roadWidth', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="number" value={(formData.attributes?.roadWidth as number) || ''} onChange={e => updateAttribute('roadWidth', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     <div>
                         <Dropdown
@@ -405,20 +405,20 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                     {/* Row 1: PN | WC | Toà */}
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bed')}</label>
-                        <input type="number" min={0} value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="number" min={0} value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bath')}</label>
-                        <input type="number" min={0} value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="number" min={0} value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_tower')}</label>
-                        <input type="text" value={(formData.attributes?.tower as string) || ''} onChange={e => updateAttribute('tower', e.target.value)} placeholder="A, B, T1..." className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="text" value={(formData.attributes?.tower as string) || ''} onChange={e => updateAttribute('tower', e.target.value)} placeholder="A, B, T1..." className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     {/* Row 2: Tầng | Hướng | View */}
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_floor')}</label>
-                        <input type="number" min={1} value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="number" min={1} value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     <div>
                         <Dropdown
@@ -430,7 +430,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                     </div>
                     <div>
                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_view')}</label>
-                        <input type="text" value={(formData.attributes?.view as string) || ''} onChange={e => updateAttribute('view', e.target.value)} placeholder="Sông, Hồ bơi, Nội khu..." className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                        <input type="text" value={(formData.attributes?.view as string) || ''} onChange={e => updateAttribute('view', e.target.value)} placeholder="Sông, Hồ bơi, Nội khu..." className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                     </div>
                     {/* Row 3: Nội thất | Pháp lý */}
                     <div>
@@ -457,15 +457,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             <div className="grid grid-cols-3 gap-4">
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bed')}</label>
-                    <input type="number" min={0} value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" min={0} value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                 </div>
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bath')}</label>
-                    <input type="number" min={0} value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" min={0} value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                 </div>
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_floors')}</label>
-                    <input type="number" min={1} value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" min={1} value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none" />
                 </div>
                 <div>
                     <Dropdown
@@ -512,12 +512,12 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.section_general')}</h4>
+                                <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-wide">{t('inventory.section_general')}</h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     {!isProject && (
                                         <div>
                                             <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_code')}</label>
-                                            <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] focus:border-indigo-500 outline-none" />
+                                            <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] focus:border-[#C9A84C] outline-none" />
                                         </div>
                                     )}
                                     {!isProject && !isProjectUnit && (projectsLoading || projects.length > 0 || !!formData.projectCode) && (
@@ -547,7 +547,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <input 
                                         value={formData.title || ''} 
                                         onChange={e => setFormData({...formData, title: e.target.value})} 
-                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold focus:border-indigo-500 outline-none ${errors.title ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold focus:border-[#C9A84C] outline-none ${errors.title ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                         placeholder={isProject ? t('inventory.placeholder_title_project') : t('inventory.placeholder_title_unit')} 
                                     />
                                     {errors.title && <p className="text-xs2 text-rose-500 mt-1">{errors.title}</p>}
@@ -561,7 +561,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <input 
                                         value={formData.contactPhone || ''} 
                                         onChange={e => setFormData({...formData, contactPhone: e.target.value})} 
-                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none font-mono ${errors.contactPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none font-mono ${errors.contactPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                         placeholder="0912..." 
                                     />
                                     {errors.contactPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.contactPhone}</p>}
@@ -577,7 +577,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             <input 
                                                 value={formData.ownerName || ''} 
                                                 onChange={e => setFormData({...formData, ownerName: e.target.value})} 
-                                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--bg-surface)]" 
+                                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none bg-[var(--bg-surface)]" 
                                                 placeholder={t('common.placeholder_fullname')}
                                             />
                                         </div>
@@ -586,7 +586,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             <input 
                                                 value={formData.ownerPhone || ''} 
                                                 onChange={e => setFormData({...formData, ownerPhone: e.target.value})} 
-                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--bg-surface)] font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`}
+                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none bg-[var(--bg-surface)] font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`}
                                                 placeholder="09..."
                                             />
                                             {errors.ownerPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.ownerPhone}</p>}
@@ -598,7 +598,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                     type="number"
                                                     value={formData.commission || ''} 
                                                     onChange={e => setFormData({...formData, commission: Number(e.target.value)})} 
-                                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--bg-surface)] font-bold" 
+                                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none bg-[var(--bg-surface)] font-bold" 
                                                     placeholder={formData.commissionUnit === 'FIXED' ? '50000000' : '1.5'}
                                                 />
                                                 <div className="w-24 shrink-0">
@@ -624,7 +624,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <input 
                                         value={formData.location || ''} 
                                         onChange={e => setFormData({...formData, location: e.target.value})} 
-                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none ${errors.location ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none ${errors.location ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                         placeholder={t('inventory.placeholder_addr')} 
                                     />
                                     {errors.location && <p className="text-xs2 text-rose-500 mt-1">{errors.location}</p>}
@@ -647,7 +647,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                     setFormData({ ...formData, coordinates: { lat, lng: formData.coordinates?.lng ?? 0 } });
                                                 }
                                             }}
-                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono focus:border-indigo-500 outline-none"
+                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono focus:border-[#C9A84C] outline-none"
                                             placeholder="10.776900"
                                         />
                                     </div>
@@ -666,7 +666,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                     setFormData({ ...formData, coordinates: { lat: formData.coordinates?.lat ?? 0, lng } });
                                                 }
                                             }}
-                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono focus:border-indigo-500 outline-none"
+                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono focus:border-[#C9A84C] outline-none"
                                             placeholder="106.700900"
                                         />
                                     </div>
@@ -705,7 +705,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                         }
                                                     }
                                                 }}
-                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] focus:border-indigo-500 outline-none ${errors.price ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] focus:border-[#C9A84C] outline-none ${errors.price ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                                 placeholder={priceUnit === UNITS.BILLION.value ? 'VD: 5.5' : priceUnit === UNITS.MILLION.value ? 'VD: 5500' : 'VD: 5500000000'}
                                             />
                                             <div className="w-28 shrink-0">
@@ -732,12 +732,12 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 return (
                                                     <div className="text-xs font-semibold text-amber-600 mt-1 text-right flex items-center justify-end gap-1">
                                                         <span>⚠ Giá vô lý!</span>
-                                                        {suggestion && <span className="text-indigo-600">Rời ô → tự chỉnh thành <strong>{suggestion}</strong></span>}
+                                                        {suggestion && <span className="text-[#C9A84C]">Rời ô → tự chỉnh thành <strong>{suggestion}</strong></span>}
                                                     </div>
                                                 );
                                             }
                                             return (
-                                                <div className="text-xs font-semibold text-indigo-600 font-mono mt-1 text-right">
+                                                <div className="text-xs font-semibold text-[#C9A84C] font-mono mt-1 text-right">
                                                     = {Math.round(rawVal).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ₫
                                                 </div>
                                             );
@@ -750,7 +750,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 type="number" 
                                                 value={formData.area || ''} 
                                                 onChange={e => setFormData({...formData, area: Number(e.target.value)})} 
-                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8 ${errors.area ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none pr-8 ${errors.area ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                             />
                                             <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
                                         </div>
@@ -766,7 +766,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 min={0}
                                                 value={(formData.attributes?.clearArea as number) || ''}
                                                 onChange={e => updateAttribute('clearArea', e.target.value ? Number(e.target.value) : undefined)}
-                                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8"
+                                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none pr-8"
                                                 placeholder="0"
                                             />
                                             <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
@@ -783,7 +783,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             type="number"
                                             value={formData.builtArea || ''}
                                             onChange={e => setFormData({...formData, builtArea: e.target.value ? Number(e.target.value) : undefined})}
-                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8"
+                                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none pr-8"
                                             placeholder="0"
                                         />
                                         <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
@@ -798,14 +798,14 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         value={(formData.attributes?.description as string) || ''}
                                         onChange={e => updateAttribute('description', e.target.value)}
                                         rows={8}
-                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none resize-none"
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none resize-none"
                                         placeholder={t('inventory.placeholder_notes')}
                                     />
                                 </div>
                                 )}
                             </div>
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
-                                <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.section_details')}</h4>
+                                <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-wide">{t('inventory.section_details')}</h4>
                                 {renderDynamicFields()}
                             </div>
                         </div>
@@ -813,17 +813,17 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                         <div className="space-y-4">
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <div className="flex justify-between items-center mb-2">
-                                    <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.section_class')}</h4>
+                                    <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-wide">{t('inventory.section_class')}</h4>
                                     {/* VERIFIED — hidden for project units */}
                                     {!isProjectUnit && (
-                                    <label className="flex items-center gap-2 cursor-pointer select-none bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">
+                                    <label className="flex items-center gap-2 cursor-pointer select-none bg-[#FDF6E3] px-2 py-1 rounded-lg border border-[#C9A84C]">
                                         <input 
                                             type="checkbox" 
                                             checked={!!formData.isVerified} 
                                             onChange={e => setFormData({...formData, isVerified: e.target.checked})}
-                                            className="w-3.5 h-3.5 accent-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                                            className="w-3.5 h-3.5 accent-[#C9A84C]-600 rounded border-slate-300 focus:ring-[#C9A84C]0"
                                         />
-                                        <span className="text-xs2 font-bold text-indigo-700 uppercase flex items-center gap-1">
+                                        <span className="text-xs2 font-bold text-[#B8860B] uppercase flex items-center gap-1">
                                             {t('inventory.verified')}
                                         </span>
                                     </label>
@@ -859,7 +859,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                             {/* IMAGES SECTION */}
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex-1">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.label_images')}</h4>
+                                    <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-wide">{t('inventory.label_images')}</h4>
                                     <span className="text-xs2 text-[var(--text-secondary)] font-bold bg-[var(--glass-surface-hover)] px-2 py-1 rounded">{t('inventory.files_selected', {count: images.length})}</span>
                                 </div>
                                 {uploadError && (
@@ -875,7 +875,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     {images.map((img, idx) => (
                                         <div 
                                             key={img + idx} 
-                                            className={`relative aspect-square rounded-xl overflow-hidden group border ${dragIdx === idx ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-[var(--glass-border)]'}`}
+                                            className={`relative aspect-square rounded-xl overflow-hidden group border ${dragIdx === idx ? 'border-[#C9A84C] ring-2 ring-[#C9A84C]' : 'border-[var(--glass-border)]'}`}
                                             draggable
                                             onDragStart={() => setDragIdx(idx)}
                                             onDragOver={(e) => { e.preventDefault(); }}
@@ -883,7 +883,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             onDragEnd={() => setDragIdx(null)}
                                         >
                                             <img src={img} className="w-full h-full object-cover" alt="" loading="lazy" />
-                                            {idx === 0 && <span className="absolute top-1 left-1 bg-indigo-600 text-white text-3xs font-bold px-1.5 py-0.5 rounded">{t('inventory.cover')}</span>}
+                                            {idx === 0 && <span className="absolute top-1 left-1 bg-[#C9A84C] text-white text-3xs font-bold px-1.5 py-0.5 rounded">{t('inventory.cover')}</span>}
                                             <button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 shadow-sm">
                                                 {ICONS.DELETE}
                                             </button>
@@ -891,7 +891,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     ))}
                                     {isUploading && (
                                         <div className="aspect-square rounded-xl border border-[var(--glass-border)] flex items-center justify-center bg-[var(--glass-surface)]">
-                                            <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-6 h-6 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin"></div>
                                         </div>
                                     )}
                                     {images.length < 10 && !isUploading && (
@@ -900,7 +900,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             onDragOver={handleDragOver}
                                             onDragLeave={handleDragLeave}
                                             onDrop={handleDrop}
-                                            className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 text-[var(--text-secondary)] hover:border-indigo-400 hover:text-indigo-500 bg-[var(--glass-surface)] hover:bg-indigo-50'}`}
+                                            className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-[#C9A84C]0 bg-[#FDF6E3]' : 'border-slate-300 text-[var(--text-secondary)] hover:border-[#C9A84C] hover:text-[#C9A84C] bg-[var(--glass-surface)] hover:bg-[#FDF6E3]'}`}
                                         >
                                             {ICONS.IMAGE_ADD}
                                             <span className="text-xs2 font-bold mt-2 text-center px-2">{t('inventory.drag_drop')}</span>
@@ -914,7 +914,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 </div>                
                 <div className="p-6 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] rounded-b-[24px] flex gap-3 shrink-0">
                     <button onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-70">{t('common.cancel')}</button>
-                    <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all hover:-translate-y-0.5 disabled:opacity-70 flex items-center justify-center gap-2">
+                    <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-3 bg-[#C9A84C] text-white font-bold rounded-xl shadow-lg hover:bg-[#B8860B] transition-all hover:-translate-y-0.5 disabled:opacity-70 flex items-center justify-center gap-2">
                         {isSubmitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                         {t('common.save')}
                     </button>

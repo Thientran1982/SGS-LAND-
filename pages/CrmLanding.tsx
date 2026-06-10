@@ -140,7 +140,7 @@ export const CrmLanding: React.FC = () => {
                         <div className="flex gap-1.5">
                             <div className="w-3 h-3 rounded-full bg-rose-400" />
                             <div className="w-3 h-3 rounded-full bg-amber-400" />
-                            <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                            <div className="w-3 h-3 rounded-full bg-[#C9A84C]" />
                         </div>
                     </div>
                     <img src={SCREENSHOT_URL} alt="Dashboard UI"

@@ -28,12 +28,12 @@ export default function HoiDap() {
         placeholder="Tìm kiếm câu hỏi..."
         value={search}
         onChange={e => setSearch(e.target.value)}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]0"
       />
       <div className="flex flex-wrap gap-2 mb-6">
         {CATEGORIES.map(c => (
           <button key={c.key} onClick={() => setCat(c.key)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${cat === c.key ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${cat === c.key ? 'bg-[#C9A84C] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
             {c.label}
           </button>
         ))}
@@ -42,13 +42,13 @@ export default function HoiDap() {
       <div className="space-y-3">
         {filtered.map(entry => (
           <a key={entry.slug} href={`/hoi-dap/${entry.slug}`}
-            className="block p-5 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all">
+            className="block p-5 bg-white border border-gray-200 rounded-xl hover:border-[#C9A84C] hover:shadow-md transition-all">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <p className="font-semibold text-gray-900 mb-1">{entry.question}</p>
                 <p className="text-sm text-gray-500 line-clamp-2">{entry.shortAnswer}</p>
               </div>
-              <span className="flex-shrink-0 px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">{entry.category}</span>
+              <span className="flex-shrink-0 px-2 py-1 bg-[#FDF6E3] text-[#C9A84C] rounded text-xs">{entry.category}</span>
             </div>
           </a>
         ))}

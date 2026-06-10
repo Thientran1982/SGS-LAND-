@@ -101,7 +101,7 @@ export const Favorites: React.FC = () => {
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6">
                 {/* Row 1: count label + sort dropdown */}
                 <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-indigo-600">
+                    <span className="text-sm font-bold text-[#C9A84C]">
                         {filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''} {t('favorites.count_label')}
                     </span>
                     {allFavorites.length > 0 && (
@@ -118,7 +118,7 @@ export const Favorites: React.FC = () => {
                     <div className="flex items-center gap-1.5 flex-wrap mt-2">
                         <button
                             onClick={() => setFilterType('ALL')}
-                            className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                            className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-[#C9A84C] text-white border-[#C9A84C]' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[#C9A84C]'}`}
                         >
                             {t('favorites.all_types')}
                         </button>
@@ -126,7 +126,7 @@ export const Favorites: React.FC = () => {
                             <button
                                 key={type}
                                 onClick={() => setFilterType(type)}
-                                className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                                className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-[#C9A84C] text-white border-[#C9A84C]' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[#C9A84C]'}`}
                             >
                                 {t(`property.${type}`)}
                             </button>
@@ -184,7 +184,7 @@ export const Favorites: React.FC = () => {
                                 ) : (
                                     <button
                                         onClick={() => window.location.hash = `#/${ROUTES.INVENTORY}`}
-                                        className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors"
+                                        className="px-6 py-2 bg-[#C9A84C] text-white font-bold rounded-xl shadow-lg hover:bg-[#B8860B] transition-colors"
                                     >
                                         {t('favorites.btn_browse')}
                                     </button>
@@ -198,7 +198,7 @@ export const Favorites: React.FC = () => {
                         <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
-                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]0"
                         >
                             {t('common.prev')}
                         </button>
@@ -206,7 +206,7 @@ export const Favorites: React.FC = () => {
                         <button
                             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                             disabled={page === totalPages}
-                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]0"
                         >
                             {t('common.next')}
                         </button>
@@ -231,7 +231,7 @@ export const Favorites: React.FC = () => {
                     role="status"
                     aria-live="polite"
                     aria-atomic="true"
-                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
+                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
                 >
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>

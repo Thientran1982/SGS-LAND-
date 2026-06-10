@@ -11,7 +11,7 @@ const CATEGORY_LABELS: Record<TaskCategory, string> = {
 };
 const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Thấp', dot: 'bg-slate-400' },
-  { value: 'medium', label: 'Trung bình', dot: 'bg-blue-400' },
+  { value: 'medium', label: 'Trung bình', dot: 'bg-[#C9A84C]' },
   { value: 'high', label: 'Cao', dot: 'bg-amber-400' },
   { value: 'urgent', label: 'Khẩn cấp', dot: 'bg-rose-500' },
 ];
@@ -127,7 +127,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
     }
   };
   const inputCls = (field: string) =>
-    `w-full h-[38px] px-3 text-[16px] bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${errors[field] ? 'border-rose-400' : 'border-[var(--glass-border)] focus:border-indigo-400'}`;
+    `w-full h-[38px] px-3 text-[16px] bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 transition-colors ${errors[field] ? 'border-rose-400' : 'border-[var(--glass-border)] focus:border-[#C9A84C]'}`;
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -159,7 +159,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               placeholder="Mô tả chi tiết công việc..."
-              className="w-full px-3 py-2.5 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none transition-colors"
+              className="w-full px-3 py-2.5 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C] resize-none transition-colors"
             />
           </div>
           {/* Priority + Deadline row */}
@@ -219,7 +219,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
             {selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {selectedUsers.map(u => (
-                  <span key={u.id} className="inline-flex items-center gap-1 text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 font-medium">
+                  <span key={u.id} className="inline-flex items-center gap-1 text-xs bg-[#FDF6E3] dark:bg-[#1C2B4A]/20 text-[#C9A84C] dark:text-[#C9A84C] border border-[#C9A84C] dark:border-[#1C2B4A] rounded-lg px-2 py-0.5 font-medium">
                     {u.name}
                     <button type="button" onClick={() => removeAssignee(u.id)} className="hover:text-rose-500 transition-colors ml-0.5">
                       <XCircle size={11} />
@@ -235,24 +235,24 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
                 onChange={e => { setAssigneeSearch(e.target.value); setUserPickerOpen(true); }}
                 onFocus={() => { setUserPickerOpen(true); if (!assigneeSearch.trim()) searchUsers(''); }}
                 placeholder="Tìm tên nhân viên..."
-                className="w-full h-[38px] pl-9 pr-3 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                className="w-full h-[38px] pl-9 pr-3 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C]"
               />
               {userPickerOpen && (userResults.length > 0 || searchingUsers) && (
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 overflow-hidden max-h-[200px] overflow-y-auto no-scrollbar">
                   {searchingUsers ? (
-                    <div className="flex items-center justify-center p-4"><Loader2 size={16} className="animate-spin text-indigo-500" /></div>
+                    <div className="flex items-center justify-center p-4"><Loader2 size={16} className="animate-spin text-[#C9A84C]0" /></div>
                   ) : (
                     userResults.map(u => (
                       <button key={u.id} type="button" onClick={() => { toggleAssignee(u); setAssigneeSearch(''); setUserPickerOpen(false); }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[var(--glass-surface-hover)] transition-colors ${assigneeIds.includes(u.id) ? 'bg-indigo-50 dark:bg-indigo-900/10' : ''}`}>
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[var(--glass-surface-hover)] transition-colors ${assigneeIds.includes(u.id) ? 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/10' : ''}`}>
+                        <div className="w-7 h-7 rounded-full bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 flex items-center justify-center text-[11px] font-bold text-[#C9A84C] flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium text-[var(--text-primary)] truncate">{u.name}</p>
                           {u.email && <p className="text-[11px] text-[var(--text-tertiary)] truncate">{u.email}</p>}
                         </div>
-                        {assigneeIds.includes(u.id) && <span className="ml-auto text-indigo-500 text-xs font-semibold flex-shrink-0">✓</span>}
+                        {assigneeIds.includes(u.id) && <span className="ml-auto text-[#C9A84C] text-xs font-semibold flex-shrink-0">✓</span>}
                       </button>
                     ))
                   )}
@@ -272,7 +272,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
             Hủy
           </button>
           <button type="submit" form="create-task-form" disabled={saving}
-            className="h-[38px] px-5 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm">
+            className="h-[38px] px-5 text-sm font-semibold bg-[#C9A84C] text-white rounded-xl hover:bg-[#B8860B] flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm">
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Tạo công việc
           </button>
         </div>

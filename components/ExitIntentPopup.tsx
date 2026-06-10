@@ -109,7 +109,7 @@ const IcoZap = () => (
 );
 
 const IcoShield = () => (
-  <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+  <svg className="w-4 h-4 text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
   </svg>
@@ -422,7 +422,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
             {/* ── Clean top bar ── */}
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div className="flex items-start gap-2.5 pr-4">
-                <svg className="w-4 h-4 text-indigo-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-[#C9A84C] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
@@ -446,13 +446,13 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
             <div className="px-5 pt-3 pb-4">
               <div className="flex flex-col gap-1.5 mb-3">
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <svg className="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                   <span>Tư vấn trong 30 phút, định giá miễn phí</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <svg className="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                   <span>Thông tin bảo mật, không spam</span>
@@ -467,7 +467,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Họ tên (không bắt buộc)"
-                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C] transition-all placeholder-slate-400"
                     style={{ fontSize: '16px' }}
                   />
                   <input
@@ -476,7 +476,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                     onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
                     placeholder="Số điện thoại *"
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C] transition-all placeholder-slate-400"
                     style={{ fontSize: '16px' }}
                   />
                   <input
@@ -484,7 +484,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="Email (để nhận xác nhận)"
-                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C] transition-all placeholder-slate-400"
                     style={{ fontSize: '16px' }}
                   />
 
@@ -495,7 +495,7 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                   <button
                     type="submit"
                     disabled={submitting || !phone.trim()}
-                    className="w-full py-2.5 rounded-lg font-medium text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-lg font-medium text-sm text-white bg-[#C9A84C] hover:bg-[#B8860B] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {submitting ? <><IcoSpinner />Đang gửi...</> : <><IcoSend />Nhận tư vấn ngay</>}
                   </button>
@@ -514,8 +514,8 @@ export const ExitIntentPopup = forwardRef<ExitIntentHandle, Props>(
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-4"
                 >
-                  <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-[#FDF6E3] rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>

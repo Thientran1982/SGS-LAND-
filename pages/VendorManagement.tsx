@@ -28,7 +28,7 @@ interface Vendor {
 }
 const STATUS_CLASSNAMES: Record<string, string> = {
   PENDING_APPROVAL: 'bg-amber-100 text-amber-800 border border-amber-200',
-  APPROVED:         'bg-emerald-100 text-emerald-800 border border-emerald-200',
+  APPROVED:         'bg-[#FDF6E3] text-[#B8860B] border border-[#C9A84C]',
   REJECTED:         'bg-rose-100 text-rose-800 border border-rose-200',
   SUSPENDED:        'bg-slate-100 text-slate-700 border border-slate-200',
 };
@@ -248,7 +248,7 @@ export default function VendorManagement() {
             </div>
             <button
               onClick={fetchVendors}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A84C] hover:bg-[#B8860B] text-white text-sm font-semibold transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -266,7 +266,7 @@ export default function VendorManagement() {
               <button
                 key={s}
                 onClick={() => { setFilterStatus(filterStatus === s ? '' : s); setPage(1); }}
-                className={`bg-white rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-gray-100'}`}
+                className={`bg-white rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-[#C9A84C] ring-2 ring-[#C9A84C]' : 'border-gray-100'}`}
               >
                 <p className="text-2xl font-bold text-gray-900">{statusCounts[s] || 0}</p>
                 <p className="text-xs font-semibold mt-1">
@@ -287,7 +287,7 @@ export default function VendorManagement() {
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Tìm theo tên công ty hoặc email..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A84C] bg-white"
             />
           </div>
           <Dropdown
@@ -301,7 +301,7 @@ export default function VendorManagement() {
         </div>
         {/* Messages */}
         {successMsg && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
+          <div className="bg-[#FDF6E3] border border-[#C9A84C] text-[#B8860B] rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             {successMsg}
           </div>
@@ -355,7 +355,7 @@ export default function VendorManagement() {
                             <p className="text-xs text-gray-500">{vendor.admin.email}</p>
                             <div className="flex items-center gap-1 mt-1">
                               {vendor.admin.emailVerified ? (
-                                <span className="text-xs text-emerald-600 flex items-center gap-0.5">
+                                <span className="text-xs text-[#C9A84C] flex items-center gap-0.5">
                                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                                   Email đã xác minh
                                 </span>
@@ -398,7 +398,7 @@ export default function VendorManagement() {
                               <button
                                 onClick={() => handleApprove(vendor)}
                                 disabled={actionLoading === vendor.id}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-60"
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#C9A84C] text-white hover:bg-[#B8860B] transition disabled:opacity-60"
                               >
                                 {actionLoading === vendor.id ? '...' : 'Duyệt'}
                               </button>
@@ -424,7 +424,7 @@ export default function VendorManagement() {
                             <button
                               onClick={() => handleApprove(vendor)}
                               disabled={actionLoading === vendor.id}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition disabled:opacity-60"
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#FDF6E3] text-[#B8860B] border border-[#C9A84C] hover:bg-[#FDF6E3] transition disabled:opacity-60"
                             >
                               {actionLoading === vendor.id ? '...' : 'Kích hoạt lại'}
                             </button>

@@ -8,9 +8,9 @@ const ICONS = {
     SEARCH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     FILE_PDF: <svg className="w-8 h-8 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M7 3a1 1 0 000 2h10a1 1 0 100-2H7zM5 7a1 1 0 000 2h14a1 1 0 100-2H5zM5 11a1 1 0 000 2h14a1 1 0 100-2H5zM5 15a1 1 0 000 2h14a1 1 0 100-2H5zM5 19a1 1 0 000 2h10a1 1 0 100-2H5z" /></svg>,
-    FILE_DOC: <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
+    FILE_DOC: <svg className="w-8 h-8 text-[#C9A84C]0" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
     FILE_TXT: <svg className="w-8 h-8 text-[var(--text-tertiary)]" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
-    CLOUD: <svg className="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>,
+    CLOUD: <svg className="w-7 h-7 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>,
     X: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     DOCS: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
 };
@@ -170,11 +170,11 @@ export const KnowledgeBase: React.FC = () => {
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     {/* Search input */}
                     <div className="relative flex-1 sm:flex-none sm:w-64 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-[#C9A84C] transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-9 pr-8 py-2 h-[38px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-9 pr-8 py-2 h-[38px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('knowledge.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -193,7 +193,7 @@ export const KnowledgeBase: React.FC = () => {
                     </div>
                     {/* Upload button — header shortcut */}
                     {canUpload && (
-                        <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
+                        <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-[#C9A84C] text-white text-sm font-bold rounded-xl shadow-sm hover:bg-[#B8860B] transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                             {isUploading
                                 ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                 : ICONS.UPLOAD
@@ -222,14 +222,14 @@ export const KnowledgeBase: React.FC = () => {
                 <div
                     className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 border-2 border-dashed rounded-2xl transition-all duration-300 overflow-hidden ${
                         isDragging
-                            ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 scale-[1.005]'
-                            : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-indigo-300 hover:bg-[var(--glass-surface)]'
+                            ? 'border-[#C9A84C]0 bg-[#FDF6E3]/50 dark:bg-[#0D1829]/30 scale-[1.005]'
+                            : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-[#C9A84C] hover:bg-[var(--glass-surface)]'
                     }`}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
                     onDrop={onDrop}
                 >
-                    <div className="shrink-0 w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center pointer-events-none">
+                    <div className="shrink-0 w-10 h-10 rounded-xl bg-[#FDF6E3] dark:bg-[#0D1829]/40 flex items-center justify-center pointer-events-none">
                         {ICONS.CLOUD}
                     </div>
                     <div className="flex-1 min-w-0 pointer-events-none">
@@ -242,7 +242,7 @@ export const KnowledgeBase: React.FC = () => {
                     </div>
                     <label className={`relative z-10 shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-[var(--glass-surface-hover)] hover:bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-semibold rounded-xl transition-all active:scale-95 cursor-pointer hidden sm:flex ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                         {isUploading
-                            ? <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                            ? <div className="w-4 h-4 border-2 border-[#C9A84C] border-t-[#C9A84C] rounded-full animate-spin" />
                             : ICONS.UPLOAD
                         }
                         {isUploading
@@ -279,7 +279,7 @@ export const KnowledgeBase: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {displayedDocs.map(doc => (
-                        <div key={doc.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group relative flex flex-col h-full">
+                        <div key={doc.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm hover:shadow-md hover:border-[#C9A84C] transition-all group relative flex flex-col h-full">
                             <div className="flex gap-3 sm:gap-4 items-start mb-4">
                                 <div className="shrink-0 p-2 bg-[var(--glass-surface)] rounded-xl">
                                     {doc.type === 'PDF' ? ICONS.FILE_PDF : doc.type === 'DOCX' ? ICONS.FILE_DOC : ICONS.FILE_TXT}
@@ -311,10 +311,10 @@ export const KnowledgeBase: React.FC = () => {
                                 ) : (
                                     <div className="flex items-center gap-1.5">
                                         <span className="relative flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9A84C] opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FDF6E3]0"></span>
                                         </span>
-                                        <span className="text-xs3 font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed')}</span>
+                                        <span className="text-xs3 font-bold text-[#C9A84C] uppercase tracking-wider">{t('knowledge.status_indexed')}</span>
                                     </div>
                                 )}
                                 {canManage && (
@@ -381,7 +381,7 @@ export const KnowledgeBase: React.FC = () => {
         )}
         {createPortal(
             toast ? (
-                <div className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 sm:max-w-sm z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 sm:max-w-sm z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm flex-1">{toast.msg}</span>
                 </div>
             ) : null,

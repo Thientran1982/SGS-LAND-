@@ -15,9 +15,9 @@ const STATUS_LABELS: Record<WfTaskStatus, string> = {
 };
 const STATUS_COLORS: Record<WfTaskStatus, string> = {
   todo: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  in_progress: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300',
+  in_progress: 'bg-[#FDF6E3] text-[#C9A84C] dark:bg-[#1C2B4A]/30 dark:text-[#C9A84C]',
   review: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
-  done: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300',
+  done: 'bg-[#FDF6E3] text-[#C9A84C] dark:bg-[#B8860B]/30 dark:text-[#C9A84C]',
   cancelled: 'bg-rose-100 text-rose-500 dark:bg-rose-900/30 dark:text-rose-400',
 };
 const PRIORITY_LABELS: Record<TaskPriority, string> = { urgent: 'Khẩn cấp', high: 'Cao', medium: 'Trung bình', low: 'Thấp' };
@@ -25,7 +25,7 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
   urgent: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-200',
   high: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-200',
   medium: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200',
-  low: 'text-teal-600 bg-teal-50 dark:bg-teal-900/20 border-teal-200',
+  low: 'text-[#C9A84C] bg-[#FDF6E3] dark:bg-[#B8860B]/20 border-[#C9A84C]',
 };
 const CATEGORY_LABELS: Record<TaskCategory, string> = {
   sales: 'Kinh doanh', legal: 'Pháp lý', marketing: 'Marketing',
@@ -49,7 +49,7 @@ interface Props {
 function Avatar({ name, size = 7 }: { name: string; size?: number }) {
   const sizeClass = `w-${size} h-${size}`;
   return (
-    <div className={`${sizeClass} rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0`}>
+    <div className={`${sizeClass} rounded-full bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 flex items-center justify-center text-[11px] font-bold text-[#C9A84C] dark:text-[#C9A84C] border border-white dark:border-slate-700 flex-shrink-0`}>
       {name?.charAt(0).toUpperCase()}
     </div>
   );
@@ -192,14 +192,14 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       <div className="relative z-10 w-full max-w-2xl bg-[var(--bg-surface)] shadow-2xl flex flex-col animate-slide-in-right overflow-hidden border-l border-[var(--glass-border)]">
         {loading && (
           <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#C9A84C]0" />
           </div>
         )}
         {error && !loading && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6">
             <AlertTriangle className="w-10 h-10 text-amber-400" />
             <p className="text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => taskId && load(taskId)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+            <button onClick={() => taskId && load(taskId)} className="text-sm text-[#C9A84C] hover:text-[#C9A84C] font-medium">Thử lại</button>
           </div>
         )}
         {!loading && !error && task && (
@@ -214,7 +214,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                 {onOpenFullPage && task && (
                   <button onClick={() => { onClose(); onOpenFullPage(task.id); }}
                     title="Mở trang chi tiết đầy đủ"
-                    className="h-[32px] w-[32px] flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors">
+                    className="h-[32px] w-[32px] flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[#C9A84C] transition-colors">
                     <ExternalLink size={14} />
                   </button>
                 )}
@@ -235,7 +235,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     <button onClick={() => setEditing(false)} className="h-[32px] px-3 text-xs font-medium border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors">
                       Hủy
                     </button>
-                    <button onClick={saveEdit} disabled={saving} className="h-[32px] px-3 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 transition-colors disabled:opacity-50">
+                    <button onClick={saveEdit} disabled={saving} className="h-[32px] px-3 text-xs font-semibold bg-[#C9A84C] text-white rounded-lg hover:bg-[#B8860B] flex items-center gap-1.5 transition-colors disabled:opacity-50">
                       {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Lưu
                     </button>
                   </>
@@ -252,7 +252,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                   <input
                     value={editData.title || ''}
                     onChange={e => setEditData(p => ({ ...p, title: e.target.value }))}
-                    className="w-full text-xl font-bold bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full text-xl font-bold bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30"
                   />
                 ) : (
                   <h2 className="text-xl font-bold text-[var(--text-primary)] leading-tight">{task.title}</h2>
@@ -268,7 +268,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                         onChange={val => setEditData(p => ({ ...p, priority: val as TaskPriority }))}
                         height={34}
                         options={[
-                          { value: 'low', label: 'Thấp', dot: 'bg-teal-500' },
+                          { value: 'low', label: 'Thấp', dot: 'bg-[#FDF6E3]0' },
                           { value: 'medium', label: 'Trung bình', dot: 'bg-amber-500' },
                           { value: 'high', label: 'Cao', dot: 'bg-orange-500' },
                           { value: 'urgent', label: 'Khẩn cấp', dot: 'bg-rose-500' },
@@ -283,7 +283,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Calendar size={11} /> Deadline</label>
                     {editing ? (
                       <input type="date" value={editData.deadline?.toString().split('T')[0] || ''} onChange={e => setEditData(p => ({ ...p, deadline: e.target.value }))}
-                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30" />
                     ) : (
                       <span className={`text-sm ${task.is_overdue ? 'text-rose-500 font-semibold' : 'text-[var(--text-secondary)]'}`}>
                         {task.deadline ? task.deadline.toString().split('T')[0] : '—'}
@@ -313,7 +313,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Clock size={11} /> Giờ ước tính</label>
                     {editing ? (
                       <input type="number" min="0.5" step="0.5" value={editData.estimated_hours || ''} onChange={e => setEditData(p => ({ ...p, estimated_hours: parseFloat(e.target.value) || undefined }))}
-                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30" />
                     ) : (
                       <span className="text-sm text-[var(--text-secondary)]">{task.estimated_hours ? `${task.estimated_hours}h` : '—'}</span>
                     )}
@@ -351,7 +351,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       value={editData.description || ''}
                       onChange={e => setEditData(p => ({ ...p, description: e.target.value }))}
                       placeholder="Thêm mô tả công việc..."
-                      className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
+                      className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 resize-none"
                     />
                   ) : (
                     <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">
@@ -367,7 +367,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       {VALID_TRANSITIONS[task.status].map(s => (
                         <button key={s} onClick={() => changeStatus(s)} disabled={changingStatus}
                           className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors disabled:opacity-50 ${
-                            s === 'done' ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' :
+                            s === 'done' ? 'border-[#C9A84C] text-[#C9A84C] hover:bg-[#FDF6E3] dark:hover:bg-[#B8860B]/20' :
                             s === 'cancelled' ? 'border-rose-300 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20' :
                             'border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
                           }`}>
@@ -386,7 +386,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                         <div key={a.id} className="flex items-center gap-1.5 bg-[var(--glass-surface-hover)] rounded-lg px-2 py-1">
                           <Avatar name={a.name} size={5} />
                           <span className="text-xs text-[var(--text-secondary)] font-medium">{a.name}</span>
-                          {a.is_primary && <span className="text-[9px] text-indigo-500 font-semibold uppercase">Chính</span>}
+                          {a.is_primary && <span className="text-[9px] text-[#C9A84C] font-semibold uppercase">Chính</span>}
                         </div>
                       ))}
                     </div>
@@ -406,7 +406,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                 <div className="flex px-5 pt-1 gap-4 border-b border-[var(--glass-border)]">
                   {(['comments', 'activity'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                      className={`text-sm font-medium py-3 border-b-2 transition-colors ${activeTab === tab ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+                      className={`text-sm font-medium py-3 border-b-2 transition-colors ${activeTab === tab ? 'border-[#C9A84C]0 text-[#C9A84C]' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
                       {tab === 'comments' ? `Bình luận (${comments.length})` : `Hoạt động (${activity.length})`}
                     </button>
                   ))}
@@ -431,8 +431,8 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       ))}
                       {/* New comment */}
                       <div className="flex gap-2.5 pt-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                          <MessageSquare size={13} className="text-indigo-500" />
+                        <div className="w-7 h-7 rounded-full bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 flex items-center justify-center flex-shrink-0">
+                          <MessageSquare size={13} className="text-[#C9A84C]0" />
                         </div>
                         <div className="flex-1">
                           <textarea
@@ -442,11 +442,11 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                             onChange={e => setNewComment(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendComment(); }}
                             placeholder="Thêm bình luận... (Ctrl+Enter để gửi)"
-                            className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
+                            className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 resize-none"
                           />
                           <div className="flex justify-end mt-1.5">
                             <button onClick={sendComment} disabled={!newComment.trim() || sendingComment}
-                              className="h-[30px] px-3 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 transition-colors disabled:opacity-50">
+                              className="h-[30px] px-3 text-xs font-semibold bg-[#C9A84C] text-white rounded-lg hover:bg-[#B8860B] flex items-center gap-1.5 transition-colors disabled:opacity-50">
                               {sendingComment ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Gửi
                             </button>
                           </div>

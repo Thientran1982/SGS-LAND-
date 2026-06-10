@@ -233,7 +233,7 @@ export const BankRates: React.FC = () => {
         value={value}
         onChange={e => { setForm(f => ({ ...f, [id]: e.target.value })); if (errors[id]) setErrors(p => ({ ...p, [id]: '' })); }}
         placeholder={placeholder}
-        className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors[id] ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+        className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors[id] ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[#C9A84C]/20 focus:border-[#C9A84C]0'}`}
       />
       {errors[id] && <p className="text-xs font-bold text-rose-500">{errors[id]}</p>}
     </div>
@@ -253,7 +253,7 @@ export const BankRates: React.FC = () => {
               value={form.bank_name}
               onChange={e => { setForm(f => ({ ...f, bank_name: e.target.value })); setErrors(p => ({ ...p, bank_name: '' })); }}
               placeholder={t('bank_rates.placeholder_bank')}
-              className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors.bank_name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+              className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors.bank_name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[#C9A84C]/20 focus:border-[#C9A84C]0'}`}
             />
             <datalist id="bank-list">
               {BANK_OPTIONS.map(b => <option key={b.value} value={b.value}/>)}
@@ -287,7 +287,7 @@ export const BankRates: React.FC = () => {
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             placeholder={t('bank_rates.placeholder_notes')}
-            className="w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all resize-none bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500"
+            className="w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all resize-none bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[#C9A84C]/20 focus:border-[#C9A84C]0"
           />
         </div>
         <div className="flex gap-3">
@@ -306,7 +306,7 @@ export const BankRates: React.FC = () => {
     <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-20 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+        <div className={`fixed top-20 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
           {toast.type === 'success' ? ICONS.CHECK : ICONS.ERROR}
           <span className="font-bold text-sm">{toast.msg}</span>
         </div>
@@ -314,11 +314,11 @@ export const BankRates: React.FC = () => {
       {/* Header */}
       <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
         <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-          <button onClick={() => window.location.hash = `#/${ROUTES.LANDING}`} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+          <button onClick={() => window.location.hash = `#/${ROUTES.LANDING}`} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-[#C9A84C] transition-colors min-h-[44px] shrink-0">
             {ICONS.BACK} <span className="hidden sm:inline">{t('contact.home')}</span>
           </button>
           <div className="flex items-center gap-2">
-            <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0"/>
+            <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-[#C9A84C] shrink-0"/>
             <span className="font-bold text-base sm:text-lg hidden sm:inline">{t('bank_rates.page_header')}</span>
           </div>
           <button onClick={() => window.location.hash = user ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-xs sm:text-sm min-h-[44px] whitespace-nowrap">
@@ -329,13 +329,13 @@ export const BankRates: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-10 animate-enter">
         {/* Title + SEO description */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 bg-[#FDF6E3] dark:bg-[#1C2B4A]/20 text-[#B8860B] dark:text-[#C9A84C] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
             {ICONS.BANK} {t('bank_rates.badge')}
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-3 tracking-tight">{t('bank_rates.h1')}</h1>
           <p className="text-[var(--text-tertiary)] text-base max-w-2xl mx-auto mb-4">{t('bank_rates.subtitle')}</p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">{t('bank_rates.updated')}</span>
+            <span className="text-xs font-semibold bg-[#FDF6E3] text-[#B8860B] px-3 py-1 rounded-full">{t('bank_rates.updated')}</span>
             <a href="/lai-suat-vay-ngan-hang" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-slate-200 transition-colors">
               {ICONS.EXT} {t('bank_rates.view_seo_page')}
             </a>
@@ -346,17 +346,17 @@ export const BankRates: React.FC = () => {
         {/* Login gate / Add form */}
         {!editingRate && (!user ? (
           <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-8 text-center mb-8 shadow-sm">
-            <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600">{ICONS.LOCK}</div>
+            <div className="w-12 h-12 bg-[#FDF6E3] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#C9A84C]">{ICONS.LOCK}</div>
             <h3 className="font-bold text-lg text-[var(--text-primary)] mb-2">{t('bank_rates.login_gate_title')}</h3>
             <p className="text-[var(--text-tertiary)] text-sm mb-5">{t('bank_rates.login_gate_desc')}</p>
-            <button onClick={() => window.location.hash = `#/${ROUTES.LOGIN}`} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+            <button onClick={() => window.location.hash = `#/${ROUTES.LOGIN}`} className="px-6 py-2.5 bg-[#C9A84C] text-white font-bold rounded-xl hover:bg-[#B8860B] transition-colors">
               {t('bank_rates.login_to_post')}
             </button>
           </div>
         ) : (
           <div className="mb-6">
             {!showForm ? (
-              <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md">
+              <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] text-white font-bold rounded-xl hover:bg-[#B8860B] transition-colors shadow-md">
                 {ICONS.PLUS} {t('bank_rates.btn_add')}
               </button>
             ) : rateForm(false, handleSubmit, () => { setShowForm(false); setForm(EMPTY_FORM); setErrors({}); })}
@@ -376,11 +376,11 @@ export const BankRates: React.FC = () => {
           )}
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"/>
+              <div className="w-8 h-8 border-2 border-[#C9A84C]/30 border-t-[#C9A84C] rounded-full animate-spin"/>
             </div>
           ) : rates.length === 0 ? (
             <div className="text-center py-16 text-[var(--text-tertiary)]">
-              <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-400">{ICONS.BANK}</div>
+              <div className="w-14 h-14 bg-[#FDF6E3] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#C9A84C]">{ICONS.BANK}</div>
               <p className="font-semibold mb-1">{t('bank_rates.empty_title')}</p>
               <p className="text-sm">{t('bank_rates.empty_desc')}</p>
             </div>
@@ -410,13 +410,13 @@ export const BankRates: React.FC = () => {
                       <tr className="border-b border-[var(--glass-border)]/50 hover:bg-[var(--glass-surface)] transition-colors">
                         <td className="px-4 py-3">
                           <span className="font-bold text-[var(--text-primary)] text-sm">{r.bank_name}</span>
-                          {r.is_verified && <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">✓</span>}
+                          {r.is_verified && <span className="ml-2 text-[10px] bg-[#FDF6E3] text-[#B8860B] px-1.5 py-0.5 rounded-full font-bold">✓</span>}
                         </td>
                         <td className="px-4 py-3"><span className="text-xs bg-[var(--glass-surface)] border border-[var(--glass-border)] px-2 py-1 rounded-lg text-[var(--text-secondary)]">{r.loan_type}</span></td>
-                        <td className="px-4 py-3 font-bold text-indigo-600 dark:text-indigo-400 text-sm whitespace-nowrap">{fmtRate(r.rate_min, r.rate_max)}/năm</td>
+                        <td className="px-4 py-3 font-bold text-[#C9A84C] dark:text-[#C9A84C] text-sm whitespace-nowrap">{fmtRate(r.rate_min, r.rate_max)}/năm</td>
                         <td className="px-4 py-3 text-sm text-[var(--text-secondary)] whitespace-nowrap">{fmtTenor(r.tenor_min, r.tenor_max)}</td>
                         <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{r.contact_name || '—'}</td>
-                        <td className="px-4 py-3 text-sm">{r.contact_phone ? <a href={`tel:${r.contact_phone}`} className="text-indigo-600 hover:underline font-medium">{r.contact_phone}</a> : '—'}</td>
+                        <td className="px-4 py-3 text-sm">{r.contact_phone ? <a href={`tel:${r.contact_phone}`} className="text-[#C9A84C] hover:underline font-medium">{r.contact_phone}</a> : '—'}</td>
                         <td className="px-4 py-3 text-xs text-[var(--text-tertiary)] max-w-[200px]">{r.notes || '—'}</td>
                         <td className="px-4 py-3 text-xs text-[var(--text-tertiary)] whitespace-nowrap">
                           {r.updated_at ? (typeof r.updated_at === 'string' ? r.updated_at : new Date(r.updated_at).toISOString()).slice(0, 10) : '—'}
@@ -428,7 +428,7 @@ export const BankRates: React.FC = () => {
                                 <button
                                   onClick={() => openEdit(r)}
                                   title={t('bank_rates.btn_edit')}
-                                  className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors text-xs font-bold whitespace-nowrap"
+                                  className="flex items-center gap-1 px-2.5 py-1.5 bg-[#FDF6E3] dark:bg-[#1C2B4A]/20 text-[#C9A84C] dark:text-[#C9A84C] rounded-lg hover:bg-[#FDF6E3] dark:hover:bg-[#1C2B4A]/40 transition-colors text-xs font-bold whitespace-nowrap"
                                 >
                                   {ICONS.EDIT}
                                   <span className="hidden sm:inline">{t('bank_rates.btn_edit')}</span>
@@ -489,10 +489,10 @@ export const BankRates: React.FC = () => {
           )}
         </div>
         {/* SEO content block — internal link to SSR page */}
-        <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl">
+        <div className="mt-8 p-6 bg-gradient-to-r from-[#C9A84C] to-[#C9A84C] dark:from-[#0D1829]/20 dark:to-[#1C2B4A]/20 border border-[#FDF6E3] dark:border-[#1C2B4A]/30 rounded-2xl">
           <h3 className="font-bold text-[var(--text-primary)] mb-2">{t('bank_rates.seo_block_title')}</h3>
           <p className="text-sm text-[var(--text-tertiary)] mb-4">{t('bank_rates.seo_block_desc')}</p>
-          <a href="/lai-suat-vay-ngan-hang" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+          <a href="/lai-suat-vay-ngan-hang" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-[#C9A84C] hover:text-[#B8860B] transition-colors">
             {ICONS.EXT} {t('bank_rates.seo_block_link')}
           </a>
         </div>

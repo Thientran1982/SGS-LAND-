@@ -31,7 +31,7 @@ const CONSTANTS = {
 };
 const DESIGN_TOKENS = {
     light: {
-        primary: '#4F46E5',
+        primary: '#C9A84C',
         secondary: '#8B5CF6',
         tertiary: '#EC4899',
         success: '#10B981',
@@ -42,11 +42,11 @@ const DESIGN_TOKENS = {
         text: '#64748B',
         background: '#FFFFFF',
         tooltipBg: 'rgba(255, 255, 255, 0.98)',
-        barGradientStart: '#4F46E5',
-        barGradientEnd: '#4338CA',
+        barGradientStart: '#C9A84C',
+        barGradientEnd: '#B8860B',
     },
     dark: {
-        primary: '#6366F1',
+        primary: '#C9A84C',
         secondary: '#A78BFA',
         tertiary: '#F472B6',
         success: '#34D399',
@@ -57,11 +57,11 @@ const DESIGN_TOKENS = {
         text: '#94A3B8',
         background: '#0F172A',
         tooltipBg: 'rgba(15, 23, 42, 0.95)',
-        barGradientStart: '#6366F1',
-        barGradientEnd: '#4F46E5',
+        barGradientStart: '#C9A84C',
+        barGradientEnd: '#C9A84C',
     },
 };
-const CHART_PALETTE = ['#4F46E5', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
+const CHART_PALETTE = ['#C9A84C', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
 // -----------------------------------------------------------------------------
 //  INTERNAL — fetch tenant theme (not exported)
 // -----------------------------------------------------------------------------

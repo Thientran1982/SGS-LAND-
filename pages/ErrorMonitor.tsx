@@ -30,8 +30,8 @@ interface ErrorStats {
 }
 // ─── Config maps ──────────────────────────────────────────────────────────────
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; dot: string }> = {
-  frontend:         { label: 'Giao diện (Frontend)', icon: <Globe size={14} />,    color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10',   dot: 'bg-blue-500' },
-  backend:          { label: 'Máy chủ (Backend)',     icon: <Server size={14} />,   color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10', dot: 'bg-purple-500' },
+  frontend:         { label: 'Giao diện (Frontend)', icon: <Globe size={14} />,    color: 'text-[#C9A84C]0 bg-[#FDF6E3] dark:bg-[#C9A84C]/10',   dot: 'bg-[#FDF6E3]0' },
+  backend:          { label: 'Máy chủ (Backend)',     icon: <Server size={14} />,   color: 'text-[#C9A84C]0 bg-[#FDF6E3] dark:bg-[#C9A84C]/10', dot: 'bg-[#FDF6E3]0' },
   unhandled_promise:{ label: 'Bất đồng bộ (Promise)', icon: <Zap size={14} />,     color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10', dot: 'bg-amber-500' },
   chunk_load:       { label: 'Tải module (Chunk)',    icon: <RefreshCw size={14} />, color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-500/10',    dot: 'bg-cyan-500' },
 };
@@ -111,7 +111,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
         className={`
           flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl border transition-all
           ${value
-            ? 'border-indigo-300 dark:border-indigo-500/50 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+            ? 'border-[#C9A84C] dark:border-[#C9A84C]/50 bg-[#FDF6E3] dark:bg-[#C9A84C]/10 text-[#B8860B] dark:text-[#C9A84C]'
             : 'border-[var(--glass-border)] bg-[var(--bg-app)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
           }
         `}
@@ -134,7 +134,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
               className={`
                 w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors
                 ${opt.value === value
-                  ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+                  ? 'bg-[#FDF6E3] dark:bg-[#C9A84C]/10 text-[#B8860B] dark:text-[#C9A84C]'
                   : 'hover:bg-[var(--glass-surface-hover)] text-[var(--text-primary)]'
                 }
               `}
@@ -142,7 +142,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
               {opt.dotColor && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.dotColor}`} />}
               {opt.icon && <span className="flex-shrink-0 text-[var(--text-secondary)]">{opt.icon}</span>}
               <span className="flex-1">{opt.label}</span>
-              {opt.value === value && <Check size={12} className="text-indigo-500 flex-shrink-0" />}
+              {opt.value === value && <Check size={12} className="text-[#C9A84C]0 flex-shrink-0" />}
             </button>
           ))}
         </div>
@@ -153,8 +153,8 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
 // ─── Options ──────────────────────────────────────────────────────────────────
 const TYPE_OPTIONS: DropdownOption[] = [
   { value: '', label: 'Tất cả loại lỗi' },
-  { value: 'frontend',          label: 'Giao diện (Frontend)',    icon: <Globe size={14} />,     dotColor: 'bg-blue-500' },
-  { value: 'backend',           label: 'Máy chủ (Backend)',       icon: <Server size={14} />,    dotColor: 'bg-purple-500' },
+  { value: 'frontend',          label: 'Giao diện (Frontend)',    icon: <Globe size={14} />,     dotColor: 'bg-[#FDF6E3]0' },
+  { value: 'backend',           label: 'Máy chủ (Backend)',       icon: <Server size={14} />,    dotColor: 'bg-[#FDF6E3]0' },
   { value: 'unhandled_promise', label: 'Bất đồng bộ (Promise)',  icon: <Zap size={14} />,       dotColor: 'bg-amber-500' },
   { value: 'chunk_load',        label: 'Tải module (Chunk)',      icon: <RefreshCw size={14} />, dotColor: 'bg-cyan-500' },
 ];
@@ -166,7 +166,7 @@ const SEVERITY_OPTIONS: DropdownOption[] = [
 ];
 const STATUS_OPTIONS: DropdownOption[] = [
   { value: 'false', label: 'Chưa xử lý', icon: <ShieldAlert size={14} />,   dotColor: 'bg-rose-500' },
-  { value: 'true',  label: 'Đã xử lý',   icon: <CheckCircle2 size={14} />,  dotColor: 'bg-emerald-500' },
+  { value: 'true',  label: 'Đã xử lý',   icon: <CheckCircle2 size={14} />,  dotColor: 'bg-[#FDF6E3]0' },
   { value: '',      label: 'Tất cả',     icon: <Filter size={14} /> },
 ];
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -274,7 +274,7 @@ export default function ErrorMonitor() {
             <button
               onClick={handleResolveAll}
               disabled={actionLoading}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl bg-[#C9A84C] hover:bg-[#C9A84C] text-white font-medium transition-all"
             >
               <CheckCheck size={14} />
               Xử lý tất cả
@@ -316,19 +316,19 @@ export default function ErrorMonitor() {
         </div>
         {/* Đã xử lý */}
         <div className="bg-[var(--bg-surface)] rounded-2xl p-4 border border-[var(--glass-border)]">
-          <div className="text-2xl font-bold text-emerald-600">
+          <div className="text-2xl font-bold text-[#C9A84C]">
             {loading && !stats ? '—' : resolved.toLocaleString('vi-VN')}
           </div>
           <div className="text-xs text-[var(--text-secondary)] mt-0.5">
             Đã xử lý
             {stats && stats.total > 0 && (
-              <span className="ml-1 text-emerald-600 font-medium">({resolvedPct}%)</span>
+              <span className="ml-1 text-[#C9A84C] font-medium">({resolvedPct}%)</span>
             )}
           </div>
           {stats && stats.total > 0 && (
-            <div className="mt-2 h-1 bg-emerald-100 dark:bg-emerald-500/10 rounded-full overflow-hidden">
+            <div className="mt-2 h-1 bg-[#FDF6E3] dark:bg-[#C9A84C]/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-500 rounded-full transition-all"
+                className="h-full bg-[#C9A84C] rounded-full transition-all"
                 style={{ width: `${resolvedPct}%` }}
               />
             </div>
@@ -507,7 +507,7 @@ export default function ErrorMonitor() {
                           onClick={e => { e.stopPropagation(); handleResolve(entry.id); }}
                           disabled={actionLoading}
                           title="Đánh dấu đã xử lý"
-                          className="p-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-500/10 text-emerald-600 transition-colors"
+                          className="p-1 rounded-lg hover:bg-[#FDF6E3] dark:hover:bg-[#C9A84C]/10 text-[#C9A84C] transition-colors"
                         >
                           <CheckCheck size={14} />
                         </button>

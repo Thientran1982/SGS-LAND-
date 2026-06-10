@@ -21,12 +21,12 @@ const DENSITY_STYLES = {
     relaxed: 'py-6 text-sm'
 };
 const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: string }> = {
-    [LeadStage.NEW]: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
-    [LeadStage.CONTACTED]: { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200' },
-    [LeadStage.QUALIFIED]: { color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' },
+    [LeadStage.NEW]: { color: 'text-[#B8860B]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
+    [LeadStage.CONTACTED]: { color: 'text-[#B8860B]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
+    [LeadStage.QUALIFIED]: { color: 'text-[#B8860B]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
     [LeadStage.PROPOSAL]: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
     [LeadStage.NEGOTIATION]: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200' },
-    [LeadStage.WON]: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+    [LeadStage.WON]: { color: 'text-[#B8860B]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
     [LeadStage.LOST]: { color: 'text-[var(--text-tertiary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-[var(--glass-border)]' },
     [LeadStage.MANUAL]: { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' },
 };
@@ -208,7 +208,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
         setMenuOpen(v => !v);
     };
     const stickyClass = isSelected 
-        ? 'bg-indigo-50 dark:bg-slate-800' 
+        ? 'bg-[#FDF6E3] dark:bg-slate-800' 
         : 'bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50';
     const paddingY = DENSITY_STYLES[density as RowDensity] || DENSITY_STYLES.normal;
     const scoreValue = lead.score?.score || 0;
@@ -217,7 +217,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
     return (
         <tr 
             onClick={() => onClick(lead)}
-            className={`group border-b border-slate-50 dark:border-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50'}`}
+            className={`group border-b border-slate-50 dark:border-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-[#FDF6E3]/30 dark:bg-[#1C2B4A]/10' : 'hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50'}`}
             tabIndex={0}
         >
             {/* Sticky Checkbox (Left 0) */}
@@ -228,7 +228,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 <div className="flex items-center justify-center h-full w-full">
                     <button 
                         onClick={() => onSelect(lead.id)}
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-indigo-400'}`}
+                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-[#C9A84C] border-[#C9A84C] text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-[#C9A84C]'}`}
                     >
                         {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                     </button>
@@ -245,7 +245,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         {lead.tags && lead.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                                 {lead.tags.slice(0, 3).map((tag: string) => (
-                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800 whitespace-nowrap">
+                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-[#FDF6E3] text-[#C9A84C] border border-[#FDF6E3] dark:bg-[#1C2B4A]/30 dark:text-[#C9A84C] dark:border-[#1C2B4A] whitespace-nowrap">
                                         {tag}
                                     </span>
                                 ))}
@@ -297,7 +297,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     <div className="flex items-center gap-2" title={`Grade: ${scoreGrade}`}>
                         <div className="w-16 h-1.5 bg-[var(--glass-surface-hover)] dark:bg-slate-800 rounded-full overflow-hidden">
                             <div 
-                                className={`h-full rounded-full ${scoreValue >= 70 ? 'bg-emerald-500' : scoreValue >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} 
+                                className={`h-full rounded-full ${scoreValue >= 70 ? 'bg-[#FDF6E3]0' : scoreValue >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} 
                                 style={{ width: `${scoreValue}%` }}
                             />
                         </div>
@@ -329,7 +329,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 const denominator = Number(lead.contractValue) || totalScheduledAmt;
                 const pct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : Math.round((schedule.filter((i: any) => i.status === 'PAID').length / schedule.length) * 100);
                 const overdueCount = schedule.filter((i: any) => i.status === 'OVERDUE' || (i.status === 'PENDING' && i.dueDate && new Date(i.dueDate) < now)).length;
-                const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500';
+                const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-[#FDF6E3]0' : 'bg-[#FDF6E3]0';
                 return (
                     <td className={`px-4 ${paddingY}`}>
                         <div className="flex flex-col gap-1 min-w-[90px]">
@@ -367,15 +367,15 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         className="w-48 bg-[var(--bg-surface)] rounded-2xl shadow-xl border border-[var(--glass-border)] py-1.5 animate-enter"
                     >
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-[#FDF6E3] hover:text-[#C9A84C] transition-colors">
                             {ICONS.EDIT} <span>{t('common.edit')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onProposal(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-[#FDF6E3] hover:text-[#C9A84C] transition-colors">
                             {ICONS.PROPOSAL} <span>{t('leads.create_proposal')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDuplicate(lead.id); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-[#FDF6E3] hover:text-[#C9A84C] transition-colors">
                             {ICONS.DUPLICATE} <span>{t('common.duplicate')}</span>
                         </button>
                         {canDelete && <>
@@ -436,7 +436,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
         >
             {/* Header row: name + score + 3-dot */}
             <div className="flex justify-between items-start mb-2.5 gap-1">
-                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors truncate flex-1 leading-snug">{lead.name}</h4>
+                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-[#C9A84C] transition-colors truncate flex-1 leading-snug">{lead.name}</h4>
                 <div className="flex items-center gap-1.5 shrink-0">
                     <div className="text-xs2 font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
                     {/* 3-dot action button — always visible on mobile (no hover), hidden until hover on desktop */}
@@ -464,7 +464,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
             {lead.tags && lead.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2.5">
                     {lead.tags.slice(0, 4).map((tag: string) => (
-                        <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 whitespace-nowrap">
+                        <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-[#FDF6E3] text-[#C9A84C] border border-[#FDF6E3] whitespace-nowrap">
                             {tag}
                         </span>
                     ))}
@@ -495,14 +495,14 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                         onClick={() => { setMenuOpen(false); onClick(lead); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
-                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-[#C9A84C]0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         {t('common.edit')}
                     </button>
                     <button
                         onClick={() => { setMenuOpen(false); onProposal(lead); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
-                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-[#C9A84C]0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         {t('leads.create_proposal')}
                     </button>
                     {canDelete && <>
@@ -1016,13 +1016,13 @@ export const Leads: React.FC = () => {
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-[#C9A84C] transition-colors">
                                 {ICONS.SEARCH}
                             </div>
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('leads.search_placeholder')} 
                             />
                             {search && (
@@ -1050,14 +1050,14 @@ export const Leads: React.FC = () => {
                         <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
                             <button 
                                 onClick={() => setViewMode('LIST')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-[#C9A84C] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_list')}
                             >
                                 {ICONS.VIEW_LIST}
                             </button>
                             <button 
                                 onClick={() => setViewMode('BOARD')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-[#C9A84C] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_board')}
                             >
                                 {ICONS.VIEW_BOARD}
@@ -1081,7 +1081,7 @@ export const Leads: React.FC = () => {
                                 <button
                                     ref={colSettingsBtnRef}
                                     onClick={() => setShowColumnSettings(v => !v)}
-                                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-[#FDF6E3] border-[#C9A84C] text-[#B8860B]' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
                                     title={t('leads.col_settings_title')}
                                 >
                                     <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
@@ -1122,7 +1122,7 @@ export const Leads: React.FC = () => {
                                                                 return next;
                                                             });
                                                         }}
-                                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                        className="w-4 h-4 rounded border-slate-300 text-[#C9A84C] focus:ring-[#C9A84C] cursor-pointer"
                                                     />
                                                     <span className="text-xs font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{col.label}</span>
                                                 </label>
@@ -1135,7 +1135,7 @@ export const Leads: React.FC = () => {
                                                     <button
                                                         key={d}
                                                         onClick={() => setDensity(d)}
-                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-[#C9A84C] text-white border-[#C9A84C]' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
                                                     >
                                                         {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
                                                     </button>
@@ -1191,32 +1191,32 @@ export const Leads: React.FC = () => {
                 {/* Scope badge — shown when the user sees their own data only */}
                 {isScopedView && (
                     <div className="flex items-center pr-2.5 md:pr-3 shrink-0">
-                        <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1 whitespace-nowrap">
+                        <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C] flex items-center gap-1 whitespace-nowrap">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             {t('leads.scope_mine')}
                         </span>
                     </div>
                 )}
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0 first:pl-0">
-                    <div className="p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
+                    <div className="p-1 bg-[#FDF6E3] text-[#C9A84C] rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads')}</span>
                     <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
+                    <div className="p-1 bg-[#FDF6E3] text-[#C9A84C] rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.new_leads_tooltip')}>{t('leads.new_leads')}</span>
-                    <span className="text-sm font-black text-indigo-600" title={t('leads.new_leads_tooltip')}>{metrics.newCount}</span>
+                    <span className="text-sm font-black text-[#C9A84C]" title={t('leads.new_leads_tooltip')}>{metrics.newCount}</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-emerald-50 text-emerald-500 rounded-md shrink-0">
+                    <div className="p-1 bg-[#FDF6E3] text-[#C9A84C] rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.win_rate_tooltip')}>{t('leads.win_rate')}</span>
-                    <span className="text-sm font-black text-emerald-600" title={`${metrics.wonCount} / ${metrics.wonCount + metrics.lostCount}`}>{metrics.winRate}%</span>
+                    <span className="text-sm font-black text-[#C9A84C]" title={`${metrics.wonCount} / ${metrics.wonCount + metrics.lostCount}`}>{metrics.winRate}%</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
                     <div className="p-1 bg-amber-50 text-amber-500 rounded-md shrink-0">
@@ -1243,7 +1243,7 @@ export const Leads: React.FC = () => {
                                         <tr>
                                             <th className={`px-4 py-3 w-[50px] border-r border-[var(--glass-border)] sticky left-0 bg-[var(--glass-surface)] z-30`}>
                                                 <div className="flex items-center justify-center">
-                                                    <input type="checkbox" checked={selectedLeads.size === leads.length && leads.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                                    <input type="checkbox" checked={selectedLeads.size === leads.length && leads.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-slate-300 text-[#C9A84C] focus:ring-[#C9A84C] cursor-pointer" />
                                                 </div>
                                             </th>
                                             <th className={`px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)] sticky left-[50px] z-30`}>{t('leads.name')}</th>
@@ -1318,13 +1318,13 @@ export const Leads: React.FC = () => {
                                                                     <p className="font-bold text-[var(--text-primary)] text-sm">{t('common.no_results')}</p>
                                                                     <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
                                                                 </div>
-                                                                <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                                <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-[#C9A84C] bg-[#FDF6E3] border border-[#C9A84C] rounded-xl hover:bg-[#FDF6E3] transition-colors">
                                                                     {t('leads.reset_filters')}
                                                                 </button>
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                                <div className="w-14 h-14 rounded-2xl bg-[#FDF6E3] flex items-center justify-center text-[#C9A84C]">
                                                                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                                                 </div>
                                                                 <div>
@@ -1380,7 +1380,7 @@ export const Leads: React.FC = () => {
                             {leads?.map(lead => (
                                 <div 
                                     key={lead.id} 
-                                    className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm active:scale-[0.98] transition-all hover:border-indigo-100" 
+                                    className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm active:scale-[0.98] transition-all hover:border-[#C9A84C]" 
                                     onClick={() => handleEdit(lead)}
                                 >
                                     <div className="flex justify-between items-start mb-3">
@@ -1397,7 +1397,7 @@ export const Leads: React.FC = () => {
                                                 {lead.tags && lead.tags.length > 0 && (
                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                         {lead.tags.slice(0, 3).map((tag: string) => (
-                                                            <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                            <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-[#FDF6E3] text-[#C9A84C] border border-[#C9A84C]">
                                                                 {tag}
                                                             </span>
                                                         ))}
@@ -1422,7 +1422,7 @@ export const Leads: React.FC = () => {
                                             <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-0.5">{t('leads.score')}</div>
                                             <div className="flex items-center justify-end gap-1.5">
                                                 <div className="w-12 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                                    <div className={`h-full rounded-full ${lead.score?.score >= 70 ? 'bg-emerald-500' : lead.score?.score >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
+                                                    <div className={`h-full rounded-full ${lead.score?.score >= 70 ? 'bg-[#FDF6E3]0' : lead.score?.score >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
                                                 </div>
                                                 <span className="text-xs font-bold text-[var(--text-primary)]">{lead.score?.score || 0}</span>
                                             </div>
@@ -1432,7 +1432,7 @@ export const Leads: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); setProposalLead(lead); }} 
-                                            className="flex-1 min-h-[40px] py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:bg-indigo-100 transition-colors"
+                                            className="flex-1 min-h-[40px] py-2 bg-[#FDF6E3] text-[#C9A84C] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:bg-[#FDF6E3] transition-colors"
                                         >
                                             {ICONS.PROPOSAL} {t('leads.create_proposal')}
                                         </button>
@@ -1458,13 +1458,13 @@ export const Leads: React.FC = () => {
                                                 <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
                                                 <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
                                             </div>
-                                            <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                            <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-[#C9A84C] bg-[#FDF6E3] border border-[#C9A84C] rounded-xl hover:bg-[#FDF6E3] transition-colors">
                                                 {t('leads.reset_filters')}
                                             </button>
                                         </>
                                     ) : (
                                         <>
-                                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                            <div className="w-12 h-12 rounded-2xl bg-[#FDF6E3] flex items-center justify-center text-[#C9A84C]">
                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                             </div>
                                             <div>
@@ -1537,7 +1537,7 @@ export const Leads: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span>
                 </div>
             ) : null,

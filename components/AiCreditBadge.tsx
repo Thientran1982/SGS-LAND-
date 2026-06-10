@@ -35,17 +35,17 @@ export const AiCreditBadge: React.FC<Props> = ({ quota, featureLabel, className 
     ? 'bg-rose-500'
     : isLow
       ? 'bg-amber-400'
-      : 'bg-emerald-500';
+      : 'bg-[#FDF6E3]0';
   const textColor = isExhausted
     ? 'text-rose-700'
     : isLow
       ? 'text-amber-700'
-      : 'text-emerald-700';
+      : 'text-[#B8860B]';
   const bgColor = isExhausted
     ? 'bg-rose-50 border-rose-200'
     : isLow
       ? 'bg-amber-50 border-amber-200'
-      : 'bg-emerald-50 border-emerald-200';
+      : 'bg-[#FDF6E3] border-[#C9A84C]';
   const resetLabel = daysLeft <= 1 ? 'Reset hôm nay' : daysLeft <= 7 ? `Reset sau ${daysLeft} ngày` : `Reset ${new Date(resetAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`;
   return (
     <div className={`rounded-xl border px-3 py-2 space-y-1.5 ${bgColor} ${className}`}>

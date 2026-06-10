@@ -29,8 +29,8 @@ const ICONS = {
     COPY: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
     CHECK: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
     CLOSE: <svg className="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-    CALC: <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 3.659c0 3.074-1.8 5.529-4.29 6.226 1.01.83 1.87 1.96 2.42 3.26M9 15.409C10.45 14.83 11.4 13.513 11.4 12c0-1.572-1.201-2.849-2.73-2.951" /></svg>,
-    CHART: <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>,
+    CALC: <svg className="w-5 h-5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 3.659c0 3.074-1.8 5.529-4.29 6.226 1.01.83 1.87 1.96 2.42 3.26M9 15.409C10.45 14.83 11.4 13.513 11.4 12c0-1.572-1.201-2.849-2.73-2.951" /></svg>,
+    CHART: <svg className="w-5 h-5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>,
     GRID: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 01-2 2v-2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
 };
 const PLACEHOLDER_IMG = "https://placehold.co/800x600?text=No+Image";
@@ -65,7 +65,7 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
                     {t('common.share_desc')}
                 </p>
 
-                <div className="bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)] flex items-center gap-2 mb-4 group focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                <div className="bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)] flex items-center gap-2 mb-4 group focus-within:border-[#C9A84C] focus-within:ring-2 focus-within:ring-[#C9A84C]/20 transition-all">
                     <input 
                         readOnly 
                         value={url} 
@@ -75,7 +75,7 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
                 </div>
                 <button 
                     onClick={handleCopy} 
-                    className={`w-full py-3 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                    className={`w-full py-3 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 ${copied ? 'bg-[#FDF6E3]0 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                 >
                     {copied ? ICONS.CHECK : ICONS.COPY}
                     {copied ? t('common.copied') : t('common.copy_link')}
@@ -142,14 +142,14 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
             <div className="flex border-b border-[var(--glass-border)]">
                 <button
                     onClick={() => setMode('LOAN')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'LOAN' ? 'text-indigo-600 bg-indigo-50/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
+                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'LOAN' ? 'text-[#C9A84C] bg-[#FDF6E3]/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CALC} {t('calc.loan')}
                 </button>
                 <div className="w-px bg-[var(--glass-surface-hover)]"></div>
                 <button
                     onClick={() => setMode('RENT')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'RENT' ? 'text-emerald-600 bg-emerald-50/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
+                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'RENT' ? 'text-[#C9A84C] bg-[#FDF6E3]/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CHART} {t('calc.rent')}
                 </button>
@@ -162,9 +162,9 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                             <div>
                                 <div className="flex justify-between mb-2">
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.loan_ratio')}</label>
-                                    <span className="text-sm font-bold text-indigo-600">{ratio}%</span>
+                                    <span className="text-sm font-bold text-[#C9A84C]">{ratio}%</span>
                                 </div>
-                                <input type="range" min="0" max="90" step="5" value={ratio} onChange={e => setRatio(Number(e.target.value))} className="w-full accent-indigo-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
+                                <input type="range" min="0" max="90" step="5" value={ratio} onChange={e => setRatio(Number(e.target.value))} className="w-full accent-[#C9A84C]-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                                 <div className="flex justify-between text-xs2 text-[var(--text-secondary)] mt-1">
                                     <span>0%</span>
                                     <span>{t('calc.own_capital')}: {formatCurrency(downPayment)}</span>
@@ -178,7 +178,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                         value={termStr}
                                         placeholder="20"
                                         onChange={e => setTermStr(e.target.value.replace(/[^0-9]/g, ''))}
-                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500"
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-[#C9A84C]0"
                                     />
                                 </div>
                                 <div>
@@ -193,22 +193,22 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                             const parts = v.split('.');
                                             setRateStr(parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : v);
                                         }}
-                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500"
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-[#C9A84C]0"
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 flex flex-col justify-center min-w-0">
-                            <div className="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1 truncate">{t('calc.monthly_payment')}</div>
-                            <div className="text-2xl md:text-3xl font-black text-indigo-900 mb-4 break-words">{formatCurrency(monthlyPayment)}</div>
+                        <div className="bg-[#FDF6E3] rounded-2xl p-5 border border-[#FDF6E3] flex flex-col justify-center min-w-0">
+                            <div className="text-xs text-[#C9A84C] font-bold uppercase tracking-wider mb-1 truncate">{t('calc.monthly_payment')}</div>
+                            <div className="text-2xl md:text-3xl font-black text-[#1C2B4A] mb-4 break-words">{formatCurrency(monthlyPayment)}</div>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between items-center gap-2 flex-wrap">
-                                    <span className="text-indigo-400 truncate">{t('calc.total_principal')}</span>
-                                    <span className="font-bold text-indigo-800 break-all">{formatCurrency(loanAmount)}</span>
+                                    <span className="text-[#C9A84C] truncate">{t('calc.total_principal')}</span>
+                                    <span className="font-bold text-[#1C2B4A] break-all">{formatCurrency(loanAmount)}</span>
                                 </div>
                                 <div className="flex justify-between items-center gap-2 flex-wrap">
-                                    <span className="text-indigo-400 truncate">{t('calc.total_interest')}</span>
-                                    <span className="font-bold text-indigo-800 break-all">{formatCurrency(totalInterest)}</span>
+                                    <span className="text-[#C9A84C] truncate">{t('calc.total_interest')}</span>
+                                    <span className="font-bold text-[#1C2B4A] break-all">{formatCurrency(totalInterest)}</span>
                                 </div>
                             </div>
                         </div>
@@ -229,16 +229,16 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                         const v = e.target.value.replace(/[^0-9]/g, '');
                                         setMonthlyRentStr(v);
                                     }}
-                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-emerald-500"
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-[#C9A84C]0"
                                 />
                                 <div className="text-xs2 text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}{t('calc.per_month')}</div>
                             </div>
                             <div>
                                 <div className="flex justify-between mb-2">
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.occupancy_rate')}</label>
-                                    <span className="text-sm font-bold text-emerald-600">{occupancy}%</span>
+                                    <span className="text-sm font-bold text-[#C9A84C]">{occupancy}%</span>
                                 </div>
-                                <input type="range" min="50" max="100" step="5" value={occupancy} onChange={e => setOccupancy(Number(e.target.value))} className="w-full accent-emerald-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
+                                <input type="range" min="50" max="100" step="5" value={occupancy} onChange={e => setOccupancy(Number(e.target.value))} className="w-full accent-[#C9A84C] h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                             </div>
                             <div className="border-t border-[var(--glass-border)] pt-4">
                                 <div>
@@ -266,17 +266,17 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                         {/* ── RIGHT: Results ── */}
                         <div className="space-y-3">
                             {/* Card 1: Dòng tiền cho thuê */}
-                            <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
-                                <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-1">{t('calc.gross_yield')}</div>
-                                <div className="text-2xl font-black text-emerald-900">{grossYield.toFixed(2)}%<span className="text-sm font-medium text-emerald-600 ml-1">{t('calc.per_year')}</span></div>
+                            <div className="bg-[#FDF6E3] rounded-2xl p-4 border border-[#C9A84C]">
+                                <div className="text-xs text-[#C9A84C] font-bold uppercase tracking-wider mb-1">{t('calc.gross_yield')}</div>
+                                <div className="text-2xl font-black text-[#B8860B]">{grossYield.toFixed(2)}%<span className="text-sm font-medium text-[#C9A84C] ml-1">{t('calc.per_year')}</span></div>
                                 <div className="mt-2 space-y-1.5 text-xs">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-emerald-600">{t('calc.annual_cashflow')}</span>
-                                        <span className="font-bold text-emerald-900">{formatCurrency(annualRevenue)}</span>
+                                        <span className="text-[#C9A84C]">{t('calc.annual_cashflow')}</span>
+                                        <span className="font-bold text-[#B8860B]">{formatCurrency(annualRevenue)}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-emerald-600">{t('calc.payback_period')}</span>
-                                        <span className="font-bold text-emerald-900">{paybackYears > 0 ? paybackYears.toFixed(1) : '---'}{t('calc.years')}</span>
+                                        <span className="text-[#C9A84C]">{t('calc.payback_period')}</span>
+                                        <span className="font-bold text-[#B8860B]">{paybackYears > 0 ? paybackYears.toFixed(1) : '---'}{t('calc.years')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -319,11 +319,11 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
 });
 const STATUS_CONFIG: Record<string, { color: string, bg: string, border: string }> = {
     BOOKING: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-    OPENING: { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
-    AVAILABLE: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    HOLD: { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+    OPENING: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
+    AVAILABLE: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
+    HOLD: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
     SOLD: { color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-slate-300' },
-    RENTED: { color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
+    RENTED: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
     INACTIVE: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
 };
 // ─── AssigneeDropdown ─────────────────────────────────────────────────────────
@@ -394,8 +394,8 @@ const AssigneeDropdown = memo(({
                     'flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs transition-all select-none',
                     disabled
                         ? 'opacity-60 cursor-not-allowed border-[var(--glass-border)] bg-[var(--glass-surface)]'
-                        : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-indigo-300 hover:shadow-sm cursor-pointer',
-                    isOpen && !disabled ? 'border-indigo-400 ring-1 ring-indigo-300/50' : '',
+                        : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-[#C9A84C] hover:shadow-sm cursor-pointer',
+                    isOpen && !disabled ? 'border-[#C9A84C] ring-1 ring-[#C9A84C]/50' : '',
                 ].join(' ')}
             >
                 {/* Avatar / spinner / placeholder */}
@@ -438,7 +438,7 @@ const AssigneeDropdown = memo(({
                         className={[
                             'w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors border-b border-[var(--glass-border)]/40',
                             !value
-                                ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                ? 'bg-[#FDF6E3] text-[#B8860B] font-semibold'
                                 : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] hover:text-[var(--text-primary)]',
                         ].join(' ')}
                     >
@@ -449,7 +449,7 @@ const AssigneeDropdown = memo(({
                         </span>
                         <span className="flex-1 text-left italic">{t('inventory.unassigned')}</span>
                         {!value && (
-                            <svg className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-[#C9A84C] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                             </svg>
                         )}
@@ -465,19 +465,19 @@ const AssigneeDropdown = memo(({
                                 className={[
                                     'w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors border-b border-[var(--glass-border)]/20 last:border-0',
                                     isSelected
-                                        ? 'bg-indigo-50 text-indigo-700'
+                                        ? 'bg-[#FDF6E3] text-[#B8860B]'
                                         : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] hover:text-[var(--text-primary)]',
                                 ].join(' ')}
                             >
                                 <img src={avatarUrl(u.name, u.avatar)} alt={u.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                                 <div className="flex-1 min-w-0 text-left">
-                                    <div className={`truncate font-medium leading-tight ${isSelected ? 'text-indigo-700' : ''}`}>{u.name}</div>
+                                    <div className={`truncate font-medium leading-tight ${isSelected ? 'text-[#B8860B]' : ''}`}>{u.name}</div>
                                     <div className="text-[10px] text-[var(--text-tertiary)] leading-tight mt-0.5">
                                         {u.role ? t(`role.${u.role.toUpperCase()}`) : ''}
                                     </div>
                                 </div>
                                 {isSelected && (
-                                    <svg className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3.5 h-3.5 text-[#C9A84C] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                     </svg>
                                 )}
@@ -563,7 +563,7 @@ const UnitActionsMenu = memo(({
                     <button
                         type="button"
                         onClick={e => { e.stopPropagation(); onEdit(e, unit); setIsOpen(false); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] hover:text-indigo-600 transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] hover:text-[#C9A84C] transition-colors"
                     >
                         <Edit2 className="w-3.5 h-3.5 flex-shrink-0" />
                         {t('common.edit')}
@@ -906,7 +906,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                         )}
                         <button 
                             onClick={handleAddUnit}
-                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap"
+                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[#C9A84C] text-white text-sm font-bold rounded-xl hover:bg-[#B8860B] transition-colors shadow-sm whitespace-nowrap"
                         >
                             <Plus className="w-4 h-4 shrink-0" />
                             <span className="hidden sm:inline">{t('inventory.add_unit')}</span>
@@ -917,7 +917,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                 {units.length === 0 ? (
                     <div className="flex flex-col items-center gap-4 py-16 px-6 text-center">
-                        <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                        <div className="w-14 h-14 rounded-2xl bg-[#FDF6E3] flex items-center justify-center text-[#C9A84C]">
                             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                         </div>
                         <div>
@@ -968,7 +968,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 }}
                                             >
                                                 <td className="px-4 py-3">
-                                                    <span className="font-mono text-xs font-bold text-indigo-600 group-hover:text-indigo-700">{unit.code}</span>
+                                                    <span className="font-mono text-xs font-bold text-[#C9A84C] group-hover:text-[#B8860B]">{unit.code}</span>
                                                 </td>
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] font-medium">{t(`property.${unit.type.toUpperCase()}`)}</td>
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.attributes?.floor || '--'}</td>
@@ -1040,7 +1040,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex flex-col">
-                                                <span className="font-mono text-xs2 font-bold text-indigo-600 mb-1">{unit.code}</span>
+                                                <span className="font-mono text-xs2 font-bold text-[#C9A84C] mb-1">{unit.code}</span>
                                                 <h4 className="text-sm font-bold text-[var(--text-primary)]">{unit.title || t(`property.${unit.type.toUpperCase()}`)}</h4>
                                             </div>
                                             <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -1126,7 +1126,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,
@@ -1559,7 +1559,7 @@ export const ListingDetail: React.FC = () => {
                 <button 
                     type="button" 
                     onClick={handleBack} 
-                    className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors px-3 py-2 rounded-lg hover:bg-[var(--glass-surface)] active:bg-[var(--glass-surface-hover)] shrink-0"
+                    className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-[#C9A84C] transition-colors px-3 py-2 rounded-lg hover:bg-[var(--glass-surface)] active:bg-[var(--glass-surface-hover)] shrink-0"
                 >
                     {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                 </button>
@@ -1568,7 +1568,7 @@ export const ListingDetail: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsEditFormOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 rounded-xl text-xs font-bold transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[#C9A84C] hover:border-[#C9A84C] hover:bg-[#FDF6E3] rounded-xl text-xs font-bold transition-colors"
                             title={t('inventory.edit_title')}
                         >
                             <Edit2 className="w-4 h-4 pointer-events-none" />
@@ -1588,7 +1588,7 @@ export const ListingDetail: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleShare} 
-                        className="p-2 text-[var(--text-secondary)] hover:text-indigo-600 rounded-full hover:bg-[var(--glass-surface)] transition-colors" 
+                        className="p-2 text-[var(--text-secondary)] hover:text-[#C9A84C] rounded-full hover:bg-[var(--glass-surface)] transition-colors" 
                         title={t('common.share_link')}
                     >
                         {ICONS.SHARE}
@@ -1668,7 +1668,7 @@ export const ListingDetail: React.FC = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {attributes.map((attr, i) => (
                             <div key={i} className="bg-[var(--glass-surface)] p-4 rounded-2xl border border-[var(--glass-border)] hover:bg-[var(--bg-surface)] hover:shadow-md transition-all duration-300 group">
-                                <div className="text-xs2 text-[var(--text-secondary)] font-bold uppercase tracking-wider mb-1 group-hover:text-indigo-500 transition-colors">{attr.label}</div>
+                                <div className="text-xs2 text-[var(--text-secondary)] font-bold uppercase tracking-wider mb-1 group-hover:text-[#C9A84C] transition-colors">{attr.label}</div>
                                 <div className="font-bold text-[var(--text-primary)] truncate" title={String(attr.value)}>{String(attr.value ?? '--')}</div>
                             </div>
                         ))}
@@ -1698,8 +1698,8 @@ export const ListingDetail: React.FC = () => {
                             {/* ── Valuation Card ─────────────────────────────────── */}
                             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col min-w-0">
                                 {/* Header */}
-                                <div className="p-5 border-b border-[var(--glass-border)] flex items-center gap-3 bg-gradient-to-r from-indigo-50/40 to-violet-50/20">
-                                    <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                                <div className="p-5 border-b border-[var(--glass-border)] flex items-center gap-3 bg-gradient-to-r from-[#C9A84C]/40 to-violet-50/20">
+                                    <div className="w-8 h-8 bg-[#C9A84C] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                                         <Sparkles className="w-4 h-4" />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -1726,30 +1726,30 @@ export const ListingDetail: React.FC = () => {
                                                     <span className="text-xs text-[var(--text-tertiary)]">{teaserData.pricePerM2Display}</span>
                                                 </div>
                                                 {/* Main price range */}
-                                                <div className="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl border border-indigo-100 p-4">
+                                                <div className="bg-gradient-to-r from-[#C9A84C] to-violet-50 rounded-2xl border border-[#FDF6E3] p-4">
                                                     <div className="flex items-center justify-between gap-2 flex-wrap">
                                                         <div className="text-center">
-                                                            <div className="text-[10px] font-bold text-indigo-400 uppercase mb-0.5">Thấp</div>
-                                                            <div className="text-sm font-black text-indigo-700">{teaserData.totalMinDisplay}</div>
+                                                            <div className="text-[10px] font-bold text-[#C9A84C] uppercase mb-0.5">Thấp</div>
+                                                            <div className="text-sm font-black text-[#B8860B]">{teaserData.totalMinDisplay}</div>
                                                         </div>
-                                                        <div className="flex-1 h-2 mx-2 bg-indigo-100 rounded-full relative min-w-[40px]">
-                                                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-violet-500 rounded-full opacity-60"></div>
-                                                            <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-4 h-4 bg-indigo-600 rounded-full shadow border-2 border-white"></div>
+                                                        <div className="flex-1 h-2 mx-2 bg-[#FDF6E3] rounded-full relative min-w-[40px]">
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-[#C9A84C] to-violet-500 rounded-full opacity-60"></div>
+                                                            <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-4 h-4 bg-[#C9A84C] rounded-full shadow border-2 border-white"></div>
                                                         </div>
                                                         <div className="text-center">
                                                             <div className="text-[10px] font-bold text-violet-400 uppercase mb-0.5">Cao</div>
                                                             <div className="text-sm font-black text-violet-700">{teaserData.totalMaxDisplay}</div>
                                                         </div>
                                                     </div>
-                                                    <div className="mt-3 pt-3 border-t border-indigo-100 text-center">
-                                                        <span className="text-xs text-indigo-600 font-medium">Trung tâm: </span>
-                                                        <span className="text-sm font-black text-indigo-800">{teaserData.totalMidDisplay}</span>
+                                                    <div className="mt-3 pt-3 border-t border-[#FDF6E3] text-center">
+                                                        <span className="text-xs text-[#C9A84C] font-medium">Trung tâm: </span>
+                                                        <span className="text-sm font-black text-[#1C2B4A]">{teaserData.totalMidDisplay}</span>
                                                     </div>
                                                 </div>
                                                 {/* Meta row */}
                                                 <div className="flex items-center gap-3 mt-2 flex-wrap">
                                                     <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-tertiary)] font-medium">
-                                                        <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                                        <svg className="w-3 h-3 text-[#C9A84C]0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                                                         {teaserData.dataSource}
                                                     </span>
                                                     <span className="text-[10px] text-[var(--text-tertiary)]">·</span>
@@ -1762,14 +1762,14 @@ export const ListingDetail: React.FC = () => {
                                             <div className="border-t border-[var(--glass-border)]"></div>
                                             {/* ── Step 2a: Guest CTA ── */}
                                             {!currentUser && (
-                                                <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-5 space-y-3">
+                                                <div className="rounded-2xl border border-[#C9A84C] bg-gradient-to-br from-[#C9A84C] to-violet-50 p-5 space-y-3">
                                                     <div className="flex items-start gap-3">
-                                                        <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                            <Sparkles className="w-4 h-4 text-indigo-600" />
+                                                        <div className="w-9 h-9 bg-[#FDF6E3] rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                            <Sparkles className="w-4 h-4 text-[#C9A84C]" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold text-indigo-900">Nhận báo cáo AI chi tiết — Miễn phí</p>
-                                                            <p className="text-xs text-indigo-600 mt-0.5 leading-relaxed">
+                                                            <p className="text-sm font-bold text-[#1C2B4A]">Nhận báo cáo AI chi tiết — Miễn phí</p>
+                                                            <p className="text-xs text-[#C9A84C] mt-0.5 leading-relaxed">
                                                                 Phân tích sâu theo 7 hệ số thị trường, so sánh tài sản tương đương, dự báo xu hướng giá.
                                                             </p>
                                                         </div>
@@ -1778,12 +1778,12 @@ export const ListingDetail: React.FC = () => {
                                                         onClick={() => {
                                                             window.location.hash = `#/${ROUTES.LOGIN}?returnTo=${encodeURIComponent(window.location.hash)}`;
                                                         }}
-                                                        className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                        className="w-full py-2.5 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] active:scale-95 transition-all flex items-center justify-center gap-2"
                                                     >
                                                         <Lock className="w-3.5 h-3.5" />
                                                         Đăng nhập để nhận báo cáo AI
                                                     </button>
-                                                    <p className="text-center text-[10px] text-indigo-400">Miễn phí · Không cần thẻ tín dụng</p>
+                                                    <p className="text-center text-[10px] text-[#C9A84C]">Miễn phí · Không cần thẻ tín dụng</p>
                                                 </div>
                                             )}
                                             {/* ── Step 2b: Logged-in user AI valuation ── */}
@@ -1799,7 +1799,7 @@ export const ListingDetail: React.FC = () => {
                                                         <button
                                                             onClick={handleAiValuation}
                                                             disabled={isValuating}
-                                                            className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
+                                                            className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-[#C9A84C] text-white hover:bg-[#B8860B] active:scale-95'}`}
                                                         >
                                                             <Sparkles className="w-4 h-4" />
                                                             {isValuating ? 'Đang phân tích...' : 'Bắt đầu thẩm định AI'}
@@ -1823,7 +1823,7 @@ export const ListingDetail: React.FC = () => {
                                                 <div className="animate-enter space-y-4">
                                                     {/* Realtime badge */}
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${valuation.isRealtime ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${valuation.isRealtime ? 'bg-[#FDF6E3] text-[#B8860B]' : 'bg-amber-100 text-amber-700'}`}>
                                                             <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
                                                             {valuation.isRealtime ? 'Dữ liệu thực tế' : 'Ước tính khu vực'}
                                                         </span>
@@ -1841,13 +1841,13 @@ export const ListingDetail: React.FC = () => {
                                                     </div>
                                                     {/* Stats row */}
                                                     <div className="grid grid-cols-2 gap-3">
-                                                        <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 min-w-0">
-                                                            <div className="text-[10px] font-bold text-indigo-600 uppercase mb-0.5">Đơn giá /m²</div>
-                                                            <div className="text-base font-black text-indigo-900 break-all">{formatCurrency(valuation.pricePerM2)}</div>
+                                                        <div className="p-3 bg-[#FDF6E3] rounded-xl border border-[#FDF6E3] min-w-0">
+                                                            <div className="text-[10px] font-bold text-[#C9A84C] uppercase mb-0.5">Đơn giá /m²</div>
+                                                            <div className="text-base font-black text-[#1C2B4A] break-all">{formatCurrency(valuation.pricePerM2)}</div>
                                                         </div>
-                                                        <div className={`p-3 rounded-xl border min-w-0 ${valuation.trendGrowthPct >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-                                                            <div className={`text-[10px] font-bold uppercase mb-0.5 ${valuation.trendGrowthPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>Xu hướng</div>
-                                                            <div className={`text-base font-black ${valuation.trendGrowthPct >= 0 ? 'text-emerald-900' : 'text-rose-900'}`}>
+                                                        <div className={`p-3 rounded-xl border min-w-0 ${valuation.trendGrowthPct >= 0 ? 'bg-[#FDF6E3] border-[#C9A84C]' : 'bg-rose-50 border-rose-100'}`}>
+                                                            <div className={`text-[10px] font-bold uppercase mb-0.5 ${valuation.trendGrowthPct >= 0 ? 'text-[#C9A84C]' : 'text-rose-600'}`}>Xu hướng</div>
+                                                            <div className={`text-base font-black ${valuation.trendGrowthPct >= 0 ? 'text-[#B8860B]' : 'text-rose-900'}`}>
                                                                 {valuation.trendGrowthPct >= 0 ? '+' : ''}{valuation.trendGrowthPct?.toFixed(1)}%/năm
                                                             </div>
                                                         </div>
@@ -1866,7 +1866,7 @@ export const ListingDetail: React.FC = () => {
                                                             {valuation.factors.filter((f: any) => f.type === 'AVM' && Math.abs(f.impact) >= 2).slice(0, 4).map((f: any, i: number) => (
                                                                 <div key={i} className="flex items-center justify-between gap-2 text-xs">
                                                                     <span className="text-[var(--text-secondary)] truncate">{f.label}</span>
-                                                                    <span className={`font-bold whitespace-nowrap ${f.isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                    <span className={`font-bold whitespace-nowrap ${f.isPositive ? 'text-[#C9A84C]' : 'text-rose-600'}`}>
                                                                         {f.isPositive ? '+' : ''}{f.impact.toFixed(1)}%
                                                                     </span>
                                                                 </div>
@@ -1881,7 +1881,7 @@ export const ListingDetail: React.FC = () => {
                                                     <AiQuotaGate quota={valuationQuota} featureLabel="thẩm định AI" onUpgradeClick={() => window.open('/pricing', '_blank')}>
                                                         <button
                                                             onClick={() => { setValuation(null); setTimeout(handleAiValuation, 50); }}
-                                                            className="w-full py-2 rounded-xl text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5"
+                                                            className="w-full py-2 rounded-xl text-xs font-bold text-[#C9A84C] border border-[#C9A84C] hover:bg-[#FDF6E3] transition-all flex items-center justify-center gap-1.5"
                                                         >
                                                             <Sparkles className="w-3 h-3" />
                                                             Thẩm định lại
@@ -1906,7 +1906,7 @@ export const ListingDetail: React.FC = () => {
                                                 <button
                                                     onClick={handleAiValuation}
                                                     disabled={isValuating}
-                                                    className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
+                                                    className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-[#C9A84C] text-white hover:bg-[#B8860B] active:scale-95'}`}
                                                 >
                                                     <Sparkles className="w-4 h-4" />
                                                     {isValuating ? 'Đang thẩm định...' : 'Bắt đầu thẩm định AI'}
@@ -1914,7 +1914,7 @@ export const ListingDetail: React.FC = () => {
                                             ) : (
                                                 <button
                                                     onClick={() => { window.location.hash = `#/${ROUTES.LOGIN}`; }}
-                                                    className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                    className="w-full py-2.5 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] active:scale-95 transition-all flex items-center justify-center gap-2"
                                                 >
                                                     <Lock className="w-3.5 h-3.5" />
                                                     Đăng nhập để thẩm định AI
@@ -1929,11 +1929,11 @@ export const ListingDetail: React.FC = () => {
                     {/* Internal Info - Only for Authenticated Agents */}
                     {canViewInternalInfo && (
                         <div className="bg-slate-900 rounded-[32px] p-8 border border-slate-800 mt-12 shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] -mr-32 -mt-32"></div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A84C]/10 blur-[100px] -mr-32 -mt-32"></div>
                             <div className="relative z-10">
                                 <div className="flex items-center gap-3 mb-8">
-                                    <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30">
-                                        <Lock className="w-5 h-5 text-indigo-400" />
+                                    <div className="w-10 h-10 bg-[#C9A84C]/20 rounded-xl flex items-center justify-center border border-[#C9A84C]/30">
+                                        <Lock className="w-5 h-5 text-[#C9A84C]" />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-white">{t('inventory.section_internal')}</h3>
@@ -1948,11 +1948,11 @@ export const ListingDetail: React.FC = () => {
                                     <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
                                         <span className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_owner_phone')}</span>
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="text-sm font-mono font-bold text-indigo-400 truncate min-w-0">{listing.ownerPhone || '--'}</span>
+                                            <span className="text-sm font-mono font-bold text-[#C9A84C] truncate min-w-0">{listing.ownerPhone || '--'}</span>
                                             {listing.ownerPhone && (
                                                 <button 
                                                     onClick={() => window.location.href = `tel:${listing.ownerPhone}`}
-                                                    className="p-1.5 bg-indigo-500/20 rounded-lg text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all flex-shrink-0"
+                                                    className="p-1.5 bg-[#C9A84C]/20 rounded-lg text-[#C9A84C] hover:bg-[#C9A84C] hover:text-white transition-all flex-shrink-0"
                                                 >
                                                     {ICONS.PHONE}
                                                 </button>
@@ -1961,13 +1961,13 @@ export const ListingDetail: React.FC = () => {
                                     </div>
                                     <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
                                         <span className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_commission')}</span>
-                                        <span className="text-sm font-bold text-emerald-400">
+                                        <span className="text-sm font-bold text-[#C9A84C]">
                                             {listing.commission ? `${listing.commission}${listing.commissionUnit === 'PERCENT' ? '%' : ' VND'}` : '--'}
                                         </span>
                                     </div>
                                     <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
                                         <span className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_verified')}</span>
-                                        <span className={`text-xs2 font-bold px-2 py-1 rounded-lg uppercase tracking-wider inline-block ${listing.isVerified ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-[var(--text-secondary)] border border-slate-600'}`}>
+                                        <span className={`text-xs2 font-bold px-2 py-1 rounded-lg uppercase tracking-wider inline-block ${listing.isVerified ? 'bg-[#FDF6E3]0/20 text-[#C9A84C] border border-[#C9A84C]/30' : 'bg-slate-700 text-[var(--text-secondary)] border border-slate-600'}`}>
                                             {listing.isVerified ? t('inventory.verified') : t('inventory.unverified')}
                                         </span>
                                     </div>
@@ -2123,7 +2123,7 @@ export const ListingDetail: React.FC = () => {
         )}
         {createPortal(
             toast ? (
-                <div className={`fixed top-6 right-4 md:right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[calc(100vw-2rem)] ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed top-6 right-4 md:right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[calc(100vw-2rem)] ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm break-words">{toast.msg}</span>
                 </div>
             ) : null,

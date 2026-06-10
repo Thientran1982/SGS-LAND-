@@ -6,17 +6,17 @@ function AuthorBox({ authorKey }: { authorKey: string }) {
   const author = AUTHORS[authorKey];
   if (!author) return null;
   return (
-    <div className="author-box mt-8 p-5 bg-blue-50 border-l-4 border-blue-600 rounded-r-lg">
+    <div className="author-box mt-8 p-5 bg-[#FDF6E3] border-l-4 border-[#C9A84C] rounded-r-lg">
       <div className="flex items-start gap-4">
-        <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+        <div className="w-16 h-16 rounded-full bg-[#C9A84C] flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
           {author.name.charAt(0)}
         </div>
         <div>
           <p className="font-bold text-gray-900 text-lg">{author.name}</p>
-          <p className="text-blue-700 font-medium text-sm">{author.title}</p>
+          <p className="text-[#B8860B] font-medium text-sm">{author.title}</p>
           <p className="text-gray-500 text-xs mt-1">{author.license}</p>
           <p className="text-gray-600 text-sm mt-1">{author.experience}</p>
-          <a href={`tel:${author.phone.replace(/\s/g, '')}`} className="inline-block mt-2 text-blue-600 hover:text-blue-800 font-medium text-sm">
+          <a href={`tel:${author.phone.replace(/\s/g, '')}`} className="inline-block mt-2 text-[#C9A84C] hover:text-[#1C2B4A] font-medium text-sm">
             Tel: {author.phone}
           </a>
         </div>
@@ -50,7 +50,7 @@ function RelatedQs({ slugs }: { slugs: string[] }) {
           if (!e) return null;
           return (
             <li key={slug}>
-              <a href={`/hoi-dap/${slug}`} className="text-blue-600 hover:underline">
+              <a href={`/hoi-dap/${slug}`} className="text-[#C9A84C] hover:underline">
                 {e.question}
               </a>
             </li>
@@ -80,21 +80,21 @@ export default function HoiDapDetail({ slug }: { slug?: string }) {
   if (!entry) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center"><h1 className="text-2xl font-bold">Không tìm thấy</h1>
-        <a href="/hoi-dap" className="mt-4 inline-block text-blue-600 hover:underline">Xem tất cả câu hỏi</a>
+        <a href="/hoi-dap" className="mt-4 inline-block text-[#C9A84C] hover:underline">Xem tất cả câu hỏi</a>
       </div></div>
   );
   const today = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   return (
     <article className="max-w-3xl mx-auto px-4 py-8" itemScope itemType="https://schema.org/FAQPage">
       <nav className="text-sm text-gray-500 mb-4">
-        <a href="/" className="hover:text-blue-600">Trang chủ</a>
+        <a href="/" className="hover:text-[#C9A84C]">Trang chủ</a>
         <span className="mx-1">/</span>
-        <a href="/hoi-dap" className="hover:text-blue-600">Hỏi đáp</a>
+        <a href="/hoi-dap" className="hover:text-[#C9A84C]">Hỏi đáp</a>
         <span className="mx-1">/</span>
         <span>{entry.question}</span>
       </nav>
       <div className="mb-4">
-        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{entry.category}</span>
+        <span className="px-3 py-1 bg-[#FDF6E3] text-[#B8860B] rounded-full text-xs font-medium">{entry.category}</span>
         <span className="ml-3 text-xs text-gray-400">Cập nhật: {today}</span>
       </div>
       <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{entry.question}</h1>
@@ -102,11 +102,11 @@ export default function HoiDapDetail({ slug }: { slug?: string }) {
         <p className="text-gray-800 font-medium" itemProp="speakable">{entry.shortAnswer}</p>
       </div>
       {entry.relatedProjects.length > 0 && (
-        <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-          <p className="font-bold text-green-800 mb-2">Dự án liên quan:</p>
+        <div className="mb-6 p-4 bg-[#FDF6E3] rounded-lg border border-[#C9A84C]">
+          <p className="font-bold text-[#B8860B] mb-2">Dự án liên quan:</p>
           <div className="flex flex-wrap gap-2">
             {entry.relatedProjects.map(p => (
-              <a key={p} href={`/du-an/${p}`} className="px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700">
+              <a key={p} href={`/du-an/${p}`} className="px-3 py-1 bg-[#C9A84C] text-white rounded-full text-sm hover:bg-[#B8860B]">
                 {PROJECT_NAMES[p] || p}
               </a>
             ))}
@@ -116,7 +116,7 @@ export default function HoiDapDetail({ slug }: { slug?: string }) {
       <div className="prose max-w-none mt-6">
         {entry.content.split('\n').map((line, i) => {
           if (line.startsWith('### ')) return <h2 key={i} className="text-xl font-bold mt-6 mb-3">{line.slice(4)}</h2>;
-          if (line.startsWith('## ')) return <h3 key={i} className="text-lg font-semibold mt-5 mb-2 text-blue-800">{line.slice(3)}</h3>;
+          if (line.startsWith('## ')) return <h3 key={i} className="text-lg font-semibold mt-5 mb-2 text-[#1C2B4A]">{line.slice(3)}</h3>;
           if (line.startsWith('- ')) return <li key={i} className="ml-4 text-gray-700">{line.slice(2)}</li>;
           if (!line.trim()) return <br key={i} />;
           return <p key={i} className="text-gray-700 leading-relaxed mb-2">{line}</p>;
@@ -125,11 +125,11 @@ export default function HoiDapDetail({ slug }: { slug?: string }) {
       <FAQAccordion items={entry.faqItems} />
       <AuthorBox authorKey={entry.authorKey} />
       <RelatedQs slugs={entry.relatedQuestions} />
-      <div className="mt-10 p-6 bg-blue-600 text-white rounded-xl text-center">
+      <div className="mt-10 p-6 bg-[#C9A84C] text-white rounded-xl text-center">
         <h3 className="text-xl font-bold mb-2">Tư vấn miễn phí từ chuyên gia SGS LAND</h3>
         <div className="flex justify-center gap-4 flex-wrap mt-4">
-          <a href="tel:18006665" className="px-6 py-3 bg-white text-blue-600 rounded-lg font-bold">Hotline 1800 6665</a>
-          <a href="/du-an" className="px-6 py-3 bg-blue-800 text-white rounded-lg font-bold">Xem dự án</a>
+          <a href="tel:18006665" className="px-6 py-3 bg-white text-[#C9A84C] rounded-lg font-bold">Hotline 1800 6665</a>
+          <a href="/du-an" className="px-6 py-3 bg-[#1C2B4A] text-white rounded-lg font-bold">Xem dự án</a>
         </div>
       </div>
     </article>

@@ -106,7 +106,7 @@ export const Marketplace: React.FC = () => {
                 canonicalPath="/marketplace-apps"
                 noindex
             />
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 text-[#C9A84C] border-[#C9A84C]0' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4">
                 <div>
@@ -114,8 +114,8 @@ export const Marketplace: React.FC = () => {
                     <p className="text-sm text-[var(--text-tertiary)]">{t('market.subtitle')}</p>
                 </div>
                 <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl">
-                    <button onClick={() => setActiveTab('BROWSE')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'BROWSE' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_browse')}</button>
-                    <button onClick={() => setActiveTab('INSTALLED')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INSTALLED' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_installed')}</button>
+                    <button onClick={() => setActiveTab('BROWSE')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'BROWSE' ? 'bg-[var(--bg-surface)] shadow text-[#C9A84C]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_browse')}</button>
+                    <button onClick={() => setActiveTab('INSTALLED')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INSTALLED' ? 'bg-[var(--bg-surface)] shadow text-[#C9A84C]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_installed')}</button>
                 </div>
             </div>
 
@@ -123,11 +123,11 @@ export const Marketplace: React.FC = () => {
                 {/* Sidebar Categories */}
                 <div className="w-full md:w-64 space-y-2 shrink-0">
                     <div className="relative mb-6 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-[#C9A84C] transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input 
-                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('common.search')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -148,7 +148,7 @@ export const Marketplace: React.FC = () => {
                         <button 
                             key={cat}
                             onClick={() => setCategory(cat)}
-                            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all uppercase tracking-wide ${category === cat ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[var(--bg-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)] border border-[var(--glass-border)]'}`}
+                            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all uppercase tracking-wide ${category === cat ? 'bg-[#C9A84C] text-white shadow-lg' : 'bg-[var(--bg-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)] border border-[var(--glass-border)]'}`}
                         >
                             {getCatLabel(cat)}
                         </button>
@@ -181,13 +181,13 @@ export const Marketplace: React.FC = () => {
 
                             return (
                                 <div key={app.id} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-lg transition-all group flex flex-col h-full relative overflow-hidden">
-                                    {isProcessing && <div className="absolute inset-0 bg-[var(--bg-surface)]/60 backdrop-blur-sm z-10 flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}
+                                    {isProcessing && <div className="absolute inset-0 bg-[var(--bg-surface)]/60 backdrop-blur-sm z-10 flex items-center justify-center"><div className="w-6 h-6 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin"></div></div>}
 
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="w-14 h-14 rounded-2xl shadow-sm bg-[var(--glass-surface)] flex items-center justify-center p-2 border border-[var(--glass-border)]">
                                             <img src={app.icon} className="w-full h-full object-contain" alt="" />
                                         </div>
-                                        {isInstalled && <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs2 font-bold uppercase tracking-wider border border-emerald-100">{t('market.installed_badge')}</span>}
+                                        {isInstalled && <span className="bg-[#FDF6E3] text-[#C9A84C] px-2 py-1 rounded text-xs2 font-bold uppercase tracking-wider border border-[#C9A84C]">{t('market.installed_badge')}</span>}
                                     </div>
                                     <h3 className="font-bold text-[var(--text-primary)] text-lg mb-1 line-clamp-1">{app.name}</h3>
                                     <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-3">{getCatLabel(app.category)}</div>
@@ -229,14 +229,14 @@ export const Marketplace: React.FC = () => {
                                         </p>
                                     </div>
                                     {(search || category !== 'ALL') && (
-                                        <button onClick={() => { setSearch(''); setCategory('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                        <button onClick={() => { setSearch(''); setCategory('ALL'); }} className="px-4 py-2 text-xs font-bold text-[#C9A84C] bg-[#FDF6E3] border border-[#C9A84C] rounded-xl hover:bg-[#FDF6E3] transition-colors">
                                             {t('market.reset_search')}
                                         </button>
                                     )}
                                 </>
                             ) : (
                                 <>
-                                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                    <div className="w-14 h-14 rounded-2xl bg-[#FDF6E3] flex items-center justify-center text-[#C9A84C]">
                                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                     </div>
                                     <div>

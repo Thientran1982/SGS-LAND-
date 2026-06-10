@@ -58,7 +58,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.name')}</label>
                         <input
-                            className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                            className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 transition-all"
                             placeholder={t('data.name_placeholder')}
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
@@ -68,7 +68,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.spreadsheet_id')}</label>
                             <input
-                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 transition-all"
                                 placeholder={t('data.spreadsheet_placeholder')}
                                 value={String(form.config?.spreadsheetId || '')}
                                 onChange={e => handleConfigChange('spreadsheetId', e.target.value)}
@@ -82,7 +82,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.target_url')}</label>
                             <input
-                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 transition-all"
                                 placeholder={t('data.webhook_placeholder')}
                                 value={String(form.config?.targetUrl || '')}
                                 onChange={e => handleConfigChange('targetUrl', e.target.value)}
@@ -94,7 +94,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.api_key')}</label>
                             <input
                                 type="password"
-                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 transition-all"
                                 placeholder={t('data.api_key_placeholder')}
                                 value={String(form.config?.apiKey || '')}
                                 onChange={e => handleConfigChange('apiKey', e.target.value)}
@@ -123,9 +123,9 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
 };
 const StatusBadge = ({ status, t }: { status: SyncStatus; t: any }) => {
     const styles: Record<string, string> = {
-        [SyncStatus.COMPLETED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        [SyncStatus.COMPLETED]: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]',
         [SyncStatus.FAILED]: 'bg-rose-50 text-rose-700 border-rose-200',
-        [SyncStatus.RUNNING]: 'bg-blue-50 text-blue-700 border-blue-200',
+        [SyncStatus.RUNNING]: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]',
         [SyncStatus.QUEUED]: 'bg-amber-50 text-amber-700 border-amber-200',
     };
     return (
@@ -294,7 +294,7 @@ export const DataPlatform: React.FC = () => {
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.status === 'ACTIVE' ? 'bg-[#FDF6E3]0' : 'bg-amber-400'}`} />
                                                 <h4 className="font-bold text-[var(--text-primary)] text-sm truncate">{c.name}</h4>
                                             </div>
                                             <div className="text-xs text-[var(--text-tertiary)] mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -311,7 +311,7 @@ export const DataPlatform: React.FC = () => {
                                         <button
                                             onClick={() => handleSync(c.id)}
                                             disabled={syncingId === c.id}
-                                            className="p-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                                            className="p-2 text-[#C9A84C] bg-[#FDF6E3] rounded-lg hover:bg-[#FDF6E3] transition-colors disabled:opacity-50"
                                             title={t('data.sync_now')}
                                         >
                                             <span className={syncingId === c.id ? 'animate-spin inline-block' : ''}>{ICONS.SYNC}</span>
@@ -393,7 +393,7 @@ export const DataPlatform: React.FC = () => {
                     role="status"
                     aria-live="polite"
                     aria-atomic="true"
-                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-emerald-900/95 border-emerald-700 text-white' : 'bg-rose-900/95 border-rose-700 text-white'}`}
+                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-[#B8860B]/95 border-[#B8860B] text-white' : 'bg-rose-900/95 border-rose-700 text-white'}`}
                 >
                     <span className="text-sm">{toast.type === 'success' ? '✓' : '✕'}</span>
                     <span className="font-semibold text-sm">{toast.msg}</span>

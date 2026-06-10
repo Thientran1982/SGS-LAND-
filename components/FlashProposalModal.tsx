@@ -26,7 +26,7 @@ const DEAL_CONFIG = {
 } as const;
 const ICONS = {
     CLOSE: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-    SEARCH: <svg className="w-5 h-5 absolute left-3 top-3 text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-5 h-5 absolute left-3 top-3 text-[var(--text-secondary)] group-focus-within:text-[#C9A84C] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     CLEAR: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     WARNING: <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     REFRESH: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
@@ -199,14 +199,14 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
         <div className="flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shrink-0">
                 <div className="relative group">
-                    <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                    <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-[#C9A84C] transition-colors">
                         {ICONS.SEARCH}
                     </div>
                     <input 
                         ref={searchInputRef}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                        className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         placeholder={t('inventory.search_hint')}
                     />
                     {searchQuery && (
@@ -226,15 +226,15 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         <div 
                             key={item.id} 
                             onClick={() => { setSelectedListing(item); setStep('CONFIRM'); }} 
-                            className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] cursor-pointer hover:border-indigo-500 hover:shadow-lg hover:scale-[1.01] transition-all group relative overflow-hidden active:scale-95"
+                            className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] cursor-pointer hover:border-[#C9A84C] hover:shadow-lg hover:scale-[1.01] transition-all group relative overflow-hidden active:scale-95"
                         >
                             <div className="flex justify-between items-start relative z-10">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="font-mono text-xs2 font-bold bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded">{item.code}</span>
-                                        <span className="text-xs2 font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">{t(`status.${item.status}`)}</span>
+                                        <span className="text-xs2 font-bold text-[#C9A84C] bg-[#FDF6E3] px-1.5 py-0.5 rounded uppercase">{t(`status.${item.status}`)}</span>
                                     </div>
-                                    <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-700 transition-colors line-clamp-1">{item.title}</h4>
+                                    <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-[#B8860B] transition-colors line-clamp-1">{item.title}</h4>
                                     <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{item.location}</p>
                                 </div>
                                 <div className="text-right shrink-0 ml-2">
@@ -271,7 +271,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 <span className="text-xs2 bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.bedrooms} {t('pub.bedrooms')}</span>
                                 <span className="text-xs2 bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.attributes.direction ? t(`direction.${selectedListing.attributes.direction}`) : '---'}</span>
                             </div>
-                            <button onClick={() => setStep('SELECT')} className="text-xs2 font-bold text-indigo-600 hover:underline mt-2 flex items-center gap-1">
+                            <button onClick={() => setStep('SELECT')} className="text-xs2 font-bold text-[#C9A84C] hover:underline mt-2 flex items-center gap-1">
                                 {ICONS.REFRESH}
                                 {t('proposal.change_property')}
                             </button>
@@ -286,7 +286,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     <button 
                                         key={type}
                                         onClick={() => setDiscountType(type)} 
-                                        className={`px-3 py-1 text-xs2 font-bold rounded-md transition-all ${discountType === type ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-tertiary)]'}`}
+                                        className={`px-3 py-1 text-xs2 font-bold rounded-md transition-all ${discountType === type ? 'bg-[var(--bg-surface)] text-[#C9A84C] shadow-sm' : 'text-[var(--text-tertiary)]'}`}
                                     >
                                         {type === 'PERCENT' ? '%' : '$'}
                                     </button>
@@ -301,7 +301,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                         min="0"
                                         value={discountValue}
                                         onChange={e => setDiscountValue(Number(e.target.value))}
-                                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-4 pr-12 py-3 text-lg font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] transition-all"
+                                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-4 pr-12 py-3 text-lg font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[#C9A84C]/20 focus:bg-[var(--bg-surface)] transition-all"
                                     />
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] font-bold text-xs pointer-events-none">
                                         {discountType === 'PERCENT' ? '%' : 'VND'}
@@ -313,7 +313,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                         min="0" max="15" step="0.5" 
                                         value={discountValue} 
                                         onChange={e => setDiscountValue(Number(e.target.value))} 
-                                        className="w-24 accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer hidden sm:block"
+                                        className="w-24 accent-[#C9A84C]-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer hidden sm:block"
                                     />
                                 )}
                             </div>
@@ -336,7 +336,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     }))}
                                     className="w-full"
                                 />
-                                <p className="text-xs2 text-indigo-500 font-bold mt-1 text-right">
+                                <p className="text-xs2 text-[#C9A84C] font-bold mt-1 text-right">
                                     → {expiryDate}
                                 </p>
                             </div>
@@ -346,7 +346,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     type="number"
                                     value={depositAmount}
                                     onChange={e => setDepositAmount(Number(e.target.value))}
-                                    className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500"
+                                    className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-[#C9A84C]0"
                                 />
                             </div>
                         </div>
@@ -357,7 +357,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 onChange={e => setNote(e.target.value)}
                                 placeholder={t('proposal.placeholder_note')}
                                 rows={2}
-                                className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500 resize-none"
+                                className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-[#C9A84C] resize-none"
                             />
                         </div>
                         {/* Payment Schedule Builder */}
@@ -368,10 +368,10 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 className="w-full flex items-center justify-between px-3 py-2.5 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] transition-colors text-left"
                             >
                                 <div className="flex items-center gap-2">
-                                    <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                                    <svg className="w-3.5 h-3.5 text-[#C9A84C]0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                                     <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">Tiến độ thanh toán đề xuất</span>
                                     {proposedSchedule.length > 0 && (
-                                        <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">{proposedSchedule.length} đợt</span>
+                                        <span className="text-[10px] font-bold bg-[#FDF6E3] text-[#B8860B] px-1.5 py-0.5 rounded-full">{proposedSchedule.length} đợt</span>
                                     )}
                                 </div>
                                 <svg className={`w-4 h-4 text-[var(--text-tertiary)] transition-transform ${showScheduleBuilder ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -390,7 +390,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                                 key={label}
                                                 type="button"
                                                 onClick={() => applySchedulePreset(preset)}
-                                                className="text-[10px] font-bold bg-[var(--glass-surface-hover)] hover:bg-indigo-100 hover:text-indigo-700 text-[var(--text-secondary)] px-2 py-1 rounded-lg transition-colors border border-[var(--glass-border)]"
+                                                className="text-[10px] font-bold bg-[var(--glass-surface-hover)] hover:bg-[#FDF6E3] hover:text-[#B8860B] text-[var(--text-secondary)] px-2 py-1 rounded-lg transition-colors border border-[var(--glass-border)]"
                                             >{label}</button>
                                         ))}
                                     </div>
@@ -443,7 +443,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                             </div>
                                             <div className={`flex justify-between text-xs font-bold px-1 pt-0.5 border-t border-[var(--glass-border)]`}>
                                                 <span className="text-[var(--text-tertiary)]">Tổng %:</span>
-                                                <span className={proposedSchedule.reduce((s, m) => s + m.percentage, 0) === 100 ? 'text-emerald-600' : 'text-rose-500'}>
+                                                <span className={proposedSchedule.reduce((s, m) => s + m.percentage, 0) === 100 ? 'text-[#C9A84C]' : 'text-rose-500'}>
                                                     {proposedSchedule.reduce((s, m) => s + m.percentage, 0)}%
                                                     {proposedSchedule.reduce((s, m) => s + m.percentage, 0) !== 100 && ' ≠ 100%'}
                                                 </span>
@@ -453,7 +453,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     <button
                                         type="button"
                                         onClick={() => setProposedSchedule(s => [...s, { id: `m-${Date.now()}`, label: `Đợt ${s.length + 1}`, daysFromNow: s.length * 30, percentage: 0 }])}
-                                        className="w-full text-xs font-bold text-indigo-600 hover:text-indigo-700 py-1.5 border border-dashed border-indigo-200 hover:border-indigo-400 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                        className="w-full text-xs font-bold text-[#C9A84C] hover:text-[#B8860B] py-1.5 border border-dashed border-[#C9A84C] hover:border-[#C9A84C] rounded-lg transition-colors flex items-center justify-center gap-1"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                         Thêm đợt thanh toán
@@ -474,7 +474,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <div className="border-t border-[var(--glass-border)] my-2"></div>
                             <div className="flex justify-between items-end">
                                 <span className="font-bold text-[var(--text-primary)] text-sm">{t('proposal.price_final')}</span>
-                                <span className="text-xl md:text-2xl font-extrabold text-emerald-600 tracking-tight bg-[var(--bg-surface)] px-2 rounded shadow-sm border border-emerald-100">
+                                <span className="text-xl md:text-2xl font-extrabold text-[#C9A84C] tracking-tight bg-[var(--bg-surface)] px-2 rounded shadow-sm border border-[#C9A84C]">
                                     {formatCurrency(finalCalculations.finalPrice)}
                                 </span>
                             </div>
@@ -506,7 +506,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     <div>
                         <h3 id="flash-proposal-title" className="font-bold text-[var(--text-primary)] text-base md:text-lg">{t('proposal.flash_title')}</h3>
                         <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)] flex-wrap">
-                            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold max-w-[120px] truncate">{lead.name}</span>
+                            <span className="bg-[#FDF6E3] text-[#B8860B] px-2 py-0.5 rounded font-bold max-w-[120px] truncate">{lead.name}</span>
                             <span>•</span>
                             <span className="font-mono">{lead.phone}</span>
                             {(() => {
@@ -516,8 +516,8 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 const pct = Math.round((paidCount / schedule.length) * 100);
                                 const now = new Date();
                                 const overdue = schedule.filter((i: any) => i.status !== 'PAID' && new Date(i.dueDate) < now).length;
-                                const bg = overdue > 0 ? 'bg-rose-50 text-rose-600' : pct === 100 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
-                                const barColor = overdue > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-amber-500';
+                                const bg = overdue > 0 ? 'bg-rose-50 text-rose-600' : pct === 100 ? 'bg-[#FDF6E3] text-[#B8860B]' : 'bg-amber-50 text-amber-700';
+                                const barColor = overdue > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-[#FDF6E3]0' : 'bg-amber-500';
                                 return (
                                     <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full font-semibold text-[10px] ${bg}`} title={`Tiến độ thanh toán hợp đồng: ${pct}%${overdue > 0 ? ` (${overdue} quá hạn)` : ''}`}>
                                         <span className="w-14 h-1 bg-white/60 rounded-full overflow-hidden inline-block align-middle">
@@ -551,18 +551,18 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     )}
                     {step === 'APPROVED' && (
                         <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center animate-enter h-full overflow-y-auto no-scrollbar">
-                            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
+                            <div className="w-16 h-16 bg-[#FDF6E3] text-[#C9A84C] rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
                                 {ICONS.SUCCESS}
                             </div>
                             <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('proposal.approved_step_title')}</h3>
                             <p className="text-[var(--text-tertiary)] mt-2 mb-6 text-sm max-w-xs">{t('proposal.approved_step_subtitle')}</p>
-                            <div className="w-full bg-[var(--glass-surface)] p-4 rounded-xl border border-emerald-200 relative">
+                            <div className="w-full bg-[var(--glass-surface)] p-4 rounded-xl border border-[#C9A84C] relative">
                                 <div className="text-xs2 uppercase font-bold text-[var(--text-secondary)] mb-1 text-left">{t('proposal.public_link_label')}</div>
                                 <div className="flex items-center gap-2">
                                     <input
                                         readOnly
                                         value={generatedLink}
-                                        className="font-mono text-xs text-indigo-600 bg-transparent outline-none w-full truncate"
+                                        className="font-mono text-xs text-[#C9A84C] bg-transparent outline-none w-full truncate"
                                         onClick={(e) => e.currentTarget.select()}
                                     />
                                 </div>
@@ -578,7 +578,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     )}
                     {step === 'DONE' && (
                         <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center animate-enter h-full overflow-y-auto no-scrollbar">
-                            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
+                            <div className="w-16 h-16 bg-[#FDF6E3] text-[#C9A84C] rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
                                 {ICONS.SUCCESS}
                             </div>
                             <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('common.success')}</h3>                            
@@ -588,7 +588,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     <input 
                                         readOnly 
                                         value={generatedLink} 
-                                        className="font-mono text-xs text-indigo-600 bg-transparent outline-none w-full truncate"
+                                        className="font-mono text-xs text-[#C9A84C] bg-transparent outline-none w-full truncate"
                                         onClick={(e) => e.currentTarget.select()}
                                     />
                                 </div>

@@ -54,8 +54,8 @@ function getPresetFromDate(range: Exclude<DateRange, 'custom'>): string | undefi
 function RoleChip({ role }: { role: string }) {
   const map: Record<string, string> = {
     ADMIN: 'bg-violet-100 text-violet-700',
-    TEAM_LEAD: 'bg-blue-100 text-blue-700',
-    SALES: 'bg-emerald-100 text-emerald-700',
+    TEAM_LEAD: 'bg-[#FDF6E3] text-[#B8860B]',
+    SALES: 'bg-[#FDF6E3] text-[#B8860B]',
     PARTNER_ADMIN: 'bg-amber-100 text-amber-700',
     PARTNER_AGENT: 'bg-orange-100 text-orange-700',
   };
@@ -78,7 +78,7 @@ function UserAvatar({ name, avatar }: { name: string; avatar?: string }) {
   }
   const initials = name?.split(' ').slice(-1)[0]?.[0]?.toUpperCase() || '?';
   return (
-    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-[#C9A84C] flex items-center justify-center text-white text-xs font-bold shrink-0">
       {initials}
     </div>
   );

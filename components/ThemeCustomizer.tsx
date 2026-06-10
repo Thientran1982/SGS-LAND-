@@ -13,7 +13,7 @@ interface ThemeCustomizerProps {
   notify: (msg: string, type: 'success' | 'error') => void;
 }
 const PRESET_COLORS = [
-  { value: '#4F46E5', label: 'Indigo' },
+  { value: '#C9A84C', label: 'Indigo' },
   { value: '#7C3AED', label: 'Violet' },
   { value: '#DB2777', label: 'Pink' },
   { value: '#0EA5E9', label: 'Sky' },
@@ -241,7 +241,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
                     }
                   }}
                   className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-mono bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--primary-600)]/20 focus:border-[var(--primary-600)]"
-                  placeholder="#4F46E5"
+                  placeholder="#C9A84C"
                 />
               </div>
               <div

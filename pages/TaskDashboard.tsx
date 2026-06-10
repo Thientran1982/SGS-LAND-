@@ -11,9 +11,9 @@ interface Props {
 const navigateTo = (route: string) => { window.location.hash = `#/${route}`; };
 const STATUS_BAR_COLORS: Record<string, string> = {
   todo: 'bg-slate-400',
-  in_progress: 'bg-indigo-500',
+  in_progress: 'bg-[#FDF6E3]0',
   review: 'bg-amber-400',
-  done: 'bg-emerald-500',
+  done: 'bg-[#FDF6E3]0',
   cancelled: 'bg-rose-400',
 };
 function StatCard({ label, value, sub, color, icon }: { label: string; value: number | string; sub?: string; color: string; icon: React.ReactNode }) {
@@ -109,8 +109,8 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
-            <ClipboardList className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="w-10 h-10 bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 rounded-xl flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-[#C9A84C] dark:text-[#C9A84C]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">Tổng quan Công việc</h1>
@@ -146,7 +146,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <AlertTriangle className="w-10 h-10 text-amber-400" />
           <p className="text-[var(--text-secondary)]">{error}</p>
-          <button onClick={() => load(false, departmentId)} className="text-sm text-indigo-500 font-medium">Thử lại</button>
+          <button onClick={() => load(false, departmentId)} className="text-sm text-[#C9A84C] font-medium">Thử lại</button>
         </div>
       )}
       {/* Stat Cards */}
@@ -155,9 +155,9 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : overview ? (
           <>
-            <StatCard label="Tổng công việc" value={overview.total_tasks} icon={<ClipboardList className="w-5 h-5 text-indigo-600" />} color="bg-indigo-100 dark:bg-indigo-900/30" />
+            <StatCard label="Tổng công việc" value={overview.total_tasks} icon={<ClipboardList className="w-5 h-5 text-[#C9A84C]" />} color="bg-[#FDF6E3] dark:bg-[#1C2B4A]/30" />
             <StatCard label="Quá hạn" value={overview.overdue_count} sub="Cần xử lý ngay" icon={<AlertTriangle className="w-5 h-5 text-rose-600" />} color="bg-rose-100 dark:bg-rose-900/30" />
-            <StatCard label="Hoàn thành" value={`${completionRate}%`} sub={`${overview.done} / ${overview.total_tasks}`} icon={<CheckCircle2 className="w-5 h-5 text-emerald-600" />} color="bg-emerald-100 dark:bg-emerald-900/30" />
+            <StatCard label="Hoàn thành" value={`${completionRate}%`} sub={`${overview.done} / ${overview.total_tasks}`} icon={<CheckCircle2 className="w-5 h-5 text-[#C9A84C]" />} color="bg-[#FDF6E3] dark:bg-[#B8860B]/30" />
             <StatCard label="Đến hạn hôm nay" value={overview.due_today_count} icon={<Clock className="w-5 h-5 text-amber-600" />} color="bg-amber-100 dark:bg-amber-900/30" />
           </>
         ) : null}
@@ -222,7 +222,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--text-primary)]">Khối lượng công việc / Nhân viên</h3>
-            <button onClick={() => onNavigate(ROUTES.EMPLOYEES)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">
+            <button onClick={() => onNavigate(ROUTES.EMPLOYEES)} className="text-xs text-[#C9A84C] hover:text-[#C9A84C] font-medium">
               Xem tất cả →
             </button>
           </div>
@@ -241,7 +241,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
                   <tr key={u.user_id} className="hover:bg-[var(--glass-surface-hover)] transition-colors">
                     <td className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 flex items-center justify-center text-[11px] font-bold text-[#C9A84C] flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -257,7 +257,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
                         : <span className="text-[var(--text-tertiary)]">0</span>}
                     </td>
                     <td className="py-2.5 text-right">
-                      <span className={`font-bold ${u.workload_score > 10 ? 'text-rose-500' : u.workload_score > 5 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      <span className={`font-bold ${u.workload_score > 10 ? 'text-rose-500' : u.workload_score > 5 ? 'text-amber-500' : 'text-[#C9A84C]0'}`}>
                         {u.workload_score.toFixed(1)}
                       </span>
                     </td>
@@ -273,7 +273,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--text-primary)]">Sắp đến hạn (7 ngày)</h3>
-            <button onClick={() => onNavigate(ROUTES.TASKS)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">
+            <button onClick={() => onNavigate(ROUTES.TASKS)} className="text-xs text-[#C9A84C] hover:text-[#C9A84C] font-medium">
               Xem tất cả →
             </button>
           </div>
@@ -283,7 +283,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
                 key={t.id}
                 className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--glass-surface-hover)] transition-colors cursor-pointer"
                 onClick={() => { window.location.hash = `#/${ROUTES.TASKS}/${t.id}`; }}>
-                <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${t.days_until_deadline === 0 ? 'bg-rose-500' : (t.days_until_deadline ?? 99) <= 3 ? 'bg-amber-400' : 'bg-indigo-400'}`} />
+                <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${t.days_until_deadline === 0 ? 'bg-rose-500' : (t.days_until_deadline ?? 99) <= 3 ? 'bg-amber-400' : 'bg-[#C9A84C]'}`} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.title}</p>
                   <p className="text-xs text-[var(--text-tertiary)]">

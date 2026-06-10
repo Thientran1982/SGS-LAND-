@@ -82,8 +82,8 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ roomNa
                 <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('editor.title')}</span>
                 <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
-                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status === 'connected' ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-                        <span className={`relative inline-flex rounded-full h-2 w-2 ${status === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status === 'connected' ? 'bg-[#C9A84C]' : 'bg-amber-400'}`}></span>
+                        <span className={`relative inline-flex rounded-full h-2 w-2 ${status === 'connected' ? 'bg-[#FDF6E3]0' : 'bg-amber-500'}`}></span>
                     </span>
                     <span className="text-xs text-[var(--text-tertiary)]">{status === 'connected' ? t('editor.status_connected') : t('editor.status_connecting')}</span>
                 </div>

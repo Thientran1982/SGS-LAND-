@@ -20,23 +20,23 @@ const stripMarkdown = (text: string): string =>
         .replace(/`(.+?)`/g, '$1')
         .trim();
 const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: any) => (
-    <div className="bg-white p-5 rounded-2xl mb-8 border border-indigo-100 shadow-sm animate-enter relative group overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="bg-white p-5 rounded-2xl mb-8 border border-[#FDF6E3] shadow-sm animate-enter relative group overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#FDF6E3]/30 rounded-full blur-3xl pointer-events-none"></div>
         <div className="flex justify-between items-center mb-4 relative z-10">
             <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200">
+                <div className="p-2 bg-[#C9A84C] rounded-xl text-white shadow-lg shadow-[#C9A84C]">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <div>
-                    <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-widest">{t('detail.ai_analysis')}</h4>
-                    <p className="text-2xs text-indigo-500 font-semibold uppercase tracking-tighter">{t('detail.ai_badge')}</p>
+                    <h4 className="font-bold text-[#1C2B4A] text-xs uppercase tracking-widest">{t('detail.ai_analysis')}</h4>
+                    <p className="text-2xs text-[#C9A84C] font-semibold uppercase tracking-tighter">{t('detail.ai_badge')}</p>
                 </div>
             </div>
             <AiQuotaGate quota={quota} featureLabel="ARIA" onUpgradeClick={onUpgrade}>
                 <button
                     onClick={onRefresh}
                     disabled={loading}
-                    className="p-2 text-indigo-500 hover:text-indigo-700 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all shadow-sm disabled:opacity-50"
+                    className="p-2 text-[#C9A84C] hover:text-[#B8860B] bg-[#FDF6E3] rounded-xl border border-[#FDF6E3] hover:bg-[#FDF6E3] transition-all shadow-sm disabled:opacity-50"
                     title={t('common.refresh')}
                 >
                     <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -51,9 +51,9 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: an
         )}
         {loading ? (
             <div className="space-y-2.5 py-1 relative z-10">
-                <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-full"></div>
-                <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-5/6"></div>
-                <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-2/3"></div>
+                <div className="h-3 bg-[#FDF6E3] rounded-full animate-pulse w-full"></div>
+                <div className="h-3 bg-[#FDF6E3] rounded-full animate-pulse w-5/6"></div>
+                <div className="h-3 bg-[#FDF6E3] rounded-full animate-pulse w-2/3"></div>
             </div>
         ) : quota && !quota.isUnlimited && quota.remaining <= 0 && !summary ? (
             <AiQuotaGate quota={quota} featureLabel="phân tích ARIA" onUpgradeClick={onUpgrade}>
@@ -65,8 +65,8 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: an
                     {summary || t('detail.ai_no_data')}
                 </p>
                 <div className="mt-4 flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-2xs font-bold rounded-full uppercase tracking-tighter border border-indigo-100">{t('detail.ai_insights')}</span>
-                    <div className="h-px flex-1 bg-indigo-100"></div>
+                    <span className="px-2 py-0.5 bg-[#FDF6E3] text-[#C9A84C] text-2xs font-bold rounded-full uppercase tracking-tighter border border-[#C9A84C]">{t('detail.ai_insights')}</span>
+                    <div className="h-px flex-1 bg-[#FDF6E3]"></div>
                 </div>
             </div>
         )}
@@ -95,7 +95,7 @@ const TimelineItem = ({ item, t, formatDateTime }: any) => {
     }
     return (
         <div className="flex gap-4 pb-6 border-l border-[var(--glass-border)] ml-2 pl-6 relative animate-enter">
-            <div className={`absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white ${item.direction === Direction.OUTBOUND ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
+            <div className={`absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white ${item.direction === Direction.OUTBOUND ? 'bg-[#FDF6E3]0' : 'bg-[#FDF6E3]0'}`}></div>
             <div className="w-full">
                 <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold text-[var(--text-secondary)]">
@@ -103,9 +103,9 @@ const TimelineItem = ({ item, t, formatDateTime }: any) => {
                     </span>
                     <span className="text-xs2 text-[var(--text-secondary)]">• {formatDateTime(item.timestamp)}</span>
                     <span className={`text-2xs px-1.5 py-0.5 rounded uppercase font-bold ${
-                        item.channel === Channel.ZALO ? 'bg-blue-50 text-blue-600' : 
+                        item.channel === Channel.ZALO ? 'bg-[#FDF6E3] text-[#C9A84C]' : 
                         item.channel === Channel.EMAIL ? 'bg-amber-50 text-amber-600' : 
-                        item.channel === Channel.SMS ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)]'
+                        item.channel === Channel.SMS ? 'bg-[#FDF6E3] text-[#C9A84C]' : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)]'
                     }`}>{item.channel}</span>
                 </div>
                 <div className={`text-sm p-3 rounded-lg border w-fit max-w-[90%] ${item.direction === Direction.OUTBOUND ? 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]'}`}>
@@ -120,10 +120,10 @@ const ICONS = {
     ZALO: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
     EMAIL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
     SMS: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
-    EDIT_PEN: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+    EDIT_PEN: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[#C9A84C]0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
 };
 const STYLES = {
-    INPUT: "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all",
+    INPUT: "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] transition-all",
     INPUT_ERROR: "w-full border border-rose-300 bg-rose-50 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
 };
 interface LeadDetailProps {
@@ -271,7 +271,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         label: t(`source.${s}`) !== `source.${s}` ? t(`source.${s}`) : s 
     }));    
     const scoreColor = (score: number) => {
-        if (score >= 70) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+        if (score >= 70) return 'text-[#C9A84C] bg-[#FDF6E3] border-[#C9A84C]';
         if (score >= 40) return 'text-amber-600 bg-amber-50 border-amber-100';
         return 'text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] border-[var(--glass-border)]';
     };
@@ -282,7 +282,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             <div className={`flex justify-between items-center p-4 md:p-6 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm ${isModal ? 'sticky top-0 z-20' : 'flex-none relative z-20'}`}>
                 <div className="flex-1 mr-4 flex items-center gap-4">
                     {/* Visual Anchor: Avatar */}
-                    <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xl border-2 border-white shadow-sm shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-[#FDF6E3] flex items-center justify-center text-[#C9A84C] font-bold text-xl border-2 border-white shadow-sm shrink-0">
                         {formData.name ? formData.name.charAt(0).toUpperCase() : '?'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -290,7 +290,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             <input 
                                 value={formData.name}
                                 onChange={(e) => handleInputChange('name', e.target.value)}
-                                className={`font-bold text-xl md:text-2xl text-[var(--text-primary)] w-full bg-transparent border border-transparent rounded-lg px-2 py-1 focus:bg-[var(--glass-surface)] focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-300 truncate`}
+                                className={`font-bold text-xl md:text-2xl text-[var(--text-primary)] w-full bg-transparent border border-transparent rounded-lg px-2 py-1 focus:bg-[var(--glass-surface)] focus:border-[#C9A84C] focus:ring-4 focus:ring-[#C9A84C]/10 outline-none transition-all placeholder:text-slate-300 truncate`}
                                 placeholder={t('auth.placeholder_name')}
                             />
                             <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
@@ -299,7 +299,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         </div>
                         <div className="flex items-center gap-2 px-2 mt-0.5">
                             <span
-                                className="text-xs2 font-mono text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded border border-[var(--glass-border)] cursor-pointer hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-colors"
+                                className="text-xs2 font-mono text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded border border-[var(--glass-border)] cursor-pointer hover:text-[#C9A84C] hover:border-[#C9A84C] hover:bg-[#FDF6E3] transition-colors"
                                 title={formData.id || ''}
                                 onClick={() => formData.id && navigator.clipboard.writeText(formData.id)}
                             >
@@ -312,7 +312,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                     </span>
                                     {formData.score.reasoning && (
                                         <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-[var(--bg-surface)] dark:bg-slate-800 rounded-xl shadow-xl border border-[var(--glass-border)] dark:border-slate-700 z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity text-xs3 text-[var(--text-secondary)] dark:text-slate-300 leading-relaxed">
-                                            <div className="font-bold text-indigo-600 mb-1 uppercase tracking-tighter">AI Reasoning</div>
+                                            <div className="font-bold text-[#C9A84C] mb-1 uppercase tracking-tighter">AI Reasoning</div>
                                             {formData.score.reasoning}
                                         </div>
                                     )}
@@ -322,7 +322,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 onClick={handleScoreLead}
                                 disabled={isScoring || !formData.id}
                                 title={t('detail.score_btn')}
-                                className="flex items-center gap-1 px-2 py-0.5 rounded border border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors text-xs2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-1 px-2 py-0.5 rounded border border-[#C9A84C] bg-[#FDF6E3] text-[#C9A84C] hover:bg-[#FDF6E3] transition-colors text-xs2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isScoring ? (
                                     <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
@@ -336,13 +336,13 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 <div className="flex items-center ml-2">
                                     <div className="flex -space-x-2">
                                         {activeViewers.map((viewer, idx) => (
-                                            <div key={idx} className="w-6 h-6 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-3xs font-bold text-indigo-700 shadow-sm" title={viewer.name}>
+                                            <div key={idx} className="w-6 h-6 rounded-full border-2 border-white bg-[#FDF6E3] flex items-center justify-center text-3xs font-bold text-[#B8860B] shadow-sm" title={viewer.name}>
                                                 {viewer.name?.charAt(0).toUpperCase()}
                                             </div>
                                         ))}
                                     </div>
                                     <span className="ml-2 text-xs2 text-[var(--text-tertiary)] flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] animate-pulse"></span>
                                         {t('detail.viewing')}
                                     </span>
                                 </div>
@@ -380,8 +380,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 <div className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-2 tracking-wider">Tài khoản mạng xã hội</div>
                                 <div className="flex flex-wrap gap-2">
                                     {lead.socialIds?.zalo && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 rounded-xl text-xs font-mono">
-                                            <span className="w-5 h-5 bg-blue-600 text-white rounded font-bold text-xs flex items-center justify-center shrink-0">Z</span>
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FDF6E3] border border-[#C9A84C] text-[#B8860B] rounded-xl text-xs font-mono">
+                                            <span className="w-5 h-5 bg-[#C9A84C] text-white rounded font-bold text-xs flex items-center justify-center shrink-0">Z</span>
                                             <span className="font-medium">Zalo:</span>
                                             <span className="select-all">{lead.socialIds.zalo}</span>
                                         </div>
@@ -411,7 +411,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 value={formData.notes || ''}
                                 onChange={e => handleInputChange('notes', e.target.value)}
                                 rows={formData.notes ? 6 : 3}
-                                className={`w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none no-scrollbar ${formData.notes ? 'bg-amber-50/60 font-mono text-xs text-[var(--text-secondary)] leading-relaxed' : ''}`}
+                                className={`w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] outline-none resize-none no-scrollbar ${formData.notes ? 'bg-amber-50/60 font-mono text-xs text-[var(--text-secondary)] leading-relaxed' : ''}`}
                                 placeholder={t('leads.notes_placeholder')}
                             />
                         </DetailField>
@@ -438,7 +438,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                         <button
                                             type="button"
                                             onClick={handleCreateContract}
-                                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs hover:bg-emerald-700 transition-colors shadow-sm active:scale-95"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#C9A84C] text-white font-bold rounded-xl text-xs hover:bg-[#B8860B] transition-colors shadow-sm active:scale-95"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                             {t('detail.create_contract') || 'Tạo hợp đồng'}
@@ -455,7 +455,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         const denominator = Number(effectiveValue) || totalScheduledAmt;
                         const paidPct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : (total > 0 ? Math.round((paidCount / total) * 100) : 0);
                         const overdueInDetail = schedule.filter(m => m.status === 'OVERDUE' || (m.status === 'PENDING' && m.dueDate && new Date(m.dueDate) < new Date())).length;
-                        const statusColor = effectiveStatus === ContractStatus.SIGNED ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : effectiveStatus === ContractStatus.CANCELLED ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200';
+                        const statusColor = effectiveStatus === ContractStatus.SIGNED ? 'text-[#C9A84C] bg-[#FDF6E3] border-[#C9A84C]' : effectiveStatus === ContractStatus.CANCELLED ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200';
                         return (
                             <div className="mb-8">
                                 <div className="flex items-center gap-2 mb-3">
@@ -479,7 +479,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                                 type="button"
                                                 onClick={() => window.open(`/p/contract_${effectiveContractId}`, '_blank')}
                                                 title={t('contracts.btn_preview_print') || 'Xem trước & In'}
-                                                className="px-3 py-1.5 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm active:scale-95"
+                                                className="px-3 py-1.5 text-xs font-bold bg-[#C9A84C] text-white rounded-xl hover:bg-[#B8860B] transition-colors flex items-center gap-1.5 shadow-sm active:scale-95"
                                             >
                                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                                 {t('contracts.btn_print_short') || 'In / PDF'}
@@ -498,7 +498,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                                         setLoadingEditContract(false);
                                                     }
                                                 }}
-                                                className="px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-60"
+                                                className="px-3 py-1.5 text-xs font-bold bg-[#C9A84C] text-white rounded-xl hover:bg-[#B8860B] transition-colors flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-60"
                                             >
                                                 {loadingEditContract
                                                     ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -518,27 +518,27 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                                 </span>
                                             </div>
                                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={`h-full rounded-full transition-all duration-500 ${overdueInDetail > 0 ? 'bg-rose-500' : paidPct === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${paidPct}%` }} />
+                                                <div className={`h-full rounded-full transition-all duration-500 ${overdueInDetail > 0 ? 'bg-rose-500' : paidPct === 100 ? 'bg-[#FDF6E3]0' : 'bg-[#FDF6E3]0'}`} style={{ width: `${paidPct}%` }} />
                                             </div>
                                             <div className="mt-3 space-y-1.5">
                                                 {schedule.map((m, idx) => {
                                                     const isActuallyOverdue = m.status === 'OVERDUE' || (m.status === 'PENDING' && m.dueDate && new Date(m.dueDate) < new Date());
                                                     const dotCls = m.status === 'PAID'
-                                                        ? 'bg-emerald-500 text-white'
+                                                        ? 'bg-[#FDF6E3]0 text-white'
                                                         : m.status === 'WAIVED'
                                                         ? 'bg-slate-300 text-slate-500'
                                                         : isActuallyOverdue
                                                         ? 'bg-rose-500 text-white animate-pulse'
                                                         : 'bg-slate-200 text-slate-500';
                                                     const amtCls = m.status === 'PAID'
-                                                        ? 'text-emerald-600'
+                                                        ? 'text-[#C9A84C]'
                                                         : isActuallyOverdue
                                                         ? 'text-rose-600'
                                                         : m.status === 'WAIVED'
                                                         ? 'text-slate-400 line-through'
                                                         : 'text-[var(--text-primary)]';
                                                     return (
-                                                        <div key={m.id || idx} className={`flex items-center gap-2 text-xs py-1 px-1.5 rounded-lg ${isActuallyOverdue ? 'bg-rose-50' : m.status === 'PAID' ? 'bg-emerald-50/50' : ''}`}>
+                                                        <div key={m.id || idx} className={`flex items-center gap-2 text-xs py-1 px-1.5 rounded-lg ${isActuallyOverdue ? 'bg-rose-50' : m.status === 'PAID' ? 'bg-[#FDF6E3]/50' : ''}`}>
                                                             <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-none text-[10px] font-bold ${dotCls}`}>
                                                                 {m.status === 'PAID' ? '✓' : m.status === 'WAIVED' ? '—' : idx + 1}
                                                             </span>
@@ -553,7 +553,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                             {totalScheduledAmt > 0 && (
                                                 <div className="mt-2 pt-2 border-t border-[var(--glass-border)] flex justify-between text-xs">
                                                     <span className="text-[var(--text-tertiary)]">{t('payment.total_paid') || 'Đã thanh toán'}</span>
-                                                    <span className="font-bold text-emerald-600">{fmtDots(totalPaidAmt)} đ / {fmtDots(totalScheduledAmt)} đ</span>
+                                                    <span className="font-bold text-[#C9A84C]">{fmtDots(totalPaidAmt)} đ / {fmtDots(totalScheduledAmt)} đ</span>
                                                 </div>
                                             )}
                                         </div>
@@ -567,7 +567,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     <div className="mb-8 bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm">
                         <div className="flex items-center gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
                             {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
-                                <button key={ch} onClick={() => setActiveChannel(ch)} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${activeChannel === ch ? 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'}`}>
+                                <button key={ch} onClick={() => setActiveChannel(ch)} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${activeChannel === ch ? 'bg-[#FDF6E3] text-[#C9A84C] ring-1 ring-[#C9A84C]' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'}`}>
                                     {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {ch}
                                 </button>
                             ))}
@@ -576,12 +576,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             <textarea 
                                 value={messageContent}
                                 onChange={e => setMessageContent(e.target.value)}
-                                className="w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none h-24 no-scrollbar"
+                                className="w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] outline-none resize-none h-24 no-scrollbar"
                                 placeholder={t('detail.placeholder_msg')}
                             />
                             <div className="flex justify-between items-center mt-2">
                                 <span className="text-xs2 text-[var(--text-secondary)] uppercase font-bold tracking-wider">{activeChannel}</span>
-                                <button onClick={handleSendMessage} disabled={isSending || !messageContent.trim()} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm active:scale-95">
+                                <button onClick={handleSendMessage} disabled={isSending || !messageContent.trim()} className="px-4 py-2 bg-[#C9A84C] text-white font-bold rounded-lg text-xs hover:bg-[#B8860B] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm active:scale-95">
                                     {isSending ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : ICONS.SEND}
                                     {isSending ? t('detail.sending') : t('detail.send')}
                                 </button>
@@ -607,7 +607,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             <button
                                 type="button"
                                 onClick={() => window.open(`/p/contract_${existingContractId}`, '_blank')}
-                                className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"
+                                className="flex-1 bg-[#C9A84C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#B8860B] transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                 {t('contracts.btn_preview_print') || 'Xem trước & In hợp đồng'}
@@ -618,7 +618,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         <button
                             type="button"
                             onClick={handleCreateContract}
-                            className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"
+                            className="flex-1 bg-[#C9A84C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#B8860B] transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             {t('detail.create_contract')}

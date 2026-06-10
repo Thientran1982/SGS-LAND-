@@ -48,11 +48,11 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.rule_name')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2.5 text-[16px] focus:border-indigo-500 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                        <input className="w-full border rounded-xl px-4 py-2.5 text-[16px] focus:border-[#C9A84C] outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.priority')}</label>
-                        <input type="number" className="w-full border rounded-xl px-4 py-2.5 text-[16px] focus:border-indigo-500 outline-none" value={form.priority} onChange={e => setForm({...form, priority: Number(e.target.value)})} />
+                        <input type="number" className="w-full border rounded-xl px-4 py-2.5 text-[16px] focus:border-[#C9A84C] outline-none" value={form.priority} onChange={e => setForm({...form, priority: Number(e.target.value)})} />
                     </div>                    
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                         <h4 className="font-bold text-sm text-[var(--text-secondary)] mb-3">{t('routing.conditions')}</h4>
@@ -79,8 +79,8 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                        <h4 className="font-bold text-sm text-indigo-900 mb-3">{t('routing.action')}</h4>
+                    <div className="bg-[#FDF6E3] p-4 rounded-xl border border-[#C9A84C]">
+                        <h4 className="font-bold text-sm text-[#1C2B4A] mb-3">{t('routing.action')}</h4>
                         <div className="space-y-3">
                             <Dropdown 
                                 label={t('routing.act_target_type')}
@@ -267,7 +267,7 @@ export const RoutingRules: React.FC = () => {
                 <div className="lg:col-span-2 space-y-4">
                     {rules.length === 0 && (
                         <div className="text-center py-16 px-8 bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
-                            <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+                            <div className="w-14 h-14 rounded-2xl bg-[#FDF6E3] flex items-center justify-center mx-auto mb-4 text-[#C9A84C]">
                                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
                             </div>
                             <p className="font-bold text-[var(--text-primary)] mb-1">{t('routing.empty_title')}</p>
@@ -286,12 +286,12 @@ export const RoutingRules: React.FC = () => {
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-xs2 font-bold bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded uppercase tracking-wider">{t('routing.priority')}: {rule.priority}</span>
-                                        {(rule.isActive ?? rule.enabled) ? <span className="w-2 h-2 bg-emerald-500 rounded-full" title={t('common.active')}></span> : <span className="w-2 h-2 bg-slate-300 rounded-full" title={t('common.inactive')}></span>}
+                                        {(rule.isActive ?? rule.enabled) ? <span className="w-2 h-2 bg-[#C9A84C] rounded-full" title={t('common.active')}></span> : <span className="w-2 h-2 bg-slate-300 rounded-full" title={t('common.inactive')}></span>}
                                     </div>
                                     <h3 className="font-bold text-[var(--text-primary)]">{rule.name}</h3>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => { setEditingRule(rule); setIsModalOpen(true); }} className="p-2 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
+                                    <button onClick={() => { setEditingRule(rule); setIsModalOpen(true); }} className="p-2 text-[var(--text-secondary)] hover:text-[#C9A84C] hover:bg-[#FDF6E3] rounded-lg transition-colors">{ICONS.EDIT}</button>
                                     <button onClick={() => setDeleteConfirmId(rule.id)} className="p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
                                 </div>
                             </div>                            
@@ -308,12 +308,12 @@ export const RoutingRules: React.FC = () => {
                                         {Object.keys(rule.conditions || {}).length === 0 && <span className="text-[var(--text-secondary)] italic text-xs2">{t('routing.no_conditions')}</span>}
                                     </div>
                                 </div>
-                                <div className="bg-indigo-50 p-3 rounded-xl">
-                                    <div className="font-bold text-indigo-400 uppercase text-xs2 mb-1">{t('routing.action')}</div>
+                                <div className="bg-[#FDF6E3] p-3 rounded-xl">
+                                    <div className="font-bold text-[#C9A84C] uppercase text-xs2 mb-1">{t('routing.action')}</div>
                                     {rule.action.strategy && (
-                                        <div className="font-bold text-indigo-900">{t(`routing.stg_${rule.action.strategy}`)}</div>
+                                        <div className="font-bold text-[#1C2B4A]">{t(`routing.stg_${rule.action.strategy}`)}</div>
                                     )}
-                                    <div className="text-indigo-700">➔ {(() => {
+                                    <div className="text-[#B8860B]">➔ {(() => {
                                         const a = rule.action as any;
                                         if (a.type === 'ASSIGN_USER') {
                                             return users.find(u => u.id === (a.targetId || a.userId))?.name || a.userName || a.targetId || '--';
@@ -349,7 +349,7 @@ export const RoutingRules: React.FC = () => {
                             <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-1 block">{t('routing.cond_budget')}</label>
                             <input type="number" className="w-full border rounded-lg px-3 py-2 text-[16px]" value={simInput.budget} onChange={e => setSimInput({...simInput, budget: Number(e.target.value)})} />
                         </div>
-                        <button onClick={runSimulation} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+                        <button onClick={runSimulation} className="w-full py-3 bg-[#C9A84C] text-white font-bold rounded-xl shadow-lg hover:bg-[#B8860B] transition-all flex items-center justify-center gap-2">
                             {ICONS.PLAY} {t('routing.sim_btn_run')}
                         </button>
                     </div>
@@ -358,8 +358,8 @@ export const RoutingRules: React.FC = () => {
                             <div className="text-xs font-bold text-[var(--text-secondary)] uppercase mb-2">{t('routing.sim_result')}</div>
                             {simResult.matchedRule ? (
                                 <div className="space-y-2">
-                                    <div className="text-emerald-600 font-bold flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <div className="text-[#C9A84C] font-bold flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-[#FDF6E3]0"></span>
                                         {simResult.matchedRule.name}
                                     </div>
                                     <div className="text-[var(--text-secondary)] text-sm">
@@ -396,7 +396,7 @@ export const RoutingRules: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,

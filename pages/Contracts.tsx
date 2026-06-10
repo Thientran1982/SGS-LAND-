@@ -118,7 +118,7 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
                 ref={btnRef}
                 onClick={toggle}
                 aria-label={t('common.actions')}
-                className="p-2 min-h-[36px] min-w-[36px] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="p-2 min-h-[36px] min-w-[36px] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]0"
             >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
@@ -221,7 +221,7 @@ const Contracts: React.FC = () => {
                 <h1 className="text-lg font-black text-[var(--text-primary)] tracking-tight">{t('contracts.title')}</h1>
                 <button
                     onClick={() => { setEditingContract(null); setIsModalOpen(true); }}
-                    className="px-4 py-2 min-h-[44px] bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    className="px-4 py-2 min-h-[44px] bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] focus-visible:ring-offset-2"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                     <span className="hidden sm:inline">{t('contracts.btn_create')}</span>
@@ -232,8 +232,8 @@ const Contracts: React.FC = () => {
             {stats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#FDF6E3] flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
                         <div className="min-w-0">
                             <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_total')}</div>
@@ -253,12 +253,12 @@ const Contracts: React.FC = () => {
                         </div>
                     </div>
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#FDF6E3] flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                         <div className="min-w-0">
                             <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_signed')}</div>
-                            <div className="text-lg sm:text-xl font-black text-emerald-600">{stats.signedCount}</div>
+                            <div className="text-lg sm:text-xl font-black text-[#C9A84C]">{stats.signedCount}</div>
                         </div>
                     </div>
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
@@ -277,7 +277,7 @@ const Contracts: React.FC = () => {
                 <div className="p-3 sm:p-4 border-b border-[var(--glass-border)] flex flex-col sm:flex-row gap-2 sm:gap-3">
                     {/* Search – full width */}
                     <div className="relative flex-1 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-[#C9A84C] transition-colors">
                             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
                         <input
@@ -285,7 +285,7 @@ const Contracts: React.FC = () => {
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
                             onChange={e => { setSearch(e.target.value); setPage(1); }}
-                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
@@ -342,7 +342,7 @@ const Contracts: React.FC = () => {
                             {isFiltered && (
                                 <button
                                     onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); }}
-                                    className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
+                                    className="px-4 py-2 text-xs font-bold text-[#C9A84C] bg-[#FDF6E3] border border-[#C9A84C] rounded-xl hover:bg-[#FDF6E3] transition-colors"
                                 >
                                     {t('contracts.reset_filters')}
                                 </button>
@@ -370,15 +370,15 @@ const Contracts: React.FC = () => {
                                             tabIndex={0}
                                             onClick={() => handleEdit(c)}
                                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEdit(c); } }}
-                                            className="cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors group focus-visible:outline-none focus-visible:bg-indigo-50/50"
+                                            className="cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors group focus-visible:outline-none focus-visible:bg-[#FDF6E3]/50"
                                         >
                                             <td className="p-4">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold mb-1 ${
                                                     c.type === ContractType.RESERVATION
                                                         ? 'bg-violet-100 text-violet-700'
                                                         : c.type === ContractType.DEPOSIT
-                                                            ? 'bg-indigo-100 text-indigo-700'
-                                                            : 'bg-emerald-100 text-emerald-700'
+                                                            ? 'bg-[#FDF6E3] text-[#B8860B]'
+                                                            : 'bg-[#FDF6E3] text-[#B8860B]'
                                                 }`}>
                                                     {c.type === ContractType.RESERVATION && (
                                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
@@ -386,7 +386,7 @@ const Contracts: React.FC = () => {
                                                     {t(`contracts.type_${c.type}`)}
                                                 </span>
                                                 <div
-                                                    className="text-xs font-mono text-[var(--text-secondary)] cursor-pointer hover:text-indigo-500 transition-colors"
+                                                    className="text-xs font-mono text-[var(--text-secondary)] cursor-pointer hover:text-[#C9A84C] transition-colors"
                                                     title={c.id}
                                                     onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(c.id).catch(() => {}); }}
                                                 >
@@ -403,7 +403,7 @@ const Contracts: React.FC = () => {
                                             <td className="p-4">
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">{formatCurrency(c.propertyPrice || 0)}</div>
                                                 {c.type === ContractType.DEPOSIT && c.depositAmount ? (
-                                                    <div className="text-xs text-indigo-500 mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount)}</div>
+                                                    <div className="text-xs text-[#C9A84C] mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount)}</div>
                                                 ) : c.type === ContractType.RESERVATION && c.depositAmount ? (
                                                     <div className="text-xs text-violet-500 mt-0.5 font-medium">{t('contracts.reservation_fee').replace(' (VNĐ)', '')}: {formatCurrency(c.depositAmount)}</div>
                                                 ) : null}
@@ -425,7 +425,7 @@ const Contracts: React.FC = () => {
                                                             </div>
                                                             <div className="w-full h-1.5 bg-[var(--glass-border)] rounded-full overflow-hidden">
                                                                 <div
-                                                                    className={`h-full rounded-full transition-all ${overdue > 0 ? 'bg-rose-500' : pct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                                                    className={`h-full rounded-full transition-all ${overdue > 0 ? 'bg-rose-500' : pct >= 100 ? 'bg-[#FDF6E3]0' : 'bg-[#FDF6E3]0'}`}
                                                                     style={{ width: `${pct}%` }}
                                                                 />
                                                             </div>
@@ -438,7 +438,7 @@ const Contracts: React.FC = () => {
                                             </td>
                                             <td className="p-4">
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
-                                                    c.status === ContractStatus.SIGNED ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                                                    c.status === ContractStatus.SIGNED ? 'bg-[#FDF6E3] text-[#B8860B] dark:bg-[#C9A84C]/20 dark:text-[#C9A84C]' :
                                                     c.status === ContractStatus.PENDING_SIGNATURE ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
                                                     c.status === ContractStatus.CANCELLED ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' :
                                                     'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] dark:bg-slate-500/20 dark:text-slate-400'
@@ -454,7 +454,7 @@ const Contracts: React.FC = () => {
                                                     </div>
                                                 ) : c.status === ContractStatus.SIGNED && (c as any).signedAt ? (
                                                     <div>
-                                                        <div className="font-medium text-emerald-600">{formatDate((c as any).signedAt)}</div>
+                                                        <div className="font-medium text-[#C9A84C]">{formatDate((c as any).signedAt)}</div>
                                                         <div className="text-xs text-[var(--text-tertiary)]">{t('contracts.signed_date_label')}</div>
                                                     </div>
                                                 ) : (
@@ -532,7 +532,7 @@ const Contracts: React.FC = () => {
                                 type="text"
                                 readOnly
                                 value={shareLink}
-                                className="bg-transparent outline-none flex-1 text-sm font-mono text-indigo-600"
+                                className="bg-transparent outline-none flex-1 text-sm font-mono text-[#C9A84C]"
                                 onClick={(e) => e.currentTarget.select()}
                             />
                             <button
@@ -543,16 +543,16 @@ const Contracts: React.FC = () => {
                                         setTimeout(() => setLinkCopied(false), 2000);
                                     }).catch(() => {});
                                 }}
-                                className="p-2 min-h-[36px] min-w-[36px] rounded-lg transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="p-2 min-h-[36px] min-w-[36px] rounded-lg transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]0"
                             >
                                 {linkCopied ? (
-                                    <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                                    <svg className="w-4 h-4 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
                                 ) : (
-                                    <svg className="w-4 h-4 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                    <svg className="w-4 h-4 text-[#B8860B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
                                 )}
                             </button>
                         </div>
-                        {linkCopied && <p role="status" aria-live="polite" className="mt-2 text-xs text-emerald-600 font-bold">{t('common.copied')}</p>}
+                        {linkCopied && <p role="status" aria-live="polite" className="mt-2 text-xs text-[#C9A84C] font-bold">{t('common.copied')}</p>}
                         <button
                             onClick={() => setShareLink(null)}
                             aria-label={t('common.close')}
@@ -567,7 +567,7 @@ const Contracts: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,

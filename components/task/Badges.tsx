@@ -91,7 +91,7 @@ export function AvatarStack({
           key={a.id}
           title={a.name}
           style={{ width: px, height: px }}
-          className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-white dark:border-slate-700 flex-shrink-0"
+          className="rounded-full bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 flex items-center justify-center text-[10px] font-bold text-[#C9A84C] border border-white dark:border-slate-700 flex-shrink-0"
         >
           {a.name?.charAt(0).toUpperCase()}
         </div>

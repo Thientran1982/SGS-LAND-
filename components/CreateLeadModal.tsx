@@ -17,7 +17,7 @@ const FormInput = ({ label, value, onChange, placeholder, required, type = 'text
             type={type}
             value={value}
             onChange={e => onChange(e.target.value)}
-            className={`w-full border rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+            className={`w-full border rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50' : 'border-[var(--glass-border)] focus:ring-[#C9A84C]/20 focus:border-[#C9A84C]0'}`}
             placeholder={placeholder}
             required={required}
             autoFocus={autoFocus}
@@ -31,7 +31,7 @@ const FormTextArea = ({ label, value, onChange, placeholder }: any) => (
         <textarea 
             value={value}
             onChange={e => onChange(e.target.value)}
-            className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none h-20"
+            className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] transition-all resize-none h-20"
             placeholder={placeholder}
         />
     </div>
@@ -271,7 +271,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 />
                                 {phoneChecking && (
                                     <p className="text-xs text-[var(--text-tertiary)] mt-1 ml-1 flex items-center gap-1">
-                                        <span className="inline-block w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                        <span className="inline-block w-3 h-3 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
                                         Đang kiểm tra...
                                     </p>
                                 )}
@@ -299,7 +299,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 />
                                 {emailChecking && (
                                     <p className="text-xs text-[var(--text-tertiary)] mt-1 ml-1 flex items-center gap-1">
-                                        <span className="inline-block w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                        <span className="inline-block w-3 h-3 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
                                         Đang kiểm tra...
                                     </p>
                                 )}
@@ -416,8 +416,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 {mergePreview.length > 0 ? (
                                     <ul className="space-y-0.5">
                                         {mergePreview.map((item, i) => (
-                                            <li key={i} className="text-xs text-emerald-700 flex items-center gap-1.5">
-                                                <span className="text-emerald-500">✓</span> {item}
+                                            <li key={i} className="text-xs text-[#B8860B] flex items-center gap-1.5">
+                                                <span className="text-[#C9A84C]0">✓</span> {item}
                                             </li>
                                         ))}
                                     </ul>
@@ -438,7 +438,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 type="button" 
                                 onClick={handleMerge} 
                                 disabled={loading}
-                                className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                                className="flex-1 py-3 bg-[#C9A84C] text-white font-bold rounded-xl text-sm shadow-lg hover:bg-[#B8860B] transition-all flex items-center justify-center gap-2"
                             >
                                 {loading && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                                 {t('leads.btn_merge')}

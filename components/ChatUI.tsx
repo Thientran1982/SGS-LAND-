@@ -21,7 +21,7 @@ const CHAT_ICONS = {
     CUSTOMER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
     CPU: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>,
     AI_SPARK: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09-3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>,
-    CHECK_SMALL: <svg className="w-2.5 h-2.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+    CHECK_SMALL: <svg className="w-2.5 h-2.5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
 };
 // Components
 export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t: any }) => {
@@ -31,28 +31,28 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
         <div className="mb-3 w-full max-w-full flex justify-end">
             <button 
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-2 text-xs2 font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors uppercase tracking-wider px-3 py-1.5 rounded-lg border border-indigo-100 group w-fit max-w-full"
+                className="flex items-center gap-2 text-xs2 font-bold text-[#C9A84C] bg-[#FDF6E3]/50 hover:bg-[#FDF6E3] transition-colors uppercase tracking-wider px-3 py-1.5 rounded-lg border border-[#FDF6E3] group w-fit max-w-full"
             >
-                <div className={`w-2 h-2 rounded-full shadow-sm transition-all duration-500 shrink-0 ${isExpanded ? 'bg-indigo-500' : 'bg-indigo-400 animate-pulse'}`}></div>
+                <div className={`w-2 h-2 rounded-full shadow-sm transition-all duration-500 shrink-0 ${isExpanded ? 'bg-[#FDF6E3]0' : 'bg-[#C9A84C] animate-pulse'}`}></div>
                 <span className="flex-1 text-left flex items-center gap-1 truncate">
                     <span className="shrink-0">{CHAT_ICONS.CPU}</span>
                     <span className="truncate">{t('inbox.thinking_process')} ({steps.length})</span>
                 </span>
-                <svg className={`w-3 h-3 transition-transform duration-300 text-indigo-400 shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <svg className={`w-3 h-3 transition-transform duration-300 text-[#C9A84C] shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </button>            
             {isExpanded && (
                 <div className="mt-2 pl-2 space-y-2 animate-enter py-1 w-full">
                     {steps.map((step, idx) => {
                         const isRouter = step.node === 'ROUTER';
                         return (
-                            <div key={idx} className="relative group pl-3 border-l border-indigo-100 w-full">
+                            <div key={idx} className="relative group pl-3 border-l border-[#FDF6E3] w-full">
                                 <div className="flex items-start gap-2 w-full">
-                                    <div className={`mt-0.5 w-3 h-3 rounded-full flex items-center justify-center shrink-0 border ${isRouter ? 'bg-[var(--glass-surface-hover)] border-[var(--glass-border)] text-[var(--text-tertiary)]' : 'bg-[var(--bg-surface)] border-indigo-200 text-indigo-600'}`}>
-                                        {step.status === 'DONE' ? CHAT_ICONS.CHECK_SMALL : <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />}
+                                    <div className={`mt-0.5 w-3 h-3 rounded-full flex items-center justify-center shrink-0 border ${isRouter ? 'bg-[var(--glass-surface-hover)] border-[var(--glass-border)] text-[var(--text-tertiary)]' : 'bg-[var(--bg-surface)] border-[#C9A84C] text-[#C9A84C]'}`}>
+                                        {step.status === 'DONE' ? CHAT_ICONS.CHECK_SMALL : <div className="w-1.5 h-1.5 bg-[#C9A84C] rounded-full animate-pulse" />}
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                            <span className={`text-xs2 font-bold uppercase tracking-tight ${isRouter ? 'text-[var(--text-tertiary)]' : 'text-indigo-600'}`}>
+                                            <span className={`text-xs2 font-bold uppercase tracking-tight ${isRouter ? 'text-[var(--text-tertiary)]' : 'text-[#C9A84C]'}`}>
                                                 {step.node.replace('_AGENT', '')}
                                             </span>
                                             <span className="text-2xs font-mono text-[var(--text-secondary)]">
@@ -89,7 +89,7 @@ export const LoanScheduleWidget = memo(({ data, t, formatCurrency }: { data: Loa
             <div className="flex justify-between items-end mb-4">
                 <div>
                     <div className="text-xs2 text-[var(--text-secondary)] uppercase font-bold">{t('inbox.loan_monthly')}</div>
-                    <div className="text-xl font-extrabold text-indigo-600">{formatCurrency(data.monthlyPayment)}</div>
+                    <div className="text-xl font-extrabold text-[#C9A84C]">{formatCurrency(data.monthlyPayment)}</div>
                 </div>
                 <div className="text-right">
                     <div className="text-xs2 text-[var(--text-secondary)] uppercase font-bold">{t('inbox.loan_total_interest')}</div>
@@ -126,9 +126,9 @@ export const LoanScheduleWidget = memo(({ data, t, formatCurrency }: { data: Loa
 ));
 export const BookingWidget = memo(({ data, t, formatDateTime }: { data: BookingDraftData, t: any, formatDateTime: any }) => (
     <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] overflow-hidden shadow-sm my-2 max-w-sm w-full">
-        <div className="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex items-center gap-2 min-w-0">
-            <div className="text-indigo-600 shrink-0">{CHAT_ICONS.CALENDAR}</div>
-            <h4 className="font-bold text-indigo-900 text-xs truncate">{t('inbox.booking_title')}</h4>
+        <div className="bg-[#FDF6E3] px-4 py-3 border-b border-[#FDF6E3] flex items-center gap-2 min-w-0">
+            <div className="text-[#C9A84C] shrink-0">{CHAT_ICONS.CALENDAR}</div>
+            <h4 className="font-bold text-[#1C2B4A] text-xs truncate">{t('inbox.booking_title')}</h4>
         </div>
         <div className="p-4 space-y-3">
             <div className="flex items-start gap-3">
@@ -145,7 +145,7 @@ export const BookingWidget = memo(({ data, t, formatDateTime }: { data: BookingD
                     <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold tracking-wide">{t('inbox.location')}</div>
                 </div>
             </div>
-            <button type="button" className="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-colors shadow-sm">
+            <button type="button" className="w-full py-2 bg-[#C9A84C] text-white font-bold rounded-lg text-xs hover:bg-[#B8860B] transition-colors shadow-sm">
                 {t('inbox.booking_confirm')}
             </button>
         </div>
@@ -168,10 +168,10 @@ export const GroundingPill = memo(({ sources, t }: { sources: GroundingMetadata,
                         href={url} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="flex items-center gap-1.5 bg-[var(--glass-surface)] hover:bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-indigo-300 rounded-full px-2.5 py-1 text-xs2 text-[var(--text-secondary)] transition-all max-w-full truncate group"
+                        className="flex items-center gap-1.5 bg-[var(--glass-surface)] hover:bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-[#C9A84C] rounded-full px-2.5 py-1 text-xs2 text-[var(--text-secondary)] transition-all max-w-full truncate group"
                     >
                         <span className="shrink-0">{CHAT_ICONS.LINK}</span>
-                        <span className="truncate group-hover:text-indigo-600">{title}</span>
+                        <span className="truncate group-hover:text-[#C9A84C]">{title}</span>
                     </a>
                 );
             })}
@@ -183,7 +183,7 @@ export const AudioBubble = memo(({ duration }: { duration: number }) => {
     const bars = useMemo(() => Array.from({ length: 12 }, () => Math.random() * 16 + 4), []);
     return (
         <div className="flex items-center gap-2 md:gap-3 min-w-[120px] w-full">
-            <button aria-label={t('inbox.play_audio')} className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:bg-indigo-100 hover:text-indigo-600 transition-colors shrink-0">
+            <button aria-label={t('inbox.play_audio')} className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:bg-[#FDF6E3] hover:text-[#C9A84C] transition-colors shrink-0">
                 {CHAT_ICONS.PLAY}
             </button>
             <div className="flex-1 h-8 flex items-center gap-0.5 opacity-50 overflow-hidden">
@@ -201,7 +201,7 @@ export const FileBubble = memo(({ name, size, url }: { name: string, size?: numb
     const { t } = useTranslation();
     return (
         <div className="flex items-center gap-2 md:gap-3 p-1 w-full">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-[#FDF6E3] text-[#C9A84C] rounded-lg flex items-center justify-center shrink-0">
                 {CHAT_ICONS.FILE}
             </div>
             <div className="min-w-0 flex-1">
@@ -247,7 +247,7 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
     if (feedbackState !== 0 && !showCorrection) {
         return (
             <div className="flex items-center gap-1 mt-1">
-                <span className={`text-xs2 font-medium ${feedbackState === 1 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                <span className={`text-xs2 font-medium ${feedbackState === 1 ? 'text-[#C9A84C]0' : 'text-amber-500'}`}>
                     {feedbackState === 1 ? '✓ Hữu ích' : '✓ Đã ghi nhận'}
                 </span>
             </div>
@@ -259,7 +259,7 @@ const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (r
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => handleFeedback(1)}
-                        className="p-1 rounded-md hover:bg-emerald-500/20 text-white/60 hover:text-emerald-400 transition-colors"
+                        className="p-1 rounded-md hover:bg-[#C9A84C]/20 text-white/60 hover:text-[#C9A84C] transition-colors"
                         title="Phản hồi tốt"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,7 +326,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                 {/* Avatar Column */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm border overflow-hidden
                     ${isOutbound 
-                        ? (isAgent ? 'bg-gradient-to-br from-indigo-500 to-purple-500 border-transparent text-white' : 'bg-slate-900 border-slate-800 text-white') 
+                        ? (isAgent ? 'bg-gradient-to-br from-[#C9A84C]0 to-[#C9A84C]0 border-transparent text-white' : 'bg-slate-900 border-slate-800 text-white') 
                         : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]'
                     }`}
                 >
@@ -343,7 +343,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                     <div className={`
                         relative px-4 py-3 rounded-2xl text-sm shadow-sm border w-fit max-w-full
                         ${isOutbound 
-                            ? 'bg-indigo-600 text-white border-indigo-600 rounded-tr-none' 
+                            ? 'bg-[#C9A84C] text-white border-[#C9A84C] rounded-tr-none' 
                             : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--glass-border)] rounded-tl-none'
                         }
                     `}>
@@ -374,7 +374,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                         <div className={`flex items-center gap-2 text-xs2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
                             <span className="text-[var(--text-secondary)] font-mono">{formatTime(msg.timestamp)}</span>
                             {isOutbound && (
-                                <span className={`font-bold ${msg.status === 'READ' ? 'text-indigo-500' : 'text-[var(--text-secondary)]'}`}>
+                                <span className={`font-bold ${msg.status === 'READ' ? 'text-[#C9A84C]0' : 'text-[var(--text-secondary)]'}`}>
                                     {msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? t('inbox.status_read') : t('inbox.status_received')}
                                 </span>
                             )}

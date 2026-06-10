@@ -28,8 +28,8 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
     return (
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-all hover:shadow-md group">
             <div className="flex justify-between mb-4 items-center">
-                <label className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors">{label}</label>
-                <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg text-xs border border-indigo-100 min-w-[60px] text-center">
+                <label className="font-bold text-[var(--text-primary)] text-sm group-hover:text-[#C9A84C] transition-colors">{label}</label>
+                <span className="font-mono font-bold text-[#C9A84C] bg-[#FDF6E3] px-3 py-1 rounded-lg text-xs border border-[#FDF6E3] min-w-[60px] text-center">
                     {value} {t('scoring.pts')}
                 </span>
             </div>
@@ -41,9 +41,9 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
                     max={max} 
                     value={value} 
                     onChange={(e) => onChange(field, Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500 transition-all z-10 relative"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#C9A84C]-600 hover:accent-[#C9A84C]-500 transition-all z-10 relative"
                     style={{
-                        background: `linear-gradient(to right, #4F46E5 0%, #4F46E5 ${percent}%, #E2E8F0 ${percent}%, #E2E8F0 100%)`
+                        background: `linear-gradient(to right, #C9A84C 0%, #C9A84C ${percent}%, #E2E8F0 ${percent}%, #E2E8F0 100%)`
                     }}
                 />
             </div>
@@ -147,7 +147,7 @@ export const ScoringRules: React.FC = () => {
     );
     if (!config) return (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
-            <div className="w-14 h-14 bg-indigo-50 text-indigo-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+            <div className="w-14 h-14 bg-[#FDF6E3] text-[#C9A84C] rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             </div>
             <p className="font-bold text-[var(--text-primary)] mb-1">{t('scoring.empty_title')}</p>
@@ -185,7 +185,7 @@ export const ScoringRules: React.FC = () => {
                     ))}
                 </div>
                 {/* Live Preview Card */}
-                <div className="bg-gradient-to-br from-slate-900 to-indigo-900 text-white p-6 rounded-[24px] shadow-xl flex flex-col justify-between relative overflow-hidden h-[300px]">
+                <div className="bg-gradient-to-br from-slate-900 to-[#1C2B4A] text-white p-6 rounded-[24px] shadow-xl flex flex-col justify-between relative overflow-hidden h-[300px]">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--bg-surface)]/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10"></div>                    
                     <div>
                         <h3 className="font-bold text-lg mb-1">{t('scoring.sim_title')}</h3>
@@ -198,7 +198,7 @@ export const ScoringRules: React.FC = () => {
                             {simulatedScore}
                             <span className="text-2xl opacity-50 font-normal">/100</span>
                         </div>
-                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${simulatedScore >= 80 ? 'bg-emerald-500 text-white' : simulatedScore >= 50 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
+                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${simulatedScore >= 80 ? 'bg-[#FDF6E3]0 text-white' : simulatedScore >= 50 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
                             {simulatedScore >= 80 ? t('scoring.status_hot') : simulatedScore >= 50 ? t('scoring.status_warm') : t('scoring.status_cold')}
                         </div>
                     </div>
@@ -240,7 +240,7 @@ export const ScoringRules: React.FC = () => {
         {createPortal(
             toast ? (
                 <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
-                    toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'
+                    toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'
                 }`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>

@@ -39,7 +39,7 @@ const TabButton: React.FC<TabButtonProps> = memo(({ active, label, icon, onClick
         className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all duration-200
         ${active ? 'bg-slate-900 text-white shadow-lg' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-secondary)]'}`}
     >
-        <span className={active ? 'text-indigo-200' : 'text-[var(--text-secondary)]'}>{icon}</span>
+        <span className={active ? 'text-[#C9A84C]' : 'text-[var(--text-secondary)]'}>{icon}</span>
         {label}
     </button>
 ));
@@ -58,7 +58,7 @@ interface InputFieldProps {
 const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange, disabled, placeholder, type = 'text', isTextArea, error, action }) => (
     <div className="space-y-1.5 group">
         <div className="flex justify-between">
-            <label htmlFor={id} className={`text-xs3 font-bold uppercase tracking-wider ml-1 transition-colors ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>{label}</label>
+            <label htmlFor={id} className={`text-xs3 font-bold uppercase tracking-wider ml-1 transition-colors ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] group-focus-within:text-[#C9A84C]0'}`}>{label}</label>
             {action && <div className="text-xs">{action}</div>}
         </div>        
         <div className="relative">
@@ -71,7 +71,7 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
                     className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all resize-none h-32 placeholder:text-[var(--text-muted)]
                         ${error 
                             ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20 bg-rose-50 text-rose-900' 
-                            : 'border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
+                            : 'border-[var(--glass-border)] focus:ring-2 focus:ring-[#C9A84C]/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
                         ${disabled ? 'opacity-60 cursor-not-allowed bg-[var(--glass-surface-hover)]' : ''}
                     `}
                     placeholder={placeholder}
@@ -86,7 +86,7 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
                     className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all placeholder:text-[var(--text-muted)]
                         ${error 
                             ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20 bg-rose-50 text-rose-900' 
-                            : 'border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
+                            : 'border-[var(--glass-border)] focus:ring-2 focus:ring-[#C9A84C]/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
                         ${disabled ? 'opacity-60 cursor-not-allowed bg-[var(--glass-surface-hover)]' : ''}
                     `}
                     placeholder={placeholder}
@@ -391,13 +391,13 @@ export const Profile: React.FC = () => {
         <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 animate-enter">
             {/* Header Card */}
             <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
-                <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>                
+                <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-[#C9A84C] to-[#C9A84C] rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>                
                 {/* Avatar */}
                 <div className="relative group cursor-pointer z-10" onClick={() => !saving && !uploading && fileInputRef.current?.click()} role="button" aria-label={t('common.upload')}>
                     <div className="w-32 h-32 rounded-full p-1 border-4 border-white shadow-xl bg-[var(--bg-surface)] overflow-hidden relative">
                         {uploading ? (
                             <div className="w-full h-full flex items-center justify-center bg-[var(--glass-surface-hover)]">
-                                <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                <div className="w-8 h-8 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin"></div>
                             </div>
                         ) : formData.avatar && !avatarError ? (
                             <img 
@@ -407,8 +407,8 @@ export const Profile: React.FC = () => {
                                 onError={() => setAvatarError(true)}
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/40 rounded-full">
-                                <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-300 select-none">
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#C9A84C] to-violet-100 dark:from-[#0D1829]/40 dark:to-violet-900/40 rounded-full">
+                                <span className="text-4xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C] select-none">
                                     {formData.name?.charAt(0).toUpperCase() ?? '?'}
                                 </span>
                             </div>
@@ -417,7 +417,7 @@ export const Profile: React.FC = () => {
                             <div className="bg-[var(--bg-surface)]/20 p-2 rounded-full text-white">{ICONS.UPLOAD}</div>
                         </div>
                     </div>
-                    <button className="absolute bottom-1 right-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] p-2 rounded-full shadow-lg border border-[var(--glass-border)] hover:text-indigo-600 transition-colors">
+                    <button className="absolute bottom-1 right-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] p-2 rounded-full shadow-lg border border-[var(--glass-border)] hover:text-[#C9A84C] transition-colors">
                         {ICONS.CAMERA}
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/png, image/jpeg, image/webp" aria-hidden="true" />
@@ -434,7 +434,7 @@ export const Profile: React.FC = () => {
                         </span>
                         {/* SSO Badge */}
                         {user.source === 'SSO' && (
-                            <span className="px-3 py-1 bg-blue-50 border border-blue-100 text-blue-600 rounded-lg text-xs font-bold uppercase tracking-wide">
+                            <span className="px-3 py-1 bg-[#FDF6E3] border border-[#C9A84C] text-[#C9A84C] rounded-lg text-xs font-bold uppercase tracking-wide">
                                 {t('profile.sso_badge')}
                             </span>
                         )}
@@ -503,7 +503,7 @@ export const Profile: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={handleRequestEmailChange}
-                                                className="text-xs text-indigo-600 hover:text-indigo-700 font-bold hover:underline"
+                                                className="text-xs text-[#C9A84C] hover:text-[#B8860B] font-bold hover:underline"
                                             >
                                                 {t('profile.btn_change')}
                                             </button>
@@ -515,8 +515,8 @@ export const Profile: React.FC = () => {
                                         className="w-full bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-sm text-[var(--text-tertiary)] cursor-not-allowed outline-none"
                                     />
                                     {emailChangeOpen && (
-                                        <div className="mt-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3 animate-enter">
-                                            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">{t('profile.email_change_title')}</p>
+                                        <div className="mt-3 p-4 bg-[#FDF6E3] border border-[#FDF6E3] rounded-2xl space-y-3 animate-enter">
+                                            <p className="text-xs font-bold text-[#B8860B] uppercase tracking-wider">{t('profile.email_change_title')}</p>
                                             <div className="space-y-1.5">
                                                 <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_new_label')}</label>
                                                 <input
@@ -525,7 +525,7 @@ export const Profile: React.FC = () => {
                                                     onChange={e => { setEmailData(d => ({ ...d, newEmail: e.target.value })); setEmailErrors(er => ({ ...er, newEmail: '' })); }}
                                                     placeholder={t('profile.email_new_placeholder')}
                                                     className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
-                                                        ${emailErrors.newEmail ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
+                                                        ${emailErrors.newEmail ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-[#C9A84C]/20 text-[var(--text-primary)]'}`}
                                                 />
                                                 {emailErrors.newEmail && <p className="text-xs2 font-bold text-rose-500 ml-1">{emailErrors.newEmail}</p>}
                                             </div>
@@ -538,7 +538,7 @@ export const Profile: React.FC = () => {
                                                     placeholder={t('common.password_placeholder')}
                                                     onKeyDown={e => e.key === 'Enter' && handleSubmitEmailChange()}
                                                     className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
-                                                        ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
+                                                        ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-[#C9A84C]/20 text-[var(--text-primary)]'}`}
                                                 />
                                                 {emailErrors.confirmPass && <p className="text-xs2 font-bold text-rose-500 ml-1">{emailErrors.confirmPass}</p>}
                                             </div>
@@ -547,7 +547,7 @@ export const Profile: React.FC = () => {
                                                     type="button"
                                                     onClick={handleSubmitEmailChange}
                                                     disabled={emailSaving}
-                                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                                    className="flex-1 bg-[#C9A84C] hover:bg-[#B8860B] text-white text-sm font-bold py-2.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                                 >
                                                     {emailSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
                                                     {t('profile.email_submit')}
@@ -587,7 +587,7 @@ export const Profile: React.FC = () => {
                                         className={`px-8 py-3 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 ${
                                             saving || !isDirty 
                                             ? 'bg-slate-200 text-[var(--text-secondary)] cursor-not-allowed shadow-none' 
-                                            : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/30'
+                                            : 'bg-[#C9A84C] text-white hover:bg-[#B8860B] hover:shadow-[#C9A84C]0/30'
                                         }`}
                                     >
                                         {saving ? <div className="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin"></div> : ICONS.SAVE}
@@ -599,7 +599,7 @@ export const Profile: React.FC = () => {
                             // Security Tab - Differentiate for SSO vs Standard
                             user.source === 'SSO' ? (
                                 <div className="animate-enter max-w-2xl text-center py-10 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
-                                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <div className="w-16 h-16 bg-[#FDF6E3] text-[#C9A84C] rounded-full flex items-center justify-center mx-auto mb-4">
                                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                                     </div>
                                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{t('profile.sso_managed_title')}</h3>
@@ -653,7 +653,7 @@ export const Profile: React.FC = () => {
                                             className={`px-8 py-3 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 ${
                                                 saving || !passData.current || !passData.new || !passData.confirm
                                                 ? 'bg-slate-200 text-[var(--text-secondary)] cursor-not-allowed shadow-none' 
-                                                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/30'
+                                                : 'bg-[#C9A84C] text-white hover:bg-[#B8860B] hover:shadow-[#C9A84C]0/30'
                                             }`}
                                         >
                                             {saving ? <div className="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin"></div> : ICONS.SAVE}
@@ -667,7 +667,7 @@ export const Profile: React.FC = () => {
                             <div className="animate-enter">
                                 {perfLoading ? (
                                     <div className="flex flex-col items-center justify-center py-16 gap-4">
-                                        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                                        <div className="w-10 h-10 border-4 border-[#C9A84C] border-t-[#C9A84C] rounded-full animate-spin" />
                                         <span className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</span>
                                     </div>
                                 ) : perfError || !perfData ? (
@@ -680,15 +680,15 @@ export const Profile: React.FC = () => {
                                 ) : (
                                     <div className="space-y-8">
                                         {/* ── SLA Score Hero ───────────────────────────────── */}
-                                        <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-100 dark:border-indigo-800/40">
+                                        <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-[#C9A84C] to-violet-50 dark:from-[#0D1829]/20 dark:to-violet-900/20 border border-[#FDF6E3] dark:border-[#1C2B4A]/40">
                                             {/* Radial SLA ring */}
                                             <div className="relative flex-shrink-0">
                                                 <svg viewBox="0 0 120 120" className="w-28 h-28">
-                                                    <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" className="text-indigo-100 dark:text-indigo-800/30" strokeWidth="10" />
+                                                    <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" className="text-[#C9A84C] dark:text-[#1C2B4A]/30" strokeWidth="10" />
                                                     <circle
                                                         cx="60" cy="60" r="50" fill="none"
                                                         stroke="currentColor"
-                                                        className={perfData.slaScore >= 90 ? 'text-emerald-500' : perfData.slaScore >= 70 ? 'text-indigo-500' : 'text-amber-500'}
+                                                        className={perfData.slaScore >= 90 ? 'text-[#C9A84C]0' : perfData.slaScore >= 70 ? 'text-[#C9A84C]0' : 'text-amber-500'}
                                                         strokeWidth="10"
                                                         strokeLinecap="round"
                                                         strokeDasharray={`${2 * Math.PI * 50}`}
@@ -705,8 +705,8 @@ export const Profile: React.FC = () => {
                                                 </svg>
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">{t('profile.perf_sla')}</p>
-                                                <p className={`text-2xl font-extrabold mb-1 ${perfData.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : perfData.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                                <p className="text-xs font-bold uppercase tracking-widest text-[#C9A84C] mb-1">{t('profile.perf_sla')}</p>
+                                                <p className={`text-2xl font-extrabold mb-1 ${perfData.slaScore >= 90 ? 'text-[#C9A84C] dark:text-[#C9A84C]' : perfData.slaScore >= 70 ? 'text-[#C9A84C] dark:text-[#C9A84C]' : 'text-amber-600 dark:text-amber-400'}`}>
                                                     {perfData.slaScore >= 90 ? t('profile.perf_sla_excellent') : perfData.slaScore >= 70 ? t('profile.perf_sla_good') : t('profile.perf_sla_needs_work')}
                                                 </p>
                                                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-sm">
@@ -724,12 +724,12 @@ export const Profile: React.FC = () => {
                                                 {/* Deals WON */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
-                                                    <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{perfData.deals}</p>
+                                                    <p className="text-3xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{perfData.deals}</p>
                                                 </div>
                                                 {/* Close Rate */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
-                                                    <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{perfData.closeRate}<span className="text-lg font-bold">%</span></p>
+                                                    <p className="text-3xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{perfData.closeRate}<span className="text-lg font-bold">%</span></p>
                                                     <p className="text-xs text-[var(--text-secondary)] mt-1">{t('profile.perf_close_formula')}</p>
                                                 </div>
                                                 {/* Revenue */}
@@ -775,11 +775,11 @@ export const Profile: React.FC = () => {
                                                 </div>
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
-                                                    <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{perfData.completedThisWeek}</p>
+                                                    <p className="text-3xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{perfData.completedThisWeek}</p>
                                                 </div>
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
-                                                    <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{perfData.completedThisMonth}</p>
+                                                    <p className="text-3xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{perfData.completedThisMonth}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -794,7 +794,7 @@ export const Profile: React.FC = () => {
         </div>
         {createPortal(
             message ? (
-                <div className={`fixed top-6 right-6 max-w-sm px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 animate-enter z-[9999] shadow-lg ${message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                <div className={`fixed top-6 right-6 max-w-sm px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 animate-enter z-[9999] shadow-lg ${message.type === 'success' ? 'bg-[#FDF6E3]0 text-white' : 'bg-rose-500 text-white'}`}>
                     {message.type === 'success' ? ICONS.SUCCESS : ICONS.ERROR}
                     {message.text}
                 </div>

@@ -7,7 +7,7 @@ interface TenantContextState {
     switchTenant: (tenantId: string) => void;
 }
 const TenantContext = createContext<TenantContextState | undefined>(undefined);
-const DEFAULT_PRIMARY_COLOR = '#4F46E5';
+const DEFAULT_PRIMARY_COLOR = '#C9A84C';
 const applyTenantTheme = (primaryColor: string) => {
     const root = document.documentElement;
     root.style.setProperty('--primary-600', primaryColor);

@@ -116,7 +116,7 @@ export function TaskFilterBar({
             type="text" value={filters.search}
             onChange={e => set({ search: e.target.value })}
             placeholder="Tìm kiếm..."
-            className="w-full h-[36px] pl-9 pr-8 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+            className="w-full h-[36px] pl-9 pr-8 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C]"
           />
           {filters.search && (
             <button onClick={() => set({ search: '' })} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
@@ -126,10 +126,10 @@ export function TaskFilterBar({
         </div>
         {(showDepartment || showProject || showAssignee || showDeadlineRange) && (
           <button onClick={() => setShowAdvanced(v => !v)}
-            className={`h-[36px] px-3 text-sm border rounded-xl flex items-center gap-1.5 transition-colors flex-shrink-0 ${showAdvanced || advancedFilterCount > 0 ? 'border-indigo-400 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
+            className={`h-[36px] px-3 text-sm border rounded-xl flex items-center gap-1.5 transition-colors flex-shrink-0 ${showAdvanced || advancedFilterCount > 0 ? 'border-[#C9A84C] text-[#C9A84C] bg-[#FDF6E3] dark:bg-[#1C2B4A]/20' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[#C9A84C] hover:text-[#C9A84C]'}`}>
             <SlidersHorizontal size={14} />
             {!compact && 'Lọc nâng cao'}
-            {advancedFilterCount > 0 && <span className="bg-indigo-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{advancedFilterCount}</span>}
+            {advancedFilterCount > 0 && <span className="bg-[#C9A84C] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{advancedFilterCount}</span>}
           </button>
         )}
       </div>
@@ -140,14 +140,14 @@ export function TaskFilterBar({
           <Filter className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
           {showStatus && ALL_STATUSES.map(s => (
             <button key={s} onClick={() => toggleStatus(s)}
-              className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors flex-shrink-0 ${filters.statusFilter.includes(s) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
+              className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors flex-shrink-0 ${filters.statusFilter.includes(s) ? 'bg-[#C9A84C] text-white border-[#C9A84C]' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[#C9A84C] hover:text-[#C9A84C]'}`}>
               {STATUS_LABELS[s]}
             </button>
           ))}
           {showStatus && showPriority && <div className="w-px h-4 bg-[var(--glass-border)] mx-0.5" />}
           {showPriority && ALL_PRIORITIES.map(p => (
             <button key={p} onClick={() => togglePriority(p)}
-              className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors flex-shrink-0 ${filters.priorityFilter.includes(p) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
+              className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors flex-shrink-0 ${filters.priorityFilter.includes(p) ? 'bg-[#C9A84C] text-white border-[#C9A84C]' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[#C9A84C] hover:text-[#C9A84C]'}`}>
               {PRIORITY_LABELS[p]}
             </button>
           ))}
@@ -198,7 +198,7 @@ export function TaskFilterBar({
                 onChange={e => { set({ assigneeName: e.target.value, assigneeId: '' }); setAssigneePickerOpen(true); }}
                 onFocus={() => setAssigneePickerOpen(true)}
                 placeholder="Lọc theo người thực hiện..."
-                className={`h-[32px] pl-2 pr-6 text-xs bg-[var(--bg-surface)] border rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none min-w-[160px] ${filters.assigneeId ? 'border-indigo-400 text-indigo-600' : 'border-[var(--glass-border)]'}`}
+                className={`h-[32px] pl-2 pr-6 text-xs bg-[var(--bg-surface)] border rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none min-w-[160px] ${filters.assigneeId ? 'border-[#C9A84C] text-[#C9A84C]' : 'border-[var(--glass-border)]'}`}
               />
               {filters.assigneeName && (
                 <button onClick={() => set({ assigneeId: '', assigneeName: '' })} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">

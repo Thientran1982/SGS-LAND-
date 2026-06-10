@@ -14,7 +14,7 @@ const ICONS = {
 const ACTION_ICONS = {
     REDACT: <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     BLOCK:  <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
-    LOG_ONLY: <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
+    LOG_ONLY: <svg className="w-3.5 h-3.5 text-[#C9A84C]0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
 };
 const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
     const [form, setForm] = useState({ name: '', pattern: '', action: 'REDACT' });
@@ -34,11 +34,11 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_rule_name')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder={t('security.placeholder_name')} />
+                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-[#C9A84C]/20 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder={t('security.placeholder_name')} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_pattern')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] font-mono focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} placeholder={t('security.placeholder_pattern')} />
+                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] font-mono focus:ring-2 focus:ring-[#C9A84C]/20 outline-none" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} placeholder={t('security.placeholder_pattern')} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_action')}</label>
@@ -133,8 +133,8 @@ export const SecurityCompliance: React.FC = () => {
                     <p className="text-sm text-[var(--text-tertiary)]">{t('security.subtitle')}</p>
                 </div>
                 <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl">
-                    <button onClick={() => setActiveTab('POLICIES')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'POLICIES' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_policies')}</button>
-                    <button onClick={() => setActiveTab('ACCESS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'ACCESS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_access')}</button>
+                    <button onClick={() => setActiveTab('POLICIES')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'POLICIES' ? 'bg-[var(--bg-surface)] shadow text-[#C9A84C]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_policies')}</button>
+                    <button onClick={() => setActiveTab('ACCESS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'ACCESS' ? 'bg-[var(--bg-surface)] shadow text-[#C9A84C]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_access')}</button>
                 </div>
             </div>
             {activeTab === 'POLICIES' && (
@@ -158,7 +158,7 @@ export const SecurityCompliance: React.FC = () => {
                                     disabled={config.legalHold} 
                                     value={config.retention?.messagesDays || 0} 
                                     onChange={e => setConfig({...config, retention: {...(config.retention || { messagesDays: 0, auditLogsDays: 0 }), messagesDays: Number(e.target.value)}})} 
-                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-indigo-500 disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
+                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-[#C9A84C] disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
                                 />
                             </div>
                             <div>
@@ -168,7 +168,7 @@ export const SecurityCompliance: React.FC = () => {
                                     disabled={config.legalHold} 
                                     value={config.retention?.auditLogsDays || 0} 
                                     onChange={e => setConfig({...config, retention: {...(config.retention || { messagesDays: 0, auditLogsDays: 0 }), auditLogsDays: Number(e.target.value)}})} 
-                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-indigo-500 disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
+                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-[#C9A84C] disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
                                 />
                             </div>
                             <button onClick={handleSaveConfig} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95">{t('security.save_policy')}</button>
@@ -186,7 +186,7 @@ export const SecurityCompliance: React.FC = () => {
                                     {t('security.no_dlp_rules')}
                                 </div>
                             ) : (config.dlpRules || []).map(rule => (
-                                <div key={rule.id} className="p-4 border rounded-xl flex justify-between items-center group hover:border-indigo-200 transition-colors">
+                                <div key={rule.id} className="p-4 border rounded-xl flex justify-between items-center group hover:border-[#C9A84C] transition-colors">
                                     <div>
                                         <div className="font-bold text-sm text-[var(--text-secondary)]">{rule.name}</div>
                                         <div className="text-xs2 font-mono text-[var(--text-secondary)] truncate max-w-[200px]">{rule.pattern}</div>
@@ -195,7 +195,7 @@ export const SecurityCompliance: React.FC = () => {
                                         <span className={`text-xs2 font-bold px-2 py-0.5 rounded border ${rule.action === 'BLOCK' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[var(--glass-surface-hover)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
                                             {t({ REDACT: 'security.action_redact', BLOCK: 'security.action_block', LOG_ONLY: 'security.action_log' }[rule.action] ?? `security.action_${rule.action.toLowerCase()}`)}
                                         </span>
-                                        <input type="checkbox" checked={rule.enabled} onChange={() => toggleRule(rule.id)} className="toggle accent-indigo-500 w-4 h-4 cursor-pointer" />
+                                        <input type="checkbox" checked={rule.enabled} onChange={() => toggleRule(rule.id)} className="toggle accent-[#C9A84C]-500 w-4 h-4 cursor-pointer" />
                                         <button onClick={() => handleDeleteRule(rule.id)} className="text-[var(--text-secondary)] hover:text-rose-500 transition-colors">{ICONS.TRASH}</button>
                                     </div>
                                 </div>
@@ -247,7 +247,7 @@ export const SecurityCompliance: React.FC = () => {
                     role="status"
                     aria-live="polite"
                     aria-atomic="true"
-                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}
+                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-[#B8860B]/90 text-[#C9A84C] border-[#C9A84C]0' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}
                 >
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>

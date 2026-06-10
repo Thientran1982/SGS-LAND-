@@ -271,7 +271,7 @@ const AdminAiCost: React.FC = () => {
           <button
             type="button"
             onClick={downloadCsv}
-            className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+            className="px-4 py-2 text-xs font-bold rounded-lg bg-[#C9A84C] text-white hover:bg-[#B8860B] shadow-sm"
           >Export CSV</button>
         </div>
       </div>
@@ -350,7 +350,7 @@ const AdminAiCost: React.FC = () => {
                       ? 'text-rose-700 font-bold'
                       : q.percentUsed >= 80
                         ? 'text-amber-700 font-bold'
-                        : 'text-emerald-700';
+                        : 'text-[#B8860B]';
                   return (
                     <tr key={p.planId} className="border-t border-[var(--glass-border)]">
                       <td className="py-2 font-bold text-[var(--text-primary)]">{p.planId}</td>
@@ -440,7 +440,7 @@ const AdminAiCost: React.FC = () => {
               return (
                 <div key={d.day} className="flex flex-col items-center min-w-[24px] group">
                   <div
-                    className="w-5 rounded-t bg-indigo-500/80 group-hover:bg-indigo-600 transition-all relative"
+                    className="w-5 rounded-t bg-[#C9A84C]/80 group-hover:bg-[#C9A84C] transition-all relative"
                     style={{ height: `${h}%` }}
                     title={`${d.day}: ${d.valuations} lượt • ${fmtUsd(d.costUsd)}`}
                   />
@@ -468,7 +468,7 @@ const AdminAiCost: React.FC = () => {
                 ? 'bg-rose-500'
                 : q.percentUsed >= 80
                   ? 'bg-amber-500'
-                  : 'bg-emerald-500';
+                  : 'bg-[#FDF6E3]0';
             return (
               <div
                 key={q.planId}
@@ -512,7 +512,7 @@ const AdminAiCost: React.FC = () => {
                     <button
                       onClick={() => saveQuota(q.planId)}
                       disabled={savingQuotaPlan === q.planId}
-                      className="self-end px-4 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                      className="self-end px-4 py-1.5 text-xs font-bold rounded-lg bg-[#C9A84C] text-white hover:bg-[#B8860B] disabled:opacity-50"
                     >
                       {savingQuotaPlan === q.planId ? 'Đang lưu…' : 'Lưu'}
                     </button>
@@ -639,7 +639,7 @@ const AdminAiCost: React.FC = () => {
           <button
             onClick={saveAlert}
             disabled={savingAlert}
-            className="px-5 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="px-5 py-2 text-xs font-bold rounded-lg bg-[#C9A84C] text-white hover:bg-[#B8860B] disabled:opacity-50"
           >
             {savingAlert ? 'Đang lưu…' : 'Lưu cấu hình'}
           </button>
@@ -673,7 +673,7 @@ const KpiCard: React.FC<{
       {trend && (
         <span className={`text-xs font-bold px-2 py-0.5 rounded ${
           trendPositive === null ? 'bg-slate-100 text-slate-600'
-            : trendPositive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+            : trendPositive ? 'bg-[#FDF6E3] text-[#B8860B]' : 'bg-rose-50 text-rose-700'
         }`}>{trend}</span>
       )}
     </div>

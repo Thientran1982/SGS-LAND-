@@ -35,7 +35,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
         <div className="bg-[#0f1117] rounded-3xl shadow-xl overflow-hidden flex flex-col h-[600px] border border-slate-800 animate-enter ring-1 ring-white/10">
             <div className="flex justify-between items-center p-3 border-b border-white/5 bg-[var(--bg-surface)]/5">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse"></div>
                     <span className="text-xs font-mono text-[var(--text-secondary)] font-bold">{t('system.live_logs')}</span>
                     <span className="text-xs2 bg-[var(--bg-surface)]/10 px-1.5 rounded text-[var(--text-secondary)] font-mono">{logs.length}</span>
                 </div>
@@ -64,11 +64,11 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
                         <span className="text-[var(--text-tertiary)] shrink-0 select-none w-16">
                             {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' })}
                         </span>
-                        <span className={`shrink-0 font-bold w-12 ${log.level === 'ERROR' ? 'text-rose-500' : log.level === 'WARN' ? 'text-amber-500' : 'text-emerald-500'}`}>
+                        <span className={`shrink-0 font-bold w-12 ${log.level === 'ERROR' ? 'text-rose-500' : log.level === 'WARN' ? 'text-amber-500' : 'text-[#C9A84C]0'}`}>
                             {log.level}
                         </span>
                         <span className="text-[var(--text-secondary)] group-hover:text-slate-200">
-                            <span className="text-indigo-400 font-bold mr-2">[{log.source}]</span>
+                            <span className="text-[#C9A84C] font-bold mr-2">[{log.source}]</span>
                             {log.message}
                             {log.context && (
                                 <span className="text-[var(--text-secondary)] ml-2">{JSON.stringify(log.context)}</span>
@@ -81,9 +81,9 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
     );
 });
 const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }: { health: SystemHealth, theme: any, onBackup: () => void, onRestore: () => void, isRestoring: boolean, t: any }) => {
-    const statusColor = health.status === 'HEALTHY' ? 'text-emerald-500' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
-    const borderColor = health.status === 'HEALTHY' ? 'border-emerald-500' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
-    const primaryColor = theme?.colors?.primary || '#4F46E5';
+    const statusColor = health.status === 'HEALTHY' ? 'text-[#C9A84C]0' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
+    const borderColor = health.status === 'HEALTHY' ? 'border-[#C9A84C]0' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
+    const primaryColor = theme?.colors?.primary || '#C9A84C';
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
             <div className={`bg-[var(--bg-surface)] p-8 rounded-[32px] border-2 ${borderColor} shadow-lg relative overflow-hidden`}>
@@ -183,7 +183,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
     const fmtTime = (iso: string | null) => iso ? new Date(iso).toLocaleString('vi-VN') : '—';
 
     const rateTone = (rate: number, threshold: number) =>
-        rate >= threshold ? 'text-emerald-600' : rate >= threshold - 0.1 ? 'text-amber-600' : 'text-rose-600 font-bold';
+        rate >= threshold ? 'text-[#C9A84C]' : rate >= threshold - 0.1 ? 'text-amber-600' : 'text-rose-600 font-bold';
     return (
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
             <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
@@ -202,7 +202,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                             type="checkbox"
                             checked={includeAutoreply}
                             onChange={(e) => setIncludeAutoreply(e.target.checked)}
-                            className="accent-indigo-600"
+                            className="accent-[#C9A84C]"
                         />
                         Tính cả auto-reply
                     </label>
@@ -219,7 +219,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                     <button
                         onClick={load}
                         disabled={loading}
-                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#C9A84C] text-white hover:bg-[#B8860B] disabled:opacity-50"
                     >
                         {loading ? 'Đang tải…' : 'Làm mới'}
                     </button>
@@ -239,7 +239,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                         </div>
                         <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
                             <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Thành công</div>
-                            <div className="text-xl font-bold font-mono text-emerald-600">{report.totals.success.toLocaleString()}</div>
+                            <div className="text-xl font-bold font-mono text-[#C9A84C]">{report.totals.success.toLocaleString()}</div>
                         </div>
                         <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
                             <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Thất bại</div>
@@ -296,7 +296,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                                                 <div className="text-2xs font-mono text-[var(--text-tertiary)]">{row.tenantId.slice(0, 8)}…</div>
                                             </td>
                                             <td className="py-2 text-right font-mono">{row.total}</td>
-                                            <td className="py-2 text-right font-mono text-emerald-600">{row.success}</td>
+                                            <td className="py-2 text-right font-mono text-[#C9A84C]">{row.success}</td>
                                             <td className="py-2 text-right font-mono text-rose-600">{row.failure}</td>
                                             <td className={`py-2 text-right font-mono ${rateTone(row.successRate, report.alertThreshold)}`}>
                                                 {fmtPct(row.successRate)}
@@ -454,7 +454,7 @@ export const SystemStatus: React.FC = () => {
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
             {toast && (
                 <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
-                    toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'
+                    toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'
                 }`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
@@ -467,8 +467,8 @@ export const SystemStatus: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9A84C] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FDF6E3]0"></span>
                     </span>
                     <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wide">{t('system.auto_refresh')}</span>
                 </div>
@@ -495,10 +495,10 @@ export const SystemStatus: React.FC = () => {
                             {health?.config?.map((conf) => (
                                 <div key={conf.key} className="flex justify-between items-center text-sm p-2 hover:bg-[var(--glass-surface)] rounded-lg transition-colors group">
                                     <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${conf.status === 'OK' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${conf.status === 'OK' ? 'bg-[#FDF6E3]0' : 'bg-rose-500'}`}></div>
                                         <span className="font-mono text-[var(--text-secondary)] text-xs2 truncate" title={conf.key}>{conf.key}</span>
                                     </div>
-                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${conf.status === 'OK' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${conf.status === 'OK' ? 'bg-[#FDF6E3] text-[#C9A84C]' : 'bg-rose-50 text-rose-600'}`}>
                                         {conf.status}
                                     </span>
                                 </div>

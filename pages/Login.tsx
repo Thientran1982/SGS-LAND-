@@ -64,7 +64,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                 {/* 1. GLASS BENTO CARD - LIVE ANALYTICS */}
                 <div className="bg-[var(--bg-surface)]/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden relative group">
                     {/* Primary orb — top-right */}
-                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#C9A84C]/25 rounded-full blur-3xl pointer-events-none"></div>
                     {/* Secondary accent orb — bottom-left */}
                     <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-violet-500/15 rounded-full blur-2xl pointer-events-none"></div>                    
                     <div className="p-6 border-b border-white/5 flex justify-between items-center">
@@ -72,13 +72,13 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                             <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('auth.market_velocity')}</div>
                             <div className="text-2xl font-bold text-white flex items-center gap-2">
                                 +24.5%
-                                <span className="text-xs2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">{t('auth.live')}</span>
+                                <span className="text-xs2 bg-[#C9A84C]/20 text-[#C9A84C] px-2 py-0.5 rounded-full border border-[#C9A84C]/20">{t('auth.live')}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
                             <div className="w-2 h-2 rounded-full bg-rose-500"></div>
                             <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <div className="w-2 h-2 rounded-full bg-[#FDF6E3]0"></div>
                         </div>
                     </div>
                     <div className="h-48 w-full relative">
@@ -105,7 +105,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                     </div>
                 </div>
                 {/* 2. TEXT CONTENT */}
-                <div className="pl-4 border-l-2 border-indigo-500 animate-enter" key={view}>
+                <div className="pl-4 border-l-2 border-[#C9A84C] animate-enter" key={view}>
                     <h2 className="text-3xl font-bold text-white mb-3 tracking-tight leading-tight">{content.title}</h2>
                     <p className="text-gray-400 text-sm leading-relaxed max-w-md">{content.desc}</p>
                 </div>
@@ -437,10 +437,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       return `w-full bg-white/5 border rounded-xl pl-10 pr-4 py-3 text-[16px] focus:ring-2 transition-all outline-none text-white placeholder-white/25
       ${hasError 
           ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 bg-rose-500/5' 
-          : 'border-white/10 focus:border-indigo-500/50 focus:ring-indigo-500/50 focus:bg-white/8'}`;
+          : 'border-white/10 focus:border-[#C9A84C]/50 focus:ring-[#C9A84C]/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-hidden relative">      
+    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-[#C9A84C]/30 selection:text-[#C9A84C] overflow-hidden relative">      
       {/* FORM COLUMN */}
       <div className="w-full lg:w-[520px] xl:w-[600px] flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">        
         {/* Top Bar */}
@@ -485,11 +485,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {view === 'VERIFY_EMAIL' && (
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
                     {/* Envelope icon + email info */}
-                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-6 text-center">
+                    <div className="bg-[#FDF6E3]0/10 border border-[#C9A84C]/20 rounded-2xl p-6 text-center">
                         <div className="text-5xl mb-4">✉️</div>
                         <p className="text-sm text-gray-400 mb-2">{t('auth.verify_email_sent_to')}</p>
                         <p className="text-white font-bold text-base mb-4 break-all">{registeredEmail}</p>
-                        <p className="text-xs text-indigo-300 leading-relaxed">{t('auth.verify_email_instruction')}</p>
+                        <p className="text-xs text-[#C9A84C] leading-relaxed">{t('auth.verify_email_instruction')}</p>
                     </div>
                     {/* Dev mode: show raw token for testing without email */}
                     {devVerifyInfo && (
@@ -502,7 +502,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     )}
                     {/* Resend button */}
                     {resentSuccess ? (
-                        <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 text-center" role="status">
+                        <div className="text-[#C9A84C] text-xs font-medium bg-[#C9A84C]/10 p-4 rounded-xl border border-[#C9A84C]/20 text-center" role="status">
                             {resentSuccess}
                         </div>
                     ) : (
@@ -554,7 +554,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         <p className="text-rose-300 font-semibold text-sm break-all mb-3">{registeredEmail}</p>
                         <p className="text-xs text-gray-400 leading-relaxed">
                             {t('auth.rejected_desc_before')}{' '}
-                            <a href="mailto:support@sgsland.vn" className="text-indigo-400 hover:underline">support@sgsland.vn</a>{' '}
+                            <a href="mailto:support@sgsland.vn" className="text-[#C9A84C] hover:underline">support@sgsland.vn</a>{' '}
                             {t('auth.rejected_desc_after')}
                         </p>
                     </div>
@@ -576,7 +576,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </div>
                 )}
                 {successMsg && (
-                    <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 flex items-start" role="status">
+                    <div className="text-[#C9A84C] text-xs font-medium bg-[#C9A84C]/10 p-4 rounded-xl border border-[#C9A84C]/20 flex items-start" role="status">
                         {successMsg}
                     </div>
                 )}                
@@ -602,7 +602,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 onClick={() => { setRegisterMode('VENDOR'); setFieldErrors({}); }}
                                 className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
                                     registerMode === 'VENDOR'
-                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                                        ? 'bg-[#FDF6E3]0/20 text-[#C9A84C] border border-[#C9A84C]/40 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-300'
                                 }`}
                             >
@@ -632,9 +632,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         )}
                         {/* Hint theo loại tài khoản */}
                         {registerMode === 'VENDOR' ? (
-                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                <svg className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                                <p className="text-xs2 text-emerald-200 leading-relaxed">{t('auth.vendor_onboard_hint')}</p>
+                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#C9A84C]/10 border border-[#C9A84C]/20">
+                                <svg className="w-4 h-4 text-[#C9A84C] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                <p className="text-xs2 text-[#C9A84C] leading-relaxed">{t('auth.vendor_onboard_hint')}</p>
                             </div>
                         ) : (
                             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
@@ -667,16 +667,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <>
                         {!tokenFromUrl ? (
                             /* Waiting for user to click email link — no form, just info + resend */
-                            <div className="bg-indigo-500/10 p-5 rounded-2xl border border-indigo-500/20 animate-enter text-center space-y-4">
-                                <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto">
-                                    <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                            <div className="bg-[#FDF6E3]0/10 p-5 rounded-2xl border border-[#C9A84C]/20 animate-enter text-center space-y-4">
+                                <div className="w-12 h-12 bg-[#C9A84C]/20 rounded-full flex items-center justify-center mx-auto">
+                                    <svg className="w-6 h-6 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 </div>
                                 <p className="text-sm font-bold text-white">{t('auth.check_email_title')}</p>
-                                <p className="text-xs text-indigo-200 leading-relaxed">
+                                <p className="text-xs text-[#C9A84C] leading-relaxed">
                                     {t('auth.check_email_body')} <span className="font-bold text-white">{email}</span>.<br/>
                                     {t('auth.check_email_instruction')}
                                 </p>
-                                <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam')}</p>
+                                <p className="text-xs2 text-[#C9A84C]/60">{t('auth.check_email_spam')}</p>
                                 {/* Dev mode: hiện link reset trực tiếp khi email không thật */}
                                 {devResetInfo && (
                                     <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/30 text-left">
@@ -696,13 +696,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                     </div>
                                 )}
                                 {resentResetMsg ? (
-                                    <p className={`text-xs2 font-semibold ${resentResetMsg === t('auth.resend_reset_sent') ? 'text-emerald-400' : 'text-rose-400'}`}>{resentResetMsg}</p>
+                                    <p className={`text-xs2 font-semibold ${resentResetMsg === t('auth.resend_reset_sent') ? 'text-[#C9A84C]' : 'text-rose-400'}`}>{resentResetMsg}</p>
                                 ) : (
                                     <button
                                         type="button"
                                         onClick={handleResendReset}
                                         disabled={resendingReset}
-                                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-60 underline underline-offset-2"
+                                        className="text-xs font-bold text-[#C9A84C] hover:text-[#C9A84C] transition-colors disabled:opacity-60 underline underline-offset-2"
                                     >
                                         {resendingReset ? t('auth.resend_reset_sending') : t('auth.resend_reset_email')}
                                     </button>
@@ -725,7 +725,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                                 value={manualToken}
                                                 onChange={e => setManualToken(e.target.value)}
                                                 placeholder="https://...reset-password/abc123... hoặc chỉ token"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 font-mono focus:outline-none focus:border-indigo-500/50"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 font-mono focus:outline-none focus:border-[#C9A84C]/50"
                                             />
                                             <button
                                                 type="button"
@@ -741,7 +741,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                                     setManualToken('');
                                                     setShowManualToken(false);
                                                 }}
-                                                className="w-full bg-indigo-600 text-white font-semibold rounded-xl py-2 text-xs hover:bg-indigo-500 transition-colors disabled:opacity-40"
+                                                className="w-full bg-[#C9A84C] text-white font-semibold rounded-xl py-2 text-xs hover:bg-[#C9A84C] transition-colors disabled:opacity-40"
                                             >
                                                 {t('auth.paste_token_confirm') || 'Xác nhận & Đặt mật khẩu mới'}
                                             </button>
@@ -751,9 +751,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </div>
                         ) : (
                             /* Token from URL — valid link, show new password form */
-                            <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 animate-enter flex items-center gap-2">
-                                <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <p className="text-xs2 text-emerald-300">{t('auth.valid_reset_link')}</p>
+                            <div className="bg-[#FDF6E3]0/10 p-3 rounded-xl border border-[#C9A84C]/20 animate-enter flex items-center gap-2">
+                                <svg className="w-4 h-4 text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <p className="text-xs2 text-[#C9A84C]">{t('auth.valid_reset_link')}</p>
                                 <input type="hidden" value={otp} readOnly />
                             </div>
                         )}
@@ -767,7 +767,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 {view === 'FORGOT_VERIFY' ? t('auth.new_pass_label') : t('auth.label_password')}
                             </label>
                             {view === 'LOGIN' && (
-                                <button type="button" onClick={() => { setView('FORGOT_REQUEST'); setGlobalError(''); setFieldErrors({}); }} className="text-xs3 font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+                                <button type="button" onClick={() => { setView('FORGOT_REQUEST'); setGlobalError(''); setFieldErrors({}); }} className="text-xs3 font-bold text-[#C9A84C] hover:text-[#C9A84C] transition-colors">
                                     {t('auth.forgot_password')}
                                 </button>
                             )}
@@ -806,7 +806,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                         aria-valuemax={100}
                                         aria-label={t('auth.password_strength')}
                                         className={`h-full transition-all duration-500 ease-out
-                                        ${calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 2 ? 'bg-rose-500' : calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 4 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                        ${calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 2 ? 'bg-rose-500' : calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 4 ? 'bg-amber-500' : 'bg-[#FDF6E3]0'}`}
                                         style={{ width: `${(calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) / 4) * 100}%` }}>
                                     </div>
                                 </div>
@@ -825,7 +825,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             id="remember" 
                             checked={rememberMe} 
                             onChange={e => setRememberMe(e.target.checked)}
-                            className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                            className="w-4 h-4 accent-[#C9A84C]-600 rounded cursor-pointer"
                         />
                         <label htmlFor="remember" className="text-xs text-gray-400 cursor-pointer select-none">{t('auth.remember_me')}</label>
                     </div>
@@ -874,12 +874,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {view === 'REGISTER' ? t('auth.has_account') : (view.startsWith('FORGOT') || view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? '' : t('auth.no_account')}
                 
                 {!view.startsWith('FORGOT') && view !== 'VERIFY_EMAIL' && view !== 'PENDING_APPROVAL' && view !== 'TENANT_REJECTED' && (
-                    <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-[#C9A84C] font-bold ml-1 transition-colors">
                         {view === 'REGISTER' ? t('auth.login_link') : t('auth.register_link')}
                     </button>
                 )}                
                 {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
-                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-[#C9A84C] font-bold ml-1 transition-colors">
                         ← {t('auth.verify_email_back_login')}
                     </button>
                 )}

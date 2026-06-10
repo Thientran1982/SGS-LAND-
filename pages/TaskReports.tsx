@@ -131,8 +131,8 @@ export function TaskReports() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-            <PieChart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="w-10 h-10 bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 rounded-xl flex items-center justify-center">
+            <PieChart className="w-5 h-5 text-[#C9A84C] dark:text-[#C9A84C]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">Báo cáo Công việc</h1>
@@ -164,7 +164,7 @@ export function TaskReports() {
           <button
             onClick={handleExport}
             disabled={exporting || loading}
-            className="h-[36px] px-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60">
+            className="h-[36px] px-3 bg-[#C9A84C] text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-[#B8860B] transition-colors shadow-sm disabled:opacity-60">
             {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             Xuất CSV
           </button>
@@ -175,7 +175,7 @@ export function TaskReports() {
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <AlertTriangle className="w-10 h-10 text-amber-400" />
           <p className="text-[var(--text-secondary)]">{error}</p>
-          <button onClick={() => load(false, departmentId)} className="text-sm text-indigo-500 font-medium">Thử lại</button>
+          <button onClick={() => load(false, departmentId)} className="text-sm text-[#C9A84C] font-medium">Thử lại</button>
         </div>
       )}
       {/* KPI row */}
@@ -184,9 +184,9 @@ export function TaskReports() {
           Array.from({ length: 4 }).map((_, i) => <SkeletonKpi key={i} />)
         ) : stats && (
           [
-            { label: 'Tỷ lệ hoàn thành', value: `${completionRate}%`, color: 'text-emerald-500' },
+            { label: 'Tỷ lệ hoàn thành', value: `${completionRate}%`, color: 'text-[#C9A84C]0' },
             { label: 'Quá hạn', value: stats.overview.overdue_count, color: 'text-rose-500' },
-            { label: 'Hoàn thành tuần này', value: stats.completion_rate_week, color: 'text-indigo-500' },
+            { label: 'Hoàn thành tuần này', value: stats.completion_rate_week, color: 'text-[#C9A84C]0' },
             { label: 'Hoàn thành hôm nay', value: stats.completion_rate_today, color: 'text-amber-500' },
           ].map(kpi => (
             <div key={kpi.label} className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-4 shadow-sm text-center">
@@ -202,7 +202,7 @@ export function TaskReports() {
       ) : stats && Object.keys(stats.by_category).length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <h3 className="font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-indigo-500" /> Công việc theo danh mục (đang mở)
+            <BarChart3 className="w-4 h-4 text-[#C9A84C]0" /> Công việc theo danh mục (đang mở)
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {Object.entries(stats.by_category).sort(([, a], [, b]) => b - a).map(([cat, count]) => (
@@ -220,7 +220,7 @@ export function TaskReports() {
       ) : projects.length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <h3 className="font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-indigo-500" /> Công việc theo dự án
+            <Building2 className="w-4 h-4 text-[#C9A84C]0" /> Công việc theo dự án
           </h3>
           <div className="space-y-3">
             {projects.filter(p => p.total > 0).slice(0, 10).map(proj => (
@@ -234,14 +234,14 @@ export function TaskReports() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-xs text-[var(--text-tertiary)]">{proj.done}/{proj.total}</span>
-                    <span className={`text-xs font-bold ${Number(proj.completion_rate) >= 70 ? 'text-emerald-500' : Number(proj.completion_rate) >= 40 ? 'text-amber-500' : 'text-rose-500'}`}>
+                    <span className={`text-xs font-bold ${Number(proj.completion_rate) >= 70 ? 'text-[#C9A84C]0' : Number(proj.completion_rate) >= 40 ? 'text-amber-500' : 'text-rose-500'}`}>
                       {proj.completion_rate}%
                     </span>
                   </div>
                 </div>
                 <div className="h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${Number(proj.completion_rate) >= 70 ? 'bg-emerald-500' : Number(proj.completion_rate) >= 40 ? 'bg-amber-400' : 'bg-rose-400'}`}
+                    className={`h-full rounded-full transition-all duration-500 ${Number(proj.completion_rate) >= 70 ? 'bg-[#FDF6E3]0' : Number(proj.completion_rate) >= 40 ? 'bg-amber-400' : 'bg-rose-400'}`}
                     style={{ width: `${proj.completion_rate}%` }} />
                 </div>
               </div>
@@ -256,11 +256,11 @@ export function TaskReports() {
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-500" /> Hiệu suất Nhân viên
+              <Users className="w-4 h-4 text-[#C9A84C]0" /> Hiệu suất Nhân viên
             </h3>
             <button
               onClick={() => { window.location.hash = `#/${ROUTES.EMPLOYEES}`; }}
-              className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">
+              className="text-xs text-[#C9A84C] hover:text-[#C9A84C] font-medium">
               Xem chi tiết →
             </button>
           </div>
@@ -280,7 +280,7 @@ export function TaskReports() {
                   <tr key={u.user_id} className="hover:bg-[var(--glass-surface-hover)] transition-colors">
                     <td className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 flex items-center justify-center text-[11px] font-bold text-[#C9A84C] flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -290,14 +290,14 @@ export function TaskReports() {
                       </div>
                     </td>
                     <td className="py-2.5 text-center text-[var(--text-secondary)] text-xs">{u.total_assigned}</td>
-                    <td className="py-2.5 text-center text-emerald-500 font-semibold text-xs">{u.done}</td>
+                    <td className="py-2.5 text-center text-[#C9A84C] font-semibold text-xs">{u.done}</td>
                     <td className="py-2.5 text-center text-xs">
                       {u.overdue > 0
                         ? <span className="text-rose-500 font-semibold">{u.overdue}</span>
                         : <span className="text-[var(--text-tertiary)]">—</span>}
                     </td>
                     <td className="py-2.5 text-right">
-                      <span className={`text-xs font-bold ${u.completion_rate >= 70 ? 'text-emerald-500' : u.completion_rate >= 40 ? 'text-amber-500' : 'text-rose-500'}`}>
+                      <span className={`text-xs font-bold ${u.completion_rate >= 70 ? 'text-[#C9A84C]0' : u.completion_rate >= 40 ? 'text-amber-500' : 'text-rose-500'}`}>
                         {u.completion_rate}%
                       </span>
                     </td>

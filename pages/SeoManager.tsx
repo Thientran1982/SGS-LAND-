@@ -82,7 +82,7 @@ function charStatus(len: number, min: number, max: number): 'green' | 'amber' | 
 const CharCount: React.FC<{ value: string; min: number; max: number }> = ({ value, min, max }) => {
     const len = value.length;
     const st = charStatus(len, min, max);
-    const cls = st === 'green' ? 'text-emerald-600' : st === 'amber' ? 'text-amber-500' : 'text-rose-500';
+    const cls = st === 'green' ? 'text-[#C9A84C]' : st === 'amber' ? 'text-amber-500' : 'text-rose-500';
     return <span className={`text-2xs font-bold tabular-nums ${cls}`}>{len}/{max}</span>;
 };
 // ── SERP Status Helpers ────────────────────────────────────────────────────────
@@ -94,10 +94,10 @@ function getSerpStatus(title: string, desc: string): 'green' | 'amber' | 'red' {
     return 'red';
 }
 function statusDotClass(status: 'green' | 'amber' | 'red') {
-    return status === 'green' ? 'bg-emerald-500' : status === 'amber' ? 'bg-amber-400' : 'bg-rose-500';
+    return status === 'green' ? 'bg-[#FDF6E3]0' : status === 'amber' ? 'bg-amber-400' : 'bg-rose-500';
 }
 function statusRingClass(status: 'green' | 'amber' | 'red') {
-    return status === 'green' ? 'ring-emerald-200 dark:ring-emerald-800' : status === 'amber' ? 'ring-amber-200 dark:ring-amber-800' : 'ring-rose-200 dark:ring-rose-800';
+    return status === 'green' ? 'ring-[#C9A84C] dark:ring-[#B8860B]' : status === 'amber' ? 'ring-amber-200 dark:ring-amber-800' : 'ring-rose-200 dark:ring-rose-800';
 }
 // ── SerpPageDropdown ────────────────────────────────────────────────────────────
 const SerpPageDropdown: React.FC<{
@@ -187,7 +187,7 @@ const SerpPageDropdown: React.FC<{
                 ref={btnRef}
                 type="button"
                 onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
-                className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl bg-[var(--bg-surface)] transition-all outline-none text-left ${isOpen ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-[var(--glass-border)] hover:border-indigo-300 hover:shadow-sm'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl bg-[var(--bg-surface)] transition-all outline-none text-left ${isOpen ? 'border-[#C9A84C]0 ring-2 ring-[#C9A84C]/20' : 'border-[var(--glass-border)] hover:border-[#C9A84C] hover:shadow-sm'}`}
             >
                 {/* Status dot */}
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ring-2 ${statusDotClass(selectedStatus)} ${statusRingClass(selectedStatus)}`} />
@@ -201,7 +201,7 @@ const SerpPageDropdown: React.FC<{
                 </div>
                 {/* Chevron */}
                 <svg
-                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-500' : 'text-[var(--text-secondary)]'}`}
+                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#C9A84C]0' : 'text-[var(--text-secondary)]'}`}
                     fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -231,7 +231,7 @@ const SerpPageDropdown: React.FC<{
                                     key={route.key}
                                     type="button"
                                     onClick={() => { onChange(route.key); setIsOpen(false); }}
-                                    className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-[var(--glass-surface)]'}`}
+                                    className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isSelected ? 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/20' : 'hover:bg-[var(--glass-surface)]'}`}
                                 >
                                     {/* Status dot */}
                                     <span className={`w-2 h-2 rounded-full shrink-0 mt-[7px] ring-2 ${statusDotClass(status)} ${statusRingClass(status)}`} />
@@ -240,20 +240,20 @@ const SerpPageDropdown: React.FC<{
                                     <div className="flex-1 min-w-0">
                                         {/* Row 1: page name + route badge + checkmark — NO flex-wrap so label truncates correctly */}
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                            <span className={`text-xs font-bold flex-1 min-w-0 truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-[var(--text-primary)]'}`}>
+                                            <span className={`text-xs font-bold flex-1 min-w-0 truncate ${isSelected ? 'text-[#B8860B] dark:text-[#C9A84C]' : 'text-[var(--text-primary)]'}`}>
                                                 {route.label}
                                             </span>
                                             <span className="text-[10px] font-mono text-[var(--text-muted)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded shrink-0">
                                                 /{route.key || ''}
                                             </span>
                                             {isSelected && (
-                                                <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-3.5 h-3.5 text-[#C9A84C] dark:text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                                 </svg>
                                             )}
                                         </div>
                                         {/* Row 2: SERP title — CSS truncate đủ, không cần JS slice */}
-                                        <div className="text-xs text-[#1a0dab] dark:text-blue-400 truncate mt-0.5 leading-tight">
+                                        <div className="text-xs text-[#1a0dab] dark:text-[#C9A84C] truncate mt-0.5 leading-tight">
                                             {cfg.title}
                                         </div>
                                         {/* Row 3: SERP description */}
@@ -314,7 +314,7 @@ const SerpPreview: React.FC<{
             {/* Google SERP Mockup */}
             <div className="bg-white dark:bg-slate-900 border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm font-sans">
                 <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <div className="w-6 h-6 bg-[#C9A84C] rounded-full flex items-center justify-center">
                         <span className="text-white text-2xs font-bold">G</span>
                     </div>
                     <span className="text-sm text-slate-500">Google Search</span>
@@ -328,7 +328,7 @@ const SerpPreview: React.FC<{
                 {/* Search Result Card */}
                 <div className="max-w-2xl">
                     <div className="flex items-center gap-2 mb-1">
-                        <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <div className="w-5 h-5 bg-[#FDF6E3] rounded-full flex items-center justify-center">
                             {ICONS.GLOBE}
                         </div>
                         <div>
@@ -351,7 +351,7 @@ const SerpPreview: React.FC<{
                         href={pageHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block text-xl text-[#1a0dab] dark:text-blue-400 font-normal hover:underline leading-tight mb-1"
+                        className="block text-xl text-[#1a0dab] dark:text-[#C9A84C] font-normal hover:underline leading-tight mb-1"
                         title={`Mở trang: ${pageHref}`}
                     >
                         {titleTrunc}{cfg.title.length > 60 ? '...' : ''}
@@ -370,7 +370,7 @@ const SerpPreview: React.FC<{
                     </div>
                     <div className="h-2 bg-[var(--glass-border)] rounded-full overflow-hidden">
                         <div
-                            className={`h-full rounded-full transition-all ${titleLen > 60 ? 'bg-amber-400' : titleLen < 30 ? 'bg-rose-400' : 'bg-emerald-500'}`}
+                            className={`h-full rounded-full transition-all ${titleLen > 60 ? 'bg-amber-400' : titleLen < 30 ? 'bg-rose-400' : 'bg-[#FDF6E3]0'}`}
                             style={{ width: `${Math.min(100, (titleLen / 60) * 100)}%` }}
                         />
                     </div>
@@ -385,7 +385,7 @@ const SerpPreview: React.FC<{
                     </div>
                     <div className="h-2 bg-[var(--glass-border)] rounded-full overflow-hidden">
                         <div
-                            className={`h-full rounded-full transition-all ${descLen > 160 ? 'bg-amber-400' : descLen < 120 ? 'bg-rose-400' : 'bg-emerald-500'}`}
+                            className={`h-full rounded-full transition-all ${descLen > 160 ? 'bg-amber-400' : descLen < 120 ? 'bg-rose-400' : 'bg-[#FDF6E3]0'}`}
                             style={{ width: `${Math.min(100, (descLen / 160) * 100)}%` }}
                         />
                     </div>
@@ -395,7 +395,7 @@ const SerpPreview: React.FC<{
                 </div>
             </div>
             {/* Tips */}
-            <div className="bg-indigo-50/60 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-4 text-xs text-indigo-700 dark:text-indigo-300 space-y-1">
+            <div className="bg-[#FDF6E3]/60 dark:bg-[#1C2B4A]/10 border border-[#FDF6E3] dark:border-[#1C2B4A]/30 rounded-xl p-4 text-xs text-[#B8860B] dark:text-[#C9A84C] space-y-1">
                 <p className="font-bold mb-1">💡 Hướng dẫn tối ưu</p>
                 <p>• <strong>Title:</strong> 30–60 ký tự. Đặt từ khóa chính ở đầu. Kết thúc bằng "- SGS LAND".</p>
                 <p>• <strong>Description:</strong> 120–160 ký tự. Chứa từ khóa chính và kêu gọi hành động.</p>
@@ -468,7 +468,7 @@ const MetaEditor: React.FC<{
     const isOverridden = (key: string) => !!overrides[key];
     return (
         <div className="space-y-4">
-            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được <strong className="font-semibold text-emerald-600">lưu lên server</strong> — Google và mạng xã hội sẽ thấy meta mới khi crawl lại.</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được <strong className="font-semibold text-[#C9A84C]">lưu lên server</strong> — Google và mạng xã hội sẽ thấy meta mới khi crawl lại.</p>
             {serverError && (
                 <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl px-3 py-2">{serverError}</div>
             )}
@@ -479,12 +479,12 @@ const MetaEditor: React.FC<{
                 const desc = getDesc(key);
                 const cfg = ROUTE_SEO[key];
                 return (
-                    <div key={key} className={`bg-[var(--bg-surface)] border rounded-2xl p-4 shadow-sm transition-all ${dirty ? 'border-indigo-300 shadow-indigo-100/50 dark:shadow-indigo-900/20' : 'border-[var(--glass-border)]'}`}>
+                    <div key={key} className={`bg-[var(--bg-surface)] border rounded-2xl p-4 shadow-sm transition-all ${dirty ? 'border-[#C9A84C] shadow-[#C9A84C]/50 dark:shadow-[#1C2B4A]/20' : 'border-[var(--glass-border)]'}`}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-sm text-[var(--text-primary)]">{label}</span>
                                 {cfg.noIndex && <span className="text-2xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full border border-[var(--glass-border)]">noindex</span>}
-                                {overridden && !dirty && <span className="text-2xs font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100">đã chỉnh</span>}
+                                {overridden && !dirty && <span className="text-2xs font-bold bg-[#FDF6E3] dark:bg-[#1C2B4A]/20 text-[#C9A84C] px-2 py-0.5 rounded-full border border-[#C9A84C]">đã chỉnh</span>}
                             </div>
                             <span className="text-2xs font-mono text-[var(--text-muted)]">/{key}</span>
                         </div>
@@ -498,7 +498,7 @@ const MetaEditor: React.FC<{
                                     type="text"
                                     value={title}
                                     onChange={e => handleChange(key, 'title', e.target.value)}
-                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] transition-all"
                                 />
                             </div>
                             <div>
@@ -510,7 +510,7 @@ const MetaEditor: React.FC<{
                                     value={desc}
                                     rows={2}
                                     onChange={e => handleChange(key, 'description', e.target.value)}
-                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all resize-none"
+                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] transition-all resize-none"
                                 />
                             </div>
                         </div>
@@ -520,7 +520,7 @@ const MetaEditor: React.FC<{
                                 <button
                                     onClick={() => handleSave(key)}
                                     disabled={serverSaving === key}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-2xs font-bold rounded-lg hover:bg-indigo-700 transition-colors active:scale-95 disabled:opacity-60"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#C9A84C] text-white text-2xs font-bold rounded-lg hover:bg-[#B8860B] transition-colors active:scale-95 disabled:opacity-60"
                                 >
                                     {serverSaving === key ? (
                                         <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Đang lưu…</>
@@ -646,18 +646,18 @@ const HealthChecklist: React.FC = () => {
     useEffect(() => { run(); }, [run]);
     const passCount = results.filter(r => r.status === 'pass').length;
     const score = results.length ? Math.round((passCount / results.length) * 100) : 0;
-    const scoreColor = score >= 90 ? 'text-emerald-600' : score >= 70 ? 'text-amber-500' : 'text-rose-500';
+    const scoreColor = score >= 90 ? 'text-[#C9A84C]' : score >= 70 ? 'text-amber-500' : 'text-rose-500';
     const statusIcon = (s: 'pass' | 'warn' | 'fail') =>
-        s === 'pass' ? <span className="text-emerald-500">{ICONS.CHECK}</span>
+        s === 'pass' ? <span className="text-[#C9A84C]0">{ICONS.CHECK}</span>
         : s === 'warn' ? <span className="text-amber-500">{ICONS.WARN}</span>
         : <span className="text-rose-500">{ICONS.ERROR}</span>;
     const statusBg = (s: 'pass' | 'warn' | 'fail') =>
-        s === 'pass' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
+        s === 'pass' ? 'bg-[#FDF6E3] dark:bg-[#B8860B]/10 border-[#C9A84C] dark:border-[#B8860B]/30'
         : s === 'warn' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30'
         : 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30';
     if (loading) return (
         <div className="flex items-center justify-center py-16 gap-3 text-[var(--text-secondary)]">
-            <div className="w-5 h-5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#C9A84C] border-t-[#C9A84C] rounded-full animate-spin" />
             <span className="text-sm font-medium">Đang kiểm tra 12 tín hiệu SEO...</span>
         </div>
     );
@@ -741,12 +741,12 @@ const StructuredData: React.FC = () => {
         setTimeout(() => setCopied(null), 2000);
     };
     const typeColor = (type: string) => {
-        if (type.includes('Organization')) return 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-100';
+        if (type.includes('Organization')) return 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/20 text-[#B8860B] dark:text-[#C9A84C] border-[#C9A84C]';
         if (type.includes('WebSite')) return 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-100';
-        if (type.includes('Software')) return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-100';
+        if (type.includes('Software')) return 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/20 text-[#B8860B] dark:text-[#C9A84C] border-[#C9A84C]';
         if (type.includes('FAQ')) return 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-100';
-        if (type.includes('Breadcrumb')) return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-100';
-        if (type.includes('Service')) return 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border-teal-100';
+        if (type.includes('Breadcrumb')) return 'bg-[#FDF6E3] dark:bg-[#B8860B]/20 text-[#B8860B] dark:text-[#C9A84C] border-[#C9A84C]';
+        if (type.includes('Service')) return 'bg-[#FDF6E3] dark:bg-[#B8860B]/20 text-[#B8860B] dark:text-[#C9A84C] border-[#C9A84C]';
         return 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200';
     };
     if (schemas.length === 0) return (
@@ -772,7 +772,7 @@ const StructuredData: React.FC = () => {
                         <span className={`shrink-0 text-2xs font-bold px-2.5 py-1 rounded-full border ${typeColor(s.type)} max-w-[60%] truncate`}>{s.type}</span>
                         <button
                             onClick={() => handleCopy(s.json, idx)}
-                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-2xs font-bold text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-2xs font-bold text-[var(--text-secondary)] hover:text-[#C9A84C] hover:bg-[#FDF6E3] dark:hover:bg-[#1C2B4A]/20 rounded-lg transition-colors"
                         >
                             {copied === idx ? ICONS.CHECK : ICONS.COPY}
                             {copied === idx ? 'Đã copy' : 'Copy'}
@@ -791,10 +791,10 @@ const StructuredData: React.FC = () => {
 };
 // ── External Tool Links ────────────────────────────────────────────────────────
 const EXTERNAL_TOOLS = [
-    { label: 'Google Search Console', url: 'https://search.google.com/search-console', color: 'text-blue-600' },
+    { label: 'Google Search Console', url: 'https://search.google.com/search-console', color: 'text-[#C9A84C]' },
     { label: 'PageSpeed Insights', url: 'https://pagespeed.web.dev/?url=https%3A%2F%2Fsgsland.vn', color: 'text-orange-600' },
-    { label: 'Rich Results Test', url: 'https://search.google.com/test/rich-results?url=https%3A%2F%2Fsgsland.vn', color: 'text-green-600' },
-    { label: 'Schema Markup Validator', url: 'https://validator.schema.org/', color: 'text-purple-600' },
+    { label: 'Rich Results Test', url: 'https://search.google.com/test/rich-results?url=https%3A%2F%2Fsgsland.vn', color: 'text-[#C9A84C]' },
+    { label: 'Schema Markup Validator', url: 'https://validator.schema.org/', color: 'text-[#C9A84C]' },
 ];
 // ── Helpers ─────────────────────────────────────────────────────────────────────
 // Apply stored overrides to the in-memory DOM JSON-LD so StructuredData always
@@ -871,7 +871,7 @@ const AgentRuns7Days: React.FC = () => {
     };
     const statusBadge = (s: Run['status']) => {
         const map: Record<Run['status'], string> = {
-            success: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+            success: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]',
             error:   'bg-rose-100 text-rose-700 border-rose-300',
             skipped: 'bg-slate-100 text-slate-600 border-slate-300',
             running: 'bg-amber-100 text-amber-700 border-amber-300',
@@ -903,7 +903,7 @@ const AgentRuns7Days: React.FC = () => {
                         <option value="skipped">skipped</option>
                         <option value="running">running</option>
                     </select>
-                    <button onClick={load} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Tải lại</button>
+                    <button onClick={load} className="text-2xs font-bold text-[#C9A84C] hover:underline">{ICONS.RESET} Tải lại</button>
                 </div>
             </div>
 
@@ -917,7 +917,7 @@ const AgentRuns7Days: React.FC = () => {
                             <tr>
                                 <th className="text-left px-2 py-1.5 font-bold">Agent</th>
                                 <th className="text-right px-2 py-1.5 font-bold">Total</th>
-                                <th className="text-right px-2 py-1.5 font-bold text-emerald-700">✓</th>
+                                <th className="text-right px-2 py-1.5 font-bold text-[#B8860B]">✓</th>
                                 <th className="text-right px-2 py-1.5 font-bold text-rose-700">✗</th>
                                 <th className="text-right px-2 py-1.5 font-bold text-slate-600">skip</th>
                                 <th className="text-right px-2 py-1.5 font-bold text-amber-700">run</th>
@@ -930,7 +930,7 @@ const AgentRuns7Days: React.FC = () => {
                                 <tr key={a.agentName} className="border-t border-[var(--border)]">
                                     <td className="px-2 py-1 font-mono">{a.agentName}</td>
                                     <td className="px-2 py-1 text-right">{a.total}</td>
-                                    <td className="px-2 py-1 text-right text-emerald-700 font-bold">{a.success}</td>
+                                    <td className="px-2 py-1 text-right text-[#B8860B] font-bold">{a.success}</td>
                                     <td className={`px-2 py-1 text-right font-bold ${a.errors > 0 ? 'text-rose-700' : 'text-[var(--text-tertiary)]'}`}>{a.errors}</td>
                                     <td className="px-2 py-1 text-right text-slate-600">{a.skipped}</td>
                                     <td className="px-2 py-1 text-right text-amber-700">{a.running}</td>
@@ -1077,7 +1077,7 @@ const GeoMonitor30Days: React.FC = () => {
                     {latest && (
                         <span className="ml-2 text-2xs font-normal text-[var(--text-tertiary)]">
                             (cập nhật lần cuối: {latest.date}{delta != null && (
-                                <span className={`ml-1 font-bold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-rose-600' : ''}`}>
+                                <span className={`ml-1 font-bold ${delta > 0 ? 'text-[#C9A84C]' : delta < 0 ? 'text-rose-600' : ''}`}>
                                     {delta > 0 ? '▲' : delta < 0 ? '▼' : ''}{Math.abs(delta)}%
                                 </span>
                             )})
@@ -1085,11 +1085,11 @@ const GeoMonitor30Days: React.FC = () => {
                     )}
                 </h3>
                 <div className="flex items-center gap-2">
-                    <button onClick={load} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Tải lại</button>
+                    <button onClick={load} className="text-2xs font-bold text-[#C9A84C] hover:underline">{ICONS.RESET} Tải lại</button>
                     <button
                         onClick={runNow}
                         disabled={running}
-                        className="px-2.5 py-1 text-2xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-wait"
+                        className="px-2.5 py-1 text-2xs font-bold rounded-md bg-[#C9A84C] text-white hover:bg-[#B8860B] disabled:opacity-60 disabled:cursor-wait"
                         title="Chạy ngay snapshot mới (thay vì chờ QStash 4:30 SA ICT hàng ngày)">
                         {running ? 'Đang chạy...' : 'Chạy snapshot ngay'}
                     </button>
@@ -1211,12 +1211,12 @@ const GeoMonitor30Days: React.FC = () => {
                                             <tr key={c.domain} className="border-b border-[var(--glass-border)]">
                                                 <td className="py-1.5 px-2 font-mono text-2xs">{c.domain}</td>
                                                 <td className="text-center px-2">
-                                                    <span className={c.reachable ? 'text-emerald-600' : 'text-rose-600'}>{c.reachable ? '✓' : '✗'}</span>
+                                                    <span className={c.reachable ? 'text-[#C9A84C]' : 'text-rose-600'}>{c.reachable ? '✓' : '✗'}</span>
                                                 </td>
                                                 <td className="text-center px-2 text-[var(--text-tertiary)]">{c.status ?? '—'}</td>
                                                 <td className="text-center px-2 text-[var(--text-tertiary)]">{c.responseMs ? `${c.responseMs}ms` : '—'}</td>
                                                 <td className="text-center px-2">
-                                                    <span className={`inline-block px-1.5 py-0.5 rounded text-2xs font-bold ${c.brandLinkOnHomepage ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                    <span className={`inline-block px-1.5 py-0.5 rounded text-2xs font-bold ${c.brandLinkOnHomepage ? 'bg-[#FDF6E3] text-[#B8860B]' : 'bg-gray-100 text-gray-500'}`}>
                                                         {c.brandLinkOnHomepage ? 'Có' : '—'}
                                                     </span>
                                                 </td>
@@ -1254,14 +1254,14 @@ interface TierStatus {
 
 const TIER_COLORS: Record<'S' | 'A' | 'B' | 'C', string> = {
     S: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border border-violet-300 dark:border-violet-700',
-    A: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700',
+    A: 'bg-[#FDF6E3] text-[#B8860B] dark:bg-[#B8860B]/30 dark:text-[#C9A84C] border border-[#C9A84C] dark:border-[#B8860B]',
     B: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-300 dark:border-amber-700',
     C: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border border-rose-300 dark:border-rose-700',
 };
 
 const TIER_BAR_COLORS: Record<'S' | 'A' | 'B' | 'C', string> = {
     S: 'bg-violet-500',
-    A: 'bg-emerald-500',
+    A: 'bg-[#FDF6E3]0',
     B: 'bg-amber-400',
     C: 'bg-rose-500',
 };
@@ -1340,7 +1340,7 @@ const GeoTierDashboard: React.FC = () => {
                     </div>
                     <button
                         onClick={loadTierStatus}
-                        className="p-2 rounded-lg bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors"
+                        className="p-2 rounded-lg bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] text-[var(--text-tertiary)] hover:text-[#C9A84C] transition-colors"
                         title="Tải lại"
                     >
                         {ICONS.RESET}
@@ -1423,7 +1423,7 @@ const GeoTierDashboard: React.FC = () => {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2.5 py-1 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg text-2xs font-bold text-indigo-600 dark:text-indigo-400 hover:border-indigo-400 transition-all"
+                        className="flex items-center gap-1 px-2.5 py-1 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg text-2xs font-bold text-[#C9A84C] dark:text-[#C9A84C] hover:border-[#C9A84C] transition-all"
                     >
                         {link.label} {ICONS.EXT}
                     </a>
@@ -1598,7 +1598,7 @@ const GeoAiSearch: React.FC = () => {
     // ── Render helpers ───────────────────────────────────────────────────────
     const StatusBadge: React.FC<{ ok: boolean; label?: string }> = ({ ok, label }) => (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold ${
-            ok ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+            ok ? 'bg-[#FDF6E3] text-[#B8860B] dark:bg-[#B8860B]/20 dark:text-[#C9A84C]'
                : 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300'
         }`}>{ok ? ICONS.CHECK : ICONS.ERROR}{label ?? (ok ? 'OK' : 'Thiếu')}</span>
     );
@@ -1610,7 +1610,7 @@ const GeoAiSearch: React.FC = () => {
             <section>
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">1. Trạng Thái AI Visibility</h3>
-                    <button onClick={loadStatus} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Tải lại</button>
+                    <button onClick={loadStatus} className="text-2xs font-bold text-[#C9A84C] hover:underline">{ICONS.RESET} Tải lại</button>
                 </div>
                 {statusLoading ? (
                     <div className="text-xs text-[var(--text-tertiary)] animate-pulse">Đang kiểm tra...</div>
@@ -1622,18 +1622,18 @@ const GeoAiSearch: React.FC = () => {
                             <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-2">File hướng dẫn cho AI crawler</div>
                             <div className="space-y-1.5 text-xs">
                                 <div className="flex items-center justify-between gap-2">
-                                    <a href="/llms.txt" target="_blank" rel="noopener" className="text-indigo-600 hover:underline font-mono">/llms.txt</a>
+                                    <a href="/llms.txt" target="_blank" rel="noopener" className="text-[#C9A84C] hover:underline font-mono">/llms.txt</a>
                                     <span className="text-[var(--text-tertiary)]">{(status.llmsTxt.bytes / 1024).toFixed(1)} KB</span>
                                     <StatusBadge ok={status.llmsTxt.ok} />
                                 </div>
                                 <div className="flex items-center justify-between gap-2">
-                                    <a href="/llms-full.txt" target="_blank" rel="noopener" className="text-indigo-600 hover:underline font-mono">/llms-full.txt</a>
+                                    <a href="/llms-full.txt" target="_blank" rel="noopener" className="text-[#C9A84C] hover:underline font-mono">/llms-full.txt</a>
                                     <span className="text-[var(--text-tertiary)]">{(status.llmsFullTxt.bytes / 1024).toFixed(1)} KB</span>
                                     <StatusBadge ok={status.llmsFullTxt.ok} />
                                 </div>
                                 {status.sitemaps.map((s) => (
                                     <div key={s.url} className="flex items-center justify-between gap-2">
-                                        <a href={s.url} target="_blank" rel="noopener" className="text-indigo-600 hover:underline font-mono">{s.url}</a>
+                                        <a href={s.url} target="_blank" rel="noopener" className="text-[#C9A84C] hover:underline font-mono">{s.url}</a>
                                         <StatusBadge ok={s.ok} />
                                     </div>
                                 ))}
@@ -1666,8 +1666,8 @@ const GeoAiSearch: React.FC = () => {
                     <span className="text-2xs text-[var(--text-tertiary)]">{keywords.length} từ khóa</span>
                 </div>
                 {keywords.length === 0 && !kwLoading && (
-                    <div className="mb-3 p-3 rounded-xl border border-indigo-300 bg-indigo-50/70 dark:bg-indigo-900/15 flex items-start gap-3">
-                        <div className="flex-1 text-xs text-indigo-900 dark:text-indigo-200">
+                    <div className="mb-3 p-3 rounded-xl border border-[#C9A84C] bg-[#FDF6E3]/70 dark:bg-[#1C2B4A]/15 flex items-start gap-3">
+                        <div className="flex-1 text-xs text-[#1C2B4A] dark:text-[#C9A84C]">
                             <div className="font-bold mb-0.5">💡 Bắt đầu nhanh — Nạp bộ 20 từ khoá chiến lược</div>
                             <div className="text-2xs opacity-90">Bao gồm: BĐS TP.HCM/Đồng Nai/Long Thành/Bình Dương, định giá BĐS, Aqua City, Izumi, Vinhomes Grand Park/Central Park/<strong>Cần Giờ</strong>, Global City, Masterise, <strong>Vạn Phúc City</strong>, <strong>Sala Đại Quang Minh</strong>, Thủ Thiêm, Grand Manhattan, Sơn Kim. Chỉ thêm nếu chưa có (an toàn để bấm nhiều lần).</div>
                         </div>
@@ -1683,7 +1683,7 @@ const GeoAiSearch: React.FC = () => {
                                 } catch { alert('Lỗi khi nạp bộ mặc định'); }
                                 finally { setSeeding(false); }
                             }}
-                            className="shrink-0 px-3 py-1.5 text-xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-wait">
+                            className="shrink-0 px-3 py-1.5 text-xs font-bold rounded-md bg-[#C9A84C] text-white hover:bg-[#B8860B] disabled:opacity-60 disabled:cursor-wait">
                             {seeding ? 'Đang nạp...' : 'Nạp 20 từ khoá'}
                         </button>
                     </div>
@@ -1707,7 +1707,7 @@ const GeoAiSearch: React.FC = () => {
                         placeholder="Ghi chú" maxLength={500}
                         className="lg:col-span-4 px-2 py-1.5 text-xs rounded-md border border-[var(--glass-border)] bg-[var(--bg-surface)]" />
                     <button type="submit" disabled={saving}
-                        className="lg:col-span-2 px-3 py-1.5 text-xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
+                        className="lg:col-span-2 px-3 py-1.5 text-xs font-bold rounded-md bg-[#C9A84C] text-white hover:bg-[#B8860B] disabled:opacity-50">
                         {saving ? 'Đang lưu...' : (saveMsg || 'Thêm / Cập nhật')}
                     </button>
                 </form>
@@ -1740,13 +1740,13 @@ const GeoAiSearch: React.FC = () => {
                                         <tr key={kw.id} className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]">
                                             <td className="py-2 px-2">
                                                 <div className="font-bold text-[var(--text-primary)]">{kw.keyword}</div>
-                                                {kw.targetUrl && <a href={kw.targetUrl} target="_blank" rel="noopener" className="text-2xs text-indigo-600 hover:underline truncate block max-w-[280px]">{kw.targetUrl}</a>}
+                                                {kw.targetUrl && <a href={kw.targetUrl} target="_blank" rel="noopener" className="text-2xs text-[#C9A84C] hover:underline truncate block max-w-[280px]">{kw.targetUrl}</a>}
                                                 {kw.notes && <div className="text-2xs text-[var(--text-tertiary)] mt-0.5">{kw.notes}</div>}
                                             </td>
                                             <td className="text-center px-2">
                                                 <span className={`inline-block px-2 py-0.5 rounded font-bold ${
                                                     kw.currentPosition === null ? 'bg-gray-100 text-gray-500'
-                                                    : reachedTop ? 'bg-emerald-100 text-emerald-700'
+                                                    : reachedTop ? 'bg-[#FDF6E3] text-[#B8860B]'
                                                     : kw.currentPosition <= 10 ? 'bg-amber-100 text-amber-700'
                                                     : 'bg-rose-100 text-rose-700'
                                                 }`}>{kw.currentPosition ?? '—'}</span>
@@ -1758,7 +1758,7 @@ const GeoAiSearch: React.FC = () => {
                                                     {(['chatgpt', 'gemini', 'claude', 'perplexity'] as const).map((engine) => {
                                                         const v = kw.aiVisibility[engine];
                                                         const label = engine[0].toUpperCase();
-                                                        const cls = v === true ? 'bg-emerald-500 text-white'
+                                                        const cls = v === true ? 'bg-[#FDF6E3]0 text-white'
                                                                   : v === false ? 'bg-rose-300 text-rose-900'
                                                                   : 'bg-gray-200 text-gray-500';
                                                         const busy = updatingId === kw.id;
@@ -1802,11 +1802,11 @@ const GeoAiSearch: React.FC = () => {
                     <section>
                         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                             <h3 className="text-sm font-bold text-[var(--text-primary)]">3. Checklist Sẵn Sàng Cho AI Trích Dẫn ({dPass}/{dTotal})</h3>
-                            <button onClick={() => { setAuditResult(null); setAuditError(null); runChecklist(); }} className="text-2xs font-bold text-indigo-600 hover:underline">{ICONS.RESET} Chạy lại / Quay về DOM admin</button>
+                            <button onClick={() => { setAuditResult(null); setAuditError(null); runChecklist(); }} className="text-2xs font-bold text-[#C9A84C] hover:underline">{ICONS.RESET} Chạy lại / Quay về DOM admin</button>
                         </div>
                         {/* URL Audit input — kiểm tra trang công khai bất kỳ */}
-                        <div className="p-3 mb-3 rounded-lg border border-indigo-300 bg-indigo-50/70 dark:bg-indigo-900/15">
-                            <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200 mb-2">🔎 Kiểm tra trang công khai (server-side fetch + parse HTML thật)</div>
+                        <div className="p-3 mb-3 rounded-lg border border-[#C9A84C] bg-[#FDF6E3]/70 dark:bg-[#1C2B4A]/15">
+                            <div className="text-xs font-bold text-[#1C2B4A] dark:text-[#C9A84C] mb-2">🔎 Kiểm tra trang công khai (server-side fetch + parse HTML thật)</div>
                             <div className="flex flex-wrap gap-2 items-center">
                                 <input
                                     type="text"
@@ -1826,16 +1826,16 @@ const GeoAiSearch: React.FC = () => {
                                             setAuditError(err?.message || 'Lỗi không xác định');
                                         } finally { setAuditing(false); }
                                     }}
-                                    className="px-3 py-1.5 text-xs font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60">
+                                    className="px-3 py-1.5 text-xs font-bold rounded-md bg-[#C9A84C] text-white hover:bg-[#B8860B] disabled:opacity-60">
                                     {auditing ? 'Đang kiểm tra...' : 'Kiểm tra URL này'}
                                 </button>
                             </div>
-                            <div className="text-2xs text-indigo-800 dark:text-indigo-300 mt-1.5 opacity-90">
+                            <div className="text-2xs text-[#1C2B4A] dark:text-[#C9A84C] mt-1.5 opacity-90">
                                 Gợi ý: <code>/du-an/vinhomes-can-gio</code>, <code>/du-an/sala</code>, <code>/du-an/van-phuc-city</code>, <code>/bat-dong-san-long-thanh</code>, <code>/ai-valuation</code>
                             </div>
                             {auditError && <div className="text-2xs text-rose-700 mt-1.5 font-bold">❌ {auditError}</div>}
                             {auditResult && (
-                                <div className="text-2xs text-emerald-800 dark:text-emerald-300 mt-1.5">
+                                <div className="text-2xs text-[#B8860B] dark:text-[#C9A84C] mt-1.5">
                                     ✓ Đã kiểm tra: <strong className="break-all">{auditResult.target}</strong> — {new Date(auditResult.fetchedAt).toLocaleString('vi-VN')}
                                 </div>
                             )}
@@ -1850,18 +1850,18 @@ const GeoAiSearch: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {displayItems.map((c: any) => (
                                 <div key={c.id} className={`p-2.5 rounded-lg border text-xs ${
-                                    c.status === 'pass' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                    c.status === 'pass' ? 'border-[#C9A84C] bg-[#FDF6E3]/50 dark:bg-[#B8860B]/10'
                                     : c.status === 'warn' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-900/10'
                                     : 'border-rose-200 bg-rose-50/50 dark:bg-rose-900/10'
                                 }`}>
                                     <div className="flex items-start gap-2">
-                                        <span className={`mt-0.5 ${c.status === 'pass' ? 'text-emerald-600' : c.status === 'warn' ? 'text-amber-600' : 'text-rose-600'}`}>
+                                        <span className={`mt-0.5 ${c.status === 'pass' ? 'text-[#C9A84C]' : c.status === 'warn' ? 'text-amber-600' : 'text-rose-600'}`}>
                                             {c.status === 'pass' ? ICONS.CHECK : c.status === 'warn' ? ICONS.WARN : ICONS.ERROR}
                                         </span>
                                         <div className="min-w-0 flex-1">
                                             <div className="font-bold text-[var(--text-primary)]">{c.label}</div>
                                             <div className="text-2xs text-[var(--text-tertiary)] mt-0.5 break-all">{c.detail}</div>
-                                            {c.tip && <div className="text-2xs text-indigo-600 mt-1">💡 {c.tip}</div>}
+                                            {c.tip && <div className="text-2xs text-[#C9A84C] mt-1">💡 {c.tip}</div>}
                                         </div>
                                     </div>
                                 </div>
@@ -1944,7 +1944,7 @@ export const SeoManager: React.FC = () => {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                            <div className="w-9 h-9 bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 text-[#C9A84C] rounded-xl flex items-center justify-center shrink-0">
                                 {ICONS.GLOBE}
                             </div>
                             <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Quản Lý SEO</h2>
@@ -1959,7 +1959,7 @@ export const SeoManager: React.FC = () => {
                                 href={tool.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-2xs font-bold hover:border-indigo-300 hover:shadow-sm transition-all ${tool.color}`}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-2xs font-bold hover:border-[#C9A84C] hover:shadow-sm transition-all ${tool.color}`}
                             >
                                 {tool.label} {ICONS.EXT}
                             </a>
@@ -1984,7 +1984,7 @@ export const SeoManager: React.FC = () => {
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                                 activeTab === tab.id
-                                    ? 'bg-[var(--bg-surface)] shadow text-indigo-600 dark:text-indigo-400'
+                                    ? 'bg-[var(--bg-surface)] shadow text-[#C9A84C] dark:text-[#C9A84C]'
                                     : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                             }`}
                         >

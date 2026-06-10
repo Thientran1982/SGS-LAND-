@@ -118,7 +118,7 @@ export const Billing: React.FC = () => {
                             <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{subscription.paymentMethod.brand}</div>
                             <div className="text-sm font-mono font-bold text-[var(--text-secondary)]">•••• {subscription.paymentMethod.last4}</div>
                         </div>
-                        <button className="text-xs font-bold text-indigo-600 hover:underline ml-2">{t('billing.update_card')}</button>
+                        <button className="text-xs font-bold text-[#C9A84C] hover:underline ml-2">{t('billing.update_card')}</button>
                     </div>
                 )}
             </div>
@@ -127,7 +127,7 @@ export const Billing: React.FC = () => {
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col">
                     <h3 className="font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                         {t('billing.current_usage')}
-                        <span className="bg-emerald-50 text-emerald-600 text-xs2 px-2 py-0.5 rounded-full border border-emerald-100 uppercase">
+                        <span className="bg-[#FDF6E3] text-[#C9A84C] text-xs2 px-2 py-0.5 rounded-full border border-[#C9A84C] uppercase">
                             {t(`billing.plan_${currentPlan.name.toLowerCase()}`)}
                         </span>
                     </h3>
@@ -138,7 +138,7 @@ export const Billing: React.FC = () => {
                                 <span className="font-bold text-[var(--text-primary)]">{usage?.seatsUsed ?? 0} / {currentPlan.limits.seats}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500" style={{ width: `${Math.min(100, ((usage?.seatsUsed ?? 0) / currentPlan.limits.seats) * 100)}%` }}></div>
+                                <div className="h-full bg-[#FDF6E3]0" style={{ width: `${Math.min(100, ((usage?.seatsUsed ?? 0) / currentPlan.limits.seats) * 100)}%` }}></div>
                             </div>
                         </div>
                         <div>
@@ -147,7 +147,7 @@ export const Billing: React.FC = () => {
                                 <span className="font-bold text-[var(--text-primary)]">{usage?.emailsSent ?? 0} / {currentPlan.limits.emailsPerMonth}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-purple-500" style={{ width: `${Math.min(100, ((usage?.emailsSent ?? 0) / currentPlan.limits.emailsPerMonth) * 100)}%` }}></div>
+                                <div className="h-full bg-[#FDF6E3]0" style={{ width: `${Math.min(100, ((usage?.emailsSent ?? 0) / currentPlan.limits.emailsPerMonth) * 100)}%` }}></div>
                             </div>
                         </div>
                         <div>
@@ -170,12 +170,12 @@ export const Billing: React.FC = () => {
                     {(Object.values(PLANS) as Plan[]).map((plan) => {
                         const isCurrent = plan.id === subscription?.planId;
                         return (
-                            <div key={plan.id} className={`p-6 rounded-[24px] border flex flex-col transition-all ${isCurrent ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:shadow-lg hover:-translate-y-1'}`}>
+                            <div key={plan.id} className={`p-6 rounded-[24px] border flex flex-col transition-all ${isCurrent ? 'bg-[#FDF6E3] border-[#C9A84C] shadow-sm' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:shadow-lg hover:-translate-y-1'}`}>
                                 <div className="flex justify-between items-start mb-4">
-                                    <h4 className={`font-bold ${isCurrent ? 'text-indigo-700' : 'text-[var(--text-primary)]'}`}>
+                                    <h4 className={`font-bold ${isCurrent ? 'text-[#B8860B]' : 'text-[var(--text-primary)]'}`}>
                                         {t(`billing.plan_${plan.name.toLowerCase()}`)}
                                     </h4>
-                                    {isCurrent && <div className="text-indigo-600 bg-[var(--bg-surface)] p-1 rounded-full shadow-sm">{ICONS.CHECK}</div>}
+                                    {isCurrent && <div className="text-[#C9A84C] bg-[var(--bg-surface)] p-1 rounded-full shadow-sm">{ICONS.CHECK}</div>}
                                 </div>
                                 <div className="text-2xl font-extrabold text-[var(--text-primary)] mb-1">
                                     {formatCurrency(plan.price)}
@@ -186,7 +186,7 @@ export const Billing: React.FC = () => {
                                 <ul className="space-y-3 mb-8 flex-1">
                                     {plan.features.map((f, i) => (
                                         <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                                            <span className="text-indigo-500 mt-0.5">{ICONS.CHECK}</span>
+                                            <span className="text-[#C9A84C]0 mt-0.5">{ICONS.CHECK}</span>
                                             {t(f)}
                                         </li>
                                     ))}
@@ -194,7 +194,7 @@ export const Billing: React.FC = () => {
                                 <button
                                     disabled={isCurrent || processingPlan === plan.id}
                                     onClick={() => !isCurrent && setUpgradeConfirmPlan(plan.id)}
-                                    className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600 cursor-pointer'}`}
+                                    className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-[#FDF6E3] text-[#C9A84C] border border-[#C9A84C]' : 'bg-slate-900 text-white hover:bg-[#C9A84C] cursor-pointer'}`}
                                 >
                                     {processingPlan === plan.id ? '…' : isCurrent ? t('billing.current_plan') : t('billing.upgrade_btn')}
                                 </button>
@@ -242,14 +242,14 @@ export const Billing: React.FC = () => {
                                             <td className="py-3 pr-4 text-[var(--text-tertiary)]">{dateStr}</td>
                                             <td className="py-3 pr-4 font-bold text-[var(--text-primary)]">${anyInv.amount ?? 0}</td>
                                             <td className="py-3 pr-4">
-                                                <span className={`text-xs3 font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                                                <span className={`text-xs3 font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-[#FDF6E3] text-[#C9A84C] border border-[#C9A84C]' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                                                     {isPaid ? t('billing.status_paid') : t('billing.status_unpaid')}
                                                 </span>
                                             </td>
                                             <td className="py-3">
                                                 <button
                                                     onClick={() => handleDownloadInvoice(inv)}
-                                                    className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                    className="flex items-center gap-1 text-xs font-bold text-[#C9A84C] hover:text-[#1C2B4A] transition-colors"
                                                 >
                                                     {ICONS.DOWNLOAD} {t('billing.download_csv')}
                                                 </button>
@@ -279,7 +279,7 @@ export const Billing: React.FC = () => {
                     role="status"
                     aria-live="polite"
                     aria-atomic="true"
-                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
+                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
                 >
                     <span className="text-sm">{toast.type === 'success' ? '✓' : '✕'}</span>
                     <span className="font-bold text-sm">{toast.msg}</span>

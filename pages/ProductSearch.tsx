@@ -24,7 +24,7 @@ const ICONS = {
     BED: <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 01 1v4a1 1 0 001 1m-6 0h6" /></svg>,
     HEART_FILLED: <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3.25 7.688 3.25c1.544 0 3.04.99 3.812 2.55.242.49.878.49 1.12 0C13.272 4.24 14.768 3.25 16.312 3.25c2.974 0 5.438 2.072 5.438 5.002 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>,
     HEART_OUTLINE: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
-    VERIFIED: <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" /></svg>,
+    VERIFIED: <svg className="w-3.5 h-3.5 text-[#C9A84C]0" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" /></svg>,
     FILTER: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
@@ -352,7 +352,7 @@ export const ProductSearch: React.FC = () => {
         <div className="h-[100dvh] flex flex-col bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] overflow-hidden relative">
             {toast && (
                 <div className="fixed top-20 right-6 z-[100] bg-slate-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-bold animate-enter flex items-center gap-2">
-                    <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                    <svg className="w-4 h-4 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
                     {toast.msg}
                 </div>
             )}
@@ -362,23 +362,23 @@ export const ProductSearch: React.FC = () => {
                     {/* Top Row: Back | Logo | Search | Login — single row on all screen sizes */}
                     <div className="px-3 md:px-6 py-2.5 flex items-center gap-2 md:gap-3">
                         {/* Back button */}
-                        <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0">
+                        <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-[#C9A84C] transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0">
                             {ICONS.BACK}
                         </button>
                         {/* Logo — icon only on mobile, icon+name on desktop */}
                         <div onClick={handleHome} className="cursor-pointer shrink-0 flex items-center gap-2">
-                            <Logo className="w-6 h-6 md:w-7 md:h-7 text-indigo-600" />
+                            <Logo className="w-6 h-6 md:w-7 md:h-7 text-[#C9A84C]" />
                             <span className="font-bold text-base tracking-tight hidden md:inline">SGS<span className="text-slate-400">MARKET</span></span>
                         </div>
                         {/* Search bar — flex-1, fills remaining space */}
                         <div className="flex-1 min-w-0 relative group">
-                            <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                            <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#C9A84C] transition-colors">
                                 {ICONS.SEARCH}
                             </div>
                             <input
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
-                                className="w-full pl-10 pr-8 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                                className="w-full pl-10 pr-8 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                                 placeholder={t('search.placeholder')}
                             />
                             {query && (
@@ -400,10 +400,10 @@ export const ProductSearch: React.FC = () => {
                         <div ref={filterContainerRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full cursor-grab active:cursor-grabbing select-none pr-4">                            
                             {/* 1. View Switcher */}
                             <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-lg shrink-0 mr-2">
-                                <button onClick={() => setViewMode('GRID')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_GRID}</button>
-                                <button onClick={() => setViewMode('LIST')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_LIST}</button>
-                                <button onClick={() => setViewMode('BOARD')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_BOARD}</button>
-                                <button onClick={() => setViewMode('MAP')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_MAP}</button>
+                                <button onClick={() => setViewMode('GRID')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-[#C9A84C] shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_GRID}</button>
+                                <button onClick={() => setViewMode('LIST')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-[#C9A84C] shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_LIST}</button>
+                                <button onClick={() => setViewMode('BOARD')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-[#C9A84C] shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_BOARD}</button>
+                                <button onClick={() => setViewMode('MAP')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-[#C9A84C] shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_MAP}</button>
                             </div>
                             <div className="w-px h-6 bg-slate-200 mx-2 shrink-0"></div>
                             {/* 2. Filters */}
@@ -418,7 +418,7 @@ export const ProductSearch: React.FC = () => {
                                 {showFavoritesOnly ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE} 
                                 <span className="hidden sm:inline">{t('favorites.title')}</span>
                             </button>
-                            <button onClick={() => setShowVerifiedOnly(!showVerifiedOnly)} className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showVerifiedOnly ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--glass-border)]'}`}>
+                            <button onClick={() => setShowVerifiedOnly(!showVerifiedOnly)} className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showVerifiedOnly ? 'bg-[#FDF6E3] border-[#C9A84C] text-[#C9A84C]' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--glass-border)]'}`}>
                                 {ICONS.VERIFIED} <span className="hidden sm:inline">{t('inventory.verified')}</span>
                             </button>
                             {hasActiveFilters && (
@@ -455,7 +455,7 @@ export const ProductSearch: React.FC = () => {
                     <a
                         key={href}
                         href={href}
-                        className="shrink-0 text-xs font-medium px-3 py-1 rounded-full border border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all bg-[var(--glass-surface)] whitespace-nowrap"
+                        className="shrink-0 text-xs font-medium px-3 py-1 rounded-full border border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[#C9A84C] hover:text-[#C9A84C] dark:hover:text-[#C9A84C] transition-all bg-[var(--glass-surface)] whitespace-nowrap"
                     >
                         {label}
                     </a>
@@ -468,7 +468,7 @@ export const ProductSearch: React.FC = () => {
                     <p className="text-slate-500 font-medium text-center">{t('common.error_loading')}</p>
                     <button
                         onClick={() => window.location.reload()}
-                        className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm"
+                        className="px-6 py-2.5 bg-[#C9A84C] text-white font-bold rounded-xl hover:bg-[#B8860B] transition-colors text-sm"
                     >
                         {t('common.retry')}
                     </button>
@@ -492,7 +492,7 @@ export const ProductSearch: React.FC = () => {
                             {/* Non-blocking loading chip — map stays fully interactive while data loads */}
                             {boardLoading && (
                                 <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-full px-4 py-2 pointer-events-none">
-                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin flex-shrink-0" />
+                                    <div className="w-4 h-4 rounded-full border-2 border-[#C9A84C] border-t-[#C9A84C] animate-spin flex-shrink-0" />
                                     <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">{t('common.loading')}</span>
                                 </div>
                             )}
@@ -500,7 +500,7 @@ export const ProductSearch: React.FC = () => {
                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-surface)]/80 backdrop-blur-sm z-10 gap-3">
                                     <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
                                     <p className="text-slate-400 font-medium">{t('common.no_results')}</p>
-                                    <button onClick={clearFilters} className="text-indigo-600 font-bold hover:underline text-sm">{t('search.clear_filters')}</button>
+                                    <button onClick={clearFilters} className="text-[#C9A84C] font-bold hover:underline text-sm">{t('search.clear_filters')}</button>
                                 </div>
                             )}
                         </div>
@@ -607,13 +607,13 @@ export const ProductSearch: React.FC = () => {
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-12 h-12 rounded-lg bg-[var(--glass-surface-hover)] overflow-hidden shrink-0 relative border border-[var(--glass-border)]">
                                                                     <img src={optimizedImageUrl(item.images?.[0], 96) || NO_IMAGE_URL} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async" width={48} height={48} onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
-                                                                    {item.isVerified && <div className="absolute bottom-0 right-0 p-0.5 bg-emerald-500 rounded-tl-md text-white flex items-center justify-center"><svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" /></svg></div>}
+                                                                    {item.isVerified && <div className="absolute bottom-0 right-0 p-0.5 bg-[#C9A84C] rounded-tl-md text-white flex items-center justify-center"><svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" /></svg></div>}
                                                                 </div>
                                                                 <div>
                                                                     <div className="font-bold text-[var(--text-primary)] text-sm mb-0.5 line-clamp-1 max-w-[200px] lg:max-w-[300px]">{item.title}</div>
                                                                     <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                                                                         <span className="lg:hidden truncate max-w-[150px]">{item.location}</span>
-                                                                        <span className={`px-1.5 py-0.5 rounded text-xs2 font-bold uppercase ${item.transaction === 'SALE' ? 'bg-indigo-50 text-indigo-600' : 'bg-purple-50 text-purple-600'}`}>
+                                                                        <span className={`px-1.5 py-0.5 rounded text-xs2 font-bold uppercase ${item.transaction === 'SALE' ? 'bg-[#FDF6E3] text-[#C9A84C]' : 'bg-[#FDF6E3] text-[#C9A84C]'}`}>
                                                                             {t(`transaction.${item.transaction}`)}
                                                                         </span>
                                                                     </div>
@@ -621,7 +621,7 @@ export const ProductSearch: React.FC = () => {
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-4 text-right font-mono font-bold text-[var(--text-primary)] whitespace-nowrap">{formatSmartPrice(item.price, t)}</td>
-                                                        <td className="px-4 py-4 text-right text-xs3 font-bold text-indigo-600">
+                                                        <td className="px-4 py-4 text-right text-xs3 font-bold text-[#C9A84C]">
                                                             {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
                                                         </td>
                                                         <td className="px-4 py-4 text-right text-sm text-[var(--text-secondary)] whitespace-nowrap">{item.area > 0 ? `${item.area} m²` : '--'}</td>
@@ -632,7 +632,7 @@ export const ProductSearch: React.FC = () => {
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-4 text-right">
-                                                            <button className="text-indigo-600 hover:text-indigo-800 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap">
+                                                            <button className="text-[#C9A84C] hover:text-[#1C2B4A] text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[#FDF6E3] transition-colors whitespace-nowrap">
                                                                 {t('common.learn_more')}
                                                             </button>
                                                         </td>
@@ -683,7 +683,7 @@ export const ProductSearch: React.FC = () => {
                                                 </div>
                                                     <div className="flex justify-between items-end mt-2">
                                                         <div>
-                                                            <div className="text-sm font-extrabold text-indigo-600 leading-none">
+                                                            <div className="text-sm font-extrabold text-[#C9A84C] leading-none">
                                                                 {formatSmartPrice(item.price, t)}
                                                             </div>
                                                             <div className="text-xs2 text-slate-400 mt-0.5 font-medium">
@@ -767,7 +767,7 @@ export const ProductSearch: React.FC = () => {
                                                             </button>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 mb-1.5">
-                                                            <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
+                                                            <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-[#C9A84C] bg-[#FDF6E3]' : 'text-[#C9A84C] bg-[#FDF6E3]'}`}>
                                                                 {t(`transaction.${item.transaction}`)}
                                                             </span>
                                                             <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
@@ -820,7 +820,7 @@ const EmptyState = ({ t, onClear }: any) => (
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
         <p className="text-slate-400 text-lg font-medium">{t('common.no_results')}</p>
-        <button onClick={onClear} className="mt-4 text-indigo-600 font-bold hover:underline">
+        <button onClick={onClear} className="mt-4 text-[#C9A84C] font-bold hover:underline">
             {t('search.clear_filters')}
         </button>
     </div>

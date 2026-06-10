@@ -136,9 +136,9 @@ const ARTICLES: Article[] = [
     },
 ];
 const CATEGORIES = [
-    { id: 'mua-ban-phap-ly', label: 'Mua Bán & Pháp Lý',  color: 'bg-indigo-50 text-indigo-600',  icon: ICONS.HOME },
-    { id: 'dinh-gia-ai',     label: 'Định Giá AI',          color: 'bg-emerald-50 text-emerald-600', icon: ICONS.AI },
-    { id: 'ky-gui',          label: 'Ký Gửi & Đăng Tin',    color: 'bg-blue-50 text-blue-600',      icon: ICONS.CONSIGN },
+    { id: 'mua-ban-phap-ly', label: 'Mua Bán & Pháp Lý',  color: 'bg-[#FDF6E3] text-[#C9A84C]',  icon: ICONS.HOME },
+    { id: 'dinh-gia-ai',     label: 'Định Giá AI',          color: 'bg-[#FDF6E3] text-[#C9A84C]', icon: ICONS.AI },
+    { id: 'ky-gui',          label: 'Ký Gửi & Đăng Tin',    color: 'bg-[#FDF6E3] text-[#C9A84C]',      icon: ICONS.CONSIGN },
     { id: 'lai-suat-vay',    label: 'Lãi Suất Vay',         color: 'bg-amber-50 text-amber-600',    icon: ICONS.BANK },
     { id: 'khu-vuc-hot',     label: 'Khu Vực Hot',          color: 'bg-rose-50 text-rose-600',      icon: ICONS.HOT },
     { id: 'dat-coc',         label: 'Đặt Cọc & Thanh Toán', color: 'bg-violet-50 text-violet-600',  icon: ICONS.DEPOSIT },
@@ -207,11 +207,11 @@ export const HelpCenter: React.FC = () => {
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-[#C9A84C] transition-colors min-h-[44px] shrink-0">
                         {ICONS.BACK} <span className="hidden sm:inline">Trang Chủ</span>
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
-                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0" />
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-[#C9A84C] shrink-0" />
                         <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">TRUNG TÂM HỖ TRỢ</span>
                     </div>
                     <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
@@ -221,18 +221,18 @@ export const HelpCenter: React.FC = () => {
             </div>
             {/* Hero Search */}
             <section className="bg-slate-900 py-20 px-6 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0D1829]/40 via-slate-900 to-slate-900" />
                 <div className="relative z-10 max-w-2xl mx-auto animate-enter">
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">Chúng tôi có thể giúp gì?</h1>
                     <p className="text-base text-slate-300 mb-8">27 câu hỏi thường gặp về mua bán BĐS, pháp lý, định giá AI, lãi suất vay và khu vực hot tại Việt Nam.</p>
                     <div className="relative group">
-                        <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                        <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#C9A84C] transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
                             value={searchQuery}
                             onChange={e => { setSearchQuery(e.target.value); setOpenArticleId(null); }}
-                            className="w-full h-14 pl-14 pr-12 rounded-2xl bg-white/10 text-white text-base shadow-2xl focus:ring-4 focus:ring-indigo-500/40 outline-none transition-all placeholder:text-slate-400 border border-white/10 focus:border-indigo-400 focus:bg-white/15"
+                            className="w-full h-14 pl-14 pr-12 rounded-2xl bg-white/10 text-white text-base shadow-2xl focus:ring-4 focus:ring-[#C9A84C]/40 outline-none transition-all placeholder:text-slate-400 border border-white/10 focus:border-[#C9A84C] focus:bg-white/15"
                             placeholder="Tìm kiếm: sổ hồng, vay ngân hàng, đặt cọc, Long Thành…"
                         />
                         {searchQuery && (
@@ -244,11 +244,11 @@ export const HelpCenter: React.FC = () => {
                 </div>
             </section>
             {/* User Guide Banner */}
-            <div className="bg-gradient-to-r from-emerald-900/60 to-slate-900 border-b border-emerald-800/40">
+            <div className="bg-gradient-to-r from-[#B8860B]/60 to-slate-900 border-b border-[#B8860B]/40">
                 <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                        <div className="w-9 h-9 rounded-xl bg-[#C9A84C]/20 border border-[#C9A84C]/30 flex items-center justify-center shrink-0">
+                            <svg className="w-5 h-5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                         </div>
                         <div>
                             <p className="text-sm font-bold text-white">Mới dùng SGS Land lần đầu?</p>
@@ -257,7 +257,7 @@ export const HelpCenter: React.FC = () => {
                     </div>
                     <a
                         href={`/#/huong-dan-su-dung`}
-                        className="shrink-0 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                        className="shrink-0 px-4 py-2 bg-[#C9A84C] hover:bg-[#C9A84C] text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
                     >
                         Xem hướng dẫn →
                     </a>
@@ -270,12 +270,12 @@ export const HelpCenter: React.FC = () => {
                         <button
                             key={cat.id}
                             onClick={() => { setActiveCategory(prev => prev === cat.id ? null : cat.id); setOpenArticleId(null); }}
-                            className={`bg-[var(--bg-surface)] p-5 rounded-2xl shadow-xl border transition-all text-left group hover:-translate-y-0.5 ${activeCategory === cat.id ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-[var(--glass-border)]'}`}
+                            className={`bg-[var(--bg-surface)] p-5 rounded-2xl shadow-xl border transition-all text-left group hover:-translate-y-0.5 ${activeCategory === cat.id ? 'border-[#C9A84C] ring-2 ring-[#C9A84C]' : 'border-[var(--glass-border)]'}`}
                         >
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${cat.color} group-hover:scale-110 transition-transform`}>
                                 {cat.icon}
                             </div>
-                            <p className={`font-bold text-sm ${activeCategory === cat.id ? 'text-indigo-600' : 'text-[var(--text-primary)]'}`}>{cat.label}</p>
+                            <p className={`font-bold text-sm ${activeCategory === cat.id ? 'text-[#C9A84C]' : 'text-[var(--text-primary)]'}`}>{cat.label}</p>
                             <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{ARTICLES.filter(a => a.cat === cat.id).length} bài viết</p>
                         </button>
                     ))}
@@ -291,7 +291,7 @@ export const HelpCenter: React.FC = () => {
                         {(activeCategory || searchQuery) && (
                             <button
                                 onClick={() => { setActiveCategory(null); setSearchQuery(''); setOpenArticleId(null); }}
-                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1"
+                                className="text-xs font-bold text-[#C9A84C] hover:text-[#1C2B4A] transition-colors flex items-center gap-1"
                             >
                                 {ICONS.X} Xóa lọc
                             </button>
@@ -309,16 +309,16 @@ export const HelpCenter: React.FC = () => {
                                         onClick={() => toggleArticle(article.id)}
                                         className="w-full flex items-center justify-between px-8 py-5 text-left hover:bg-[var(--glass-surface)] transition-colors group"
                                     >
-                                        <span className={`font-medium text-sm md:text-base pr-4 transition-colors ${isOpen ? 'text-indigo-600' : 'text-[var(--text-secondary)] group-hover:text-indigo-600'}`}>
+                                        <span className={`font-medium text-sm md:text-base pr-4 transition-colors ${isOpen ? 'text-[#C9A84C]' : 'text-[var(--text-secondary)] group-hover:text-[#C9A84C]'}`}>
                                             {article.q}
                                         </span>
-                                        <span className={`shrink-0 text-[var(--text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`}>
+                                        <span className={`shrink-0 text-[var(--text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#C9A84C]0' : ''}`}>
                                             {ICONS.CHEVRON_DOWN}
                                         </span>
                                     </button>
                                     {isOpen && (
                                         <div className="px-8 pb-6">
-                                            <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                                            <div className="p-5 bg-[#FDF6E3] border border-[#FDF6E3] rounded-xl text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                                                 {article.a}
                                             </div>
                                             {/* Micro-feedback */}
@@ -326,12 +326,12 @@ export const HelpCenter: React.FC = () => {
                                                 <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                                                     <span className="font-semibold text-[var(--text-secondary)]">Câu trả lời này có hữu ích?</span>
                                                     {fb ? (
-                                                        <span className="text-emerald-600 font-bold">Cảm ơn phản hồi của bạn!</span>
+                                                        <span className="text-[#C9A84C] font-bold">Cảm ơn phản hồi của bạn!</span>
                                                     ) : (
                                                         <>
                                                             <button
                                                                 onClick={() => submitFeedback(article.id, 'up')}
-                                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition"
+                                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#C9A84C] text-[#B8860B] hover:bg-[#FDF6E3] transition"
                                                                 aria-label="Hữu ích"
                                                             >
                                                                 {ICONS.THUMB_UP} Có
@@ -348,7 +348,7 @@ export const HelpCenter: React.FC = () => {
                                                 </div>
                                                 <p className="text-xs text-[var(--text-tertiary)]">
                                                     Cần hỗ trợ thêm?{' '}
-                                                    <button onClick={handleContact} className="text-indigo-600 font-bold hover:underline">Liên hệ SGS Land</button>
+                                                    <button onClick={handleContact} className="text-[#C9A84C] font-bold hover:underline">Liên hệ SGS Land</button>
                                                     {' '}hoặc <strong>info@sgsland.vn</strong>
                                                 </p>
                                             </div>
@@ -361,7 +361,7 @@ export const HelpCenter: React.FC = () => {
                     ) : (
                         <div className="text-center py-16 px-6">
                             <p className="text-[var(--text-tertiary)] text-base">Không tìm thấy kết quả nào cho <strong>"{searchQuery}"</strong></p>
-                            <button onClick={handleContact} className="mt-4 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                            <button onClick={handleContact} className="mt-4 px-5 py-2.5 bg-[#C9A84C] text-white text-sm font-bold rounded-xl hover:bg-[#B8860B] transition-colors">
                                 Gửi câu hỏi đến đội ngũ hỗ trợ
                             </button>
                         </div>
@@ -372,7 +372,7 @@ export const HelpCenter: React.FC = () => {
                     <p className="text-[var(--text-tertiary)] mb-4 text-sm">Không tìm thấy nội dung bạn cần?</p>
                     <button
                         onClick={handleContact}
-                        className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95"
+                        className="px-8 py-3 bg-[#C9A84C] text-white font-bold rounded-xl shadow-lg hover:bg-[#B8860B] transition-all active:scale-95"
                     >
                         Liên Hệ Hỗ Trợ Trực Tiếp
                     </button>

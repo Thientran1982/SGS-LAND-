@@ -21,11 +21,11 @@ import { Interaction, Channel, Direction } from '../types';
 
 // Phase 4 B6: Agent badge display config
 const AGENT_BADGE: Record<string, { label: string; color: string }> = {
-    broker:  { label: '🏠 Minh - Môi Giới',   color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    broker:  { label: '🏠 Minh - Môi Giới',   color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
     legal:   { label: '⚖️ Hà - Pháp Lý',      color: 'bg-red-50 text-red-700 border-red-200' },
-    analyst: { label: '📊 Khoa - Phân Tích',   color: 'bg-purple-50 text-purple-700 border-purple-200' },
-    finance: { label: '🏦 Hương - Tài Chính',  color: 'bg-teal-50 text-teal-700 border-teal-200' },
-    project: { label: '🏗️ Long - Dự Án',       color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    analyst: { label: '📊 Khoa - Phân Tích',   color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
+    finance: { label: '🏦 Hương - Tài Chính',  color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
+    project: { label: '🏗️ Long - Dự Án',       color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
 };
 
 const HOTLINE = '0971132378';
@@ -576,11 +576,11 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                         <div className="flex items-center gap-2.5 min-w-0">
                             {/* Avatar */}
                             <div className="relative shrink-0">
-                                <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                <div className="w-9 h-9 rounded-xl bg-[#FDF6E3] flex items-center justify-center text-[#C9A84C]">
                                     {isHumanMode ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                                 </div>
                                 {/* Online indicator */}
-                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
+                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#C9A84C] border-2 border-white rounded-full" />
                             </div>
                             <div className="min-w-0">
                                 <p className="font-semibold text-sm text-slate-800 leading-tight">SGS LAND AI</p>
@@ -646,7 +646,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                         /* Registration form */
                         <div className="flex-1 overflow-y-auto bg-[var(--bg-surface)] flex flex-col justify-center p-5">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                                <div className="w-10 h-10 rounded-xl bg-[#FDF6E3] flex items-center justify-center text-[#C9A84C] shrink-0">
                                     <Bot className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -667,7 +667,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                     value={name}
                                     onChange={e => setName(e.target.value)}
                                     placeholder={t('livechat.name_placeholder')}
-                                    className="w-full px-4 py-2.5 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-[#C9A84C] focus:border-[#C9A84C] outline-none transition-all bg-[var(--bg-app)]"
                                 />
                                 <input
                                     type="tel"
@@ -675,19 +675,19 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('livechat.phone_placeholder')}
-                                    className="w-full px-4 py-2.5 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-[#C9A84C] focus:border-[#C9A84C] outline-none transition-all bg-[var(--bg-app)]"
                                 />
                                 <button
                                     type="submit"
-                                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all"
+                                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-[#C9A84C] hover:bg-[#B8860B] active:scale-95 transition-all"
                                 >
                                     {t('livechat.start_chat')}
                                 </button>
                             </form>
                             {/* Hotline fallback */}
                             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[var(--text-tertiary)]">
-                                <PhoneCall className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                                <span>Hoặc gọi ngay: <a href={`tel:${HOTLINE}`} className="font-bold text-indigo-600 hover:underline">{HOTLINE_DISPLAY}</a></span>
+                                <PhoneCall className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" />
+                                <span>Hoặc gọi ngay: <a href={`tel:${HOTLINE}`} className="font-bold text-[#C9A84C] hover:underline">{HOTLINE_DISPLAY}</a></span>
                             </div>
                         </div>
                     ) : (
@@ -700,8 +700,8 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                     <div className="flex justify-center py-0.5">
                                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${
                                             modeNotice === 'HUMAN_TAKEOVER'
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                                                ? 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]'
+                                                : 'bg-[#FDF6E3] text-[#C9A84C] border-[#C9A84C]'
                                         }`}>
                                             {modeNotice === 'HUMAN_TAKEOVER'
                                                 ? t('livechat.agent_takeover_notice')
@@ -713,13 +713,13 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                 {/* Phase 2 Domain Intelligence: Intent badge */}
                                 {detectedIntent && detectedIntent.primary !== 'unknown' && (() => {
                                     const INTENT_LABELS: Record<string, { label: string; color: string }> = {
-                                        tim_mua:    { label: '🏡 Tìm mua',     color: 'bg-blue-50 text-blue-700 border-blue-200' },
-                                        tim_thue:   { label: '🔑 Tìm thuê',    color: 'bg-purple-50 text-purple-700 border-purple-200' },
+                                        tim_mua:    { label: '🏡 Tìm mua',     color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
+                                        tim_thue:   { label: '🔑 Tìm thuê',    color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
                                         dinh_gia:   { label: '📊 Định giá',    color: 'bg-orange-50 text-orange-700 border-orange-200' },
                                         hoi_phap_ly:{ label: '⚖️ Pháp lý',     color: 'bg-red-50 text-red-700 border-red-200' },
-                                        can_vay:    { label: '🏦 Vay vốn',     color: 'bg-teal-50 text-teal-700 border-teal-200' },
+                                        can_vay:    { label: '🏦 Vay vốn',     color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
                                         dau_tu:     { label: '📈 Đầu tư',      color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-                                        hoi_du_an:  { label: '🏗️ Dự án',       color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+                                        hoi_du_an:  { label: '🏗️ Dự án',       color: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
                                     };
                                     const meta = INTENT_LABELS[detectedIntent.primary];
                                     if (!meta) return null;
@@ -744,12 +744,12 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                             </span>
                                         )}
                                         {userProfile.district && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF6E3] text-[#B8860B] border border-[#C9A84C]">
                                                 📍 {userProfile.district}
                                             </span>
                                         )}
                                         {userProfile.purpose && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF6E3] text-[#B8860B] border border-[#C9A84C]">
                                                 🏠 {userProfile.purpose}
                                             </span>
                                         )}
@@ -770,7 +770,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                     key={qr.label}
                                                     type="button"
                                                     onClick={() => handleSend(qr.msg)}
-                                                    className="text-xs px-3 py-1.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors font-medium whitespace-nowrap"
+                                                    className="text-xs px-3 py-1.5 rounded-full border border-[#C9A84C] bg-[#FDF6E3] text-[#B8860B] hover:bg-[#FDF6E3] transition-colors font-medium whitespace-nowrap"
                                                 >
                                                     {qr.label}
                                                 </button>
@@ -808,7 +808,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                         }}
                                                         title="Hữu ích"
                                                         className={`w-4 h-4 flex items-center justify-center rounded text-[10px] bg-transparent border-none transition-all cursor-pointer disabled:cursor-default ${
-                                                            fb === 'up' ? 'text-emerald-600' : fb === 'down' ? 'opacity-25' : 'text-slate-400 hover:text-emerald-500'
+                                                            fb === 'up' ? 'text-[#C9A84C]' : fb === 'down' ? 'opacity-25' : 'text-slate-400 hover:text-[#C9A84C]0'
                                                         }`}
                                                     >👍</button>
                                                     <button
@@ -833,17 +833,17 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                 {/* Typing dots animation */}
                                 {isThinking && (
                                     <div className="flex justify-start">
-                                        <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-indigo-100 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
+                                        <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[#FDF6E3] px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
                                             <div className="flex gap-1">
                                                 {[0, 75, 150].map(delay => (
                                                     <span
                                                         key={delay}
-                                                        className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"
+                                                        className="w-2 h-2 bg-[#C9A84C] rounded-full animate-bounce"
                                                         style={{ animationDelay: `${delay}ms` }}
                                                     />
                                                 ))}
                                             </div>
-                                            <span className="text-xs text-indigo-500 font-medium">{t('livechat.replying')}</span>
+                                            <span className="text-xs text-[#C9A84C] font-medium">{t('livechat.replying')}</span>
                                         </div>
                                     </div>
                                 )}
@@ -854,12 +854,12 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                         key="capture-form"
                                         initial={{ opacity: 0, y: 8, scale: 0.97 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        className="rounded-2xl border border-indigo-200 bg-[var(--bg-surface)] overflow-hidden shadow-sm"
+                                        className="rounded-2xl border border-[#C9A84C] bg-[var(--bg-surface)] overflow-hidden shadow-sm"
                                     >
                                         {captureSuccess ? (
                                             <div className="px-4 py-5 text-center">
-                                                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="w-10 h-10 bg-[#FDF6E3] rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg className="w-5 h-5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 </div>
@@ -896,7 +896,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                             value={captureData.name}
                                                             onChange={e => setCaptureData(d => ({ ...d, name: e.target.value }))}
                                                             placeholder="Tên của bạn"
-                                                            className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                            className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-[#C9A84C] outline-none bg-[var(--bg-app)]"
                                                         />
                                                     )}
                                                     <input
@@ -905,19 +905,19 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                         value={captureData.phone}
                                                         onChange={e => setCaptureData(d => ({ ...d, phone: e.target.value }))}
                                                         placeholder="Số điện thoại *"
-                                                        className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                        className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-[#C9A84C] outline-none bg-[var(--bg-app)]"
                                                     />
                                                     <textarea
                                                         value={captureData.notes}
                                                         onChange={e => setCaptureData(d => ({ ...d, notes: e.target.value }))}
                                                         placeholder="Ghi chú thêm (tùy chọn)"
                                                         rows={2}
-                                                        className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
+                                                        className="w-full px-3 py-2 text-base md:text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-[#C9A84C] outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
                                                     />
                                                     <button
                                                         type="submit"
                                                         disabled={captureSubmitting || !captureData.phone.trim()}
-                                                        className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50"
+                                                        className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-[#C9A84C] hover:bg-[#B8860B] active:scale-95 transition-all disabled:opacity-50"
                                                     >
                                                         {captureSubmitting ? 'Đang gửi...' : (
                                                             captureMode === 'ESCALATION' ? 'Kết nối tư vấn viên' : 'Gửi yêu cầu gọi lại'
@@ -944,7 +944,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                                     key={btn.action}
                                                     type="button"
                                                     onClick={() => handleActionButton(btn.action)}
-                                                    className="text-xs px-3 py-1.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors font-medium whitespace-nowrap"
+                                                    className="text-xs px-3 py-1.5 rounded-full border border-[#C9A84C] bg-[#FDF6E3] text-[#B8860B] hover:bg-[#FDF6E3] transition-colors font-medium whitespace-nowrap"
                                                 >
                                                     {btn.label}
                                                 </button>
@@ -973,7 +973,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                     >
                                         {userInitial}
                                     </div>
-                                    <div className="flex-1 flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                                    <div className="flex-1 flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-xl border border-[var(--glass-border)] focus-within:border-[#C9A84C] focus-within:ring-2 focus-within:ring-[#C9A84C] transition-all">
                                         <textarea
                                             ref={inputRef}
                                             value={input}
@@ -992,7 +992,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                             type="button"
                                             onClick={() => handleSend()}
                                             disabled={!input.trim() || isThinking}
-                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white bg-indigo-600 hover:bg-indigo-700 shrink-0 disabled:opacity-40 transition-all active:scale-95"
+                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white bg-[#C9A84C] hover:bg-[#B8860B] shrink-0 disabled:opacity-40 transition-all active:scale-95"
                                             aria-label="Gửi"
                                         >
                                             <Send className="w-4 h-4" />
@@ -1002,7 +1002,7 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
                                 <p className="text-center text-[10px] text-slate-400 mt-2 font-medium">
                                     {t('livechat.powered_by')} <span className="font-bold text-[var(--text-tertiary)]">SGS Land AI</span>
                                     {' · '}
-                                    <a href={`tel:${HOTLINE}`} className="text-indigo-400 hover:text-indigo-600 font-bold transition-colors">{HOTLINE_DISPLAY}</a>
+                                    <a href={`tel:${HOTLINE}`} className="text-[#C9A84C] hover:text-[#C9A84C] font-bold transition-colors">{HOTLINE_DISPLAY}</a>
                                 </p>
                             </div>
                         </>

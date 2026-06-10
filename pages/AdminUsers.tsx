@@ -25,13 +25,13 @@ function getRoleBadgeClass(role: string): string {
     switch (role) {
         case 'ADMIN':          return 'bg-rose-50 text-rose-700 border border-rose-200';
         case 'MANAGER':        return 'bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200';
-        case 'TEAM_LEAD':      return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
-        case 'SALES':          return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+        case 'TEAM_LEAD':      return 'bg-[#FDF6E3] text-[#B8860B] border border-[#C9A84C]';
+        case 'SALES':          return 'bg-[#FDF6E3] text-[#B8860B] border border-[#C9A84C]';
         case 'MARKETING':      return 'bg-amber-50 text-amber-700 border border-amber-200';
         case 'SUPPORTER':      return 'bg-sky-50 text-sky-700 border border-sky-200';
         case 'VIEWER':         return 'bg-slate-100 text-slate-600 border border-slate-200';
         case 'PARTNER_ADMIN':  return 'bg-violet-50 text-violet-700 border border-violet-200';
-        case 'PARTNER_AGENT':  return 'bg-purple-50 text-purple-700 border border-purple-200';
+        case 'PARTNER_AGENT':  return 'bg-[#FDF6E3] text-[#B8860B] border border-[#C9A84C]';
         default:               return 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]';
     }
 }
@@ -41,7 +41,7 @@ const ICONS = {
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     SEND: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-    INFO: <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    INFO: <svg className="w-4 h-4 text-[#C9A84C]0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     SORT: <svg className="w-3 h-3 ml-1 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     CHART: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
@@ -127,10 +127,10 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
             .catch(() => { setError(true); setLoading(false); });
     }, [user.id]);
     const slaColor = data
-        ? data.slaScore >= 90 ? 'text-emerald-500' : data.slaScore >= 70 ? 'text-indigo-500' : 'text-amber-500'
+        ? data.slaScore >= 90 ? 'text-[#C9A84C]0' : data.slaScore >= 70 ? 'text-[#C9A84C]0' : 'text-amber-500'
         : 'text-[var(--text-secondary)]';
     const slaLabelColor = data
-        ? data.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : data.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'
+        ? data.slaScore >= 90 ? 'text-[#C9A84C] dark:text-[#C9A84C]' : data.slaScore >= 70 ? 'text-[#C9A84C] dark:text-[#C9A84C]' : 'text-amber-600 dark:text-amber-400'
         : '';
     const circumference = 2 * Math.PI * 50;
     return createPortal(
@@ -159,7 +159,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                 <div className="overflow-y-auto px-6 py-5 space-y-5 no-scrollbar">
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
-                            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                            <div className="w-8 h-8 border-4 border-[#C9A84C] border-t-[#C9A84C] rounded-full animate-spin" />
                             <p className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</p>
                         </div>
                     )}
@@ -215,12 +215,12 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     {/* Deals */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
-                                        <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{data.deals}</p>
+                                        <p className="text-2xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{data.deals}</p>
                                     </div>
                                     {/* Close Rate */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
-                                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{data.closeRate}<span className="text-sm font-bold">%</span></p>
+                                        <p className="text-2xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{data.closeRate}<span className="text-sm font-bold">%</span></p>
                                         <p className="text-2xs text-[var(--text-secondary)] mt-1">{t('profile.perf_close_formula')}</p>
                                     </div>
                                     {/* Revenue */}
@@ -266,11 +266,11 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     </div>
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
-                                        <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{data.completedThisWeek}</p>
+                                        <p className="text-2xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{data.completedThisWeek}</p>
                                     </div>
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
-                                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{data.completedThisMonth}</p>
+                                        <p className="text-2xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C]">{data.completedThisMonth}</p>
                                     </div>
                                 </div>
                             </div>
@@ -339,7 +339,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     if (!isOpen) return null;
     const inputCls = (field: string) =>
         `w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-        ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`;
+        ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-[#C9A84C]/20 focus:border-[#C9A84C]0'}`;
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
             {/* Backdrop */}
@@ -437,10 +437,10 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                                 className="w-full"
                                 placement="top"
                             />
-                            <div className="mt-2 bg-indigo-50/60 border border-indigo-100 rounded-xl p-3 flex gap-2">
+                            <div className="mt-2 bg-[#FDF6E3]/60 border border-[#FDF6E3] rounded-xl p-3 flex gap-2">
                                 <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                                 <div>
-                                    <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
+                                    <h4 className="text-xs2 font-bold text-[#B8860B] uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
                                     <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                         {t(`role_desc.${role}`)}
                                     </p>
@@ -668,7 +668,7 @@ export const AdminUsers: React.FC = () => {
             <div className="flex items-center gap-1">
                 {label}
                 {sort.field === field && (
-                    <span className={`text-indigo-500 transition-transform ${sort.order === 'desc' ? 'rotate-180' : ''}`}>
+                    <span className={`text-[#C9A84C] transition-transform ${sort.order === 'desc' ? 'rotate-180' : ''}`}>
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
                     </span>
                 )}
@@ -703,11 +703,11 @@ export const AdminUsers: React.FC = () => {
                             <span className="text-xs sm:text-sm font-black text-[var(--text-primary)]">{totalUsers}</span>
                         </div>
                         {/* Hoạt động */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                            <span className="hidden sm:inline text-xs2 font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-emerald-600 uppercase">{t('admin.users.mobile_active')}</span>
-                            <span className="text-xs sm:text-sm font-black text-emerald-700">{stats.activeCount}</span>
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-[#FDF6E3] border border-[#C9A84C] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shrink-0"></span>
+                            <span className="hidden sm:inline text-xs2 font-bold text-[#C9A84C] uppercase tracking-wide">{t('admin.users.active_users')}</span>
+                            <span className="sm:hidden text-2xs font-bold text-[#C9A84C] uppercase">{t('admin.users.mobile_active')}</span>
+                            <span className="text-xs sm:text-sm font-black text-[#B8860B]">{stats.activeCount}</span>
                         </div>
                         {/* Chờ duyệt */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
@@ -731,11 +731,11 @@ export const AdminUsers: React.FC = () => {
                 <div className="flex items-center gap-3 px-4 sm:px-5 py-2 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
                     {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
                     <div className="relative flex-1 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-[#C9A84C] transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
+                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
                             placeholder={t('admin.users.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -794,7 +794,7 @@ export const AdminUsers: React.FC = () => {
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
                                                         <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
-                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
+                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-[#FDF6E3] text-[#B8860B] px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
                                                     <div className="text-xs2 sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
                                                     {/* Role selector on mobile — interactive dropdown */}
@@ -844,7 +844,7 @@ export const AdminUsers: React.FC = () => {
                                                 onClick={() => user.id !== currentUser?.id && setUserToStatusChange(user)}
                                                 disabled={user.id === currentUser?.id}
                                                 className={`px-2 sm:px-3 py-1 rounded-full text-2xs sm:text-xs2 font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
-                                                    ${user.status === CommonStatus.ACTIVE ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' : 
+                                                    ${user.status === CommonStatus.ACTIVE ? 'bg-[#FDF6E3] text-[#C9A84C] border-[#C9A84C] hover:bg-[#FDF6E3]' : 
                                                       user.status === CommonStatus.PENDING ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' :
                                                       user.status === CommonStatus.DEACTIVATED ? 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100' :
                                                       user.status === CommonStatus.ARCHIVED ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' :
@@ -853,7 +853,7 @@ export const AdminUsers: React.FC = () => {
                                                 `}
                                                 title={t(`admin.users.status_${user.status.toLowerCase()}`)}
                                             >
-                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${user.status === CommonStatus.ACTIVE ? 'bg-emerald-500' : user.status === CommonStatus.PENDING ? 'bg-amber-500' : user.status === CommonStatus.DEACTIVATED ? 'bg-orange-400' : user.status === CommonStatus.ARCHIVED ? 'bg-slate-400' : 'bg-slate-400'}`}></span>
+                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${user.status === CommonStatus.ACTIVE ? 'bg-[#FDF6E3]0' : user.status === CommonStatus.PENDING ? 'bg-amber-500' : user.status === CommonStatus.DEACTIVATED ? 'bg-orange-400' : user.status === CommonStatus.ARCHIVED ? 'bg-slate-400' : 'bg-slate-400'}`}></span>
                                                 {/* Mobile: short label | Desktop: full label */}
                                                 <span className="sm:hidden">
                                                     {user.status === CommonStatus.ACTIVE ? t('admin.users.mobile_active') : user.status === CommonStatus.PENDING ? t('admin.users.mobile_pending') : user.status === CommonStatus.DEACTIVATED ? t('admin.users.mobile_deactivated') : user.status === CommonStatus.ARCHIVED ? t('admin.users.mobile_archived') : t('admin.users.mobile_inactive')}
@@ -881,11 +881,11 @@ export const AdminUsers: React.FC = () => {
                                                     <button 
                                                         onClick={() => handleResendInvite(user)}
                                                         disabled={resendingId === user.id}
-                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors relative group/btn" 
+                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-[#C9A84C] hover:bg-[#FDF6E3] rounded-lg transition-colors relative group/btn" 
                                                         title={t('admin.users.resend')}
                                                     >
                                                         {resendingId === user.id ? (
-                                                            <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                                            <div className="w-4 h-4 border-2 border-[#C9A84C] border-t-[#C9A84C] rounded-full animate-spin"></div>
                                                         ) : (
                                                             ICONS.SEND
                                                         )}
@@ -976,10 +976,10 @@ export const AdminUsers: React.FC = () => {
                             {t('admin.users.confirm_role_change', { name: userToRoleChange.user.name, role: t(`role.${userToRoleChange.newRole}`) })}
                         </p>
                         
-                        <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2 mb-6">
+                        <div className="bg-[#FDF6E3]/50 border border-[#FDF6E3] rounded-xl p-3 flex gap-2 mb-6">
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
-                                <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
+                                <h4 className="text-xs2 font-bold text-[#B8860B] uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                     {t(`role_desc.${userToRoleChange.newRole}`)}
                                 </p>
@@ -995,7 +995,7 @@ export const AdminUsers: React.FC = () => {
                             </button>
                             <button 
                                 onClick={confirmRoleChange}
-                                className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-colors"
+                                className="flex-1 py-2.5 bg-[#C9A84C] text-white font-bold rounded-xl text-sm shadow-lg hover:bg-[#B8860B] transition-colors"
                             >
                                 {t('common.confirm')}
                             </button>
@@ -1007,7 +1007,7 @@ export const AdminUsers: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,

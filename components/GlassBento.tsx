@@ -12,12 +12,12 @@ interface BentoCardProps extends React.HTMLAttributes<HTMLElement> {
 }
 const CONSTANTS = {
     TREND_STYLES: {
-        up: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400',
+        up: 'bg-[#FDF6E3]0/10 text-[#C9A84C] border-[#C9A84C]/20 dark:text-[#C9A84C]',
         down: 'bg-rose-500/10 text-rose-600 border-rose-500/20 dark:text-rose-400'
     },
     // ADDED rounded-[32px] here to fix the square corners issue
     BASE_CLASS: "glass-card rounded-[32px] p-6 md:p-8 flex flex-col group relative text-left w-full h-full transition-all duration-500 ease-out",
-    INTERACTIVE_CLASS: "cursor-pointer active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+    INTERACTIVE_CLASS: "cursor-pointer active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/50"
 };
 export const GlassBento: React.FC<BentoCardProps> = memo(({ 
     title, 

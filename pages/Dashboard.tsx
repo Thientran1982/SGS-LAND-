@@ -17,7 +17,7 @@ import { Dropdown } from '../components/Dropdown';
 import { useSocket, socket } from '../services/websocket';
 // --- ICONS ---
 const ICONS = {
-    TREND_UP: <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
+    TREND_UP: <svg className="w-3 h-3 text-[#C9A84C] dark:text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
     TREND_DOWN: <svg className="w-3 h-3 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>,
     REFRESH: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
     USER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
@@ -32,7 +32,7 @@ const TrendIndicator = ({ value, label }: { value: number; label: string }) => {
     const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
     const isPositive = safeValue >= 0;
     return (
-        <div className={`flex items-center gap-1 text-xs2 font-bold uppercase tracking-wider ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+        <div className={`flex items-center gap-1 text-xs2 font-bold uppercase tracking-wider ${isPositive ? 'text-[#C9A84C] dark:text-[#C9A84C]' : 'text-rose-600 dark:text-rose-400'}`}>
             {isPositive ? ICONS.TREND_UP : ICONS.TREND_DOWN}
             <span>{Math.abs(safeValue)}%</span>
             <span className="text-[var(--text-tertiary)] dark:text-slate-400 font-medium normal-case ml-1">{label}</span>
@@ -59,10 +59,10 @@ function useTimeAgo() {
 const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
     const getIcon = (type: string) => {
         switch(type) {
-            case 'LEAD': return { icon: ICONS.USER, bg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' };
-            case 'DEAL': return { icon: ICONS.CHECK, bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' };
+            case 'LEAD': return { icon: ICONS.USER, bg: 'bg-[#FDF6E3] text-[#B8860B] dark:bg-[#1C2B4A]/40 dark:text-[#C9A84C]' };
+            case 'DEAL': return { icon: ICONS.CHECK, bg: 'bg-[#FDF6E3] text-[#B8860B] dark:bg-[#B8860B]/40 dark:text-[#C9A84C]' };
             case 'SYSTEM': return { icon: ICONS.CLOUD, bg: 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] dark:bg-slate-800 dark:text-slate-300' };
-            default: return { icon: ICONS.AI, bg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' };
+            default: return { icon: ICONS.AI, bg: 'bg-[#FDF6E3] text-[#B8860B] dark:bg-[#1C2B4A]/40 dark:text-[#C9A84C]' };
         }
     };
     const style = getIcon(activity.type);
@@ -121,12 +121,12 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
                 {data.pricePerM2 > 0 && (
                     <div className="flex items-center justify-between gap-4 mb-1">
                         <span className="text-[var(--text-secondary)] dark:text-slate-400">Giá/m²:</span>
-                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{Math.round(data.pricePerM2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} tr/m²</span>
+                        <span className="font-mono font-bold text-[#C9A84C] dark:text-[#C9A84C]">{Math.round(data.pricePerM2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} tr/m²</span>
                     </div>
                 )}
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_interest')}:</span>
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{data.interest} {t('dash.scatter_interest_unit')}</span>
+                    <span className="font-mono font-bold text-[#C9A84C] dark:text-[#C9A84C]">{data.interest} {t('dash.scatter_interest_unit')}</span>
                 </div>
             </div>
         );
@@ -141,8 +141,8 @@ const EmptyState = ({ message }: { message: string }) => (
 );
 // --- AGENT AVATAR with initials fallback ---
 const AVATAR_COLORS = [
-    'bg-indigo-500', 'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
-    'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-pink-500',
+    'bg-[#FDF6E3]0', 'bg-violet-500', 'bg-sky-500', 'bg-[#FDF6E3]0',
+    'bg-rose-500', 'bg-amber-500', 'bg-[#FDF6E3]0', 'bg-pink-500',
 ];
 const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
     const [broken, setBroken] = React.useState(false);
@@ -186,7 +186,7 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
         >
             {isLoading ? (
                 <div className="flex items-center justify-center h-40">
-                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin"></div>
                 </div>
             ) : isError ? (
                 <div className="flex flex-col items-center justify-center h-40 gap-2 text-[var(--text-tertiary)]">
@@ -240,7 +240,7 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                                                     </div>
                                                     <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
                                                         <div
-                                                            className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                                                            className="h-full bg-[#C9A84C] rounded-full transition-all duration-500"
                                                             style={{ width: `${pct}%` }}
                                                         />
                                                     </div>
@@ -341,20 +341,20 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.avg_latency')}</div>
                     </div>
                     <div>
-                        <div className="text-2xl font-extrabold text-indigo-500 dark:text-indigo-400 tracking-tight">{stats.dbLatency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
+                        <div className="text-2xl font-extrabold text-[#C9A84C] dark:text-[#C9A84C] tracking-tight">{stats.dbLatency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.traffic_db_latency')}</div>
                     </div>
                     <div>
-                        <div className={`text-2xl font-extrabold tracking-tight ${stats.errors > 0 ? 'text-red-500' : 'text-emerald-500 dark:text-emerald-400'}`}>{stats.errors}</div>
+                        <div className={`text-2xl font-extrabold tracking-tight ${stats.errors > 0 ? 'text-red-500' : 'text-[#C9A84C]0 dark:text-[#C9A84C]'}`}>{stats.errors}</div>
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.traffic_errors')}</div>
                     </div>
                 </div>
-                <div className={`flex items-center gap-2 px-2 py-1 rounded-full border shrink-0 ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
+                <div className={`flex items-center gap-2 px-2 py-1 rounded-full border shrink-0 ${isConnected ? 'bg-[#FDF6E3] border-[#C9A84C] dark:bg-[#B8860B]/20 dark:border-[#B8860B]' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
                     <span className="relative flex h-2 w-2">
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-[#C9A84C]' : 'bg-amber-400'}`}></span>
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-[#FDF6E3]0' : 'bg-amber-500'}`}></span>
                     </span>
-                    <span className={`text-xs2 font-bold uppercase ${isConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                    <span className={`text-xs2 font-bold uppercase ${isConnected ? 'text-[#B8860B] dark:text-[#C9A84C]' : 'text-amber-700 dark:text-amber-400'}`}>
                         {isConnected ? t('dash.live_status') : t('dash.connecting')}
                     </span>
                 </div>
@@ -517,7 +517,7 @@ export const Dashboard: React.FC = () => {
                 </p>
                 <button 
                     onClick={() => refetch()}
-                    className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-all active:scale-95"
+                    className="px-6 py-2.5 bg-[#C9A84C] text-white font-bold rounded-xl shadow-md hover:bg-[#B8860B] transition-all active:scale-95"
                 >
                     {t('common.system_reload')}
                 </button>
@@ -549,7 +549,7 @@ export const Dashboard: React.FC = () => {
                         {/* Scope badge */}
                         <span className={`text-xs2 font-bold px-2 py-1 rounded-full border flex items-center gap-1 shrink-0 ${
                             isSalesScope
-                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700'
+                                ? 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C] dark:bg-[#1C2B4A]/30 dark:text-[#C9A84C] dark:border-[#B8860B]'
                                 : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                         }`}>
                             <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -578,7 +578,7 @@ export const Dashboard: React.FC = () => {
                     <button 
                         onClick={handleExport}
                         disabled={isExporting}
-                        className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="shrink-0 bg-[#C9A84C] hover:bg-[#B8860B] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {isExporting ? (
                             <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -591,9 +591,9 @@ export const Dashboard: React.FC = () => {
             </div>
             {/* Getting Started Banner — shown until dismissed or user has 5+ leads */}
             {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
-                <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-900/40 to-slate-800/60 border border-emerald-800/40">
+                <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#B8860B]/40 to-slate-800/60 border border-[#B8860B]/40">
                     <div className="flex items-center gap-3">
-                        <span className="text-emerald-400 shrink-0">
+                        <span className="text-[#C9A84C] shrink-0">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         </span>
                         <div>
@@ -610,7 +610,7 @@ export const Dashboard: React.FC = () => {
                     <div className="flex items-center gap-2 shrink-0">
                         <a
                             href="/#/huong-dan-su-dung"
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                            className="px-3 py-1.5 bg-[#C9A84C] hover:bg-[#C9A84C] text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
                         >
                             {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'} →
                         </a>
@@ -632,19 +632,19 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard
                         title={t('dash.revenue_title')}
-                        className="h-full min-h-[180px] bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200 overflow-hidden"
+                        className="h-full min-h-[180px] bg-gradient-to-br from-[#C9A84C] to-[#B8860B] text-white border-none shadow-xl [&_h3]:!text-[#C9A84C] overflow-hidden"
                     >
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-black tracking-tight mt-2 text-white break-words">
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
-                                <div className="text-xs2 text-indigo-200 font-bold uppercase tracking-wider mt-1">
+                                <div className="text-xs2 text-[#C9A84C] font-bold uppercase tracking-wider mt-1">
                                     {t('dash.revenue_subtitle')}
                                 </div>
                             </div>
                             <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
-                                <span className={`font-bold flex items-center gap-1 ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                <span className={`font-bold flex items-center gap-1 ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-[#C9A84C]' : 'text-rose-300'}`}>
                                     {(analytics.revenueDelta ?? 0) >= 0 ? ICONS.TREND_UP : ICONS.TREND_DOWN}
                                     {Math.abs(analytics.revenueDelta || 0)}%
                                 </span>
@@ -662,7 +662,7 @@ export const Dashboard: React.FC = () => {
                                     {formatCompactNumber(analytics.pipelineValue || 0)}
                                 </div>
                                 <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
-                                    {t('dash.win_probability')}: <span className="text-indigo-600 dark:text-indigo-400">{analytics.winProbability || 0}%</span>
+                                    {t('dash.win_probability')}: <span className="text-[#C9A84C] dark:text-[#C9A84C]">{analytics.winProbability || 0}%</span>
                                 </div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
@@ -679,17 +679,17 @@ export const Dashboard: React.FC = () => {
                                 <div className="flex items-center gap-2 mt-2">
                                     <div className="relative h-10 w-10 shrink-0">
                                         <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
-                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-emerald-100 dark:text-emerald-900/30" strokeWidth="4" />
-                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="4" strokeLinecap="round"
+                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-[#C9A84C] dark:text-[#B8860B]/30" strokeWidth="4" />
+                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-[#C9A84C]0" strokeWidth="4" strokeLinecap="round"
                                                 strokeDasharray={`${((analytics.aiDeflectionRate || 0) / 100) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`} />
                                         </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                        <div className="absolute inset-0 flex items-center justify-center text-[#C9A84C] dark:text-[#C9A84C]">
                                             {ICONS.AI}
                                         </div>
                                     </div>
                                     <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
                                 </div>
-                                <div className="text-xs2 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai')}</div>
+                                <div className="text-xs2 text-[#C9A84C] dark:text-[#C9A84C] font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai')}</div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period')} />
@@ -728,7 +728,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div className="text-right hidden sm:block">
                                 <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.conversion')}</div>
-                                <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
+                                <div className="text-lg font-bold text-[#C9A84C] dark:text-[#C9A84C]">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
                             </div>
                         </div>
                         <div className="flex-1 w-full min-h-[250px] relative">
@@ -840,7 +840,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-4">
                             <div className="flex flex-col gap-3">
                                 {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
-                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
+                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-[#C9A84C] dark:hover:border-[#C9A84C]/30 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <AgentAvatar name={agent.name} avatar={agent.avatar} />
@@ -858,13 +858,13 @@ export const Dashboard: React.FC = () => {
                                         <div className="flex items-center gap-4 text-right">
                                             <div>
                                                 <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.close_rate')}</div>
-                                                <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{agent.closeRate}%</div>
+                                                <div className="font-bold text-[#C9A84C] dark:text-[#C9A84C] text-sm">{agent.closeRate}%</div>
                                             </div>
                                             <div className="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
                                             <div>
                                                 <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.sla_score')}</div>
                                                 <div className="flex items-center gap-1 justify-end">
-                                                    <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
+                                                    <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-[#C9A84C] dark:text-[#C9A84C]' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
                                                 </div>
                                                 <div className="text-2xs text-[var(--text-secondary)] font-medium">{t('dash.avg_abbr')}: {agent.avgResponseMinutes != null ? `${agent.avgResponseMinutes} ${t('dash.minutes')}` : 'N/A'}</div>
                                             </div>
@@ -896,7 +896,7 @@ export const Dashboard: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border text-sm font-medium ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border text-sm font-medium ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     {toast.msg}
                 </div>
             ) : null,

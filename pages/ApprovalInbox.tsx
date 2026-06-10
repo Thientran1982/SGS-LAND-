@@ -21,7 +21,7 @@ interface RiskAssessment {
 const RISK_STYLES = {
     HIGH: { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200', badge: 'bg-rose-500', icon: 'text-rose-500' },
     MEDIUM: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200', badge: 'bg-amber-500', icon: 'text-amber-500' },
-    LOW: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200', badge: 'bg-emerald-500', icon: 'text-emerald-500' }
+    LOW: { bg: 'bg-[#FDF6E3]', text: 'text-[#C9A84C]', border: 'border-[#C9A84C]', badge: 'bg-[#FDF6E3]0', icon: 'text-[#C9A84C]0' }
 };
 const ICONS = {
     USER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
@@ -142,7 +142,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
     return (
         <div 
             className={`bg-[var(--bg-surface)] rounded-[20px] border shadow-sm relative overflow-hidden transition-all duration-300 group flex flex-col h-full
-                ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' : `border-[var(--glass-border)] hover:border-[var(--glass-border)] hover:shadow-md`}`}
+                ${isSelected ? 'border-[#C9A84C]0 ring-2 ring-[#C9A84C]/20 bg-[#FDF6E3]/10' : `border-[var(--glass-border)] hover:border-[var(--glass-border)] hover:shadow-md`}`}
             onClick={() => onToggleSelect(proposal.id)}
         >
             {/* Header / Selection */}
@@ -150,7 +150,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                 <div className="flex items-center gap-3">
                     <div 
                         className={`w-5 h-5 rounded border transition-colors flex items-center justify-center
-                            ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-[var(--bg-surface)] border-slate-300 text-transparent group-hover:border-indigo-400'}`}
+                            ${isSelected ? 'bg-[#C9A84C] border-[#C9A84C] text-white' : 'bg-[var(--bg-surface)] border-slate-300 text-transparent group-hover:border-[#C9A84C]'}`}
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
@@ -179,7 +179,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                          <div className="text-xs2 text-[var(--text-tertiary)]">
                             {t('approvals.price_original')}: <span className="line-through">{formatCurrency(proposal.basePrice)}</span>
                          </div>
-                         <div className="text-sm font-bold text-indigo-600">
+                         <div className="text-sm font-bold text-[#C9A84C]">
                             {formatCurrency(proposal.finalPrice)}
                          </div>
                     </div>
@@ -191,7 +191,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                     </div>
                     <div className="text-xs text-[var(--text-secondary)] truncate flex-1 font-medium">{lead?.name || t('data.unknown')}</div>
                     {lead?.score && (
-                        <div className={`text-xs2 font-bold px-1.5 rounded border ${lead.score.grade === 'A' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-[var(--glass-border)]'}`}>
+                        <div className={`text-xs2 font-bold px-1.5 rounded border ${lead.score.grade === 'A' ? 'bg-[#FDF6E3] text-[#C9A84C] border-[#C9A84C]' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-[var(--glass-border)]'}`}>
                             {t('approvals.lead_rank')} {lead.score.grade}
                         </div>
                     )}
@@ -366,7 +366,7 @@ export const ApprovalInbox: React.FC = () => {
                 </div>
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
                     <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest truncate">{t('approvals.metric_avg_discount')}</span>
-                    <div className="text-xl md:text-2xl font-black text-indigo-600 tracking-tight mt-1">{metrics.avgDiscount.toFixed(1)}%</div>
+                    <div className="text-xl md:text-2xl font-black text-[#C9A84C] tracking-tight mt-1">{metrics.avgDiscount.toFixed(1)}%</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
                     <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest truncate">{t('approvals.metric_high_risk')}</span>
@@ -380,7 +380,7 @@ export const ApprovalInbox: React.FC = () => {
                     <span className="bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded-full text-xs font-bold">{pending.length}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={handleSelectAll} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors">
+                    <button onClick={handleSelectAll} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-[#C9A84C] transition-colors">
                         {selectedIds.size === sortedProposals.length && sortedProposals.length > 0 ? t('approvals.deselect_all') : t('approvals.select_all')}
                     </button>
                     <div className="h-4 w-px bg-slate-200"></div>
@@ -438,12 +438,12 @@ export const ApprovalInbox: React.FC = () => {
             {selectedIds.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white p-3 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-scale-up border border-slate-700 min-w-[300px] justify-between">
                     <div className="pl-2 text-sm font-bold flex items-center gap-2">
-                        <span className="bg-indigo-500 px-2 py-0.5 rounded-full text-xs">{selectedIds.size}</span>
+                        <span className="bg-[#FDF6E3]0 px-2 py-0.5 rounded-full text-xs">{selectedIds.size}</span>
                         {t('approvals.selected_count')}
                     </div>
                     <button 
                         onClick={() => processApproval(Array.from(selectedIds))}
-                        className="bg-[var(--bg-surface)] text-[var(--text-primary)] px-6 py-2 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors shadow-lg active:scale-95"
+                        className="bg-[var(--bg-surface)] text-[var(--text-primary)] px-6 py-2 rounded-xl text-xs font-bold hover:bg-[#FDF6E3] transition-colors shadow-lg active:scale-95"
                     >
                         {t('approvals.approve_selection')}
                     </button>
@@ -458,7 +458,7 @@ export const ApprovalInbox: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-[#B8860B]/90 border-[#C9A84C] text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,

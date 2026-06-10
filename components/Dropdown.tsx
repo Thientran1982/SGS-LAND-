@@ -26,7 +26,7 @@ interface DropdownProps<T extends string | number> {
 // -----------------------------------------------------------------------------
 const ICONS = {
     CHEVRON: <svg className="w-4 h-4 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
-    CHECK: <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+    CHECK: <svg className="w-4 h-4 text-[#C9A84C] dark:text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
 };
 const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
@@ -39,8 +39,8 @@ const STYLES = {
     // State variants
     DISABLED: "bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 cursor-not-allowed border-[var(--glass-border)] dark:border-slate-700",
     ERROR: "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/20",
-    DEFAULT: "bg-[var(--bg-surface)] dark:bg-slate-800 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.99] text-[var(--text-secondary)] dark:text-slate-200",
-    OPEN: "border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20"
+    DEFAULT: "bg-[var(--bg-surface)] dark:bg-slate-800 border-[var(--glass-border)] dark:border-slate-700 hover:border-[#C9A84C] dark:hover:border-[#C9A84C] hover:shadow-sm focus:ring-2 focus:ring-[#C9A84C]/20 active:scale-[0.99] text-[var(--text-secondary)] dark:text-slate-200",
+    OPEN: "border-[#C9A84C]0 dark:border-[#C9A84C] ring-2 ring-[#C9A84C]/20"
 };
 // -----------------------------------------------------------------------------
 // 3. MAIN COMPONENT
@@ -155,7 +155,7 @@ export const Dropdown = memo(<T extends string | number>({
     return (
         <div className={`relative ${className}`} ref={containerRef}>
             {label && (
-                <label className={`${STYLES.LABEL} ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] dark:text-slate-400 group-focus-within:text-indigo-500 dark:group-focus-within:text-indigo-400'}`}>
+                <label className={`${STYLES.LABEL} ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] dark:text-slate-400 group-focus-within:text-[#C9A84C] dark:group-focus-within:text-[#C9A84C]'}`}>
                     {label}
                 </label>
             )}            
@@ -181,7 +181,7 @@ export const Dropdown = memo(<T extends string | number>({
                         <span className={error ? "text-rose-400" : "text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]"}>{displayPlaceholder}</span>
                     )}
                 </div>                
-                <div className={`text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] ${isOpen ? 'rotate-180 text-indigo-500 dark:text-indigo-400' : ''} transition-transform duration-200`}>
+                <div className={`text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] ${isOpen ? 'rotate-180 text-[#C9A84C] dark:text-[#C9A84C]' : ''} transition-transform duration-200`}>
                     {ICONS.CHEVRON}
                 </div>
             </button>
@@ -213,7 +213,7 @@ export const Dropdown = memo(<T extends string | number>({
                                         aria-selected={isSelected}
                                         type="button"
                                         onClick={() => handleSelect(opt.value as T)}
-                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
+                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 text-[#B8860B] dark:text-[#C9A84C] font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
                                     >
                                         {opt.icon && (
                                             <span className={`transition-transform duration-200 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>

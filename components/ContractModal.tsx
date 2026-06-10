@@ -36,7 +36,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, r
         <div>
             <label className={labelClass}>
                 {label}
-                <span className="ml-1 text-indigo-400 font-normal normal-case tracking-normal">(VNĐ)</span>
+                <span className="ml-1 text-[#C9A84C] font-normal normal-case tracking-normal">(VNĐ)</span>
             </label>
             <div className="relative">
                 <input
@@ -52,7 +52,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, r
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-tertiary)] pointer-events-none">đ</span>
             </div>
             {preview ? (
-                <p className="mt-1.5 text-xs font-semibold text-indigo-600 flex items-center gap-1">
+                <p className="mt-1.5 text-xs font-semibold text-[#C9A84C] flex items-center gap-1">
                     <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     {preview}
                 </p>
@@ -81,8 +81,8 @@ const TABS: Tab[] = [
     {
         id: 'parties',
         labelKey: 'contracts.tab_parties',
-        color: 'text-indigo-500',
-        activeColor: 'border-indigo-500 text-indigo-600 bg-indigo-50',
+        color: 'text-[#C9A84C]0',
+        activeColor: 'border-[#C9A84C]0 text-[#C9A84C] bg-[#FDF6E3]',
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -114,8 +114,8 @@ const TABS: Tab[] = [
     {
         id: 'schedule',
         labelKey: 'contracts.tab_schedule',
-        color: 'text-emerald-500',
-        activeColor: 'border-emerald-500 text-emerald-600 bg-emerald-50',
+        color: 'text-[#C9A84C]0',
+        activeColor: 'border-[#C9A84C]0 text-[#C9A84C] bg-[#FDF6E3]',
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -227,7 +227,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
             setLoading(false);
         }
     };
-    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
+    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-[#C9A84C]/20 focus:border-[#C9A84C] outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
     const labelClass = "block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1";
 
     const scheduleCount = (formData.paymentSchedule || []).length;
@@ -277,7 +277,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                             />
                         </div>
                     </div>
-                    <button onClick={onClose} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                    <button onClick={onClose} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]0">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
@@ -299,7 +299,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 {tab.icon}
                                 <span className="hidden sm:inline">{t(tab.labelKey)}</span>
                                 {tab.id === 'schedule' && scheduleCount > 0 && (
-                                    <span className="bg-emerald-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                    <span className="bg-[#FDF6E3]0 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                                         {scheduleCount}
                                     </span>
                                 )}
@@ -429,7 +429,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                         {t('contracts.reservation_terms_title')}
                                     </h3>
-                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 flex items-start gap-2">
+                                    <div className="p-3 bg-[#FDF6E3] border border-[#C9A84C] rounded-xl text-xs text-[#B8860B] flex items-start gap-2">
                                         <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         <span>{t('contracts.vnd_input_hint')}</span>
                                     </div>
@@ -471,7 +471,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 </div>
                                 {/* BÊN A (Bên bán / Chủ đầu tư) — gọn */}
                                 <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
-                                    <h3 className="font-bold text-indigo-600 flex items-center gap-2 text-sm border-b border-indigo-100 pb-2">
+                                    <h3 className="font-bold text-[#C9A84C] flex items-center gap-2 text-sm border-b border-[#FDF6E3] pb-2">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                         {t('contracts.party_a_title')}
                                     </h3>
@@ -514,7 +514,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                             )}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <h3 className="font-bold text-indigo-600 border-b border-indigo-100 pb-2">{t('contracts.party_a_title')}</h3>
+                                    <h3 className="font-bold text-[#C9A84C] border-b border-[#FDF6E3] pb-2">{t('contracts.party_a_title')}</h3>
                                     <div>
                                         <label className={labelClass}>{t('contracts.party_a_name')}</label>
                                         <input required value={formData.partyAName || ''} onChange={e => handleChange('partyAName', e.target.value)} className={inputClass} />
@@ -565,7 +565,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    <h3 className="font-bold text-emerald-600 border-b border-emerald-100 pb-2">{t('contracts.party_b_title')}</h3>
+                                    <h3 className="font-bold text-[#C9A84C] border-b border-[#C9A84C] pb-2">{t('contracts.party_b_title')}</h3>
                                     <div>
                                         <label className={labelClass}>{t('contracts.party_b_name')}</label>
                                         <input required value={formData.partyBName || ''} onChange={e => handleChange('partyBName', e.target.value)} className={inputClass} />
@@ -707,8 +707,8 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         {formData.type !== ContractType.RESERVATION && activeTab === 'terms' && (
                             <div className="space-y-6">
                                 {/* ── PHẦN 1: THÔNG TIN KÝ KẾT ── */}
-                                <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50/60 p-4 space-y-4">
-                                    <h3 className="font-bold text-indigo-700 flex items-center gap-2 text-sm">
+                                <div className="rounded-xl border-2 border-[#C9A84C] bg-[#FDF6E3]/60 p-4 space-y-4">
+                                    <h3 className="font-bold text-[#B8860B] flex items-center gap-2 text-sm">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                         {t('contracts.signing_info_title')}
                                     </h3>
@@ -738,12 +738,12 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                             />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-indigo-500 italic">{t('contracts.blank_line_hint')}</p>
+                                    <p className="text-xs text-[#C9A84C] italic">{t('contracts.blank_line_hint')}</p>
                                 </div>
 
                                 {/* ── PHẦN 2: TÀI CHÍNH ── */}
                                 <h3 className="font-bold text-rose-600 border-b border-rose-100 pb-2">{t('contracts.finance_terms_title')}</h3>
-                                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 flex items-start gap-2">
+                                <div className="p-3 bg-[#FDF6E3] border border-[#C9A84C] rounded-xl text-xs text-[#B8860B] flex items-start gap-2">
                                     <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     <span>{t('contracts.vnd_input_hint')}</span>
                                 </div>
@@ -803,7 +803,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         {formData.type !== ContractType.RESERVATION && activeTab === 'schedule' && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="font-bold text-emerald-600 border-b border-emerald-100 pb-2 flex items-center gap-2 flex-1">
+                                    <h3 className="font-bold text-[#C9A84C] border-b border-[#C9A84C] pb-2 flex items-center gap-2 flex-1">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                                         {t('payment.schedule_title')}
                                     </h3>
@@ -835,22 +835,22 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 </div>
                 {/* Footer */}
                 {savedContractId ? (
-                    <div className="px-4 sm:px-6 py-4 border-t border-[var(--glass-border)] bg-emerald-50 rounded-b-2xl shrink-0">
+                    <div className="px-4 sm:px-6 py-4 border-t border-[var(--glass-border)] bg-[#FDF6E3] rounded-b-2xl shrink-0">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                                    <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                                <div className="w-8 h-8 rounded-full bg-[#FDF6E3] flex items-center justify-center shrink-0">
+                                    <svg className="w-4 h-4 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-emerald-800">{t('contracts.saved_success_title') || 'Đã lưu hợp đồng nháp'}</p>
-                                    <p className="text-xs text-emerald-600">{t('contracts.saved_success_desc') || 'Xem trước và in hoặc xuất PDF để gửi cho khách hàng.'}</p>
+                                    <p className="text-sm font-bold text-[#B8860B]">{t('contracts.saved_success_title') || 'Đã lưu hợp đồng nháp'}</p>
+                                    <p className="text-xs text-[#C9A84C]">{t('contracts.saved_success_desc') || 'Xem trước và in hoặc xuất PDF để gửi cho khách hàng.'}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <button
                                     type="button"
                                     onClick={() => { window.open(`/p/contract_${savedContractId}`, '_blank'); }}
-                                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 transition-colors shadow-sm active:scale-95"
+                                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#C9A84C] text-white font-bold text-sm rounded-xl hover:bg-[#B8860B] transition-colors shadow-sm active:scale-95"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                     {t('contracts.btn_preview_print') || 'Xem trước & In'}
@@ -873,7 +873,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 key={tab.id}
                                 type="button"
                                 onClick={() => handleTabChange(tab.id)}
-                                className={`w-2 h-2 rounded-full transition-all ${activeTab === tab.id ? 'w-5 bg-indigo-500' : 'bg-slate-300 hover:bg-slate-400'}`}
+                                className={`w-2 h-2 rounded-full transition-all ${activeTab === tab.id ? 'w-5 bg-[#FDF6E3]0' : 'bg-slate-300 hover:bg-slate-400'}`}
                                 title={t(tab.labelKey)}
                                 aria-label={t(tab.labelKey)}
                             />
@@ -889,7 +889,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         <button type="button" onClick={onClose} className="px-6 py-2.5 min-h-[44px] rounded-xl font-bold text-sm text-[var(--text-secondary)] hover:bg-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
                             {t('common.cancel')}
                         </button>
-                        <button type="submit" form="contract-form" disabled={loading} className="px-6 py-2.5 min-h-[44px] rounded-xl font-bold text-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition-all disabled:opacity-50 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
+                        <button type="submit" form="contract-form" disabled={loading} className="px-6 py-2.5 min-h-[44px] rounded-xl font-bold text-sm bg-[#C9A84C] text-white hover:bg-[#B8860B] shadow-md transition-all disabled:opacity-50 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] focus-visible:ring-offset-2">
                             {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                             {loading ? (contract ? t('contracts.btn_updating') : t('contracts.btn_creating')) : (contract ? t('contracts.btn_save') : t('contracts.btn_create'))}
                         </button>

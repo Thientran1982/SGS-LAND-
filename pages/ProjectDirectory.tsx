@@ -244,15 +244,15 @@ const TYPE_OPTIONS: FilterOption[] = [
 ];
 const STATUS_OPTIONS: FilterOption[] = [
     { value: 'Tất cả', label: 'Tất cả trạng thái' },
-    { value: 'Đang bàn giao', label: 'Đang bàn giao', dot: 'bg-emerald-500' },
+    { value: 'Đang bàn giao', label: 'Đang bàn giao', dot: 'bg-[#FDF6E3]0' },
     { value: 'Đang mở bán', label: 'Đang mở bán', dot: 'bg-[#FDF6E3]0' },
     { value: 'Đang bán', label: 'Đang bán', dot: 'bg-[#FDF6E3]0' },
-    { value: 'Thứ cấp', label: 'Thứ cấp (đã bàn giao)', dot: 'bg-emerald-400' },
+    { value: 'Thứ cấp', label: 'Thứ cấp (đã bàn giao)', dot: 'bg-[#C9A84C]' },
     { value: 'Sắp mở bán', label: 'Sắp mở bán', dot: 'bg-amber-500' },
     { value: 'Đang phát triển', label: 'Đang phát triển', dot: 'bg-amber-400' },
 ];
 const STATUS_BADGE: Record<string, string> = {
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    emerald: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]',
     indigo: 'bg-[#FDF6E3] text-[#B8860B] border-[#E8D4A0]',
     amber: 'bg-amber-50 text-amber-700 border-amber-200',
 };

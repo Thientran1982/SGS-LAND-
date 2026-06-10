@@ -84,7 +84,7 @@ export function SelectDropdown({
         disabled={disabled}
         onClick={() => { if (disabled) return; open ? setOpen(false) : openMenu(); }}
         style={{ height }}
-        className={`w-full flex items-center justify-between gap-2 px-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${disabled ? 'bg-[var(--glass-surface)] opacity-60 cursor-not-allowed border-[var(--glass-border)]' : 'bg-[var(--glass-surface-hover)] text-[var(--text-primary)]'} ${!disabled && (error ? 'border-rose-400' : open ? 'border-indigo-400 ring-2 ring-indigo-500/20' : 'border-[var(--glass-border)] hover:border-indigo-300')} ${className}`}
+        className={`w-full flex items-center justify-between gap-2 px-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 transition-colors ${disabled ? 'bg-[var(--glass-surface)] opacity-60 cursor-not-allowed border-[var(--glass-border)]' : 'bg-[var(--glass-surface-hover)] text-[var(--text-primary)]'} ${!disabled && (error ? 'border-rose-400' : open ? 'border-[#C9A84C] ring-2 ring-[#C9A84C]/20' : 'border-[var(--glass-border)] hover:border-[#C9A84C]')} ${className}`}
       >
         <span className="flex items-center gap-2 min-w-0 flex-1 truncate">
           {selected?.dot && (
@@ -109,11 +109,11 @@ export function SelectDropdown({
                 key={opt.value}
                 type="button"
                 onClick={() => handleSelect(opt.value)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${value === opt.value ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${value === opt.value ? 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/20 text-[#C9A84C] dark:text-[#C9A84C]' : 'text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)]'}`}
               >
                 {opt.dot && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.dot}`} />}
                 <span className="flex-1 truncate">{opt.label}</span>
-                {value === opt.value && <Check size={13} className="flex-shrink-0 text-indigo-500" />}
+                {value === opt.value && <Check size={13} className="flex-shrink-0 text-[#C9A84C]0" />}
               </button>
             ))}
           </div>

@@ -279,12 +279,12 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                                         <div className="font-bold mb-1">{label}</div>
                                                         <div className="flex gap-3">
                                                             <span className="text-[var(--text-secondary)]">{t('reports.metric_conversion')}:</span>
-                                                            <span className="font-mono text-emerald-400">{payload[0].value}%</span>
+                                                            <span className="font-mono text-[#C9A84C]">{payload[0].value}%</span>
                                                         </div>
                                                         <div className="flex gap-3">
                                                             <span className="text-[var(--text-secondary)]">{t('reports.won')}:</span>
                                                             {/* won/resolved: denominator excludes in-progress leads for accurate close rate */}
-                                                            <span className="font-mono text-emerald-400">{payload[0].payload.won}/{payload[0].payload.resolved ?? payload[0].payload.total}</span>
+                                                            <span className="font-mono text-[#C9A84C]">{payload[0].payload.won}/{payload[0].payload.resolved ?? payload[0].payload.total}</span>
                                                         </div>
                                                         {payload[0].payload.lost > 0 && (
                                                             <div className="flex gap-3">
@@ -357,9 +357,9 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                             </div>
                         )}
                         {overallRate !== null && (
-                            <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
-                                <div className="text-xs2 font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate')}</div>
-                                <div className="text-2xl font-extrabold text-emerald-700">{overallRate}%</div>
+                            <div className="flex-shrink-0 bg-[#FDF6E3] border border-[#C9A84C] rounded-[14px] px-4 py-2 text-center">
+                                <div className="text-xs2 font-bold text-[#C9A84C] uppercase tracking-wider">{t('reports.funnel_overall_rate')}</div>
+                                <div className="text-2xl font-extrabold text-[#B8860B]">{overallRate}%</div>
                             </div>
                         )}
                     </div>
@@ -426,7 +426,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
         // Fix: when spend = 0, ROI is meaningless — show N/A instead of 0%
         if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]">{t('reports.roi_na')}</span>;
         return (
-            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-[#FDF6E3] text-[#C9A84C] border border-[#C9A84C]' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                 {row.roi > 0 ? '+' : ''}{row.roi.toFixed(1)}%
             </span>
         );
@@ -487,7 +487,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                                     <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
                                         {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-[var(--text-secondary)]">{t('common.no_value')}</span>}
                                     </td>
-                                    <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
+                                    <td className="p-5 text-right font-mono font-bold text-[#C9A84C]">{formatCurrency(row.revenue)}</td>
                                     <td className="p-5 text-right">{roiDisplay(row)}</td>
                                 </tr>
                             ))}
@@ -579,7 +579,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                 {canUpdateCosts && (
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow hover:bg-indigo-700 transition-all"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-[#C9A84C] text-white text-xs font-bold rounded-xl shadow hover:bg-[#B8860B] transition-all"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
                         {t('reports.btn_add_cost')}
@@ -617,7 +617,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                             <div className="flex items-center justify-end gap-2 sm:gap-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                 <button 
                                                     onClick={() => { setEditingCost(cost); setNewCostValue(cost.cost.toString()); setShowUpdateModal(true); }}
-                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors px-2 py-1 rounded-lg hover:bg-indigo-50"
+                                                    className="text-xs font-bold text-[#C9A84C] hover:text-[#1C2B4A] transition-colors px-2 py-1 rounded-lg hover:bg-[#FDF6E3]"
                                                 >
                                                     {t('reports.btn_update')}
                                                 </button>
@@ -650,7 +650,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 value={addForm.source}
                                 onChange={(e) => setAddForm(f => ({ ...f, source: e.target.value }))}
                                 placeholder={t('reports.cost_source_placeholder')}
-                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                         <div>
@@ -660,7 +660,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 value={addForm.campaignName}
                                 onChange={(e) => setAddForm(f => ({ ...f, campaignName: e.target.value }))}
                                 placeholder={t('reports.cost_campaign_placeholder')}
-                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                         <div>
@@ -669,7 +669,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 type="month"
                                 value={addForm.period}
                                 onChange={(e) => setAddForm(f => ({ ...f, period: e.target.value }))}
-                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                         <div>
@@ -679,7 +679,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 value={addForm.cost}
                                 onChange={(e) => setAddForm(f => ({ ...f, cost: e.target.value }))}
                                 placeholder="0"
-                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                     </div>
@@ -690,7 +690,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         <button 
                             onClick={handleAdd} 
                             disabled={isSaving || !addForm.source || !addForm.cost}
-                            className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-3 bg-[#C9A84C] text-white font-bold rounded-xl text-sm shadow-lg hover:bg-[#B8860B] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSaving ? t('common.processing') : t('common.save')}
                         </button>
@@ -736,14 +736,14 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             type="number" 
                             value={newCostValue}
                             onChange={(e) => setNewCostValue(e.target.value)}
-                            className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
+                            className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:bg-[var(--bg-surface)] transition-all"
                         />
                     </div>
                     <div className="flex gap-3 w-full">
                         <button onClick={() => { setShowUpdateModal(false); setEditingCost(null); }} disabled={isSavingUpdate} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors disabled:opacity-50">
                             {t('common.cancel')}
                         </button>
-                        <button onClick={handleUpdate} disabled={isSavingUpdate} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                        <button onClick={handleUpdate} disabled={isSavingUpdate} className="flex-1 py-3 bg-[#C9A84C] text-white font-bold rounded-xl text-sm shadow-lg hover:bg-[#B8860B] transition-all disabled:opacity-60 flex items-center justify-center gap-2">
                             {isSavingUpdate && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                             {isSavingUpdate ? t('common.processing') : t('common.save')}
                         </button>
@@ -900,10 +900,10 @@ export const Reports: React.FC = () => {
                     <div className="flex flex-col items-end shrink-0 gap-0.5">
                         <div className="flex items-center gap-1.5">
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9A84C] opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FDF6E3]0"></span>
                             </span>
-                            <span className="text-xs3 font-extrabold text-emerald-600 uppercase tracking-widest">{t('reports.live')}</span>
+                            <span className="text-xs3 font-extrabold text-[#C9A84C] uppercase tracking-widest">{t('reports.live')}</span>
                         </div>
                         {lastUpdated && (
                             <span className="text-xs3 text-[var(--text-secondary)] font-mono whitespace-nowrap">
@@ -939,10 +939,10 @@ export const Reports: React.FC = () => {
                         {/* LIVE badge mobile */}
                         <div className="flex items-center gap-1 shrink-0">
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9A84C] opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FDF6E3]0"></span>
                             </span>
-                            <span className="text-xs3 font-extrabold text-emerald-600 uppercase tracking-widest">{t('reports.live')}</span>
+                            <span className="text-xs3 font-extrabold text-[#C9A84C] uppercase tracking-widest">{t('reports.live')}</span>
                         </div>
                     </div>
                     {lastUpdated && (
@@ -961,7 +961,7 @@ export const Reports: React.FC = () => {
             </div>
 
             {createPortal(
-                toast ? <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+                toast ? <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-[#C9A84C] text-white' : 'bg-rose-600 text-white'}`}>
                     {toast.type === 'success'
                         ? <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                         : <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>

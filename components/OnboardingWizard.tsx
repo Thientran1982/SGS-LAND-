@@ -14,10 +14,10 @@ const STEP_CONFIG = [
         desc_vn: 'Mời nhân sự và tổ chức nhóm làm việc của bạn.',
         desc_en: 'Invite staff and organize your working teams.',
         route: ROUTES.ADMIN_USERS,
-        gradient: 'from-indigo-500 to-violet-500',
-        lightBg: 'bg-indigo-50 dark:bg-indigo-900/20',
-        iconColor: 'text-indigo-600 dark:text-indigo-400',
-        borderColor: 'border-indigo-100 dark:border-indigo-800/40',
+        gradient: 'from-[#C9A84C]0 to-violet-500',
+        lightBg: 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/20',
+        iconColor: 'text-[#C9A84C] dark:text-[#C9A84C]',
+        borderColor: 'border-[#C9A84C] dark:border-[#1C2B4A]/40',
         icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -30,10 +30,10 @@ const STEP_CONFIG = [
         desc_vn: 'Nhập dữ liệu khách hàng và kết nối nguồn dữ liệu.',
         desc_en: 'Import customer data and connect data sources.',
         route: ROUTES.DATA_PLATFORM,
-        gradient: 'from-blue-500 to-cyan-500',
-        lightBg: 'bg-blue-50 dark:bg-blue-900/20',
-        iconColor: 'text-blue-600 dark:text-blue-400',
-        borderColor: 'border-blue-100 dark:border-blue-800/40',
+        gradient: 'from-[#C9A84C]0 to-cyan-500',
+        lightBg: 'bg-[#FDF6E3] dark:bg-[#1C2B4A]/20',
+        iconColor: 'text-[#C9A84C] dark:text-[#C9A84C]',
+        borderColor: 'border-[#C9A84C] dark:border-[#1C2B4A]/40',
         icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
@@ -46,7 +46,7 @@ const STEP_CONFIG = [
         desc_vn: 'Kết nối Zalo OA, Facebook Page để nhận lead.',
         desc_en: 'Connect Zalo OA, Facebook Page to receive leads.',
         route: ROUTES.ENTERPRISE_SETTINGS,
-        gradient: 'from-violet-500 to-purple-500',
+        gradient: 'from-violet-500 to-[#C9A84C]0',
         lightBg: 'bg-violet-50 dark:bg-violet-900/20',
         iconColor: 'text-violet-600 dark:text-violet-400',
         borderColor: 'border-violet-100 dark:border-violet-800/40',
@@ -62,10 +62,10 @@ const STEP_CONFIG = [
         desc_vn: 'Thiết lập quy tắc phân bổ lead tự động cho nhóm.',
         desc_en: 'Set up automated lead routing rules for teams.',
         route: ROUTES.ROUTING_RULES,
-        gradient: 'from-emerald-500 to-teal-500',
-        lightBg: 'bg-emerald-50 dark:bg-emerald-900/20',
-        iconColor: 'text-emerald-600 dark:text-emerald-400',
-        borderColor: 'border-emerald-100 dark:border-emerald-800/40',
+        gradient: 'from-[#C9A84C]0 to-[#C9A84C]0',
+        lightBg: 'bg-[#FDF6E3] dark:bg-[#B8860B]/20',
+        iconColor: 'text-[#C9A84C] dark:text-[#C9A84C]',
+        borderColor: 'border-[#C9A84C] dark:border-[#B8860B]/40',
         icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -171,7 +171,7 @@ export const OnboardingWizard: React.FC = () => {
             <button
                 onClick={() => setIsMinimized(false)}
                 title={t('onboard.title')}
-                className="fixed bottom-6 right-6 z-50 group focus:outline-none focus:ring-4 focus:ring-indigo-500/30"
+                className="fixed bottom-6 right-6 z-50 group focus:outline-none focus:ring-4 focus:ring-[#C9A84C]/30"
             >
                 <div className="bg-slate-900 dark:bg-slate-950 text-white rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 p-1.5 border border-white/10">
                     <ProgressRing percentage={state.percentage} size={48} stroke={3} />
@@ -189,13 +189,13 @@ export const OnboardingWizard: React.FC = () => {
             {/* ── HEADER ── */}
             <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 pt-4 pb-5 overflow-hidden">
                 {/* Decorative blobs */}
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-[#C9A84C]/20 rounded-full blur-2xl pointer-events-none" />
                 <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-violet-500/20 rounded-full blur-xl pointer-events-none" />
                 <div className="relative flex justify-between items-start mb-3">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-xs2 font-bold text-emerald-400 uppercase tracking-widest">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] animate-pulse" />
+                            <span className="text-xs2 font-bold text-[#C9A84C] uppercase tracking-widest">
                                 {language === 'en' ? 'Getting Started' : 'Bắt Đầu'}
                             </span>
                         </div>
@@ -257,7 +257,7 @@ export const OnboardingWizard: React.FC = () => {
                             <div className={`
                                 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all
                                 ${isDone
-                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400'
+                                    ? 'bg-[#FDF6E3] dark:bg-[#B8860B]/30 text-[#C9A84C] dark:text-[#C9A84C]'
                                     : `${step.lightBg} ${step.iconColor}`
                                 }
                             `}>

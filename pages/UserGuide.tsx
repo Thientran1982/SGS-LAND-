@@ -98,16 +98,16 @@ const NAV_ITEMS: { id: SectionId; label: string; icon: React.ReactNode; color: s
     { id: 'settings',     label: 'Cài đặt & Hồ sơ',      icon: Ico.SETTING,    color: 'slate'   },
 ];
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-    emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-    blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/30',    text: 'text-blue-400',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30'       },
+    emerald: { bg: 'bg-[#FDF6E3]0/10', border: 'border-[#C9A84C]0/30', text: 'text-[#C9A84C]', badge: 'bg-[#FDF6E3]0/20 text-[#C9A84C] border-[#C9A84C]/30' },
+    blue:    { bg: 'bg-[#FDF6E3]0/10',    border: 'border-[#C9A84C]0/30',    text: 'text-[#C9A84C]',    badge: 'bg-[#FDF6E3]0/20 text-[#C9A84C] border-[#C9A84C]/30'       },
     violet:  { bg: 'bg-violet-500/10',  border: 'border-violet-500/30',  text: 'text-violet-400',  badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
     cyan:    { bg: 'bg-cyan-500/10',    border: 'border-cyan-500/30',    text: 'text-cyan-400',    badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'       },
     amber:   { bg: 'bg-amber-500/10',   border: 'border-amber-500/30',   text: 'text-amber-400',   badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30'   },
     pink:    { bg: 'bg-pink-500/10',    border: 'border-pink-500/30',    text: 'text-pink-400',    badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30'       },
     orange:  { bg: 'bg-orange-500/10',  border: 'border-orange-500/30',  text: 'text-orange-400',  badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
     rose:    { bg: 'bg-rose-500/10',    border: 'border-rose-500/30',    text: 'text-rose-400',    badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30'       },
-    teal:    { bg: 'bg-teal-500/10',    border: 'border-teal-500/30',    text: 'text-teal-400',    badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30'       },
-    indigo:  { bg: 'bg-indigo-500/10',  border: 'border-indigo-500/30',  text: 'text-indigo-400',  badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
+    teal:    { bg: 'bg-[#FDF6E3]0/10',    border: 'border-[#C9A84C]0/30',    text: 'text-[#C9A84C]',    badge: 'bg-[#FDF6E3]0/20 text-[#C9A84C] border-[#C9A84C]/30'       },
+    indigo:  { bg: 'bg-[#FDF6E3]0/10',  border: 'border-[#C9A84C]0/30',  text: 'text-[#C9A84C]',  badge: 'bg-[#FDF6E3]0/20 text-[#C9A84C] border-[#C9A84C]/30' },
     lime:    { bg: 'bg-lime-500/10',    border: 'border-lime-500/30',    text: 'text-lime-400',    badge: 'bg-lime-500/20 text-lime-300 border-lime-500/30'       },
     slate:   { bg: 'bg-slate-500/10',   border: 'border-slate-500/30',   text: 'text-slate-400',   badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30'   },
 };
@@ -116,8 +116,8 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; badg
 ───────────────────────────────────────────── */
 function Tip({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 mt-5">
-            <span className="text-emerald-400 mt-0.5 shrink-0">{Ico.TIP}</span>
+        <div className="flex gap-3 p-4 rounded-xl bg-[#C9A84C]/5 border border-[#C9A84C]/20 mt-5">
+            <span className="text-[#C9A84C] mt-0.5 shrink-0">{Ico.TIP}</span>
             <p className="text-sm text-slate-300 leading-relaxed">{children}</p>
         </div>
     );
@@ -135,7 +135,7 @@ function StepList({ steps }: { steps: { title: string; desc: string }[] }) {
         <ol className="space-y-4 mt-5">
             {steps.map((s, i) => (
                 <li key={i} className="flex gap-4">
-                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black flex items-center justify-center mt-0.5">{i + 1}</span>
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-[#C9A84C]/15 border border-[#C9A84C]/30 text-[#C9A84C] text-xs font-black flex items-center justify-center mt-0.5">{i + 1}</span>
                     <div>
                         <p className="font-semibold text-white text-sm">{s.title}</p>
                         <p className="text-sm text-slate-400 mt-0.5 leading-relaxed">{s.desc}</p>
@@ -474,7 +474,7 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
                     'Quản lý thiết bị đang đăng nhập và phiên làm việc',
                 ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2.5 text-sm text-slate-400">
-                        <span className="text-emerald-500 shrink-0">{Ico.CHECK}</span>
+                        <span className="text-[#C9A84C]0 shrink-0">{Ico.CHECK}</span>
                         {item}
                     </div>
                 ))}
@@ -629,7 +629,7 @@ export function UserGuide() {
                                 {activeIdx < NAV_ITEMS.length - 1 && (
                                     <button
                                         onClick={() => nav(NAV_ITEMS[activeIdx + 1].id)}
-                                        className="text-xs text-white px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center gap-1 font-medium"
+                                        className="text-xs text-white px-3 py-1.5 rounded-lg bg-[#C9A84C] hover:bg-[#C9A84C] transition-all flex items-center gap-1 font-medium"
                                     >
                                         Tiếp
                                         {Ico.ARROW_RIGHT}
@@ -656,7 +656,7 @@ export function UserGuide() {
                             {activeIdx < NAV_ITEMS.length - 1 ? (
                                 <button
                                     onClick={() => nav(NAV_ITEMS[activeIdx + 1].id)}
-                                    className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
+                                    className="flex items-center gap-2 text-sm text-[#C9A84C] hover:text-[#C9A84C] transition-colors font-medium"
                                 >
                                     {NAV_ITEMS[activeIdx + 1].label}
                                     {Ico.ARROW_RIGHT}
@@ -664,7 +664,7 @@ export function UserGuide() {
                             ) : (
                                 <button
                                     onClick={() => { window.location.hash = `#/${ROUTES.DASHBOARD}`; }}
-                                    className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
+                                    className="flex items-center gap-2 text-sm text-[#C9A84C] hover:text-[#C9A84C] transition-colors font-medium"
                                 >
                                     Bắt đầu sử dụng →
                                 </button>

@@ -21,8 +21,8 @@ type SortDir = 'asc' | 'desc';
 function WorkloadBar({ score }: { score: number }) {
   const max = 20;
   const pct = Math.min(100, (score / max) * 100);
-  const color = score > 12 ? 'bg-rose-500' : score > 6 ? 'bg-amber-400' : 'bg-emerald-500';
-  const textColor = score > 12 ? 'text-rose-500' : score > 6 ? 'text-amber-500' : 'text-emerald-500';
+  const color = score > 12 ? 'bg-rose-500' : score > 6 ? 'bg-amber-400' : 'bg-[#FDF6E3]0';
+  const textColor = score > 12 ? 'text-rose-500' : score > 6 ? 'text-amber-500' : 'text-[#C9A84C]0';
   return (
     <div className="flex items-center gap-2 min-w-[90px]">
       <div className="flex-1 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
@@ -49,7 +49,7 @@ function SortButton({ col, current, dir, onClick }: { col: SortKey; current: Sor
   return (
     <button
       onClick={() => onClick(col)}
-      className={`flex items-center gap-0.5 text-xs font-medium transition-colors ${active ? 'text-indigo-500' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+      className={`flex items-center gap-0.5 text-xs font-medium transition-colors ${active ? 'text-[#C9A84C]0' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
       {active ? (dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ChevronDown size={11} className="opacity-30" />}
     </button>
   );
@@ -99,7 +99,7 @@ export function Employees() {
   const SortCol = ({ col, label }: { col: SortKey; label: string }) => (
     <button
       onClick={() => handleSort(col)}
-      className={`flex items-center gap-1 text-xs font-medium transition-colors ${sortKey === col ? 'text-indigo-500' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+      className={`flex items-center gap-1 text-xs font-medium transition-colors ${sortKey === col ? 'text-[#C9A84C]0' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
       {label}
       {sortKey === col
         ? (sortDir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />)
@@ -111,7 +111,7 @@ export function Employees() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[var(--glass-border)] flex-shrink-0">
         <div className="flex items-center gap-2">
-          <UserCheck className="w-5 h-5 text-indigo-500" />
+          <UserCheck className="w-5 h-5 text-[#C9A84C]0" />
           <h1 className="text-lg font-bold text-[var(--text-primary)]">Quản lý Nhân viên</h1>
           {!loading && <span className="text-sm text-[var(--text-tertiary)]">({employees.length})</span>}
         </div>
@@ -131,11 +131,11 @@ export function Employees() {
             <p className="text-xs text-[var(--text-tertiary)]">Công việc quá hạn</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-emerald-500">{totalDone}</p>
+            <p className="text-xl font-bold text-[#C9A84C]0">{totalDone}</p>
             <p className="text-xs text-[var(--text-tertiary)]">Đã hoàn thành</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-indigo-500">{avgCompletion.toFixed(0)}%</p>
+            <p className="text-xl font-bold text-[#C9A84C]0">{avgCompletion.toFixed(0)}%</p>
             <p className="text-xs text-[var(--text-tertiary)]">Tỷ lệ TB</p>
           </div>
         </div>
@@ -147,7 +147,7 @@ export function Employees() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Tìm nhân viên hoặc phòng ban..."
-          className="w-full h-[38px] px-3 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          className="w-full h-[38px] px-3 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30"
         />
       </div>
       {/* Sort header */}
@@ -170,7 +170,7 @@ export function Employees() {
           <div className="flex flex-col items-center justify-center h-40 gap-2">
             <AlertTriangle className="w-8 h-8 text-amber-400" />
             <p className="text-sm text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => load()} className="text-sm text-indigo-500 font-medium">Thử lại</button>
+            <button onClick={() => load()} className="text-sm text-[#C9A84C] font-medium">Thử lại</button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
@@ -183,7 +183,7 @@ export function Employees() {
               <div key={emp.user_id} className="px-4 md:px-6 py-4 hover:bg-[var(--glass-surface-hover)] transition-colors">
                 <div className="flex items-center gap-3">
                   {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[#FDF6E3] dark:bg-[#1C2B4A]/30 flex items-center justify-center text-sm font-bold text-[#C9A84C] flex-shrink-0">
                     {emp.name?.charAt(0).toUpperCase()}
                   </div>
                   {/* Info */}
@@ -199,7 +199,7 @@ export function Employees() {
                             <AlertCircle size={12} /> {emp.overdue}
                           </span>
                         )}
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${emp.completion_rate >= 70 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : emp.completion_rate >= 40 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'}`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${emp.completion_rate >= 70 ? 'bg-[#FDF6E3] text-[#B8860B] dark:bg-[#B8860B]/30 dark:text-[#C9A84C]' : emp.completion_rate >= 40 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'}`}>
                           {emp.completion_rate}%
                         </span>
                       </div>
@@ -207,8 +207,8 @@ export function Employees() {
                     {/* Task counts + workload */}
                     <div className="flex items-center gap-3 mt-2 flex-wrap">
                       <span className="text-xs text-[var(--text-tertiary)]">Tổng: <b className="text-[var(--text-primary)]">{emp.total_assigned}</b></span>
-                      <span className="text-xs text-indigo-500">Đang làm: <b>{emp.in_progress}</b></span>
-                      <span className="text-xs text-emerald-500">Hoàn thành: <b>{emp.done}</b></span>
+                      <span className="text-xs text-[#C9A84C]0">Đang làm: <b>{emp.in_progress}</b></span>
+                      <span className="text-xs text-[#C9A84C]0">Hoàn thành: <b>{emp.done}</b></span>
                       <span className="text-xs text-slate-400">Chờ: <b>{emp.todo}</b></span>
                       {emp.total_assigned > 0 && (
                         <WorkloadBar score={emp.in_progress + emp.overdue * 2} />

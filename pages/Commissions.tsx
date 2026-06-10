@@ -12,7 +12,7 @@ const STATUS_LABEL: Record<LedgerStatus, string> = {
 const STATUS_COLOR: Record<LedgerStatus, string> = {
   PENDING:   'bg-amber-50 text-amber-700 border-amber-200',
   DUE:       'bg-orange-50 text-orange-700 border-orange-200',
-  PAID:      'bg-emerald-50 text-emerald-700 border-emerald-200',
+  PAID:      'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]',
   CANCELLED: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 function fmtMoney(v: string | number | null | undefined): string {
@@ -143,7 +143,7 @@ export const Commissions: React.FC = () => {
         </div>
         <a
           href={exportUrl}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B]"
         >
           ⬇ Xuất Excel
         </a>
@@ -252,7 +252,7 @@ export const Commissions: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">{fmtMoney(it.sale_price)}</td>
-                  <td className="px-3 py-2 text-right whitespace-nowrap font-bold text-emerald-700">{fmtMoney(it.gross_amount)}</td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap font-bold text-[#B8860B]">{fmtMoney(it.gross_amount)}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {it.rate_pct ? `${Number(it.rate_pct).toFixed(2)}%` : '—'}
                     <div className="text-xs text-[var(--text-tertiary)]">{it.policy_type || '—'}{it.policy_version ? ` v${it.policy_version}` : ''}</div>
@@ -270,7 +270,7 @@ export const Commissions: React.FC = () => {
                           type="button"
                           onClick={() => handlePaid(it.id)}
                           disabled={paying === it.id}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 disabled:opacity-50"
+                          className="px-2.5 py-1 rounded-lg bg-[#C9A84C] text-white text-xs font-bold hover:bg-[#B8860B] disabled:opacity-50"
                         >
                           {paying === it.id ? '...' : 'Đánh dấu đã trả'}
                         </button>
@@ -308,9 +308,9 @@ export const Commissions: React.FC = () => {
           />
           {selected.size > 0 && (
             <>
-              <span className="font-bold text-emerald-700">Đã chọn: {selected.size}</span>
+              <span className="font-bold text-[#B8860B]">Đã chọn: {selected.size}</span>
               <button type="button" onClick={handleBulkPaid} disabled={bulkPaying}
-                className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 disabled:opacity-50">
+                className="px-3 py-1.5 rounded-lg bg-[#C9A84C] text-white text-xs font-bold hover:bg-[#B8860B] disabled:opacity-50">
                 {bulkPaying ? 'Đang xử lý…' : `Đánh dấu đã trả (${selected.size})`}
               </button>
               <button type="button" onClick={() => setSelected(new Set())}
@@ -320,7 +320,7 @@ export const Commissions: React.FC = () => {
         </div>
       )}
       {toast && (
-        <div className={`fixed bottom-6 right-6 px-4 py-2 rounded-xl shadow-lg text-sm font-bold ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+        <div className={`fixed bottom-6 right-6 px-4 py-2 rounded-xl shadow-lg text-sm font-bold ${toast.type === 'success' ? 'bg-[#C9A84C] text-white' : 'bg-rose-600 text-white'}`}>
           {toast.msg}
         </div>
       )}

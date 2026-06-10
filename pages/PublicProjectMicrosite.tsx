@@ -14,7 +14,7 @@ interface Props {
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   OPENING:   { label: 'Mở bán',     cls: 'bg-[#FDF6E3] text-[#B8860B] border-[#E8D4A0]' },
   BOOKING:   { label: 'Đặt chỗ',   cls: 'bg-sky-50 text-sky-700 border-sky-200' },
-  AVAILABLE: { label: 'Còn hàng',   cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  AVAILABLE: { label: 'Còn hàng',   cls: 'bg-[#FDF6E3] text-[#B8860B] border-[#C9A84C]' },
 };
 function formatPrice(price: number | null, currency: string | null): string {
   if (price == null) return 'Liên hệ';
@@ -379,7 +379,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const branding = brandingOverride
     ? { ...baseBranding, ...brandingOverride }
     : baseBranding;
-  const brandPrimary = branding?.primaryColor || '#4F46E5';
+  const brandPrimary = branding?.primaryColor || '#C9A84C';
   const brandLabel   = branding?.displayName || tenantContact.brandName || 'SGS LAND';
   const brandLogo    = branding?.logoUrl || null;
   return (
@@ -513,7 +513,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                   <ul className="grid sm:grid-cols-2 gap-2">
                     {project.metadata.highlights.map((h, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                        <span className="text-emerald-500 mt-0.5">✓</span>{h}
+                        <span className="text-[#C9A84C]0 mt-0.5">✓</span>{h}
                       </li>
                     ))}
                   </ul>
@@ -619,7 +619,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                   data-testid="turnstile-container" />
               )}
               {submitMsg && (
-                <div className={`sm:col-span-2 px-3 py-2 rounded-lg text-sm ${submitMsg.ok ? 'bg-emerald-500/20 text-emerald-50 border border-emerald-300/30' : 'bg-rose-500/20 text-rose-50 border border-rose-300/30'}`}>
+                <div className={`sm:col-span-2 px-3 py-2 rounded-lg text-sm ${submitMsg.ok ? 'bg-[#FDF6E3]0/20 text-[#C9A84C] border border-[#C9A84C]/30' : 'bg-rose-500/20 text-rose-50 border border-rose-300/30'}`}>
                   {submitMsg.text}
                 </div>
               )}
