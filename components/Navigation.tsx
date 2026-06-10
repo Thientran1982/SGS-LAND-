@@ -22,10 +22,10 @@ interface CommandCenterProps {
 // -----------------------------------------------------------------------------
 const ICONS = {
     MENU: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
-    SEARCH: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[#C9A84C] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     SEARCH_MOBILE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     BELL: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>,
-    HEART: <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
+    HEART: <svg className="w-4 h-4 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
     CHECK_ALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7M3 17l4 4L19 5" /></svg>,
     TRASH: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
 };
@@ -68,8 +68,8 @@ const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean })
     return (
         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
             ${isActive 
-                ? 'border-indigo-500 shadow-indigo-500/20' 
-                : 'border-white dark:border-white/10 group-hover:border-indigo-500 group-hover:shadow-indigo-500/20'}`
+                ? 'border-[#C9A84C] shadow-[#C9A84C]/20' 
+                : 'border-white dark:border-white/10 group-hover:border-[#C9A84C] group-hover:shadow-[#C9A84C]/20'}`
         }>
             {hasAvatar ? (
                 <img 
@@ -117,7 +117,7 @@ const NotificationPanel = memo(({
                     {hasUnread && (
                         <button
                             onClick={onMarkAllRead}
-                            className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                            className="flex items-center gap-1 text-xs font-semibold text-[#C9A84C] hover:text-[#B8860B] transition-colors"
                             title={t('nav.mark_all_read')}
                         >
                             {ICONS.CHECK_ALL}
@@ -147,24 +147,24 @@ const NotificationPanel = memo(({
                     notifications.map(notif => (
                         <div 
                             key={notif.id}
-                            className={`group flex items-start gap-3 px-4 py-3 border-b border-[var(--glass-border)] last:border-0 transition-colors ${!notif.readAt ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface-hover)]'}`}
+                            className={`group flex items-start gap-3 px-4 py-3 border-b border-[var(--glass-border)] last:border-0 transition-colors ${!notif.readAt ? 'bg-[#FDF6E3]/50 dark:bg-[#C9A84C]/8' : 'hover:bg-[var(--glass-surface-hover)]'}`}
                         >
                             {/* Icon */}
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
+                            <div className="w-8 h-8 rounded-full bg-[#F5E6B8] dark:bg-[#C9A84C]/10 flex items-center justify-center shrink-0 mt-0.5">
                                 {NOTIF_ICON[notif.type] ?? ICONS.BELL}
                             </div>
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-xs font-bold text-[var(--text-primary)] truncate">{notif.title}</span>
-                                    {!notif.readAt && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
+                                    {!notif.readAt && <span className="w-1.5 h-1.5 rounded-full bg-[#FDF6E3]0 shrink-0" />}
                                 </div>
                                 {notif.body && (
                                     <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">{notif.body}</p>
                                 )}
                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                     {notif.userName && (
-                                        <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400 shrink-0">
+                                        <span className="text-xs font-medium text-[#C9A84C] dark:text-[#C9A84C] shrink-0">
                                             {notif.userName}
                                         </span>
                                     )}
@@ -182,7 +182,7 @@ const NotificationPanel = memo(({
                                                 ), 80);
                                                 onClose();
                                             }}
-                                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                                            className="text-xs font-semibold text-[#C9A84C] hover:text-[#B8860B] transition-colors"
                                         >
                                             {t('notif.view_lead')}
                                         </button>
@@ -194,7 +194,7 @@ const NotificationPanel = memo(({
                                 {!notif.readAt && (
                                     <button
                                         onClick={() => onMarkRead(notif.id)}
-                                        className="w-5 h-5 rounded-full text-slate-300 hover:text-indigo-500 transition-colors flex items-center justify-center"
+                                        className="w-5 h-5 rounded-full text-slate-300 hover:text-[#C9A84C] transition-colors flex items-center justify-center"
                                         title={t('notif.mark_read')}
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -255,7 +255,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
             <div className="flex items-center gap-2 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
                 <button
                     onClick={onMenuClick}
-                    className="md:hidden group flex items-center justify-center -ml-2 min-h-[44px] min-w-[44px] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded-xl"
+                    className="md:hidden group flex items-center justify-center -ml-2 min-h-[44px] min-w-[44px] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] focus-visible:rounded-xl"
                     aria-label={t('common.menu')}
                     aria-expanded={false}
                 >
@@ -274,7 +274,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     <button 
                         onClick={onSearch}
                         aria-label={t('common.search')}
-                        className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98]"
+                        className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-[#C9A84C]/60 hover:shadow-lg hover:shadow-[#C9A84C]/10 active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
                             {ICONS.SEARCH}
@@ -288,7 +288,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 {/* Mobile Search Icon */}
                 <button
                     onClick={onSearch}
-                    className="md:hidden group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded-xl"
+                    className="md:hidden group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] focus-visible:rounded-xl"
                     aria-label={t('common.search')}
                 >
                     <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
@@ -299,13 +299,13 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 <div ref={panelRef} className="relative">
                     <button
                         onClick={() => setPanelOpen(prev => !prev)}
-                        className="group relative flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded-xl"
+                        className="group relative flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] focus-visible:rounded-xl"
                         aria-label={t('nav.notifications')}
                     >
                         <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all relative">
                             {ICONS.BELL}
                             {unreadCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center leading-none shadow-sm">
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#C9A84C] text-white text-[10px] font-black flex items-center justify-center leading-none shadow-sm">
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
                             )}
@@ -327,12 +327,12 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 {/* Profile */}
                 <button
                     onClick={() => onNavigate(ROUTES.PROFILE)}
-                    className="flex items-center gap-2 sm:gap-3 pl-1 group cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-xl"
+                    className="flex items-center gap-2 sm:gap-3 pl-1 group cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] focus-visible:ring-offset-2 rounded-xl"
                     title={t('menu.profile')}
                     aria-label={t('menu.profile')}
                 >
                     <div className="text-right hidden sm:block leading-tight">
-                        <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] group-hover:text-indigo-600'}`}>
+                        <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-[#C9A84C] dark:text-[#C9A84C]' : 'text-[var(--text-primary)] group-hover:text-[#C9A84C]'}`}>
                             {user.name}
                         </div>
                         <div className="text-xs2 text-[var(--text-tertiary)] font-medium">

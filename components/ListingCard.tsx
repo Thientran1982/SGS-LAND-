@@ -58,7 +58,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
                     {/* Transaction Type Badge - FIX for Ambiguous Status */}
-                    <div className={`flex items-center gap-1.5 text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-purple-600/90' : 'bg-blue-600/90'}`}>
+                    <div className={`flex items-center gap-1.5 text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-[#C9A84C]/90' : 'bg-blue-600/90'}`}>
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
                     {isVerified && (
@@ -104,8 +104,8 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     {images!.length > 1 && (
                         <>
                             <div className="absolute inset-0 flex items-center justify-between p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                                <button onClick={prevImage} aria-label={t('common.prev')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{LISTING_ICONS.CHEVRON_LEFT}</button>
-                                <button onClick={nextImage} aria-label={t('common.next')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{LISTING_ICONS.CHEVRON_RIGHT}</button>
+                                <button onClick={prevImage} aria-label={t('common.prev')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]">{LISTING_ICONS.CHEVRON_LEFT}</button>
+                                <button onClick={nextImage} aria-label={t('common.next')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]">{LISTING_ICONS.CHEVRON_RIGHT}</button>
                             </div>
                             <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
                                 {images!.map((_, idx) => (
@@ -165,7 +165,7 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
     };
     return (
         <>
-            <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-secondary)] hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}>{LISTING_ICONS.ACTION}</button>
+            <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-[#FDF6E3] dark:bg-[#C9A84C]/10 text-[#C9A84C] dark:text-[#C9A84C]' : 'text-[var(--text-secondary)] hover:text-[#C9A84C] dark:hover:text-[#C9A84C] hover:bg-[#FDF6E3] dark:hover:bg-[#C9A84C]/10'}`}>{LISTING_ICONS.ACTION}</button>
             {isOpen && createPortal(
                 <div 
                     className="fixed z-[9999] w-48 bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 overflow-hidden animate-enter origin-top-right"
@@ -249,7 +249,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     return (
         <div 
             onClick={handleCardClick}
-            className="bg-[var(--bg-surface)] dark:bg-slate-900 rounded-[24px] shadow-sm group h-full relative overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 cursor-pointer flex flex-col"
+            className="bg-[var(--bg-surface)] dark:bg-slate-900 rounded-[24px] shadow-sm group h-full relative overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(201,168,76,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(201,168,76,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-[#C9A84C]/40 dark:hover:border-[#C9A84C]/40 cursor-pointer flex flex-col"
         >
             <div className="shrink-0">
                 <ImageCarousel 
@@ -277,7 +277,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                                 {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                             </span>
                         </div>
-                        <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={item.title}>
+                        <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-[#C9A84C] dark:group-hover:text-[#C9A84C] transition-colors" title={item.title}>
                             {item.title}
                         </h3>
                     </div>
@@ -305,7 +305,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                         {attrs.legalStatus && (
                             <div className="flex flex-col items-end">
                                 <span className="text-2xs font-bold text-[var(--text-secondary)] uppercase">{t('inventory.label_legal')}</span>
-                                <span className="text-2xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
+                                <span className="text-2xs font-bold text-[#C9A84C] dark:text-[#C9A84C] bg-[#FDF6E3] dark:bg-[#C9A84C]/10 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
                                     {t(`legal.${attrs.legalStatus}`) || (attrs.legalStatus as string)}
                                 </span>
                             </div>

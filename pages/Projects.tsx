@@ -189,14 +189,14 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             setSaving(false);
         }
     };
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 {/* Header — luôn hiển thị, không scroll */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
-                    <div className="flex items-center gap-2 text-indigo-600">
+                    <div className="flex items-center gap-2 text-[#C9A84C]">
                         {IC.BLDG}
                         <h2 className="text-base font-bold">{project ? t('project.edit') : t('project.new')}</h2>
                     </div>
@@ -324,7 +324,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                     type="button"
                                     onClick={() => coverInputRef.current?.click()}
                                     disabled={coverUploading}
-                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-indigo-400 bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-indigo-600 transition-colors disabled:opacity-60"
+                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-[#C9A84C] bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-[#C9A84C] transition-colors disabled:opacity-60"
                                 >
                                     {coverUploading ? (
                                         <span className="w-6 h-6 border-2 border-current/30 border-t-current rounded-full animate-spin" />
@@ -341,12 +341,12 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                         {/* Mini-site công khai (/p/<code>) — ADMIN/SUPER_ADMIN/TEAM_LEAD của tenant chủ có quyền bật/tắt (server enforce). */}
                         <div className="col-span-2">
                             <label className={`${labelCls} mb-2`}>{t('project.microsite_section')}</label>
-                            <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
+                            <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-[#C9A84C] bg-[#FDF6E3]/50 dark:bg-[#1C2B4A]/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
                                 <input
                                     type="checkbox"
                                     checked={publicMicrosite}
                                     onChange={(e) => setPublicMicrosite(e.target.checked)}
-                                    className="mt-0.5 w-4 h-4 accent-indigo-600"
+                                    className="mt-0.5 w-4 h-4 accent-[#C9A84C]"
                                 />
                                 <span className="flex-1">
                                     <span className="block text-sm font-semibold text-[var(--text-primary)]">
@@ -387,7 +387,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                     </div>
                     <div className="flex gap-3 justify-end pt-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">{t('common.cancel')}</button>
-                        <button type="submit" disabled={saving || coverUploading} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">{saving ? t('common.loading') : t('common.save')}</button>
+                        <button type="submit" disabled={saving || coverUploading} className="px-5 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] disabled:opacity-50">{saving ? t('common.loading') : t('common.save')}</button>
                     </div>
                 </form>
             </div>
@@ -459,14 +459,14 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     // Tenants not yet ACTIVE in this project
     const activePartnerIds = new Set(accesses.filter(a => a.status === 'ACTIVE').map(a => a.partner_tenant_id));
     const availableTenants = tenants.filter(t2 => !activePartnerIds.has(t2.id));
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
                     <div>
-                        <div className="flex items-center gap-2 text-indigo-600">
+                        <div className="flex items-center gap-2 text-[#C9A84C]">
                             {IC.SHIELD}
                             <h2 className="text-base font-bold">{t('project.access_title')}</h2>
                         </div>
@@ -477,8 +477,8 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 
                 <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
                     {/* Grant form */}
-                    <form onSubmit={handleGrant} className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4 space-y-3">
-                        <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">{t('project.grant_access')}</p>
+                    <form onSubmit={handleGrant} className="bg-[#FDF6E3] dark:bg-[#C9A84C]/10 border border-[#E8D4A0] dark:border-[#C9A84C]/40 rounded-xl p-4 space-y-3">
+                        <p className="text-sm font-bold text-[#B8860B] dark:text-[#E8D4A0]">{t('project.grant_access')}</p>
                         {err && <p className="text-rose-600 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5" role="alert">{err}</p>}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
@@ -500,7 +500,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <button type="submit" disabled={granting} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+                            <button type="submit" disabled={granting} className="px-4 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] disabled:opacity-50 flex items-center gap-2">
                                 {IC.SHIELD}
                                 {granting ? t('common.loading') : t('project.grant_access')}
                             </button>
@@ -566,7 +566,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 const STATUS_LISTING_COLOR: Record<string, string> = {
     AVAILABLE: 'bg-emerald-100 text-emerald-700',
     BOOKING:   'bg-sky-100 text-sky-700',
-    OPENING:   'bg-indigo-100 text-indigo-700',
+    OPENING:   'bg-[#F5E6B8] text-[#B8860B]',
     HOLD:      'bg-amber-100 text-amber-700',
     SOLD:      'bg-slate-100 text-slate-500',
     RENTED:    'bg-violet-100 text-violet-700',
@@ -601,7 +601,7 @@ interface ListingDetailPanelProps {
 }
 const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
     { value: 'BOOKING',  idle: 'bg-sky-50    text-sky-600    border border-sky-200'   },
-    { value: 'OPENING',  idle: 'bg-indigo-50 text-indigo-600 border border-indigo-200'},
+    { value: 'OPENING',  idle: 'bg-[#FDF6E3] text-[#C9A84C] border border-[#E8D4A0]'},
     { value: 'AVAILABLE',idle: 'bg-emerald-50 text-emerald-600 border border-emerald-200'},
     { value: 'HOLD',     idle: 'bg-amber-50  text-amber-600  border border-amber-200' },
     { value: 'SOLD',     idle: 'bg-slate-100 text-slate-500  border border-slate-200' },
@@ -657,7 +657,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                                     {t(`status.${listing.status}`) || listing.status}
                                 </span>
                                 {listing.transaction && (
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FDF6E3] text-[#B8860B] border border-[#E8D4A0] whitespace-nowrap">
                                         {t(`transaction.${listing.transaction}`) || listing.transaction}
                                     </span>
                                 )}
@@ -670,7 +670,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             <button
                                 type="button"
                                 onClick={onEdit}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C9A84C] text-white text-xs font-bold hover:bg-[#B8860B] transition-colors"
                             >
                                 {IC.EDIT} {t('common.edit')}
                             </button>
@@ -795,7 +795,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     {/* Assigned agent */}
                     {listing.assignedToName && (
                         <div className="flex items-center gap-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] px-4 py-3">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm font-bold shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-[#F5E6B8] flex items-center justify-center text-[#C9A84C] text-sm font-bold shrink-0">
                                 {listing.assignedToName[0]?.toUpperCase()}
                             </div>
                             <div>
@@ -1061,7 +1061,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                             <td className="px-3 py-2 text-[var(--text-secondary)]">{row.tower || <span className="text-[var(--text-tertiary)]">—</span>}</td>
                                             <td className="px-3 py-2 font-semibold text-[var(--text-primary)]">{row.floor_from}–{row.floor_to}</td>
                                             <td className="px-3 py-2 text-[var(--text-secondary)]">{DIR_LABEL[row.direction] ?? row.direction}</td>
-                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded font-medium">{BEDROOM_LABEL[row.bedroom_type] ?? row.bedroom_type}</span></td>
+                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-[#FDF6E3] text-[#B8860B] rounded font-medium">{BEDROOM_LABEL[row.bedroom_type] ?? row.bedroom_type}</span></td>
                                             <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmtSqm(base)}</td>
                                             <td className="px-3 py-2 text-right">
                                                 <span className={adj === 0 ? 'text-[var(--text-tertiary)]' : adj > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
@@ -1073,7 +1073,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                             {canEdit && (
                                                 <td className="px-3 py-2">
                                                     <div className="flex items-center gap-1">
-                                                        <button type="button" onClick={() => startEdit(row)} className="p-1 rounded hover:bg-indigo-50 text-indigo-500" title="Sửa">{IC.EDIT}</button>
+                                                        <button type="button" onClick={() => startEdit(row)} className="p-1 rounded hover:bg-[#FDF6E3] text-[#C9A84C]" title="Sửa">{IC.EDIT}</button>
                                                         <button type="button" onClick={() => handleDelete(row.id)} disabled={deleting === row.id}
                                                             className="p-1 rounded hover:bg-rose-50 text-rose-400 disabled:opacity-40" title="Xóa">
                                                             {deleting === row.id ? <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : IC.TRASH}
@@ -1383,7 +1383,7 @@ function BulkImageUploadModal({
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-3xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
-                    <div className="flex items-center gap-2 text-indigo-600">
+                    <div className="flex items-center gap-2 text-[#C9A84C]">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         <h2 className="text-base font-bold">{t('project.bulk_images_title')}</h2>
                     </div>
@@ -1427,8 +1427,8 @@ function BulkImageUploadModal({
                                 disabled={!projectCode || submitting}
                                 className={`w-full rounded-xl border-2 border-dashed transition-colors px-4 py-8 flex flex-col items-center justify-center gap-2 ${
                                     dragOver
-                                        ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700'
-                                        : 'border-[var(--glass-border)] hover:border-indigo-400 text-[var(--text-secondary)] hover:text-indigo-600'
+                                        ? 'border-[#C9A84C] bg-[#FDF6E3]/60 dark:bg-[#1C2B4A]/30 text-[#B8860B]'
+                                        : 'border-[var(--glass-border)] hover:border-[#C9A84C] text-[var(--text-secondary)] hover:text-[#C9A84C]'
                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                             >
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -1469,7 +1469,7 @@ function BulkImageUploadModal({
                                                     value={it.manualCode}
                                                     onChange={e => setManual(it.id, e.target.value)}
                                                     disabled={submitting || codesLoading || listingCodes.length === 0}
-                                                    className="mt-1 w-full text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    className="mt-1 w-full text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#C9A84C]"
                                                 >
                                                     <option value="">{t('project.bulk_images_pick_listing')}</option>
                                                     {listingCodes.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1498,7 +1498,7 @@ function BulkImageUploadModal({
                                 {t('project.bulk_images_uploading').replace('{p}', String(progress))}
                             </div>
                             <div className="w-full h-2 bg-[var(--glass-surface)] rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500 transition-all" style={{ width: `${progress}%` }} />
+                                <div className="h-full bg-[#FDF6E3]0 transition-all" style={{ width: `${progress}%` }} />
                             </div>
                         </div>
                     )}
@@ -1578,7 +1578,7 @@ function BulkImageUploadModal({
                             </button>
                             <button type="button" onClick={submit}
                                 disabled={submitting || items.length === 0 || !projectCode}
-                                className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">
+                                className="px-5 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] disabled:opacity-50">
                                 {submitting
                                     ? t('common.loading')
                                     : t('project.bulk_images_submit').replace('{n}', String(items.length))}
@@ -1586,7 +1586,7 @@ function BulkImageUploadModal({
                         </>
                     ) : (
                         <button type="button" onClick={onClose}
-                            className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700">
+                            className="px-5 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B]">
                             {t('project.bulk_images_close')}
                         </button>
                     )}
@@ -2215,7 +2215,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 {([
                                     { key: 'totalCount',     label: t('project.stat_total'),    cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
                                     { key: 'availableCount', label: t('project.stat_available'), cls: 'bg-emerald-100 text-emerald-700' },
-                                    { key: 'openingCount',   label: t('project.stat_opening'),   cls: 'bg-indigo-100 text-indigo-700' },
+                                    { key: 'openingCount',   label: t('project.stat_opening'),   cls: 'bg-[#F5E6B8] text-[#B8860B]' },
                                     { key: 'bookingCount',   label: t('project.stat_booking'),   cls: 'bg-sky-100 text-sky-700' },
                                     { key: 'holdCount',      label: t('project.stat_hold'),      cls: 'bg-amber-100 text-amber-700' },
                                     { key: 'soldCount',      label: t('project.stat_sold'),      cls: 'bg-slate-100 text-slate-500' },
@@ -2549,7 +2549,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 </span>
                             )}
                             {search && filtered.length !== listings.length && (
-                                <span className="text-indigo-500">· {t('common.search')}: "{search}"</span>
+                                <span className="text-[#C9A84C]">· {t('common.search')}: "{search}"</span>
                             )}
                         </div>
                         <button type="button" onClick={onClose} className="px-4 py-1.5 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)] transition-colors">{t('common.close')}</button>
@@ -3110,7 +3110,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
     const coverImage: string | null = meta.coverImage || meta.cover_image || null;
 
     return (
-        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col overflow-hidden">
+        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-[#C9A84C]/40 transition-all flex flex-col overflow-hidden">
             {/* Cover image — 16:9 hero photo; falls back to neutral placeholder
                 so every card has a consistent visual height. */}
             <div className="relative aspect-[16/9] w-full bg-[var(--bg-app)] border-b border-[var(--glass-border)]">
@@ -3135,7 +3135,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                             )}
                         </div>
                         {isPartner && project.developer_name && (
-                            <p className="text-xs text-indigo-600 font-semibold mt-0.5 truncate">{t('project.developer')}: {project.developer_name}</p>
+                            <p className="text-xs text-[#C9A84C] font-semibold mt-0.5 truncate">{t('project.developer')}: {project.developer_name}</p>
                         )}
                         {project.location && (
                             <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate flex items-center gap-1">
@@ -3226,7 +3226,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 <button
                     type="button"
                     onClick={onPriceMatrix}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-indigo-50 border border-[var(--glass-border)] hover:border-indigo-300 text-[var(--text-secondary)] hover:text-indigo-700 text-sm font-semibold rounded-xl transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-[#FDF6E3] border border-[var(--glass-border)] hover:border-[#C9A84C]/60 text-[var(--text-secondary)] hover:text-[#B8860B] text-sm font-semibold rounded-xl transition-all"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     Bảng Giá
@@ -3242,7 +3242,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 >
                     <button onClick={() => { setMenuOpen(false); onEdit(); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                         {t('common.edit')}
                     </button>
                     <button onClick={() => { setMenuOpen(false); onAccess(); }}
@@ -3485,7 +3485,7 @@ export function Projects() {
                             placeholder={t('common.search') + '...'}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 h-[38px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full pl-9 pr-3 py-2 h-[38px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]"
                         />
                     </div>
                     {/* Status filter */}
@@ -3512,7 +3512,7 @@ export function Projects() {
                     {/* Create button */}
                     {isAdmin && (
                         <button type="button" onClick={() => setFormTarget('new')}
-                            className="shrink-0 flex items-center gap-1.5 px-4 py-2 h-[38px] rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 shadow-sm transition-colors">
+                            className="shrink-0 flex items-center gap-1.5 px-4 py-2 h-[38px] rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B] shadow-sm transition-colors">
                             {IC.PLUS} <span className="hidden xs:inline">{t('project.new')}</span>
                         </button>
                     )}
@@ -3525,11 +3525,11 @@ export function Projects() {
                 )}
                 {loading ? (
                     <div className="flex items-center justify-center h-48">
-                        <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-4 border-[#E8D4A0] border-t-[#C9A84C] rounded-full animate-spin" />
                     </div>
                 ) : projects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-48 text-[var(--text-secondary)]">
-                        <div className="text-indigo-300 mb-3">
+                        <div className="text-[#E8D4A0] mb-3">
                             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
@@ -3537,7 +3537,7 @@ export function Projects() {
                         <p className="font-semibold">{t('common.no_data')}</p>
                         {isAdmin && (
                             <button type="button" onClick={() => setFormTarget('new')}
-                                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700">
+                                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A84C] text-white text-sm font-bold hover:bg-[#B8860B]">
                                 {IC.PLUS} {t('project.new')}
                             </button>
                         )}
@@ -3565,7 +3565,7 @@ export function Projects() {
                                     isAdmin ? 'cursor-grab active:cursor-grabbing' : '',
                                     dragIdx === idx ? 'opacity-40 scale-[0.97] shadow-inner' : '',
                                     dragOverIdx === idx && dragIdx !== idx
-                                        ? 'ring-2 ring-indigo-400 ring-offset-2 rounded-2xl scale-[1.01]'
+                                        ? 'ring-2 ring-[#C9A84C] ring-offset-2 rounded-2xl scale-[1.01]'
                                         : '',
                                 ].join(' ')}
                             >
