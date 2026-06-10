@@ -32,7 +32,7 @@ const EN_NAV: Record<string, string> = {
 const PARTNERS = ['Vinhomes', 'Novaland', 'Nam Long', 'Masterise', 'Van Phúc', 'Khang Điền'];
 
 const PROJECTS_DATA = [
-  { slug: 'aqua-city',               image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80', vi: { name: 'Aqua City',           dev: 'Novaland',  loc: 'Biên Hòa, Đồng Nai', price: 'Từ 2,5 tỷ',  badge: 'Hot',         type: 'Đô Thị Sinh Thái' }, en: { name: 'Aqua City',           dev: 'Novaland',  loc: 'Bien Hoa, Dong Nai', price: 'From 2.5B',  badge: 'Hot',         type: 'Eco Township' } },
+  { slug: 'aqua-city',               image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80', vi: { name: 'Aqua City',           dev: 'Novaland',  loc: 'Biên Hòa, Đồng Nai', price: 'Từ 6 tỷ',    badge: 'Hot',         type: 'Đô Thị Sinh Thái' }, en: { name: 'Aqua City',           dev: 'Novaland',  loc: 'Bien Hoa, Dong Nai', price: 'From 6B',    badge: 'Hot',         type: 'Eco Township' } },
   { slug: 'the-global-city',         image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80', vi: { name: 'The Global City',     dev: 'Masterise', loc: 'Thủ Đức, TP.HCM',    price: 'Từ 4,5 tỷ',  badge: 'Cao Cấp',     type: 'Đô Thị Tài Chính' }, en: { name: 'The Global City',     dev: 'Masterise', loc: 'Thu Duc, HCMC',     price: 'From 4.5B',  badge: 'Premium',     type: 'Financial Township' } },
   { slug: 'vinhomes-can-gio',        image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80', vi: { name: 'Vinhomes Cần Giờ',   dev: 'Vinhomes',  loc: 'Cần Giờ, TP.HCM',    price: 'Từ 12 tỷ',   badge: 'Mega',        type: 'Đô Thị Biển' },    en: { name: 'Vinhomes Can Gio',    dev: 'Vinhomes',  loc: 'Can Gio, HCMC',     price: 'From 12B',   badge: 'Mega',        type: 'Coastal City' } },
   { slug: 'izumi-city',              image: 'https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&q=80', vi: { name: 'Izumi City',          dev: 'Nam Long',  loc: 'Biên Hòa, Đồng Nai', price: 'Từ 8,4 tỷ',  badge: 'Nhật Bản',    type: 'Chuẩn Nhật Bản' }, en: { name: 'Izumi City',          dev: 'Nam Long',  loc: 'Bien Hoa, Dong Nai', price: 'From 8.4B',  badge: 'Japanese',    type: 'Japanese Standard' } },
@@ -193,7 +193,7 @@ export default function Landing() {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <button onClick={() => setLanguage(vi ? 'en' : 'vn')}
-              className="hidden sm:flex h-7 px-2.5 rounded text-[11px] font-bold uppercase tracking-wide transition-colors"
+              className="hidden sm:flex items-center justify-center h-7 px-2.5 rounded text-[11px] font-bold uppercase tracking-wide transition-colors"
               style={{ color: TEXT2, border: `1px solid ${BORDER}` }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEXT1; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = TEXT2; }}>
