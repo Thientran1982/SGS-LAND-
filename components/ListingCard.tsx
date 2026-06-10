@@ -205,42 +205,34 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
             onClick();
         }
     }, [item.id, onClick]);
-    const attributeGrid = useMemo(() => {
-        if (!item) return null;        
-        const GridItem = ({ label, value }: { label: string, value: string | number }) => (
-            <div className="text-center overflow-hidden">
-                <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase truncate" title={label}>{label}</div>
-                <div className="text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 truncate mt-0.5" title={String(value)}>{value}</div>
+    const attributeChips = useMemo(() => {
+        if (!item) return null;
+        const attrs = item.attributes || {};
+        const chips: string[] = [];
+        if (item.type === PropertyType.PROJECT) {
+            if (attrs.developer) chips.push(String(attrs.developer));
+            const units = item.totalUnits || (attrs.totalUnits as string);
+            if (units) chips.push(`${units} căn`);
+            if (attrs.handoverYear) chips.push(String(attrs.handoverYear));
+        } else if (item.type === PropertyType.LAND || item.type === PropertyType.FACTORY) {
+            if (item.area) chips.push(`${item.area} m²`);
+            if (attrs.frontage) chips.push(`MT ${attrs.frontage}m`);
+            if (attrs.landType) chips.push(String(attrs.landType));
+        } else {
+            if (item.area) chips.push(`${item.area} m²`);
+            if (item.bedrooms) chips.push(`${item.bedrooms} PN`);
+            if (attrs.direction) chips.push(t(`direction.${attrs.direction}`));
+        }
+        if (chips.length === 0) return null;
+        return (
+            <div className="flex items-center gap-1.5 flex-wrap mb-3">
+                {chips.map((c, i) => (
+                    <span key={i} className="text-xs text-[var(--text-secondary)] dark:text-slate-400 bg-[var(--glass-surface-hover)] dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                        {c}
+                    </span>
+                ))}
             </div>
         );
-        const wrapperClass = "grid grid-cols-3 gap-2 py-2 border-t border-b border-slate-50 dark:border-white/5 mb-2";
-        const attrs = item.attributes || {}; 
-
-        if (item.type === PropertyType.PROJECT) {
-            return (
-                <div className={wrapperClass}>
-                    <GridItem label={t('inventory.label_developer')} value={attrs.developer || '--'} />
-                    <GridItem label={t('inventory.label_total_units')} value={item.totalUnits || (attrs.totalUnits as string) || '--'} />
-                    <GridItem label={t('inventory.label_handover')} value={attrs.handoverYear || '--'} />
-                </div>
-            );
-        } else if (item.type === PropertyType.LAND || item.type === PropertyType.FACTORY) {
-             return (
-                <div className={wrapperClass}>
-                    <GridItem label={t('pub.area')} value={`${item.area || 0} m²`} />
-                    <GridItem label={t('inventory.label_frontage')} value={attrs.frontage ? `${attrs.frontage as number}m` : '--'} />
-                    <GridItem label={t('inventory.label_land_type')} value={(attrs.landType as string) || '--'} />
-                </div>
-            );
-        } else {
-             return (
-                <div className={wrapperClass}>
-                    <GridItem label={t('pub.area')} value={`${item.area || 0} m²`} />
-                    <GridItem label={t('pub.bedrooms')} value={item.bedrooms || '-'} />
-                    <GridItem label={t('pub.direction')} value={attrs.direction ? t(`direction.${attrs.direction}`) : '-'} />
-                </div>
-            );
-        }
     }, [item, t]);
 
     if (!item) return null;
@@ -267,61 +259,44 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                 />
             </div>
             <div className="p-4 flex flex-col flex-1 bg-[var(--bg-surface)] dark:bg-slate-900 relative z-10 min-h-0">
-                <div className="flex justify-between items-start mb-1">
-                    <div className="min-w-0 flex-1 mr-2">
-                        <div className="flex items-center gap-2 mb-1">
-                            {!isProject && (
-                                <span className="font-mono text-2xs font-bold bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{item.code}</span>
-                            )}
-                            <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-[#FDF6E3] dark:bg-[#C9A84C]/20 text-[#B8860B] dark:text-[#C9A84C]' : 'bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-tertiary)] dark:text-slate-400'}`}>
-                                {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
-                            </span>
-                        </div>
-                        <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-[#C9A84C] dark:group-hover:text-[#C9A84C] transition-colors" title={item.title}>
-                            {item.title}
-                        </h3>
-                    </div>
-                </div>
-                <div className="flex items-center gap-1 text-xs3 text-[var(--text-tertiary)] dark:text-slate-400 mb-3 truncate">
+                {/* Title */}
+                <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-snug line-clamp-2 group-hover:text-[#C9A84C] dark:group-hover:text-[#C9A84C] transition-colors mb-1.5" title={item.title}>
+                    {item.title}
+                </h3>
+                {/* Location */}
+                <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)] dark:text-slate-500 mb-2.5 truncate">
                     {LISTING_ICONS.LOCATION}
                     <span className="truncate">{item.location}</span>
                 </div>
-                {attributeGrid}
-                <div className="flex justify-between items-center mt-auto pt-1 gap-2">
-                    <div className="min-w-0 flex-1">
-                        <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase mb-0.5">
-                            {isProject ? t('inventory.min_price') : t('inventory.label_price')}
-                        </div>
-                        <div className="text-lg font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight leading-none">
+                {/* Attribute chips */}
+                {attributeChips}
+                {/* Price row */}
+                <div className="flex items-end justify-between mt-auto gap-2">
+                    <div className="min-w-0">
+                        <div className="text-base font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight leading-none">
                             {formatSmartPrice(item.price, t)}
                         </div>
                         {item.area > 0 && item.type !== PropertyType.PROJECT && (
-                            <div className="text-xs2 font-medium text-[var(--text-tertiary)] dark:text-slate-400 mt-0.5">
+                            <div className="text-xs text-[var(--text-tertiary)] dark:text-slate-500 mt-0.5">
                                 {formatUnitPrice(item.price, item.area, t)}
                             </div>
                         )}
-                    </div>                    
-                    <div className="flex items-center gap-2 shrink-0">
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
                         {attrs.legalStatus && (
-                            <div className="flex flex-col items-end">
-                                <span className="text-2xs font-bold text-[var(--text-secondary)] uppercase">{t('inventory.label_legal')}</span>
-                                <span className="text-2xs font-bold text-[#C9A84C] dark:text-[#C9A84C] bg-[#FDF6E3] dark:bg-[#C9A84C]/10 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
-                                    {t(`legal.${attrs.legalStatus}`) || (attrs.legalStatus as string)}
-                                </span>
-                            </div>
+                            <span className="text-2xs font-bold text-[#C9A84C] bg-[#FDF6E3] dark:bg-[#C9A84C]/10 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                {t(`legal.${attrs.legalStatus}`) || (attrs.legalStatus as string)}
+                            </span>
                         )}
                         {shouldShowActions && (
-                            <>
-                                {attrs.legalStatus && <div className="w-px h-6 bg-[var(--glass-surface-hover)] dark:bg-white/10 mx-1"></div>}
-                                <ListingActionMenu 
-                                    listing={item}
-                                    onEdit={() => onEdit(item)}
-                                    onDelete={() => onDelete(item.id)}
-                                    onCopy={onCopy}
-                                    onDuplicate={() => onDuplicate && onDuplicate(item.id)}
-                                    t={t}
-                                />
-                            </>
+                            <ListingActionMenu
+                                listing={item}
+                                onEdit={() => onEdit(item)}
+                                onDelete={() => onDelete(item.id)}
+                                onCopy={onCopy}
+                                onDuplicate={() => onDuplicate && onDuplicate(item.id)}
+                                t={t}
+                            />
                         )}
                     </div>
                 </div>

@@ -390,7 +390,7 @@ export const ProductSearch: React.FC = () => {
                             )}
                         </div>
                         {/* Login / Dashboard button */}
-                        <button onClick={handleLogin} className="px-3 md:px-5 py-2 min-h-[40px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
+                        <button onClick={handleLogin} className="px-3 md:px-5 py-2 min-h-[40px] bg-[#C9A84C] text-white font-bold rounded-xl text-xs hover:bg-[#B8960A] transition-colors shadow-sm active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
                             {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                         </button>
                     </div>
