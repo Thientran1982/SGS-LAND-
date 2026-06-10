@@ -12,7 +12,7 @@ import { User } from '../types';
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     SEARCH: <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
-    AI_CHIP: <svg className="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>,
+    AI_CHIP: <svg className="w-12 h-12 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>,
     DATA: <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
     LOCK: <svg className="w-12 h-12 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
     HOME: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 01 1v4a1 1 0 001 1m-6 0h6" /></svg>,
@@ -1015,8 +1015,8 @@ export const AiValuation: React.FC = () => {
                         {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
-                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 shrink-0" />
-                        <span className="font-bold text-sm sm:text-lg tracking-wider hidden sm:inline truncate">SGS <span className="text-emerald-400">ĐỊNH GIÁ AI™</span></span>
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-[#C9A84C] shrink-0" />
+                        <span className="font-bold text-sm sm:text-lg tracking-wider hidden sm:inline truncate">SGS <span className="text-[#C9A84C]">ĐỊNH GIÁ AI™</span></span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         {!currentUser && (
@@ -1053,7 +1053,7 @@ export const AiValuation: React.FC = () => {
                                     : `${quotaInfo.remaining}/${quotaInfo.limit} lượt`}
                             </button>
                         )}
-                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-emerald-500 text-[var(--text-primary)] font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] whitespace-nowrap">
+                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-[#C9A84C] text-[var(--text-primary)] font-bold rounded-xl hover:bg-[#B8860B] transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] whitespace-nowrap">
                             {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                         </button>
                     </div>
@@ -1062,7 +1062,7 @@ export const AiValuation: React.FC = () => {
             {/* MAIN CONTENT AREA */}
             <div className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 relative">
                 {/* BACKGROUND FX */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#C9A84C]/10 rounded-full blur-[100px] pointer-events-none"></div>
                 {/* STEP INDICATOR */}
                 {step !== 'RESULT' && (
                     <div className="flex items-center justify-center gap-2 mb-10">
@@ -1080,8 +1080,8 @@ export const AiValuation: React.FC = () => {
                                 <React.Fragment key={key}>
                                     <div className="flex flex-col items-center gap-1">
                                         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all duration-300 ${
-                                            isDone    ? 'bg-emerald-500 border-emerald-500 text-white' :
-                                            isActive  ? 'bg-slate-800 border-emerald-500 text-emerald-400' :
+                                            isDone    ? 'bg-[#C9A84C] border-[#C9A84C] text-white' :
+                                            isActive  ? 'bg-slate-800 border-[#C9A84C] text-[#C9A84C]' :
                                                         'bg-slate-800/50 border-slate-700 text-slate-600'
                                         }`}>
                                             {isDone ? (
@@ -1090,10 +1090,10 @@ export const AiValuation: React.FC = () => {
                                                 </svg>
                                             ) : num}
                                         </div>
-                                        <span className={`text-[10px] font-bold transition-colors ${isActive ? 'text-emerald-400' : isDone ? 'text-emerald-600' : 'text-slate-600'}`}>{label}</span>
+                                        <span className={`text-[10px] font-bold transition-colors ${isActive ? 'text-[#C9A84C]' : isDone ? 'text-[#B8860B]' : 'text-slate-600'}`}>{label}</span>
                                     </div>
                                     {i < arr.length - 1 && (
-                                        <div className={`w-12 md:w-20 h-0.5 mb-4 rounded-full transition-all duration-300 ${isDone ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+                                        <div className={`w-12 md:w-20 h-0.5 mb-4 rounded-full transition-all duration-300 ${isDone ? 'bg-[#C9A84C]' : 'bg-slate-700'}`} />
                                     )}
                                 </React.Fragment>
                             );
@@ -1103,19 +1103,19 @@ export const AiValuation: React.FC = () => {
                 {/* STEP 1: ADDRESS INPUT */}
                 {step === 'ADDRESS' && (
                     <div className="text-center animate-enter">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-6">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C] text-xs font-bold uppercase tracking-widest mb-6">
+                            <span className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse"></span>
                             Định Giá Thời Gian Thực
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
                             Định Giá Bất Động Sản <br/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Bằng AI — Sai Số ±5–12%</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] to-[#E8C86D]">Bằng AI — Sai Số ±5–12%</span>
                         </h1>
                         <p className="text-xl text-slate-400 mb-5 max-w-2xl mx-auto">
                             Nhập địa chỉ — AI phân tích dữ liệu thị trường thực tế. Càng điền đầy đủ, sai số càng nhỏ.
                         </p>
 
-                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all mt-3">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-[#C9A84C]/50 transition-all mt-3">
                             <div className="pl-3 md:pl-4 shrink-0 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
                             <input 
                                 value={address}
@@ -1153,7 +1153,7 @@ export const AiValuation: React.FC = () => {
                                     setStep('DETAILS');
                                 }}
                                 disabled={!address}
-                                className="shrink-0 bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold px-5 md:px-8 h-12 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
+                                className="shrink-0 bg-[#C9A84C] hover:bg-[#B8860B] text-[var(--text-primary)] font-bold px-5 md:px-8 h-12 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
                             >
                                 Định Giá →
                             </button>
@@ -1177,7 +1177,7 @@ export const AiValuation: React.FC = () => {
                                 <button
                                     key={ex}
                                     onClick={() => { setAddress(ex); const d = detectPropertyTypeFromText(ex); if (d) { setPropertyType(d); setAutoDetectedType(d); } }}
-                                    className="text-xs text-slate-500 hover:text-emerald-400 border border-slate-700/60 hover:border-emerald-500/40 bg-slate-800/40 hover:bg-emerald-500/5 px-3 py-1.5 rounded-full transition-all"
+                                    className="text-xs text-slate-500 hover:text-[#C9A84C] border border-slate-700/60 hover:border-[#C9A84C]/40 bg-slate-800/40 hover:bg-[#C9A84C]/5 px-3 py-1.5 rounded-full transition-all"
                                 >
                                     {ex}
                                 </button>
@@ -1197,8 +1197,8 @@ export const AiValuation: React.FC = () => {
                             </span>
                             <span className="text-slate-700">→</span>
                             <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                + Đầy đủ → <b className="text-emerald-400">98%</b>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]"></span>
+                                + Đầy đủ → <b className="text-[#C9A84C]">98%</b>
                             </span>
                         </div>
 
@@ -1235,10 +1235,10 @@ export const AiValuation: React.FC = () => {
                                                     if (detected) setAutoDetectedType(detected);
                                                     setStep('DETAILS');
                                                 }}
-                                                className="w-full flex items-center gap-4 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-emerald-500/30 rounded-2xl px-4 py-3 text-left transition-all group"
+                                                className="w-full flex items-center gap-4 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-[#C9A84C]/30 rounded-2xl px-4 py-3 text-left transition-all group"
                                             >
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-semibold text-sm text-white truncate group-hover:text-emerald-300 transition-colors">{h.address}</div>
+                                                    <div className="font-semibold text-sm text-white truncate group-hover:text-[#DFC07A] transition-colors">{h.address}</div>
                                                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                         <span className="text-xs text-slate-500">{h.area}m²</span>
                                                         <span className="text-slate-700">·</span>
@@ -1250,7 +1250,7 @@ export const AiValuation: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0">
-                                                    <div className="font-black text-emerald-400 text-base tabular-nums">
+                                                    <div className="font-black text-[#C9A84C] text-base tabular-nums">
                                                         {(h.totalPrice / 1_000_000_000).toFixed(2)} tỷ
                                                     </div>
                                                     <div className="text-xs text-slate-500">
@@ -1288,7 +1288,7 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                     <div className="text-right text-xs text-slate-500">
                                         <div>Tối đa</div>
-                                        <div className="font-bold text-emerald-400">98%</div>
+                                        <div className="font-bold text-[#C9A84C]">98%</div>
                                     </div>
                                 </div>
                                 {/* Progress bar */}
@@ -1308,7 +1308,7 @@ export const AiValuation: React.FC = () => {
                             <div className="space-y-6">
                                 {/* Address Readonly + Auto-Detect Badge */}
                                 <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
-                                    <div className="text-emerald-500">{ICONS.SEARCH}</div>
+                                    <div className="text-[#C9A84C]">{ICONS.SEARCH}</div>
                                     <div className="flex-1 min-w-0">
                                         <div className="truncate text-slate-300 font-medium">{address}</div>
                                         {autoDetectedType && (
@@ -1324,7 +1324,7 @@ export const AiValuation: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <button onClick={() => { setStep('ADDRESS'); setAutoDetectedType(null); setNgang(''); setDai(''); }} className="text-xs font-bold text-emerald-400 hover:underline shrink-0">Sửa</button>
+                                    <button onClick={() => { setStep('ADDRESS'); setAutoDetectedType(null); setNgang(''); setDai(''); }} className="text-xs font-bold text-[#C9A84C] hover:underline shrink-0">Sửa</button>
                                 </div>
 
                                 {/* Inputs */}
@@ -1373,7 +1373,7 @@ export const AiValuation: React.FC = () => {
                                                             else if (v > 50000) setAreaError('Diện tích tối đa 50,000m²');
                                                             else setAreaError('');
                                                         }}
-                                                        className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all ${areaError ? 'border-rose-500/70' : 'border-slate-700'}`}
+                                                        className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-[#C9A84C] outline-none transition-all ${areaError ? 'border-rose-500/70' : 'border-slate-700'}`}
                                                         placeholder={areaPlaceholder}
                                                         min="1"
                                                         autoFocus
@@ -1389,7 +1389,7 @@ export const AiValuation: React.FC = () => {
                                                 <div className="flex gap-1.5 mt-2 flex-wrap">
                                                     {areaPresets.map(v => (
                                                         <button key={v} type="button" onClick={() => setArea(String(v))}
-                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all ${area === String(v) ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}>
+                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all ${area === String(v) ? 'bg-[#C9A84C]/20 border-[#C9A84C]/60 text-[#C9A84C]' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}>
                                                             {v}m²
                                                         </button>
                                                     ))}
@@ -1466,7 +1466,7 @@ export const AiValuation: React.FC = () => {
                                                     type="number"
                                                     value={ngang}
                                                     onChange={e => handleNgangChange(e.target.value)}
-                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-emerald-500 outline-none transition-all"
+                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-[#C9A84C] outline-none transition-all"
                                                     placeholder="Ngang (m)"
                                                     min="1"
                                                     step="0.1"
@@ -1479,7 +1479,7 @@ export const AiValuation: React.FC = () => {
                                                     type="number"
                                                     value={dai}
                                                     onChange={e => handleDaiChange(e.target.value)}
-                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-emerald-500 outline-none transition-all"
+                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-[#C9A84C] outline-none transition-all"
                                                     placeholder="Dài (m)"
                                                     min="1"
                                                     step="0.1"
@@ -1489,11 +1489,11 @@ export const AiValuation: React.FC = () => {
                                             <div className="text-slate-500 font-bold text-lg select-none pb-4">=</div>
                                             <div className="flex-1 text-center pb-4">
                                                 {ngang && dai && parseFloat(ngang) > 0 && parseFloat(dai) > 0 ? (
-                                                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2.5">
-                                                        <span className="text-emerald-400 font-black text-lg">
+                                                    <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/30 rounded-xl px-3 py-2.5">
+                                                        <span className="text-[#C9A84C] font-black text-lg">
                                                             {Math.round(parseFloat(ngang) * parseFloat(dai))}
                                                         </span>
-                                                        <span className="text-emerald-500/70 text-xs font-bold"> m²</span>
+                                                        <span className="text-[#C9A84C]/70 text-xs font-bold"> m²</span>
                                                     </div>
                                                 ) : (
                                                     <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5">
@@ -1504,7 +1504,7 @@ export const AiValuation: React.FC = () => {
                                             </div>
                                         </div>
                                         {ngang && dai && parseFloat(ngang) > 0 && parseFloat(dai) > 0 && (
-                                            <div className="flex items-center gap-2 mt-2.5 text-xs text-emerald-400/80">
+                                            <div className="flex items-center gap-2 mt-2.5 text-xs text-[#C9A84C]/80">
                                                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                                 Đã cập nhật Diện Tích ({Math.round(parseFloat(ngang) * parseFloat(dai))}m²) và Mặt Tiền ({parseFloat(ngang)}m)
                                             </div>
@@ -1516,7 +1516,7 @@ export const AiValuation: React.FC = () => {
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý <span className="text-rose-400 font-black">*</span></label>
                                     <div className="grid grid-cols-2 gap-2">
                                         {[
-                                            { id: 'PINK_BOOK', label: 'Sổ Hồng / Sổ Đỏ', badge: 'Đầy đủ', badgeColor: 'text-emerald-400' },
+                                            { id: 'PINK_BOOK', label: 'Sổ Hồng / Sổ Đỏ', badge: 'Đầy đủ', badgeColor: 'text-[#C9A84C]' },
                                             { id: 'PENDING',   label: 'Đang làm sổ',      badge: '-8%',     badgeColor: 'text-sky-400',    title: 'Đang trong quá trình cấp sổ — rủi ro thấp' },
                                             { id: 'CONTRACT',  label: 'HĐ Mua Bán',        badge: '-12%',    badgeColor: 'text-yellow-400' },
                                             { id: 'WAITING',   label: 'Vi Bằng / Giấy tay', badge: '-20%',   badgeColor: 'text-rose-400',   title: 'Chưa có sổ / vi bằng — rủi ro cao' }
@@ -1525,7 +1525,7 @@ export const AiValuation: React.FC = () => {
                                                 key={opt.id}
                                                 onClick={() => setLegal(opt.id as any)}
                                                 title={opt.title}
-                                                className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${legal === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${legal === opt.id ? 'bg-[#C9A84C] text-[var(--text-primary)] border-[#C9A84C]' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-[#C9A84C]/50'}`}
                                             >
                                                 <span>{opt.label}</span>
                                                 <span className={`text-[10px] font-bold ${legal === opt.id ? 'text-white/70' : opt.badgeColor}`}>{opt.badge}</span>
@@ -1605,7 +1605,7 @@ export const AiValuation: React.FC = () => {
                                     <div>
                                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
                                             Số Phòng Ngủ
-                                            <span className="text-emerald-500 ml-1 normal-case font-bold text-[10px]">★ quan trọng với căn hộ</span>
+                                            <span className="text-[#C9A84C] ml-1 normal-case font-bold text-[10px]">★ quan trọng với căn hộ</span>
                                         </label>
                                         <div className="grid grid-cols-5 gap-2">
                                             {[
@@ -1619,7 +1619,7 @@ export const AiValuation: React.FC = () => {
                                                     key={opt.value}
                                                     type="button"
                                                     onClick={() => setBedrooms(prev => prev === opt.value ? null : opt.value)}
-                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${bedrooms === opt.value ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${bedrooms === opt.value ? 'bg-[#C9A84C] text-[var(--text-primary)] border-[#C9A84C]' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-[#C9A84C]/50'}`}
                                                 >
                                                     {opt.label}
                                                 </button>
@@ -1646,8 +1646,8 @@ export const AiValuation: React.FC = () => {
                                             { d: 'Bắc' },
                                             { d: 'Đông Bắc' },
                                             { d: 'Đông' },
-                                            { d: 'Đông Nam', badge: 'Tốt nhất', badgeColor: 'text-emerald-400' },
-                                            { d: 'Nam',      badge: 'Tốt',      badgeColor: 'text-emerald-500' },
+                                            { d: 'Đông Nam', badge: 'Tốt nhất', badgeColor: 'text-[#C9A84C]' },
+                                            { d: 'Nam',      badge: 'Tốt',      badgeColor: 'text-[#C9A84C]' },
                                             { d: 'Tây Nam' },
                                             { d: 'Tây' },
                                             { d: 'Tây Bắc' },
@@ -1656,7 +1656,7 @@ export const AiValuation: React.FC = () => {
                                                 key={d}
                                                 type="button"
                                                 onClick={() => setDirection(prev => prev === d ? '' : d)}
-                                                className={`py-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${direction === d ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                className={`py-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${direction === d ? 'bg-[#C9A84C] text-[var(--text-primary)] border-[#C9A84C]' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-[#C9A84C]/50'}`}
                                             >
                                                 <span>{d}</span>
                                                 {badge && <span className={`text-[9px] font-bold ${direction === d ? 'text-white/80' : badgeColor}`}>{badge}</span>}
@@ -1664,7 +1664,7 @@ export const AiValuation: React.FC = () => {
                                         ))}
                                     </div>
                                     {direction && (direction === 'Đông Nam' || direction === 'Nam') && (
-                                        <div className="text-emerald-400/80 text-xs mt-1.5 italic">✓ Hướng {direction} thường có giá cao hơn 8–15% so với hướng Tây/Tây Bắc</div>
+                                        <div className="text-[#C9A84C]/80 text-xs mt-1.5 italic">✓ Hướng {direction} thường có giá cao hơn 8–15% so với hướng Tây/Tây Bắc</div>
                                     )}
                                     {direction && direction !== 'Đông Nam' && direction !== 'Nam' && (
                                         <div className="text-slate-500 text-xs mt-1.5 italic">Hướng {direction} — hệ số hướng được điều chỉnh tự động theo AVM</div>
@@ -1683,7 +1683,7 @@ export const AiValuation: React.FC = () => {
                                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Mặt Tiền (m)</label>
                                                     <input type="number" value={frontageWidth}
                                                         onChange={e => setFrontageWidth(e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-[#C9A84C] outline-none transition-all"
                                                         placeholder="4" min="1" />
                                                 </div>
                                             )}
@@ -1694,7 +1694,7 @@ export const AiValuation: React.FC = () => {
                                                     </label>
                                                     <input type="number" value={floorLevel}
                                                         onChange={e => setFloorLevel(e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-[#C9A84C] outline-none transition-all"
                                                         placeholder={propertyType === 'penthouse' ? '25' : '10'} min="1" />
                                                 </div>
                                             )}
@@ -1706,7 +1706,7 @@ export const AiValuation: React.FC = () => {
                                                     </label>
                                                     <input type="number" value={yearBuilt}
                                                         onChange={e => handleYearBuiltChange(e.target.value)}
-                                                        className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all ${
+                                                        className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-[#C9A84C] outline-none transition-all ${
                                                             yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR)
                                                                 ? 'border-rose-500/70'
                                                                 : 'border-slate-700'
@@ -1757,7 +1757,7 @@ export const AiValuation: React.FC = () => {
                                                         type="number"
                                                         value={monthlyRent}
                                                         onChange={e => setMonthlyRent(e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-[#C9A84C] outline-none transition-all"
                                                         placeholder="Tự động tính"
                                                         min="0"
                                                     />
@@ -1778,13 +1778,13 @@ export const AiValuation: React.FC = () => {
                                             {(propertyType === 'office'
                                                 ? [
                                                     { id: 'LUXURY', label: 'Cao cấp', badge: '+12%', badgeColor: 'text-purple-400' },
-                                                    { id: 'FULL',   label: 'Hoàn thiện', badge: '+7%', badgeColor: 'text-emerald-400' },
+                                                    { id: 'FULL',   label: 'Hoàn thiện', badge: '+7%', badgeColor: 'text-[#C9A84C]' },
                                                     { id: 'BASIC',  label: 'Shell & Core', badge: 'Ref', badgeColor: 'text-slate-400' },
                                                     { id: 'NONE',   label: 'Thô', badge: '-5%', badgeColor: 'text-rose-400' }
                                                 ]
                                                 : [
                                                     { id: 'LUXURY', label: 'Nội thất cao cấp', badge: '+12%', badgeColor: 'text-purple-400' },
-                                                    { id: 'FULL',   label: 'Nội thất đầy đủ',   badge: '+7%',  badgeColor: 'text-emerald-400' },
+                                                    { id: 'FULL',   label: 'Nội thất đầy đủ',   badge: '+7%',  badgeColor: 'text-[#C9A84C]' },
                                                     { id: 'BASIC',  label: 'Nội thất cơ bản',   badge: 'Ref',  badgeColor: 'text-slate-400' },
                                                     { id: 'NONE',   label: 'Nhà thô',            badge: '-5%',  badgeColor: 'text-rose-400' }
                                                 ]
@@ -1793,7 +1793,7 @@ export const AiValuation: React.FC = () => {
                                                     key={opt.id}
                                                     type="button"
                                                     onClick={() => setFurnishing(prev => prev === opt.id ? '' : opt.id as any)}
-                                                    className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${furnishing === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                    className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${furnishing === opt.id ? 'bg-[#C9A84C] text-[var(--text-primary)] border-[#C9A84C]' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-[#C9A84C]/50'}`}
                                                 >
                                                     <span>{opt.label}</span>
                                                     <span className={`text-[9px] font-bold ${furnishing === opt.id ? 'text-white/80' : opt.badgeColor}`}>{opt.badge}</span>
@@ -1815,10 +1815,10 @@ export const AiValuation: React.FC = () => {
                                         !area || parseFloat(area) <= 0 || !!areaError ||
                                         !!(yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR))
                                     }
-                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg flex items-center justify-center gap-3"
+                                    className="w-full bg-[#C9A84C] hover:bg-[#B8860B] text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-[#C9A84C]/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg flex items-center justify-center gap-3"
                                 >
                                     <span>Định Giá Ngay</span>
-                                    <span className={`text-sm font-bold rounded-full px-3 py-0.5 ${accuracy >= 90 ? 'bg-emerald-400/30 text-emerald-100' : accuracy >= 75 ? 'bg-yellow-400/20 text-yellow-100' : 'bg-white/20 text-white/70'}`}>
+                                    <span className={`text-sm font-bold rounded-full px-3 py-0.5 ${accuracy >= 90 ? 'bg-[#C9A84C]/30 text-[#F5E6B8]' : accuracy >= 75 ? 'bg-yellow-400/20 text-yellow-100' : 'bg-white/20 text-white/70'}`}>
                                         {accuracy >= 90 ? '✓ ' : ''}{accuracy.toFixed(0)}% dữ liệu
                                     </span>
                                 </button>
@@ -1832,8 +1832,8 @@ export const AiValuation: React.FC = () => {
                     <div className="max-w-xl mx-auto pt-4 animate-enter">
                         {teaserLoading ? (
                             <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-10 shadow-2xl text-center">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C] text-xs font-bold uppercase tracking-widest mb-4">
+                                    <span className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse"></span>
                                     Đang lấy giá thị trường tham chiếu
                                 </div>
                                 <div className="text-slate-400 text-sm mb-1">Tra cứu dữ liệu khu vực — không tốn lượt AI</div>
@@ -1855,7 +1855,7 @@ export const AiValuation: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={runAdvancedAnalysis}
-                                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-3 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+                                        className="w-full bg-[#C9A84C] hover:bg-[#B8860B] text-[var(--text-primary)] font-bold py-3 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
                                     >
                                         <span>Vẫn phân tích AI chuyên sâu</span>
                                         <span className="text-xs font-bold rounded-full px-2 py-0.5 bg-white/20 text-white/90">−1 lượt</span>
@@ -1871,13 +1871,13 @@ export const AiValuation: React.FC = () => {
                         ) : !teaser ? null : (
                             <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-7 md:p-8 shadow-2xl">
                                 <div className="flex items-start justify-between gap-3 mb-1">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-widest">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C] text-[11px] font-bold uppercase tracking-widest">
+                                        <span className="w-2 h-2 rounded-full bg-[#C9A84C]"></span>
                                         Giá sơ bộ — Miễn phí
                                     </div>
                                     <button
                                         onClick={() => setStep('DETAILS')}
-                                        className="text-xs font-bold text-slate-400 hover:text-emerald-400 transition-colors shrink-0"
+                                        className="text-xs font-bold text-slate-400 hover:text-[#C9A84C] transition-colors shrink-0"
                                     >
                                         ← Sửa thông tin
                                     </button>
@@ -1900,9 +1900,9 @@ export const AiValuation: React.FC = () => {
                                     <div className="text-slate-400 text-xs uppercase font-bold tracking-widest mb-2">
                                         Khoảng giá thị trường ước tính
                                     </div>
-                                    <div className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300 tracking-tight">
+                                    <div className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#DFC07A] to-[#E8C86D] tracking-tight">
                                         {teaser.totalMinDisplay} — {teaser.totalMaxDisplay}
-                                        <span className="text-base text-emerald-500 ml-2">VNĐ</span>
+                                        <span className="text-base text-[#C9A84C] ml-2">VNĐ</span>
                                     </div>
                                     <div className="text-slate-400 text-sm mt-2">
                                         Trung bình: <b className="text-white">{teaser.totalMidDisplay}</b>
@@ -1926,7 +1926,7 @@ export const AiValuation: React.FC = () => {
                                 <div className="grid grid-cols-3 gap-2 mb-5">
                                     <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
                                         <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Tin cậy</div>
-                                        <div className={`text-sm font-bold ${teaser.confidence >= 75 ? 'text-emerald-400' : teaser.confidence >= 60 ? 'text-yellow-400' : 'text-slate-300'}`}>{teaser.confidence}%</div>
+                                        <div className={`text-sm font-bold ${teaser.confidence >= 75 ? 'text-[#C9A84C]' : teaser.confidence >= 60 ? 'text-yellow-400' : 'text-slate-300'}`}>{teaser.confidence}%</div>
                                     </div>
                                     <div className="bg-slate-900/40 border border-slate-700/40 rounded-xl px-3 py-2.5 text-center">
                                         <div className="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Xu hướng</div>
@@ -1945,21 +1945,21 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 </div>
                                 {/* CTA: upgrade to deep AI analysis */}
-                                <div className="bg-gradient-to-br from-emerald-900/30 to-cyan-900/20 border border-emerald-500/30 rounded-2xl p-4 mb-3">
+                                <div className="bg-gradient-to-br from-[#C9A84C]/10 to-[#C9A84C]/5 border border-[#C9A84C]/30 rounded-2xl p-4 mb-3">
                                     <div className="flex items-start gap-3">
                                         <div className="text-2xl shrink-0">🤖</div>
                                         <div className="flex-1 min-w-0">
                                             <div className="font-bold text-white text-sm mb-1">Cần phân tích chính xác hơn?</div>
                                             <div className="text-xs text-slate-400 leading-relaxed">
                                                 AI sẽ tổng hợp 7 hệ số định giá, so sánh giao dịch nội bộ, tính phương pháp thu nhập
-                                                và đưa ra biên độ ±5–12% — tốn <b className="text-emerald-400">1 lượt</b>.
+                                                và đưa ra biên độ ±5–12% — tốn <b className="text-[#C9A84C]">1 lượt</b>.
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <button
                                     onClick={runAdvancedAnalysis}
-                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 text-base flex items-center justify-center gap-2"
+                                    className="w-full bg-[#C9A84C] hover:bg-[#B8860B] text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-[#C9A84C]/20 transition-all active:scale-95 text-base flex items-center justify-center gap-2"
                                 >
                                     <span>Phân tích AI chuyên sâu</span>
                                     <span className="text-xs font-bold rounded-full px-2.5 py-0.5 bg-white/20 text-white/90">−1 lượt</span>
@@ -1979,13 +1979,13 @@ export const AiValuation: React.FC = () => {
                     <div className="max-w-xl mx-auto pt-8 animate-enter">
                         {/* Header + progress bar */}
                         <div className="text-center mb-6">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C] text-xs font-bold uppercase tracking-widest mb-4">
+                                <span className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse"></span>
                                 SGS Định Giá AI™ đang xử lý
                             </div>
                             <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-500 ease-out rounded-full"
+                                    className="h-full bg-gradient-to-r from-[#C9A84C] to-[#E8C86D] transition-all duration-500 ease-out rounded-full"
                                     style={{ width: `${progress}%` }}
                                 />
                             </div>
@@ -2002,9 +2002,9 @@ export const AiValuation: React.FC = () => {
                                         key={idx}
                                         className={`rounded-2xl border p-4 transition-all duration-500 ${
                                             status === 'done'
-                                                ? 'bg-emerald-900/20 border-emerald-500/30'
+                                                ? 'bg-[#C9A84C]/8 border-[#C9A84C]/30'
                                                 : status === 'active'
-                                                ? 'bg-slate-800 border-emerald-500/60 shadow-lg shadow-emerald-500/10'
+                                                ? 'bg-slate-800 border-[#C9A84C]/60 shadow-lg shadow-[#C9A84C]/10'
                                                 : 'bg-slate-800/20 border-slate-700/30 opacity-35'
                                         }`}
                                     >
@@ -2014,13 +2014,13 @@ export const AiValuation: React.FC = () => {
                                                 {agent.icon}
                                             </span>
                                             <span className={`font-bold text-sm flex-1 ${
-                                                status === 'done' ? 'text-emerald-400' :
+                                                status === 'done' ? 'text-[#C9A84C]' :
                                                 status === 'active' ? 'text-white' : 'text-slate-500'
                                             }`}>
                                                 {agent.title}
                                             </span>
                                             {status === 'done' && (
-                                                <span className="text-xs text-emerald-400 font-bold flex items-center gap-1 shrink-0">
+                                                <span className="text-xs text-[#C9A84C] font-bold flex items-center gap-1 shrink-0">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                     </svg>
@@ -2030,7 +2030,7 @@ export const AiValuation: React.FC = () => {
                                             {status === 'active' && (
                                                 <span className="inline-flex gap-0.5 shrink-0">
                                                     {[0, 150, 300].map(delay => (
-                                                        <span key={delay} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+                                                        <span key={delay} className="w-1.5 h-1.5 bg-[#C9A84C] rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
                                                     ))}
                                                 </span>
                                             )}
@@ -2040,9 +2040,9 @@ export const AiValuation: React.FC = () => {
                                             <div className="ml-8 mt-2 space-y-1">
                                                 {agent.details.filter(Boolean).map((d, di) => (
                                                     <div key={di} className={`text-xs font-mono flex items-start gap-1.5 ${
-                                                        status === 'done' ? 'text-emerald-300/70' : 'text-slate-300'
+                                                        status === 'done' ? 'text-[#DFC07A]/70' : 'text-slate-300'
                                                     }`}>
-                                                        <span className={`mt-0.5 shrink-0 ${status === 'done' ? 'text-emerald-500' : 'text-emerald-400'}`}>›</span>
+                                                        <span className={`mt-0.5 shrink-0 ${status === 'done' ? 'text-[#C9A84C]' : 'text-[#C9A84C]'}`}>›</span>
                                                         <span>{d}</span>
                                                     </div>
                                                 ))}
@@ -2063,14 +2063,14 @@ export const AiValuation: React.FC = () => {
                             <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6">
                                 <div>
                                     <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        <span className="w-2 h-2 bg-[#C9A84C] rounded-full animate-pulse"></span>
                                         {valuation.reconciliation
                                             ? `Giá trị tổng hợp (${(valuation.reconciliation.compsWeight * 100).toFixed(0)}% So Sánh + ${(valuation.reconciliation.incomeWeight * 100).toFixed(0)}% Thu Nhập)`
                                             : 'Giá trị thị trường ước tính'}
                                     </h3>
                                     <div className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-slate-400 tracking-tight">
                                         <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatSmartPrice(valuation.price, t)}</span>{' '}
-                                        <span className="text-2xl text-emerald-500">VNĐ</span>
+                                        <span className="text-2xl text-[#C9A84C]">VNĐ</span>
                                     </div>
                                     <div className="text-slate-400 text-sm mt-2 font-medium">
                                         Biên độ:{' '}
@@ -2079,16 +2079,16 @@ export const AiValuation: React.FC = () => {
                                         <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatVND(valuation.range[1])}</span>
                                     </div>
                                     {!currentUser && (
-                                        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                                        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#DFC07A] text-xs font-semibold">
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                            <a href="/#/auth/login" className="hover:text-emerald-200 transition-colors">Đăng nhập để xem số liệu đầy đủ →</a>
+                                            <a href="/#/auth/login" className="hover:text-[#EDD898] transition-colors">Đăng nhập để xem số liệu đầy đủ →</a>
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex gap-3 flex-wrap justify-end">
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
                                         <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold mb-1">Độ Tin Cậy</div>
-                                        <div className={`text-xl font-bold ${valuation.confidence >= 90 ? 'text-emerald-400' : valuation.confidence >= 70 ? 'text-yellow-400' : 'text-rose-400'}`}>
+                                        <div className={`text-xl font-bold ${valuation.confidence >= 90 ? 'text-[#C9A84C]' : valuation.confidence >= 70 ? 'text-yellow-400' : 'text-rose-400'}`}>
                                             {valuation.confidence}%
                                         </div>
                                     </div>
@@ -2172,7 +2172,7 @@ export const AiValuation: React.FC = () => {
                                         <div key={i} className="px-5 py-3">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="text-slate-300 text-sm font-medium">{factor.label}</span>
-                                                <span className={`font-bold text-sm ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                <span className={`font-bold text-sm ${factor.isPositive ? 'text-[#C9A84C]' : 'text-rose-400'}`}>
                                                     {factor.impact === 0 ? 'Chuẩn' : `${sign}${factor.impact}%`}
                                                 </span>
                                             </div>
@@ -2182,7 +2182,7 @@ export const AiValuation: React.FC = () => {
                                             {factor.impact > 0 && (
                                                 <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                                                     <div
-                                                        className={`h-full rounded-full transition-all ${factor.isPositive ? 'bg-emerald-500/60' : 'bg-rose-500/60'}`}
+                                                        className={`h-full rounded-full transition-all ${factor.isPositive ? 'bg-[#C9A84C]/60' : 'bg-rose-500/60'}`}
                                                         style={{ width: `${barWidth}%` }}
                                                     />
                                                 </div>
@@ -2196,7 +2196,7 @@ export const AiValuation: React.FC = () => {
                                         {avmFactors.length > 0 && (
                                             <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
                                                 <div className="px-5 py-3 border-b border-slate-700/50 flex items-center gap-2">
-                                                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                                    <span className="w-2 h-2 rounded-full bg-[#C9A84C] inline-block"></span>
                                                     <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Hệ số điều chỉnh — đã áp dụng vào giá</span>
                                                 </div>
                                                 <div className="divide-y divide-slate-800">
@@ -2322,18 +2322,18 @@ export const AiValuation: React.FC = () => {
                                 {/* Two-column: Comps vs Income */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                     {/* Comps Method */}
-                                    <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5">
+                                    <div className="bg-[#C9A84C]/5 border border-[#C9A84C]/20 rounded-2xl p-5">
                                         <div className="flex items-center gap-2 mb-3">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                                            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Phương pháp So sánh thị trường</span>
+                                            <span className="w-2.5 h-2.5 rounded-full bg-[#C9A84C] flex-shrink-0"></span>
+                                            <span className="text-[#C9A84C] text-xs font-bold uppercase tracking-widest">Phương pháp So sánh thị trường</span>
                                         </div>
                                         <div className="text-2xl font-black text-white mb-1">
                                             <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatSmartPrice(valuation.compsPrice || valuation.price, t)}</span>{' '}
-                                            <span className="text-sm text-emerald-400">VNĐ</span>
+                                            <span className="text-sm text-[#C9A84C]">VNĐ</span>
                                         </div>
                                         {valuation.reconciliation && (
-                                            <div className="mt-3 text-xs bg-emerald-500/10 rounded-lg px-3 py-1.5 inline-block">
-                                                Trọng số: <span className="font-bold text-emerald-300">{(valuation.reconciliation.compsWeight * 100).toFixed(0)}%</span>
+                                            <div className="mt-3 text-xs bg-[#C9A84C]/10 rounded-lg px-3 py-1.5 inline-block">
+                                                Trọng số: <span className="font-bold text-[#DFC07A]">{(valuation.reconciliation.compsWeight * 100).toFixed(0)}%</span>
                                             </div>
                                         )}
                                     </div>
@@ -2377,7 +2377,7 @@ export const AiValuation: React.FC = () => {
                                 {/* Gross Rental Yield */}
                                 <div className="flex items-center gap-3 text-sm">
                                     <span className="text-slate-400">Tỷ suất cho thuê gộp:</span>
-                                    <span className={`font-bold ${valuation.incomeApproach.grossRentalYield >= 5 ? 'text-emerald-400' : valuation.incomeApproach.grossRentalYield >= 3 ? 'text-yellow-400' : 'text-rose-400'}`}>
+                                    <span className={`font-bold ${valuation.incomeApproach.grossRentalYield >= 5 ? 'text-[#C9A84C]' : valuation.incomeApproach.grossRentalYield >= 3 ? 'text-yellow-400' : 'text-rose-400'}`}>
                                         {valuation.incomeApproach.grossRentalYield.toFixed(2)}%/năm
                                     </span>
                                     <span className="text-slate-600">|</span>
@@ -2418,7 +2418,7 @@ export const AiValuation: React.FC = () => {
                                                     : 'Mô phỏng 12 tháng từ tỷ lệ tăng trưởng AI trích xuất'}
                                             </p>
                                         </div>
-                                        <span className={`text-xs px-3 py-1 rounded-full border font-bold shrink-0 ${isFallback ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : isDown ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                                        <span className={`text-xs px-3 py-1 rounded-full border font-bold shrink-0 ${isFallback ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : isDown ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-[#C9A84C]/10 text-[#C9A84C] border-[#C9A84C]/20'}`}>
                                             {trendLabel}
                                         </span>
                                     </div>
@@ -2463,7 +2463,7 @@ export const AiValuation: React.FC = () => {
                         {valuationId && (
                             <div className="bg-slate-800/60 border border-slate-700 rounded-[28px] px-7 py-6 flex flex-col gap-4">
                                 {feedbackSent ? (
-                                    <div className="flex items-center gap-3 text-emerald-400">
+                                    <div className="flex items-center gap-3 text-[#C9A84C]">
                                         <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                         <span className="text-sm font-medium">Cảm ơn! Phản hồi của bạn giúp AI định giá chính xác hơn.</span>
                                     </div>
@@ -2473,7 +2473,7 @@ export const AiValuation: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             <button
                                                 onClick={() => setFeedbackRating(1)}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${feedbackRating === 1 ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'border-slate-600 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400'}`}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${feedbackRating === 1 ? 'bg-[#C9A84C]/20 border-[#C9A84C] text-[#C9A84C]' : 'border-slate-600 text-slate-400 hover:border-[#C9A84C]/50 hover:text-[#C9A84C]'}`}
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
                                                 Chính xác
@@ -2589,7 +2589,7 @@ export const AiValuation: React.FC = () => {
             {step === 'ADDRESS' && (
                 <section className="py-20 px-6 max-w-6xl mx-auto border-t border-slate-800 mt-20">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="bg-slate-800/50 p-8 rounded-[32px] border border-slate-700 hover:border-emerald-500/50 transition-colors group">
+                        <div className="bg-slate-800/50 p-8 rounded-[32px] border border-slate-700 hover:border-[#C9A84C]/50 transition-colors group">
                             <div className="mb-6 group-hover:scale-110 transition-transform duration-300">{ICONS.AI_CHIP}</div>
                             <h3 className="text-xl font-bold text-white mb-3">SGS Định Giá AI™</h3>
                             <p className="text-slate-400 leading-relaxed">Thuật toán độc quyền kết hợp giữa so sánh giá thị trường và phân tích dòng tiền tương lai.</p>
@@ -2610,7 +2610,7 @@ export const AiValuation: React.FC = () => {
         </div>
         {createPortal(
             toast ? (
-                <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'error' ? 'bg-rose-900/95 border-rose-500 text-white' : 'bg-emerald-900/95 border-emerald-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'error' ? 'bg-rose-900/95 border-rose-500 text-white' : 'bg-[#1C2B4A]/95 border-[#C9A84C] text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,
@@ -2651,7 +2651,7 @@ export const AiValuation: React.FC = () => {
                                     <tr key={h.id} className="hover:bg-slate-700/30">
                                         <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{h.date}</td>
                                         <td className="px-4 py-3 text-slate-200 max-w-[200px] truncate" title={h.address}>{h.address}</td>
-                                        <td className="px-4 py-3 text-right font-bold text-emerald-400 whitespace-nowrap">{formatVND(h.totalPrice)}</td>
+                                        <td className="px-4 py-3 text-right font-bold text-[#C9A84C] whitespace-nowrap">{formatVND(h.totalPrice)}</td>
                                         <td className="px-4 py-3 text-right">
                                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${h.confidence >= 80 ? 'text-[#3B6D11] bg-[#EAF3DE]' : h.confidence >= 70 ? 'text-[#854F0B] bg-[#FAEEDA]' : 'text-[#A32D2D] bg-[#FCEBEB]'}`}>
                                                 {h.confidence}%
@@ -2673,8 +2673,8 @@ export const AiValuation: React.FC = () => {
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Icon */}
-                    <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                        <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-14 h-14 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center">
+                        <svg className="w-7 h-7 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
@@ -2694,7 +2694,7 @@ export const AiValuation: React.FC = () => {
                             'Truy cập SGS CRM bất động sản',
                         ].map(b => (
                             <li key={b} className="flex items-center gap-2 text-xs text-slate-300">
-                                <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-[#C9A84C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                 </svg>
                                 {b}
@@ -2704,7 +2704,7 @@ export const AiValuation: React.FC = () => {
                     <div className="flex flex-col gap-2.5 w-full">
                         <button
                             onClick={() => { window.location.hash = `#/${ROUTES.LOGIN}`; }}
-                            className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
+                            className="w-full py-3 bg-[#C9A84C] text-white font-bold rounded-xl hover:bg-[#B8860B] active:scale-95 transition-all shadow-lg shadow-[#C9A84C]/20"
                         >
                             Đăng nhập / Đăng ký miễn phí →
                         </button>
