@@ -1103,25 +1103,24 @@ export const AiValuation: React.FC = () => {
                 {/* STEP 1: ADDRESS INPUT */}
                 {step === 'ADDRESS' && (
                     <div className="text-center animate-enter">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C] text-xs font-bold uppercase tracking-widest mb-6">
-                            <span className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse"></span>
-                            Định Giá Thời Gian Thực
-                        </div>
-                        <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-                            Định Giá Bất Động Sản <br/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] to-[#E8C86D]">Bằng AI — Sai Số ±5–12%</span>
+                        {/* Title */}
+                        <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight tracking-tight">
+                            Định giá bất động sản<br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] to-[#E8C86D]">bằng AI, miễn phí</span>
                         </h1>
-                        <p className="text-xl text-slate-400 mb-5 max-w-2xl mx-auto">
-                            Nhập địa chỉ — AI phân tích dữ liệu thị trường thực tế. Càng điền đầy đủ, sai số càng nhỏ.
+                        <p className="text-base text-slate-400 mb-8 max-w-xl mx-auto">
+                            Nhập địa chỉ — nhận giá thị trường ước tính trong 30 giây. Sai số ±5–12%.
                         </p>
 
-                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-[#C9A84C]/50 transition-all mt-3">
-                            <div className="pl-3 md:pl-4 shrink-0 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
-                            <input 
+                        {/* Search bar */}
+                        <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-2 shadow-2xl relative z-20 focus-within:border-[#C9A84C]/50 focus-within:ring-2 focus-within:ring-[#C9A84C]/20 transition-all">
+                            <div className="pl-3 shrink-0 text-slate-500 flex items-center">{ICONS.SEARCH}</div>
+                            <input
                                 value={address}
                                 onChange={(e) => { setAddress(e.target.value); setAutoDetectedType(null); }}
-                                className="flex-1 min-w-0 bg-transparent border-none outline-none text-white placeholder:text-slate-500 text-base md:text-lg h-14"
-                                placeholder={typedPlaceholder}
+                                className="flex-1 min-w-0 bg-transparent border-none outline-none text-white placeholder:text-slate-600 text-base h-13 leading-none"
+                                style={{ height: '3.25rem' }}
+                                placeholder={typedPlaceholder || 'Nhập địa chỉ bất động sản…'}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && address) {
                                         const detected = detectPropertyTypeFromText(address);
@@ -1132,15 +1131,15 @@ export const AiValuation: React.FC = () => {
                                 autoFocus
                             />
                             {address && (
-                                <button 
+                                <button
                                     onClick={() => { setAddress(''); setAutoDetectedType(null); }}
-                                    className="shrink-0 text-slate-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-slate-700 flex items-center justify-center"
+                                    className="shrink-0 text-slate-500 hover:text-white transition-colors p-1.5 rounded-full hover:bg-slate-700"
                                     title={t('common.clear_search')}
                                 >
                                     {ICONS.X}
                                 </button>
                             )}
-                            <button 
+                            <button
                                 onClick={() => {
                                     const trimmed = address.trim();
                                     if (trimmed.length < 10) {
@@ -1153,9 +1152,10 @@ export const AiValuation: React.FC = () => {
                                     setStep('DETAILS');
                                 }}
                                 disabled={!address}
-                                className="shrink-0 bg-[#C9A84C] hover:bg-[#B8860B] text-[var(--text-primary)] font-bold px-5 md:px-8 h-12 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
+                                className="shrink-0 bg-[#C9A84C] hover:bg-[#B8860B] text-slate-900 font-bold px-6 md:px-8 rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-sm whitespace-nowrap"
+                                style={{ height: '2.75rem' }}
                             >
-                                Định Giá →
+                                Định giá →
                             </button>
                         </div>
 
@@ -1169,44 +1169,34 @@ export const AiValuation: React.FC = () => {
                         {/* Quick-search examples */}
                         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                             {[
-                                'Căn hộ Vinhomes Grand Park TP.Thủ Đức',
-                                'Nhà phố dự án Aqua City, Biên Hòa, Đồng Nai',
-                                'Biệt thự Sala Đại Quang Minh, TP.Thủ Đức',
+                                'Vinhomes Grand Park, TP.Thủ Đức',
+                                'Aqua City, Biên Hòa, Đồng Nai',
                                 'Đất nền Long Thành, Đồng Nai',
                             ].map(ex => (
                                 <button
                                     key={ex}
                                     onClick={() => { setAddress(ex); const d = detectPropertyTypeFromText(ex); if (d) { setPropertyType(d); setAutoDetectedType(d); } }}
-                                    className="text-xs text-slate-500 hover:text-[#C9A84C] border border-slate-700/60 hover:border-[#C9A84C]/40 bg-slate-800/40 hover:bg-[#C9A84C]/5 px-3 py-1.5 rounded-full transition-all"
+                                    className="text-xs text-slate-500 hover:text-[#C9A84C] border border-slate-700/50 hover:border-[#C9A84C]/30 bg-slate-800/30 hover:bg-[#C9A84C]/5 px-3 py-1.5 rounded-full transition-all"
                                 >
                                     {ex}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Hint strip below search */}
-                        <div className="mt-5 flex items-center justify-center gap-4 md:gap-6 text-xs text-slate-500">
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
-                                Địa chỉ → <b className="text-yellow-400">75%</b>
-                            </span>
-                            <span className="text-slate-700">→</span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-                                + Chi tiết → <b className="text-orange-400">90%</b>
-                            </span>
-                            <span className="text-slate-700">→</span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]"></span>
-                                + Đầy đủ → <b className="text-[#C9A84C]">98%</b>
-                            </span>
+                        {/* Trust strip */}
+                        <div className="mt-6 flex items-center justify-center gap-5 text-xs text-slate-600">
+                            <span>45.000+ giao dịch</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                            <span>CBRE · Savills · batdongsan</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                            <span>Miễn phí 100%</span>
                         </div>
 
                         {/* Valuation History */}
                         {history.length > 0 && (
-                            <div className="mt-14 text-left max-w-2xl mx-auto">
+                            <div className="mt-12 text-left max-w-2xl mx-auto">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Lịch sử định giá</h3>
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Lịch sử định giá</h3>
                                     <button
                                         onClick={() => { clearHistory(); setHistory([]); }}
                                         className="text-xs text-slate-600 hover:text-rose-400 transition-colors"
@@ -1235,25 +1225,25 @@ export const AiValuation: React.FC = () => {
                                                     if (detected) setAutoDetectedType(detected);
                                                     setStep('DETAILS');
                                                 }}
-                                                className="w-full flex items-center gap-4 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-[#C9A84C]/30 rounded-2xl px-4 py-3 text-left transition-all group"
+                                                className="w-full flex items-center gap-4 bg-slate-800/40 hover:bg-slate-800/70 border border-slate-700/40 hover:border-[#C9A84C]/25 rounded-2xl px-4 py-3 text-left transition-all group"
                                             >
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-semibold text-sm text-white truncate group-hover:text-[#DFC07A] transition-colors">{h.address}</div>
-                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                        <span className="text-xs text-slate-500">{h.area}m²</span>
+                                                    <div className="font-medium text-sm text-slate-200 truncate group-hover:text-[#DFC07A] transition-colors">{h.address}</div>
+                                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                        <span className="text-xs text-slate-600">{h.area}m²</span>
                                                         <span className="text-slate-700">·</span>
-                                                        <span className="text-xs text-slate-500">{ptLabel}</span>
+                                                        <span className="text-xs text-slate-600">{ptLabel}</span>
                                                         <span className="text-slate-700">·</span>
-                                                        <span className="text-xs text-slate-500">{legalLabel}</span>
+                                                        <span className="text-xs text-slate-600">{legalLabel}</span>
                                                         <span className="text-slate-700">·</span>
-                                                        <span className="text-xs text-slate-600">{dateStr}</span>
+                                                        <span className="text-xs text-slate-700">{dateStr}</span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0">
-                                                    <div className="font-black text-[#C9A84C] text-base tabular-nums">
+                                                    <div className="font-bold text-[#C9A84C] text-sm tabular-nums">
                                                         {(h.totalPrice / 1_000_000_000).toFixed(2)} tỷ
                                                     </div>
-                                                    <div className="text-xs text-slate-500">
+                                                    <div className="text-xs text-slate-600">
                                                         {(h.pricePerM2 / 1_000_000).toFixed(0)} tr/m²
                                                     </div>
                                                 </div>
