@@ -211,14 +211,6 @@ export default function Landing() {
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = TEXT2; }}>
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
-            <button onClick={() => setChatOpen(true)}
-              className="hidden sm:flex items-center justify-center w-7 h-7 rounded transition-colors"
-              style={{ color: TEXT2, border: `1px solid ${BORDER}` }}
-              aria-label="AI Chat"
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = GOLD; (e.currentTarget as HTMLElement).style.borderColor = GOLD; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = TEXT2; (e.currentTarget as HTMLElement).style.borderColor = BORDER; }}>
-              <MessageCircle className="w-3.5 h-3.5" />
-            </button>
             <a href={`/${ROUTES.LOGIN}`}
               className="hidden sm:inline-flex items-center h-8 px-4 text-[13px] font-medium rounded-lg border transition-colors"
               style={{ color: TEXT1, borderColor: BORDER }}
@@ -263,12 +255,6 @@ export default function Landing() {
                 style={{ borderColor: BORDER, color: TEXT2 }}
                 aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-              <button onClick={() => { setChatOpen(true); setMenuOpen(false); }}
-                className="flex items-center justify-center w-9 h-9 rounded-lg border transition-colors shrink-0"
-                style={{ borderColor: BORDER, color: TEXT2 }}
-                aria-label="AI Chat">
-                <MessageCircle className="w-4 h-4" />
               </button>
               <a href={`/${ROUTES.LOGIN}`}
                 className="flex-1 text-center py-2.5 text-sm font-medium rounded-lg border"
@@ -760,6 +746,16 @@ export default function Landing() {
       {faqSection}
       {contactCta}
       {footer}
+      {/* Floating AI Chat button */}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all hover:shadow-xl hover:scale-105 active:scale-95"
+        style={{ background: GOLD, color: WHITE }}
+        aria-label="AI Chat"
+      >
+        <MessageCircle className="w-5 h-5" />
+        <span className="text-sm font-bold">{vi ? 'Chat AI' : 'AI Chat'}</span>
+      </button>
       <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
