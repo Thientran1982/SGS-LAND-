@@ -244,17 +244,36 @@ export default function Landing() {
     </header>
   );
 
-  // ── HERO — dark navy, centered, minimal ────────────────────────────────────
+  // ── HERO — real estate photo background with gradient overlay ───────────────
   const hero = (
-    <section style={{ background: NAVY, minHeight: '100svh' }}
+    <section style={{ minHeight: '100svh' }}
       className="relative flex flex-col items-center justify-center text-center pt-16 overflow-hidden">
 
-      {/* Single subtle glow — dead center, very soft */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse 60% 50% at 50% 45%, rgba(201,168,76,0.12) 0%, transparent 70%)` }} />
+      {/* Property photo — full bleed background */}
+      <img
+        src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1920&q=90"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover object-center"
+        style={{ zIndex: 0 }}
+      />
 
-      {/* Content */}
-      <div className="relative w-full max-w-3xl mx-auto px-5 py-24 sm:py-32">
+      {/* Gradient overlay — dark vignette, bottom-heavy for text readability */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        zIndex: 1,
+        background: [
+          'linear-gradient(to bottom, rgba(10,15,30,0.60) 0%, rgba(10,15,30,0.72) 50%, rgba(10,15,30,0.88) 100%)',
+        ].join(', '),
+      }} />
+
+      {/* Subtle gold warmth at center */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        zIndex: 2,
+        background: 'radial-gradient(ellipse 55% 40% at 50% 55%, rgba(201,168,76,0.10) 0%, transparent 70%)',
+      }} />
+
+      {/* Content — sits above all overlays */}
+      <div className="relative w-full max-w-3xl mx-auto px-5 py-24 sm:py-32" style={{ zIndex: 3 }}>
 
         {/* Eyebrow */}
         <p className="text-xs font-bold uppercase tracking-[0.18em] mb-6"
@@ -585,7 +604,7 @@ export default function Landing() {
 
   // ── FOOTER — dark, organized ──────────────────────────────────────────────
   const footer = (
-    <footer style={{ background: '#060A12' }}>
+    <footer style={{ background: '#0F1F3D' }}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 pt-16 pb-10">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 mb-12">
 
