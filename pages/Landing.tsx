@@ -9,15 +9,15 @@ import {
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// ─── Design tokens (CSS vars → auto dark-mode via html.dark overrides) ────────
 const NAVY   = '#1C2B4A';
-const GOLD   = '#C9A84C';
-const WHITE  = '#FFFFFF';
-const CREAM  = '#F9F8F5';
-const OFF    = '#F3F2EF';
-const BORDER = '#E5E3DF';
-const TEXT1  = '#1A2332';
-const TEXT2  = '#6B7280';
+const GOLD   = 'var(--color-gold)';
+const WHITE  = 'var(--color-brand-white)';
+const CREAM  = 'var(--color-brand-cream)';
+const OFF    = 'var(--color-brand-off)';
+const BORDER = 'var(--color-brand-border)';
+const TEXT1  = 'var(--color-brand-text)';
+const TEXT2  = 'var(--color-brand-muted)';
 
 // ─── Static data ──────────────────────────────────────────────────────────────
 const NAV_LINKS = [
@@ -130,6 +130,7 @@ export default function Landing() {
   const vi = language === 'vn';
   const { theme, toggleTheme } = useTheme();
   const [chatOpen, setChatOpen] = useState(false);
+  const logoColor = theme === 'dark' ? 'var(--color-gold)' : NAVY;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -175,8 +176,8 @@ export default function Landing() {
 
           {/* Logo */}
           <a href={`/${ROUTES.LANDING}`} className="flex items-center gap-2 shrink-0">
-            <Logo className="w-[17px] h-[17px]" stroke={NAVY} />
-            <span className="font-bold text-[15px] tracking-tight" style={{ color: NAVY }}>
+            <Logo className="w-[17px] h-[17px]" stroke={logoColor} />
+            <span className="font-bold text-[15px] tracking-tight" style={{ color: logoColor }}>
               SGS LAND
             </span>
           </a>
@@ -492,7 +493,7 @@ export default function Landing() {
 
   // ── AI CTA — warm gold bg, clean, no dark navy ─────────────────────────────
   const aiCta = (
-    <section style={{ background: '#FFFBF0', borderTop: `1px solid #F0E8C8`, borderBottom: `1px solid #F0E8C8` }}
+    <section style={{ background: CREAM, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}
       className="py-20">
       <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
         <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-6"

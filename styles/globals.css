@@ -17,9 +17,11 @@
   --color-brand-navy:   #1C2B4A;
   --color-brand-text:   #1A2332;
   --color-brand-cream:  #F9F8F5;
+  --color-brand-white:  #FFFFFF;
   --color-brand-off:    #F3F2EF;
   --color-brand-border: #E5E3DF;
   --color-brand-muted:  #6B7280;
+  --color-brand-logo:   #1C2B4A;
   
   /* CRM App Theme - SGS LAND Gold */
   --primary-50:   #FDF6E3;
@@ -53,6 +55,13 @@ html {
 }
 html.dark {
   color-scheme: dark;
+  --color-brand-cream:  #0D1829;
+  --color-brand-white:  #111827;
+  --color-brand-off:    #1A2332;
+  --color-brand-border: #2A3A55;
+  --color-brand-text:   #F1F5F9;
+  --color-brand-muted:  #94A3B8;
+  --color-brand-logo:   #C9A84C;
 }
 /* Global scrollbar reset — hide all scrollbars across the entire app */
 *, *::before, *::after {
