@@ -9,7 +9,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
+import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT, DEFAULT_CAP_RATES } from '../valuationEngine';
 import type { LegalStatus, PropertyType } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
 import { priceCalibrationService } from '../services/priceCalibrationService';
@@ -578,18 +578,36 @@ export function createValuationRoutes(
       }
 
       // ── Step 3: Apply AVM with all 7 coefficients + multi-source blend ────
-      // User-provided monthly rent (triệu VNĐ) takes precedence over all estimates
+      // Rent priority: user input > AI/cache > location-scaled fallback
+      // Track source so we can make income approach neutral when rent is unknown.
+      let rentSource: 'user' | 'ai_cache' | 'fallback' = monthlyRent ? 'ai_cache' : 'fallback';
+
       if (monthlyRentInput !== undefined && !isNaN(Number(monthlyRentInput)) && Number(monthlyRentInput) > 0) {
-        monthlyRent = Number(monthlyRentInput); // engine uses triệu VNĐ unit
-      }
-      if (!monthlyRent) {
-        monthlyRent = estimateFallbackRent(marketBasePrice * areaNum, resolvedPropertyType, areaNum);
+        monthlyRent = Number(monthlyRentInput);
+        rentSource = 'user';
       }
 
-      // NOTE on blending: when we hit the cache, `marketBasePrice` already IS the cache price.
-      // Passing cachedMarketPrice = marketBasePrice would double-count it (same value treated as
-      // two independent sources → artificial confidence boost). Only pass cachedMarketPrice
-      // when the AI returned a FRESH price so the cache can serve as a cross-check.
+      if (!monthlyRent) {
+        // Derive fallback rent from `marketBasePrice × area × grossYieldCap / 12` so the
+        // income approach reflects actual location value instead of a flat per-m² table.
+        // This makes the income approach produce a value close to comps (neutral signal)
+        // rather than introducing location-invariant noise that skews final price by ±15-45%.
+        // Exception: for land types the yield-based derivation is already the correct method.
+        const capRate = DEFAULT_CAP_RATES[resolvedPropertyType] ?? 0.04;
+        const roughCompsVnd = marketBasePrice * areaNum;
+        const yieldBasedRent = Math.round(((roughCompsVnd * capRate) / 12) / 1_000_000 * 10) / 10;
+
+        // Sanity-check: rent/m²/month must be in [0.003, 10] triệu
+        const rentPerM2 = yieldBasedRent / areaNum;
+        if (yieldBasedRent > 0 && rentPerM2 >= 0.003 && rentPerM2 <= 10) {
+          monthlyRent = yieldBasedRent;
+        } else {
+          // Out-of-range → use per-m² table as floor (commercial edge cases)
+          monthlyRent = estimateFallbackRent(roughCompsVnd, resolvedPropertyType, areaNum);
+        }
+        rentSource = 'fallback';
+      }
+
       const avmResult = applyAVM({
         marketBasePrice,
         area: areaNum,
@@ -606,12 +624,10 @@ export function createValuationRoutes(
         furnishing: furnishing || undefined,
         buildingAge: resolvedBuildingAge,
         bedrooms: bedrooms !== undefined ? Number(bedrooms) : undefined,
-        // Multi-source blending — internal comps only (cache not double-counted)
+        // Multi-source blending — internal comps only (cache price is already the base, not double-counted)
         internalCompsMedian,
         internalCompsCount,
-        // Only pass cachedMarketPrice when it is genuinely DIFFERENT from marketBasePrice
-        // (i.e. when the route fetched a fresh AI price AND a cached reference is available)
-        cachedMarketPrice: (!cacheEntry && marketDataSource === 'AI_LIVE') ? undefined : undefined,
+        cachedMarketPrice: undefined,
         cachedConfidence: undefined,
       });
 
@@ -668,6 +684,7 @@ export function createValuationRoutes(
         reconciliation: avmResult.reconciliation,
         // Enhanced metadata
         sources: {
+          rentSource,
           ...avmResult.sources,
           marketDataSource,
           cacheAge: cacheEntry ? Math.round((Date.now() - new Date(cacheEntry.fetchedAt).getTime()) / 60000) + 'm' : null,

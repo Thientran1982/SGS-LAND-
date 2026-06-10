@@ -14,12 +14,13 @@
  *  Coefficients:
  *    Kd   — Road width (lộ giới)         : 0.70 – 1.30
  *    Kp   — Legal status (pháp lý)       : 0.80 – 1.00
- *    Ka   — Area size (diện tích)         : 0.90 – 1.10
+ *    Ka   — Area size (diện tích)         : 0.88 – 1.10
  *    Kfl  — Floor level (tầng)           : 0.88 – 1.12  [apartments only]
  *    Kdir — Building direction (hướng)   : 0.95 – 1.05
  *    Kmf  — Frontage width (mặt tiền)    : 0.92 – 1.20
- *    Kfurn— Furnishing (nội thất)         : 0.95 – 1.07
+ *    Kfurn— Furnishing (nội thất)         : 0.95 – 1.12
  *    Kage — Building age (tuổi nhà)      : 0.70 – 1.05
+ *    Kbr  — Bedroom count (số phòng ngủ) : 0.95 – 1.10  [apartments only]
  *
  *  Method 2 — Income Capitalization (Vietnamese gross yield convention):
  *    GrossIncome   = MonthlyRent × 12
