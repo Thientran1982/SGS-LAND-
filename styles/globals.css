@@ -1,6 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================
+   SGS LAND BRAND TOKENS — public/landing pages
+   These are separate from the CRM app theme (--primary-600).
+   Use these vars in Landing.tsx, CrmLanding.tsx, and all
+   public-facing pages for brand consistency.
+   ============================================================ */
+:root {
+  --color-gold:         #C9A84C;
+  --color-gold-dark:    #B8860B;
+  --color-gold-subtle:  #FDF6E3;
+  --color-gold-border:  #E8D4A0;
+
+  --color-brand-navy:   #1C2B4A;
+  --color-brand-text:   #1A2332;
+  --color-brand-cream:  #F9F8F5;
+  --color-brand-off:    #F3F2EF;
+  --color-brand-border: #E5E3DF;
+  --color-brand-muted:  #6B7280;
+}
+
 @layer base {
   h1 {
     @apply text-xl md:text-2xl lg:text-3xl font-bold;
