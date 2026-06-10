@@ -1065,9 +1065,9 @@ const GeoMonitor30Days: React.FC = () => {
         ? Math.round(((latest.aiMentions.totals.rate - previous.aiMentions.totals.rate) as number) * 100)
         : null;
     const COLORS: Record<string, string> = {
-        gemini: '#4285f4', chatgpt: '#10a37f', claude: '#cc785c', perplexity: '#1f6feb', grok: '#1f2937', overall: '#6366f1',
+        gemini: '#4285f4', chatgpt: '#10a37f', claude: '#cc785c', perplexity: '#1f6feb', grok: '#1f2937', overall: '#C9A84C',
     };
-    const KW_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#a855f7'];
+    const KW_COLORS = ['#C9A84C', '#10b981', '#f59e0b', '#ef4444', '#a855f7'];
 
     return (
         <section>

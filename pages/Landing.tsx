@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../services/i18n';
+import { useTheme } from '../services/theme';
+import { AiChatWidget } from '../components/AiChatWidget';
 import {
   Search, ArrowRight, Zap, BarChart3, Globe2, Users,
-  CheckCircle2, Star, Menu, X, Phone, Mail, MapPin
+  CheckCircle2, Star, Menu, X, Phone, Mail, MapPin, Sun, Moon, MessageCircle
 } from 'lucide-react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
@@ -126,6 +128,8 @@ export default function Landing() {
   const [searchTab, setSearchTab]   = useState(0);
   const { language, setLanguage }   = useTranslation();
   const vi = language === 'vn';
+  const { theme, toggleTheme } = useTheme();
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -199,6 +203,22 @@ export default function Landing() {
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = TEXT2; }}>
               {vi ? 'EN' : 'VI'}
             </button>
+            <button onClick={toggleTheme}
+              className="hidden sm:flex items-center justify-center w-7 h-7 rounded transition-colors"
+              style={{ color: TEXT2, border: `1px solid ${BORDER}` }}
+              aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEXT1; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = TEXT2; }}>
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            </button>
+            <button onClick={() => setChatOpen(true)}
+              className="hidden sm:flex items-center justify-center w-7 h-7 rounded transition-colors"
+              style={{ color: TEXT2, border: `1px solid ${BORDER}` }}
+              aria-label="AI Chat"
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = GOLD; (e.currentTarget as HTMLElement).style.borderColor = GOLD; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = TEXT2; (e.currentTarget as HTMLElement).style.borderColor = BORDER; }}>
+              <MessageCircle className="w-3.5 h-3.5" />
+            </button>
             <a href={`/${ROUTES.LOGIN}`}
               className="hidden sm:inline-flex items-center h-8 px-4 text-[13px] font-medium rounded-lg border transition-colors"
               style={{ color: TEXT1, borderColor: BORDER }}
@@ -232,7 +252,24 @@ export default function Landing() {
                 {vi ? l.label : (EN_NAV[l.label] || l.label)}
               </a>
             ))}
-            <div className="pt-3 mt-1 border-t flex gap-2" style={{ borderColor: BORDER }}>
+            <div className="pt-3 mt-1 border-t flex items-center gap-2" style={{ borderColor: BORDER }}>
+              <button onClick={() => setLanguage(vi ? 'en' : 'vn')}
+                className="flex items-center justify-center h-9 px-3 text-[12px] font-bold uppercase tracking-wide rounded-lg border transition-colors"
+                style={{ borderColor: BORDER, color: TEXT2 }}>
+                {vi ? 'EN' : 'VI'}
+              </button>
+              <button onClick={toggleTheme}
+                className="flex items-center justify-center w-9 h-9 rounded-lg border transition-colors shrink-0"
+                style={{ borderColor: BORDER, color: TEXT2 }}
+                aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button onClick={() => { setChatOpen(true); setMenuOpen(false); }}
+                className="flex items-center justify-center w-9 h-9 rounded-lg border transition-colors shrink-0"
+                style={{ borderColor: BORDER, color: TEXT2 }}
+                aria-label="AI Chat">
+                <MessageCircle className="w-4 h-4" />
+              </button>
               <a href={`/${ROUTES.LOGIN}`}
                 className="flex-1 text-center py-2.5 text-sm font-medium rounded-lg border"
                 style={{ borderColor: BORDER, color: TEXT1 }}>
@@ -723,6 +760,7 @@ export default function Landing() {
       {faqSection}
       {contactCta}
       {footer}
+      <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }

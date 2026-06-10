@@ -244,9 +244,9 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                 <div>
                                     <div className="flex justify-between mb-2">
                                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.appreciation_rate')}</label>
-                                        <span className="text-sm font-bold text-violet-600">{appreciation}%{t('calc.per_year')}</span>
+                                        <span className="text-sm font-bold text-[#C9A84C]">{appreciation}%{t('calc.per_year')}</span>
                                     </div>
-                                    <input type="range" min="0" max="20" step="0.5" value={appreciation} onChange={e => setAppreciation(Number(e.target.value))} className="w-full accent-violet-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
+                                    <input type="range" min="0" max="20" step="0.5" value={appreciation} onChange={e => setAppreciation(Number(e.target.value))} className="w-full accent-[#C9A84C] h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                                     <div className="flex justify-between text-xs2 text-[var(--text-secondary)] mt-1">
                                         <span>0%</span><span>20%</span>
                                     </div>
@@ -259,7 +259,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                     value={holdingYearsStr}
                                     placeholder="10"
                                     onChange={e => setHoldingYearsStr(e.target.value.replace(/[^0-9]/g, ''))}
-                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-violet-500"
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-[#C9A84C]"
                                 />
                             </div>
                         </div>
@@ -281,32 +281,32 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                 </div>
                             </div>
                             {/* Card 2: Tăng giá vốn */}
-                            <div className="bg-violet-50 rounded-2xl p-4 border border-violet-100">
-                                <div className="text-xs text-violet-600 font-bold uppercase tracking-wider mb-1">{t('calc.projected_price_label')}</div>
-                                <div className="text-2xl font-black text-violet-900 break-words">{price > 0 ? formatCurrency(projectedPrice) : '---'}</div>
+                            <div className="bg-white rounded-2xl p-4 border border-[#E8E0D0]">
+                                <div className="text-xs text-[#C9A84C] font-bold uppercase tracking-wider mb-1">{t('calc.projected_price_label')}</div>
+                                <div className="text-2xl font-black text-[#1C2B4A] break-words">{price > 0 ? formatCurrency(projectedPrice) : '---'}</div>
                                 <div className="mt-2 space-y-1.5 text-xs">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-violet-600">{t('calc.capital_gain')}</span>
-                                        <span className="font-bold text-violet-900">+{formatCurrency(capitalGain)}</span>
+                                        <span className="text-[#C9A84C]">{t('calc.capital_gain')}</span>
+                                        <span className="font-bold text-[#1C2B4A]">+{formatCurrency(capitalGain)}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-violet-600">{t('calc.total_rental_income')} ({holdingYears}{t('calc.years')})</span>
-                                        <span className="font-bold text-violet-900">+{formatCurrency(totalRentalIncome)}</span>
+                                        <span className="text-[#C9A84C]">{t('calc.total_rental_income')} ({holdingYears}{t('calc.years')})</span>
+                                        <span className="font-bold text-[#1C2B4A]">+{formatCurrency(totalRentalIncome)}</span>
                                     </div>
                                 </div>
                             </div>
                             {/* Card 3: Tổng lợi nhuận */}
-                            <div className="bg-sky-50 rounded-2xl p-4 border border-sky-100">
-                                <div className="text-xs text-sky-600 font-bold uppercase tracking-wider mb-1">{t('calc.total_profit')}</div>
-                                <div className="text-2xl font-black text-sky-900 break-words">{formatCurrency(totalProfit)}</div>
+                            <div className="bg-white rounded-2xl p-4 border border-[#E8E0D0]">
+                                <div className="text-xs text-[#C9A84C] font-bold uppercase tracking-wider mb-1">{t('calc.total_profit')}</div>
+                                <div className="text-2xl font-black text-[#1C2B4A] break-words">{formatCurrency(totalProfit)}</div>
                                 <div className="mt-2 space-y-1.5 text-xs">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sky-600">{t('calc.total_roi')}</span>
-                                        <span className="font-bold text-sky-900">{totalROI.toFixed(1)}%</span>
+                                        <span className="text-[#C9A84C]">{t('calc.total_roi')}</span>
+                                        <span className="font-bold text-[#1C2B4A]">{totalROI.toFixed(1)}%</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sky-600">{t('calc.annualized_return')}</span>
-                                        <span className="font-bold text-sky-900">{annualizedReturn.toFixed(2)}%{t('calc.per_year')}</span>
+                                        <span className="text-[#C9A84C]">{t('calc.annualized_return')}</span>
+                                        <span className="font-bold text-[#1C2B4A]">{annualizedReturn.toFixed(2)}%{t('calc.per_year')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -318,13 +318,13 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     );
 });
 const STATUS_CONFIG: Record<string, { color: string, bg: string, border: string }> = {
-    BOOKING: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+    BOOKING: { color: 'text-[#B8860B]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]/30' },
     OPENING: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
     AVAILABLE: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
     HOLD: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
     SOLD: { color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-slate-300' },
     RENTED: { color: 'text-[#C9A84C]', bg: 'bg-[#FDF6E3]', border: 'border-[#C9A84C]' },
-    INACTIVE: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
+    INACTIVE: { color: 'text-[#999999]', bg: 'bg-[#F5F5F5]', border: 'border-[#E0E0E0]' },
 };
 // ─── AssigneeDropdown ─────────────────────────────────────────────────────────
 // Custom dropdown replacing native <select> for unit assignment.
@@ -571,7 +571,7 @@ const UnitActionsMenu = memo(({
                     <button
                         type="button"
                         onClick={e => { e.stopPropagation(); onDelete(e, unit); setIsOpen(false); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[#F5F5F5] hover:text-[#DC2626] transition-colors"
                     >
                         <Trash2 className="w-3.5 h-3.5 flex-shrink-0" />
                         {t('common.delete')}
@@ -1578,7 +1578,7 @@ export const ListingDetail: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleToggleFavorite}
-                        className={`p-2 rounded-full transition-colors ${listing?.isFavorite ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50'}`}
+                        className={`p-2 rounded-full transition-colors ${listing?.isFavorite ? 'text-[#DC2626] bg-[#F5F5F5] hover:bg-[#F0F0F0]' : 'text-[var(--text-secondary)] hover:text-[#DC2626] hover:bg-[#F5F5F5]'}`}
                         title={listing?.isFavorite ? t('favorites.remove') : t('favorites.add')}
                     >
                         <svg className="w-5 h-5 pointer-events-none" fill={listing?.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
@@ -1698,7 +1698,7 @@ export const ListingDetail: React.FC = () => {
                             {/* ── Valuation Card ─────────────────────────────────── */}
                             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col min-w-0">
                                 {/* Header */}
-                                <div className="p-5 border-b border-[var(--glass-border)] flex items-center gap-3 bg-gradient-to-r from-[#C9A84C]/40 to-violet-50/20">
+                                <div className="p-5 border-b border-[var(--glass-border)] flex items-center gap-3 bg-[#FDF9F0]">
                                     <div className="w-8 h-8 bg-[#C9A84C] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                                         <Sparkles className="w-4 h-4" />
                                     </div>
@@ -1726,19 +1726,19 @@ export const ListingDetail: React.FC = () => {
                                                     <span className="text-xs text-[var(--text-tertiary)]">{teaserData.pricePerM2Display}</span>
                                                 </div>
                                                 {/* Main price range */}
-                                                <div className="bg-gradient-to-r from-[#C9A84C] to-violet-50 rounded-2xl border border-[#FDF6E3] p-4">
+                                                <div className="bg-white rounded-2xl border border-[#E8E0D0] p-4">
                                                     <div className="flex items-center justify-between gap-2 flex-wrap">
                                                         <div className="text-center">
                                                             <div className="text-[10px] font-bold text-[#C9A84C] uppercase mb-0.5">Thấp</div>
                                                             <div className="text-sm font-black text-[#B8860B]">{teaserData.totalMinDisplay}</div>
                                                         </div>
                                                         <div className="flex-1 h-2 mx-2 bg-[#FDF6E3] rounded-full relative min-w-[40px]">
-                                                            <div className="absolute inset-0 bg-gradient-to-r from-[#C9A84C] to-violet-500 rounded-full opacity-60"></div>
+                                                            <div className="absolute inset-0 bg-[#FDF9F0]0 rounded-full opacity-60"></div>
                                                             <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-4 h-4 bg-[#C9A84C] rounded-full shadow border-2 border-white"></div>
                                                         </div>
                                                         <div className="text-center">
-                                                            <div className="text-[10px] font-bold text-violet-400 uppercase mb-0.5">Cao</div>
-                                                            <div className="text-sm font-black text-violet-700">{teaserData.totalMaxDisplay}</div>
+                                                            <div className="text-[10px] font-bold text-[#888888] uppercase mb-0.5">Cao</div>
+                                                            <div className="text-sm font-black text-[#1C2B4A]">{teaserData.totalMaxDisplay}</div>
                                                         </div>
                                                     </div>
                                                     <div className="mt-3 pt-3 border-t border-[#FDF6E3] text-center">
@@ -1762,7 +1762,7 @@ export const ListingDetail: React.FC = () => {
                                             <div className="border-t border-[var(--glass-border)]"></div>
                                             {/* ── Step 2a: Guest CTA ── */}
                                             {!currentUser && (
-                                                <div className="rounded-2xl border border-[#C9A84C] bg-gradient-to-br from-[#C9A84C] to-violet-50 p-5 space-y-3">
+                                                <div className="rounded-2xl border border-[#C9A84C] bg-[#FDFBF7] p-5 space-y-3">
                                                     <div className="flex items-start gap-3">
                                                         <div className="w-9 h-9 bg-[#FDF6E3] rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
                                                             <Sparkles className="w-4 h-4 text-[#C9A84C]" />
@@ -1823,7 +1823,7 @@ export const ListingDetail: React.FC = () => {
                                                 <div className="animate-enter space-y-4">
                                                     {/* Realtime badge */}
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${valuation.isRealtime ? 'bg-[#FDF6E3] text-[#B8860B]' : 'bg-amber-100 text-amber-700'}`}>
+                                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${valuation.isRealtime ? 'bg-[#FDF6E3] text-[#B8860B]' : 'bg-[#FDF6E3] text-[#B8860B]'}`}>
                                                             <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
                                                             {valuation.isRealtime ? 'Dữ liệu thực tế' : 'Ước tính khu vực'}
                                                         </span>
@@ -1845,9 +1845,9 @@ export const ListingDetail: React.FC = () => {
                                                             <div className="text-[10px] font-bold text-[#C9A84C] uppercase mb-0.5">Đơn giá /m²</div>
                                                             <div className="text-base font-black text-[#1C2B4A] break-all">{formatCurrency(valuation.pricePerM2)}</div>
                                                         </div>
-                                                        <div className={`p-3 rounded-xl border min-w-0 ${valuation.trendGrowthPct >= 0 ? 'bg-[#FDF6E3] border-[#C9A84C]' : 'bg-rose-50 border-rose-100'}`}>
-                                                            <div className={`text-[10px] font-bold uppercase mb-0.5 ${valuation.trendGrowthPct >= 0 ? 'text-[#C9A84C]' : 'text-rose-600'}`}>Xu hướng</div>
-                                                            <div className={`text-base font-black ${valuation.trendGrowthPct >= 0 ? 'text-[#B8860B]' : 'text-rose-900'}`}>
+                                                        <div className={`p-3 rounded-xl border min-w-0 ${valuation.trendGrowthPct >= 0 ? 'bg-[#FDF6E3] border-[#C9A84C]' : 'bg-[#F5F5F5] border-[#E0E0E0]'}`}>
+                                                            <div className={`text-[10px] font-bold uppercase mb-0.5 ${valuation.trendGrowthPct >= 0 ? 'text-[#C9A84C]' : 'text-[#DC2626]'}`}>Xu hướng</div>
+                                                            <div className={`text-base font-black ${valuation.trendGrowthPct >= 0 ? 'text-[#B8860B]' : 'text-[#1C2B4A]'}`}>
                                                                 {valuation.trendGrowthPct >= 0 ? '+' : ''}{valuation.trendGrowthPct?.toFixed(1)}%/năm
                                                             </div>
                                                         </div>
@@ -1866,7 +1866,7 @@ export const ListingDetail: React.FC = () => {
                                                             {valuation.factors.filter((f: any) => f.type === 'AVM' && Math.abs(f.impact) >= 2).slice(0, 4).map((f: any, i: number) => (
                                                                 <div key={i} className="flex items-center justify-between gap-2 text-xs">
                                                                     <span className="text-[var(--text-secondary)] truncate">{f.label}</span>
-                                                                    <span className={`font-bold whitespace-nowrap ${f.isPositive ? 'text-[#C9A84C]' : 'text-rose-600'}`}>
+                                                                    <span className={`font-bold whitespace-nowrap ${f.isPositive ? 'text-[#C9A84C]' : 'text-[#DC2626]'}`}>
                                                                         {f.isPositive ? '+' : ''}{f.impact.toFixed(1)}%
                                                                     </span>
                                                                 </div>

@@ -632,19 +632,19 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard
                         title={t('dash.revenue_title')}
-                        className="h-full min-h-[180px] bg-gradient-to-br from-[#C9A84C] to-[#B8860B] text-white border-none shadow-xl [&_h3]:!text-[#C9A84C] overflow-hidden"
+                        className="h-full min-h-[180px] bg-gradient-to-br from-[#C9A84C] to-[#B8860B] text-white border-none shadow-xl [&_h3]:!text-white overflow-hidden"
                     >
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-black tracking-tight mt-2 text-white break-words">
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
-                                <div className="text-xs2 text-[#C9A84C] font-bold uppercase tracking-wider mt-1">
+                                <div className="text-xs2 text-white/80 font-bold uppercase tracking-wider mt-1">
                                     {t('dash.revenue_subtitle')}
                                 </div>
                             </div>
                             <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
-                                <span className={`font-bold flex items-center gap-1 ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-[#C9A84C]' : 'text-rose-300'}`}>
+                                <span className={`font-bold flex items-center gap-1 ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-white' : 'text-rose-200'}`}>
                                     {(analytics.revenueDelta ?? 0) >= 0 ? ICONS.TREND_UP : ICONS.TREND_DOWN}
                                     {Math.abs(analytics.revenueDelta || 0)}%
                                 </span>

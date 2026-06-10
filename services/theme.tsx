@@ -32,7 +32,7 @@ const CONSTANTS = {
 const DESIGN_TOKENS = {
     light: {
         primary: '#C9A84C',
-        secondary: '#8B5CF6',
+        secondary: '#B8860B',
         tertiary: '#EC4899',
         success: '#10B981',
         warning: '#F59E0B',
@@ -47,7 +47,7 @@ const DESIGN_TOKENS = {
     },
     dark: {
         primary: '#C9A84C',
-        secondary: '#A78BFA',
+        secondary: '#C9A84C',
         tertiary: '#F472B6',
         success: '#34D399',
         warning: '#FBBF24',
@@ -61,7 +61,7 @@ const DESIGN_TOKENS = {
         barGradientEnd: '#C9A84C',
     },
 };
-const CHART_PALETTE = ['#C9A84C', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
+const CHART_PALETTE = ['#C9A84C', '#B8860B', '#1C2B4A', '#6B8EBA', '#E8E0D0', '#8A7048', '#DC2626'];
 // -----------------------------------------------------------------------------
 //  INTERNAL — fetch tenant theme (not exported)
 // -----------------------------------------------------------------------------

@@ -86,15 +86,15 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                             <AreaChart data={CHART_DATA}>
                                 <defs>
                                     <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#C9A84C" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#C9A84C" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <YAxis hide domain={['dataMin', 'dataMax']} />
                                 <Area 
                                     type="monotone" 
                                     dataKey="value" 
-                                    stroke="#6366f1" 
+                                    stroke="#C9A84C" 
                                     strokeWidth={3}
                                     fillOpacity={1} 
                                     fill="url(#colorVal)" 

@@ -21,11 +21,11 @@
       'width:' + BUBBLE_SIZE + 'px',
       'height:' + BUBBLE_SIZE + 'px',
       'border-radius:50%',
-      'background:linear-gradient(135deg,#4f46e5,#7c3aed)',
+      'background:linear-gradient(135deg,#C9A84C,#B8860B)',
       'color:#fff',
       'border:none',
       'cursor:pointer',
-      'box-shadow:0 4px 24px rgba(79,70,229,.45)',
+      'box-shadow:0 4px 24px rgba(201,168,76,.45)',
       'display:flex',
       'align-items:center',
       'justify-content:center',
@@ -41,7 +41,7 @@
     });
     btn.addEventListener('mouseleave', function () {
       btn.style.transform = 'scale(1)';
-      btn.style.boxShadow = '0 4px 24px rgba(79,70,229,.45)';
+      btn.style.boxShadow = '0 4px 24px rgba(201,168,76,.45)';
     });
     btn.addEventListener('click', toggleChat);
     document.body.appendChild(btn);
