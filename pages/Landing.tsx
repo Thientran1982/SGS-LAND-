@@ -337,9 +337,12 @@ export default function Landing() {
           <Search className="shrink-0 ml-4 w-4 h-4" style={{ color: TEXT2 }} />
           <input
             type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={vi ? 'Tìm dự án, khu vực, loại hình...' : 'Search projects, areas, types...'}
-            className="flex-1 bg-transparent px-3 py-4 text-sm focus:outline-none"
-            style={{ color: TEXT1 }} />
+            placeholder={vi
+              ? ['Tìm dự án, khu vực, loại hình...', 'Tìm căn hộ cho thuê, khu vực...', 'Tìm theo tên dự án hoặc chủ đầu tư...'][searchTab]
+              : ['Search projects, areas, types...', 'Search rentals, areas, districts...', 'Search by project name or developer...'][searchTab]
+            }
+            className="flex-1 bg-transparent px-3 py-4 focus:outline-none"
+            style={{ color: TEXT1, fontSize: '16px' }} />
           <button type="submit"
             className="m-1.5 px-6 py-2.5 text-sm font-bold rounded-xl shrink-0 transition-opacity hover:opacity-90"
             style={{ background: GOLD, color: WHITE }}>
