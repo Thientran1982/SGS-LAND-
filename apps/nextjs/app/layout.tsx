@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     "SGS LAND",
     "AI bất động sản",
     "hệ thống quản lý khách hàng bất động sản",
-    "phần mềm bất động sản Việt Nam",
+    "sàn top 1 bất động sản Việt Nam",
   ],
   authors: [{ name: "SGS Land Corp", url: "https://sgsland.vn" }],
   creator: "SGS Land Corp",
