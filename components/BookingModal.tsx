@@ -91,7 +91,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                             value={phone}
                             onChange={e => { setPhone(e.target.value); if (errors.phone) setErrors(p => ({ ...p, phone: undefined })); }}
                             disabled={isSubmitting}
-                            className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50 ${errors.phone ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:border-indigo-500 focus:ring-indigo-500/20 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]'}`}
+                            className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50 ${errors.phone ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:border-[#C9A84C] focus:ring-[#C9A84C]/20 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]'}`}
                             placeholder="0912345678"
                         />
                         {errors.phone && <p className="text-xs2 text-rose-500 font-bold mt-1 ml-1">{errors.phone}</p>}
@@ -104,14 +104,14 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                                 value={date} 
                                 onChange={e => setDate(e.target.value)} 
                                 disabled={isSubmitting}
-                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
+                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             />
                             <input 
                                 type="time" 
                                 value={time} 
                                 onChange={e => setTime(e.target.value)} 
                                 disabled={isSubmitting}
-                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
+                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             />
                         </div>
                     </div>
@@ -121,7 +121,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                             value={note}
                             onChange={e => setNote(e.target.value)}
                             disabled={isSubmitting}
-                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all h-24 resize-none placeholder:text-[var(--text-muted)] disabled:opacity-50"
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-[#C9A84C] outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all h-24 resize-none placeholder:text-[var(--text-muted)] disabled:opacity-50"
                             placeholder={t('leads.placeholder_notes')}
                         />
                     </div>
@@ -137,7 +137,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                     <button 
                         onClick={handleConfirm} 
                         disabled={isSubmitting}
-                        className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="flex-1 py-3 bg-[#C9A84C] text-white font-bold rounded-xl text-sm shadow-lg hover:bg-[#B8860B] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

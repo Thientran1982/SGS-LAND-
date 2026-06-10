@@ -62,7 +62,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
                     {isVerified && (
-                        <div className="flex items-center gap-1.5 bg-emerald-600/95 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
+                        <div className="flex items-center gap-1.5 bg-[#C9A84C]/95 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
                             {LISTING_ICONS.VERIFIED}
                             <span className="uppercase tracking-wide">{t('inventory.verified')}</span>
                         </div>
@@ -273,7 +273,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                             {!isProject && (
                                 <span className="font-mono text-2xs font-bold bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{item.code}</span>
                             )}
-                            <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-tertiary)] dark:text-slate-400'}`}>
+                            <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-[#FDF6E3] dark:bg-[#C9A84C]/20 text-[#B8860B] dark:text-[#C9A84C]' : 'bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-tertiary)] dark:text-slate-400'}`}>
                                 {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                             </span>
                         </div>

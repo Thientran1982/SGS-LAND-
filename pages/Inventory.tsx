@@ -31,10 +31,10 @@ const ICONS = {
 const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: string }> = {
     [ListingStatus.BOOKING]: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
     [ListingStatus.OPENING]: { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
-    [ListingStatus.AVAILABLE]: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+    [ListingStatus.AVAILABLE]: { color: 'text-[#B8860B]', bg: 'bg-[#FDF6E3]', border: 'border-[#E8D4A0]' },
     [ListingStatus.HOLD]: { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
     [ListingStatus.SOLD]: { color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-slate-300' },
-    [ListingStatus.RENTED]: { color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
+    [ListingStatus.RENTED]: { color: 'text-[#1C2B4A]', bg: 'bg-[#EEF1F7]', border: 'border-[#C5CEDF]' },
     [ListingStatus.INACTIVE]: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
     [ListingStatus.BEST_MARKET]: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-300' },
 };
@@ -777,9 +777,9 @@ export const Inventory: React.FC = () => {
                     <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-0.5 truncate">{t('inventory.total_listings')}</div>
                     <div className="text-base md:text-xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-emerald-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs font-bold text-emerald-500 uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
-                    <div className="text-base md:text-xl font-black text-emerald-600">{stats.availableCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[#E8D4A0] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-[#C9A84C] uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
+                    <div className="text-base md:text-xl font-black text-[#B8860B]">{stats.availableCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-amber-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-amber-500 uppercase tracking-wider mb-0.5 truncate">{t('status.HOLD')}</div>
@@ -793,9 +793,9 @@ export const Inventory: React.FC = () => {
                     <div className="text-2xs font-bold text-indigo-500 uppercase tracking-wider mb-0.5 truncate">{t('status.OPENING')}</div>
                     <div className="text-base md:text-xl font-black text-indigo-600">{stats.openingCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-teal-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs font-bold text-teal-500 uppercase tracking-wider mb-0.5 truncate">{t('status.RENTED')}</div>
-                    <div className="text-base md:text-xl font-black text-teal-600">{stats.rentedCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[#C5CEDF] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-[#1C2B4A] uppercase tracking-wider mb-0.5 truncate">{t('status.RENTED')}</div>
+                    <div className="text-base md:text-xl font-black text-[#1C2B4A]">{stats.rentedCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5 truncate">{t('status.SOLD')}</div>

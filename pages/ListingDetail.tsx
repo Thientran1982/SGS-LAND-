@@ -1650,8 +1650,8 @@ export const ListingDetail: React.FC = () => {
                 <div className="lg:col-span-2 space-y-8">
                     <div>
                         <div className="flex flex-wrap gap-2 mb-4">
-                            <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-indigo-100">{t(`property.${listing.type.toUpperCase()}`)}</span>
-                            <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-emerald-100">{t(`status.${listing.status}`)}</span>
+                            <span className="bg-[#FDF6E3] text-[#B8860B] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-[#E8D4A0]">{t(`property.${listing.type.toUpperCase()}`)}</span>
+                            <span className="bg-[#FDF6E3] text-[#B8860B] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-[#E8D4A0]">{t(`status.${listing.status}`)}</span>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 leading-tight">{listing.title}</h1>
                         <div className="flex items-center gap-2 text-[var(--text-tertiary)] font-medium flex-wrap">
@@ -2003,11 +2003,11 @@ export const ListingDetail: React.FC = () => {
                             <a
                                 href={`tel:${listing.contactPhone}`}
                                 onClick={handleContact}
-                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 active:scale-95"
+                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[#FDF6E3] border-[#E8D4A0] text-[#B8860B] hover:bg-[#F5E6B8] active:scale-95"
                             >
                                 {ICONS.PHONE}
                                 {showPhone
-                                    ? <><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>{displayPhone}</>
+                                    ? <><span className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse flex-shrink-0"></span>{displayPhone}</>
                                     : t('detail.contact_now')
                                 }
                             </a>
@@ -2105,11 +2105,11 @@ export const ListingDetail: React.FC = () => {
                     <a
                         href={`tel:${listing.contactPhone}`}
                         onClick={handleContact}
-                        className="flex-1 py-3.5 border rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 active:scale-95"
+                        className="flex-1 py-3.5 border rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 bg-[#FDF6E3] border-[#E8D4A0] text-[#B8860B] hover:bg-[#F5E6B8] active:scale-95"
                     >
                         {ICONS.PHONE}
                         {showPhone
-                            ? <><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>{displayPhone}</>
+                            ? <><span className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse flex-shrink-0"></span>{displayPhone}</>
                             : t('detail.contact_now')
                         }
                     </a>

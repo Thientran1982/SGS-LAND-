@@ -541,7 +541,7 @@ export default function ProjectDirectory() {
                         <button
                             onClick={exportToExcel}
                             disabled={filtered.length === 0}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#C9A84C] text-white rounded-xl text-xs font-bold hover:bg-[#B8860B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                             aria-label={tx.btnExport}
                             title={tx.btnExport}
                         >
