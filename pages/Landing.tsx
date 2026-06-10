@@ -371,22 +371,30 @@ export default function Landing() {
     </section>
   );
 
-  // ── PARTNERS — white strip ─────────────────────────────────────────────────
+  // ── PARTNERS — marquee ticker ─────────────────────────────────────────────
   const partners = (
-    <section style={{ background: WHITE, borderBottom: `1px solid ${BORDER}` }} className="py-5">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
-          <span className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: '#B0ADA6' }}>
+    <section style={{ background: WHITE, borderBottom: `1px solid ${BORDER}` }} className="py-4 overflow-hidden">
+      <div className="flex items-center gap-0">
+        {/* Label — pinned left, fades out */}
+        <div className="shrink-0 flex items-center gap-3 pl-5 sm:pl-8 pr-6 z-10"
+          style={{ background: `linear-gradient(to right, ${WHITE} 80%, transparent)`, position: 'relative' }}>
+          <span className="text-[11px] font-bold uppercase tracking-[0.14em] whitespace-nowrap" style={{ color: '#B0ADA6' }}>
             {vi ? 'Đối tác chính thức' : 'Official partners'}
           </span>
-          <div className="w-px h-4 hidden sm:block" style={{ background: BORDER }} />
-          {PARTNERS.map(p => (
-            <span key={p}
-              className="text-sm font-semibold cursor-default transition-colors duration-150 hover:text-gray-700"
-              style={{ color: '#AAA69E' }}>
-              {p}
-            </span>
-          ))}
+          <div className="w-px h-4" style={{ background: BORDER }} />
+        </div>
+
+        {/* Scrolling track — duplicated for seamless loop */}
+        <div className="flex-1 overflow-hidden relative">
+          <div className="marquee-track">
+            {[...PARTNERS, ...PARTNERS].map((p, i) => (
+              <span key={i}
+                className="text-sm font-semibold whitespace-nowrap mx-8 cursor-default transition-colors duration-150 hover:opacity-100"
+                style={{ color: '#AAA69E' }}>
+                {p}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </section>

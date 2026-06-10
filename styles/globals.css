@@ -63,6 +63,18 @@ html.dark {
   --color-brand-muted:  #94A3B8;
   --color-brand-logo:   #C9A84C;
 }
+/* Partner marquee / ticker scroll */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+
 /* Global scrollbar reset — hide all scrollbars across the entire app */
 *, *::before, *::after {
   -ms-overflow-style: none;
