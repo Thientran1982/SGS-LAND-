@@ -179,73 +179,124 @@ export default function Landing() {
     'Định Giá AI': 'AI Valuation', 'Dữ Liệu TT': 'Market Data', 'CRM Platform': 'CRM Platform',
   };
 
+  // ── ANNOUNCEMENT BAR ─────────────────────────────────────────────────────────
+  const [announcementVisible, setAnnouncementVisible] = useState(true);
+  const announcement = announcementVisible ? (
+    <div className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-3 px-4 py-2.5 text-xs font-semibold"
+      style={{ background: `linear-gradient(90deg, ${NAVY} 0%, #0D1535 50%, ${NAVY} 100%)`, borderBottom: `1px solid ${GOLD}30` }}>
+      <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: GOLD }} />
+      <span className="text-slate-200">
+        {lang === 'vi'
+          ? <><strong style={{ color: GOLD }}>Aqua City</strong> mở bán đợt mới · Biệt thự đảo từ <strong className="text-white">6,5 tỷ</strong> · Pháp lý đầy đủ, sổ hồng riêng</>
+          : <><strong style={{ color: GOLD }}>Aqua City</strong> new phase open · Island villas from <strong className="text-white">6.5B VND</strong> · Full legal, separate pink book</>}
+      </span>
+      <a href={`/${ROUTES.DU_AN}/aqua-city`}
+        className="shrink-0 flex items-center gap-1 font-bold underline-offset-2 hover:underline transition-all"
+        style={{ color: GOLD }}>
+        {lang === 'vi' ? 'Xem ngay' : 'View now'} <ArrowRight className="w-3 h-3" />
+      </a>
+      <button onClick={() => setAnnouncementVisible(false)}
+        className="absolute right-4 p-1 text-slate-500 hover:text-white transition-colors">
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  ) : null;
+
+  const announcementH = announcementVisible ? 40 : 0;
+
   // ── HEADER ──────────────────────────────────────────────────────────────────
   const header = (
-    <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+    <header className="fixed left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background: scrolled ? 'rgba(10,15,30,0.96)' : 'rgba(10,15,30,0.80)',
-        backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: `1px solid ${scrolled ? `${GOLD}20` : 'rgba(255,255,255,0.07)'}`,
-        boxShadow: scrolled ? '0 1px 40px rgba(0,0,0,0.50)' : 'none',
+        top: `${announcementH}px`,
+        background: scrolled ? 'rgba(8,12,24,0.97)' : 'rgba(8,12,24,0.75)',
+        backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
+        borderBottom: `1px solid ${scrolled ? `rgba(201,168,76,0.18)` : 'rgba(255,255,255,0.06)'}`,
+        boxShadow: scrolled ? `0 4px 32px rgba(0,0,0,0.60), 0 1px 0 ${GOLD}15` : 'none',
       }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-[60px]">
+          {/* Logo */}
           <a href={`/${ROUTES.LANDING}`} className="flex items-center gap-2.5 shrink-0 group">
-            <Logo className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" stroke={GOLD} />
-            <span className="font-bold text-base tracking-tight" style={{ color: GOLD }}>SGS LAND</span>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center transition-all group-hover:scale-105"
+              style={{ background: `${GOLD}22`, border: `1px solid ${GOLD}40` }}>
+              <Logo className="w-4 h-4" stroke={GOLD} />
+            </div>
+            <span className="font-black text-base tracking-[-0.02em]">
+              <span style={{ color: GOLD }}>SGS</span>
+              <span className="text-white"> LAND</span>
+            </span>
           </a>
 
-          <nav className="hidden md:flex items-center gap-0.5">
-            {NAV_LINKS.map(l => (
-              <a key={l.href} href={l.href}
-                className="px-3.5 py-2 text-sm font-medium text-slate-300 hover:text-white rounded-lg hover:bg-white/8 transition-all duration-200">
-                {lang === 'vi' ? l.label : (EN_NAV[l.label] || l.label)}
-              </a>
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center">
+            {NAV_LINKS.map((l, i) => (
+              <React.Fragment key={l.href}>
+                {i > 0 && <span className="w-px h-3 mx-0.5" style={{ background: 'rgba(255,255,255,0.10)' }} />}
+                <a href={l.href}
+                  className="px-3 py-1.5 text-[13px] font-medium rounded-md transition-all duration-200"
+                  style={{ color: 'rgba(255,255,255,0.65)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                  {lang === 'vi' ? l.label : (EN_NAV[l.label] || l.label)}
+                </a>
+              </React.Fragment>
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setLanguage(lang === 'vi' ? 'en' : 'vn')}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <button onClick={() => setLanguage(lang === 'vi' ? 'en' : 'vn')}
+              className="hidden sm:flex h-7 px-2.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all"
+              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.50)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.borderColor = `${GOLD}40`; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.50)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; }}>
               {lang === 'vi' ? 'EN' : 'VI'}
             </button>
             <a href={`/${ROUTES.LOGIN}`}
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:bg-white/10"
-              style={{ border: `1px solid ${GOLD}50` }}>
+              className="hidden sm:inline-flex items-center h-8 px-4 text-[13px] font-semibold rounded-lg transition-all duration-200"
+              style={{ color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.14)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.borderColor = `${GOLD}45`; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.75)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
               {lang === 'vi' ? 'Đăng nhập' : 'Sign in'}
             </a>
             <a href={`/${ROUTES.AI_VALUATION}`}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold rounded-lg transition-all hover:brightness-110"
-              style={{ background: GOLD, color: NAVY }}>
+              className="hidden sm:inline-flex items-center gap-1.5 h-8 px-4 text-[13px] font-bold rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
+              style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY, boxShadow: `0 2px 12px ${GOLD}35` }}>
               <Zap className="w-3.5 h-3.5" />
               {lang === 'vi' ? 'Định Giá AI' : 'AI Valuation'}
             </a>
             <button onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/8 transition-colors">
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
+              style={{ color: 'rgba(255,255,255,0.60)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.60)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t" style={{ background: 'rgba(10,15,30,0.98)', borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+        <div className="md:hidden" style={{ background: 'rgba(6,9,18,0.99)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="max-w-7xl mx-auto px-4 py-3 space-y-0.5">
             {NAV_LINKS.map(l => (
               <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
-                className="block px-4 py-2.5 text-sm font-medium text-slate-300 hover:text-white rounded-lg hover:bg-white/8 transition-colors">
+                className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors"
+                style={{ color: 'rgba(255,255,255,0.65)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                 {lang === 'vi' ? l.label : (EN_NAV[l.label] || l.label)}
               </a>
             ))}
-            <div className="pt-3 border-t border-white/08 flex gap-2">
-              <a href={`/${ROUTES.LOGIN}`}
-                className="flex-1 text-center px-4 py-2.5 text-sm font-semibold text-white rounded-lg border border-white/15">
+            <div className="pt-3 mt-2 border-t border-white/06 flex gap-2">
+              <a href={`/${ROUTES.LOGIN}`} className="flex-1 text-center py-2.5 text-sm font-semibold text-white rounded-lg border border-white/12">
                 {lang === 'vi' ? 'Đăng nhập' : 'Sign in'}
               </a>
               <a href={`/${ROUTES.AI_VALUATION}`}
-                className="flex-1 text-center px-4 py-2.5 text-sm font-bold rounded-lg" style={{ background: GOLD, color: NAVY }}>
+                className="flex-1 text-center py-2.5 text-sm font-bold rounded-lg"
+                style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY }}>
                 {lang === 'vi' ? 'Định Giá AI' : 'AI Valuation'}
               </a>
             </div>
@@ -257,139 +308,260 @@ export default function Landing() {
 
   // ── HERO ─────────────────────────────────────────────────────────────────────
   const hero = (
-    <section className="relative flex flex-col items-center justify-center overflow-hidden pt-16"
-      style={{ background: `linear-gradient(160deg, #060A14 0%, ${NAVY} 50%, #0C1428 100%)`, minHeight: '100svh' }}>
+    <section className="relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(150deg, #050810 0%, #0A0F1E 45%, #080D1C 100%)',
+        paddingTop: `${announcementH + 60}px`,
+        minHeight: '100svh',
+      }}>
 
-      {/* Background layers */}
+      {/* ── Background ── */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Single centered gold radial glow */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"
-          style={{ background: `radial-gradient(circle, ${GOLD}18 0%, transparent 65%)`, filter: 'blur(40px)' }} />
-        {/* Subtle indigo depth glow top-left */}
-        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #3B82F6 0%, transparent 70%)', filter: 'blur(80px)' }} />
-        {/* Grid */}
+        {/* Gold ambient — center-right */}
+        <div className="absolute top-0 right-0 w-[900px] h-[900px]"
+          style={{ background: `radial-gradient(circle at 70% 40%, ${GOLD}14 0%, transparent 60%)` }} />
+        {/* Blue depth — top-left */}
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px]"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 65%)' }} />
+        {/* Fine grid */}
         <div className="absolute inset-0"
-          style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px)`, backgroundSize: '56px 56px', opacity: 1 }} />
-        {/* Gold top line */}
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }} />
+        {/* Vignette */}
+        <div className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse 90% 90% at 50% 50%, transparent 35%, rgba(5,8,16,0.55) 100%)' }} />
+        {/* Gold top border */}
         <div className="absolute top-0 inset-x-0 h-[1px]"
-          style={{ background: `linear-gradient(90deg, transparent, ${GOLD}90 40%, ${GOLD} 50%, ${GOLD}90 60%, transparent)` }} />
-        {/* Vignette edges */}
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(6,10,20,0.6) 100%)' }} />
+          style={{ background: `linear-gradient(90deg, transparent, ${GOLD}80 35%, ${GOLD} 50%, ${GOLD}80 65%, transparent)` }} />
       </div>
 
-      {/* Content — centered */}
-      <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-8 py-20 lg:py-28 text-center">
+      {/* ── Content ── */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-[1fr_480px] xl:grid-cols-[1fr_520px] gap-8 xl:gap-14 items-center py-16 lg:py-20 xl:py-24">
 
-        {/* Eyebrow */}
-        <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-8 text-xs font-bold uppercase tracking-[0.12em]"
-          style={{ background: `${GOLD}18`, border: `1px solid ${GOLD}45`, color: GOLD }}>
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: GOLD }} />
-          {lang === 'vi' ? 'Nền Tảng Proptech #1 TP.HCM' : 'Vietnam\'s #1 Proptech Platform'}
-        </div>
+          {/* ── LEFT: Copy ── */}
+          <div className="order-2 lg:order-1">
 
-        {/* Headline */}
-        <h1 className="font-black tracking-tight leading-[1.02] mb-6"
-          style={{ fontSize: 'clamp(2.5rem, 7vw, 5.5rem)', letterSpacing: '-0.02em' }}>
-          <span className="text-white">{lang === 'vi' ? 'Tìm Kiếm &' : 'Find & Invest'}</span>
-          <br />
-          <span style={{
-            background: `linear-gradient(135deg, ${GOLD_L} 0%, ${GOLD} 45%, #B8892E 100%)`,
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}>
-            {lang === 'vi' ? 'Đầu Tư BĐS' : 'Real Estate'}
-          </span>
-          <br />
-          <span className="text-white">{lang === 'vi' ? 'Thông Minh' : 'Intelligently'}</span>
-        </h1>
-
-        {/* Sub */}
-        <p className="text-slate-300 leading-relaxed mb-10 mx-auto"
-          style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', maxWidth: '600px' }}>
-          {lang === 'vi'
-            ? <>SGS LAND phân phối <strong className="text-white font-semibold">11+ dự án lớn</strong> — Aqua City, The Global City, Vinhomes Cần Giờ. Định giá AI sai số <strong style={{ color: GOLD }}>±5%</strong>. Tư vấn & vay vốn miễn phí.</>
-            : <>SGS LAND distributes <strong className="text-white font-semibold">11+ major projects</strong> — Aqua City, The Global City, Vinhomes Can Gio. AI valuation with <strong style={{ color: GOLD }}>±5%</strong> accuracy. Free advisory & financing.</>}
-        </p>
-
-        {/* Search bar — glassmorphism */}
-        <form onSubmit={handleSearch}
-          className="flex mx-auto mb-8 rounded-2xl overflow-hidden shadow-2xl"
-          style={{
-            maxWidth: '580px',
-            background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-            boxShadow: `0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)`,
-          }}>
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-              placeholder={lang === 'vi' ? 'Tìm dự án, khu vực, loại hình...' : 'Search projects, areas, property types...'}
-              className="w-full bg-transparent pl-11 pr-4 py-4 text-sm text-white placeholder-slate-500 focus:outline-none" />
-          </div>
-          <button type="submit"
-            className="px-6 py-4 text-sm font-bold shrink-0 transition-all duration-200 hover:brightness-110"
-            style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY }}>
-            {lang === 'vi' ? 'Tìm kiếm' : 'Search'}
-          </button>
-        </form>
-
-        {/* CTA buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-          <a href={`/${ROUTES.AI_VALUATION}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 hover:brightness-110"
-            style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY, boxShadow: `0 4px 24px ${GOLD}40` }}>
-            <Zap className="w-4 h-4" />
-            {lang === 'vi' ? 'Định Giá AI Miễn Phí' : 'Free AI Valuation'}
-          </a>
-          <a href={`/${ROUTES.DU_AN}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:bg-white/15"
-            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.20)' }}>
-            {lang === 'vi' ? 'Xem Dự Án' : 'View Projects'}
-            <ArrowRight className="w-4 h-4" />
-          </a>
-        </div>
-
-        {/* Trust signals */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-400 mb-16">
-          {[
-            { text: lang === 'vi' ? 'Đối tác chính thức Vinhomes' : 'Official Vinhomes partner' },
-            { text: lang === 'vi' ? 'Pháp lý 2 lớp kiểm duyệt' : '2-layer legal verification' },
-            { text: lang === 'vi' ? 'Tư vấn & vay vốn 0đ' : 'Free advisory & financing' },
-          ].map(b => (
-            <div key={b.text} className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>{b.text}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {STATS.map((s, i) => (
-            <div key={i} className="rounded-2xl px-4 py-5 text-center transition-all duration-300 hover:scale-[1.02]"
-              style={{
-                background: i % 2 === 1
-                  ? `linear-gradient(135deg, ${GOLD}18 0%, ${GOLD}08 100%)`
-                  : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${i % 2 === 1 ? `${GOLD}35` : 'rgba(255,255,255,0.09)'}`,
-                backdropFilter: 'blur(8px)',
-              }}>
-              <div className="text-2xl sm:text-3xl font-black mb-1 tracking-tight"
-                style={{ color: i % 2 === 1 ? GOLD : 'white' }}>
-                {s.value}
+            {/* Social proof bar */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4" style={{ fill: GOLD, color: GOLD }} />
+                ))}
               </div>
-              <div className="text-xs font-semibold mb-0.5 uppercase tracking-wide" style={{ color: GOLD }}>{s.label}</div>
-              <div className="text-xs text-slate-500 leading-tight">{s.sub}</div>
+              <span className="text-sm font-semibold text-white">4.9</span>
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>·</span>
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                {lang === 'vi' ? '247 đánh giá · Đối tác CBRE Vietnam' : '247 reviews · CBRE Vietnam Partner'}
+              </span>
             </div>
-          ))}
+
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 mb-6 text-[11px] font-bold uppercase tracking-[0.14em]"
+              style={{ background: `${GOLD}16`, border: `1px solid ${GOLD}40`, color: GOLD }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: GOLD }} />
+              {lang === 'vi' ? 'Proptech #1 TP. Hồ Chí Minh' : '#1 Proptech Platform · Ho Chi Minh City'}
+            </div>
+
+            {/* Headline */}
+            <h1 className="font-black leading-[0.95] mb-6 text-white"
+              style={{ fontSize: 'clamp(2.8rem, 6.5vw, 5.2rem)', letterSpacing: '-0.04em' }}>
+              {lang === 'vi' ? (
+                <>
+                  Tìm &{' '}
+                  <span style={{
+                    background: `linear-gradient(135deg, #F0D080 0%, ${GOLD} 40%, #C08020 100%)`,
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  }}>Đầu Tư</span>
+                  <br />BĐS Thông Minh
+                </>
+              ) : (
+                <>
+                  Find &{' '}
+                  <span style={{
+                    background: `linear-gradient(135deg, #F0D080 0%, ${GOLD} 40%, #C08020 100%)`,
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  }}>Invest</span>
+                  <br />Intelligently
+                </>
+              )}
+            </h1>
+
+            {/* Sub */}
+            <p className="leading-relaxed mb-8 max-w-[500px]"
+              style={{ fontSize: 'clamp(0.95rem, 1.6vw, 1.1rem)', color: 'rgba(255,255,255,0.55)' }}>
+              {lang === 'vi'
+                ? <>SGS LAND phân phối <strong className="text-white font-semibold">11+ dự án lớn</strong> tại TP.HCM. Định giá AI độ chính xác <strong style={{ color: GOLD }}>±5%</strong>. Tư vấn pháp lý & hỗ trợ vay vốn hoàn toàn miễn phí.</>
+                : <>SGS LAND distributes <strong className="text-white font-semibold">11+ major projects</strong> in HCMC. AI valuation at <strong style={{ color: GOLD }}>±5%</strong> accuracy. Free legal advisory & bank financing support.</>}
+            </p>
+
+            {/* Search */}
+            <form onSubmit={handleSearch} className="flex mb-7 rounded-[14px] overflow-hidden"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.13)',
+                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06)',
+                maxWidth: '500px',
+              }}>
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(255,255,255,0.35)' }} />
+                <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder={lang === 'vi' ? 'Tìm dự án, khu vực, loại hình...' : 'Search projects, areas, types...'}
+                  className="w-full bg-transparent pl-11 pr-3 py-[14px] text-sm text-white placeholder-slate-600 focus:outline-none" />
+              </div>
+              <button type="submit"
+                className="m-1.5 px-5 text-sm font-bold rounded-[10px] transition-all duration-200 hover:brightness-110 shrink-0"
+                style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY }}>
+                {lang === 'vi' ? 'Tìm' : 'Search'}
+              </button>
+            </form>
+
+            {/* CTA row */}
+            <div className="flex flex-wrap items-center gap-3 mb-8">
+              <a href={`/${ROUTES.AI_VALUATION}`}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 hover:brightness-110 active:scale-[0.97]"
+                style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY, boxShadow: `0 4px 20px ${GOLD}45` }}>
+                <Zap className="w-4 h-4" />
+                {lang === 'vi' ? 'Định Giá AI Miễn Phí' : 'Free AI Valuation'}
+              </a>
+              <a href={`/${ROUTES.DU_AN}`}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200 active:scale-[0.97]"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.16)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.borderColor = `${GOLD}35`; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.16)'; }}>
+                {lang === 'vi' ? 'Xem Dự Án' : 'View Projects'}
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* Trust pills */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {[
+                { text: lang === 'vi' ? 'Đối tác Vinhomes' : 'Vinhomes Partner' },
+                { text: lang === 'vi' ? 'Pháp lý 2 lớp' : '2-Layer Legal' },
+                { text: lang === 'vi' ? 'Tư vấn miễn phí' : 'Free Advisory' },
+              ].map(b => (
+                <div key={b.text} className="flex items-center gap-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  {b.text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── RIGHT: Featured property visual ── */}
+          <div className="order-1 lg:order-2 relative">
+            {/* Main image card */}
+            <div className="relative rounded-3xl overflow-hidden"
+              style={{
+                aspectRatio: '4/5',
+                boxShadow: `0 32px 80px rgba(0,0,0,0.70), 0 0 0 1px rgba(255,255,255,0.06), 0 -1px 0 ${GOLD}20`,
+              }}>
+              <img
+                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85"
+                alt="Aqua City — Novaland"
+                className="w-full h-full object-cover"
+                style={{ transform: 'scale(1.03)' }}
+              />
+              {/* Gradient overlay */}
+              <div className="absolute inset-0"
+                style={{ background: 'linear-gradient(to top, rgba(5,8,16,0.85) 0%, rgba(5,8,16,0.20) 40%, transparent 70%)' }} />
+
+              {/* Bottom info overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: GOLD }}>
+                      {lang === 'vi' ? 'Đô Thị Sinh Thái' : 'Eco Township'}
+                    </div>
+                    <div className="text-xl font-black text-white leading-tight tracking-tight">Aqua City</div>
+                    <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Novaland · Biên Hòa, Đồng Nai</div>
+                  </div>
+                  <a href={`/${ROUTES.DU_AN}/aqua-city`}
+                    className="flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-bold transition-all hover:brightness-110 shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY }}>
+                    {lang === 'vi' ? 'Xem' : 'View'} <ArrowRight className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Badge top-left */}
+              <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide"
+                style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #B8892E 100%)`, color: NAVY }}>
+                HOT
+              </div>
+            </div>
+
+            {/* Floating glass card — price */}
+            <div className="absolute -bottom-5 -left-5 rounded-2xl px-4 py-3.5 hidden sm:block"
+              style={{
+                background: 'rgba(10,15,30,0.90)',
+                border: `1px solid rgba(201,168,76,0.30)`,
+                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.50)',
+              }}>
+              <div className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                {lang === 'vi' ? 'Giá từ' : 'From'}
+              </div>
+              <div className="text-lg font-black" style={{ color: GOLD }}>2,5 tỷ VND</div>
+              <div className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {lang === 'vi' ? '1.000 ha · Sổ hồng riêng' : '1,000 ha · Separate title'}
+              </div>
+            </div>
+
+            {/* Floating glass card — AI valuation */}
+            <div className="absolute -top-4 -right-4 rounded-2xl px-4 py-3.5 hidden sm:block"
+              style={{
+                background: 'rgba(10,15,30,0.90)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.45)',
+              }}>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: `${GOLD}22` }}>
+                  <Zap className="w-3.5 h-3.5" style={{ color: GOLD }} />
+                </div>
+                <span className="text-[11px] font-bold text-white">{lang === 'vi' ? 'AI Định Giá' : 'AI Valuation'}</span>
+              </div>
+              <div className="text-xl font-black" style={{ color: GOLD }}>±5%</div>
+              <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {lang === 'vi' ? 'Chính xác · 3 giây' : 'Accurate · 3 seconds'}
+              </div>
+            </div>
+
+            {/* Decorative dots */}
+            <div className="absolute -bottom-8 -right-8 w-24 h-24 opacity-20 pointer-events-none hidden lg:block"
+              style={{ backgroundImage: `radial-gradient(${GOLD} 1.5px, transparent 1.5px)`, backgroundSize: '8px 8px' }} />
+          </div>
+        </div>
+
+        {/* ── Stats bar (below the split) ── */}
+        <div className="pb-12 lg:pb-16">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {STATS.map((s, i) => (
+              <div key={i} className="rounded-2xl px-5 py-4 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  background: i % 2 === 1 ? `linear-gradient(135deg, ${GOLD}16 0%, ${GOLD}07 100%)` : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${i % 2 === 1 ? `${GOLD}30` : 'rgba(255,255,255,0.07)'}`,
+                }}>
+                <div className="text-2xl sm:text-3xl font-black mb-0.5 tracking-[-0.02em]"
+                  style={{ color: i % 2 === 1 ? GOLD : 'white' }}>
+                  {s.value}
+                </div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.10em] mb-0.5" style={{ color: `${GOLD}90` }}>{s.label}</div>
+                <div className="text-[11px]" style={{ color: 'rgba(255,255,255,0.32)' }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 inset-x-0 h-24 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, transparent, rgba(6,10,20,0.3))' }} />
+      <div className="absolute bottom-0 inset-x-0 h-20 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, transparent, rgba(5,8,16,0.5))' }} />
     </section>
   );
 
@@ -849,6 +1021,7 @@ export default function Landing() {
   // ── RENDER ────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen font-sans antialiased bg-white text-gray-900">
+      {announcement}
       {header}
       {hero}
       {partners}
