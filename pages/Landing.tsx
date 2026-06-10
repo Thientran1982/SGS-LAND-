@@ -16,7 +16,7 @@ const NAV_LINKS = [
   { label: 'CRM Platform',    href: `/${ROUTES.CRM_SOLUTION}` },
 ];
 
-const STATS = [
+const STATS_STATIC = [
   { value: '11+',  label: 'Dự Án Lớn',    sub: 'Vinhomes, Novaland, Nam Long...' },
   { value: '±5%',  label: 'Chính Xác AI', sub: 'Sai số định giá tự động' },
   { value: '3+',   label: 'Tỉnh Thành',   sub: 'TP.HCM, Đồng Nai, Bình Dương' },
@@ -25,14 +25,14 @@ const STATS = [
 
 const PARTNERS = ['Vinhomes', 'Novaland', 'Nam Long', 'Masterise', 'Van Phúc', 'Khang Điền', 'Sơn Kim Land'];
 
-const FEATURES = [
+const FEATURES_STATIC = [
   { icon: <Zap className="w-6 h-6" />,       title: 'AI Định Giá ±5%',     desc: 'Định giá tự động bất kỳ BĐS nào tại TP.HCM với sai số chỉ ±5%. Kết quả trong 3 giây.',                        href: `/${ROUTES.AI_VALUATION}`,  color: '#D4A843' },
   { icon: <Globe2 className="w-6 h-6" />,    title: 'Sàn Giao Dịch',       desc: 'Hàng nghìn căn hộ, đất nền, nhà phố được xác minh pháp lý. Kết nối trực tiếp với chủ đầu tư.',            href: `/${ROUTES.SEARCH}`,        color: '#D4A843' },
   { icon: <BarChart3 className="w-6 h-6" />, title: 'Dữ Liệu Thị Trường',  desc: 'Báo cáo biến động giá theo quý, xu hướng đầu tư từ 50+ dự án lớn tại TP.HCM.',                             href: '/market-data',             color: '#D4A843' },
   { icon: <Users className="w-6 h-6" />,     title: 'CRM Đa Kênh',         desc: 'Quản lý khách hàng, tích hợp Zalo/Facebook/Email. Dùng thử miễn phí 30 ngày.',                               href: `/${ROUTES.CRM_SOLUTION}`,  color: '#D4A843' },
 ];
 
-const PROJECTS = [
+const PROJECTS_VI = [
   { slug: 'aqua-city',  image: 'https://sgsland.vn/aqua-city.jpg',                 name: 'Aqua City',            dev: 'Novaland',    loc: 'Biên Hòa, Đồng Nai',     scale: '1.000 ha',   price: 'Từ 2,5 tỷ',  badge: 'Hot',        gradient: 'from-emerald-800 to-teal-600',     type: 'Đô Thị Sinh Thái' },
   { slug: 'the-global-city',  image: 'https://sgsland.vn/global-city.jpg',           name: 'The Global City',      dev: 'Masterise',   loc: 'Thủ Đức, TP.HCM',        scale: '117 ha',     price: 'Từ 4,5 tỷ',  badge: 'Cao Cấp',    gradient: 'from-blue-900 to-indigo-700',      type: 'Đô Thị Tài Chính' },
   { slug: 'vinhomes-can-gio',  image: 'https://sgsland.vn/vinhomes-can-gio.jpg',          name: 'Vinhomes Cần Giờ',     dev: 'Vinhomes',    loc: 'Cần Giờ, TP.HCM',        scale: '2.870 ha',   price: 'Từ 12 tỷ',   badge: 'Siêu Dự Án', gradient: 'from-cyan-900 to-blue-700',        type: 'Đô Thị Biển' },
@@ -41,7 +41,7 @@ const PROJECTS = [
   { slug: 'diamond-sky-van-phuc-city',  image: 'https://sgsland.vn/diamond-sky.jpg', name: 'Diamond Sky',          dev: 'Van Phúc',    loc: 'TP Thủ Đức, TP.HCM',     scale: '198 ha',     price: 'Từ 9,6 tỷ',  badge: 'Cao Cấp',    gradient: 'from-amber-900 to-orange-700',     type: 'Căn Hộ View Sông' },
 ];
 
-const TESTIMONIALS = [
+const TESTIMONIALS_VI = [
   { name: 'Nguyễn Minh Tuấn',  role: 'Nhà đầu tư',   content: 'AI định giá của SGS LAND rất chính xác, giúp tôi mua được căn hộ Vinhomes đúng giá thị trường.', rating: 5 },
   { name: 'Trần Thị Lan Anh',  role: 'Môi giới BĐS', content: 'CRM platform giúp tôi quản lý 200+ khách hàng dễ dàng. Doanh số tăng 40% sau 3 tháng sử dụng.', rating: 5 },
   { name: 'Lê Thành Đạt',      role: 'Nhà đầu tư',   content: 'Dữ liệu thị trường SGS LAND cực kỳ chi tiết, giúp tôi quyết định đầu tư đúng thời điểm.',       rating: 5 },
@@ -51,7 +51,7 @@ const GOLD = '#D4A843';
 const NAVY = '#0A0F1E';
 
 // ─── FAQ data (restored from backup) ────────────────────────────────────────
-const HOME_FAQ = [
+const HOME_FAQ_VI = [
   {
     q: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?',
     a: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Biên Hòa, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.',
@@ -181,6 +181,58 @@ export default function Landing() {
   const [darkMode, setDarkMode] = useState(false);
   const { language, setLanguage } = useTranslation();
   const lang = language === 'vn' ? 'vi' : 'en';
+  const FEATURES = lang === 'vi' ? [
+    { icon: <Zap className="w-6 h-6" />,       title: 'AI Định Giá ±5%',      desc: 'Định giá tự động bất kỳ BĐS nào tại TP.HCM với sai số chỉ ±5%. Kết quả trong 3 giây.',    href: `/${ROUTES.AI_VALUATION}`,  color: '#D4A843' },
+    { icon: <Globe2 className="w-6 h-6" />,    title: 'Sàn Giao Dịch',       desc: 'Hàng nghìn căn hộ, đất nền, nhà phố được xác minh pháp lý. Kết nối trực tiếp với chủ đầu tư.',    href: `/${ROUTES.SEARCH}`,         color: '#D4A843' },
+    { icon: <BarChart3 className="w-6 h-6" />, title: 'Dữ Liệu Thị Trường',  desc: 'Báo cáo biến động giá theo quý, xu hướng đầu tư từ 50+ dự án lớn tại TP.HCM.',    href: '/market-data',              color: '#D4A843' },
+    { icon: <Users className="w-6 h-6" />,     title: 'CRM Đa Kênh',          desc: 'Quản lý khách hàng, tích hợp Zalo/Facebook/Email. Dùng thử miễn phí 30 ngày.',    href: `/${ROUTES.CRM_SOLUTION}`,   color: '#D4A843' },
+  ] : [
+    { icon: <Zap className="w-6 h-6" />,       title: 'AI Valuation ±5%',      desc: 'Automatically value any HCMC property with ±5% accuracy. Results in 3 seconds.',    href: `/${ROUTES.AI_VALUATION}`,  color: '#D4A843' },
+    { icon: <Globe2 className="w-6 h-6" />,    title: 'Exchange',       desc: 'Thousands of verified apartments, land plots, and houses. Connect directly with developers.',    href: `/${ROUTES.SEARCH}`,         color: '#D4A843' },
+    { icon: <BarChart3 className="w-6 h-6" />, title: 'Market Data',  desc: 'Quarterly price trend reports, investment outlook from 50+ major HCMC projects.',    href: '/market-data',              color: '#D4A843' },
+    { icon: <Users className="w-6 h-6" />,     title: 'Multi-Channel CRM',          desc: 'Customer management with Zalo/Facebook/Email integration. Free trial for 30 days.',    href: `/${ROUTES.CRM_SOLUTION}`,   color: '#D4A843' },
+  ];
+  const STATS = lang === 'vi' ? [
+    { value: '11+',  label: 'Dự Án Lớn',   sub: 'Vinhomes, Novaland, Nam Long...' },
+    { value: '±5%', label: 'Chính Xác AI', sub: 'Sai số định giá tự động' },
+    { value: '3+',   label: 'Tỉnh Thành',  sub: 'TP.HCM, Đồng Nai, Bình Dương' },
+    { value: '1/7',  label: 'Hỗ Trợ',     sub: 'Pháp lý & vay vốn miễn phí' },
+  ] : [
+    { value: '11+',  label: 'Major Projects',   sub: 'Vinhomes, Novaland, Nam Long...' },
+    { value: '±5%', label: 'AI Accuracy', sub: 'Automated valuation margin' },
+    { value: '3+',   label: 'Provinces',  sub: 'HCMC, Dong Nai, Binh Duong' },
+    { value: '1/7',  label: 'Support',     sub: 'Free legal & financing' },
+  ];
+
+  // --- Computed PROJECTS ---
+  const PROJECTS = lang === 'vi' ? PROJECTS_VI : [
+    { slug: 'aqua-city', image: 'https://sgsland.vn/aqua-city.jpg', name: 'Aqua City', dev: 'Novaland', loc: 'Bien Hoa, Dong Nai', scale: '1,000 ha', price: 'From 2.5B VND', badge: 'Hot', gradient: 'from-emerald-800 to-teal-600', type: 'Eco Township' },
+    { slug: 'the-global-city', image: 'https://sgsland.vn/global-city.jpg', name: 'The Global City', dev: 'Masterise', loc: 'Thu Duc, HCMC', scale: '117 ha', price: 'From 4.5B VND', badge: 'Premium', gradient: 'from-blue-900 to-indigo-700', type: 'Financial Township' },
+    { slug: 'vinhomes-can-gio', image: 'https://sgsland.vn/vinhomes-can-gio.jpg', name: 'Vinhomes Can Gio', dev: 'Vinhomes', loc: 'Can Gio, HCMC', scale: '2,870 ha', price: 'From 12B VND', badge: 'Mega Project', gradient: 'from-cyan-900 to-blue-700', type: 'Coastal Township' },
+    { slug: 'izumi-city', image: 'https://sgsland.vn/izumi-city.jpg', name: 'Izumi City', dev: 'Nam Long', loc: 'Bien Hoa, Dong Nai', scale: '170 ha', price: 'From 8.4B VND', badge: 'Japanese', gradient: 'from-rose-900 to-pink-700', type: 'Japanese Standard Township' },
+    { slug: 'vinhomes-grand-park', image: 'https://sgsland.vn/vinhomes-grand-park.jpg', name: 'Vinhomes Grand Park', dev: 'Vinhomes', loc: 'Thu Duc, HCMC', scale: '271 ha', price: 'From 1.8B VND', badge: 'Best Seller', gradient: 'from-violet-900 to-purple-700', type: 'Grand Township' },
+    { slug: 'diamond-sky-van-phuc-city', image: 'https://sgsland.vn/diamond-sky.jpg', name: 'Diamond Sky', dev: 'Van Phuc', loc: 'TP Thu Duc, HCMC', scale: '198 ha', price: 'From 9.6B VND', badge: 'Premium', gradient: 'from-amber-900 to-orange-700', type: 'River View Condo' },
+  ];
+
+  // --- Computed TESTIMONIALS ---
+  const TESTIMONIALS = lang === 'vi' ? TESTIMONIALS_VI : [
+    { name: 'Nguyen Minh Tuan', role: 'Investor', content: 'SGS LAND AI valuation is very accurate, helping me buy a Vinhomes apartment at market price.', rating: 5 },
+    { name: 'Tran Thi Lan Anh', role: 'Real Estate Agent', content: 'CRM platform helps me manage 200+ clients easily. Revenue increased 40% after 3 months.', rating: 5 },
+    { name: 'Le Thanh Dat', role: 'Investor', content: 'SGS LAND market data is extremely detailed, helping me make the right investment decisions at the right time.', rating: 5 },
+  ];
+
+  // --- Computed HOME_FAQ ---
+  const HOME_FAQ = lang === 'vi' ? HOME_FAQ_VI : [
+    { q: 'What is SGS LAND and what projects does it distribute?', a: 'SGS LAND is an authorized real estate distributor in HCMC, specializing in major projects: Aqua City Novaland (1,000ha, Bien Hoa), The Global City Masterise (117ha, Thu Duc), Izumi City Nam Long (170ha, Bien Hoa, Dong Nai), Vinhomes Can Gio (2,870ha), Masterise Homes (Masteri, Lumiere, Grand Marina), Vinhomes Grand Park (271ha, Thu Duc). Free consultation at sgsland.vn or hotline 0971 132 378.' },
+    { q: 'Is buying real estate through SGS LAND free?', a: 'No. SGS LAND does not charge buyers. Revenue comes from developer commissions under distribution contracts. Customers get free legal consultation, contract review and loan application support.' },
+    { q: 'How does SGS LAND AI Valuation tool work?', a: 'The AI Valuation (AVM) system analyzes real transaction data, urban planning, infrastructure and market trends to provide estimated valuations with ±5% accuracy. Just enter address, area and property type - results in seconds, no registration required.' },
+    { q: 'Which projects are currently open for booking priority at SGS LAND?', a: 'As of April 2026: Aqua City Novaland (Bien Hoa, Dong Nai) is delivering many phases with separate pink books, from 6.5 billion. Izumi City Nam Long new phase from 8.4 billion. The Global City Masterise accepting deposits from 15 billion. Vinhomes Can Gio started sales from 12 billion. Contact 0971 132 378 for latest price list and progress.' },
+    { q: 'How does SGS LAND support bank loans?', a: 'SGS LAND connects customers with major partner banks: Vietcombank, BIDV, Techcombank, VPBank - supporting up to 70% LTV, 20-25 year terms, 0% interest rate for 12-24 months. Legal team reviews sale purchase contracts and free loan documents before signing.' },
+    { q: 'Does Dong Nai real estate have investment potential?', a: 'According to CBRE Vietnam and Savills Vietnam, Dong Nai suburban real estate - especially Nhon Trach (Bien Hoa) - grew 12-18% per year in 2022-2024 thanks to Ring Road 3, Nhon Trach Bridge and Long Thanh Airport infrastructure. Aqua City Novaland and Izumi City Nam Long are two large-scale SGS LAND projects in the area.' },
+    { q: 'How is HCMC real estate priced in 2026?', a: 'HCMC new apartment prices in 2026 average 80-150 million VND/m2 for mid-range to high-end segments. Townhouses and villas in major projects like Vinhomes, Masterise range from 8-30 billion. Prices in Dong Nai and Long An are still 30-50% cheaper than HCMC inner city, making them suitable for long-term investment.' },
+  ];
+
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -258,7 +310,7 @@ export default function Landing() {
             <button
               onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
               className="hidden sm:flex items-center px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white border border-white/20 hover:border-white/40 rounded-md transition-all duration-200 tracking-wider"
-              title="Chuyển ngôn ngữ"
+              title="Switch Language"
             >
               <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
             </button>
@@ -347,7 +399,7 @@ export default function Landing() {
             <div className="inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 mb-8 text-xs font-bold uppercase tracking-widest"
               style={{ background: `linear-gradient(135deg, ${GOLD}20, ${GOLD}08)`, border: `1px solid ${GOLD}50`, color: GOLD }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: GOLD }} />
-              Nền Tảng Proptech #1 TP.HCM
+              {lang === 'vi' ? 'Nền Tảng Proptech #1 TP.HCM' : '#1 Proptech Platform HCMC'}
             </div>
 
             {/* Headline */}
@@ -365,9 +417,15 @@ export default function Landing() {
 
             {/* Subheadline */}
             <p className="text-lg text-slate-300 leading-relaxed mb-8 max-w-lg">
-              SGS LAND phân phối <strong className="text-white">11+ dự án lớn</strong> tại TP.HCM —
-              Aqua City, The Global City, Vinhomes Cần Giờ.
-              Định giá AI sai số <strong style={{ color: GOLD }}>±5%</strong>. Tư vấn &amp; vay vốn miễn phí.
+              {lang === 'vi' ? <>
+                SGS LAND phân phối <strong className="text-white">11+ dự án lớn</strong> tại TP.HCM —
+                Aqua City, The Global City, Vinhomes Cần Giờ.
+                Định giá AI sai số <strong style={{ color: GOLD }}>±5%</strong>. Tư vấn & vay vốn miễn phí.
+              </> : <>
+                SGS LAND distributes <strong className="text-white">11+ major projects</strong> in HCMC —
+                Aqua City, The Global City, Vinhomes Can Gio.
+                AI valuation with <strong style={{ color: GOLD }}>±5%</strong> accuracy. Free consultation & financing.
+              </>}
             </p>
 
             {/* Glassmorphism search bar */}
@@ -386,7 +444,7 @@ export default function Landing() {
               <button type="submit"
                 className="px-6 py-4 font-bold text-sm transition-all duration-200 hover:brightness-110 shrink-0"
                 style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #e8a020 100%)`, color: NAVY }}>
-                Tìm kiếm
+                {lang === 'vi' ? 'Tìm kiếm' : 'Search'}
               </button>
             </form>
 
@@ -409,9 +467,9 @@ export default function Landing() {
             {/* Trust signals */}
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
               {[
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: lang==='vi'?'Đối tác chính thức Vinhomes':'Official Vinhomes Partner' },
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: lang==='vi'?'Pháp lý 2 lớp kiểm duyệt':'Dual-layer Legal Review' },
-                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: 'Tư vấn & vay vốn 0đ' },
+            { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: lang === 'vi' ? 'Dối tác Vinhomes chính thức' : 'Official Vinhomes Partner' },
+            { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: lang === 'vi' ? 'Pháp lý 2 lớp kiểm duyệt' : 'Dual-layer Legal Review' },
+                { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: lang === 'vi' ? 'Tư vấn & vay vốn 0đ' : 'Free Consultation & Financing' },
               ].map(b => (
                 <div key={b.text} className="flex items-center gap-1.5">
                   {b.icon}
@@ -469,7 +527,7 @@ export default function Landing() {
     <section className="border-y border-gray-100 bg-gray-50 py-5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest shrink-0">Đối tác chính thức</span>
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest shrink-0">{lang === 'vi' ? 'Đối tác chính thức' : 'Official Partners'}</span>
           {PARTNERS.map(p => (
             <span key={p} className="text-sm font-semibold text-gray-500 hover:text-amber-600 transition-colors cursor-default">{p}</span>
           ))}
@@ -484,10 +542,10 @@ export default function Landing() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-4 py-1 mb-4">
-            <span className="text-amber-700 text-xs font-bold uppercase tracking-widest">Nền Tảng Công Nghệ</span>
+            <span className="text-amber-700 text-xs font-bold uppercase tracking-widest">{lang === 'vi' ? 'Nền Tảng Công Nghệ' : 'TECHNOLOGY PLATFORM'}</span>
           </div>
-          <h2 className={`text-3xl sm:text-4xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Công Cụ Proptech Hàng Đầu</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto leading-relaxed">SGS LAND tích hợp AI, dữ liệu thị trường và CRM trong một nền tảng duy nhất.</p>
+          <h2 className={`text-3xl sm:text-4xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{lang === 'vi' ? 'Công Cụ Proptech Hàng Đầu' : 'Leading Proptech Tools'}</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto leading-relaxed">{lang === 'vi' ? 'SGS LAND tích hợp AI, dữ liệu thị trường và CRM trong một nền tảng duy nhất.' : 'SGS LAND integrates AI, market data and CRM into a single platform.'}</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {FEATURES.map((f, i) => (
@@ -505,7 +563,7 @@ export default function Landing() {
               <h3 className={`font-bold mb-2 group-hover:text-amber-500 transition-colors ${darkMode ? 'text-white' : 'text-gray-900 group-hover:text-amber-600'}`}>{f.title}</h3>
               <p className={`text-sm leading-relaxed mb-4 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>{f.desc}</p>
               <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: f.color }}>
-                <span>Khám phá</span>
+                <span>{lang === 'vi' ? 'Khám phá' : 'Explore'}</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
             </a>
@@ -522,13 +580,13 @@ export default function Landing() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
             <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-4 py-1 mb-3">
-              <span className="text-amber-700 text-xs font-bold uppercase tracking-widest">11+ Dự Án Lớn</span>
+              <span className="text-amber-700 text-xs font-bold uppercase tracking-widest">{lang === 'vi' ? '11+ Dự Án Lớn' : '11+ Major Projects'}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Dự Án SGS LAND Phân Phối</h2>
-            <p className={`mt-2 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Chỉ phân phối dự án uy tín, pháp lý hoàn chỉnh</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">{lang === 'vi' ? 'Dự Án SGS LAND Phân Phối' : 'SGS LAND Distribution Projects'}</h2>
+            <p className={`mt-2 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>{lang === 'vi' ? 'Chỉ phân phối dự án uy tín, pháp lý hoàn chỉnh' : 'Only distributing reputable projects with complete legal documentation'}</p>
           </div>
           <a href={`/${ROUTES.DU_AN}`} className="inline-flex items-center gap-2 text-amber-600 font-semibold text-sm hover:text-amber-700 transition-colors shrink-0">
-            Xem tất cả dự án <ArrowRight className="w-4 h-4" />
+            {lang === 'vi' ? 'Xem tất cả dự án' : 'View all projects'} <ArrowRight className="w-4 h-4" />
           </a>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -556,11 +614,11 @@ export default function Landing() {
                 <div className="text-sm text-gray-500 mb-4">{p.dev} · {p.loc}</div>
                 <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                   <div>
-                    <div className="text-xs text-gray-400 mb-0.5">Quy mô</div>
+                    <div className="text-xs text-gray-400 mb-0.5">{lang === 'vi' ? 'Quy mô' : 'Scale'}</div>
                     <div className="text-sm font-semibold text-gray-700">{p.scale}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-gray-400 mb-0.5">Giá từ</div>
+                    <div className="text-xs text-gray-400 mb-0.5">{lang === 'vi' ? 'Giá từ' : 'From'}</div>
                     <div className="text-sm font-bold text-amber-600">{p.price}</div>
                   </div>
                 </div>
@@ -578,10 +636,10 @@ export default function Landing() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
           {[
-            { n: '11+',  label: 'Dự Án Đang Phân Phối' },
-            { n: '±5%',  label: 'Độ Chính Xác AI Định Giá' },
-            { n: '247+', label: 'Đánh Giá 5 Sao' },
-            { n: '2015', label: 'Năm Thành Lập' },
+            { n: '11+',   label: lang === 'vi' ? 'Dự Án Đang Phân Phối' : 'Active Projects' },
+            { n: '±5%',  label: lang === 'vi' ? 'Độ Chính Xác AI Định Giá' : 'AI Valuation Accuracy' },
+            { n: '247+', label: lang === 'vi' ? 'Đánh Giá 5 Sao' : '5-Star Reviews' },
+            { n: '2015', label: lang === 'vi' ? 'Năm Thành Lập' : 'Year Founded' },
           ].map((s, i) => (
             <div key={i}>
               <div className="text-4xl font-black mb-1" style={{ color: i % 2 === 0 ? 'white' : GOLD }}>{s.n}</div>
@@ -611,13 +669,13 @@ export default function Landing() {
               style={{ background: `${GOLD}18`, border: `1px solid ${GOLD}40`, color: GOLD }}
             >
               <Zap className="w-3.5 h-3.5" />
-              AI Định Giá Bất Động Sản
+              {lang === 'vi' ? 'AI Định Giá Bất Động Sản' : 'AI Real Estate Valuation'}
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Biết Giá Thực Của BĐS<br />Trong 3 Giây
+              {lang === 'vi' ? <>Biết Giá Thực Của BĐS<br />Trong 3 Giây</> : <>Know Real Estate's True Value<br />In 3 Seconds</>}
             </h2>
             <p className="text-slate-300 mb-8 max-w-xl mx-auto leading-relaxed">
-              Nhập địa chỉ bất kỳ tại TP.HCM. AI phân tích 50+ yếu tố cho kết quả định giá với sai số chỉ ±5%.
+              {lang === 'vi' ? 'Nhập địa chỉ bất kỳ tại TP.HCM. AI phân tích 50+ yếu tố cho kết quả định giá với sai số chỉ ±5%.' : 'Enter any address in HCMC. AI analyzes 50+ factors for valuation results with only ±5% margin of error.'}
             </p>
             <a
               href={`/${ROUTES.AI_VALUATION}`}
@@ -625,7 +683,7 @@ export default function Landing() {
               style={{ background: GOLD, color: NAVY }}
             >
               <Zap className="w-5 h-5" />
-              Định Giá Miễn Phí Ngay
+              {lang === 'vi' ? 'Định Giá Miễn Phí Ngay' : 'Free Valuation Now'}
             </a>
           </div>
         </div>
@@ -638,8 +696,8 @@ export default function Landing() {
     <section className={`py-20 ${darkMode ? 'bg-[#0A0F1E]' : 'bg-gray-50'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Khách Hàng Nói Gì?</h2>
-          <p className={`${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Đánh giá thực từ nhà đầu tư và môi giới BĐS</p>
+          <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{lang === 'vi' ? 'Khách Hàng Nói Gì?' : 'What Our Clients Say'}</h2>
+          <p className={`${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>{lang === 'vi' ? 'Đánh giá thực từ nhà đầu tư và môi giới BĐS' : 'Real reviews from investors and real estate brokers'}</p>
         </div>
         <div className="grid sm:grid-cols-3 gap-6">
           {TESTIMONIALS.map((t, i) => (
@@ -690,14 +748,14 @@ export default function Landing() {
             className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-4 text-xs font-bold uppercase tracking-widest"
             style={{ background: `${GOLD}15`, border: `1px solid ${GOLD}35`, color: GOLD }}
           >
-            Hỏi &amp; Đáp
+            {lang === 'vi' ? 'Hỏi & Đáp' : 'FAQ'}
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
-            Câu Hỏi{' '}
-            <span style={{ color: GOLD }}>Thường Gặp</span>
+          {lang === 'vi' ? 'Câu Hỏi' : 'FAQ'}
+            <span style={{ color: GOLD }}>{lang === 'vi' ? 'Thường Gặp' : 'Questions'}</span>
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto leading-relaxed">
-            Giải đáp thắc mắc về bất động sản TP.HCM, các dự án lớn và dịch vụ của SGS LAND.
+            {lang === 'vi' ? 'Giải đáp thắc mắc về bất động sản TP.HCM, các dự án lớn và dịch vụ của SGS LAND.' : 'Answers to common questions about HCMC real estate, major projects and SGS LAND services.'}
           </p>
         </div>
 
@@ -706,8 +764,8 @@ export default function Landing() {
 
         {/* Footnote */}
         <p className="text-xs text-slate-600 mt-8 text-center leading-relaxed">
-          Nội dung được biên soạn bởi đội ngũ chuyên gia SGS LAND. Cập nhật lần cuối:{' '}
-          <time dateTime="2026-04-18">04/2026</time>. Nguồn tham khảo: CBRE Vietnam, Savills Vietnam, Bộ Xây Dựng.
+            {lang === 'vi' ? 'Nội dung được biên soạn bởi đội ngũ chuyên gia SGS LAND. Cập nhật lần cuối' : 'Content compiled by SGS LAND expert team. Last updated'}:{' '}
+            <time dateTime="2026-04-18">04/2026</time>. {lang === 'vi' ? 'Nguồn tham khảo: CBRE Vietnam, Savills Vietnam, Bộ Xây Dựng.' : 'Sources: CBRE Vietnam, Savills Vietnam, Ministry of Construction.'}
         </p>
       </div>
 
@@ -723,8 +781,8 @@ export default function Landing() {
   const contactCta = (
     <section className={`py-16 border-t ${darkMode ? 'bg-[#0D1525] border-white/10' : 'bg-white border-gray-100'}`}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className={`text-3xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Cần Tư Vấn BĐS Miễn Phí?</h2>
-        <p className={`mb-8 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Chuyên viên SGS LAND hỗ trợ 7 ngày/tuần. Hotline: 0971.132.378</p>
+        <h2 className={`text-3xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{lang === 'vi' ? 'Cần Tư Vấn BĐS Miễn Phí?' : 'Need Free Real Estate Consultation?'}</h2>
+        <p className={`mb-8 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>{lang === 'vi' ? 'Chuyên viên SGS LAND hỗ trợ 7 ngày/tuần. Hotline:' : 'SGS LAND specialists available 7 days/week. Hotline:'} 0971.132.378</p>
         <div className="flex flex-wrap justify-center gap-3">
           <a
             href="tel:+84971132378"
@@ -738,7 +796,7 @@ export default function Landing() {
             href={`/${ROUTES.SEARCH}`}
             className="inline-flex items-center gap-2 px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:border-amber-200 hover:text-amber-600 transition-colors"
           >
-            Xem Sàn Giao Dịch
+            {lang === 'vi' ? 'Xem Sàn Giao Dịch' : 'View Exchange'}
             <ArrowRight className="w-4 h-4" />
           </a>
         </div>
@@ -764,7 +822,7 @@ export default function Landing() {
               </span>
             </a>
             <p className="text-slate-500 leading-relaxed text-sm mb-6 max-w-xs">
-              Hệ điều hành Bất động sản tích hợp AI Agent, CRM đa kênh và Tự động hóa quy trình dành cho doanh nghiệp.
+          {lang === 'vi' ? 'Hệ điều hành Bất động sản tích hợp AI Agent, CRM đa kênh và Tự động hóa quy trình dành cho doanh nghiệp.' : 'Real estate platform integrating AI Agent, multi-channel CRM and workflow automation for enterprises.'}
             </p>
             {/* Contact */}
             <ul className="space-y-2.5 text-sm text-slate-500">
@@ -782,26 +840,26 @@ export default function Landing() {
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" stroke={GOLD} />
-                <span>TP. Hồ Chí Minh, Việt Nam</span>
+                <span>{lang === 'vi' ? 'TP. Hồ Chí Minh, Việt Nam' : 'Ho Chi Minh City, Vietnam'}</span>
               </li>
             </ul>
           </div>
 
           {/* Sản Phẩm */}
           <div>
-            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">Sản Phẩm</h4>
+            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">{lang === 'vi' ? 'Sản Phẩm' : 'Products'}</h4>
             <ul className="space-y-2.5">
-              <FL label="Sàn Giao Dịch"         href={`/${ROUTES.SEARCH}`} />
-              <FL label="Định Giá AI"            href={`/${ROUTES.AI_VALUATION}`} />
+              <FL label={lang === 'vi' ? 'Sàn Giao Dịch' : 'Exchange'}         href={`/${ROUTES.SEARCH}`} />
+              <FL label={lang === 'vi' ? 'Định Giá AI' : 'AI Valuation'}            href={`/${ROUTES.AI_VALUATION}`} />
               <FL label="SGS CRM"               href={`/${ROUTES.CRM_SOLUTION}`} />
-              <FL label="Ký Gửi BĐS"            href={`/${ROUTES.KY_GUI}`} />
-              <FL label="Lãi Suất Ngân Hàng"    href="/lai-suat-vay-ngan-hang" />
+              <FL label={lang === 'vi' ? 'Ký Gửi BĐS' : 'List Property'}            href={`/${ROUTES.KY_GUI}`} />
+              <FL label={lang === 'vi' ? 'Lãi Suất Ngân Hàng' : 'Bank Interest Rates'}    href="/lai-suat-vay-ngan-hang" />
             </ul>
           </div>
 
           {/* Dự Án */}
           <div>
-            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">Dự Án</h4>
+            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">{lang === 'vi' ? 'Dự Án' : 'Projects'}</h4>
             <ul className="space-y-2.5">
               <FL label="Aqua City"             href={`/${ROUTES.DU_AN}/aqua-city`} />
               <FL label="The Global City"       href={`/${ROUTES.DU_AN}/the-global-city`} />
@@ -811,48 +869,48 @@ export default function Landing() {
               <FL label="Vinhomes Grand Park"   href={`/${ROUTES.DU_AN}/vinhomes-grand-park`} />
               <FL label="Vinhomes Central Park" href={`/${ROUTES.DU_AN}/vinhomes-central-park`} />
               <FL label="Sơn Kim Land"          href={`/${ROUTES.DU_AN}/son-kim-land`} />
-              <FL label="Xem tất cả →"         href={`/${ROUTES.DU_AN}`} />
+              <FL label={lang === 'vi' ? 'Xem tất cả →' : 'View all →'}         href={`/${ROUTES.DU_AN}`} />
             </ul>
           </div>
 
           {/* Khu Vực */}
           <div>
-            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">Khu Vực Nổi Bật</h4>
+            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">{lang === 'vi' ? 'Khu Vực Nổi Bật' : 'Featured Areas'}</h4>
             <ul className="space-y-2.5">
-              <FL label="BĐS Đồng Nai"          href={`/${ROUTES.BDS_DONG_NAI}`} />
-              <FL label="BĐS Long Thành"        href={`/${ROUTES.BDS_LONG_THANH}`} />
-              <FL label="BĐS Thủ Đức"           href={`/${ROUTES.BDS_THU_DUC}`} />
-              <FL label="BĐS Bình Dương"        href={`/${ROUTES.BDS_BINH_DUONG}`} />
-              <FL label="BĐS Quận 7"            href={`/${ROUTES.BDS_QUAN_7}`} />
-              <FL label="BĐS Phú Nhuận"         href={`/${ROUTES.BDS_PHU_NHUAN}`} />
-              <FL label="BĐS Bình Chánh"        href={`/${ROUTES.BDS_BINH_CHANH}`} />
-              <FL label="BĐS Bình Thạnh"        href={`/${ROUTES.BDS_BINH_THANH}`} />
-              <FL label="BĐS Long An"           href={`/${ROUTES.BDS_LONG_AN}`} />
-              <FL label="Đầu Tư BĐS"           href="/dau-tu-bat-dong-san" />
-              <FL label="Pháp Lý Nhà Đất"      href="/phap-ly-nha-dat" />
+              <FL label={lang === 'vi' ? 'BĐS Đồng Nai' : 'Dong Nai RE'}          href={`/${ROUTES.BDS_DONG_NAI}`} />
+              <FL label={lang === 'vi' ? 'BĐS Long Thành' : 'Long Thanh RE'}        href={`/${ROUTES.BDS_LONG_THANH}`} />
+              <FL label={lang === 'vi' ? 'BĐS Thủ Đức' : 'Thu Duc RE'}           href={`/${ROUTES.BDS_THU_DUC}`} />
+              <FL label={lang === 'vi' ? 'BĐS Bình Dương' : 'Binh Duong RE'}        href={`/${ROUTES.BDS_BINH_DUONG}`} />
+              <FL label={lang === 'vi' ? 'BĐS Quận 7' : 'District 7 RE'}            href={`/${ROUTES.BDS_QUAN_7}`} />
+              <FL label={lang === 'vi' ? 'BĐS Phú Nhuận' : 'Phu Nhuan RE'}         href={`/${ROUTES.BDS_PHU_NHUAN}`} />
+              <FL label={lang === 'vi' ? 'BĐS Bình Chánh' : 'Binh Chanh RE'}        href={`/${ROUTES.BDS_BINH_CHANH}`} />
+              <FL label={lang === 'vi' ? 'BĐS Bình Thạnh' : 'Binh Thanh RE'}        href={`/${ROUTES.BDS_BINH_THANH}`} />
+              <FL label={lang === 'vi' ? 'BĐS Long An' : 'Long An RE'}           href={`/${ROUTES.BDS_LONG_AN}`} />
+              <FL label={lang === 'vi' ? 'Đầu Tư BĐS' : 'Real Estate Investment'}           href="/dau-tu-bat-dong-san" />
+              <FL label={lang === 'vi' ? 'Pháp Lý Nhà Đất' : 'Property Legal Matters'}      href="/phap-ly-nha-dat" />
             </ul>
           </div>
 
           {/* Công Ty + Hỗ Trợ + Pháp Lý */}
           <div>
-            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">Về Chúng Tôi</h4>
+            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">{lang === 'vi' ? 'Về Chúng Tôi' : 'About Us'}</h4>
             <ul className="space-y-2.5 mb-6">
-              <FL label="Câu Chuyện"           href={`/${ROUTES.ABOUT}`} />
-              <FL label="Tuyển Dụng"           href={`/${ROUTES.CAREERS}`} />
-              <FL label="Tin Tức"              href={`/${ROUTES.NEWS}`} />
-              <FL label="Liên Hệ"             href={`/${ROUTES.CONTACT}`} />
+              <FL label={lang === 'vi' ? 'Câu Chuyện' : 'Our Story'}           href={`/${ROUTES.ABOUT}`} />
+              <FL label={lang === 'vi' ? 'Tuyển Dụng' : 'Careers'}           href={`/${ROUTES.CAREERS}`} />
+              <FL label={lang === 'vi' ? 'Tin Tức' : 'News'}              href={`/${ROUTES.NEWS}`} />
+              <FL label={lang === 'vi' ? 'Liên Hệ' : 'Contact'}             href={`/${ROUTES.CONTACT}`} />
             </ul>
-            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">Hỗ Trợ</h4>
+            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">{lang === 'vi' ? 'Hỗ Trợ' : 'Support'}</h4>
             <ul className="space-y-2.5 mb-6">
-              <FL label="Trung Tâm Trợ Giúp"  href={`/${ROUTES.HELP_CENTER}`} />
-              <FL label="Hướng Dẫn Sử Dụng"   href={`/${ROUTES.USER_GUIDE}`} />
-              <FL label="Tài Liệu API"         href={`/${ROUTES.API_DOCS}`} />
-              <FL label="Trạng Thái Hệ Thống" href={`/${ROUTES.STATUS_PUBLIC}`} />
+              <FL label={lang === 'vi' ? 'Trung Tâm Trợ Giúp' : 'Help Center'}  href={`/${ROUTES.HELP_CENTER}`} />
+              <FL label={lang === 'vi' ? 'Hướng Dẫn Sử Dụng' : 'User Guide'}   href={`/${ROUTES.USER_GUIDE}`} />
+              <FL label={lang === 'vi' ? 'Tài Liệu API' : 'API Documentation'}         href={`/${ROUTES.API_DOCS}`} />
+                <FL label={lang === 'vi' ? 'Trang Thái Hệ Thống' : 'System Status'} href={`/${ROUTES.STATUS_PUBLIC}`} />
             </ul>
-            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">Pháp Lý</h4>
+            <h4 className="font-bold text-white mb-4 uppercase tracking-widest text-xs">{lang === 'vi' ? 'Pháp Lý' : 'Legal'}</h4>
             <ul className="space-y-2.5">
-              <FL label="Chính Sách Bảo Mật"  href={`/${ROUTES.PRIVACY}`} />
-              <FL label="Điều Khoản Sử Dụng"  href={`/${ROUTES.TERMS}`} />
+              <FL label={lang === 'vi' ? 'Chính Sách Bảo Mật' : 'Privacy Policy'}  href={`/${ROUTES.PRIVACY}`} />
+              <FL label={lang === 'vi' ? 'Điều Khoản Sử Dụng' : 'Terms of Service'}  href={`/${ROUTES.TERMS}`} />
             </ul>
           </div>
 
@@ -864,7 +922,7 @@ export default function Landing() {
           style={{ borderTop: `1px solid rgba(255,255,255,0.06)` }}
         >
           <span className="text-slate-600 text-xs">
-            © {new Date().getFullYear()} SGS Land Corp. Bản quyền được bảo hộ. · <a href="https://sgsland.vn" className="hover:text-amber-400 transition-colors">sgsland.vn</a>
+            © {new Date().getFullYear()} {lang === 'vi' ? 'SGS Land Corp. Bản quyền được bảo hộ.' : 'SGS Land Corp. All rights reserved.'} · <a href="https://sgsland.vn" className="hover:text-amber-400 transition-colors">sgsland.vn</a>
           </span>
           {/* Social icons */}
           <div className="flex items-center gap-3">
