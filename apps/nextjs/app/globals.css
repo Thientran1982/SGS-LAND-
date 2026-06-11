@@ -48,6 +48,21 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 
     color-scheme: light;
+
+    /* ── SGS Brand Design Tokens — Light ──────────────── */
+    --sgs-bg:            #FAFAF8;
+    --sgs-surface:       #FFFFFF;
+    --sgs-primary:       #1B3A5C;
+    --sgs-primary-deep:  #0F2740;
+    --sgs-accent:        #C8963E;
+    --sgs-accent-hover:  #D9A94E;
+    --sgs-accent-text:   #8C6420;
+    --sgs-text:          #16202B;
+    --sgs-text-muted:    #5C6B7A;
+    --sgs-verified:      #1E7F5C;
+    --sgs-hero-deep:     #0A1E33;
+    --sgs-champagne:     #F5EAD5;
+    --sgs-on-dark-muted: #93A6B8;
   }
 
   /* ─── Dark Mode ─────────────────────────────────────────── */
@@ -84,6 +99,21 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
 
     color-scheme: dark;
+
+    /* ── SGS Brand Design Tokens — Dark ──────────────── */
+    --sgs-bg:            #0E1620;
+    --sgs-surface:       #16222F;
+    --sgs-primary:       #7FA8D0;
+    --sgs-primary-deep:  #060E17;
+    --sgs-accent:        #D4A855;
+    --sgs-accent-hover:  #E0B860;
+    --sgs-accent-text:   #D4A855;
+    --sgs-text:          #E8ECF1;
+    --sgs-text-muted:    #9AAAB8;
+    --sgs-verified:      #3FB389;
+    --sgs-hero-deep:     #030A12;
+    --sgs-champagne:     #1A2536;
+    --sgs-on-dark-muted: #93A6B8;
   }
 }
 
@@ -93,9 +123,12 @@
      self-hosted font files are resolved correctly in production.
      Falling back to the literal name "Inter" causes production failures
      because next/font serves Inter under a hashed internal name. */
-  --font-sans:    var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    var(--font-be-vietnam), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono:    var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-serif:   var(--font-noto-serif), "Noto Serif Display", Georgia, "Times New Roman", serif;
+  --font-body:    var(--font-be-vietnam), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono-sgs: var(--font-ibm-plex-mono), var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* Custom font sizes (compact scale) */
   --font-size-3xs: 7px;
@@ -167,6 +200,22 @@
 @keyframes soft-enter {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes underline-draw {
+  from { width: 0; opacity: 0; }
+  to   { width: 100%; opacity: 1; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ripple {
+  0%   { transform: scale(0); opacity: 0.4; }
+  100% { transform: scale(4); opacity: 0; }
 }
 @keyframes slide-in-right {
   from { opacity: 0; transform: translateX(32px); }

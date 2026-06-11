@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Noto_Serif_Display, Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getOrganizationSchema, getWebsiteSchema, getEntityDisambiguationSchema, getMetricsSchema, getLocalBusinessSchema, getAggregateRatingSchema } from "@/lib/schema";
@@ -15,6 +15,27 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
+  weight: ["400", "500"],
+});
+
+const notoSerifDisplay = Noto_Serif_Display({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-noto-serif",
+  display: "swap",
+  weight: ["400", "600", "700"],
+});
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-be-vietnam",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-ibm-plex-mono",
   display: "swap",
   weight: ["400", "500"],
 });
@@ -164,7 +185,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifDisplay.variable} ${beVietnamPro.variable} ${ibmPlexMono.variable} font-sans antialiased`}
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
         {children}
