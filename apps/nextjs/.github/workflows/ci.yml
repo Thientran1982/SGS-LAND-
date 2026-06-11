@@ -1,0 +1,47 @@
+name: CI — SGS LAND Next.js
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  type-check-and-build:
+    name: TypeScript Check & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true   # warn only, không block deploy
+
+      - name: Build production
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://sgsland.vn
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_SITE_VERIFICATION: ${{ secrets.GOOGLE_SITE_VERIFICATION }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: nextjs-build
+          path: .next/
+          retention-days: 7

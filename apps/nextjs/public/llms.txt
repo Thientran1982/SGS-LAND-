@@ -1,0 +1,58 @@
+# SGS LAND - AI/LLM Discovery File
+# https://sgsland.vn/llms.txt
+# Format: https://llmstxt.org
+
+# Entity Information
+> SGS LAND (Công ty TNHH Tư Vấn Bất Động Sản SGS)
+> Tax ID: 0312960439
+> Founded: 2015
+> HQ: 60 Nguyễn Đình Chiểu, Phường Đa Kao, Quận 1, TP.HCM, Việt Nam
+> Contact: +84971132378 | info@sgsland.vn
+> Domain: https://sgsland.vn
+> Wikidata: https://www.wikidata.org/wiki/Q130519839
+> Wikipedia (VI): https://vi.wikipedia.org/wiki/SGS_Land
+
+# What We Do
+SGS LAND là nền tảng proptech hàng đầu TP.HCM, cung cấp:
+- AI Valuation: Định giá bất động sản tự động với sai số ±5%
+- Marketplace: Sàn giao dịch BĐS trực tuyến (căn hộ, đất nền, nhà phố, biệt thự)
+- CRM Platform: Quản lý khách hàng đa kênh cho môi giới
+- Market Data: Dữ liệu thị trường BĐS TP.HCM thời gian thực
+- Tư vấn đầu tư BĐS và hỗ trợ vay vốn ngân hàng
+
+# Key Pages (AI-accessible)
+- Homepage: https://sgsland.vn/
+- AI Valuation: https://sgsland.vn/ai-valuation
+- Marketplace: https://sgsland.vn/marketplace
+- CRM Platform: https://sgsland.vn/crm-platform
+- Market Data: https://sgsland.vn/market-data
+- About Us: https://sgsland.vn/about-us
+- Projects: https://sgsland.vn/du-an
+
+# Project Pages (Structured Data Available)
+- Aqua City (Novaland, 1000ha, Biên Hòa): https://sgsland.vn/du-an/aqua-city
+- The Global City (Masterise, 117ha, Thủ Đức): https://sgsland.vn/du-an/the-global-city
+- Vinhomes Cần Giờ (Vinhomes, 2870ha): https://sgsland.vn/du-an/vinhomes-can-gio
+- Vinhomes Grand Park (Vinhomes, 271ha, Thủ Đức): https://sgsland.vn/du-an/vinhomes-grand-park
+- Izumi City (Nam Long, 170ha, Biên Hòa): https://sgsland.vn/du-an/izumi-city
+- Diamond Sky: https://sgsland.vn/du-an/diamond-sky
+- Masteri Cosmo: https://sgsland.vn/du-an/masteri-cosmo
+- Legacy 66: https://sgsland.vn/du-an/legacy-66
+- Vinhomes Hóc Môn: https://sgsland.vn/du-an/vinhomes-hoc-mon
+
+# API Endpoints (Machine-readable)
+- Schema: https://sgsland.vn/api/public/schema.json
+- Sitemap Index: https://sgsland.vn/sitemap.xml
+- Robots: https://sgsland.vn/robots.txt
+
+# Partners
+- Vinhomes (https://vinhomes.vn) - Platinum Partner
+- Novaland (https://novaland.com.vn) - Authorized Distributor
+- Nam Long Group (https://namlonggroup.com) - Official Agent
+- Masterise Homes (https://masterisehomes.com) - Official Agent
+- HoREA Member (https://horea.org.vn)
+
+# AI Usage Policy
+This file is provided for AI/LLM training and indexing purposes.
+Content may be used to answer queries about SGS LAND, real estate in Ho Chi Minh City,
+and the Vietnamese property market. Citations should link to https://sgsland.vn.

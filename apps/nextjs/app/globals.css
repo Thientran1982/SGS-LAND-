@@ -1,0 +1,265 @@
+/* ============================================================
+   SGS LAND — Global Styles (Next.js App Router)
+   TailwindCSS v4 + Design Tokens
+   ============================================================ */
+
+@import "tailwindcss";
+
+/* ─── Design Tokens — Light Mode ─────────────────────────── */
+@layer base {
+  :root,
+  .light {
+    /* Backgrounds */
+    --bg-app:      #F1F5F9;
+    --bg-surface:  #FFFFFF;
+    --bg-elevated: #FFFFFF;
+    --bg-sidebar:  #1E1B4B;
+    --bg-input:    #F8FAFC;
+
+    /* Primary brand — Indigo */
+    --primary-600:    #4F46E5;
+    --primary-hover:  #4338CA;
+    --primary-subtle: #EEF2FF;
+
+    /* Text */
+    --text-primary:   #0F172A;
+    --text-secondary: #475569;
+    --text-tertiary:  #94A3B8;
+    --text-muted:     #CBD5E1;
+    --text-inverse:   #FFFFFF;
+
+    /* Status */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger:  #EF4444;
+    --color-info:    #3B82F6;
+
+    /* Glassmorphism */
+    --glass-surface: rgba(255, 255, 255, 0.72);
+    --glass-border:  rgba(148, 163, 184, 0.18);
+
+    /* Borders */
+    --border-default: #E2E8F0;
+    --border-strong:  #CBD5E1;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+    color-scheme: light;
+  }
+
+  /* ─── Dark Mode ─────────────────────────────────────────── */
+  .dark {
+    --bg-app:      #0B0F1A;
+    --bg-surface:  #141928;
+    --bg-elevated: #1C2235;
+    --bg-sidebar:  #0D1120;
+    --bg-input:    #1C2235;
+
+    --primary-600:    #6366F1;
+    --primary-hover:  #818CF8;
+    --primary-subtle: #1E1B4B;
+
+    --text-primary:   #F1F5F9;
+    --text-secondary: #94A3B8;
+    --text-tertiary:  #64748B;
+    --text-muted:     #334155;
+    --text-inverse:   #0F172A;
+
+    --color-success: #34D399;
+    --color-warning: #FBBF24;
+    --color-danger:  #F87171;
+    --color-info:    #60A5FA;
+
+    --glass-surface: rgba(20, 25, 40, 0.80);
+    --glass-border:  rgba(148, 163, 184, 0.10);
+
+    --border-default: #1E2A3B;
+    --border-strong:  #2D3E54;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+
+    color-scheme: dark;
+  }
+}
+
+/* ─── TailwindCSS v4 Theme Extension ─────────────────────── */
+@theme {
+  /* Font families — use CSS variables injected by next/font so the
+     self-hosted font files are resolved correctly in production.
+     Falling back to the literal name "Inter" causes production failures
+     because next/font serves Inter under a hashed internal name. */
+  --font-sans:    var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Custom font sizes (compact scale) */
+  --font-size-3xs: 7px;
+  --font-size-2xs: 8px;
+  --font-size-xs:  10px;
+  --font-size-sm:  11px;
+  --font-size-base: 12px;
+  --font-size-lg:  14px;
+  --font-size-xl:  16px;
+  --font-size-2xl: 19px;
+  --font-size-3xl: 22px;
+  --font-size-4xl: 26px;
+  --font-size-5xl: 32px;
+  --font-size-6xl: 40px;
+
+  /* Color tokens → CSS variables */
+  --color-surface:           var(--bg-surface);
+  --color-surface-elevated:  var(--bg-elevated);
+  --color-app-bg:            var(--bg-app);
+  --color-sidebar:           var(--bg-sidebar);
+  --color-input:             var(--bg-input);
+  --color-primary:           var(--primary-600);
+  --color-primary-hover:     var(--primary-hover);
+  --color-primary-subtle:    var(--primary-subtle);
+  --color-text-primary:      var(--text-primary);
+  --color-text-secondary:    var(--text-secondary);
+  --color-text-tertiary:     var(--text-tertiary);
+  --color-text-muted:        var(--text-muted);
+  --color-text-inverse:      var(--text-inverse);
+  --color-status-success:    var(--color-success);
+  --color-status-warning:    var(--color-warning);
+  --color-status-danger:     var(--color-danger);
+  --color-status-info:       var(--color-info);
+  --color-glass:             var(--glass-surface);
+  --color-glass-border:      var(--glass-border);
+  --color-border-default:    var(--border-default);
+  --color-border-strong:     var(--border-strong);
+
+  /* Shadow tokens */
+  --shadow-token-sm: var(--shadow-sm);
+  --shadow-token-md: var(--shadow-md);
+  --shadow-token-lg: var(--shadow-lg);
+
+  /* Animations */
+  --animate-scale-up:       scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-slide-in-right: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-shimmer:        shimmer 1.4s ease-in-out infinite;
+  --animate-fade-in:        fade-in 0.2s ease both;
+  --animate-enter:          soft-enter 0.18s ease-out forwards;
+}
+
+/* ─── Keyframes ───────────────────────────────────────────── */
+@keyframes scaleUp {
+  0%   { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  0%   { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes soft-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scale-up {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Global Resets ───────────────────────────────────────── */
+@layer base {
+  html, body {
+    overscroll-behavior-y: none;
+  }
+
+  /* Global scrollbar reset */
+  *, *::before, *::after {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar { display: none; }
+
+  h1 { @apply text-xl md:text-2xl lg:text-3xl font-bold; }
+}
+
+/* ─── Utility Classes ─────────────────────────────────────── */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .pb-safe {
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  }
+  .pb-safe-footer {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    .pb-safe-footer {
+      padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  /* Thin scrollbar for dropdowns */
+  .thin-scrollbar {
+    -ms-overflow-style: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-border) transparent;
+  }
+  .thin-scrollbar::-webkit-scrollbar { display: block; width: 4px; height: 4px; }
+  .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .thin-scrollbar::-webkit-scrollbar-thumb { background-color: var(--glass-border); border-radius: 4px; }
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); }
+}
+
+/* ─── Components ──────────────────────────────────────────── */
+@layer components {
+  .glass-card {
+    background: var(--glass-surface);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border);
+  }
+
+  .animate-enter          { animation: soft-enter 0.18s ease-out forwards; }
+  .animate-scale-up       { animation: scale-up 0.2s ease both; }
+  .animate-slide-in-right { animation: slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animate-fade-in        { animation: fade-in 0.2s ease both; }
+
+  /* Markdown content */
+  .markdown-body { font-family: inherit; }
+  .markdown-body p { margin-bottom: 0.75em; }
+  .markdown-body p:last-child { margin-bottom: 0; }
+  .markdown-body strong { font-weight: 700; }
+  .markdown-body em { font-style: italic; }
+  .markdown-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+  .markdown-body ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 0.75em; }
+  .markdown-body li { margin-bottom: 0.25em; }
+  .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { font-weight: 700; margin-top: 1em; margin-bottom: 0.5em; }
+  .markdown-body h1 { font-size: 1.5em; }
+  .markdown-body h2 { font-size: 1.25em; }
+  .markdown-body h3 { font-size: 1.125em; }
+  .markdown-body code { background-color: rgba(0,0,0,0.05); padding: 0.1em 0.3em; border-radius: 0.25em; font-size: 0.9em; }
+  .dark .markdown-body code { background-color: rgba(255,255,255,0.1); }
+  .markdown-body pre { background-color: rgba(0,0,0,0.05); padding: 0.75em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 0.75em; }
+  .dark .markdown-body pre { background-color: rgba(255,255,255,0.05); }
+  .markdown-body pre code { background-color: transparent; padding: 0; }
+  .markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--text-secondary); font-style: italic; }
+  .dark .markdown-body blockquote { border-left-color: rgba(255,255,255,0.1); }
+  .markdown-body a { color: var(--primary-600); text-decoration: underline; text-underline-offset: 2px; }
+}

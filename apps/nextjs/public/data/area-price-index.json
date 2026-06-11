@@ -1,0 +1,132 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "SGS LAND — Chỉ số giá BĐS theo khu vực TP.HCM và vùng ven",
+  "description": "Chỉ số giá bất động sản theo quận/huyện tại TP. Hồ Chí Minh, Đồng Nai, Bình Dương — cập nhật từ 2.847 giao dịch công chứng Q1–Q2/2026.",
+  "url": "https://sgsland.vn/lai-suat-ngan-hang",
+  "creator": {
+    "@type": "Organization",
+    "name": "SGS Land Corp.",
+    "url": "https://sgsland.vn"
+  },
+  "dateModified": "2026-06-04",
+  "datePublished": "2024-08-01",
+  "license": "https://sgsland.vn/terms-of-service",
+  "temporalCoverage": "2024-01/2026-06",
+  "spatialCoverage": {
+    "@type": "Place",
+    "name": "TP. Hồ Chí Minh và vùng ven",
+    "geo": {
+      "@type": "GeoShape",
+      "box": "10.35 106.35 11.2 107.0"
+    }
+  },
+  "variableMeasured": "Giá BĐS (triệu VNĐ/m²)",
+  "measurementTechnique": "AVM 9 hệ số (Comparable Sales 35%, Hedonic 20%, Spatial 12%, Legal 10%, Infra 8%, Floor/View 6%, Age 5%, Brand 3%, Liquidity 1%)",
+  "data": [
+    {
+      "area": "TP. Thủ Đức",
+      "slug": "bat-dong-san-thu-duc",
+      "avgPricePerSqm_M_VND": 62,
+      "yoyChange_pct": 8.2,
+      "topProject": "Vinhomes Grand Park",
+      "priceRange": "45–95",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Quận 7 (Phú Mỹ Hưng)",
+      "slug": "bat-dong-san-quan-7",
+      "avgPricePerSqm_M_VND": 75,
+      "yoyChange_pct": 6.5,
+      "topProject": "Sala",
+      "priceRange": "55–120",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Bình Thạnh",
+      "slug": "bat-dong-san-binh-thanh",
+      "avgPricePerSqm_M_VND": 55,
+      "yoyChange_pct": 7.1,
+      "topProject": "Masteri Thảo Điền",
+      "priceRange": "40–90",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Phú Nhuận",
+      "slug": "bat-dong-san-phu-nhuan",
+      "avgPricePerSqm_M_VND": 58,
+      "yoyChange_pct": 5.8,
+      "topProject": "Novaland Phú Nhuận",
+      "priceRange": "42–80",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Bình Chánh",
+      "slug": "bat-dong-san-binh-chanh",
+      "avgPricePerSqm_M_VND": 32,
+      "yoyChange_pct": 12.4,
+      "topProject": "The Privia",
+      "priceRange": "22–48",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Cần Giờ",
+      "slug": "bat-dong-san-can-gio",
+      "avgPricePerSqm_M_VND": 28,
+      "yoyChange_pct": 18.6,
+      "topProject": "Vinhomes Cần Giờ",
+      "priceRange": "18–55",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Hóc Môn",
+      "slug": "bat-dong-san-hoc-mon",
+      "avgPricePerSqm_M_VND": 25,
+      "yoyChange_pct": 22.1,
+      "topProject": "Vinhomes Hóc Môn",
+      "priceRange": "15–42",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Biên Hòa, Đồng Nai",
+      "slug": "bat-dong-san-dong-nai",
+      "avgPricePerSqm_M_VND": 22,
+      "yoyChange_pct": 9.3,
+      "topProject": "Aqua City",
+      "priceRange": "14–38",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Long Thành, Đồng Nai",
+      "slug": "bat-dong-san-long-thanh",
+      "avgPricePerSqm_M_VND": 18,
+      "yoyChange_pct": 14.7,
+      "topProject": "Izumi City",
+      "priceRange": "12–32",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Bình Dương",
+      "slug": "bat-dong-san-binh-duong",
+      "avgPricePerSqm_M_VND": 26,
+      "yoyChange_pct": 8.9,
+      "topProject": "Merita Bình Dương",
+      "priceRange": "16–40",
+      "quarter": "Q2/2026"
+    },
+    {
+      "area": "Long An",
+      "slug": "bat-dong-san-long-an",
+      "avgPricePerSqm_M_VND": 14,
+      "yoyChange_pct": 11.2,
+      "topProject": "Waterpoint",
+      "priceRange": "9–22",
+      "quarter": "Q2/2026"
+    }
+  ],
+  "source": {
+    "notarizedTransactions": 2847,
+    "period": "Q1–Q2/2026",
+    "dataProviders": ["Sở Tài nguyên TP.HCM", "CBRE Vietnam", "JLL Vietnam", "SGS LAND AVM Engine"]
+  }
+}
