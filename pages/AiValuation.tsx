@@ -206,39 +206,51 @@ function getMarketSources(pType: string): { primary: string; reports: string } {
         return { primary: 'batdongsan.com.vn · onehousing.vn · nha.vn', reports: 'Savills Apartment Q1/2026 · CBRE Vietnam Q1/2026' };
     return { primary: 'batdongsan.com.vn · cafeland.vn · cen.vn', reports: 'Savills · CBRE · JLL Vietnam Q1/2026' };
 }
-// ─── AVM coefficients with ACTUAL computed values ─────────────────────────────
+// ─── AVM coefficients — mirrors server/valuationEngine.ts exactly ─────────────
+// Reference: 4m road, Sổ Hồng, 60-100m², floor 4-10, East-facing, 4m frontage, Basic furnish, 3-5yr
 function computeKd(roadM: number): { val: number; label: string } {
-    if (roadM <= 2)  return { val: 0.78, label: `Kd=0.78 (hẻm≤2m)` };
-    if (roadM <= 3)  return { val: 0.88, label: `Kd=0.88 (hẻm 3m)` };
-    if (roadM <= 4)  return { val: 0.95, label: `Kd=0.95 (hẻm 4m)` };
-    if (roadM <= 5)  return { val: 1.00, label: `Kd=1.00 (đường 5m)` };
-    if (roadM <= 6)  return { val: 1.08, label: `Kd=1.08 (đường 6m)` };
-    if (roadM <= 8)  return { val: 1.15, label: `Kd=1.15 (đường 8m)` };
-    if (roadM <= 12) return { val: 1.22, label: `Kd=1.22 (đường 10-12m)` };
-    return { val: 1.30, label: `Kd=1.30 (đại lộ ≥12m)` };
+    if (roadM >= 20) return { val: 1.30, label: `Kd=1.30 (đại lộ ≥20m, +30%)` };
+    if (roadM >= 12) return { val: 1.18, label: `Kd=1.18 (đường chính ${roadM}m, +18%)` };
+    if (roadM >= 8)  return { val: 1.10, label: `Kd=1.10 (đường nội khu ${roadM}m, +10%)` };
+    if (roadM >= 6)  return { val: 1.05, label: `Kd=1.05 (đường ${roadM}m, +5%)` };
+    if (roadM >= 4)  return { val: 1.00, label: `Kd=1.00 (hẻm xe hơi ${roadM}m, chuẩn)` };
+    if (roadM >= 3)  return { val: 0.90, label: `Kd=0.90 (hẻm ${roadM}m, −10%)` };
+    if (roadM >= 2)  return { val: 0.80, label: `Kd=0.80 (hẻm hẹp ${roadM}m, −20%)` };
+    return { val: 0.70, label: `Kd=0.70 (hẻm cụt/ngõ <2m, −30%)` };
 }
 function computeKp(legal: string): string {
-    if (legal === 'PINK_BOOK') return 'Kp=1.00 (Sổ Hồng đầy đủ)';
+    if (legal === 'PINK_BOOK') return 'Kp=1.00 (Sổ Hồng đầy đủ, chuẩn)';
     if (legal === 'PENDING')   return 'Kp=0.92 (Đang làm sổ, −8%)';
-    if (legal === 'CONTRACT')  return 'Kp=0.88 (HĐMB, khấu trừ 12%)';
-    return 'Kp=0.80 (Vi Bằng/Giấy tay, rủi ro cao, −20%)';
+    if (legal === 'CONTRACT')  return 'Kp=0.88 (HĐMB, −12%)';
+    return 'Kp=0.80 (Vi Bằng/Giấy tay, −20%)';
 }
-function computeKa(aM2: number): string {
-    if (aM2 < 30)   return `Ka=0.90 (DT nhỏ <30m², cộng trừ −10%)`;
-    if (aM2 <= 60)  return `Ka=1.00 (DT chuẩn 30–60m²)`;
-    if (aM2 <= 100) return `Ka=0.97 (DT 61–100m², −3% hiệu ứng kích thước)`;
-    if (aM2 <= 200) return `Ka=0.94 (DT 101–200m², −6%)`;
-    return `Ka=0.90 (DT lớn >200m², −10%)`;
+function computeKa(aM2: number, pType?: string): string {
+    // Land types: larger area → lower per-m² liquidity (mirrors getKa land branch)
+    if (pType?.startsWith('land_')) {
+        if (aM2 < 50)   return `Ka=1.05 (Đất nhỏ ${aM2}m², khan hiếm +5%)`;
+        if (aM2 < 200)  return `Ka=1.00 (Đất chuẩn ${aM2}m², tham chiếu)`;
+        if (aM2 < 500)  return `Ka=0.97 (Đất ${aM2}m², −3% thanh khoản)`;
+        if (aM2 < 2000) return `Ka=0.93 (Đất lớn ${aM2}m², −7%)`;
+        return `Ka=0.88 (Đất rất lớn ${aM2}m², −12%)`;
+    }
+    // Residential/commercial: reference 60-100m²
+    if (aM2 < 25)   return `Ka=0.90 (Siêu nhỏ ${aM2}m², −10%)`;
+    if (aM2 < 40)   return `Ka=0.95 (Nhỏ ${aM2}m², −5%)`;
+    if (aM2 < 60)   return `Ka=0.98 (Trung bình nhỏ ${aM2}m², −2%)`;
+    if (aM2 < 100)  return `Ka=1.00 (Chuẩn ${aM2}m², tham chiếu)`;
+    if (aM2 < 150)  return `Ka=1.03 (Lớn ${aM2}m², +3%)`;
+    if (aM2 < 250)  return `Ka=1.06 (Rộng ${aM2}m², +6%)`;
+    return `Ka=1.10 (Rất rộng ${aM2}m², +10%)`;
 }
 function computeKdir(direction: string): string | null {
     const d = direction.toUpperCase();
-    // Compound directions must be checked BEFORE single-word checks to avoid partial match
+    // Compound directions checked BEFORE single to avoid partial match
     if (d.includes('ĐÔNG') && d.includes('NAM'))  return 'Kdir=1.04 (Đông Nam — đón nắng sáng, thoáng gió)';
     if (d.includes('ĐÔNG') && d.includes('BẮC'))  return 'Kdir=0.98 (Đông Bắc — nắng sáng, hơi lạnh mùa đông)';
     if (d.includes('TÂY')  && d.includes('NAM'))  return 'Kdir=0.97 (Tây Nam — nắng chiều, hơi nóng)';
     if (d.includes('TÂY')  && d.includes('BẮC'))  return 'Kdir=0.97 (Tây Bắc — chiều nắng tây, nóng)';
     // Single directions
-    if (d.includes('NAM'))   return 'Kdir=1.04 (Nam — đón gió, thoáng mát)';
+    if (d.includes('NAM'))   return 'Kdir=1.05 (Nam — mát mẻ quanh năm, phong thủy tốt)';
     if (d.includes('ĐÔNG'))  return 'Kdir=1.00 (Đông — đón nắng sáng, chuẩn tham chiếu)';
     if (d.includes('TÂY'))   return 'Kdir=0.95 (Tây — nắng chiều tây, nóng)';
     if (d.includes('BẮC'))   return 'Kdir=0.96 (Bắc — ít nắng, tối và lạnh)';
@@ -247,32 +259,37 @@ function computeKdir(direction: string): string | null {
 function computeKfl(floorN: number, pType: string): string | null {
     const isApt = ['apartment_center', 'apartment_suburb', 'penthouse', 'project'].includes(pType);
     if (!isApt) return null;
-    if (floorN <= 5)   return `Kfl=1.00 (Tầng thấp 1–5)`;
-    if (floorN <= 15)  return `Kfl=1.03 (Tầng trung 6–15)`;
-    if (floorN <= 25)  return `Kfl=1.06 (Tầng cao 16–25, view tốt)`;
-    return `Kfl=1.09 (Tầng cao >25, view panorama)`;
+    if (floorN <= 1)   return `Kfl=0.88 (Tầng trệt, −12%)`;
+    if (floorN <= 3)   return `Kfl=0.93 (Tầng thấp ${floorN}, −7%)`;
+    if (floorN <= 10)  return `Kfl=1.00 (Tầng trung ${floorN}, chuẩn)`;
+    if (floorN <= 20)  return `Kfl=1.05 (Tầng cao ${floorN}, +5%)`;
+    if (floorN <= 30)  return `Kfl=1.09 (Tầng rất cao ${floorN}, +9%)`;
+    return `Kfl=1.12 (Penthouse/tầng thượng ${floorN}, +12%)`;
 }
 function computeKmf(mfM: number): string | null {
     if (mfM <= 0) return null;
-    if (mfM < 3)   return `Kmf=0.90 (Mặt tiền <3m, hẻm nhỏ)`;
-    if (mfM < 4)   return `Kmf=0.96 (Mặt tiền 3–4m)`;
-    if (mfM < 6)   return `Kmf=1.00 (Mặt tiền 4–6m, chuẩn)`;
-    if (mfM < 8)   return `Kmf=1.08 (Mặt tiền 6–8m, rộng)`;
-    return `Kmf=1.15 (Mặt tiền ≥8m, tiền cảnh đẹp)`;
+    if (mfM >= 10) return `Kmf=1.20 (Mặt tiền siêu rộng ${mfM}m, +20%)`;
+    if (mfM >= 7)  return `Kmf=1.12 (Mặt tiền rộng ${mfM}m, +12%)`;
+    if (mfM >= 5)  return `Kmf=1.06 (Mặt tiền đẹp ${mfM}m, +6%)`;
+    if (mfM >= 4)  return `Kmf=1.00 (Mặt tiền chuẩn ${mfM}m, tham chiếu)`;
+    if (mfM >= 3)  return `Kmf=0.96 (Mặt tiền hẹp ${mfM}m, −4%)`;
+    return `Kmf=0.92 (Mặt tiền rất hẹp ${mfM}m, −8%)`;
 }
 function computeKfurn(furn: string): string | null {
-    if (furn === 'FULL')  return 'Kfurn=1.12 (Nội thất đầy đủ cao cấp)';
-    if (furn === 'BASIC') return 'Kfurn=1.05 (Nội thất cơ bản)';
-    if (furn === 'NONE')  return 'Kfurn=1.00 (Bàn giao thô)';
+    if (furn === 'LUXURY') return 'Kfurn=1.12 (Nội thất cao cấp/luxury, +12%)';
+    if (furn === 'FULL')   return 'Kfurn=1.07 (Nội thất đầy đủ, +7%)';
+    if (furn === 'BASIC')  return 'Kfurn=1.00 (Nội thất cơ bản, chuẩn)';
+    if (furn === 'NONE')   return 'Kfurn=0.95 (Nhà thô/bàn giao thô, −5%)';
     return null;
 }
 function computeKage(ageY: number): string | null {
     if (ageY <= 0) return null;
-    if (ageY <= 3)   return `Kage=1.00 (Nhà mới ≤3 năm)`;
-    if (ageY <= 8)   return `Kage=0.96 (Nhà 4–8 năm, −4% khấu hao)`;
-    if (ageY <= 15)  return `Kage=0.91 (Nhà 9–15 năm, −9%)`;
-    if (ageY <= 25)  return `Kage=0.83 (Nhà 16–25 năm, −17%)`;
-    return `Kage=0.74 (Nhà >25 năm, xuống cấp −26%)`;
+    if (ageY <= 2)   return `Kage=1.05 (Mới xây ${ageY} năm, +5%)`;
+    if (ageY <= 5)   return `Kage=1.00 (Nhà mới ${ageY} năm, chuẩn)`;
+    if (ageY <= 10)  return `Kage=0.96 (Nhà đã qua sử dụng ${ageY} năm, −4%)`;
+    if (ageY <= 20)  return `Kage=0.90 (Nhà cũ ${ageY} năm, −10%)`;
+    if (ageY <= 30)  return `Kage=0.82 (Nhà rất cũ ${ageY} năm, −18%)`;
+    return `Kage=0.70 (Nhà xuống cấp ${ageY} năm, −30%)`;
 }
 // ─── Main builder ─────────────────────────────────────────────────────────────
 function buildAgentSteps(
@@ -323,7 +340,7 @@ function buildAgentSteps(
     const coeffLines: string[] = [
         kd ? kd.label : 'Kd=1.00 (Lộ giới chưa nhập)',
         computeKp(legalStatus),
-        computeKa(areaN),
+        computeKa(areaN, pType),
         ...(kdirStr ? [kdirStr] : []),
         ...(kflStr ? [kflStr] : []),
         ...(kmfStr ? [kmfStr] : []),
