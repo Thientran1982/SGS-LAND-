@@ -283,7 +283,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
             : "AI Valuation ±5%, 2-layer legal check, multi-channel CRM. Connecting 15,000+ agents and 45,000+ properties across HCMC, Dong Nai, Binh Duong."}
         </p>
         {/* Glass AI Search Panel */}
-        <div style={{ marginBottom: "-52px", maxWidth: "680px" }}>
+        <div style={{ marginBottom: "-52px", maxWidth: "680px", position: "relative", zIndex: 20 }}>
           <div
             className="rounded-2xl p-4 sm:p-5"
             style={{

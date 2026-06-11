@@ -498,7 +498,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                     className="fixed bottom-24 md:bottom-28 right-4 md:right-6 z-[60] w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-[var(--glass-border)] flex flex-col"
                     style={{
                         height: '540px',
-                        maxHeight: 'calc(100dvh - 8rem)',
+                        maxHeight: 'calc(100dvh - 10rem)',
                         boxShadow: '0 24px 64px rgba(27,58,92,0.20), 0 4px 16px rgba(0,0,0,0.12)',
                     }}
                 >
