@@ -13,8 +13,9 @@ type Lang = "vi" | "en";
 type Theme = "light" | "dark";
 interface FeaturedProject {
   slug: string; name: string; dev: string; loc: string;
-  scale: string; priceFrom: string; type: string;
-  badge: string; badgeType: "sale" | "open" | "soon";
+  scale: string; priceFrom: string;
+  type: string; type_en: string;
+  badge: string; badge_en: string; badgeType: "sale" | "open" | "soon";
   img: string; legal?: boolean; category: string;
 }
 interface Props {
@@ -25,15 +26,15 @@ interface Props {
 //  STATIC DATA
 // ═══════════════════════════════════════════════════════════════
 const PROJECTS: FeaturedProject[] = [
-  { slug: "aqua-city",             name: "Aqua City Novaland",       dev: "Novaland",          loc: "Biên Hòa, Đồng Nai",   scale: "1.000 ha", priceFrom: "6,2 tỷ",  type: "Biệt thự & Nhà phố", badge: "Đang bàn giao", badgeType: "sale", img: "/landing/aqua-city/hero-opt.jpg",            legal: true,  category: "villa"     },
-  { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",     badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"       },
-  { slug: "izumi-city",            name: "Izumi City Nam Long",      dev: "Nam Long Group",    loc: "Biên Hòa, Đồng Nai",   scale: "170 ha",   priceFrom: "1,2 tỷ",  type: "Đô thị chuẩn Nhật",  badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/izumi-city.webp",           legal: true,  category: "apt"       },
-  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "8 tỷ",    type: "Đô thị biển",        badge: "Nhận đặt cọc", badgeType: "open", img: "/images/projects/vinhomes-can-gio.webp",                   category: "villa"     },
-  { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",     badge: "Còn hàng",     badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt"       },
-  { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",         badge: "Còn hàng",     badgeType: "sale", img: "/images/projects/vinhomes-grand-park.webp",  legal: true,  category: "apt"       },
-  { slug: "vinhomes-hoc-mon",      name: "Vinhomes Hóc Môn",         dev: "Vinhomes",          loc: "Hóc Môn, TP.HCM",      scale: "TBA",      priceFrom: "6,5 tỷ",  type: "Đô thị mới",         badge: "Sắp mở bán",   badgeType: "open", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "villa"     },
-  { slug: "diamond-sky-van-phuc-city", name: "Diamond Sky Vạn Phúc City", dev: "Hưng Thịnh Corp",  loc: "Hà Đông, Hà Nội",      scale: "43 tầng",  priceFrom: "3,8 tỷ",  type: "Căn hộ cao cấp",     badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/diamond-sky-van-phuc-city.webp", legal: true, category: "apt"    },
-  { slug: "legacy-66",             name: "Legacy 66",                dev: "Hưng Thịnh Corp",   loc: "Bình Dương",            scale: "6,6 ha",   priceFrom: "1,6 tỷ",  type: "Nhà phố & Biệt thự", badge: "Đang mở bán",  badgeType: "open", img: "/landing/legacy-66/hero.jpg",                legal: true,  category: "villa"     },
+  { slug: "aqua-city",             name: "Aqua City Novaland",       dev: "Novaland",          loc: "Biên Hòa, Đồng Nai",   scale: "1.000 ha", priceFrom: "6,2 tỷ",  type: "Biệt thự & Nhà phố",  type_en: "Villas & Townhouses",       badge: "Đang bàn giao", badge_en: "Delivering",          badgeType: "sale", img: "/landing/aqua-city/hero-opt.jpg",            legal: true,  category: "villa" },
+  { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"   },
+  { slug: "izumi-city",            name: "Izumi City Nam Long",      dev: "Nam Long Group",    loc: "Biên Hòa, Đồng Nai",   scale: "170 ha",   priceFrom: "1,2 tỷ",  type: "Đô thị chuẩn Nhật",   type_en: "Japanese-Standard Township", badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/izumi-city.webp",           legal: true,  category: "apt"   },
+  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "8 tỷ",    type: "Đô thị biển",          type_en: "Coastal Township",          badge: "Nhận đặt cọc", badge_en: "Taking Deposits",     badgeType: "open", img: "/images/projects/vinhomes-can-gio.webp",                   category: "villa" },
+  { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Còn hàng",     badge_en: "Available",           badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt"   },
+  { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",          type_en: "Mega Township",             badge: "Còn hàng",     badge_en: "Available",           badgeType: "sale", img: "/images/projects/vinhomes-grand-park.webp",  legal: true,  category: "apt"   },
+  { slug: "vinhomes-hoc-mon",      name: "Vinhomes Hóc Môn",         dev: "Vinhomes",          loc: "Hóc Môn, TP.HCM",      scale: "TBA",      priceFrom: "6,5 tỷ",  type: "Đô thị mới",          type_en: "New Urban Township",        badge: "Sắp mở bán",   badge_en: "Coming Soon",         badgeType: "open", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "villa" },
+  { slug: "diamond-sky-van-phuc-city", name: "Diamond Sky Vạn Phúc City", dev: "Hưng Thịnh Corp", loc: "Hà Đông, Hà Nội",  scale: "43 tầng",  priceFrom: "3,8 tỷ",  type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/diamond-sky-van-phuc-city.webp", legal: true, category: "apt"  },
+  { slug: "legacy-66",             name: "Legacy 66",                dev: "Hưng Thịnh Corp",   loc: "Bình Dương",            scale: "6,6 ha",   priceFrom: "1,6 tỷ",  type: "Nhà phố & Biệt thự",  type_en: "Townhouses & Villas",       badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/landing/legacy-66/hero.jpg",                legal: true,  category: "villa" },
 ];
 const STATS_DATA = [
   { num: 45000, suffix: "+",        prefix: "",   vi: "BĐS quản lý",        en: "Properties"       },
@@ -42,33 +43,63 @@ const STATS_DATA = [
   { num: 48,    suffix: "/5",       prefix: "4.", vi: "Đánh giá khách hàng",en: "Customer Rating"  },
   { num: 5,     suffix: "%",        prefix: "±",  vi: "Sai số định giá AI", en: "AI Valuation MAPE"},
 ];
-const TICKER_ITEMS = [
-  "Căn hộ Vinhomes Grand Park 2PN — 3,2 tỷ — Đã công chứng 10/06/2026",
-  "Nhà phố Aqua City 5×20m — 5,5 tỷ — Sổ hồng trao tay 08/06/2026",
-  "Nhà phố Vinhomes Hóc Môn 4×16m — 4,5 tỷ — Sổ hồng trao tay 05/06/2026",
-  "Biệt thự The Global City — 15 tỷ — Đặt cọc thành công 03/06/2026",
-  "Nhà phố Izumi City 4PN — 7,8 tỷ — Chốt hôm nay 01/06/2026",
-  "Shophouse Masteri Cosmo Central — 12,4 tỷ — Sang tên 29/05/2026",
-  "Căn hộ Vinhomes Cần Giờ 2PN — 8,5 tỷ — Nhận đặt cọc 27/05/2026",
+const TICKER_ITEMS: { vi: string; en: string }[] = [
+  { vi: "Căn hộ Vinhomes Grand Park 2PN — 3,2 tỷ — Đã công chứng 10/06/2026",       en: "Vinhomes Grand Park 2BR Apt — 3.2B VND — Notarized 10/06/2026"         },
+  { vi: "Nhà phố Aqua City 5×20m — 5,5 tỷ — Sổ hồng trao tay 08/06/2026",          en: "Aqua City Townhouse 5×20m — 5.5B VND — Title transferred 08/06/2026"  },
+  { vi: "Nhà phố Vinhomes Hóc Môn 4×16m — 4,5 tỷ — Sổ hồng trao tay 05/06/2026",  en: "Vinhomes Hoc Mon Townhouse 4×16m — 4.5B VND — Title transferred 05/06/2026" },
+  { vi: "Biệt thự The Global City — 15 tỷ — Đặt cọc thành công 03/06/2026",        en: "The Global City Villa — 15B VND — Deposit secured 03/06/2026"          },
+  { vi: "Nhà phố Izumi City 4PN — 7,8 tỷ — Chốt hôm nay 01/06/2026",              en: "Izumi City Townhouse 4BR — 7.8B VND — Closed today 01/06/2026"         },
+  { vi: "Shophouse Masteri Cosmo Central — 12,4 tỷ — Sang tên 29/05/2026",         en: "Masteri Cosmo Central Shophouse — 12.4B VND — Transferred 29/05/2026"  },
+  { vi: "Căn hộ Vinhomes Cần Giờ 2PN — 8,5 tỷ — Nhận đặt cọc 27/05/2026",        en: "Vinhomes Can Gio 2BR Apt — 8.5B VND — Deposit accepted 27/05/2026"     },
 ];
-const PLACEHOLDERS = [
-  "Căn hộ 2PN gần Metro số 1, dưới 3 tỷ…",
-  "Biệt thự Aqua City có sổ hồng riêng…",
-  "Căn hộ Masteri Cosmo Central pháp lý sạch dưới 7 tỷ…",
-  "Vay 70% mua Vinhomes Hóc Môn, lãi suất thấp nhất…",
+const PLACEHOLDERS: { vi: string; en: string }[] = [
+  { vi: "Căn hộ 2PN gần Metro số 1, dưới 3 tỷ…",                       en: "2BR apartment near Metro Line 1, under 3B VND…"              },
+  { vi: "Biệt thự Aqua City có sổ hồng riêng…",                         en: "Villa at Aqua City with freehold title…"                     },
+  { vi: "Căn hộ Masteri Cosmo Central pháp lý sạch dưới 7 tỷ…",        en: "Legal-clean Masteri Cosmo Central apartment under 7B VND…"  },
+  { vi: "Vay 70% mua Vinhomes Hóc Môn, lãi suất thấp nhất…",           en: "70% mortgage for Vinhomes Hoc Mon, lowest rate…"            },
 ];
-const QUICK_CHIPS = [
-  "Biệt thự Aqua City có sổ hồng",
-  "Căn hộ pháp lý sạch Tp.HCM",
-  "Vay 70% lãi suất thấp",
+const QUICK_CHIPS: { vi: string; en: string }[] = [
+  { vi: "Biệt thự Aqua City có sổ hồng", en: "Aqua City villa with freehold title" },
+  { vi: "Căn hộ pháp lý sạch Tp.HCM",   en: "Legal-clean apartment in HCMC"       },
+  { vi: "Vay 70% lãi suất thấp",         en: "70% mortgage, low interest rate"     },
 ];
 const FAQ_ITEMS = [
-  { q: "Tại sao nên mua bất động sản qua SGS LAND?",           a: "SGS LAND là đại lý F1 uỷ quyền chính thức của Novaland, Masterise Homes, Nam Long và Vinhomes — đảm bảo giá gốc, không phát sinh phí môi giới cho người mua, pháp lý minh bạch 2 lớp độc lập." },
-  { q: "Công nghệ định giá AI của SGS LAND chính xác bao nhiêu?", a: "Công nghệ SGS-AVM v2.1 sử dụng 9 hệ số định giá chuẩn TĐGVN/IVS, MAPE ±4.8%, dựa trên hơn 2.400 giao dịch công chứng thực tế. Kết quả tức thì, minh bạch từng yếu tố ảnh hưởng." },
-  { q: "Quy trình kiểm tra pháp lý tại SGS LAND như thế nào?", a: "2 lớp độc lập: AI sơ thẩm kiểm tra quy hoạch 1/2000, sổ hồng, tranh chấp tài sản; Chuyên viên pháp lý xác nhận thực địa theo Luật Đất Đai 2024 và Luật Kinh doanh BĐS 2023." },
-  { q: "Người mua có phải trả phí dịch vụ không?",             a: "Hoàn toàn miễn phí. Định giá AI, tư vấn pháp lý, hỗ trợ vay vốn — tất cả đều không mất phí với người mua và thuê. Người bán và chủ đầu tư chi trả hoa hồng dịch vụ cho SGS LAND." },
-  { q: "SGS LAND hỗ trợ vay ngân hàng như thế nào?",           a: "Đối tác với 12+ ngân hàng lớn (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, lãi suất từ 6–8,5%/năm. Đội tư vấn tài chính đồng hành từ hồ sơ đến giải ngân." },
-  { q: "Những dự án nào đang phân phối tại SGS LAND?",         a: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Cần Giờ, Masteri Cosmo Central, Vinhomes Hóc Môn — cập nhật liên tục." },
+  {
+    q: "Tại sao nên mua bất động sản qua SGS LAND?",
+    a: "SGS LAND là đại lý F1 uỷ quyền chính thức của Novaland, Masterise Homes, Nam Long và Vinhomes — đảm bảo giá gốc, không phát sinh phí môi giới cho người mua, pháp lý minh bạch 2 lớp độc lập.",
+    q_en: "Why buy real estate through SGS LAND?",
+    a_en: "SGS LAND is the officially authorized F1 agent of Novaland, Masterise Homes, Nam Long and Vinhomes — guaranteeing original prices, zero broker fees for buyers, and transparent 2-layer independent legal verification.",
+  },
+  {
+    q: "Công nghệ định giá AI của SGS LAND chính xác bao nhiêu?",
+    a: "Công nghệ SGS-AVM v2.1 sử dụng 9 hệ số định giá chuẩn TĐGVN/IVS, MAPE ±4.8%, dựa trên hơn 2.400 giao dịch công chứng thực tế. Kết quả tức thì, minh bạch từng yếu tố ảnh hưởng.",
+    q_en: "How accurate is SGS LAND's AI valuation technology?",
+    a_en: "SGS-AVM v2.1 uses 9 valuation factors compliant with TĐGVN/IVS standards, MAPE ±4.8%, based on 2,400+ real notarized transactions. Instant results with full transparency on each contributing factor.",
+  },
+  {
+    q: "Quy trình kiểm tra pháp lý tại SGS LAND như thế nào?",
+    a: "2 lớp độc lập: AI sơ thẩm kiểm tra quy hoạch 1/2000, sổ hồng, tranh chấp tài sản; Chuyên viên pháp lý xác nhận thực địa theo Luật Đất Đai 2024 và Luật Kinh doanh BĐS 2023.",
+    q_en: "How does SGS LAND's legal verification process work?",
+    a_en: "2 independent layers: AI first check covers zoning 1/2000, land title, and dispute records; Legal specialists then perform on-site verification under Land Law 2024 and Real Estate Business Law 2023.",
+  },
+  {
+    q: "Người mua có phải trả phí dịch vụ không?",
+    a: "Hoàn toàn miễn phí. Định giá AI, tư vấn pháp lý, hỗ trợ vay vốn — tất cả đều không mất phí với người mua và thuê. Người bán và chủ đầu tư chi trả hoa hồng dịch vụ cho SGS LAND.",
+    q_en: "Do buyers pay any service fees?",
+    a_en: "Completely free. AI valuation, legal advice, mortgage support — all at no cost to buyers and renters. Sellers and developers pay the commission to SGS LAND.",
+  },
+  {
+    q: "SGS LAND hỗ trợ vay ngân hàng như thế nào?",
+    a: "Đối tác với 12+ ngân hàng lớn (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, lãi suất từ 6–8,5%/năm. Đội tư vấn tài chính đồng hành từ hồ sơ đến giải ngân.",
+    q_en: "How does SGS LAND help with bank financing?",
+    a_en: "Partners with 12+ major banks (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, interest rates from 6–8.5%/year. Our financial advisory team guides you from application to disbursement.",
+  },
+  {
+    q: "Những dự án nào đang phân phối tại SGS LAND?",
+    a: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Cần Giờ, Masteri Cosmo Central, Vinhomes Hóc Môn — cập nhật liên tục.",
+    q_en: "Which projects does SGS LAND currently distribute?",
+    a_en: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Can Gio, Masteri Cosmo Central, Vinhomes Hoc Mon — continuously updated.",
+  },
 ];
 const FILTER_TABS = [
   { id: "all", vi: "Tất cả", en: "All" },
@@ -162,7 +193,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
   }, []);
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query || PLACEHOLDERS[phIdx]);
+    onSearch(query || PLACEHOLDERS[phIdx][lang]);
   };
   const chip = (text: string) => {
     setQuery(text);
@@ -192,7 +223,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
           style={{ background: "rgba(200,150,62,0.15)", border: "1px solid rgba(200,150,62,0.4)", color: "#D4A855" }}
         >
           <Award className="w-3.5 h-3.5" />
-          Đại lý F1 uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes
+          {lang === "vi" ? "Đại lý F1 uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes" : "Authorized F1 Agent — Novaland · Masterise · Nam Long · Vinhomes"}
         </div>
         {/* Kinetic headline */}
         <h1
@@ -278,7 +309,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder={PLACEHOLDERS[phIdx]}
+                  placeholder={PLACEHOLDERS[phIdx][lang]}
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
                     background: "var(--sgs-subtle-bg, #F8F9FB)",
@@ -304,8 +335,8 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
             <div className="flex flex-wrap gap-2 mt-3">
               {QUICK_CHIPS.map(c => (
                 <button
-                  key={c}
-                  onClick={() => chip(c)}
+                  key={c.vi}
+                  onClick={() => chip(c[lang])}
                   className="text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
                     background: "#F5EAD5", color: "var(--sgs-text-heading, #1B3A5C)",
@@ -314,7 +345,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   onMouseEnter={e => (e.currentTarget.style.background = "#EAD5B0")}
                   onMouseLeave={e => (e.currentTarget.style.background = "#F5EAD5")}
                 >
-                  {c}
+                  {c[lang]}
                 </button>
               ))}
             </div>
@@ -374,7 +405,7 @@ function StatsBar({ lang }: { lang: Lang }) {
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 3 — LEGAL TICKER
 // ═══════════════════════════════════════════════════════════════
-function LegalTicker() {
+function LegalTicker({ lang }: { lang: Lang }) {
   const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
   return (
     <div
@@ -396,6 +427,7 @@ function LegalTicker() {
           <span
             key={i}
             className="inline-flex items-center gap-2 text-sm px-8"
+            data-ticker={lang}
             style={{
               color: "#B9C6D4",
               fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
@@ -403,7 +435,7 @@ function LegalTicker() {
           >
             <span style={{ color: "#C8963E", fontSize: "8px" }}>●</span>
             <span style={{ color: "#1E7F5C", fontWeight: 600 }}>✓</span>
-            {item}
+            {item[lang]}
           </span>
         ))}
       </div>
@@ -414,7 +446,7 @@ function LegalTicker() {
 //  SECTION 4 — PROJECTS
 // ═══════════════════════════════════════════════════════════════
 
-function ProjectCard({ proj }: { proj: FeaturedProject }) {
+function ProjectCard({ proj, lang }: { proj: FeaturedProject; lang: Lang }) {
   return (
     <a
       href={`/du-an/${proj.slug}`}
@@ -440,19 +472,19 @@ function ProjectCard({ proj }: { proj: FeaturedProject }) {
           className="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full"
           style={BADGE_STYLES[proj.badgeType]}
         >
-          {proj.badge}
+          {lang === "vi" ? proj.badge : proj.badge_en}
         </span>
         {proj.legal && (
           <span
             className="absolute top-3 right-3 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
             style={{ background: "rgba(30,127,92,0.9)", color: "#FFFFFF", backdropFilter: "blur(4px)" }}
           >
-            <CheckCircle className="w-3 h-3" /> Pháp lý ✓
+            <CheckCircle className="w-3 h-3" /> {lang === "vi" ? "Pháp lý ✓" : "Legal ✓"}
           </span>
         )}
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <span className="text-xs font-medium mb-1" style={{ color: "#8C6420" }}>{proj.type}</span>
+        <span className="text-xs font-medium mb-1" style={{ color: "#8C6420" }}>{lang === "vi" ? proj.type : proj.type_en}</span>
         <h3
           className="font-semibold text-sm mb-1 leading-snug"
           style={{ color: "var(--sgs-text, #16202B)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
@@ -464,19 +496,19 @@ function ProjectCard({ proj }: { proj: FeaturedProject }) {
         </div>
         <div className="mt-auto flex items-end justify-between">
           <div>
-            <div className="text-[11px] mb-0.5" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>Quy mô {proj.scale}</div>
+            <div className="text-[11px] mb-0.5" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{lang === "vi" ? `Quy mô ${proj.scale}` : `Scale: ${proj.scale}`}</div>
             <div
               className="text-sm font-bold tabular-nums"
               style={{ color: "var(--sgs-accent-text, #8C6420)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
             >
-              Từ {proj.priceFrom}
+              {lang === "vi" ? `Từ ${proj.priceFrom}` : `From ${proj.priceFrom}`}
             </div>
           </div>
           <div
             className="flex items-center gap-1 text-xs font-medium transition-transform group-hover:translate-x-1"
             style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}
           >
-            Xem <ChevronRight className="w-3.5 h-3.5" />
+            {lang === "vi" ? "Xem" : "View"} <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </div>
       </div>
@@ -524,7 +556,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
 
         {/* 1-col mobile / 2-col tablet / 3-col desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map(p => <ProjectCard key={p.slug} proj={p} />)}
+          {filtered.map(p => <ProjectCard key={p.slug} proj={p} lang={lang} />)}
         </div>
       </div>
     </section>
@@ -586,7 +618,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
             }}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>Kết quả định giá AI</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>{lang === "vi" ? "Kết quả định giá AI" : "AI Valuation Result"}</span>
               <span
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
                 style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
@@ -596,7 +628,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
             </div>
             <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.7)" }}>
               <p className="text-xs font-medium mb-0.5" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>Vinhomes Grand Park 2PN · 65m²</p>
-              <p className="text-xs" style={{ color: "#5C6B7A" }}>TP Thủ Đức · Tầng 15 · Hướng Đông Nam</p>
+              <p className="text-xs" style={{ color: "#5C6B7A" }}>{lang === "vi" ? "TP Thủ Đức · Tầng 15 · Hướng Đông Nam" : "Thu Duc City · Floor 15 · SE Facing"}</p>
             </div>
             <div className="mb-5">
               <div className="flex justify-between text-xs mb-2" style={{ color: "#5C6B7A" }}>
@@ -621,12 +653,17 @@ function ValuationSection({ lang }: { lang: Lang }) {
               </div>
             </div>
             <div className="space-y-2.5">
-              {[
-                { label: "Vị trí & Kết nối",          score: 88 },
-                { label: "Pháp lý",                   score: 95 },
-                { label: "Tiện ích nội khu",           score: 82 },
-                { label: "Thanh khoản thị trường",     score: 79 },
-              ].map(f => (
+              {(lang === "vi" ? [
+                { label: "Vị trí & Kết nối",        score: 88 },
+                { label: "Pháp lý",                 score: 95 },
+                { label: "Tiện ích nội khu",         score: 82 },
+                { label: "Thanh khoản thị trường",   score: 79 },
+              ] : [
+                { label: "Location & Connectivity", score: 88 },
+                { label: "Legal",                   score: 95 },
+                { label: "Amenities",               score: 82 },
+                { label: "Market Liquidity",        score: 79 },
+              ]).map(f => (
                 <div key={f.label} className="flex items-center gap-3">
                   <span className="text-xs shrink-0 w-36" style={{ color: "#5C6B7A" }}>{f.label}</span>
                   <div className="flex-1 h-1.5 rounded-full" style={{ background: "#E2E8F0" }}>
@@ -681,10 +718,12 @@ function BentoSection({ lang }: { lang: Lang }) {
             </div>
             <h3 className="text-xl font-semibold mb-2"
               style={{ color: "#FFFFFF", fontFamily: "var(--font-noto-serif, serif)" }}>
-              Định giá AI ±5%
+              {lang === "vi" ? "Định giá AI ±5%" : "AI Valuation ±5%"}
             </h3>
             <p className="text-sm mb-5" style={{ color: "#93A6B8" }}>
-              SGS-AVM v2.1 — 9 hệ số TĐGVN/IVS. Phân tích realtime từ 2.400+ giao dịch công chứng thực tế.
+              {lang === "vi"
+                ? "SGS-AVM v2.1 — 9 hệ số TĐGVN/IVS. Phân tích realtime từ 2.400+ giao dịch công chứng thực tế."
+                : "SGS-AVM v2.1 — 9 TĐGVN/IVS factors. Real-time analysis from 2,400+ notarized transactions."}
             </p>
             {/* Sparkline */}
             <div className="mt-auto">
@@ -701,7 +740,7 @@ function BentoSection({ lang }: { lang: Lang }) {
                   fill="url(#sparkFill)" />
                 <circle cx="200" cy="6" r="3" fill="#D4A855" />
               </svg>
-              <p className="text-[11px]" style={{ color: "#93A6B8" }}>Thị trường BĐS Đông Nam Bộ Q2/2026</p>
+              <p className="text-[11px]" style={{ color: "#93A6B8" }}>{lang === "vi" ? "Thị trường BĐS Đông Nam Bộ Q2/2026" : "SE Vietnam Real Estate Market Q2/2026"}</p>
             </div>
           </div>
           {/* Legal */}
@@ -720,17 +759,17 @@ function BentoSection({ lang }: { lang: Lang }) {
             <div>
               <h3 className="font-semibold mb-1.5"
                 style={{ color: "var(--sgs-text-heading, #1B3A5C)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
-                Pháp lý 2 lớp độc lập
+                {lang === "vi" ? "Pháp lý 2 lớp độc lập" : "Independent 2-Layer Legal Check"}
               </h3>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: "#5C6B7A" }}>
                 <span className="flex items-center gap-1">
                   <CheckCircle className="w-3.5 h-3.5" style={{ color: "#1E7F5C" }} />
-                  AI: Quy hoạch 1/2000 + sổ đỏ
+                  {lang === "vi" ? "AI: Quy hoạch 1/2000 + sổ đỏ" : "AI: Zoning 1/2000 + Title deed"}
                 </span>
                 <span style={{ color: "#CBD5E1" }}>→</span>
                 <span className="flex items-center gap-1">
                   <CheckCircle className="w-3.5 h-3.5" style={{ color: "#1E7F5C" }} />
-                  Chuyên viên: Xác nhận thực địa
+                  {lang === "vi" ? "Chuyên viên: Xác nhận thực địa" : "Expert: On-site verification"}
                 </span>
               </div>
             </div>
@@ -835,14 +874,16 @@ function TrustBlock({ lang }: { lang: Lang }) {
                 className="text-xs px-2.5 py-0.5 rounded-full font-medium"
                 style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
               >
-                Giao dịch đã xác minh
+                {lang === "vi" ? "Giao dịch đã xác minh" : "Verified Transaction"}
               </span>
             </div>
             <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "var(--sgs-text, #16202B)" }}>
-              "Mua biệt thự Aqua City qua SGS LAND tháng 3/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."
+              {lang === "vi"
+                ? '"Mua biệt thự Aqua City qua SGS LAND tháng 3/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."'
+                : '"Purchased an Aqua City villa through SGS LAND in March 2026. The advisory team clearly explained payment policies, assisted with BIDV financing, and handled free legal checks. From deposit to contract signing took just 5 business days."'}
             </blockquote>
-            <p className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>Anh Nguyễn Văn Hải</p>
-            <p className="text-xs" style={{ color: "#5C6B7A" }}>Khách hàng mua Aqua City · TP.HCM, tháng 1/2026</p>
+            <p className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>{lang === "vi" ? "Anh Nguyễn Văn Hải" : "Mr. Nguyen Van Hai"}</p>
+            <p className="text-xs" style={{ color: "#5C6B7A" }}>{lang === "vi" ? "Khách hàng mua Aqua City · TP.HCM, tháng 1/2026" : "Aqua City buyer · HCMC, January 2026"}</p>
           </div>
         </div>
         {/* Micro-trust bar */}
@@ -921,13 +962,17 @@ function FAQSection({ lang }: { lang: Lang }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div className="space-y-3">
             {FAQ_ITEMS.slice(0, half).map((item, i) => (
-              <FAQItem key={i} q={item.q} a={item.a}
+              <FAQItem key={i}
+                q={lang === "en" && item.q_en ? item.q_en : item.q}
+                a={lang === "en" && item.a_en ? item.a_en : item.a}
                 open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? null : i)} />
             ))}
           </div>
           <div className="space-y-3">
             {FAQ_ITEMS.slice(half).map((item, i) => (
-              <FAQItem key={i + half} q={item.q} a={item.a}
+              <FAQItem key={i + half}
+                q={lang === "en" && item.q_en ? item.q_en : item.q}
+                a={lang === "en" && item.a_en ? item.a_en : item.a}
                 open={openIdx === i + half} onToggle={() => setOpenIdx(openIdx === (i + half) ? null : i + half)} />
             ))}
           </div>
@@ -1219,7 +1264,7 @@ function PublicHeader() {
                 aria-label="Chuyển chế độ sáng tối"
               >
                 {theme === "light" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-                {theme === "light" ? "Tối" : "Sáng"}
+                {theme === "light" ? (lang === "vi" ? "Tối" : "Dark") : (lang === "vi" ? "Sáng" : "Light")}
               </button>
             </div>
             <div className="flex gap-2">
@@ -1237,7 +1282,7 @@ function PublicHeader() {
                 className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg"
                 style={{ background: "#C8963E", color: "#0F2740" }}
               >
-                Định Giá AI
+                {lang === "vi" ? "Định Giá AI" : "AI Valuation"}
               </a>
             </div>
           </div>
@@ -1261,39 +1306,39 @@ const FOOTER_PROJECTS = [
   { label: "Sơn Kim Land",               href: "/du-an/son-kim-land"               },
 ];
 const FOOTER_SUPPORT = [
-  { label: "Tìm kiếm BĐS",          href: "/marketplace"          },
-  { label: "Định giá AI",            href: "/ai-valuation"         },
-  { label: "Lãi suất ngân hàng",     href: "/lai-suat-ngan-hang"   },
-  { label: "CRM Bất Động Sản",       href: "/crm-platform"         },
-  { label: "Live Chat AI",           href: "/livechat"             },
-  { label: "Trung tâm hỗ trợ",       href: "/help-center"          },
-  { label: "Hướng dẫn sử dụng",     href: "/huong-dan-su-dung"    },
-  { label: "Chính sách bảo mật",     href: "/privacy-policy"       },
-  { label: "Điều khoản sử dụng",     href: "/terms-of-service"     },
+  { vi: "Tìm kiếm BĐS",          en: "Property Search",       href: "/marketplace"          },
+  { vi: "Định giá AI",            en: "AI Valuation",          href: "/ai-valuation"         },
+  { vi: "Lãi suất ngân hàng",     en: "Bank Rates",            href: "/lai-suat-ngan-hang"   },
+  { vi: "CRM Bất Động Sản",       en: "Real Estate CRM",       href: "/crm-platform"         },
+  { vi: "Live Chat AI",           en: "Live Chat AI",          href: "/livechat"             },
+  { vi: "Trung tâm hỗ trợ",       en: "Help Center",           href: "/help-center"          },
+  { vi: "Hướng dẫn sử dụng",     en: "User Guide",            href: "/huong-dan-su-dung"    },
+  { vi: "Chính sách bảo mật",     en: "Privacy Policy",        href: "/privacy-policy"       },
+  { vi: "Điều khoản sử dụng",     en: "Terms of Service",      href: "/terms-of-service"     },
 ];
 const FOOTER_ABOUT = [
-  { label: "Về chúng tôi",       href: "/about-us"            },
-  { label: "Tin tức",             href: "/news"                },
-  { label: "Tuyển dụng",          href: "/careers"             },
-  { label: "Liên hệ",             href: "/contact"             },
-  { label: "BĐS Thủ Đức",          href: "/bat-dong-san-thu-duc"    },
-  { label: "BĐS Long Thành",       href: "/bat-dong-san-long-thanh" },
-  { label: "BĐS Đồng Nai",         href: "/bat-dong-san-dong-nai"   },
-  { label: "BĐS Bình Thạnh",       href: "/bat-dong-san-binh-thanh" },
-  { label: "BĐS Quận 7",           href: "/bat-dong-san-quan-7"     },
-  { label: "BĐS Long An",          href: "/bat-dong-san-long-an"    },
-  { label: "Nhà phố Trung Tâm",    href: "/nha-pho-trung-tam"       },
-  { label: "Trạng thái hệ thống",  href: "/status"                  },
+  { vi: "Về chúng tôi",       en: "About Us",              href: "/about-us"                 },
+  { vi: "Tin tức",             en: "News",                  href: "/news"                     },
+  { vi: "Tuyển dụng",          en: "Careers",               href: "/careers"                  },
+  { vi: "Liên hệ",             en: "Contact",               href: "/contact"                  },
+  { vi: "BĐS Thủ Đức",          en: "Thu Duc Properties",    href: "/bat-dong-san-thu-duc"    },
+  { vi: "BĐS Long Thành",       en: "Long Thanh Properties", href: "/bat-dong-san-long-thanh" },
+  { vi: "BĐS Đồng Nai",         en: "Dong Nai Properties",   href: "/bat-dong-san-dong-nai"   },
+  { vi: "BĐS Bình Thạnh",       en: "Binh Thanh Properties", href: "/bat-dong-san-binh-thanh" },
+  { vi: "BĐS Quận 7",           en: "District 7 Properties", href: "/bat-dong-san-quan-7"     },
+  { vi: "BĐS Long An",          en: "Long An Properties",    href: "/bat-dong-san-long-an"    },
+  { vi: "Nhà phố Trung Tâm",    en: "Central Townhouses",    href: "/nha-pho-trung-tam"       },
+  { vi: "Trạng thái hệ thống",  en: "System Status",         href: "/status"                  },
 ];
 const LEGAL_LINKS = [
-  { label: "Chính sách bảo mật", href: "/privacy-policy"  },
-  { label: "Điều khoản",          href: "/terms-of-service" },
-  { label: "Cookie",              href: "/cookie-settings"  },
+  { vi: "Chính sách bảo mật", en: "Privacy Policy",  href: "/privacy-policy"  },
+  { vi: "Điều khoản",          en: "Terms",           href: "/terms-of-service" },
+  { vi: "Cookie",              en: "Cookie",          href: "/cookie-settings"  },
 ];
 const linkHover = (e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: boolean) => {
   (e.currentTarget as HTMLElement).style.color = hover ? "#D4A855" : "#B9C6D4";
 };
-function PublicFooter() {
+function PublicFooter({ lang }: { lang: Lang }) {
   const year = new Date().getFullYear();
   return (
     <footer style={{ background: "#0F2740", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
@@ -1337,8 +1382,9 @@ function PublicFooter() {
               </div>
             </div>
             <p className="text-sm leading-relaxed mb-5" style={{ color: "#93A6B8" }}>
-              Nền tảng quản lý &amp; phân phối BĐS AI — Đại lý F1 uỷ quyền Novaland,
-              Masterise Homes, Nam Long, Vinhomes. Tin dùng bởi 15.000+ môi giới.
+              {lang === "vi"
+                ? "Nền tảng quản lý & phân phối BĐS AI — Đại lý F1 uỷ quyền Novaland, Masterise Homes, Nam Long, Vinhomes. Tin dùng bởi 15.000+ môi giới."
+                : "AI-powered real estate management & distribution platform — Authorized F1 agent for Novaland, Masterise Homes, Nam Long, Vinhomes. Trusted by 15,000+ brokers."}
             </p>
             <div className="space-y-2.5">
               <a
@@ -1373,7 +1419,7 @@ function PublicFooter() {
               className="text-xs font-semibold uppercase mb-4"
               style={{ color: "#D4A855", letterSpacing: "0.12em" }}
             >
-              Dự án phân phối
+              {lang === "vi" ? "Dự án phân phối" : "Distribution Projects"}
             </h3>
             <ul className="space-y-2.5">
               {FOOTER_PROJECTS.map((link) => (
@@ -1397,7 +1443,7 @@ function PublicFooter() {
               className="text-xs font-semibold uppercase mb-4"
               style={{ color: "#D4A855", letterSpacing: "0.12em" }}
             >
-              Hỗ trợ &amp; Chính sách
+              {lang === "vi" ? "Hỗ trợ & Chính sách" : "Support & Policies"}
             </h3>
             <ul className="space-y-2.5">
               {FOOTER_SUPPORT.map((link) => (
@@ -1409,7 +1455,7 @@ function PublicFooter() {
                     onMouseEnter={e => linkHover(e, true)}
                     onMouseLeave={e => linkHover(e, false)}
                   >
-                    {link.label}
+                    {link[lang]}
                   </a>
                 </li>
               ))}
@@ -1421,7 +1467,7 @@ function PublicFooter() {
               className="text-xs font-semibold uppercase mb-4"
               style={{ color: "#D4A855", letterSpacing: "0.12em" }}
             >
-              Về SGS LAND
+              {lang === "vi" ? "Về SGS LAND" : "About SGS LAND"}
             </h3>
             <ul className="space-y-2.5 mb-5">
               {FOOTER_ABOUT.map((link) => (
@@ -1433,7 +1479,7 @@ function PublicFooter() {
                     onMouseEnter={e => linkHover(e, true)}
                     onMouseLeave={e => linkHover(e, false)}
                   >
-                    {link.label}
+                    {link[lang]}
                   </a>
                 </li>
               ))}
@@ -1449,7 +1495,9 @@ function PublicFooter() {
         {/* ── Bottom bar ────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5">
           <p className="text-xs" style={{ color: "#93A6B8" }}>
-            © {year} Công ty TNHH SGS Land. GPKD số: 0312960439 | Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.
+            {lang === "vi"
+              ? `© ${year} Công ty TNHH SGS Land. GPKD số: 0312960439 | Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.`
+              : `© ${year} SGS Land Co., Ltd. Business Reg: 0312960439 | F1 Agent: Novaland · Masterise Homes · Nam Long · Vinhomes.`}
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
             {LEGAL_LINKS.map((link) => (
@@ -1461,7 +1509,7 @@ function PublicFooter() {
                 onMouseEnter={e => linkHover(e, true)}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#93A6B8"}
               >
-                {link.label}
+                {link[lang]}
               </a>
             ))}
           </div>
@@ -1492,14 +1540,14 @@ function Landing({ featuredListings, stats }: Props) {
       <PublicHeader />
       <HeroSection   onSearch={handleSearch} lang={lang} />
       <StatsBar      lang={lang} />
-      <LegalTicker />
+      <LegalTicker   lang={lang} />
       <ProjectsSection  lang={lang} />
       <ValuationSection lang={lang} />
       <BentoSection     lang={lang} />
       <TrustBlock       lang={lang} />
       <FAQSection       lang={lang} />
       <CTABanner        lang={lang} onChatOpen={() => setChatOpen(true)} />
-      <PublicFooter />
+      <PublicFooter     lang={lang} />
       {/* ── Floating AI Chat Button ───────────────────────────────── */}
       <button
         onClick={() => setChatOpen(true)}
