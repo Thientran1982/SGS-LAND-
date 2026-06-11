@@ -59,11 +59,13 @@ export function PublicHeader() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background:      isHero ? "transparent" : "rgba(255,255,255,0.93)",
-        backdropFilter:  isHero ? "none"        : "blur(14px)",
-        WebkitBackdropFilter: isHero ? "none"   : "blur(14px)",
-        borderBottom:    isHero ? "none"        : "1px solid rgba(27,58,92,0.12)",
-        boxShadow:       isHero ? "none"        : "0 1px 20px rgba(15,39,64,0.08)",
+        background:      isHero
+          ? "linear-gradient(to bottom, rgba(10,30,51,0.72) 0%, rgba(10,30,51,0.0) 100%)"
+          : "rgba(255,255,255,0.93)",
+        backdropFilter:  isHero ? "none"   : "blur(14px)",
+        WebkitBackdropFilter: isHero ? "none" : "blur(14px)",
+        borderBottom:    isHero ? "none"   : "1px solid rgba(27,58,92,0.12)",
+        boxShadow:       isHero ? "none"   : "0 1px 20px rgba(15,39,64,0.08)",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

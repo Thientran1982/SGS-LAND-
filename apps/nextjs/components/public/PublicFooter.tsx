@@ -204,9 +204,9 @@ export function PublicFooter() {
               className="space-y-1 pt-4"
               style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <p className="text-xs" style={{ color: "#93A6B8" }}>GPKD: 0300000000</p>
+              <p className="text-xs" style={{ color: "#93A6B8" }}>GPKD: 0312960439</p>
               <p className="text-xs" style={{ color: "#93A6B8" }}>Cấp ngày: 01/01/2018 tại TP.HCM</p>
-              <p className="text-xs" style={{ color: "#93A6B8" }}>MST: 0300000000</p>
+              <p className="text-xs" style={{ color: "#93A6B8" }}>MST: 0312960439</p>
               <p className="text-xs" style={{ color: "#93A6B8" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
             </div>
           </div>

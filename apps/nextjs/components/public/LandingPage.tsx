@@ -37,7 +37,7 @@ const PROJECTS: FeaturedProject[] = [
   { slug: "aqua-city",             name: "Aqua City Novaland",       dev: "Novaland",          loc: "Biên Hòa, Đồng Nai",   scale: "1.000 ha", priceFrom: "6,5 tỷ",  type: "Biệt thự & Nhà phố", badge: "Đang bàn giao", badgeType: "sale", img: "/landing/aqua-city/hero-opt.jpg",            legal: true,  category: "villa"     },
   { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",     badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"       },
   { slug: "izumi-city",            name: "Izumi City Nam Long",      dev: "Nam Long Group",    loc: "Biên Hòa, Đồng Nai",   scale: "170 ha",   priceFrom: "1,2 tỷ",  type: "Đô thị chuẩn Nhật",  badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/izumi-city.webp",           legal: true,  category: "apt"       },
-  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "Từ 8 tỷ", type: "Đô thị biển",         badge: "Nhận đặt cọc", badgeType: "open", img: "/landing/aqua-city/hero-opt.jpg",                          category: "villa"     },
+  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "8 tỷ",    type: "Đô thị biển",         badge: "Nhận đặt cọc", badgeType: "open", img: "/landing/aqua-city/hero-opt.jpg",                          category: "villa"     },
   { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",     badge: "Còn hàng",     badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt"       },
   { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",          badge: "Còn hàng",     badgeType: "sale", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "apt"       },
   { slug: "van-phuc-city",         name: "Vạn Phúc City",            dev: "Vạn Phúc Group",    loc: "TP Thủ Đức",           scale: "198 ha",   priceFrom: "15 tỷ",   type: "Nhà phố & Biệt thự", badge: "Đang mở bán",  badgeType: "open", img: "/landing/legacy-66/hero.jpg",                              category: "townhouse" },
@@ -423,7 +423,7 @@ function LegalTicker() {
     >
       <div
         className="flex whitespace-nowrap"
-        style={{ animation: "ticker-scroll 44s linear infinite" }}
+        style={{ animation: "ticker-scroll 28s linear infinite" }}
         onMouseEnter={e => (e.currentTarget.style.animationPlayState = "paused")}
         onMouseLeave={e => (e.currentTarget.style.animationPlayState = "running")}
       >
