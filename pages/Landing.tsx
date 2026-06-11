@@ -69,7 +69,7 @@ const PLACEHOLDERS = [
 
 const QUICK_CHIPS = [
   "Biệt thự Aqua City có sổ hồng",
-  "Đất nền pháp lý sạch Biên Hòa",
+  "Căn hộ pháp lý sạch Tp.HCM",
   "Vay 70% lãi suất thấp",
 ];
 
@@ -419,7 +419,7 @@ function LegalTicker() {
     >
       <div
         className="flex whitespace-nowrap"
-        style={{ animation: "ticker-scroll 55s linear infinite" }}
+        style={{ animation: "ticker-scroll 20s linear infinite" }}
         onMouseEnter={e => (e.currentTarget.style.animationPlayState = "paused")}
         onMouseLeave={e => (e.currentTarget.style.animationPlayState = "running")}
       >
