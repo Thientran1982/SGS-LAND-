@@ -24,18 +24,18 @@ const LEAD_KEY = 'widget_lead_id';
 const SESSION_MSGS_KEY = 'widget_msgs_v2';
 const MAX_SESSION_MSGS = 30;
 
-const QUICK_REPLIES = [
-    { label: '🏠 Căn hộ dưới 3 tỷ', msg: 'Tôi muốn tìm căn hộ giá dưới 3 tỷ tại TP.HCM' },
-    { label: '✈️ Dự án Long Thành', msg: 'Cho tôi biết về các dự án gần sân bay Long Thành' },
-    { label: '💰 Định giá nhà tôi', msg: 'Tôi muốn định giá bất động sản của mình' },
-    { label: '🏦 Lãi suất vay', msg: 'Lãi suất vay mua nhà hiện tại là bao nhiêu?' },
-    { label: '📋 Kiểm tra pháp lý', msg: 'Tôi muốn kiểm tra tình trạng pháp lý sổ hồng' },
+const QUICK_REPLY_KEYS = [
+    { labelKey: 'livechat.qr_apt',       msgKey: 'livechat.qr_apt_msg'       },
+    { labelKey: 'livechat.qr_longthanh', msgKey: 'livechat.qr_longthanh_msg' },
+    { labelKey: 'livechat.qr_valuate',   msgKey: 'livechat.qr_valuate_msg'   },
+    { labelKey: 'livechat.qr_rate',      msgKey: 'livechat.qr_rate_msg'      },
+    { labelKey: 'livechat.qr_legal',     msgKey: 'livechat.qr_legal_msg'     },
 ];
 
-const ACTION_BUTTONS = [
-    { label: '📅 Đặt lịch xem nhà', action: 'book_viewing' },
-    { label: '📞 Được gọi lại', action: 'callback' },
-    { label: '🏘️ Dự án nổi bật', action: 'view_projects' },
+const ACTION_BUTTON_KEYS = [
+    { labelKey: 'livechat.ab_viewing',  action: 'book_viewing'  },
+    { labelKey: 'livechat.ab_callback', action: 'callback'      },
+    { labelKey: 'livechat.ab_projects', action: 'view_projects' },
 ];
 
 // Smart Escalation — intercept before AI
@@ -519,7 +519,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                             <div className="min-w-0">
                                 <p className="font-bold text-sm leading-tight">SGS LAND AI</p>
                                 <p className="text-white/75 text-xs leading-tight">
-                                    {isHumanMode ? 'Tư vấn viên đang hỗ trợ' : 'Đang hoạt động · Phản hồi ngay'}
+                                    {isHumanMode ? t('livechat.agent_assisting') : t('livechat.ai_online')}
                                 </p>
                             </div>
                         </div>
@@ -560,12 +560,12 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                         <div className="flex-1 overflow-y-auto bg-[var(--bg-surface)] flex flex-col justify-center p-5">
                             <div className="flex items-center gap-2 mb-4">
                                 <div>
-                                    <p className="font-bold text-sm text-[var(--text-primary)]">Trợ lý AI bất động sản</p>
-                                    <p className="text-xs text-[var(--text-tertiary)]">Tư vấn miễn phí · Phản hồi ngay</p>
+                                    <p className="font-bold text-sm text-[var(--text-primary)]">{t('livechat.widget_title')}</p>
+                                    <p className="text-xs text-[var(--text-tertiary)]">{t('livechat.widget_subtitle')}</p>
                                 </div>
                             </div>
                             <p className="text-xs text-[var(--text-secondary)] mb-4 leading-relaxed">
-                                Để lại tên và số điện thoại để bắt đầu. AI sẽ tư vấn dự án, giá, pháp lý — mọi lúc, mọi nơi.
+                                {t('livechat.widget_desc')}
                             </p>
                             {startError && (
                                 <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 mb-3">{startError}</p>
@@ -600,7 +600,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                             {/* Hotline fallback */}
                             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[var(--text-tertiary)]">
                                 <PhoneCall className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                                <span>Hoặc gọi ngay: <a href={`tel:${HOTLINE}`} className="font-bold text-indigo-600 hover:underline">{HOTLINE_DISPLAY}</a></span>
+                                <span>{t('livechat.or_call')} <a href={`tel:${HOTLINE}`} className="font-bold text-indigo-600 hover:underline">{HOTLINE_DISPLAY}</a></span>
                             </div>
                         </div>
                     ) : (
@@ -630,16 +630,16 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                         animate={{ opacity: 1, y: 0 }}
                                         className="pb-1"
                                     >
-                                        <p className="text-xs text-[var(--text-tertiary)] text-center mb-2 font-medium">Bạn muốn hỏi về:</p>
+                                        <p className="text-xs text-[var(--text-tertiary)] text-center mb-2 font-medium">{t('livechat.quick_replies_title')}</p>
                                         <div className="flex flex-wrap gap-2 justify-center">
-                                            {QUICK_REPLIES.map(qr => (
+                                            {QUICK_REPLY_KEYS.map(qr => (
                                                 <button
-                                                    key={qr.label}
+                                                    key={qr.labelKey}
                                                     type="button"
-                                                    onClick={() => handleSend(qr.msg)}
+                                                    onClick={() => handleSend(t(qr.msgKey))}
                                                     className="text-xs px-3 py-1.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors font-medium whitespace-nowrap"
                                                 >
-                                                    {qr.label}
+                                                    {t(qr.labelKey)}
                                                 </button>
                                             ))}
                                         </div>
@@ -702,13 +702,13 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                     <div>
                                                         <p className="font-bold text-sm text-indigo-900">
                                                             {captureMode === 'ESCALATION'
-                                                                ? '🙋 Kết nối tư vấn viên thật'
-                                                                : '📞 Được gọi lại miễn phí'}
+                                                                ? t('livechat.escalation_title')
+                                                                : t('livechat.callback_title')}
                                                         </p>
                                                         <p className="text-xs text-indigo-600 mt-0.5">
                                                             {captureMode === 'ESCALATION'
-                                                                ? 'Tư vấn viên sẽ liên hệ bạn trong 15 phút'
-                                                                : 'Để lại số điện thoại — tư vấn viên gọi lại trong 15 phút'}
+                                                                ? t('livechat.escalation_desc')
+                                                                : t('livechat.callback_desc')}
                                                         </p>
                                                     </div>
                                                     <button
@@ -725,7 +725,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                             type="text"
                                                             value={captureData.name}
                                                             onChange={e => setCaptureData(d => ({ ...d, name: e.target.value }))}
-                                                            placeholder="Tên của bạn"
+                                                            placeholder={t('livechat.name_placeholder')}
                                                             className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
                                                             style={{ fontSize: '16px' }}
                                                         />
@@ -735,14 +735,14 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                         required
                                                         value={captureData.phone}
                                                         onChange={e => setCaptureData(d => ({ ...d, phone: e.target.value }))}
-                                                        placeholder="Số điện thoại *"
+                                                        placeholder={t('livechat.phone_required')}
                                                         className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
                                                         style={{ fontSize: '16px' }}
                                                     />
                                                     <textarea
                                                         value={captureData.notes}
                                                         onChange={e => setCaptureData(d => ({ ...d, notes: e.target.value }))}
-                                                        placeholder="Ghi chú thêm (tùy chọn)"
+                                                        placeholder={t('livechat.notes_placeholder')}
                                                         rows={2}
                                                         className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
                                                         style={{ fontSize: '16px' }}
@@ -753,8 +753,8 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                         className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
                                                         style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
                                                     >
-                                                        {captureSubmitting ? 'Đang gửi...' : (
-                                                            captureMode === 'ESCALATION' ? 'Kết nối tư vấn viên' : 'Gửi yêu cầu gọi lại'
+                                                        {captureSubmitting ? t('livechat.sending') : (
+                                                            captureMode === 'ESCALATION' ? t('livechat.connect_agent') : t('livechat.send_callback')
                                                         )}
                                                     </button>
                                                 </form>
@@ -771,16 +771,16 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                         animate={{ opacity: 1, y: 0 }}
                                         className="pt-1"
                                     >
-                                        <p className="text-xs text-[var(--text-tertiary)] text-center mb-2 font-medium">Bước tiếp theo:</p>
+                                        <p className="text-xs text-[var(--text-tertiary)] text-center mb-2 font-medium">{t('livechat.next_steps')}</p>
                                         <div className="flex flex-wrap gap-2 justify-center">
-                                            {ACTION_BUTTONS.map(btn => (
+                                            {ACTION_BUTTON_KEYS.map(btn => (
                                                 <button
                                                     key={btn.action}
                                                     type="button"
                                                     onClick={() => handleActionButton(btn.action)}
                                                     className="text-xs px-3 py-1.5 rounded-full border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors font-medium whitespace-nowrap"
                                                 >
-                                                    {btn.label}
+                                                    {t(btn.labelKey)}
                                                 </button>
                                             ))}
                                             <button
@@ -788,7 +788,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                 onClick={() => setActionBtnsDismissed(true)}
                                                 className="text-xs px-2 py-1.5 text-[var(--text-muted)] hover:text-[var(--text-tertiary)] transition-colors"
                                             >
-                                                Bỏ qua
+                                                {t('livechat.skip')}
                                             </button>
                                         </div>
                                     </motion.div>
