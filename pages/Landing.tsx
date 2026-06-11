@@ -36,10 +36,10 @@ const PROJECTS: FeaturedProject[] = [
   { slug: "aqua-city",             name: "Aqua City Novaland",       dev: "Novaland",          loc: "Biên Hòa, Đồng Nai",   scale: "1.000 ha", priceFrom: "6,5 tỷ",  type: "Biệt thự & Nhà phố", badge: "Đang bàn giao", badgeType: "sale", img: "/landing/aqua-city/hero-opt.jpg",            legal: true,  category: "villa"     },
   { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",     badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"       },
   { slug: "izumi-city",            name: "Izumi City Nam Long",      dev: "Nam Long Group",    loc: "Biên Hòa, Đồng Nai",   scale: "170 ha",   priceFrom: "1,2 tỷ",  type: "Đô thị chuẩn Nhật",  badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/izumi-city.webp",           legal: true,  category: "apt"       },
-  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "8 tỷ", type: "Đô thị biển",         badge: "Nhận đặt cọc", badgeType: "open", img: "/landing/aqua-city/hero-opt.jpg",                          category: "villa"     },
+  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "8 tỷ",    type: "Đô thị biển",        badge: "Nhận đặt cọc", badgeType: "open", img: "/images/projects/vinhomes-can-gio.webp",                   category: "villa"     },
   { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",     badge: "Còn hàng",     badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt"       },
-  { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",          badge: "Còn hàng",     badgeType: "sale", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "apt"       },
-  { slug: "van-phuc-city",         name: "Vạn Phúc City",            dev: "Vạn Phúc Group",    loc: "TP Thủ Đức",           scale: "198 ha",   priceFrom: "15 tỷ",   type: "Nhà phố & Biệt thự", badge: "Đang mở bán",  badgeType: "open", img: "/landing/legacy-66/hero.jpg",                              category: "townhouse" },
+  { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",         badge: "Còn hàng",     badgeType: "sale", img: "/images/projects/vinhomes-grand-park.webp",  legal: true,  category: "apt"       },
+  { slug: "vinhomes-hoc-mon",      name: "Vinhomes Hóc Môn",         dev: "Vinhomes",          loc: "Hóc Môn, TP.HCM",      scale: "TBA",      priceFrom: "4,5 tỷ",  type: "Đô thị mới",         badge: "Sắp mở bán",   badgeType: "open", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "villa"     },
 ];
 
 const STATS_DATA = [
@@ -53,11 +53,11 @@ const STATS_DATA = [
 const TICKER_ITEMS = [
   "Căn hộ Vinhomes Grand Park 2PN — 3,2 tỷ — Đã công chứng 10/06/2026",
   "Nhà phố Aqua City 5×20m — 5,5 tỷ — Sổ hồng trao tay 08/06/2026",
-  "Căn hộ Legacy 66 Tp.HCM — 6,1 tỷ — Pháp lý đầy đủ 05/06/2026",
+  "Nhà phố Vinhomes Hóc Môn 4×16m — 4,5 tỷ — Sổ hồng trao tay 05/06/2026",
   "Biệt thự The Global City — 15 tỷ — Đặt cọc thành công 03/06/2026",
   "Nhà phố Izumi City 4PN — 7,8 tỷ — Chốt hôm nay 01/06/2026",
   "Shophouse Masteri Cosmo Central — 12,4 tỷ — Sang tên 29/05/2026",
-  "Biệt thự Vạn Phúc ven sông — 22 tỷ — Pháp lý sạch 27/05/2026",
+  "Căn hộ Vinhomes Cần Giờ 2PN — 8,5 tỷ — Nhận đặt cọc 27/05/2026",
 ];
 
 const PLACEHOLDERS = [
@@ -1343,9 +1343,8 @@ const FOOTER_ABOUT = [
   { label: "Tin tức",             href: "/news"                },
   { label: "Tuyển dụng",          href: "/careers"             },
   { label: "Liên hệ",             href: "/contact"             },
+  { label: "BĐS TP Thủ Đức",       href: "/bat-dong-san-thu-duc"     },
   { label: "BĐS Đồng Nai",        href: "/bat-dong-san-dong-nai"   },
-  { label: "BĐS Long Thành",      href: "/bat-dong-san-long-thanh" },
-  { label: "BĐS Thủ Đức",         href: "/bat-dong-san-thu-duc"    },
   { label: "Trạng thái hệ thống", href: "/status"              },
 ];
 
@@ -1516,9 +1515,6 @@ function PublicFooter() {
               className="space-y-1 pt-4"
               style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <p className="text-xs" style={{ color: "#93A6B8" }}>GPKD: 0312960439</p>
-              <p className="text-xs" style={{ color: "#93A6B8" }}>Cấp ngày: 01/01/2018 tại TP.HCM</p>
-              <p className="text-xs" style={{ color: "#93A6B8" }}>MST: 0312960439</p>
               <p className="text-xs" style={{ color: "#93A6B8" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
             </div>
           </div>
