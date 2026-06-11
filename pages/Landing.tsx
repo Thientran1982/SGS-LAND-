@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
+import { AiChatWidget } from "../components/AiChatWidget";
 
 import {
   Sparkles, ArrowRight, Phone, Mail, MapPin, Shield, ChevronDown,
@@ -44,7 +45,7 @@ const PROJECTS: FeaturedProject[] = [
 const STATS_DATA = [
   { num: 45000, suffix: "+",        prefix: "",   vi: "BĐS quản lý",        en: "Properties"       },
   { num: 15000, suffix: "+",        prefix: "",   vi: "Môi giới đối tác",   en: "Partner Agents"   },
-  { num: 2,     suffix: " tỷ USD+", prefix: "",   vi: "Giá trị giao dịch",  en: "Transaction Value"},
+  { num: 1,     suffix: " tỷ USD+", prefix: "",   vi: "Giá trị giao dịch",  en: "Transaction Value"},
   { num: 48,    suffix: "/5",       prefix: "4.", vi: "Đánh giá khách hàng",en: "Customer Rating"  },
   { num: 5,     suffix: "%",        prefix: "±",  vi: "Sai số định giá AI", en: "AI Valuation MAPE"},
 ];
@@ -289,24 +290,22 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
             }}
           >
             <p
-              className="text-xs font-semibold mb-3 flex items-center gap-1.5"
+              className="text-xs font-semibold mb-3"
               style={{ color: "#8C6420" }}
             >
-              <Sparkles className="w-3.5 h-3.5" style={{ color: "#C8963E" }} />
               {lang === "vi"
                 ? "Hỏi AI — mô tả nhu cầu bằng ngôn ngữ tự nhiên"
                 : "Ask AI — describe your needs in natural language"}
             </p>
             <form onSubmit={submit} className="flex gap-2">
               <div className="flex-1 relative">
-                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#C8963E" }} />
                 <input
                   id="sgs-search"
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={PLACEHOLDERS[phIdx]}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
                     background: "#F8F9FB",
                     border: "1.5px solid rgba(27,58,92,0.1)",
@@ -320,12 +319,11 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
               </div>
               <button
                 type="submit"
-                className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
+                className="px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
                 style={{ background: "#C8963E", color: "#0F2740" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
                 onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
               >
-                <ArrowRight className="w-4 h-4" />
                 {lang === "vi" ? "Hỏi ngay" : "Search"}
               </button>
             </form>
@@ -901,7 +899,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
           style={{ borderTop: "1px solid rgba(27,58,92,0.08)" }}
         >
           {[
-            { icon: <Award className="w-5 h-5" />,    label: lang === "vi" ? "GPKD số 0300000000 · TP.HCM"  : "Business Reg. 0300000000 · HCMC" },
+            { icon: <Award className="w-5 h-5" />,    label: lang === "vi" ? "GPKD số 0312960439 · TP.HCM"  : "Business Reg. 0312960439 · HCMC" },
             { icon: <Building2 className="w-5 h-5" />, label: lang === "vi" ? "Thành lập từ năm 2018"         : "Established since 2018"           },
             { icon: <Clock className="w-5 h-5" />,    label: lang === "vi" ? "Hotline phản hồi < 15 phút"    : "Hotline response < 15 minutes"    },
           ].map((item, i) => (
@@ -1115,20 +1113,12 @@ function PublicHeader() {
 
           {/* ── Logo ─────────────────────────────────────── */}
           <a href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105"
-              style={{ background: "#C8963E" }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5" style={{ color: "#0F2740" }}>
-                <path
-                  d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
-                  stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"
-                  fill="currentColor" fillOpacity="0.18"
-                />
-                <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/>
-              </svg>
-            </div>
+            <img
+              src="/logo.svg"
+              alt="SGS Land"
+              className="w-9 h-9 rounded-xl transition-transform group-hover:scale-105"
+              style={{ objectFit: "contain" }}
+            />
             <div>
               <div
                 className="font-bold text-lg leading-tight"
@@ -1192,7 +1182,6 @@ function PublicHeader() {
               }}
               aria-label="Chuyển ngôn ngữ VI / EN"
             >
-              <Globe className="w-3.5 h-3.5" />
               {lang.toUpperCase()}
             </button>
 
@@ -1226,14 +1215,13 @@ function PublicHeader() {
                 (e.currentTarget as HTMLElement).style.background = "transparent";
               }}
             >
-              <User className="w-4 h-4" />
               {lang === "vi" ? "Đăng nhập" : "Sign in"}
             </a>
 
             {/* CTA — Gold */}
             <a
               href="/ai-valuation"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
                 background: "#C8963E",
                 color: "#0F2740",
@@ -1242,7 +1230,6 @@ function PublicHeader() {
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#D9A94E"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "#C8963E"}
             >
-              <Sparkles className="w-4 h-4" />
               {lang === "vi" ? "Định giá miễn phí" : "Free Valuation"}
             </a>
           </div>
@@ -1529,9 +1516,9 @@ function PublicFooter() {
               className="space-y-1 pt-4"
               style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <p className="text-xs" style={{ color: "#93A6B8" }}>GPKD: 0300000000</p>
+              <p className="text-xs" style={{ color: "#93A6B8" }}>GPKD: 0312960439</p>
               <p className="text-xs" style={{ color: "#93A6B8" }}>Cấp ngày: 01/01/2018 tại TP.HCM</p>
-              <p className="text-xs" style={{ color: "#93A6B8" }}>MST: 0300000000</p>
+              <p className="text-xs" style={{ color: "#93A6B8" }}>MST: 0312960439</p>
               <p className="text-xs" style={{ color: "#93A6B8" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
             </div>
           </div>
@@ -1566,6 +1553,7 @@ function PublicFooter() {
 function Landing({ featuredListings, stats }: Props) {
   
   const [lang, setLang] = useState<Lang>("vi");
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -1595,6 +1583,29 @@ function Landing({ featuredListings, stats }: Props) {
       <FAQSection       lang={lang} />
       <CTABanner        lang={lang} />
       <PublicFooter />
+
+      {/* ── Floating AI Chat Button ───────────────────────────────── */}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold shadow-xl transition-all hover:scale-105 active:scale-95"
+        style={{
+          background: "linear-gradient(135deg, #1B3A5C 0%, #0F2740 100%)",
+          color: "#FFFFFF",
+          boxShadow: "0 8px 32px rgba(15,39,64,0.45), 0 2px 8px rgba(200,150,62,0.25)",
+          display: chatOpen ? "none" : "flex",
+        }}
+        aria-label="Mở chat AI"
+      >
+        <Bot className="w-5 h-5" style={{ color: "#C8963E" }} />
+        <span>{lang === "vi" ? "Chat AI" : "AI Chat"}</span>
+        <span
+          className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+          style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.7)" }}
+        />
+      </button>
+
+      {/* ── AI Chat Widget ────────────────────────────────────────── */}
+      <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }
