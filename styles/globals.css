@@ -20,6 +20,34 @@ html {
 html.dark {
   color-scheme: dark;
 }
+
+/* ── SGS Land public page design tokens ──────────────────────── */
+:root {
+  --sgs-bg:           #FAFAF8;
+  --sgs-surface:      #FFFFFF;
+  --sgs-text:         #16202B;
+  --sgs-text-muted:   #5C6B7A;
+  --sgs-text-heading: #1B3A5C;
+  --sgs-primary:      #1B3A5C;
+  --sgs-accent-text:  #8C6420;
+  --sgs-subtle-bg:    #F8F9FB;
+  --sgs-border:       rgba(27,58,92,0.08);
+}
+html.dark {
+  --sgs-bg:           #091523;
+  --sgs-surface:      #0D1E2E;
+  --sgs-text:         #E4EDF5;
+  --sgs-text-muted:   #7A9BB5;
+  --sgs-text-heading: #C8D8E8;
+  --sgs-primary:      #90B8D4;
+  --sgs-accent-text:  #C8963E;
+  --sgs-subtle-bg:    #111E2E;
+  --sgs-border:       rgba(255,255,255,0.08);
+}
+html.dark body {
+  background: #091523;
+  color: #E4EDF5;
+}
 /* Global scrollbar reset — hide all scrollbars across the entire app */
 *, *::before, *::after {
   -ms-overflow-style: none;

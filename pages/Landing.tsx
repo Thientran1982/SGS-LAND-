@@ -91,7 +91,7 @@ const FILTER_TABS = [
 
 const BADGE_STYLES: Record<string, React.CSSProperties> = {
   sale: { background: "rgba(30,127,92,0.12)", color: "#1E7F5C", border: "1px solid rgba(30,127,92,0.25)" },
-  open: { background: "rgba(27,58,92,0.10)",  color: "#1B3A5C", border: "1px solid rgba(27,58,92,0.2)"  },
+  open: { background: "rgba(27,58,92,0.10)",  color: "var(--sgs-text-heading, #1B3A5C)", border: "1px solid rgba(27,58,92,0.2)"  },
   soon: { background: "rgba(200,150,62,0.12)",color: "#8C6420", border: "1px solid rgba(200,150,62,0.3)" },
 };
 
@@ -307,9 +307,9 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   placeholder={PLACEHOLDERS[phIdx]}
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
-                    background: "#F8F9FB",
+                    background: "var(--sgs-subtle-bg, #F8F9FB)",
                     border: "1.5px solid rgba(27,58,92,0.1)",
-                    color: "#16202B",
+                    color: "var(--sgs-text, #16202B)",
                     caretColor: "#C8963E",
                     fontFamily: "var(--font-be-vietnam, sans-serif)",
                   }}
@@ -334,7 +334,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   onClick={() => chip(c)}
                   className="text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
-                    background: "#F5EAD5", color: "#1B3A5C",
+                    background: "#F5EAD5", color: "var(--sgs-text-heading, #1B3A5C)",
                     border: "1px solid rgba(200,150,62,0.25)",
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = "#EAD5B0")}
@@ -506,7 +506,7 @@ function ProjectCard({ proj }: { proj: FeaturedProject }) {
           </div>
           <div
             className="flex items-center gap-1 text-xs font-medium transition-transform group-hover:translate-x-1"
-            style={{ color: "#1B3A5C" }}
+            style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}
           >
             Xem <ChevronRight className="w-3.5 h-3.5" />
           </div>
@@ -531,7 +531,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
           <a
             href="/du-an"
             className="flex items-center gap-1 text-sm font-semibold shrink-0 mb-2"
-            style={{ color: "#1B3A5C" }}
+            style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}
           >
             {lang === "vi" ? "Xem tất cả" : "View all"} <ArrowRight className="w-4 h-4" />
           </a>
@@ -622,7 +622,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
             }}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold" style={{ color: "#1B3A5C" }}>Kết quả định giá AI</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>Kết quả định giá AI</span>
               <span
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
                 style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
@@ -631,7 +631,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
               </span>
             </div>
             <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.7)" }}>
-              <p className="text-xs font-medium mb-0.5" style={{ color: "#1B3A5C" }}>Vinhomes Grand Park 2PN · 65m²</p>
+              <p className="text-xs font-medium mb-0.5" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>Vinhomes Grand Park 2PN · 65m²</p>
               <p className="text-xs" style={{ color: "#5C6B7A" }}>TP Thủ Đức · Tầng 15 · Hướng Đông Nam</p>
             </div>
             <div className="mb-5">
@@ -672,7 +672,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
                   </div>
                   <span
                     className="text-xs w-7 text-right font-medium"
-                    style={{ color: "#1B3A5C", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+                    style={{ color: "var(--sgs-text-heading, #1B3A5C)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
                   >
                     {f.score}
                   </span>
@@ -759,7 +759,7 @@ function BentoSection({ lang }: { lang: Lang }) {
             </div>
             <div>
               <h3 className="font-semibold mb-1.5"
-                style={{ color: "#1B3A5C", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+                style={{ color: "var(--sgs-text-heading, #1B3A5C)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
                 Pháp lý 2 lớp độc lập
               </h3>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: "#5C6B7A" }}>
@@ -785,7 +785,7 @@ function BentoSection({ lang }: { lang: Lang }) {
               style={{ background: "rgba(200,150,62,0.15)" }}>
               <Heart className="w-5 h-5" style={{ color: "#8C6420" }} />
             </div>
-            <h3 className="font-semibold mb-1" style={{ color: "#1B3A5C" }}>
+            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>
               {lang === "vi" ? "Miễn phí 100%" : "100% Free"}
             </h3>
             <p className="text-sm" style={{ color: "#5C6B7A" }}>
@@ -804,9 +804,9 @@ function BentoSection({ lang }: { lang: Lang }) {
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
               style={{ background: "rgba(27,58,92,0.07)" }}>
-              <Landmark className="w-5 h-5" style={{ color: "#1B3A5C" }} />
+              <Landmark className="w-5 h-5" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }} />
             </div>
-            <h3 className="font-semibold mb-1" style={{ color: "#1B3A5C" }}>
+            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>
               {lang === "vi" ? "Vay ưu đãi 12+ NH" : "12+ Bank Partners"}
             </h3>
             <p
@@ -847,13 +847,13 @@ function TrustBlock({ lang }: { lang: Lang }) {
               key={p}
               className="flex items-center justify-center px-6 py-3 rounded-xl transition-all"
               style={{
-                background: "#F8F9FB", border: "1px solid rgba(27,58,92,0.1)",
+                background: "var(--sgs-subtle-bg, #F8F9FB)", border: "1px solid rgba(27,58,92,0.1)",
                 opacity: 0.72, minWidth: "130px",
               }}
               onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
               onMouseLeave={e => (e.currentTarget.style.opacity = "0.72")}
             >
-              <span className="font-bold text-sm" style={{ color: "#1B3A5C", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+              <span className="font-bold text-sm" style={{ color: "var(--sgs-text-heading, #1B3A5C)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
                 {p}
               </span>
             </div>
@@ -863,7 +863,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
         {/* Testimonial card */}
         <div
           className="rounded-2xl p-7 flex flex-col sm:flex-row gap-6 items-start"
-          style={{ background: "#F8F9FB", border: "1px solid rgba(27,58,92,0.08)" }}
+          style={{ background: "var(--sgs-subtle-bg, #F8F9FB)", border: "1px solid rgba(27,58,92,0.08)" }}
         >
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shrink-0"
@@ -885,10 +885,10 @@ function TrustBlock({ lang }: { lang: Lang }) {
                 Giao dịch đã xác minh
               </span>
             </div>
-            <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "#16202B" }}>
+            <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "var(--sgs-text, #16202B)" }}>
               "Mua biệt thự Aqua City qua SGS LAND tháng 1/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."
             </blockquote>
-            <p className="text-sm font-semibold" style={{ color: "#1B3A5C" }}>Anh Nguyễn Văn Hải</p>
+            <p className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>Anh Nguyễn Văn Hải</p>
             <p className="text-xs" style={{ color: "#5C6B7A" }}>Khách hàng mua Aqua City · TP.HCM, tháng 1/2026</p>
           </div>
         </div>
@@ -905,7 +905,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "rgba(27,58,92,0.07)", color: "#1B3A5C" }}>
+                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, #1B3A5C)" }}>
                 {item.icon}
               </div>
               <span className="text-sm" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{item.label}</span>
@@ -1101,10 +1101,10 @@ function PublicHeader() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background:      isHero ? "transparent" : "rgba(255,255,255,0.93)",
+        background:      isHero ? "transparent" : theme === "dark" ? "rgba(9,21,35,0.95)" : "rgba(255,255,255,0.93)",
         backdropFilter:  isHero ? "none"        : "blur(14px)",
         WebkitBackdropFilter: isHero ? "none"   : "blur(14px)",
-        borderBottom:    isHero ? "none"        : "1px solid rgba(27,58,92,0.12)",
+        borderBottom:    isHero ? "none"        : theme === "dark" ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(27,58,92,0.12)",
         boxShadow:       isHero ? "none"        : "0 1px 20px rgba(15,39,64,0.08)",
       }}
     >
@@ -1123,7 +1123,7 @@ function PublicHeader() {
               <div
                 className="font-bold text-lg leading-tight"
                 style={{
-                  color: isHero ? "#FFFFFF" : "#1B3A5C",
+                  color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
                   fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
                   letterSpacing: "-0.02em",
                 }}
@@ -1133,7 +1133,7 @@ function PublicHeader() {
               <div
                 className="text-[9px] font-semibold uppercase hidden sm:block"
                 style={{
-                  color: isHero ? "rgba(200,150,62,0.85)" : "#8C6420",
+                  color: isHero ? "rgba(200,150,62,0.85)" : theme === "dark" ? "#C8963E" : "#8C6420",
                   letterSpacing: "0.2em",
                 }}
               >
@@ -1150,18 +1150,18 @@ function PublicHeader() {
                 href={link.href}
                 className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
-                  color: isHero ? "rgba(255,255,255,0.85)" : "#1B3A5C",
+                  color: isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "#1B3A5C",
                   fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
                 }}
                 onMouseEnter={e => {
                   const el = e.currentTarget as HTMLElement;
-                  el.style.background = isHero ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.06)";
-                  el.style.color = isHero ? "#FFFFFF" : "#0F2740";
+                  el.style.background = isHero ? "rgba(255,255,255,0.1)" : theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(27,58,92,0.06)";
+                  el.style.color = isHero ? "#FFFFFF" : theme === "dark" ? "#FFFFFF" : "#0F2740";
                 }}
                 onMouseLeave={e => {
                   const el = e.currentTarget as HTMLElement;
                   el.style.background = "transparent";
-                  el.style.color = isHero ? "rgba(255,255,255,0.85)" : "#1B3A5C";
+                  el.style.color = isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "#1B3A5C";
                 }}
               >
                 {lang === "vi" ? link.vi : link.en}
@@ -1176,9 +1176,9 @@ function PublicHeader() {
               onClick={toggleLang}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
               style={{
-                background: isHero ? "rgba(255,255,255,0.12)" : "rgba(27,58,92,0.07)",
-                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "rgba(27,58,92,0.18)"}`,
-                color: isHero ? "#FFFFFF" : "#1B3A5C",
+                background: isHero ? "rgba(255,255,255,0.12)" : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)",
+                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`,
+                color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
               }}
               aria-label="Chuyển ngôn ngữ VI / EN"
             >
@@ -1190,9 +1190,9 @@ function PublicHeader() {
               onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
               style={{
-                background: isHero ? "rgba(255,255,255,0.12)" : "rgba(27,58,92,0.07)",
-                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : "rgba(27,58,92,0.18)"}`,
-                color: isHero ? "#FFFFFF" : "#1B3A5C",
+                background: isHero ? "rgba(255,255,255,0.12)" : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)",
+                border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`,
+                color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
               }}
               aria-label="Chuyển chế độ sáng / tối"
             >
@@ -1204,8 +1204,8 @@ function PublicHeader() {
               href="/login"
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
-                border: `1.5px solid ${isHero ? "rgba(255,255,255,0.45)" : "#1B3A5C"}`,
-                color: isHero ? "rgba(255,255,255,0.92)" : "#1B3A5C",
+                border: `1.5px solid ${isHero ? "rgba(255,255,255,0.45)" : theme === "dark" ? "rgba(255,255,255,0.3)" : "#1B3A5C"}`,
+                color: isHero ? "rgba(255,255,255,0.92)" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement;
@@ -1238,7 +1238,7 @@ function PublicHeader() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="lg:hidden p-2 rounded-lg transition-colors"
-            style={{ color: isHero ? "#FFFFFF" : "#1B3A5C" }}
+            style={{ color: isHero ? "#FFFFFF" : theme === "dark" ? "#C8D8E8" : "#1B3A5C" }}
             aria-label="Mở menu"
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -1251,10 +1251,10 @@ function PublicHeader() {
         <div
           className="lg:hidden"
           style={{
-            background: "rgba(255,255,255,0.97)",
+            background: theme === "dark" ? "rgba(9,21,35,0.97)" : "rgba(255,255,255,0.97)",
             backdropFilter: "blur(14px)",
             WebkitBackdropFilter: "blur(14px)",
-            borderBottom: "1px solid rgba(27,58,92,0.1)",
+            borderBottom: theme === "dark" ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(27,58,92,0.1)",
           }}
         >
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
@@ -1264,7 +1264,7 @@ function PublicHeader() {
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-50"
-                style={{ color: "#1B3A5C" }}
+                style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}
               >
                 {lang === "vi" ? link.vi : link.en}
               </a>
@@ -1276,7 +1276,7 @@ function PublicHeader() {
               <button
                 onClick={toggleLang}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "rgba(27,58,92,0.07)", color: "#1B3A5C" }}
+                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, #1B3A5C)" }}
                 aria-label="Chuyển ngôn ngữ"
               >
                 <Globe className="w-3.5 h-3.5" /> {lang.toUpperCase()}
@@ -1284,7 +1284,7 @@ function PublicHeader() {
               <button
                 onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "rgba(27,58,92,0.07)", color: "#1B3A5C" }}
+                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, #1B3A5C)" }}
                 aria-label="Chuyển chế độ sáng tối"
               >
                 {theme === "light" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
@@ -1296,7 +1296,7 @@ function PublicHeader() {
                 href="/login"
                 onClick={() => setMenuOpen(false)}
                 className="flex-1 text-center text-sm font-medium py-2.5 rounded-lg transition-colors"
-                style={{ border: "1.5px solid #1B3A5C", color: "#1B3A5C" }}
+                style={{ border: `1.5px solid var(--sgs-text-heading, #1B3A5C)`, color: "var(--sgs-text-heading, #1B3A5C)" }}
               >
                 {lang === "vi" ? "Đăng nhập" : "Sign in"}
               </a>
@@ -1527,7 +1527,7 @@ function PublicFooter() {
         {/* ── Bottom bar ────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5">
           <p className="text-xs" style={{ color: "#93A6B8" }}>
-            © {year} Công ty Cổ phần SGS Land. GPKD số: 0312960439 | Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.
+            © {year} Công ty TNHH SGS Land. GPKD số: 0312960439 | Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
             {LEGAL_LINKS.map((link) => (

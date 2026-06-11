@@ -1,6 +1,6 @@
 (function () {
   try {
-    var localTheme = localStorage.getItem('sgs_theme');
+    var localTheme = localStorage.getItem('sgs-theme');
     var sysTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     var theme = (localTheme === 'dark' || localTheme === 'light') ? localTheme : sysTheme;
     if (theme === 'dark') {
