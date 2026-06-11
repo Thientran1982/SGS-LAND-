@@ -52,19 +52,19 @@ const STATS_DATA = [
 
 const TICKER_ITEMS = [
   "Căn hộ Vinhomes Grand Park 2PN — 3,2 tỷ — Đã công chứng 10/06/2026",
-  "Nhà phố Aqua City 5×20m — 8,5 tỷ — Sổ hồng trao tay 08/06/2026",
-  "Đất nền Legacy 66 Long An — 2,1 tỷ — Pháp lý đầy đủ 05/06/2026",
+  "Nhà phố Aqua City 5×20m — 5,5 tỷ — Sổ hồng trao tay 08/06/2026",
+  "Căn hộ Legacy 66 Tp.HCM — 6,1 tỷ — Pháp lý đầy đủ 05/06/2026",
   "Biệt thự The Global City — 15 tỷ — Đặt cọc thành công 03/06/2026",
-  "Căn hộ Izumi City 3PN — 4,8 tỷ — Chốt hôm nay 01/06/2026",
-  "Shophouse Masteri Cosmo Central — 6,43 tỷ — Sang tên 29/05/2026",
-  "Biệt thự Vạn Phúc ven sông — 18 tỷ — Pháp lý sạch 27/05/2026",
+  "Nhà phố Izumi City 4PN — 7,8 tỷ — Chốt hôm nay 01/06/2026",
+  "Shophouse Masteri Cosmo Central — 12,4 tỷ — Sang tên 29/05/2026",
+  "Biệt thự Vạn Phúc ven sông — 22 tỷ — Pháp lý sạch 27/05/2026",
 ];
 
 const PLACEHOLDERS = [
   "Căn hộ 2PN gần Metro số 1, dưới 3 tỷ…",
   "Biệt thự Aqua City có sổ hồng riêng…",
-  "Đất nền Biên Hòa pháp lý sạch dưới 2 tỷ…",
-  "Vay 70% mua Grand Park, lãi suất thấp nhất…",
+  "Căn hộ Masteri Cosmo Central pháp lý sạch dưới 7 tỷ…",
+  "Vay 70% mua Vinhomes Hóc Môn, lãi suất thấp nhất…",
 ];
 
 const QUICK_CHIPS = [
@@ -419,7 +419,7 @@ function LegalTicker() {
     >
       <div
         className="flex whitespace-nowrap"
-        style={{ animation: "ticker-scroll 20s linear infinite" }}
+        style={{ animation: "ticker-scroll 55s linear infinite" }}
         onMouseEnter={e => (e.currentTarget.style.animationPlayState = "paused")}
         onMouseLeave={e => (e.currentTarget.style.animationPlayState = "running")}
       >
@@ -1554,6 +1554,7 @@ function Landing({ featuredListings, stats }: Props) {
   
   const [lang, setLang] = useState<Lang>("vi");
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatQuery, setChatQuery] = useState("");
 
   useEffect(() => {
     try {
@@ -1566,8 +1567,8 @@ function Landing({ featuredListings, stats }: Props) {
   }, []);
 
   const handleSearch = (q: string) => {
-    if (q.trim()) window.location.href = `/marketplace?q=${encodeURIComponent(q.trim())}`;
-    else window.location.href = "/marketplace";
+    setChatQuery(q.trim());
+    setChatOpen(true);
   };
 
   return (
@@ -1605,7 +1606,7 @@ function Landing({ featuredListings, stats }: Props) {
       </button>
 
       {/* ── AI Chat Widget ────────────────────────────────────────── */}
-      <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} initialQuery={chatQuery} />
     </div>
   );
 }

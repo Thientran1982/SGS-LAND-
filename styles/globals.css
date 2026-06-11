@@ -48,6 +48,12 @@ html.dark body {
   background: #091523;
   color: #E4EDF5;
 }
+
+/* ── Legal Ticker scroll animation ───────────────────────────── */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
 /* Global scrollbar reset — hide all scrollbars across the entire app */
 *, *::before, *::after {
   -ms-overflow-style: none;

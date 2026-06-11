@@ -163,10 +163,11 @@ function isSysMsg(msg: Interaction): boolean {
 interface AiChatWidgetProps {
     isOpen: boolean;
     onClose: () => void;
+    initialQuery?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
+export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProps) {
     const { t, language } = useTranslation();
     const { socket } = useSocket();
 
@@ -226,6 +227,14 @@ export function AiChatWidget({ isOpen, onClose }: AiChatWidgetProps) {
     useEffect(() => {
         if (isOpen && !wasEverOpen) setWasEverOpen(true);
     }, [isOpen, wasEverOpen]);
+
+    // ── Pre-fill input from Hero search query ──
+    useEffect(() => {
+        if (isOpen && initialQuery && initialQuery.trim()) {
+            setInput(initialQuery.trim());
+            setTimeout(() => inputRef.current?.focus(), 150);
+        }
+    }, [isOpen, initialQuery]);
 
     // ── Socket: join room & handle events ──
     useEffect(() => {
