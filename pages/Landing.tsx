@@ -182,7 +182,7 @@ function SectionHeading({ title, subtitle, center = false }: {
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 1 — HERO
 // ═══════════════════════════════════════════════════════════════
-function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: Lang }) {
+function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void; lang: Lang; isCrm?: boolean }) {
   const [query, setQuery]           = useState("");
   const [phIdx, setPhIdx]           = useState(0);
   const [visible, setVisible]       = useState(false);
@@ -204,7 +204,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
       className="relative flex flex-col justify-center overflow-hidden"
       style={{
         minHeight: "88vh",
-        paddingTop: "80px",
+        paddingTop: isCrm ? "24px" : "80px",
         background: "linear-gradient(175deg, var(--sgs-hero-deep) 0%, var(--sgs-primary-deep) 45%, var(--sgs-primary) 80%, rgba(200,150,62,0.18) 100%)",
       }}
     >
@@ -1522,6 +1522,7 @@ function Landing({ featuredListings, stats }: Props) {
   const [lang, setLang] = useState<Lang>("vi");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatQuery, setChatQuery] = useState("");
+  const isCrm = typeof window !== "undefined" && !!localStorage.getItem("sgs_auth_cached");
   useEffect(() => {
     try {
       const saved = localStorage.getItem("sgs-lang") as Lang | null;
@@ -1537,8 +1538,8 @@ function Landing({ featuredListings, stats }: Props) {
   };
   return (
     <div className="flex flex-col overflow-x-hidden">
-      <PublicHeader />
-      <HeroSection   onSearch={handleSearch} lang={lang} />
+      {!isCrm && <PublicHeader />}
+      <HeroSection   onSearch={handleSearch} lang={lang} isCrm={isCrm} />
       <StatsBar      lang={lang} />
       <LegalTicker   lang={lang} />
       <ProjectsSection  lang={lang} />

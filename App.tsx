@@ -506,7 +506,7 @@ const AppShell: React.FC = () => {
     // This eliminates the extra render cycle that useEffect caused, removing the 1-frame
     // flash before the new page div appeared in the DOM.
     if (authState === 'AUTH' && route.base && PAGE_REGISTRY[route.base] &&
-        !PUBLIC_ROUTES.has(route.base)) {
+        (!PUBLIC_ROUTES.has(route.base) || route.base === ROUTES.LANDING)) {
         mountedPrivateRoutesRef.current.add(route.base);
     }
     const mountedPrivateRoutes = mountedPrivateRoutesRef.current;
@@ -743,7 +743,7 @@ const AppShell: React.FC = () => {
         return SmallSpinner;
     }
     // 2. Public Pages Routing (Guest or Auth user on public page)
-    if (authState === 'GUEST' || PUBLIC_ROUTES.has(route.base)) {
+    if (authState === 'GUEST' || (PUBLIC_ROUTES.has(route.base) && authState === 'AUTH' && route.base !== ROUTES.LANDING)) {
         
         // If unauthenticated on a private route, redirect directly to login
         if (authState === 'GUEST' && !PUBLIC_ROUTES.has(route.base) && route.base !== '') {
