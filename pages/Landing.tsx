@@ -414,7 +414,8 @@ function LegalTicker({ lang }: { lang: Lang }) {
         background: "var(--sgs-primary-deep)",
         borderTop: "1px solid rgba(200,150,62,0.15)",
         borderBottom: "1px solid rgba(200,150,62,0.15)",
-        padding: "9px 0",
+        padding: "12px 0",
+        isolation: "isolate",
       }}
     >
       <div
