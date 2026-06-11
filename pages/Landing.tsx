@@ -1338,6 +1338,7 @@ const FOOTER_SUPPORT = [
   { label: "CRM Bất Động Sản",       href: "/crm-platform"         },
   { label: "Live Chat AI",           href: "/livechat"             },
   { label: "Trung tâm hỗ trợ",       href: "/help-center"          },
+  { label: "Hướng dẫn sử dụng",     href: "/huong-dan-su-dung"    },
   { label: "Chính sách bảo mật",     href: "/privacy-policy"       },
   { label: "Điều khoản sử dụng",     href: "/terms-of-service"     },
   { label: "Cookie",                 href: "/cookie-settings"      },
