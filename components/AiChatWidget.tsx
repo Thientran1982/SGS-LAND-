@@ -559,10 +559,6 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                         /* Registration form */
                         <div className="flex-1 overflow-y-auto bg-[var(--bg-surface)] flex flex-col justify-center p-5">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0"
-                                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
-                                    <Sparkles className="w-5 h-5" />
-                                </div>
                                 <div>
                                     <p className="font-bold text-sm text-[var(--text-primary)]">Trợ lý AI bất động sản</p>
                                     <p className="text-xs text-[var(--text-tertiary)]">Tư vấn miễn phí · Phản hồi ngay</p>
@@ -581,7 +577,8 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                     value={name}
                                     onChange={e => setName(e.target.value)}
                                     placeholder={t('livechat.name_placeholder')}
-                                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    style={{ fontSize: '16px' }}
                                 />
                                 <input
                                     type="tel"
@@ -589,7 +586,8 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('livechat.phone_placeholder')}
-                                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    style={{ fontSize: '16px' }}
                                 />
                                 <button
                                     type="submit"
@@ -728,7 +726,8 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                             value={captureData.name}
                                                             onChange={e => setCaptureData(d => ({ ...d, name: e.target.value }))}
                                                             placeholder="Tên của bạn"
-                                                            className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                            className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                            style={{ fontSize: '16px' }}
                                                         />
                                                     )}
                                                     <input
@@ -737,14 +736,16 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                         value={captureData.phone}
                                                         onChange={e => setCaptureData(d => ({ ...d, phone: e.target.value }))}
                                                         placeholder="Số điện thoại *"
-                                                        className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                        className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                        style={{ fontSize: '16px' }}
                                                     />
                                                     <textarea
                                                         value={captureData.notes}
                                                         onChange={e => setCaptureData(d => ({ ...d, notes: e.target.value }))}
                                                         placeholder="Ghi chú thêm (tùy chọn)"
                                                         rows={2}
-                                                        className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
+                                                        className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
+                                                        style={{ fontSize: '16px' }}
                                                     />
                                                     <button
                                                         type="submit"
