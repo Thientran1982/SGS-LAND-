@@ -1317,13 +1317,18 @@ function PublicHeader() {
 }
 
 const FOOTER_PROJECTS = [
-  { label: "Aqua City Novaland",      href: "/du-an/aqua-city"           },
-  { label: "The Global City",         href: "/du-an/the-global-city"     },
-  { label: "Izumi City Nam Long",     href: "/du-an/izumi-city"          },
-  { label: "Vinhomes Grand Park",     href: "/du-an/vinhomes-grand-park" },
-  { label: "Vinhomes Cần Giờ",        href: "/du-an/vinhomes-can-gio"    },
-  { label: "Masteri Cosmo Central",   href: "/p/mcc"                     },
-  { label: "Vinhomes Hóc Môn",        href: "/du-an/vinhomes-hoc-mon"    },
+  { label: "Aqua City Novaland",         href: "/du-an/aqua-city"                  },
+  { label: "The Global City",            href: "/du-an/the-global-city"            },
+  { label: "Izumi City Nam Long",        href: "/du-an/izumi-city"                 },
+  { label: "Vinhomes Grand Park",        href: "/du-an/vinhomes-grand-park"        },
+  { label: "Vinhomes Cần Giờ",           href: "/du-an/vinhomes-can-gio"           },
+  { label: "Masteri Cosmo Central",      href: "/du-an/masteri-cosmo-central"      },
+  { label: "Vinhomes Hóc Môn",           href: "/du-an/vinhomes-hoc-mon"           },
+  { label: "Diamond Sky Vạn Phúc City",  href: "/du-an/diamond-sky-van-phuc-city"  },
+  { label: "Legacy 66",                  href: "/du-an/legacy-66"                  },
+  { label: "Grand Manhattan Novaland",   href: "/du-an/grand-manhattan-novaland"   },
+  { label: "Khu đô thị Thủ Thiêm",       href: "/du-an/thu-thiem"                  },
+  { label: "Sơn Kim Land",               href: "/du-an/son-kim-land"               },
 ];
 
 const FOOTER_SUPPORT = [
@@ -1343,9 +1348,14 @@ const FOOTER_ABOUT = [
   { label: "Tin tức",             href: "/news"                },
   { label: "Tuyển dụng",          href: "/careers"             },
   { label: "Liên hệ",             href: "/contact"             },
-  { label: "BĐS TP Thủ Đức",       href: "/bat-dong-san-thu-duc"     },
-  { label: "BĐS Đồng Nai",        href: "/bat-dong-san-dong-nai"   },
-  { label: "Trạng thái hệ thống", href: "/status"              },
+  { label: "BĐS Thủ Đức",          href: "/bat-dong-san-thu-duc"    },
+  { label: "BĐS Long Thành",       href: "/bat-dong-san-long-thanh" },
+  { label: "BĐS Đồng Nai",         href: "/bat-dong-san-dong-nai"   },
+  { label: "BĐS Bình Thạnh",       href: "/bat-dong-san-binh-thanh" },
+  { label: "BĐS Quận 7",           href: "/bat-dong-san-quan-7"     },
+  { label: "BĐS Long An",          href: "/bat-dong-san-long-an"    },
+  { label: "Nhà phố Trung Tâm",    href: "/nha-pho-trung-tam"       },
+  { label: "Trạng thái hệ thống",  href: "/status"                  },
 ];
 
 const LEGAL_LINKS = [
