@@ -37,7 +37,7 @@ import { evictPublicProjectCacheByTenant } from '../services/publicProjectCache'
 import { writeAuditLog } from '../middleware/auditLog';
 
 const DEFAULT_CONFIG = {
-  primaryColor: '#4F46E5',
+  primaryColor: '#1B3A5C',
   features: { enableZalo: true, maxUsers: 100 },
 };
 

@@ -14,12 +14,12 @@ interface Props {
 const STATUS_BG: Record<string, string> = {
   AVAILABLE: '#ECFDF5',
   BOOKING: '#E0F2FE',
-  OPENING: '#EEF2FF',
+  OPENING: '#E8EEF5',
 };
 const STATUS_FG: Record<string, string> = {
   AVAILABLE: '#047857',
   BOOKING: '#0369A1',
-  OPENING: '#4338CA',
+  OPENING: '#0F2740',
 };
 const PLACEHOLDER = 'https://placehold.co/800x600?text=No+Image';
 

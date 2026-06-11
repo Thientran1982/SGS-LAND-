@@ -83,7 +83,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
 const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }: { health: SystemHealth, theme: any, onBackup: () => void, onRestore: () => void, isRestoring: boolean, t: any }) => {
     const statusColor = health.status === 'HEALTHY' ? 'text-emerald-500' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
     const borderColor = health.status === 'HEALTHY' ? 'border-emerald-500' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
-    const primaryColor = theme?.colors?.primary || '#4F46E5';
+    const primaryColor = theme?.colors?.primary || '#1B3A5C';
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
             <div className={`bg-[var(--bg-surface)] p-8 rounded-[32px] border-2 ${borderColor} shadow-lg relative overflow-hidden`}>

@@ -109,8 +109,8 @@ const FILTER_TABS = [
 ];
 const BADGE_STYLES: Record<string, React.CSSProperties> = {
   sale: { background: "rgba(30,127,92,0.12)", color: "#1E7F5C", border: "1px solid rgba(30,127,92,0.25)" },
-  open: { background: "rgba(27,58,92,0.10)",  color: "var(--sgs-text-heading, #1B3A5C)", border: "1px solid rgba(27,58,92,0.2)"  },
-  soon: { background: "rgba(200,150,62,0.12)",color: "#8C6420", border: "1px solid rgba(200,150,62,0.3)" },
+  open: { background: "rgba(27,58,92,0.10)",  color: "var(--sgs-text-heading, var(--sgs-primary))", border: "1px solid rgba(27,58,92,0.2)"  },
+  soon: { background: "rgba(200,150,62,0.12)",color: "var(--sgs-accent-text)", border: "1px solid rgba(200,150,62,0.3)" },
 };
 // ═══════════════════════════════════════════════════════════════
 //  HOOKS
@@ -161,7 +161,7 @@ function SectionHeading({ title, subtitle, center = false }: {
         className="text-2xl sm:text-3xl font-semibold leading-tight"
         style={{
           fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
-          color: "var(--sgs-primary, #1B3A5C)",
+          color: "var(--sgs-primary, var(--sgs-primary))",
           letterSpacing: "-0.02em",
         }}
       >
@@ -169,7 +169,7 @@ function SectionHeading({ title, subtitle, center = false }: {
       </h2>
       <div
         className={center ? "mx-auto" : ""}
-        style={{ width: "48px", height: "3px", background: "#C8963E", borderRadius: "2px", marginTop: "10px", marginBottom: subtitle ? "12px" : 0 }}
+        style={{ width: "48px", height: "3px", background: "var(--sgs-accent)", borderRadius: "2px", marginTop: "10px", marginBottom: subtitle ? "12px" : 0 }}
       />
       {subtitle && (
         <p className="text-base mt-2" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
@@ -205,7 +205,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
       style={{
         minHeight: "88vh",
         paddingTop: "80px",
-        background: "linear-gradient(175deg, #0A1E33 0%, #0F2740 45%, #1B3A5C 80%, rgba(200,150,62,0.18) 100%)",
+        background: "linear-gradient(175deg, var(--sgs-hero-deep) 0%, var(--sgs-primary-deep) 45%, var(--sgs-primary) 80%, rgba(200,150,62,0.18) 100%)",
       }}
     >
       {/* City silhouette */}
@@ -213,7 +213,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
         <svg viewBox="0 0 1440 180" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg"
           style={{ width: "100%", height: "100%", opacity: 0.10 }}>
           <path d="M0,180 L0,120 L40,120 L40,90 L60,90 L60,120 L80,120 L80,70 L100,70 L100,55 L120,55 L120,70 L140,70 L140,120 L160,120 L160,80 L180,80 L180,45 L190,45 L190,25 L200,25 L200,45 L210,45 L210,80 L240,80 L240,100 L260,100 L260,60 L280,60 L280,35 L300,35 L300,18 L310,18 L310,8 L320,8 L320,18 L330,18 L330,35 L360,35 L360,60 L380,60 L380,95 L400,95 L400,70 L420,70 L420,45 L440,45 L440,70 L460,70 L460,95 L480,95 L480,120 L500,120 L500,90 L520,90 L520,62 L540,62 L540,90 L560,90 L560,115 L580,115 L580,78 L600,78 L600,52 L620,52 L620,35 L640,35 L640,52 L660,52 L660,78 L680,78 L680,108 L720,108 L720,135 L760,135 L760,108 L780,108 L780,80 L800,80 L800,62 L820,62 L820,80 L840,80 L840,108 L860,108 L860,80 L880,80 L880,52 L900,52 L900,35 L920,35 L920,52 L940,52 L940,80 L960,80 L960,108 L1000,108 L1000,80 L1020,80 L1020,62 L1040,62 L1040,45 L1060,45 L1060,62 L1080,62 L1080,80 L1100,80 L1100,108 L1120,108 L1120,70 L1140,70 L1140,45 L1160,45 L1160,25 L1180,25 L1180,45 L1200,45 L1200,70 L1240,70 L1240,98 L1260,98 L1260,70 L1280,70 L1280,90 L1300,90 L1300,118 L1320,118 L1320,98 L1340,98 L1340,120 L1360,120 L1360,100 L1400,100 L1400,120 L1440,120 L1440,180 Z"
-            fill="#C8963E"/>
+            fill="var(--sgs-accent)"/>
         </svg>
       </div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
@@ -296,7 +296,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
           >
             <p
               className="text-xs font-semibold mb-3"
-              style={{ color: "#8C6420" }}
+              style={{ color: "var(--sgs-accent-text)" }}
             >
               {lang === "vi"
                 ? "Hỏi AI — mô tả nhu cầu bằng ngôn ngữ tự nhiên"
@@ -314,8 +314,8 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   style={{
                     background: "var(--sgs-subtle-bg, #F8F9FB)",
                     border: "1.5px solid rgba(27,58,92,0.1)",
-                    color: "var(--sgs-text, #16202B)",
-                    caretColor: "#C8963E",
+                    color: "var(--sgs-text, var(--sgs-text))",
+                    caretColor: "var(--sgs-accent)",
                     fontFamily: "var(--font-be-vietnam, sans-serif)",
                   }}
                   onFocus={e => (e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)")}
@@ -325,9 +325,9 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
               <button
                 type="submit"
                 className="px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
-                style={{ background: "#C8963E", color: "#0F2740" }}
+                style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+                onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
               >
                 {lang === "vi" ? "Hỏi ngay" : "Search"}
               </button>
@@ -339,7 +339,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   onClick={() => chip(c[lang])}
                   className="text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
-                    background: "#F5EAD5", color: "var(--sgs-text-heading, #1B3A5C)",
+                    background: "#F5EAD5", color: "var(--sgs-text-heading, var(--sgs-primary))",
                     border: "1px solid rgba(200,150,62,0.25)",
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = "#EAD5B0")}
@@ -368,7 +368,7 @@ function StatItem({ num, suffix, prefix, label }: { num: number; suffix: string;
         className="text-2xl sm:text-3xl font-bold mb-1 tabular-nums"
         style={{
           fontFamily: "var(--font-ibm-plex-mono, var(--font-jetbrains-mono), monospace)",
-          color: "var(--sgs-primary, #1B3A5C)",
+          color: "var(--sgs-primary, var(--sgs-primary))",
         }}
       >
         {prefix}{fmt(count)}{suffix}
@@ -411,7 +411,7 @@ function LegalTicker({ lang }: { lang: Lang }) {
     <div
       className="overflow-hidden"
       style={{
-        background: "#0F2740",
+        background: "var(--sgs-primary-deep)",
         borderTop: "1px solid rgba(200,150,62,0.15)",
         borderBottom: "1px solid rgba(200,150,62,0.15)",
         padding: "9px 0",
@@ -433,7 +433,7 @@ function LegalTicker({ lang }: { lang: Lang }) {
               fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
             }}
           >
-            <span style={{ color: "#C8963E", fontSize: "8px" }}>●</span>
+            <span style={{ color: "var(--sgs-accent)", fontSize: "8px" }}>●</span>
             <span style={{ color: "#1E7F5C", fontWeight: 600 }}>✓</span>
             {item[lang]}
           </span>
@@ -461,7 +461,7 @@ function ProjectCard({ proj, lang }: { proj: FeaturedProject; lang: Lang }) {
     >
       <div
         className="relative overflow-hidden"
-        style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, #0F2740, #1B3A5C)" }}
+        style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, var(--sgs-primary-deep), var(--sgs-primary))" }}
       >
         <img           src={proj.img} alt={proj.name}  loading="lazy"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -484,10 +484,10 @@ function ProjectCard({ proj, lang }: { proj: FeaturedProject; lang: Lang }) {
         )}
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <span className="text-xs font-medium mb-1" style={{ color: "#8C6420" }}>{lang === "vi" ? proj.type : proj.type_en}</span>
+        <span className="text-xs font-medium mb-1" style={{ color: "var(--sgs-accent-text)" }}>{lang === "vi" ? proj.type : proj.type_en}</span>
         <h3
           className="font-semibold text-sm mb-1 leading-snug"
-          style={{ color: "var(--sgs-text, #16202B)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
+          style={{ color: "var(--sgs-text, var(--sgs-text))", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
         >
           {proj.name}
         </h3>
@@ -499,14 +499,14 @@ function ProjectCard({ proj, lang }: { proj: FeaturedProject; lang: Lang }) {
             <div className="text-[11px] mb-0.5" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{lang === "vi" ? `Quy mô ${proj.scale}` : `Scale: ${proj.scale}`}</div>
             <div
               className="text-sm font-bold tabular-nums"
-              style={{ color: "var(--sgs-accent-text, #8C6420)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+              style={{ color: "var(--sgs-accent-text, var(--sgs-accent-text))", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
             >
               {lang === "vi" ? `Từ ${proj.priceFrom}` : `From ${proj.priceFrom}`}
             </div>
           </div>
           <div
             className="flex items-center gap-1 text-xs font-medium transition-transform group-hover:translate-x-1"
-            style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}
+            style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}
           >
             {lang === "vi" ? "Xem" : "View"} <ChevronRight className="w-3.5 h-3.5" />
           </div>
@@ -530,7 +530,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
           <a
             href="/du-an"
             className="flex items-center gap-1 text-sm font-semibold shrink-0 mb-2"
-            style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}
+            style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}
           >
             {lang === "vi" ? "Xem tất cả" : "View all"} <ArrowRight className="w-4 h-4" />
           </a>
@@ -544,9 +544,9 @@ function ProjectsSection({ lang }: { lang: Lang }) {
               onClick={() => setFilter(tab.id)}
               className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
               style={{
-                background: filter === tab.id ? "#1B3A5C" : "var(--sgs-surface, #FFFFFF)",
-                color: filter === tab.id ? "#FFFFFF" : "#1B3A5C",
-                border: filter === tab.id ? "1px solid #1B3A5C" : "1px solid rgba(27,58,92,0.18)",
+                background: filter === tab.id ? "var(--sgs-primary)" : "var(--sgs-surface, #FFFFFF)",
+                color: filter === tab.id ? "#FFFFFF" : "var(--sgs-primary)",
+                border: filter === tab.id ? "1px solid var(--sgs-primary)" : "1px solid rgba(27,58,92,0.18)",
               }}
             >
               {lang === "vi" ? tab.vi : tab.en}
@@ -599,9 +599,9 @@ function ValuationSection({ lang }: { lang: Lang }) {
             <a
               href="/ai-valuation"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all"
-              style={{ background: "#C8963E", color: "#0F2740" }}
+              style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
               onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
-              onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+              onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
             >
               <Sparkles className="w-4 h-4" />
               {lang === "vi" ? "Định giá ngay — Miễn phí" : "Valuate for Free"}
@@ -618,7 +618,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
             }}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>{lang === "vi" ? "Kết quả định giá AI" : "AI Valuation Result"}</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}>{lang === "vi" ? "Kết quả định giá AI" : "AI Valuation Result"}</span>
               <span
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
                 style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
@@ -627,7 +627,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
               </span>
             </div>
             <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.7)" }}>
-              <p className="text-xs font-medium mb-0.5" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>Vinhomes Grand Park 2PN · 65m²</p>
+              <p className="text-xs font-medium mb-0.5" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}>Vinhomes Grand Park 2PN · 65m²</p>
               <p className="text-xs" style={{ color: "#5C6B7A" }}>{lang === "vi" ? "TP Thủ Đức · Tầng 15 · Hướng Đông Nam" : "Thu Duc City · Floor 15 · SE Facing"}</p>
             </div>
             <div className="mb-5">
@@ -635,7 +635,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
                 <span>2,85 tỷ</span>
                 <span
                   className="text-sm font-bold"
-                  style={{ color: "#8C6420", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+                  style={{ color: "var(--sgs-accent-text)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
                 >
                   3,18 tỷ ★
                 </span>
@@ -644,11 +644,11 @@ function ValuationSection({ lang }: { lang: Lang }) {
               <div className="relative h-2 rounded-full" style={{ background: "#E2E8F0" }}>
                 <div
                   className="absolute top-0 left-[22%] right-[22%] h-full rounded-full"
-                  style={{ background: "linear-gradient(90deg, rgba(200,150,62,0.25), #C8963E, rgba(200,150,62,0.25))" }}
+                  style={{ background: "linear-gradient(90deg, rgba(200,150,62,0.25), var(--sgs-accent), rgba(200,150,62,0.25))" }}
                 />
                 <div
                   className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white"
-                  style={{ left: "calc(50% - 8px)", background: "#C8963E", boxShadow: "0 2px 6px rgba(200,150,62,0.5)" }}
+                  style={{ left: "calc(50% - 8px)", background: "var(--sgs-accent)", boxShadow: "0 2px 6px rgba(200,150,62,0.5)" }}
                 />
               </div>
             </div>
@@ -668,12 +668,12 @@ function ValuationSection({ lang }: { lang: Lang }) {
                   <span className="text-xs shrink-0 w-36" style={{ color: "#5C6B7A" }}>{f.label}</span>
                   <div className="flex-1 h-1.5 rounded-full" style={{ background: "#E2E8F0" }}>
                     <div className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${f.score}%`, background: f.score > 85 ? "#1E7F5C" : "#C8963E" }}
+                      style={{ width: `${f.score}%`, background: f.score > 85 ? "#1E7F5C" : "var(--sgs-accent)" }}
                     />
                   </div>
                   <span
                     className="text-xs w-7 text-right font-medium"
-                    style={{ color: "var(--sgs-text-heading, #1B3A5C)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+                    style={{ color: "var(--sgs-text-heading, var(--sgs-primary))", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
                   >
                     {f.score}
                   </span>
@@ -707,7 +707,7 @@ function BentoSection({ lang }: { lang: Lang }) {
           <div
             className="sm:col-span-2 lg:row-span-2 rounded-2xl p-7 flex flex-col"
             style={{
-              background: "linear-gradient(145deg, #0F2740, #1B3A5C)",
+              background: "linear-gradient(145deg, var(--sgs-primary-deep), var(--sgs-primary))",
               border: "1px solid rgba(200,150,62,0.2)",
               minHeight: "260px",
             }}
@@ -758,7 +758,7 @@ function BentoSection({ lang }: { lang: Lang }) {
             </div>
             <div>
               <h3 className="font-semibold mb-1.5"
-                style={{ color: "var(--sgs-text-heading, #1B3A5C)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+                style={{ color: "var(--sgs-text-heading, var(--sgs-primary))", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
                 {lang === "vi" ? "Pháp lý 2 lớp độc lập" : "Independent 2-Layer Legal Check"}
               </h3>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: "#5C6B7A" }}>
@@ -781,9 +781,9 @@ function BentoSection({ lang }: { lang: Lang }) {
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
               style={{ background: "rgba(200,150,62,0.15)" }}>
-              <Heart className="w-5 h-5" style={{ color: "#8C6420" }} />
+              <Heart className="w-5 h-5" style={{ color: "var(--sgs-accent-text)" }} />
             </div>
-            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>
+            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}>
               {lang === "vi" ? "Miễn phí 100%" : "100% Free"}
             </h3>
             <p className="text-sm" style={{ color: "#5C6B7A" }}>
@@ -801,9 +801,9 @@ function BentoSection({ lang }: { lang: Lang }) {
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
               style={{ background: "rgba(27,58,92,0.07)" }}>
-              <Landmark className="w-5 h-5" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }} />
+              <Landmark className="w-5 h-5" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }} />
             </div>
-            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>
+            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}>
               {lang === "vi" ? "Vay ưu đãi 12+ NH" : "12+ Bank Partners"}
             </h3>
             <p
@@ -846,7 +846,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
               onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
               onMouseLeave={e => (e.currentTarget.style.opacity = "0.72")}
             >
-              <span className="font-bold text-sm" style={{ color: "var(--sgs-text-heading, #1B3A5C)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+              <span className="font-bold text-sm" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
                 {p}
               </span>
             </div>
@@ -859,7 +859,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
         >
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shrink-0"
-            style={{ background: "#1B3A5C", color: "#FFFFFF" }}
+            style={{ background: "var(--sgs-primary)", color: "#FFFFFF" }}
           >
             NH
           </div>
@@ -867,7 +867,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
             <div className="flex items-center gap-2 mb-2">
               <div className="flex items-center gap-0.5">
                 {[1,2,3,4,5].map(i => (
-                  <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#C8963E" }} />
+                  <Star key={i} className="w-4 h-4 fill-current" style={{ color: "var(--sgs-accent)" }} />
                 ))}
               </div>
               <span
@@ -877,12 +877,12 @@ function TrustBlock({ lang }: { lang: Lang }) {
                 {lang === "vi" ? "Giao dịch đã xác minh" : "Verified Transaction"}
               </span>
             </div>
-            <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "var(--sgs-text, #16202B)" }}>
+            <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "var(--sgs-text, var(--sgs-text))" }}>
               {lang === "vi"
                 ? '"Mua biệt thự Aqua City qua SGS LAND tháng 3/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."'
                 : '"Purchased an Aqua City villa through SGS LAND in March 2026. The advisory team clearly explained payment policies, assisted with BIDV financing, and handled free legal checks. From deposit to contract signing took just 5 business days."'}
             </blockquote>
-            <p className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}>{lang === "vi" ? "Anh Nguyễn Văn Hải" : "Mr. Nguyen Van Hai"}</p>
+            <p className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}>{lang === "vi" ? "Anh Nguyễn Văn Hải" : "Mr. Nguyen Van Hai"}</p>
             <p className="text-xs" style={{ color: "#5C6B7A" }}>{lang === "vi" ? "Khách hàng mua Aqua City · TP.HCM, tháng 1/2026" : "Aqua City buyer · HCMC, January 2026"}</p>
           </div>
         </div>
@@ -898,7 +898,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, #1B3A5C)" }}>
+                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, var(--sgs-primary))" }}>
                 {item.icon}
               </div>
               <span className="text-sm" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{item.label}</span>
@@ -928,13 +928,13 @@ function FAQItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean
       >
         <span
           className="font-medium text-sm leading-relaxed"
-          style={{ color: "var(--sgs-text, #16202B)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
+          style={{ color: "var(--sgs-text, var(--sgs-text))", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
         >
           {q}
         </span>
         <ChevronDown
           className="w-4 h-4 shrink-0 mt-0.5 transition-transform duration-200"
-          style={{ color: open ? "#C8963E" : "#5C6B7A", transform: open ? "rotate(180deg)" : "rotate(0)" }}
+          style={{ color: open ? "var(--sgs-accent)" : "#5C6B7A", transform: open ? "rotate(180deg)" : "rotate(0)" }}
         />
       </button>
       <div style={{ maxHeight: open ? "400px" : "0", overflow: "hidden", transition: "max-height 0.3s ease" }}>
@@ -989,7 +989,7 @@ function CTABanner({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void })
     <section
       className="py-20"
       style={{
-        background: "linear-gradient(135deg, #0A1E33 0%, #0F2740 60%, #1B3A5C 100%)",
+        background: "linear-gradient(135deg, var(--sgs-hero-deep) 0%, var(--sgs-primary-deep) 60%, var(--sgs-primary) 100%)",
         borderTop: "1px solid rgba(200,150,62,0.2)",
       }}
     >
@@ -1013,9 +1013,9 @@ function CTABanner({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void })
           <a
             href="tel:+84971132378"
             className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all w-full sm:w-auto justify-center"
-            style={{ background: "#C8963E", color: "#0F2740" }}
+            style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
             onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
-            onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+            onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
           >
             <Phone className="w-4 h-4" />
             Hotline +84 971 132 378
@@ -1105,17 +1105,17 @@ function PublicHeader() {
               <div
                 className="font-bold text-lg leading-tight"
                 style={{
-                  color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
+                  color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
                   fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
                   letterSpacing: "-0.02em",
                 }}
               >
-                SGS <span style={{ color: "#C8963E" }}>LAND</span>
+                SGS <span style={{ color: "var(--sgs-accent)" }}>LAND</span>
               </div>
               <div
                 className="text-[9px] font-semibold uppercase hidden sm:block"
                 style={{
-                  color: isHero ? "rgba(200,150,62,0.85)" : theme === "dark" ? "#C8963E" : "#8C6420",
+                  color: isHero ? "rgba(200,150,62,0.85)" : theme === "dark" ? "var(--sgs-accent)" : "var(--sgs-accent-text)",
                   letterSpacing: "0.2em",
                 }}
               >
@@ -1131,18 +1131,18 @@ function PublicHeader() {
                 href={link.href}
                 className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
-                  color: isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "#1B3A5C",
+                  color: isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "var(--sgs-primary)",
                   fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
                 }}
                 onMouseEnter={e => {
                   const el = e.currentTarget as HTMLElement;
                   el.style.background = isHero ? "rgba(255,255,255,0.1)" : theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(27,58,92,0.06)";
-                  el.style.color = isHero ? "#FFFFFF" : theme === "dark" ? "#FFFFFF" : "#0F2740";
+                  el.style.color = isHero ? "#FFFFFF" : theme === "dark" ? "#FFFFFF" : "var(--sgs-primary-deep)";
                 }}
                 onMouseLeave={e => {
                   const el = e.currentTarget as HTMLElement;
                   el.style.background = "transparent";
-                  el.style.color = isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "#1B3A5C";
+                  el.style.color = isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "var(--sgs-primary)";
                 }}
               >
                 {lang === "vi" ? link.vi : link.en}
@@ -1158,7 +1158,7 @@ function PublicHeader() {
               style={{
                 background: isHero ? "rgba(255,255,255,0.12)" : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)",
                 border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`,
-                color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
+                color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
               }}
               aria-label="Chuyển ngôn ngữ VI / EN"
             >
@@ -1171,7 +1171,7 @@ function PublicHeader() {
               style={{
                 background: isHero ? "rgba(255,255,255,0.12)" : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)",
                 border: `1px solid ${isHero ? "rgba(255,255,255,0.3)" : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`,
-                color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
+                color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
               }}
               aria-label="Chuyển chế độ sáng / tối"
             >
@@ -1182,8 +1182,8 @@ function PublicHeader() {
               href="/login"
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
-                border: `1.5px solid ${isHero ? "rgba(255,255,255,0.45)" : theme === "dark" ? "rgba(255,255,255,0.3)" : "#1B3A5C"}`,
-                color: isHero ? "rgba(255,255,255,0.92)" : theme === "dark" ? "#E4EDF5" : "#1B3A5C",
+                border: `1.5px solid ${isHero ? "rgba(255,255,255,0.45)" : theme === "dark" ? "rgba(255,255,255,0.3)" : "var(--sgs-primary)"}`,
+                color: isHero ? "rgba(255,255,255,0.92)" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)",
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement;
@@ -1201,12 +1201,12 @@ function PublicHeader() {
               href="/ai-valuation"
               className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
-                background: "#C8963E",
-                color: "#0F2740",
+                background: "var(--sgs-accent)",
+                color: "var(--sgs-primary-deep)",
                 boxShadow: "0 2px 8px rgba(200,150,62,0.35)",
               }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#D9A94E"}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "#C8963E"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "var(--sgs-accent)"}
             >
               {lang === "vi" ? "Định giá miễn phí" : "Free Valuation"}
             </a>
@@ -1215,7 +1215,7 @@ function PublicHeader() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="lg:hidden p-2 rounded-lg transition-colors"
-            style={{ color: isHero ? "#FFFFFF" : theme === "dark" ? "#C8D8E8" : "#1B3A5C" }}
+            style={{ color: isHero ? "#FFFFFF" : theme === "dark" ? "#C8D8E8" : "var(--sgs-primary)" }}
             aria-label="Mở menu"
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -1240,7 +1240,7 @@ function PublicHeader() {
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-50"
-                style={{ color: "var(--sgs-text-heading, #1B3A5C)" }}
+                style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}
               >
                 {lang === "vi" ? link.vi : link.en}
               </a>
@@ -1252,7 +1252,7 @@ function PublicHeader() {
               <button
                 onClick={toggleLang}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, #1B3A5C)" }}
+                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, var(--sgs-primary))" }}
                 aria-label="Chuyển ngôn ngữ"
               >
                 <Globe className="w-3.5 h-3.5" /> {lang.toUpperCase()}
@@ -1260,7 +1260,7 @@ function PublicHeader() {
               <button
                 onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg"
-                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, #1B3A5C)" }}
+                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-text-heading, var(--sgs-primary))" }}
                 aria-label="Chuyển chế độ sáng tối"
               >
                 {theme === "light" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
@@ -1272,7 +1272,7 @@ function PublicHeader() {
                 href="/login"
                 onClick={() => setMenuOpen(false)}
                 className="flex-1 text-center text-sm font-medium py-2.5 rounded-lg transition-colors"
-                style={{ border: `1.5px solid var(--sgs-text-heading, #1B3A5C)`, color: "var(--sgs-text-heading, #1B3A5C)" }}
+                style={{ border: `1.5px solid var(--sgs-text-heading, var(--sgs-primary))`, color: "var(--sgs-text-heading, var(--sgs-primary))" }}
               >
                 {lang === "vi" ? "Đăng nhập" : "Sign in"}
               </a>
@@ -1280,7 +1280,7 @@ function PublicHeader() {
                 href="/ai-valuation"
                 onClick={() => setMenuOpen(false)}
                 className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg"
-                style={{ background: "#C8963E", color: "#0F2740" }}
+                style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
               >
                 {lang === "vi" ? "Định Giá AI" : "AI Valuation"}
               </a>
@@ -1341,7 +1341,7 @@ const linkHover = (e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: 
 function PublicFooter({ lang }: { lang: Lang }) {
   const year = new Date().getFullYear();
   return (
-    <footer style={{ background: "#0F2740", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
+    <footer style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
         {/* ── 4-column grid ─────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10"
@@ -1351,10 +1351,10 @@ function PublicFooter({ lang }: { lang: Lang }) {
             <div className="flex items-center gap-2.5 mb-4">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "#C8963E" }}
+                style={{ background: "var(--sgs-accent)" }}
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5" style={{ color: "#0F2740" }}>
+                  className="w-5 h-5" style={{ color: "var(--sgs-primary-deep)" }}>
                   <path
                     d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
                     stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"
@@ -1394,7 +1394,7 @@ function PublicFooter({ lang }: { lang: Lang }) {
                 onMouseEnter={e => linkHover(e, true)}
                 onMouseLeave={e => linkHover(e, false)}
               >
-                <Phone className="w-4 h-4 shrink-0" style={{ color: "#C8963E" }} />
+                <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--sgs-accent)" }} />
                 0971 132 378
               </a>
               <a
@@ -1404,11 +1404,11 @@ function PublicFooter({ lang }: { lang: Lang }) {
                 onMouseEnter={e => linkHover(e, true)}
                 onMouseLeave={e => linkHover(e, false)}
               >
-                <Mail className="w-4 h-4 shrink-0" style={{ color: "#C8963E" }} />
+                <Mail className="w-4 h-4 shrink-0" style={{ color: "var(--sgs-accent)" }} />
                 info@sgsland.vn
               </a>
               <div className="flex items-start gap-2.5 text-sm" style={{ color: "#B9C6D4" }}>
-                <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#C8963E" }} />
+                <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--sgs-accent)" }} />
                 TP. Hồ Chí Minh, Việt Nam
               </div>
             </div>
@@ -1553,14 +1553,14 @@ function Landing({ featuredListings, stats }: Props) {
         onClick={() => setChatOpen(true)}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold shadow-xl transition-all hover:scale-105 active:scale-95"
         style={{
-          background: "linear-gradient(135deg, #1B3A5C 0%, #0F2740 100%)",
+          background: "linear-gradient(135deg, var(--sgs-primary) 0%, var(--sgs-primary-deep) 100%)",
           color: "#FFFFFF",
           boxShadow: "0 8px 32px rgba(15,39,64,0.45), 0 2px 8px rgba(200,150,62,0.25)",
           display: chatOpen ? "none" : "flex",
         }}
         aria-label="Mở chat AI"
       >
-        <Bot className="w-5 h-5" style={{ color: "#C8963E" }} />
+        <Bot className="w-5 h-5" style={{ color: "var(--sgs-accent)" }} />
         <span>{lang === "vi" ? "Chat AI" : "AI Chat"}</span>
         <span
           className="absolute -top-1 -right-1 w-3 h-3 rounded-full"

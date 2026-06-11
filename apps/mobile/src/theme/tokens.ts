@@ -4,9 +4,9 @@
 // aligned with the web tokens so future white-label theming can map 1:1.
 export const colors = {
   // Brand
-  brand: '#4F46E5',          // indigo-600 — primary CTA
-  brandDark: '#4338CA',
-  brandSoft: '#EEF2FF',
+  brand: '#1B3A5C',          // indigo-600 — primary CTA
+  brandDark: '#0F2740',
+  brandSoft: '#E8EEF5',
   // Backgrounds
   bgBase: '#FFFFFF',
   bgSurface: '#FFFFFF',
@@ -29,7 +29,7 @@ export const colors = {
   // Listing status pills (mirror web STATUS_CONFIG)
   statusAvailable: '#10B981',
   statusBooking: '#0EA5E9',
-  statusOpening: '#6366F1',
+  statusOpening: '#1B3A5C',
   statusSold: '#94A3B8',
 };
 export const spacing = {

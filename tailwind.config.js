@@ -37,6 +37,22 @@ export default {
         '6xl':  ['40px', { lineHeight: '46px' }],   // was 44px
       },
       colors: {
+        // === SGS LAND DESIGN TOKENS (maps to CSS vars) ===
+        'sgs-bg':            'var(--sgs-bg)',
+        'sgs-surface':       'var(--sgs-surface)',
+        'sgs-primary':       'var(--sgs-primary)',
+        'sgs-primary-deep':  'var(--sgs-primary-deep)',
+        'sgs-accent':        'var(--sgs-accent)',
+        'sgs-accent-text':   'var(--sgs-accent-text)',
+        'sgs-text':          'var(--sgs-text)',
+        'sgs-text-muted':    'var(--sgs-text-muted)',
+        'sgs-text-heading':  'var(--sgs-text-heading)',
+        'sgs-verified':      'var(--sgs-verified)',
+        'sgs-hero-deep':     'var(--sgs-hero-deep)',
+        'sgs-champagne':     'var(--sgs-champagne)',
+        'sgs-on-dark-muted': 'var(--sgs-on-dark-muted)',
+        'sgs-subtle-bg':     'var(--sgs-subtle-bg)',
+        'sgs-border':        'var(--sgs-border)',
         surface:          'var(--bg-surface)',
         'surface-elevated': 'var(--bg-elevated)',
         'app-bg':         'var(--bg-app)',

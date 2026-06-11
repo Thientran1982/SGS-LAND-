@@ -7,7 +7,7 @@ const migration: Migration = {
     await client.query(`
       UPDATE tenants
       SET config = jsonb_build_object(
-        'primaryColor', '#4F46E5',
+        'primaryColor', '#1B3A5C',
         'features', jsonb_build_object(
           'enableZalo', true,
           'maxUsers', 100

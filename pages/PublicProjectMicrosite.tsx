@@ -379,7 +379,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   const branding = brandingOverride
     ? { ...baseBranding, ...brandingOverride }
     : baseBranding;
-  const brandPrimary = branding?.primaryColor || '#4F46E5';
+  const brandPrimary = branding?.primaryColor || '#1B3A5C';
   const brandLabel   = branding?.displayName || tenantContact.brandName || 'SGS LAND';
   const brandLogo    = branding?.logoUrl || null;
   return (

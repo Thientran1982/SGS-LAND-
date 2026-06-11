@@ -25,7 +25,7 @@ export default function CrmLandingPage() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="py-20 sm:py-32" style={{ background: "linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 100%)" }}>
+      <section className="py-20 sm:py-32" style={{ background: "linear-gradient(135deg, #E8EEF5 0%, #F8FAFC 100%)" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium mb-6"
             style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>

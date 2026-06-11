@@ -23,30 +23,44 @@ html.dark {
 
 /* ── SGS Land public page design tokens ──────────────────────── */
 :root {
-  --sgs-bg:           #FAFAF8;
-  --sgs-surface:      #FFFFFF;
-  --sgs-text:         #16202B;
-  --sgs-text-muted:   #5C6B7A;
-  --sgs-text-heading: #1B3A5C;
-  --sgs-primary:      #1B3A5C;
-  --sgs-accent-text:  #8C6420;
-  --sgs-subtle-bg:    #F8F9FB;
-  --sgs-border:       rgba(27,58,92,0.08);
+  /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Light Mode) === */
+  --sgs-bg:             #FAFAF8;   /* nền trang (trắng ngà âm) */
+  --sgs-surface:        #FFFFFF;   /* card, search bar, panel */
+  --sgs-primary:        #1B3A5C;   /* navy đậm — header, heading, nút phụ (11.6:1) */
+  --sgs-primary-deep:   #0F2740;   /* gradient hero, footer, CTA banner */
+  --sgs-accent:         #C8963E;   /* vàng đồng — CHỈ nền nút CTA, border, icon */
+  --sgs-accent-text:    #8C6420;   /* vàng đậm — giá tiền, link nhấn (5.3:1 PASS AA) */
+  --sgs-text:           #16202B;   /* chữ chính (15.8:1) */
+  --sgs-text-muted:     #5C6B7A;   /* chữ phụ (5.2:1 PASS AA) */
+  --sgs-text-heading:   #1B3A5C;   /* heading dùng primary navy */
+  --sgs-verified:       #1E7F5C;   /* badge Pháp lý đã kiểm duyệt (4.95:1) */
+  --sgs-hero-deep:      #0A1E33;   /* đình gradient hero — navy mực đêm */
+  --sgs-champagne:      #F5EAD5;   /* nền highlight mềm — chip AI, tag nổi bật */
+  --sgs-on-dark-muted:  #93A6B8;   /* chữ phụ nhỏ trên navy đậm (6.1:1) */
+  --sgs-subtle-bg:      #F5EAD5;   /* = champagne, nền tag nhẹ */
+  --sgs-border:         rgba(27,58,92,0.12); /* border light */
 }
 html.dark {
-  --sgs-bg:           #091523;
-  --sgs-surface:      #0D1E2E;
-  --sgs-text:         #E4EDF5;
-  --sgs-text-muted:   #7A9BB5;
-  --sgs-text-heading: #C8D8E8;
-  --sgs-primary:      #90B8D4;
-  --sgs-accent-text:  #C8963E;
-  --sgs-subtle-bg:    #111E2E;
-  --sgs-border:       rgba(255,255,255,0.08);
+  /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Dark Mode) === */
+  --sgs-bg:             #0E1620;
+  --sgs-surface:        #16222F;
+  --sgs-primary:        #7FA8D0;   /* navy sáng — heading, link (7.3:1) */
+  --sgs-primary-deep:   #1B3A5C;
+  --sgs-accent:         #D4A855;   /* vàng dark mode — nút lẫn chữ (8.3:1) */
+  --sgs-accent-text:    #D4A855;
+  --sgs-text:           #E8ECF1;   /* chữ chính (15.3:1) */
+  --sgs-text-muted:     #9AAAB8;   /* chữ phụ */
+  --sgs-text-heading:   #7FA8D0;
+  --sgs-verified:       #3FB389;   /* badge xác thực */
+  --sgs-hero-deep:      #0A1E33;
+  --sgs-champagne:      rgba(212,168,85,0.12); /* warm-tinted dark surface (spec) */
+  --sgs-on-dark-muted:  #93A6B8;
+  --sgs-subtle-bg:      #1E2D3D;
+  --sgs-border:         rgba(127,168,208,0.15);
 }
 html.dark body {
-  background: #091523;
-  color: #E4EDF5;
+  background: var(--sgs-bg);
+  color: var(--sgs-text);
 }
 
 /* ── Legal Ticker scroll animation ───────────────────────────── */

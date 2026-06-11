@@ -153,13 +153,13 @@ export const Hero3D = () => {
             <stop offset="0%" stopColor="#312E81" /><stop offset="100%" stopColor="#1E1B4B" />
           </linearGradient>
           <linearGradient id="glassRightSmall" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4338CA" /><stop offset="100%" stopColor="#312E81" />
+            <stop offset="0%" stopColor="var(--sgs-primary-deep)" /><stop offset="100%" stopColor="#312E81" />
           </linearGradient>
           <linearGradient id="glassTopSmall" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366F1" /><stop offset="100%" stopColor="#4F46E5" />
+            <stop offset="0%" stopColor="var(--sgs-primary)" /><stop offset="100%" stopColor="var(--sgs-primary)" />
           </linearGradient>
           <linearGradient id="aiHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366F1" /><stop offset="100%" stopColor="#8B5CF6" />
+            <stop offset="0%" stopColor="var(--sgs-primary)" /><stop offset="100%" stopColor="#8B5CF6" />
           </linearGradient>
           <linearGradient id="emeraldGlow" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#10B981" stopOpacity="0" />
@@ -253,9 +253,9 @@ export const Hero3D = () => {
             fill="rgba(16,185,129,0.35)" stroke="#6EE7B7" strokeWidth="1.5" />
           {/* NE block — indigo */}
           <rect x="24" y="-210" width="186" height="186"
-            fill="rgba(99,102,241,0.07)" stroke="#6366F1" strokeWidth="1.5" opacity="0.75" />
+            fill="rgba(99,102,241,0.07)" stroke="var(--sgs-primary)" strokeWidth="1.5" opacity="0.75" />
           <rect x="60" y="-170" width="90" height="90"
-            fill="rgba(99,102,241,0.10)" stroke="#818CF8" strokeWidth="1" opacity="0.6" />
+            fill="rgba(99,102,241,0.10)" stroke="#7FA8D0" strokeWidth="1" opacity="0.6" />
           {/* SW block — violet */}
           <rect x="-210" y="24" width="186" height="186"
             fill="rgba(139,92,246,0.07)" stroke="#8B5CF6" strokeWidth="1.5" opacity="0.65" />
@@ -281,7 +281,7 @@ export const Hero3D = () => {
           {[[-140,-140],[80,-140],[-140,80]].map(([px,py],i)=>(
             <g key={`pin-${i}`}>
               <circle cx={px} cy={py} r={5}
-                fill={['#10B981','#6366F1','#8B5CF6'][i]} opacity="0.9" />
+                fill={['#10B981','var(--sgs-primary)','#8B5CF6'][i]} opacity="0.9" />
               <circle cx={px} cy={py} r={2.5} fill="#fff" opacity="0.8" />
             </g>
           ))}
@@ -312,7 +312,7 @@ export const Hero3D = () => {
           <polygon points="400,380 320,340 320,220 400,260" fill="url(#glassLeftSmall)" stroke="#1E1B4B" strokeWidth="1" />
           <polygon points="400,380 480,340 480,220 400,260" fill="url(#glassRightSmall)" stroke="#1E1B4B" strokeWidth="1" />
           <polygon points="400,260 320,220 400,180 480,220" fill="url(#glassTopSmall)" stroke="#312E81" strokeWidth="1" />
-          <polyline points="320,340 400,380 480,340" fill="none" stroke="#4338CA" strokeWidth="2" strokeLinejoin="round" />
+          <polyline points="320,340 400,380 480,340" fill="none" stroke="var(--sgs-primary-deep)" strokeWidth="2" strokeLinejoin="round" />
           <line x1="400" y1="380" x2="400" y2="260" stroke="#312E81" strokeWidth="2" />
           {([
             [338,298,'warm',1.5,7],[356,273,'cool',3.2,8],
@@ -341,16 +341,16 @@ export const Hero3D = () => {
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
         {/* Target floor strip — rows 3-4-5, left face (constant subtle indigo) */}
         <polygon points="240,210 400,290 400,380 240,300"
-          fill="#6366F1" opacity="0.09" clipPath="url(#clipLeft)" />
+          fill="var(--sgs-primary)" opacity="0.09" clipPath="url(#clipLeft)" />
         <polygon points="240,210 400,290 400,380 240,300"
-          fill="#6366F1" opacity={TARGET_ROWS.has(laserRow) ? 0.07 : 0}
+          fill="var(--sgs-primary)" opacity={TARGET_ROWS.has(laserRow) ? 0.07 : 0}
           filter="url(#glow)" clipPath="url(#clipLeft)"
           style={{ transition: 'opacity 0.15s' }} />
         {/* ── Selection bracket — left side, pointing at target floors T3-T5 */}
-        <line x1="233" y1="210" x2="233" y2="300" stroke="#818CF8" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
-        <line x1="233" y1="210" x2="242" y2="210" stroke="#818CF8" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
-        <line x1="233" y1="300" x2="242" y2="300" stroke="#818CF8" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
-        <rect x="160" y="246" width="68" height="18" rx="4" fill="#1E1B4B" stroke="#6366F1" strokeWidth="1" opacity="0.93" />
+        <line x1="233" y1="210" x2="233" y2="300" stroke="#7FA8D0" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
+        <line x1="233" y1="210" x2="242" y2="210" stroke="#7FA8D0" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
+        <line x1="233" y1="300" x2="242" y2="300" stroke="#7FA8D0" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
+        <rect x="160" y="246" width="68" height="18" rx="4" fill="#1E1B4B" stroke="var(--sgs-primary)" strokeWidth="1" opacity="0.93" />
         <text x="194" y="259" fill="#A5B4FC" fontSize="8" fontWeight="bold" textAnchor="middle"
           fontFamily="system-ui,sans-serif" letterSpacing="0.8">T3 – T5</text>
         {/* Windows — Left face */}
@@ -369,9 +369,9 @@ export const Hero3D = () => {
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
         {/* Target floor strip — rows 3-4-5, right face */}
         <polygon points="400,290 560,210 560,300 400,380"
-          fill="#6366F1" opacity="0.09" clipPath="url(#clipRight)" />
+          fill="var(--sgs-primary)" opacity="0.09" clipPath="url(#clipRight)" />
         <polygon points="400,290 560,210 560,300 400,380"
-          fill="#6366F1" opacity={TARGET_ROWS.has(laserRow) ? 0.07 : 0}
+          fill="var(--sgs-primary)" opacity={TARGET_ROWS.has(laserRow) ? 0.07 : 0}
           filter="url(#glow)" clipPath="url(#clipRight)"
           style={{ transition: 'opacity 0.15s' }} />
         {/* Windows — Right face */}
@@ -384,8 +384,8 @@ export const Hero3D = () => {
           ))}
         </g>
         {/* Top edge highlights */}
-        <polyline points="240,120 400,40 560,120" fill="none" stroke="#6366F1" strokeWidth="2" opacity="0.55" filter="url(#glow)" />
-        <polyline points="240,120 400,40 560,120" fill="none" stroke="#818CF8" strokeWidth="0.75" opacity="0.35" />
+        <polyline points="240,120 400,40 560,120" fill="none" stroke="var(--sgs-primary)" strokeWidth="2" opacity="0.55" filter="url(#glow)" />
+        <polyline points="240,120 400,40 560,120" fill="none" stroke="#7FA8D0" strokeWidth="0.75" opacity="0.35" />
         <polyline points="240,120 400,200 560,120" fill="none" stroke="#475569" strokeWidth="1" opacity="0.35" />
         {/* ── AI SCANNING LASER ── */}
         <motion.g
@@ -422,7 +422,7 @@ export const Hero3D = () => {
           <path d="M400,20 C380,20 365,35 365,55 C365,80 400,120 400,120 C400,120 435,80 435,55 C435,35 420,20 400,20 Z"
             fill="url(#aiHighlight)" filter="url(#glow)" opacity="0.95" />
           <circle cx="400" cy="55" r="13" fill="#fff" opacity="0.95" />
-          <circle cx="400" cy="55" r="7" fill="#6366F1" />
+          <circle cx="400" cy="55" r="7" fill="var(--sgs-primary)" />
           <circle cx="400" cy="55" r="3" fill="#fff" opacity="0.8" />
         </motion.g>
         {/* ── DATA TAG 1: Price ── */}

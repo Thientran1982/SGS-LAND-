@@ -193,7 +193,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const handleSaveBranding = async () => {
     // Normalize primaryColor: nếu nhập sai format thì không lưu
     if (form.primaryColor && !HEX_RE.test(form.primaryColor)) {
-      notify('Màu thương hiệu phải là mã hex 6 ký tự, ví dụ #4F46E5.', 'error');
+      notify('Màu thương hiệu phải là mã hex 6 ký tự, ví dụ #1B3A5C.', 'error');
       return;
     }
     setSaving(true);
@@ -284,7 +284,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const apex = data.binding.apexDomain;
   const txt  = data.binding.customDomainTxtRecord;
   const verified = !!data.binding.customDomainVerifiedAt;
-  const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : '#4F46E5';
+  const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : '#1B3A5C';
   // ── Custom-domain health (task #34) ─────────────────────────────────────────
   // Cron 5 phút re-verify cả domain đã verified. Có 2 trạng thái cần cảnh báo:
   //   • lostVerification: trước đây verified nhưng bản ghi TXT đã biến mất quá
@@ -480,13 +480,13 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <input
                 type="text"
                 value={form.primaryColor || ''}
-                placeholder="#4F46E5"
+                placeholder="#1B3A5C"
                 maxLength={7}
                 onChange={(e) => updateField('primaryColor', e.target.value)}
                 className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-mono text-sm uppercase"
               />
             </div>
-            <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ #4F46E5.</span>
+            <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ #1B3A5C.</span>
           </label>
           {TEXT_FIELDS.map(({ key, label, placeholder, help }) => (
             <label key={key} className="flex flex-col gap-1 text-sm">

@@ -10,19 +10,19 @@
   :root,
   .light {
     /* Backgrounds */
-    --bg-app:      #F1F5F9;
+    --bg-app:      #FAFAF8;
     --bg-surface:  #FFFFFF;
     --bg-elevated: #FFFFFF;
-    --bg-sidebar:  #1E1B4B;
+    --bg-sidebar:  #1B3A5C;
     --bg-input:    #F8FAFC;
 
     /* Primary brand — Indigo */
-    --primary-600:    #4F46E5;
-    --primary-hover:  #4338CA;
-    --primary-subtle: #EEF2FF;
+    --primary-600:    #1B3A5C;
+    --primary-hover:  #0F2740;
+    --primary-subtle: #E8EEF5;
 
     /* Text */
-    --text-primary:   #0F172A;
+    --text-primary:   #16202B;
     --text-secondary: #475569;
     --text-tertiary:  #94A3B8;
     --text-muted:     #CBD5E1;
@@ -68,14 +68,14 @@
   /* ─── Dark Mode ─────────────────────────────────────────── */
   .dark {
     --bg-app:      #0B0F1A;
-    --bg-surface:  #141928;
-    --bg-elevated: #1C2235;
-    --bg-sidebar:  #0D1120;
-    --bg-input:    #1C2235;
+    --bg-surface:  #16222F;
+    --bg-elevated: #1C2C3E;
+    --bg-sidebar:  #0E1620;
+    --bg-input:    #16222F;
 
-    --primary-600:    #6366F1;
-    --primary-hover:  #818CF8;
-    --primary-subtle: #1E1B4B;
+    --primary-600:    #1B3A5C;
+    --primary-hover:  #7FA8D0;
+    --primary-subtle: #E8EEF5;
 
     --text-primary:   #F1F5F9;
     --text-secondary: #94A3B8;
@@ -104,15 +104,15 @@
     --sgs-bg:            #0E1620;
     --sgs-surface:       #16222F;
     --sgs-primary:       #7FA8D0;
-    --sgs-primary-deep:  #060E17;
+    --sgs-primary-deep:  #0A1E33;
     --sgs-accent:        #D4A855;
-    --sgs-accent-hover:  #E0B860;
+    --sgs-accent-hover:  #D4A855;
     --sgs-accent-text:   #D4A855;
     --sgs-text:          #E8ECF1;
     --sgs-text-muted:    #9AAAB8;
     --sgs-verified:      #3FB389;
-    --sgs-hero-deep:     #030A12;
-    --sgs-champagne:     #1A2536;
+    --sgs-hero-deep:     #0A1E33;
+    --sgs-champagne:     #8C6420;
     --sgs-on-dark-muted: #93A6B8;
   }
 }

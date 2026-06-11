@@ -66,7 +66,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   // -----------------------------------------------------------------------
 
   const THEME_DEFAULTS = {
-    primaryColor: '#4F46E5',
+    primaryColor: '#1B3A5C',
     fontFamily: 'Inter',
     fontScale: 'default',
     bgApp: '',
@@ -251,7 +251,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
       const result = await emailService.sendEmail(user.tenantId, {
         to: recipient,
         subject: 'SGS LAND - Test Email',
-        html: '<div style="font-family: Arial, sans-serif; padding: 20px;"><h2 style="color: #4F46E5;">SMTP Test Successful!</h2><p>Your email configuration is working correctly.</p><p style="color: #94A3B8; font-size: 12px;">Sent from SGS LAND Enterprise Platform</p></div>',
+        html: '<div style="font-family: Arial, sans-serif; padding: 20px;"><h2 style="color: #1B3A5C;">SMTP Test Successful!</h2><p>Your email configuration is working correctly.</p><p style="color: #94A3B8; font-size: 12px;">Sent from SGS LAND Enterprise Platform</p></div>',
         text: 'SMTP Test Successful! Your email configuration is working correctly.',
       });
       if (result.success) {

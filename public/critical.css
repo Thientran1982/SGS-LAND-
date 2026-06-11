@@ -11,14 +11,14 @@
   --glass-border:        rgba(213, 221, 232, 1);
 
   --text-primary:   #0D1526;
-  --text-secondary: #44556B;
+  --text-secondary: #5C6B7A;
   --text-tertiary:  #8B9BB2;
-  --text-muted:     #C4CDD9;
+  --text-muted:     #5C6B7A;
   --text-inverse:   #FFFFFF;
 
-  --primary-600:    #4F46E5;
-  --primary-hover:  #4338CA;
-  --primary-subtle: #EEF2FF;
+  --primary-600:    #1B3A5C;
+  --primary-hover:  #0F2740;
+  --primary-subtle: #E8EEF5;
 
   --color-success: #0EA569;
   --color-warning: #E8930A;
@@ -36,6 +36,23 @@
   --aurora-1: #DDE5FF;
   --aurora-2: #F5E8FF;
   --aurora-3: #D1F5EA;
+
+  /* === SGS LAND DESIGN TOKENS === */
+  --sgs-bg:             #FAFAF8;
+  --sgs-surface:        #FFFFFF;
+  --sgs-primary:        #1B3A5C;
+  --sgs-primary-deep:   #0F2740;
+  --sgs-accent:         #C8963E;
+  --sgs-accent-text:    #8C6420;
+  --sgs-text:           #16202B;
+  --sgs-text-muted:     #5C6B7A;
+  --sgs-text-heading:   #1B3A5C;
+  --sgs-verified:       #1E7F5C;
+  --sgs-hero-deep:      #0A1E33;
+  --sgs-champagne:      #F5EAD5;
+  --sgs-on-dark-muted:  #93A6B8;
+  --sgs-subtle-bg:      #F5EAD5;
+  --sgs-border:         rgba(27,58,92,0.12);
 }
 
 .dark {
@@ -55,9 +72,9 @@
   --text-muted:     #364559;
   --text-inverse:   #0D1526;
 
-  --primary-600:    #6366F1;
-  --primary-hover:  #818CF8;
-  --primary-subtle: #1E1B4B;
+  --primary-600:    #1B3A5C;
+  --primary-hover:  #7FA8D0;
+  --primary-subtle: #E8EEF5;
 
   --color-success: #34D399;
   --color-warning: #FBBF24;
@@ -75,6 +92,23 @@
   --aurora-1: #1e1b4b;
   --aurora-2: #312e81;
   --aurora-3: #0f172a;
+
+  /* === SGS LAND DARK MODE TOKENS === */
+  --sgs-bg:             #0E1620;
+  --sgs-surface:        #16222F;
+  --sgs-primary:        #7FA8D0;
+  --sgs-primary-deep:   #1B3A5C;
+  --sgs-accent:         #D4A855;
+  --sgs-accent-text:    #D4A855;
+  --sgs-text:           #E8ECF1;
+  --sgs-text-muted:     #9AAAB8;
+  --sgs-text-heading:   #7FA8D0;
+  --sgs-verified:       #3FB389;
+  --sgs-hero-deep:      #0A1E33;
+  --sgs-champagne:      #1B2A3A;
+  --sgs-on-dark-muted:  #93A6B8;
+  --sgs-subtle-bg:      #1E2D3D;
+  --sgs-border:         rgba(127,168,208,0.15);
 }
 
 /* --- CORE LAYOUT --- */
@@ -284,7 +318,7 @@ html, body {
   border-bottom: none !important;
 }
 /* Three pin colors */
-.sgs-pin-sale    { background-color: #4f46e5 !important; }
+.sgs-pin-sale    { background-color: #1b3a5c !important; }
 .sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-pin-project { background-color: #2563eb !important; }
 /* Tail triangles — box-sizing:content-box is critical: Leaflet's .leaflet-container*
@@ -297,7 +331,7 @@ html, body {
   border-right: 10px solid transparent !important;
   margin-top: -1px !important;
 }
-.sgs-pin-tail.sgs-pin-sale    { border-top: 11px solid #4f46e5 !important; }
+.sgs-pin-tail.sgs-pin-sale    { border-top: 11px solid #1b3a5c !important; }
 .sgs-pin-tail.sgs-pin-rent    { border-top: 11px solid #7c3aed !important; }
 .sgs-pin-tail.sgs-pin-project { border-top: 11px solid #2563eb !important; }
 /* Cluster outer wrapper — inline-flex so it self-sizes inside the 0×0 Leaflet marker */
@@ -325,7 +359,7 @@ html, body {
   font-family: system-ui,-apple-system,sans-serif !important;
   background-image: linear-gradient(135deg,rgba(255,255,255,0.22) 0%,transparent 55%) !important;
 }
-.sgs-cluster-pill.sgs-pin-sale    { background-color: #4f46e5 !important; }
+.sgs-cluster-pill.sgs-pin-sale    { background-color: #1b3a5c !important; }
 .sgs-cluster-pill.sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-cluster-pill.sgs-pin-project { background-color: #2563eb !important; }
 /* Legacy cluster bubble + tail (kept for safety, not used by current clusterIcon) */
@@ -348,7 +382,7 @@ html, body {
   position: relative !important;
   background-image: linear-gradient(135deg,rgba(255,255,255,0.18) 0%,transparent 55%) !important;
 }
-.sgs-cluster-bubble.sgs-pin-sale    { background-color: #4f46e5 !important; }
+.sgs-cluster-bubble.sgs-pin-sale    { background-color: #1b3a5c !important; }
 .sgs-cluster-bubble.sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-cluster-bubble.sgs-pin-project { background-color: #2563eb !important; }
 .sgs-cluster-tail {
@@ -358,7 +392,7 @@ html, body {
   border-right: 12px solid transparent !important;
   margin-top: -1px !important;
 }
-.sgs-cluster-tail.sgs-pin-sale    { border-top: 13px solid #4f46e5 !important; }
+.sgs-cluster-tail.sgs-pin-sale    { border-top: 13px solid #1b3a5c !important; }
 .sgs-cluster-tail.sgs-pin-rent    { border-top: 13px solid #7c3aed !important; }
 .sgs-cluster-tail.sgs-pin-project { border-top: 13px solid #2563eb !important; }
 
