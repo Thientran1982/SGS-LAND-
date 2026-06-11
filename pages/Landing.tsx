@@ -1,1228 +1,1090 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ROUTES } from '../config/routes';
-import { Logo } from '../components/Logo';
-import { SeoHead } from '../components/SeoHead';
-import { db } from '../services/dbApi';
-import { Listing, ListingStatus, PropertyType, User } from '../types'; 
-import { useTranslation } from '../services/i18n';
-import { useTheme } from '../services/theme';
-import { ListingCard } from '../components/ListingCard'; 
-import { Hero3D } from '../components/Hero3D';
-import { AiChatWidget } from '../components/AiChatWidget';
-import { ArrowRight, Search, Sparkles, BarChart3, Globe2, Zap, Sun, Moon, ChevronRight, X, Phone, MapPin, Scale, Building2, Bot } from 'lucide-react';
-import { motion } from 'motion/react';
-// -----------------------------------------------------------------------------
-// ASSETS & CONFIGURATION
-// -----------------------------------------------------------------------------
-const PARTNERS = [
-    "AQUA CITY NOVALAND", "THE GLOBAL CITY MASTERISE", "IZUMI CITY NAM LONG",
-    "VINHOMES CẦN GIỜ", "VINHOMES GRAND PARK", "MASTERISE HOMES",
-    "GRAND MARINA SAIGON", "WATERPOINT NAM LONG", "THE PRIVIA KHANG ĐIỀN",
-    "VINHOMES CENTRAL PARK", "SƠN KIM LAND",
-];
-const FEATURED_PROJECTS: FeaturedProject[] = [
-    {
-        slug: 'aqua-city',
-        name: 'Aqua City Novaland',
-        dev: 'Novaland',
-        loc: 'Biên Hòa, Đồng Nai',
-        scale: '1.000 ha',
-        priceFrom: 'Từ 6,5 tỷ',
-        type: 'Đại Đô Thị Sinh Thái',
-        badge: 'Đang bàn giao',
-        badgeColor: 'emerald',
-        img: '/landing/aqua-city/hero-opt.jpg',
-        href: '/landing/aqua-city/',
-    },
-    {
-        slug: 'the-global-city',
-        name: 'The Global City',
-        dev: 'Masterise Homes',
-        loc: 'An Phú, TP Thủ Đức',
-        scale: '117 ha',
-        priceFrom: 'Từ 15 tỷ',
-        type: 'Đại Đô Thị Thương Mại',
-        badge: 'Đang mở bán',
-        badgeColor: 'indigo',
-        img: '/images/projects/the-global-city.webp',
-    },
-    {
-        slug: 'izumi-city',
-        name: 'Izumi City Nam Long',
-        dev: 'Nam Long Group',
-        loc: 'Biên Hòa, Đồng Nai',
-        scale: '170 ha',
-        priceFrom: 'Từ 8,4 tỷ',
-        type: 'Đô Thị Chuẩn Nhật',
-        badge: 'Đang mở bán',
-        badgeColor: 'indigo',
-        img: '/images/projects/izumi-city.webp',
-    },
-    {
-        slug: 'vinhomes-can-gio',
-        name: 'Vinhomes Cần Giờ',
-        dev: 'Vinhomes',
-        loc: 'Cần Giờ, TP.HCM',
-        scale: '2.870 ha',
-        priceFrom: 'Từ 12 tỷ',
-        type: 'Siêu Đô Thị Lấn Biển',
-        badge: 'Đang bán',
-        badgeColor: 'indigo',
-        img: '/images/projects/vinhomes-can-gio.webp',
-    },
-    {
-        slug: 'diamond-sky-van-phuc-city',
-        name: 'Diamond Sky – Vạn Phúc City',
-        dev: 'Tập đoàn Vạn Phúc',
-        loc: 'KĐT Vạn Phúc City, TP Thủ Đức',
-        scale: '198 ha tổng khu',
-        priceFrom: 'Từ 9,6 tỷ',
-        type: 'Căn hộ cao tầng view sông',
-        badge: 'Đang mở bán',
-        badgeColor: 'indigo',
-        img: '/images/projects/diamond-sky-van-phuc-city.webp',
-    },
-    {
-        slug: 'vinhomes-grand-park',
-        name: 'Vinhomes Grand Park',
-        dev: 'Vinhomes',
-        loc: 'TP Thủ Đức, TP.HCM',
-        scale: '271 ha',
-        priceFrom: 'Từ 3 tỷ',
-        type: 'Siêu Đô Thị Tích Hợp',
-        badge: 'Đang bàn giao',
-        badgeColor: 'emerald',
-        img: '/images/projects/vinhomes-grand-park.webp',
-    },
-    {
-        slug: 'vinhomes-hoc-mon',
-        name: 'Vinhomes Hóc Môn',
-        dev: 'Vinhomes',
-        loc: 'Huyện Hóc Môn, TP.HCM',
-        scale: '1.080 ha',
-        priceFrom: 'Đang cập nhật',
-        type: 'Siêu Đô Thị Smart City 4.0',
-        badge: 'Sắp mở bán 2026',
-        badgeColor: 'amber',
-        img: '/landing/vinhomes-hoc-mon/hero.jpg',
-        href: '/landing/vinhomes-hoc-mon/',
-    },
-    {
-        slug: 'masteri-cosmo-central',
-        name: 'Masteri Cosmo Central',
-        dev: 'Masterise Homes · Foster + Partners',
-        loc: 'Đỗ Xuân Hợp, TP. Thủ Đức, TP.HCM',
-        scale: '6 tòa · 117,4 ha The Global City',
-        priceFrom: 'Từ 6,429 tỷ',
-        type: 'Căn hộ All-in-One Cao Cấp',
-        badge: 'Đang mở bán',
-        badgeColor: 'blue',
-        img: '/landing/masteri-cosmo-central/hero.jpg?v=3',
-        href: '/landing/masteri-cosmo-central/',
-    },
-    {
-        slug: 'legacy-66',
-        name: 'Legacy 66',
-        dev: 'Tân Thành · Savills · DELTA',
-        loc: '66 Tân Thành, Chợ Lớn, TP.HCM',
-        scale: '3.956,60 m² · 348 căn',
-        priceFrom: 'Đang cập nhật',
-        type: 'Căn hộ cao cấp + Shophouse',
-        badge: 'Bàn giao Q2/2027',
-        badgeColor: 'emerald',
-        img: '/landing/legacy-66/hero.jpg',
-        href: '/landing/legacy-66/',
-    },
-];
-const HOME_FAQ = [
-    {
-        q: 'SGS LAND là gì? SGS LAND phân phối những dự án nào?',
-        a: 'SGS LAND là đại lý phân phối bất động sản tại TP.HCM, chuyên các dự án lớn: Aqua City Novaland (1.000ha, Biên Hòa, Đồng Nai), The Global City Masterise Homes (117ha, Thủ Đức), Izumi City Nam Long (170ha, Biên Hòa), Vinhomes Cần Giờ (2.870ha), Masterise Homes (Masteri, Lumière, Grand Marina), Vinhomes Grand Park (271ha, Thủ Đức). Tư vấn miễn phí tại sgsland.vn hoặc hotline 0971 132 378.',
-    },
-    {
-        q: 'Mua bất động sản qua SGS LAND có mất phí môi giới không?',
-        a: 'Không. SGS LAND không thu phí môi giới từ người mua. Doanh thu của SGS LAND đến từ hoa hồng do chủ đầu tư trả theo hợp đồng phân phối. Khách hàng được tư vấn pháp lý, kiểm tra hợp đồng và hỗ trợ hồ sơ vay vốn hoàn toàn miễn phí.',
-    },
-    {
-        q: 'Công cụ định giá AI của SGS LAND hoạt động như thế nào?',
-        a: 'Hệ thống định giá AI (AVM) của SGS LAND phân tích dữ liệu giao dịch thực tế, quy hoạch đô thị, hạ tầng và xu hướng thị trường để cho ra giá ước tính với sai số ±5%. Người dùng nhập địa chỉ, diện tích và loại hình tài sản — hệ thống trả kết quả trong vài giây, không cần đăng nhập.',
-    },
-    {
-        q: 'Dự án nào đang mở bán và có thể đặt chỗ ưu tiên qua SGS LAND?',
-        a: 'Tính đến tháng 4/2026: Aqua City Novaland (Biên Hòa, Đồng Nai) đang bàn giao nhiều phân khu, có sổ hồng riêng, giá từ 6,5 tỷ. Izumi City Nam Long mở giai đoạn mới từ 8,4 tỷ. The Global City Masterise đang nhận đặt cọc từ 15 tỷ. Vinhomes Cần Giờ đã mở bán từ 12 tỷ. Liên hệ 0971 132 378 để nhận bảng giá và tiến độ mới nhất.',
-    },
-    {
-        q: 'SGS LAND hỗ trợ vay vốn ngân hàng như thế nào?',
-        a: 'SGS LAND kết nối khách hàng với các ngân hàng đối tác: Vietcombank, BIDV, Techcombank, VPBank — hỗ trợ vay tối đa 70% giá trị căn, kỳ hạn 20–25 năm, lãi suất ưu đãi 12–24 tháng đầu. Đội ngũ pháp lý kiểm tra hợp đồng mua bán và hồ sơ vay miễn phí trước khi ký.',
-    },
-    {
-        q: 'Bất động sản Đồng Nai có tiềm năng đầu tư không?',
-        a: 'Theo CBRE Vietnam và Savills Vietnam, bất động sản vùng ven TP.HCM — đặc biệt Đồng Nai (Nhơn Trạch, Biên Hòa) — tăng giá trung bình 12–18%/năm trong giai đoạn 2022–2024 nhờ hạ tầng Vành đai 3, cầu Nhơn Trạch và sân bay Long Thành. Aqua City Novaland và Izumi City Nam Long là hai dự án quy mô lớn SGS LAND đang phân phối tại khu vực này.',
-    },
-    {
-        q: 'Giá bất động sản TP.HCM năm 2026 như thế nào?',
-        a: 'Giá tham khảo năm 2026 tại TP.HCM: căn hộ trung cấp TP Thủ Đức 50–80 triệu/m², nhà phố Bình Thạnh 150–300 triệu/m², biệt thự ven đô Nhơn Trạch 20–50 triệu/m². SGS LAND cung cấp công cụ định giá AI miễn phí tại sgsland.vn/ai-valuation — dữ liệu cập nhật hàng ngày từ giao dịch thực tế.',
-    },
-    {
-        q: 'Chủ đầu tư muốn tìm đơn vị phân phối dự án, SGS LAND có hỗ trợ không?',
-        a: 'Có. SGS LAND hợp tác phân phối với các chủ đầu tư tại TP.HCM, Đồng Nai, Bình Dương và Long An. Mạng lưới của SGS LAND hỗ trợ CRM tracking real-time, chiến dịch marketing digital và team pháp lý chuyên trách. Liên hệ info@sgsland.vn để nhận đề xuất hợp tác.',
-    },
-    {
-        q: 'Top 3 dự án căn hộ tốt nhất TP.HCM năm 2026 là gì?',
-        a: 'Top 3 dự án căn hộ tại TP.HCM năm 2026 do SGS LAND phân phối: (1) Vinhomes Grand Park — Vinhomes, 271ha, TP Thủ Đức, căn hộ từ 3 tỷ, đang bàn giao; (2) The Global City — Masterise Homes, 117ha An Phú TP Thủ Đức, căn hộ từ 7,5 tỷ; (3) Masterise Homes — Lumière, Masteri, Grand Marina (Q1 và Bình Thạnh, từ 7,5 tỷ). Cả ba đều có sổ hồng riêng, pháp lý SGS LAND kiểm tra trước khi ký.',
-    },
-    {
-        q: 'Top 3 dự án nhà phố biệt thự tốt nhất khu Đông TP.HCM 2026?',
-        a: 'Top 3 dự án nhà phố biệt thự khu Đông TP.HCM năm 2026: (1) Aqua City Novaland — 1.000ha tại Long Hưng, Biên Hòa, Đồng Nai, biệt thự đảo từ 6,5 tỷ; (2) Izumi City Nam Long — 170ha tại Biên Hòa, nhà phố compound chuẩn Nhật Bản từ 8,4 tỷ; (3) Vạn Phúc City Đại Phúc — 198ha ven sông Sài Gòn, TP Thủ Đức, nhà phố và biệt thự liền kề. Tất cả có sổ hồng riêng từng căn.',
-    },
-    {
-        q: 'Top 3 đại đô thị tích hợp lớn nhất Việt Nam 2026?',
-        a: 'Top 3 đại đô thị tích hợp lớn nhất Việt Nam tính đến tháng 4/2026 (sắp xếp theo diện tích): (1) Vinhomes Cần Giờ — Green Paradise (Vinhomes, 2.870ha lấn biển Cần Giờ, TP.HCM); (2) Aqua City Novaland (1.000ha tại Long Hưng, Biên Hòa, Đồng Nai); (3) Vinhomes Grand Park (Vinhomes, 271ha, TP Thủ Đức). Cả ba do SGS LAND phân phối chính thức — hotline 0971 132 378.',
-    },
-    {
-        q: 'Bất động sản TP.HCM là gì? Khu vực nào sôi động nhất 2026?',
-        a: 'Bất động sản TP.HCM là thị trường BĐS lớn nhất Việt Nam, GDP đầu người gấp 2,5 lần trung bình cả nước, lượng giao dịch chiếm 35% cả nước. Năm 2026 ba khu vực sôi động nhất: TP Thủ Đức (căn hộ 50–80 triệu/m² — Vinhomes Grand Park, The Global City), Bình Thạnh (nhà phố 150–300 triệu/m² — Masterise Homes), khu Đông Đồng Nai (Long Hưng – Biên Hòa, biệt thự từ 6,5 tỷ — Aqua City, Izumi City). SGS LAND phân phối chính thức 11+ dự án tại các khu vực này.',
-    },
-];
-const TOP3_RANKINGS = [
-    {
-        category: 'Căn Hộ',
-        title: 'Top 3 Căn Hộ TP.HCM 2026',
-        accent: 'indigo',
-        items: [
-            { rank: 1, name: 'Vinhomes Grand Park', dev: 'Vinhomes', meta: '271ha · TP Thủ Đức', price: 'Từ 3 tỷ', slug: 'vinhomes-grand-park' },
-            { rank: 2, name: 'The Global City', dev: 'Masterise Homes', meta: '117ha · An Phú, Thủ Đức', price: 'Từ 7,5 tỷ', slug: 'the-global-city' },
-            { rank: 3, name: 'Masterise Homes Ecosystem', dev: 'Masterise Group', meta: 'Lumière · Masteri · Grand Marina', price: 'Từ 7,5 tỷ', slug: 'masterise-homes' },
-        ],
-    },
-    {
-        category: 'Nhà Phố & Biệt Thự',
-        title: 'Top 3 Nhà Phố Khu Đông 2026',
-        accent: 'emerald',
-        items: [
-            { rank: 1, name: 'Aqua City Novaland', dev: 'Novaland', meta: '1.000ha · Biên Hòa, Đồng Nai', price: 'Biệt thự từ 6,5 tỷ', slug: 'aqua-city' },
-            { rank: 2, name: 'Izumi City Nam Long', dev: 'Nam Long Group', meta: '170ha · Biên Hòa, Đồng Nai', price: 'Nhà phố từ 8,4 tỷ', slug: 'izumi-city' },
-            { rank: 3, name: 'Vạn Phúc City', dev: 'Đại Phúc Group', meta: '198ha · Ven sông Sài Gòn, Thủ Đức', price: 'Liên hệ', slug: 'van-phuc-city' },
-        ],
-    },
-    {
-        category: 'Đại Đô Thị',
-        title: 'Top 3 Đại Đô Thị Lớn Nhất Việt Nam',
-        accent: 'amber',
-        items: [
-            { rank: 1, name: 'Vinhomes Cần Giờ', dev: 'Vinhomes', meta: '2.870ha · Cần Giờ, TP.HCM', price: 'Từ 12 tỷ', slug: 'vinhomes-can-gio' },
-            { rank: 2, name: 'Aqua City Novaland', dev: 'Novaland', meta: '1.000ha · Biên Hòa, Đồng Nai', price: 'Từ 6,5 tỷ', slug: 'aqua-city' },
-            { rank: 3, name: 'Vinhomes Grand Park', dev: 'Vinhomes', meta: '271ha · TP Thủ Đức', price: 'Từ 3 tỷ', slug: 'vinhomes-grand-park' },
-        ],
-    },
-];
-const ICONS = {
-    ARROW_RIGHT: <ArrowRight className="w-4 h-4" />,
-    SEARCH: <Search className="w-5 h-5" />,
-    AI_SPARK: <Sparkles className="w-6 h-6" />,
-    CHART: <BarChart3 className="w-6 h-6" />,
-    GLOBE: <Globe2 className="w-6 h-6" />,
-    BOLT: <Zap className="w-6 h-6" />,
-    SUN: <Sun className="w-4 h-4" />,
-    MOON: <Moon className="w-4 h-4" />,
-    X: <X className="w-4 h-4" />
-};
-// --- HOOKS ---
-const useCountUp = (end: number, duration: number = 2000, start: boolean = false) => {
-    const [count, setCount] = useState(0);
-    useEffect(() => {
-        if (!start) return;
-        let animId: number;
-        let startTime: number | null = null;
-        const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = currentTime - startTime;
-            const percentage = Math.min(progress / duration, 1);
-            // Easing function (easeOutExpo)
-            const ease = percentage === 1 ? 1 : 1 - Math.pow(2, -10 * percentage);
-            // Preserve decimal places for fractional `end` values
-            const raw = ease * end;
-            setCount(Number.isInteger(end) ? Math.floor(raw) : Math.round(raw * 100) / 100);
-            if (progress < duration) {
-                animId = requestAnimationFrame(animate);
-            }
-        };
-        animId = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(animId);
-    }, [end, duration, start]);
-    return count;
-};
-const NavPill = ({ children, onClick }: { children?: React.ReactNode, onClick?: () => void }) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className="px-2.5 lg:px-4 py-1 lg:py-1.5 rounded-full text-xs2 lg:text-xs font-bold transition-all duration-300 border bg-[var(--bg-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md cursor-pointer hover:-translate-y-0.5 select-none whitespace-nowrap min-h-[36px]"
-    >
-        {children}
-    </button>
-);
-// Enhanced Stat Card with Intersection Observer for Animation
-const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string, value: number, suffix: string, trend: string, prefix?: string }) => {
-    const [isVisible, setIsVisible] = useState(false);
-    const cardRef = useRef<HTMLDivElement>(null);
-    const count = useCountUp(value, 2000, isVisible);
-    const { language } = useTranslation();
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setIsVisible(true);
-                    observer.disconnect();
-                }
-            },
-            { threshold: 0.2 }
-        );
-        if (cardRef.current) observer.observe(cardRef.current);
-        return () => observer.disconnect();
-    }, []);
-    return (
-        <motion.div 
-            ref={cardRef} 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col p-6 md:p-8 rounded-[24px] md:rounded-[32px] bg-[var(--bg-surface)] dark:bg-slate-800 border border-[var(--glass-border)] dark:border-slate-700 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-all group h-full justify-center items-center text-center transform hover:-translate-y-1"
+import React, { useState, useEffect, useRef } from "react";
+
+import {
+  Sparkles, ArrowRight, Phone, MapPin, Shield, ChevronDown,
+  CheckCircle, Star, Bot, Search, TrendingUp, Users, Award,
+  ChevronRight, BarChart3, Landmark, Clock, Heart, Building2,
+} from "lucide-react";
+
+// ═══════════════════════════════════════════════════════════════
+//  TYPES
+// ═══════════════════════════════════════════════════════════════
+
+type Lang = "vi" | "en";
+
+interface FeaturedProject {
+  slug: string; name: string; dev: string; loc: string;
+  scale: string; priceFrom: string; type: string;
+  badge: string; badgeType: "sale" | "open" | "soon";
+  img: string; legal?: boolean; category: string;
+}
+
+interface Props {
+  featuredListings: any[];
+  stats: { totalListings: number; totalProjects: number; totalBrokers: number };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STATIC DATA
+// ═══════════════════════════════════════════════════════════════
+
+const PROJECTS: FeaturedProject[] = [
+  { slug: "aqua-city",             name: "Aqua City Novaland",       dev: "Novaland",          loc: "Biên Hòa, Đồng Nai",   scale: "1.000 ha", priceFrom: "6,5 tỷ",  type: "Biệt thự & Nhà phố", badge: "Đang bàn giao", badgeType: "sale", img: "/landing/aqua-city/hero-opt.jpg",            legal: true,  category: "villa"     },
+  { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",     badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"       },
+  { slug: "izumi-city",            name: "Izumi City Nam Long",      dev: "Nam Long Group",    loc: "Biên Hòa, Đồng Nai",   scale: "170 ha",   priceFrom: "1,2 tỷ",  type: "Đô thị chuẩn Nhật",  badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/izumi-city.webp",           legal: true,  category: "apt"       },
+  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "Từ 8 tỷ", type: "Đô thị biển",         badge: "Nhận đặt cọc", badgeType: "open", img: "/landing/aqua-city/hero-opt.jpg",                          category: "villa"     },
+  { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",     badge: "Còn hàng",     badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt"       },
+  { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",          badge: "Còn hàng",     badgeType: "sale", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "apt"       },
+  { slug: "van-phuc-city",         name: "Vạn Phúc City",            dev: "Vạn Phúc Group",    loc: "TP Thủ Đức",           scale: "198 ha",   priceFrom: "15 tỷ",   type: "Nhà phố & Biệt thự", badge: "Đang mở bán",  badgeType: "open", img: "/landing/legacy-66/hero.jpg",                              category: "townhouse" },
+];
+
+const STATS_DATA = [
+  { num: 45000, suffix: "+",        prefix: "",   vi: "BĐS quản lý",        en: "Properties"       },
+  { num: 15000, suffix: "+",        prefix: "",   vi: "Môi giới đối tác",   en: "Partner Agents"   },
+  { num: 2,     suffix: " tỷ USD+", prefix: "",   vi: "Giá trị giao dịch",  en: "Transaction Value"},
+  { num: 48,    suffix: "/5",       prefix: "4.", vi: "Đánh giá khách hàng",en: "Customer Rating"  },
+  { num: 5,     suffix: "%",        prefix: "±",  vi: "Sai số định giá AI", en: "AI Valuation MAPE"},
+];
+
+const TICKER_ITEMS = [
+  "Căn hộ Vinhomes Grand Park 2PN — 3,2 tỷ — Đã công chứng 10/06/2026",
+  "Nhà phố Aqua City 5×20m — 8,5 tỷ — Sổ hồng trao tay 08/06/2026",
+  "Đất nền Legacy 66 Long An — 2,1 tỷ — Pháp lý đầy đủ 05/06/2026",
+  "Biệt thự The Global City — 15 tỷ — Đặt cọc thành công 03/06/2026",
+  "Căn hộ Izumi City 3PN — 4,8 tỷ — Chốt hôm nay 01/06/2026",
+  "Shophouse Masteri Cosmo Central — 6,43 tỷ — Sang tên 29/05/2026",
+  "Biệt thự Vạn Phúc ven sông — 18 tỷ — Pháp lý sạch 27/05/2026",
+];
+
+const PLACEHOLDERS = [
+  "Căn hộ 2PN gần Metro số 1, dưới 3 tỷ…",
+  "Biệt thự Aqua City có sổ hồng riêng…",
+  "Đất nền Biên Hòa pháp lý sạch dưới 2 tỷ…",
+  "Vay 70% mua Grand Park, lãi suất thấp nhất…",
+];
+
+const QUICK_CHIPS = [
+  "Biệt thự Aqua City có sổ hồng",
+  "Đất nền pháp lý sạch Biên Hòa",
+  "Vay 70% lãi suất thấp",
+];
+
+const FAQ_ITEMS = [
+  { q: "Tại sao nên mua bất động sản qua SGS LAND?",           a: "SGS LAND là đại lý F1 uỷ quyền chính thức của Novaland, Masterise Homes, Nam Long và Vinhomes — đảm bảo giá gốc, không phát sinh phí môi giới cho người mua, pháp lý minh bạch 2 lớp độc lập." },
+  { q: "Công nghệ định giá AI của SGS LAND chính xác bao nhiêu?", a: "Công nghệ SGS-AVM v2.1 sử dụng 9 hệ số định giá chuẩn TĐGVN/IVS, MAPE ±4.8%, dựa trên hơn 2.400 giao dịch công chứng thực tế. Kết quả tức thì, minh bạch từng yếu tố ảnh hưởng." },
+  { q: "Quy trình kiểm tra pháp lý tại SGS LAND như thế nào?", a: "2 lớp độc lập: AI sơ thẩm kiểm tra quy hoạch 1/2000, sổ hồng, tranh chấp tài sản; Chuyên viên pháp lý xác nhận thực địa theo Luật Đất Đai 2024 và Luật Kinh doanh BĐS 2023." },
+  { q: "Người mua có phải trả phí dịch vụ không?",             a: "Hoàn toàn miễn phí. Định giá AI, tư vấn pháp lý, hỗ trợ vay vốn — tất cả đều không mất phí với người mua và thuê. Người bán và chủ đầu tư chi trả hoa hồng dịch vụ cho SGS LAND." },
+  { q: "SGS LAND hỗ trợ vay ngân hàng như thế nào?",           a: "Đối tác với 12+ ngân hàng lớn (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, lãi suất từ 6–8,5%/năm. Đội tư vấn tài chính đồng hành từ hồ sơ đến giải ngân." },
+  { q: "Những dự án nào đang phân phối tại SGS LAND?",         a: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Cần Giờ, Masteri Cosmo Central, Vinhomes Hóc Môn — cập nhật liên tục." },
+];
+
+const FILTER_TABS = [
+  { id: "all", vi: "Tất cả", en: "All" },
+  { id: "apt", vi: "Căn hộ", en: "Apartments" },
+  { id: "villa", vi: "Biệt thự", en: "Villas" },
+  { id: "townhouse", vi: "Nhà phố", en: "Townhouses" },
+];
+
+const BADGE_STYLES: Record<string, React.CSSProperties> = {
+  sale: { background: "rgba(30,127,92,0.12)", color: "#1E7F5C", border: "1px solid rgba(30,127,92,0.25)" },
+  open: { background: "rgba(27,58,92,0.10)",  color: "#1B3A5C", border: "1px solid rgba(27,58,92,0.2)"  },
+  soon: { background: "rgba(200,150,62,0.12)",color: "#8C6420", border: "1px solid rgba(200,150,62,0.3)" },
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  HOOKS
+// ═══════════════════════════════════════════════════════════════
+
+function useInView(threshold = 0.25) {
+  const ref = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, inView };
+}
+
+function useCountUp(target: number, duration = 1800, active = false) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let frame: number;
+    const start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+      else setCount(target);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration, active]);
+  return count;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SHARED: Section Heading
+// ═══════════════════════════════════════════════════════════════
+
+function SectionHeading({ title, subtitle, center = false }: {
+  title: React.ReactNode; subtitle?: string; center?: boolean;
+}) {
+  return (
+    <div className={center ? "text-center" : ""}>
+      <h2
+        className="text-2xl sm:text-3xl font-semibold leading-tight"
+        style={{
+          fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
+          color: "var(--sgs-primary, #1B3A5C)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {title}
+      </h2>
+      <div
+        className={center ? "mx-auto" : ""}
+        style={{ width: "48px", height: "3px", background: "#C8963E", borderRadius: "2px", marginTop: "10px", marginBottom: subtitle ? "12px" : 0 }}
+      />
+      {subtitle && (
+        <p className="text-base mt-2" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 1 — HERO
+// ═══════════════════════════════════════════════════════════════
+
+function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: Lang }) {
+  const [query, setQuery]           = useState("");
+  const [phIdx, setPhIdx]           = useState(0);
+  const [visible, setVisible]       = useState(false);
+
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    const id = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 3200);
+    return () => clearInterval(id);
+  }, []);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(query || PLACEHOLDERS[phIdx]);
+  };
+  const chip = (text: string) => {
+    setQuery(text);
+    document.getElementById("sgs-search")?.focus();
+  };
+
+  return (
+    <section
+      className="relative flex flex-col justify-center overflow-hidden"
+      style={{
+        minHeight: "88vh",
+        paddingTop: "80px",
+        background: "linear-gradient(175deg, #0A1E33 0%, #0F2740 45%, #1B3A5C 80%, rgba(200,150,62,0.18) 100%)",
+      }}
+    >
+      {/* City silhouette */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none select-none" style={{ height: "180px" }}>
+        <svg viewBox="0 0 1440 180" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg"
+          style={{ width: "100%", height: "100%", opacity: 0.10 }}>
+          <path d="M0,180 L0,120 L40,120 L40,90 L60,90 L60,120 L80,120 L80,70 L100,70 L100,55 L120,55 L120,70 L140,70 L140,120 L160,120 L160,80 L180,80 L180,45 L190,45 L190,25 L200,25 L200,45 L210,45 L210,80 L240,80 L240,100 L260,100 L260,60 L280,60 L280,35 L300,35 L300,18 L310,18 L310,8 L320,8 L320,18 L330,18 L330,35 L360,35 L360,60 L380,60 L380,95 L400,95 L400,70 L420,70 L420,45 L440,45 L440,70 L460,70 L460,95 L480,95 L480,120 L500,120 L500,90 L520,90 L520,62 L540,62 L540,90 L560,90 L560,115 L580,115 L580,78 L600,78 L600,52 L620,52 L620,35 L640,35 L640,52 L660,52 L660,78 L680,78 L680,108 L720,108 L720,135 L760,135 L760,108 L780,108 L780,80 L800,80 L800,62 L820,62 L820,80 L840,80 L840,108 L860,108 L860,80 L880,80 L880,52 L900,52 L900,35 L920,35 L920,52 L940,52 L940,80 L960,80 L960,108 L1000,108 L1000,80 L1020,80 L1020,62 L1040,62 L1040,45 L1060,45 L1060,62 L1080,62 L1080,80 L1100,80 L1100,108 L1120,108 L1120,70 L1140,70 L1140,45 L1160,45 L1160,25 L1180,25 L1180,45 L1200,45 L1200,70 L1240,70 L1240,98 L1260,98 L1260,70 L1280,70 L1280,90 L1300,90 L1300,118 L1320,118 L1320,98 L1340,98 L1340,120 L1360,120 L1360,100 L1400,100 L1400,120 L1440,120 L1440,180 Z"
+            fill="#C8963E"/>
+        </svg>
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        {/* Badge */}
+        <div
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-6"
+          style={{ background: "rgba(200,150,62,0.15)", border: "1px solid rgba(200,150,62,0.4)", color: "#D4A855" }}
         >
-            <span className="text-xs2 md:text-xs text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-widest mb-3 md:mb-4">{label}</span>
-            <div className="flex flex-col items-center gap-2 md:gap-3">
-                <span className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight group-hover:scale-105 transition-transform">
-                    {prefix}{Number.isInteger(value) ? count.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US') : count.toFixed(2)}{suffix}
-                </span>
-                <span className="text-xs2 md:text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 whitespace-nowrap">{trend}</span>
-            </div>
-        </motion.div>
-    );
-};
-const FeatureBento = ({ title, desc, icon, className = "", iconBg = "bg-[var(--glass-surface-hover)] dark:bg-slate-700", onClick, ctaLabel, delay = 0 }: any) => (
-    <motion.div 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.15 }}
-        transition={{ duration: 0.45, delay }}
-        onClick={onClick}
-        className={`relative p-6 md:p-8 rounded-[32px] overflow-hidden group border border-[var(--glass-border)] dark:border-slate-700 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] transition-all duration-500 bg-[var(--bg-surface)] dark:bg-slate-800 flex flex-col justify-between cursor-pointer ${className}`}
-    >
-        <div className="absolute top-0 right-0 p-32 bg-gradient-to-br from-white/5 to-transparent rounded-full blur-2xl pointer-events-none transition-opacity opacity-0 group-hover:opacity-100"></div>
-        
-        <div>
-            <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl ${iconBg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm`}>
-                {icon}
-            </div>
-            <h3 className="text-lg md:text-xl font-bold text-[var(--text-primary)] dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{title}</h3>
-            <p className="text-xs md:text-sm text-[var(--text-tertiary)] dark:text-slate-400 leading-relaxed max-w-[95%] font-medium">{desc}</p>
+          <Award className="w-3.5 h-3.5" />
+          Đại lý F1 uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes
         </div>
-        <div className="pt-8 flex items-center gap-2 text-xs font-bold text-[var(--text-primary)] dark:text-white opacity-60 group-hover:opacity-100 transition-opacity group/btn">
-            <span>{ctaLabel}</span>
-            <span className="group-hover/btn:translate-x-1 transition-transform">{ICONS.ARROW_RIGHT}</span>
+
+        {/* Kinetic headline */}
+        <h1
+          id="seo-h1"
+          className="mb-5"
+          style={{
+            fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
+            fontWeight: 600,
+            fontSize: "clamp(2rem, 5vw, 3.8rem)",
+            lineHeight: 1.15,
+            color: "#FFFFFF",
+            letterSpacing: "-0.02em",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(24px)",
+            transition: "opacity 0.75s ease, transform 0.75s ease",
+          }}
+        >
+          {lang === "vi" ? (
+            <>
+              Tìm kiếm, mua &amp;{" "}
+              <span
+                className="italic"
+                style={{ color: "#D4A855", display: "inline-block", position: "relative" }}
+              >
+                đầu tư
+                <span
+                  style={{
+                    position: "absolute", bottom: "-2px", left: 0, height: "2.5px",
+                    background: "#D4A855", borderRadius: "2px",
+                    animation: "underline-draw 0.55s ease 0.85s forwards",
+                    width: 0,
+                  }}
+                />
+              </span>{" "}
+              BĐS TP.HCM
+            </>
+          ) : (
+            <>
+              Search, Buy &amp;{" "}
+              <span className="italic" style={{ color: "#D4A855" }}>invest</span>{" "}
+              in HCMC Real Estate
+            </>
+          )}
+        </h1>
+
+        <p
+          className="text-base sm:text-lg max-w-lg mb-10"
+          style={{
+            color: "rgba(220,232,244,0.78)",
+            fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+            opacity: visible ? 1 : 0,
+            transition: "opacity 0.75s ease 0.18s",
+          }}
+        >
+          {lang === "vi"
+            ? "Định giá AI ±5%, pháp lý 2 lớp, CRM đa kênh. Kết nối 15.000+ môi giới và 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương."
+            : "AI Valuation ±5%, 2-layer legal check, multi-channel CRM. Connecting 15,000+ agents and 45,000+ properties across HCMC, Dong Nai, Binh Duong."}
+        </p>
+
+        {/* Glass AI Search Panel */}
+        <div style={{ marginBottom: "-52px", maxWidth: "680px" }}>
+          <div
+            className="rounded-2xl p-4 sm:p-5"
+            style={{
+              background: "rgba(255,255,255,0.95)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+              border: "1px solid rgba(200,150,62,0.4)",
+              boxShadow: "0 20px 60px rgba(10,30,51,0.4), 0 4px 16px rgba(200,150,62,0.12)",
+            }}
+          >
+            <p
+              className="text-xs font-semibold mb-3 flex items-center gap-1.5"
+              style={{ color: "#8C6420" }}
+            >
+              <Sparkles className="w-3.5 h-3.5" style={{ color: "#C8963E" }} />
+              {lang === "vi"
+                ? "Hỏi AI — mô tả nhu cầu bằng ngôn ngữ tự nhiên"
+                : "Ask AI — describe your needs in natural language"}
+            </p>
+            <form onSubmit={submit} className="flex gap-2">
+              <div className="flex-1 relative">
+                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#C8963E" }} />
+                <input
+                  id="sgs-search"
+                  type="text"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder={PLACEHOLDERS[phIdx]}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  style={{
+                    background: "#F8F9FB",
+                    border: "1.5px solid rgba(27,58,92,0.1)",
+                    color: "#16202B",
+                    caretColor: "#C8963E",
+                    fontFamily: "var(--font-be-vietnam, sans-serif)",
+                  }}
+                  onFocus={e => (e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)")}
+                  onBlur={e  => (e.currentTarget.style.border = "1.5px solid rgba(27,58,92,0.1)")}
+                />
+              </div>
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
+                style={{ background: "#C8963E", color: "#0F2740" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+              >
+                <ArrowRight className="w-4 h-4" />
+                {lang === "vi" ? "Hỏi ngay" : "Search"}
+              </button>
+            </form>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {QUICK_CHIPS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => chip(c)}
+                  className="text-xs px-3 py-1.5 rounded-full transition-all"
+                  style={{
+                    background: "#F5EAD5", color: "#1B3A5C",
+                    border: "1px solid rgba(200,150,62,0.25)",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#EAD5B0")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "#F5EAD5")}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-    </motion.div>
-);
-type FeaturedProject = {
-    slug: string;
-    name: string;
-    dev: string;
-    loc: string;
-    scale: string;
-    priceFrom: string;
-    type: string;
-    badge: string;
-    badgeColor: string;
-    img: string;
-    href?: string;
-};
-const badgeStyles: Record<string, string> = {
-    emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800',
-    indigo:  'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800',
-    amber:   'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800',
-};
-const ProjectCard = ({ project, onClick }: { project: FeaturedProject; onClick: () => void }) => {
-    const [imgLoaded, setImgLoaded] = React.useState(false);
-    return (
-    <motion.article
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.05 }}
-        transition={{ duration: 0.35 }}
-        onClick={onClick}
-        className="relative rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 bg-[var(--bg-surface)] dark:bg-slate-800 hover:shadow-xl dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 flex flex-col overflow-hidden"
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 2 — STATS BAR
+// ═══════════════════════════════════════════════════════════════
+
+function StatItem({ num, suffix, prefix, label }: { num: number; suffix: string; prefix: string; label: string }) {
+  const { ref, inView } = useInView(0.3);
+  const count = useCountUp(num, 1800, inView);
+  const fmt = (n: number) => (n >= 1000 ? n.toLocaleString("vi-VN") : String(n));
+  return (
+    <div ref={ref as React.RefObject<HTMLDivElement>} className="text-center px-2 py-1">
+      <div
+        className="text-2xl sm:text-3xl font-bold mb-1 tabular-nums"
+        style={{
+          fontFamily: "var(--font-ibm-plex-mono, var(--font-jetbrains-mono), monospace)",
+          color: "var(--sgs-primary, #1B3A5C)",
+        }}
+      >
+        {prefix}{fmt(count)}{suffix}
+      </div>
+      <div className="text-xs sm:text-sm" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{label}</div>
+    </div>
+  );
+}
+
+function StatsBar({ lang }: { lang: Lang }) {
+  return (
+    <section
+      className="relative z-10"
+      style={{
+        background: "var(--sgs-surface, #FFFFFF)",
+        borderBottom: "1px solid rgba(27,58,92,0.08)",
+        paddingTop: "76px",
+        paddingBottom: "28px",
+      }}
     >
-        {/* Project image */}
-        <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-slate-700">
-            {/* Shimmer — always in DOM, fades out via opacity so no layout reflow on image load */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 divide-x divide-slate-100">
+          {STATS_DATA.map(s => (
+            <StatItem
+              key={s.vi}
+              num={s.num} suffix={s.suffix} prefix={s.prefix}
+              label={lang === "vi" ? s.vi : s.en}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 3 — LEGAL TICKER
+// ═══════════════════════════════════════════════════════════════
+
+function LegalTicker() {
+  const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  return (
+    <div
+      className="overflow-hidden"
+      style={{
+        background: "#0F2740",
+        borderTop: "1px solid rgba(200,150,62,0.15)",
+        borderBottom: "1px solid rgba(200,150,62,0.15)",
+        padding: "9px 0",
+      }}
+    >
+      <div
+        className="flex whitespace-nowrap"
+        style={{ animation: "ticker-scroll 44s linear infinite" }}
+        onMouseEnter={e => (e.currentTarget.style.animationPlayState = "paused")}
+        onMouseLeave={e => (e.currentTarget.style.animationPlayState = "running")}
+      >
+        {doubled.map((item, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-2 text-sm px-8"
+            style={{
+              color: "#B9C6D4",
+              fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+            }}
+          >
+            <span style={{ color: "#C8963E", fontSize: "8px" }}>●</span>
+            <span style={{ color: "#1E7F5C", fontWeight: 600 }}>✓</span>
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 4 — PROJECTS
+// ═══════════════════════════════════════════════════════════════
+
+function ProjectCard({ proj }: { proj: FeaturedProject }) {
+  return (
+    <a
+      href={`/du-an/${proj.slug}`}
+      className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      style={{
+        background: "var(--sgs-surface, #FFFFFF)",
+        border: "1px solid rgba(27,58,92,0.08)",
+        boxShadow: "0 1px 4px rgba(22,32,43,0.06)",
+      }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 8px 28px rgba(22,32,43,0.12)")}
+      onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 1px 4px rgba(22,32,43,0.06)")}
+    >
+      <div
+        className="relative overflow-hidden"
+        style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, #0F2740, #1B3A5C)" }}
+      >
+        <img           src={proj.img} alt={proj.name}  loading="lazy"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+        <span
+          className="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full"
+          style={BADGE_STYLES[proj.badgeType]}
+        >
+          {proj.badge}
+        </span>
+        {proj.legal && (
+          <span
+            className="absolute top-3 right-3 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(30,127,92,0.9)", color: "#FFFFFF", backdropFilter: "blur(4px)" }}
+          >
+            <CheckCircle className="w-3 h-3" /> Pháp lý ✓
+          </span>
+        )}
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        <span className="text-xs font-medium mb-1" style={{ color: "#8C6420" }}>{proj.type}</span>
+        <h3
+          className="font-semibold text-sm mb-1 leading-snug"
+          style={{ color: "var(--sgs-text, #16202B)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
+        >
+          {proj.name}
+        </h3>
+        <div className="flex items-center gap-1 text-xs mb-3" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
+          <MapPin className="w-3 h-3 shrink-0" />{proj.dev} · {proj.loc}
+        </div>
+        <div className="mt-auto flex items-end justify-between">
+          <div>
+            <div className="text-[11px] mb-0.5" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>Quy mô {proj.scale}</div>
             <div
-                aria-hidden="true"
-                className={`absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 dark:from-slate-700 dark:via-slate-600 dark:to-slate-700 bg-[length:200%_100%] animate-[shimmer_1.4s_ease-in-out_infinite] transition-opacity duration-300 pointer-events-none ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
-            />
-            <img
-                src={project.img}
-                alt={`${project.name} - ${project.type} ${project.loc}`}
-                width={640}
-                height={360}
-                loading="lazy"
-                decoding="async"
-                className={`w-full h-full object-cover transition-opacity duration-500 group-hover:scale-105 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-                onLoad={() => setImgLoaded(true)}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; setImgLoaded(true); }}
-            />
-            <span className={`absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full border whitespace-nowrap leading-none backdrop-blur-sm ${badgeStyles[project.badgeColor] ?? badgeStyles.indigo}`}>
-                {project.badge}
-            </span>
-        </div>
-        {/* Card body */}
-        <div className="p-5 flex flex-col flex-1">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 leading-none mb-3 self-start">
-                {project.type}
-            </span>
-            <h3 className="text-lg font-bold text-[var(--text-primary)] dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-snug">
-                {project.name}
-            </h3>
-            <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 mb-3">{project.dev} &middot; {project.loc}</p>
-            <div className="flex items-center gap-1 text-sm mb-4">
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
-                <span className="font-medium text-[var(--text-secondary)] dark:text-slate-300">{project.scale}</span>
-            </div>
-            <div className="mt-auto pt-4 border-t border-[var(--glass-border)] dark:border-slate-700 flex items-center justify-between">
-                <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{project.priceFrom}</span>
-                <span className="flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 opacity-60 group-hover:opacity-100 transition-opacity">
-                    Xem thông tin dự án <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </span>
-            </div>
-        </div>
-    </motion.article>
-    );
-};
-const HomeFAQAccordion = ({ items }: { items: { q: string; a: string }[] }) => {
-    const [open, setOpen] = useState<number | null>(0);
-    return (
-        <div className="space-y-3">
-            {items.map((item, i) => (
-                <div key={i} className="border border-[var(--glass-border)] dark:border-slate-700 rounded-2xl overflow-hidden bg-[var(--bg-surface)] dark:bg-slate-800">
-                    <button
-                        type="button"
-                        onClick={() => setOpen(open === i ? null : i)}
-                        className="w-full flex items-center justify-between gap-4 p-5 text-left font-bold text-[var(--text-primary)] dark:text-white text-sm md:text-base leading-snug hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                        aria-expanded={open === i}
-                    >
-                        <span role="heading" aria-level={3}>{item.q}</span>
-                        <ChevronRight className={`w-4 h-4 shrink-0 transition-transform duration-200 ${open === i ? 'rotate-90' : ''}`} />
-                    </button>
-                    {open === i && (
-                        <p className="px-5 pb-5 text-sm md:text-base text-[var(--text-secondary)] dark:text-slate-300 leading-relaxed border-t border-[var(--glass-border)] dark:border-slate-700 pt-4">
-                            {item.a}
-                        </p>
-                    )}
-                </div>
-            ))}
-        </div>
-    );
-};
-export const Landing: React.FC = () => {
-    const { formatCurrency, language, setLanguage, t } = useTranslation();
-    const { theme, toggleTheme } = useTheme();   
-    const [scrolled, setScrolled] = useState(false);
-    const [allListings, setAllListings] = useState<Listing[]>([]);
-    const [activeCategory, setActiveCategory] = useState<'ALL' | 'PROJECT' | 'UNIT'>('ALL');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [favorites, setFavorites] = useState<Set<string>>(new Set());
-    const [chatOpen, setChatOpen] = useState(false);
-    // Typewriter effect
-    const [text, setText] = useState('');  
-    useEffect(() => {
-        db.getCurrentUser().then(user => {
-            setCurrentUser(user);
-            if (user) {
-                db.getFavorites(1, 1000)
-                    .then(res => setFavorites(new Set(res.data.map((f: any) => f.id))))
-                    .catch(() => {});
-            } else {
-                try { setFavorites(new Set(JSON.parse(localStorage.getItem('sgs_favorites') || '[]'))); } catch {}
-            }
-        }).catch(() => {});
-        const onLogout = () => { setCurrentUser(null); setFavorites(new Set()); };
-        window.addEventListener('auth:logout', onLogout);
-        return () => window.removeEventListener('auth:logout', onLogout);
-    }, []);
-    useEffect(() => {
-        const heroTitle = t('landing.hero_title');
-        document.title = `SGS LAND | ${heroTitle}`;
-        // Update meta description dynamically for SPA SEO
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) metaDesc.setAttribute('content', t('landing.hero_desc'));
-        const ogTitle = document.querySelector('meta[property="og:title"]');
-        if (ogTitle) ogTitle.setAttribute('content', `SGS LAND | ${heroTitle}`);
-        const ogDesc = document.querySelector('meta[property="og:description"]');
-        if (ogDesc) ogDesc.setAttribute('content', t('landing.hero_desc'));
-        const twTitle = document.querySelector('meta[name="twitter:title"]');
-        if (twTitle) twTitle.setAttribute('content', `SGS LAND | ${heroTitle}`);
-        const twDesc = document.querySelector('meta[name="twitter:description"]');
-        if (twDesc) twDesc.setAttribute('content', t('landing.hero_desc'));
-    }, [t, language]);
-    useEffect(() => {
-        const fullText = t('landing.typewriter');
-        let idx = 0;
-        setText('');        
-        const interval = setInterval(() => {
-            setText(fullText.slice(0, idx));
-            idx++;
-            if (idx > fullText.length) clearInterval(interval);
-        }, 40);
-        return () => clearInterval(interval);
-    }, [language, t]); 
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        
-        db.getPublicListings(1, 200).then(res => {
-            if (res.data) {
-                const validListings = res.data.filter(l =>
-                    l.status === ListingStatus.AVAILABLE ||
-                    l.status === ListingStatus.OPENING ||
-                    l.status === ListingStatus.BOOKING
-                );
-                setAllListings(validListings.sort((a, b) => b.price - a.price));
-            }
-        }).catch(() => { /* silent — listings fallback to empty */ });
-        
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-    const navigateTo = (route: string) => {
-        window.location.hash = `#/${route}`;
-        window.scrollTo(0, 0); 
-    };
-    const handleSearch = () => {
-        // Navigate to search page with query parameter if present
-        const route = searchQuery.trim() 
-            ? `${ROUTES.SEARCH}?q=${encodeURIComponent(searchQuery.trim())}` 
-            : ROUTES.SEARCH;
-        navigateTo(route);
-    };
-    const handleToggleFavorite = async (id: string) => {
-        if (!currentUser) { navigateTo(ROUTES.LOGIN); return; }
-        const isFav = favorites.has(id);
-        const newSet = new Set(favorites);
-        if (isFav) newSet.delete(id); else newSet.add(id);
-        setFavorites(newSet);
-        try { await db.toggleFavorite(id); } catch { setFavorites(favorites); }
-    };
-    const displayedListings = useMemo(() => {
-        let filtered = allListings;
-        if (activeCategory === 'PROJECT') {
-            filtered = allListings.filter(l => l.type === PropertyType.PROJECT);
-        } else if (activeCategory === 'UNIT') {
-            filtered = allListings.filter(l => l.type !== PropertyType.PROJECT);
-        }
-        // Show top 6
-        return filtered.slice(0, 6);
-    }, [allListings, activeCategory]);
-    const FooterLink = ({ label, route }: { label: string, route: string }) => (
-        <li>
-            <button 
-                onClick={() => navigateTo(route)} 
-                className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left text-[var(--text-tertiary)] dark:text-slate-400 hover:translate-x-1 duration-200 inline-block"
+              className="text-sm font-bold tabular-nums"
+              style={{ color: "var(--sgs-accent-text, #8C6420)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
             >
-                {label}
-            </button>
-        </li>
-    );
-    return (
-        <div className="bg-[var(--bg-surface)] dark:bg-slate-900 text-[var(--text-primary)] dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-clip min-h-[100dvh] transition-colors duration-300">
-            <SeoHead
-                title="SGS LAND | Định Giá AI & CRM Bất Động Sản Số 1 Việt Nam"
-                description="Nền tảng BĐS AI hàng đầu Việt Nam: Định giá ±5%, CRM đa kênh Zalo/Facebook/Email, kho 2.000+ tin thật, pháp lý kiểm duyệt 2 lớp. Dùng thử miễn phí 14 ngày."
-                canonicalPath="/"
-                structuredData={[
-                    {
-                        '@type': 'Organization',
-                        '@id': 'https://sgsland.vn/#organization',
-                        name: 'SGS LAND',
-                        legalName: 'Công ty TNHH SGS Land',
-                        url: 'https://sgsland.vn',
-                        logo: 'https://sgsland.vn/og-image.jpg',
-                        foundingDate: '2024',
-                        taxID: '0312960439',
-                        address: {
-                            '@type': 'PostalAddress',
-                            streetAddress: 'TP. Hồ Chí Minh',
-                            addressLocality: 'Hồ Chí Minh',
-                            addressCountry: 'VN',
-                        },
-                        contactPoint: {
-                            '@type': 'ContactPoint',
-                            telephone: '+84-971-132-378',
-                            contactType: 'customer service',
-                            email: 'info@sgsland.vn',
-                            availableLanguage: ['vi', 'en'],
-                        },
-                        sameAs: ['https://www.facebook.com/sgsland', 'https://zalo.me/sgsland'],
-                    },
-                    {
-                        '@type': 'WebSite',
-                        '@id': 'https://sgsland.vn/#website',
-                        url: 'https://sgsland.vn',
-                        name: 'SGS LAND',
-                        publisher: { '@id': 'https://sgsland.vn/#organization' },
-                        inLanguage: 'vi-VN',
-                        potentialAction: {
-                            '@type': 'SearchAction',
-                            target: 'https://sgsland.vn/marketplace?q={search_term_string}',
-                            'query-input': 'required name=search_term_string',
-                        },
-                    },
-                    {
-                        '@type': 'SoftwareApplication',
-                        name: 'SGS LAND CRM Bất Động Sản',
-                        operatingSystem: 'Web',
-                        applicationCategory: 'BusinessApplication',
-                        offers: { '@type': 'Offer', price: '0', priceCurrency: 'VND' },
-                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247', bestRating: '5', worstRating: '1' },
-                        review: [
-                            {
-                                '@type': 'Review',
-                                author: { '@type': 'Person', name: 'Nguyễn Văn An' },
-                                datePublished: '2026-03-15',
-                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
-                                reviewBody: 'Nền tảng CRM BĐS tốt nhất thị trường. Định giá AI sai số ±5% giúp tôi đàm phán hiệu quả hơn. Giao diện thân thiện, không cần đào tạo.',
-                            },
-                            {
-                                '@type': 'Review',
-                                author: { '@type': 'Person', name: 'Trần Thị Bình' },
-                                datePublished: '2026-02-20',
-                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
-                                reviewBody: 'Quản lý lead đa kênh Zalo/Facebook rất tiện. Team chăm sóc khách hàng phản hồi nhanh, hỗ trợ onboarding tận tình.',
-                            },
-                            {
-                                '@type': 'Review',
-                                author: { '@type': 'Person', name: 'Lê Minh Khoa' },
-                                datePublished: '2026-01-10',
-                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
-                                reviewBody: 'Dùng thử 14 ngày rồi đăng ký luôn gói Pro. Tính năng AI phân loại lead tiết kiệm 3–4 giờ mỗi ngày.',
-                            },
-                        ],
-                    },
-                ]}
-            />
-            {/* NAVBAR — only shown for guests (when logged in, Layout's CommandCenter handles navigation) */}
-            {!currentUser && (
-                <nav className="fixed top-3 md:top-4 left-1/2 -translate-x-1/2 z-50 w-full px-4 flex justify-center pointer-events-none">
-                    <div className={`pointer-events-auto relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex items-center justify-between p-1.5 rounded-full border ${scrolled ? 'bg-[var(--bg-surface)]/90 dark:bg-slate-900/90 backdrop-blur-xl border-[var(--glass-border)]/50 dark:border-white/10 shadow-2xl w-full max-w-5xl' : 'bg-transparent border-transparent w-full max-w-7xl'}`}>                        
-                        <div className="flex items-center gap-1.5 md:gap-2 pl-1.5 cursor-pointer group z-10 flex-none md:flex-1" onClick={() => navigateTo('')}>
-                            <div className="bg-[var(--bg-surface)] dark:bg-slate-800 p-1 rounded-lg shadow-sm border border-[var(--glass-border)] dark:border-slate-700 group-hover:scale-105 transition-transform">
-                                <Logo className="w-4 h-4 md:w-5 md:h-5 text-indigo-600 dark:text-indigo-400" />
-                            </div>
-                            <span className={`font-bold text-sm md:text-base tracking-tight transition-opacity text-[var(--text-primary)] dark:text-white`}>SGS<span className="text-slate-400">LAND</span></span>
-                        </div>
-                        <div className="hidden md:flex items-center gap-0.5 bg-[var(--glass-surface-hover)]/80 dark:bg-slate-800/80 p-0.5 rounded-full border border-[var(--glass-border)]/50 dark:border-slate-700 backdrop-blur-md shadow-sm pointer-events-auto flex-none 
-                            md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-20">
-                            <NavPill onClick={() => navigateTo(ROUTES.SEARCH)}>{t('nav.public_market')}</NavPill>
-                            <NavPill onClick={() => navigateTo(ROUTES.AI_VALUATION)}>{t('footer.link_valuation')}</NavPill>
-                            <NavPill onClick={() => navigateTo(ROUTES.CRM_SOLUTION)}>{t('footer.link_crm')}</NavPill>
-                        </div>
-                        <div className="flex items-center gap-1 md:gap-1.5 pr-0.5 z-10 flex-none ml-auto md:flex-1 md:justify-end">
-                            <button
-                                onClick={toggleTheme}
-                                className="p-1.5 rounded-full text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)]/60 dark:hover:bg-slate-800/60 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
-                                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                            >
-                                {theme === 'dark' ? ICONS.SUN : ICONS.MOON}
-                            </button>
-                            <button
-                                onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
-                                className="p-1.5 rounded-full text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)]/60 dark:hover:bg-slate-800/60 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center text-xs2 font-extrabold tracking-tighter border border-transparent hover:border-[var(--glass-border)]/60 dark:hover:border-slate-700"
-                                title={t('nav.lang_switch')}
-                                aria-label={t('nav.lang_switch')}
-                            >
-                                {language.toUpperCase()}
-                            </button>
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-4 py-1.5 lg:py-2 text-xs2 lg:text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[36px] items-center">
-                                {t('auth.btn_login')}
-                            </button>
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 lg:px-5 py-2 rounded-full text-xs2 lg:text-xs font-bold hover:bg-slate-700 dark:hover:bg-slate-100 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-1.5 whitespace-nowrap min-h-[36px]">
-                                {t('landing.cta_btn_register')} <span className="hidden sm:inline">{ICONS.ARROW_RIGHT}</span>
-                            </button>
-                        </div>
-                    </div>
-                </nav>
-            )}
-            {/* HERO SECTION */}
-            <section className={`relative ${currentUser ? 'pt-8 md:pt-12' : 'pt-32 md:pt-40'} pb-20 md:pb-32 px-6 overflow-hidden min-h-[90svh] flex flex-col justify-center items-center`}>
-                {/* Background Decor */}
-                <motion.div 
-                    animate={{ 
-                        scale: [1, 1.05, 1],
-                        opacity: [0.4, 0.6, 0.4]
-                    }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[1200px] h-[600px] md:h-[800px] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-100/40 via-transparent to-transparent dark:from-indigo-900/20 rounded-full blur-3xl -z-10 pointer-events-none"
-                ></motion.div>                
-                <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-                    {/* Left Column: Text & Search */}
-                    <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="inline-flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-full bg-indigo-50/80 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-500/30 shadow-sm mb-6 md:mb-8 backdrop-blur-sm"
-                        >
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600 dark:bg-indigo-400"></span>
-                            </span>
-                            <span className="text-2xs md:text-xs2 font-bold text-indigo-700 dark:text-indigo-300 tracking-widest uppercase">{t('landing.badge_tech')}</span>
-                        </motion.div>
-                        <motion.h1 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: 0.1 }}
-                            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] dark:text-white tracking-tight mb-8 md:mb-10 leading-[1.1] drop-shadow-sm relative"
-                        >
-                            {/* Invisible ghost text reserves full heading height; whitespace-nowrap
-                                guarantees single-line so the text never wraps on narrow viewports */}
-                            <span className="invisible select-none whitespace-nowrap" aria-hidden="true">{t('landing.typewriter')}</span>
-                            {/* Visible animated text overlaid — whitespace-nowrap keeps it on one line */}
-                            <span className="absolute inset-0 whitespace-nowrap">{text}<span className="animate-blink text-indigo-500">|</span></span>
-                        </motion.h1>
-                        <motion.p 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
-                            className="text-base md:text-xl text-[var(--text-secondary)] dark:text-slate-300 max-w-2xl mb-10 md:mb-12 font-medium leading-relaxed"
-                        >
-                            {t('landing.hero_desc')}
-                        </motion.p>
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: 0.3 }}
-                            className="w-full max-w-xl relative group z-20"
-                        >
-                            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200 dark:from-indigo-800 dark:via-purple-800 dark:to-pink-800 rounded-full opacity-40 blur-lg group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
-                            <div className="relative bg-[var(--bg-surface)] dark:bg-slate-800 rounded-full p-1.5 md:p-2 flex items-center shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-[var(--glass-border)] dark:border-slate-700">
-                                <div className="pl-3 md:pl-6 pr-2 md:pr-4 text-slate-400 group-hover:text-indigo-600 transition-colors flex items-center justify-center">{ICONS.SEARCH}</div>
-                                <input 
-                                    className="flex-1 bg-transparent border-none outline-none text-[var(--text-primary)] dark:text-white text-sm md:text-lg placeholder:text-[var(--text-muted)] h-12 md:h-12 font-medium truncate w-full"
-                                    placeholder={t('landing.search_placeholder')}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                />
-                                {searchQuery && (
-                                    <button 
-                                        onClick={() => setSearchQuery('')}
-                                        className="text-slate-400 hover:text-[var(--text-secondary)] dark:hover:text-slate-300 transition-colors p-1 rounded-full hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-700 mr-2 flex items-center justify-center"
-                                        title={t('common.clear_search')}
-                                    >
-                                        {ICONS.X}
-                                    </button>
-                                )}
-                                <button onClick={handleSearch} className="bg-slate-900 dark:bg-indigo-600 text-white px-4 md:px-8 py-2.5 md:py-3 rounded-full font-bold text-xs md:text-sm hover:bg-slate-800 dark:hover:bg-indigo-700 transition-colors active:scale-95 shadow-lg shrink-0 ml-1 min-h-[44px]">
-                                    {t('common.search')}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                    {/* Right Column: 3D SVG */}
-                    <div className="w-full flex justify-center items-center lg:justify-end">
-                        <Hero3D />
-                    </div>
-                </div>
-                <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1, delay: 0.6 }}
-                    className="mt-16 md:mt-24 pt-8 w-full max-w-5xl mx-auto text-center"
-                >
-                    <p className="text-xs2 md:text-xs font-bold text-[var(--text-tertiary)] dark:text-slate-400 uppercase tracking-[0.3em] mb-6 md:mb-8">{t('landing.trust_badge')}</p>
-                    
-                    {/* TICKER ANIMATION CONTAINER */}
-                    <div className="relative overflow-hidden w-full max-w-4xl mx-auto mask-linear-fade">
-                        <div className="flex gap-12 md:gap-20 opacity-60 grayscale hover:grayscale-0 transition-all duration-700 animate-scroll-x">
-                            {[...PARTNERS, ...PARTNERS].map((p, i) => (
-                                <span key={i} className="text-sm md:text-lg font-bold font-display text-[var(--text-primary)] dark:text-slate-300 tracking-tight cursor-default whitespace-nowrap">{p}</span>
-                            ))}
-                        </div>
-                    </div>
-                </motion.div>
-            </section>
-            {/* METRICS (ENTERPRISE GRADE) */}
-            <section className="py-16 md:py-20 px-6 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 border-y border-[var(--glass-border)] dark:border-slate-800 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        <StatCard label={t('landing.stat_value_label')} value={11} suffix="+" trend={t('landing.trend_ytd')} />
-                        <StatCard label={t('landing.stat_data_label')} value={95} suffix="%" trend={t('landing.trend_daily')} />
-                        <StatCard label={t('landing.stat_latency_label')} value={5} suffix=" Tỉnh" trend={t('landing.trend_multi_region')} />
-                        <StatCard label={t('landing.stat_uptime_label')} value={24} suffix="/7" trend={t('landing.trend_enterprise')} />
-                    </div>
-                </div>
-            </section>
-            {/* FEATURED PROJECTS */}
-            <section className="py-20 md:py-32 px-6 bg-[var(--bg-surface)] dark:bg-slate-900">
-                <div className="max-w-7xl mx-auto">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        className="mb-12 md:mb-16"
-                    >
-                        <span className="text-xs font-bold tracking-[0.25em] uppercase text-indigo-600 dark:text-indigo-400 mb-3 block">11+ DỰ ÁN LỚN</span>
-                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-[var(--text-primary)] dark:text-white mb-4 tracking-tight">
-                            Dự Án SGS LAND <br className="hidden md:block" /><span className="text-indigo-600 dark:text-indigo-400">Đang Phân Phối</span>
-                        </h2>
-                        <p className="text-lg md:text-xl text-[var(--text-tertiary)] dark:text-slate-400 max-w-2xl leading-relaxed">
-                            SGS LAND phân phối các dự án quy mô lớn tại TP.HCM, Đồng Nai và Bình Dương — tổng diện tích hơn 4.500ha, giá từ 2 tỷ đến hàng trăm tỷ đồng/căn.
-                        </p>
-                    </motion.div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {(FEATURED_PROJECTS as unknown as FeaturedProject[]).map((p) => (
-                            <ProjectCard
-                                key={p.slug}
-                                project={p}
-                                onClick={() => {
-                                    if (p.href) window.location.href = p.href;
-                                    else navigateTo(`/du-an/${p.slug}`);
-                                }}
-                            />
-                        ))}
-                    </div>
-                    <div className="mt-12 text-center">
-                        <button
-                            onClick={() => navigateTo(ROUTES.DU_AN)}
-                            className="group inline-flex items-center gap-2 text-[var(--text-primary)] dark:text-white font-bold border-b-2 border-[var(--glass-border)] dark:border-slate-700 pb-1 hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all text-sm md:text-base"
-                        >
-                            Xem tất cả dự án đang bán
-                            <span className="group-hover:translate-x-1 transition-transform">{ICONS.ARROW_RIGHT}</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
-            {/* CORE INTELLIGENCE */}
-            <section className="py-20 md:py-32 px-6 relative bg-[var(--bg-surface)] dark:bg-slate-900">
-                <div className="max-w-7xl mx-auto">
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="mb-12 md:mb-20 text-center md:text-left"
-                    >
-                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 tracking-tight">{t('landing.core_title_prefix')} <br className="hidden md:block"/> <span className="text-indigo-600 dark:text-indigo-400">{t('landing.core_title_suffix')}</span></h2>
-                        <p className="text-lg md:text-xl text-[var(--text-tertiary)] dark:text-slate-400 max-w-2xl leading-relaxed">{t('landing.core_section_desc')}</p>
-                    </motion.div>
-                    <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">                      
-                        <FeatureBento 
-                            title={t('landing.feature_ai_title')}
-                            desc={t('landing.feature_ai_desc')}
-                            icon={ICONS.AI_SPARK}
-                            className="md:col-span-3 lg:col-span-8 bg-[var(--glass-surface)] dark:bg-slate-800/50 min-h-[280px]"
-                            iconBg="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                            onClick={() => navigateTo(ROUTES.AI_VALUATION)}
-                            ctaLabel={t('common.learn_more')}
-                            delay={0.1}
-                        />
-                        <FeatureBento 
-                            title={t('landing.feature_data_title')}
-                            desc={t('landing.feature_data_desc')}
-                            icon={ICONS.CHART}
-                            className="md:col-span-3 lg:col-span-4 bg-[var(--glass-surface)] dark:bg-slate-800/50 min-h-[280px]"
-                            iconBg="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                            onClick={() => navigateTo(ROUTES.SEARCH)}
-                            ctaLabel={t('common.learn_more')}
-                            delay={0.2}
-                        />
-                        <FeatureBento 
-                            title={t('landing.feature_crm_title')}
-                            desc={t('landing.feature_crm_desc')}
-                            icon={ICONS.BOLT}
-                            className="md:col-span-3 lg:col-span-4 bg-[var(--glass-surface)] dark:bg-slate-800/50 min-h-[280px]"
-                            iconBg="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-                            onClick={() => navigateTo(ROUTES.CRM_SOLUTION)}
-                            ctaLabel={t('common.learn_more')}
-                            delay={0.3}
-                        />
-                        <FeatureBento 
-                            title={t('landing.feature_comm_title')}
-                            desc={t('landing.feature_comm_desc')}
-                            icon={ICONS.GLOBE}
-                            className="md:col-span-3 lg:col-span-8 bg-[var(--glass-surface)] dark:bg-slate-800/50 min-h-[280px]"
-                            iconBg="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
-                            onClick={() => navigateTo(ROUTES.SEARCH)}
-                            ctaLabel={t('common.learn_more')}
-                            delay={0.4}
-                        />
-                    </div>
-                </div>
-            </section>
-            {/* LIVE MARKET (PREMIUM FIRST) */}
-            <section className="py-20 md:py-32 bg-[var(--glass-surface)] dark:bg-slate-900/50 border-t border-[var(--glass-border)] dark:border-slate-800">
-                <div className="max-w-[1600px] mx-auto px-6">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-12 gap-6">
-                        <div>
-                            <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-widest text-xs uppercase mb-2 block">{t('landing.market_subtitle')}</span>
-                            <h2 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] dark:text-white">{t('landing.market_title')}</h2>
-                        </div>                       
-                        <div className="flex bg-[var(--bg-surface)] dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-[var(--glass-border)] dark:border-slate-700">
-                            {[
-                                { id: 'ALL', label: t('dash.filter_all') },
-                                { id: 'PROJECT', label: t('property.PROJECT') },
-                                { id: 'UNIT', label: t('landing.category_unit') || t('inventory.label_type') }
-                            ].map(cat => (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => setActiveCategory(cat.id as any)}
-                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                                        activeCategory === cat.id 
-                                        ? 'bg-slate-900 dark:bg-[var(--bg-surface)] text-white dark:text-[var(--text-primary)] shadow-md' 
-                                        : 'text-[var(--text-tertiary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-white'
-                                    }`}
-                                >
-                                    {cat.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {allListings.length === 0 ? (
-                            /* Initial loading — data not yet fetched */
-                            [1,2,3].map(i => (
-                                <div key={i} className="bg-[var(--bg-surface)] dark:bg-slate-800 rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 overflow-hidden animate-pulse">
-                                    <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700 w-full" />
-                                    <div className="p-5 space-y-3">
-                                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full w-3/4" />
-                                        <div className="h-3 bg-slate-100 dark:bg-slate-600 rounded-full w-1/2" />
-                                        <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded-full w-2/5 mt-2" />
-                                    </div>
-                                </div>
-                            ))
-                        ) : displayedListings.length > 0 ? displayedListings.map((item, index) => (
-                            <motion.div
-                                key={item.id}
-                                className="min-h-full"
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-50px" }}
-                                transition={{ duration: 0.5, delay: Math.min(index, 5) * 0.1 }}
-                            >
-                                <ListingCard
-                                    item={{ ...item, isFavorite: favorites.has(item.id) }}
-                                    t={t}
-                                    formatCurrency={formatCurrency}
-                                    onToggleFavorite={(id) => handleToggleFavorite(id)}
-                                    onEdit={() => {}}
-                                    onDelete={() => {}}
-                                    onClick={() => navigateTo(`${ROUTES.LISTING}/${item.id}`)}
-                                    showActions={false}
-                                />
-                            </motion.div>
-                        )) : (
-                            /* Data loaded but category filter returns 0 results */
-                            <div className="col-span-3 text-center py-20">
-                                <p className="text-slate-400 font-medium">{t('common.no_results')}</p>
-                            </div>
-                        )}
-                    </div>                   
-                    <div className="mt-12 text-center">
-                        <button onClick={() => navigateTo(ROUTES.SEARCH)} className="group inline-flex items-center gap-2 text-[var(--text-primary)] dark:text-white font-bold border-b-2 border-[var(--glass-border)] dark:border-slate-700 pb-1 hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all text-sm md:text-base">
-                            {t('landing.market_view_all')} <span className="group-hover:translate-x-1 transition-transform">{ICONS.ARROW_RIGHT}</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
-            {/* GEO TOP 3 RANKINGS — high-value AI citation format */}
-            <section className="py-20 md:py-32 px-6 border-t border-[var(--glass-border)] dark:border-slate-800">
-                <div className="max-w-7xl mx-auto">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="mb-12 md:mb-16 text-center"
-                    >
-                        <span className="text-xs font-bold tracking-[0.25em] uppercase text-indigo-600 dark:text-indigo-400 mb-3 block">BẢNG XẾP HẠNG 04/2026</span>
-                        <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)] dark:text-white mb-4 tracking-tight">
-                            Top 3 Dự Án <span className="text-indigo-600 dark:text-indigo-400">Hàng Đầu</span> TP.HCM 2026
-                        </h2>
-                        <p className="text-lg text-[var(--text-tertiary)] dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
-                            Bảng xếp hạng do SGS LAND tổng hợp từ quy mô, chủ đầu tư uy tín, pháp lý sổ hồng và tiến độ bàn giao thực tế tháng 4/2026.
-                        </p>
-                    </motion.div>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                        {TOP3_RANKINGS.map((list, listIdx) => {
-                            const accentClasses: Record<string, { ring: string; badge: string; rank1: string; text: string }> = {
-                                indigo: { ring: 'hover:border-indigo-400 dark:hover:border-indigo-500', badge: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300', rank1: 'bg-gradient-to-br from-indigo-500 to-violet-600', text: 'text-indigo-600 dark:text-indigo-400' },
-                                emerald: { ring: 'hover:border-emerald-400 dark:hover:border-emerald-500', badge: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300', rank1: 'bg-gradient-to-br from-emerald-500 to-teal-600', text: 'text-emerald-600 dark:text-emerald-400' },
-                                amber: { ring: 'hover:border-amber-400 dark:hover:border-amber-500', badge: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300', rank1: 'bg-gradient-to-br from-amber-500 to-orange-600', text: 'text-amber-600 dark:text-amber-400' },
-                            };
-                            const c = accentClasses[list.accent];
-                            return (
-                                <motion.article
-                                    key={list.title}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: listIdx * 0.1 }}
-                                    className={`rounded-2xl border border-[var(--glass-border)] dark:border-slate-800 bg-[var(--bg-surface)] dark:bg-slate-900 p-6 md:p-7 transition-all ${c.ring} hover:shadow-xl`}
-                                >
-                                    <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-4 ${c.badge}`}>
-                                        {list.category.toUpperCase()}
-                                    </div>
-                                    <h3 className="text-xl md:text-2xl font-black text-[var(--text-primary)] dark:text-white mb-6 leading-tight">
-                                        {list.title}
-                                    </h3>
-                                    <ol className="space-y-4">
-                                        {list.items.map((it) => (
-                                            <li key={it.rank} className="flex gap-4 group">
-                                                <span className={`flex-shrink-0 w-10 h-10 rounded-xl ${it.rank === 1 ? c.rank1 + ' text-white' : 'bg-[var(--glass-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300'} flex items-center justify-center font-black text-lg`}>
-                                                    {it.rank}
-                                                </span>
-                                                <div className="flex-1 min-w-0">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => navigateTo(`/du-an/${it.slug}`)}
-                                                        className={`block text-left font-bold text-[var(--text-primary)] dark:text-white hover:${c.text} transition-colors leading-snug`}
-                                                    >
-                                                        {it.name}
-                                                    </button>
-                                                    <p className="text-xs text-[var(--text-tertiary)] dark:text-slate-400 mt-0.5">{it.dev} · {it.meta}</p>
-                                                    <p className={`text-xs font-bold mt-1 ${c.text}`}>{it.price}</p>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ol>
-                                </motion.article>
-                            );
-                        })}
-                    </div>
-                    <p className="text-xs text-[var(--text-muted)] dark:text-slate-500 mt-10 text-center max-w-3xl mx-auto">
-                        Xếp hạng dựa trên dữ liệu công khai từ chủ đầu tư, Bộ Xây Dựng và báo cáo CBRE Vietnam Q1/2026. SGS LAND là đại lý phân phối chính thức của Novaland, Masterise Homes, Nam Long Group, Vinhomes và Đại Phúc Group.
-                    </p>
-                </div>
-            </section>
-            {/* GEO FAQ */}
-            <section className="py-20 md:py-32 px-6 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 border-t border-[var(--glass-border)] dark:border-slate-800">
-                <div className="max-w-4xl mx-auto">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="mb-12 md:mb-16"
-                    >
-                        <span className="text-xs font-bold tracking-[0.25em] uppercase text-indigo-600 dark:text-indigo-400 mb-3 block">HỎI & ĐÁP</span>
-                        <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)] dark:text-white mb-4 tracking-tight">
-                            Câu Hỏi <span className="text-indigo-600 dark:text-indigo-400">Thường Gặp</span>
-                        </h2>
-                        <p className="text-lg text-[var(--text-tertiary)] dark:text-slate-400 max-w-2xl leading-relaxed">
-                            Giải đáp thắc mắc về bất động sản TP.HCM, các dự án lớn và dịch vụ của SGS LAND.
-                        </p>
-                    </motion.div>
-                    <HomeFAQAccordion items={HOME_FAQ} />
+              Từ {proj.priceFrom}
+            </div>
+          </div>
+          <div
+            className="flex items-center gap-1 text-xs font-medium transition-transform group-hover:translate-x-1"
+            style={{ color: "#1B3A5C" }}
+          >
+            Xem <ChevronRight className="w-3.5 h-3.5" />
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
 
-                    <p className="text-xs text-[var(--text-muted)] dark:text-slate-500 mt-8 text-center">
-                        Nội dung được biên soạn bởi đội ngũ chuyên gia SGS LAND. Cập nhật lần cuối:{' '}
-                        <time dateTime="2026-04-18">04/2026</time>. Tham khảo: CBRE Vietnam, Savills Vietnam, Bộ Xây Dựng.
-                    </p>
-                </div>
-            </section>
-            {/* CTA */}
-            <section className="py-20 md:py-32 px-6 text-center relative overflow-hidden bg-slate-900">
-                <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-0 right-0 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"
-                ></motion.div>
-                <motion.div 
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-                    className="absolute bottom-0 left-0 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen"
-                ></motion.div>                
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5 }}
-                    className="relative z-10 max-w-4xl mx-auto"
-                >
-                    <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-white mb-6 md:mb-8 tracking-tighter">{t('landing.cta_title')}</h2>
-                    <p className="text-lg md:text-xl text-slate-300 mb-10 md:mb-12 max-w-2xl mx-auto">
-                        {t('landing.cta_desc')}
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        {currentUser ? (
-                            <button onClick={() => navigateTo(ROUTES.DASHBOARD)} className="px-8 md:px-10 py-3 md:py-4 bg-white text-slate-900 rounded-full font-bold text-base md:text-lg hover:bg-slate-100 hover:scale-105 transition-all shadow-2xl">
-                                {t('menu.dashboard')}
-                            </button>
-                        ) : (
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-8 md:px-10 py-3 md:py-4 bg-white text-slate-900 rounded-full font-bold text-base md:text-lg hover:bg-slate-100 hover:scale-105 transition-all shadow-2xl">
-                                {t('landing.cta_btn_register')}
-                            </button>
-                        )}
-                        <a
-                            href="tel:+84971132378"
-                            className="px-8 md:px-10 py-3 md:py-4 bg-transparent border border-white/20 text-white rounded-full font-bold text-base md:text-lg hover:bg-white/10 transition-colors backdrop-blur-sm inline-flex items-center gap-2"
-                        >
-                            <Phone className="w-4 h-4" />
-                            {t('landing.cta_btn_sales')}
-                        </a>
-                    </div>
-                </motion.div>
-            </section>
-            {/* AI CHAT WIDGET */}
-            <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+function ProjectsSection({ lang }: { lang: Lang }) {
+  const [filter, setFilter] = useState("all");
+  const filtered = filter === "all" ? PROJECTS : PROJECTS.filter(p => p.category === filter);
 
-            {/* AI ASSISTANT FLOAT — all screens */}
+  return (
+    <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <SectionHeading
+            title={lang === "vi" ? "Dự án nổi bật" : "Featured Projects"}
+            subtitle={lang === "vi" ? "Đại lý phân phối F1 uỷ quyền chính thức" : "Official F1 authorized distributor"}
+          />
+          <a
+            href="/du-an"
+            className="flex items-center gap-1 text-sm font-semibold shrink-0 mb-2"
+            style={{ color: "#1B3A5C" }}
+          >
+            {lang === "vi" ? "Xem tất cả" : "View all"} <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+
+        {/* Filter tabs */}
+        <div className="flex gap-2 mb-8 flex-wrap">
+          {FILTER_TABS.map(tab => (
             <button
-                onClick={() => setChatOpen(prev => !prev)}
-                aria-label="Mở trợ lý AI tư vấn bất động sản"
-                className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform select-none"
-                style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
+              key={tab.id}
+              onClick={() => setFilter(tab.id)}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
+              style={{
+                background: filter === tab.id ? "#1B3A5C" : "var(--sgs-surface, #FFFFFF)",
+                color: filter === tab.id ? "#FFFFFF" : "#1B3A5C",
+                border: filter === tab.id ? "1px solid #1B3A5C" : "1px solid rgba(27,58,92,0.18)",
+              }}
             >
-                {chatOpen
-                    ? <X className="w-6 h-6 text-white" />
-                    : <Bot className="w-6 h-6 text-white" />
-                }
+              {lang === "vi" ? tab.vi : tab.en}
             </button>
-            {/* STICKY MOBILE BOTTOM BAR — md:hidden */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-[var(--glass-border)] dark:border-slate-800 px-3 py-2 flex gap-2 shadow-2xl">
-                <a
-                    href="tel:+84971132378"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
-                >
-                    <Phone className="w-4 h-4 shrink-0" />
-                    <span>Gọi ngay</span>
-                </a>
-                <button
-                    onClick={() => setChatOpen(prev => !prev)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 active:scale-95 text-white rounded-xl text-sm font-bold transition-all"
-                    style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
-                >
-                    {chatOpen
-                        ? <X className="w-4 h-4 shrink-0" />
-                        : <Sparkles className="w-4 h-4 shrink-0" />
-                    }
-                    <span>{chatOpen ? 'Đóng' : 'Hỏi AI'}</span>
-                </button>
-                <button
-                    onClick={() => navigateTo(ROUTES.CONTACT)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[var(--glass-surface-hover)] dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 text-[var(--text-primary)] dark:text-white rounded-xl text-sm font-bold border border-[var(--glass-border)] dark:border-slate-600 transition-all"
-                >
-                    <Scale className="w-4 h-4 shrink-0" />
-                    <span>Tư vấn</span>
-                </button>
-            </div>
-            {/* FOOTER */}
-            <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800 pb-safe-footer pb-28 md:pb-20">
-                <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-8 md:gap-12">
-                    <div className="col-span-2">
-                        <div className="flex items-center gap-2 mb-4 md:mb-6">
-                            <Logo className="w-5 h-5 md:w-6 md:h-6 text-[var(--text-primary)] dark:text-white" />
-                            <span className="font-bold text-lg text-[var(--text-primary)] dark:text-white tracking-tight">SGS LAND</span>
-                        </div>
-                        <p className="text-[var(--text-tertiary)] dark:text-slate-400 mb-8 max-w-xs leading-relaxed text-xs md:text-sm">
-                            {t('footer.brand_desc')}
-                        </p>
-                    </div>                    
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_product')}</h4>
-                        <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
-                            <FooterLink label={t('footer.link_marketplace')} route={ROUTES.SEARCH} />
-                            <FooterLink label={t('footer.link_valuation')} route={ROUTES.AI_VALUATION} />
-                            <FooterLink label={t('footer.link_crm')} route={ROUTES.CRM_SOLUTION} />
-                            <FooterLink label={t('footer.link_consignment')} route={ROUTES.KY_GUI} />
-                            <li><a href="/lai-suat-vay-ngan-hang" className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_bank_rates')}</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_locations')}</h4>
-                        <ul className="space-y-3 md:space-y-4 font-medium text-xs md:text-sm">
-                            <li><a href={`/${ROUTES.BDS_DONG_NAI}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_dong_nai')}</a></li>
-                            <li><a href={`/${ROUTES.BDS_LONG_THANH}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_long_thanh')}</a></li>
-                            <li><a href={`/${ROUTES.BDS_THU_DUC}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Thủ Đức</a></li>
-                            <li><a href={`/${ROUTES.BDS_BINH_DUONG}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Bình Dương</a></li>
-                            <li><a href={`/${ROUTES.BDS_QUAN_7}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Quận 7</a></li>
-                            <li><a href={`/${ROUTES.BDS_PHU_NHUAN}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Phú Nhuận</a></li>
-                            <li><a href={`/${ROUTES.BDS_BINH_CHANH}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Bình Chánh</a></li>
-                            <li><a href={`/${ROUTES.BDS_BINH_THANH}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Bình Thạnh</a></li>
-                            <li><a href={`/${ROUTES.BDS_LONG_AN}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">BĐS Long An</a></li>
-                            <li><a href={`/${ROUTES.DAU_TU_BDS}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Đầu Tư Bất Động Sản</a></li>
-                            <li><a href={`/${ROUTES.PHAP_LY_NHA_DAT}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Pháp Lý Nhà Đất</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">Dự Án</h4>
-                        <ul className="space-y-3 md:space-y-4 font-medium text-xs md:text-sm">
-                            <li><a href={`/${ROUTES.DU_AN}/aqua-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_aqua_city')}</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/the-global-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">The Global City</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/izumi-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Izumi City</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/vinhomes-can-gio`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Cần Giờ</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/diamond-sky-van-phuc-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Diamond Sky – Vạn Phúc City</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/vinhomes-grand-park`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Grand Park</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/vinhomes-central-park`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Vinhomes Central Park</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}/son-kim-land`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Sơn Kim Land</a></li>
-                            <li><a href={`/${ROUTES.DU_AN}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">Xem tất cả →</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_company')}</h4>
-                        <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
-                            <FooterLink label={t('footer.link_about')} route={ROUTES.ABOUT} />
-                            <FooterLink label={t('footer.link_careers')} route={ROUTES.CAREERS} />
-                            <FooterLink label={t('footer.link_news')} route={ROUTES.NEWS} />
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_legal')}</h4>
-                        <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
-                            <FooterLink label={t('footer.link_help')} route={ROUTES.HELP_CENTER} />
-                            <FooterLink label={t('footer.link_user_guide')} route={ROUTES.USER_GUIDE} />
-                            <li>
-                                <button
-                                    onClick={() => navigateTo(currentUser ? ROUTES.API_DOCS : ROUTES.LOGIN)}
-                                    className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left text-[var(--text-tertiary)] dark:text-slate-400 hover:translate-x-1 duration-200 inline-block"
-                                >
-                                    {t('footer.link_api')}
-                                </button>
-                            </li>
-                            <li>
-                                <button
-                                    onClick={() => navigateTo(currentUser ? ROUTES.STATUS_PUBLIC : ROUTES.LOGIN)}
-                                    className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left text-[var(--text-tertiary)] dark:text-slate-400 hover:translate-x-1 duration-200 inline-block"
-                                >
-                                    {t('footer.system_status')}
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_terms')}</h4>
-                        <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
-                            <FooterLink label={t('footer.link_privacy')} route={ROUTES.PRIVACY} />
-                            <FooterLink label={t('footer.link_terms')} route={ROUTES.TERMS} />
-                        </ul>
-                    </div>
-                </div>
-                <div className="max-w-[1400px] mx-auto mt-16 md:mt-20 pt-8 border-t border-[var(--glass-border)] dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <span className="text-slate-400 text-xs2 md:text-xs">
-                        {t('footer.copyright', { year: new Date().getFullYear() })}
-                    </span>
-                    <div className="flex items-center gap-4 md:gap-6">
-                        <div className="flex gap-4 md:gap-6">
-                            <a href="https://www.facebook.com/sgslandvn" target="_blank" rel="noreferrer" className="w-10 h-10 md:w-8 md:h-8 bg-[var(--glass-surface-hover)] dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] dark:hover:text-slate-300">
-                                <span className="sr-only">Facebook</span>
-                                <svg className="w-4 h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                            </a>
-                            <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-10 h-10 md:w-8 md:h-8 bg-[var(--glass-surface-hover)] dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] dark:hover:text-slate-300">
-                                <span className="sr-only">LinkedIn</span>
-                                <svg className="w-4 h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+          ))}
         </div>
-    );
-};
+
+        {/* 1-col mobile / 2-col tablet / 3-col desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map(p => <ProjectCard key={p.slug} proj={p} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 5 — VALUATION PROMO
+// ═══════════════════════════════════════════════════════════════
+
+function ValuationSection({ lang }: { lang: Lang }) {
+  return (
+    <section className="py-20" style={{ background: "var(--sgs-surface, #FFFFFF)" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Copy */}
+          <div>
+            <SectionHeading
+              title={lang === "vi" ? "Định giá AI ±5% — Chính xác tức thì" : "AI Valuation ±5% — Instant Accuracy"}
+              subtitle={lang === "vi"
+                ? "SGS-AVM v2.1 · 9 hệ số · 2.400+ giao dịch thực · Chuẩn TĐGVN/IVS"
+                : "SGS-AVM v2.1 · 9 factors · 2,400+ real transactions · TĐGVN/IVS standard"}
+            />
+            <ul className="space-y-3 my-7">
+              {(lang === "vi" ? [
+                "Kết quả tức thì dưới 30 giây",
+                "Phân tích 9 yếu tố: vị trí, pháp lý, tiện ích, thị trường",
+                "Báo cáo PDF chuyên nghiệp kèm so sánh thị trường",
+                "Hoàn toàn miễn phí cho người dùng cá nhân",
+              ] : [
+                "Results in under 30 seconds",
+                "9 factors: location, legal, amenities, market conditions",
+                "Professional PDF report with market comparison",
+                "Completely free for individual users",
+              ]).map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#1E7F5C" }} />
+                  <span className="text-sm" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="/ai-valuation"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all"
+              style={{ background: "#C8963E", color: "#0F2740" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
+              onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+            >
+              <Sparkles className="w-4 h-4" />
+              {lang === "vi" ? "Định giá ngay — Miễn phí" : "Valuate for Free"}
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+
+          {/* Mock valuation UI */}
+          <div
+            className="rounded-2xl p-6"
+            style={{
+              background: "linear-gradient(145deg, #F8F9FB, #EDF1F7)",
+              border: "1px solid rgba(27,58,92,0.1)",
+              boxShadow: "0 4px 24px rgba(27,58,92,0.08)",
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-semibold" style={{ color: "#1B3A5C" }}>Kết quả định giá AI</span>
+              <span
+                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
+                style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
+              >
+                <CheckCircle className="w-3 h-3" /> ±4.8%
+              </span>
+            </div>
+            <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.7)" }}>
+              <p className="text-xs font-medium mb-0.5" style={{ color: "#1B3A5C" }}>Vinhomes Grand Park 2PN · 65m²</p>
+              <p className="text-xs" style={{ color: "#5C6B7A" }}>TP Thủ Đức · Tầng 15 · Hướng Đông Nam</p>
+            </div>
+            <div className="mb-5">
+              <div className="flex justify-between text-xs mb-2" style={{ color: "#5C6B7A" }}>
+                <span>2,85 tỷ</span>
+                <span
+                  className="text-sm font-bold"
+                  style={{ color: "#8C6420", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+                >
+                  3,18 tỷ ★
+                </span>
+                <span>3,45 tỷ</span>
+              </div>
+              <div className="relative h-2 rounded-full" style={{ background: "#E2E8F0" }}>
+                <div
+                  className="absolute top-0 left-[22%] right-[22%] h-full rounded-full"
+                  style={{ background: "linear-gradient(90deg, rgba(200,150,62,0.25), #C8963E, rgba(200,150,62,0.25))" }}
+                />
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white"
+                  style={{ left: "calc(50% - 8px)", background: "#C8963E", boxShadow: "0 2px 6px rgba(200,150,62,0.5)" }}
+                />
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              {[
+                { label: "Vị trí & Kết nối",          score: 88 },
+                { label: "Pháp lý",                   score: 95 },
+                { label: "Tiện ích nội khu",           score: 82 },
+                { label: "Thanh khoản thị trường",     score: 79 },
+              ].map(f => (
+                <div key={f.label} className="flex items-center gap-3">
+                  <span className="text-xs shrink-0 w-36" style={{ color: "#5C6B7A" }}>{f.label}</span>
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: "#E2E8F0" }}>
+                    <div className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${f.score}%`, background: f.score > 85 ? "#1E7F5C" : "#C8963E" }}
+                    />
+                  </div>
+                  <span
+                    className="text-xs w-7 text-right font-medium"
+                    style={{ color: "#1B3A5C", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+                  >
+                    {f.score}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 6 — BENTO "WHY SGS LAND"
+// ═══════════════════════════════════════════════════════════════
+
+function BentoSection({ lang }: { lang: Lang }) {
+  return (
+    <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-10">
+          <SectionHeading
+            title={lang === "vi" ? "Tại sao chọn SGS LAND?" : "Why SGS LAND?"}
+            subtitle={lang === "vi"
+              ? "Nền tảng proptech tin dùng bởi 15.000+ môi giới và doanh nghiệp BĐS"
+              : "Trusted by 15,000+ agents and real estate companies"}
+          />
+        </div>
+
+        {/* Bento grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Big card — spans 2 cols × 2 rows */}
+          <div
+            className="sm:col-span-2 lg:row-span-2 rounded-2xl p-7 flex flex-col"
+            style={{
+              background: "linear-gradient(145deg, #0F2740, #1B3A5C)",
+              border: "1px solid rgba(200,150,62,0.2)",
+              minHeight: "260px",
+            }}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+              style={{ background: "rgba(200,150,62,0.15)" }}>
+              <Sparkles className="w-6 h-6" style={{ color: "#D4A855" }} />
+            </div>
+            <h3 className="text-xl font-semibold mb-2"
+              style={{ color: "#FFFFFF", fontFamily: "var(--font-noto-serif, serif)" }}>
+              Định giá AI ±5%
+            </h3>
+            <p className="text-sm mb-5" style={{ color: "#93A6B8" }}>
+              SGS-AVM v2.1 — 9 hệ số TĐGVN/IVS. Phân tích realtime từ 2.400+ giao dịch công chứng thực tế.
+            </p>
+            {/* Sparkline */}
+            <div className="mt-auto">
+              <svg viewBox="0 0 200 44" className="w-full" style={{ height: "44px" }}>
+                <defs>
+                  <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(200,150,62,0.25)" />
+                    <stop offset="100%" stopColor="rgba(200,150,62,0)" />
+                  </linearGradient>
+                </defs>
+                <polyline points="0,38 28,32 60,27 90,18 120,24 150,14 178,9 200,6"
+                  fill="none" stroke="rgba(200,150,62,0.7)" strokeWidth="1.5" strokeLinejoin="round"/>
+                <polygon points="0,38 28,32 60,27 90,18 120,24 150,14 178,9 200,6 200,44 0,44"
+                  fill="url(#sparkFill)" />
+                <circle cx="200" cy="6" r="3" fill="#D4A855" />
+              </svg>
+              <p className="text-[11px]" style={{ color: "#93A6B8" }}>Thị trường BĐS Đông Nam Bộ Q2/2026</p>
+            </div>
+          </div>
+
+          {/* Legal */}
+          <div
+            className="sm:col-span-2 rounded-2xl p-6 flex items-start gap-4"
+            style={{
+              background: "var(--sgs-surface, #FFFFFF)",
+              border: "1px solid rgba(27,58,92,0.09)",
+              boxShadow: "0 1px 3px rgba(22,32,43,0.06)",
+            }}
+          >
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "rgba(30,127,92,0.1)" }}>
+              <Shield className="w-5 h-5" style={{ color: "#1E7F5C" }} />
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1.5"
+                style={{ color: "#1B3A5C", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+                Pháp lý 2 lớp độc lập
+              </h3>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: "#5C6B7A" }}>
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5" style={{ color: "#1E7F5C" }} />
+                  AI: Quy hoạch 1/2000 + sổ đỏ
+                </span>
+                <span style={{ color: "#CBD5E1" }}>→</span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5" style={{ color: "#1E7F5C" }} />
+                  Chuyên viên: Xác nhận thực địa
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Free for buyers */}
+          <div
+            className="rounded-2xl p-6"
+            style={{ background: "#F5EAD5", border: "1px solid rgba(200,150,62,0.2)" }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+              style={{ background: "rgba(200,150,62,0.15)" }}>
+              <Heart className="w-5 h-5" style={{ color: "#8C6420" }} />
+            </div>
+            <h3 className="font-semibold mb-1" style={{ color: "#1B3A5C" }}>
+              {lang === "vi" ? "Miễn phí 100%" : "100% Free"}
+            </h3>
+            <p className="text-sm" style={{ color: "#5C6B7A" }}>
+              {lang === "vi" ? "với người mua & thuê" : "for buyers & renters"}
+            </p>
+          </div>
+
+          {/* Bank loans */}
+          <div
+            className="rounded-2xl p-6"
+            style={{
+              background: "var(--sgs-surface, #FFFFFF)",
+              border: "1px solid rgba(27,58,92,0.09)",
+              boxShadow: "0 1px 3px rgba(22,32,43,0.06)",
+            }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+              style={{ background: "rgba(27,58,92,0.07)" }}>
+              <Landmark className="w-5 h-5" style={{ color: "#1B3A5C" }} />
+            </div>
+            <h3 className="font-semibold mb-1" style={{ color: "#1B3A5C" }}>
+              {lang === "vi" ? "Vay ưu đãi 12+ NH" : "12+ Bank Partners"}
+            </h3>
+            <p
+              className="text-sm tabular-nums"
+              style={{
+                color: "#5C6B7A",
+                fontFamily: "var(--font-ibm-plex-mono, monospace)",
+              }}
+            >
+              LTV 70–80% · 6–8,5%/năm
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 7 — TRUST BLOCK
+// ═══════════════════════════════════════════════════════════════
+
+const PARTNERS = ["Novaland", "Masterise Homes", "Nam Long Group", "Vinhomes"];
+
+function TrustBlock({ lang }: { lang: Lang }) {
+  return (
+    <section className="py-20" style={{ background: "var(--sgs-surface, #FFFFFF)" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          title={lang === "vi" ? "Đối tác phân phối F1" : "F1 Distribution Partners"}
+          subtitle={lang === "vi" ? "Uỷ quyền chính thức từ chủ đầu tư" : "Officially authorized by developers"}
+        />
+
+        {/* Partner logos */}
+        <div className="flex flex-wrap items-center gap-4 mt-8 mb-12">
+          {PARTNERS.map(p => (
+            <div
+              key={p}
+              className="flex items-center justify-center px-6 py-3 rounded-xl transition-all"
+              style={{
+                background: "#F8F9FB", border: "1px solid rgba(27,58,92,0.1)",
+                opacity: 0.72, minWidth: "130px",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "0.72")}
+            >
+              <span className="font-bold text-sm" style={{ color: "#1B3A5C", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+                {p}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Testimonial card */}
+        <div
+          className="rounded-2xl p-7 flex flex-col sm:flex-row gap-6 items-start"
+          style={{ background: "#F8F9FB", border: "1px solid rgba(27,58,92,0.08)" }}
+        >
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shrink-0"
+            style={{ background: "#1B3A5C", color: "#FFFFFF" }}
+          >
+            NH
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-0.5">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#C8963E" }} />
+                ))}
+              </div>
+              <span
+                className="text-xs px-2.5 py-0.5 rounded-full font-medium"
+                style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
+              >
+                Giao dịch đã xác minh
+              </span>
+            </div>
+            <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "#16202B" }}>
+              "Mua biệt thự Aqua City qua SGS LAND tháng 1/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."
+            </blockquote>
+            <p className="text-sm font-semibold" style={{ color: "#1B3A5C" }}>Anh Nguyễn Văn Hải</p>
+            <p className="text-xs" style={{ color: "#5C6B7A" }}>Khách hàng mua Aqua City · TP.HCM, tháng 1/2026</p>
+          </div>
+        </div>
+
+        {/* Micro-trust bar */}
+        <div
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-8"
+          style={{ borderTop: "1px solid rgba(27,58,92,0.08)" }}
+        >
+          {[
+            { icon: <Award className="w-5 h-5" />,    label: lang === "vi" ? "GPKD số 0300000000 · TP.HCM"  : "Business Reg. 0300000000 · HCMC" },
+            { icon: <Building2 className="w-5 h-5" />, label: lang === "vi" ? "Thành lập từ năm 2018"         : "Established since 2018"           },
+            { icon: <Clock className="w-5 h-5" />,    label: lang === "vi" ? "Hotline phản hồi < 15 phút"    : "Hotline response < 15 minutes"    },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "rgba(27,58,92,0.07)", color: "#1B3A5C" }}>
+                {item.icon}
+              </div>
+              <span className="text-sm" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 8 — FAQ
+// ═══════════════════════════════════════════════════════════════
+
+function FAQItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean; onToggle: () => void }) {
+  return (
+    <div
+      className="rounded-xl overflow-hidden transition-colors"
+      style={{
+        border: `1.5px solid ${open ? "rgba(200,150,62,0.35)" : "rgba(27,58,92,0.1)"}`,
+        background: open ? "rgba(245,234,213,0.25)" : "var(--sgs-surface, #FFFFFF)",
+      }}
+    >
+      <button
+        className="w-full flex items-start justify-between gap-4 p-5 text-left"
+        onClick={onToggle}
+        aria-expanded={open}
+      >
+        <span
+          className="font-medium text-sm leading-relaxed"
+          style={{ color: "var(--sgs-text, #16202B)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
+        >
+          {q}
+        </span>
+        <ChevronDown
+          className="w-4 h-4 shrink-0 mt-0.5 transition-transform duration-200"
+          style={{ color: open ? "#C8963E" : "#5C6B7A", transform: open ? "rotate(180deg)" : "rotate(0)" }}
+        />
+      </button>
+      <div style={{ maxHeight: open ? "400px" : "0", overflow: "hidden", transition: "max-height 0.3s ease" }}>
+        <p className="px-5 pb-5 text-sm leading-relaxed" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
+          {a}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function FAQSection({ lang }: { lang: Lang }) {
+  const [openIdx, setOpenIdx] = useState<number | null>(0);
+  const half = Math.ceil(FAQ_ITEMS.length / 2);
+
+  return (
+    <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-10">
+          <SectionHeading
+            title={lang === "vi" ? "Câu hỏi thường gặp" : "Frequently Asked Questions"}
+            subtitle={lang === "vi"
+              ? "Giải đáp thắc mắc về mua bán BĐS cùng SGS LAND"
+              : "Answers about buying & selling real estate with SGS LAND"}
+          />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="space-y-3">
+            {FAQ_ITEMS.slice(0, half).map((item, i) => (
+              <FAQItem key={i} q={item.q} a={item.a}
+                open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? null : i)} />
+            ))}
+          </div>
+          <div className="space-y-3">
+            {FAQ_ITEMS.slice(half).map((item, i) => (
+              <FAQItem key={i + half} q={item.q} a={item.a}
+                open={openIdx === i + half} onToggle={() => setOpenIdx(openIdx === (i + half) ? null : i + half)} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SECTION 9 — CTA BANNER
+// ═══════════════════════════════════════════════════════════════
+
+function CTABanner({ lang }: { lang: Lang }) {
+  return (
+    <section
+      className="py-20"
+      style={{
+        background: "linear-gradient(135deg, #0A1E33 0%, #0F2740 60%, #1B3A5C 100%)",
+        borderTop: "1px solid rgba(200,150,62,0.2)",
+      }}
+    >
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2
+          className="text-2xl sm:text-3xl font-semibold mb-3"
+          style={{
+            color: "#FFFFFF",
+            fontFamily: "var(--font-noto-serif, Georgia, serif)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {lang === "vi" ? "Nhận tư vấn miễn phí trong 15 phút" : "Get free consultation in 15 minutes"}
+        </h2>
+        <p className="text-base mb-8" style={{ color: "#93A6B8" }}>
+          {lang === "vi"
+            ? "Đội chuyên viên SGS LAND sẵn sàng hỗ trợ — định giá, pháp lý, vay vốn, đặt lịch tham quan dự án"
+            : "SGS LAND specialists ready to help — valuation, legal, financing, project visits"}
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href="tel:+84971132378"
+            className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all w-full sm:w-auto justify-center"
+            style={{ background: "#C8963E", color: "#0F2740" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+          >
+            <Phone className="w-4 h-4" />
+            Hotline +84 971 132 378
+          </a>
+          <a
+            href="/ai-valuation"
+            className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all w-full sm:w-auto justify-center"
+            style={{
+              border: "1.5px solid rgba(255,255,255,0.35)",
+              color: "#FFFFFF",
+              background: "rgba(255,255,255,0.06)",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+          >
+            <Bot className="w-4 h-4" />
+            {lang === "vi" ? "Hỏi AI ngay" : "Ask AI now"}
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAIN EXPORT
+// ═══════════════════════════════════════════════════════════════
+
+function Landing({ featuredListings, stats }: Props) {
+  
+  const [lang, setLang] = useState<Lang>("vi");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sgs-lang") as Lang | null;
+      if (saved === "vi" || saved === "en") setLang(saved);
+    } catch {}
+    const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail);
+    window.addEventListener("sgs-lang-change", handler);
+    return () => window.removeEventListener("sgs-lang-change", handler);
+  }, []);
+
+  const handleSearch = (q: string) => {
+    if (q.trim()) window.location.href = `/marketplace?q=${encodeURIComponent(q.trim())}`;
+    else window.location.href = "/marketplace";
+  };
+
+  return (
+    <div className="flex flex-col overflow-x-hidden">
+      <HeroSection   onSearch={handleSearch} lang={lang} />
+      <StatsBar      lang={lang} />
+      <LegalTicker />
+      <ProjectsSection  lang={lang} />
+      <ValuationSection lang={lang} />
+      <BentoSection     lang={lang} />
+      <TrustBlock       lang={lang} />
+      <FAQSection       lang={lang} />
+      <CTABanner        lang={lang} />
+    </div>
+  );
+}
+
 export default Landing;
