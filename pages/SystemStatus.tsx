@@ -35,7 +35,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
         <div className="bg-[#0f1117] rounded-3xl shadow-xl overflow-hidden flex flex-col h-[600px] border border-slate-800 animate-enter ring-1 ring-white/10">
             <div className="flex justify-between items-center p-3 border-b border-white/5 bg-[var(--bg-surface)]/5">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-sgs-verified animate-pulse"></div>
                     <span className="text-xs font-mono text-[var(--text-secondary)] font-bold">{t('system.live_logs')}</span>
                     <span className="text-xs2 bg-[var(--bg-surface)]/10 px-1.5 rounded text-[var(--text-secondary)] font-mono">{logs.length}</span>
                 </div>
@@ -68,7 +68,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
                             {log.level}
                         </span>
                         <span className="text-[var(--text-secondary)] group-hover:text-slate-200">
-                            <span className="text-indigo-400 font-bold mr-2">[{log.source}]</span>
+                            <span className="text-sgs-text-muted font-bold mr-2">[{log.source}]</span>
                             {log.message}
                             {log.context && (
                                 <span className="text-[var(--text-secondary)] ml-2">{JSON.stringify(log.context)}</span>
@@ -83,7 +83,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
 const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }: { health: SystemHealth, theme: any, onBackup: () => void, onRestore: () => void, isRestoring: boolean, t: any }) => {
     const statusColor = health.status === 'HEALTHY' ? 'text-emerald-500' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
     const borderColor = health.status === 'HEALTHY' ? 'border-emerald-500' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
-    const primaryColor = theme?.colors?.primary || '#1B3A5C';
+    const primaryColor = theme?.colors?.primary || 'var(--sgs-primary)';
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
             <div className={`bg-[var(--bg-surface)] p-8 rounded-[32px] border-2 ${borderColor} shadow-lg relative overflow-hidden`}>
@@ -100,7 +100,7 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
                     </div>
                 </div>
             </div>
-            <div className="bg-slate-900 p-8 rounded-[32px] text-white shadow-xl flex flex-col justify-between relative overflow-hidden">
+            <div className="bg-sgs-primary-deep p-8 rounded-[32px] text-white shadow-xl flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                 <div>
                     <h3 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4">{t('system.dr_title')}</h3>
@@ -219,7 +219,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                     <button
                         onClick={load}
                         disabled={loading}
-                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-sgs-primary text-white hover:bg-sgs-primary disabled:opacity-50"
                     >
                         {loading ? 'Đang tải…' : 'Làm mới'}
                     </button>
@@ -239,7 +239,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                         </div>
                         <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
                             <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Thành công</div>
-                            <div className="text-xl font-bold font-mono text-emerald-600">{report.totals.success.toLocaleString()}</div>
+                            <div className="text-xl font-bold font-mono text-sgs-verified">{report.totals.success.toLocaleString()}</div>
                         </div>
                         <div className="p-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)]">
                             <div className="text-2xs font-bold uppercase text-[var(--text-tertiary)]">Thất bại</div>
@@ -296,7 +296,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                                                 <div className="text-2xs font-mono text-[var(--text-tertiary)]">{row.tenantId.slice(0, 8)}…</div>
                                             </td>
                                             <td className="py-2 text-right font-mono">{row.total}</td>
-                                            <td className="py-2 text-right font-mono text-emerald-600">{row.success}</td>
+                                            <td className="py-2 text-right font-mono text-sgs-verified">{row.success}</td>
                                             <td className="py-2 text-right font-mono text-rose-600">{row.failure}</td>
                                             <td className={`py-2 text-right font-mono ${rateTone(row.successRate, report.alertThreshold)}`}>
                                                 {fmtPct(row.successRate)}
@@ -468,7 +468,7 @@ export const SystemStatus: React.FC = () => {
                 <div className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-sgs-verified"></span>
                     </span>
                     <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wide">{t('system.auto_refresh')}</span>
                 </div>

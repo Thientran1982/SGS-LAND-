@@ -270,7 +270,7 @@ export default function LiveChat() {
             <div className="min-h-full w-full bg-[var(--glass-surface)] flex flex-col p-4 md:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto no-scrollbar">
                 <div className="flex-1 min-h-[2rem]"></div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--bg-surface)] p-6 md:p-8 rounded-2xl shadow-xl max-w-md w-full border border-[var(--glass-border)] mx-auto shrink-0">
-                    <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-200">
+                    <div className="w-16 h-16 bg-sgs-primary rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-200">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     </div>
                     <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2 leading-tight py-1">{chatTitle}</h1>
@@ -284,13 +284,13 @@ export default function LiveChat() {
                     <form onSubmit={handleStartChat} className="space-y-4">
                         <div>
                             <label htmlFor="lc-name" className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.name_label')}</label>
-                            <input id="lc-name" type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.name_placeholder')} />
+                            <input id="lc-name" type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all" placeholder={t('livechat.name_placeholder')} />
                         </div>
                         <div>
                             <label htmlFor="lc-phone" className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.phone_label')}</label>
-                            <input id="lc-phone" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.phone_placeholder')} />
+                            <input id="lc-phone" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all" placeholder={t('livechat.phone_placeholder')} />
                         </div>
-                        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors shadow-md shadow-indigo-200 mt-2">
+                        <button type="submit" className="w-full bg-sgs-primary hover:bg-sgs-primary text-white font-bold py-3 rounded-xl transition-colors shadow-md shadow-indigo-200 mt-2">
                             {t('livechat.start_chat')}
                         </button>
                     </form>
@@ -302,7 +302,7 @@ export default function LiveChat() {
     return (
         <div className="h-full w-full bg-[var(--glass-surface)] flex flex-col max-w-2xl mx-auto shadow-2xl overflow-hidden">
             {/* Header */}
-            <div className={`${isHumanMode ? 'bg-emerald-600' : 'bg-indigo-600'} text-white p-4 flex items-center justify-between shadow-md z-10 shrink-0 transition-colors duration-500`}>
+            <div className={`${isHumanMode ? 'bg-emerald-600' : 'bg-sgs-primary'} text-white p-4 flex items-center justify-between shadow-md z-10 shrink-0 transition-colors duration-500`}>
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur shrink-0">
                         {isHumanMode ? (
@@ -336,7 +336,7 @@ export default function LiveChat() {
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${
                             modeNotificationCode === 'HUMAN_TAKEOVER'
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                                : 'bg-indigo-50 text-sgs-primary border-indigo-200'
                         }`}>
                             {modeNotificationCode === 'HUMAN_TAKEOVER' ? (
                                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -363,7 +363,7 @@ export default function LiveChat() {
                 ))}
                 {isThinking && (
                     <div className="flex justify-start animate-pulse">
-                        <div className="bg-[var(--bg-surface)] border border-indigo-100 text-indigo-600 px-4 py-3 rounded-2xl rounded-tl-none text-xs font-bold flex items-center gap-2 shadow-sm">
+                        <div className="bg-[var(--bg-surface)] border border-sgs-border text-sgs-primary px-4 py-3 rounded-2xl rounded-tl-none text-xs font-bold flex items-center gap-2 shadow-sm">
                             <div className="flex gap-1">
                                 <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
                                 <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
@@ -396,7 +396,7 @@ export default function LiveChat() {
                         type="button"
                         onClick={handleSend}
                         disabled={!input.trim() || isThinking}
-                        className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shrink-0 disabled:opacity-50 disabled:bg-slate-300 transition-colors"
+                        className="w-10 h-10 bg-sgs-primary text-white rounded-xl flex items-center justify-center shrink-0 disabled:opacity-50 disabled:bg-slate-300 transition-colors"
                         aria-label={t('livechat.replying')}
                     >
                         <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>

@@ -120,7 +120,7 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
       onClick={() => { if (!uploading) onClose(); }}
     >
       <div
-        className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col"
+        className="bg-white dark:bg-sgs-primary-deep w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col"
         style={{ maxHeight: 'calc(100vh - 24px)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -203,7 +203,7 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
                 type="button"
                 onClick={handleUpload}
                 disabled={!file || uploading}
-                className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 rounded-lg bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {uploading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                 {uploading
@@ -217,19 +217,19 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
             </div>
             {/* Diff result after upload */}
             {uploadResult && (
-              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-3 space-y-2 text-sm">
-                <p className="font-bold text-emerald-700 dark:text-emerald-300">
+              <div className="mt-4 rounded-lg border border-emerald-200 bg-sgs-champagne dark:bg-emerald-900/20 dark:border-emerald-800 p-3 space-y-2 text-sm">
+                <p className="font-bold text-sgs-verified dark:text-emerald-300">
                   ✓ {t('floorplan.upload_ok') || 'Đã lưu sa bàn'} · {uploadResult.codes.length} {t('floorplan.codes_found') || 'mã trong SVG'}
                 </p>
                 {/* Compact X/Y/Z diff summary: matched / unmatched-codes / extra-listings */}
                 <p className="text-xs text-[var(--text-secondary)]">
                   {t('floorplan.diff_summary') || 'Khớp'}:{' '}
-                  <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                  <span className="font-bold text-sgs-verified dark:text-emerald-300">
                     {Math.max(0, uploadResult.codes.length - uploadResult.unmatchedCodes.length)}
                   </span>
                   {' / '}
                   {t('floorplan.unmatched_short') || 'Thiếu listing'}:{' '}
-                  <span className="font-bold text-amber-700 dark:text-amber-400">
+                  <span className="font-bold text-sgs-accent-text dark:text-sgs-accent-text">
                     {uploadResult.unmatchedCodes.length}
                   </span>
                   {' / '}
@@ -244,7 +244,7 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
                       {t('floorplan.unmatched_codes') || 'Mã trong SVG chưa khớp listing'} ({uploadResult.unmatchedCodes.length})
                     </p>
                     {uploadResult.unmatchedCodes.length === 0 ? (
-                      <p className="text-xs text-emerald-700">— {t('floorplan.all_matched') || 'tất cả đã khớp'}</p>
+                      <p className="text-xs text-sgs-verified">— {t('floorplan.all_matched') || 'tất cả đã khớp'}</p>
                     ) : (
                       <div className="flex flex-wrap gap-1 max-h-24 overflow-auto">
                         {uploadResult.unmatchedCodes.map((c) => (
@@ -258,7 +258,7 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
                       {t('floorplan.extra_listings') || 'Listing chưa được vẽ trên sa bàn'} ({uploadResult.extraListings.length})
                     </p>
                     {uploadResult.extraListings.length === 0 ? (
-                      <p className="text-xs text-emerald-700">— {t('floorplan.all_drawn') || 'tất cả listing đã có vùng'}</p>
+                      <p className="text-xs text-sgs-verified">— {t('floorplan.all_drawn') || 'tất cả listing đã có vùng'}</p>
                     ) : (
                       <div className="flex flex-wrap gap-1 max-h-24 overflow-auto">
                         {uploadResult.extraListings.slice(0, 50).map((l) => (

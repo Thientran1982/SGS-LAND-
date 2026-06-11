@@ -56,7 +56,7 @@ export default function EnterpriseSettingsPage() {
           <div className="space-y-4">
             <Field label="Tên công ty"><input className={inp} style={inpS} value={form.name || ""} onChange={set("name")} placeholder="SGS Land Corp" /></Field>
             <Field label="URL logo"><input className={inp} style={inpS} value={form.logo_url || ""} onChange={set("logo_url")} placeholder="https://..." /></Field>
-            <Field label="Màu chủ đạo (hex)"><input className={inp} style={inpS} value={form.primary_color || ""} onChange={set("primary_color")} placeholder="#1B3A5C" /></Field>
+            <Field label="Màu chủ đạo (hex)"><input className={inp} style={inpS} value={form.primary_color || ""} onChange={set("primary_color")} placeholder="var(--sgs-primary)" /></Field>
           </div>
         </Card>
         <Card title="Khu vực & ngôn ngữ" icon={Globe}>

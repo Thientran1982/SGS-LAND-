@@ -245,15 +245,15 @@ const TYPE_OPTIONS: FilterOption[] = [
 const STATUS_OPTIONS: FilterOption[] = [
     { value: 'Tất cả', label: 'Tất cả trạng thái' },
     { value: 'Đang bàn giao', label: 'Đang bàn giao', dot: 'bg-emerald-500' },
-    { value: 'Đang mở bán', label: 'Đang mở bán', dot: 'bg-indigo-500' },
-    { value: 'Đang bán', label: 'Đang bán', dot: 'bg-indigo-500' },
+    { value: 'Đang mở bán', label: 'Đang mở bán', dot: 'bg-sgs-primary' },
+    { value: 'Đang bán', label: 'Đang bán', dot: 'bg-sgs-primary' },
     { value: 'Thứ cấp', label: 'Thứ cấp (đã bàn giao)', dot: 'bg-emerald-400' },
     { value: 'Sắp mở bán', label: 'Sắp mở bán', dot: 'bg-amber-500' },
     { value: 'Đang phát triển', label: 'Đang phát triển', dot: 'bg-amber-400' },
 ];
 const STATUS_BADGE: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    indigo: 'bg-indigo-50 text-sgs-primary border-indigo-200',
     amber: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -283,17 +283,17 @@ const ProjectCard = ({ project }: { project: DuAnProject }) => (
             </span>
         </div>
         <div className="p-5 flex flex-col flex-1">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-2">{project.projectType}</span>
-            <h3 className="text-base font-bold text-[var(--text-primary)] mb-1 group-hover:text-indigo-600 transition-colors leading-snug">
+            <span className="text-xs font-bold text-sgs-primary uppercase tracking-wide mb-2">{project.projectType}</span>
+            <h3 className="text-base font-bold text-[var(--text-primary)] mb-1 group-hover:text-sgs-primary transition-colors leading-snug">
                 {project.name}
             </h3>
             <p className="text-xs text-[var(--text-tertiary)] mb-2 flex items-center gap-1">
-                <MapPin className="w-3 h-3 shrink-0 text-indigo-400" />
+                <MapPin className="w-3 h-3 shrink-0 text-sgs-text-muted" />
                 {project.developer} · {project.location}
             </p>
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-4 line-clamp-2">{project.description}</p>
             <div className="mt-auto pt-3 border-t border-[var(--glass-border)] flex items-center justify-between">
-                <span className="text-sm font-extrabold text-indigo-600">{project.priceRange}</span>
+                <span className="text-sm font-extrabold text-sgs-primary">{project.priceRange}</span>
                 <span className="flex items-center gap-1 text-xs font-semibold text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity">
                     Xem chi tiết <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </span>
@@ -435,13 +435,13 @@ export default function ProjectDirectory() {
                         <span className="font-extrabold text-sm tracking-tight text-[var(--text-primary)]">SGS LAND</span>
                     </button>
                     <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-[var(--text-secondary)]">
-                        <button onClick={() => navigate('/marketplace')} className="hover:text-indigo-600 transition-colors">Mua Bán BĐS</button>
-                        <button onClick={() => navigate('/ai-valuation')} className="hover:text-indigo-600 transition-colors">Định Giá AI</button>
-                        <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-indigo-600 transition-colors">Ký Gửi</button>
+                        <button onClick={() => navigate('/marketplace')} className="hover:text-sgs-primary transition-colors">Mua Bán BĐS</button>
+                        <button onClick={() => navigate('/ai-valuation')} className="hover:text-sgs-primary transition-colors">Định Giá AI</button>
+                        <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-sgs-primary transition-colors">Ký Gửi</button>
                     </nav>
                     <a
                         href={`tel:${HOTLINE_TEL}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors shrink-0"
+                        className="flex items-center gap-2 px-4 py-2 bg-sgs-primary text-white rounded-xl text-xs font-bold hover:bg-sgs-primary transition-colors shrink-0"
                     >
                         <Phone className="w-3.5 h-3.5" />
                         {HOTLINE_DISPLAY}
@@ -449,18 +449,18 @@ export default function ProjectDirectory() {
                 </div>
             </nav>
             {/* ── Hero ── */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white py-16 px-4">
+            <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-sgs-primary-deep to-slate-900 text-white py-16 px-4">
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl" />
                     <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-indigo-600/10 blur-2xl" />
                 </div>
                 <div className="relative max-w-4xl mx-auto text-center">
-                    <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-4">
+                    <p className="text-xs font-bold text-sgs-on-dark-muted uppercase tracking-widest mb-4">
                         SGS LAND · Đại Lý Phân Phối Chính Thức
                     </p>
                     <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
                         Dự Án BĐS<br />
-                        <span className="text-indigo-400">SGS LAND Đang Phân Phối</span>
+                        <span className="text-sgs-text-muted">SGS LAND Đang Phân Phối</span>
                     </h1>
                     <p className="text-base text-indigo-100/80 max-w-2xl mx-auto mb-8">
                         {ALL_PROJECTS.length} dự án từ Novaland, Masterise Homes, Vinhomes, Nam Long — tại TP.HCM và Đồng Nai. Tư vấn miễn phí, không thu phí người mua.
@@ -486,13 +486,13 @@ export default function ProjectDirectory() {
                                 placeholder="Tìm dự án, chủ đầu tư..."
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 rounded-xl text-sm border border-[var(--glass-border)] bg-[var(--bg-app)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                className="w-full pl-9 pr-4 py-2 rounded-xl text-sm border border-[var(--glass-border)] bg-[var(--bg-app)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary transition"
                             />
                         </div>
                         {/* Filter toggle (mobile) */}
                         <button
                             onClick={() => setShowFilters(v => !v)}
-                            className={`sm:hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${hasActiveFilters ? 'border-indigo-500 text-indigo-600 bg-indigo-50' : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)]'}`}
+                            className={`sm:hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${hasActiveFilters ? 'border-indigo-500 text-sgs-primary bg-indigo-50' : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)]'}`}
                         >
                             <SlidersHorizontal className="w-4 h-4" />
                             Lọc {hasActiveFilters && '•'}
@@ -541,7 +541,7 @@ export default function ProjectDirectory() {
                         <button
                             onClick={exportToExcel}
                             disabled={filtered.length === 0}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-sgs-verified text-white rounded-xl text-xs font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                             aria-label={tx.btnExport}
                             title={tx.btnExport}
                         >
@@ -560,7 +560,7 @@ export default function ProjectDirectory() {
                         <p className="text-[var(--text-secondary)] mb-4 text-sm">Không tìm thấy dự án phù hợp.</p>
                         <button
                             onClick={() => { setSearchQuery(''); setProvince('Tất cả'); setTypeGroup('Tất cả'); setStatusFilter('Tất cả'); }}
-                            className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors"
+                            className="px-6 py-2.5 bg-sgs-primary text-white rounded-xl text-sm font-bold hover:bg-sgs-primary transition-colors"
                         >
                             Xem tất cả dự án
                         </button>
@@ -572,7 +572,7 @@ export default function ProjectDirectory() {
                 )}
             </main>
             {/* ── CTA ── */}
-            <section className="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white py-14 px-4 mt-4">
+            <section className="bg-gradient-to-br from-sgs-primary to-sgs-primary text-white py-14 px-4 mt-4">
                 <div className="max-w-3xl mx-auto text-center">
                     <p className="text-xs font-bold uppercase tracking-widest text-indigo-200 mb-3">Tư Vấn Miễn Phí · Không Thu Phí Người Mua</p>
                     <h2 className="text-2xl md:text-3xl font-extrabold mb-4">Cần Tư Vấn Dự Án Cụ Thể?</h2>
@@ -582,7 +582,7 @@ export default function ProjectDirectory() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <a
                             href={`tel:${HOTLINE_TEL}`}
-                            className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-700 rounded-2xl font-extrabold text-base hover:bg-indigo-50 transition-all shadow-lg"
+                            className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-sgs-primary rounded-2xl font-extrabold text-base hover:bg-sgs-champagne transition-all shadow-lg"
                         >
                             <Phone className="w-5 h-5" />
                             Gọi {HOTLINE_DISPLAY}
@@ -613,11 +613,11 @@ export default function ProjectDirectory() {
                         <p className="text-xs text-[var(--text-secondary)]">Đại lý BĐS phân phối chính thức tại TP.HCM</p>
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
-                        <button onClick={() => navigate('/marketplace')} className="hover:text-indigo-600">Mua Bán BĐS</button>
-                        <button onClick={() => navigate('/ai-valuation')} className="hover:text-indigo-600">Định Giá AI</button>
-                        <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-indigo-600">Ký Gửi BĐS</button>
-                        <button onClick={() => navigate('/news')} className="hover:text-indigo-600">Tin Tức</button>
-                        <button onClick={() => navigate('/contact')} className="hover:text-indigo-600">Liên Hệ</button>
+                        <button onClick={() => navigate('/marketplace')} className="hover:text-sgs-primary">Mua Bán BĐS</button>
+                        <button onClick={() => navigate('/ai-valuation')} className="hover:text-sgs-primary">Định Giá AI</button>
+                        <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-sgs-primary">Ký Gửi BĐS</button>
+                        <button onClick={() => navigate('/news')} className="hover:text-sgs-primary">Tin Tức</button>
+                        <button onClick={() => navigate('/contact')} className="hover:text-sgs-primary">Liên Hệ</button>
                     </div>
                 </div>
             </footer>
@@ -667,11 +667,11 @@ function FilterDropdown({
                 onClick={() => setOpen(v => !v)}
                 className={`${fullWidth ? 'w-full' : ''} flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap select-none
                     ${isActive
-                        ? 'border-indigo-500 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-600'
+                        ? 'border-indigo-500 text-sgs-primary bg-indigo-50 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-600'
                         : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)] hover:border-indigo-300 hover:text-indigo-600'
                     } ${open ? 'ring-2 ring-indigo-400/30' : ''}`}
             >
-                <span className={`${isActive ? 'text-indigo-500' : 'text-[var(--text-tertiary)]'}`}>
+                <span className={`${isActive ? 'text-sgs-primary' : 'text-[var(--text-tertiary)]'}`}>
                     {icon}
                 </span>
                 <span className="text-[var(--text-tertiary)] font-medium shrink-0">{label}:</span>
@@ -705,7 +705,7 @@ function FilterDropdown({
                                     onClick={() => { onChange(opt.value); setOpen(false); }}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs text-left transition-colors
                                         ${isSelected
-                                            ? 'bg-indigo-50 text-indigo-700 font-bold dark:bg-indigo-950/60 dark:text-indigo-300'
+                                            ? 'bg-indigo-50 text-sgs-primary font-bold dark:bg-indigo-950/60 dark:text-indigo-300'
                                             : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] font-medium'
                                         }
                                         ${i === 1 && !isAll ? 'mt-0.5' : ''}
@@ -721,7 +721,7 @@ function FilterDropdown({
                                     )}
                                     <span className="flex-1">{opt.label}</span>
                                     {isSelected && (
-                                        <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                        <Check className="w-3.5 h-3.5 text-sgs-primary shrink-0" />
                                     )}
                                 </button>
                             );

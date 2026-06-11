@@ -23,7 +23,7 @@ export const FONT_SCALE_OPTIONS: { value: CustomThemeConfig['fontScale']; label:
   { value: 'large', label: 'Rộng rãi', size: '17px' },
 ];
 export const DEFAULT_CUSTOM_THEME: CustomThemeConfig = {
-  primaryColor: '#1B3A5C',
+  primaryColor: 'var(--sgs-primary)',
   fontFamily: 'Inter',
   fontScale: 'default',
   bgApp: '',

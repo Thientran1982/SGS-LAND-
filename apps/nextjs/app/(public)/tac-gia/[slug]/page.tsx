@@ -206,7 +206,7 @@ export default async function AuthorPage({
                           {cat.name}
                         </span>
                       )}
-                      <h3 className="font-semibold text-sm leading-snug mb-1 group-hover:text-indigo-500 transition-colors"
+                      <h3 className="font-semibold text-sm leading-snug mb-1 group-hover:text-sgs-primary transition-colors"
                         style={{ color: "var(--text-primary)" }}>
                         <Link href={`/news/${article.slug}`}>{article.title}</Link>
                       </h3>

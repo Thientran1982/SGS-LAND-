@@ -173,10 +173,10 @@ export const OnboardingWizard: React.FC = () => {
                 title={t('onboard.title')}
                 className="fixed bottom-6 right-6 z-50 group focus:outline-none focus:ring-4 focus:ring-indigo-500/30"
             >
-                <div className="bg-slate-900 dark:bg-slate-950 text-white rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 p-1.5 border border-white/10">
+                <div className="bg-sgs-primary-deep dark:bg-slate-950 text-white rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 p-1.5 border border-white/10">
                     <ProgressRing percentage={state.percentage} size={48} stroke={3} />
                 </div>
-                <span className="absolute -top-8 right-0 bg-slate-900 text-white text-xs2 font-bold px-2.5 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                <span className="absolute -top-8 right-0 bg-sgs-primary-deep text-white text-xs2 font-bold px-2.5 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
                     {t('onboard.title')}
                 </span>
             </button>,
@@ -185,9 +185,9 @@ export const OnboardingWizard: React.FC = () => {
     }
     // ── Full panel ─────────────────────────────────────────────────────────────
     return createPortal(
-        <div className="fixed bottom-6 right-6 z-50 w-[320px] flex flex-col shadow-2xl rounded-2xl overflow-hidden animate-enter border border-[var(--glass-border)]/80 dark:border-slate-700/60 bg-[var(--bg-surface)] dark:bg-slate-900">
+        <div className="fixed bottom-6 right-6 z-50 w-[320px] flex flex-col shadow-2xl rounded-2xl overflow-hidden animate-enter border border-[var(--glass-border)]/80 dark:border-slate-700/60 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep">
             {/* ── HEADER ── */}
-            <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 pt-4 pb-5 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-sgs-primary-deep via-slate-800 to-slate-900 px-4 pt-4 pb-5 overflow-hidden">
                 {/* Decorative blobs */}
                 <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
                 <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-violet-500/20 rounded-full blur-xl pointer-events-none" />
@@ -239,7 +239,7 @@ export const OnboardingWizard: React.FC = () => {
                 </div>
             </div>
             {/* ── STEPS LIST ── */}
-            <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--glass-surface)]/80 dark:bg-slate-900/80 p-2 space-y-1.5">
+            <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--glass-surface)]/80 dark:bg-sgs-primary-deep/80 p-2 space-y-1.5">
                 {STEP_CONFIG.map((step, idx) => {
                     const isDone = state.completedSteps.includes(step.id);
                     const label = t(step.labelKey);
@@ -295,7 +295,7 @@ export const OnboardingWizard: React.FC = () => {
                 })}
             </div>
             {/* ── FOOTER ── */}
-            <div className="px-4 py-3 bg-[var(--bg-surface)] dark:bg-slate-900 border-t border-[var(--glass-border)] dark:border-slate-800/60 flex items-center justify-between">
+            <div className="px-4 py-3 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border-t border-[var(--glass-border)] dark:border-slate-800/60 flex items-center justify-between">
                 <span className="text-xs2 text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
                     {language === 'en' ? 'SGS Land CRM Setup' : 'Hệ thống SGS Land CRM'}
                 </span>

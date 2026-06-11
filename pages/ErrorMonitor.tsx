@@ -111,7 +111,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
         className={`
           flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl border transition-all
           ${value
-            ? 'border-indigo-300 dark:border-indigo-500/50 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+            ? 'border-indigo-300 dark:border-indigo-500/50 bg-indigo-50 dark:bg-indigo-500/10 text-sgs-primary dark:text-indigo-300'
             : 'border-[var(--glass-border)] bg-[var(--bg-app)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
           }
         `}
@@ -134,7 +134,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
               className={`
                 w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors
                 ${opt.value === value
-                  ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+                  ? 'bg-indigo-50 dark:bg-indigo-500/10 text-sgs-primary dark:text-indigo-300'
                   : 'hover:bg-[var(--glass-surface-hover)] text-[var(--text-primary)]'
                 }
               `}
@@ -142,7 +142,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
               {opt.dotColor && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.dotColor}`} />}
               {opt.icon && <span className="flex-shrink-0 text-[var(--text-secondary)]">{opt.icon}</span>}
               <span className="flex-1">{opt.label}</span>
-              {opt.value === value && <Check size={12} className="text-indigo-500 flex-shrink-0" />}
+              {opt.value === value && <Check size={12} className="text-sgs-primary flex-shrink-0" />}
             </button>
           ))}
         </div>
@@ -274,7 +274,7 @@ export default function ErrorMonitor() {
             <button
               onClick={handleResolveAll}
               disabled={actionLoading}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl bg-sgs-verified hover:bg-sgs-verified text-white font-medium transition-all"
             >
               <CheckCheck size={14} />
               Xử lý tất cả
@@ -316,19 +316,19 @@ export default function ErrorMonitor() {
         </div>
         {/* Đã xử lý */}
         <div className="bg-[var(--bg-surface)] rounded-2xl p-4 border border-[var(--glass-border)]">
-          <div className="text-2xl font-bold text-emerald-600">
+          <div className="text-2xl font-bold text-sgs-verified">
             {loading && !stats ? '—' : resolved.toLocaleString('vi-VN')}
           </div>
           <div className="text-xs text-[var(--text-secondary)] mt-0.5">
             Đã xử lý
             {stats && stats.total > 0 && (
-              <span className="ml-1 text-emerald-600 font-medium">({resolvedPct}%)</span>
+              <span className="ml-1 text-sgs-verified font-medium">({resolvedPct}%)</span>
             )}
           </div>
           {stats && stats.total > 0 && (
-            <div className="mt-2 h-1 bg-emerald-100 dark:bg-emerald-500/10 rounded-full overflow-hidden">
+            <div className="mt-2 h-1 bg-sgs-champagne dark:bg-emerald-500/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-500 rounded-full transition-all"
+                className="h-full bg-sgs-verified rounded-full transition-all"
                 style={{ width: `${resolvedPct}%` }}
               />
             </div>
@@ -507,7 +507,7 @@ export default function ErrorMonitor() {
                           onClick={e => { e.stopPropagation(); handleResolve(entry.id); }}
                           disabled={actionLoading}
                           title="Đánh dấu đã xử lý"
-                          className="p-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-500/10 text-emerald-600 transition-colors"
+                          className="p-1 rounded-lg hover:bg-sgs-champagne dark:hover:bg-emerald-500/10 text-sgs-verified transition-colors"
                         >
                           <CheckCheck size={14} />
                         </button>

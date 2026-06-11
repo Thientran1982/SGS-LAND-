@@ -499,13 +499,13 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                     style={{
                         height: '540px',
                         maxHeight: 'calc(100dvh - 8rem)',
-                        boxShadow: '0 24px 64px rgba(99,102,241,0.18), 0 4px 16px rgba(0,0,0,0.12)',
+                        boxShadow: '0 24px 64px rgba(27,58,92,0.20), 0 4px 16px rgba(0,0,0,0.12)',
                     }}
                 >
                     {/* ── Header ── */}
                     <div
                         className="shrink-0 flex items-center justify-between px-4 py-3 text-white"
-                        style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
+                        style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep) 0%, var(--sgs-primary) 100%)' }}
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
                             {/* Avatar */}
@@ -577,7 +577,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                     value={name}
                                     onChange={e => setName(e.target.value)}
                                     placeholder={t('livechat.name_placeholder')}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary/50 focus:border-sgs-primary outline-none transition-all bg-[var(--bg-app)]"
                                     style={{ fontSize: '16px' }}
                                 />
                                 <input
@@ -586,21 +586,21 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
                                     placeholder={t('livechat.phone_placeholder')}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-[var(--bg-app)]"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary/50 focus:border-sgs-primary outline-none transition-all bg-[var(--bg-app)]"
                                     style={{ fontSize: '16px' }}
                                 />
                                 <button
                                     type="submit"
                                     className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 active:scale-95"
-                                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                                    style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep), var(--sgs-primary))' }}
                                 >
                                     {t('livechat.start_chat')}
                                 </button>
                             </form>
                             {/* Hotline fallback */}
                             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[var(--text-tertiary)]">
-                                <PhoneCall className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                                <span>{t('livechat.or_call')} <a href={`tel:${HOTLINE}`} className="font-bold text-indigo-600 hover:underline">{HOTLINE_DISPLAY}</a></span>
+                                <PhoneCall className="w-3.5 h-3.5 text-sgs-text-muted shrink-0" />
+                                <span>{t('livechat.or_call')} <a href={`tel:${HOTLINE}`} className="font-bold text-sgs-primary hover:underline">{HOTLINE_DISPLAY}</a></span>
                             </div>
                         </div>
                     ) : (
@@ -614,7 +614,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${
                                             modeNotice === 'HUMAN_TAKEOVER'
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                                                : 'bg-sgs-champagne/50 text-sgs-primary border-sgs-border'
                                         }`}>
                                             {modeNotice === 'HUMAN_TAKEOVER'
                                                 ? t('livechat.agent_takeover_notice')
@@ -637,7 +637,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                     key={qr.labelKey}
                                                     type="button"
                                                     onClick={() => handleSend(t(qr.msgKey))}
-                                                    className="text-xs px-3 py-1.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors font-medium whitespace-nowrap"
+                                                    className="text-xs px-3 py-1.5 rounded-full border border-sgs-border bg-sgs-champagne text-sgs-primary hover:bg-sgs-champagne transition-colors font-medium whitespace-nowrap"
                                                 >
                                                     {t(qr.labelKey)}
                                                 </button>
@@ -663,17 +663,17 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                 {/* Typing dots animation */}
                                 {isThinking && (
                                     <div className="flex justify-start">
-                                        <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-indigo-100 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
+                                        <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-sgs-border px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
                                             <div className="flex gap-1">
                                                 {[0, 75, 150].map(delay => (
                                                     <span
                                                         key={delay}
-                                                        className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"
+                                                        className="w-2 h-2 bg-sgs-primary rounded-full animate-bounce"
                                                         style={{ animationDelay: `${delay}ms` }}
                                                     />
                                                 ))}
                                             </div>
-                                            <span className="text-xs text-indigo-500 font-medium">{t('livechat.replying')}</span>
+                                            <span className="text-xs text-sgs-primary font-medium">{t('livechat.replying')}</span>
                                         </div>
                                     </div>
                                 )}
@@ -684,12 +684,12 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                         key="capture-form"
                                         initial={{ opacity: 0, y: 8, scale: 0.97 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        className="rounded-2xl border border-indigo-200 bg-[var(--bg-surface)] overflow-hidden shadow-sm"
+                                        className="rounded-2xl border border-sgs-border bg-[var(--bg-surface)] overflow-hidden shadow-sm"
                                     >
                                         {captureSuccess ? (
                                             <div className="px-4 py-5 text-center">
-                                                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="w-10 h-10 bg-sgs-champagne rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <svg className="w-5 h-5 text-sgs-verified" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 </div>
@@ -698,14 +698,14 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
+                                                <div className="px-4 py-3 bg-sgs-champagne border-b border-sgs-border flex items-center justify-between">
                                                     <div>
-                                                        <p className="font-bold text-sm text-indigo-900">
+                                                        <p className="font-bold text-sm text-sgs-primary">
                                                             {captureMode === 'ESCALATION'
                                                                 ? t('livechat.escalation_title')
                                                                 : t('livechat.callback_title')}
                                                         </p>
-                                                        <p className="text-xs text-indigo-600 mt-0.5">
+                                                        <p className="text-xs text-sgs-primary mt-0.5">
                                                             {captureMode === 'ESCALATION'
                                                                 ? t('livechat.escalation_desc')
                                                                 : t('livechat.callback_desc')}
@@ -714,7 +714,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                     <button
                                                         type="button"
                                                         onClick={() => { setCaptureMode(null); setCaptureData({ name: '', phone: '', notes: '' }); }}
-                                                        className="w-6 h-6 rounded-full bg-white/60 flex items-center justify-center text-indigo-400 hover:text-indigo-700"
+                                                        className="w-6 h-6 rounded-full bg-white/60 flex items-center justify-center text-sgs-text-muted hover:text-sgs-primary"
                                                     >
                                                         <X className="w-3.5 h-3.5" />
                                                     </button>
@@ -726,7 +726,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                             value={captureData.name}
                                                             onChange={e => setCaptureData(d => ({ ...d, name: e.target.value }))}
                                                             placeholder={t('livechat.name_placeholder')}
-                                                            className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                            className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary/50 outline-none bg-[var(--bg-app)]"
                                                             style={{ fontSize: '16px' }}
                                                         />
                                                     )}
@@ -736,7 +736,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                         value={captureData.phone}
                                                         onChange={e => setCaptureData(d => ({ ...d, phone: e.target.value }))}
                                                         placeholder={t('livechat.phone_required')}
-                                                        className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none bg-[var(--bg-app)]"
+                                                        className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary/50 outline-none bg-[var(--bg-app)]"
                                                         style={{ fontSize: '16px' }}
                                                     />
                                                     <textarea
@@ -744,14 +744,14 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                         onChange={e => setCaptureData(d => ({ ...d, notes: e.target.value }))}
                                                         placeholder={t('livechat.notes_placeholder')}
                                                         rows={2}
-                                                        className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-400 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
+                                                        className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary/50 outline-none resize-none bg-[var(--bg-app)] no-scrollbar"
                                                         style={{ fontSize: '16px' }}
                                                     />
                                                     <button
                                                         type="submit"
                                                         disabled={captureSubmitting || !captureData.phone.trim()}
                                                         className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                                                        style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                                                        style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep), var(--sgs-primary))' }}
                                                     >
                                                         {captureSubmitting ? t('livechat.sending') : (
                                                             captureMode === 'ESCALATION' ? t('livechat.connect_agent') : t('livechat.send_callback')
@@ -778,7 +778,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                                     key={btn.action}
                                                     type="button"
                                                     onClick={() => handleActionButton(btn.action)}
-                                                    className="text-xs px-3 py-1.5 rounded-full border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors font-medium whitespace-nowrap"
+                                                    className="text-xs px-3 py-1.5 rounded-full border border-sgs-border bg-sgs-champagne text-sgs-primary hover:bg-sgs-champagne transition-colors font-medium whitespace-nowrap"
                                                 >
                                                     {t(btn.labelKey)}
                                                 </button>
@@ -804,11 +804,11 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                     {/* User avatar */}
                                     <div
                                         className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm mb-1"
-                                        style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}
+                                        style={{ background: 'linear-gradient(135deg, var(--sgs-hero-deep), var(--sgs-primary-deep))' }}
                                     >
                                         {userInitial}
                                     </div>
-                                    <div className="flex-1 flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                                    <div className="flex-1 flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-xl border border-[var(--glass-border)] focus-within:border-sgs-primary focus-within:ring-2 focus-within:ring-sgs-primary/15 transition-all">
                                         <textarea
                                             ref={inputRef}
                                             value={input}
@@ -828,7 +828,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                             onClick={() => handleSend()}
                                             disabled={!input.trim() || isThinking}
                                             className="w-9 h-9 rounded-lg flex items-center justify-center text-white shrink-0 disabled:opacity-40 transition-all active:scale-95"
-                                            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                                            style={{ background: 'linear-gradient(135deg, var(--sgs-primary-deep), var(--sgs-primary))' }}
                                             aria-label="Gửi"
                                         >
                                             <Send className="w-4 h-4" />
@@ -838,7 +838,7 @@ export function AiChatWidget({ isOpen, onClose, initialQuery }: AiChatWidgetProp
                                 <p className="text-center text-[10px] text-slate-400 mt-2 font-medium">
                                     {t('livechat.powered_by')} <span className="font-bold text-[var(--text-tertiary)]">SGS Land AI</span>
                                     {' · '}
-                                    <a href={`tel:${HOTLINE}`} className="text-indigo-400 hover:text-indigo-600 font-bold transition-colors">{HOTLINE_DISPLAY}</a>
+                                    <a href={`tel:${HOTLINE}`} className="text-sgs-text-muted hover:text-sgs-primary font-bold transition-colors">{HOTLINE_DISPLAY}</a>
                                 </p>
                             </div>
                         </>

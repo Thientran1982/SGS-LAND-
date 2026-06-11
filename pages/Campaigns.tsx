@@ -40,7 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
   DRAFT:     'bg-slate-100 text-slate-700 border-slate-200',
   ACTIVE:    'bg-emerald-100 text-emerald-700 border-emerald-200',
   PAUSED:    'bg-amber-100 text-amber-700 border-amber-200',
-  COMPLETED: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  COMPLETED: 'bg-indigo-100 text-sgs-primary border-indigo-200',
 };
 const STATUS_LABEL: Record<string, string> = {
   DRAFT:     'Bản nháp',
@@ -157,7 +157,7 @@ export const Campaigns: React.FC = () => {
         </div>
         <button
           onClick={() => setEditing(emptyCampaign())}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 text-sm"
+          className="px-4 py-2 bg-sgs-primary text-white rounded-lg font-semibold hover:bg-sgs-primary text-sm"
         >
           + Tạo chiến dịch
         </button>
@@ -169,7 +169,7 @@ export const Campaigns: React.FC = () => {
           <p className="text-[var(--text-tertiary)] mb-4">Chưa có chiến dịch nào.</p>
           <button
             onClick={() => setEditing(emptyCampaign())}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 text-sm"
+            className="px-4 py-2 bg-sgs-primary text-white rounded-lg font-semibold hover:bg-sgs-primary text-sm"
           >
             Tạo chiến dịch đầu tiên
           </button>
@@ -212,16 +212,16 @@ export const Campaigns: React.FC = () => {
                     ) : (
                       <div className="inline-flex gap-1">
                         {c.status === 'DRAFT' && (
-                          <button onClick={() => onActivate(c)} className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700">Kích hoạt</button>
+                          <button onClick={() => onActivate(c)} className="px-2 py-1 text-xs bg-sgs-verified text-white rounded hover:bg-emerald-700">Kích hoạt</button>
                         )}
                         {c.status === 'ACTIVE' && (
                           <>
-                            <button onClick={() => onRunNow(c)} className="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">Chạy ngay</button>
-                            <button onClick={() => onPause(c)} className="px-2 py-1 text-xs bg-amber-500 text-white rounded hover:bg-amber-600">Tạm dừng</button>
+                            <button onClick={() => onRunNow(c)} className="px-2 py-1 text-xs bg-sgs-primary text-white rounded hover:bg-sgs-primary">Chạy ngay</button>
+                            <button onClick={() => onPause(c)} className="px-2 py-1 text-xs bg-sgs-accent text-white rounded hover:bg-sgs-accent">Tạm dừng</button>
                           </>
                         )}
                         {c.status === 'PAUSED' && (
-                          <button onClick={() => onActivate(c)} className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700">Tiếp tục</button>
+                          <button onClick={() => onActivate(c)} className="px-2 py-1 text-xs bg-sgs-verified text-white rounded hover:bg-emerald-700">Tiếp tục</button>
                         )}
                         {(c.status === 'DRAFT' || c.status === 'PAUSED') && (
                           <button onClick={() => setEditing(c)} className="px-2 py-1 text-xs bg-slate-200 text-slate-700 rounded hover:bg-slate-300">Sửa</button>
@@ -326,8 +326,8 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/40" onClick={onClose} />
-      <div className="w-full max-w-2xl h-full bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-[var(--glass-border)] px-6 py-4 flex items-center justify-between z-10">
+      <div className="w-full max-w-2xl h-full bg-white dark:bg-sgs-primary-deep shadow-2xl overflow-y-auto">
+        <div className="sticky top-0 bg-white dark:bg-sgs-primary-deep border-b border-[var(--glass-border)] px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-bold">{isEdit ? 'Sửa chiến dịch' : 'Tạo chiến dịch mới'}</h2>
           <button onClick={onClose} className="text-2xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">×</button>
         </div>
@@ -339,7 +339,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                 type="text"
                 value={form.name || ''}
                 onChange={e => upd({ name: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary"
                 placeholder="VD: Khuyến mãi tháng 4 cho lead QUALIFIED"
               />
             </Field>
@@ -348,7 +348,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                 value={form.description || ''}
                 onChange={e => upd({ description: e.target.value })}
                 rows={2}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sgs-primary"
               />
             </Field>
           </Section>
@@ -469,11 +469,11 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                 </Field>
               </>
             )}
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
-              <div className="text-xs text-indigo-600 uppercase font-semibold">Số người sẽ nhận</div>
-              <div className="text-2xl font-bold text-indigo-900 mt-1">
+            <div className="bg-sgs-champagne border border-sgs-border rounded-lg px-4 py-3">
+              <div className="text-xs text-sgs-primary uppercase font-semibold">Số người sẽ nhận</div>
+              <div className="text-2xl font-bold text-sgs-primary mt-1">
                 {audLoading ? '...' : audCount ?? '—'}
-                <span className="text-sm font-normal text-indigo-700 ml-2">người</span>
+                <span className="text-sm font-normal text-sgs-primary ml-2">người</span>
               </div>
             </div>
           </Section>
@@ -522,7 +522,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                   onChange={e => upd({ scheduled_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
                   className="px-3 py-2 border rounded-lg"
                 />
-                <p className="text-xs text-emerald-600 mt-1">
+                <p className="text-xs text-sgs-verified mt-1">
                   Hệ thống tự động chạy chiến dịch khi đến giờ hẹn (kiểm tra mỗi 5 phút). Bạn không cần thao tác thêm sau khi kích hoạt.
                 </p>
               </Field>
@@ -580,7 +580,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
             <button
               onClick={save}
               disabled={saving}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-60"
+              className="px-4 py-2 rounded-lg bg-sgs-primary text-white font-semibold hover:bg-sgs-primary disabled:opacity-60"
             >
               {saving ? 'Đang lưu...' : (isEdit ? 'Lưu thay đổi' : 'Tạo chiến dịch')}
             </button>

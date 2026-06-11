@@ -17,14 +17,14 @@ import { Dropdown } from '../components/Dropdown';
 import { useSocket, socket } from '../services/websocket';
 // --- ICONS ---
 const ICONS = {
-    TREND_UP: <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
+    TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
     TREND_DOWN: <svg className="w-3 h-3 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>,
     REFRESH: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
     USER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
     CLOUD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
     AI: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" /></svg>,
-    WARNING: <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
+    WARNING: <svg className="w-6 h-6 text-sgs-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
     EMPTY: <svg className="w-8 h-8 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
 };
 // --- SUB-COMPONENTS ---
@@ -59,7 +59,7 @@ function useTimeAgo() {
 const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
     const getIcon = (type: string) => {
         switch(type) {
-            case 'LEAD': return { icon: ICONS.USER, bg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' };
+            case 'LEAD': return { icon: ICONS.USER, bg: 'bg-indigo-100 text-sgs-primary dark:bg-indigo-900/40 dark:text-indigo-300' };
             case 'DEAL': return { icon: ICONS.CHECK, bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' };
             case 'SYSTEM': return { icon: ICONS.CLOUD, bg: 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] dark:bg-slate-800 dark:text-slate-300' };
             default: return { icon: ICONS.AI, bg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' };
@@ -121,12 +121,12 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
                 {data.pricePerM2 > 0 && (
                     <div className="flex items-center justify-between gap-4 mb-1">
                         <span className="text-[var(--text-secondary)] dark:text-slate-400">Giá/m²:</span>
-                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{Math.round(data.pricePerM2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} tr/m²</span>
+                        <span className="font-mono font-bold text-sgs-primary dark:text-sgs-text-muted">{Math.round(data.pricePerM2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} tr/m²</span>
                     </div>
                 )}
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_interest')}:</span>
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{data.interest} {t('dash.scatter_interest_unit')}</span>
+                    <span className="font-mono font-bold text-sgs-verified dark:text-emerald-400">{data.interest} {t('dash.scatter_interest_unit')}</span>
                 </div>
             </div>
         );
@@ -141,7 +141,7 @@ const EmptyState = ({ message }: { message: string }) => (
 );
 // --- AGENT AVATAR with initials fallback ---
 const AVATAR_COLORS = [
-    'bg-indigo-500', 'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
+    'bg-sgs-primary', 'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
     'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-pink-500',
 ];
 const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
@@ -181,12 +181,12 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
     return (
         <BentoCard
             title={t('dash.geo_title')}
-            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900 overflow-hidden flex flex-col"
+            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep overflow-hidden flex flex-col"
             icon={<svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         >
             {isLoading ? (
                 <div className="flex items-center justify-center h-40">
-                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-2 border-sgs-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
             ) : isError ? (
                 <div className="flex flex-col items-center justify-center h-40 gap-2 text-[var(--text-tertiary)]">
@@ -240,7 +240,7 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                                                     </div>
                                                     <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
                                                         <div
-                                                            className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                                                            className="h-full bg-sgs-primary rounded-full transition-all duration-500"
                                                             style={{ width: `${pct}%` }}
                                                         />
                                                     </div>
@@ -326,7 +326,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     return (
         <BentoCard 
             title={t('dash.traffic_title')}
-            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900"
+            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep"
             contentClassName="justify-start"
             icon={<svg className="w-5 h-5 text-sky-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
         >
@@ -341,7 +341,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.avg_latency')}</div>
                     </div>
                     <div>
-                        <div className="text-2xl font-extrabold text-indigo-500 dark:text-indigo-400 tracking-tight">{stats.dbLatency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
+                        <div className="text-2xl font-extrabold text-sgs-primary dark:text-sgs-text-muted tracking-tight">{stats.dbLatency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.traffic_db_latency')}</div>
                     </div>
                     <div>
@@ -370,7 +370,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                                 </linearGradient>
                             </defs>
                             <XAxis dataKey="time" hide />
-                            <Tooltip content={<CustomTooltip t={t} language={language} />} cursor={{stroke: colors.grid || '#E2E8F0', strokeWidth: 1}} />
+                            <Tooltip content={<CustomTooltip t={t} language={language} />} cursor={{stroke: colors.grid || 'var(--sgs-border)', strokeWidth: 1}} />
                             <Area 
                                 type="monotone" 
                                 dataKey="latency" 
@@ -517,7 +517,7 @@ export const Dashboard: React.FC = () => {
                 </p>
                 <button 
                     onClick={() => refetch()}
-                    className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-all active:scale-95"
+                    className="px-6 py-2.5 bg-sgs-primary text-white font-bold rounded-xl shadow-md hover:bg-sgs-primary transition-all active:scale-95"
                 >
                     {t('common.system_reload')}
                 </button>
@@ -549,7 +549,7 @@ export const Dashboard: React.FC = () => {
                         {/* Scope badge */}
                         <span className={`text-xs2 font-bold px-2 py-1 rounded-full border flex items-center gap-1 shrink-0 ${
                             isSalesScope
-                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700'
+                                ? 'bg-indigo-50 text-sgs-primary border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700'
                                 : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                         }`}>
                             <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -578,7 +578,7 @@ export const Dashboard: React.FC = () => {
                     <button 
                         onClick={handleExport}
                         disabled={isExporting}
-                        className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="shrink-0 bg-sgs-primary hover:bg-sgs-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {isExporting ? (
                             <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -591,7 +591,7 @@ export const Dashboard: React.FC = () => {
             </div>
             {/* Getting Started Banner — shown until dismissed or user has 5+ leads */}
             {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
-                <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-900/40 to-slate-800/60 border border-emerald-800/40">
+                <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-900/40 to-sgs-primary-deep/60 border border-emerald-800/40">
                     <div className="flex items-center gap-3">
                         <span className="text-emerald-400 shrink-0">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -610,14 +610,14 @@ export const Dashboard: React.FC = () => {
                     <div className="flex items-center gap-2 shrink-0">
                         <a
                             href="/#/huong-dan-su-dung"
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                            className="px-3 py-1.5 bg-sgs-verified hover:bg-sgs-verified text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
                         >
                             {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'} →
                         </a>
                         <button
                             onClick={(e) => { localStorage.setItem('sgs_guide_dismissed', '1'); (e.currentTarget.closest('[data-guide-banner]') as HTMLElement | null)?.remove(); }}
                             data-guide-banner
-                            className="text-slate-600 hover:text-slate-400 transition-colors p-1"
+                            className="text-sgs-text-muted hover:text-slate-400 transition-colors p-1"
                             title="Ẩn"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -632,7 +632,7 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard
                         title={t('dash.revenue_title')}
-                        className="h-full min-h-[180px] bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200 overflow-hidden"
+                        className="h-full min-h-[180px] bg-gradient-to-br from-sgs-primary to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200 overflow-hidden"
                     >
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
@@ -655,14 +655,14 @@ export const Dashboard: React.FC = () => {
                 </div>
                 {/* 2. Pipeline Value (Giá Trị Pipeline) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.pipeline_value')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.pipeline_value')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight mt-2 break-words">
                                     {formatCompactNumber(analytics.pipelineValue || 0)}
                                 </div>
                                 <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
-                                    {t('dash.win_probability')}: <span className="text-indigo-600 dark:text-indigo-400">{analytics.winProbability || 0}%</span>
+                                    {t('dash.win_probability')}: <span className="text-sgs-primary dark:text-sgs-text-muted">{analytics.winProbability || 0}%</span>
                                 </div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
@@ -673,23 +673,23 @@ export const Dashboard: React.FC = () => {
                 </div>
                 {/* 3. AI Deflection Rate (Tỷ Lệ Tự Động Hóa AI) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.ai_deflection_rate')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.ai_deflection_rate')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="flex items-center gap-2 mt-2">
                                     <div className="relative h-10 w-10 shrink-0">
                                         <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
                                             <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-emerald-100 dark:text-emerald-900/30" strokeWidth="4" />
-                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="4" strokeLinecap="round"
+                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-sgs-verified" strokeWidth="4" strokeLinecap="round"
                                                 strokeDasharray={`${((analytics.aiDeflectionRate || 0) / 100) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`} />
                                         </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                        <div className="absolute inset-0 flex items-center justify-center text-sgs-verified dark:text-emerald-400">
                                             {ICONS.AI}
                                         </div>
                                     </div>
                                     <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
                                 </div>
-                                <div className="text-xs2 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai')}</div>
+                                <div className="text-xs2 text-sgs-verified dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai')}</div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period')} />
@@ -699,7 +699,7 @@ export const Dashboard: React.FC = () => {
                 </div>
                 {/* 4. Sales Velocity (Tốc Độ Bán Hàng) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.sales_velocity')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.sales_velocity')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white mt-2">
@@ -719,7 +719,7 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-2 lg:col-span-3 min-h-[420px]">
                     <BentoCard 
                         title={t('dash.pipeline_title')}
-                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900"
+                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep"
                     >
                         <div className="flex justify-between items-end mb-4">
                             <div>
@@ -728,7 +728,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div className="text-right hidden sm:block">
                                 <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.conversion')}</div>
-                                <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
+                                <div className="text-lg font-bold text-sgs-verified dark:text-emerald-400">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
                             </div>
                         </div>
                         <div className="flex-1 w-full min-h-[250px] relative">
@@ -768,7 +768,7 @@ export const Dashboard: React.FC = () => {
                     </BentoCard>
                 </div>
                 <div className="md:col-span-2 lg:col-span-1 min-h-[420px]">
-                    <BentoCard title={t('dash.activity_title')} className="h-full bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden flex flex-col">
+                    <BentoCard title={t('dash.activity_title')} className="h-full bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] dark:border-white/10 overflow-hidden flex flex-col">
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
                             <div className="flex flex-col gap-2">
                                 {(analytics.recentActivities || []).map((act, idx) => (
@@ -787,7 +787,7 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                     <BentoCard
                         title={t('dash.market_pulse_title')}
-                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900"
+                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep"
                     >
                         <div className="flex-1 w-full h-[320px] relative mt-4 flex flex-col">
                             {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
@@ -803,7 +803,7 @@ export const Dashboard: React.FC = () => {
                                                 <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.7}>
                                                     {analytics.marketPulse.map((entry: any, index: number) => {
                                                         // Generate a color based on location
-                                                        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
+                                                        const colors = ['#3B82F6', 'var(--sgs-verified)', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
                                                         const hash = entry.location.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
                                                         const color = colors[hash % colors.length];
                                                         return <Cell key={`cell-${index}`} fill={color} />;
@@ -814,7 +814,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                     <div className="flex flex-wrap items-center justify-center gap-3 pt-2 pb-1">
                                         {Array.from(new Set(analytics.marketPulse.map((item: any) => item.location))).map((loc: any, idx: number) => {
-                                            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
+                                            const colors = ['#3B82F6', 'var(--sgs-verified)', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
                                             const hash = loc.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
                                             const color = colors[hash % colors.length];
                                             return (
@@ -835,12 +835,12 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                     <BentoCard
                         title={t('dash.leaderboard_title')}
-                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900 overflow-hidden flex flex-col"
+                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep overflow-hidden flex flex-col"
                     >
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-4">
                             <div className="flex flex-col gap-3">
                                 {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
-                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
+                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-sgs-border dark:hover:border-indigo-500/30 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <AgentAvatar name={agent.name} avatar={agent.avatar} />
@@ -858,7 +858,7 @@ export const Dashboard: React.FC = () => {
                                         <div className="flex items-center gap-4 text-right">
                                             <div>
                                                 <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.close_rate')}</div>
-                                                <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{agent.closeRate}%</div>
+                                                <div className="font-bold text-sgs-verified dark:text-emerald-400 text-sm">{agent.closeRate}%</div>
                                             </div>
                                             <div className="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
                                             <div>

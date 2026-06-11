@@ -143,14 +143,14 @@ export const Contact: React.FC = () => {
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-sgs-primary transition-colors min-h-[44px] shrink-0">
                         {ICONS.BACK} <span className="hidden sm:inline">{t('contact.home')}</span>
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
-                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0" />
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-sgs-primary shrink-0" />
                         <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">{t('contact.header')}</span>
                     </div>
-                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
+                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
                         {currentUser ? t('contact.dashboard') : t('contact.login')}
                     </button>
                 </div>
@@ -169,7 +169,7 @@ export const Contact: React.FC = () => {
                             <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">{t('contact.info_title')}</h3>
                             <div className="space-y-6">
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0">
+                                    <div className="w-12 h-12 bg-sgs-champagne text-sgs-primary rounded-2xl flex items-center justify-center shrink-0">
                                         {ICONS.MAP_PIN}
                                     </div>
                                     <div>
@@ -178,7 +178,7 @@ export const Contact: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                                    <div className="w-12 h-12 bg-sgs-champagne text-sgs-verified rounded-2xl flex items-center justify-center shrink-0">
                                         {ICONS.PHONE}
                                     </div>
                                     <div>
@@ -213,13 +213,13 @@ export const Contact: React.FC = () => {
                     </div>
                     {/* Contact Form */}
                     <div className="bg-[var(--bg-surface)] p-8 md:p-10 rounded-[40px] border border-[var(--glass-border)] shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-[80px] -mr-20 -mt-20 opacity-60 pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-sgs-champagne rounded-full blur-[80px] -mr-20 -mt-20 opacity-60 pointer-events-none"></div>
 
                         <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-6 relative z-10">{t('contact.form_title')}</h3>
                         <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div className="space-y-1 group">
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">{t('contact.label_name')} <span className="text-rose-500">*</span></label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-sgs-primary transition-colors">{t('contact.label_name')} <span className="text-rose-500">*</span></label>
                                     <input
                                         type="text"
                                         className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all ${errors.name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
@@ -230,7 +230,7 @@ export const Contact: React.FC = () => {
                                     {errors.name && <p className="text-xs2 font-bold text-rose-500 ml-1 animate-enter">{errors.name}</p>}
                                 </div>
                                 <div className="space-y-1 group">
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">{t('contact.label_email')} <span className="text-rose-500">*</span></label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-sgs-primary transition-colors">{t('contact.label_email')} <span className="text-rose-500">*</span></label>
                                     <input
                                         type="email"
                                         className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all ${errors.email ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
@@ -254,7 +254,7 @@ export const Contact: React.FC = () => {
                             </div>
 
                             <div className="space-y-1 group">
-                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">{t('contact.label_message')} <span className="text-rose-500">*</span></label>
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-sgs-primary transition-colors">{t('contact.label_message')} <span className="text-rose-500">*</span></label>
                                 <textarea
                                     rows={5}
                                     className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all resize-none ${errors.message ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
@@ -267,7 +267,7 @@ export const Contact: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={sending}
-                                className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                                className="w-full py-4 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
                             >
                                 {sending ? (
                                     <>

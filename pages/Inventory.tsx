@@ -30,7 +30,7 @@ const ICONS = {
 };
 const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: string }> = {
     [ListingStatus.BOOKING]: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-    [ListingStatus.OPENING]: { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+    [ListingStatus.OPENING]: { color: 'text-sgs-primary', bg: 'bg-sgs-champagne', border: 'border-sgs-border' },
     [ListingStatus.AVAILABLE]: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
     [ListingStatus.HOLD]: { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
     [ListingStatus.SOLD]: { color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-slate-300' },
@@ -204,7 +204,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
             className="group border-b border-slate-50 dark:border-slate-800/50 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50 transition-colors cursor-pointer hidden md:table-row"
         >
             {/* Sticky Code & Image */}
-            <td className="px-4 py-3 sticky left-0 z-10 bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-r border-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors min-w-[200px] max-w-[250px]">
+            <td className="px-4 py-3 sticky left-0 z-10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-r border-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors min-w-[200px] max-w-[250px]">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-[var(--glass-border)] relative">
                         <LazyImage
@@ -212,7 +212,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                             width={128}
                             wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)] dark:bg-slate-800"
                         />
-                        {item.isVerified && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-bl-md z-10" />}
+                        {item.isVerified && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-sgs-verified rounded-bl-md z-10" />}
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
@@ -250,7 +250,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     <td className="px-4 py-3 text-xs text-right">
                         <div className="flex flex-col items-end">
                             {item.commission ? (
-                                <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                                <span className="font-bold text-sgs-primary dark:text-sgs-text-muted">
                                     {`${item.commission}${item.commissionUnit === 'PERCENT' ? '%' : ' VND'}`}
                                 </span>
                             ) : (
@@ -278,7 +278,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     </span>
                 </div>
             </td>
-            <td className="px-4 py-3 text-right text-xs3 font-bold text-indigo-600 dark:text-indigo-400">
+            <td className="px-4 py-3 text-right text-xs3 font-bold text-sgs-primary dark:text-sgs-text-muted">
                 {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
             </td>
             <td className="px-4 py-3 text-right text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono">
@@ -290,7 +290,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                 </span>
             </td>
             {/* Sticky Actions */}
-            <td className="px-3 py-3 text-right sticky right-0 z-10 bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-l border-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
+            <td className="px-3 py-3 text-right sticky right-0 z-10 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-l border-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
                 {canViewInternal && (
                     <button
                         ref={btnRef}
@@ -311,7 +311,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                         className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
                     >
                         <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                            <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             {t('common.edit')}
                         </button>
                         {onDuplicate && (
@@ -416,7 +416,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                 <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top ?? 'auto', bottom: menuPos.bottom ?? 'auto', right: menuPos.right, zIndex: 9999 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
                     <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         {t('common.edit')}
                     </button>
                     {onDuplicate && (
@@ -481,7 +481,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                         </span>
                         <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
                     </div>
-                    <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>
+                    <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-sgs-primary transition-colors">{item.title}</div>
                 </div>
                 {canViewInternal && (
                     <button
@@ -507,7 +507,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                 <div className="text-right">
                     <div className="text-xs2 text-[var(--text-secondary)]">{item.area}m²</div>
                     {item.area > 0 && item.type !== PropertyType.PROJECT && (
-                        <div className="text-2xs font-bold text-indigo-600">
+                        <div className="text-2xs font-bold text-sgs-primary">
                             {formatUnitPrice(item.price, item.area, t)}
                         </div>
                     )}
@@ -517,7 +517,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                 <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top ?? 'auto', bottom: menuPos.bottom ?? 'auto', right: menuPos.right, zIndex: 9999 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
                     <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         {t('common.edit')}
                     </button>
                     {onDuplicate && (
@@ -714,13 +714,13 @@ export const Inventory: React.FC = () => {
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
                                 {ICONS.SEARCH}
                             </div>
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2 min-h-[40px] sm:py-2.5 sm:min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                className="w-full pl-10 pr-10 py-2 min-h-[40px] sm:py-2.5 sm:min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('inventory.search_hint')} 
                             />
                             {search && (
@@ -736,7 +736,7 @@ export const Inventory: React.FC = () => {
                             )}
                         </div>
                         {canViewInternalInfo && (
-                            <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="md:hidden shrink-0 w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
+                            <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="md:hidden shrink-0 w-10 h-10 bg-sgs-primary-deep text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
                         )}
                     </div>
                     <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing">
@@ -745,10 +745,10 @@ export const Inventory: React.FC = () => {
                         <div className="min-w-[140px] shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" /></div>                        
                         {/* View Switcher */}
                         <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
-                            <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
-                            <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
-                            <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
-                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map')}>{ICONS.VIEW_MAP}</button>
+                            <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
+                            <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
+                            <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
+                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map')}>{ICONS.VIEW_MAP}</button>
                         </div>
                         {/* Active filter chip */}
                         {(typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL') && (
@@ -764,7 +764,7 @@ export const Inventory: React.FC = () => {
                         )}
                         <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
                         {canViewInternalInfo && (
-                            <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
+                            <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex items-center gap-2 px-4 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                                 {ICONS.ADD} {t('inventory.create_title')}
                             </button>
                         )}
@@ -778,20 +778,20 @@ export const Inventory: React.FC = () => {
                     <div className="text-base md:text-xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-emerald-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs font-bold text-emerald-500 uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
-                    <div className="text-base md:text-xl font-black text-emerald-600">{stats.availableCount}</div>
+                    <div className="text-2xs font-bold text-sgs-verified uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
+                    <div className="text-base md:text-xl font-black text-sgs-verified">{stats.availableCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-amber-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs font-bold text-amber-500 uppercase tracking-wider mb-0.5 truncate">{t('status.HOLD')}</div>
-                    <div className="text-base md:text-xl font-black text-amber-600">{stats.holdCount}</div>
+                    <div className="text-2xs font-bold text-sgs-accent-text uppercase tracking-wider mb-0.5 truncate">{t('status.HOLD')}</div>
+                    <div className="text-base md:text-xl font-black text-sgs-accent-text">{stats.holdCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-orange-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-orange-500 uppercase tracking-wider mb-0.5 truncate">{t('status.BOOKING')}</div>
                     <div className="text-base md:text-xl font-black text-orange-600">{stats.bookingCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-indigo-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs font-bold text-indigo-500 uppercase tracking-wider mb-0.5 truncate">{t('status.OPENING')}</div>
-                    <div className="text-base md:text-xl font-black text-indigo-600">{stats.openingCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-sgs-border shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-sgs-primary uppercase tracking-wider mb-0.5 truncate">{t('status.OPENING')}</div>
+                    <div className="text-base md:text-xl font-black text-sgs-primary">{stats.openingCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-teal-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
                     <div className="text-2xs font-bold text-teal-500 uppercase tracking-wider mb-0.5 truncate">{t('status.RENTED')}</div>
@@ -856,13 +856,13 @@ export const Inventory: React.FC = () => {
                                                     <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
                                                     <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint')}</p>
                                                 </div>
-                                                <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-sgs-primary bg-sgs-champagne border border-sgs-border rounded-xl hover:bg-sgs-champagne transition-colors">
                                                     {t('inventory.reset_filters')}
                                                 </button>
                                             </>
                                         ) : (
                                             <>
-                                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                <div className="w-14 h-14 rounded-2xl bg-sgs-champagne flex items-center justify-center text-sgs-text-muted">
                                                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                                                 </div>
                                                 {(currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT') ? (
@@ -877,7 +877,7 @@ export const Inventory: React.FC = () => {
                                                     </div>
                                                 )}
                                                 {canViewInternalInfo && (
-                                                    <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                    <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-sgs-primary-deep rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                         {ICONS.ADD} {t('inventory.create_title')}
                                                     </button>
                                                 )}
@@ -1003,13 +1003,13 @@ export const Inventory: React.FC = () => {
                                                         <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
                                                         <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint')}</p>
                                                     </div>
-                                                    <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                    <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-sgs-primary bg-sgs-champagne border border-sgs-border rounded-xl hover:bg-sgs-champagne transition-colors">
                                                         {t('inventory.reset_filters')}
                                                     </button>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                    <div className="w-12 h-12 rounded-2xl bg-sgs-champagne flex items-center justify-center text-sgs-text-muted">
                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                                                     </div>
                                                     {(currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT') ? (
@@ -1024,7 +1024,7 @@ export const Inventory: React.FC = () => {
                                                         </div>
                                                     )}
                                                     {canViewInternalInfo && (
-                                                        <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                        <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-sgs-primary-deep rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                             {ICONS.ADD} {t('inventory.create_title')}
                                                         </button>
                                                     )}
@@ -1053,8 +1053,8 @@ export const Inventory: React.FC = () => {
                             {/* Non-blocking loading chip — map stays interactive while full dataset loads */}
                             {boardLoading && (
                                 <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-full px-4 py-2 pointer-events-none">
-                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin flex-shrink-0" />
-                                    <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">{t('common.loading')}</span>
+                                    <div className="w-4 h-4 rounded-full border-2 border-sgs-border border-t-indigo-600 animate-spin flex-shrink-0" />
+                                    <span className="text-xs font-semibold text-sgs-text-muted whitespace-nowrap">{t('common.loading')}</span>
                                 </div>
                             )}
                         </div>

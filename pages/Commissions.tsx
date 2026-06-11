@@ -143,7 +143,7 @@ export const Commissions: React.FC = () => {
         </div>
         <a
           href={exportUrl}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700"
         >
           ⬇ Xuất Excel
         </a>
@@ -204,10 +204,10 @@ export const Commissions: React.FC = () => {
           {err}
         </div>
       )}
-      <div className="rounded-2xl border border-[var(--glass-border)] bg-white dark:bg-slate-900 overflow-hidden">
+      <div className="rounded-2xl border border-[var(--glass-border)] bg-white dark:bg-sgs-primary-deep overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs uppercase text-[var(--text-tertiary)]">
+            <thead className="bg-sgs-bg dark:bg-slate-800/60 text-xs uppercase text-[var(--text-tertiary)]">
               <tr>
                 {isAdmin && (
                   <th className="px-3 py-2 w-8">
@@ -252,7 +252,7 @@ export const Commissions: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">{fmtMoney(it.sale_price)}</td>
-                  <td className="px-3 py-2 text-right whitespace-nowrap font-bold text-emerald-700">{fmtMoney(it.gross_amount)}</td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap font-bold text-sgs-verified">{fmtMoney(it.gross_amount)}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {it.rate_pct ? `${Number(it.rate_pct).toFixed(2)}%` : '—'}
                     <div className="text-xs text-[var(--text-tertiary)]">{it.policy_type || '—'}{it.policy_version ? ` v${it.policy_version}` : ''}</div>
@@ -270,7 +270,7 @@ export const Commissions: React.FC = () => {
                           type="button"
                           onClick={() => handlePaid(it.id)}
                           disabled={paying === it.id}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 disabled:opacity-50"
+                          className="px-2.5 py-1 rounded-lg bg-sgs-verified text-white text-xs font-bold hover:bg-emerald-700 disabled:opacity-50"
                         >
                           {paying === it.id ? '...' : 'Đánh dấu đã trả'}
                         </button>
@@ -308,9 +308,9 @@ export const Commissions: React.FC = () => {
           />
           {selected.size > 0 && (
             <>
-              <span className="font-bold text-emerald-700">Đã chọn: {selected.size}</span>
+              <span className="font-bold text-sgs-verified">Đã chọn: {selected.size}</span>
               <button type="button" onClick={handleBulkPaid} disabled={bulkPaying}
-                className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 disabled:opacity-50">
+                className="px-3 py-1.5 rounded-lg bg-sgs-verified text-white text-xs font-bold hover:bg-emerald-700 disabled:opacity-50">
                 {bulkPaying ? 'Đang xử lý…' : `Đánh dấu đã trả (${selected.size})`}
               </button>
               <button type="button" onClick={() => setSelected(new Set())}

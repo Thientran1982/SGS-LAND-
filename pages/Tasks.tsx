@@ -163,7 +163,7 @@ function TaskList() {
   };
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (sortKey !== col) return <ArrowUpDown size={12} className="opacity-40" />;
-    return sortDir === 'asc' ? <ArrowUp size={12} className="text-indigo-500" /> : <ArrowDown size={12} className="text-indigo-500" />;
+    return sortDir === 'asc' ? <ArrowUp size={12} className="text-sgs-primary" /> : <ArrowDown size={12} className="text-sgs-primary" />;
   };
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -263,17 +263,17 @@ function TaskList() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-[var(--glass-border)] flex-shrink-0 gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <ListTodo className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+          <ListTodo className="w-5 h-5 text-sgs-primary flex-shrink-0" />
           <h1 className="text-base font-bold text-[var(--text-primary)] truncate">Danh sách Công việc</h1>
           <span className="text-xs text-[var(--text-tertiary)] flex-shrink-0 bg-[var(--glass-surface-hover)] px-2 py-0.5 rounded-full">{total}</span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => exportTasksToCSV(tasks)} title="Xuất CSV"
-            className="h-[34px] w-[34px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:text-indigo-600 hover:border-indigo-300 transition-colors">
+            className="h-[34px] w-[34px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:text-sgs-primary hover:border-indigo-300 transition-colors">
             <Download size={15} />
           </button>
           <button onClick={() => setShowCreate(true)}
-            className="h-[34px] px-3.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">
+            className="h-[34px] px-3.5 bg-sgs-primary text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-sgs-primary transition-colors shadow-sm flex-shrink-0">
             <Plus size={15} /> Thêm
           </button>
         </div>
@@ -293,14 +293,14 @@ function TaskList() {
       </div>
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-800 flex-shrink-0">
-          <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">{selectedIds.size} đã chọn</span>
+        <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 bg-sgs-champagne dark:bg-sgs-primary/20 border-b border-sgs-border dark:border-indigo-800 flex-shrink-0">
+          <span className="text-xs font-semibold text-sgs-primary dark:text-sgs-on-dark-muted">{selectedIds.size} đã chọn</span>
           <div className="flex flex-wrap gap-2 ml-auto items-center">
             {/* Bulk assign picker */}
             <div className="relative" ref={bulkAssignRef}>
               <button
                 onClick={() => { setBulkAction('assign'); setBulkAssignPickerOpen(v => !v); }}
-                className={`h-[28px] px-2.5 text-xs border rounded-lg flex items-center gap-1.5 transition-colors font-medium ${bulkAction === 'assign' ? 'border-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700' : 'border-indigo-200 dark:border-indigo-700 text-indigo-600 hover:bg-indigo-100'}`}>
+                className={`h-[28px] px-2.5 text-xs border rounded-lg flex items-center gap-1.5 transition-colors font-medium ${bulkAction === 'assign' ? 'border-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700' : 'border-indigo-200 dark:border-indigo-700 text-sgs-primary hover:bg-indigo-100'}`}>
                 <User2 size={11} /> Giao cho...
               </button>
               {bulkAssignPickerOpen && (
@@ -335,7 +335,7 @@ function TaskList() {
               />
             </div>
             <button onClick={runBulkAction} disabled={!bulkAction || bulkAction === 'assign' || bulkLoading}
-              className="h-[28px] px-3 text-xs bg-indigo-600 text-white rounded-lg font-medium flex items-center gap-1 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+              className="h-[28px] px-3 text-xs bg-sgs-primary text-white rounded-lg font-medium flex items-center gap-1 hover:bg-sgs-primary disabled:opacity-50 transition-colors">
               {bulkLoading ? <Loader2 size={11} className="animate-spin" /> : null} Áp dụng
             </button>
             <button onClick={() => { setSelectedIds(new Set()); setBulkAction(''); setBulkAssignPickerOpen(false); }}
@@ -349,16 +349,16 @@ function TaskList() {
           <TaskSkeleton rows={8} />
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-32 gap-2">
-            <AlertTriangle className="w-7 h-7 text-amber-400" />
+            <AlertTriangle className="w-7 h-7 text-sgs-accent-text" />
             <p className="text-sm text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => loadTasks(filters, sortKey, sortDir, page)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+            <button onClick={() => loadTasks(filters, sortKey, sortDir, page)} className="text-xs text-sgs-primary hover:text-sgs-primary font-medium">Thử lại</button>
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
             <ListTodo className="w-10 h-10 text-[var(--text-tertiary)]" />
             <p className="text-sm text-[var(--text-secondary)]">{hasFilters ? 'Không tìm thấy công việc phù hợp' : 'Chưa có công việc nào'}</p>
             {!hasFilters && (
-              <button onClick={() => setShowCreate(true)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
+              <button onClick={() => setShowCreate(true)} className="text-sm text-sgs-primary hover:text-sgs-primary font-medium flex items-center gap-1">
                 <Plus size={14} /> Tạo công việc đầu tiên
               </button>
             )}
@@ -368,8 +368,8 @@ function TaskList() {
             <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] z-10">
               <tr className="text-left text-[var(--text-tertiary)]">
                 <th className="pl-4 md:pl-6 pr-2 py-3 w-8">
-                  <button onClick={toggleSelectAll} className="text-[var(--text-tertiary)] hover:text-indigo-500 transition-colors">
-                    {allSelected ? <CheckSquare size={15} className="text-indigo-500" /> : <Square size={15} />}
+                  <button onClick={toggleSelectAll} className="text-[var(--text-tertiary)] hover:text-sgs-primary transition-colors">
+                    {allSelected ? <CheckSquare size={15} className="text-sgs-primary" /> : <Square size={15} />}
                   </button>
                 </th>
                 <th className="px-2 py-3 font-medium text-xs">
@@ -397,12 +397,12 @@ function TaskList() {
               {tasks.map(task => (
                 <tr key={task.id} className="hover:bg-[var(--glass-surface-hover)] transition-colors group">
                   <td className="pl-4 md:pl-6 pr-2 py-3 w-8" onClick={e => { e.stopPropagation(); toggleSelect(task.id); }}>
-                    <button className="text-[var(--text-tertiary)] hover:text-indigo-500 transition-colors">
-                      {selectedIds.has(task.id) ? <CheckSquare size={15} className="text-indigo-500" /> : <Square size={15} />}
+                    <button className="text-[var(--text-tertiary)] hover:text-sgs-primary transition-colors">
+                      {selectedIds.has(task.id) ? <CheckSquare size={15} className="text-sgs-primary" /> : <Square size={15} />}
                     </button>
                   </td>
                   <td className="px-2 py-3 cursor-pointer" onClick={() => openTask(task.id)}>
-                    <div className="font-medium text-[var(--text-primary)] line-clamp-1 group-hover:text-indigo-600 transition-colors">{task.title}</div>
+                    <div className="font-medium text-[var(--text-primary)] line-clamp-1 group-hover:text-sgs-primary transition-colors">{task.title}</div>
                     {task.project_name && <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{task.project_name}</div>}
                   </td>
                   <td className="px-3 py-3 hidden sm:table-cell" onClick={e => e.stopPropagation()}>
@@ -453,7 +453,7 @@ function TaskList() {
                     <AvatarStack assignees={task.assignees || []} />
                   </td>
                   <td className="px-3 py-3 hidden sm:table-cell cursor-pointer" onClick={() => openTask(task.id)}>
-                    <ChevronRight size={14} className="text-[var(--text-tertiary)] group-hover:text-indigo-500 transition-colors" />
+                    <ChevronRight size={14} className="text-[var(--text-tertiary)] group-hover:text-sgs-primary transition-colors" />
                   </td>
                 </tr>
               ))}

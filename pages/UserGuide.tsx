@@ -107,7 +107,7 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; badg
     orange:  { bg: 'bg-orange-500/10',  border: 'border-orange-500/30',  text: 'text-orange-400',  badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
     rose:    { bg: 'bg-rose-500/10',    border: 'border-rose-500/30',    text: 'text-rose-400',    badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30'       },
     teal:    { bg: 'bg-teal-500/10',    border: 'border-teal-500/30',    text: 'text-teal-400',    badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30'       },
-    indigo:  { bg: 'bg-indigo-500/10',  border: 'border-indigo-500/30',  text: 'text-indigo-400',  badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
+    indigo:  { bg: 'bg-indigo-500/10',  border: 'border-indigo-500/30',  text: 'text-sgs-text-muted',  badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
     lime:    { bg: 'bg-lime-500/10',    border: 'border-lime-500/30',    text: 'text-lime-400',    badge: 'bg-lime-500/20 text-lime-300 border-lime-500/30'       },
     slate:   { bg: 'bg-slate-500/10',   border: 'border-slate-500/30',   text: 'text-slate-400',   badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30'   },
 };
@@ -124,8 +124,8 @@ function Tip({ children }: { children: React.ReactNode }) {
 }
 function Note({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 mt-5">
-            <span className="text-amber-400 mt-0.5 shrink-0">{Ico.WARNING}</span>
+        <div className="flex gap-3 p-4 rounded-xl bg-sgs-accent/5 border border-amber-500/20 mt-5">
+            <span className="text-sgs-accent-text mt-0.5 shrink-0">{Ico.WARNING}</span>
             <p className="text-sm text-slate-300 leading-relaxed">{children}</p>
         </div>
     );
@@ -174,7 +174,7 @@ function SectionHeader({ color, icon, label, badge }: { color: string; icon: Rea
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${c.badge}`}>{badge}</span>
                     )}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">Nhấn mục trên thanh bên để điều hướng nhanh</p>
+                <p className="text-xs text-sgs-text-muted mt-0.5">Nhấn mục trên thanh bên để điều hướng nhanh</p>
             </div>
         </div>
     );
@@ -257,7 +257,7 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
                     <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium">
                         <span className="text-violet-400">{icon}</span>
                         {label}
-                        {i < PIPELINE_STAGES.length - 1 && <span className="text-slate-600 ml-1">→</span>}
+                        {i < PIPELINE_STAGES.length - 1 && <span className="text-sgs-text-muted ml-1">→</span>}
                     </div>
                 ))}
             </div>
@@ -474,7 +474,7 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
                     'Quản lý thiết bị đang đăng nhập và phiên làm việc',
                 ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2.5 text-sm text-slate-400">
-                        <span className="text-emerald-500 shrink-0">{Ico.CHECK}</span>
+                        <span className="text-sgs-verified shrink-0">{Ico.CHECK}</span>
                         {item}
                     </div>
                 ))}
@@ -511,9 +511,9 @@ export function UserGuide() {
     const activeIdx = NAV_ITEMS.findIndex(n => n.id === active);
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+        <div className="min-h-screen bg-sgs-primary-deep text-white flex flex-col">
             {/* TOP BAR */}
-            <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 md:px-6 h-14 shrink-0">
+            <header className="sticky top-0 z-40 bg-sgs-primary-deep/95 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 md:px-6 h-14 shrink-0">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => { window.location.hash = `#/${ROUTES.LANDING}`; }}
@@ -546,7 +546,7 @@ export function UserGuide() {
             <div className="flex flex-1 overflow-hidden">
                 {/* SIDEBAR — desktop */}
                 <aside className="hidden md:flex flex-col w-64 shrink-0 border-r border-slate-800 overflow-y-auto py-4 px-3 gap-1 sticky top-14 h-[calc(100vh-3.5rem)]">
-                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-2 mb-2">Nội dung</p>
+                    <p className="text-[10px] font-bold text-sgs-text-muted uppercase tracking-widest px-2 mb-2">Nội dung</p>
                     {NAV_ITEMS.map(n => {
                         const isActive = active === n.id;
                         const nc = COLOR_MAP[n.color];
@@ -568,7 +568,7 @@ export function UserGuide() {
                     <div className="mt-auto pt-4 border-t border-slate-800 mx-2">
                         <a
                             href="mailto:info@sgsland.vn"
-                            className="flex items-center gap-2 text-xs text-slate-500 hover:text-white transition-colors"
+                            className="flex items-center gap-2 text-xs text-sgs-text-muted hover:text-white transition-colors"
                         >
                             {Ico.EMAIL}
                             info@sgsland.vn
@@ -579,8 +579,8 @@ export function UserGuide() {
                 {/* SIDEBAR — mobile overlay */}
                 {mobileOpen && (
                     <div className="md:hidden fixed inset-0 z-50 bg-black/70" onClick={() => setMobileOpen(false)}>
-                        <div className="w-72 h-full bg-slate-900 border-r border-slate-800 flex flex-col py-4 px-3 gap-1 overflow-y-auto" onClick={e => e.stopPropagation()}>
-                            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-2 mb-2">Nội dung</p>
+                        <div className="w-72 h-full bg-sgs-primary-deep border-r border-slate-800 flex flex-col py-4 px-3 gap-1 overflow-y-auto" onClick={e => e.stopPropagation()}>
+                            <p className="text-[10px] font-bold text-sgs-text-muted uppercase tracking-widest px-2 mb-2">Nội dung</p>
                             {NAV_ITEMS.map(n => {
                                 const isActive = active === n.id;
                                 const nc = COLOR_MAP[n.color];
@@ -611,7 +611,7 @@ export function UserGuide() {
                                 <span className={c.text}>{item.icon}</span>
                                 <div>
                                     <h1 className="text-base font-bold text-white">{item.label}</h1>
-                                    <p className="text-[11px] text-slate-500">
+                                    <p className="text-[11px] text-sgs-text-muted">
                                         {activeIdx + 1} / {NAV_ITEMS.length} chủ đề
                                     </p>
                                 </div>
@@ -629,7 +629,7 @@ export function UserGuide() {
                                 {activeIdx < NAV_ITEMS.length - 1 && (
                                     <button
                                         onClick={() => nav(NAV_ITEMS[activeIdx + 1].id)}
-                                        className="text-xs text-white px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center gap-1 font-medium"
+                                        className="text-xs text-white px-3 py-1.5 rounded-lg bg-sgs-verified hover:bg-sgs-verified transition-all flex items-center gap-1 font-medium"
                                     >
                                         Tiếp
                                         {Ico.ARROW_RIGHT}

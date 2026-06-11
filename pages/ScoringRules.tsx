@@ -28,8 +28,8 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
     return (
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-all hover:shadow-md group">
             <div className="flex justify-between mb-4 items-center">
-                <label className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors">{label}</label>
-                <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg text-xs border border-indigo-100 min-w-[60px] text-center">
+                <label className="font-bold text-[var(--text-primary)] text-sm group-hover:text-sgs-primary transition-colors">{label}</label>
+                <span className="font-mono font-bold text-sgs-primary bg-sgs-champagne px-3 py-1 rounded-lg text-xs border border-sgs-border min-w-[60px] text-center">
                     {value} {t('scoring.pts')}
                 </span>
             </div>
@@ -140,14 +140,14 @@ export const ScoringRules: React.FC = () => {
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
             </div>
             <p className="font-bold text-[var(--text-primary)] mb-1">{t('common.error_loading')}</p>
-            <button onClick={loadData} className="mt-4 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-sm">
+            <button onClick={loadData} className="mt-4 px-5 py-2.5 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-sm">
                 {t('common.retry')}
             </button>
         </div>
     );
     if (!config) return (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
-            <div className="w-14 h-14 bg-indigo-50 text-indigo-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+            <div className="w-14 h-14 bg-sgs-champagne text-sgs-text-muted rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             </div>
             <p className="font-bold text-[var(--text-primary)] mb-1">{t('scoring.empty_title')}</p>
@@ -185,7 +185,7 @@ export const ScoringRules: React.FC = () => {
                     ))}
                 </div>
                 {/* Live Preview Card */}
-                <div className="bg-gradient-to-br from-slate-900 to-indigo-900 text-white p-6 rounded-[24px] shadow-xl flex flex-col justify-between relative overflow-hidden h-[300px]">
+                <div className="bg-gradient-to-br from-sgs-primary-deep to-sgs-primary-deep text-white p-6 rounded-[24px] shadow-xl flex flex-col justify-between relative overflow-hidden h-[300px]">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--bg-surface)]/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10"></div>                    
                     <div>
                         <h3 className="font-bold text-lg mb-1">{t('scoring.sim_title')}</h3>
@@ -210,7 +210,7 @@ export const ScoringRules: React.FC = () => {
             </div>
             <div className="bg-[var(--glass-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-start gap-4">
-                    <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] text-amber-500 shadow-sm">
+                    <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] text-sgs-accent-text shadow-sm">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     </div>
                     <div>
@@ -229,7 +229,7 @@ export const ScoringRules: React.FC = () => {
                     <button 
                         onClick={handleSave} 
                         disabled={saving}
-                        className="flex-1 sm:flex-none px-8 py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                        className="flex-1 sm:flex-none px-8 py-3 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
                     >
                         {saving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                         {t('common.save')}

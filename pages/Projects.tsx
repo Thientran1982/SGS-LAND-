@@ -196,7 +196,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 {/* Header — luôn hiển thị, không scroll */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
-                    <div className="flex items-center gap-2 text-indigo-600">
+                    <div className="flex items-center gap-2 text-sgs-primary">
                         {IC.BLDG}
                         <h2 className="text-base font-bold">{project ? t('project.edit') : t('project.new')}</h2>
                     </div>
@@ -324,7 +324,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                     type="button"
                                     onClick={() => coverInputRef.current?.click()}
                                     disabled={coverUploading}
-                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-indigo-400 bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-indigo-600 transition-colors disabled:opacity-60"
+                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-indigo-400 bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-sgs-primary transition-colors disabled:opacity-60"
                                 >
                                     {coverUploading ? (
                                         <span className="w-6 h-6 border-2 border-current/30 border-t-current rounded-full animate-spin" />
@@ -387,7 +387,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                     </div>
                     <div className="flex gap-3 justify-end pt-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">{t('common.cancel')}</button>
-                        <button type="submit" disabled={saving || coverUploading} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">{saving ? t('common.loading') : t('common.save')}</button>
+                        <button type="submit" disabled={saving || coverUploading} className="px-5 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary disabled:opacity-50">{saving ? t('common.loading') : t('common.save')}</button>
                     </div>
                 </form>
             </div>
@@ -466,7 +466,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
                     <div>
-                        <div className="flex items-center gap-2 text-indigo-600">
+                        <div className="flex items-center gap-2 text-sgs-primary">
                             {IC.SHIELD}
                             <h2 className="text-base font-bold">{t('project.access_title')}</h2>
                         </div>
@@ -477,8 +477,8 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 
                 <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
                     {/* Grant form */}
-                    <form onSubmit={handleGrant} className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4 space-y-3">
-                        <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">{t('project.grant_access')}</p>
+                    <form onSubmit={handleGrant} className="bg-sgs-champagne dark:bg-sgs-primary/20 border border-sgs-border dark:border-sgs-primary rounded-xl p-4 space-y-3">
+                        <p className="text-sm font-bold text-sgs-primary dark:text-sgs-on-dark-muted">{t('project.grant_access')}</p>
                         {err && <p className="text-rose-600 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5" role="alert">{err}</p>}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
@@ -500,7 +500,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <button type="submit" disabled={granting} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+                            <button type="submit" disabled={granting} className="px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary disabled:opacity-50 flex items-center gap-2">
                                 {IC.SHIELD}
                                 {granting ? t('common.loading') : t('project.grant_access')}
                             </button>
@@ -601,7 +601,7 @@ interface ListingDetailPanelProps {
 }
 const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
     { value: 'BOOKING',  idle: 'bg-sky-50    text-sky-600    border border-sky-200'   },
-    { value: 'OPENING',  idle: 'bg-indigo-50 text-indigo-600 border border-indigo-200'},
+    { value: 'OPENING',  idle: 'bg-indigo-50 text-sgs-primary border border-indigo-200'},
     { value: 'AVAILABLE',idle: 'bg-emerald-50 text-emerald-600 border border-emerald-200'},
     { value: 'HOLD',     idle: 'bg-amber-50  text-amber-600  border border-amber-200' },
     { value: 'SOLD',     idle: 'bg-slate-100 text-slate-500  border border-slate-200' },
@@ -641,13 +641,13 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                 /* Hardcoded bg-white/dark:bg-slate-900 — see ProjectListingsPanel
                    for the same fix; CSS variable can be overridden by tenant
                    custom theme and end up matching the dark backdrop. */
-                className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
+                className="bg-white dark:bg-sgs-primary-deep rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--glass-border)] shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shrink-0">
+                        <div className="w-8 h-8 rounded-xl bg-sgs-champagne dark:bg-emerald-900/30 flex items-center justify-center text-sgs-verified shrink-0">
                             {IC.HOME}
                         </div>
                         <div className="min-w-0">
@@ -657,7 +657,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                                     {t(`status.${listing.status}`) || listing.status}
                                 </span>
                                 {listing.transaction && (
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border whitespace-nowrap">
                                         {t(`transaction.${listing.transaction}`) || listing.transaction}
                                     </span>
                                 )}
@@ -670,7 +670,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                             <button
                                 type="button"
                                 onClick={onEdit}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sgs-primary text-white text-xs font-bold hover:bg-sgs-primary transition-colors"
                             >
                                 {IC.EDIT} {t('common.edit')}
                             </button>
@@ -722,9 +722,9 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     )}
                     {/* Price cards */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-800">
-                            <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
-                            <p className="text-xl font-bold text-emerald-700">{fmtPrice(listing.price)}</p>
+                        <div className="bg-sgs-champagne dark:bg-emerald-900/20 rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-800">
+                            <p className="text-xs text-sgs-verified font-semibold uppercase tracking-wide mb-1">{t('inventory.label_price')}</p>
+                            <p className="text-xl font-bold text-sgs-verified">{fmtPrice(listing.price)}</p>
                         </div>
                         <div className="bg-[var(--glass-surface)] rounded-xl p-3.5 border border-[var(--glass-border)]">
                             <p className="text-xs text-[var(--text-tertiary)] font-semibold uppercase tracking-wide mb-1">{t('inventory.label_unit_price')}</p>
@@ -795,7 +795,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                     {/* Assigned agent */}
                     {listing.assignedToName && (
                         <div className="flex items-center gap-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] px-4 py-3">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm font-bold shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-sgs-champagne flex items-center justify-center text-sgs-primary text-sm font-bold shrink-0">
                                 {listing.assignedToName[0]?.toUpperCase()}
                             </div>
                             <div>
@@ -939,14 +939,14 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
             <div className="w-full max-w-3xl bg-[var(--bg-surface)] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-[var(--glass-border)]">
-                    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <svg className="w-5 h-5 text-sgs-verified shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-sm font-bold text-[var(--text-primary)] truncate">Bảng Giá — {project.name}</h2>
                         <p className="text-xs text-[var(--text-secondary)] mt-0.5">Giá theo tầng · hướng · loại phòng</p>
                     </div>
                     {canEdit && (
                         <button type="button" onClick={() => { setForm({ ...EMPTY_ROW }); setEditId(null); }}
-                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-sgs-verified hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
                             {IC.PLUS} Thêm dòng
                         </button>
                     )}
@@ -1017,7 +1017,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                 Hủy
                             </button>
                             <button type="button" onClick={handleSave} disabled={saving}
-                                className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-1.5">
+                                className="px-4 py-1.5 text-xs font-bold bg-sgs-verified hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-1.5">
                                 {saving ? <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : null}
                                 {editId ? 'Lưu thay đổi' : 'Thêm dòng'}
                             </button>
@@ -1046,7 +1046,7 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                     <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Loại</th>
                                     <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Giá gốc</th>
                                     <th className="text-right px-3 py-2 font-semibold text-[var(--text-tertiary)]">Điều chỉnh</th>
-                                    <th className="text-right px-3 py-2 font-semibold text-emerald-600">Giá hiệu lực</th>
+                                    <th className="text-right px-3 py-2 font-semibold text-sgs-verified">Giá hiệu lực</th>
                                     <th className="text-left px-3 py-2 font-semibold text-[var(--text-tertiary)]">Ghi chú</th>
                                     {canEdit && <th className="px-3 py-2" />}
                                 </tr>
@@ -1061,19 +1061,19 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                             <td className="px-3 py-2 text-[var(--text-secondary)]">{row.tower || <span className="text-[var(--text-tertiary)]">—</span>}</td>
                                             <td className="px-3 py-2 font-semibold text-[var(--text-primary)]">{row.floor_from}–{row.floor_to}</td>
                                             <td className="px-3 py-2 text-[var(--text-secondary)]">{DIR_LABEL[row.direction] ?? row.direction}</td>
-                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded font-medium">{BEDROOM_LABEL[row.bedroom_type] ?? row.bedroom_type}</span></td>
+                                            <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-sgs-champagne text-sgs-primary rounded font-medium">{BEDROOM_LABEL[row.bedroom_type] ?? row.bedroom_type}</span></td>
                                             <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmtSqm(base)}</td>
                                             <td className="px-3 py-2 text-right">
                                                 <span className={adj === 0 ? 'text-[var(--text-tertiary)]' : adj > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-500 font-semibold'}>
                                                     {adj >= 0 ? '+' : ''}{adj}%
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2 text-right font-bold text-emerald-700">{fmtSqm(eff)}</td>
+                                            <td className="px-3 py-2 text-right font-bold text-sgs-verified">{fmtSqm(eff)}</td>
                                             <td className="px-3 py-2 text-[var(--text-tertiary)] max-w-[160px] truncate">{row.notes || '—'}</td>
                                             {canEdit && (
                                                 <td className="px-3 py-2">
                                                     <div className="flex items-center gap-1">
-                                                        <button type="button" onClick={() => startEdit(row)} className="p-1 rounded hover:bg-indigo-50 text-indigo-500" title="Sửa">{IC.EDIT}</button>
+                                                        <button type="button" onClick={() => startEdit(row)} className="p-1 rounded hover:bg-sgs-champagne text-sgs-primary" title="Sửa">{IC.EDIT}</button>
                                                         <button type="button" onClick={() => handleDelete(row.id)} disabled={deleting === row.id}
                                                             className="p-1 rounded hover:bg-rose-50 text-rose-400 disabled:opacity-40" title="Xóa">
                                                             {deleting === row.id ? <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> : IC.TRASH}
@@ -1152,7 +1152,7 @@ class ListingsPanelErrorBoundary extends React.Component<
                             <p className="text-sm text-slate-700">
                                 Vui lòng chụp màn hình thông báo bên dưới và gửi cho đội kỹ thuật:
                             </p>
-                            <pre className="text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 overflow-auto max-h-60 whitespace-pre-wrap break-words text-slate-800">
+                            <pre className="text-xs bg-sgs-bg border border-slate-200 rounded-lg p-3 overflow-auto max-h-60 whitespace-pre-wrap break-words text-slate-800">
 {msg}
                             </pre>
                             <div className="flex justify-end gap-2 pt-1">
@@ -1383,7 +1383,7 @@ function BulkImageUploadModal({
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-3xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
-                    <div className="flex items-center gap-2 text-indigo-600">
+                    <div className="flex items-center gap-2 text-sgs-primary">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         <h2 className="text-base font-bold">{t('project.bulk_images_title')}</h2>
                     </div>
@@ -1405,7 +1405,7 @@ function BulkImageUploadModal({
                         </div>
                     )}
                     {codesError && (
-                        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">{codesError}</div>
+                        <div className="text-sm text-sgs-accent-text bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">{codesError}</div>
                     )}
                     {/* Drop zone */}
                     {!result && (
@@ -1458,18 +1458,18 @@ function BulkImageUploadModal({
                                             </div>
                                             <div className="shrink-0 w-44">
                                                 {effectiveCode ? (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-mono border border-emerald-200 max-w-full truncate" title={effectiveCode}>
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sgs-champagne text-sgs-verified text-xs font-mono border border-emerald-200 max-w-full truncate" title={effectiveCode}>
                                                         <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                                                         <span className="truncate">{effectiveCode}</span>
                                                     </span>
                                                 ) : (
-                                                    <span className="text-xs text-amber-600 font-semibold">{t('project.bulk_images_no_match')}</span>
+                                                    <span className="text-xs text-sgs-accent-text font-semibold">{t('project.bulk_images_no_match')}</span>
                                                 )}
                                                 <select
                                                     value={it.manualCode}
                                                     onChange={e => setManual(it.id, e.target.value)}
                                                     disabled={submitting || codesLoading || listingCodes.length === 0}
-                                                    className="mt-1 w-full text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    className="mt-1 w-full text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-sgs-primary"
                                                 >
                                                     <option value="">{t('project.bulk_images_pick_listing')}</option>
                                                     {listingCodes.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1498,15 +1498,15 @@ function BulkImageUploadModal({
                                 {t('project.bulk_images_uploading').replace('{p}', String(progress))}
                             </div>
                             <div className="w-full h-2 bg-[var(--glass-surface)] rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500 transition-all" style={{ width: `${progress}%` }} />
+                                <div className="h-full bg-sgs-primary transition-all" style={{ width: `${progress}%` }} />
                             </div>
                         </div>
                     )}
                     {/* Result */}
                     {result && summary && (
                         <div className="space-y-3">
-                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                                <div className="text-sm font-bold text-emerald-700">
+                            <div className="rounded-xl border border-emerald-200 bg-sgs-champagne px-4 py-3">
+                                <div className="text-sm font-bold text-sgs-verified">
                                     {t('project.bulk_images_summary')
                                         .replace('{ok}', String(summary.uploaded))
                                         .replace('{total}', String(summary.total))
@@ -1578,7 +1578,7 @@ function BulkImageUploadModal({
                             </button>
                             <button type="button" onClick={submit}
                                 disabled={submitting || items.length === 0 || !projectCode}
-                                className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50">
+                                className="px-5 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary disabled:opacity-50">
                                 {submitting
                                     ? t('common.loading')
                                     : t('project.bulk_images_submit').replace('{n}', String(items.length))}
@@ -1586,7 +1586,7 @@ function BulkImageUploadModal({
                         </>
                     ) : (
                         <button type="button" onClick={onClose}
-                            className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700">
+                            className="px-5 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary">
                             {t('project.bulk_images_close')}
                         </button>
                     )}
@@ -1990,14 +1990,14 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                   See bug "trắng trang" (Apr 2026) — repro: Quản lý dự án →
                   Masteri Cosmo Central → Danh mục sản phẩm.
                 */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-slate-200 dark:border-slate-700 overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
+                <div className="bg-white dark:bg-sgs-primary-deep rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-slate-200 dark:border-slate-700 overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
                         {/* Top row */}
                         <div className="flex items-center justify-between gap-3 px-5 py-3.5">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0 text-emerald-600">
+                                <div className="w-8 h-8 rounded-xl bg-sgs-champagne dark:bg-emerald-900/30 flex items-center justify-center shrink-0 text-sgs-verified">
                                     {IC.LIST}
                                 </div>
                                 <div className="min-w-0">
@@ -2202,7 +2202,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 {/* Add */}
                                 {canCreate && (
                                     <button type="button" onClick={() => setShowCreate(true)}
-                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
+                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
                                         {IC.PLUS} <span className="hidden sm:inline">{t('project.add_listing')}</span>
                                     </button>
                                 )}
@@ -2285,7 +2285,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                             {/* Bulk actions — visible when rows selected */}
                             {selected.size > 0 && isAdmin && (
                                 <>
-                                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl whitespace-nowrap">
+                                    <span className="text-xs font-semibold text-sgs-verified bg-sgs-champagne border border-emerald-200 px-2.5 py-1.5 rounded-xl whitespace-nowrap">
                                         {selected.size} {t('project.bulk_selected_suffix')}
                                     </span>
                                     <Dropdown
@@ -2299,11 +2299,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         }))}
                                     />
                                     <button type="button" onClick={handleBulkStatus} disabled={!bulkStatus || bulkWorking}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 disabled:opacity-40 transition-colors">
+                                        className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-sgs-accent text-white text-sm font-bold hover:bg-sgs-accent disabled:opacity-40 transition-colors">
                                         {IC.CHECK_ALL} {bulkWorking ? '...' : t('project.bulk_apply')}
                                     </button>
                                     <button type="button" onClick={() => setAccessListings(selectedListings)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors">
+                                        className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary transition-colors">
                                         {IC.LOCK} <span className="hidden sm:inline">{t('project.bulk_access_btn')}</span>
                                     </button>
                                     <button type="button" onClick={() => setSelected(new Set())}
@@ -2316,7 +2316,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
                     {/* ── Body: list view OR interactive floor plan view ── */}
                     {viewMode === 'floorplan' ? (
-                        <div className="overflow-hidden bg-white dark:bg-slate-900 flex flex-col">
+                        <div className="overflow-hidden bg-white dark:bg-sgs-primary-deep flex flex-col">
                             {!floorPlansLoaded ? (
                                 <div className="flex items-center justify-center h-40">
                                     <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -2328,7 +2328,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         <button
                                             type="button"
                                             onClick={() => setShowFloorPlanManager(true)}
-                                            className="mt-3 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700"
+                                            className="mt-3 px-4 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700"
                                         >
                                             {t('floorplan.upload_btn') || 'Tải lên SVG'}
                                         </button>
@@ -2353,7 +2353,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     /* Inner list area uses Tailwind hardcoded colors (no CSS var)
                        so it's guaranteed visible regardless of any tenant custom
                        theme override of --bg-surface. See "trắng trang" bug fix. */
-                    <div className="overflow-auto scroll-touch thin-scrollbar bg-white dark:bg-slate-900">
+                    <div className="overflow-auto scroll-touch thin-scrollbar bg-white dark:bg-sgs-primary-deep">
                         {loadError && (
                             <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3" role="alert">
                                 <div className="min-w-0">
@@ -2378,7 +2378,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <p className="font-semibold mb-1">{t('project.no_listings')}</p>
                                 {canCreate && !search && (
                                     <button type="button" onClick={() => setShowCreate(true)}
-                                        className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                                        className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700">
                                         {IC.PLUS} {t('project.add_listing')}
                                     </button>
                                 )}
@@ -2386,7 +2386,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         ) : (
                             <div role="table" aria-label={t('project.listings_table') || 'Danh mục sản phẩm'} style={{ minWidth: '100%' }}>
                                 {/* Header row */}
-                                <div role="row" className="flex items-center px-4 py-2.5 border-b text-xs font-semibold uppercase tracking-wide whitespace-nowrap" style={{ background: '#F8FAFC', borderColor: '#D5DDE8', color: '#8B9BB2', minWidth: 'max-content' }}>
+                                <div role="row" className="flex items-center px-4 py-2.5 border-b text-xs font-semibold uppercase tracking-wide whitespace-nowrap" style={{ background: '#F8FAFC', borderColor: 'var(--sgs-border)', color: 'var(--sgs-on-dark-muted)', minWidth: 'max-content' }}>
                                     {isAdmin && (
                                         <div className="w-10 shrink-0">
                                             <input
@@ -2424,7 +2424,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                         key={l.id}
                                         role="row"
                                         onClick={() => setDetailListing(l)}
-                                        className="flex items-center px-4 py-2 border-b cursor-pointer transition-colors hover:bg-slate-50"
+                                        className="flex items-center px-4 py-2 border-b cursor-pointer transition-colors hover:bg-sgs-bg"
                                         style={{
                                             background: selected.has(l.id) ? '#ECFDF5' : (idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC'),
                                             borderColor: '#E5E7EB',
@@ -2443,19 +2443,19 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                             </div>
                                         )}
                                         <div className="w-14 shrink-0">
-                                            <div className="w-11 h-11 rounded-lg overflow-hidden border bg-slate-100" style={{ borderColor: '#D5DDE8' }}>
+                                            <div className="w-11 h-11 rounded-lg overflow-hidden border bg-slate-100" style={{ borderColor: 'var(--sgs-border)' }}>
                                                 <LazyImage src={l.images?.[0]} wrapperClassName="w-full h-full" />
                                             </div>
                                         </div>
                                         <div className="w-24 shrink-0">
-                                            <span className="font-mono text-xs px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: '#F1F5F9', color: '#44556B' }}>
+                                            <span className="font-mono text-xs px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)' }}>
                                                 {l.code}
                                             </span>
                                         </div>
                                         <div className="w-56 shrink-0 pr-2">
                                             <div className="font-semibold text-sm truncate" style={{ color: '#0D1526' }}>{l.title}</div>
                                             {(l.type === 'Apartment' || l.type === 'Penthouse') && (l.attributes?.tower || l.attributes?.floor) && (
-                                                <div className="text-xs mt-0.5 truncate" style={{ color: '#8B9BB2' }}>
+                                                <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--sgs-on-dark-muted)' }}>
                                                     {[
                                                         l.attributes?.tower && `${t('inventory.label_tower')} ${l.attributes.tower}`,
                                                         l.attributes?.floor && `${t('inventory.label_floor')} ${l.attributes.floor}`,
@@ -2464,7 +2464,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                             )}
                                         </div>
                                         <div className="w-28 shrink-0">
-                                            <span className="text-xs font-semibold border px-2 py-0.5 rounded whitespace-nowrap" style={{ background: '#F1F5F9', color: '#44556B', borderColor: '#D5DDE8' }}>
+                                            <span className="text-xs font-semibold border px-2 py-0.5 rounded whitespace-nowrap" style={{ background: 'var(--sgs-bg)', color: 'var(--sgs-text-muted)', borderColor: 'var(--sgs-border)' }}>
                                                 {t(`property.${l.type?.toUpperCase()}`) || l.type}
                                             </span>
                                         </div>
@@ -2473,44 +2473,44 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 {t(`status.${l.status}`) || l.status}
                                             </span>
                                         </div>
-                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
-                                            {l.area ? <>{l.area} <span style={{ color: '#8B9BB2' }}>m²</span></> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
+                                            {l.area ? <>{l.area} <span style={{ color: 'var(--sgs-on-dark-muted)' }}>m²</span></> : <span style={{ color: 'var(--sgs-border)' }}>—</span>}
                                         </div>
-                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
+                                        <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
                                             {isApartmentProject
-                                                ? (l.attributes?.clearArea ? <>{l.attributes.clearArea} <span style={{ color: '#8B9BB2' }}>m²</span></> : <span style={{ color: '#C4CDD9' }}>—</span>)
-                                                : (l.builtArea ? <>{l.builtArea} <span style={{ color: '#8B9BB2' }}>m²</span></> : <span style={{ color: '#C4CDD9' }}>—</span>)
+                                                ? (l.attributes?.clearArea ? <>{l.attributes.clearArea} <span style={{ color: 'var(--sgs-on-dark-muted)' }}>m²</span></> : <span style={{ color: 'var(--sgs-border)' }}>—</span>)
+                                                : (l.builtArea ? <>{l.builtArea} <span style={{ color: 'var(--sgs-on-dark-muted)' }}>m²</span></> : <span style={{ color: 'var(--sgs-border)' }}>—</span>)
                                             }
                                         </div>
                                         {isApartmentProject && (
                                             <>
-                                                <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
-                                                    {l.attributes?.tower ? <span className="font-medium">{l.attributes.tower}</span> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                                <div className="w-20 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
+                                                    {l.attributes?.tower ? <span className="font-medium">{l.attributes.tower}</span> : <span style={{ color: 'var(--sgs-border)' }}>—</span>}
                                                 </div>
-                                                <div className="w-16 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
-                                                    {l.attributes?.floor ? <span className="font-medium">{l.attributes.floor}</span> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                                <div className="w-16 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
+                                                    {l.attributes?.floor ? <span className="font-medium">{l.attributes.floor}</span> : <span style={{ color: 'var(--sgs-border)' }}>—</span>}
                                                 </div>
-                                                <div className="w-32 shrink-0 text-xs whitespace-nowrap truncate pr-2" style={{ color: '#44556B' }}>
-                                                    {l.attributes?.view ? <span className="font-medium">{l.attributes.view}</span> : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                                <div className="w-32 shrink-0 text-xs whitespace-nowrap truncate pr-2" style={{ color: 'var(--sgs-text-muted)' }}>
+                                                    {l.attributes?.view ? <span className="font-medium">{l.attributes.view}</span> : <span style={{ color: 'var(--sgs-border)' }}>—</span>}
                                                 </div>
                                             </>
                                         )}
-                                        <div className="w-24 shrink-0 text-xs whitespace-nowrap" style={{ color: '#44556B' }}>
+                                        <div className="w-24 shrink-0 text-xs whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
                                             {l.attributes?.direction
                                                 ? <span className="font-medium">{t(`direction.${l.attributes.direction}`) || l.attributes.direction}</span>
-                                                : <span style={{ color: '#C4CDD9' }}>—</span>}
+                                                : <span style={{ color: 'var(--sgs-border)' }}>—</span>}
                                         </div>
-                                        <div className="w-28 shrink-0 text-xs font-mono whitespace-nowrap" style={{ color: '#44556B' }}>
+                                        <div className="w-28 shrink-0 text-xs font-mono whitespace-nowrap" style={{ color: 'var(--sgs-text-muted)' }}>
                                             {fmtUnitPrice(l.price, l.area)}
                                         </div>
-                                        <div className="w-32 shrink-0 font-bold whitespace-nowrap" style={{ color: '#047857' }}>{fmtPrice(l.price)}</div>
+                                        <div className="w-32 shrink-0 font-bold whitespace-nowrap" style={{ color: 'var(--sgs-verified)' }}>{fmtPrice(l.price)}</div>
                                         {canEditOwn && (
                                             <div className="w-16 shrink-0 text-center" onClick={e => e.stopPropagation()}>
                                                 <button
                                                     type="button"
                                                     onClick={e => openRowMenu(e, l.id)}
                                                     className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-slate-100"
-                                                    style={{ color: menuOpenId === l.id ? '#0D1526' : '#8B9BB2' }}
+                                                    style={{ color: menuOpenId === l.id ? '#0D1526' : 'var(--sgs-on-dark-muted)' }}
                                                     title={t('common.actions')}
                                                 >
                                                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -2524,7 +2524,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                 <button
                                                     type="button"
                                                     onClick={() => setAccessListings([l])}
-                                                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border whitespace-nowrap hover:bg-violet-50"
+                                                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border whitespace-nowrap hover:bg-sgs-champagne"
                                                     style={{ color: '#7C3AED', borderColor: '#DDD6FE' }}
                                                 >
                                                     {IC.LOCK} {t('project.listing_access_single_btn')}
@@ -2544,12 +2544,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 <span className="font-bold text-[var(--text-secondary)]">{filtered.length}</span> {t('project.listing_count')}
                             </span>
                             {selected.size > 0 && (
-                                <span className="text-emerald-600 font-semibold">
+                                <span className="text-sgs-verified font-semibold">
                                     · {selected.size} {t('project.bulk_selected_suffix')}
                                 </span>
                             )}
                             {search && filtered.length !== listings.length && (
-                                <span className="text-indigo-500">· {t('common.search')}: "{search}"</span>
+                                <span className="text-sgs-primary">· {t('common.search')}: "{search}"</span>
                             )}
                         </div>
                         <button type="button" onClick={onClose} className="px-4 py-1.5 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)] transition-colors">{t('common.close')}</button>
@@ -2653,7 +2653,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         <button
                             type="button"
                             onClick={() => { setMenuOpenId(null); setContractTarget(menuListing); }}
-                            className="w-full text-left px-3 py-2 text-xs text-emerald-700 hover:bg-emerald-50 flex items-center gap-2"
+                            className="w-full text-left px-3 py-2 text-xs text-sgs-verified hover:bg-sgs-champagne flex items-center gap-2"
                         >
                             {IC.CONTRACT} {t('detail.create_contract') || 'Hợp đồng'}
                         </button>
@@ -2718,7 +2718,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-6 max-w-lg w-full space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-sgs-champagne dark:bg-violet-900/30 flex items-center justify-center text-sgs-primary shrink-0">
                                 {IC.UPLOAD}
                             </div>
                             <div>
@@ -2728,9 +2728,9 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         </div>
                         {/* Summary */}
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-center">
-                                <div className="text-2xl font-extrabold text-emerald-700">{importPreview.valid.length}</div>
-                                <div className="text-xs text-emerald-600 font-semibold mt-0.5">Hợp lệ — sẽ được tạo</div>
+                            <div className="rounded-xl bg-sgs-champagne dark:bg-emerald-900/20 px-4 py-3 text-center">
+                                <div className="text-2xl font-extrabold text-sgs-verified">{importPreview.valid.length}</div>
+                                <div className="text-xs text-sgs-verified font-semibold mt-0.5">Hợp lệ — sẽ được tạo</div>
                             </div>
                             <div className={`rounded-xl px-4 py-3 text-center ${importPreview.errors.length > 0 ? 'bg-rose-50 dark:bg-rose-900/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
                                 <div className={`text-2xl font-extrabold ${importPreview.errors.length > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{importPreview.errors.length}</div>
@@ -2760,7 +2760,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 type="button"
                                 onClick={handleImportConfirm}
                                 disabled={importUploading || importPreview.valid.length === 0}
-                                className="flex-1 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors disabled:opacity-60"
+                                className="flex-1 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary transition-colors disabled:opacity-60"
                             >
                                 {importUploading
                                     ? 'Đang nhập...'
@@ -2776,12 +2776,12 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-6 max-w-sm w-full space-y-4">
                         <div className="text-center">
-                            <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 mx-auto mb-3">
+                            <div className="w-14 h-14 rounded-full bg-sgs-champagne dark:bg-emerald-900/30 flex items-center justify-center text-sgs-verified mx-auto mb-3">
                                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                             </div>
                             <h3 className="font-bold text-[var(--text-primary)] text-lg">Nhập hoàn tất</h3>
                             <p className="text-sm text-[var(--text-secondary)] mt-1">
-                                Đã tạo thành công <span className="font-bold text-emerald-700">{importDone.created}</span> sản phẩm
+                                Đã tạo thành công <span className="font-bold text-sgs-verified">{importDone.created}</span> sản phẩm
                                 {importDone.errors.length > 0 && (
                                     <>, <span className="font-bold text-rose-600">{importDone.errors.length}</span> lỗi bỏ qua</>
                                 )}
@@ -2799,7 +2799,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                         <button
                             type="button"
                             onClick={() => setImportDone(null)}
-                            className="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+                            className="w-full px-4 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
                         >
                             Đóng
                         </button>
@@ -2949,7 +2949,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
                     <div>
-                        <div className="flex items-center gap-2 text-violet-600">
+                        <div className="flex items-center gap-2 text-sgs-primary">
                             {IC.LOCK}
                             <h2 className="text-base font-bold">{t('project.listing_access_title')}</h2>
                         </div>
@@ -2963,13 +2963,13 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                 </div>
                 <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
                     {/* Info box */}
-                    <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-xl px-4 py-3 text-xs text-violet-700 dark:text-violet-300">
+                    <div className="bg-sgs-champagne dark:bg-violet-900/20 border border-sgs-border dark:border-violet-700 rounded-xl px-4 py-3 text-xs text-sgs-primary dark:text-violet-300">
                         <strong>{t('project.listing_access_note')}:</strong> {t('project.listing_access_info')}
                     </div>
 
                     {/* Grant form */}
-                    <form onSubmit={handleGrant} className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-xl p-4 space-y-3">
-                        <p className="text-sm font-bold text-violet-700 dark:text-violet-300">{t('project.listing_access_grant_title')}</p>
+                    <form onSubmit={handleGrant} className="bg-sgs-champagne dark:bg-violet-900/20 border border-sgs-border dark:border-violet-700 rounded-xl p-4 space-y-3">
+                        <p className="text-sm font-bold text-sgs-primary dark:text-violet-300">{t('project.listing_access_grant_title')}</p>
                         {err && <p className="text-rose-600 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5" role="alert">{err}</p>}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
@@ -2992,7 +2992,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                         </div>
                         <div className="flex justify-end">
                             <button type="submit" disabled={granting}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-50">
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary disabled:opacity-50">
                                 {IC.SHIELD}
                                 {granting ? t('project.listing_access_granting') : isBulk ? `${t('project.listing_access_grant_btn')} (${listings.length})` : t('project.listing_access_grant_btn')}
                             </button>
@@ -3009,7 +3009,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                                     <p className="text-xs font-bold text-[var(--text-primary)] truncate border-b border-[var(--glass-border)] pb-1">
                                         {l.title || l.code}
                                         {activeList.length > 0 && (
-                                            <span className="ml-2 text-violet-600">({activeList.length} {t('project.listing_access_partner_count')})</span>
+                                            <span className="ml-2 text-sgs-primary">({activeList.length} {t('project.listing_access_partner_count')})</span>
                                         )}
                                     </p>
                                 )}
@@ -3110,7 +3110,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
     const coverImage: string | null = meta.coverImage || meta.cover_image || null;
 
     return (
-        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col overflow-hidden">
+        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-sgs-border transition-all flex flex-col overflow-hidden">
             {/* Cover image — 16:9 hero photo; falls back to neutral placeholder
                 so every card has a consistent visual height. */}
             <div className="relative aspect-[16/9] w-full bg-[var(--bg-app)] border-b border-[var(--glass-border)]">
@@ -3135,7 +3135,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                             )}
                         </div>
                         {isPartner && project.developer_name && (
-                            <p className="text-xs text-indigo-600 font-semibold mt-0.5 truncate">{t('project.developer')}: {project.developer_name}</p>
+                            <p className="text-xs text-sgs-primary font-semibold mt-0.5 truncate">{t('project.developer')}: {project.developer_name}</p>
                         )}
                         {project.location && (
                             <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate flex items-center gap-1">
@@ -3196,7 +3196,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                     )}
                     {project.openDate && (
                         <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-sgs-accent shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">{t('project.open_date')}: <span className="font-semibold text-[var(--text-secondary)]">{fmtDate(project.openDate)}</span></span>
                         </div>
                     )}
@@ -3213,12 +3213,12 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 <button
                     type="button"
                     onClick={onListings}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-emerald-700 text-sm font-semibold rounded-xl transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-sgs-verified text-sm font-semibold rounded-xl transition-all"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                     {t('project.view_listings')}
                     {(project.listingCount || 0) > 0 && (
-                        <span className="ml-auto px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                        <span className="ml-auto px-2 py-0.5 bg-sgs-champagne text-sgs-verified text-xs font-bold rounded-full">
                             {project.listingCount}
                         </span>
                     )}
@@ -3226,7 +3226,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 <button
                     type="button"
                     onClick={onPriceMatrix}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-indigo-50 border border-[var(--glass-border)] hover:border-indigo-300 text-[var(--text-secondary)] hover:text-indigo-700 text-sm font-semibold rounded-xl transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne border border-[var(--glass-border)] hover:border-indigo-300 text-[var(--text-secondary)] hover:text-sgs-primary text-sm font-semibold rounded-xl transition-all"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     Bảng Giá
@@ -3242,12 +3242,12 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 >
                     <button onClick={() => { setMenuOpen(false); onEdit(); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                         {t('common.edit')}
                     </button>
                     <button onClick={() => { setMenuOpen(false); onAccess(); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                         {t('project.tab_access')}
                     </button>
                     <div className="border-t border-[var(--glass-border)] my-1" />
@@ -3485,7 +3485,7 @@ export function Projects() {
                             placeholder={t('common.search') + '...'}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 h-[38px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full pl-9 pr-3 py-2 h-[38px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                         />
                     </div>
                     {/* Status filter */}
@@ -3512,7 +3512,7 @@ export function Projects() {
                     {/* Create button */}
                     {isAdmin && (
                         <button type="button" onClick={() => setFormTarget('new')}
-                            className="shrink-0 flex items-center gap-1.5 px-4 py-2 h-[38px] rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 shadow-sm transition-colors">
+                            className="shrink-0 flex items-center gap-1.5 px-4 py-2 h-[38px] rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary shadow-sm transition-colors">
                             {IC.PLUS} <span className="hidden xs:inline">{t('project.new')}</span>
                         </button>
                     )}
@@ -3525,11 +3525,11 @@ export function Projects() {
                 )}
                 {loading ? (
                     <div className="flex items-center justify-center h-48">
-                        <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-4 border-sgs-border border-t-indigo-600 rounded-full animate-spin" />
                     </div>
                 ) : projects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-48 text-[var(--text-secondary)]">
-                        <div className="text-indigo-300 mb-3">
+                        <div className="text-sgs-on-dark-muted mb-3">
                             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
@@ -3537,7 +3537,7 @@ export function Projects() {
                         <p className="font-semibold">{t('common.no_data')}</p>
                         {isAdmin && (
                             <button type="button" onClick={() => setFormTarget('new')}
-                                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700">
+                                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary text-white text-sm font-bold hover:bg-sgs-primary">
                                 {IC.PLUS} {t('project.new')}
                             </button>
                         )}

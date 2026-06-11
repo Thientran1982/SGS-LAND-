@@ -88,7 +88,7 @@ export default function MarketplaceAppsPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   {c.status === "active" || !c.status
-                    ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    ? <CheckCircle2 className="w-4 h-4 text-sgs-verified" />
                     : <XCircle className="w-4 h-4 text-red-400" />}
                   <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
                     {c.status === "active" || !c.status ? "Hoạt động" : "Lỗi"}
@@ -125,7 +125,7 @@ export default function MarketplaceAppsPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{app.label}</p>
-                      {connected && <span className="text-[10px] text-emerald-600 font-medium">● Đã kết nối</span>}
+                      {connected && <span className="text-[10px] text-sgs-verified font-medium">● Đã kết nối</span>}
                     </div>
                   </div>
                   <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{app.desc}</p>

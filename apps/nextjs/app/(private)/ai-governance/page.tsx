@@ -81,7 +81,7 @@ export default function AiGovernancePage() {
           {/* KPI row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: "Tổng yêu cầu AI", value: logs.length, icon: Bot, color: "text-indigo-600" },
+              { label: "Tổng yêu cầu AI", value: logs.length, icon: Bot, color: "text-sgs-primary" },
               { label: "Bị gắn cờ", value: flaggedCount, icon: ShieldCheck, color: flaggedCount > 0 ? "text-red-500" : "text-emerald-600" },
               { label: "Phản hồi", value: fbStats?.total ?? 0, icon: MessageSquare, color: "text-blue-600" },
               { label: "Tỷ lệ tích cực", value: fbStats?.total ? `${Math.round(((fbStats.positive ?? 0) / fbStats.total) * 100)}%` : "—", icon: ThumbsUp, color: "text-emerald-600" },
@@ -144,7 +144,7 @@ export default function AiGovernancePage() {
                   {logs.slice(0, 30).map((l, i) => (
                     <tr key={l.id ?? i} className="border-t hover:bg-indigo-50/20 transition-colors"
                       style={{ borderColor: "var(--border-default)" }}>
-                      <td className="px-4 py-3 text-xs font-medium text-indigo-600">{l.feature ?? "—"}</td>
+                      <td className="px-4 py-3 text-xs font-medium text-sgs-primary">{l.feature ?? "—"}</td>
                       <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--text-secondary)" }}>{l.model ?? "—"}</td>
                       <td className="px-4 py-3 text-xs" style={{ color: "var(--text-secondary)" }}>{l.user_name ?? "—"}</td>
                       <td className="px-4 py-3">

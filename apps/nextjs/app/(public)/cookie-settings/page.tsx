@@ -12,7 +12,7 @@ export default function CookieSettingsPage() {
           <div key={c} className="flex items-center justify-between p-4 rounded-xl"
             style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
             <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{c}</span>
-            <div className={`w-10 h-5 rounded-full transition-colors ${i === 0 ? "bg-indigo-600" : "bg-gray-300"}`}>
+            <div className={`w-10 h-5 rounded-full transition-colors ${i === 0 ? "bg-sgs-primary" : "bg-gray-300"}`}>
               <div className={`w-4 h-4 bg-white rounded-full mt-0.5 transition-transform ${i === 0 ? "translate-x-5" : "translate-x-0.5"}`} />
             </div>
           </div>

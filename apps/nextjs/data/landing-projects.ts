@@ -210,7 +210,7 @@ const LEGACY_66: LandingProject = {
     primary: "#0E2A1E",
     deep: "#0A1F16",
     soft: "#E6EFE9",
-    gold: "#C9A84C",
+    gold: "var(--sgs-accent)",
     goldSoft: "#F4E9C9",
     cream: "#F5F1E8",
   },

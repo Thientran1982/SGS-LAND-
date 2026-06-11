@@ -158,7 +158,7 @@ export function DashboardShell() {
                 <Icon className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-semibold text-sm mb-1 group-hover:text-indigo-500 transition-colors" style={{ color: "var(--text-primary)" }}>{label}</p>
+                <p className="font-semibold text-sm mb-1 group-hover:text-sgs-primary transition-colors" style={{ color: "var(--text-primary)" }}>{label}</p>
                 <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>{desc}</p>
               </div>
             </Link>

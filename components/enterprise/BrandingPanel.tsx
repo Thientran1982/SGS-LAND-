@@ -193,7 +193,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const handleSaveBranding = async () => {
     // Normalize primaryColor: nếu nhập sai format thì không lưu
     if (form.primaryColor && !HEX_RE.test(form.primaryColor)) {
-      notify('Màu thương hiệu phải là mã hex 6 ký tự, ví dụ #1B3A5C.', 'error');
+      notify('Màu thương hiệu phải là mã hex 6 ký tự, ví dụ var(--sgs-primary).', 'error');
       return;
     }
     setSaving(true);
@@ -284,7 +284,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
   const apex = data.binding.apexDomain;
   const txt  = data.binding.customDomainTxtRecord;
   const verified = !!data.binding.customDomainVerifiedAt;
-  const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : '#1B3A5C';
+  const colorValue = (form.primaryColor && HEX_RE.test(form.primaryColor)) ? form.primaryColor : 'var(--sgs-primary)';
   // ── Custom-domain health (task #34) ─────────────────────────────────────────
   // Cron 5 phút re-verify cả domain đã verified. Có 2 trạng thái cần cảnh báo:
   //   • lostVerification: trước đây verified nhưng bản ghi TXT đã biến mất quá
@@ -397,7 +397,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={!!uploading.logoUrl}
-                  className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50 self-start"
+                  className="px-3 py-1.5 rounded bg-sgs-primary hover:bg-sgs-primary text-white text-xs font-bold disabled:opacity-50 self-start"
                 >
                   {uploading.logoUrl ? 'Đang tải…' : (form.logoUrl ? 'Thay logo' : 'Tải logo lên')}
                 </button>
@@ -439,7 +439,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                   type="button"
                   onClick={() => faviconInputRef.current?.click()}
                   disabled={!!uploading.faviconUrl}
-                  className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50 self-start"
+                  className="px-3 py-1.5 rounded bg-sgs-primary hover:bg-sgs-primary text-white text-xs font-bold disabled:opacity-50 self-start"
                 >
                   {uploading.faviconUrl ? 'Đang tải…' : (form.faviconUrl ? 'Thay favicon' : 'Tải favicon lên')}
                 </button>
@@ -480,13 +480,13 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <input
                 type="text"
                 value={form.primaryColor || ''}
-                placeholder="#1B3A5C"
+                placeholder="var(--sgs-primary)"
                 maxLength={7}
                 onChange={(e) => updateField('primaryColor', e.target.value)}
                 className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-mono text-sm uppercase"
               />
             </div>
-            <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ #1B3A5C.</span>
+            <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ var(--sgs-primary).</span>
           </label>
           {TEXT_FIELDS.map(({ key, label, placeholder, help }) => (
             <label key={key} className="flex flex-col gap-1 text-sm">
@@ -522,7 +522,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             type="button"
             onClick={handleSaveBranding}
             disabled={saving}
-            className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-50"
+            className="px-5 py-2 rounded-lg bg-sgs-primary hover:bg-sgs-primary text-white text-sm font-bold disabled:opacity-50"
           >
             {saving ? 'Đang lưu…' : 'Lưu thương hiệu'}
           </button>
@@ -554,7 +554,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             type="button"
             onClick={handleSetSubdomain}
             disabled={slugBusy || !slugInput.trim()}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-sgs-primary hover:bg-sgs-primary text-white text-sm font-bold disabled:opacity-50"
           >
             {slugBusy ? '…' : 'Đăng ký / Cập nhật'}
           </button>
@@ -573,7 +573,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
           <p className="mt-3 text-sm">
             Đang hoạt động:{' '}
             <a href={data.binding.subdomainUrl} target="_blank" rel="noopener noreferrer"
-               className="font-mono text-indigo-600 hover:underline">
+               className="font-mono text-sgs-primary hover:underline">
               {data.binding.subdomainUrl}
             </a>
           </p>
@@ -644,7 +644,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             type="button"
             onClick={handleSetCustomDomain}
             disabled={hostBusy || !hostInput.trim()}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-sgs-primary hover:bg-sgs-primary text-white text-sm font-bold disabled:opacity-50"
           >
             {hostBusy ? '…' : 'Lưu tên miền'}
           </button>
@@ -670,11 +670,11 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                 gửi email" — vì TXT chỉ chứng minh ownership, chưa cấu hình SPF/DKIM. */}
             {verified && (
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sgs-champagne text-emerald-800 text-[11px] font-bold border border-emerald-300">
                   ✓ Đã xác thực sở hữu (TXT)
                 </span>
                 {emailSenderReady ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sgs-champagne text-emerald-800 text-[11px] font-bold border border-emerald-300">
                     ✉️ Đã sẵn sàng gửi email (SPF/DKIM)
                   </span>
                 ) : (
@@ -689,16 +689,16 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             )}
             {!verified && (
               <>
-                <div className="text-xs text-amber-700">
+                <div className="text-xs text-sgs-accent-text">
                   Vào trang quản lý DNS của tên miền <strong className="font-mono">{data.binding.customDomain}</strong>, tạo bản ghi TXT:
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-1 text-xs font-mono bg-white p-3 rounded border border-amber-200">
-                  <div className="text-slate-500">Loại:</div><div>TXT</div>
-                  <div className="text-slate-500">Tên:</div><div className="break-all">{txt.name}</div>
-                  <div className="text-slate-500">Giá trị:</div><div className="break-all">{txt.value}</div>
-                  <div className="text-slate-500">TTL:</div><div>3600 (hoặc Auto)</div>
+                  <div className="text-sgs-text-muted">Loại:</div><div>TXT</div>
+                  <div className="text-sgs-text-muted">Tên:</div><div className="break-all">{txt.name}</div>
+                  <div className="text-sgs-text-muted">Giá trị:</div><div className="break-all">{txt.value}</div>
+                  <div className="text-sgs-text-muted">TTL:</div><div>3600 (hoặc Auto)</div>
                 </div>
-                <div className="text-xs text-amber-700">
+                <div className="text-xs text-sgs-accent-text">
                   Sau đó trỏ A/CNAME của <strong className="font-mono">{data.binding.customDomain}</strong> về SGS Land theo hướng dẫn quản trị viên cung cấp.
                   Hệ thống tự kiểm tra mỗi 5 phút — hoặc nhấn nút bên dưới để check ngay.
                 </div>
@@ -706,7 +706,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                   type="button"
                   onClick={handleVerifyCustomDomain}
                   disabled={verifyBusy}
-                  className="mt-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold disabled:opacity-50"
+                  className="mt-2 px-4 py-2 rounded-lg bg-sgs-accent hover:bg-sgs-accent text-white text-sm font-bold disabled:opacity-50"
                 >
                   {verifyBusy ? 'Đang kiểm tra…' : 'Kiểm tra TXT ngay'}
                 </button>
@@ -716,7 +716,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <p className="text-sm">
                 Mở:{' '}
                 <a href={`https://${data.binding.customDomain}`} target="_blank" rel="noopener noreferrer"
-                   className="font-mono text-indigo-600 hover:underline">
+                   className="font-mono text-sgs-primary hover:underline">
                   https://{data.binding.customDomain}
                 </a>
               </p>

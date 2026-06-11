@@ -82,7 +82,7 @@ export default function DataPlatformPage() {
             {[
               { label: "Kết nối đang hoạt động", value: activeConns, icon: Zap, color: "text-emerald-600" },
               { label: "Jobs lỗi", value: failedJobs, icon: XCircle, color: "text-red-500" },
-              { label: "Bản ghi đã xử lý", value: totalRecords.toLocaleString("vi-VN"), icon: Activity, color: "text-indigo-600" },
+              { label: "Bản ghi đã xử lý", value: totalRecords.toLocaleString("vi-VN"), icon: Activity, color: "text-sgs-primary" },
             ].map(k => (
               <div key={k.label} className="rounded-2xl p-4" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
                 <div className="flex items-center gap-2 mb-2">
@@ -116,7 +116,7 @@ export default function DataPlatformPage() {
                       </p>
                     </div>
                     {!c.status || c.status === "active"
-                      ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      ? <CheckCircle2 className="w-4 h-4 text-sgs-verified shrink-0" />
                       : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
                   </div>
                 ))}

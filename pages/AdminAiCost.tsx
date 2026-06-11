@@ -271,7 +271,7 @@ const AdminAiCost: React.FC = () => {
           <button
             type="button"
             onClick={downloadCsv}
-            className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+            className="px-4 py-2 text-xs font-bold rounded-lg bg-sgs-primary text-white hover:bg-sgs-primary shadow-sm"
           >Export CSV</button>
         </div>
       </div>
@@ -440,7 +440,7 @@ const AdminAiCost: React.FC = () => {
               return (
                 <div key={d.day} className="flex flex-col items-center min-w-[24px] group">
                   <div
-                    className="w-5 rounded-t bg-indigo-500/80 group-hover:bg-indigo-600 transition-all relative"
+                    className="w-5 rounded-t bg-indigo-500/80 group-hover:bg-sgs-primary transition-all relative"
                     style={{ height: `${h}%` }}
                     title={`${d.day}: ${d.valuations} lượt • ${fmtUsd(d.costUsd)}`}
                   />
@@ -512,7 +512,7 @@ const AdminAiCost: React.FC = () => {
                     <button
                       onClick={() => saveQuota(q.planId)}
                       disabled={savingQuotaPlan === q.planId}
-                      className="self-end px-4 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                      className="self-end px-4 py-1.5 text-xs font-bold rounded-lg bg-sgs-primary text-white hover:bg-sgs-primary disabled:opacity-50"
                     >
                       {savingQuotaPlan === q.planId ? 'Đang lưu…' : 'Lưu'}
                     </button>
@@ -639,7 +639,7 @@ const AdminAiCost: React.FC = () => {
           <button
             onClick={saveAlert}
             disabled={savingAlert}
-            className="px-5 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="px-5 py-2 text-xs font-bold rounded-lg bg-sgs-verified text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {savingAlert ? 'Đang lưu…' : 'Lưu cấu hình'}
           </button>
@@ -656,7 +656,7 @@ const AdminAiCost: React.FC = () => {
         </div>
       </Panel>
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl bg-slate-900 text-white text-sm shadow-2xl animate-enter">
+        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl bg-sgs-primary-deep text-white text-sm shadow-2xl animate-enter">
           {toast}
         </div>
       )}

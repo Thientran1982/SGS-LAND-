@@ -111,7 +111,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             ((form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE || form.type === ConnectorType.ZOHO_CRM) && !String(form.config?.apiKey || '').trim()) ||
                             (form.type === ConnectorType.WEBHOOK_EXPORT && !String(form.config?.targetUrl || '').trim())
                         }
-                        className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {t('common.save')}
                     </button>
@@ -224,7 +224,7 @@ export const DataPlatform: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="shrink-0 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95 text-sm"
+                    className="shrink-0 px-5 py-2.5 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95 text-sm"
                 >
                     {ICONS.ADD}
                     {t('data.btn_new')}
@@ -279,7 +279,7 @@ export const DataPlatform: React.FC = () => {
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(true)}
-                                className="mt-1 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all flex items-center gap-1.5"
+                                className="mt-1 px-4 py-2 bg-sgs-primary-deep text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all flex items-center gap-1.5"
                             >
                                 {ICONS.ADD} {t('data.btn_new')}
                             </button>
@@ -311,7 +311,7 @@ export const DataPlatform: React.FC = () => {
                                         <button
                                             onClick={() => handleSync(c.id)}
                                             disabled={syncingId === c.id}
-                                            className="p-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                                            className="p-2 text-sgs-primary bg-sgs-champagne rounded-lg hover:bg-sgs-champagne transition-colors disabled:opacity-50"
                                             title={t('data.sync_now')}
                                         >
                                             <span className={syncingId === c.id ? 'animate-spin inline-block' : ''}>{ICONS.SYNC}</span>

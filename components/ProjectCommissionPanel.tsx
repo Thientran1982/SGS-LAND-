@@ -87,9 +87,9 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
   return createPortal(
     <div className="fixed inset-0 z-[10002] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-y-auto"
          onClick={onClose}>
-      <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4"
+      <div className="w-full max-w-5xl bg-white dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4"
            onClick={e => e.stopPropagation()}>
-        <header className="flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border)] sticky top-0 bg-white dark:bg-slate-900 rounded-t-2xl">
+        <header className="flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border)] sticky top-0 bg-white dark:bg-sgs-primary-deep rounded-t-2xl">
           <div>
             <h2 className="text-lg font-extrabold text-[var(--text-primary)]">Hoa hồng &amp; doanh số</h2>
             <p className="text-xs text-[var(--text-tertiary)]">{projectName}</p>
@@ -113,7 +113,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
                     </button>
                   )}
                   <button type="button" onClick={() => setShowEditor(s => !s)}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">
+                    className="px-2.5 py-1 rounded-lg bg-sgs-verified text-white text-xs font-bold hover:bg-emerald-700">
                     {showEditor ? 'Huỷ' : (active ? '+ Tạo phiên bản mới' : '+ Tạo chính sách')}
                   </button>
                 </div>
@@ -179,11 +179,11 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
             <div className="px-4 py-2 border-b border-[var(--glass-border)] flex items-center justify-between">
               <h3 className="text-sm font-bold">Giao dịch hoa hồng (50 mới nhất)</h3>
               <a href={commissionApi.exportXlsxUrl({ projectId })}
-                 className="text-xs font-bold text-emerald-700 hover:underline">⬇ Xuất Excel</a>
+                 className="text-xs font-bold text-sgs-verified hover:underline">⬇ Xuất Excel</a>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs uppercase text-[var(--text-tertiary)]">
+                <thead className="bg-sgs-bg dark:bg-slate-800/60 text-xs uppercase text-[var(--text-tertiary)]">
                   <tr>
                     <th className="text-left px-3 py-2">Ngày</th>
                     <th className="text-left px-3 py-2">SP</th>
@@ -207,7 +207,7 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
                         <div className="text-xs text-[var(--text-tertiary)]">{it.partner_tenant_name || 'Bán nội bộ'}</div>
                       </td>
                       <td className="px-3 py-2 text-right whitespace-nowrap">{fmtMoney(it.sale_price)}</td>
-                      <td className="px-3 py-2 text-right whitespace-nowrap font-bold text-emerald-700">{fmtMoney(it.gross_amount)}</td>
+                      <td className="px-3 py-2 text-right whitespace-nowrap font-bold text-sgs-verified">{fmtMoney(it.gross_amount)}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs">{STATUS_LABEL[it.status] || it.status}</td>
                     </tr>
                   ))}
@@ -237,7 +237,7 @@ const Leaderboard: React.FC<{ title: string; rows: Array<{ name: string; units: 
         {rows.slice(0, 5).map((r, i) => (
           <li key={i} className="flex items-center justify-between text-sm">
             <span className="truncate">{i + 1}. {r.name}</span>
-            <span className="text-xs text-[var(--text-tertiary)]">{r.units} đv · <span className="font-bold text-emerald-700">{fmtMoney(r.gross)}</span></span>
+            <span className="text-xs text-[var(--text-tertiary)]">{r.units} đv · <span className="font-bold text-sgs-verified">{fmtMoney(r.gross)}</span></span>
           </li>
         ))}
       </ul>
@@ -249,7 +249,7 @@ const PolicyView: React.FC<{ policy: CommissionPolicy }> = ({ policy }) => {
   return (
     <div className="text-sm">
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+        <span className="px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-verified border border-emerald-200 text-xs font-bold">
           v{policy.version} · {policy.type}
         </span>
         <span className="text-xs text-[var(--text-tertiary)]">Hiệu lực từ {fmtDate(policy.active_from)}</span>
@@ -260,7 +260,7 @@ const PolicyView: React.FC<{ policy: CommissionPolicy }> = ({ policy }) => {
           <div className="text-xs text-[var(--text-tertiary)] mb-1">Bậc theo số sản phẩm bán/tháng:</div>
           <ul className="text-sm space-y-0.5">
             {(cfg.tiers || []).map((t: TierBand, i: number) => (
-              <li key={i}>≥ <span className="font-bold">{t.minUnitsThisMonth}</span> sản phẩm: <span className="font-bold text-emerald-700">{t.ratePct}%</span></li>
+              <li key={i}>≥ <span className="font-bold">{t.minUnitsThisMonth}</span> sản phẩm: <span className="font-bold text-sgs-verified">{t.ratePct}%</span></li>
             ))}
           </ul>
         </div>
@@ -345,7 +345,7 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
             </div>
           ))}
           <button type="button" onClick={() => setTiers(arr => [...arr, { minUnitsThisMonth: 0, ratePct: 1 }])}
-            className="text-xs font-bold text-emerald-700 hover:underline">+ Thêm bậc</button>
+            className="text-xs font-bold text-sgs-verified hover:underline">+ Thêm bậc</button>
         </div>
       )}
       {type === 'MILESTONE' && (
@@ -376,12 +376,12 @@ const PolicyEditor: React.FC<{ onSubmit: (type: PolicyType, config: PolicyConfig
             </div>
           ))}
           <button type="button" onClick={() => setMilestones(arr => [...arr, { key: '', label: '', pct: 0, offsetDays: 0 }])}
-            className="text-xs font-bold text-emerald-700 hover:underline">+ Thêm mốc</button>
+            className="text-xs font-bold text-sgs-verified hover:underline">+ Thêm mốc</button>
         </div>
       )}
       <div className="pt-2 border-t border-[var(--glass-border)]">
         <button type="button" onClick={submit} disabled={working}
-          className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50">
+          className="px-4 py-2 rounded-xl bg-sgs-verified text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50">
           {working ? 'Đang lưu…' : 'Lưu chính sách'}
         </button>
         <p className="text-xs text-[var(--text-tertiary)] mt-2">

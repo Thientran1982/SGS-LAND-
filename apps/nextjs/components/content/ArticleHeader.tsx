@@ -99,7 +99,7 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
           style={{
             background: "rgba(5,150,105,0.07)",
             border: "1px solid rgba(5,150,105,0.2)",
-            color: "#059669",
+            color: "var(--sgs-verified)",
           }}
         >
           <span className="text-base" aria-hidden>✓</span>

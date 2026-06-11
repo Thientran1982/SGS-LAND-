@@ -91,9 +91,9 @@ const FILTER_TABS = [
 ];
 
 const BADGE_STYLES: Record<string, React.CSSProperties> = {
-  sale: { background: "rgba(30,127,92,0.12)", color: "#1E7F5C", border: "1px solid rgba(30,127,92,0.25)" },
-  open: { background: "rgba(27,58,92,0.10)",  color: "#1B3A5C", border: "1px solid rgba(27,58,92,0.2)"  },
-  soon: { background: "rgba(200,150,62,0.12)",color: "#8C6420", border: "1px solid rgba(200,150,62,0.3)" },
+  sale: { background: "rgba(30,127,92,0.12)", color: "var(--sgs-verified)", border: "1px solid rgba(30,127,92,0.25)" },
+  open: { background: "rgba(27,58,92,0.10)",  color: "var(--sgs-primary)", border: "1px solid rgba(27,58,92,0.2)"  },
+  soon: { background: "rgba(200,150,62,0.12)",color: "var(--sgs-accent-text)", border: "1px solid rgba(200,150,62,0.3)" },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -149,7 +149,7 @@ function SectionHeading({ title, subtitle, center = false }: {
         className="text-2xl sm:text-3xl font-semibold leading-tight"
         style={{
           fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
-          color: "var(--sgs-primary, #1B3A5C)",
+          color: "var(--sgs-primary, var(--sgs-primary))",
           letterSpacing: "-0.02em",
         }}
       >
@@ -157,7 +157,7 @@ function SectionHeading({ title, subtitle, center = false }: {
       </h2>
       <div
         className={center ? "mx-auto" : ""}
-        style={{ width: "48px", height: "3px", background: "#C8963E", borderRadius: "2px", marginTop: "10px", marginBottom: subtitle ? "12px" : 0 }}
+        style={{ width: "48px", height: "3px", background: "var(--sgs-accent)", borderRadius: "2px", marginTop: "10px", marginBottom: subtitle ? "12px" : 0 }}
       />
       {subtitle && (
         <p className="text-base mt-2" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
@@ -198,7 +198,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
       style={{
         minHeight: "88vh",
         paddingTop: "80px",
-        background: "linear-gradient(175deg, #0A1E33 0%, #0F2740 45%, #1B3A5C 80%, rgba(200,150,62,0.18) 100%)",
+        background: "linear-gradient(175deg, #0A1E33 0%, #0F2740 45%, var(--sgs-primary) 80%, rgba(200,150,62,0.18) 100%)",
       }}
     >
       {/* City silhouette */}
@@ -206,7 +206,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
         <svg viewBox="0 0 1440 180" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg"
           style={{ width: "100%", height: "100%", opacity: 0.10 }}>
           <path d="M0,180 L0,120 L40,120 L40,90 L60,90 L60,120 L80,120 L80,70 L100,70 L100,55 L120,55 L120,70 L140,70 L140,120 L160,120 L160,80 L180,80 L180,45 L190,45 L190,25 L200,25 L200,45 L210,45 L210,80 L240,80 L240,100 L260,100 L260,60 L280,60 L280,35 L300,35 L300,18 L310,18 L310,8 L320,8 L320,18 L330,18 L330,35 L360,35 L360,60 L380,60 L380,95 L400,95 L400,70 L420,70 L420,45 L440,45 L440,70 L460,70 L460,95 L480,95 L480,120 L500,120 L500,90 L520,90 L520,62 L540,62 L540,90 L560,90 L560,115 L580,115 L580,78 L600,78 L600,52 L620,52 L620,35 L640,35 L640,52 L660,52 L660,78 L680,78 L680,108 L720,108 L720,135 L760,135 L760,108 L780,108 L780,80 L800,80 L800,62 L820,62 L820,80 L840,80 L840,108 L860,108 L860,80 L880,80 L880,52 L900,52 L900,35 L920,35 L920,52 L940,52 L940,80 L960,80 L960,108 L1000,108 L1000,80 L1020,80 L1020,62 L1040,62 L1040,45 L1060,45 L1060,62 L1080,62 L1080,80 L1100,80 L1100,108 L1120,108 L1120,70 L1140,70 L1140,45 L1160,45 L1160,25 L1180,25 L1180,45 L1200,45 L1200,70 L1240,70 L1240,98 L1260,98 L1260,70 L1280,70 L1280,90 L1300,90 L1300,118 L1320,118 L1320,98 L1340,98 L1340,120 L1360,120 L1360,100 L1400,100 L1400,120 L1440,120 L1440,180 Z"
-            fill="#C8963E"/>
+            fill="var(--sgs-accent)"/>
         </svg>
       </div>
 
@@ -292,16 +292,16 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
           >
             <p
               className="text-xs font-semibold mb-3 flex items-center gap-1.5"
-              style={{ color: "#8C6420" }}
+              style={{ color: "var(--sgs-accent-text)" }}
             >
-              <Sparkles className="w-3.5 h-3.5" style={{ color: "#C8963E" }} />
+              <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--sgs-accent)" }} />
               {lang === "vi"
                 ? "Hỏi AI — mô tả nhu cầu bằng ngôn ngữ tự nhiên"
                 : "Ask AI — describe your needs in natural language"}
             </p>
             <form onSubmit={submit} className="flex gap-2">
               <div className="flex-1 relative">
-                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#C8963E" }} />
+                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--sgs-accent)" }} />
                 <input
                   id="sgs-search"
                   type="text"
@@ -312,8 +312,8 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   style={{
                     background: "#F8F9FB",
                     border: "1.5px solid rgba(27,58,92,0.1)",
-                    color: "#16202B",
-                    caretColor: "#C8963E",
+                    color: "var(--sgs-text)",
+                    caretColor: "var(--sgs-accent)",
                     fontFamily: "var(--font-be-vietnam, sans-serif)",
                   }}
                   onFocus={e => (e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)")}
@@ -323,9 +323,9 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
               <button
                 type="submit"
                 className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
-                style={{ background: "#C8963E", color: "#0F2740" }}
+                style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+                onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
               >
                 <ArrowRight className="w-4 h-4" />
                 {lang === "vi" ? "Hỏi ngay" : "Search"}
@@ -338,11 +338,11 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   onClick={() => chip(c)}
                   className="text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
-                    background: "#F5EAD5", color: "#1B3A5C",
+                    background: "var(--sgs-champagne)", color: "var(--sgs-primary)",
                     border: "1px solid rgba(200,150,62,0.25)",
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = "#EAD5B0")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "#F5EAD5")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-champagne)")}
                 >
                   {c}
                 </button>
@@ -369,7 +369,7 @@ function StatItem({ num, suffix, prefix, label }: { num: number; suffix: string;
         className="text-2xl sm:text-3xl font-bold mb-1 tabular-nums"
         style={{
           fontFamily: "var(--font-ibm-plex-mono, var(--font-jetbrains-mono), monospace)",
-          color: "var(--sgs-primary, #1B3A5C)",
+          color: "var(--sgs-primary, var(--sgs-primary))",
         }}
       >
         {prefix}{fmt(count)}{suffix}
@@ -415,7 +415,7 @@ function LegalTicker() {
     <div
       className="overflow-hidden"
       style={{
-        background: "#0F2740",
+        background: "var(--sgs-primary-deep)",
         borderTop: "1px solid rgba(200,150,62,0.15)",
         borderBottom: "1px solid rgba(200,150,62,0.15)",
         padding: "9px 0",
@@ -436,8 +436,8 @@ function LegalTicker() {
               fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
             }}
           >
-            <span style={{ color: "#C8963E", fontSize: "8px" }}>●</span>
-            <span style={{ color: "#1E7F5C", fontWeight: 600 }}>✓</span>
+            <span style={{ color: "var(--sgs-accent)", fontSize: "8px" }}>●</span>
+            <span style={{ color: "var(--sgs-verified)", fontWeight: 600 }}>✓</span>
             {item}
           </span>
         ))}
@@ -465,7 +465,7 @@ function ProjectCard({ proj }: { proj: FeaturedProject }) {
     >
       <div
         className="relative overflow-hidden"
-        style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, #0F2740, #1B3A5C)" }}
+        style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, #0F2740, var(--sgs-primary))" }}
       >
         <Image
           src={proj.img} alt={proj.name} fill loading="lazy"
@@ -489,7 +489,7 @@ function ProjectCard({ proj }: { proj: FeaturedProject }) {
         )}
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <span className="text-xs font-medium mb-1" style={{ color: "#8C6420" }}>{proj.type}</span>
+        <span className="text-xs font-medium mb-1" style={{ color: "var(--sgs-accent-text)" }}>{proj.type}</span>
         <h3
           className="font-semibold text-sm mb-1 leading-snug"
           style={{ color: "var(--sgs-text, #16202B)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}
@@ -511,7 +511,7 @@ function ProjectCard({ proj }: { proj: FeaturedProject }) {
           </div>
           <div
             className="flex items-center gap-1 text-xs font-medium transition-transform group-hover:translate-x-1"
-            style={{ color: "#1B3A5C" }}
+            style={{ color: "var(--sgs-primary)" }}
           >
             Xem <ChevronRight className="w-3.5 h-3.5" />
           </div>
@@ -536,7 +536,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
           <Link
             href="/du-an"
             className="flex items-center gap-1 text-sm font-semibold shrink-0 mb-2"
-            style={{ color: "#1B3A5C" }}
+            style={{ color: "var(--sgs-primary)" }}
           >
             {lang === "vi" ? "Xem tất cả" : "View all"} <ArrowRight className="w-4 h-4" />
           </Link>
@@ -550,9 +550,9 @@ function ProjectsSection({ lang }: { lang: Lang }) {
               onClick={() => setFilter(tab.id)}
               className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
               style={{
-                background: filter === tab.id ? "#1B3A5C" : "var(--sgs-surface, #FFFFFF)",
-                color: filter === tab.id ? "#FFFFFF" : "#1B3A5C",
-                border: filter === tab.id ? "1px solid #1B3A5C" : "1px solid rgba(27,58,92,0.18)",
+                background: filter === tab.id ? "var(--sgs-primary)" : "var(--sgs-surface, #FFFFFF)",
+                color: filter === tab.id ? "#FFFFFF" : "var(--sgs-primary)",
+                border: filter === tab.id ? "1px solid var(--sgs-primary)" : "1px solid rgba(27,58,92,0.18)",
               }}
             >
               {lang === "vi" ? tab.vi : tab.en}
@@ -599,7 +599,7 @@ function ValuationSection({ lang }: { lang: Lang }) {
                 "Completely free for individual users",
               ]).map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#1E7F5C" }} />
+                  <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "var(--sgs-verified)" }} />
                   <span className="text-sm" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{item}</span>
                 </li>
               ))}
@@ -607,9 +607,9 @@ function ValuationSection({ lang }: { lang: Lang }) {
             <Link
               href="/ai-valuation"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all"
-              style={{ background: "#C8963E", color: "#0F2740" }}
+              style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
               onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
-              onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+              onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
             >
               <Sparkles className="w-4 h-4" />
               {lang === "vi" ? "Định giá ngay — Miễn phí" : "Valuate for Free"}
@@ -627,37 +627,37 @@ function ValuationSection({ lang }: { lang: Lang }) {
             }}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold" style={{ color: "#1B3A5C" }}>Kết quả định giá AI</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--sgs-primary)" }}>Kết quả định giá AI</span>
               <span
                 className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
-                style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
+                style={{ background: "rgba(30,127,92,0.1)", color: "var(--sgs-verified)" }}
               >
                 <CheckCircle className="w-3 h-3" /> ±4.8%
               </span>
             </div>
             <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.7)" }}>
-              <p className="text-xs font-medium mb-0.5" style={{ color: "#1B3A5C" }}>Vinhomes Grand Park 2PN · 65m²</p>
-              <p className="text-xs" style={{ color: "#5C6B7A" }}>TP Thủ Đức · Tầng 15 · Hướng Đông Nam</p>
+              <p className="text-xs font-medium mb-0.5" style={{ color: "var(--sgs-primary)" }}>Vinhomes Grand Park 2PN · 65m²</p>
+              <p className="text-xs" style={{ color: "var(--sgs-text-muted)" }}>TP Thủ Đức · Tầng 15 · Hướng Đông Nam</p>
             </div>
             <div className="mb-5">
-              <div className="flex justify-between text-xs mb-2" style={{ color: "#5C6B7A" }}>
+              <div className="flex justify-between text-xs mb-2" style={{ color: "var(--sgs-text-muted)" }}>
                 <span>2,85 tỷ</span>
                 <span
                   className="text-sm font-bold"
-                  style={{ color: "#8C6420", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+                  style={{ color: "var(--sgs-accent-text)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
                 >
                   3,18 tỷ ★
                 </span>
                 <span>3,45 tỷ</span>
               </div>
-              <div className="relative h-2 rounded-full" style={{ background: "#E2E8F0" }}>
+              <div className="relative h-2 rounded-full" style={{ background: "var(--sgs-border)" }}>
                 <div
                   className="absolute top-0 left-[22%] right-[22%] h-full rounded-full"
                   style={{ background: "linear-gradient(90deg, rgba(200,150,62,0.25), #C8963E, rgba(200,150,62,0.25))" }}
                 />
                 <div
                   className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white"
-                  style={{ left: "calc(50% - 8px)", background: "#C8963E", boxShadow: "0 2px 6px rgba(200,150,62,0.5)" }}
+                  style={{ left: "calc(50% - 8px)", background: "var(--sgs-accent)", boxShadow: "0 2px 6px rgba(200,150,62,0.5)" }}
                 />
               </div>
             </div>
@@ -669,15 +669,15 @@ function ValuationSection({ lang }: { lang: Lang }) {
                 { label: "Thanh khoản thị trường",     score: 79 },
               ].map(f => (
                 <div key={f.label} className="flex items-center gap-3">
-                  <span className="text-xs shrink-0 w-36" style={{ color: "#5C6B7A" }}>{f.label}</span>
-                  <div className="flex-1 h-1.5 rounded-full" style={{ background: "#E2E8F0" }}>
+                  <span className="text-xs shrink-0 w-36" style={{ color: "var(--sgs-text-muted)" }}>{f.label}</span>
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--sgs-border)" }}>
                     <div className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${f.score}%`, background: f.score > 85 ? "#1E7F5C" : "#C8963E" }}
+                      style={{ width: `${f.score}%`, background: f.score > 85 ? "var(--sgs-verified)" : "var(--sgs-accent)" }}
                     />
                   </div>
                   <span
                     className="text-xs w-7 text-right font-medium"
-                    style={{ color: "#1B3A5C", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
+                    style={{ color: "var(--sgs-primary)", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}
                   >
                     {f.score}
                   </span>
@@ -714,7 +714,7 @@ function BentoSection({ lang }: { lang: Lang }) {
           <div
             className="sm:col-span-2 lg:row-span-2 rounded-2xl p-7 flex flex-col"
             style={{
-              background: "linear-gradient(145deg, #0F2740, #1B3A5C)",
+              background: "linear-gradient(145deg, #0F2740, var(--sgs-primary))",
               border: "1px solid rgba(200,150,62,0.2)",
               minHeight: "260px",
             }}
@@ -727,7 +727,7 @@ function BentoSection({ lang }: { lang: Lang }) {
               style={{ color: "#FFFFFF", fontFamily: "var(--font-noto-serif, serif)" }}>
               Định giá AI ±5%
             </h3>
-            <p className="text-sm mb-5" style={{ color: "#93A6B8" }}>
+            <p className="text-sm mb-5" style={{ color: "var(--sgs-on-dark-muted)" }}>
               SGS-AVM v2.1 — 9 hệ số TĐGVN/IVS. Phân tích realtime từ 2.400+ giao dịch công chứng thực tế.
             </p>
             {/* Sparkline */}
@@ -745,7 +745,7 @@ function BentoSection({ lang }: { lang: Lang }) {
                   fill="url(#sparkFill)" />
                 <circle cx="200" cy="6" r="3" fill="#D4A855" />
               </svg>
-              <p className="text-[11px]" style={{ color: "#93A6B8" }}>Thị trường BĐS Đông Nam Bộ Q2/2026</p>
+              <p className="text-[11px]" style={{ color: "var(--sgs-on-dark-muted)" }}>Thị trường BĐS Đông Nam Bộ Q2/2026</p>
             </div>
           </div>
 
@@ -760,21 +760,21 @@ function BentoSection({ lang }: { lang: Lang }) {
           >
             <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: "rgba(30,127,92,0.1)" }}>
-              <Shield className="w-5 h-5" style={{ color: "#1E7F5C" }} />
+              <Shield className="w-5 h-5" style={{ color: "var(--sgs-verified)" }} />
             </div>
             <div>
               <h3 className="font-semibold mb-1.5"
-                style={{ color: "#1B3A5C", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+                style={{ color: "var(--sgs-primary)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
                 Pháp lý 2 lớp độc lập
               </h3>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: "#5C6B7A" }}>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: "var(--sgs-text-muted)" }}>
                 <span className="flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5" style={{ color: "#1E7F5C" }} />
+                  <CheckCircle className="w-3.5 h-3.5" style={{ color: "var(--sgs-verified)" }} />
                   AI: Quy hoạch 1/2000 + sổ đỏ
                 </span>
                 <span style={{ color: "#CBD5E1" }}>→</span>
                 <span className="flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5" style={{ color: "#1E7F5C" }} />
+                  <CheckCircle className="w-3.5 h-3.5" style={{ color: "var(--sgs-verified)" }} />
                   Chuyên viên: Xác nhận thực địa
                 </span>
               </div>
@@ -784,16 +784,16 @@ function BentoSection({ lang }: { lang: Lang }) {
           {/* Free for buyers */}
           <div
             className="rounded-2xl p-6"
-            style={{ background: "#F5EAD5", border: "1px solid rgba(200,150,62,0.2)" }}
+            style={{ background: "var(--sgs-champagne)", border: "1px solid rgba(200,150,62,0.2)" }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
               style={{ background: "rgba(200,150,62,0.15)" }}>
-              <Heart className="w-5 h-5" style={{ color: "#8C6420" }} />
+              <Heart className="w-5 h-5" style={{ color: "var(--sgs-accent-text)" }} />
             </div>
-            <h3 className="font-semibold mb-1" style={{ color: "#1B3A5C" }}>
+            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-primary)" }}>
               {lang === "vi" ? "Miễn phí 100%" : "100% Free"}
             </h3>
-            <p className="text-sm" style={{ color: "#5C6B7A" }}>
+            <p className="text-sm" style={{ color: "var(--sgs-text-muted)" }}>
               {lang === "vi" ? "với người mua & thuê" : "for buyers & renters"}
             </p>
           </div>
@@ -809,15 +809,15 @@ function BentoSection({ lang }: { lang: Lang }) {
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
               style={{ background: "rgba(27,58,92,0.07)" }}>
-              <Landmark className="w-5 h-5" style={{ color: "#1B3A5C" }} />
+              <Landmark className="w-5 h-5" style={{ color: "var(--sgs-primary)" }} />
             </div>
-            <h3 className="font-semibold mb-1" style={{ color: "#1B3A5C" }}>
+            <h3 className="font-semibold mb-1" style={{ color: "var(--sgs-primary)" }}>
               {lang === "vi" ? "Vay ưu đãi 12+ NH" : "12+ Bank Partners"}
             </h3>
             <p
               className="text-sm tabular-nums"
               style={{
-                color: "#5C6B7A",
+                color: "var(--sgs-text-muted)",
                 fontFamily: "var(--font-ibm-plex-mono, monospace)",
               }}
             >
@@ -858,7 +858,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
               onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
               onMouseLeave={e => (e.currentTarget.style.opacity = "0.72")}
             >
-              <span className="font-bold text-sm" style={{ color: "#1B3A5C", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+              <span className="font-bold text-sm" style={{ color: "var(--sgs-primary)", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
                 {p}
               </span>
             </div>
@@ -872,7 +872,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
         >
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shrink-0"
-            style={{ background: "#1B3A5C", color: "#FFFFFF" }}
+            style={{ background: "var(--sgs-primary)", color: "#FFFFFF" }}
           >
             NH
           </div>
@@ -880,21 +880,21 @@ function TrustBlock({ lang }: { lang: Lang }) {
             <div className="flex items-center gap-2 mb-2">
               <div className="flex items-center gap-0.5">
                 {[1,2,3,4,5].map(i => (
-                  <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#C8963E" }} />
+                  <Star key={i} className="w-4 h-4 fill-current" style={{ color: "var(--sgs-accent)" }} />
                 ))}
               </div>
               <span
                 className="text-xs px-2.5 py-0.5 rounded-full font-medium"
-                style={{ background: "rgba(30,127,92,0.1)", color: "#1E7F5C" }}
+                style={{ background: "rgba(30,127,92,0.1)", color: "var(--sgs-verified)" }}
               >
                 Giao dịch đã xác minh
               </span>
             </div>
-            <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "#16202B" }}>
+            <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "var(--sgs-text)" }}>
               "Mua biệt thự Aqua City qua SGS LAND tháng 1/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."
             </blockquote>
-            <p className="text-sm font-semibold" style={{ color: "#1B3A5C" }}>Anh Nguyễn Văn Hải</p>
-            <p className="text-xs" style={{ color: "#5C6B7A" }}>Khách hàng mua Aqua City · TP.HCM, tháng 1/2026</p>
+            <p className="text-sm font-semibold" style={{ color: "var(--sgs-primary)" }}>Anh Nguyễn Văn Hải</p>
+            <p className="text-xs" style={{ color: "var(--sgs-text-muted)" }}>Khách hàng mua Aqua City · TP.HCM, tháng 1/2026</p>
           </div>
         </div>
 
@@ -910,7 +910,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "rgba(27,58,92,0.07)", color: "#1B3A5C" }}>
+                style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-primary)" }}>
                 {item.icon}
               </div>
               <span className="text-sm" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>{item.label}</span>
@@ -948,7 +948,7 @@ function FAQItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean
         </span>
         <ChevronDown
           className="w-4 h-4 shrink-0 mt-0.5 transition-transform duration-200"
-          style={{ color: open ? "#C8963E" : "#5C6B7A", transform: open ? "rotate(180deg)" : "rotate(0)" }}
+          style={{ color: open ? "var(--sgs-accent)" : "var(--sgs-text-muted)", transform: open ? "rotate(180deg)" : "rotate(0)" }}
         />
       </button>
       <div style={{ maxHeight: open ? "400px" : "0", overflow: "hidden", transition: "max-height 0.3s ease" }}>
@@ -1003,7 +1003,7 @@ function CTABanner({ lang }: { lang: Lang }) {
     <section
       className="py-20"
       style={{
-        background: "linear-gradient(135deg, #0A1E33 0%, #0F2740 60%, #1B3A5C 100%)",
+        background: "linear-gradient(135deg, #0A1E33 0%, #0F2740 60%, var(--sgs-primary) 100%)",
         borderTop: "1px solid rgba(200,150,62,0.2)",
       }}
     >
@@ -1018,7 +1018,7 @@ function CTABanner({ lang }: { lang: Lang }) {
         >
           {lang === "vi" ? "Nhận tư vấn miễn phí trong 15 phút" : "Get free consultation in 15 minutes"}
         </h2>
-        <p className="text-base mb-8" style={{ color: "#93A6B8" }}>
+        <p className="text-base mb-8" style={{ color: "var(--sgs-on-dark-muted)" }}>
           {lang === "vi"
             ? "Đội chuyên viên SGS LAND sẵn sàng hỗ trợ — định giá, pháp lý, vay vốn, đặt lịch tham quan dự án"
             : "SGS LAND specialists ready to help — valuation, legal, financing, project visits"}
@@ -1027,9 +1027,9 @@ function CTABanner({ lang }: { lang: Lang }) {
           <a
             href="tel:+84971132378"
             className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-sm font-semibold transition-all w-full sm:w-auto justify-center"
-            style={{ background: "#C8963E", color: "#0F2740" }}
+            style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
             onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
-            onMouseLeave={e => (e.currentTarget.style.background = "#C8963E")}
+            onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
           >
             <Phone className="w-4 h-4" />
             Hotline +84 971 132 378

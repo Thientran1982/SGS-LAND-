@@ -106,7 +106,7 @@ export default function TaskDashboardPage() {
                           <span>{p.count} ({pct}%)</span>
                         </div>
                         <div className="h-2 rounded-full" style={{ background: "var(--border-default)" }}>
-                          <div className="h-2 rounded-full bg-indigo-500" style={{ width: `${pct}%` }} />
+                          <div className="h-2 rounded-full bg-sgs-primary" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                     );
@@ -126,7 +126,7 @@ export default function TaskDashboardPage() {
                       <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-secondary)" }}>
                         <span>{a.done}/{a.count} xong</span>
                         <div className="w-20 h-1.5 rounded-full" style={{ background: "var(--border-default)" }}>
-                          <div className="h-1.5 rounded-full bg-emerald-500"
+                          <div className="h-1.5 rounded-full bg-sgs-verified"
                             style={{ width: `${a.count ? Math.round((a.done / a.count) * 100) : 0}%` }} />
                         </div>
                       </div>

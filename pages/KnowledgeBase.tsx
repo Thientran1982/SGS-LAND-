@@ -10,7 +10,7 @@ const ICONS = {
     FILE_PDF: <svg className="w-8 h-8 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M7 3a1 1 0 000 2h10a1 1 0 100-2H7zM5 7a1 1 0 000 2h14a1 1 0 100-2H5zM5 11a1 1 0 000 2h14a1 1 0 100-2H5zM5 15a1 1 0 000 2h14a1 1 0 100-2H5zM5 19a1 1 0 000 2h10a1 1 0 100-2H5z" /></svg>,
     FILE_DOC: <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
     FILE_TXT: <svg className="w-8 h-8 text-[var(--text-tertiary)]" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
-    CLOUD: <svg className="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>,
+    CLOUD: <svg className="w-7 h-7 text-sgs-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>,
     X: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     DOCS: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
 };
@@ -170,11 +170,11 @@ export const KnowledgeBase: React.FC = () => {
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     {/* Search input */}
                     <div className="relative flex-1 sm:flex-none sm:w-64 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-9 pr-8 py-2 h-[38px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-9 pr-8 py-2 h-[38px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('knowledge.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -193,7 +193,7 @@ export const KnowledgeBase: React.FC = () => {
                     </div>
                     {/* Upload button — header shortcut */}
                     {canUpload && (
-                        <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
+                        <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-sgs-primary text-white text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                             {isUploading
                                 ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                 : ICONS.UPLOAD
@@ -229,7 +229,7 @@ export const KnowledgeBase: React.FC = () => {
                     onDragLeave={onDragLeave}
                     onDrop={onDrop}
                 >
-                    <div className="shrink-0 w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center pointer-events-none">
+                    <div className="shrink-0 w-10 h-10 rounded-xl bg-sgs-champagne dark:bg-indigo-950/40 flex items-center justify-center pointer-events-none">
                         {ICONS.CLOUD}
                     </div>
                     <div className="flex-1 min-w-0 pointer-events-none">
@@ -279,7 +279,7 @@ export const KnowledgeBase: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {displayedDocs.map(doc => (
-                        <div key={doc.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group relative flex flex-col h-full">
+                        <div key={doc.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm hover:shadow-md hover:border-sgs-border transition-all group relative flex flex-col h-full">
                             <div className="flex gap-3 sm:gap-4 items-start mb-4">
                                 <div className="shrink-0 p-2 bg-[var(--glass-surface)] rounded-xl">
                                     {doc.type === 'PDF' ? ICONS.FILE_PDF : doc.type === 'DOCX' ? ICONS.FILE_DOC : ICONS.FILE_TXT}
@@ -301,7 +301,7 @@ export const KnowledgeBase: React.FC = () => {
                                 {doc.status === 'PROCESSING' ? (
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2 h-2 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                        <span className="text-xs3 font-bold text-amber-600 uppercase tracking-wider">{t('knowledge.status_processing')}</span>
+                                        <span className="text-xs3 font-bold text-sgs-accent-text uppercase tracking-wider">{t('knowledge.status_processing')}</span>
                                     </div>
                                 ) : doc.status === 'INACTIVE' ? (
                                     <div className="flex items-center gap-1.5">
@@ -312,9 +312,9 @@ export const KnowledgeBase: React.FC = () => {
                                     <div className="flex items-center gap-1.5">
                                         <span className="relative flex h-2 w-2">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-sgs-verified"></span>
                                         </span>
-                                        <span className="text-xs3 font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed')}</span>
+                                        <span className="text-xs3 font-bold text-sgs-verified uppercase tracking-wider">{t('knowledge.status_indexed')}</span>
                                     </div>
                                 )}
                                 {canManage && (
@@ -347,7 +347,7 @@ export const KnowledgeBase: React.FC = () => {
         </div>
         {/* ─── Delete Confirmation Modal ─── */}
         {confirmDeleteId && createPortal(
-            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-enter">
+            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-sgs-primary-deep/50 backdrop-blur-sm animate-enter">
                 <div className="bg-[var(--bg-surface)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl max-w-sm w-full p-6 border border-[var(--glass-border)]">
                     <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 mx-auto sm:mx-0">
                         {ICONS.TRASH}

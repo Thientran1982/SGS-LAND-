@@ -26,7 +26,7 @@ interface DropdownProps<T extends string | number> {
 // -----------------------------------------------------------------------------
 const ICONS = {
     CHEVRON: <svg className="w-4 h-4 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
-    CHECK: <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+    CHECK: <svg className="w-4 h-4 text-sgs-primary dark:text-sgs-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
 };
 const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
@@ -213,7 +213,7 @@ export const Dropdown = memo(<T extends string | number>({
                                         aria-selected={isSelected}
                                         type="button"
                                         onClick={() => handleSelect(opt.value as T)}
-                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
+                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-300 font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
                                     >
                                         {opt.icon && (
                                             <span className={`transition-transform duration-200 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>

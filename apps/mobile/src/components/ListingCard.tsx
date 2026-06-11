@@ -17,9 +17,9 @@ const STATUS_BG: Record<string, string> = {
   OPENING: '#E8EEF5',
 };
 const STATUS_FG: Record<string, string> = {
-  AVAILABLE: '#047857',
+  AVAILABLE: 'var(--sgs-verified)',
   BOOKING: '#0369A1',
-  OPENING: '#0F2740',
+  OPENING: 'var(--sgs-primary-deep)',
 };
 const PLACEHOLDER = 'https://placehold.co/800x600?text=No+Image';
 

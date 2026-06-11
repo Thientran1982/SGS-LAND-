@@ -162,7 +162,7 @@ export const Careers: React.FC = () => {
                         {/* Modal header */}
                         <div className="flex items-start justify-between p-6 pb-4 border-b border-[var(--glass-border)]">
                             <div>
-                                <div className="flex items-center gap-2 text-indigo-600 text-xs font-bold uppercase tracking-widest mb-1">
+                                <div className="flex items-center gap-2 text-sgs-primary text-xs font-bold uppercase tracking-widest mb-1">
                                     {ICONS.BRIEFCASE} Ứng Tuyển
                                 </div>
                                 <h2 className="text-lg font-black text-[var(--text-primary)] leading-snug">{selectedJob}</h2>
@@ -175,13 +175,13 @@ export const Careers: React.FC = () => {
                         {sendStatus === 'SUCCESS' ? (
                             /* Success state */
                             <div className="p-8 text-center">
-                                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                <div className="w-16 h-16 bg-sgs-champagne rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-sgs-verified" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                                 </div>
                                 <h3 className="text-xl font-black text-[var(--text-primary)] mb-2">Gửi thành công!</h3>
                                 <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-1">Hồ sơ ứng tuyển của <strong>{form.name}</strong> cho vị trí <strong>{selectedJob}</strong> đã được gửi.</p>
                                 <p className="text-[var(--text-tertiary)] text-xs">Đội ngũ SGS LAND sẽ liên hệ qua email <strong>{form.email}</strong> trong vòng 3–5 ngày làm việc.</p>
-                                <button onClick={closeModal} className="mt-6 px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors">
+                                <button onClick={closeModal} className="mt-6 px-6 py-2.5 bg-sgs-primary-deep text-white rounded-xl font-bold text-sm hover:bg-sgs-primary transition-colors">
                                     Đóng
                                 </button>
                             </div>
@@ -239,7 +239,7 @@ export const Careers: React.FC = () => {
                                     {errors.message && <p className="text-rose-500 text-xs mt-1">{errors.message}</p>}
                                 </div>
                                 <div className="flex items-center gap-3 pt-2">
-                                    <button type="submit" disabled={sendStatus === 'LOADING'} className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg">
+                                    <button type="submit" disabled={sendStatus === 'LOADING'} className="flex-1 py-3 bg-sgs-primary-deep text-white rounded-xl font-bold text-sm hover:bg-sgs-primary transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg">
                                         {sendStatus === 'LOADING' ? <>{ICONS.SPIN} Đang gửi...</> : <>{ICONS.SEND} Gửi Hồ Sơ Ứng Tuyển</>}
                                     </button>
                                     <button type="button" onClick={closeModal} disabled={sendStatus === 'LOADING'} className="px-4 py-3 rounded-xl border border-[var(--glass-border)] text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors disabled:opacity-50">
@@ -255,23 +255,23 @@ export const Careers: React.FC = () => {
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-sgs-primary transition-colors min-h-[44px] shrink-0">
                         {ICONS.BACK} <span className="hidden sm:inline">{t('careers.home')}</span>
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
-                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0" />
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-sgs-primary shrink-0" />
                         <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">{t('careers.header')}</span>
                     </div>
-                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
+                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
                         {currentUser ? t('careers.dashboard') : t('careers.login')}
                     </button>
                 </div>
             </div>
             {/* Hero */}
-            <section className="py-24 px-6 text-center bg-slate-900 text-white relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900"></div>
+            <section className="py-24 px-6 text-center bg-sgs-primary-deep text-white relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sgs-primary-deep/40 via-slate-900 to-slate-900"></div>
                 <div className="relative z-10 max-w-4xl mx-auto animate-enter">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-8">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-sgs-on-dark-muted text-xs font-bold uppercase tracking-widest mb-8">
                         {t('careers.hero_badge')}
                     </div>
                     <h1 className="text-4xl md:text-7xl font-extrabold mb-8 tracking-tight leading-tight">
@@ -290,12 +290,12 @@ export const Careers: React.FC = () => {
                 <div className="max-w-6xl mx-auto px-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                         <div className="space-y-4">
-                            <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-bold text-xl">1</div>
+                            <div className="w-12 h-12 bg-sgs-champagne text-sgs-primary rounded-2xl flex items-center justify-center font-bold text-xl">1</div>
                             <h3 className="text-2xl font-bold text-[var(--text-primary)]">{t('careers.val1_title')}</h3>
                             <p className="text-[var(--text-tertiary)] leading-relaxed">{t('careers.val1_desc')}</p>
                         </div>
                         <div className="space-y-4">
-                            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center font-bold text-xl">2</div>
+                            <div className="w-12 h-12 bg-sgs-champagne text-sgs-verified rounded-2xl flex items-center justify-center font-bold text-xl">2</div>
                             <h3 className="text-2xl font-bold text-[var(--text-primary)]">{t('careers.val2_title')}</h3>
                             <p className="text-[var(--text-tertiary)] leading-relaxed">{t('careers.val2_desc')}</p>
                         </div>
@@ -313,28 +313,28 @@ export const Careers: React.FC = () => {
                     <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-12 text-center">{t('careers.open_positions')}</h2>
                     <div className="space-y-6">
                         {JOBS.map(job => (
-                            <div key={job.id} className="group bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[24px] p-6 hover:border-indigo-200 hover:shadow-xl transition-all duration-300 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div key={job.id} className="group bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[24px] p-6 hover:border-sgs-border hover:shadow-xl transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-sgs-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-wide">{job.dept}</span>
+                                            <span className="text-xs font-bold text-sgs-primary bg-sgs-champagne px-2.5 py-1 rounded-lg uppercase tracking-wide">{job.dept}</span>
                                             {job.tags.map(tag => (
                                                 <span key={tag} className="text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-2 py-1 rounded border border-[var(--glass-border)]">{tag}</span>
                                             ))}
                                         </div>
-                                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-indigo-600 transition-colors">{job.title}</h3>
+                                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-sgs-primary transition-colors">{job.title}</h3>
                                         <div className="flex items-center gap-4 text-sm text-[var(--text-tertiary)]">
                                             <span className="flex items-center gap-1.5">{ICONS.LOCATION} {job.location}</span>
                                             <span className="flex items-center gap-1.5">{ICONS.CLOCK} {job.type}</span>
-                                            <span className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                                            <span className="flex items-center gap-1.5 text-sgs-verified font-bold">
                                                 {ICONS.MONEY} {'salary_key' in job ? t(job.salary_key as Parameters<typeof t>[0]) : job.salary}
                                             </span>
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => openModal(job.title)}
-                                        className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-lg group-hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2"
+                                        className="px-6 py-3 bg-sgs-primary-deep text-white rounded-xl font-bold text-sm shadow-lg group-hover:bg-sgs-primary transition-colors flex items-center justify-center gap-2"
                                     >
                                         {t('careers.apply_btn')} {ICONS.ARROW}
                                     </button>

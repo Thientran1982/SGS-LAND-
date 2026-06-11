@@ -217,10 +217,10 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                     <div>
                         <h3 className="font-bold text-[var(--text-primary)] text-base">So sánh phiên bản — {prompt.name}</h3>
                         <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                            <span className="font-mono px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">v{activeVersion} (active)</span>
+                            <span className="font-mono px-1.5 py-0.5 bg-sgs-champagne text-sgs-verified rounded border border-emerald-200">v{activeVersion} (active)</span>
                             <span className="mx-2 text-[var(--text-tertiary)]">↔</span>
-                            <span className="font-mono px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : ''}</span>
-                            <span className="ml-3 text-emerald-600">+{diff.addedCount}</span>
+                            <span className="font-mono px-1.5 py-0.5 bg-sgs-champagne text-sgs-primary rounded border border-sgs-border">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : ''}</span>
+                            <span className="ml-3 text-sgs-verified">+{diff.addedCount}</span>
                             <span className="ml-1 text-rose-500">−{diff.removedCount}</span>
                         </p>
                     </div>
@@ -235,7 +235,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                         <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Diff nội dung prompt</div>
                         <div className="grid grid-cols-2 gap-2 border border-[var(--glass-border)] rounded-xl overflow-hidden">
                             <div className="bg-emerald-50/40 border-r border-[var(--glass-border)]">
-                                <div className="text-2xs font-bold text-emerald-700 px-3 py-1.5 bg-emerald-100/60 border-b border-emerald-200">v{activeVersion} (active)</div>
+                                <div className="text-2xs font-bold text-sgs-verified px-3 py-1.5 bg-emerald-100/60 border-b border-emerald-200">v{activeVersion} (active)</div>
                                 <div className="font-mono text-[11px] leading-5 max-h-[40vh] overflow-auto">
                                     {diff.left.map((ln, idx) => {
                                         const bg = ln.type === 'removed' ? 'bg-rose-100/70' : ln.type === 'pad' ? 'bg-slate-50' : '';
@@ -252,7 +252,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                                 </div>
                             </div>
                             <div className="bg-indigo-50/30">
-                                <div className="text-2xs font-bold text-indigo-700 px-3 py-1.5 bg-indigo-100/60 border-b border-indigo-200">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : `(${rightVersionObj?.status || ''})`}</div>
+                                <div className="text-2xs font-bold text-sgs-primary px-3 py-1.5 bg-indigo-100/60 border-b border-sgs-border">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : `(${rightVersionObj?.status || ''})`}</div>
                                 <div className="font-mono text-[11px] leading-5 max-h-[40vh] overflow-auto">
                                     {diff.right.map((ln, idx) => {
                                         const bg = ln.type === 'added' ? 'bg-emerald-100/70' : ln.type === 'pad' ? 'bg-slate-50' : '';
@@ -275,7 +275,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                         <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Chạy thử song song trên cùng input</div>
                         <div className="flex gap-2">
                             <input
-                                className="flex-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500"
+                                className="flex-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm outline-none focus:border-sgs-primary"
                                 placeholder="Nhập câu hỏi mẫu để test cả 2 phiên bản..."
                                 value={testInput}
                                 onChange={(e) => setTestInput(e.target.value)}
@@ -284,7 +284,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                             <button
                                 onClick={handleTestBoth}
                                 disabled={runningBoth || !testInput.trim()}
-                                className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow hover:bg-indigo-700 disabled:opacity-60 flex items-center gap-2 transition-colors shrink-0"
+                                className="px-4 py-2 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow hover:bg-sgs-primary disabled:opacity-60 flex items-center gap-2 transition-colors shrink-0"
                             >
                                 {runningBoth ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : ICONS.PLAY}
                                 Test cả 2 phiên bản
@@ -293,18 +293,18 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                         {(leftOutput || rightOutput || runningBoth) && (
                             <div className="grid grid-cols-2 gap-2 mt-2">
                                 <div className="border border-emerald-200 bg-emerald-50/50 rounded-xl p-3 max-h-56 overflow-auto">
-                                    <div className="text-2xs font-bold text-emerald-700 mb-1 flex items-center justify-between">
+                                    <div className="text-2xs font-bold text-sgs-verified mb-1 flex items-center justify-between">
                                         <span>v{activeVersion} (active)</span>
-                                        {leftOutput?.latencyMs != null && <span className="font-mono text-[10px] text-emerald-600">{leftOutput.latencyMs}ms</span>}
+                                        {leftOutput?.latencyMs != null && <span className="font-mono text-[10px] text-sgs-verified">{leftOutput.latencyMs}ms</span>}
                                     </div>
                                     <pre className="text-[11px] font-mono text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
                                         {runningBoth && !leftOutput ? 'Đang chạy...' : (leftOutput?.text || '—')}
                                     </pre>
                                 </div>
-                                <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-3 max-h-56 overflow-auto">
-                                    <div className="text-2xs font-bold text-indigo-700 mb-1 flex items-center justify-between">
+                                <div className="border border-sgs-border bg-indigo-50/50 rounded-xl p-3 max-h-56 overflow-auto">
+                                    <div className="text-2xs font-bold text-sgs-primary mb-1 flex items-center justify-between">
                                         <span>v{targetVersion}</span>
-                                        {rightOutput?.latencyMs != null && <span className="font-mono text-[10px] text-indigo-600">{rightOutput.latencyMs}ms</span>}
+                                        {rightOutput?.latencyMs != null && <span className="font-mono text-[10px] text-sgs-primary">{rightOutput.latencyMs}ms</span>}
                                     </div>
                                     <pre className="text-[11px] font-mono text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
                                         {runningBoth && !rightOutput ? 'Đang chạy...' : (rightOutput?.text || '—')}
@@ -341,7 +341,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                                                 </td>
                                                 <td className="p-2 text-center font-mono text-rose-500">{entry.previousVersion != null ? `v${entry.previousVersion}` : '—'}</td>
                                                 <td className="p-2 text-center text-[var(--text-tertiary)]">→</td>
-                                                <td className="p-2 text-center font-mono font-bold text-emerald-600">v{entry.version}</td>
+                                                <td className="p-2 text-center font-mono font-bold text-sgs-verified">v{entry.version}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -362,7 +362,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                         <button
                             onClick={handlePromote}
                             disabled={promoting || targetVersion === activeVersion}
-                            className="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                            className="px-4 py-2 bg-sgs-verified text-white font-bold text-xs rounded-lg shadow hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
                         >
                             {promoting ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : ICONS.CHECK}
                             Promote v{targetVersion} thành ACTIVE
@@ -423,7 +423,7 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                         options={(config.allowedModels || []).map(m => ({
                             value: m,
                             label: formatModelName(m),
-                            icon: <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" /></svg>
+                            icon: <svg className="w-3.5 h-3.5 text-sgs-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" /></svg>
                         }))}
                         disabled={!config.allowedModels?.length}
                         placeholder="Chọn mô hình mặc định"
@@ -440,7 +440,7 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                         <span className="font-mono text-[var(--text-secondary)]">${(config.currentSpendUsd || 0).toFixed(2)}</span>
                     </div>
                     <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, ((config.currentSpendUsd || 0) / config.budgetCapUsd) * 100)}%` }}></div>
+                        <div className="h-full bg-sgs-verified" style={{ width: `${Math.min(100, ((config.currentSpendUsd || 0) / config.budgetCapUsd) * 100)}%` }}></div>
                     </div>
                 </div>
                 <div>
@@ -449,13 +449,13 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                         <span className="text-[var(--text-secondary)] font-bold">$</span>
                         <input 
                             type="number" 
-                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-mono outline-none focus:border-indigo-500"
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-mono outline-none focus:border-sgs-primary"
                             value={config.budgetCapUsd}
                             onChange={(e) => onUpdateConfig('budgetCapUsd', Number(e.target.value))}
                         />
                     </div>
                 </div>
-                <button onClick={onSave} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95">
+                <button onClick={onSave} className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95">
                     {t('ai.save_config')}
                 </button>
             </div>
@@ -508,11 +508,11 @@ const PromptsTab = memo(({
                             >
                                 <div className="flex items-center gap-1.5 mb-0.5">
                                     {configured
-                                        ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                        ? <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified shrink-0"></span>
                                         : <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] opacity-40 shrink-0"></span>
                                     }
                                     <span className={`font-bold truncate ${configured ? 'text-emerald-700' : 'text-[var(--text-secondary)]'}`}>{agent}</span>
-                                    {configured && <span className="ml-auto text-[9px] font-bold text-emerald-600 bg-emerald-100 px-1 rounded">override</span>}
+                                    {configured && <span className="ml-auto text-[9px] font-bold text-sgs-verified bg-sgs-champagne px-1 rounded">override</span>}
                                 </div>
                                 <code className="text-[10px] text-[var(--text-tertiary)] font-mono block truncate">{key}</code>
                                 <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight hidden sm:block">{t(descKey)}</p>
@@ -527,11 +527,11 @@ const PromptsTab = memo(({
                                     </div>
                                     <p className="text-[var(--text-secondary)] leading-relaxed mb-2">{defInfo.summary}</p>
                                     <div className="bg-[var(--glass-surface)] rounded-lg p-2">
-                                        <span className="text-[9px] font-bold text-indigo-600 uppercase block mb-1">{t('ai.catalog_rules_label')}</span>
+                                        <span className="text-[9px] font-bold text-sgs-primary uppercase block mb-1">{t('ai.catalog_rules_label')}</span>
                                         <p className="text-[var(--text-tertiary)] leading-relaxed">{defInfo.notes}</p>
                                     </div>
                                     {!configured && (
-                                        <button onClick={(e) => { e.stopPropagation(); onCreateOpen(); }} className="mt-2 w-full text-center text-[10px] font-bold text-indigo-600 hover:text-indigo-800 py-1 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors pointer-events-auto">
+                                        <button onClick={(e) => { e.stopPropagation(); onCreateOpen(); }} className="mt-2 w-full text-center text-[10px] font-bold text-sgs-primary hover:text-sgs-primary py-1 border border-sgs-border rounded-lg bg-sgs-champagne hover:bg-sgs-champagne transition-colors pointer-events-auto">
                                             {t('ai.catalog_create_override')}
                                         </button>
                                     )}
@@ -548,7 +548,7 @@ const PromptsTab = memo(({
         <div className="bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm h-[600px] flex flex-col">
             <div className="flex justify-between items-center mb-4 px-2">
                 <h3 className="font-bold text-[var(--text-primary)]">{t('ai.tab_prompts')}</h3>
-                <button onClick={onCreateOpen} className="bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg text-indigo-600 transition-colors" title={t('ai.btn_create')}>
+                <button onClick={onCreateOpen} className="bg-sgs-champagne hover:bg-sgs-champagne p-2 rounded-lg text-sgs-primary transition-colors" title={t('ai.btn_create')}>
                     {ICONS.ADD}
                 </button>
             </div>
@@ -564,7 +564,7 @@ const PromptsTab = memo(({
                         className={`p-4 rounded-xl border cursor-pointer transition-all group ${selectedPrompt?.id === p.id ? 'bg-indigo-50 border-indigo-200 shadow-sm ring-1 ring-indigo-200' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:bg-[var(--glass-surface)]'}`}
                     >
                         <div className="flex justify-between items-start">
-                            <div className={`font-bold text-sm ${selectedPrompt?.id === p.id ? 'text-indigo-700' : 'text-[var(--text-secondary)]'}`}>{p.name}</div>
+                            <div className={`font-bold text-sm ${selectedPrompt?.id === p.id ? 'text-sgs-primary' : 'text-[var(--text-secondary)]'}`}>{p.name}</div>
                             <span className="text-2xs bg-slate-200 text-[var(--text-secondary)] px-1.5 py-0.5 rounded font-mono font-bold">v{p.activeVersion}</span>
                         </div>
                         <div className="text-xs text-[var(--text-tertiary)] mt-1 truncate group-hover:text-[var(--text-secondary)]">{p.description}</div>
@@ -605,7 +605,7 @@ const PromptsTab = memo(({
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => onSaveVersion('DRAFT')} className="px-3 py-1.5 border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold text-xs rounded-lg hover:bg-[var(--glass-surface)] transition-colors">{t('ai.draft')}</button>
-                            <button onClick={() => onSaveVersion('APPROVED')} className="px-3 py-1.5 bg-slate-900 text-white font-bold text-xs rounded-lg shadow hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <button onClick={() => onSaveVersion('APPROVED')} className="px-3 py-1.5 bg-sgs-primary-deep text-white font-bold text-xs rounded-lg shadow hover:bg-slate-800 transition-colors flex items-center gap-2">
                                 {ICONS.SAVE} {t('ai.publish')}
                             </button>
                         </div>
@@ -616,7 +616,7 @@ const PromptsTab = memo(({
                                 <button 
                                     key={v}
                                     onClick={() => onInsertVar(v)}
-                                    className="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs2 font-bold rounded border border-indigo-100 hover:bg-indigo-100 flex items-center gap-1 shrink-0 transition-colors"
+                                    className="px-2 py-1 bg-sgs-champagne text-sgs-primary text-xs2 font-bold rounded border border-sgs-border hover:bg-sgs-champagne flex items-center gap-1 shrink-0 transition-colors"
                                 >
                                     {ICONS.VARIABLE} {v}
                                 </button>
@@ -638,12 +638,12 @@ const PromptsTab = memo(({
                         {diffMode && diffLeftContent !== null ? (
                             <div className="flex-1 grid grid-cols-2 gap-2 min-h-0">
                                 <div className="flex flex-col min-h-0">
-                                    <div className="text-2xs font-bold text-emerald-700 mb-1 px-1">v{selectedPrompt.activeVersion} (active)</div>
-                                    <pre className="flex-1 w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 font-mono text-xs overflow-auto whitespace-pre-wrap leading-relaxed">{diffLeftContent}</pre>
+                                    <div className="text-2xs font-bold text-sgs-verified mb-1 px-1">v{selectedPrompt.activeVersion} (active)</div>
+                                    <pre className="flex-1 w-full bg-sgs-champagne border border-emerald-200 rounded-xl p-3 font-mono text-xs overflow-auto whitespace-pre-wrap leading-relaxed">{diffLeftContent}</pre>
                                 </div>
                                 <div className="flex flex-col min-h-0">
                                     <div className="flex items-center justify-between mb-1 px-1">
-                                        <span className="text-2xs font-bold text-indigo-700">So với v{diffRightVersion} (đang sửa)</span>
+                                        <span className="text-2xs font-bold text-sgs-primary">So với v{diffRightVersion} (đang sửa)</span>
                                         <select
                                             value={diffRightVersion ?? ''}
                                             onChange={(e) => onSelectDiffVersion(Number(e.target.value))}
@@ -654,12 +654,12 @@ const PromptsTab = memo(({
                                             ))}
                                         </select>
                                     </div>
-                                    <pre className="flex-1 w-full bg-indigo-50 border border-indigo-200 rounded-xl p-3 font-mono text-xs overflow-auto whitespace-pre-wrap leading-relaxed">{editContent}</pre>
+                                    <pre className="flex-1 w-full bg-sgs-champagne border border-sgs-border rounded-xl p-3 font-mono text-xs overflow-auto whitespace-pre-wrap leading-relaxed">{editContent}</pre>
                                 </div>
                             </div>
                         ) : (
                             <textarea
-                                className="flex-1 w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl p-4 font-mono text-sm outline-none focus:border-indigo-500 resize-none leading-relaxed"
+                                className="flex-1 w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl p-4 font-mono text-sm outline-none focus:border-sgs-primary resize-none leading-relaxed"
                                 value={editContent}
                                 onChange={(e) => onEditContent(e.target.value)}
                             />
@@ -669,19 +669,19 @@ const PromptsTab = memo(({
                     <div className="mt-4 pt-4 border-t border-[var(--glass-border)]">
                         <div className="flex gap-3">
                             <input 
-                                className="flex-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500"
+                                className="flex-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm outline-none focus:border-sgs-primary"
                                 placeholder={t('ai.sim_placeholder')}
                                 value={testInput}
                                 onChange={(e) => onSetTestInput(e.target.value)}
                             />
-                            <button onClick={onRunSim} disabled={isEvalRunning} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow hover:bg-indigo-700 disabled:opacity-70 flex items-center gap-2 transition-colors">
+                            <button onClick={onRunSim} disabled={isEvalRunning} className="px-4 py-2 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow hover:bg-sgs-primary disabled:opacity-70 flex items-center gap-2 transition-colors">
                                 {isEvalRunning ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : ICONS.PLAY}
                                 {t('ai.run_sim')}
                             </button>
                         </div>
                         {lastEvalRun && (
                             <div className="mt-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] text-xs font-mono text-[var(--text-secondary)] max-h-24 overflow-y-auto no-scrollbar">
-                                <span className="text-emerald-600 font-bold">{t('ai.sim_output_label')}</span> {lastEvalRun}
+                                <span className="text-sgs-verified font-bold">{t('ai.sim_output_label')}</span> {lastEvalRun}
                             </div>
                         )}
                     </div>
@@ -748,7 +748,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                    { label: 'Tổng phản hồi', value: stats?.totalFeedback || 0, icon: ICONS.CHAT, color: 'text-indigo-600' },
+                    { label: 'Tổng phản hồi', value: stats?.totalFeedback || 0, icon: ICONS.CHAT, color: 'text-sgs-primary' },
                     { label: 'Tỷ lệ chấp thuận', value: `${stats?.approvalRate || 0}%`, icon: ICONS.STAR, color: stats?.approvalRate && stats.approvalRate >= 70 ? 'text-emerald-600' : 'text-amber-500' },
                     { label: 'Phản hồi tốt', value: stats?.positiveCount || 0, icon: ICONS.THUMBS_UP, color: 'text-emerald-600' },
                     { label: 'Cần cải thiện', value: stats?.negativeCount || 0, icon: ICONS.THUMBS_DOWN, color: 'text-rose-500' },
@@ -789,7 +789,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                     <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
                         Khi nhấn <strong>Tính lại Reward</strong>, hệ thống sẽ tổng hợp tất cả phản hồi tích cực/tiêu cực thành bộ quy tắc few-shot và negative-rule. AI sẽ tự động học từ các phản hồi này trong các cuộc hội thoại tiếp theo.
                     </p>
-                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700 space-y-1">
+                    <div className="bg-sgs-champagne border border-sgs-border rounded-xl p-3 text-xs text-sgs-primary space-y-1">
                         <div className="font-bold">Kiến trúc RLHF:</div>
                         <div>① Thu feedback (👍/👎 + sửa lỗi)</div>
                         <div>② Tính Reward Signal per-intent</div>
@@ -799,7 +799,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                     <button
                         onClick={onRecompute}
                         disabled={isRecomputing}
-                        className="mt-auto w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 disabled:opacity-60 flex items-center justify-center gap-2 transition-all active:scale-95 text-sm"
+                        className="mt-auto w-full py-3 bg-sgs-primary text-white font-bold rounded-xl shadow hover:bg-sgs-primary disabled:opacity-60 flex items-center justify-center gap-2 transition-all active:scale-95 text-sm"
                     >
                         {isRecomputing ? (
                             <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang tính...</>
@@ -828,7 +828,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                 </div>
                                 <div className={`w-10 sm:w-12 shrink-0 text-right text-xs font-bold ${approvalColor(item.rate)}`}>{item.rate}%</div>
                                 <div className="hidden sm:block w-20 shrink-0 text-right text-xs text-[var(--text-tertiary)]">
-                                    <span className="text-emerald-600">+{item.positive}</span> / <span className="text-rose-500">-{item.negative}</span>
+                                    <span className="text-sgs-verified">+{item.positive}</span> / <span className="text-rose-500">-{item.negative}</span>
                                 </div>
                             </div>
                         ))}
@@ -857,7 +857,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                     <div className="p-3 grid grid-cols-3 gap-2 text-xs">
                                         <div className="text-center">
                                             <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Tốt / Xấu</div>
-                                            <div><span className="text-emerald-600 font-bold">{sig.positiveCount}</span><span className="text-[var(--text-tertiary)] mx-0.5">/</span><span className="text-rose-500 font-bold">{sig.negativeCount}</span></div>
+                                            <div><span className="text-sgs-verified font-bold">{sig.positiveCount}</span><span className="text-[var(--text-tertiary)] mx-0.5">/</span><span className="text-rose-500 font-bold">{sig.negativeCount}</span></div>
                                         </div>
                                         <div className="text-center">
                                             <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Few-shot</div>
@@ -871,10 +871,10 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                     {isExpanded && (sig.topExamples?.length > 0 || sig.negativePatterns?.length > 0) && (
                                         <div className="border-t border-[var(--glass-border)] p-3 space-y-3 bg-[var(--glass-surface)]/50">
                                             {sig.topExamples?.slice(0, 1).map((ex: any, i: number) => (
-                                                <div key={i} className="bg-emerald-50 border border-emerald-100 rounded-lg p-2">
-                                                    <div className="text-[10px] font-bold text-emerald-700 mb-1 flex items-center gap-1">{ICONS.CHECK_SM} Mẫu tốt</div>
+                                                <div key={i} className="bg-sgs-champagne border border-emerald-100 rounded-lg p-2">
+                                                    <div className="text-[10px] font-bold text-sgs-verified mb-1 flex items-center gap-1">{ICONS.CHECK_SM} Mẫu tốt</div>
                                                     <div className="text-[10px] text-[var(--text-tertiary)]">Khách: {(ex.userMessage || '').slice(0, 80)}</div>
-                                                    <div className="text-[10px] text-emerald-700 mt-1">AI: {(ex.aiResponse || '').slice(0, 120)}</div>
+                                                    <div className="text-[10px] text-sgs-verified mt-1">AI: {(ex.aiResponse || '').slice(0, 120)}</div>
                                                 </div>
                                             ))}
                                             {sig.negativePatterns?.slice(0, 1).map((p: any, i: number) => (
@@ -912,9 +912,9 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                         <React.Fragment key={sig.intent}>
                                             <tr className="hover:bg-[var(--glass-surface)] transition-colors cursor-pointer" onClick={() => setExpandedSignal(isExpanded ? null : sig.intent)}>
                                                 <td className="p-3 font-bold text-[var(--text-secondary)]">{INTENT_LABELS[sig.intent] || sig.intent}</td>
-                                                <td className="p-3 text-center"><span className="text-emerald-600 font-bold">{sig.positiveCount}</span><span className="text-[var(--text-tertiary)] mx-1">/</span><span className="text-rose-500 font-bold">{sig.negativeCount}</span></td>
+                                                <td className="p-3 text-center"><span className="text-sgs-verified font-bold">{sig.positiveCount}</span><span className="text-[var(--text-tertiary)] mx-1">/</span><span className="text-rose-500 font-bold">{sig.negativeCount}</span></td>
                                                 <td className="p-3 text-center"><span className={`font-bold ${approvalColor(Math.round((sig.avgScore + 1) / 2 * 100))}`}>{typeof sig.avgScore === 'number' ? sig.avgScore.toFixed(2) : '—'}</span></td>
-                                                <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${fewShot > 0 ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span></td>
+                                                <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${fewShot > 0 ? 'bg-indigo-50 text-sgs-primary border border-indigo-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span></td>
                                                 <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${negRules > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{negRules > 0 ? `${negRules} quy tắc` : '—'}</span></td>
                                                 <td className="p-3 text-[var(--text-tertiary)] font-mono">{sig.lastComputed ? formatTime(sig.lastComputed) : '—'}</td>
                                             </tr>
@@ -924,11 +924,11 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
                                                             {sig.topExamples?.length > 0 && (
                                                                 <div>
-                                                                    <div className="text-xs font-bold text-emerald-700 mb-2 flex items-center gap-1">{ICONS.CHECK_SM} Mẫu trả lời tốt (Few-shot)</div>
+                                                                    <div className="text-xs font-bold text-sgs-verified mb-2 flex items-center gap-1">{ICONS.CHECK_SM} Mẫu trả lời tốt (Few-shot)</div>
                                                                     {sig.topExamples.slice(0, 2).map((ex: any, i: number) => (
-                                                                        <div key={i} className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 mb-2">
+                                                                        <div key={i} className="bg-sgs-champagne border border-emerald-100 rounded-lg p-2 mb-2">
                                                                             <div className="text-xs text-[var(--text-tertiary)] mb-1">Khách: <span className="text-[var(--text-secondary)]">{(ex.userMessage || '').slice(0, 100)}</span></div>
-                                                                            <div className="text-xs text-emerald-700">AI: {(ex.aiResponse || '').slice(0, 200)}</div>
+                                                                            <div className="text-xs text-sgs-verified">AI: {(ex.aiResponse || '').slice(0, 200)}</div>
                                                                         </div>
                                                                     ))}
                                                                 </div>
@@ -961,7 +961,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-[var(--text-primary)] text-sm">Sửa lỗi gần đây từ người dùng</h3>
-                        <button onClick={() => setShowCorrections(!showCorrections)} className="text-xs text-indigo-600 font-bold">
+                        <button onClick={() => setShowCorrections(!showCorrections)} className="text-xs text-sgs-primary font-bold">
                             {showCorrections ? 'Ẩn bớt' : 'Xem tất cả'}
                         </button>
                     </div>
@@ -982,8 +982,8 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                         <div className="text-[var(--text-secondary)] line-through opacity-60">{(c.aiResponse || '').slice(0, 120)}</div>
                                     </div>
                                     <div>
-                                        <div className="font-bold text-emerald-600 mb-1 flex items-center gap-1">{ICONS.CHECK_SM} Sửa đúng</div>
-                                        <div className="text-emerald-700">{(c.correction || '').slice(0, 150)}</div>
+                                        <div className="font-bold text-sgs-verified mb-1 flex items-center gap-1">{ICONS.CHECK_SM} Sửa đúng</div>
+                                        <div className="text-sgs-verified">{(c.correction || '').slice(0, 150)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -1245,7 +1245,7 @@ export const AiGovernance: React.FC = () => {
                                         <td className="p-3 font-bold text-[var(--text-secondary)]">{log.taskType}</td>
                                         <td className="p-3 font-mono text-[var(--text-secondary)]">{formatModelName(log.model)}</td>
                                         <td className="p-3 text-[var(--text-secondary)]">{log.latencyMs}ms</td>
-                                        <td className="p-3 text-emerald-600 font-mono">${(log.costUsd || 0).toFixed(4)}</td>
+                                        <td className="p-3 text-sgs-verified font-mono">${(log.costUsd || 0).toFixed(4)}</td>
                                         <td className="p-3">
                                             {log.safetyFlags.length > 0 ? (
                                                 <div className="flex gap-1">
@@ -1253,7 +1253,7 @@ export const AiGovernance: React.FC = () => {
                                                         <span key={f} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 rounded text-2xs font-bold uppercase tracking-wide">{f}</span>
                                                     ))}
                                                 </div>
-                                            ) : <span className="text-emerald-500 font-bold text-xs2">{t('ai.safe')}</span>}
+                                            ) : <span className="text-sgs-verified font-bold text-xs2">{t('ai.safe')}</span>}
                                         </td>
                                     </tr>
                                 ))}
@@ -1306,7 +1306,7 @@ export const AiGovernance: React.FC = () => {
                                 </div>
                                 <div className="flex gap-3 pt-2">
                                     <button type="button" onClick={() => setIsCreateOpen(false)} className="flex-1 py-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm">{t('common.cancel')}</button>
-                                    <button type="submit" className="flex-1 py-2 bg-slate-900 text-white font-bold rounded-xl text-sm">{t('common.create')}</button>
+                                    <button type="submit" className="flex-1 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl text-sm">{t('common.create')}</button>
                                 </div>
                             </div>
                         </form>

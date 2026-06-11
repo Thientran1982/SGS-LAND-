@@ -50,7 +50,7 @@ export function RelatedArticles({ articles, categories, className = "" }: Relate
                 </span>
               )}
               <h3
-                className="text-sm font-semibold leading-snug mb-2 group-hover:text-indigo-500 transition-colors line-clamp-3"
+                className="text-sm font-semibold leading-snug mb-2 group-hover:text-sgs-primary transition-colors line-clamp-3"
                 style={{ color: "var(--text-primary)" }}
               >
                 {article.title}

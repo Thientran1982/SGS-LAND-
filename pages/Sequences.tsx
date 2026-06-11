@@ -42,10 +42,10 @@ const ICONS = {
     TEMPLATE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zm-10 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>,
     EDIT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
-    EMAIL: <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-    SMS: <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
+    EMAIL: <svg className="w-5 h-5 text-sgs-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+    SMS: <svg className="w-5 h-5 text-sgs-verified" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
     WAIT: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    TASK: <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
+    TASK: <svg className="w-5 h-5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
     ZALO: <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
     CLOSE: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     SAVE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -143,7 +143,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                             min={0}
                             value={form.delayHours}
                             onChange={e => setForm(f => ({ ...f, delayHours: parseInt(e.target.value) || 0 }))}
-                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-[var(--glass-surface)] transition-all"
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary bg-[var(--glass-surface)] transition-all"
                         />
                     </div>
                     {isMessage && (
@@ -157,7 +157,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                                         type="text"
                                         value={form.subject || ''}
                                         onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-[var(--glass-surface)] transition-all"
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary bg-[var(--glass-surface)] transition-all"
                                         placeholder={t('seq.placeholder_subject')}
                                     />
                                 </div>
@@ -170,7 +170,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                                     value={form.content || ''}
                                     onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                                     rows={4}
-                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-[var(--glass-surface)] transition-all resize-none"
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary bg-[var(--glass-surface)] transition-all resize-none"
                                     placeholder={t('seq.placeholder_content')}
                                 />
                             </div>
@@ -185,7 +185,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                                 type="text"
                                 value={form.taskTitle || ''}
                                 onChange={e => setForm(f => ({ ...f, taskTitle: e.target.value }))}
-                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-[var(--glass-surface)] transition-all"
+                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary bg-[var(--glass-surface)] transition-all"
                                 placeholder={t('seq.placeholder_task')}
                             />
                         </div>
@@ -200,7 +200,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
                     </button>
                     <button
                         onClick={handleSave}
-                        className="flex-1 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 active:scale-95"
+                        className="flex-1 py-2.5 bg-sgs-primary-deep text-white font-bold rounded-xl text-sm shadow-lg hover:bg-sgs-primary transition-all flex items-center justify-center gap-2 active:scale-95"
                     >
                         {ICONS.SAVE}
                         {t('common.save')}
@@ -241,7 +241,7 @@ const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index
             <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm z-10 shrink-0 border-2 ${getStepColor(step.type)}`}>
                 {getStepIcon(step.type)}
             </div>
-            <div className="flex-1 bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--glass-border)] shadow-sm mb-6 hover:border-indigo-200 transition-colors">
+            <div className="flex-1 bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--glass-border)] shadow-sm mb-6 hover:border-sgs-border transition-colors">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -256,7 +256,7 @@ const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index
                     <div className="flex gap-1 opacity-0 group-hover/step:opacity-100 transition-opacity shrink-0">
                         <button
                             onClick={onEdit}
-                            className="p-1.5 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors text-[var(--text-secondary)]"
+                            className="p-1.5 hover:bg-sgs-champagne hover:text-sgs-primary rounded-lg transition-colors text-[var(--text-secondary)]"
                             title={t('common.edit')}
                         >
                             {ICONS.EDIT}
@@ -402,7 +402,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                             </h3>
                             <button
                                 onClick={handleAddStep}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white font-bold rounded-lg text-xs shadow hover:bg-indigo-700 transition-all active:scale-95"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-sgs-primary-deep text-white font-bold rounded-lg text-xs shadow hover:bg-sgs-primary transition-all active:scale-95"
                             >
                                 {ICONS.ADD}
                                 {t('seq.add_step')}
@@ -412,7 +412,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                             {steps.length === 0 ? (
                                 <div
                                     onClick={handleAddStep}
-                                    className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all text-[var(--text-tertiary)] hover:text-indigo-600"
+                                    className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all text-[var(--text-tertiary)] hover:text-sgs-primary"
                                 >
                                     {ICONS.ADD}
                                     <span className="text-sm font-bold">{t('seq.empty_steps')}</span>
@@ -433,7 +433,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                                         onClick={handleAddStep}
                                         className="flex gap-4 relative opacity-60 hover:opacity-100 transition-opacity cursor-pointer border-2 border-dashed border-slate-300 rounded-xl p-4 items-center justify-center bg-[var(--glass-surface)] hover:bg-[var(--bg-surface)] hover:border-indigo-300"
                                     >
-                                        <div className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-indigo-600">
+                                        <div className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-sgs-primary">
                                             {ICONS.ADD}
                                             <span className="text-xs font-bold">{t('seq.add_step')}</span>
                                         </div>
@@ -448,7 +448,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all shadow-lg active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
+                        className="w-full bg-sgs-primary-deep text-white font-bold py-3 rounded-xl hover:bg-sgs-primary transition-all shadow-lg active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
                     >
                         {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : ICONS.SAVE}
                         {saving ? t('common.processing') : t('common.save')}
@@ -558,13 +558,13 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
                             <div className="flex items-start justify-between gap-3 mb-3">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <div className="min-w-0">
-                                        <h3 className="font-bold text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors">{tpl.name}</h3>
+                                        <h3 className="font-bold text-[var(--text-primary)] group-hover:text-sgs-primary transition-colors">{tpl.name}</h3>
                                         <p className="text-xs text-[var(--text-tertiary)] mt-0.5 line-clamp-2">{tpl.description}</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => onUse(tpl)}
-                                    className="flex-shrink-0 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-all active:scale-95 shadow-sm"
+                                    className="flex-shrink-0 px-4 py-2 bg-sgs-primary text-white text-xs font-bold rounded-xl hover:bg-sgs-primary transition-all active:scale-95 shadow-sm"
                                 >
                                     Dùng Mẫu
                                 </button>
@@ -580,7 +580,7 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
                                     {tpl.steps.filter(s => s.type === 'EMAIL').length} email
                                 </span>
                                 {tpl.steps.filter(s => s.type === 'CREATE_TASK').length > 0 && (
-                                    <span className="text-xs text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+                                    <span className="text-xs text-sgs-primary bg-sgs-champagne px-2.5 py-1 rounded-lg border border-sgs-border">
                                         {tpl.steps.filter(s => s.type === 'CREATE_TASK').length} task
                                     </span>
                                 )}
@@ -603,7 +603,7 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
     >
         <div className="flex justify-between items-start mb-4">
             <div className="flex-1 min-w-0 pr-2">
-                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors truncate">{sequence.name}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-sgs-primary transition-colors truncate">{sequence.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${sequence.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                     <span className="text-xs text-[var(--text-tertiary)]">{sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}</span>
@@ -617,7 +617,7 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
                 >
                     {ICONS.TRASH}
                 </button>
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl" title={t('common.edit')}>
+                <div className="p-2 bg-sgs-champagne text-sgs-primary rounded-xl" title={t('common.edit')}>
                     {ICONS.EDIT}
                 </div>
             </div>
@@ -628,11 +628,11 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
                 <div className="text-2xs text-[var(--text-secondary)] font-bold uppercase">{t('seq.stat_active')}</div>
             </div>
             <div className="text-center border-l border-[var(--glass-border)]">
-                <div className="text-lg font-bold text-emerald-600">{sequence.stats?.openRate || 0}%</div>
+                <div className="text-lg font-bold text-sgs-verified">{sequence.stats?.openRate || 0}%</div>
                 <div className="text-2xs text-[var(--text-secondary)] font-bold uppercase">{t('seq.stat_open')}</div>
             </div>
             <div className="text-center border-l border-[var(--glass-border)]">
-                <div className="text-lg font-bold text-indigo-600">{sequence.stats?.replyRate || 0}%</div>
+                <div className="text-lg font-bold text-sgs-primary">{sequence.stats?.replyRate || 0}%</div>
                 <div className="text-2xs text-[var(--text-secondary)] font-bold uppercase">{t('seq.stat_reply')}</div>
             </div>
         </div>
@@ -745,18 +745,18 @@ export const Sequences: React.FC = () => {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={openTemplateGallery}
-                        className="px-4 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-200 hover:bg-indigo-100 transition-all flex items-center gap-2 active:scale-95 text-sm"
+                        className="px-4 py-2.5 bg-sgs-champagne text-sgs-primary font-bold rounded-xl border border-sgs-border hover:bg-sgs-champagne transition-all flex items-center gap-2 active:scale-95 text-sm"
                     >
                         {ICONS.TEMPLATE} Thư Viện Mẫu
                     </button>
-                    <button onClick={handleCreate} className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
+                    <button onClick={handleCreate} className="px-5 py-2.5 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
                         {ICONS.ADD} {t('seq.btn_new')}
                     </button>
                 </div>
             </div>
             {sequences.length === 0 ? (
                 <div className="text-center py-20 px-8 bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
-                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+                    <div className="w-16 h-16 rounded-2xl bg-sgs-champagne flex items-center justify-center mx-auto mb-4 text-sgs-text-muted">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                     </div>
                     <p className="font-bold text-[var(--text-primary)] mb-2">{t('seq.empty_title')}</p>
@@ -764,7 +764,7 @@ export const Sequences: React.FC = () => {
                     <div className="flex items-center justify-center gap-3 flex-wrap">
                         <button
                             onClick={openTemplateGallery}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 text-sm"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-sgs-primary text-white font-bold rounded-xl shadow-lg hover:bg-sgs-primary transition-all active:scale-95 text-sm"
                         >
                             {ICONS.TEMPLATE} Dùng Mẫu Có Sẵn
                         </button>

@@ -252,9 +252,9 @@ export default function AboutUsPage() {
           style={{ background: "rgba(5,150,105,0.06)", border: "1px solid rgba(5,150,105,0.2)", color: "var(--text-secondary)" }}
           role="note"
         >
-          <Shield className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#059669" }} aria-hidden />
+          <Shield className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "var(--sgs-verified)" }} aria-hidden />
           <div>
-            <p className="font-semibold mb-1" style={{ color: "#059669" }}>Tuân thủ pháp luật</p>
+            <p className="font-semibold mb-1" style={{ color: "var(--sgs-verified)" }}>Tuân thủ pháp luật</p>
             <p>
               SGS LAND hoạt động theo Luật Đất Đai 2024, Luật Nhà Ở 2023, Luật Kinh Doanh BĐS 2023,
               và Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân. Định giá theo chuẩn TĐGVN/IVS.

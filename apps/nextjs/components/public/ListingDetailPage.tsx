@@ -85,7 +85,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
               <button onClick={handleShare}
                 className="absolute top-4 right-4 p-2 rounded-xl glass-card transition-all hover:scale-105"
                 title={copied ? "Đã copy!" : "Chia sẻ"}>
-                {copied ? <CheckCircle className="w-5 h-5 text-green-500" /> : <Share2 className="w-5 h-5" style={{ color: "var(--text-primary)" }} />}
+                {copied ? <CheckCircle className="w-5 h-5 text-sgs-verified" /> : <Share2 className="w-5 h-5" style={{ color: "var(--text-primary)" }} />}
               </button>
             </div>
             {images.length > 1 && (
@@ -232,7 +232,7 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 <Link key={l.id} href={`/bds/${slug}`}
                   className="group p-4 rounded-2xl hover:shadow-token-md transition-all"
                   style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-                  <p className="font-semibold text-sm mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors"
+                  <p className="font-semibold text-sm mb-1 line-clamp-2 group-hover:text-sgs-primary transition-colors"
                     style={{ color: "var(--text-primary)" }}>{l.title}</p>
                   <p className="text-xs mb-2 truncate" style={{ color: "var(--text-secondary)" }}>{l.location}</p>
                   <p className="font-bold text-base" style={{ color: "var(--primary-600)" }}>{formatPrice(l.price)}</p>

@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<WfTaskStatus, string> = {
 };
 const STATUS_COLORS: Record<WfTaskStatus, string> = {
   todo: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  in_progress: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300',
+  in_progress: 'bg-indigo-100 text-sgs-primary dark:bg-indigo-900/30 dark:text-indigo-300',
   review: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
   done: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300',
   cancelled: 'bg-rose-100 text-rose-500 dark:bg-rose-900/30 dark:text-rose-400',
@@ -49,7 +49,7 @@ interface Props {
 function Avatar({ name, size = 7 }: { name: string; size?: number }) {
   const sizeClass = `w-${size} h-${size}`;
   return (
-    <div className={`${sizeClass} rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0`}>
+    <div className={`${sizeClass} rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-sgs-primary dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0`}>
       {name?.charAt(0).toUpperCase()}
     </div>
   );
@@ -192,14 +192,14 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
       <div className="relative z-10 w-full max-w-2xl bg-[var(--bg-surface)] shadow-2xl flex flex-col animate-slide-in-right overflow-hidden border-l border-[var(--glass-border)]">
         {loading && (
           <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-sgs-primary" />
           </div>
         )}
         {error && !loading && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6">
-            <AlertTriangle className="w-10 h-10 text-amber-400" />
+            <AlertTriangle className="w-10 h-10 text-sgs-accent-text" />
             <p className="text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => taskId && load(taskId)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+            <button onClick={() => taskId && load(taskId)} className="text-sm text-sgs-primary hover:text-sgs-primary font-medium">Thử lại</button>
           </div>
         )}
         {!loading && !error && task && (
@@ -214,7 +214,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                 {onOpenFullPage && task && (
                   <button onClick={() => { onClose(); onOpenFullPage(task.id); }}
                     title="Mở trang chi tiết đầy đủ"
-                    className="h-[32px] w-[32px] flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors">
+                    className="h-[32px] w-[32px] flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-sgs-primary transition-colors">
                     <ExternalLink size={14} />
                   </button>
                 )}
@@ -235,7 +235,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     <button onClick={() => setEditing(false)} className="h-[32px] px-3 text-xs font-medium border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors">
                       Hủy
                     </button>
-                    <button onClick={saveEdit} disabled={saving} className="h-[32px] px-3 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 transition-colors disabled:opacity-50">
+                    <button onClick={saveEdit} disabled={saving} className="h-[32px] px-3 text-xs font-semibold bg-sgs-primary text-white rounded-lg hover:bg-sgs-primary flex items-center gap-1.5 transition-colors disabled:opacity-50">
                       {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Lưu
                     </button>
                   </>
@@ -386,7 +386,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                         <div key={a.id} className="flex items-center gap-1.5 bg-[var(--glass-surface-hover)] rounded-lg px-2 py-1">
                           <Avatar name={a.name} size={5} />
                           <span className="text-xs text-[var(--text-secondary)] font-medium">{a.name}</span>
-                          {a.is_primary && <span className="text-[9px] text-indigo-500 font-semibold uppercase">Chính</span>}
+                          {a.is_primary && <span className="text-[9px] text-sgs-primary font-semibold uppercase">Chính</span>}
                         </div>
                       ))}
                     </div>
@@ -431,8 +431,8 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       ))}
                       {/* New comment */}
                       <div className="flex gap-2.5 pt-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                          <MessageSquare size={13} className="text-indigo-500" />
+                        <div className="w-7 h-7 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center flex-shrink-0">
+                          <MessageSquare size={13} className="text-sgs-primary" />
                         </div>
                         <div className="flex-1">
                           <textarea
@@ -446,7 +446,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                           />
                           <div className="flex justify-end mt-1.5">
                             <button onClick={sendComment} disabled={!newComment.trim() || sendingComment}
-                              className="h-[30px] px-3 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 transition-colors disabled:opacity-50">
+                              className="h-[30px] px-3 text-xs font-semibold bg-sgs-primary text-white rounded-lg hover:bg-sgs-primary flex items-center gap-1.5 transition-colors disabled:opacity-50">
                               {sendingComment ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Gửi
                             </button>
                           </div>

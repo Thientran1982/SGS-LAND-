@@ -203,7 +203,7 @@ function emailBase(content: string, footerNote?: string): string {
   </style>
 </head>
 <body style="margin:0;padding:0;background-color:#F1F5F9;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F1F5F9">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="var(--sgs-bg)">
   <tr>
     <td align="center" valign="top" class="email-wrapper" style="padding:40px 16px;">
       <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
@@ -215,7 +215,7 @@ function emailBase(content: string, footerNote?: string): string {
                 <td align="center" style="padding-bottom:8px;">
                   <table cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td bgcolor="#1B3A5C" style="padding:7px 16px;border-radius:8px;">
+                      <td bgcolor="var(--sgs-primary)" style="padding:7px 16px;border-radius:8px;">
                         <span style="color:#FFFFFF;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">SGS</span>
                         <span style="color:#A5B4FC;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">&nbsp;LAND</span>
                       </td>
@@ -244,9 +244,9 @@ function emailBase(content: string, footerNote?: string): string {
             ${footerNote ? `<p style="color:#64748B;font-size:12px;line-height:1.6;margin:0 0 10px;font-family:Arial,sans-serif;">${footerNote}</p>` : ''}
             <p style="color:#94A3B8;font-size:11px;margin:0;line-height:1.8;font-family:Arial,sans-serif;">
               &copy; ${year} SGS LAND &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM<br />
-              <a href="https://sgsland.vn" style="color:#1B3A5C;text-decoration:none;font-family:Arial,sans-serif;">sgsland.vn</a>
+              <a href="https://sgsland.vn" style="color:var(--sgs-primary);text-decoration:none;font-family:Arial,sans-serif;">sgsland.vn</a>
               &nbsp;&bull;&nbsp;
-              <a href="mailto:info@sgsland.vn" style="color:#1B3A5C;text-decoration:none;font-family:Arial,sans-serif;">info@sgsland.vn</a>
+              <a href="mailto:info@sgsland.vn" style="color:var(--sgs-primary);text-decoration:none;font-family:Arial,sans-serif;">info@sgsland.vn</a>
             </p>
           </td>
         </tr>
@@ -260,7 +260,7 @@ function emailBase(content: string, footerNote?: string): string {
 function primaryButton(href: string, label: string): string {
   return `<table class="btn-full" cellpadding="0" cellspacing="0" border="0" align="center" style="min-width:200px;">
   <tr>
-    <td bgcolor="#1B3A5C" style="border-radius:8px;padding:0;text-align:center;">
+    <td bgcolor="var(--sgs-primary)" style="border-radius:8px;padding:0;text-align:center;">
       <a href="${href}" class="btn-link" style="display:inline-block;padding:14px 36px;color:#FFFFFF;font-size:15px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;letter-spacing:0.3px;border-radius:8px;">${label}</a>
     </td>
   </tr>
@@ -277,7 +277,7 @@ function linkBox(url: string): string {
   <tr>
     <td bgcolor="#F8FAFC" style="padding:14px 18px;border:1px solid #E2E8F0;border-radius:8px;">
       <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Hoặc dán link này vào trình duyệt:</p>
-      <p style="color:#1B3A5C;font-size:11px;word-break:break-all;margin:0;font-family:'Courier New',monospace;line-height:1.5;">${url}</p>
+      <p style="color:var(--sgs-primary);font-size:11px;word-break:break-all;margin:0;font-family:'Courier New',monospace;line-height:1.5;">${url}</p>
     </td>
   </tr>
 </table>`;
@@ -554,7 +554,7 @@ async function sendWelcomeEmail(tenantId: string, to: string, userName: string):
   const safeName = escapeHtml(userName);
   const featureRow = (text: string) =>
     `<tr><td style="padding:5px 0;color:#334155;font-size:13px;font-family:Arial,sans-serif;">
-      <span style="color:#1B3A5C;font-weight:bold;">&#10004;</span>&nbsp;&nbsp;${text}
+      <span style="color:var(--sgs-primary);font-weight:bold;">&#10004;</span>&nbsp;&nbsp;${text}
     </td></tr>`;
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -622,7 +622,7 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
       <tr>
         <td style="padding:14px 20px;text-align:center;">
           <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">Vai trò được phân công</p>
-          <p style="color:#1B3A5C;font-size:16px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">${roleDisplay}</p>
+          <p style="color:var(--sgs-primary);font-size:16px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">${roleDisplay}</p>
         </td>
       </tr>
     </table>
@@ -692,12 +692,12 @@ async function sendContactNotification(
           </tr>
           <tr>
             <td style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">Email</td>
-            <td style="padding:6px 0;font-family:Arial,sans-serif;"><a href="mailto:${safeEmail}" style="color:#1B3A5C;text-decoration:none;font-size:14px;">${safeEmail}</a></td>
+            <td style="padding:6px 0;font-family:Arial,sans-serif;"><a href="mailto:${safeEmail}" style="color:var(--sgs-primary);text-decoration:none;font-size:14px;">${safeEmail}</a></td>
           </tr>
           <tr>
             <td style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">Chủ đề</td>
             <td style="padding:6px 0;font-family:Arial,sans-serif;">
-              <span style="display:inline-block;background:#E8EEF5;color:#1B3A5C;font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;font-family:Arial,sans-serif;">${safeSubject}</span>
+              <span style="display:inline-block;background:#E8EEF5;color:var(--sgs-primary);font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;font-family:Arial,sans-serif;">${safeSubject}</span>
             </td>
           </tr>
         </table>
@@ -736,10 +736,10 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
       </p>
       <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">Quá trình tư vấn bao gồm:</p>
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#1B3A5C;font-weight:bold;">1.</span>&nbsp; Trao đổi yêu cầu & phong cách thiết kế mong muốn</td></tr>
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#1B3A5C;font-weight:bold;">2.</span>&nbsp; Khảo sát mặt bằng & lên phương án thiết kế sơ bộ</td></tr>
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#1B3A5C;font-weight:bold;">3.</span>&nbsp; Báo giá chi tiết & ký hợp đồng tư vấn/thi công</td></tr>
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#1B3A5C;font-weight:bold;">4.</span>&nbsp; Theo dõi tiến độ & bàn giao công trình</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:var(--sgs-primary);font-weight:bold;">1.</span>&nbsp; Trao đổi yêu cầu & phong cách thiết kế mong muốn</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:var(--sgs-primary);font-weight:bold;">2.</span>&nbsp; Khảo sát mặt bằng & lên phương án thiết kế sơ bộ</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:var(--sgs-primary);font-weight:bold;">3.</span>&nbsp; Báo giá chi tiết & ký hợp đồng tư vấn/thi công</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:var(--sgs-primary);font-weight:bold;">4.</span>&nbsp; Theo dõi tiến độ & bàn giao công trình</td></tr>
       </table>`,
     cta: { url: 'https://sgsland.vn/#/marketplace', label: 'Xem Tin Rao Bất Động Sản' },
   },
@@ -806,7 +806,7 @@ async function sendContactAutoReply(
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Chúng Tôi Đã Nhận Được Tin Nhắn!</h1></td></tr>
       <tr><td align="center" style="padding-top:6px;">
-        <span style="display:inline-block;background:#E8EEF5;color:#1B3A5C;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;font-family:Arial,sans-serif;">${escapeHtml(info.label)}</span>
+        <span style="display:inline-block;background:#E8EEF5;color:var(--sgs-primary);font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;font-family:Arial,sans-serif;">${escapeHtml(info.label)}</span>
       </td></tr>
     </table>
     ${spacer(24)}
@@ -826,7 +826,7 @@ async function sendContactAutoReply(
     <!-- Submitted message echo -->
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td bgcolor="#F0F4FF" style="padding:14px 18px;border:1px solid #C7D2FE;border-radius:8px;border-left:4px solid #1B3A5C;">
+        <td bgcolor="#F0F4FF" style="padding:14px 18px;border:1px solid #C7D2FE;border-radius:8px;border-left:4px solid var(--sgs-primary);">
           <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Nội dung bạn đã gửi</p>
           <p style="color:#334155;font-size:13px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${safeMsg}</p>
         </td>
@@ -841,7 +841,7 @@ async function sendContactAutoReply(
     ` : ''}
     <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
       Cần hỗ trợ ngay? Gọi hotline <strong style="color:#0F172A;">0971 132 378</strong> (24/7)<br />
-      hoặc email <a href="mailto:info@sgsland.vn" style="color:#1B3A5C;text-decoration:none;">info@sgsland.vn</a>
+      hoặc email <a href="mailto:info@sgsland.vn" style="color:var(--sgs-primary);text-decoration:none;">info@sgsland.vn</a>
     </p>
   `;
   return sendEmail(DEFAULT_TENANT_ID, {
@@ -979,7 +979,7 @@ async function sendNudgeB(tenantId: string, to: string, userName: string): Promi
     ${spacer(12)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
-        <a href="${listingUrl}" style="color:#1B3A5C;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+        <a href="${listingUrl}" style="color:var(--sgs-primary);font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
           Hoặc đăng thêm tin mới miễn phí &rarr;
         </a>
       </td></tr>
@@ -1052,7 +1052,7 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
     ${spacer(12)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
-        <a href="${marketUrl}" style="color:#1B3A5C;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+        <a href="${marketUrl}" style="color:var(--sgs-primary);font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
           Xem tin BĐS mới nhất không cần đăng nhập &rarr;
         </a>
       </td></tr>
@@ -1206,7 +1206,7 @@ async function sendNudgeE(tenantId: string, to: string, userName: string): Promi
     ${spacer(12)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
-        <a href="${listUrl}" style="color:#1B3A5C;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+        <a href="${listUrl}" style="color:var(--sgs-primary);font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
           Hoặc đăng tin với AI mô tả tự động &rarr;
         </a>
       </td></tr>
@@ -1292,7 +1292,7 @@ async function sendLeadNurture(
     ${spacer(12)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
-        <a href="tel:${hotline}" style="color:#1B3A5C;font-size:14px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;">
+        <a href="tel:${hotline}" style="color:var(--sgs-primary);font-size:14px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;">
           &#128222; Gọi ngay: ${hotlineDisp} (24/7)
         </a>
       </td></tr>
@@ -1464,7 +1464,7 @@ async function sendBillingReceiptEmail(
     </table>
     ${spacer(20)}
     <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
-      ${t.footer} <a href="mailto:billing@sgsland.vn" style="color:#1B3A5C;text-decoration:none;">billing@sgsland.vn</a>.
+      ${t.footer} <a href="mailto:billing@sgsland.vn" style="color:var(--sgs-primary);text-decoration:none;">billing@sgsland.vn</a>.
     </p>
   `;
   return sendEmail(tenantId, {
@@ -1501,7 +1501,7 @@ async function sendBillingAdminAlertEmail(
   const safeDate = escapeHtml(formatPaidAt(args.paidAt));
   const safeSession = escapeHtml(args.sessionId);
   const safeUrl = escapeHtml(args.billingUrl);
-  const payerEmailLink = `<a href="mailto:${safePayer}" style="color:#1B3A5C;text-decoration:none;">${safePayer}</a>`;
+  const payerEmailLink = `<a href="mailto:${safePayer}" style="color:var(--sgs-primary);text-decoration:none;">${safePayer}</a>`;
   const detailRow = (label: string, value: string) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #E2E8F0;color:#64748B;font-size:13px;font-family:Arial,sans-serif;">${label}</td>
@@ -1630,7 +1630,7 @@ async function sendVendorRejectedEmail(
     ${spacer(20)}
     <p style="color:#475569;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">
       Nếu bạn muốn khiếu nại hoặc cần thêm thông tin, vui lòng liên hệ với chúng tôi qua email 
-      <a href="mailto:support@sgsland.vn" style="color:#1B3A5C;">support@sgsland.vn</a>.
+      <a href="mailto:support@sgsland.vn" style="color:var(--sgs-primary);">support@sgsland.vn</a>.
     </p>
   `;
   return sendEmail(tenantId, {

@@ -103,7 +103,7 @@ export default function TasksPage() {
             </thead>
             <tbody>
               {tasks.map(t => (
-                <tr key={t.id} className="border-t hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors"
+                <tr key={t.id} className="border-t hover:bg-indigo-50/30 dark:hover:bg-sgs-primary/10 transition-colors"
                   style={{ borderColor: "var(--border-default)" }}>
                   <td className="px-4 py-3 font-medium max-w-xs" style={{ color: "var(--text-primary)" }}>
                     <span className={isOverdue(t) ? "text-red-500" : ""}>{t.title}</span>

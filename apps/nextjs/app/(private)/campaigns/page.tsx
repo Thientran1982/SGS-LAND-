@@ -137,8 +137,8 @@ export default function CampaignsPage() {
                     <td className="px-4 py-3 text-xs" style={{ color: "var(--text-secondary)" }}>
                       {(c.send_count ?? 0).toLocaleString("vi-VN")}
                     </td>
-                    <td className="px-4 py-3 text-xs text-emerald-600">{openRate}%</td>
-                    <td className="px-4 py-3 text-xs text-violet-600">{clickRate}%</td>
+                    <td className="px-4 py-3 text-xs text-sgs-verified">{openRate}%</td>
+                    <td className="px-4 py-3 text-xs text-sgs-primary">{clickRate}%</td>
                     <td className="px-4 py-3 text-xs" style={{ color: "var(--text-tertiary)" }}>
                       {c.last_run_at ? new Date(c.last_run_at).toLocaleDateString("vi-VN") : "—"}
                     </td>

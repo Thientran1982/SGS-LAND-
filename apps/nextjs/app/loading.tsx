@@ -35,7 +35,7 @@ export default function RootLoading() {
           height={36}
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#1B3A5C"
+          stroke="var(--sgs-primary)"
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -85,7 +85,7 @@ export default function RootLoading() {
         <div
           style={{
             height: "100%",
-            background: "linear-gradient(90deg, #1B3A5C, #7FA8D0)",
+            background: "linear-gradient(90deg, var(--sgs-primary), #7FA8D0)",
             borderRadius: 9999,
             animation: "sgsFill 6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
           }}

@@ -190,18 +190,18 @@ const FAQ_ITEMS = [
 const StepCard: React.FC<typeof PROCESS_STEPS[0]> = ({ num, icon, title, desc, detail }) => (
     <div className="relative flex gap-4 md:gap-6">
         <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white font-black text-lg flex items-center justify-center shadow-lg flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-sgs-primary text-white font-black text-lg flex items-center justify-center shadow-lg flex-shrink-0">
                 {num}
             </div>
             <div className="w-0.5 flex-1 bg-gradient-to-b from-indigo-300 to-transparent mt-2" />
         </div>
         <div className="pb-10 flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-                <span className="text-indigo-600 flex-shrink-0">{icon}</span>
+                <span className="text-sgs-primary flex-shrink-0">{icon}</span>
                 <h3 className="text-lg font-bold text-[var(--text-primary)]">{title}</h3>
             </div>
             <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-2">{desc}</p>
-            <div className="flex items-start gap-1.5 text-xs text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg inline-flex">
+            <div className="flex items-start gap-1.5 text-xs text-sgs-primary bg-sgs-champagne dark:bg-sgs-primary/20 px-3 py-1.5 rounded-lg inline-flex">
                 <Ico d={P.lightBulb} cls="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />{detail}
             </div>
         </div>
@@ -216,7 +216,7 @@ const FaqItem: React.FC<{ q: string; a: string; defaultOpen?: boolean }> = ({ q,
                 className="w-full flex items-start justify-between gap-4 py-5 text-left group"
                 aria-expanded={open}
             >
-                <span className="font-semibold text-[var(--text-primary)] text-sm md:text-base group-hover:text-indigo-600 transition-colors">{q}</span>
+                <span className="font-semibold text-[var(--text-primary)] text-sm md:text-base group-hover:text-sgs-primary transition-colors">{q}</span>
                 <span className={`text-indigo-500 mt-0.5 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </span>
@@ -311,24 +311,24 @@ export const Consignment: React.FC = () => {
             {/* ── Header ── */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-8 h-14 md:h-16 flex items-center justify-between gap-4">
-                    <button onClick={() => navigate(ROUTES.LANDING)} className="flex items-center gap-2 font-black text-indigo-600 hover:opacity-80 transition-opacity min-h-[44px]">
+                    <button onClick={() => navigate(ROUTES.LANDING)} className="flex items-center gap-2 font-black text-sgs-primary hover:opacity-80 transition-opacity min-h-[44px]">
                         <Logo className="w-6 h-6" />
                         <span className="text-base md:text-lg hidden sm:inline">SGS LAND</span>
                     </button>
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--text-secondary)]">
-                        <button onClick={() => navigate(ROUTES.SEARCH)} className="hover:text-indigo-600 transition-colors">Tìm BĐS</button>
-                        <button onClick={() => navigate(ROUTES.CONTACT)} className="hover:text-indigo-600 transition-colors">Liên hệ</button>
+                        <button onClick={() => navigate(ROUTES.SEARCH)} className="hover:text-sgs-primary transition-colors">Tìm BĐS</button>
+                        <button onClick={() => navigate(ROUTES.CONTACT)} className="hover:text-sgs-primary transition-colors">Liên hệ</button>
                     </nav>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={scrollToForm}
-                            className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg active:scale-95 min-h-[44px]"
+                            className="px-4 py-2 bg-sgs-primary text-white text-sm font-bold rounded-xl hover:bg-sgs-primary transition-colors shadow-lg active:scale-95 min-h-[44px]"
                         >
                             Đăng ký ký gửi
                         </button>
                         <button
                             onClick={() => navigate(currentUser ? ROUTES.DASHBOARD : ROUTES.LOGIN)}
-                            className="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-colors min-h-[44px] hidden sm:flex items-center"
+                            className="px-4 py-2 bg-sgs-primary-deep text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-colors min-h-[44px] hidden sm:flex items-center"
                         >
                             {currentUser ? 'Dashboard' : 'Đăng nhập'}
                         </button>
@@ -336,7 +336,7 @@ export const Consignment: React.FC = () => {
                 </div>
             </div>
             {/* ── Hero ── */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white py-20 md:py-32 px-6">
+            <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-sgs-primary-deep to-slate-900 text-white py-20 md:py-32 px-6">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-400 rounded-full blur-3xl" />
                     <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-400 rounded-full blur-3xl" />
@@ -348,7 +348,7 @@ export const Consignment: React.FC = () => {
                     <h1 className="text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight">
                         Ký Gửi Bất Động Sản
                         <br />
-                        <span className="text-indigo-300">Miễn Phí · An Toàn · Hiệu Quả</span>
+                        <span className="text-sgs-on-dark-muted">Miễn Phí · An Toàn · Hiệu Quả</span>
                     </h1>
                     <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mx-auto leading-relaxed mb-10">
                         Chủ sở hữu ủy quyền — SGS LAND lo toàn bộ: Marketing AI, pháp lý hợp đồng, kết nối khách mua/thuê.
@@ -357,7 +357,7 @@ export const Consignment: React.FC = () => {
                     <div className="flex flex-wrap justify-center gap-4">
                         <button
                             onClick={scrollToForm}
-                            className="px-8 py-4 bg-white text-indigo-700 font-black rounded-2xl hover:bg-indigo-50 transition-all shadow-xl active:scale-95 text-lg"
+                            className="px-8 py-4 bg-white text-sgs-primary font-black rounded-2xl hover:bg-sgs-champagne transition-all shadow-xl active:scale-95 text-lg"
                         >
                             Đăng ký ký gửi ngay →
                         </button>
@@ -372,7 +372,7 @@ export const Consignment: React.FC = () => {
                         {[['5.000+', 'Môi giới'], ['10.000+', 'Giao dịch'], ['98%', 'Hài lòng']].map(([val, label]) => (
                             <div key={label} className="text-center">
                                 <div className="text-2xl md:text-3xl font-black text-white">{val}</div>
-                                <div className="text-xs text-indigo-300 mt-1">{label}</div>
+                                <div className="text-xs text-sgs-on-dark-muted mt-1">{label}</div>
                             </div>
                         ))}
                     </div>
@@ -388,7 +388,7 @@ export const Consignment: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {BENEFITS.map((b) => (
                             <div key={b.title} className="bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-6 hover:shadow-md transition-shadow">
-                                <div className="mb-4 text-indigo-600">{b.icon}</div>
+                                <div className="mb-4 text-sgs-primary">{b.icon}</div>
                                 <h3 className="font-bold text-[var(--text-primary)] mb-2">{b.title}</h3>
                                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{b.desc}</p>
                             </div>
@@ -412,7 +412,7 @@ export const Consignment: React.FC = () => {
                     <div className="overflow-x-auto rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm">
                         <table className="w-full text-sm min-w-[900px]">
                             <thead>
-                                <tr className="bg-indigo-600 text-white">
+                                <tr className="bg-sgs-primary text-white">
                                     <th className="px-5 py-4 text-left font-bold">Loại giao dịch</th>
                                     <th className="px-5 py-4 text-center font-bold">Mức hoa hồng</th>
                                     <th className="px-5 py-4 text-left font-bold">Cơ sở tính</th>
@@ -425,7 +425,7 @@ export const Consignment: React.FC = () => {
                                     <tr key={row.type} className={i % 2 === 0 ? 'bg-[var(--bg-surface)]' : 'bg-[var(--glass-surface)]'}>
                                         <td className="px-5 py-4 font-semibold text-[var(--text-primary)]">{row.type}</td>
                                         <td className="px-5 py-4 text-center">
-                                            <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-black px-3 py-1 rounded-full text-sm">{row.rate}</span>
+                                            <span className="bg-sgs-champagne dark:bg-sgs-primary/30 text-sgs-primary dark:text-sgs-on-dark-muted font-black px-3 py-1 rounded-full text-sm">{row.rate}</span>
                                         </td>
                                         <td className="px-5 py-4 text-[var(--text-secondary)]">{row.base}</td>
                                         <td className="px-5 py-4 text-right font-bold text-[var(--text-primary)] whitespace-nowrap">{row.min}</td>
@@ -456,7 +456,7 @@ export const Consignment: React.FC = () => {
                     <div className="mt-4 text-center">
                         <button
                             onClick={scrollToForm}
-                            className="px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg active:scale-95 text-lg"
+                            className="px-8 py-4 bg-sgs-primary text-white font-black rounded-2xl hover:bg-sgs-primary transition-all shadow-lg active:scale-95 text-lg"
                         >
                             Bắt đầu ngay →
                         </button>
@@ -466,9 +466,9 @@ export const Consignment: React.FC = () => {
             {/* ── Legal Commitment Box ── */}
             <section className="py-12 px-6 bg-indigo-950 text-white">
                 <div className="max-w-4xl mx-auto">
-                    <div className="border border-indigo-700 rounded-2xl p-8 md:p-10">
+                    <div className="border border-sgs-primary rounded-2xl p-8 md:p-10">
                         <div className="flex gap-4 items-start">
-                            <span className="flex-shrink-0 text-indigo-300"><Ico d={P.lock} cls="w-10 h-10" /></span>
+                            <span className="flex-shrink-0 text-sgs-on-dark-muted"><Ico d={P.lock} cls="w-10 h-10" /></span>
                             <div>
                                 <h2 className="text-xl md:text-2xl font-black mb-4 text-white">Cam Kết Pháp Lý Về Hoa Hồng</h2>
                                 <div className="space-y-3 text-sm text-indigo-200 leading-relaxed">
@@ -512,15 +512,15 @@ export const Consignment: React.FC = () => {
                         <p className="text-[var(--text-secondary)]">Điền thông tin — chuyên viên SGS LAND liên hệ trong <strong>4 giờ làm việc</strong></p>
                     </div>
                     {submitted ? (
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-10 text-center animate-enter">
-                            <div className="mb-4 flex justify-center text-emerald-500"><Ico d={P.checkCircle} cls="w-14 h-14" /></div>
-                            <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mb-3">Đăng ký thành công!</h3>
+                        <div className="bg-sgs-champagne dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-10 text-center animate-enter">
+                            <div className="mb-4 flex justify-center text-sgs-verified"><Ico d={P.checkCircle} cls="w-14 h-14" /></div>
+                            <h3 className="text-2xl font-black text-sgs-verified dark:text-emerald-400 mb-3">Đăng ký thành công!</h3>
                             <p className="text-[var(--text-secondary)] mb-2">Chúng tôi đã nhận được yêu cầu ký gửi của bạn.</p>
                             <p className="text-[var(--text-secondary)] mb-6">Chuyên viên SGS LAND sẽ liên hệ qua số điện thoại bạn đã cung cấp trong vòng <strong>4 giờ làm việc</strong>.</p>
-                            <p className="text-xs text-[var(--text-tertiary)]">Mọi thắc mắc vui lòng liên hệ trực tiếp: <a href="mailto:info@sgsland.vn" className="text-indigo-600 font-semibold">info@sgsland.vn</a></p>
+                            <p className="text-xs text-[var(--text-tertiary)]">Mọi thắc mắc vui lòng liên hệ trực tiếp: <a href="mailto:info@sgsland.vn" className="text-sgs-primary font-semibold">info@sgsland.vn</a></p>
                             <button
                                 onClick={() => setSubmitted(false)}
-                                className="mt-8 px-6 py-2.5 border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-secondary)] hover:text-indigo-600 transition-colors"
+                                className="mt-8 px-6 py-2.5 border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-secondary)] hover:text-sgs-primary transition-colors"
                             >
                                 Đăng ký ký gửi thêm bất động sản
                             </button>
@@ -529,14 +529,14 @@ export const Consignment: React.FC = () => {
                         <form onSubmit={handleSubmit} className="bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-8 shadow-sm space-y-5">
                             {/* Personal info */}
                             <div className="pb-2 border-b border-[var(--glass-border)]">
-                                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4">Thông tin chủ sở hữu</p>
+                                <p className="text-xs font-bold text-sgs-primary uppercase tracking-wider mb-4">Thông tin chủ sở hữu</p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Họ và tên <span className="text-red-500">*</span></label>
                                         <input
                                             type="text" name="name" value={form.name} onChange={handleChange} required
                                             placeholder="Nguyễn Văn A"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                         />
                                     </div>
                                     <div>
@@ -544,7 +544,7 @@ export const Consignment: React.FC = () => {
                                         <input
                                             type="tel" name="phone" value={form.phone} onChange={handleChange} required
                                             placeholder="0901 234 567"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                         />
                                     </div>
                                 </div>
@@ -553,20 +553,20 @@ export const Consignment: React.FC = () => {
                                     <input
                                         type="email" name="email" value={form.email} onChange={handleChange}
                                         placeholder="email@cua-ban.com (nhận xác nhận và báo cáo)"
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                     />
                                 </div>
                             </div>
                             {/* Property info */}
                             <div className="pb-2 border-b border-[var(--glass-border)]">
-                                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-4">Thông tin bất động sản</p>
+                                <p className="text-xs font-bold text-sgs-primary uppercase tracking-wider mb-4">Thông tin bất động sản</p>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Loại bất động sản</label>
                                         <select
                                             name="propertyType" value={form.propertyType} onChange={handleChange}
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                         >
                                             <option value="">-- Chọn loại --</option>
                                             <option value="Nhà phố">Nhà phố</option>
@@ -605,7 +605,7 @@ export const Consignment: React.FC = () => {
                                     <input
                                         type="text" name="address" value={form.address} onChange={handleChange} required
                                         placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                     />
                                 </div>
 
@@ -616,7 +616,7 @@ export const Consignment: React.FC = () => {
                                             type="number" name="area" value={form.area} onChange={handleChange}
                                             placeholder="Ví dụ: 80"
                                             min="1"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                         />
                                     </div>
                                     <div>
@@ -624,7 +624,7 @@ export const Consignment: React.FC = () => {
                                         <input
                                             type="text" name="price" value={form.price} onChange={handleChange}
                                             placeholder="Ví dụ: 5 tỷ hoặc 15 triệu/tháng"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                         />
                                     </div>
                                 </div>
@@ -635,7 +635,7 @@ export const Consignment: React.FC = () => {
                                 <textarea
                                     name="notes" value={form.notes} onChange={handleChange} rows={3}
                                     placeholder="Tình trạng pháp lý, tiện ích, đặc điểm nổi bật, yêu cầu đặc biệt..."
-                                    className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                    className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-sgs-primary resize-none"
                                 />
                             </div>
                             {/* Agreement */}
@@ -646,7 +646,7 @@ export const Consignment: React.FC = () => {
                                 />
                                 <span className="text-xs text-[var(--text-secondary)] leading-relaxed group-hover:text-[var(--text-primary)] transition-colors">
                                     Tôi đồng ý để SGS LAND liên hệ tư vấn và xử lý thông tin cá nhân theo{' '}
-                                    <button type="button" onClick={() => navigate(ROUTES.PRIVACY)} className="text-indigo-600 underline">Chính sách bảo mật</button>.
+                                    <button type="button" onClick={() => navigate(ROUTES.PRIVACY)} className="text-sgs-primary underline">Chính sách bảo mật</button>.
                                     Tôi hiểu rằng hoa hồng chỉ phát sinh khi giao dịch thành công và được xác lập trong hợp đồng ký gửi. <span className="text-red-500">*</span>
                                 </span>
                             </label>
@@ -673,7 +673,7 @@ export const Consignment: React.FC = () => {
                             </button>
                             <p className="text-center text-xs text-[var(--text-tertiary)]">
                                 Hoặc liên hệ trực tiếp:{' '}
-                                <a href="mailto:info@sgsland.vn" className="text-indigo-600 font-semibold">info@sgsland.vn</a>
+                                <a href="mailto:info@sgsland.vn" className="text-sgs-primary font-semibold">info@sgsland.vn</a>
                             </p>
                         </form>
                     )}
@@ -682,19 +682,19 @@ export const Consignment: React.FC = () => {
             {/* ── Footer ── */}
             <footer className="py-10 px-6 border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">
                 <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm text-[var(--text-secondary)] mb-6">
-                    <button onClick={() => navigate(ROUTES.LANDING)} className="hover:text-indigo-600 transition-colors">Trang chủ</button>
+                    <button onClick={() => navigate(ROUTES.LANDING)} className="hover:text-sgs-primary transition-colors">Trang chủ</button>
                     <span>·</span>
-                    <button onClick={() => navigate(ROUTES.SEARCH)} className="hover:text-indigo-600 transition-colors">Tìm BĐS</button>
+                    <button onClick={() => navigate(ROUTES.SEARCH)} className="hover:text-sgs-primary transition-colors">Tìm BĐS</button>
                     <span>·</span>
-                    <button onClick={() => navigate(ROUTES.CONTACT)} className="hover:text-indigo-600 transition-colors">Liên hệ</button>
+                    <button onClick={() => navigate(ROUTES.CONTACT)} className="hover:text-sgs-primary transition-colors">Liên hệ</button>
                     <span>·</span>
-                    <button onClick={() => navigate(ROUTES.PRIVACY)} className="hover:text-indigo-600 transition-colors">Chính sách bảo mật</button>
+                    <button onClick={() => navigate(ROUTES.PRIVACY)} className="hover:text-sgs-primary transition-colors">Chính sách bảo mật</button>
                     <span>·</span>
-                    <button onClick={() => navigate(ROUTES.TERMS)} className="hover:text-indigo-600 transition-colors">Điều khoản dịch vụ</button>
+                    <button onClick={() => navigate(ROUTES.TERMS)} className="hover:text-sgs-primary transition-colors">Điều khoản dịch vụ</button>
                 </div>
                 <p className="text-center text-xs text-[var(--text-tertiary)]">
                     SGS Land Corp · MST: 0312960439 · TP. Hồ Chí Minh, Việt Nam<br />
-                    <a href="mailto:info@sgsland.vn" className="hover:text-indigo-600 transition-colors">info@sgsland.vn</a>
+                    <a href="mailto:info@sgsland.vn" className="hover:text-sgs-primary transition-colors">info@sgsland.vn</a>
                 </p>
             </footer>
         </div>

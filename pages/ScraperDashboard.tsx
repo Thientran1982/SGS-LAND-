@@ -107,11 +107,11 @@ function fmtPrice(price: number, display: string): string {
 function Badge({ ok, label }: { ok: boolean; label?: string }) {
   const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold';
   return ok
-    ? <span className={`${base} bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400`}><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"/>OK</span>
+    ? <span className={`${base} bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400`}><span className="w-1.5 h-1.5 rounded-full bg-sgs-verified inline-block"/>OK</span>
     : <span className={`${base} bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400`}><span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"/>{label ?? 'Lỗi'}</span>;
 }
 const PROJECT_COLOR_MAP: Record<string, string> = {
-  indigo:  'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700',
+  indigo:  'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-300 border-indigo-200 dark:border-indigo-700',
   emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700',
   blue:    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700',
   sky:     'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700',
@@ -210,12 +210,12 @@ function MarketTab() {
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm text-[var(--text-primary)]">{src.name}</span>
                 {src.status === 'active'
-                  ? <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">{ICONS.CHECK} OK</span>
+                  ? <span className="flex items-center gap-1 text-xs font-medium text-sgs-verified dark:text-emerald-400">{ICONS.CHECK} OK</span>
                   : <span className="flex items-center gap-1 text-xs font-medium text-rose-500">{ICONS.LOCK} CF</span>}
               </div>
               <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">{src.note}</p>
               {src.status === 'active' && (
-                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{src.listings} tin</span>
+                <span className="text-xs font-semibold text-sgs-primary dark:text-sgs-text-muted">{src.listings} tin</span>
               )}
             </div>
           ))}
@@ -241,7 +241,7 @@ function MarketTab() {
                     className={[
                       'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
                       blocked ? 'border-[var(--glass-border)] text-[var(--text-tertiary)] opacity-50 cursor-not-allowed'
-                        : active ? 'bg-indigo-600 border-indigo-600 text-white shadow'
+                        : active ? 'bg-indigo-600 border-sgs-primary text-white shadow'
                         : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-400 hover:text-indigo-600',
                     ].join(' ')}
                   >
@@ -262,7 +262,7 @@ function MarketTab() {
           <button
             onClick={handleRun}
             disabled={running || !selected.length}
-            className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow hover:bg-sgs-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {running
               ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Đang chạy...</>
@@ -313,7 +313,7 @@ function MarketTab() {
               value={filter}
               onChange={e => setFilter(e.target.value)}
               placeholder="Tìm theo tên, địa điểm..."
-              className="flex-1 min-w-[160px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500"
+              className="flex-1 min-w-[160px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary"
             />
             <div className="min-w-[160px]">
               <Dropdown
@@ -356,7 +356,7 @@ function MarketTab() {
                   <tr key={l.id} className="hover:bg-[var(--glass-surface-hover)] transition-colors group">
                     <td className="px-4 py-3 max-w-xs">
                       <a href={l.url} target="_blank" rel="noopener noreferrer"
-                        className="font-medium text-[var(--text-primary)] hover:text-indigo-600 dark:hover:text-indigo-400 flex items-start gap-1 group-hover:underline">
+                        className="font-medium text-[var(--text-primary)] hover:text-sgs-primary dark:hover:text-sgs-text-muted flex items-start gap-1 group-hover:underline">
                         <span className="flex-1 line-clamp-2">{l.title}</span>
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5">{ICONS.EXTERNAL}</span>
                       </a>
@@ -388,7 +388,7 @@ function MarketTab() {
       )}
       {!loading && listings.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-400 flex items-center justify-center mb-4">{ICONS.GLOBE}</div>
+          <div className="w-16 h-16 rounded-3xl bg-sgs-champagne dark:bg-sgs-primary/20 text-sgs-text-muted flex items-center justify-center mb-4">{ICONS.GLOBE}</div>
           <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">Chưa có dữ liệu</h3>
           <p className="text-sm text-[var(--text-tertiary)] max-w-xs">Chọn nguồn dữ liệu và nhấn "Chạy scraper" để bắt đầu thu thập tin đăng từ thị trường.</p>
         </div>
@@ -494,7 +494,7 @@ function ProjectsTab() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={e => e.stopPropagation()}
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 mt-0.5"
+                      className="text-xs text-sgs-primary dark:text-sgs-text-muted hover:underline flex items-center gap-0.5 mt-0.5"
                     >
                       {proj.siteUrl.replace('https://', '')} {ICONS.EXTERNAL}
                     </a>
@@ -514,7 +514,7 @@ function ProjectsTab() {
                   <p className="text-xs text-rose-500 mt-2 leading-relaxed line-clamp-2">{resultInfo.error}</p>
                 )}
                 {resultInfo?.warning && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 leading-relaxed line-clamp-2">{resultInfo.warning}</p>
+                  <p className="text-xs text-sgs-accent-text dark:text-sgs-accent-text mt-2 leading-relaxed line-clamp-2">{resultInfo.warning}</p>
                 )}
               </div>
             );
@@ -546,7 +546,7 @@ function ProjectsTab() {
             <button
               onClick={handleRun}
               disabled={running || !selected.length}
-              className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow hover:bg-sgs-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {running
                 ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Đang chạy...</>
@@ -570,7 +570,7 @@ function ProjectsTab() {
               value={filter}
               onChange={e => setFilter(e.target.value)}
               placeholder="Tìm loại, tòa..."
-              className="flex-1 min-w-[140px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500"
+              className="flex-1 min-w-[140px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary"
             />
             {catalog.length > 0 && (
               <div className="min-w-[160px]">
@@ -647,7 +647,7 @@ function ProjectsTab() {
                           href={u.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="flex items-center gap-1 text-xs text-sgs-primary dark:text-sgs-text-muted hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           Xem {ICONS.EXTERNAL}
                         </a>
@@ -667,7 +667,7 @@ function ProjectsTab() {
       )}
       {!loading && !running && units.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-400 flex items-center justify-center mb-4 text-3xl">🏗️</div>
+          <div className="w-16 h-16 rounded-3xl bg-sgs-champagne dark:bg-sgs-primary/20 text-sgs-text-muted flex items-center justify-center mb-4 text-3xl">🏗️</div>
           <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">Chưa có dữ liệu dự án</h3>
           <p className="text-sm text-[var(--text-tertiary)] max-w-xs">Chọn các dự án bên trên rồi nhấn "Chạy scraper" để thu thập thông tin sản phẩm.</p>
         </div>
@@ -702,7 +702,7 @@ const INTEREST_LABELS: Record<LeadInterest, { label: string; cls: string }> = {
   unknown:  { label: 'Chưa xác định',cls: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400' },
 };
 const SOURCE_DISPLAY: Record<string, { label: string; cls: string }> = {
-  sgsland_db:    { label: 'DB nội bộ',    cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' },
+  sgsland_db:    { label: 'DB nội bộ',    cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-400' },
   batdongsan:    { label: 'BatDongSan',   cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
   muaban:        { label: 'Muaban',       cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
   homedy:        { label: 'Homedy',       cls: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' },
@@ -885,7 +885,7 @@ function LeadsTab() {
                   className={[
                     'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all',
                     isSelected
-                      ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                      ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-sgs-primary dark:text-indigo-300 shadow-sm'
                       : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300',
                   ].join(' ')}
                 >
@@ -908,7 +908,7 @@ function LeadsTab() {
           <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Nguồn mở rộng</p>
           <button
             onClick={() => setShowCfg(c => !c)}
-            className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-indigo-500 transition-colors"
+            className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-sgs-primary transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             Cấu hình API
@@ -919,23 +919,23 @@ function LeadsTab() {
           <div className="mb-4 p-4 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">Facebook Access Token</label>
-              <input value={socialCfg.fbToken} onChange={e => setSocialCfg(c => ({...c, fbToken: e.target.value}))} placeholder="EAAxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+              <input value={socialCfg.fbToken} onChange={e => setSocialCfg(c => ({...c, fbToken: e.target.value}))} placeholder="EAAxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary" />
             </div>
             <div>
               <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">Facebook Page ID:Form ID</label>
-              <input value={socialCfg.fbPage} onChange={e => setSocialCfg(c => ({...c, fbPage: e.target.value}))} placeholder="123456789:987654321" className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+              <input value={socialCfg.fbPage} onChange={e => setSocialCfg(c => ({...c, fbPage: e.target.value}))} placeholder="123456789:987654321" className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary" />
             </div>
             <div>
               <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">TikTok Access Token</label>
-              <input value={socialCfg.ttToken} onChange={e => setSocialCfg(c => ({...c, ttToken: e.target.value}))} placeholder="tt_xxxxxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+              <input value={socialCfg.ttToken} onChange={e => setSocialCfg(c => ({...c, ttToken: e.target.value}))} placeholder="tt_xxxxxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary" />
             </div>
             <div>
               <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">TikTok Advertiser ID</label>
-              <input value={socialCfg.ttAdv} onChange={e => setSocialCfg(c => ({...c, ttAdv: e.target.value}))} placeholder="7123456789..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+              <input value={socialCfg.ttAdv} onChange={e => setSocialCfg(c => ({...c, ttAdv: e.target.value}))} placeholder="7123456789..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary" />
             </div>
             <div className="md:col-span-2">
               <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">Zalo OA Access Token</label>
-              <input value={socialCfg.zlToken} onChange={e => setSocialCfg(c => ({...c, zlToken: e.target.value}))} placeholder="zoa_xxxxxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+              <input value={socialCfg.zlToken} onChange={e => setSocialCfg(c => ({...c, zlToken: e.target.value}))} placeholder="zoa_xxxxxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary" />
             </div>
           </div>
         )}
@@ -953,14 +953,14 @@ function LeadsTab() {
             return (
               <div key={src.id} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
                 <span className={`text-xs font-semibold ${srcInfo?.cls ?? ''} px-1.5 py-0.5 rounded-full`}>{src.label}</span>
-                {count > 0 && <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-full">{count}</span>}
+                {count > 0 && <span className="text-[10px] font-bold text-sgs-verified dark:text-emerald-400 bg-sgs-champagne dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-full">{count}</span>}
                 <button
                   onClick={locked ? () => setShowCfg(true) : src.onRun}
                   disabled={busy || !!extRunning}
                   title={locked ? 'Cần cấu hình token — nhấn để mở Cấu hình API' : `Chạy ${src.label}`}
                   className={[
                     'ml-1 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all',
-                    busy ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 cursor-not-allowed'
+                    busy ? 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary cursor-not-allowed'
                       : locked ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100'
                       : 'bg-indigo-600 text-white hover:bg-indigo-700',
                   ].join(' ')}
@@ -1004,7 +1004,7 @@ function LeadsTab() {
             {leads.length > 0 && (
               <button
                 onClick={handleBulkImport}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-sm shadow hover:bg-emerald-700 transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 bg-sgs-verified text-white font-bold rounded-xl text-sm shadow hover:bg-emerald-700 transition-all"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Import tất cả vào CRM
@@ -1013,7 +1013,7 @@ function LeadsTab() {
             <button
               onClick={handleRun}
               disabled={running || !selected.length}
-              className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow hover:bg-sgs-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {running
                 ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Đang tìm...</>
@@ -1049,7 +1049,7 @@ function LeadsTab() {
               value={filter}
               onChange={e => setFilter(e.target.value)}
               placeholder="Tìm tên, SĐT..."
-              className="flex-1 min-w-[140px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500"
+              className="flex-1 min-w-[140px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-sgs-primary"
             />
             {catalog.length > 0 && (
               <div className="min-w-[160px]">
@@ -1081,21 +1081,21 @@ function LeadsTab() {
               <button
                 onClick={() => setViewMode('table')}
                 title="Chế độ bảng"
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
               </button>
               <button
                 onClick={() => setViewMode('cards')}
                 title="Chế độ thẻ"
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
               </button>
               <button
                 onClick={handleExportCSV}
                 title="Xuất CSV"
-                className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-emerald-600 transition-colors"
+                className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-sgs-verified transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </button>
@@ -1117,23 +1117,23 @@ function LeadsTab() {
                       <span className="font-semibold text-sm text-[var(--text-primary)] leading-tight line-clamp-1">{lead.name || 'Không rõ'}</span>
                       <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${srcInfo.cls}`}>{srcInfo.label}</span>
                     </div>
-                    {lead.phone && <a href={`tel:${lead.phone}`} className="text-base font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide">{lead.phone}</a>}
-                    {lead.email && <a href={`mailto:${lead.email}`} className="text-xs text-[var(--text-secondary)] hover:text-indigo-500 hover:underline truncate">{lead.email}</a>}
+                    {lead.phone && <a href={`tel:${lead.phone}`} className="text-base font-bold text-sgs-primary dark:text-sgs-text-muted hover:underline tracking-wide">{lead.phone}</a>}
+                    {lead.email && <a href={`mailto:${lead.email}`} className="text-xs text-[var(--text-secondary)] hover:text-sgs-primary hover:underline truncate">{lead.email}</a>}
                     {proj && (
                       <div className="flex items-center gap-1">
                         <span className={`w-4 h-4 rounded flex items-center justify-center text-[8px] border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>
                         <span className="text-xs text-[var(--text-tertiary)] truncate">{lead.project}</span>
                       </div>
                     )}
-                    {lead.price && <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{lead.price}</span>}
+                    {lead.price && <span className="text-xs font-semibold text-sgs-verified dark:text-emerald-400">{lead.price}</span>}
                     <div className="mt-auto pt-1">
                       {isImported ? (
-                        <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{ICONS.CHECK}Đã lưu CRM</span>
+                        <span className="flex items-center gap-1 text-xs font-semibold text-sgs-verified dark:text-emerald-400">{ICONS.CHECK}Đã lưu CRM</span>
                       ) : (
                         <button
                           onClick={() => handleImport(lead)}
                           disabled={isImporting || !hasContact}
-                          className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-sgs-primary text-white text-xs font-bold rounded-lg hover:bg-sgs-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           {isImporting ? <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> : null}
                           Import CRM
@@ -1176,10 +1176,10 @@ function LeadsTab() {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         {lead.phone
-                          ? <a href={`tel:${lead.phone}`} className="block font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide text-sm">{lead.phone}</a>
+                          ? <a href={`tel:${lead.phone}`} className="block font-bold text-sgs-primary dark:text-sgs-text-muted hover:underline tracking-wide text-sm">{lead.phone}</a>
                           : null}
                         {lead.email
-                          ? <a href={`mailto:${lead.email}`} className="block text-xs text-[var(--text-secondary)] hover:text-indigo-500 hover:underline mt-0.5 max-w-[180px] truncate">{lead.email}</a>
+                          ? <a href={`mailto:${lead.email}`} className="block text-xs text-[var(--text-secondary)] hover:text-sgs-primary hover:underline mt-0.5 max-w-[180px] truncate">{lead.email}</a>
                           : null}
                         {!hasContact && <span className="text-xs text-[var(--text-tertiary)]">—</span>}
                       </td>
@@ -1196,22 +1196,22 @@ function LeadsTab() {
                         <div className="flex items-center gap-1">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${srcInfo.cls}`}>{srcInfo.label}</span>
                           {lead.sourceUrl && (
-                            <a href={lead.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--text-tertiary)] hover:text-indigo-500 transition-colors flex-shrink-0">{ICONS.EXTERNAL}</a>
+                            <a href={lead.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--text-tertiary)] hover:text-sgs-primary transition-colors flex-shrink-0">{ICONS.EXTERNAL}</a>
                           )}
                         </div>
                       </td>
                       <td className="px-3 py-3 max-w-[220px]">
                         <div className="text-xs text-[var(--text-secondary)] line-clamp-2">{lead.listing || lead.notes || '—'}</div>
-                        {lead.price && <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">{lead.price}</div>}
+                        {lead.price && <div className="text-xs font-semibold text-sgs-verified dark:text-emerald-400 mt-0.5">{lead.price}</div>}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         {isImported ? (
-                          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{ICONS.CHECK}Đã lưu</span>
+                          <span className="flex items-center gap-1 text-xs font-semibold text-sgs-verified dark:text-emerald-400">{ICONS.CHECK}Đã lưu</span>
                         ) : (
                           <button
                             onClick={() => handleImport(lead)}
                             disabled={isImporting || !hasContact}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-sgs-primary text-white text-xs font-bold rounded-lg hover:bg-sgs-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {isImporting
                               ? <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
@@ -1240,7 +1240,7 @@ function LeadsTab() {
           <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-[var(--glass-border)]">
             <h2 className="text-sm font-bold text-[var(--text-primary)]">Nguồn mở rộng</h2>
             <span className="text-xs text-[var(--text-tertiary)]">{extDisplayed.length} liên hệ</span>
-            <button onClick={handleExportCSV} className="ml-auto flex items-center gap-1 text-xs text-emerald-600 hover:underline font-semibold">
+            <button onClick={handleExportCSV} className="ml-auto flex items-center gap-1 text-xs text-sgs-verified hover:underline font-semibold">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Xuất CSV
             </button>
@@ -1257,18 +1257,18 @@ function LeadsTab() {
                     <span className="font-semibold text-sm text-[var(--text-primary)] leading-tight line-clamp-1">{lead.name || 'Không rõ'}</span>
                     <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${srcInfo.cls}`}>{srcInfo.label}</span>
                   </div>
-                  {lead.phone && <a href={`tel:${lead.phone}`} className="text-base font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide">{lead.phone}</a>}
+                  {lead.phone && <a href={`tel:${lead.phone}`} className="text-base font-bold text-sgs-primary dark:text-sgs-text-muted hover:underline tracking-wide">{lead.phone}</a>}
                   {lead.email && <span className="text-xs text-[var(--text-secondary)] truncate">{lead.email}</span>}
                   {lead.listing && <div className="text-xs text-[var(--text-secondary)] line-clamp-2">{lead.listing}</div>}
-                  {lead.price   && <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{lead.price}</span>}
+                  {lead.price   && <span className="text-xs font-semibold text-sgs-verified dark:text-emerald-400">{lead.price}</span>}
                   <div className="mt-auto pt-1">
                     {isImported ? (
-                      <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{ICONS.CHECK}Đã lưu CRM</span>
+                      <span className="flex items-center gap-1 text-xs font-semibold text-sgs-verified dark:text-emerald-400">{ICONS.CHECK}Đã lưu CRM</span>
                     ) : (
                       <button
                         onClick={() => handleImport(lead)}
                         disabled={isImporting || !hasContact}
-                        className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-sgs-primary text-white text-xs font-bold rounded-lg hover:bg-sgs-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isImporting ? <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> : null}
                         Import CRM
@@ -1283,7 +1283,7 @@ function LeadsTab() {
       )}
       {!loading && !running && leads.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center mb-4 text-3xl">📞</div>
+          <div className="w-16 h-16 rounded-3xl bg-sgs-champagne dark:bg-emerald-900/20 text-sgs-verified flex items-center justify-center mb-4 text-3xl">📞</div>
           <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">Chưa có dữ liệu khách hàng</h3>
           <p className="text-sm text-[var(--text-tertiary)] max-w-sm">
             Chọn dự án và nhấn "Tìm khách hàng" để thu thập SĐT từ DB nội bộ và các sàn BĐS.
@@ -1311,7 +1311,7 @@ export default function ScraperDashboard() {
       {/* Header */}
       <div className="flex-shrink-0 px-6 pt-6 pb-0">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-sgs-champagne dark:bg-sgs-primary/30 text-sgs-primary dark:text-sgs-text-muted flex items-center justify-center">
             {ICONS.GLOBE}
           </div>
           <div>
@@ -1328,7 +1328,7 @@ export default function ScraperDashboard() {
               className={[
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all -mb-px',
                 tab === t.id
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                  ? 'border-indigo-600 text-sgs-primary dark:text-indigo-400 dark:border-indigo-400'
                   : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
               ].join(' ')}
             >

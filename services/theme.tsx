@@ -31,22 +31,22 @@ const CONSTANTS = {
 };
 const DESIGN_TOKENS = {
     light: {
-        primary: '#1B3A5C',
+        primary: 'var(--sgs-primary)',
         secondary: '#8B5CF6',
         tertiary: '#EC4899',
-        success: '#10B981',
+        success: 'var(--sgs-verified)',
         warning: '#F59E0B',
         info: '#3B82F6',
         danger: '#F43F5E',
-        grid: '#E2E8F0',
+        grid: 'var(--sgs-border)',
         text: '#64748B',
         background: '#FFFFFF',
         tooltipBg: 'rgba(255, 255, 255, 0.98)',
-        barGradientStart: '#1B3A5C',
-        barGradientEnd: '#0F2740',
+        barGradientStart: 'var(--sgs-primary)',
+        barGradientEnd: 'var(--sgs-primary-deep)',
     },
     dark: {
-        primary: '#1B3A5C',
+        primary: 'var(--sgs-primary)',
         secondary: '#A78BFA',
         tertiary: '#F472B6',
         success: '#34D399',
@@ -57,11 +57,11 @@ const DESIGN_TOKENS = {
         text: '#94A3B8',
         background: '#0F172A',
         tooltipBg: 'rgba(15, 23, 42, 0.95)',
-        barGradientStart: '#1B3A5C',
-        barGradientEnd: '#1B3A5C',
+        barGradientStart: 'var(--sgs-primary)',
+        barGradientEnd: 'var(--sgs-primary)',
     },
 };
-const CHART_PALETTE = ['#1B3A5C', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
+const CHART_PALETTE = ['var(--sgs-primary)', '#8B5CF6', '#EC4899', 'var(--sgs-verified)', '#F59E0B', '#3B82F6', '#EF4444'];
 // -----------------------------------------------------------------------------
 //  INTERNAL — fetch tenant theme (not exported)
 // -----------------------------------------------------------------------------

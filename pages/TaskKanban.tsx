@@ -48,7 +48,7 @@ function deserializeKanbanFilters(): TaskFilters {
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
   { id: 'todo',        label: 'Chờ xử lý',      color: 'bg-slate-50 dark:bg-slate-800/30',       headerColor: 'bg-slate-100 dark:bg-slate-800/60',       dot: 'bg-slate-400' },
-  { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10',  headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30',  dot: 'bg-indigo-500' },
+  { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10',  headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30',  dot: 'bg-sgs-primary' },
   { id: 'review',      label: 'Chờ duyệt',       color: 'bg-amber-50/60 dark:bg-amber-900/10',    headerColor: 'bg-amber-100/80 dark:bg-amber-900/30',    dot: 'bg-amber-500' },
   { id: 'done',        label: 'Hoàn thành',       color: 'bg-emerald-50/60 dark:bg-emerald-900/10', headerColor: 'bg-emerald-100/80 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
   { id: 'cancelled',   label: 'Đã hủy',           color: 'bg-rose-50/40 dark:bg-rose-900/10',      headerColor: 'bg-rose-100/80 dark:bg-rose-900/30',      dot: 'bg-rose-400' },
@@ -85,7 +85,7 @@ function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: 
           )}
         </div>
         {task.is_overdue && <span className="text-[10px] text-rose-500 font-semibold">⚠ Quá hạn</span>}
-        {!task.is_overdue && task.urgency_level === 'critical' && <span className="text-[10px] text-amber-500 font-semibold">Sắp hết hạn</span>}
+        {!task.is_overdue && task.urgency_level === 'critical' && <span className="text-[10px] text-sgs-accent-text font-semibold">Sắp hết hạn</span>}
       </div>
       <p className="text-sm font-semibold text-[var(--text-primary)] line-clamp-2 leading-snug mb-2.5">{task.title}</p>
 
@@ -119,7 +119,7 @@ function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tas
       </div>
       <div ref={setNodeRef} className={`flex-1 overflow-y-auto p-2.5 space-y-2 no-scrollbar min-h-[120px] transition-colors ${isOver ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
         {tasks.length === 0 ? (
-          <p className={`text-center text-xs py-8 transition-colors ${isOver ? 'text-indigo-400' : 'text-[var(--text-tertiary)]'}`}>
+          <p className={`text-center text-xs py-8 transition-colors ${isOver ? 'text-sgs-text-muted' : 'text-[var(--text-tertiary)]'}`}>
             {isOver ? 'Thả vào đây' : 'Không có công việc'}
           </p>
         ) : tasks.map(t => (
@@ -286,9 +286,9 @@ export function TaskKanban() {
   );
   if (error) return (
     <div className="flex flex-col items-center justify-center h-full gap-3">
-      <AlertTriangle className="w-10 h-10 text-amber-400" />
+      <AlertTriangle className="w-10 h-10 text-sgs-accent-text" />
       <p className="text-[var(--text-secondary)]">{error}</p>
-      <button onClick={() => loadTasks(filters)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+      <button onClick={() => loadTasks(filters)} className="text-sm text-sgs-primary hover:text-sgs-primary font-medium">Thử lại</button>
     </div>
   );
   return (
@@ -318,7 +318,7 @@ export function TaskKanban() {
               <RefreshCw size={14} />
             </button>
             <button onClick={() => setShowCreate(true)}
-              className="h-[34px] px-3.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors shadow-sm">
+              className="h-[34px] px-3.5 bg-sgs-primary text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-sgs-primary transition-colors shadow-sm">
               <Plus size={15} /> Thêm
             </button>
           </div>

@@ -26,7 +26,7 @@ function Avatar({ name, size = 8 }: { name: string; size?: number }) {
   const px = AVATAR_PX[size] ?? 32;
   return (
     <div style={{ width: px, height: px }}
-      className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0">
+      className="rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-[11px] font-bold text-sgs-primary dark:text-sgs-text-muted border border-white dark:border-slate-700 flex-shrink-0">
       {name?.charAt(0).toUpperCase()}
     </div>
   );
@@ -378,10 +378,10 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   if (error || !task) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3">
-        <AlertTriangle className="w-10 h-10 text-amber-400" />
+        <AlertTriangle className="w-10 h-10 text-sgs-accent-text" />
         <p className="text-[var(--text-secondary)]">{error || 'Không tìm thấy công việc'}</p>
         <div className="flex gap-3">
-          <button onClick={() => load(taskId)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+          <button onClick={() => load(taskId)} className="text-sm text-sgs-primary hover:text-sgs-primary font-medium">Thử lại</button>
           <button onClick={onBack} className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] flex items-center gap-1">
             <ArrowLeft size={13} /> Danh sách
           </button>
@@ -426,13 +426,13 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   autoFocus
                   className="flex-1 text-2xl font-bold bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
-                {savingTitle && <Loader2 size={16} className="animate-spin text-indigo-500 mt-3 flex-shrink-0" />}
+                {savingTitle && <Loader2 size={16} className="animate-spin text-sgs-primary mt-3 flex-shrink-0" />}
               </div>
             ) : (
               <div className="group flex items-start gap-2 cursor-pointer"
                 onClick={() => { setEditTitle(task.title); setEditingTitle(true); }}>
-                <h1 className="text-2xl font-bold text-[var(--text-primary)] leading-tight flex-1 group-hover:text-indigo-600 transition-colors">{task.title}</h1>
-                <button className="opacity-0 group-hover:opacity-100 transition-opacity mt-1 p-1 rounded-lg text-[var(--text-tertiary)] hover:text-indigo-500 flex-shrink-0">
+                <h1 className="text-2xl font-bold text-[var(--text-primary)] leading-tight flex-1 group-hover:text-sgs-primary transition-colors">{task.title}</h1>
+                <button className="opacity-0 group-hover:opacity-100 transition-opacity mt-1 p-1 rounded-lg text-[var(--text-tertiary)] hover:text-sgs-primary flex-shrink-0">
                   <Edit3 size={14} />
                 </button>
               </div>
@@ -453,13 +453,13 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   });
                   setEditingMeta(true);
                 }}
-                  className="text-xs text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
+                  className="text-xs text-sgs-primary hover:text-sgs-primary font-medium flex items-center gap-1">
                   <Edit3 size={11} /> Sửa
                 </button>
               ) : (
                 <div className="flex gap-2">
                   <button onClick={() => setEditingMeta(false)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">Hủy</button>
-                  <button onClick={saveMeta} disabled={savingMeta} className="text-xs text-indigo-500 hover:text-indigo-600 font-semibold flex items-center gap-1">
+                  <button onClick={saveMeta} disabled={savingMeta} className="text-xs text-sgs-primary hover:text-sgs-primary font-semibold flex items-center gap-1">
                     {savingMeta ? <Loader2 size={10} className="animate-spin" /> : <Save size={11} />} Lưu
                   </button>
                 </div>
@@ -563,7 +563,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Mô tả</h3>
               {!editingDesc && (
                 <button onClick={() => { setEditDesc(task.description || ''); setEditingDesc(true); }}
-                  className="text-xs text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
+                  className="text-xs text-sgs-primary hover:text-sgs-primary font-medium flex items-center gap-1">
                   <Edit3 size={11} /> {task.description ? 'Sửa' : 'Thêm'}
                 </button>
               )}
@@ -577,7 +577,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 />
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => setEditingDesc(false)} className="h-8 px-3 text-xs border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">Hủy</button>
-                  <button onClick={saveDesc} disabled={savingDesc} className="h-8 px-3 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 disabled:opacity-50">
+                  <button onClick={saveDesc} disabled={savingDesc} className="h-8 px-3 text-xs bg-sgs-primary text-white rounded-lg hover:bg-sgs-primary flex items-center gap-1.5 disabled:opacity-50">
                     {savingDesc ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Lưu
                   </button>
                 </div>
@@ -624,7 +624,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-[var(--text-primary)] truncate">{a.name}</span>
                         {a.is_primary && (
-                          <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-md font-semibold flex items-center gap-0.5 flex-shrink-0">
+                          <span className="text-[10px] bg-sgs-champagne dark:bg-sgs-primary/30 text-sgs-primary dark:text-sgs-text-muted px-1.5 py-0.5 rounded-md font-semibold flex items-center gap-0.5 flex-shrink-0">
                             <Star size={9} /> Chính
                           </span>
                         )}
@@ -636,7 +636,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                       {!a.is_primary && (
                         <button onClick={() => setPrimaryAssignee(a.id, a.name)} disabled={settingPrimaryId === a.id}
                           title="Đặt làm người chính"
-                          className="w-6 h-6 flex items-center justify-center rounded-md text-[var(--text-tertiary)] hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                          className="w-6 h-6 flex items-center justify-center rounded-md text-[var(--text-tertiary)] hover:text-sgs-primary hover:bg-sgs-champagne dark:hover:bg-sgs-primary/20">
                           {settingPrimaryId === a.id ? <Loader2 size={11} className="animate-spin" /> : <Star size={11} />}
                         </button>
                       )}
@@ -661,21 +661,21 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               {userPickerOpen && (userResults.length > 0 || searchingUsers) && (
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 overflow-hidden">
                   {searchingUsers ? (
-                    <div className="flex items-center justify-center p-4"><Loader2 size={16} className="animate-spin text-indigo-500" /></div>
+                    <div className="flex items-center justify-center p-4"><Loader2 size={16} className="animate-spin text-sgs-primary" /></div>
                   ) : userResults.map(u => {
                     const alreadyAssigned = task.assignees?.some(a => a.id === u.id);
                     return (
                       <button key={u.id} type="button" disabled={alreadyAssigned}
                         onClick={() => selectPendingAssignee(u)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors ${alreadyAssigned ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--glass-surface-hover)]'}`}>
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-[11px] font-bold text-sgs-primary flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-[var(--text-primary)] truncate">{u.name}</p>
                           {u.email && <p className="text-[11px] text-[var(--text-tertiary)] truncate">{u.email}</p>}
                         </div>
-                        {alreadyAssigned && <span className="text-xs text-emerald-500 font-semibold flex-shrink-0">✓ Đã giao</span>}
+                        {alreadyAssigned && <span className="text-xs text-sgs-verified font-semibold flex-shrink-0">✓ Đã giao</span>}
                       </button>
                     );
                   })}
@@ -684,9 +684,9 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
             </div>
             {/* Pending assignee: due_note + confirm */}
             {pendingAssignee && (
-              <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 space-y-2">
+              <div className="mt-2 p-3 bg-sgs-champagne dark:bg-sgs-primary/20 rounded-xl border border-sgs-border dark:border-indigo-800 space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-[10px] font-bold text-sgs-primary flex-shrink-0">
                     {pendingAssignee.name?.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-[var(--text-primary)] flex-1">{pendingAssignee.name}</span>
@@ -698,7 +698,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   placeholder="Ghi chú cho người thực hiện (tùy chọn)..."
                   className="w-full h-[32px] px-3 text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-indigo-400" />
                 <button onClick={addAssignee} disabled={addingAssignee}
-                  className="w-full h-[32px] bg-indigo-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  className="w-full h-[32px] bg-sgs-primary text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-sgs-primary disabled:opacity-50 transition-colors">
                   {addingAssignee ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Xác nhận giao việc
                 </button>
               </div>
@@ -724,7 +724,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                       <span className="text-xs text-[var(--text-tertiary)]">{timeAgo(c.created_at)}</span>
                       <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => { setEditingCommentId(c.id); setEditCommentText(c.content); }}
-                          className="text-xs text-[var(--text-tertiary)] hover:text-indigo-500 p-1 rounded">
+                          className="text-xs text-[var(--text-tertiary)] hover:text-sgs-primary p-1 rounded">
                           <Edit3 size={11} />
                         </button>
                         <button onClick={() => deleteComment(c.id)} disabled={deletingCommentId === c.id}
@@ -739,7 +739,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                           className="w-full text-sm bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none resize-none" />
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => setEditingCommentId(null)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">Hủy</button>
-                          <button onClick={() => saveComment(c.id)} className="text-xs text-indigo-500 hover:text-indigo-600 font-semibold">Lưu</button>
+                          <button onClick={() => saveComment(c.id)} className="text-xs text-sgs-primary hover:text-sgs-primary font-semibold">Lưu</button>
                         </div>
                       </div>
                     ) : (
@@ -750,8 +750,8 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               ))}
             </div>
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                <MessageSquare size={14} className="text-indigo-500" />
+              <div className="w-8 h-8 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center flex-shrink-0">
+                <MessageSquare size={14} className="text-sgs-primary" />
               </div>
               <div className="flex-1 space-y-2">
                 <textarea ref={commentRef} rows={2} value={newComment} onChange={e => setNewComment(e.target.value)}
@@ -760,7 +760,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none" />
                 <div className="flex justify-end">
                   <button onClick={sendComment} disabled={sendingComment || !newComment.trim()}
-                    className="h-8 px-4 bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                    className="h-8 px-4 bg-sgs-primary text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-sgs-primary disabled:opacity-50 transition-colors">
                     {sendingComment ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Gửi
                   </button>
                 </div>
@@ -804,7 +804,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
           </div>
           {activityHasMore && (
             <button onClick={loadMoreActivity} disabled={loadingMoreActivity}
-              className="w-full mt-3 py-2 text-xs text-indigo-500 hover:text-indigo-600 font-medium text-center flex items-center justify-center gap-1.5 border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface-hover)] transition-colors disabled:opacity-50">
+              className="w-full mt-3 py-2 text-xs text-sgs-primary hover:text-sgs-primary font-medium text-center flex items-center justify-center gap-1.5 border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface-hover)] transition-colors disabled:opacity-50">
               {loadingMoreActivity ? <Loader2 size={12} className="animate-spin" /> : <ChevronDown size={12} />}
               Xem thêm
             </button>
@@ -892,7 +892,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
           <div className="relative z-10 w-full max-w-sm bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-5 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-                <Star size={18} className="text-amber-500" />
+                <Star size={18} className="text-sgs-accent-text" />
               </div>
               <div>
                 <h3 className="font-bold text-[var(--text-primary)]">Hủy người chính?</h3>

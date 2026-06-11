@@ -87,7 +87,7 @@ export function ArticleFooter({
           style={{
             background: "rgba(5,150,105,0.06)",
             border: "1px solid rgba(5,150,105,0.2)",
-            color: "#059669",
+            color: "var(--sgs-verified)",
           }}
           role="note"
         >

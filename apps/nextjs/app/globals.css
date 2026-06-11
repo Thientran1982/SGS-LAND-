@@ -145,19 +145,19 @@
   --font-size-6xl: 40px;
 
   /* Color tokens → CSS variables */
-  --color-surface:           var(--bg-surface);
-  --color-surface-elevated:  var(--bg-elevated);
-  --color-app-bg:            var(--bg-app);
-  --color-sidebar:           var(--bg-sidebar);
-  --color-input:             var(--bg-input);
-  --color-primary:           var(--primary-600);
-  --color-primary-hover:     var(--primary-hover);
-  --color-primary-subtle:    var(--primary-subtle);
-  --color-text-primary:      var(--text-primary);
-  --color-text-secondary:    var(--text-secondary);
-  --color-text-tertiary:     var(--text-tertiary);
-  --color-text-muted:        var(--text-muted);
-  --color-text-inverse:      var(--text-inverse);
+  --color-surface:           var(--sgs-surface);
+  --color-surface-elevated:  var(--sgs-surface);
+  --color-app-bg:            var(--sgs-bg);
+  --color-sidebar:           var(--sgs-bg);
+  --color-input:             var(--sgs-surface);
+  --color-primary:           var(--sgs-primary);
+  --color-primary-hover:     var(--sgs-primary-deep);
+  --color-primary-subtle:    var(--sgs-champagne);
+  --color-text-primary:      var(--sgs-text);
+  --color-text-secondary:    var(--sgs-text-muted);
+  --color-text-tertiary:     var(--sgs-text-muted);
+  --color-text-muted:        var(--sgs-text-muted);
+  --color-text-inverse:      var(--sgs-surface);
   --color-status-success:    var(--color-success);
   --color-status-warning:    var(--color-warning);
   --color-status-danger:     var(--color-danger);
@@ -273,7 +273,7 @@
   .thin-scrollbar::-webkit-scrollbar { display: block; width: 4px; height: 4px; }
   .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .thin-scrollbar::-webkit-scrollbar-thumb { background-color: var(--glass-border); border-radius: 4px; }
-  .thin-scrollbar::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); }
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover { background-color: var(--sgs-text-muted); }
 }
 
 /* ─── Components ──────────────────────────────────────────── */
@@ -308,7 +308,7 @@
   .markdown-body pre { background-color: rgba(0,0,0,0.05); padding: 0.75em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 0.75em; }
   .dark .markdown-body pre { background-color: rgba(255,255,255,0.05); }
   .markdown-body pre code { background-color: transparent; padding: 0; }
-  .markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--text-secondary); font-style: italic; }
+  .markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--sgs-text-muted); font-style: italic; }
   .dark .markdown-body blockquote { border-left-color: rgba(255,255,255,0.1); }
-  .markdown-body a { color: var(--primary-600); text-decoration: underline; text-underline-offset: 2px; }
+  .markdown-body a { color: var(--sgs-primary); text-decoration: underline; text-underline-offset: 2px; }
 }

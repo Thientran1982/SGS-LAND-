@@ -61,7 +61,7 @@ function ListingCard({ listing }: { listing: Listing }) {
       </div>
 
       <div className="p-4">
-        <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors"
+        <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-snug group-hover:text-sgs-primary transition-colors"
           style={{ color: "var(--text-primary)" }}>
           {listing.title}
         </h3>

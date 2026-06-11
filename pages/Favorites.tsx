@@ -101,7 +101,7 @@ export const Favorites: React.FC = () => {
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6">
                 {/* Row 1: count label + sort dropdown */}
                 <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-indigo-600">
+                    <span className="text-sm font-bold text-sgs-primary">
                         {filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''} {t('favorites.count_label')}
                     </span>
                     {allFavorites.length > 0 && (
@@ -184,7 +184,7 @@ export const Favorites: React.FC = () => {
                                 ) : (
                                     <button
                                         onClick={() => window.location.hash = `#/${ROUTES.INVENTORY}`}
-                                        className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors"
+                                        className="px-6 py-2 bg-sgs-primary text-white font-bold rounded-xl shadow-lg hover:bg-sgs-primary transition-colors"
                                     >
                                         {t('favorites.btn_browse')}
                                     </button>
@@ -198,7 +198,7 @@ export const Favorites: React.FC = () => {
                         <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
-                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                         >
                             {t('common.prev')}
                         </button>
@@ -206,7 +206,7 @@ export const Favorites: React.FC = () => {
                         <button
                             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                             disabled={page === totalPages}
-                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                         >
                             {t('common.next')}
                         </button>

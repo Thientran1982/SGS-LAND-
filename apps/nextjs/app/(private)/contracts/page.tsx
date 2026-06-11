@@ -108,7 +108,7 @@ export default function ContractsPage() {
             </thead>
             <tbody>
               {contracts.map((c) => (
-                <tr key={c.id} className="border-t hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors"
+                <tr key={c.id} className="border-t hover:bg-indigo-50/30 dark:hover:bg-sgs-primary/10 transition-colors"
                   style={{ borderColor: "var(--border-default)" }}>
                   <td className="px-4 py-3 font-mono text-xs font-medium" style={{ color: "var(--text-primary)" }}>
                     {c.contract_number ?? `#${c.id}`}

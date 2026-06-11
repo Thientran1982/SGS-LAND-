@@ -43,15 +43,15 @@ export const PublicStatus: React.FC = () => {
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-sgs-primary transition-colors min-h-[44px] shrink-0">
                         {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
-                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0" />
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-sgs-primary shrink-0" />
                         <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">TRẠNG THÁI HỆ THỐNG</span>
                     </div>
                     {currentUser ? (
-                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
+                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
                             {t('menu.dashboard')}
                         </button>
                     ) : (
@@ -60,7 +60,7 @@ export const PublicStatus: React.FC = () => {
                 </div>
             </div>
             <div className="max-w-3xl mx-auto px-6 py-16 animate-enter">
-                <div className="bg-emerald-500 text-white p-8 rounded-[32px] shadow-2xl shadow-emerald-500/20 mb-12 flex items-center justify-between">
+                <div className="bg-sgs-verified text-white p-8 rounded-[32px] shadow-2xl shadow-emerald-500/20 mb-12 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('status.operational')}</h1>
                         <p className="text-emerald-100 font-medium">{t('status.updated_at')} {formatDateTime(new Date().toISOString())}</p>
@@ -75,7 +75,7 @@ export const PublicStatus: React.FC = () => {
                     <UptimeGraph />
                     <div className="flex justify-between text-xs font-bold text-slate-400 mt-3 uppercase tracking-wider">
                         <span>90 ngày trước</span>
-                        <span className="text-emerald-600">99.99%</span>
+                        <span className="text-sgs-verified">99.99%</span>
                         <span>Hôm nay</span>
                     </div>
                 </div>

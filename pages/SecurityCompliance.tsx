@@ -12,7 +12,7 @@ const ICONS = {
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 const ACTION_ICONS = {
-    REDACT: <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
+    REDACT: <svg className="w-3.5 h-3.5 text-sgs-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     BLOCK:  <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
     LOG_ONLY: <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
 };
@@ -48,7 +48,7 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
                             options={actionOptions}
                         />
                     </div>
-                    <button onClick={() => onSave(form)} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl mt-2 hover:bg-slate-800 transition-colors">{t('security.btn_save_rule')}</button>
+                    <button onClick={() => onSave(form)} className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl mt-2 hover:bg-slate-800 transition-colors">{t('security.btn_save_rule')}</button>
                 </div>
             </div>
         </div>,
@@ -158,7 +158,7 @@ export const SecurityCompliance: React.FC = () => {
                                     disabled={config.legalHold} 
                                     value={config.retention?.messagesDays || 0} 
                                     onChange={e => setConfig({...config, retention: {...(config.retention || { messagesDays: 0, auditLogsDays: 0 }), messagesDays: Number(e.target.value)}})} 
-                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-indigo-500 disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
+                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-sgs-primary disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
                                 />
                             </div>
                             <div>
@@ -168,10 +168,10 @@ export const SecurityCompliance: React.FC = () => {
                                     disabled={config.legalHold} 
                                     value={config.retention?.auditLogsDays || 0} 
                                     onChange={e => setConfig({...config, retention: {...(config.retention || { messagesDays: 0, auditLogsDays: 0 }), auditLogsDays: Number(e.target.value)}})} 
-                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-indigo-500 disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
+                                    className="w-full border rounded-xl px-4 py-2 mt-1 text-sm outline-none focus:border-sgs-primary disabled:opacity-50 disabled:bg-[var(--glass-surface-hover)]" 
                                 />
                             </div>
-                            <button onClick={handleSaveConfig} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95">{t('security.save_policy')}</button>
+                            <button onClick={handleSaveConfig} className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95">{t('security.save_policy')}</button>
                         </div>
                     </div>
                     {/* DLP Rules */}
@@ -186,7 +186,7 @@ export const SecurityCompliance: React.FC = () => {
                                     {t('security.no_dlp_rules')}
                                 </div>
                             ) : (config.dlpRules || []).map(rule => (
-                                <div key={rule.id} className="p-4 border rounded-xl flex justify-between items-center group hover:border-indigo-200 transition-colors">
+                                <div key={rule.id} className="p-4 border rounded-xl flex justify-between items-center group hover:border-sgs-border transition-colors">
                                     <div>
                                         <div className="font-bold text-sm text-[var(--text-secondary)]">{rule.name}</div>
                                         <div className="text-xs2 font-mono text-[var(--text-secondary)] truncate max-w-[200px]">{rule.pattern}</div>

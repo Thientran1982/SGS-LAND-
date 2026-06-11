@@ -645,7 +645,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                                 borderRadius: 8,
                                 padding: '4px 8px',
                                 display: 'flex', alignItems: 'center', gap: 5,
-                                fontSize: 10, fontWeight: 700, color: '#374151',
+                                fontSize: 10, fontWeight: 700, color: 'var(--text-secondary, #374151)',
                                 fontFamily: 'system-ui,sans-serif',
                             }}>
                                 <div style={{ width: 8, height: 8, borderRadius: 2, background: bg }} />
@@ -710,10 +710,10 @@ const MapView: React.FC<MapViewProps> = memo(({
                         </div>
                         {/* Body */}
                         <div style={{ padding: '11px 13px 13px' }}>
-                            <h3 style={{ fontWeight: 700, color: '#0f172a', fontSize: 13, margin: '0 0 2px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                            <h3 style={{ fontWeight: 700, color: 'var(--text-primary, #0f172a)', fontSize: 13, margin: '0 0 2px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                                 {sel.listing.title}
                             </h3>
-                            <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 11, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                            <div style={{ fontSize: 10, color: 'var(--text-secondary, #94a3b8)', marginBottom: 11, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                                 {sel.listing.location}
                             </div>
                             <button onClick={() => onNavigate(sel.listing.id)} style={{
@@ -744,14 +744,14 @@ const MapView: React.FC<MapViewProps> = memo(({
                         fontFamily: 'system-ui,-apple-system,sans-serif',
                     }}>
                         <div style={{ padding: '13px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: 800, fontSize: 13, color: '#0f172a' }}>
+                            <span style={{ fontWeight: 800, fontSize: 13, color: 'var(--text-primary, #0f172a)' }}>
                                 {clusterGroup.length} {t('map.listings_here') || 'BĐS tại đây'}
                             </span>
                             <button onClick={() => setClusterGroup(null)} style={{
-                                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                                background: 'var(--glass-surface, #f1f5f9)', border: 'none', borderRadius: '50%',
                                 width: 26, height: 26, cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 16, color: '#64748b', fontWeight: 300,
+                                fontSize: 16, color: 'var(--text-secondary, #64748b)', fontWeight: 300,
                             }}>×</button>
                         </div>
                         <div style={{ overflowY: 'auto', maxHeight: 318 }}>
@@ -767,7 +767,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                         <img src={thumb} style={{ width: 52, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" referrerPolicy="no-referrer" />
                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ fontWeight: 700, fontSize: 12, color: '#0f172a', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{listing.title}</div>
+                                            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary, #0f172a)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{listing.title}</div>
                                             <div style={{ fontSize: 11, color: bg, fontWeight: 700, marginTop: 2 }}>{lp}</div>
                                         </div>
                                     </div>

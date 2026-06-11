@@ -52,7 +52,7 @@ export default function DuAnPage() {
               </div>
             </div>
             <div>
-              <h2 className="font-bold text-base mb-1 group-hover:text-indigo-500 transition-colors" style={{ color: "var(--text-primary)" }}>{p.name}</h2>
+              <h2 className="font-bold text-base mb-1 group-hover:text-sgs-primary transition-colors" style={{ color: "var(--text-primary)" }}>{p.name}</h2>
               <p className="text-xs mb-2" style={{ color: "var(--text-tertiary)" }}>{p.dev} · {p.type}</p>
               <p className="flex items-center gap-1 text-xs" style={{ color: "var(--text-secondary)" }}>
                 <MapPin className="w-3 h-3 shrink-0" />{p.loc}

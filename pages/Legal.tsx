@@ -252,15 +252,15 @@ const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpda
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-sgs-primary transition-colors min-h-[44px] shrink-0">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                         <span className="hidden sm:inline">{t('legal.back_home')}</span>
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
-                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0" />
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-sgs-primary shrink-0" />
                         <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">{t('legal.header')}</span>
                     </div>
-                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
+                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
                         {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                     </button>
                 </div>
@@ -276,19 +276,19 @@ const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpda
                     <p className="text-[var(--text-tertiary)] font-mono text-sm uppercase tracking-widest">{t('legal.last_updated')}: {lastUpdated}</p>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-8 md:p-16 rounded-[32px] border border-[var(--glass-border)] shadow-sm">
-                    <div className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-p:leading-relaxed prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline prose-li:text-[var(--text-secondary)]">
+                    <div className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-p:leading-relaxed prose-a:text-sgs-primary prose-a:no-underline hover:prose-a:underline prose-li:text-[var(--text-secondary)]">
                         {children}
                     </div>
                 </div>
                 {/* Cross-links footer */}
-                <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-slate-500">
-                    <button onClick={() => window.location.hash = `#/${ROUTES.PRIVACY}`} className="hover:text-indigo-600 transition-colors">{t('legal.privacy_title')}</button>
+                <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-sgs-text-muted">
+                    <button onClick={() => window.location.hash = `#/${ROUTES.PRIVACY}`} className="hover:text-sgs-primary transition-colors">{t('legal.privacy_title')}</button>
                     <span>·</span>
-                    <button onClick={() => window.location.hash = `#/${ROUTES.TERMS}`} className="hover:text-indigo-600 transition-colors">{t('legal.terms_title')}</button>
+                    <button onClick={() => window.location.hash = `#/${ROUTES.TERMS}`} className="hover:text-sgs-primary transition-colors">{t('legal.terms_title')}</button>
                     <span>·</span>
-                    <a href="mailto:legal@sgsland.vn" className="hover:text-indigo-600 transition-colors">legal@sgsland.vn</a>
+                    <a href="mailto:legal@sgsland.vn" className="hover:text-sgs-primary transition-colors">legal@sgsland.vn</a>
                     <span>·</span>
-                    <button onClick={handleHome} className="hover:text-indigo-600 transition-colors">{t('legal.back_home')}</button>
+                    <button onClick={handleHome} className="hover:text-sgs-primary transition-colors">{t('legal.back_home')}</button>
                 </div>
                 <div className="mt-4 text-center text-xs text-slate-400">
                     SGS Land Corp · MST: 0312960439 · TP. Hồ Chí Minh, Việt Nam
@@ -381,8 +381,8 @@ export const CookieSettings: React.FC = () => {
                         <p className="text-xs text-[var(--text-tertiary)]">{t('legal.cookie_essential_desc')}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-emerald-600 font-bold">{t('common.enabled')}</span>
-                        <svg className="w-6 h-6 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+                        <span className="text-xs text-sgs-verified font-bold">{t('common.enabled')}</span>
+                        <svg className="w-6 h-6 text-sgs-verified" fill="currentColor" viewBox="0 0 24 24">
                             <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
                         </svg>
                     </div>
@@ -394,7 +394,7 @@ export const CookieSettings: React.FC = () => {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" checked={prefs.analytics} onChange={e => setPref({...prefs, analytics: e.target.checked})} className="sr-only peer" />
-                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--bg-surface)] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--bg-surface)] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sgs-primary"></div>
                     </label>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--glass-border)] flex justify-between items-center">
@@ -404,7 +404,7 @@ export const CookieSettings: React.FC = () => {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" checked={prefs.marketing} onChange={e => setPref({...prefs, marketing: e.target.checked})} className="sr-only peer" />
-                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--bg-surface)] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--bg-surface)] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sgs-primary"></div>
                     </label>
                 </div>
             </div>

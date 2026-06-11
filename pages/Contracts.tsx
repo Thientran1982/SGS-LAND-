@@ -118,7 +118,7 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
                 ref={btnRef}
                 onClick={toggle}
                 aria-label={t('common.actions')}
-                className="p-2 min-h-[36px] min-w-[36px] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="p-2 min-h-[36px] min-w-[36px] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
             >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
@@ -221,7 +221,7 @@ const Contracts: React.FC = () => {
                 <h1 className="text-lg font-black text-[var(--text-primary)] tracking-tight">{t('contracts.title')}</h1>
                 <button
                     onClick={() => { setEditingContract(null); setIsModalOpen(true); }}
-                    className="px-4 py-2 min-h-[44px] bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    className="px-4 py-2 min-h-[44px] bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:ring-offset-2"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                     <span className="hidden sm:inline">{t('contracts.btn_create')}</span>
@@ -232,8 +232,8 @@ const Contracts: React.FC = () => {
             {stats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-sgs-champagne flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
                         <div className="min-w-0">
                             <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_total')}</div>
@@ -245,29 +245,29 @@ const Contracts: React.FC = () => {
                     </div>
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
                         <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-sgs-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
                         </div>
                         <div className="min-w-0">
                             <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_pending')}</div>
-                            <div className="text-lg sm:text-xl font-black text-amber-600">{stats.pendingCount}</div>
+                            <div className="text-lg sm:text-xl font-black text-sgs-accent-text">{stats.pendingCount}</div>
                         </div>
                     </div>
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-sgs-champagne flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-sgs-verified" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                         <div className="min-w-0">
                             <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_signed')}</div>
-                            <div className="text-lg sm:text-xl font-black text-emerald-600">{stats.signedCount}</div>
+                            <div className="text-lg sm:text-xl font-black text-sgs-verified">{stats.signedCount}</div>
                         </div>
                     </div>
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-sgs-champagne flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                         <div className="min-w-0">
                             <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_signed_value')}</div>
-                            <div className="text-sm sm:text-base font-black text-violet-600 truncate">{formatCurrency(stats.signedValue)}</div>
+                            <div className="text-sm sm:text-base font-black text-sgs-primary truncate">{formatCurrency(stats.signedValue)}</div>
                         </div>
                     </div>
                 </div>
@@ -277,7 +277,7 @@ const Contracts: React.FC = () => {
                 <div className="p-3 sm:p-4 border-b border-[var(--glass-border)] flex flex-col sm:flex-row gap-2 sm:gap-3">
                     {/* Search – full width */}
                     <div className="relative flex-1 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
                             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
                         <input
@@ -285,7 +285,7 @@ const Contracts: React.FC = () => {
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
                             onChange={e => { setSearch(e.target.value); setPage(1); }}
-                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
@@ -342,7 +342,7 @@ const Contracts: React.FC = () => {
                             {isFiltered && (
                                 <button
                                     onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); }}
-                                    className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
+                                    className="px-4 py-2 text-xs font-bold text-sgs-primary bg-sgs-champagne border border-sgs-border rounded-xl hover:bg-sgs-champagne transition-colors"
                                 >
                                     {t('contracts.reset_filters')}
                                 </button>
@@ -386,7 +386,7 @@ const Contracts: React.FC = () => {
                                                     {t(`contracts.type_${c.type}`)}
                                                 </span>
                                                 <div
-                                                    className="text-xs font-mono text-[var(--text-secondary)] cursor-pointer hover:text-indigo-500 transition-colors"
+                                                    className="text-xs font-mono text-[var(--text-secondary)] cursor-pointer hover:text-sgs-primary transition-colors"
                                                     title={c.id}
                                                     onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(c.id).catch(() => {}); }}
                                                 >
@@ -403,9 +403,9 @@ const Contracts: React.FC = () => {
                                             <td className="p-4">
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">{formatCurrency(c.propertyPrice || 0)}</div>
                                                 {c.type === ContractType.DEPOSIT && c.depositAmount ? (
-                                                    <div className="text-xs text-indigo-500 mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount)}</div>
+                                                    <div className="text-xs text-sgs-primary mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount)}</div>
                                                 ) : c.type === ContractType.RESERVATION && c.depositAmount ? (
-                                                    <div className="text-xs text-violet-500 mt-0.5 font-medium">{t('contracts.reservation_fee').replace(' (VNĐ)', '')}: {formatCurrency(c.depositAmount)}</div>
+                                                    <div className="text-xs text-sgs-primary mt-0.5 font-medium">{t('contracts.reservation_fee').replace(' (VNĐ)', '')}: {formatCurrency(c.depositAmount)}</div>
                                                 ) : null}
                                             </td>
                                             <td className="p-4 min-w-[140px]">
@@ -425,7 +425,7 @@ const Contracts: React.FC = () => {
                                                             </div>
                                                             <div className="w-full h-1.5 bg-[var(--glass-border)] rounded-full overflow-hidden">
                                                                 <div
-                                                                    className={`h-full rounded-full transition-all ${overdue > 0 ? 'bg-rose-500' : pct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                                                    className={`h-full rounded-full transition-all ${overdue > 0 ? 'bg-rose-500' : pct >= 100 ? 'bg-emerald-500' : 'bg-sgs-primary'}`}
                                                                     style={{ width: `${pct}%` }}
                                                                 />
                                                             </div>
@@ -449,12 +449,12 @@ const Contracts: React.FC = () => {
                                             <td className="p-4 text-sm text-[var(--text-secondary)]">
                                                 {c.type === ContractType.RESERVATION && (c as any).handoverDate ? (
                                                     <div>
-                                                        <div className="font-medium text-violet-600">{formatDate((c as any).handoverDate)}</div>
+                                                        <div className="font-medium text-sgs-primary">{formatDate((c as any).handoverDate)}</div>
                                                         <div className="text-xs text-[var(--text-tertiary)]">{t('contracts.reservation_expiry')}</div>
                                                     </div>
                                                 ) : c.status === ContractStatus.SIGNED && (c as any).signedAt ? (
                                                     <div>
-                                                        <div className="font-medium text-emerald-600">{formatDate((c as any).signedAt)}</div>
+                                                        <div className="font-medium text-sgs-verified">{formatDate((c as any).signedAt)}</div>
                                                         <div className="text-xs text-[var(--text-tertiary)]">{t('contracts.signed_date_label')}</div>
                                                     </div>
                                                 ) : (
@@ -518,7 +518,7 @@ const Contracts: React.FC = () => {
             />
             {shareLink && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)} aria-hidden="true" />
+                    <div className="absolute inset-0 bg-sgs-primary-deep/40 backdrop-blur-sm" onClick={() => setShareLink(null)} aria-hidden="true" />
                     <div
                         role="dialog"
                         aria-modal="true"
@@ -532,7 +532,7 @@ const Contracts: React.FC = () => {
                                 type="text"
                                 readOnly
                                 value={shareLink}
-                                className="bg-transparent outline-none flex-1 text-sm font-mono text-indigo-600"
+                                className="bg-transparent outline-none flex-1 text-sm font-mono text-sgs-primary"
                                 onClick={(e) => e.currentTarget.select()}
                             />
                             <button
@@ -543,20 +543,20 @@ const Contracts: React.FC = () => {
                                         setTimeout(() => setLinkCopied(false), 2000);
                                     }).catch(() => {});
                                 }}
-                                className="p-2 min-h-[36px] min-w-[36px] rounded-lg transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="p-2 min-h-[36px] min-w-[36px] rounded-lg transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                             >
                                 {linkCopied ? (
-                                    <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                                    <svg className="w-4 h-4 text-sgs-verified" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
                                 ) : (
-                                    <svg className="w-4 h-4 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                    <svg className="w-4 h-4 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
                                 )}
                             </button>
                         </div>
-                        {linkCopied && <p role="status" aria-live="polite" className="mt-2 text-xs text-emerald-600 font-bold">{t('common.copied')}</p>}
+                        {linkCopied && <p role="status" aria-live="polite" className="mt-2 text-xs text-sgs-verified font-bold">{t('common.copied')}</p>}
                         <button
                             onClick={() => setShareLink(null)}
                             aria-label={t('common.close')}
-                            className="mt-6 w-full py-2.5 min-h-[44px] bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                            className="mt-6 w-full py-2.5 min-h-[44px] bg-sgs-primary-deep text-white rounded-xl font-bold hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
                         >
                             {t('common.close')}
                         </button>

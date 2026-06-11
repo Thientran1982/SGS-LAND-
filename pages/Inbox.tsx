@@ -40,7 +40,7 @@ const ICONS = {
 };
 /* ── Colour tokens for InboxDropdown — must be static strings for Tailwind ── */
 const DD_COLORS: Record<string, { open: string; item: string; check: string }> = {
-    indigo:  { open: 'bg-indigo-50 border-indigo-400 text-indigo-700',   item: 'bg-indigo-50 text-indigo-700',   check: 'text-indigo-600'  },
+    indigo:  { open: 'bg-indigo-50 border-indigo-400 text-indigo-700',   item: 'bg-indigo-50 text-indigo-700',   check: 'text-sgs-primary'  },
     blue:    { open: 'bg-blue-50 border-blue-400 text-blue-700',         item: 'bg-blue-50 text-blue-700',       check: 'text-blue-600'    },
     emerald: { open: 'bg-emerald-50 border-emerald-400 text-emerald-700',item: 'bg-emerald-50 text-emerald-700', check: 'text-emerald-600' },
     amber:   { open: 'bg-amber-50 border-amber-400 text-amber-700',      item: 'bg-amber-50 text-amber-700',     check: 'text-amber-600'   },
@@ -623,7 +623,7 @@ export const Inbox: React.FC = () => {
                         <h2 className="font-bold text-[var(--text-primary)]">{t('menu.inbox')}</h2>
                         <button 
                             onClick={() => setIsWidgetModalOpen(true)}
-                            className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            className="text-xs font-bold text-sgs-primary bg-sgs-champagne hover:bg-sgs-champagne px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
                             <span className="hidden sm:inline">{t('inbox.live_chat_widget')}</span>
@@ -636,7 +636,7 @@ export const Inbox: React.FC = () => {
                         <input 
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-9 py-2.5 min-h-[44px] text-sm outline-none focus:border-indigo-500 transition-all"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-9 py-2.5 min-h-[44px] text-sm outline-none focus:border-sgs-primary transition-all"
                             placeholder={t('common.search')}
                         />
                         {search && (
@@ -704,7 +704,7 @@ export const Inbox: React.FC = () => {
                                             <span className="truncate">{thread.lead.name}</span>
                                             {/* AI Status Indicator */}
                                             {isAiEnabled ? (
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title={t('inbox.ai_agent_active')}></span>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified animate-pulse shrink-0" title={t('inbox.ai_agent_active')}></span>
                                             ) : (
                                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" title={t('inbox.human_control')}></span>
                                             )}
@@ -716,7 +716,7 @@ export const Inbox: React.FC = () => {
                                             {/* Follow-up badge — shown when last outbound was an AI follow-up */}
                                             {thread.lastMessage?.direction === 'OUTBOUND' && thread.lastMessage?.metadata?.isFollowUp && (
                                                 <span
-                                                    className="text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 bg-amber-50 text-amber-600 border border-amber-200"
+                                                    className="text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 bg-amber-50 text-sgs-accent-text border border-amber-200"
                                                     title={`Follow-up tự động ngày ${thread.lastMessage.metadata.followUpDay ?? ''}`}
                                                 >
                                                     ⏰ {thread.lastMessage.metadata.followUpDay ? `D${thread.lastMessage.metadata.followUpDay}` : 'FU'}
@@ -763,7 +763,7 @@ export const Inbox: React.FC = () => {
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {thread.lead.assignedTo && (
-                                                <div className="text-2xs font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[60px]" title={thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || t('inbox.unassigned')}>
+                                                <div className="text-2xs font-bold text-sgs-primary bg-sgs-champagne px-1.5 py-0.5 rounded truncate max-w-[60px]" title={thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || t('inbox.unassigned')}>
                                                     {(thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || '')?.split(' ').pop() || ''}
                                                 </div>
                                             )}
@@ -795,18 +795,18 @@ export const Inbox: React.FC = () => {
                     <div className="px-4 py-2.5 md:px-5 md:py-3 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/95 backdrop-blur-md z-20 shadow-sm gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                             {/* Back button — mobile only */}
-                            <button onClick={() => setSelectedLeadId(null)} aria-label={t('common.back')} className="md:hidden text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] p-1.5 min-h-[44px] min-w-[44px] rounded-full transition-colors shrink-0 -ml-1 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                            <button onClick={() => setSelectedLeadId(null)} aria-label={t('common.back')} className="md:hidden text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] p-1.5 min-h-[44px] min-w-[44px] rounded-full transition-colors shrink-0 -ml-1 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary">
                                 {ICONS.BACK}
                             </button>
                             {/* Avatar */}
-                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center font-bold text-indigo-600 border border-indigo-200 shrink-0 text-sm">
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center font-bold text-sgs-primary border border-sgs-border shrink-0 text-sm">
                                 {selectedThread.lead.name.charAt(0).toUpperCase()}
                             </div>
                             {/* Name + status */}
                             <div className="min-w-0 flex-1">
                                 <div className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-1.5 min-w-0">
                                     <span className="truncate">{selectedThread.lead.name}</span>
-                                    <span className="text-2xs px-1.5 py-0.5 rounded-md uppercase font-bold border text-emerald-600 bg-emerald-50 border-emerald-100 shrink-0 hidden sm:inline">
+                                    <span className="text-2xs px-1.5 py-0.5 rounded-md uppercase font-bold border text-sgs-verified bg-sgs-champagne border-emerald-100 shrink-0 hidden sm:inline">
                                         {selectedThread.lead.score?.score || 0}đ
                                     </span>
                                 </div>
@@ -851,7 +851,7 @@ export const Inbox: React.FC = () => {
                                                     >
                                                         <span className="truncate min-w-0 flex-1">{u.name}</span>
                                                         {selectedThread.lead.assignedTo === u.id && (
-                                                            <svg className="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                            <svg className="w-4 h-4 text-sgs-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                                         )}
                                                     </button>
                                                 ))}
@@ -909,7 +909,7 @@ export const Inbox: React.FC = () => {
                         ))}
                         {isThinking && (
                             <div className="flex justify-start animate-pulse">
-                                <div className="bg-[var(--bg-surface)] border border-indigo-100 text-indigo-600 px-4 py-3 rounded-2xl rounded-tl-none text-xs font-bold flex items-center gap-2 shadow-sm">
+                                <div className="bg-[var(--bg-surface)] border border-sgs-border text-sgs-primary px-4 py-3 rounded-2xl rounded-tl-none text-xs font-bold flex items-center gap-2 shadow-sm">
                                     <div className="flex gap-1">
                                         <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
                                         <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
@@ -969,7 +969,7 @@ export const Inbox: React.FC = () => {
                             </div>
                             {/* Supervisor mode badge */}
                             {!isAiActiveForSelected && (
-                                <div className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0">
+                                <div className="text-xs font-bold text-sgs-accent-text bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0">
                                     {ICONS.ALERT}
                                     <span className="hidden sm:inline">{t('inbox.supervisor_takeover_active')}</span>
                                     <span className="sm:hidden">Manual</span>
@@ -988,7 +988,7 @@ export const Inbox: React.FC = () => {
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 aria-label={t('inbox.attach')}
-                                className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-indigo-50 shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-tertiary)] hover:text-sgs-primary transition-colors rounded-lg hover:bg-sgs-champagne shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                             >
                                 {ICONS.ATTACH}
                             </button>                            
@@ -1009,7 +1009,7 @@ export const Inbox: React.FC = () => {
                                 onClick={handleSend}
                                 disabled={!input.trim() || isThinking}
                                 aria-label={t('inbox.send')}
-                                className="p-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:shadow-md hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:shadow-none active:scale-95 shrink-0 self-end mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                                className="p-2 bg-sgs-primary text-white rounded-lg shadow-sm hover:shadow-md hover:bg-sgs-primary transition-all disabled:opacity-40 disabled:shadow-none active:scale-95 shrink-0 self-end mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary focus-visible:ring-offset-1"
                             >
                                 {ICONS.SEND}
                             </button>
@@ -1042,7 +1042,7 @@ export const Inbox: React.FC = () => {
             {createPortal(
             <AnimatePresence>
                 {isWidgetModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm overflow-y-auto no-scrollbar">
+                    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-6 bg-sgs-primary-deep/50 backdrop-blur-sm overflow-y-auto no-scrollbar">
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1052,12 +1052,12 @@ export const Inbox: React.FC = () => {
                             <div className="p-4 md:p-6 border-b border-[var(--glass-border)] flex justify-between items-start md:items-center bg-[var(--glass-surface)]/50 shrink-0">
                                 <div>
                                     <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                        <svg className="w-5 h-5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
                                         {t('inbox.live_chat_widget')}
                                     </h2>
                                     <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inbox.widget_subtitle')}</p>
                                 </div>
-                                <button onClick={() => setIsWidgetModalOpen(false)} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-xl transition-colors shrink-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                                <button onClick={() => setIsWidgetModalOpen(false)} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-xl transition-colors shrink-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                             </div>                            
@@ -1071,7 +1071,7 @@ export const Inbox: React.FC = () => {
                                                 value={widgetTitle}
                                                 onChange={e => setWidgetTitle(e.target.value)}
                                                 placeholder={t('inbox.widget_title_placeholder')}
-                                                className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-all"
+                                                className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-sgs-primary transition-all"
                                             />
                                         </div>
                                         <div>
@@ -1080,7 +1080,7 @@ export const Inbox: React.FC = () => {
                                                 value={widgetDesc}
                                                 onChange={e => setWidgetDesc(e.target.value)}
                                                 placeholder={t('inbox.widget_desc_placeholder')}
-                                                className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-all"
+                                                className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-sgs-primary transition-all"
                                             />
                                         </div>
                                     </div>
@@ -1089,7 +1089,7 @@ export const Inbox: React.FC = () => {
                                         <div className="flex items-center justify-between mb-2">
                                             <label className="text-sm font-bold text-[var(--text-secondary)]">{t('inbox.widget_link_label')}</label>
                                             {shortLink && !isGeneratingShortLink && (
-                                                <span className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full font-medium border border-emerald-200">{t('inbox.widget_short_valid')}</span>
+                                                <span className="text-xs px-2 py-0.5 bg-sgs-champagne text-sgs-verified rounded-full font-medium border border-emerald-200">{t('inbox.widget_short_valid')}</span>
                                             )}
                                         </div>
                                         {/* Channel selector — choose platform to share link */}
@@ -1117,7 +1117,7 @@ export const Inbox: React.FC = () => {
                                         <div className="flex gap-2">
                                             {isGeneratingShortLink ? (
                                                 <div className="flex-1 flex items-center gap-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2">
-                                                    <svg className="w-4 h-4 animate-spin text-indigo-500 shrink-0" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                                    <svg className="w-4 h-4 animate-spin text-sgs-primary shrink-0" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
                                                     <span className="text-sm text-[var(--text-tertiary)]">{t('inbox.widget_short_generating')}</span>
                                                 </div>
                                             ) : (
@@ -1134,7 +1134,7 @@ export const Inbox: React.FC = () => {
                                                     notify(t('inbox.widget_link_copied'), 'success');
                                                 }}
                                                 disabled={isGeneratingShortLink}
-                                                className="px-4 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-xl hover:bg-indigo-100 transition-colors text-sm whitespace-nowrap shrink-0 disabled:opacity-40"
+                                                className="px-4 py-2 bg-sgs-champagne text-sgs-primary font-bold rounded-xl hover:bg-sgs-champagne transition-colors text-sm whitespace-nowrap shrink-0 disabled:opacity-40"
                                             >
                                                 {t('inbox.widget_copy')}
                                             </button>
@@ -1142,7 +1142,7 @@ export const Inbox: React.FC = () => {
                                                 onClick={() => generateShortLink(widgetTitle, widgetDesc, currentUser?.id, linkChannel)}
                                                 disabled={isGeneratingShortLink}
                                                 title={t('inbox.widget_refresh_link')}
-                                                className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors disabled:opacity-40"
+                                                className="p-2 text-[var(--text-tertiary)] hover:text-sgs-primary hover:bg-sgs-champagne rounded-xl transition-colors disabled:opacity-40"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                             </button>
@@ -1151,7 +1151,7 @@ export const Inbox: React.FC = () => {
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 title={t('inbox.widget_open_link')}
-                                                className="p-2 text-[var(--text-tertiary)] hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+                                                className="p-2 text-[var(--text-tertiary)] hover:text-sgs-verified hover:bg-sgs-champagne rounded-xl transition-colors"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                             </a>
@@ -1188,7 +1188,7 @@ export const Inbox: React.FC = () => {
                                                 readOnly
                                                 rows={5}
                                                 value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${embedChannel}&lang=${language}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
-                                                className="w-full bg-slate-900 text-emerald-400 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono resize-none leading-relaxed no-scrollbar"
+                                                className="w-full bg-sgs-primary-deep text-emerald-400 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono resize-none leading-relaxed no-scrollbar"
                                             />
                                             <button
                                                 onClick={() => {

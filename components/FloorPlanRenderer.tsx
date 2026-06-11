@@ -45,7 +45,7 @@ const STATUS_FILL: Record<string, string> = {
   INACTIVE:  '#94a3b8', // slate-400 (gray)
 };
 const STATUS_STROKE: Record<string, string> = {
-  AVAILABLE: '#047857',
+  AVAILABLE: 'var(--sgs-verified)',
   BOOKING:   '#a16207',
   HOLD:      '#b45309',
   SOLD:      '#b91c1c',

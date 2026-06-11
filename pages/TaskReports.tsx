@@ -164,7 +164,7 @@ export function TaskReports() {
           <button
             onClick={handleExport}
             disabled={exporting || loading}
-            className="h-[36px] px-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60">
+            className="h-[36px] px-3 bg-sgs-primary text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-sgs-primary transition-colors shadow-sm disabled:opacity-60">
             {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             Xuất CSV
           </button>
@@ -173,9 +173,9 @@ export function TaskReports() {
       {/* Error */}
       {error && !loading && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <AlertTriangle className="w-10 h-10 text-amber-400" />
+          <AlertTriangle className="w-10 h-10 text-sgs-accent-text" />
           <p className="text-[var(--text-secondary)]">{error}</p>
-          <button onClick={() => load(false, departmentId)} className="text-sm text-indigo-500 font-medium">Thử lại</button>
+          <button onClick={() => load(false, departmentId)} className="text-sm text-sgs-primary font-medium">Thử lại</button>
         </div>
       )}
       {/* KPI row */}
@@ -186,7 +186,7 @@ export function TaskReports() {
           [
             { label: 'Tỷ lệ hoàn thành', value: `${completionRate}%`, color: 'text-emerald-500' },
             { label: 'Quá hạn', value: stats.overview.overdue_count, color: 'text-rose-500' },
-            { label: 'Hoàn thành tuần này', value: stats.completion_rate_week, color: 'text-indigo-500' },
+            { label: 'Hoàn thành tuần này', value: stats.completion_rate_week, color: 'text-sgs-primary' },
             { label: 'Hoàn thành hôm nay', value: stats.completion_rate_today, color: 'text-amber-500' },
           ].map(kpi => (
             <div key={kpi.label} className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-4 shadow-sm text-center">
@@ -202,7 +202,7 @@ export function TaskReports() {
       ) : stats && Object.keys(stats.by_category).length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <h3 className="font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-indigo-500" /> Công việc theo danh mục (đang mở)
+            <BarChart3 className="w-4 h-4 text-sgs-primary" /> Công việc theo danh mục (đang mở)
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {Object.entries(stats.by_category).sort(([, a], [, b]) => b - a).map(([cat, count]) => (
@@ -220,7 +220,7 @@ export function TaskReports() {
       ) : projects.length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <h3 className="font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-indigo-500" /> Công việc theo dự án
+            <Building2 className="w-4 h-4 text-sgs-primary" /> Công việc theo dự án
           </h3>
           <div className="space-y-3">
             {projects.filter(p => p.total > 0).slice(0, 10).map(proj => (
@@ -256,11 +256,11 @@ export function TaskReports() {
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-500" /> Hiệu suất Nhân viên
+              <Users className="w-4 h-4 text-sgs-primary" /> Hiệu suất Nhân viên
             </h3>
             <button
               onClick={() => { window.location.hash = `#/${ROUTES.EMPLOYEES}`; }}
-              className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">
+              className="text-xs text-sgs-primary hover:text-sgs-primary font-medium">
               Xem chi tiết →
             </button>
           </div>
@@ -280,7 +280,7 @@ export function TaskReports() {
                   <tr key={u.user_id} className="hover:bg-[var(--glass-surface-hover)] transition-colors">
                     <td className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-[11px] font-bold text-sgs-primary flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -290,7 +290,7 @@ export function TaskReports() {
                       </div>
                     </td>
                     <td className="py-2.5 text-center text-[var(--text-secondary)] text-xs">{u.total_assigned}</td>
-                    <td className="py-2.5 text-center text-emerald-500 font-semibold text-xs">{u.done}</td>
+                    <td className="py-2.5 text-center text-sgs-verified font-semibold text-xs">{u.done}</td>
                     <td className="py-2.5 text-center text-xs">
                       {u.overdue > 0
                         ? <span className="text-rose-500 font-semibold">{u.overdue}</span>

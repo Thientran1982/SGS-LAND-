@@ -25,7 +25,7 @@ function getRoleBadgeClass(role: string): string {
     switch (role) {
         case 'ADMIN':          return 'bg-rose-50 text-rose-700 border border-rose-200';
         case 'MANAGER':        return 'bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200';
-        case 'TEAM_LEAD':      return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+        case 'TEAM_LEAD':      return 'bg-indigo-50 text-sgs-primary border border-indigo-200';
         case 'SALES':          return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
         case 'MARKETING':      return 'bg-amber-50 text-amber-700 border border-amber-200';
         case 'SUPPORTER':      return 'bg-sky-50 text-sky-700 border border-sky-200';
@@ -41,7 +41,7 @@ const ICONS = {
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     SEND: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-    INFO: <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    INFO: <svg className="w-4 h-4 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     SORT: <svg className="w-3 h-3 ml-1 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     CHART: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
@@ -127,7 +127,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
             .catch(() => { setError(true); setLoading(false); });
     }, [user.id]);
     const slaColor = data
-        ? data.slaScore >= 90 ? 'text-emerald-500' : data.slaScore >= 70 ? 'text-indigo-500' : 'text-amber-500'
+        ? data.slaScore >= 90 ? 'text-emerald-500' : data.slaScore >= 70 ? 'text-sgs-primary' : 'text-amber-500'
         : 'text-[var(--text-secondary)]';
     const slaLabelColor = data
         ? data.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : data.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'
@@ -159,7 +159,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                 <div className="overflow-y-auto px-6 py-5 space-y-5 no-scrollbar">
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
-                            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                            <div className="w-8 h-8 border-4 border-sgs-border border-t-indigo-600 rounded-full animate-spin" />
                             <p className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</p>
                         </div>
                     )}
@@ -215,18 +215,18 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     {/* Deals */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
-                                        <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{data.deals}</p>
+                                        <p className="text-2xl font-extrabold text-sgs-verified dark:text-emerald-400">{data.deals}</p>
                                     </div>
                                     {/* Close Rate */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
-                                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{data.closeRate}<span className="text-sm font-bold">%</span></p>
+                                        <p className="text-2xl font-extrabold text-sgs-primary dark:text-sgs-text-muted">{data.closeRate}<span className="text-sm font-bold">%</span></p>
                                         <p className="text-2xs text-[var(--text-secondary)] mt-1">{t('profile.perf_close_formula')}</p>
                                     </div>
                                     {/* Revenue */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_revenue')}</p>
-                                        <p className="text-xl font-extrabold text-violet-600 dark:text-violet-400">
+                                        <p className="text-xl font-extrabold text-sgs-primary dark:text-violet-400">
                                             {data.revenue >= 1e9
                                                 ? `${(data.revenue / 1e9).toFixed(1)} ${t('profile.perf_billion')}`
                                                 : data.revenue >= 1e6
@@ -243,7 +243,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     {/* In Progress */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_in_progress')}</p>
-                                        <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{data.inProgress}</p>
+                                        <p className="text-2xl font-extrabold text-sgs-accent-text dark:text-sgs-accent-text">{data.inProgress}</p>
                                     </div>
                                     {/* Lost */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
@@ -266,11 +266,11 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     </div>
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
-                                        <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{data.completedThisWeek}</p>
+                                        <p className="text-2xl font-extrabold text-sgs-verified dark:text-emerald-400">{data.completedThisWeek}</p>
                                     </div>
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
-                                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{data.completedThisMonth}</p>
+                                        <p className="text-2xl font-extrabold text-sgs-primary dark:text-sgs-text-muted">{data.completedThisMonth}</p>
                                     </div>
                                 </div>
                             </div>
@@ -437,10 +437,10 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                                 className="w-full"
                                 placement="top"
                             />
-                            <div className="mt-2 bg-indigo-50/60 border border-indigo-100 rounded-xl p-3 flex gap-2">
+                            <div className="mt-2 bg-indigo-50/60 border border-sgs-border rounded-xl p-3 flex gap-2">
                                 <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                                 <div>
-                                    <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
+                                    <h4 className="text-xs2 font-bold text-sgs-primary uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
                                     <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                         {t(`role_desc.${role}`)}
                                     </p>
@@ -455,7 +455,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                         type="submit"
                         form="invite-user-form"
                         disabled={loading || !name.trim() || !email.trim()}
-                        className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
+                        className="w-full py-3 bg-sgs-primary-deep text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
                     >
                         {loading
                             ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -703,24 +703,24 @@ export const AdminUsers: React.FC = () => {
                             <span className="text-xs sm:text-sm font-black text-[var(--text-primary)]">{totalUsers}</span>
                         </div>
                         {/* Hoạt động */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                            <span className="hidden sm:inline text-xs2 font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-emerald-600 uppercase">{t('admin.users.mobile_active')}</span>
-                            <span className="text-xs sm:text-sm font-black text-emerald-700">{stats.activeCount}</span>
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-sgs-champagne border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sgs-verified shrink-0"></span>
+                            <span className="hidden sm:inline text-xs2 font-bold text-sgs-verified uppercase tracking-wide">{t('admin.users.active_users')}</span>
+                            <span className="sm:hidden text-2xs font-bold text-sgs-verified uppercase">{t('admin.users.mobile_active')}</span>
+                            <span className="text-xs sm:text-sm font-black text-sgs-verified">{stats.activeCount}</span>
                         </div>
                         {/* Chờ duyệt */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                            <span className="hidden sm:inline text-xs2 font-bold text-amber-600 uppercase tracking-wide">{t('admin.users.pending_invites')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-amber-600 uppercase">{t('admin.users.mobile_pending')}</span>
-                            <span className="text-xs sm:text-sm font-black text-amber-700">{stats.pendingCount}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-sgs-accent shrink-0"></span>
+                            <span className="hidden sm:inline text-xs2 font-bold text-sgs-accent-text uppercase tracking-wide">{t('admin.users.pending_invites')}</span>
+                            <span className="sm:hidden text-2xs font-bold text-sgs-accent-text uppercase">{t('admin.users.mobile_pending')}</span>
+                            <span className="text-xs sm:text-sm font-black text-sgs-accent-text">{stats.pendingCount}</span>
                         </div>
                     </div>
                     {/* Nút mời thành viên */}
                     <button
                         onClick={() => setIsInviteOpen(true)}
-                        className="shrink-0 px-3 sm:px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md hover:bg-slate-800 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap active:scale-95 min-h-[36px]"
+                        className="shrink-0 px-3 sm:px-4 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl text-xs sm:text-sm shadow-md hover:bg-slate-800 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap active:scale-95 min-h-[36px]"
                     >
                         {ICONS.ADD}
                         <span className="hidden sm:inline">{t('admin.users.invite')}</span>
@@ -731,11 +731,11 @@ export const AdminUsers: React.FC = () => {
                 <div className="flex items-center gap-3 px-4 sm:px-5 py-2 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
                     {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
                     <div className="relative flex-1 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
+                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
                             placeholder={t('admin.users.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -794,7 +794,7 @@ export const AdminUsers: React.FC = () => {
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
                                                         <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
-                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
+                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-sgs-champagne text-sgs-primary px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
                                                     <div className="text-xs2 sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
                                                     {/* Role selector on mobile — interactive dropdown */}
@@ -870,7 +870,7 @@ export const AdminUsers: React.FC = () => {
                                                 {!isPending && [UserRole.SALES, UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) && (
                                                     <button
                                                         onClick={() => setPerfUser(user)}
-                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-sgs-champagne rounded-lg transition-colors"
                                                         title={t('admin.users.view_perf')}
                                                     >
                                                         {ICONS.CHART}
@@ -881,11 +881,11 @@ export const AdminUsers: React.FC = () => {
                                                     <button 
                                                         onClick={() => handleResendInvite(user)}
                                                         disabled={resendingId === user.id}
-                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors relative group/btn" 
+                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-sgs-primary hover:bg-sgs-champagne rounded-lg transition-colors relative group/btn" 
                                                         title={t('admin.users.resend')}
                                                     >
                                                         {resendingId === user.id ? (
-                                                            <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                                            <div className="w-4 h-4 border-2 border-sgs-border border-t-indigo-600 rounded-full animate-spin"></div>
                                                         ) : (
                                                             ICONS.SEND
                                                         )}
@@ -976,10 +976,10 @@ export const AdminUsers: React.FC = () => {
                             {t('admin.users.confirm_role_change', { name: userToRoleChange.user.name, role: t(`role.${userToRoleChange.newRole}`) })}
                         </p>
                         
-                        <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2 mb-6">
+                        <div className="bg-indigo-50/50 border border-sgs-border rounded-xl p-3 flex gap-2 mb-6">
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
-                                <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
+                                <h4 className="text-xs2 font-bold text-sgs-primary uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                     {t(`role_desc.${userToRoleChange.newRole}`)}
                                 </p>
@@ -995,7 +995,7 @@ export const AdminUsers: React.FC = () => {
                             </button>
                             <button 
                                 onClick={confirmRoleChange}
-                                className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-colors"
+                                className="flex-1 py-2.5 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow-lg hover:bg-sgs-primary transition-colors"
                             >
                                 {t('common.confirm')}
                             </button>

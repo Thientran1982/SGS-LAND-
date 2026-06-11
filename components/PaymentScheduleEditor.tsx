@@ -87,7 +87,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                         />
                     </div>
                     <div className="flex items-center justify-between text-xs text-[var(--text-tertiary)]">
-                        <span>{t('payment.total_paid')}: <strong className="text-emerald-600">{formatVND(totalPaid)}</strong></span>
+                        <span>{t('payment.total_paid')}: <strong className="text-sgs-verified">{formatVND(totalPaid)}</strong></span>
                         <span>{t('payment.total_scheduled')}: <strong>{formatVND(totalScheduled)}</strong></span>
                     </div>
                     {milestones.length > 0 && (
@@ -128,7 +128,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                             <div key={ms.id} className={`border rounded-xl p-4 space-y-3 transition-all ${isOverdue ? 'border-rose-200 bg-rose-50/30' : 'border-[var(--glass-border)] bg-[var(--bg-surface)]'}`}>
                                 {/* Row header */}
                                 <div className="flex items-center gap-3">
-                                    <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                    <span className="w-6 h-6 rounded-full bg-sgs-champagne text-sgs-primary font-bold text-xs flex items-center justify-center shrink-0">
                                         {idx + 1}
                                     </span>
                                     <input
@@ -218,7 +218,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                 {(ms.status === PaymentStatus.PAID || ms.status === PaymentStatus.WAIVED) && (
                                     <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[var(--glass-border)]">
                                         <div>
-                                            <label className="block text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">{t('payment.paid_date')}</label>
+                                            <label className="block text-xs font-bold text-sgs-verified uppercase tracking-wider mb-1">{t('payment.paid_date')}</label>
                                             <input
                                                 type="date"
                                                 value={ms.paidDate || ''}
@@ -229,7 +229,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">{t('payment.paid_amount')} (VNĐ)</label>
+                                            <label className="block text-xs font-bold text-sgs-verified uppercase tracking-wider mb-1">{t('payment.paid_amount')} (VNĐ)</label>
                                             <div className="relative">
                                                 <input
                                                     type="number"
@@ -242,10 +242,10 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                                     placeholder="VD: 500000000"
                                                     aria-label={t('payment.paid_amount')}
                                                 />
-                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-500 pointer-events-none">đ</span>
+                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-sgs-verified pointer-events-none">đ</span>
                                             </div>
                                             {(ms.paidAmount ?? ms.amount) ? (
-                                                <p className="mt-1 text-[10px] font-semibold text-emerald-600">
+                                                <p className="mt-1 text-[10px] font-semibold text-sgs-verified">
                                                     ≈ {formatVND(ms.paidAmount ?? ms.amount ?? 0)}
                                                 </p>
                                             ) : null}
@@ -265,7 +265,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                 </div>
                                 {/* Formatted amount display */}
                                 {ms.amount > 0 && (
-                                    <div className="text-right text-xs font-bold text-indigo-600">
+                                    <div className="text-right text-xs font-bold text-sgs-primary">
                                         ≈ {formatVND(ms.amount)}
                                         {ms.percentage > 0 && ` (${ms.percentage}%)`}
                                     </div>
@@ -280,7 +280,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                 <button
                     type="button"
                     onClick={addMilestone}
-                    className="w-full py-2.5 rounded-xl border-2 border-dashed border-indigo-200 text-indigo-500 hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-indigo-700 text-xs font-bold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    className="w-full py-2.5 rounded-xl border-2 border-dashed border-sgs-border text-sgs-primary hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-sgs-primary text-xs font-bold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                     {t('payment.add_milestone')}

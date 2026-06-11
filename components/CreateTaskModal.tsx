@@ -219,7 +219,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
             {selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {selectedUsers.map(u => (
-                  <span key={u.id} className="inline-flex items-center gap-1 text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 font-medium">
+                  <span key={u.id} className="inline-flex items-center gap-1 text-xs bg-sgs-champagne dark:bg-sgs-primary/20 text-sgs-primary dark:text-sgs-text-muted border border-sgs-border dark:border-indigo-800 rounded-lg px-2 py-0.5 font-medium">
                     {u.name}
                     <button type="button" onClick={() => removeAssignee(u.id)} className="hover:text-rose-500 transition-colors ml-0.5">
                       <XCircle size={11} />
@@ -240,19 +240,19 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               {userPickerOpen && (userResults.length > 0 || searchingUsers) && (
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 overflow-hidden max-h-[200px] overflow-y-auto no-scrollbar">
                   {searchingUsers ? (
-                    <div className="flex items-center justify-center p-4"><Loader2 size={16} className="animate-spin text-indigo-500" /></div>
+                    <div className="flex items-center justify-center p-4"><Loader2 size={16} className="animate-spin text-sgs-primary" /></div>
                   ) : (
                     userResults.map(u => (
                       <button key={u.id} type="button" onClick={() => { toggleAssignee(u); setAssigneeSearch(''); setUserPickerOpen(false); }}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[var(--glass-surface-hover)] transition-colors ${assigneeIds.includes(u.id) ? 'bg-indigo-50 dark:bg-indigo-900/10' : ''}`}>
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-[11px] font-bold text-sgs-primary flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium text-[var(--text-primary)] truncate">{u.name}</p>
                           {u.email && <p className="text-[11px] text-[var(--text-tertiary)] truncate">{u.email}</p>}
                         </div>
-                        {assigneeIds.includes(u.id) && <span className="ml-auto text-indigo-500 text-xs font-semibold flex-shrink-0">✓</span>}
+                        {assigneeIds.includes(u.id) && <span className="ml-auto text-sgs-primary text-xs font-semibold flex-shrink-0">✓</span>}
                       </button>
                     ))
                   )}
@@ -272,7 +272,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
             Hủy
           </button>
           <button type="submit" form="create-task-form" disabled={saving}
-            className="h-[38px] px-5 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm">
+            className="h-[38px] px-5 text-sm font-semibold bg-sgs-primary text-white rounded-xl hover:bg-sgs-primary flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm">
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Tạo công việc
           </button>
         </div>

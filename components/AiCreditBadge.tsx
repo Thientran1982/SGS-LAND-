@@ -65,7 +65,7 @@ export const AiCreditBadge: React.FC<Props> = ({ quota, featureLabel, className 
         />
       </div>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[9px] text-slate-500">{resetLabel}</span>
+        <span className="text-[9px] text-sgs-text-muted">{resetLabel}</span>
         {(isExhausted || isLow) && onUpgradeClick && (
           <button
             onClick={onUpgradeClick}

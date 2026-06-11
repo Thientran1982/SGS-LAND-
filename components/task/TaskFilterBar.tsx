@@ -126,10 +126,10 @@ export function TaskFilterBar({
         </div>
         {(showDepartment || showProject || showAssignee || showDeadlineRange) && (
           <button onClick={() => setShowAdvanced(v => !v)}
-            className={`h-[36px] px-3 text-sm border rounded-xl flex items-center gap-1.5 transition-colors flex-shrink-0 ${showAdvanced || advancedFilterCount > 0 ? 'border-indigo-400 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
+            className={`h-[36px] px-3 text-sm border rounded-xl flex items-center gap-1.5 transition-colors flex-shrink-0 ${showAdvanced || advancedFilterCount > 0 ? 'border-indigo-400 text-sgs-primary bg-indigo-50 dark:bg-indigo-900/20' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
             <SlidersHorizontal size={14} />
             {!compact && 'Lọc nâng cao'}
-            {advancedFilterCount > 0 && <span className="bg-indigo-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{advancedFilterCount}</span>}
+            {advancedFilterCount > 0 && <span className="bg-sgs-primary text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{advancedFilterCount}</span>}
           </button>
         )}
       </div>

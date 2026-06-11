@@ -116,7 +116,7 @@ export default function VendorManagementPage() {
                   {logs.map((log, i) => (
                     <tr key={log.id ?? i} className="border-t hover:bg-indigo-50/20 transition-colors"
                       style={{ borderColor: "var(--border-default)" }}>
-                      <td className="px-4 py-3 text-xs font-mono font-medium text-indigo-600">{log.action ?? "—"}</td>
+                      <td className="px-4 py-3 text-xs font-mono font-medium text-sgs-primary">{log.action ?? "—"}</td>
                       <td className="px-4 py-3 text-xs" style={{ color: "var(--text-primary)" }}>
                         {log.actor_name ?? log.actor_email ?? "—"}
                       </td>

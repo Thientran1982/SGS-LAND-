@@ -397,7 +397,7 @@ export const Profile: React.FC = () => {
                     <div className="w-32 h-32 rounded-full p-1 border-4 border-white shadow-xl bg-[var(--bg-surface)] overflow-hidden relative">
                         {uploading ? (
                             <div className="w-full h-full flex items-center justify-center bg-[var(--glass-surface-hover)]">
-                                <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                <div className="w-8 h-8 border-2 border-sgs-primary border-t-transparent rounded-full animate-spin"></div>
                             </div>
                         ) : formData.avatar && !avatarError ? (
                             <img 
@@ -407,8 +407,8 @@ export const Profile: React.FC = () => {
                                 onError={() => setAvatarError(true)}
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/40 rounded-full">
-                                <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-300 select-none">
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-sgs-primary-deep/40 dark:to-violet-900/40 rounded-full">
+                                <span className="text-4xl font-extrabold text-sgs-primary dark:text-sgs-on-dark-muted select-none">
                                     {formData.name?.charAt(0).toUpperCase() ?? '?'}
                                 </span>
                             </div>
@@ -417,7 +417,7 @@ export const Profile: React.FC = () => {
                             <div className="bg-[var(--bg-surface)]/20 p-2 rounded-full text-white">{ICONS.UPLOAD}</div>
                         </div>
                     </div>
-                    <button className="absolute bottom-1 right-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] p-2 rounded-full shadow-lg border border-[var(--glass-border)] hover:text-indigo-600 transition-colors">
+                    <button className="absolute bottom-1 right-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] p-2 rounded-full shadow-lg border border-[var(--glass-border)] hover:text-sgs-primary transition-colors">
                         {ICONS.CAMERA}
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/png, image/jpeg, image/webp" aria-hidden="true" />
@@ -426,7 +426,7 @@ export const Profile: React.FC = () => {
                 <div className="text-center md:text-left z-10 flex-1">
                     <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight mb-2">{user.name}</h1>
                     <div className="flex items-center justify-center md:justify-start gap-3">
-                        <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-md shadow-slate-200">
+                        <span className="px-3 py-1 bg-sgs-primary-deep text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-md shadow-slate-200">
                             {t(`role.${user.role?.toUpperCase()}`)}
                         </span>
                         <span className="px-3 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-xs font-mono text-[var(--text-tertiary)]">
@@ -434,7 +434,7 @@ export const Profile: React.FC = () => {
                         </span>
                         {/* SSO Badge */}
                         {user.source === 'SSO' && (
-                            <span className="px-3 py-1 bg-blue-50 border border-blue-100 text-blue-600 rounded-lg text-xs font-bold uppercase tracking-wide">
+                            <span className="px-3 py-1 bg-blue-50 border border-blue-100 text-sgs-primary rounded-lg text-xs font-bold uppercase tracking-wide">
                                 {t('profile.sso_badge')}
                             </span>
                         )}
@@ -503,7 +503,7 @@ export const Profile: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={handleRequestEmailChange}
-                                                className="text-xs text-indigo-600 hover:text-indigo-700 font-bold hover:underline"
+                                                className="text-xs text-sgs-primary hover:text-sgs-primary font-bold hover:underline"
                                             >
                                                 {t('profile.btn_change')}
                                             </button>
@@ -515,8 +515,8 @@ export const Profile: React.FC = () => {
                                         className="w-full bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-sm text-[var(--text-tertiary)] cursor-not-allowed outline-none"
                                     />
                                     {emailChangeOpen && (
-                                        <div className="mt-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3 animate-enter">
-                                            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">{t('profile.email_change_title')}</p>
+                                        <div className="mt-3 p-4 bg-sgs-champagne border border-sgs-border rounded-2xl space-y-3 animate-enter">
+                                            <p className="text-xs font-bold text-sgs-primary uppercase tracking-wider">{t('profile.email_change_title')}</p>
                                             <div className="space-y-1.5">
                                                 <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_new_label')}</label>
                                                 <input
@@ -547,7 +547,7 @@ export const Profile: React.FC = () => {
                                                     type="button"
                                                     onClick={handleSubmitEmailChange}
                                                     disabled={emailSaving}
-                                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                                    className="flex-1 bg-sgs-primary hover:bg-sgs-primary text-white text-sm font-bold py-2.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                                 >
                                                     {emailSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
                                                     {t('profile.email_submit')}
@@ -599,7 +599,7 @@ export const Profile: React.FC = () => {
                             // Security Tab - Differentiate for SSO vs Standard
                             user.source === 'SSO' ? (
                                 <div className="animate-enter max-w-2xl text-center py-10 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
-                                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <div className="w-16 h-16 bg-blue-100 text-sgs-primary rounded-full flex items-center justify-center mx-auto mb-4">
                                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                                     </div>
                                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{t('profile.sso_managed_title')}</h3>
@@ -667,7 +667,7 @@ export const Profile: React.FC = () => {
                             <div className="animate-enter">
                                 {perfLoading ? (
                                     <div className="flex flex-col items-center justify-center py-16 gap-4">
-                                        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                                        <div className="w-10 h-10 border-4 border-sgs-border border-t-indigo-600 rounded-full animate-spin" />
                                         <span className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</span>
                                     </div>
                                 ) : perfError || !perfData ? (
@@ -680,7 +680,7 @@ export const Profile: React.FC = () => {
                                 ) : (
                                     <div className="space-y-8">
                                         {/* ── SLA Score Hero ───────────────────────────────── */}
-                                        <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-100 dark:border-indigo-800/40">
+                                        <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-sgs-primary-deep/20 dark:to-violet-900/20 border border-sgs-border dark:border-indigo-800/40">
                                             {/* Radial SLA ring */}
                                             <div className="relative flex-shrink-0">
                                                 <svg viewBox="0 0 120 120" className="w-28 h-28">
@@ -688,7 +688,7 @@ export const Profile: React.FC = () => {
                                                     <circle
                                                         cx="60" cy="60" r="50" fill="none"
                                                         stroke="currentColor"
-                                                        className={perfData.slaScore >= 90 ? 'text-emerald-500' : perfData.slaScore >= 70 ? 'text-indigo-500' : 'text-amber-500'}
+                                                        className={perfData.slaScore >= 90 ? 'text-emerald-500' : perfData.slaScore >= 70 ? 'text-sgs-primary' : 'text-amber-500'}
                                                         strokeWidth="10"
                                                         strokeLinecap="round"
                                                         strokeDasharray={`${2 * Math.PI * 50}`}
@@ -705,7 +705,7 @@ export const Profile: React.FC = () => {
                                                 </svg>
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">{t('profile.perf_sla')}</p>
+                                                <p className="text-xs font-bold uppercase tracking-widest text-sgs-primary mb-1">{t('profile.perf_sla')}</p>
                                                 <p className={`text-2xl font-extrabold mb-1 ${perfData.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : perfData.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>
                                                     {perfData.slaScore >= 90 ? t('profile.perf_sla_excellent') : perfData.slaScore >= 70 ? t('profile.perf_sla_good') : t('profile.perf_sla_needs_work')}
                                                 </p>
@@ -724,18 +724,18 @@ export const Profile: React.FC = () => {
                                                 {/* Deals WON */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
-                                                    <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{perfData.deals}</p>
+                                                    <p className="text-3xl font-extrabold text-sgs-verified dark:text-emerald-400">{perfData.deals}</p>
                                                 </div>
                                                 {/* Close Rate */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
-                                                    <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{perfData.closeRate}<span className="text-lg font-bold">%</span></p>
+                                                    <p className="text-3xl font-extrabold text-sgs-primary dark:text-sgs-text-muted">{perfData.closeRate}<span className="text-lg font-bold">%</span></p>
                                                     <p className="text-xs text-[var(--text-secondary)] mt-1">{t('profile.perf_close_formula')}</p>
                                                 </div>
                                                 {/* Revenue */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_revenue')}</p>
-                                                    <p className="text-2xl font-extrabold text-violet-600 dark:text-violet-400">
+                                                    <p className="text-2xl font-extrabold text-sgs-primary dark:text-violet-400">
                                                         {perfData.revenue >= 1e9
                                                             ? `${(perfData.revenue / 1e9).toFixed(1)} ${t('profile.perf_billion')}`
                                                             : perfData.revenue >= 1e6
@@ -752,7 +752,7 @@ export const Profile: React.FC = () => {
                                                 {/* In Progress */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_in_progress')}</p>
-                                                    <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400">{perfData.inProgress}</p>
+                                                    <p className="text-3xl font-extrabold text-sgs-accent-text dark:text-sgs-accent-text">{perfData.inProgress}</p>
                                                 </div>
                                                 {/* Lost */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
@@ -775,11 +775,11 @@ export const Profile: React.FC = () => {
                                                 </div>
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
-                                                    <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{perfData.completedThisWeek}</p>
+                                                    <p className="text-3xl font-extrabold text-sgs-verified dark:text-emerald-400">{perfData.completedThisWeek}</p>
                                                 </div>
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
-                                                    <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{perfData.completedThisMonth}</p>
+                                                    <p className="text-3xl font-extrabold text-sgs-primary dark:text-sgs-text-muted">{perfData.completedThisMonth}</p>
                                                 </div>
                                             </div>
                                         </div>

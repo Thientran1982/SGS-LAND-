@@ -188,7 +188,7 @@ function css(): string {
   return `
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#F1F5F9;color:#1E293B;line-height:1.6;font-size:15px}
-    a{color:#1B3A5C;text-decoration:none}a:hover{text-decoration:underline}
+    a{color:var(--sgs-primary);text-decoration:none}a:hover{text-decoration:underline}
     .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
     /* Header */
     .hdr{background:#1E293B;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100}
@@ -198,7 +198,7 @@ function css(): string {
     .hdr-nav{display:flex;align-items:center;gap:8px}
     .hdr-nav a{color:#CBD5E1;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;border:1px solid #334155;transition:background .15s;white-space:nowrap}
     .hdr-nav a:hover{background:#334155;color:#fff;text-decoration:none}
-    .hdr-nav a.primary{background:#1B3A5C;border-color:#1B3A5C;color:#fff}
+    .hdr-nav a.primary{background:var(--sgs-primary);border-color:var(--sgs-primary);color:#fff}
     .hdr-nav a.primary:hover{background:#0F2740;border-color:#0F2740}
     /* Hero */
     .hero{background:linear-gradient(135deg,#1E293B 0%,#1e3a5f 100%);padding:48px 20px 60px;text-align:center}
@@ -214,7 +214,7 @@ function css(): string {
     .card-hdr h2{font-size:18px;font-weight:700;color:#0F172A}
     .card-hdr p{color:#64748B;font-size:13px;margin-top:3px}
     .badge-green{background:#DCFCE7;color:#166534;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap}
-    .badge-blue{background:#E8EEF5;color:#1B3A5C;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap}
+    .badge-blue{background:#E8EEF5;color:var(--sgs-primary);font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap}
     .tbl-wrap{overflow-x:auto}
     table{width:100%;border-collapse:collapse;min-width:620px}
     thead th{background:#F8FAFC;padding:11px 16px;text-align:left;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #E2E8F0;white-space:nowrap}
@@ -231,15 +231,15 @@ function css(): string {
     .faq-q{padding:15px 18px;font-weight:700;color:#0F172A;font-size:15px;background:#F8FAFC;border-bottom:1px solid #E2E8F0}
     .faq-a{padding:14px 18px;color:#475569;font-size:14px;line-height:1.7}
     /* CTA */
-    .cta-box{background:linear-gradient(135deg,#1B3A5C,#0F2740);border-radius:16px;padding:36px 28px;text-align:center;color:#fff;margin-bottom:28px}
+    .cta-box{background:linear-gradient(135deg,var(--sgs-primary),#0F2740);border-radius:16px;padding:36px 28px;text-align:center;color:#fff;margin-bottom:28px}
     .cta-box h2{font-size:22px;font-weight:700;margin-bottom:8px}
     .cta-box p{color:#C7D2FE;font-size:14px;margin-bottom:24px}
-    .cta-btn{display:inline-block;background:#fff;color:#1B3A5C;padding:13px 32px;border-radius:10px;font-weight:700;font-size:15px;transition:transform .15s}
+    .cta-btn{display:inline-block;background:#fff;color:var(--sgs-primary);padding:13px 32px;border-radius:10px;font-weight:700;font-size:15px;transition:transform .15s}
     .cta-btn:hover{transform:translateY(-1px);text-decoration:none}
     /* Info boxes */
     .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:28px}
     .info-item{background:#fff;border-radius:12px;padding:20px;border:1px solid #E2E8F0;text-align:center}
-    .info-val{font-size:28px;font-weight:800;color:#1B3A5C;display:block;line-height:1}
+    .info-val{font-size:28px;font-weight:800;color:var(--sgs-primary);display:block;line-height:1}
     .info-label{font-size:12px;color:#64748B;margin-top:6px}
     /* Breadcrumb */
     .bc{padding:14px 0;font-size:13px;color:#64748B;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -391,7 +391,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <!-- HEADER -->
 <header class="hdr">
   <a href="/" class="hdr-brand">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--sgs-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M12 2L2 7l10 5 10-5-10-5z" class="svg-p1"/>
       <path d="M2 12l10 5 10-5" class="svg-p2"/>
       <path d="M2 17l10 5 10-5" class="svg-p3"/>
@@ -530,7 +530,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <footer class="ftr">
   <div class="wrap">
     <a href="/" class="ftr-brand">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--sgs-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 2L2 7l10 5 10-5-10-5z" class="svg-p1"/>
         <path d="M2 12l10 5 10-5" class="svg-p2"/>
         <path d="M2 17l10 5 10-5" class="svg-p3"/>

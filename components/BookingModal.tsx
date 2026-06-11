@@ -68,7 +68,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={!isSubmitting ? onClose : undefined}></div>
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-                    <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">{ICONS.CALENDAR}</div>
+                    <div className="p-1.5 bg-sgs-champagne text-sgs-primary rounded-lg">{ICONS.CALENDAR}</div>
                     {t('detail.book_viewing')}
                 </h3>                
                 <div className="space-y-4">
@@ -104,14 +104,14 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                                 value={date} 
                                 onChange={e => setDate(e.target.value)} 
                                 disabled={isSubmitting}
-                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
+                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             />
                             <input 
                                 type="time" 
                                 value={time} 
                                 onChange={e => setTime(e.target.value)} 
                                 disabled={isSubmitting}
-                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
+                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             />
                         </div>
                     </div>
@@ -121,7 +121,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                             value={note}
                             onChange={e => setNote(e.target.value)}
                             disabled={isSubmitting}
-                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all h-24 resize-none placeholder:text-[var(--text-muted)] disabled:opacity-50"
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-sgs-primary outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all h-24 resize-none placeholder:text-[var(--text-muted)] disabled:opacity-50"
                             placeholder={t('leads.placeholder_notes')}
                         />
                     </div>
@@ -137,7 +137,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                     <button 
                         onClick={handleConfirm} 
                         disabled={isSubmitting}
-                        className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="flex-1 py-3 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow-lg hover:bg-sgs-primary transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

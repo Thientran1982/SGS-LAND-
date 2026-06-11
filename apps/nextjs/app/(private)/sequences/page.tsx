@@ -63,8 +63,8 @@ const SEQ_STATUS: Record<string, { label: string; cls: string }> = {
 };
 
 const SEND_STATUS: Record<string, { label: string; icon: React.ReactNode }> = {
-  PENDING:   { label: "Chờ gửi",  icon: <Clock className="w-3.5 h-3.5 text-amber-500" /> },
-  SENT:      { label: "Đã gửi",   icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> },
+  PENDING:   { label: "Chờ gửi",  icon: <Clock className="w-3.5 h-3.5 text-sgs-accent-text" /> },
+  SENT:      { label: "Đã gửi",   icon: <CheckCircle2 className="w-3.5 h-3.5 text-sgs-verified" /> },
   FAILED:    { label: "Lỗi",      icon: <XCircle className="w-3.5 h-3.5 text-red-500" /> },
   SKIPPED:   { label: "Bỏ qua",  icon: <Ban className="w-3.5 h-3.5 text-slate-400" /> },
   CANCELLED: { label: "Đã hủy",  icon: <Ban className="w-3.5 h-3.5 text-red-400" /> },
@@ -72,8 +72,8 @@ const SEND_STATUS: Record<string, { label: string; icon: React.ReactNode }> = {
 
 const CHANNEL_ICON: Record<string, React.ReactNode> = {
   ZALO:  <MessageCircle className="w-3.5 h-3.5 text-blue-500" />,
-  SMS:   <Phone className="w-3.5 h-3.5 text-violet-500" />,
-  EMAIL: <Mail className="w-3.5 h-3.5 text-indigo-500" />,
+  SMS:   <Phone className="w-3.5 h-3.5 text-sgs-primary" />,
+  EMAIL: <Mail className="w-3.5 h-3.5 text-sgs-primary" />,
 };
 
 const EMAIL_SEQ_COLOR: Record<string, string> = {
@@ -157,7 +157,7 @@ function FollowUpRow({ seq, onCancel }: { seq: FollowUpSequence; onCancel: (id: 
             </span>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.cls}`}>{st.label}</span>
             {seq.project_code && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-sgs-champagne text-sgs-primary font-medium">
                 {seq.project_code}
               </span>
             )}
@@ -169,8 +169,8 @@ function FollowUpRow({ seq, onCancel }: { seq: FollowUpSequence; onCancel: (id: 
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-xs" style={{ color: "var(--text-secondary)" }}>
-          <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{seq.sent_count}/4 gửi</span>
-          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-amber-500" />{seq.pending_count} chờ</span>
+          <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-sgs-verified" />{seq.sent_count}/4 gửi</span>
+          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-sgs-accent-text" />{seq.pending_count} chờ</span>
           {seq.failed_count > 0 && (
             <span className="flex items-center gap-1"><XCircle className="w-3.5 h-3.5 text-red-500" />{seq.failed_count} lỗi</span>
           )}
@@ -253,9 +253,9 @@ function FollowUpTab() {
       {!loading && data.total > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
-            { label: "Tổng chuỗi", value: data.total, icon: <Workflow className="w-4 h-4 text-indigo-500" /> },
-            { label: "Đang chạy",  value: activeCount, icon: <Clock className="w-4 h-4 text-amber-500" /> },
-            { label: "Tin đã gửi", value: sentTotal,   icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" /> },
+            { label: "Tổng chuỗi", value: data.total, icon: <Workflow className="w-4 h-4 text-sgs-primary" /> },
+            { label: "Đang chạy",  value: activeCount, icon: <Clock className="w-4 h-4 text-sgs-accent-text" /> },
+            { label: "Tin đã gửi", value: sentTotal,   icon: <CheckCircle2 className="w-4 h-4 text-sgs-verified" /> },
           ].map(kpi => (
             <div key={kpi.label} className="rounded-2xl p-4 flex items-center gap-3"
               style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
@@ -395,7 +395,7 @@ function EmailSequencesTab() {
               <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-secondary)" }}>
                 {s.steps_count !== undefined && <div className="flex items-center gap-1"><Workflow className="w-3.5 h-3.5" />{s.steps_count} bước</div>}
                 {s.enrolled_count !== undefined && <div className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{s.enrolled_count} đã đăng ký</div>}
-                {s.active_count !== undefined && <div className="flex items-center gap-1"><Play className="w-3.5 h-3.5 text-emerald-500" />{s.active_count} đang chạy</div>}
+                {s.active_count !== undefined && <div className="flex items-center gap-1"><Play className="w-3.5 h-3.5 text-sgs-verified" />{s.active_count} đang chạy</div>}
                 {s.completed_count !== undefined && <div className="flex items-center gap-1"><Pause className="w-3.5 h-3.5 text-blue-500" />{s.completed_count} xong</div>}
               </div>
               {s.trigger_type && (
@@ -425,7 +425,7 @@ export default function SequencesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-            <Zap className="w-6 h-6 text-indigo-500" />
+            <Zap className="w-6 h-6 text-sgs-primary" />
             Sequences & Follow-up
           </h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>

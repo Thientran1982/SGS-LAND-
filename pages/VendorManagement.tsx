@@ -70,8 +70,8 @@ function RejectModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Từ chối đăng ký</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-lg font-bold text-sgs-text">Từ chối đăng ký</h3>
+          <p className="text-sm text-sgs-text-muted mt-1">
             Workspace: <strong>{vendor.name}</strong> — {vendor.admin?.email}
           </p>
         </div>
@@ -135,8 +135,8 @@ function SuspendModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Tạm ngừng workspace</h3>
-          <p className="text-sm text-gray-500 mt-1"><strong>{vendor.name}</strong></p>
+          <h3 className="text-lg font-bold text-sgs-text">Tạm ngừng workspace</h3>
+          <p className="text-sm text-sgs-text-muted mt-1"><strong>{vendor.name}</strong></p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <textarea
@@ -148,7 +148,7 @@ function SuspendModal({
           />
           <div className="flex gap-3 justify-end">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">Hủy</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 transition disabled:opacity-60">
+            <button type="submit" disabled={loading} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-sgs-accent hover:bg-sgs-accent-text transition disabled:opacity-60">
               {loading ? 'Đang xử lý...' : 'Tạm ngừng'}
             </button>
           </div>
@@ -235,20 +235,20 @@ export default function VendorManagement() {
     return acc;
   }, {});
   return (
-    <div className="min-h-full bg-gray-50">
+    <div className="min-h-full bg-sgs-bg">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-5">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Quản lý Vendor</h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <h1 className="text-2xl font-bold text-sgs-text">Quản lý Vendor</h1>
+              <p className="text-sm text-sgs-text-muted mt-1">
                 Duyệt, từ chối hoặc tạm ngừng workspace của các công ty đăng ký trên SGS Land
               </p>
             </div>
             <button
               onClick={fetchVendors}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary hover:bg-sgs-primary text-white text-sm font-semibold transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -268,7 +268,7 @@ export default function VendorManagement() {
                 onClick={() => { setFilterStatus(filterStatus === s ? '' : s); setPage(1); }}
                 className={`bg-white rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-gray-100'}`}
               >
-                <p className="text-2xl font-bold text-gray-900">{statusCounts[s] || 0}</p>
+                <p className="text-2xl font-bold text-sgs-text">{statusCounts[s] || 0}</p>
                 <p className="text-xs font-semibold mt-1">
                   <StatusBadge status={s} />
                 </p>
@@ -301,7 +301,7 @@ export default function VendorManagement() {
         </div>
         {/* Messages */}
         {successMsg && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
+          <div className="bg-sgs-champagne border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             {successMsg}
           </div>
@@ -331,36 +331,36 @@ export default function VendorManagement() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-sgs-bg border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Công ty</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Admin</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Gói</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Trạng thái</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Ngày đăng ký</th>
-                    <th className="text-right px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Hành động</th>
+                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Công ty</th>
+                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Admin</th>
+                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Gói</th>
+                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Trạng thái</th>
+                    <th className="text-left px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Ngày đăng ký</th>
+                    <th className="text-right px-5 py-3.5 font-semibold text-sgs-text-muted text-xs uppercase tracking-wide">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {vendors.map(vendor => (
-                    <tr key={vendor.id} className="hover:bg-gray-50/50 transition">
+                    <tr key={vendor.id} className="hover:bg-sgs-bg/50 transition">
                       <td className="px-5 py-4">
-                        <p className="font-semibold text-gray-900">{vendor.name}</p>
+                        <p className="font-semibold text-sgs-text">{vendor.name}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{vendor.domain}</p>
                       </td>
                       <td className="px-5 py-4">
                         {vendor.admin ? (
                           <div>
                             <p className="font-medium text-gray-800">{vendor.admin.name}</p>
-                            <p className="text-xs text-gray-500">{vendor.admin.email}</p>
+                            <p className="text-xs text-sgs-text-muted">{vendor.admin.email}</p>
                             <div className="flex items-center gap-1 mt-1">
                               {vendor.admin.emailVerified ? (
-                                <span className="text-xs text-emerald-600 flex items-center gap-0.5">
+                                <span className="text-xs text-sgs-verified flex items-center gap-0.5">
                                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                                   Email đã xác minh
                                 </span>
                               ) : (
-                                <span className="text-xs text-amber-600">Email chưa xác minh</span>
+                                <span className="text-xs text-sgs-accent-text">Email chưa xác minh</span>
                               )}
                             </div>
                           </div>
@@ -388,7 +388,7 @@ export default function VendorManagement() {
                         )}
                       </td>
                       <td className="px-5 py-4">
-                        <p className="text-gray-600">{new Date(vendor.createdAt).toLocaleDateString('vi-VN')}</p>
+                        <p className="text-sgs-text-muted">{new Date(vendor.createdAt).toLocaleDateString('vi-VN')}</p>
                         <p className="text-xs text-gray-400">{new Date(vendor.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
                       </td>
                       <td className="px-5 py-4">
@@ -398,7 +398,7 @@ export default function VendorManagement() {
                               <button
                                 onClick={() => handleApprove(vendor)}
                                 disabled={actionLoading === vendor.id}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-60"
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-sgs-verified text-white hover:bg-emerald-700 transition disabled:opacity-60"
                               >
                                 {actionLoading === vendor.id ? '...' : 'Duyệt'}
                               </button>
@@ -415,7 +415,7 @@ export default function VendorManagement() {
                             <button
                               onClick={() => setSuspendTarget(vendor)}
                               disabled={actionLoading === vendor.id}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition disabled:opacity-60"
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-sgs-accent-text border border-amber-200 hover:bg-amber-100 transition disabled:opacity-60"
                             >
                               Tạm ngừng
                             </button>
@@ -424,7 +424,7 @@ export default function VendorManagement() {
                             <button
                               onClick={() => handleApprove(vendor)}
                               disabled={actionLoading === vendor.id}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition disabled:opacity-60"
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-sgs-champagne text-sgs-primary border border-sgs-border hover:bg-sgs-champagne transition disabled:opacity-60"
                             >
                               {actionLoading === vendor.id ? '...' : 'Kích hoạt lại'}
                             </button>
@@ -444,15 +444,15 @@ export default function VendorManagement() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
+              className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40 hover:bg-sgs-bg transition"
             >
               Trước
             </button>
-            <span className="text-sm text-gray-500">Trang {page} / {totalPages}</span>
+            <span className="text-sm text-sgs-text-muted">Trang {page} / {totalPages}</span>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
+              className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40 hover:bg-sgs-bg transition"
             >
               Sau
             </button>

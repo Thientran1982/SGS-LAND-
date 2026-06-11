@@ -129,7 +129,7 @@ export const Checkout: React.FC = () => {
                     <p className="text-sm text-[var(--text-secondary)] mb-5">{error || 'Vui lòng tạo lại từ trang định giá hoặc trang Billing.'}</p>
                     <button
                         onClick={() => navigateTo(ROUTES.BILLING)}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sgs-primary-deep text-white text-sm font-bold hover:bg-sgs-primary transition-colors"
                     >
                         {ICONS.BACK} Quay lại Billing
                     </button>
@@ -146,7 +146,7 @@ export const Checkout: React.FC = () => {
             <div className="max-w-3xl mx-auto">
                 <button
                     onClick={() => navigateTo(ROUTES.BILLING)}
-                    className="inline-flex items-center gap-2 text-xs font-bold text-[var(--text-secondary)] hover:text-indigo-600 mb-4"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-[var(--text-secondary)] hover:text-sgs-primary mb-4"
                 >
                     {ICONS.BACK} Quay lại Billing
                 </button>
@@ -156,7 +156,7 @@ export const Checkout: React.FC = () => {
                     <div className="md:col-span-2 bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                         <div className="text-xs2 uppercase tracking-wider font-bold text-[var(--text-tertiary)] mb-2">Đơn nâng cấp</div>
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] mb-1">Gói {session.planName}</div>
-                        <div className="text-3xl font-extrabold text-indigo-600 mb-1">
+                        <div className="text-3xl font-extrabold text-sgs-primary mb-1">
                             ${session.amount}
                             <span className="text-sm font-medium text-[var(--text-secondary)]"> / tháng</span>
                         </div>
@@ -164,7 +164,7 @@ export const Checkout: React.FC = () => {
                         <ul className="space-y-2.5">
                             {features.map((f) => (
                                 <li key={f} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                                    <span className="text-emerald-500 mt-0.5">{ICONS.CHECK}</span>
+                                    <span className="text-sgs-verified mt-0.5">{ICONS.CHECK}</span>
                                     {f}
                                 </li>
                             ))}
@@ -178,7 +178,7 @@ export const Checkout: React.FC = () => {
                     <div className="md:col-span-3 bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                         {isPaid ? (
                             <div className="py-10 text-center">
-                                <div className="w-16 h-16 mx-auto rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-4">
+                                <div className="w-16 h-16 mx-auto rounded-full bg-sgs-champagne border border-emerald-200 flex items-center justify-center text-sgs-verified mb-4">
                                     {ICONS.CHECK}
                                 </div>
                                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Thanh toán thành công</h3>
@@ -187,7 +187,7 @@ export const Checkout: React.FC = () => {
                                 </p>
                                 <button
                                     onClick={() => navigateTo(ROUTES.BILLING)}
-                                    className="px-5 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600"
+                                    className="px-5 py-2 rounded-xl bg-sgs-primary-deep text-white text-sm font-bold hover:bg-sgs-primary"
                                 >
                                     Xem chi tiết Billing
                                 </button>
@@ -202,14 +202,14 @@ export const Checkout: React.FC = () => {
                                 </p>
                                 <button
                                     onClick={() => navigateTo(`${ROUTES.CHECKOUT}?plan=${session.planId}`)}
-                                    className="px-5 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600"
+                                    className="px-5 py-2 rounded-xl bg-sgs-primary-deep text-white text-sm font-bold hover:bg-sgs-primary"
                                 >
                                     Tạo phiên mới
                                 </button>
                             </div>
                         ) : session.provider === 'stripe' ? (
                             <div className="py-10 text-center">
-                                <div className="w-16 h-16 mx-auto rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 mb-4">
+                                <div className="w-16 h-16 mx-auto rounded-full bg-sgs-champagne border border-sgs-border flex items-center justify-center text-sgs-primary mb-4">
                                     {ICONS.LOCK}
                                 </div>
                                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Thanh toán an toàn qua Stripe</h3>
@@ -219,7 +219,7 @@ export const Checkout: React.FC = () => {
                                 {session.providerCheckoutUrl ? (
                                     <a
                                         href={session.providerCheckoutUrl}
-                                        className="inline-flex px-5 py-3 rounded-xl bg-indigo-600 text-white text-sm font-extrabold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20"
+                                        className="inline-flex px-5 py-3 rounded-xl bg-sgs-primary text-white text-sm font-extrabold hover:bg-sgs-primary shadow-lg shadow-indigo-500/20"
                                     >
                                         Tiếp tục đến Stripe →
                                     </a>
@@ -253,7 +253,7 @@ export const Checkout: React.FC = () => {
                                             value={cardName}
                                             onChange={(e) => setCardName(e.target.value)}
                                             placeholder="NGUYEN VAN A"
-                                            className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                         />
                                     </div>
                                     <div>
@@ -262,7 +262,7 @@ export const Checkout: React.FC = () => {
                                             value={cardNumber}
                                             onChange={(e) => setCardNumber(e.target.value)}
                                             placeholder="4242 4242 4242 4242"
-                                            className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
@@ -272,7 +272,7 @@ export const Checkout: React.FC = () => {
                                                 value={cardExpiry}
                                                 onChange={(e) => setCardExpiry(e.target.value)}
                                                 placeholder="MM/YY"
-                                                className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                             />
                                         </div>
                                         <div>
@@ -281,7 +281,7 @@ export const Checkout: React.FC = () => {
                                                 value={cardCvc}
                                                 onChange={(e) => setCardCvc(e.target.value)}
                                                 placeholder="123"
-                                                className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                className="w-full px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-sgs-primary"
                                             />
                                         </div>
                                     </div>
@@ -296,7 +296,7 @@ export const Checkout: React.FC = () => {
                                     <button
                                         onClick={handleConfirm}
                                         disabled={submitting}
-                                        className="flex-1 py-3 rounded-xl bg-emerald-500 text-white text-sm font-extrabold hover:bg-emerald-600 active:scale-[0.99] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
+                                        className="flex-1 py-3 rounded-xl bg-sgs-verified text-white text-sm font-extrabold hover:bg-sgs-verified active:scale-[0.99] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                         {submitting ? 'Đang xử lý…' : `Xác nhận thanh toán $${session.amount}`}
                                     </button>

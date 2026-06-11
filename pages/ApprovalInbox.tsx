@@ -150,7 +150,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                 <div className="flex items-center gap-3">
                     <div 
                         className={`w-5 h-5 rounded border transition-colors flex items-center justify-center
-                            ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-[var(--bg-surface)] border-slate-300 text-transparent group-hover:border-indigo-400'}`}
+                            ${isSelected ? 'bg-indigo-600 border-sgs-primary text-white' : 'bg-[var(--bg-surface)] border-slate-300 text-transparent group-hover:border-indigo-400'}`}
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
@@ -179,7 +179,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                          <div className="text-xs2 text-[var(--text-tertiary)]">
                             {t('approvals.price_original')}: <span className="line-through">{formatCurrency(proposal.basePrice)}</span>
                          </div>
-                         <div className="text-sm font-bold text-indigo-600">
+                         <div className="text-sm font-bold text-sgs-primary">
                             {formatCurrency(proposal.finalPrice)}
                          </div>
                     </div>
@@ -219,7 +219,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                     onClick={(e) => { e.stopPropagation(); onApprove(proposal.id); }}
                     disabled={isSelf}
                     title={isSelf ? t('approvals.tooltip_self') : undefined}
-                    className="flex-1 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-2 rounded-lg bg-sgs-primary-deep text-white text-xs font-bold hover:bg-slate-800 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isSelf ? t('approvals.tooltip_self') : t('approvals.btn_approve')}
                 </button>
@@ -366,7 +366,7 @@ export const ApprovalInbox: React.FC = () => {
                 </div>
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
                     <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest truncate">{t('approvals.metric_avg_discount')}</span>
-                    <div className="text-xl md:text-2xl font-black text-indigo-600 tracking-tight mt-1">{metrics.avgDiscount.toFixed(1)}%</div>
+                    <div className="text-xl md:text-2xl font-black text-sgs-primary tracking-tight mt-1">{metrics.avgDiscount.toFixed(1)}%</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
                     <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest truncate">{t('approvals.metric_high_risk')}</span>
@@ -380,7 +380,7 @@ export const ApprovalInbox: React.FC = () => {
                     <span className="bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded-full text-xs font-bold">{pending.length}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={handleSelectAll} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors">
+                    <button onClick={handleSelectAll} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-sgs-primary transition-colors">
                         {selectedIds.size === sortedProposals.length && sortedProposals.length > 0 ? t('approvals.deselect_all') : t('approvals.select_all')}
                     </button>
                     <div className="h-4 w-px bg-slate-200"></div>
@@ -436,14 +436,14 @@ export const ApprovalInbox: React.FC = () => {
             )}
             {/* BULK ACTION BAR */}
             {selectedIds.size > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white p-3 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-scale-up border border-slate-700 min-w-[300px] justify-between">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-sgs-primary-deep text-white p-3 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-scale-up border border-slate-700 min-w-[300px] justify-between">
                     <div className="pl-2 text-sm font-bold flex items-center gap-2">
-                        <span className="bg-indigo-500 px-2 py-0.5 rounded-full text-xs">{selectedIds.size}</span>
+                        <span className="bg-sgs-primary px-2 py-0.5 rounded-full text-xs">{selectedIds.size}</span>
                         {t('approvals.selected_count')}
                     </div>
                     <button 
                         onClick={() => processApproval(Array.from(selectedIds))}
-                        className="bg-[var(--bg-surface)] text-[var(--text-primary)] px-6 py-2 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors shadow-lg active:scale-95"
+                        className="bg-[var(--bg-surface)] text-[var(--text-primary)] px-6 py-2 rounded-xl text-xs font-bold hover:bg-sgs-champagne transition-colors shadow-lg active:scale-95"
                     >
                         {t('approvals.approve_selection')}
                     </button>

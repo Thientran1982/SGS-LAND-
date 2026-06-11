@@ -13,11 +13,11 @@ interface ThemeCustomizerProps {
   notify: (msg: string, type: 'success' | 'error') => void;
 }
 const PRESET_COLORS = [
-  { value: '#1B3A5C', label: 'Indigo' },
+  { value: 'var(--sgs-primary)', label: 'Indigo' },
   { value: '#7C3AED', label: 'Violet' },
   { value: '#DB2777', label: 'Pink' },
   { value: '#0EA5E9', label: 'Sky' },
-  { value: '#059669', label: 'Emerald' },
+  { value: 'var(--sgs-verified)', label: 'Emerald' },
   { value: '#D97706', label: 'Amber' },
   { value: '#DC2626', label: 'Red' },
   { value: '#0D9488', label: 'Teal' },
@@ -241,7 +241,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
                     }
                   }}
                   className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-mono bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--primary-600)]/20 focus:border-[var(--primary-600)]"
-                  placeholder="#1B3A5C"
+                  placeholder="var(--sgs-primary)"
                 />
               </div>
               <div
@@ -432,7 +432,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
       </div>
 
       {isDirty && (
-        <p className="text-xs text-amber-600 font-medium flex items-center gap-1.5">
+        <p className="text-xs text-sgs-accent-text font-medium flex items-center gap-1.5">
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>

@@ -22,7 +22,7 @@ const DENSITY_STYLES = {
 };
 const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: string }> = {
     [LeadStage.NEW]: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
-    [LeadStage.CONTACTED]: { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+    [LeadStage.CONTACTED]: { color: 'text-sgs-primary', bg: 'bg-sgs-champagne', border: 'border-sgs-border' },
     [LeadStage.QUALIFIED]: { color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' },
     [LeadStage.PROPOSAL]: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
     [LeadStage.NEGOTIATION]: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200' },
@@ -228,7 +228,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 <div className="flex items-center justify-center h-full w-full">
                     <button 
                         onClick={() => onSelect(lead.id)}
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-indigo-400'}`}
+                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-sgs-primary text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-indigo-400'}`}
                     >
                         {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                     </button>
@@ -245,12 +245,12 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         {lead.tags && lead.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                                 {lead.tags.slice(0, 3).map((tag: string) => (
-                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800 whitespace-nowrap">
+                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border dark:bg-sgs-primary/30 dark:text-sgs-text-muted dark:border-indigo-800 whitespace-nowrap">
                                         {tag}
                                     </span>
                                 ))}
                                 {lead.tags.length > 3 && (
-                                    <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                    <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-sgs-text-muted dark:bg-slate-800 dark:text-slate-400">
                                         +{lead.tags.length - 3}
                                     </span>
                                 )}
@@ -329,7 +329,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 const denominator = Number(lead.contractValue) || totalScheduledAmt;
                 const pct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : Math.round((schedule.filter((i: any) => i.status === 'PAID').length / schedule.length) * 100);
                 const overdueCount = schedule.filter((i: any) => i.status === 'OVERDUE' || (i.status === 'PENDING' && i.dueDate && new Date(i.dueDate) < now)).length;
-                const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500';
+                const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-sgs-primary';
                 return (
                     <td className={`px-4 ${paddingY}`}>
                         <div className="flex flex-col gap-1 min-w-[90px]">
@@ -367,15 +367,15 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         className="w-48 bg-[var(--bg-surface)] rounded-2xl shadow-xl border border-[var(--glass-border)] py-1.5 animate-enter"
                     >
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
                             {ICONS.EDIT} <span>{t('common.edit')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onProposal(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
                             {ICONS.PROPOSAL} <span>{t('leads.create_proposal')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDuplicate(lead.id); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-sgs-champagne hover:text-sgs-primary transition-colors">
                             {ICONS.DUPLICATE} <span>{t('common.duplicate')}</span>
                         </button>
                         {canDelete && <>
@@ -436,7 +436,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
         >
             {/* Header row: name + score + 3-dot */}
             <div className="flex justify-between items-start mb-2.5 gap-1">
-                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors truncate flex-1 leading-snug">{lead.name}</h4>
+                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-sgs-primary transition-colors truncate flex-1 leading-snug">{lead.name}</h4>
                 <div className="flex items-center gap-1.5 shrink-0">
                     <div className="text-xs2 font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
                     {/* 3-dot action button — always visible on mobile (no hover), hidden until hover on desktop */}
@@ -464,12 +464,12 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
             {lead.tags && lead.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2.5">
                     {lead.tags.slice(0, 4).map((tag: string) => (
-                        <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 whitespace-nowrap">
+                        <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border whitespace-nowrap">
                             {tag}
                         </span>
                     ))}
                     {lead.tags.length > 4 && (
-                        <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500">
+                        <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-sgs-text-muted">
                             +{lead.tags.length - 4}
                         </span>
                     )}
@@ -495,14 +495,14 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, fo
                         onClick={() => { setMenuOpen(false); onClick(lead); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
-                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         {t('common.edit')}
                     </button>
                     <button
                         onClick={() => { setMenuOpen(false); onProposal(lead); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
-                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <svg className="w-3.5 h-3.5 text-sgs-verified" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         {t('leads.create_proposal')}
                     </button>
                     {canDelete && <>
@@ -1016,13 +1016,13 @@ export const Leads: React.FC = () => {
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
                                 {ICONS.SEARCH}
                             </div>
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('leads.search_placeholder')} 
                             />
                             {search && (
@@ -1037,7 +1037,7 @@ export const Leads: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <button onClick={() => setIsCreateModalOpen(true)} className="md:hidden shrink-0 w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
+                        <button onClick={() => setIsCreateModalOpen(true)} className="md:hidden shrink-0 w-10 h-10 bg-sgs-primary-deep text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
                     </div>
                     <div 
                         ref={filtersRef}
@@ -1050,14 +1050,14 @@ export const Leads: React.FC = () => {
                         <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
                             <button 
                                 onClick={() => setViewMode('LIST')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_list')}
                             >
                                 {ICONS.VIEW_LIST}
                             </button>
                             <button 
                                 onClick={() => setViewMode('BOARD')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_board')}
                             >
                                 {ICONS.VIEW_BOARD}
@@ -1122,7 +1122,7 @@ export const Leads: React.FC = () => {
                                                                 return next;
                                                             });
                                                         }}
-                                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                        className="w-4 h-4 rounded border-slate-300 text-sgs-primary focus:ring-sgs-primary cursor-pointer"
                                                     />
                                                     <span className="text-xs font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{col.label}</span>
                                                 </label>
@@ -1180,7 +1180,7 @@ export const Leads: React.FC = () => {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             <span className="hidden sm:inline">{t('leads.export_excel')}</span>
                         </button>
-                        <button onClick={() => setIsCreateModalOpen(true)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
+                        <button onClick={() => setIsCreateModalOpen(true)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                             {ICONS.ADD} {t('common.add_new')}
                         </button>
                     </div>
@@ -1191,7 +1191,7 @@ export const Leads: React.FC = () => {
                 {/* Scope badge — shown when the user sees their own data only */}
                 {isScopedView && (
                     <div className="flex items-center pr-2.5 md:pr-3 shrink-0">
-                        <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1 whitespace-nowrap">
+                        <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-sgs-champagne text-sgs-primary border-sgs-border flex items-center gap-1 whitespace-nowrap">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             {t('leads.scope_mine')}
                         </span>
@@ -1205,27 +1205,27 @@ export const Leads: React.FC = () => {
                     <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
+                    <div className="p-1 bg-sgs-champagne text-sgs-primary rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.new_leads_tooltip')}>{t('leads.new_leads')}</span>
-                    <span className="text-sm font-black text-indigo-600" title={t('leads.new_leads_tooltip')}>{metrics.newCount}</span>
+                    <span className="text-sm font-black text-sgs-primary" title={t('leads.new_leads_tooltip')}>{metrics.newCount}</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-emerald-50 text-emerald-500 rounded-md shrink-0">
+                    <div className="p-1 bg-sgs-champagne text-sgs-verified rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.win_rate_tooltip')}>{t('leads.win_rate')}</span>
-                    <span className="text-sm font-black text-emerald-600" title={`${metrics.wonCount} / ${metrics.wonCount + metrics.lostCount}`}>{metrics.winRate}%</span>
+                    <span className="text-sm font-black text-sgs-verified" title={`${metrics.wonCount} / ${metrics.wonCount + metrics.lostCount}`}>{metrics.winRate}%</span>
                 </div>
                 <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
-                    <div className="p-1 bg-amber-50 text-amber-500 rounded-md shrink-0">
+                    <div className="p-1 bg-amber-50 text-sgs-accent-text rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.avg_score')}</span>
-                    <span className="text-sm font-black text-amber-600">{metrics.avgScore}</span>
+                    <span className="text-sm font-black text-sgs-accent-text">{metrics.avgScore}</span>
                     <div className="hidden md:flex w-14 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${metrics.avgScore}%` }} />
+                        <div className="h-full bg-sgs-accent rounded-full" style={{ width: `${metrics.avgScore}%` }} />
                     </div>
                 </div>
             </div>
@@ -1243,7 +1243,7 @@ export const Leads: React.FC = () => {
                                         <tr>
                                             <th className={`px-4 py-3 w-[50px] border-r border-[var(--glass-border)] sticky left-0 bg-[var(--glass-surface)] z-30`}>
                                                 <div className="flex items-center justify-center">
-                                                    <input type="checkbox" checked={selectedLeads.size === leads.length && leads.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                                    <input type="checkbox" checked={selectedLeads.size === leads.length && leads.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-slate-300 text-sgs-primary focus:ring-sgs-primary cursor-pointer" />
                                                 </div>
                                             </th>
                                             <th className={`px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)] sticky left-[50px] z-30`}>{t('leads.name')}</th>
@@ -1318,20 +1318,20 @@ export const Leads: React.FC = () => {
                                                                     <p className="font-bold text-[var(--text-primary)] text-sm">{t('common.no_results')}</p>
                                                                     <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
                                                                 </div>
-                                                                <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                                <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-sgs-primary bg-sgs-champagne border border-sgs-border rounded-xl hover:bg-sgs-champagne transition-colors">
                                                                     {t('leads.reset_filters')}
                                                                 </button>
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                                <div className="w-14 h-14 rounded-2xl bg-sgs-champagne flex items-center justify-center text-sgs-text-muted">
                                                                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                                                 </div>
                                                                 <div>
                                                                     <p className="font-bold text-[var(--text-primary)] text-sm">{t('leads.empty_title')}</p>
                                                                     <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint')}</p>
                                                                 </div>
-                                                                <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                                <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-sgs-primary-deep rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                                     {ICONS.ADD} {t('common.add_new')}
                                                                 </button>
                                                             </>
@@ -1380,7 +1380,7 @@ export const Leads: React.FC = () => {
                             {leads?.map(lead => (
                                 <div 
                                     key={lead.id} 
-                                    className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm active:scale-[0.98] transition-all hover:border-indigo-100" 
+                                    className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm active:scale-[0.98] transition-all hover:border-sgs-border" 
                                     onClick={() => handleEdit(lead)}
                                 >
                                     <div className="flex justify-between items-start mb-3">
@@ -1397,12 +1397,12 @@ export const Leads: React.FC = () => {
                                                 {lead.tags && lead.tags.length > 0 && (
                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                         {lead.tags.slice(0, 3).map((tag: string) => (
-                                                            <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                            <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border">
                                                                 {tag}
                                                             </span>
                                                         ))}
                                                         {lead.tags.length > 3 && (
-                                                            <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500">+{lead.tags.length - 3}</span>
+                                                            <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-sgs-text-muted">+{lead.tags.length - 3}</span>
                                                         )}
                                                     </div>
                                                 )}
@@ -1432,7 +1432,7 @@ export const Leads: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); setProposalLead(lead); }} 
-                                            className="flex-1 min-h-[40px] py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:bg-indigo-100 transition-colors"
+                                            className="flex-1 min-h-[40px] py-2 bg-sgs-champagne text-sgs-primary rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:bg-sgs-champagne transition-colors"
                                         >
                                             {ICONS.PROPOSAL} {t('leads.create_proposal')}
                                         </button>
@@ -1458,20 +1458,20 @@ export const Leads: React.FC = () => {
                                                 <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
                                                 <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
                                             </div>
-                                            <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                            <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-sgs-primary bg-sgs-champagne border border-sgs-border rounded-xl hover:bg-sgs-champagne transition-colors">
                                                 {t('leads.reset_filters')}
                                             </button>
                                         </>
                                     ) : (
                                         <>
-                                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                            <div className="w-12 h-12 rounded-2xl bg-sgs-champagne flex items-center justify-center text-sgs-text-muted">
                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                             </div>
                                             <div>
                                                 <p className="font-bold text-sm text-[var(--text-primary)]">{t('leads.empty_title')}</p>
                                                 <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint')}</p>
                                             </div>
-                                            <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                            <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-sgs-primary-deep rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                 {ICONS.ADD} {t('common.add_new')}
                                             </button>
                                         </>

@@ -51,7 +51,7 @@ export function PublicFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer style={{ background: "#0F2740", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
+    <footer style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
 
         {/* ── 4-column grid ─────────────────────────────── */}
@@ -63,10 +63,10 @@ export function PublicFooter() {
             <div className="flex items-center gap-2.5 mb-4">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "#C8963E" }}
+                style={{ background: "var(--sgs-accent)" }}
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5" style={{ color: "#0F2740" }}>
+                  className="w-5 h-5" style={{ color: "var(--sgs-primary-deep)" }}>
                   <path
                     d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
                     stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"
@@ -94,7 +94,7 @@ export function PublicFooter() {
               </div>
             </div>
 
-            <p className="text-sm leading-relaxed mb-5" style={{ color: "#93A6B8" }}>
+            <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--sgs-on-dark-muted)" }}>
               Nền tảng quản lý &amp; phân phối BĐS AI — Đại lý F1 uỷ quyền Novaland,
               Masterise Homes, Nam Long, Vinhomes. Tin dùng bởi 15.000+ môi giới.
             </p>
@@ -107,7 +107,7 @@ export function PublicFooter() {
                 onMouseEnter={e => linkHover(e, true)}
                 onMouseLeave={e => linkHover(e, false)}
               >
-                <Phone className="w-4 h-4 shrink-0" style={{ color: "#C8963E" }} />
+                <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--sgs-accent)" }} />
                 0971 132 378
               </a>
               <a
@@ -117,11 +117,11 @@ export function PublicFooter() {
                 onMouseEnter={e => linkHover(e, true)}
                 onMouseLeave={e => linkHover(e, false)}
               >
-                <Mail className="w-4 h-4 shrink-0" style={{ color: "#C8963E" }} />
+                <Mail className="w-4 h-4 shrink-0" style={{ color: "var(--sgs-accent)" }} />
                 info@sgsland.vn
               </a>
               <div className="flex items-start gap-2.5 text-sm" style={{ color: "#B9C6D4" }}>
-                <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#C8963E" }} />
+                <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--sgs-accent)" }} />
                 TP. Hồ Chí Minh, Việt Nam
               </div>
             </div>
@@ -204,17 +204,17 @@ export function PublicFooter() {
               className="space-y-1 pt-4"
               style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <p className="text-xs" style={{ color: "#93A6B8" }}>GPKD: 0312960439</p>
-              <p className="text-xs" style={{ color: "#93A6B8" }}>Cấp ngày: 01/01/2018 tại TP.HCM</p>
-              <p className="text-xs" style={{ color: "#93A6B8" }}>MST: 0312960439</p>
-              <p className="text-xs" style={{ color: "#93A6B8" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
+              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>GPKD: 0312960439</p>
+              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>Cấp ngày: 01/01/2018 tại TP.HCM</p>
+              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>MST: 0312960439</p>
+              <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>API: <a href="/developers" style={{ color: "#B9C6D4" }}>developers</a></p>
             </div>
           </div>
         </div>
 
         {/* ── Bottom bar ────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5">
-          <p className="text-xs" style={{ color: "#93A6B8" }}>
+          <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
             © {year} Công ty Cổ phần SGS Land. Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
@@ -223,9 +223,9 @@ export function PublicFooter() {
                 key={link.href}
                 href={link.href}
                 className="text-xs transition-colors"
-                style={{ color: "#93A6B8" }}
+                style={{ color: "var(--sgs-on-dark-muted)" }}
                 onMouseEnter={e => linkHover(e, true)}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#93A6B8"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--sgs-on-dark-muted)"}
               >
                 {link.label}
               </Link>

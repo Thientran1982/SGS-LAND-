@@ -4,33 +4,33 @@
 // aligned with the web tokens so future white-label theming can map 1:1.
 export const colors = {
   // Brand
-  brand: '#1B3A5C',          // indigo-600 — primary CTA
-  brandDark: '#0F2740',
+  brand: 'var(--sgs-primary)',          // indigo-600 — primary CTA
+  brandDark: 'var(--sgs-primary-deep)',
   brandSoft: '#E8EEF5',
   // Backgrounds
   bgBase: '#FFFFFF',
   bgSurface: '#FFFFFF',
-  bgMuted: '#F8FAFC',         // slate-50
-  bgDark: '#0F172A',          // slate-900 — splash/dark accents
+  bgMuted: 'var(--sgs-bg)',         // slate-50
+  bgDark: 'var(--sgs-text)',          // slate-900 — splash/dark accents
   // Text
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',   // slate-600
-  textTertiary: '#64748B',    // slate-500
-  textMuted: '#94A3B8',       // slate-400
+  textPrimary: 'var(--sgs-text)',
+  textSecondary: 'var(--sgs-text-muted)',   // slate-600
+  textTertiary: 'var(--sgs-text-muted)',    // slate-500
+  textMuted: 'var(--sgs-on-dark-muted)',       // slate-400
   textInverse: '#FFFFFF',
   // Borders / dividers
-  border: '#E2E8F0',          // slate-200
+  border: 'var(--sgs-border)',          // slate-200
   borderStrong: '#CBD5E1',    // slate-300
   // Status
-  success: '#10B981',
+  success: 'var(--sgs-verified)',
   warning: '#F59E0B',
   danger: '#EF4444',
-  verified: '#10B981',
+  verified: 'var(--sgs-verified)',
   // Listing status pills (mirror web STATUS_CONFIG)
-  statusAvailable: '#10B981',
+  statusAvailable: 'var(--sgs-verified)',
   statusBooking: '#0EA5E9',
-  statusOpening: '#1B3A5C',
-  statusSold: '#94A3B8',
+  statusOpening: 'var(--sgs-primary)',
+  statusSold: 'var(--sgs-on-dark-muted)',
 };
 export const spacing = {
   xs: 4,
@@ -60,7 +60,7 @@ export const typography = {
 };
 export const shadow = {
   card: {
-    shadowColor: '#0F172A',
+    shadowColor: 'var(--sgs-text)',
     shadowOpacity: 0.06,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },

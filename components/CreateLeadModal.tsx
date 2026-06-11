@@ -6,7 +6,7 @@ import { Dropdown } from './Dropdown';
 import { Lead, LEAD_SOURCES, VN_PHONE_REGEX, LeadStage } from '../types';
 import { useSocket } from '../services/websocket';
 const ICONS = {
-    DUPLICATE: <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 00-2-2v-2" /></svg>
+    DUPLICATE: <svg className="w-5 h-5 text-sgs-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 00-2-2v-2" /></svg>
 };
 const FormInput = ({ label, value, onChange, placeholder, required, type = 'text', autoFocus, error, className = "" }: any) => (
     <div className={`space-y-1 ${className}`}>
@@ -31,7 +31,7 @@ const FormTextArea = ({ label, value, onChange, placeholder }: any) => (
         <textarea 
             value={value}
             onChange={e => onChange(e.target.value)}
-            className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none h-20"
+            className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-[16px] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary transition-all resize-none h-20"
             placeholder={placeholder}
         />
     </div>
@@ -277,10 +277,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 )}
                                 {!phoneChecking && phoneWarning && (
                                     <div className="mt-1.5 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                                        <span className="text-amber-500 text-sm mt-0.5">⚠</span>
+                                        <span className="text-sgs-accent-text text-sm mt-0.5">⚠</span>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-semibold text-amber-700">Số điện thoại đã tồn tại</p>
-                                            <p className="text-xs text-amber-600 truncate">{phoneWarning.name} — {phoneWarning.phone}</p>
+                                            <p className="text-xs font-semibold text-sgs-accent-text">Số điện thoại đã tồn tại</p>
+                                            <p className="text-xs text-sgs-accent-text truncate">{phoneWarning.name} — {phoneWarning.phone}</p>
                                         </div>
                                     </div>
                                 )}
@@ -305,10 +305,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 )}
                                 {!emailChecking && emailWarning && (
                                     <div className="mt-1.5 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                                        <span className="text-amber-500 text-sm mt-0.5">⚠</span>
+                                        <span className="text-sgs-accent-text text-sm mt-0.5">⚠</span>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-semibold text-amber-700">Email đã tồn tại</p>
-                                            <p className="text-xs text-amber-600 truncate">{emailWarning.name}</p>
+                                            <p className="text-xs font-semibold text-sgs-accent-text">Email đã tồn tại</p>
+                                            <p className="text-xs text-sgs-accent-text truncate">{emailWarning.name}</p>
                                         </div>
                                     </div>
                                 )}
@@ -374,7 +374,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             <button 
                                 type="submit" 
                                 disabled={loading} 
-                                className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                                className="flex-1 py-3 bg-sgs-primary-deep text-white font-bold rounded-xl text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
                             >
                                 {loading && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                                 {t('common.add_new')}
@@ -393,16 +393,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             </div>                            
                             <div className="bg-[var(--bg-surface)]/60 p-3 rounded-lg mt-3 text-xs border border-amber-200/50">
                                 <div className="grid grid-cols-[60px_1fr] gap-1">
-                                    <span className="text-amber-700/60 font-bold">{t('leads.name')}:</span>
+                                    <span className="text-sgs-accent-text/60 font-bold">{t('leads.name')}:</span>
                                     <span className="font-bold">{duplicateLead?.name}</span>
                                     
-                                    <span className="text-amber-700/60 font-bold">{t('leads.phone')}:</span>
+                                    <span className="text-sgs-accent-text/60 font-bold">{t('leads.phone')}:</span>
                                     <span className="font-mono tracking-wider">
                                         {duplicateLead?.phone
                                             ? duplicateLead.phone.slice(0, 3) + '****' + duplicateLead.phone.slice(-3)
                                             : '—'}
                                     </span>                                    
-                                    <span className="text-amber-700/60 font-bold">{t('common.owner')}:</span>
+                                    <span className="text-sgs-accent-text/60 font-bold">{t('common.owner')}:</span>
                                     <span>
                                         {duplicateLead?.assignedToName
                                             || users.find(u => u.value === duplicateLead?.assignedTo)?.label
@@ -412,17 +412,17 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             </div>
                             {/* What will actually be added */}
                             <div className="mt-3 pt-2 border-t border-amber-200/40">
-                                <p className="text-xs font-bold text-amber-700/80 mb-1.5">Thông tin sẽ bổ sung vào hồ sơ:</p>
+                                <p className="text-xs font-bold text-sgs-accent-text/80 mb-1.5">Thông tin sẽ bổ sung vào hồ sơ:</p>
                                 {mergePreview.length > 0 ? (
                                     <ul className="space-y-0.5">
                                         {mergePreview.map((item, i) => (
-                                            <li key={i} className="text-xs text-emerald-700 flex items-center gap-1.5">
-                                                <span className="text-emerald-500">✓</span> {item}
+                                            <li key={i} className="text-xs text-sgs-verified flex items-center gap-1.5">
+                                                <span className="text-sgs-verified">✓</span> {item}
                                             </li>
                                         ))}
                                     </ul>
                                 ) : (
-                                    <p className="text-xs text-amber-600/70 italic">Không có thông tin mới để bổ sung — chỉ gộp hồ sơ.</p>
+                                    <p className="text-xs text-sgs-accent-text/70 italic">Không có thông tin mới để bổ sung — chỉ gộp hồ sơ.</p>
                                 )}
                             </div>
                         </div>                        
@@ -438,7 +438,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 type="button" 
                                 onClick={handleMerge} 
                                 disabled={loading}
-                                className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                                className="flex-1 py-3 bg-sgs-primary text-white font-bold rounded-xl text-sm shadow-lg hover:bg-sgs-primary transition-all flex items-center justify-center gap-2"
                             >
                                 {loading && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                                 {t('leads.btn_merge')}

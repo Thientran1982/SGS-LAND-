@@ -123,8 +123,8 @@ html, body {
   overflow: hidden;
   font-family: var(--custom-font, 'Inter', sans-serif);
   font-size: var(--custom-font-size, 15px);
-  background-color: var(--bg-app);
-  color: var(--text-primary);
+  background-color: var(--sgs-bg);
+  color: var(--sgs-text);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -135,7 +135,7 @@ html, body {
   position: fixed;
   inset: -50%;
   width: 200%; height: 200%;
-  background: radial-gradient(circle at center, transparent 0%, var(--bg-app) 70%),
+  background: radial-gradient(circle at center, transparent 0%, var(--sgs-bg) 70%),
               conic-gradient(from 0deg at 50% 50%, var(--aurora-1), var(--aurora-2), var(--aurora-3), var(--aurora-1));
   filter: blur(80px);
   opacity: 0.4;
@@ -158,7 +158,7 @@ html, body {
     animation: none;
     filter: none;
     opacity: 0.15;
-    background: var(--bg-app);
+    background: var(--sgs-bg);
     inset: 0;
     width: 100%; height: 100%;
   }
@@ -191,12 +191,12 @@ html, body {
 
 /* --- COMPACT BUTTON SYSTEM --- */
 .card-surface {
-  background: var(--bg-surface);
+  background: var(--sgs-surface);
   border: 1px solid var(--border-default);
   box-shadow: var(--shadow-sm);
 }
 .card-elevated {
-  background: var(--bg-elevated);
+  background: var(--sgs-surface);
   border: 1px solid var(--border-default);
   box-shadow: var(--shadow-md);
 }
@@ -212,13 +212,13 @@ html, body {
   justify-content: center;
   height: 100vh;
   gap: 24px;
-  color: var(--text-secondary);
+  color: var(--sgs-text-muted);
   z-index: 50;
   position: relative;
 }
 .loader-logo {
   width: 64px; height: 64px;
-  background: var(--bg-surface);
+  background: var(--sgs-surface);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
@@ -237,7 +237,7 @@ html, body {
 .loader-progress {
   height: 100%;
   width: 50%;
-  background: var(--primary-600);
+  background: var(--sgs-primary);
   border-radius: 2px;
   animation: progress 1.5s infinite ease-in-out;
 }
@@ -425,7 +425,7 @@ html, body {
 .noscript-wrapper {
   padding: 40px;
   text-align: center;
-  color: var(--text-primary);
+  color: var(--sgs-text);
 }
 .noscript-wrapper h2 {
   font-weight: 800;
@@ -452,6 +452,6 @@ html, body {
 .markdown-body pre { background-color: rgba(0,0,0,0.05); padding: 0.75em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 0.75em; }
 .dark .markdown-body pre { background-color: rgba(255,255,255,0.05); }
 .markdown-body pre code { background-color: transparent; padding: 0; }
-.markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--text-secondary); font-style: italic; }
+.markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--sgs-text-muted); font-style: italic; }
 .dark .markdown-body blockquote { border-left-color: rgba(255,255,255,0.1); }
-.markdown-body a { color: var(--primary-600); text-decoration: underline; text-underline-offset: 2px; }
+.markdown-body a { color: var(--sgs-primary); text-decoration: underline; text-underline-offset: 2px; }

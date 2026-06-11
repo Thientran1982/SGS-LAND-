@@ -49,7 +49,7 @@ function SortButton({ col, current, dir, onClick }: { col: SortKey; current: Sor
   return (
     <button
       onClick={() => onClick(col)}
-      className={`flex items-center gap-0.5 text-xs font-medium transition-colors ${active ? 'text-indigo-500' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+      className={`flex items-center gap-0.5 text-xs font-medium transition-colors ${active ? 'text-sgs-primary' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
       {active ? (dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ChevronDown size={11} className="opacity-30" />}
     </button>
   );
@@ -99,7 +99,7 @@ export function Employees() {
   const SortCol = ({ col, label }: { col: SortKey; label: string }) => (
     <button
       onClick={() => handleSort(col)}
-      className={`flex items-center gap-1 text-xs font-medium transition-colors ${sortKey === col ? 'text-indigo-500' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+      className={`flex items-center gap-1 text-xs font-medium transition-colors ${sortKey === col ? 'text-sgs-primary' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
       {label}
       {sortKey === col
         ? (sortDir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />)
@@ -111,7 +111,7 @@ export function Employees() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[var(--glass-border)] flex-shrink-0">
         <div className="flex items-center gap-2">
-          <UserCheck className="w-5 h-5 text-indigo-500" />
+          <UserCheck className="w-5 h-5 text-sgs-primary" />
           <h1 className="text-lg font-bold text-[var(--text-primary)]">Quản lý Nhân viên</h1>
           {!loading && <span className="text-sm text-[var(--text-tertiary)]">({employees.length})</span>}
         </div>
@@ -131,11 +131,11 @@ export function Employees() {
             <p className="text-xs text-[var(--text-tertiary)]">Công việc quá hạn</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-emerald-500">{totalDone}</p>
+            <p className="text-xl font-bold text-sgs-verified">{totalDone}</p>
             <p className="text-xs text-[var(--text-tertiary)]">Đã hoàn thành</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-indigo-500">{avgCompletion.toFixed(0)}%</p>
+            <p className="text-xl font-bold text-sgs-primary">{avgCompletion.toFixed(0)}%</p>
             <p className="text-xs text-[var(--text-tertiary)]">Tỷ lệ TB</p>
           </div>
         </div>
@@ -168,9 +168,9 @@ export function Employees() {
           Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
-            <AlertTriangle className="w-8 h-8 text-amber-400" />
+            <AlertTriangle className="w-8 h-8 text-sgs-accent-text" />
             <p className="text-sm text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => load()} className="text-sm text-indigo-500 font-medium">Thử lại</button>
+            <button onClick={() => load()} className="text-sm text-sgs-primary font-medium">Thử lại</button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
@@ -183,7 +183,7 @@ export function Employees() {
               <div key={emp.user_id} className="px-4 md:px-6 py-4 hover:bg-[var(--glass-surface-hover)] transition-colors">
                 <div className="flex items-center gap-3">
                   {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-sm font-bold text-sgs-primary flex-shrink-0">
                     {emp.name?.charAt(0).toUpperCase()}
                   </div>
                   {/* Info */}
@@ -207,8 +207,8 @@ export function Employees() {
                     {/* Task counts + workload */}
                     <div className="flex items-center gap-3 mt-2 flex-wrap">
                       <span className="text-xs text-[var(--text-tertiary)]">Tổng: <b className="text-[var(--text-primary)]">{emp.total_assigned}</b></span>
-                      <span className="text-xs text-indigo-500">Đang làm: <b>{emp.in_progress}</b></span>
-                      <span className="text-xs text-emerald-500">Hoàn thành: <b>{emp.done}</b></span>
+                      <span className="text-xs text-sgs-primary">Đang làm: <b>{emp.in_progress}</b></span>
+                      <span className="text-xs text-sgs-verified">Hoàn thành: <b>{emp.done}</b></span>
                       <span className="text-xs text-slate-400">Chờ: <b>{emp.todo}</b></span>
                       {emp.total_assigned > 0 && (
                         <WorkloadBar score={emp.in_progress + emp.overdue * 2} />

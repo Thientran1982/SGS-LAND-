@@ -125,7 +125,7 @@ export function AiChatWidget() {
         >
           {/* Header */}
           <div
-            className="flex items-center gap-3 px-4 py-3 shrink-0 cursor-pointer bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 shrink-0 cursor-pointer bg-sgs-primary hover:bg-sgs-primary transition-colors"
             onClick={() => setMinimized((v) => !v)}
           >
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -223,7 +223,7 @@ export function AiChatWidget() {
       {/* FAB Button */}
       <button
         onClick={handleOpen}
-        className="fixed bottom-6 right-4 sm:right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700"
+        className="fixed bottom-6 right-4 sm:right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 bg-sgs-primary hover:bg-sgs-primary"
         aria-label="Chat với SGS AI"
       >
         {open ? (

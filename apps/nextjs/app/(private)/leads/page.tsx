@@ -106,7 +106,7 @@ export default function LeadsPage() {
             </thead>
             <tbody>
               {leads.map((lead) => (
-                <tr key={lead.id} className="border-t transition-colors hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10"
+                <tr key={lead.id} className="border-t transition-colors hover:bg-indigo-50/30 dark:hover:bg-sgs-primary/10"
                   style={{ borderColor: "var(--border-default)" }}>
                   <td className="px-4 py-3 font-medium" style={{ color: "var(--text-primary)" }}>{lead.name}</td>
                   <td className="px-4 py-3">

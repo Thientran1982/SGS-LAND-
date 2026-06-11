@@ -109,11 +109,11 @@ export function SelectDropdown({
                 key={opt.value}
                 type="button"
                 onClick={() => handleSelect(opt.value)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${value === opt.value ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)]'}`}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${value === opt.value ? 'bg-indigo-50 dark:bg-indigo-900/20 text-sgs-primary dark:text-indigo-400' : 'text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)]'}`}
               >
                 {opt.dot && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.dot}`} />}
                 <span className="flex-1 truncate">{opt.label}</span>
-                {value === opt.value && <Check size={13} className="flex-shrink-0 text-indigo-500" />}
+                {value === opt.value && <Check size={13} className="flex-shrink-0 text-sgs-primary" />}
               </button>
             ))}
           </div>

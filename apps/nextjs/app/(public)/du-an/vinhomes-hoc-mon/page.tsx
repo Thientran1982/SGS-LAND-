@@ -166,11 +166,11 @@ export default function VinhomesHocMonPage() {
     <>
       <SchemaScript schemas={[REAL_ESTATE_LISTING_SCHEMA, SPECIAL_ANNOUNCEMENT_SCHEMA, faqSchema, breadcrumb]} />
 
-      <main className="min-h-screen bg-white dark:bg-slate-900">
+      <main className="min-h-screen bg-white dark:bg-sgs-primary-deep">
         {/* Hero */}
-        <section className="relative bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 text-white py-20 px-4">
+        <section className="relative bg-gradient-to-br from-sgs-primary-deep via-sgs-primary-deep to-slate-900 text-white py-20 px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 mb-6 text-sm font-semibold tracking-widest uppercase text-indigo-300">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 mb-6 text-sm font-semibold tracking-widest uppercase text-sgs-on-dark-muted">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
@@ -179,7 +179,7 @@ export default function VinhomesHocMonPage() {
             </div>
             <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
               Vinhomes Hóc Môn<br />
-              <span className="text-indigo-300">Smart City 4.0</span>
+              <span className="text-sgs-on-dark-muted">Smart City 4.0</span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 mb-3 font-medium">
               667ha · Ra mắt Q4/2026 · Giá từ 2,5 tỷ VNĐ
@@ -190,7 +190,7 @@ export default function VinhomesHocMonPage() {
             <div className="flex flex-wrap gap-3 mt-8">
               <a
                 href="https://sgsland.vn/contact"
-                className="px-6 py-3 bg-indigo-500 hover:bg-indigo-400 rounded-xl font-bold text-white transition-colors"
+                className="px-6 py-3 bg-sgs-primary hover:bg-indigo-400 rounded-xl font-bold text-white transition-colors"
               >
                 Đăng ký đặt chỗ ưu tiên
               </a>
@@ -205,9 +205,9 @@ export default function VinhomesHocMonPage() {
         </section>
 
         {/* Key Facts */}
-        <section className="py-12 px-4 bg-slate-50 dark:bg-slate-800">
+        <section className="py-12 px-4 bg-sgs-bg dark:bg-slate-800">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
+            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-8">
               Thông tin dự án
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -221,10 +221,10 @@ export default function VinhomesHocMonPage() {
                   key={item.label}
                   className="bg-white dark:bg-slate-700 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-600"
                 >
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">
+                  <p className="text-xs text-sgs-text-muted dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">
                     {item.label}
                   </p>
-                  <p className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                  <p className="text-xl font-black text-sgs-primary dark:text-sgs-text-muted">
                     {item.value}
                   </p>
                   <p className="text-xs text-slate-400 mt-1">{item.sub}</p>
@@ -237,16 +237,16 @@ export default function VinhomesHocMonPage() {
         {/* Price Table */}
         <section className="py-12 px-4">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-6">
               Bảng giá dự kiến (Q4/2026)
             </h2>
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-sm text-sgs-text-muted mb-6">
               Nguồn: SGS LAND broker network Q2/2026. Giá thực tế có thể thay đổi theo từng đợt mở bán của Vinhomes.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-indigo-50 dark:bg-slate-800">
+                  <tr className="bg-sgs-champagne dark:bg-slate-800">
                     <th className="text-left p-3 font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                       Loại hình
                     </th>
@@ -272,11 +272,11 @@ export default function VinhomesHocMonPage() {
                     { type: "Biệt thự song lập", area: "150-250 m² đất", price: "20–40 tỷ", note: "Vườn riêng" },
                     { type: "Biệt thự đơn lập", area: "250-500 m² đất", price: "30–60 tỷ", note: "Hạng sang nội khu" },
                   ].map((row) => (
-                    <tr key={row.type} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <tr key={row.type} className="border-b border-slate-100 dark:border-slate-700 hover:bg-sgs-bg dark:hover:bg-slate-800/50">
                       <td className="p-3 font-medium text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600">{row.type}</td>
-                      <td className="p-3 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600">{row.area}</td>
-                      <td className="p-3 font-bold text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-600">{row.price}</td>
-                      <td className="p-3 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600">{row.note}</td>
+                      <td className="p-3 text-sgs-text-muted dark:text-slate-400 border border-slate-200 dark:border-slate-600">{row.area}</td>
+                      <td className="p-3 font-bold text-sgs-primary dark:text-sgs-text-muted border border-slate-200 dark:border-slate-600">{row.price}</td>
+                      <td className="p-3 text-sgs-text-muted dark:text-slate-400 border border-slate-200 dark:border-slate-600">{row.note}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -286,9 +286,9 @@ export default function VinhomesHocMonPage() {
         </section>
 
         {/* Infrastructure */}
-        <section className="py-12 px-4 bg-slate-50 dark:bg-slate-800">
+        <section className="py-12 px-4 bg-sgs-bg dark:bg-slate-800">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-6">
               Hạ tầng kết nối — Catalyst tăng giá
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
@@ -319,12 +319,12 @@ export default function VinhomesHocMonPage() {
                   className="bg-white dark:bg-slate-700 rounded-xl p-5 border border-slate-100 dark:border-slate-600"
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-bold text-slate-900 dark:text-white">{item.title}</h3>
-                    <span className="text-xs px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full whitespace-nowrap font-medium">
+                    <h3 className="font-bold text-sgs-text dark:text-white">{item.title}</h3>
+                    <span className="text-xs px-2 py-1 bg-sgs-champagne dark:bg-sgs-primary/40 text-sgs-primary dark:text-sgs-on-dark-muted rounded-full whitespace-nowrap font-medium">
                       {item.badge}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm text-sgs-text-muted dark:text-slate-400 leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -334,17 +334,17 @@ export default function VinhomesHocMonPage() {
         {/* FAQ */}
         <section className="py-12 px-4">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
+            <h2 className="text-2xl font-bold text-sgs-text dark:text-white mb-8">
               Câu hỏi thường gặp về Vinhomes Hóc Môn
             </h2>
             <div className="space-y-4">
               {FAQ_VHM.map((item) => (
                 <div
                   key={item.question}
-                  className="bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-100 dark:border-slate-700"
+                  className="bg-sgs-bg dark:bg-slate-800 rounded-xl p-5 border border-slate-100 dark:border-slate-700"
                 >
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-2">{item.question}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{item.answer}</p>
+                  <h3 className="font-bold text-sgs-text dark:text-white mb-2">{item.question}</h3>
+                  <p className="text-sm text-sgs-text-muted dark:text-slate-400 leading-relaxed">{item.answer}</p>
                 </div>
               ))}
             </div>
@@ -352,7 +352,7 @@ export default function VinhomesHocMonPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-16 px-4 bg-indigo-900 text-white text-center">
+        <section className="py-16 px-4 bg-sgs-primary text-white text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-black mb-4">Đăng ký đặt chỗ ưu tiên ngay</h2>
             <p className="text-indigo-200 mb-8 leading-relaxed">
@@ -361,7 +361,7 @@ export default function VinhomesHocMonPage() {
             <div className="flex flex-wrap gap-4 justify-center">
               <a
                 href="https://sgsland.vn/contact"
-                className="px-8 py-4 bg-white text-indigo-900 rounded-xl font-black text-lg hover:bg-indigo-50 transition-colors"
+                className="px-8 py-4 bg-white text-sgs-primary rounded-xl font-black text-lg hover:bg-sgs-champagne transition-colors"
               >
                 Liên hệ tư vấn ngay
               </a>
@@ -372,7 +372,7 @@ export default function VinhomesHocMonPage() {
                 +84 971 132 378
               </a>
             </div>
-            <p className="text-xs text-indigo-400 mt-6">
+            <p className="text-xs text-sgs-text-muted mt-6">
               Miễn phí tư vấn · Không ép cọc · Pháp lý 2 lớp kiểm chứng
             </p>
           </div>

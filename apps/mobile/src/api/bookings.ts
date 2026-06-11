@@ -68,7 +68,7 @@ export const BOOKING_STATUS_LABEL: Record<BookingStatus, string> = {
 };
 export const BOOKING_STATUS_COLOR: Record<BookingStatus, string> = {
   PENDING: '#D97706',
-  PAID: '#059669',
+  PAID: 'var(--sgs-verified)',
   FAILED: '#DC2626',
   CANCELLED: '#64748B',
   REFUNDED: '#7C3AED',

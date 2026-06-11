@@ -77,8 +77,8 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                         </div>
                         <div className="flex items-center gap-1">
                             <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-                            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <div className="w-2 h-2 rounded-full bg-sgs-accent"></div>
+                            <div className="w-2 h-2 rounded-full bg-sgs-verified"></div>
                         </div>
                     </div>
                     <div className="h-48 w-full relative">
@@ -105,13 +105,13 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                     </div>
                 </div>
                 {/* 2. TEXT CONTENT */}
-                <div className="pl-4 border-l-2 border-indigo-500 animate-enter" key={view}>
+                <div className="pl-4 border-l-2 border-sgs-primary animate-enter" key={view}>
                     <h2 className="text-3xl font-bold text-white mb-3 tracking-tight leading-tight">{content.title}</h2>
                     <p className="text-gray-400 text-sm leading-relaxed max-w-md">{content.desc}</p>
                 </div>
                 {/* 3. TRUST SIGNALS */}
                 <div className="flex items-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500 pt-4">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('auth.trusted_by')}</span>
+                    <span className="text-xs font-bold text-sgs-text-muted uppercase tracking-widest">{t('auth.trusted_by')}</span>
                     {['Vinhomes', 'Masterise', 'Keppel', 'Gamuda'].map((brand, i) => (
                         <span key={i} className="text-sm font-bold text-white/80 font-display">{brand}</span>
                     ))}
@@ -447,7 +447,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         <div className="p-8 flex justify-between items-center">
              <div className="flex items-center gap-3">
                 <Logo className="w-8 h-8 text-white" strokeWidth={2.5} />
-                <span className="font-bold text-lg tracking-tight">SGS<span className="text-gray-500">ID</span></span>
+                <span className="font-bold text-lg tracking-tight">SGS<span className="text-sgs-text-muted">ID</span></span>
              </div>
              <div className="flex items-center gap-3">
                 <button
@@ -460,7 +460,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </button>
                 <button 
                     onClick={() => window.location.hash = `#/${ROUTES.LANDING}`}
-                    className="text-xs font-bold text-gray-500 hover:text-white transition-colors"
+                    className="text-xs font-bold text-sgs-text-muted hover:text-white transition-colors"
                 >
                     {t('legal.back_home')}
                 </button>
@@ -489,12 +489,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         <div className="text-5xl mb-4">✉️</div>
                         <p className="text-sm text-gray-400 mb-2">{t('auth.verify_email_sent_to')}</p>
                         <p className="text-white font-bold text-base mb-4 break-all">{registeredEmail}</p>
-                        <p className="text-xs text-indigo-300 leading-relaxed">{t('auth.verify_email_instruction')}</p>
+                        <p className="text-xs text-sgs-on-dark-muted leading-relaxed">{t('auth.verify_email_instruction')}</p>
                     </div>
                     {/* Dev mode: show raw token for testing without email */}
                     {devVerifyInfo && (
-                        <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/30 animate-enter">
-                            <p className="text-xs2 font-bold text-amber-400 uppercase tracking-wider mb-2">[DEV] Link xác minh (không có email thật):</p>
+                        <div className="bg-sgs-accent/10 p-4 rounded-xl border border-amber-500/30 animate-enter">
+                            <p className="text-xs2 font-bold text-sgs-accent-text uppercase tracking-wider mb-2">[DEV] Link xác minh (không có email thật):</p>
                             <a href={devVerifyInfo.url} className="text-xs text-amber-200 break-all font-mono hover:underline">
                                 {devVerifyInfo.url}
                             </a>
@@ -520,7 +520,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {/* ── PENDING APPROVAL VIEW ─────────────────────── */}
             {view === 'PENDING_APPROVAL' && (
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
-                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 text-center">
+                    <div className="bg-sgs-accent/10 border border-amber-500/20 rounded-2xl p-6 text-center">
                         <div className="text-5xl mb-4">⏳</div>
                         <h3 className="text-white font-bold text-lg mb-2">{t('auth.pending_approval_heading')}</h3>
                         <p className="text-sm text-gray-400 mb-2">{t('auth.pending_approval_email_verified')}</p>
@@ -554,7 +554,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         <p className="text-rose-300 font-semibold text-sm break-all mb-3">{registeredEmail}</p>
                         <p className="text-xs text-gray-400 leading-relaxed">
                             {t('auth.rejected_desc_before')}{' '}
-                            <a href="mailto:support@sgsland.vn" className="text-indigo-400 hover:underline">support@sgsland.vn</a>{' '}
+                            <a href="mailto:support@sgsland.vn" className="text-sgs-text-muted hover:underline">support@sgsland.vn</a>{' '}
                             {t('auth.rejected_desc_after')}
                         </p>
                     </div>
@@ -637,8 +637,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 <p className="text-xs2 text-emerald-200 leading-relaxed">{t('auth.vendor_onboard_hint')}</p>
                             </div>
                         ) : (
-                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                                <svg className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-sgs-accent/10 border border-amber-500/20">
+                                <svg className="w-4 h-4 text-sgs-accent-text mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                                 <p className="text-xs2 text-amber-200 leading-relaxed">{t('auth.sales_onboard_hint')}</p>
                             </div>
                         )}
@@ -655,7 +655,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         {fieldErrors.email && <p id="err-email" className="text-xs2 text-rose-400 ml-1">{fieldErrors.email}</p>}                        
                         {/* B2B Nudge */}
                         {isPersonalEmail && view === 'REGISTER' && (
-                            <div className="flex items-center gap-2 mt-1 ml-1 text-amber-400">
+                            <div className="flex items-center gap-2 mt-1 ml-1 text-sgs-accent-text">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                                 <p className="text-xs2 font-medium">{t('auth.b2b_nudge')}</p>
                             </div>
@@ -669,7 +669,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             /* Waiting for user to click email link — no form, just info + resend */
                             <div className="bg-indigo-500/10 p-5 rounded-2xl border border-indigo-500/20 animate-enter text-center space-y-4">
                                 <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto">
-                                    <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                    <svg className="w-6 h-6 text-sgs-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 </div>
                                 <p className="text-sm font-bold text-white">{t('auth.check_email_title')}</p>
                                 <p className="text-xs text-indigo-200 leading-relaxed">
@@ -679,8 +679,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam')}</p>
                                 {/* Dev mode: hiện link reset trực tiếp khi email không thật */}
                                 {devResetInfo && (
-                                    <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/30 text-left">
-                                        <p className="text-xs2 font-bold text-amber-400 uppercase tracking-wider mb-2">[DEV] Link đặt lại mật khẩu:</p>
+                                    <div className="bg-sgs-accent/10 p-3 rounded-xl border border-amber-500/30 text-left">
+                                        <p className="text-xs2 font-bold text-sgs-accent-text uppercase tracking-wider mb-2">[DEV] Link đặt lại mật khẩu:</p>
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -702,7 +702,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                         type="button"
                                         onClick={handleResendReset}
                                         disabled={resendingReset}
-                                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-60 underline underline-offset-2"
+                                        className="text-xs font-bold text-sgs-text-muted hover:text-sgs-on-dark-muted transition-colors disabled:opacity-60 underline underline-offset-2"
                                     >
                                         {resendingReset ? t('auth.resend_reset_sending') : t('auth.resend_reset_email')}
                                     </button>
@@ -713,7 +713,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                         <button
                                             type="button"
                                             onClick={() => setShowManualToken(true)}
-                                            className="text-xs2 text-gray-500 hover:text-gray-300 transition-colors underline underline-offset-2"
+                                            className="text-xs2 text-sgs-text-muted hover:text-gray-300 transition-colors underline underline-offset-2"
                                         >
                                             {t('auth.paste_token_prompt') || 'Đã có link đặt lại mật khẩu? Dán vào đây'}
                                         </button>
@@ -741,7 +741,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                                     setManualToken('');
                                                     setShowManualToken(false);
                                                 }}
-                                                className="w-full bg-indigo-600 text-white font-semibold rounded-xl py-2 text-xs hover:bg-indigo-500 transition-colors disabled:opacity-40"
+                                                className="w-full bg-sgs-primary text-white font-semibold rounded-xl py-2 text-xs hover:bg-sgs-primary transition-colors disabled:opacity-40"
                                             >
                                                 {t('auth.paste_token_confirm') || 'Xác nhận & Đặt mật khẩu mới'}
                                             </button>
@@ -767,7 +767,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 {view === 'FORGOT_VERIFY' ? t('auth.new_pass_label') : t('auth.label_password')}
                             </label>
                             {view === 'LOGIN' && (
-                                <button type="button" onClick={() => { setView('FORGOT_REQUEST'); setGlobalError(''); setFieldErrors({}); }} className="text-xs3 font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+                                <button type="button" onClick={() => { setView('FORGOT_REQUEST'); setGlobalError(''); setFieldErrors({}); }} className="text-xs3 font-bold text-sgs-text-muted hover:text-sgs-on-dark-muted transition-colors">
                                     {t('auth.forgot_password')}
                                 </button>
                             )}
@@ -810,7 +810,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                         style={{ width: `${(calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) / 4) * 100}%` }}>
                                     </div>
                                 </div>
-                                <span className="text-xs2 font-bold text-gray-500 uppercase">
+                                <span className="text-xs2 font-bold text-sgs-text-muted uppercase">
                                     {calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 2 ? t('auth.weak') : calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 4 ? t('auth.medium') : t('auth.strong')}
                                 </span>
                             </div>
@@ -850,7 +850,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <div className="animate-enter mt-6" style={{animationDelay: '0.3s'}}>
                     <div className="relative py-4">
                         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10"></span></div>
-                        <div className="relative flex-1 justify-center text-xs2 uppercase font-bold tracking-widest text-center"><span className="bg-[#09090b] px-3 text-gray-500">{t('auth.or')}</span></div>
+                        <div className="relative flex-1 justify-center text-xs2 uppercase font-bold tracking-widest text-center"><span className="bg-[#09090b] px-3 text-sgs-text-muted">{t('auth.or')}</span></div>
                     </div>
                     <div className="space-y-3">
                         <button type="button" onClick={() => { setIsSsoMode(!isSsoMode); setGlobalError(''); }} className="w-full bg-white/5 border border-white/10 text-white/70 font-bold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all flex justify-center items-center gap-3">
@@ -870,16 +870,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </div>
                 </div>
             )}
-            <div className="mt-auto py-8 text-center text-sm font-medium text-gray-500 animate-enter">
+            <div className="mt-auto py-8 text-center text-sm font-medium text-sgs-text-muted animate-enter">
                 {view === 'REGISTER' ? t('auth.has_account') : (view.startsWith('FORGOT') || view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? '' : t('auth.no_account')}
                 
                 {!view.startsWith('FORGOT') && view !== 'VERIFY_EMAIL' && view !== 'PENDING_APPROVAL' && view !== 'TENANT_REJECTED' && (
-                    <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-sgs-on-dark-muted font-bold ml-1 transition-colors">
                         {view === 'REGISTER' ? t('auth.login_link') : t('auth.register_link')}
                     </button>
                 )}                
                 {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
-                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setDevResetInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-sgs-on-dark-muted font-bold ml-1 transition-colors">
                         ← {t('auth.verify_email_back_login')}
                     </button>
                 )}

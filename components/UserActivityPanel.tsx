@@ -78,7 +78,7 @@ function UserAvatar({ name, avatar }: { name: string; avatar?: string }) {
   }
   const initials = name?.split(' ').slice(-1)[0]?.[0]?.toUpperCase() || '?';
   return (
-    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-sgs-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
       {initials}
     </div>
   );

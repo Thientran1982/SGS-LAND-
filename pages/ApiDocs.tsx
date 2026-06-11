@@ -8,7 +8,7 @@ import { User } from '../types';
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     COPY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
-    CHECK: <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+    CHECK: <svg className="w-4 h-4 text-sgs-verified" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
 };
 const CodeBlock = ({ code, language = 'bash' }: { code: string, language?: string }) => {
     const [copied, setCopied] = useState(false);
@@ -48,15 +48,15 @@ export const ApiDocs: React.FC = () => {
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)] shrink-0">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-sgs-primary transition-colors min-h-[44px] shrink-0">
                         {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
-                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0" />
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-sgs-primary shrink-0" />
                         <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">SGS API</span>
                     </div>
                     {currentUser ? (
-                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
+                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-sgs-primary-deep text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
                             {t('menu.dashboard')}
                         </button>
                     ) : (
@@ -96,7 +96,7 @@ export const ApiDocs: React.FC = () => {
                         <section id="endpoints" className="mb-16">
                             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Endpoint Khách Hàng</h2>
                             <div className="flex items-center gap-3 mb-4">
-                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-lg text-xs font-mono">GET</span>
+                                <span className="px-3 py-1 bg-sgs-champagne text-sgs-verified font-bold rounded-lg text-xs font-mono">GET</span>
                                 <code className="text-sm font-mono text-[var(--text-secondary)]">/v1/leads</code>
                             </div>
                             <p className="text-[var(--text-secondary)] mb-4">Trả về danh sách khách hàng tiềm năng liên kết với tài khoản của bạn.</p>                           

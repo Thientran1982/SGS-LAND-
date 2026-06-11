@@ -162,9 +162,9 @@ export const Hero3D = () => {
             <stop offset="0%" stopColor="var(--sgs-primary)" /><stop offset="100%" stopColor="#8B5CF6" />
           </linearGradient>
           <linearGradient id="emeraldGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#10B981" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--sgs-verified)" stopOpacity="0" />
             <stop offset="50%" stopColor="#34D399" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+            <stop offset="100%" stopColor="var(--sgs-verified)" stopOpacity="0" />
           </linearGradient>
           {/* Road gradient */}
           <linearGradient id="roadH" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -243,7 +243,7 @@ export const Hero3D = () => {
           {/* ── PROPERTY LOTS ── */}
           {/* NW block — PRIMARY (emerald, highlighted) — main property */}
           <rect x="-210" y="-210" width="186" height="186"
-            fill="rgba(16,185,129,0.10)" stroke="#10B981" strokeWidth="2" />
+            fill="rgba(16,185,129,0.10)" stroke="var(--sgs-verified)" strokeWidth="2" />
           {/* Inner sub-lot */}
           <rect x="-170" y="-170" width="100" height="100"
             fill="rgba(16,185,129,0.18)" stroke="#34D399" strokeWidth="1.5"
@@ -274,14 +274,14 @@ export const Hero3D = () => {
               <circle cx={tx} cy={ty} r={i < 4 ? 7 : 5}
                 fill="#065F46" opacity={i < 4 ? 0.7 : 0.5} />
               <circle cx={tx} cy={ty} r={i < 4 ? 4 : 3}
-                fill="#10B981" opacity={i < 4 ? 0.6 : 0.45} />
+                fill="var(--sgs-verified)" opacity={i < 4 ? 0.6 : 0.45} />
             </g>
           ))}
           {/* ── PROPERTY BOUNDARY PINS (small markers on lots) ── */}
           {[[-140,-140],[80,-140],[-140,80]].map(([px,py],i)=>(
             <g key={`pin-${i}`}>
               <circle cx={px} cy={py} r={5}
-                fill={['#10B981','var(--sgs-primary)','#8B5CF6'][i]} opacity="0.9" />
+                fill={['var(--sgs-verified)','var(--sgs-primary)','#8B5CF6'][i]} opacity="0.9" />
               <circle cx={px} cy={py} r={2.5} fill="#fff" opacity="0.8" />
             </g>
           ))}
@@ -394,21 +394,21 @@ export const Hero3D = () => {
         >
           <polygon points="240,120 400,200 400,210 240,130" fill="url(#emeraldGlow)" opacity="0.22" />
           <polygon points="400,200 560,120 560,130 400,210" fill="url(#emeraldGlow)" opacity="0.22" />
-          <polyline points="240,120 400,200 560,120" fill="none" stroke="#10B981" strokeWidth="2" filter="url(#glow)" opacity="0.85" />
+          <polyline points="240,120 400,200 560,120" fill="none" stroke="var(--sgs-verified)" strokeWidth="2" filter="url(#glow)" opacity="0.85" />
           {/* Center ridge dot */}
-          <circle cx="400" cy="200" r="5.5" fill="#10B981" opacity="0.2" filter="url(#glow)" />
+          <circle cx="400" cy="200" r="5.5" fill="var(--sgs-verified)" opacity="0.2" filter="url(#glow)" />
           <circle cx="400" cy="200" r="3.5" fill="#fff" filter="url(#glow)" opacity="0.95" />
           {/* Left corner dot — halo + core */}
-          <circle cx="240" cy="120" r="6" fill="#10B981" opacity="0.18" filter="url(#glow)" />
-          <circle cx="240" cy="120" r="3" fill="#10B981" filter="url(#glow)" />
+          <circle cx="240" cy="120" r="6" fill="var(--sgs-verified)" opacity="0.18" filter="url(#glow)" />
+          <circle cx="240" cy="120" r="3" fill="var(--sgs-verified)" filter="url(#glow)" />
           <circle cx="240" cy="120" r="1.2" fill="#fff" opacity="0.85" />
           {/* Right corner dot — halo + core */}
-          <circle cx="560" cy="120" r="6" fill="#10B981" opacity="0.18" filter="url(#glow)" />
-          <circle cx="560" cy="120" r="3" fill="#10B981" filter="url(#glow)" />
+          <circle cx="560" cy="120" r="6" fill="var(--sgs-verified)" opacity="0.18" filter="url(#glow)" />
+          <circle cx="560" cy="120" r="3" fill="var(--sgs-verified)" filter="url(#glow)" />
           <circle cx="560" cy="120" r="1.2" fill="#fff" opacity="0.85" />
           {/* ── Floor indicator — pill follows laser ── */}
           <rect x="196" y="112" width="36" height="17" rx="4"
-            fill="#0F172A" stroke="#10B981" strokeWidth="1.2" opacity="0.95" />
+            fill="#0F172A" stroke="var(--sgs-verified)" strokeWidth="1.2" opacity="0.95" />
           <text x="214" y="124.5" fill="#34D399" fontSize="9.5" fontWeight="bold"
             textAnchor="middle" fontFamily="monospace" letterSpacing="0.5">
             {floorLabel}
@@ -439,13 +439,13 @@ export const Hero3D = () => {
         </motion.g>
         {/* ── DATA TAG 2: Match ── */}
         <motion.g animate={{ y: [0,-12,0] }} transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut', delay: 1 }}>
-          <line x1="240" y1="280" x2="162" y2="232" stroke="#10B981" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.65" />
+          <line x1="240" y1="280" x2="162" y2="232" stroke="var(--sgs-verified)" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.65" />
           {/* Connector dot — halo + core + white center */}
-          <circle cx="162" cy="232" r="8" fill="#10B981" opacity="0.18" filter="url(#glow)" />
-          <circle cx="162" cy="232" r="4.5" fill="#10B981" filter="url(#glow)" />
+          <circle cx="162" cy="232" r="8" fill="var(--sgs-verified)" opacity="0.18" filter="url(#glow)" />
+          <circle cx="162" cy="232" r="4.5" fill="var(--sgs-verified)" filter="url(#glow)" />
           <circle cx="162" cy="232" r="1.8" fill="#fff" opacity="0.9" />
-          <rect x="28" y="210" width="130" height="46" rx="9" fill="#1E293B" stroke="#10B981" strokeWidth="1.5" opacity="0.97" />
-          <rect x="28" y="210" width="130" height="46" rx="9" fill="#10B981" opacity="0.05" />
+          <rect x="28" y="210" width="130" height="46" rx="9" fill="#1E293B" stroke="var(--sgs-verified)" strokeWidth="1.5" opacity="0.97" />
+          <rect x="28" y="210" width="130" height="46" rx="9" fill="var(--sgs-verified)" opacity="0.05" />
           <text x="93" y="228" fill="#34D399" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1.2">{labelMatch}</text>
           <text x="93" y="247" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textMatch}</text>
         </motion.g>

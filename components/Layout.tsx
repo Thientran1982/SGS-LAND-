@@ -164,7 +164,7 @@ const Sidebar = memo(({
                     className={`flex items-center gap-3 transition-all duration-300 outline-none ${isCollapsed ? 'scale-0 opacity-0 absolute' : 'scale-100 opacity-100'}`}
                     aria-label={t('nav.go_to_dashboard') || "Đi đến Tổng quan"}
                 >
-                    <div className="w-8 h-8 text-indigo-600">
+                    <div className="w-8 h-8 text-sgs-primary">
                         <Logo className="w-full h-full" />
                     </div>
                     <div className="overflow-hidden whitespace-nowrap text-left">
@@ -179,7 +179,7 @@ const Sidebar = memo(({
                 {isCollapsed && (
                     <button
                         onClick={() => onNavigate(ROUTES.DASHBOARD)}
-                        className="w-8 h-8 text-indigo-600 animate-scale-up absolute"
+                        className="w-8 h-8 text-sgs-primary animate-scale-up absolute"
                         aria-label={t('nav.go_to_dashboard') || "Đi đến Tổng quan"}
                     >
                         <Logo className="w-full h-full" />
@@ -208,7 +208,7 @@ const Sidebar = memo(({
                             ) : (
                                 <button 
                                     onClick={() => toggleGroup(group.id)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 mb-1 text-xs2 font-bold uppercase tracking-widest transition-colors hover:text-[var(--text-primary)] ${hasActiveChild ? 'text-indigo-600' : 'text-[var(--text-tertiary)]'}`}
+                                    className={`w-full flex items-center justify-between px-3 py-2 mb-1 text-xs2 font-bold uppercase tracking-widest transition-colors hover:text-[var(--text-primary)] ${hasActiveChild ? 'text-sgs-primary' : 'text-[var(--text-tertiary)]'}`}
                                 >
                                     <span>{t(group.labelKey)}</span>
                                     <div className={`transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`}>
@@ -231,7 +231,7 @@ const Sidebar = memo(({
                                             className={`
                                                 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
                                                 ${isActive
-                                                    ? 'bg-gradient-to-r from-indigo-50 to-transparent dark:from-indigo-900/20 text-indigo-700 dark:text-indigo-300 shadow-sm border-l-4 border-indigo-500'
+                                                    ? 'bg-gradient-to-r from-indigo-50 to-transparent dark:from-indigo-900/20 text-sgs-primary dark:text-indigo-300 shadow-sm border-l-4 border-indigo-500'
                                                     : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] border-l-4 border-transparent'}
                                             `}
                                         >
@@ -262,7 +262,7 @@ const Sidebar = memo(({
                 <div className={`grid ${isCollapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-1`}>
                     <button
                         onClick={onToggleTheme}
-                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group relative"
+                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-sgs-primary transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary group relative"
                         title={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
                         aria-label={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
                     >
@@ -274,7 +274,7 @@ const Sidebar = memo(({
 
                     <button
                         onClick={onToggleLang}
-                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group"
+                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-sgs-primary transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary group"
                         title={t('nav.lang_switch')}
                         aria-label={t('nav.lang_switch')}
                     >

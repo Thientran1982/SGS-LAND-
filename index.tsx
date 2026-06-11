@@ -201,7 +201,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 <p className="text-[var(--text-secondary)] text-xs mt-2 max-w-[250px] mx-auto leading-relaxed">{TEXT.CRASH_DESC}</p>
             </div>           
             {/* Error Stack */}
-            <div className="bg-slate-50 dark:bg-black/30 rounded-xl p-4 mb-8 relative group border border-slate-100 dark:border-white/5">
+            <div className="bg-sgs-bg dark:bg-black/30 rounded-xl p-4 mb-8 relative group border border-slate-100 dark:border-white/5">
                <code className="text-[10px] font-mono text-rose-600 dark:text-rose-400 block whitespace-pre-wrap break-words max-h-48 overflow-y-auto no-scrollbar font-bold">
                    {this.state.error?.message || TEXT.ERR_UNKNOWN}
                </code>

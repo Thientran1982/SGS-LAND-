@@ -108,7 +108,7 @@ html.dark body {
   border-radius: 4px;
 }
 .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-muted);
+  background-color: var(--sgs-text-muted);
 }
 /* Glassmorphism utility */
 @layer components {
@@ -181,6 +181,6 @@ html.dark body {
 .markdown-body pre { background-color: rgba(0,0,0,0.05); padding: 0.75em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 0.75em; }
 .dark .markdown-body pre { background-color: rgba(255,255,255,0.05); }
 .markdown-body pre code { background-color: transparent; padding: 0; }
-.markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--text-secondary); font-style: italic; }
+.markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--sgs-text-muted); font-style: italic; }
 .dark .markdown-body blockquote { border-left-color: rgba(255,255,255,0.1); }
-.markdown-body a { color: var(--primary-600); text-decoration: underline; text-underline-offset: 2px; }
+.markdown-body a { color: var(--sgs-primary); text-decoration: underline; text-underline-offset: 2px; }

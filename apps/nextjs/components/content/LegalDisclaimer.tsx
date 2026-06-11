@@ -23,9 +23,9 @@ export const LegalDisclaimer: FC<LegalDisclaimerProps> = ({
       color: "var(--text-secondary)",
     }}
   >
-    <Scale className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#059669" }} aria-hidden />
+    <Scale className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "var(--sgs-verified)" }} aria-hidden />
     <div>
-      <p className="font-semibold mb-1" style={{ color: "#059669" }}>Lưu ý pháp lý</p>
+      <p className="font-semibold mb-1" style={{ color: "var(--sgs-verified)" }}>Lưu ý pháp lý</p>
       <p>
         Nội dung bài viết này mang tính chất tham khảo chung, không thay thế tư vấn pháp lý chuyên
         nghiệp. Quy định pháp luật có thể thay đổi. Vui lòng liên hệ luật sư hoặc chuyên gia pháp

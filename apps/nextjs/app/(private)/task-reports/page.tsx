@@ -136,12 +136,12 @@ export default function TaskReportsPage() {
                         style={{ borderColor: "var(--border-default)" }}>
                         <td className="px-4 py-3 font-medium" style={{ color: "var(--text-primary)" }}>{a.assignee_name ?? "Chưa giao"}</td>
                         <td className="px-4 py-3 text-xs" style={{ color: "var(--text-secondary)" }}>{a.count}</td>
-                        <td className="px-4 py-3 text-xs text-emerald-600">{a.done}</td>
+                        <td className="px-4 py-3 text-xs text-sgs-verified">{a.done}</td>
                         <td className="px-4 py-3 text-xs text-red-500">{a.overdue ?? 0}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-16 h-1.5 rounded-full" style={{ background: "var(--border-default)" }}>
-                              <div className="h-1.5 rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                              <div className="h-1.5 rounded-full bg-sgs-verified" style={{ width: `${pct}%` }} />
                             </div>
                             <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{pct}%</span>
                           </div>

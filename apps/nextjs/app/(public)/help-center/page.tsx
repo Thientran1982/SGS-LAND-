@@ -56,7 +56,7 @@ export default function HelpCenterPage() {
               <Icon className="w-4 h-4" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm group-hover:text-indigo-500 transition-colors" style={{ color: "var(--text-primary)" }}>{title}</p>
+              <p className="font-semibold text-sm group-hover:text-sgs-primary transition-colors" style={{ color: "var(--text-primary)" }}>{title}</p>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{desc}</p>
             </div>
             <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />

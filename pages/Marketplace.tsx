@@ -123,11 +123,11 @@ export const Marketplace: React.FC = () => {
                 {/* Sidebar Categories */}
                 <div className="w-full md:w-64 space-y-2 shrink-0">
                     <div className="relative mb-6 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-sgs-primary transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input 
-                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('common.search')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -181,13 +181,13 @@ export const Marketplace: React.FC = () => {
 
                             return (
                                 <div key={app.id} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-lg transition-all group flex flex-col h-full relative overflow-hidden">
-                                    {isProcessing && <div className="absolute inset-0 bg-[var(--bg-surface)]/60 backdrop-blur-sm z-10 flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}
+                                    {isProcessing && <div className="absolute inset-0 bg-[var(--bg-surface)]/60 backdrop-blur-sm z-10 flex items-center justify-center"><div className="w-6 h-6 border-2 border-sgs-primary border-t-transparent rounded-full animate-spin"></div></div>}
 
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="w-14 h-14 rounded-2xl shadow-sm bg-[var(--glass-surface)] flex items-center justify-center p-2 border border-[var(--glass-border)]">
                                             <img src={app.icon} className="w-full h-full object-contain" alt="" />
                                         </div>
-                                        {isInstalled && <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs2 font-bold uppercase tracking-wider border border-emerald-100">{t('market.installed_badge')}</span>}
+                                        {isInstalled && <span className="bg-sgs-champagne text-sgs-verified px-2 py-1 rounded text-xs2 font-bold uppercase tracking-wider border border-emerald-100">{t('market.installed_badge')}</span>}
                                     </div>
                                     <h3 className="font-bold text-[var(--text-primary)] text-lg mb-1 line-clamp-1">{app.name}</h3>
                                     <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-3">{getCatLabel(app.category)}</div>
@@ -207,7 +207,7 @@ export const Marketplace: React.FC = () => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <button onClick={() => handleInstall(app.id)} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center gap-2">
+                                            <button onClick={() => handleInstall(app.id)} className="px-4 py-2 bg-sgs-primary-deep text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center gap-2">
                                                 {ICONS.INSTALL} {t('market.btn_install')}
                                             </button>
                                         )}
@@ -229,14 +229,14 @@ export const Marketplace: React.FC = () => {
                                         </p>
                                     </div>
                                     {(search || category !== 'ALL') && (
-                                        <button onClick={() => { setSearch(''); setCategory('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                        <button onClick={() => { setSearch(''); setCategory('ALL'); }} className="px-4 py-2 text-xs font-bold text-sgs-primary bg-sgs-champagne border border-sgs-border rounded-xl hover:bg-sgs-champagne transition-colors">
                                             {t('market.reset_search')}
                                         </button>
                                     )}
                                 </>
                             ) : (
                                 <>
-                                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                    <div className="w-14 h-14 rounded-2xl bg-sgs-champagne flex items-center justify-center text-sgs-text-muted">
                                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                     </div>
                                     <div>

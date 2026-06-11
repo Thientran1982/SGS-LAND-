@@ -118,7 +118,7 @@ export const Billing: React.FC = () => {
                             <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{subscription.paymentMethod.brand}</div>
                             <div className="text-sm font-mono font-bold text-[var(--text-secondary)]">•••• {subscription.paymentMethod.last4}</div>
                         </div>
-                        <button className="text-xs font-bold text-indigo-600 hover:underline ml-2">{t('billing.update_card')}</button>
+                        <button className="text-xs font-bold text-sgs-primary hover:underline ml-2">{t('billing.update_card')}</button>
                     </div>
                 )}
             </div>
@@ -127,7 +127,7 @@ export const Billing: React.FC = () => {
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col">
                     <h3 className="font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                         {t('billing.current_usage')}
-                        <span className="bg-emerald-50 text-emerald-600 text-xs2 px-2 py-0.5 rounded-full border border-emerald-100 uppercase">
+                        <span className="bg-sgs-champagne text-sgs-verified text-xs2 px-2 py-0.5 rounded-full border border-emerald-100 uppercase">
                             {t(`billing.plan_${currentPlan.name.toLowerCase()}`)}
                         </span>
                     </h3>
@@ -138,7 +138,7 @@ export const Billing: React.FC = () => {
                                 <span className="font-bold text-[var(--text-primary)]">{usage?.seatsUsed ?? 0} / {currentPlan.limits.seats}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500" style={{ width: `${Math.min(100, ((usage?.seatsUsed ?? 0) / currentPlan.limits.seats) * 100)}%` }}></div>
+                                <div className="h-full bg-sgs-primary" style={{ width: `${Math.min(100, ((usage?.seatsUsed ?? 0) / currentPlan.limits.seats) * 100)}%` }}></div>
                             </div>
                         </div>
                         <div>
@@ -156,7 +156,7 @@ export const Billing: React.FC = () => {
                                 <span className="font-bold text-[var(--text-primary)]">{usage?.aiRequests ?? 0} / {currentPlan.limits.aiRequestsPerMonth}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, ((usage?.aiRequests ?? 0) / currentPlan.limits.aiRequestsPerMonth) * 100)}%` }}></div>
+                                <div className="h-full bg-sgs-accent" style={{ width: `${Math.min(100, ((usage?.aiRequests ?? 0) / currentPlan.limits.aiRequestsPerMonth) * 100)}%` }}></div>
                             </div>
                         </div>
                     </div>
@@ -172,10 +172,10 @@ export const Billing: React.FC = () => {
                         return (
                             <div key={plan.id} className={`p-6 rounded-[24px] border flex flex-col transition-all ${isCurrent ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:shadow-lg hover:-translate-y-1'}`}>
                                 <div className="flex justify-between items-start mb-4">
-                                    <h4 className={`font-bold ${isCurrent ? 'text-indigo-700' : 'text-[var(--text-primary)]'}`}>
+                                    <h4 className={`font-bold ${isCurrent ? 'text-sgs-primary' : 'text-[var(--text-primary)]'}`}>
                                         {t(`billing.plan_${plan.name.toLowerCase()}`)}
                                     </h4>
-                                    {isCurrent && <div className="text-indigo-600 bg-[var(--bg-surface)] p-1 rounded-full shadow-sm">{ICONS.CHECK}</div>}
+                                    {isCurrent && <div className="text-sgs-primary bg-[var(--bg-surface)] p-1 rounded-full shadow-sm">{ICONS.CHECK}</div>}
                                 </div>
                                 <div className="text-2xl font-extrabold text-[var(--text-primary)] mb-1">
                                     {formatCurrency(plan.price)}
@@ -186,7 +186,7 @@ export const Billing: React.FC = () => {
                                 <ul className="space-y-3 mb-8 flex-1">
                                     {plan.features.map((f, i) => (
                                         <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                                            <span className="text-indigo-500 mt-0.5">{ICONS.CHECK}</span>
+                                            <span className="text-sgs-primary mt-0.5">{ICONS.CHECK}</span>
                                             {t(f)}
                                         </li>
                                     ))}
@@ -194,7 +194,7 @@ export const Billing: React.FC = () => {
                                 <button
                                     disabled={isCurrent || processingPlan === plan.id}
                                     onClick={() => !isCurrent && setUpgradeConfirmPlan(plan.id)}
-                                    className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600 cursor-pointer'}`}
+                                    className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-indigo-50 text-sgs-primary border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600 cursor-pointer'}`}
                                 >
                                     {processingPlan === plan.id ? '…' : isCurrent ? t('billing.current_plan') : t('billing.upgrade_btn')}
                                 </button>
@@ -249,7 +249,7 @@ export const Billing: React.FC = () => {
                                             <td className="py-3">
                                                 <button
                                                     onClick={() => handleDownloadInvoice(inv)}
-                                                    className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                    className="flex items-center gap-1 text-xs font-bold text-sgs-primary hover:text-sgs-primary transition-colors"
                                                 >
                                                     {ICONS.DOWNLOAD} {t('billing.download_csv')}
                                                 </button>

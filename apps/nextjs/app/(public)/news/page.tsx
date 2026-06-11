@@ -81,7 +81,7 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
         </div>
 
         <h2
-          className="font-bold text-base leading-snug mb-2 group-hover:text-indigo-500 transition-colors line-clamp-2 flex-1"
+          className="font-bold text-base leading-snug mb-2 group-hover:text-sgs-primary transition-colors line-clamp-2 flex-1"
           style={{ color: "var(--text-primary)" }}
           itemProp="headline"
         >
@@ -146,7 +146,7 @@ function FeaturedArticle({ article }: { article: (typeof ARTICLES)[0] }) {
             {cat.name}
           </span>
         )}
-        <h2 className="text-2xl font-extrabold leading-tight mb-3 group-hover:text-indigo-500 transition-colors"
+        <h2 className="text-2xl font-extrabold leading-tight mb-3 group-hover:text-sgs-primary transition-colors"
           style={{ color: "var(--text-primary)" }}>
           <Link href={`/news/${article.slug}`}>{article.title}</Link>
         </h2>

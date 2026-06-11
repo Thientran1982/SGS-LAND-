@@ -107,8 +107,8 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     {images!.length > 1 && (
                         <>
                             <div className="absolute inset-0 flex items-center justify-between p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                                <button onClick={prevImage} aria-label={t('common.prev')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{LISTING_ICONS.CHEVRON_LEFT}</button>
-                                <button onClick={nextImage} aria-label={t('common.next')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{LISTING_ICONS.CHEVRON_RIGHT}</button>
+                                <button onClick={prevImage} aria-label={t('common.prev')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary">{LISTING_ICONS.CHEVRON_LEFT}</button>
+                                <button onClick={nextImage} aria-label={t('common.next')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary">{LISTING_ICONS.CHEVRON_RIGHT}</button>
                             </div>
                             <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
                                 {images!.map((_, idx) => (
@@ -121,7 +121,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800">
                     {LISTING_ICONS.IMAGE_PLACEHOLDER}
-                    <span className="text-xs text-[var(--text-tertiary)] dark:text-slate-500">Chưa có ảnh</span>
+                    <span className="text-xs text-[var(--text-tertiary)] dark:text-sgs-text-muted">Chưa có ảnh</span>
                 </div>
             )}            
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 pointer-events-none z-10"></div>
@@ -168,10 +168,10 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
     };
     return (
         <>
-            <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-secondary)] hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}>{LISTING_ICONS.ACTION}</button>
+            <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-400' : 'text-[var(--text-secondary)] hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}>{LISTING_ICONS.ACTION}</button>
             {isOpen && createPortal(
                 <div 
-                    className="fixed z-[9999] w-48 bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 overflow-hidden animate-enter origin-top-right"
+                    className="fixed z-[9999] w-48 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 overflow-hidden animate-enter origin-top-right"
                     style={{ top: coords.top ?? 'auto', bottom: coords.bottom ?? 'auto', left: coords.left }}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -252,7 +252,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     return (
         <div 
             onClick={handleCardClick}
-            className="bg-[var(--bg-surface)] dark:bg-slate-900 rounded-[24px] shadow-sm group h-full relative overflow-hidden transform-gpu will-change-transform transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 isolate cursor-pointer flex flex-col"
+            className="bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-[24px] shadow-sm group h-full relative overflow-hidden transform-gpu will-change-transform transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 isolate cursor-pointer flex flex-col"
             style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
         >
             <div className="shrink-0">
@@ -270,7 +270,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                     onClick={handleCardClick}
                 />
             </div>
-            <div className="p-4 flex flex-col flex-1 bg-[var(--bg-surface)] dark:bg-slate-900 relative z-10 min-h-0">
+            <div className="p-4 flex flex-col flex-1 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep relative z-10 min-h-0">
                 <div className="flex justify-between items-start mb-1">
                     <div className="min-w-0 flex-1 mr-2">
                         <div className="flex items-center gap-2 mb-1">
@@ -281,7 +281,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                                 {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                             </span>
                         </div>
-                        <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={item.title}>
+                        <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-sgs-primary dark:group-hover:text-sgs-text-muted transition-colors" title={item.title}>
                             {item.title}
                         </h3>
                     </div>
@@ -309,7 +309,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                         {attrs.legalStatus && (
                             <div className="flex flex-col items-end">
                                 <span className="text-2xs font-bold text-[var(--text-secondary)] uppercase">{t('inventory.label_legal')}</span>
-                                <span className="text-2xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
+                                <span className="text-2xs font-bold text-sgs-primary dark:text-sgs-text-muted bg-sgs-champagne dark:bg-sgs-primary/20 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
                                     {t(`legal.${attrs.legalStatus}`) || (attrs.legalStatus as string)}
                                 </span>
                             </div>
