@@ -1344,7 +1344,7 @@ export default function ProjectLandingPage() {
                             seller: {
                                 '@type': 'RealEstateAgent',
                                 name: 'SGS LAND',
-                                legalName: 'Công ty TNHH SGS Land',
+                                legalName: 'Công ty Cổ phần SGS Land',
                                 taxID: '0312960439',
                                 url: 'https://sgsland.vn',
                                 telephone: '+84-971-132-378',
