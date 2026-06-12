@@ -91,6 +91,22 @@ interface ProjectConfig {
     projectType: string;
     scale: string;
 }
+const PROJECT_GEO_DATA: Record<string, { lat: number; lng: number; yearBuilt: string; containedIn: string; parentArea: string }> = {
+  'aqua-city': { lat: 10.9218, lng: 106.8962, yearBuilt: '2019', containedIn: 'Bien Hoa', parentArea: 'Dong Nai' },
+  'manhattan': { lat: 10.7769, lng: 106.7009, yearBuilt: '2021', containedIn: 'Binh Thanh', parentArea: 'TP. Ho Chi Minh' },
+  'vinhomes-can-gio': { lat: 10.4124, lng: 106.9524, yearBuilt: '2025', containedIn: 'Can Gio', parentArea: 'TP. Ho Chi Minh' },
+  'van-phuc-city': { lat: 10.8324, lng: 106.7516, yearBuilt: '2019', containedIn: 'TP Thu Duc', parentArea: 'TP. Ho Chi Minh' },
+  'sala': { lat: 10.8025, lng: 106.7414, yearBuilt: '2018', containedIn: 'TP Thu Duc', parentArea: 'TP. Ho Chi Minh' },
+  'izumi-city': { lat: 10.9650, lng: 106.8410, yearBuilt: '2022', containedIn: 'Long Thanh', parentArea: 'Dong Nai' },
+  'vinhomes-grand-park': { lat: 10.8510, lng: 106.7930, yearBuilt: '2020', containedIn: 'TP Thu Duc', parentArea: 'TP. Ho Chi Minh' },
+  'vinhomes-central-park': { lat: 10.7982, lng: 106.7186, yearBuilt: '2017', containedIn: 'Binh Thanh', parentArea: 'TP. Ho Chi Minh' },
+  'thu-thiem': { lat: 10.7891, lng: 106.7265, yearBuilt: '2022', containedIn: 'TP Thu Duc', parentArea: 'TP. Ho Chi Minh' },
+  'son-kim-land': { lat: 10.7985, lng: 106.7180, yearBuilt: '2023', containedIn: 'Binh Thanh', parentArea: 'TP. Ho Chi Minh' },
+  'masterise-homes': { lat: 10.8003, lng: 106.7210, yearBuilt: '2023', containedIn: 'TP Thu Duc', parentArea: 'TP. Ho Chi Minh' },
+  'the-global-city': { lat: 10.8401, lng: 106.7485, yearBuilt: '2024', containedIn: 'TP Thu Duc', parentArea: 'TP. Ho Chi Minh' },
+  'nha-pho-trung-tam': { lat: 10.7769, lng: 106.7009, yearBuilt: '2020', containedIn: 'TP. Ho Chi Minh', parentArea: 'Viet Nam' },
+};
+
 const PROJECT_CONFIG: Record<string, ProjectConfig> = {
     'aqua-city': {
         slug: 'aqua-city',
@@ -1312,6 +1328,10 @@ export default function ProjectLandingPage() {
                             '@type': 'PostalAddress',
                             addressLocality: cfg.location,
                             addressCountry: 'VN',
+                                geo: PROJECT_GEO_DATA[cfg.slug] ? { '@type': 'GeoCoordinates', latitude: PROJECT_GEO_DATA[cfg.slug]!.lat, longitude: PROJECT_GEO_DATA[cfg.slug]!.lng } : undefined,
+                                yearBuilt: PROJECT_GEO_DATA[cfg.slug]?.yearBuilt,
+                                containedIn: PROJECT_GEO_DATA[cfg.slug] ? { '@type': 'AdministrativeArea', name: PROJECT_GEO_DATA[cfg.slug]!.containedIn, containedIn: { '@type': 'AdministrativeArea', name: PROJECT_GEO_DATA[cfg.slug]!.parentArea } } : undefined,
+                                isRelatedTo: { '@id': 'https://sgsland.vn/#organization' },
                         },
                         additionalProperty: [
                             { '@type': 'PropertyValue', name: 'Chủ đầu tư', value: cfg.developer },
