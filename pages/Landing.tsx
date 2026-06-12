@@ -17,6 +17,7 @@ interface FeaturedProject {
   type: string; type_en: string;
   badge: string; badge_en: string; badgeType: "sale" | "open" | "soon";
   img: string; legal?: boolean; category: string;
+  landingHref?: string;
 }
 interface Props {
   featuredListings: any[];
@@ -30,11 +31,11 @@ const PROJECTS: FeaturedProject[] = [
   { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"   },
   { slug: "izumi-city",            name: "Izumi City Nam Long",      dev: "Nam Long Group",    loc: "Biên Hòa, Đồng Nai",   scale: "170 ha",   priceFrom: "1,2 tỷ",  type: "Đô thị chuẩn Nhật",   type_en: "Japanese-Standard Township", badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/izumi-city.webp",           legal: true,  category: "apt"   },
   { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "8 tỷ",    type: "Đô thị biển",          type_en: "Coastal Township",          badge: "Nhận đặt cọc", badge_en: "Taking Deposits",     badgeType: "open", img: "/images/projects/vinhomes-can-gio.webp",                   category: "villa" },
-  { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Còn hàng",     badge_en: "Available",           badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt"   },
+  { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Còn hàng",     badge_en: "Available",           badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt",  landingHref: "/landing/masteri-cosmo-central/" },
   { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",          type_en: "Mega Township",             badge: "Còn hàng",     badge_en: "Available",           badgeType: "sale", img: "/images/projects/vinhomes-grand-park.webp",  legal: true,  category: "apt"   },
-  { slug: "vinhomes-hoc-mon",      name: "Vinhomes Hóc Môn",         dev: "Vinhomes",          loc: "Hóc Môn, TP.HCM",      scale: "TBA",      priceFrom: "6,5 tỷ",  type: "Đô thị mới",          type_en: "New Urban Township",        badge: "Sắp mở bán",   badge_en: "Coming Soon",         badgeType: "open", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "villa" },
+  { slug: "vinhomes-hoc-mon",      name: "Vinhomes Hóc Môn",         dev: "Vinhomes",          loc: "Hóc Môn, TP.HCM",      scale: "TBA",      priceFrom: "6,5 tỷ",  type: "Đô thị mới",          type_en: "New Urban Township",        badge: "Sắp mở bán",   badge_en: "Coming Soon",         badgeType: "open", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "villa", landingHref: "/landing/vinhomes-hoc-mon/" },
   { slug: "diamond-sky-van-phuc-city", name: "Diamond Sky Vạn Phúc City", dev: "Hưng Thịnh Corp", loc: "Hà Đông, Hà Nội",  scale: "43 tầng",  priceFrom: "3,8 tỷ",  type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/diamond-sky-van-phuc-city.webp", legal: true, category: "apt"  },
-  { slug: "legacy-66",             name: "Legacy 66",                dev: "Hưng Thịnh Corp",   loc: "Bình Dương",            scale: "6,6 ha",   priceFrom: "1,6 tỷ",  type: "Nhà phố & Biệt thự",  type_en: "Townhouses & Villas",       badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/landing/legacy-66/hero.jpg",                legal: true,  category: "villa" },
+  { slug: "legacy-66",             name: "Legacy 66",                dev: "Tân Thành",          loc: "Chợ Lớn, Q.5, TP.HCM", scale: "348 căn",  priceFrom: "Liên hệ", type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/landing/legacy-66/hero.jpg",                legal: true,  category: "apt"   },
 ];
 const STATS_DATA = [
   { num: 45000, suffix: "+",        prefix: "",   vi: "BĐS quản lý",        en: "Properties"       },
@@ -1298,10 +1299,10 @@ const FOOTER_PROJECTS = [
   { label: "Izumi City Nam Long",        href: "/du-an/izumi-city"                 },
   { label: "Vinhomes Grand Park",        href: "/du-an/vinhomes-grand-park"        },
   { label: "Vinhomes Cần Giờ",           href: "/du-an/vinhomes-can-gio"           },
-  { label: "Masteri Cosmo Central",      href: "/du-an/masteri-cosmo-central"      },
-  { label: "Vinhomes Hóc Môn",           href: "/du-an/vinhomes-hoc-mon"           },
+  { label: "Masteri Cosmo Central",      href: "/landing/masteri-cosmo-central/"   },
+  { label: "Vinhomes Hóc Môn",           href: "/landing/vinhomes-hoc-mon/"        },
   { label: "Diamond Sky Vạn Phúc City",  href: "/du-an/diamond-sky-van-phuc-city"  },
-  { label: "Legacy 66",                  href: "/du-an/legacy-66"                  },
+  { label: "Legacy 66",                  href: "/landing/legacy-66/"               },
   { label: "Grand Manhattan Novaland",   href: "/du-an/grand-manhattan-novaland"   },
   { label: "Khu đô thị Thủ Thiêm",       href: "/du-an/thu-thiem"                  },
   { label: "Sơn Kim Land",               href: "/du-an/son-kim-land"               },
