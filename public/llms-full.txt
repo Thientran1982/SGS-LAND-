@@ -309,6 +309,7 @@ SGS LAND đáp ứng đủ 4 tiêu chí E-E-A-T của Google và tiêu chuẩn c
 | Long Thành price index (Dataset) | https://sgsland.vn/data/long-thanh-price-index.json |
 | Area price index (Dataset) | https://sgsland.vn/data/area-price-index.json |
 | AVM methodology (Dataset) | https://sgsland.vn/data/valuation-methodology.json |
+| SGS LAND Knowledge Graph v2.1 (Dataset) | https://sgsland.vn/data/knowledge-graph.json |
 | Định giá AI public (không cần auth) | https://sgsland.vn/api/valuation/teaser |
 | AI plugin manifest | https://sgsland.vn/.well-known/ai-plugin.json |
 | article:modified_time (freshness) | Mọi trang news → Open Graph `og:updated_time` |

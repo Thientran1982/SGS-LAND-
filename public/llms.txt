@@ -272,6 +272,7 @@ Organization (SGS LAND / sgsland.vn)
 - [/data/area-price-index.json](https://sgsland.vn/data/area-price-index.json) — Chỉ số giá tất cả khu vực trọng điểm Đông Nam Bộ
 - [/data/project-feed.json](https://sgsland.vn/data/project-feed.json) — JSON-LD entity catalog 13 dự án lớn
 - [/data/valuation-methodology.json](https://sgsland.vn/data/valuation-methodology.json) — 9 hệ số AVM, trọng số, kiểm chứng
+- [/data/knowledge-graph.json](https://sgsland.vn/data/knowledge-graph.json) — SGS LAND Knowledge Graph v2.1: entity relationships, Organization, Person, ApartmentComplex, Dataset (for AI crawlers & LLMs)
 
 ---
 

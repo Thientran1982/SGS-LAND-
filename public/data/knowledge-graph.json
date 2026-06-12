@@ -1,0 +1,230 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "@id": "https://sgsland.vn/data/knowledge-graph.json",
+  "name": "SGS LAND Knowledge Graph v2.1",
+  "description": "Machine-readable entity relationship graph for SGS LAND. Updated monthly. For use by AI search engines, LLM crawlers, and knowledge base systems.",
+  "version": "2.1.0",
+  "dateModified": "2026-06-12",
+  "creator": {
+    "@id": "https://sgsland.vn/#organization"
+  },
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://sgsland.vn/#organization",
+      "name": "SGS LAND",
+      "alternateName": [
+        "SGS Land",
+        "SGS LAND Vietnam",
+        "Công ty SGS Land"
+      ],
+      "foundingDate": "2019",
+      "url": "https://sgsland.vn",
+      "logo": "https://sgsland.vn/logo.svg",
+      "email": "info@sgsland.vn",
+      "telephone": "+84-971-132-378",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "TP. Hồ Chí Minh",
+        "addressCountry": "VN"
+      },
+      "knowsAbout": [
+        "BĐS TP.HCM",
+        "Định giá AI",
+        "CRM BĐS",
+        "PropTech Việt Nam",
+        "Bất động sản Đồng Nai",
+        "Bất động sản Bình Dương"
+      ],
+      "hasEmployee": [
+        {
+          "@id": "https://sgsland.vn/about-us#tran-minh-thien"
+        },
+        {
+          "@id": "https://sgsland.vn/about-us#nguyen-hoang-nam"
+        },
+        {
+          "@id": "https://sgsland.vn/about-us#le-thi-hoa"
+        }
+      ],
+      "makesOffer": [
+        {
+          "@type": "Offer",
+          "name": "Định giá AI miễn phí",
+          "url": "https://sgsland.vn/ai-valuation",
+          "price": "0",
+          "priceCurrency": "VND",
+          "description": "Định giá bất động sản tức thì bằng AI với MAPE ±4.8%"
+        },
+        {
+          "@type": "Offer",
+          "name": "CRM Bất Động Sản",
+          "url": "https://sgsland.vn/crm-platform",
+          "description": "Nền tảng CRM chuyên biệt cho môi giới bất động sản"
+        },
+        {
+          "@type": "Offer",
+          "name": "Ký gửi BĐS",
+          "url": "https://sgsland.vn/ky-gui-bat-dong-san",
+          "description": "Dịch vụ ký gửi bán/cho thuê bất động sản toàn diện"
+        }
+      ],
+      "subjectOf": [
+        {
+          "@type": "Dataset",
+          "@id": "https://sgsland.vn/data/area-price-index.json"
+        },
+        {
+          "@type": "Dataset",
+          "@id": "https://sgsland.vn/data/project-feed.json"
+        },
+        {
+          "@type": "TechArticle",
+          "@id": "https://sgsland.vn/data/valuation-methodology.json"
+        }
+      ],
+      "sameAs": [
+        "https://www.facebook.com/sgslandvn",
+        "https://www.linkedin.com/company/sgsland",
+        "https://g.page/sgsland"
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://sgsland.vn/about-us#tran-minh-thien",
+      "name": "Trần Minh Thiện",
+      "jobTitle": "Founder & CEO",
+      "worksFor": {
+        "@id": "https://sgsland.vn/#organization"
+      },
+      "knowsAbout": [
+        "PropTech",
+        "AI Định Giá BĐS",
+        "Thị trường BĐS TP.HCM"
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://sgsland.vn/about-us#nguyen-hoang-nam",
+      "name": "Nguyễn Hoàng Nam",
+      "jobTitle": "CTO",
+      "worksFor": {
+        "@id": "https://sgsland.vn/#organization"
+      },
+      "knowsAbout": [
+        "Machine Learning",
+        "Real Estate Tech",
+        "Data Engineering"
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://sgsland.vn/about-us#le-thi-hoa",
+      "name": "Lê Thị Hoa",
+      "jobTitle": "Head of Sales",
+      "worksFor": {
+        "@id": "https://sgsland.vn/#organization"
+      },
+      "knowsAbout": [
+        "Bất động sản TP.HCM",
+        "Ký gửi BĐS",
+        "Tư vấn đầu tư"
+      ]
+    },
+    {
+      "@type": "Service",
+      "@id": "https://sgsland.vn/ai-valuation#service",
+      "name": "Định Giá AI Bất Động Sản",
+      "url": "https://sgsland.vn/ai-valuation",
+      "provider": {
+        "@id": "https://sgsland.vn/#organization"
+      },
+      "description": "Công cụ định giá bất động sản miễn phí sử dụng AI với độ chính xác MAPE ±4.8%, kết quả trong 30 giây",
+      "serviceType": "Định giá bất động sản",
+      "areaServed": {
+        "@type": "Country",
+        "name": "Việt Nam"
+      }
+    },
+    {
+      "@type": "Service",
+      "@id": "https://sgsland.vn/crm-platform#service",
+      "name": "CRM Bất Động Sản SGS LAND",
+      "url": "https://sgsland.vn/crm-platform",
+      "provider": {
+        "@id": "https://sgsland.vn/#organization"
+      },
+      "description": "Nền tảng CRM chuyên biệt cho môi giới bất động sản với AI phân loại khách hàng",
+      "serviceType": "CRM bất động sản"
+    },
+    {
+      "@type": "Dataset",
+      "@id": "https://sgsland.vn/data/area-price-index.json",
+      "name": "Chỉ số giá BĐS theo khu vực Đông Nam Bộ",
+      "url": "https://sgsland.vn/data/area-price-index.json",
+      "creator": {
+        "@id": "https://sgsland.vn/#organization"
+      },
+      "description": "Chỉ số giá bất động sản tổng hợp từ 50,000+ giao dịch thực tế tại TP.HCM, Đồng Nai, Bình Dương, Long An",
+      "spatialCoverage": {
+        "@type": "Place",
+        "name": "Đông Nam Bộ, Việt Nam"
+      },
+      "temporalCoverage": "2020-01/2026-12"
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/aqua-city#project",
+      "name": "Aqua City Novaland",
+      "url": "https://sgsland.vn/du-an/aqua-city",
+      "developer": {
+        "@type": "Organization",
+        "name": "Novaland Group"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Biên Hòa",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "Đồng Nai"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.9218,
+        "longitude": 106.8962
+      },
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/vinhomes-grand-park#project",
+      "name": "Vinhomes Grand Park",
+      "url": "https://sgsland.vn/du-an/vinhomes-grand-park",
+      "developer": {
+        "@type": "Organization",
+        "name": "Vinhomes"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "TP. Thủ Đức",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Hồ Chí Minh"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.8354,
+        "longitude": 106.8298
+      },
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    }
+  ]
+}
