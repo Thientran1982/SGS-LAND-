@@ -93,8 +93,15 @@ export function rateLimit(options: {
         count = await upstashIncr(redis, redisKey, windowSecs);
         const ttl = await redis.ttl(redisKey) as number;
         resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : windowMs);
-      } catch {
-        // Upstash error — fall through to in-memory
+      } catch (redisErr: any) {
+        // If Redis quota is exhausted (Upstash free tier limit) or any Redis error,
+        // skip rate limiting rather than falling back to a shared in-memory counter
+        // which can produce false positives when multiple users share the same process.
+        const msg = String(redisErr?.message || redisErr || '');
+        if (msg.includes('max requests limit exceeded') || msg.includes('QUOTA') || msg.includes('ERR max')) {
+          return next();
+        }
+        // For other Redis errors (network, timeout) — use in-memory fallback
         const store = getStore(name);
         const now = Date.now();
         let entry = store.get(key);
@@ -155,7 +162,7 @@ export const authRateLimit = rateLimit({
 export const apiRateLimit = rateLimit({
   name: 'api',
   windowMs: 60_000,
-  maxRequests: 600,
+  maxRequests: 1200,
 });
 
 export const webhookRateLimit = rateLimit({

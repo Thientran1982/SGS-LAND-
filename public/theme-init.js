@@ -1,4 +1,12 @@
 (function () {
+  // Inject no-transition style FIRST to prevent FOUC flash when applying initial dark/light theme.
+  // Without this: dark-mode users see a white flash (#FAFAF8 → dark) on every page load
+  // because critical.css has `transition: background-color 0.3s ease` on body.
+  var noTrans = document.createElement('style');
+  noTrans.id = 'sgs-no-transitions';
+  noTrans.textContent = 'html,body{transition:none!important}';
+  document.head.appendChild(noTrans);
+
   try {
     var localTheme = localStorage.getItem('sgs-theme');
     var sysTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -73,4 +81,13 @@
       }
     }
   } catch (e) {}
+
+  // Re-enable transitions after browser has painted with the correct initial theme.
+  // Double rAF ensures the style has been committed before re-enabling.
+  window.requestAnimationFrame(function() {
+    window.requestAnimationFrame(function() {
+      var el = document.getElementById('sgs-no-transitions');
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
+  });
 })();
