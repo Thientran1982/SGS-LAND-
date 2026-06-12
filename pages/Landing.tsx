@@ -1098,9 +1098,9 @@ function PublicHeader() {
           {/* ── Logo ─────────────────────────────────────── */}
           <a href="/" className="flex items-center gap-2.5 shrink-0 group">
             <img
-              src="/logo.svg"
+              src="/logo-icon.png"
               alt="SGS Land"
-              className="w-9 h-9 rounded-xl transition-transform group-hover:scale-105"
+              className="w-9 h-9 transition-transform group-hover:scale-105"
               style={{ objectFit: "contain" }}
             />
             <div>
@@ -1352,9 +1352,9 @@ function PublicFooter({ lang }: { lang: Lang }) {
           <div>
             <div className="flex items-center gap-2.5 mb-4">
               <img
-                src="/logo.svg"
+                src="/logo-icon.png"
                 alt="SGS Land"
-                className="w-9 h-9 rounded-xl shrink-0"
+                className="w-9 h-9 shrink-0"
                 style={{ objectFit: "contain" }}
               />
               <div>
