@@ -596,14 +596,14 @@ const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, templates, lo
 // -----------------------------------------------------------------------------
 // SEQUENCE CARD
 // -----------------------------------------------------------------------------
-const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Sequence, onClick: () => void, onDelete: () => void, t: TFn }) => (
+const SequenceCard = memo(({ sequence, onClick, onDelete, onDuplicate, onToggle, t }: { sequence: Sequence, onClick: () => void, onDelete: () => void, onDuplicate: () => void, onToggle: () => void, t: TFn }) => (
     <div
         onClick={onClick}
         className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
     >
         <div className="flex justify-between items-start mb-4">
             <div className="flex-1 min-w-0 pr-2">
-                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-sgs-primary transition-colors truncate">{sequence.name}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-sgs-primary transition-colors truncate" title={sequence.name}>{sequence.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${sequence.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                     <span className="text-xs text-[var(--text-tertiary)]">{sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}</span>
@@ -611,6 +611,23 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                 <button
+                      onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+                      className="p-2 text-[var(--text-secondary)] hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                      title="Nhân bản chiến dịch"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                      className={`p-2 rounded-lg transition-all ${sequence.isActive ? 'text-amber-500 hover:text-amber-700 hover:bg-amber-50' : 'text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50'}`}
+                      title={sequence.isActive ? 'Tạm dừng' : 'Kích hoạt'}
+                    >
+                      {sequence.isActive
+                        ? <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      }
+                    </button>
+                    <button
                     onClick={(e) => { e.stopPropagation(); onDelete(); }}
                     className="p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                     title={t('common.delete')}
@@ -702,6 +719,49 @@ export const Sequences: React.FC = () => {
             notify(t('common.error'), 'error');
         }
     }, [t, notify]);
+    const handleDuplicate = async (seq: Sequence) => {
+      try {
+        const res = await fetch('/api/sequences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: seq.name + ' (Bản sao)',
+            triggerEvent: seq.triggerEvent,
+            steps: seq.steps || [],
+            isActive: false,
+          }),
+        });
+        if (res.ok) {
+          const newSeq = await res.json();
+          setSequences(prev => [newSeq, ...prev]);
+          notify('Đã nhân bản chiến dịch', 'success');
+        } else {
+          notify('Không thể nhân bản chiến dịch', 'error');
+        }
+      } catch {
+        notify('Lỗi khi nhân bản chiến dịch', 'error');
+      }
+    };
+    const handleToggle = async (seq: Sequence) => {
+      try {
+        const res = await fetch(`/api/sequences/${seq.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ isActive: !seq.isActive }),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setSequences(prev => prev.map(s => s.id === seq.id ? updated : s));
+          notify(seq.isActive ? 'Đã tạm dừng chiến dịch' : 'Đã kích hoạt chiến dịch', 'success');
+        } else {
+          notify('Không thể cập nhật trạng thái', 'error');
+        }
+      } catch {
+        notify('Lỗi khi cập nhật trạng thái', 'error');
+      }
+    };
     const handleDelete = async () => {
         if (!itemToDelete) return;
         try {
@@ -785,7 +845,9 @@ export const Sequences: React.FC = () => {
                             onClick={() => setSelectedSeq(seq)}
                             onDelete={() => setItemToDelete(seq.id)}
                             t={t}
-                        />
+                        onDuplicate={() => handleDuplicate(seq)}
+                        onToggle={() => handleToggle(seq)}
+                      />
                     ))}
                 </div>
             )}
