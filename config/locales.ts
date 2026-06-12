@@ -108,6 +108,7 @@ export const DICTIONARY = {
 
         "role.SUPER_ADMIN": "Quản Trị Viên Cấp Cao",
         "role.ADMIN": "Quản Trị Viên",
+        "role.MANAGER": "Quản Lý",
         "role.SALES": "Chuyên Viên Kinh Doanh",
         "role.TEAM_LEAD": "Trưởng Nhóm",
         "role.MARKETING": "Marketing",
@@ -2533,6 +2534,7 @@ export const DICTIONARY = {
 
         "role.SUPER_ADMIN": "Super Admin",
         "role.ADMIN": "Administrator",
+        "role.MANAGER": "Manager",
         "role.SALES": "Sales Agent",
         "role.TEAM_LEAD": "Team Leader",
         "role.MARKETING": "Marketing",

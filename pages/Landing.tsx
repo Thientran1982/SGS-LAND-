@@ -1350,20 +1350,12 @@ function PublicFooter({ lang }: { lang: Lang }) {
           {/* Col 1 — Brand + contact ────────────────────── */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "var(--sgs-accent)" }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5" style={{ color: "var(--sgs-primary-deep)" }}>
-                  <path
-                    d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
-                    stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"
-                    fill="currentColor" fillOpacity="0.18"
-                  />
-                  <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/>
-                </svg>
-              </div>
+              <img
+                src="/logo.svg"
+                alt="SGS Land"
+                className="w-9 h-9 rounded-xl shrink-0"
+                style={{ objectFit: "contain" }}
+              />
               <div>
                 <div
                   className="font-bold text-base leading-tight"
