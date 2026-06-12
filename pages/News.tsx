@@ -132,6 +132,32 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         </div>
                     )}
                 </div>
+                {/* ── Admin GEO panel: Canonical URL ── */}
+                {isAdmin && (
+                    <div className="mb-6 px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="text-xs font-bold text-sgs-primary uppercase tracking-widest shrink-0">🔗 Slug (URL)</span>
+                        {article.slug ? (
+                            <>
+                                <code className="flex-1 text-xs text-[var(--text-secondary)] font-mono bg-[var(--bg-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)] truncate select-all">
+                                    /news/{article.slug}
+                                </code>
+                                <button
+                                    onClick={async () => {
+                                        const url = `${window.location.origin}/news/${article.slug}`;
+                                        const ok = await copyToClipboard(url);
+                                        setShareFeedback(ok ? 'Đã sao chép URL!' : 'Không thể sao chép');
+                                        setTimeout(() => setShareFeedback(null), 2500);
+                                    }}
+                                    className="shrink-0 px-3 py-1.5 text-xs font-bold rounded-lg bg-sgs-primary text-white hover:bg-sgs-primary/90 transition-colors"
+                                >
+                                    Sao chép
+                                </button>
+                            </>
+                        ) : (
+                            <span className="text-xs text-amber-600 font-medium italic">Chưa có slug — nhấn Sửa để thiết lập</span>
+                        )}
+                    </div>
+                )}
                 <div className="flex flex-wrap items-center gap-4 mb-6 text-xs font-bold uppercase tracking-wider">
                     <span className="bg-sgs-primary text-white px-3 py-1 rounded-full shadow-md shadow-indigo-200">
                         {article.category}
@@ -445,10 +471,35 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                 </div>
                 <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">Slug (URL)</label>
-                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Để trống để tự tạo từ tiêu đề. VD: <code>thi-truong-bat-dong-san-2026</code></p>
-                    <input type="text" name="slug" value={formData.slug ?? ''} onChange={handleChange}
-                        placeholder="thi-truong-bat-dong-san-2026"
-                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all font-mono text-sm" />
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Nhập slug tùy chỉnh, hoặc nhấn <strong>Tự động</strong> để tạo từ tiêu đề. Để trống = tự tạo khi lưu.</p>
+                    <div className="flex gap-2">
+                        <input type="text" name="slug" value={formData.slug ?? ''} onChange={handleChange}
+                            placeholder="thi-truong-bat-dong-san-2026"
+                            className="flex-1 px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all font-mono text-sm" />
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const title = formData.title || '';
+                                if (!title) return;
+                                const slug = title.toLowerCase()
+                                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                                    .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+                                    .replace(/[^a-z0-9\s-]/g, '')
+                                    .trim().replace(/\s+/g, '-')
+                                    .replace(/-+/g, '-').slice(0, 120);
+                                setFormData(prev => ({ ...prev, slug }));
+                            }}
+                            className="shrink-0 px-4 py-3 rounded-xl border border-sgs-primary text-sgs-primary text-sm font-bold hover:bg-sgs-primary hover:text-white transition-all"
+                        >
+                            Tự động
+                        </button>
+                    </div>
+                    {/* Live URL preview */}
+                    {(formData.slug || formData.title) && (
+                        <p className="mt-2 text-xs text-emerald-600 font-mono bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                            🔗 /news/{formData.slug || (formData.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 120)}
+                        </p>
+                    )}
                 </div>
                 <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">SEO Title</label>
