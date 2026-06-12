@@ -609,7 +609,7 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, onDuplicate, onToggle,
                     <span className="text-xs text-[var(--text-tertiary)]">{sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}</span>
                 </div>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <div className="hidden group-hover:flex items-center gap-1 flex-shrink-0">
                 <button
                       onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
                       className="p-2 text-[var(--text-secondary)] hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
