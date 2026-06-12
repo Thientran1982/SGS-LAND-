@@ -1,163 +1,619 @@
 {
   "@context": "https://schema.org",
+  "@type": "Dataset",
+  "@id": "https://sgsland.vn/data/project-feed.json",
+  "name": "SGS LAND Project Feed — Danh Sách 13 Dự Án Bất Động Sản",
+  "description": "JSON-LD entity catalog chứa 13 dự án bất động sản lớn tại TP.HCM và Đông Nam Bộ. Dữ liệu machine-readable chuẩn Schema.org ApartmentComplex. Dành cho AI search engines, LLM crawlers, property portals.",
+  "version": "2.0.0",
+  "dateModified": "2026-06-12",
+  "creator": {
+    "@id": "https://sgsland.vn/#organization"
+  },
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://sgsland.vn/data/project-feed.json"
+    },
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://sgsland.vn/api/public/project-feed",
+      "description": "GEO-optimized entity feed với JSON-LD"
+    }
+  ],
   "@graph": [
     {
-      "@type": "Dataset",
-      "@id": "https://sgsland.vn/data/project-feed.json",
-      "name": "SGS LAND — Project Entity Feed (GEO-Optimized)",
-      "description": "Machine-readable JSON-LD catalog of 13 major real estate projects distributed by SGS LAND in Vietnam. Updated monthly. For LLM crawlers and AI engines.",
-      "url": "https://sgsland.vn/data/project-feed.json",
-      "publisher": { "@type": "Organization", "@id": "https://sgsland.vn/#org", "name": "SGS LAND" },
-      "dateModified": "2026-05-09",
-      "license": "https://sgsland.vn/terms-of-service",
-      "update_frequency": "Hàng tháng",
-      "entity_count": 13
+      "@type": "ItemList",
+      "@id": "https://sgsland.vn/data/project-feed.json#list",
+      "name": "Danh sách 13 dự án bất động sản SGS LAND",
+      "numberOfItems": 13,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/aqua-city#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/manhattan#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/vinhomes-can-gio#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/van-phuc-city#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/sala#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/izumi-city#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/vinhomes-grand-park#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/vinhomes-central-park#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 9,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/thu-thiem#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 10,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/son-kim-land#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 11,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/masterise-homes#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 12,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/the-global-city#project"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 13,
+          "item": {
+            "@id": "https://sgsland.vn/du-an/nha-pho-trung-tam#project"
+          }
+        }
+      ]
     },
     {
       "@type": "ApartmentComplex",
-      "@id": "https://sgsland.vn/du-an/aqua-city",
+      "@id": "https://sgsland.vn/du-an/aqua-city#project",
       "name": "Aqua City Novaland",
-      "alternateName": ["Aqua City Biên Hòa", "Aqua City Long Hưng"],
-      "description": "Đại đô thị sinh thái 1.000ha tại Long Hưng, Biên Hòa, Đồng Nai. Chủ đầu tư Novaland. Biệt thự đảo từ 6,5 tỷ, nhà phố từ 8,2 tỷ. Sổ hồng riêng từng căn. Cách TP.HCM 30-35 phút.",
+      "alternateName": [
+        "Aqua City Biên Hòa",
+        "Aqua City Long Hưng"
+      ],
       "url": "https://sgsland.vn/du-an/aqua-city",
-      "developer": { "@type": "Organization", "name": "Novaland Group", "url": "https://novaland.com.vn" },
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Long Hưng, Biên Hòa",
-        "addressRegion": "Đồng Nai",
-        "addressCountry": "VN"
+      "description": "Khu đô thị sinh thái 1.000 ha tại Biên Hòa, Đồng Nai. Nhà phố, biệt thự ven sông Long Hưng.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Novaland Group",
+        "url": "https://novaland.com.vn"
       },
-      "geo": { "@type": "GeoCoordinates", "latitude": 10.9218, "longitude": 106.8962 },
-      "numberOfRooms": "3-7",
-      "floorSize": { "@type": "QuantitativeValue", "value": "50-500", "unitCode": "MTK" },
-      "totalLandArea": { "@type": "QuantitativeValue", "value": 1000, "unitCode": "HEC" },
-      "priceRange": "Biệt thự 6,5–50 tỷ VNĐ; Nhà phố 8,2–25 tỷ; Căn hộ 3–8 tỷ",
-      "amenityFeature": ["Sân golf 18 lỗ", "Marina thuyền", "Resort 5 sao", "100.000m² mặt nước", "Bệnh viện", "Trường học"],
-      "legalStatus": "Sổ hồng riêng từng căn",
-      "keywords": ["Aqua City Novaland", "biệt thự Đồng Nai", "nhà phố Biên Hòa", "đô thị sinh thái"],
-      "sameAs": ["https://www.facebook.com/aquacitynovaland"]
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Biên Hòa",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "Đồng Nai"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.9218,
+        "longitude": 106.8962
+      },
+      "yearBuilt": "2019",
+      "numberOfAccommodationUnits": {
+        "@type": "QuantitativeValue",
+        "minValue": 1000,
+        "maxValue": 5000
+      },
+      "priceRange": "Từ 3 tỷ – 30 tỷ VNĐ",
+      "amenityFeature": [
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Trường học quốc tế",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Bệnh viện",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Công viên ven sông",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Trung tâm thương mại",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Marina & du thuyền",
+          "value": true
+        }
+      ],
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
     },
     {
-      "@type": "Residence",
-      "@id": "https://sgsland.vn/du-an/izumi-city",
-      "name": "Izumi City Nam Long",
-      "alternateName": ["Izumi City Biên Hòa", "Khu đô thị Nhật Bản Biên Hòa"],
-      "description": "Đô thị tích hợp 170ha chuẩn Nhật Bản tại Biên Hòa, Đồng Nai. Liên doanh Nam Long Group & Hankyu Hanshin Properties. Nhà phố compound từ 8,4 tỷ, biệt thự từ 14 tỷ. Cách sân bay Long Thành 20 phút.",
-      "url": "https://sgsland.vn/du-an/izumi-city",
-      "developer": { "@type": "Organization", "name": "Nam Long Group & Hankyu Hanshin Properties" },
-      "address": { "@type": "PostalAddress", "addressLocality": "Biên Hòa", "addressRegion": "Đồng Nai", "addressCountry": "VN" },
-      "geo": { "@type": "GeoCoordinates", "latitude": 10.9100, "longitude": 106.8900 },
-      "priceRange": "Nhà phố 8,4–20 tỷ VNĐ; Biệt thự 14–35 tỷ",
-      "amenityFeature": ["Fuji Mart", "Trường học chuẩn Nhật", "Công viên hoa Anh Đào", "Khu thương mại 4 tầng", "Bể bơi"],
-      "legalStatus": "Sổ hồng riêng",
-      "keywords": ["Izumi City", "khu đô thị Nhật Bản", "Biên Hòa Đồng Nai", "Nam Long"]
-    },
-    {
-      "@type": "Residence",
-      "@id": "https://sgsland.vn/du-an/vinhomes-grand-park",
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/vinhomes-grand-park#project",
       "name": "Vinhomes Grand Park",
-      "alternateName": ["Vinhomes Q9", "Vinhomes Quận 9"],
-      "description": "Siêu đô thị 271ha tại TP Thủ Đức (Quận 9 cũ), TP.HCM. Vinhomes/Vingroup. Căn hộ từ 3 tỷ, đang bàn giao. Metro số 1 kết nối trực tiếp. Phân khu: The Rainbow, The Origami, The Beverly, The Manhattan, The Opus One.",
+      "alternateName": [
+        "VGP",
+        "Vinhomes Quận 9"
+      ],
       "url": "https://sgsland.vn/du-an/vinhomes-grand-park",
-      "developer": { "@type": "Organization", "name": "Vinhomes (Vingroup)" },
-      "address": { "@type": "PostalAddress", "addressLocality": "TP Thủ Đức", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "geo": { "@type": "GeoCoordinates", "latitude": 10.8400, "longitude": 106.8228 },
-      "numberOfUnits": "44 tòa cao tầng",
-      "priceRange": "Căn hộ 3–8 tỷ VNĐ; Shophouse từ 10 tỷ",
-      "amenityFeature": ["Công viên trung tâm 36ha", "Vinschool", "Vinmec", "Metro số 1", "Bể bơi Olympic"],
-      "legalStatus": "Sổ hồng riêng",
-      "keywords": ["Vinhomes Grand Park", "căn hộ Thủ Đức", "Vinhomes Q9", "Metro số 1"]
-    },
-    {
-      "@type": "Residence",
-      "@id": "https://sgsland.vn/du-an/vinhomes-can-gio",
-      "name": "Vinhomes Cần Giờ (Green Paradise)",
-      "alternateName": ["Vinhomes Green Paradise", "Vinhomes Long Beach Cần Giờ"],
-      "description": "Siêu đô thị du lịch lấn biển 2.870ha — lớn nhất Việt Nam tính đến 2026. Vinhomes/Vingroup. Vị trí: xã Long Hòa & Cần Thạnh, huyện Cần Giờ, TP.HCM. Khởi công 2025, mở bán dự kiến Q3/2026. Từ 12 tỷ.",
-      "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
-      "developer": { "@type": "Organization", "name": "Vinhomes (Vingroup)" },
-      "address": { "@type": "PostalAddress", "addressLocality": "Cần Giờ", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "geo": { "@type": "GeoCoordinates", "latitude": 10.4200, "longitude": 106.8500 },
-      "priceRange": "Dự kiến từ 12 tỷ VNĐ (biệt thự biển, shophouse biển)",
-      "amenityFeature": ["Sân golf 18 lỗ", "Marina", "Vinwonders", "Bến tàu cao tốc Sài Gòn–Cần Giờ"],
-      "legalStatus": "Đã Thủ tướng phê duyệt chủ trương đầu tư; quy hoạch 1/500 đang triển khai",
-      "keywords": ["Vinhomes Cần Giờ", "Vinhomes Green Paradise", "siêu đô thị lấn biển", "mở bán 2026"]
-    },
-    {
-      "@type": "Residence",
-      "@id": "https://sgsland.vn/du-an/the-global-city",
-      "name": "The Global City Masterise",
-      "description": "Đô thị thương mại 117ha tại An Phú, TP Thủ Đức, TP.HCM. Masterise Homes. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Cạnh Metro số 1 ga An Phú.",
-      "url": "https://sgsland.vn/du-an/the-global-city",
-      "developer": { "@type": "Organization", "name": "Masterise Homes" },
-      "address": { "@type": "PostalAddress", "addressLocality": "An Phú, TP Thủ Đức", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "priceRange": "Nhà phố 15–40 tỷ VNĐ; Biệt thự 30–120 tỷ",
-      "amenityFeature": ["Trung tâm thương mại Singapore-style", "Văn phòng hạng A", "Bệnh viện quốc tế", "Trường học quốc tế"],
-      "keywords": ["The Global City", "Masterise", "nhà phố Thủ Đức", "đô thị thương mại"]
-    },
-    {
-      "@type": "Residence",
-      "@id": "https://sgsland.vn/du-an/van-phuc-city",
-      "name": "Vạn Phúc City",
-      "description": "Khu đô thị ven sông lớn nhất khu Đông TP.HCM, 198ha, Đại Phúc Group. 3,4km bờ sông Sài Gòn. Nhà phố từ 18 tỷ, biệt thự từ 40 tỷ. Sổ hồng riêng. Trường EMASI, Van Phuc Mall.",
-      "url": "https://sgsland.vn/du-an/van-phuc-city",
-      "developer": { "@type": "Organization", "name": "Tập đoàn Đại Phúc" },
-      "address": { "@type": "PostalAddress", "addressLocality": "Hiệp Bình Phước, TP Thủ Đức", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "priceRange": "Nhà phố 18–35 tỷ VNĐ; Biệt thự 40–120 tỷ",
-      "amenityFeature": ["3,4km bờ sông Sài Gòn", "Quảng trường nhạc nước", "Van Phuc Mall", "Trường quốc tế EMASI"],
-      "legalStatus": "Sổ hồng riêng — đã bàn giao và cấp sổ phần lớn"
-    },
-    {
-      "@type": "Residence",
-      "@id": "https://sgsland.vn/du-an/sala",
-      "name": "Sala Đại Quang Minh",
-      "alternateName": ["Khu đô thị Sala", "Sarica", "Sarimi", "Sadora"],
-      "description": "257ha khu đô thị kiểu mẫu tại Thủ Thiêm, TP Thủ Đức. Căn hộ hạng sang 75-150 triệu/m². Vận hành ổn định từ 2017. Đối diện Q1 qua sông Sài Gòn.",
-      "url": "https://sgsland.vn/du-an/sala",
-      "developer": { "@type": "Organization", "name": "Công ty CP Đầu Tư Địa Ốc Đại Quang Minh" },
-      "address": { "@type": "PostalAddress", "addressLocality": "Thủ Thiêm, TP Thủ Đức", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "priceRange": "Căn hộ 75–150 triệu/m² (3–12 tỷ); Nhà phố Sala 35–90 tỷ",
-      "amenityFeature": ["Trường AIS", "BVIS", "Bệnh viện FV Saigon", "Sala Shopping Center"],
-      "legalStatus": "Sổ hồng riêng — đã bàn giao"
+      "description": "Đại đô thị 271 ha tại TP Thủ Đức. Căn hộ, nhà phố, shophouse với tiện ích 5 sao.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Vinhomes",
+        "url": "https://vinhomes.vn"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "TP. Thủ Đức",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Hồ Chí Minh"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.8354,
+        "longitude": 106.8298
+      },
+      "yearBuilt": "2019",
+      "numberOfAccommodationUnits": {
+        "@type": "QuantitativeValue",
+        "minValue": 10000,
+        "maxValue": 40000
+      },
+      "priceRange": "Từ 2.5 tỷ – 20 tỷ VNĐ",
+      "amenityFeature": [
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Công viên 36 ha",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Trường học Vinschool",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Vincom Mega Mall",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Bệnh viện Vinmec",
+          "value": true
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Hồ bơi olympic",
+          "value": true
+        }
+      ],
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
     },
     {
       "@type": "ApartmentComplex",
-      "@id": "https://sgsland.vn/du-an/vinhomes-central-park",
+      "@id": "https://sgsland.vn/du-an/vinhomes-central-park#project",
       "name": "Vinhomes Central Park",
-      "description": "44 tòa cao tầng, 14.500 căn hộ ven sông Sài Gòn, Bình Thạnh. Landmark 81 (cao nhất VN). Căn hộ 50-150 triệu/m². 10 phút sân bay Tân Sơn Nhất.",
+      "alternateName": [
+        "VCP",
+        "Vinhomes Bình Thạnh"
+      ],
       "url": "https://sgsland.vn/du-an/vinhomes-central-park",
-      "developer": { "@type": "Organization", "name": "Vinhomes (Vingroup)" },
-      "address": { "@type": "PostalAddress", "addressLocality": "Bình Thạnh", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "priceRange": "Căn hộ 50–150 triệu/m²; Cho thuê 15–60 triệu/tháng",
-      "amenityFeature": ["Landmark 81", "Công viên 3,3ha", "Bể bơi vô cực", "Vincom Mega Mall"]
-    },
-    {
-      "@type": "Place",
-      "@id": "https://sgsland.vn/du-an/thu-thiem",
-      "name": "Khu Đô Thị Thủ Thiêm",
-      "description": "Khu đô thị mới 657ha — trung tâm tài chính tương lai TP.HCM. Đối diện Q1 qua hầm Thủ Thiêm. Văn phòng hạng A, căn hộ hạng sang, thương mại. Dự án nổi bật: Empire City, Metropole Thủ Thiêm, The River.",
-      "url": "https://sgsland.vn/du-an/thu-thiem",
-      "address": { "@type": "PostalAddress", "addressLocality": "Thủ Thiêm, TP Thủ Đức", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "priceRange": "Căn hộ 80–250 triệu/m²; Đất thương mại từ 500 triệu/m²"
+      "description": "Khu đô thị 43 ha tại Bình Thạnh, TP.HCM. Căn hộ cao tầng view sông Sài Gòn.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Vinhomes"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Bình Thạnh",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Hồ Chí Minh"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.7956,
+        "longitude": 106.722
+      },
+      "yearBuilt": "2015",
+      "priceRange": "Từ 4 tỷ – 35 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
     },
     {
       "@type": "ApartmentComplex",
-      "@id": "https://sgsland.vn/du-an/manhattan",
-      "name": "Grand Manhattan Novaland",
-      "description": "Căn hộ hạng sang Novaland tại TP.HCM nội thành. Từ 120 triệu/m², căn 2PN từ 8-15 tỷ. Tiêu chuẩn 5 sao.",
-      "url": "https://sgsland.vn/du-an/manhattan",
-      "developer": { "@type": "Organization", "name": "Novaland Group" },
-      "address": { "@type": "PostalAddress", "addressLocality": "TP.HCM nội thành", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "priceRange": "Từ 120 triệu/m²; căn 2PN từ 8–15 tỷ VNĐ"
+      "@id": "https://sgsland.vn/du-an/the-global-city#project",
+      "name": "The Global City",
+      "alternateName": [
+        "Global City Masterise",
+        "Global City An Phú"
+      ],
+      "url": "https://sgsland.vn/du-an/the-global-city",
+      "description": "Khu đô thị 117 ha tại An Phú, TP Thủ Đức. Masterise Homes phát triển.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Masterise Homes"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "An Phú",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Thủ Đức"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.8007,
+        "longitude": 106.7564
+      },
+      "yearBuilt": "2022",
+      "priceRange": "Từ 7.5 tỷ – 50 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
     },
     {
-      "@type": "Place",
-      "@id": "https://sgsland.vn/du-an/nha-pho-trung-tam",
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/izumi-city#project",
+      "name": "Izumi City Nam Long",
+      "alternateName": [
+        "Izumi City",
+        "Nam Long Đồng Nai"
+      ],
+      "url": "https://sgsland.vn/du-an/izumi-city",
+      "description": "Khu đô thị 170 ha tại Long Thành, Đồng Nai. Nam Long Group phát triển với phong cách Nhật Bản.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Nam Long Group"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Long Thành",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "Đồng Nai"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.856,
+        "longitude": 106.9612
+      },
+      "yearBuilt": "2021",
+      "priceRange": "Từ 2.8 tỷ – 15 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/vinhomes-can-gio#project",
+      "name": "Vinhomes Cần Giờ",
+      "alternateName": [
+        "Vinhomes Wonder Park",
+        "Vinhomes Can Gio"
+      ],
+      "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
+      "description": "Siêu đô thị lấn biển 2.870 ha tại Cần Giờ, TP.HCM. Dự án quy mô lớn nhất Việt Nam.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Vinhomes"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Cần Giờ",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Hồ Chí Minh"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.4114,
+        "longitude": 106.873
+      },
+      "yearBuilt": "2024",
+      "priceRange": "Từ 5 tỷ – 100 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/van-phuc-city#project",
+      "name": "Van Phuc City",
+      "alternateName": [
+        "Vạn Phúc City",
+        "Van Phuc Binh Duong"
+      ],
+      "url": "https://sgsland.vn/du-an/van-phuc-city",
+      "description": "Khu đô thị 198 ha tại Thuận An, Bình Dương. Dự án compound cao cấp hàng đầu Bình Dương.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Van Phuc Group"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Thuận An",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "Bình Dương"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.8897,
+        "longitude": 106.7198
+      },
+      "yearBuilt": "2018",
+      "priceRange": "Từ 4 tỷ – 25 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/sala#project",
+      "name": "Sala Đại Quang Minh",
+      "alternateName": [
+        "Sala",
+        "Sala Thu Thiem"
+      ],
+      "url": "https://sgsland.vn/du-an/sala",
+      "description": "Khu đô thị 4.3 ha tại Thủ Thiêm, TP Thủ Đức. Căn hộ hạng sang view sông Sài Gòn.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Đại Quang Minh"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Thủ Thiêm",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Thủ Đức"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.7877,
+        "longitude": 106.7315
+      },
+      "yearBuilt": "2016",
+      "priceRange": "Từ 6 tỷ – 40 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/thu-thiem#project",
+      "name": "Khu Đô Thị Thủ Thiêm",
+      "alternateName": [
+        "Thu Thiem New Urban Area",
+        "Thủ Thiêm Quận 2"
+      ],
+      "url": "https://sgsland.vn/du-an/thu-thiem",
+      "description": "Khu đô thị mới Thủ Thiêm 657 ha tại TP Thủ Đức. Trung tâm tài chính – thương mại mới của TP.HCM.",
+      "developer": {
+        "@type": "Organization",
+        "name": "UBND TP.HCM"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Thủ Thiêm",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Thủ Đức"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.788,
+        "longitude": 106.732
+      },
+      "yearBuilt": "2020",
+      "priceRange": "Từ 8 tỷ – 200 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/son-kim-land#project",
+      "name": "Son Kim Land",
+      "alternateName": [
+        "SonKim Land",
+        "Son Kim Garden"
+      ],
+      "url": "https://sgsland.vn/du-an/son-kim-land",
+      "description": "Dự án nhà ở cao cấp tại Quận 7, TP.HCM. Son Kim Land phát triển.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Son Kim Land"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "Quận 7",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Hồ Chí Minh"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.7318,
+        "longitude": 106.7201
+      },
+      "yearBuilt": "2020",
+      "priceRange": "Từ 5 tỷ – 20 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/masterise-homes#project",
+      "name": "Masterise Homes",
+      "alternateName": [
+        "Masterise",
+        "Masteri Homes"
+      ],
+      "url": "https://sgsland.vn/du-an/masterise-homes",
+      "description": "Thương hiệu bất động sản hạng sang Masterise Homes tại TP.HCM và Hà Nội.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Masterise Homes"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "TP. Thủ Đức",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Hồ Chí Minh"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.8003,
+        "longitude": 106.7562
+      },
+      "yearBuilt": "2021",
+      "priceRange": "Từ 7 tỷ – 60 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/manhattan#project",
+      "name": "The Manhattan",
+      "alternateName": [
+        "Manhattan Vinhomes Grand Park",
+        "Manhattan GP"
+      ],
+      "url": "https://sgsland.vn/du-an/manhattan",
+      "description": "Phân khu The Manhattan trong Vinhomes Grand Park tại TP Thủ Đức. Căn hộ phong cách New York.",
+      "developer": {
+        "@type": "Organization",
+        "name": "Vinhomes"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "TP. Thủ Đức",
+        "containedIn": {
+          "@type": "AdministrativeArea",
+          "name": "TP. Hồ Chí Minh"
+        }
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.836,
+        "longitude": 106.8305
+      },
+      "yearBuilt": "2021",
+      "priceRange": "Từ 3 tỷ – 12 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    },
+    {
+      "@type": "ApartmentComplex",
+      "@id": "https://sgsland.vn/du-an/nha-pho-trung-tam#project",
       "name": "Nhà Phố Trung Tâm TP.HCM",
-      "description": "Nhà phố mặt tiền và nhà hẻm xe hơi tại Q1, Q3, Phú Nhuận, Bình Thạnh, Gò Vấp. Sổ đỏ chính chủ, pháp lý ổn định, nhu cầu thuê kinh doanh cao. Mặt tiền Q1 từ 500 triệu/m².",
+      "alternateName": [
+        "Nhà phố nội đô",
+        "Townhouse HCMC"
+      ],
       "url": "https://sgsland.vn/du-an/nha-pho-trung-tam",
-      "address": { "@type": "PostalAddress", "addressLocality": "Q1, Q3, Phú Nhuận, Bình Thạnh", "addressRegion": "TP.HCM", "addressCountry": "VN" },
-      "priceRange": "Mặt tiền Q1: 500–2.000 triệu/m²; Nhà hẻm Q3: 100–250 triệu/m²"
+      "description": "Nhà phố thương mại và dân cư tại các quận trung tâm TP.HCM (Q1, Q3, Q5, Bình Thạnh, Phú Nhuận).",
+      "developer": {
+        "@type": "Organization",
+        "@id": "https://sgsland.vn/#organization",
+        "name": "SGS LAND"
+      },
+      "containedIn": {
+        "@type": "AdministrativeArea",
+        "name": "TP. Hồ Chí Minh"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 10.7769,
+        "longitude": 106.7009
+      },
+      "yearBuilt": "2023",
+      "priceRange": "Từ 10 tỷ – 150 tỷ VNĐ",
+      "isRelatedTo": {
+        "@id": "https://sgsland.vn/#organization"
+      }
     }
   ]
 }

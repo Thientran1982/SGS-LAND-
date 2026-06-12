@@ -198,3 +198,5 @@ Sitemap: https://sgsland.vn/sitemap-listings.xml
 Sitemap: https://sgsland.vn/sitemap-projects.xml
 
 Sitemap: https://sgsland.vn/sitemap-entity.xml
+
+Allow: /api/geo-entity-feed

@@ -493,6 +493,112 @@ export function createPublicProjectRoutes(): Router {
       logger.error(`[PublicProject] GET /project-feed failed: ${err?.message || err}`);
       res.status(500).json({ ok: false, error: 'Lỗi máy chủ. Vui lòng thử lại.' });
     }
+
+  // GET /api/geo-entity-feed — Full GEO entity feed: Organization + 13 Projects + Services + Datasets
+  // Returns complete Schema.org JSON-LD knowledge graph for AI crawlers, LLM engines, and search bots
+  // Mirrors /data/project-feed.json but served via API with proper content-type and CORS headers
+  router.get('/geo-entity-feed', async (_req: Request, res: Response) => {
+    try {
+      const baseUrl = process.env.APP_URL || 'https://sgsland.vn';
+      const now = new Date().toISOString().slice(0, 10);
+
+      const entityFeed = {
+        '@context': 'https://schema.org',
+        '@type': 'Dataset',
+        '@id': `${baseUrl}/data/project-feed.json`,
+        'name': 'SGS LAND GEO Entity Feed — Knowledge Graph API',
+        'description': 'Machine-readable entity feed for AI search engines and LLM crawlers. Contains Organization, 13 ApartmentComplex projects, Service entities, and Dataset references.',
+        'version': '2.0.0',
+        'dateModified': now,
+        'creator': { '@id': `${baseUrl}/#organization` },
+        'license': 'https://creativecommons.org/licenses/by/4.0/',
+        'distribution': [
+          { '@type': 'DataDownload', 'encodingFormat': 'application/json', 'contentUrl': `${baseUrl}/data/project-feed.json` },
+          { '@type': 'DataDownload', 'encodingFormat': 'application/json', 'contentUrl': `${baseUrl}/api/geo-entity-feed` }
+        ],
+        '@graph': [
+          {
+            '@type': 'Organization',
+            '@id': `${baseUrl}/#organization`,
+            'name': 'SGS LAND',
+            'url': baseUrl,
+            'logo': `${baseUrl}/logo.svg`,
+            'email': 'info@sgsland.vn',
+            'telephone': '+84-971-132-378',
+            'foundingDate': '2019',
+            'knowsAbout': ['Bất động sản TP.HCM', 'Định giá AI', 'CRM BĐS', 'PropTech Việt Nam'],
+            'sameAs': ['https://www.facebook.com/sgslandvn', 'https://www.linkedin.com/company/sgsland', 'https://g.page/sgsland'],
+            'makesOffer': [
+              { '@type': 'Offer', 'name': 'Định giá AI miễn phí', 'url': `${baseUrl}/ai-valuation`, 'price': '0', 'priceCurrency': 'VND' },
+              { '@type': 'Offer', 'name': 'CRM Bất Động Sản', 'url': `${baseUrl}/crm-platform` },
+              { '@type': 'Offer', 'name': 'Ký gửi BĐS', 'url': `${baseUrl}/ky-gui-bat-dong-san` }
+            ]
+          },
+          {
+            '@type': 'Service',
+            '@id': `${baseUrl}/ai-valuation#service`,
+            'name': 'Định Giá AI Bất Động Sản',
+            'url': `${baseUrl}/ai-valuation`,
+            'provider': { '@id': `${baseUrl}/#organization` },
+            'description': 'Công cụ định giá BĐS miễn phí bằng AI, MAPE ±4.8%, kết quả trong 30 giây',
+            'serviceType': 'Định giá bất động sản'
+          },
+          {
+            '@type': 'ItemList',
+            '@id': `${baseUrl}/data/project-feed.json#list`,
+            'name': 'Danh sách 13 dự án bất động sản SGS LAND',
+            'numberOfItems': 13,
+            'itemListElement': [
+              { '@type': 'ListItem', 'position': 1, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/aqua-city#project`, 'name': 'Aqua City Novaland', 'url': `${baseUrl}/du-an/aqua-city`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.9218, 'longitude': 106.8962 } } },
+              { '@type': 'ListItem', 'position': 2, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/vinhomes-grand-park#project`, 'name': 'Vinhomes Grand Park', 'url': `${baseUrl}/du-an/vinhomes-grand-park`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.8354, 'longitude': 106.8298 } } },
+              { '@type': 'ListItem', 'position': 3, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/vinhomes-central-park#project`, 'name': 'Vinhomes Central Park', 'url': `${baseUrl}/du-an/vinhomes-central-park`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.7956, 'longitude': 106.7220 } } },
+              { '@type': 'ListItem', 'position': 4, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/the-global-city#project`, 'name': 'The Global City', 'url': `${baseUrl}/du-an/the-global-city`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.8007, 'longitude': 106.7564 } } },
+              { '@type': 'ListItem', 'position': 5, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/izumi-city#project`, 'name': 'Izumi City Nam Long', 'url': `${baseUrl}/du-an/izumi-city`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.8560, 'longitude': 106.9612 } } },
+              { '@type': 'ListItem', 'position': 6, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/vinhomes-can-gio#project`, 'name': 'Vinhomes Cần Giờ', 'url': `${baseUrl}/du-an/vinhomes-can-gio`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.4114, 'longitude': 106.8730 } } },
+              { '@type': 'ListItem', 'position': 7, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/van-phuc-city#project`, 'name': 'Van Phuc City', 'url': `${baseUrl}/du-an/van-phuc-city`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.8897, 'longitude': 106.7198 } } },
+              { '@type': 'ListItem', 'position': 8, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/sala#project`, 'name': 'Sala Đại Quang Minh', 'url': `${baseUrl}/du-an/sala`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.7877, 'longitude': 106.7315 } } },
+              { '@type': 'ListItem', 'position': 9, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/thu-thiem#project`, 'name': 'Khu Đô Thị Thủ Thiêm', 'url': `${baseUrl}/du-an/thu-thiem`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.7880, 'longitude': 106.7320 } } },
+              { '@type': 'ListItem', 'position': 10, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/son-kim-land#project`, 'name': 'Son Kim Land', 'url': `${baseUrl}/du-an/son-kim-land`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.7318, 'longitude': 106.7201 } } },
+              { '@type': 'ListItem', 'position': 11, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/masterise-homes#project`, 'name': 'Masterise Homes', 'url': `${baseUrl}/du-an/masterise-homes`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.8003, 'longitude': 106.7562 } } },
+              { '@type': 'ListItem', 'position': 12, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/manhattan#project`, 'name': 'The Manhattan', 'url': `${baseUrl}/du-an/manhattan`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.8360, 'longitude': 106.8305 } } },
+              { '@type': 'ListItem', 'position': 13, 'item': { '@type': 'ApartmentComplex', '@id': `${baseUrl}/du-an/nha-pho-trung-tam#project`, 'name': 'Nhà Phố Trung Tâm TP.HCM', 'url': `${baseUrl}/du-an/nha-pho-trung-tam`, 'geo': { '@type': 'GeoCoordinates', 'latitude': 10.7769, 'longitude': 106.7009 } } }
+            ]
+          },
+          {
+            '@type': 'Dataset',
+            '@id': `${baseUrl}/data/area-price-index.json`,
+            'name': 'Chỉ số giá BĐS theo khu vực Đông Nam Bộ',
+            'url': `${baseUrl}/data/area-price-index.json`,
+            'creator': { '@id': `${baseUrl}/#organization` }
+          },
+          {
+            '@type': 'Dataset',
+            '@id': `${baseUrl}/data/knowledge-graph.json`,
+            'name': 'SGS LAND Knowledge Graph v2.1',
+            'url': `${baseUrl}/data/knowledge-graph.json`,
+            'creator': { '@id': `${baseUrl}/#organization` }
+          },
+          {
+            '@type': 'TechArticle',
+            '@id': `${baseUrl}/data/valuation-methodology.json`,
+            'name': 'Phương Pháp Định Giá AI SGS LAND — AVM v2.1',
+            'url': `${baseUrl}/data/valuation-methodology.json`,
+            'author': { '@id': `${baseUrl}/#organization` }
+          }
+        ]
+      };
+
+      res.setHeader('Content-Type', 'application/ld+json; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Robots-Tag', 'noindex');
+      res.json(entityFeed);
+    } catch (err: any) {
+      logger.error(`[GeoEntityFeed] GET /geo-entity-feed failed: ${err?.message || err}`);
+      res.status(500).json({ ok: false, error: 'Lỗi máy chủ. Vui lòng thử lại.' });
+    }
+  });
+
   });
 
   // GET /api/public/projects/:code — full payload (cached 5 phút, scoped theo Host tenant)

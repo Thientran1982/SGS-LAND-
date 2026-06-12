@@ -17,7 +17,10 @@
   "spatialCoverage": {
     "@type": "AdministrativeArea",
     "name": "Đông Nam Bộ",
-    "containedIn": { "@type": "Country", "name": "Việt Nam" }
+    "containedIn": {
+      "@type": "Country",
+      "name": "Việt Nam"
+    }
   },
   "data": {
     "unit": "triệu VNĐ/m²",
@@ -27,7 +30,11 @@
         "area": "Quận 1 (TP.HCM)",
         "area_slug": "quan-1",
         "segment": "nhà phố mặt tiền",
-        "price_range": { "min": 500, "avg": 850, "max": 2000 },
+        "price_range": {
+          "min": 500,
+          "avg": 850,
+          "max": 2000
+        },
         "yoy_growth_pct": 8,
         "rental_yield_pct": 2.5,
         "liquidity": "cao — DOM trung bình 25 ngày"
@@ -36,7 +43,11 @@
         "area": "Quận 3 (TP.HCM)",
         "area_slug": "quan-3",
         "segment": "nhà phố + căn hộ hạng sang",
-        "price_range": { "min": 150, "avg": 280, "max": 600 },
+        "price_range": {
+          "min": 150,
+          "avg": 280,
+          "max": 600
+        },
         "yoy_growth_pct": 7,
         "rental_yield_pct": 3.0,
         "liquidity": "cao"
@@ -45,7 +56,11 @@
         "area": "Phú Mỹ Hưng — Quận 7 (TP.HCM)",
         "area_slug": "phu-my-hung-quan-7",
         "segment": "căn hộ + nhà phố",
-        "price_range": { "min": 70, "avg": 110, "max": 200 },
+        "price_range": {
+          "min": 70,
+          "avg": 110,
+          "max": 200
+        },
         "yoy_growth_pct": 9,
         "rental_yield_pct": 4.2,
         "liquidity": "cao — cộng đồng Hàn-Nhật 50.000+ chuyên gia",
@@ -55,21 +70,41 @@
         "area": "TP Thủ Đức (Quận 2 cũ + Quận 9 cũ + Thủ Đức cũ)",
         "area_slug": "thu-duc",
         "segment": "căn hộ",
-        "price_range": { "min": 50, "avg": 95, "max": 200 },
+        "price_range": {
+          "min": 50,
+          "avg": 95,
+          "max": 200
+        },
         "yoy_growth_pct": 12,
         "rental_yield_pct": 4.5,
         "liquidity": "cao — Metro số 1 vận hành, SHTP",
         "sub_areas": [
-          { "name": "Thủ Thiêm (cực cao cấp)", "avg": 180, "note": "Empire City, Metropole — trung tâm tài chính tương lai" },
-          { "name": "Vinhomes Grand Park area", "avg": 65, "note": "Metro số 1 đến tận cửa, đang bàn giao" },
-          { "name": "An Phú / Global City", "avg": 120, "note": "Masterise Homes, Thảo Điền — expat hub" }
+          {
+            "name": "Thủ Thiêm (cực cao cấp)",
+            "avg": 180,
+            "note": "Empire City, Metropole — trung tâm tài chính tương lai"
+          },
+          {
+            "name": "Vinhomes Grand Park area",
+            "avg": 65,
+            "note": "Metro số 1 đến tận cửa, đang bàn giao"
+          },
+          {
+            "name": "An Phú / Global City",
+            "avg": 120,
+            "note": "Masterise Homes, Thảo Điền — expat hub"
+          }
         ]
       },
       {
         "area": "Phú Nhuận (TP.HCM)",
         "area_slug": "phu-nhuan",
         "segment": "nhà phố mặt tiền",
-        "price_range": { "min": 150, "avg": 230, "max": 350 },
+        "price_range": {
+          "min": 150,
+          "avg": 230,
+          "max": 350
+        },
         "yoy_growth_pct": 8,
         "rental_yield_pct": 3.5,
         "liquidity": "cao",
@@ -79,7 +114,11 @@
         "area": "Bình Thạnh (TP.HCM)",
         "area_slug": "binh-thanh",
         "segment": "căn hộ + nhà phố",
-        "price_range": { "min": 50, "avg": 90, "max": 150 },
+        "price_range": {
+          "min": 50,
+          "avg": 90,
+          "max": 150
+        },
         "yoy_growth_pct": 9,
         "rental_yield_pct": 4.0,
         "liquidity": "cao",
@@ -89,7 +128,11 @@
         "area": "Bình Chánh (TP.HCM)",
         "area_slug": "binh-chanh",
         "segment": "đất nền + nhà phố dự án",
-        "price_range": { "min": 25, "avg": 55, "max": 100 },
+        "price_range": {
+          "min": 25,
+          "avg": 55,
+          "max": 100
+        },
         "yoy_growth_pct": 15,
         "rental_yield_pct": 3.0,
         "liquidity": "trung bình — DOM 45-60 ngày",
@@ -99,7 +142,11 @@
         "area": "Biên Hòa — Long Hưng (Đồng Nai)",
         "area_slug": "bien-hoa",
         "segment": "nhà phố compound + biệt thự",
-        "price_range": { "min": 25, "avg": 45, "max": 120 },
+        "price_range": {
+          "min": 25,
+          "avg": 45,
+          "max": 120
+        },
         "yoy_growth_pct": 14,
         "rental_yield_pct": 3.5,
         "liquidity": "trung bình",
@@ -109,7 +156,11 @@
         "area": "Long Thành (Đồng Nai)",
         "area_slug": "long-thanh",
         "segment": "đất nền thổ cư sổ đỏ",
-        "price_range": { "min": 10, "avg": 25, "max": 38 },
+        "price_range": {
+          "min": 10,
+          "avg": 25,
+          "max": 38
+        },
         "yoy_growth_pct": 22,
         "rental_yield_pct": null,
         "liquidity": "trung bình — DOM 35-45 ngày",
@@ -119,7 +170,11 @@
         "area": "Nhơn Trạch (Đồng Nai)",
         "area_slug": "nhon-trach",
         "segment": "đất nền",
-        "price_range": { "min": 5, "avg": 10, "max": 20 },
+        "price_range": {
+          "min": 5,
+          "avg": 10,
+          "max": 20
+        },
         "yoy_growth_pct": 25,
         "rental_yield_pct": null,
         "liquidity": "trung bình",
@@ -129,7 +184,11 @@
         "area": "Thuận An (Bình Dương)",
         "area_slug": "thuan-an",
         "segment": "căn hộ + đất nền",
-        "price_range": { "min": 40, "avg": 70, "max": 100 },
+        "price_range": {
+          "min": 40,
+          "avg": 70,
+          "max": 100
+        },
         "yoy_growth_pct": 11,
         "rental_yield_pct": 5.0,
         "liquidity": "cao — giáp TP.HCM, nhu cầu chuyên gia KCN",
@@ -139,7 +198,11 @@
         "area": "Dĩ An (Bình Dương)",
         "area_slug": "di-an",
         "segment": "căn hộ",
-        "price_range": { "min": 30, "avg": 55, "max": 90 },
+        "price_range": {
+          "min": 30,
+          "avg": 55,
+          "max": 90
+        },
         "yoy_growth_pct": 10,
         "rental_yield_pct": 5.5,
         "liquidity": "cao — nhu cầu sinh viên ĐH Quốc Gia ổn định",
@@ -149,7 +212,11 @@
         "area": "TP Bình Dương mới (Bình Dương)",
         "area_slug": "binh-duong-moi",
         "segment": "đất nền + căn hộ",
-        "price_range": { "min": 20, "avg": 38, "max": 60 },
+        "price_range": {
+          "min": 20,
+          "avg": 38,
+          "max": 60
+        },
         "yoy_growth_pct": 13,
         "rental_yield_pct": 4.0,
         "liquidity": "trung bình",
@@ -161,11 +228,73 @@
       "fixed_24_months_range": "7.5-9.5%/năm",
       "ltv_with_pink_book_pct": 70,
       "avg_loan_term_years": 20,
-      "partner_banks": ["BIDV", "Vietcombank", "VietinBank", "Techcombank", "VPBank", "MB Bank", "Sacombank", "ACB", "HDBank", "Agribank", "SeABank", "OCB"]
+      "partner_banks": [
+        "BIDV",
+        "Vietcombank",
+        "VietinBank",
+        "Techcombank",
+        "VPBank",
+        "MB Bank",
+        "Sacombank",
+        "ACB",
+        "HDBank",
+        "Agribank",
+        "SeABank",
+        "OCB"
+      ]
     }
   },
   "credit": "SGS LAND — tổng hợp từ mạng lưới 200+ broker, giao dịch công chứng TP.HCM/Đồng Nai/Bình Dương, báo cáo CafeF và VnEconomy. Sai số ±5-10%.",
   "update_frequency": "Hàng tuần — thứ Sáu 18:00 ICT",
   "valuation_tool": "https://sgsland.vn/ai-valuation",
-  "marketplace": "https://sgsland.vn/marketplace"
+  "marketplace": "https://sgsland.vn/marketplace",
+  "@id": "https://sgsland.vn/data/area-price-index.json",
+  "measurementTechnique": "Tổng hợp từ 50,000+ giao dịch thực tế tại TP.HCM, Đồng Nai, Bình Dương, Long An. Giá trung vị được tính theo phương pháp hedonic pricing, loại bỏ ngoại lệ bằng IQR 1.5×. Cập nhật hàng tuần từ dữ liệu MLS nội bộ SGS LAND.",
+  "variableMeasured": [
+    {
+      "@type": "PropertyValue",
+      "name": "Giá trung vị theo m²",
+      "description": "Giá bất động sản trung vị (triệu VNĐ/m²) theo khu vực",
+      "unitCode": "C62",
+      "unitText": "triệu VNĐ/m²"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Tỷ suất tăng trưởng YoY",
+      "description": "Phần trăm tăng trưởng giá so cùng kỳ năm trước",
+      "unitCode": "P1",
+      "unitText": "%"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Tỷ suất thuê",
+      "description": "Rental yield hàng năm (%)",
+      "unitCode": "P1",
+      "unitText": "%"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Thanh khoản thị trường",
+      "description": "Mức độ thanh khoản: cao/trung bình/thấp và DOM trung bình"
+    }
+  ],
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://sgsland.vn/data/area-price-index.json",
+      "description": "Dữ liệu JSON đầy đủ với Schema.org markup"
+    },
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "text/html",
+      "contentUrl": "https://sgsland.vn/lai-suat-vay-ngan-hang",
+      "description": "Giao diện web tra cứu giá BĐS theo khu vực"
+    }
+  ],
+  "creator": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#organization",
+    "name": "SGS LAND"
+  }
 }
