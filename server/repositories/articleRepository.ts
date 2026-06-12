@@ -94,6 +94,9 @@ class ArticleRepository extends BaseRepository {
       const images: string[] = Array.isArray(data.images) ? data.images : [];
       const videos: string[] = Array.isArray(data.videos) ? data.videos : [];
 
+      const metadataIn = typeof data.metadata === 'object' && data.metadata !== null
+        ? data.metadata : {};
+
       const params = [
         data.title, '', data.content || '', data.excerpt || '',
         data.category || 'general', JSON.stringify(data.tags || []),
@@ -102,6 +105,7 @@ class ArticleRepository extends BaseRepository {
         data.status || 'DRAFT',
         data.status === 'PUBLISHED' ? new Date().toISOString() : null,
         JSON.stringify(videos),
+        JSON.stringify(metadataIn),
       ];
 
       // Try base slug first, then up to 5 suffixed variants on duplicate key
@@ -111,8 +115,8 @@ class ArticleRepository extends BaseRepository {
         params[1] = slug;
         try {
           const result = await client.query(
-            `INSERT INTO articles (title, slug, content, excerpt, category, tags, author, cover_image, images, featured, status, published_at, videos)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13::jsonb) RETURNING *`,
+            `INSERT INTO articles (title, slug, content, excerpt, category, tags, author, cover_image, images, featured, status, published_at, videos, metadata)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13::jsonb, $14::jsonb) RETURNING *`,
             params
           );
           return this.rowToEntity(result.rows[0]);
@@ -144,6 +148,12 @@ class ArticleRepository extends BaseRepository {
         category: 'category', tags: 'tags', author: 'author',
         coverImage: 'cover_image', status: 'status', slug: 'slug',
       };
+
+      if (resolvedData.metadata !== undefined && typeof resolvedData.metadata === 'object') {
+        fields.push(`metadata = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(resolvedData.metadata));
+        paramIndex++;
+      }
 
       for (const [key, col] of Object.entries(allowedFields)) {
         if (resolvedData[key] !== undefined) {

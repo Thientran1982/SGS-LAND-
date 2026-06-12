@@ -249,12 +249,25 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!CAN_UPLOAD.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
-      const { title, content, excerpt, category, tags, author, coverImage, image, images, videos, featured, status, slug } = req.body;
+      const { title, content, excerpt, category, tags, author, coverImage, image, images, videos, featured, status, slug,
+              seoTitle, metaDescription, focusKeyword, schemaType, geoEntities, localArea } = req.body;
       if (!title) return res.status(400).json({ error: 'Title is required' });
+      const metadata = {
+        seo: {
+          ...(seoTitle        ? { title: seoTitle }           : {}),
+          ...(metaDescription ? { description: metaDescription } : {}),
+          ...(focusKeyword    ? { focusKeyword }               : {}),
+          ...(schemaType      ? { schemaType }                 : {}),
+        },
+        geo: {
+          ...(geoEntities ? { entities: geoEntities } : {}),
+          ...(localArea   ? { localArea }             : {}),
+        },
+      };
       const article = await articleRepository.create(user.tenantId, {
         title, content, excerpt, category, tags,
         author: author || user.name, coverImage: coverImage || image, image, images, videos, featured,
-        status: status || 'PUBLISHED', slug,
+        status: status || 'PUBLISHED', slug, metadata,
       });
       res.status(201).json(article);
     } catch (error) {
@@ -269,7 +282,12 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!CAN_MANAGE.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
-      const article = await articleRepository.update(user.tenantId, String(req.params.id), req.body);
+      const { seoTitle, metaDescription, focusKeyword, schemaType, geoEntities, localArea, ...rest } = req.body;
+      const hasSeoGeo = seoTitle || metaDescription || focusKeyword || schemaType || geoEntities || localArea;
+      const updateData = hasSeoGeo
+        ? { ...rest, metadata: { seo: { ...(seoTitle ? { title: seoTitle } : {}), ...(metaDescription ? { description: metaDescription } : {}), ...(focusKeyword ? { focusKeyword } : {}), ...(schemaType ? { schemaType } : {}) }, geo: { ...(geoEntities ? { entities: geoEntities } : {}), ...(localArea ? { localArea } : {}) } } }
+        : rest;
+      const article = await articleRepository.update(user.tenantId, String(req.params.id), updateData);
       if (!article) return res.status(404).json({ error: 'Article not found' });
       res.json(article);
     } catch (error) {

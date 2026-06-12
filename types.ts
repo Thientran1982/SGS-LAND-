@@ -30,6 +30,15 @@ export interface Article {
     videos?: string[];
     featured: boolean;
     tags: string[];
+    // URL & SEO
+    slug?: string;
+    seoTitle?: string;
+    metaDescription?: string;
+    focusKeyword?: string;
+    schemaType?: string;
+    // GEO / AI-citation
+    geoEntities?: string;
+    localArea?: string;
 }
 // =============================================================================
 // 1. KERNEL & PRIMITIVES (Branded Types)

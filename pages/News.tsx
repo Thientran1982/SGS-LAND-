@@ -223,12 +223,24 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
     formId?: string;
 }) => {
     const [uploadingCount, setUploadingCount] = useState(0);
+    const [formTab, setFormTab] = useState<'content' | 'seo'>('content');
 
     useEffect(() => {
         onUploadingChange?.(uploadingCount > 0);
     }, [uploadingCount, onUploadingChange]);
 
-    const [formData, setFormData] = useState<Partial<Article>>(initialData || {
+    const initSeo = (initialData as any)?.metadata?.seo ?? {};
+    const initGeo = (initialData as any)?.metadata?.geo ?? {};
+
+    const [formData, setFormData] = useState<Partial<Article>>(initialData ? {
+        ...initialData,
+        seoTitle:        initialData.seoTitle        ?? initSeo.title        ?? '',
+        metaDescription: initialData.metaDescription ?? initSeo.description  ?? '',
+        focusKeyword:    initialData.focusKeyword     ?? initSeo.focusKeyword ?? '',
+        schemaType:      initialData.schemaType       ?? initSeo.schemaType   ?? 'NewsArticle',
+        geoEntities:     initialData.geoEntities      ?? initGeo.entities     ?? '',
+        localArea:       initialData.localArea        ?? initGeo.localArea    ?? '',
+    } : {
         title: '',
         excerpt: '',
         content: '',
@@ -240,7 +252,13 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
         images: [],
         videos: [],
         featured: false,
-        tags: []
+        tags: [],
+        seoTitle: '',
+        metaDescription: '',
+        focusKeyword: '',
+        schemaType: 'NewsArticle',
+        geoEntities: '',
+        localArea: '',
     });
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -315,6 +333,19 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
     };
     return (
         <form id={formId} onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-surface)] p-8 rounded-2xl shadow-sm border border-[var(--glass-border)]">
+            {/* ── Tab bar ── */}
+            <div className="flex gap-1 p-1 bg-[var(--glass-surface)] rounded-xl w-fit">
+                {([['content', '📝 Nội dung'], ['seo', '🔍 SEO & GEO']] as const).map(([tab, label]) => (
+                    <button
+                        key={tab} type="button"
+                        onClick={() => setFormTab(tab)}
+                        className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${formTab === tab ? 'bg-[var(--bg-surface)] text-sgs-primary shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                    >{label}</button>
+                ))}
+            </div>
+
+            {/* ── Tab: Nội dung ── */}
+            {formTab === 'content' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tiêu đề</label>
@@ -403,6 +434,81 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                     <label htmlFor="featured" className="text-sm font-bold text-[var(--text-secondary)] cursor-pointer">Bài viết nổi bật</label>
                 </div>
             </div>
+            )}
+
+            {/* ── Tab: SEO & GEO ── */}
+            {formTab === 'seo' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* ── SEO ── */}
+                <div className="md:col-span-2">
+                    <p className="text-xs font-bold uppercase tracking-widest text-sgs-primary mb-4">SEO — Tối ưu công cụ tìm kiếm</p>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">Slug (URL)</label>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Để trống để tự tạo từ tiêu đề. VD: <code>thi-truong-bat-dong-san-2026</code></p>
+                    <input type="text" name="slug" value={formData.slug ?? ''} onChange={handleChange}
+                        placeholder="thi-truong-bat-dong-san-2026"
+                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all font-mono text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">SEO Title</label>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Tiêu đề hiển thị trên Google (50–60 ký tự). Để trống = dùng tiêu đề bài.</p>
+                    <input type="text" name="seoTitle" value={formData.seoTitle ?? ''} onChange={handleChange}
+                        maxLength={70}
+                        placeholder="Thị trường BĐS 2026 | Phân tích chuyên sâu - SGS LAND"
+                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all" />
+                    <p className="text-xs text-right text-[var(--text-tertiary)] mt-1">{(formData.seoTitle ?? '').length}/70 ký tự</p>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">Meta Description</label>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Mô tả hiển thị trên Google (140–160 ký tự). Để trống = dùng tóm tắt.</p>
+                    <textarea name="metaDescription" value={formData.metaDescription ?? ''} onChange={handleChange}
+                        rows={3} maxLength={160}
+                        placeholder="Phân tích thị trường BĐS TP.HCM 2026: giá nhà, xu hướng, dự án nổi bật..."
+                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all resize-none" />
+                    <p className="text-xs text-right text-[var(--text-tertiary)] mt-1">{(formData.metaDescription ?? '').length}/160 ký tự</p>
+                </div>
+                <div>
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">Focus Keyword</label>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Từ khóa chính cần xếp hạng (1 cụm từ).</p>
+                    <input type="text" name="focusKeyword" value={formData.focusKeyword ?? ''} onChange={handleChange}
+                        placeholder="giá nhà TP.HCM 2026"
+                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all" />
+                </div>
+                <div>
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">Schema Type</label>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Loại structured data (JSON-LD).</p>
+                    <select name="schemaType" value={formData.schemaType ?? 'NewsArticle'} onChange={handleChange}
+                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-sgs-primary focus:border-sgs-primary outline-none transition-all bg-[var(--bg-surface)]">
+                        <option value="NewsArticle">NewsArticle — Tin tức</option>
+                        <option value="BlogPosting">BlogPosting — Bài phân tích</option>
+                        <option value="Article">Article — Bài viết tổng quát</option>
+                        <option value="FAQPage">FAQPage — Hỏi &amp; Đáp</option>
+                        <option value="HowTo">HowTo — Hướng dẫn</option>
+                    </select>
+                </div>
+                {/* ── GEO / AI Citation ── */}
+                <div className="md:col-span-2 pt-2">
+                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-4">GEO — Tối ưu AI & trích dẫn (Generative Engine Optimization)</p>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">Thực thể GEO (GEO Entities)</label>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Liệt kê các thương hiệu, người, địa điểm, khái niệm chính được đề cập — cách nhau bằng dấu phẩy. Giúp AI (ChatGPT, Gemini, Perplexity) nhận diện và trích dẫn bài này.</p>
+                    <textarea name="geoEntities" value={formData.geoEntities ?? ''} onChange={handleChange}
+                        rows={2}
+                        placeholder="SGS LAND, Vinhomes, TP.HCM, Thủ Đức, thị trường BĐS 2026, giá căn hộ"
+                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none" />
+                </div>
+                <div>
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">Vùng địa lý (Local Area)</label>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-2">Phạm vi địa lý chính của bài viết.</p>
+                    <input type="text" name="localArea" value={formData.localArea ?? ''} onChange={handleChange}
+                        placeholder="TP. Hồ Chí Minh"
+                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+                </div>
+            </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-6 border-t border-[var(--glass-border)]">
                 <button type="button" onClick={onCancel} className="px-6 py-3 rounded-xl font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors">Hủy</button>
                 <button type="submit" disabled={uploadingCount > 0} className="px-6 py-3 rounded-xl font-bold text-white bg-sgs-primary hover:bg-sgs-primary shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
@@ -661,7 +767,7 @@ export const News: React.FC = () => {
                     <p className="text-[var(--text-tertiary)] text-lg max-w-2xl mx-auto">
                         Thông tin thị trường, xu hướng công nghệ PropTech và phân tích dữ liệu AI độc quyền từ SGS Land.
                     </p>
-                    {currentUser?.role === UserRole.ADMIN && (
+                    {['SUPER_ADMIN', 'ADMIN'].includes(currentUser?.role ?? '') && (
                         <div className="mt-8 flex justify-center md:absolute md:top-0 md:right-0 md:mt-0">
                             <button 
                                 onClick={() => setIsCreating(true)}
