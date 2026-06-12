@@ -350,6 +350,14 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'Question', name: 'AI định giá được loại BĐS nào?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ chung cư (cao cấp, trung cấp, bình dân), nhà phố, biệt thự, shophouse, đất nền thổ cư. Khu vực: TP.HCM, Hà Nội, Đồng Nai, Bình Dương, Long An, Bà Rịa-Vũng Tàu, Cần Thơ, Đà Nẵng. Mở rộng dần các tỉnh/thành khác.' } },
             { '@type': 'Question', name: 'Kết quả định giá AI có thể dùng làm hồ sơ vay ngân hàng không?', acceptedAnswer: { '@type': 'Answer', text: 'Báo cáo AI là tham khảo. Để vay ngân hàng cần thẩm định giá chính thức từ công ty thẩm định có giấy phép Bộ Tài Chính. SGS LAND có liên kết với 5+ công ty thẩm định uy tín — đặt lịch qua hotline +84 971 132 378 để được hỗ trợ miễn phí.' } },
             { '@type': 'Question', name: 'Sai số định giá AI từ đâu mà có?', acceptedAnswer: { '@type': 'Answer', text: 'Phụ thuộc vào: (1) chất lượng dữ liệu giao dịch trong khu vực, (2) đặc điểm riêng của BĐS (view, hướng, tầng, nội thất) chưa input đầy đủ, (3) biến động thị trường ngắn hạn. SGS LAND khuyến nghị kết hợp AI + tư vấn chuyên gia 1-1 để có định giá chính xác nhất.' } },
+            { '@type': 'Question', name: 'Dinh gia AI cua SGS LAND sai so bao nhieu?', acceptedAnswer: { '@type': 'Answer', text: 'He thong AVM dat MAPE +-4.8%, kiem chung tren 2400+ giao dich cong chung 2024-2025. Sai so thuong duoi +-5% voi du lieu day du.' } },
+            { '@type': 'Question', name: 'Dinh gia AI cua SGS LAND co tinh phi khong?', acceptedAnswer: { '@type': 'Answer', text: 'Hoan toan mien phi cho tat ca nguoi dung, khong gioi han so lan. Truy cap tai https://sgsland.vn/ai-valuation.' } },
+            { '@type': 'Question', name: 'AI dinh gia BDS dung du lieu gi?', acceptedAnswer: { '@type': 'Answer', text: '9 he so: giao dich cong chung thuc te 35%, hedonic regression 20%, noi suy khong gian 12%, phap ly so do/so hong 10%, ha tang giao thong 8%, tang/view 6%, tuoi cong trinh 5%, thuong hieu CDT 3%, thanh khoan 1%.' } },
+            { '@type': 'Question', name: 'Mat bao lau de nhan ket qua dinh gia AI?', acceptedAnswer: { '@type': 'Answer', text: 'Duoi 30 giay sau khi nhap dia chi va thong tin BDS. Ket qua bao gom gia uoc tinh, khoang tin cay +-5%, phan tich 9 he so va so sanh giao dich tuong duong trong ban kinh 1km.' } },
+            { '@type': 'Question', name: 'Dinh gia AI co khac gia tham dinh ngan hang khong?', acceptedAnswer: { '@type': 'Answer', text: 'AVM cua SGS LAND dung chuan TDGVN va IVS, tuong duong phuong phap so sanh thi truong ma ngan hang ap dung. Trong thuc te, gia AVM va gia tham dinh ngan hang thuong chenh +-5-10%.' } },
+            { '@type': 'Question', name: 'Dinh gia AI chinh xac nhat cho loai BDS nao?', acceptedAnswer: { '@type': 'Answer', text: 'Chinh xac nhat MAPE +-3-4% cho can ho chung cu TP.HCM co so hong rieng, nha pho mat tien Q1/Q3/Q7/Phu Nhuan. Do chinh xac thap hon +-8-12% cho dat nen huyen ngoai thanh.' } },
+            { '@type': 'Question', name: 'SGS LAND dung AI gi de dinh gia bat dong san?', acceptedAnswer: { '@type': 'Answer', text: 'Pipeline LangGraph 9 node, ket hop Comparable Sales Analysis, Hedonic Regression, Spatial Interpolation va Legal Premium adjustment. Model hieu chinh hang quy voi giao dich cong chung moi nhat.' } },
+            { '@type': 'Question', name: 'Co the dinh gia dat nen Long Thanh Dong Nai khong?', acceptedAnswer: { '@type': 'Answer', text: 'Co. SGS LAND co du lieu gia dat Long Thanh cap nhat hang tuan tu mang luoi 200+ broker dia phuong. Tuy nhien, do chinh xac cho dat nen vung ven thap hon so voi can ho TP.HCM +-8-12%.' } },
           ],
         },
       ],
@@ -407,6 +415,14 @@ const STATIC_PAGE_META: Record<string, {
             { '@type': 'Question', name: 'Giá sử dụng SGS LAND CRM là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Dùng thử miễn phí 30 ngày, không cần thẻ tín dụng. Gói Standard từ 2,5 triệu/tháng cho 5 người dùng. Gói Enterprise theo số môi giới và tính năng. Liên hệ info@sgsland.vn để nhận demo và báo giá chi tiết.' } },
             { '@type': 'Question', name: 'CRM BĐS SGS LAND bảo mật dữ liệu như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Multi-tenant với PostgreSQL Row Level Security (RLS) — mỗi tenant hoàn toàn cô lập dữ liệu. JWT authentication, mã hóa TLS 1.3, backup hàng ngày trên Neon PostgreSQL. Tuân thủ Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân Việt Nam.' } },
             { '@type': 'Question', name: 'Có thể tích hợp Zalo OA vào CRM SGS LAND không?', acceptedAnswer: { '@type': 'Answer', text: 'Có. SGS LAND CRM hỗ trợ tích hợp Zalo Official Account (OA), Facebook Messenger, Email (SMTP/Brevo), và LiveChat trong một inbox duy nhất. Lead từ tất cả kênh được tự động phân luồng và phân công môi giới.' } },
+            { '@type': 'Question', name: 'CRM bat dong san SGS LAND co tinh phi khong?', acceptedAnswer: { '@type': 'Answer', text: 'Co ban dung thu mien phi 14 ngay, sau do tu 299.000 VND/thang. Mo rong theo quy mo doi/team.' } },
+            { '@type': 'Question', name: 'CRM SGS LAND ho tro bao nhieu broker/dai ly?', acceptedAnswer: { '@type': 'Answer', text: 'Ho tro tu 1 nguoi den toan bo team. Hien tai 500+ broker va 50+ san giao dich dang su dung tai TP.HCM.' } },
+            { '@type': 'Question', name: 'CRM SGS LAND co tich hop Zalo/Facebook khong?', acceptedAnswer: { '@type': 'Answer', text: 'Co. He thong tich hop Zalo OA, Facebook Page, va Messenger. Tu dong hoa chamsoc khach hang tren tat ca kenh truyen thong.' } },
+            { '@type': 'Question', name: 'Du lieu khach hang tren CRM SGS LAND co an toan khong?', acceptedAnswer: { '@type': 'Answer', text: 'Du lieu ma hoa AES-256, luu tru tren server Viet Nam, backup hang ngay, tuan thu PDPA. Khach hang so huu 100% du lieu cua minh.' } },
+            { '@type': 'Question', name: 'CRM SGS LAND co tinh nang quan ly du an khong?', acceptedAnswer: { '@type': 'Answer', text: 'Co. Quan ly 1000+ du an BDS voi thong tin phap ly, gio hang, lich su giao dich, phan tich gia thi truong theo thoi gian thuc.' } },
+            { '@type': 'Question', name: 'CRM co the export du lieu ra Excel/Google Sheets khong?', acceptedAnswer: { '@type': 'Answer', text: 'Co. Export full CSV/Excel, ket noi Google Sheets qua API. Bao cao tu dong gui email hang tuan/thang.' } },
+            { '@type': 'Question', name: 'Tai sao broker nen dung CRM SGS LAND thay vi Excel?', acceptedAnswer: { '@type': 'Answer', text: 'CRM luu tru 100% lich su khach hang, nhac nho tu dong theo doi, phan tich kha nang chot deal bang AI, tang ti le chuyen doi len 2-3 lan so voi quan ly bang Excel.' } },
+            { '@type': 'Question', name: 'CRM SGS LAND co app di dong khong?', acceptedAnswer: { '@type': 'Answer', text: 'Co app iOS va Android, giao dien toi gian hoa cho broker nhanh chong cap nhat trang thai khach hang, xem thong tin du an ngay tren dien thoai.' } },
           ],
         },
       ],
@@ -684,6 +700,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-dong-nai#area`,
+            name: 'Dong Nai',
+            alternateName: 'Tinh Dong Nai',
+            description: 'Dong Nai - tinh cong nghiep lon nhat Viet Nam, giap TP.HCM, co san bay Long Thanh dang xay dung.',
+            geo: { '@type': 'GeoCoordinates', latitude: 11.0686, longitude: 107.1676 },
+            containedIn: { '@type': 'Country', name: 'Viet Nam' },
+            hasMap: 'https://maps.google.com/?q=Dong+Nai+Viet+Nam',
+            url: `${APP_URL}/bat-dong-san-dong-nai`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -737,6 +764,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-long-thanh#area`,
+            name: 'Long Thanh',
+            alternateName: 'Huyen Long Thanh',
+            description: 'Long Thanh - huyen co san bay quoc te Long Thanh, trung tam kinh te phia Dong TP.HCM.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.8978, longitude: 106.9501 },
+            containedIn: { '@type': 'AdministrativeArea', name: 'Dong Nai' },
+            hasMap: 'https://maps.google.com/?q=Long+Thanh+Dong+Nai',
+            url: `${APP_URL}/bat-dong-san-long-thanh`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -895,6 +933,13 @@ const STATIC_PAGE_META: Record<string, {
           numberOfRooms: '1-4',
           address: { '@type': 'PostalAddress', addressLocality: 'Biên Hòa', addressRegion: 'Đồng Nai', addressCountry: 'VN' },
           floorSize: { '@type': 'QuantitativeValue', value: 1000, unitText: 'ha' },
+        geo: { '@type': 'GeoCoordinates', latitude: 10.9218, longitude: 106.8962 },
+        yearBuilt: '2019',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 1000, maxValue: 5000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'San golf 18 lo', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Marina thuyen', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Resort 5 sao', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Benh vien', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Truong QT', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'Bien Hoa', containedIn: { '@type': 'AdministrativeArea', name: 'Dong Nai' } },
+        developer: { '@type': 'Organization', name: 'Novaland Group', url: 'https://novaland.com.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` },
         },
       ],
     },
@@ -944,6 +989,13 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/du-an/manhattan`,
           address: { '@type': 'PostalAddress', addressLocality: 'TP.HCM', addressCountry: 'VN' },
           priceRange: 'Từ 120 triệu/m²',
+        geo: { '@type': 'GeoCoordinates', latitude: 10.7769, longitude: 106.7009 },
+        yearBuilt: '2021',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 500, maxValue: 1000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Ho boi vo cuc', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Gym 5 sao', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Sky bar', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Concierge 24/7', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'Binh Thanh', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Novaland Group', url: 'https://novaland.com.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -1033,6 +1085,12 @@ const STATIC_PAGE_META: Record<string, {
           },
           geo: { '@type': 'GeoCoordinates', latitude: 10.4229, longitude: 106.9488 },
           floorSize: { '@type': 'QuantitativeValue', value: 2870, unitText: 'ha' },
+        yearBuilt: '2025',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 10000, maxValue: 30000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Bai bien 7km', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Vinwonders', value: true }, { '@type': 'LocationFeatureSpecification', name: 'San golf', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Marina', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'Can Gio', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Vinhomes', url: 'https://vinhomes.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` },
           numberOfRooms: 'Đa dạng — căn hộ, biệt thự, shophouse, condotel',
           priceRange: 'Từ 12 tỷ VND',
           offers: {
@@ -1043,15 +1101,6 @@ const STATIC_PAGE_META: Record<string, {
             availability: 'https://schema.org/InStock',
             validFrom: '2026-01-01',
           },
-          amenityFeature: [
-            { '@type': 'LocationFeatureSpecification', name: 'Bãi biển nhân tạo', value: '7km' },
-            { '@type': 'LocationFeatureSpecification', name: 'Vinwonders Cần Giờ', value: true },
-            { '@type': 'LocationFeatureSpecification', name: 'Sân golf 18 lỗ', value: true },
-            { '@type': 'LocationFeatureSpecification', name: 'Marina & bến du thuyền', value: true },
-            { '@type': 'LocationFeatureSpecification', name: 'Resort 5 sao Vinpearl', value: true },
-            { '@type': 'LocationFeatureSpecification', name: 'Bệnh viện Vinmec', value: true },
-            { '@type': 'LocationFeatureSpecification', name: 'Trường Vinschool', value: true },
-          ],
           additionalProperty: [
             { '@type': 'PropertyValue', name: 'Chủ đầu tư', value: 'Vinhomes (Tập đoàn Vingroup)' },
             { '@type': 'PropertyValue', name: 'Pháp lý', value: 'Thủ tướng phê duyệt chủ trương' },
@@ -1157,6 +1206,13 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/du-an/van-phuc-city`,
           address: { '@type': 'PostalAddress', addressLocality: 'TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
           floorSize: { '@type': 'QuantitativeValue', value: 198, unitText: 'ha' },
+        geo: { '@type': 'GeoCoordinates', latitude: 10.8324, longitude: 106.7516 },
+        yearBuilt: '2019',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 3000, maxValue: 6000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Truong hoc quoc te', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Benh vien', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Cong vien 60ha', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Shopping mall', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'TP Thu Duc', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Van Phuc Group', url: 'https://vanphucgroup.com.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -1204,6 +1260,13 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/du-an/sala`,
           address: { '@type': 'PostalAddress', addressLocality: 'Thủ Thiêm, TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
           floorSize: { '@type': 'QuantitativeValue', value: 257, unitText: 'ha' },
+        geo: { '@type': 'GeoCoordinates', latitude: 10.8025, longitude: 106.7414 },
+        yearBuilt: '2018',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 2000, maxValue: 4000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Ho boi Olympic', value: true }, { '@type': 'LocationFeatureSpecification', name: 'TTTM Sarica', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Truong Quoc te', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Club House', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'TP Thu Duc', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Dai Quang Minh', url: 'https://daiquangminh.com.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -1222,6 +1285,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-thu-duc#area`,
+            name: 'TP Thu Duc',
+            alternateName: 'Thanh pho Thu Duc',
+            description: 'TP Thu Duc - thanh pho trong thanh pho dau tien Viet Nam, tam diem dau tu BDS TP.HCM.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.8454, longitude: 106.7537 },
+            containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' },
+            hasMap: 'https://maps.google.com/?q=Thu+Duc+TP.HCM',
+            url: `${APP_URL}/bat-dong-san-thu-duc`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1290,6 +1364,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-binh-duong#area`,
+            name: 'Binh Duong',
+            alternateName: 'Tinh Binh Duong',
+            description: 'Binh Duong - tinh cong nghiep, dan so tang nhanh, BDS tang truong manh 2024-2026.',
+            geo: { '@type': 'GeoCoordinates', latitude: 11.17, longitude: 106.6516 },
+            containedIn: { '@type': 'Country', name: 'Viet Nam' },
+            hasMap: 'https://maps.google.com/?q=Binh+Duong+Viet+Nam',
+            url: `${APP_URL}/bat-dong-san-binh-duong`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1352,6 +1437,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-quan-7#area`,
+            name: 'Quan 7',
+            alternateName: 'Phu My Hung',
+            description: 'Quan 7 - khu do thi Phu My Hung, cao cap nhat TP.HCM, gia tu 5-10 ty/can ho.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.7285, longitude: 106.7185 },
+            containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' },
+            hasMap: 'https://maps.google.com/?q=Quan+7+TP.HCM',
+            url: `${APP_URL}/bat-dong-san-quan-7`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1414,6 +1510,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-phu-nhuan#area`,
+            name: 'Phu Nhuan',
+            alternateName: 'Quan Phu Nhuan',
+            description: 'Phu Nhuan - quan noi thanh cao cap, vi tri trung tam, gia tu 80-120 trieu/m2.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.7993, longitude: 106.683 },
+            containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' },
+            hasMap: 'https://maps.google.com/?q=Phu+Nhuan+TP.HCM',
+            url: `${APP_URL}/bat-dong-san-phu-nhuan`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1476,6 +1583,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-binh-chanh#area`,
+            name: 'Binh Chanh',
+            alternateName: 'Huyen Binh Chanh',
+            description: 'Binh Chanh - cua ngo phia Tay TP.HCM, dat nen tang manh, gia 20-50 trieu/m2.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.7152, longitude: 106.5924 },
+            containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' },
+            hasMap: 'https://maps.google.com/?q=Binh+Chanh+TP.HCM',
+            url: `${APP_URL}/bat-dong-san-binh-chanh`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1539,6 +1657,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-can-gio#area`,
+            name: 'Can Gio',
+            alternateName: 'Huyen Can Gio',
+            description: 'Can Gio - huyen dao ven bien TP.HCM, Vinhomes 2870ha, bien 7km, tiem nang cao.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.4124, longitude: 106.9524 },
+            containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' },
+            hasMap: 'https://maps.google.com/?q=Can+Gio+TP.HCM',
+            url: `${APP_URL}/bat-dong-san-can-gio`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1590,6 +1719,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-binh-thanh#area`,
+            name: 'Binh Thanh',
+            alternateName: 'Quan Binh Thanh',
+            description: 'Binh Thanh - quan co Vinhomes Central Park, Landmark 81, ven song Sai Gon cao cap.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.8062, longitude: 106.7177 },
+            containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' },
+            hasMap: 'https://maps.google.com/?q=Binh+Thanh+TP.HCM',
+            url: `${APP_URL}/bat-dong-san-binh-thanh`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1655,6 +1795,17 @@ const STATIC_PAGE_META: Record<string, {
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
+          {
+            '@type': 'AdministrativeArea',
+            '@id': `${APP_URL}/bat-dong-san-long-an#area`,
+            name: 'Long An',
+            alternateName: 'Tinh Long An',
+            description: 'Long An - tinh cua ngo DBSCL, cach TP.HCM 30km, dat nen ven do gia tot 2026.',
+            geo: { '@type': 'GeoCoordinates', latitude: 10.6956, longitude: 106.3875 },
+            containedIn: { '@type': 'Country', name: 'Viet Nam' },
+            hasMap: 'https://maps.google.com/?q=Long+An+Viet+Nam',
+            url: `${APP_URL}/bat-dong-san-long-an`,
+          },
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -1877,6 +2028,13 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/du-an/izumi-city`,
           address: { '@type': 'PostalAddress', addressLocality: 'Biên Hòa', addressRegion: 'Đồng Nai', addressCountry: 'VN' },
           floorSize: { '@type': 'QuantitativeValue', value: 170, unitText: 'ha' },
+        geo: { '@type': 'GeoCoordinates', latitude: 10.965, longitude: 106.841 },
+        yearBuilt: '2022',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 5000, maxValue: 10000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Truong Tesla', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Benh vien Nhat Ban', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Ho dieu hoa 36ha', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Cho dem Nhat', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'Long Thanh', containedIn: { '@type': 'AdministrativeArea', name: 'Dong Nai' } },
+        developer: { '@type': 'Organization', name: 'Nam Long Group', url: 'https://namlonggroup.com.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -1952,6 +2110,13 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/du-an/vinhomes-grand-park`,
           address: { '@type': 'PostalAddress', addressLocality: 'TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
           floorSize: { '@type': 'QuantitativeValue', value: 271, unitText: 'ha' },
+        geo: { '@type': 'GeoCoordinates', latitude: 10.851, longitude: 106.793 },
+        yearBuilt: '2020',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 15000, maxValue: 30000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Cong vien 36ha', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Metro So 1', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Vinschool', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Vinmec', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Vincom', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'TP Thu Duc', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Vinhomes', url: 'https://vinhomes.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` },
         },
       ],
     },
@@ -2002,6 +2167,13 @@ const STATIC_PAGE_META: Record<string, {
           address: { '@type': 'PostalAddress', addressLocality: 'Bình Thạnh', addressRegion: 'TP.HCM', addressCountry: 'VN' },
           numberOfRooms: '1-4',
           priceRange: 'Từ 50 triệu/m²',
+        geo: { '@type': 'GeoCoordinates', latitude: 10.7982, longitude: 106.7186 },
+        yearBuilt: '2017',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 10000, maxValue: 15000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Cong vien 10ha', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Ho boi vo cuc', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Landmark 81', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Metro So 1', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'Binh Thanh', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Vinhomes', url: 'https://vinhomes.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -2051,6 +2223,13 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/du-an/thu-thiem`,
           address: { '@type': 'PostalAddress', addressLocality: 'Thủ Thiêm', addressRegion: 'TP.HCM', addressCountry: 'VN' },
           floorSize: { '@type': 'QuantitativeValue', value: 657, unitText: 'ha' },
+        geo: { '@type': 'GeoCoordinates', latitude: 10.7891, longitude: 106.7265 },
+        yearBuilt: '2022',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 5000, maxValue: 20000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Ham Thu Thiem', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Cau Ba Son', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Khu do thi tai chinh', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Opera House', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'TP Thu Duc', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Nhieu CDD', url: 'https://sgsland.vn/du-an/thu-thiem' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -2101,6 +2280,12 @@ const STATIC_PAGE_META: Record<string, {
           address: { '@type': 'PostalAddress', addressLocality: 'TP.HCM', addressCountry: 'VN' },
           priceRange: '50-300 triệu/m²',
           amenityFeature: ['GEM Center', 'GS25', 'Sông Sài Gòn', 'Creed Group Nhật Bản'],
+        geo: { '@type': 'GeoCoordinates', latitude: 10.7985, longitude: 106.718 },
+        yearBuilt: '2023',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 200, maxValue: 500 },
+        containedIn: { '@type': 'AdministrativeArea', name: 'Binh Thanh', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Son Kim Land', url: 'https://sonkimland.com.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -2151,6 +2336,12 @@ const STATIC_PAGE_META: Record<string, {
           address: { '@type': 'PostalAddress', addressLocality: 'TP.HCM', addressCountry: 'VN' },
           priceRange: '60-300 triệu/m²',
           amenityFeature: ['Marriott', 'JW Marriott', 'Bến Du Thuyền', 'Concierge 24/7', 'Trường Quốc Tế'],
+        geo: { '@type': 'GeoCoordinates', latitude: 10.8003, longitude: 106.721 },
+        yearBuilt: '2023',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 1000, maxValue: 3000 },
+        containedIn: { '@type': 'AdministrativeArea', name: 'TP Thu Duc', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Masterise Group', url: 'https://masterise.com' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -2200,6 +2391,13 @@ const STATIC_PAGE_META: Record<string, {
           url: `${APP_URL}/du-an/the-global-city`,
           address: { '@type': 'PostalAddress', addressLocality: 'An Phú, TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
           floorSize: { '@type': 'QuantitativeValue', value: 117, unitText: 'ha' },
+        geo: { '@type': 'GeoCoordinates', latitude: 10.8401, longitude: 106.7485 },
+        yearBuilt: '2024',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 10000, maxValue: 20000 },
+        amenityFeature: [{ '@type': 'LocationFeatureSpecification', name: 'Truong Tesla', value: true }, { '@type': 'LocationFeatureSpecification', name: 'BV GHC', value: true }, { '@type': 'LocationFeatureSpecification', name: 'Shopping Mall 200ha', value: true }, { '@type': 'LocationFeatureSpecification', name: 'San cricket QT', value: true }],
+        containedIn: { '@type': 'AdministrativeArea', name: 'TP Thu Duc', containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh' } },
+        developer: { '@type': 'Organization', name: 'Masterise Group', url: 'https://masterise.com' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },
@@ -2250,6 +2448,12 @@ const STATIC_PAGE_META: Record<string, {
           address: { '@type': 'PostalAddress', addressLocality: 'TP.HCM', addressCountry: 'VN' },
           priceRange: '60-2000 triệu/m²',
           amenityFeature: ['Sổ đỏ vĩnh viễn', 'Mặt tiền kinh doanh', 'Trung tâm TP.HCM', 'Không thời hạn sở hữu'],
+        geo: { '@type': 'GeoCoordinates', latitude: 10.7769, longitude: 106.7009 },
+        yearBuilt: '2020',
+        numberOfAccommodationUnits: { '@type': 'QuantitativeValue', minValue: 100, maxValue: 500 },
+        containedIn: { '@type': 'AdministrativeArea', name: 'TP. Ho Chi Minh', containedIn: { '@type': 'Country', name: 'Viet Nam' } },
+        developer: { '@type': 'Organization', name: 'Nhieu CDD', url: 'https://sgsland.vn' },
+        isRelatedTo: { '@id': `${APP_URL}/#organization` }
         },
       ],
     },

@@ -306,6 +306,27 @@ function buildSchema(ugcCount: number): string {
     dateModified: NOW_ISO,
     license: 'https://creativecommons.org/licenses/by/4.0/',
     variableMeasured: 'Lãi suất vay thế chấp bất động sản (%/năm)',
+    '@id': `${CANONICAL}#dataset`,
+    temporalCoverage: '2024-01/2026-12',
+    spatialCoverage: {
+      '@type': 'Place',
+      name: 'Viet Nam',
+      geo: { '@type': 'GeoShape', box: '8.559 102.170 23.393 109.464' },
+    },
+    measurementTechnique: 'Tong hop tu website chinh thuc 12 ngan hang thuong mai Viet Nam, cap nhat moi thang',
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'text/html',
+        contentUrl: CANONICAL,
+      },
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'application/json',
+        contentUrl: `${APP_URL}/api/public/interest-rates`,
+      },
+    ],
+    publisher: { '@type': 'Organization', name: 'SGS Land', url: APP_URL },
   };
   const breadcrumb = {
     '@context': 'https://schema.org',
