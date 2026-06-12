@@ -244,6 +244,10 @@ html, body {
 @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 @keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
 
+/* --- ADAPTIVE LOGO: navy on light bg, white on dark bg --- */
+.logo-adaptive { filter: none; }
+html.dark .logo-adaptive { filter: brightness(0) invert(1); }
+
 /* --- ENTERPRISE MAP OVERRIDES (White Labeling & Fixes) --- */
 .leaflet-control-attribution {
   background: rgba(255, 255, 255, 0.7) !important;
