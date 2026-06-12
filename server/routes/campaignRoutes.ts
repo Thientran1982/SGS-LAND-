@@ -358,5 +358,18 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
     res.json({ data: r.rows, total: r.rowCount });
   });
 
+
+// --- Unsubscribe ---
+router.get('/api/unsubscribe/:recipientId', async (req: Request, res: Response) => {
+  const recipientId = String(req.params.recipientId || '');
+  try {
+    await pool.query(
+      `UPDATE campaign_recipients SET status='UNSUBSCRIBED', error='unsubscribed' WHERE id=$1`,
+      [recipientId],
+    );
+  } catch (e: any) {
+    res.status(500).send('Error');
+  }
+});
   return router;
 }

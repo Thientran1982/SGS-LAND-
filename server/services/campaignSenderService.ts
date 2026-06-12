@@ -148,7 +148,13 @@ export function decorateBody(
       return `href=${q}${tracked}${q}`;
     },
   );
-  return `${rewritten}${pixel}`;
+  // Add unsubscribe footer
+  const unsubFooter = `
+<div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;font-family:sans-serif;">
+  <p style="margin:0">Bạn nhận được email này vì đã đăng ký tại SGS Land.</p>
+  <p style="margin:4px 0 0">Để <a href="${publicBaseUrl}/api/unsubscribe/${recipientId}" style="color:#6b7280">hủy đăng ký</a> nhận email, nhấn vào đây.</p>
+</div>`;
+  return `${rewritten}${pixel}${unsubFooter}`;
 }
 /**
  * Chạy chiến dịch: build audience, chèn recipients, gửi từng email qua Brevo.

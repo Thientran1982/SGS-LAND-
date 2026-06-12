@@ -162,7 +162,14 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins and team leads can update sequences' });
       }
 
-      const sequence = await sequenceRepository.update(user.tenantId, req.params.id as string, req.body);
+      // Validate: cannot activate sequence with no steps
+        if (req.body.isActive === true) {
+          const bodySteps = req.body.steps;
+          if (!bodySteps || (Array.isArray(bodySteps) && bodySteps.length === 0)) {
+            return res.status(400).json({ error: 'Vui lòng thêm ít nhất 1 bước trước khi kích hoạt chiến dịch' });
+          }
+        }
+        const sequence = await sequenceRepository.update(user.tenantId, req.params.id as string, req.body);
       if (!sequence) return res.status(404).json({ error: 'Sequence not found' });
       res.json(sequence);
     } catch (error) {

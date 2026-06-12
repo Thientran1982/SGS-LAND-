@@ -1,9 +1,12 @@
 import { validateUUIDParam } from '../middleware/validation';
+import { pool } from '../db';
 import { Router, Request, Response } from 'express';
 import { leadRepository } from '../repositories/leadRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { routingRuleRepository } from '../repositories/routingRuleRepository';
 import { notificationRepository } from '../repositories/notificationRepository';
+import { enrollLeadToMatchingSequences } from '../services/sequenceService';
+
 
 const STAGE_LABEL_VN: Record<string, string> = {
   NEW:         'Mới',
@@ -326,6 +329,10 @@ export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => an
       }
 
       getBroadcast?.()?.to(`tenant:${user.tenantId}`).emit('lead_updated', { leadId: lead.id, stage: lead.stage });
+      // AUTO-ENROLL: trigger sequences matching new stage
+      if (req.body.stage && req.body.stage !== before.stage && lead.email) {
+        enrollLeadToMatchingSequences(pool, user.tenantId, lead.id, lead.email, lead.name || '', req.body.stage).catch(() => {});
+      }
       res.json(lead);
     } catch (error) {
       console.error('Error updating lead:', error);
