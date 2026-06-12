@@ -4,13 +4,17 @@
   "description": "Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động và CRM đa kênh.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAFA",
-  "theme_color": "#4F46E5",
+  "background_color": "#0F2740",
+  "theme_color": "#1B3A5C",
   "orientation": "portrait-primary",
   "lang": "vi",
   "dir": "ltr",
   "scope": "/",
-  "categories": ["business", "productivity", "finance"],
+  "categories": [
+    "business",
+    "productivity",
+    "finance"
+  ],
   "iarc_rating_id": "",
   "icons": [
     {
@@ -55,14 +59,24 @@
       "short_name": "Tìm kiếm",
       "description": "Tìm kiếm và lọc bất động sản",
       "url": "/search",
-      "icons": [{ "src": "/favicon-32x32.png", "sizes": "32x32" }]
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
     },
     {
       "name": "Định giá AI",
       "short_name": "Định giá",
       "description": "Định giá bất động sản bằng AI",
       "url": "/ai-valuation",
-      "icons": [{ "src": "/favicon-32x32.png", "sizes": "32x32" }]
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
     }
   ],
   "related_applications": [],
