@@ -1,6 +1,7 @@
 import express from "express";
 import compression from "compression";
 import path from "path";
+import fs from "fs";
 import { Server } from "socket.io";
 import http from "http";
 import cookieParser from "cookie-parser";
@@ -5244,6 +5245,51 @@ async function startServer() {
     });
 
     // All other SPA routes → inject admin-saved override or fallback to defaults
+
+    // Custom /assets handler: reads files into buffer to avoid EIO streaming errors
+    // on Replit VM overlay filesystem. Retries once on EIO before giving up.
+    const MIME: Record<string, string> = {
+      '.js':    'application/javascript; charset=utf-8',
+      '.css':   'text/css; charset=utf-8',
+      '.woff2': 'font/woff2',
+      '.woff':  'font/woff',
+      '.ttf':   'font/ttf',
+      '.svg':   'image/svg+xml',
+      '.png':   'image/png',
+      '.jpg':   'image/jpeg',
+      '.jpeg':  'image/jpeg',
+      '.webp':  'image/webp',
+      '.ico':   'image/x-icon',
+      '.json':  'application/json',
+      '.map':   'application/json',
+    };
+
+    app.get('/assets/*', (req, res, next) => {
+      const filePath = path.join(process.cwd(), 'dist', req.path);
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = MIME[ext] || 'application/octet-stream';
+
+      const tryRead = (attempt: number) => {
+        fs.readFile(filePath, (err, data) => {
+          if (err) {
+            if ((err as any).code === 'ENOENT') {
+              return next();
+            }
+            if ((err as any).code === 'EIO' && attempt < 2) {
+              // Retry once after 50ms on transient I/O error
+              return setTimeout(() => tryRead(attempt + 1), 50);
+            }
+            return next(err);
+          }
+          res.setHeader('Content-Type', contentType);
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          res.setHeader('Vary', 'Accept-Encoding');
+          res.end(data);
+        });
+      };
+      tryRead(1);
+    });
+
     // Long-lived cache for hashed assets (JS/CSS chunks have content hash in filename)
     app.use(express.static("dist", {
       maxAge: '1y',
