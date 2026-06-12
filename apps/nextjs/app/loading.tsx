@@ -31,7 +31,7 @@ export default function RootLoading() {
         }}
       >
         <img
-          src="/logo-icon.png"
+          src="/logo-white.png"
           alt="SGS Land logo"
           width={40}
           height={40}

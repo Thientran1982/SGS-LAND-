@@ -48,7 +48,7 @@ export function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <img src="/logo-icon.png" alt="SGS Land" width={32} height={32} style={{ objectFit: "contain" }} />
+            <img src="/logo-white.png" alt="SGS Land" width={32} height={32} style={{ objectFit: "contain" }} />
             <span className="font-bold text-xl" style={{ color: "var(--text-primary)" }}>SGS <span style={{ color: "var(--primary-600)" }}>LAND</span></span>
           </Link>
           <h1 className="text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>Đăng nhập</h1>

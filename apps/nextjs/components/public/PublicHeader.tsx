@@ -77,7 +77,7 @@ export function PublicHeader() {
               className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden"
               style={{ background: "rgba(255,255,255,0.12)" }}
             >
-              <img src="/logo-icon.png" alt="SGS Land" className="w-7 h-7 object-contain" />
+              <img src="/logo-white.png" alt="SGS Land" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div
