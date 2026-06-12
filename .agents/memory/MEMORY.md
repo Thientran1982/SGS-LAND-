@@ -1,3 +1,5 @@
 - [Next.js 15.5 prerender fix](nextjs15-prerender-fix.md) — force-dynamic on root layout prevents /_not-found OuterLayoutRouter.useContext null crash
 - [GEO Tier S file locations](geo-tier-s.md) — llms.txt/llms-full.txt/llms-en.txt in public/, sitemap subs as route handlers, area-price-index in public/data/
 - [Next.js Public Site Setup](nextjs-public-site-setup.md) — Next.js runs on port 3001 (separate from Express CRM port 5000); all public components must have "use client"
+- [Express v5 route wildcards](express-v5-wildcards.md) — use /assets/*path not /assets/* — path-to-regexp v8 requires named wildcards
+- [Production EIO static assets](production-eio-assets.md) — Replit VM overlay filesystem returns EIO on large streamed files; fix with fs.readFile + retry

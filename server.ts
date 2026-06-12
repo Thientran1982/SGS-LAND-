@@ -5264,7 +5264,7 @@ async function startServer() {
       '.map':   'application/json',
     };
 
-    app.get('/assets/*', (req, res, next) => {
+    app.get('/assets/*path', (req, res, next) => {
       const filePath = path.join(process.cwd(), 'dist', req.path);
       const ext = path.extname(filePath).toLowerCase();
       const contentType = MIME[ext] || 'application/octet-stream';
