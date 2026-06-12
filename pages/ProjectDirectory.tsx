@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import ExcelJS from 'exceljs';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 import { motion } from 'motion/react';
@@ -340,6 +339,7 @@ export default function ProjectDirectory() {
         colUrl: isEn ? 'URL' : 'Liên kết',
     };
     const exportToExcel = async () => {
+        const ExcelJS = (await import('exceljs')).default;
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet(tx.sheetName);
         const header = [
