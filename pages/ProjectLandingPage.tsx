@@ -1302,7 +1302,18 @@ export default function ProjectLandingPage() {
 
     const cfg = PROJECT_CONFIG[projectSlug];
 
+    const STATIC_LANDING_REDIRECTS: Record<string, string> = {
+        'vinhomes-hoc-mon':      '/landing/vinhomes-hoc-mon/',
+        'masteri-cosmo-central': '/landing/masteri-cosmo-central/',
+        'legacy-66':             '/landing/legacy-66/',
+    };
+
     if (!cfg) {
+        const staticHref = STATIC_LANDING_REDIRECTS[projectSlug];
+        if (staticHref) {
+            window.location.replace(staticHref);
+            return null;
+        }
         return <ProjectDirectory />;
     }
 
