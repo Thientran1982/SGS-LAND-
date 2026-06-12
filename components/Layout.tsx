@@ -168,9 +168,9 @@ const Sidebar = memo(({
                         <Logo className="w-full h-full" />
                     </div>
                     <div className="overflow-hidden whitespace-nowrap text-left">
-                        <h1 className="font-bold text-lg leading-none tracking-tight text-[var(--text-primary)]">
+                        <span className="font-bold text-lg leading-none tracking-tight text-[var(--text-primary)]">
                             {t('nav.logo_label')}
-                        </h1>
+                        </span>
                         <span className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-[0.2em]">
                             {t('nav.brand_subtitle')}
                         </span>

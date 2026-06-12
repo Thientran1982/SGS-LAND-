@@ -4847,6 +4847,22 @@ async function startServer() {
     }
   });
 
+  // Serve .well-known files with explicit Content-Type before static middleware.
+  // express.static may serve .json as text/plain on some hosts; this guarantees
+  // application/json so ChatGPT / AI agents can parse the plugin manifest.
+  app.get('/.well-known/ai-plugin.json', (_req, res) => {
+    const filePath = path.join(process.cwd(), 'public', '.well-known', 'ai-plugin.json');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    res.sendFile(filePath, { dotfiles: 'allow' }, (err) => { if (err && !res.headersSent) res.status(404).json({ error: 'Not found' }); });
+  });
+  app.get('/.well-known/openapi.yaml', (_req, res) => {
+    const filePath = path.join(process.cwd(), 'public', '.well-known', 'openapi.yaml');
+    res.setHeader('Content-Type', 'application/yaml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    res.sendFile(filePath, { dotfiles: 'allow' }, (err) => { if (err && !res.headersSent) res.status(404).end(); });
+  });
+
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
