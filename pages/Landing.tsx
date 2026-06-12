@@ -311,7 +311,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={PLACEHOLDERS[phIdx][lang]}
-                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl text-[16px] md:text-sm outline-none transition-all"
                   style={{
                     background: "var(--sgs-subtle-bg, #F8F9FB)",
                     border: "1.5px solid rgba(27,58,92,0.1)",
