@@ -48,9 +48,7 @@ export function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 12l10 5 10-5" /><path d="M2 17l10 5 10-5" />
-            </svg>
+            <img src="/logo-icon.png" alt="SGS Land" width={32} height={32} style={{ objectFit: "contain" }} />
             <span className="font-bold text-xl" style={{ color: "var(--text-primary)" }}>SGS <span style={{ color: "var(--primary-600)" }}>LAND</span></span>
           </Link>
           <h1 className="text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>Đăng nhập</h1>

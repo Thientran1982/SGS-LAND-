@@ -30,21 +30,14 @@ export default function RootLoading() {
           animation: "sgsGlow 2.4s ease-in-out infinite",
         }}
       >
-        <svg
-          width={36}
-          height={36}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="var(--sgs-primary)"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <img
+          src="/logo-icon.png"
+          alt="SGS Land logo"
+          width={40}
+          height={40}
+          style={{ objectFit: "contain" }}
           aria-hidden
-        >
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 12l10 5 10-5" />
-          <path d="M2 17l10 5 10-5" />
-        </svg>
+        />
       </div>
 
       {/* Brand */}

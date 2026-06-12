@@ -74,18 +74,10 @@ export function PublicHeader() {
           {/* ── Logo ─────────────────────────────────────── */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105"
-              style={{ background: "var(--sgs-accent)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.12)" }}
             >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5" style={{ color: "var(--sgs-primary-deep)" }}>
-                <path
-                  d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
-                  stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"
-                  fill="currentColor" fillOpacity="0.18"
-                />
-                <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/>
-              </svg>
+              <img src="/logo-icon.png" alt="SGS Land" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div
