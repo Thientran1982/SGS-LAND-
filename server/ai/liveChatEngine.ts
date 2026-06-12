@@ -19,6 +19,7 @@ import { projectRepository } from '../repositories/projectRepository';
 import { DEFAULT_TENANT_ID } from '../constants';
 import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
 import { logger } from '../middleware/logger';
+import { agentRepository } from '../repositories/agentRepository';
 
 // ---------------------------------------------------------------------------
 // Gemini client — reuse GEMINI_API_KEY from env (same as server/ai.ts)
@@ -1104,7 +1105,29 @@ Trả về JSON với các trường sau:
         let analysis: any;
         try { analysis = JSON.parse(raw); } catch { analysis = { raw }; }
 
-        return {
+        // C4: Sync analyze_chat_session output to ai_agent_memories + lead_journey_memory
+        // This allows Pipeline 1 (conversational AI) to read LiveChat context
+        if (leadId && analysis && tenantId) {
+          const sessionSummary = typeof analysis === 'string' 
+            ? analysis 
+            : (analysis.summary || analysis.intent_pattern || JSON.stringify(analysis).slice(0, 500));
+          // Save to ai_agent_memories (Pipeline 1 can read this)
+          agentRepository.savePropertyMemory(
+            tenantId, 'LIVE_CHAT', '__LIVE_CHAT__',
+            sessionSummary,
+            { sessionId: sessionId || `sess_${Date.now()}`, source: 'live_chat', leadId, messageCount: messages.length, analysis: typeof analysis === 'object' ? analysis : {} }
+          ).catch((e: any) => logger.error('[C4] Failed to sync to ai_agent_memories:', e));
+          // Save to lead_journey_memory (global cross-pipeline journey tracking)
+          agentRepository.saveLeadJourneyEvent(
+            tenantId, leadId, 'LIVE_CHAT', 'CHAT_SESSION_ANALYZED',
+            sessionSummary,
+            typeof analysis === 'object' ? analysis : {},
+            { messageCount: messages.length },
+            sessionId || undefined,
+            'live_chat'
+          ).catch((e: any) => logger.error('[C4] Failed to sync to lead_journey_memory:', e));
+        }
+                return {
             sessionId: sessionId || `sess_${Date.now()}`,
             tenantId,
             leadId: leadId || null,

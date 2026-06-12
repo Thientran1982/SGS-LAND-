@@ -402,6 +402,31 @@ async function getPromptTemplate(tenantId: string, templateKey: string, fallback
     const cached = getCachedToolData<string>(cacheKey);
     if (cached) return cached;
     try {
+        // C1: Check agent_prompt_versions table first (DB override - highest priority)
+        const agentIdMap: Record<string, string> = {
+          INVENTORY_SYSTEM: 'INVENTORY_AGENT',
+          FINANCE_SYSTEM: 'FINANCE_AGENT',
+          LEGAL_SYSTEM: 'LEGAL_AGENT',
+          SALES_SYSTEM: 'SALES_AGENT',
+          MARKETING_SYSTEM: 'MARKETING_AGENT',
+          CONTRACT_SYSTEM: 'CONTRACT_AGENT',
+          LEAD_ANALYST_SYSTEM: 'LEAD_ANALYST',
+          VALUATION_SYSTEM: 'VALUATION_AGENT',
+          VALUATION_SEARCH_SYSTEM: 'VALUATION_AGENT',
+          ROUTER_SYSTEM: 'ROUTER',
+          FOLLOWUP_SYSTEM: 'FOLLOWUP_AGENT',
+          QC_SYSTEM: 'QC_AGENT',
+          WRITER_PERSONA: 'WRITER',
+        };
+        const dbAgentId = agentIdMap[templateKey];
+        if (dbAgentId) {
+          const dbPrompt = await agentRepository.getActivePrompt(tenantId, dbAgentId);
+          if (dbPrompt?.systemInstruction) {
+            setCachedToolData(cacheKey, dbPrompt.systemInstruction);
+            return dbPrompt.systemInstruction;
+          }
+        }
+        // Fallback: aiGovernance prompt templates
         const templates = await aiGovernanceRepository.getPromptTemplates(tenantId);
         const match = templates?.find((t: any) => t.name === templateKey && t.isActive !== false);
         const content = match?.content || fallback;
@@ -947,6 +972,7 @@ export type AgentState = {
     escalated?: boolean;
     isSysMsg?: boolean;
     userFavorites?: CompactFavorite[];
+  isInternalRequest?: boolean; // C3 guard: if true, ANALYZE_LEAD is allowed
 };
 
 type NodeFunction = (state: AgentState) => Promise<Partial<AgentState>>;
@@ -1156,6 +1182,24 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             trackAiUsage('CHAT_ROUTER', GENAI_CONFIG.MODELS.ROUTER, Date.now() - _routerStart, routerPrompt, routerRes.text || '', { tenantId: state.tenantId });
 
             const plan = JSON.parse(routerRes.text || '{}');
+
+              // =====================================================
+              // C3 HARD GUARD: ANALYZE_LEAD is internal-only.
+              // If the Router AI incorrectly classifies a customer
+              // message as ANALYZE_LEAD, reroute to SEARCH_INVENTORY
+              // or DIRECT_ANSWER to protect internal analytics.
+              // Only admin/internal requests (state.isInternalRequest)
+              // are allowed to proceed to LEAD_ANALYST.
+              // =====================================================
+              if (plan.next_step === 'ANALYZE_LEAD' && !state.isInternalRequest) {
+                logger.warn('[ROUTER C3 GUARD] Blocked ANALYZE_LEAD from customer chat. Rerouting to SEARCH_INVENTORY.');
+                // Choose reroute: if user message looks like property search -> SEARCH_INVENTORY, else DIRECT_ANSWER
+                const msgLower = (state.userMessage || '').toLowerCase();
+                const searchKeywords = ['tìm', 'xem', 'mua', 'thuê', 'dự án', 'căn hộ', 'nhà', 'đất', 'bds', 'bất động sản'];
+                const hasSearchKeyword = searchKeywords.some(kw => msgLower.includes(kw));
+                plan.next_step = hasSearchKeyword ? 'SEARCH_INVENTORY' : 'DIRECT_ANSWER';
+                plan.c3_rerouted = true;
+              }
             const ext = plan.extraction || {};
             const entityParts: string[] = [];
             if (ext.budget_max)         entityParts.push(`Ngân sách: ${(ext.budget_max / 1e9).toFixed(2)} Tỷ`);

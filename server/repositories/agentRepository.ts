@@ -12,6 +12,39 @@ const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+
+// ============================================================
+// C1: Prompt Version interfaces
+// ============================================================
+export interface AgentPromptVersion {
+  id: string;
+  tenantId: string;
+  agentId: string;
+  version: string;
+  systemInstruction: string;
+  isActive: boolean;
+  changeNote: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================
+// C2: Lead Journey Memory interface
+// ============================================================
+export interface LeadJourneyEvent {
+  id: string;
+  tenantId: string;
+  leadId: string;
+  agentId: string;
+  sessionId: string | null;
+  eventType: string;
+  summary: string;
+  signals: Record<string, any>;
+  metadata: Record<string, any>;
+  source: string;
+  createdAt: string;
+}
 export interface AgentSkill {
   id: string;
   name: string;
@@ -370,6 +403,217 @@ class AgentRepository extends BaseRepository {
       return this.rowToMemory(res.rows[0]);
     });
   }
+
+  // ============================================================
+  // C1: Prompt Versioning methods
+  // ============================================================
+
+  /**
+   * Get the currently active prompt version for a given agent+tenant.
+   * Returns null if no DB override — caller should fallback to DEFAULT_*_SYSTEM.
+   */
+  async getActivePrompt(tenantId: string, agentId: string): Promise<AgentPromptVersion | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const res = await client.query(
+        `SELECT id, tenant_id, agent_id, version, system_instruction,
+                is_active, change_note, created_by, created_at, updated_at
+         FROM agent_prompt_versions
+         WHERE tenant_id = $1 AND agent_id = $2 AND is_active = true
+         LIMIT 1`,
+        [tenantId, agentId]
+      );
+      if (res.rows.length === 0) return null;
+      const r = res.rows[0];
+      return {
+        id: r.id,
+        tenantId: r.tenant_id,
+        agentId: r.agent_id,
+        version: r.version,
+        systemInstruction: r.system_instruction,
+        isActive: r.is_active,
+        changeNote: r.change_note,
+        createdBy: r.created_by,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      } as AgentPromptVersion;
+    });
+  }
+
+  /**
+   * Save a new prompt version. Does NOT auto-activate.
+   * Call activatePromptVersion() separately to activate.
+   */
+  async savePromptVersion(
+    tenantId: string,
+    agentId: string,
+    version: string,
+    systemInstruction: string,
+    changeNote?: string,
+    createdBy?: string
+  ): Promise<AgentPromptVersion> {
+    return this.withTenant(tenantId, async (client) => {
+      const res = await client.query(
+        `INSERT INTO agent_prompt_versions
+           (tenant_id, agent_id, version, system_instruction, is_active, change_note, created_by)
+         VALUES ($1, $2, $3, $4, false, $5, $6)
+         RETURNING *`,
+        [tenantId, agentId, version, systemInstruction, changeNote || null, createdBy || null]
+      );
+      const r = res.rows[0];
+      return {
+        id: r.id, tenantId: r.tenant_id, agentId: r.agent_id,
+        version: r.version, systemInstruction: r.system_instruction,
+        isActive: r.is_active, changeNote: r.change_note,
+        createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at,
+      } as AgentPromptVersion;
+    });
+  }
+
+  /**
+   * Activate a specific version — deactivates all others for same tenant+agent.
+   * Uses a transaction to ensure atomicity.
+   */
+  async activatePromptVersion(tenantId: string, agentId: string, version: string): Promise<AgentPromptVersion> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE agent_prompt_versions
+         SET is_active = false, updated_at = NOW()
+         WHERE tenant_id = $1 AND agent_id = $2 AND is_active = true`,
+        [tenantId, agentId]
+      );
+      const res = await client.query(
+        `UPDATE agent_prompt_versions
+         SET is_active = true, updated_at = NOW()
+         WHERE tenant_id = $1 AND agent_id = $2 AND version = $3
+         RETURNING *`,
+        [tenantId, agentId, version]
+      );
+      if (res.rows.length === 0) throw new Error(`Prompt version not found: ${agentId}@${version}`);
+      const r = res.rows[0];
+      return {
+        id: r.id, tenantId: r.tenant_id, agentId: r.agent_id,
+        version: r.version, systemInstruction: r.system_instruction,
+        isActive: r.is_active, changeNote: r.change_note,
+        createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at,
+      } as AgentPromptVersion;
+    });
+  }
+
+  /**
+   * List all versions for a given agent+tenant, ordered by created_at desc.
+   */
+  async listPromptVersions(tenantId: string, agentId: string): Promise<AgentPromptVersion[]> {
+    return this.withTenant(tenantId, async (client) => {
+      const res = await client.query(
+        `SELECT id, tenant_id, agent_id, version, system_instruction,
+                is_active, change_note, created_by, created_at, updated_at
+         FROM agent_prompt_versions
+         WHERE tenant_id = $1 AND agent_id = $2
+         ORDER BY created_at DESC`,
+        [tenantId, agentId]
+      );
+      return res.rows.map((r: any) => ({
+        id: r.id, tenantId: r.tenant_id, agentId: r.agent_id,
+        version: r.version, systemInstruction: r.system_instruction,
+        isActive: r.is_active, changeNote: r.change_note,
+        createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at,
+      })) as AgentPromptVersion[];
+    });
+  }
+
+  // ============================================================
+  // C2: Lead Journey Memory methods
+  // ============================================================
+
+  /**
+   * Save a journey event for a lead. Called by agents and LiveChat pipeline.
+   */
+  async saveLeadJourneyEvent(
+    tenantId: string,
+    leadId: string,
+    agentId: string,
+    eventType: string,
+    summary: string,
+    signals: Record<string, any> = {},
+    metadata: Record<string, any> = {},
+    sessionId?: string,
+    source: string = 'chat'
+  ): Promise<LeadJourneyEvent> {
+    return this.withTenant(tenantId, async (client) => {
+      const res = await client.query(
+        `INSERT INTO lead_journey_memory
+           (tenant_id, lead_id, agent_id, session_id, event_type, summary, signals, metadata, source)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)
+         RETURNING *`,
+        [
+          tenantId, leadId, agentId, sessionId || null,
+          eventType, summary,
+          JSON.stringify(signals), JSON.stringify(metadata), source
+        ]
+      );
+      const r = res.rows[0];
+      return {
+        id: r.id, tenantId: r.tenant_id, leadId: r.lead_id,
+        agentId: r.agent_id, sessionId: r.session_id,
+        eventType: r.event_type, summary: r.summary,
+        signals: r.signals, metadata: r.metadata,
+        source: r.source, createdAt: r.created_at,
+      } as LeadJourneyEvent;
+    });
+  }
+
+  /**
+   * Get the full journey for a lead — used by LEAD_ANALYST node.
+   * Returns last N events across all agents, ordered newest first.
+   */
+  async getLeadJourney(
+    tenantId: string,
+    leadId: string,
+    limit: number = 50
+  ): Promise<LeadJourneyEvent[]> {
+    return this.withTenant(tenantId, async (client) => {
+      const res = await client.query(
+        `SELECT id, tenant_id, lead_id, agent_id, session_id,
+                event_type, summary, signals, metadata, source, created_at
+         FROM lead_journey_memory
+         WHERE tenant_id = $1 AND lead_id = $2
+         ORDER BY created_at DESC
+         LIMIT $3`,
+        [tenantId, leadId, Math.min(limit, 100)]
+      );
+      return res.rows.map((r: any) => ({
+        id: r.id, tenantId: r.tenant_id, leadId: r.lead_id,
+        agentId: r.agent_id, sessionId: r.session_id,
+        eventType: r.event_type, summary: r.summary,
+        signals: r.signals, metadata: r.metadata,
+        source: r.source, createdAt: r.created_at,
+      })) as LeadJourneyEvent[];
+    });
+  }
+
+  /**
+   * Get journey events from a specific session — used by C4 LiveChat sync.
+   */
+  async getSessionJourney(tenantId: string, sessionId: string): Promise<LeadJourneyEvent[]> {
+    return this.withTenant(tenantId, async (client) => {
+      const res = await client.query(
+        `SELECT id, tenant_id, lead_id, agent_id, session_id,
+                event_type, summary, signals, metadata, source, created_at
+         FROM lead_journey_memory
+         WHERE tenant_id = $1 AND session_id = $2
+         ORDER BY created_at ASC`,
+        [tenantId, sessionId]
+      );
+      return res.rows.map((r: any) => ({
+        id: r.id, tenantId: r.tenant_id, leadId: r.lead_id,
+        agentId: r.agent_id, sessionId: r.session_id,
+        eventType: r.event_type, summary: r.summary,
+        signals: r.signals, metadata: r.metadata,
+        source: r.source, createdAt: r.created_at,
+      })) as LeadJourneyEvent[];
+    });
+  }
+
 }
 
 export const agentRepository = new AgentRepository();

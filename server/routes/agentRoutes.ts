@@ -95,5 +95,93 @@ export function createAgentRoutes(authenticateToken: any): Router {
     }
   });
 
-  return router;
+  
+  // ============================================================
+  // C1: Prompt Versioning endpoints
+  // ============================================================
+
+  // GET /api/agents/:agentId/prompts — list all prompt versions for agent
+  router.get('/:agentId/prompts', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { agentId } = req.params;
+      const versions = await agentRepository.listPromptVersions(user.tenantId, agentId as string);
+      // Strip systemInstruction from list for bandwidth (return it only on GET single)
+      const summary = versions.map(v => ({
+        id: v.id, agentId: v.agentId, version: v.version,
+        isActive: v.isActive, changeNote: v.changeNote,
+        createdBy: v.createdBy, createdAt: v.createdAt,
+      }));
+      res.json(summary);
+    } catch (e) {
+      console.error('agentRoutes GET prompts error:', e);
+      res.status(500).json({ error: 'Failed to list prompt versions' });
+    }
+  });
+
+  // GET /api/agents/:agentId/prompts/active — get active prompt for agent
+  router.get('/:agentId/prompts/active', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { agentId } = req.params;
+      const active = await agentRepository.getActivePrompt(user.tenantId, agentId as string);
+      if (!active) return res.json({ agentId, source: 'default', systemInstruction: null });
+      res.json(active);
+    } catch (e) {
+      console.error('agentRoutes GET active prompt error:', e);
+      res.status(500).json({ error: 'Failed to get active prompt' });
+    }
+  });
+
+  // POST /api/agents/:agentId/prompts — save a new prompt version
+  router.post('/:agentId/prompts', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { agentId } = req.params;
+      const { version, systemInstruction, changeNote, activate } = req.body;
+      if (!version || !systemInstruction) {
+        return res.status(400).json({ error: 'version and systemInstruction are required' });
+      }
+      const saved = await agentRepository.savePromptVersion(
+        user.tenantId, agentId as string, version as string, systemInstruction as string, changeNote, user.email
+      );
+      // Optionally activate immediately
+      if (activate === true) {
+        const activated = await agentRepository.activatePromptVersion(user.tenantId, agentId as string, version as string);
+        return res.status(201).json({ ...activated, activated: true });
+      }
+      res.status(201).json(saved);
+    } catch (e: any) {
+      console.error('agentRoutes POST prompt error:', e);
+      res.status(500).json({ error: e?.message || 'Failed to save prompt version' });
+    }
+  });
+
+  // PUT /api/agents/:agentId/prompts/:version/activate — activate a specific version
+  router.put('/:agentId/prompts/:version/activate', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { agentId, version } = req.params;
+      const activated = await agentRepository.activatePromptVersion(user.tenantId, agentId as string, version as string);
+      res.json(activated);
+    } catch (e: any) {
+      console.error('agentRoutes PUT activate prompt error:', e);
+      res.status(500).json({ error: e?.message || 'Failed to activate prompt version' });
+    }
+  });
+
+  // GET /api/agents/journey/:leadId — get full journey for a lead (LEAD_ANALYST)
+  router.get('/journey/:leadId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const journey = await agentRepository.getLeadJourney(user.tenantId, req.params.leadId as string, limit);
+      res.json(journey);
+    } catch (e) {
+      console.error('agentRoutes GET journey error:', e);
+      res.status(500).json({ error: 'Failed to get lead journey' });
+    }
+  });
+
+return router;
 }
