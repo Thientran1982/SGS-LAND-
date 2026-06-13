@@ -5125,6 +5125,7 @@ async function startServer() {
     }
     app.get('/du-an/:projectSlug', (req: express.Request, res: express.Response) => {
       const pagePath = `/du-an/${req.params.projectSlug}`;
+      if (req.path.startsWith('/assets/')) { return res.status(404).end(); }
       const ua = String(req.headers['user-agent'] || '');
       const aiBot = isAIBot(ua);
       // GEO-maximized body for AI crawlers (GPTBot, PerplexityBot, ClaudeBot);
@@ -5273,7 +5274,7 @@ async function startServer() {
         fs.readFile(filePath, (err, data) => {
           if (err) {
             if ((err as any).code === 'ENOENT') {
-              return next();
+              return res.status(404).end();
             }
             if ((err as any).code === 'EIO' && attempt < 2) {
               // Retry once after 50ms on transient I/O error
