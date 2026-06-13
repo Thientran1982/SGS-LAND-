@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { scraperApi } from '../services/api/scraperApi';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { SeoHead } from '../components/SeoHead';
@@ -155,26 +157,29 @@ function MarketTab() {
   const [filter,    setFilter]    = useState('');
   const [txFilter,  setTxFilter]  = useState('all');
   const [sortKey,   setSortKey]   = useState('price');
-  const loadStatus = useCallback(async () => {
-    try {
-      const res = await fetch('/api/scraper/status', { credentials: 'include' });
-      if (res.ok) setStatus(await res.json());
-    } catch { /* ignore */ }
-  }, []);
-  const loadResults = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/scraper/results', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data.results ?? []);
-        setListings(data.listings ?? []);
-        setScrapedAt(data.scrapedAt ?? null);
-      }
-    } catch { /* ignore */ }
-    setLoading(false);
-  }, []);
-  useEffect(() => { loadStatus(); loadResults(); }, [loadStatus, loadResults]);
+  const queryClient = useQueryClient();
+  const { data: scraperStatusData, isLoading: scraperStatusLoading } = useQuery<any>({
+    queryKey: ['scraperStatus'],
+    queryFn: () => scraperApi.getStatus(),
+    refetchInterval: 5000,
+    staleTime: 4000,
+  });
+  const { data: scraperResultsData, isLoading: scraperResultsLoading } = useQuery<any>({
+    queryKey: ['scraperResults'],
+    queryFn: () => scraperApi.getProjectsResults(),
+    staleTime: 10_000,
+  });
+  useEffect(() => {
+    if (scraperStatusData) setStatus(scraperStatusData);
+    setLoading(scraperStatusLoading || scraperResultsLoading);
+  }, [scraperStatusData, scraperStatusLoading, scraperResultsLoading]);
+  useEffect(() => {
+    if (scraperResultsData) {
+      setResults(scraperResultsData.results ?? []);
+      setListings(scraperResultsData.listings ?? []);
+      setScrapedAt(scraperResultsData.scrapedAt ?? null);
+    }
+  }, [scraperResultsData]);
   const handleRun = async () => {
     if (running || !selected.length) return;
     setRunning(true); setError(null);
@@ -189,7 +194,7 @@ function MarketTab() {
       setResults(data.results ?? []);
       setListings(data.listings ?? []);
       setScrapedAt(data.scrapedAt ?? null);
-      loadStatus();
+      queryClient.invalidateQueries({ queryKey: ['scraperStatus'] });
     } catch (err) { setError(String(err)); }
     setRunning(false);
   };
