@@ -575,6 +575,20 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
 export const News: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+
+    // URL slug routing helpers
+    const openArticle = (id: string, slug?: string) => {
+        setSelectedArticleId(id);
+        if (slug) {
+            window.history.pushState(null, '', '/news/' + slug);
+        } else {
+            window.history.pushState(null, '', '/news/' + id);
+        }
+    };
+    const closeArticle = () => {
+        setSelectedArticleId(null);
+        window.history.pushState(null, '', '/news');
+    };
     const [editingArticle, setEditingArticle] = useState<Article | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [email, setEmail] = useState('');
@@ -627,6 +641,21 @@ export const News: React.FC = () => {
         };
         fetchData();
     }, [currentPage]);
+
+    // Auto-open article from URL slug on initial load
+    useEffect(() => {
+        const pathParts = window.location.pathname.split('/');
+        // /news/:slug -> parts = ['', 'news', 'slug']
+        const urlSlug = pathParts.length >= 3 && pathParts[1] === 'news' ? pathParts.slice(2).join('/') : '';
+        if (!urlSlug || !articles.length) return;
+        // Find article matching slug or id
+        const matched = articles.find((a: any) =>
+            (a.slug && a.slug === urlSlug) || a.id === urlSlug
+        );
+        if (matched && !selectedArticleId) {
+            setSelectedArticleId(matched.id);
+        }
+    }, [articles]);
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
     const handleSubscribe = async (e: React.FormEvent) => {
@@ -736,7 +765,7 @@ export const News: React.FC = () => {
                     {/* Header reused */}
                     <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                         <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                            <button onClick={() => setSelectedArticleId(null)} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-sgs-primary transition-colors min-h-[44px] shrink-0">
+                            <button onClick={() => closeArticle()} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-sgs-primary transition-colors min-h-[44px] shrink-0">
                                 {ICONS.BACK} <span className="hidden sm:inline">Quay lại</span>
                             </button>
                             <div className="flex items-center gap-2 min-w-0">
@@ -750,17 +779,17 @@ export const News: React.FC = () => {
                     </div>
                     <ArticleDetail 
                         article={article} 
-                        onBack={() => setSelectedArticleId(null)} 
+                        onBack={() => closeArticle()} 
                         isAdmin={['SUPER_ADMIN', 'ADMIN'].includes(currentUser?.role ?? '')}
                         onEdit={(a) => {
                             setEditingArticle(a);
-                            setSelectedArticleId(null);
+                    closeArticle();
                         }}
                         onDelete={async (id) => {
                             try {
                                 await db.deleteArticle(id);
                                 setArticles(prev => prev.filter(a => a.id !== id));
-                                setSelectedArticleId(null);
+                                closeArticle();
                             } catch (error) {
                                 console.error('Failed to delete article', error);
                                 showError('Có lỗi xảy ra khi xóa bài viết.');
@@ -833,7 +862,7 @@ export const News: React.FC = () => {
                 {/* Featured Article */}
                 {featured && (
                     <div 
-                        onClick={() => setSelectedArticleId(featured.id)}
+                        onClick={() => openArticle(featured.id, (featured as any).slug)}
                         className="mb-16 group cursor-pointer relative rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl min-h-[420px] md:min-h-0 md:aspect-[21/9] flex flex-col justify-end transform transition-transform hover:scale-[1.01] isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                     >
                         <img src={featured.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={featured.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&fit=crop'; }}  loading="lazy" />
@@ -866,7 +895,7 @@ export const News: React.FC = () => {
                     {others.map(article => (
                         <div 
                             key={article.id} 
-                            onClick={() => setSelectedArticleId(article.id)}
+                            onClick={() => openArticle(article.id, (article as any).slug)}
                             className="bg-[var(--bg-surface)] rounded-2xl md:rounded-[32px] border border-[var(--glass-border)] overflow-hidden hover:shadow-2xl transition-all duration-300 group cursor-pointer hover:-translate-y-2 flex flex-col h-full isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                         >
                             <div className="aspect-[4/3] overflow-hidden relative isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
