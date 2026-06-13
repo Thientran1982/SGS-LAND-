@@ -765,7 +765,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                                         style={{ display: 'flex', gap: 10, padding: '8px 13px', cursor: 'pointer', borderTop: '1px solid rgba(0,0,0,0.05)', alignItems: 'center', transition: 'background 0.12s' }}
                                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.03)')}
                                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                        <img src={thumb} style={{ width: 52, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" referrerPolicy="no-referrer" />
+                                        <img src={thumb} style={{ width: 52, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" referrerPolicy="no-referrer"  loading="lazy" />
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary, #0f172a)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{listing.title}</div>
                                             <div style={{ fontSize: 11, color: bg, fontWeight: 700, marginTop: 2 }}>{lp}</div>

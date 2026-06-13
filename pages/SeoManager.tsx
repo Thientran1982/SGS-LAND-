@@ -10,6 +10,7 @@ import { Dropdown } from '../components/Dropdown';
 import {
     LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
+import { SeoHead } from '../components/SeoHead';
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const ICONS = {
     GLOBE:    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -181,7 +182,7 @@ const SerpPageDropdown: React.FC<{
         };
     }, [isOpen]);
     return (
-        <div className="relative">
+                <div className="relative">
             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide block mb-1.5">Chọn trang</label>
             <button
                 ref={btnRef}
@@ -1737,6 +1738,8 @@ export const SeoManager: React.FC = () => {
     );
     return (
         <div className="space-y-5 pb-20 animate-enter p-4 sm:p-6">
+          <SeoHead title="Quản Lý SEO | SGS LAND" description="Tối ưu hóa SEO cho danh sách bất động sản và nội dung website SGS LAND." canonicalPath="/seo-manager" />
+
 
             {/* ── Header ──────────────────────────────────────────────────── */}
             <div className="bg-[var(--bg-surface)] px-5 py-4 sm:px-6 sm:py-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">

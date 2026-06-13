@@ -8,6 +8,7 @@ import { copyToClipboard } from '../utils/clipboard';
 import { ThemeCustomizer } from '../components/ThemeCustomizer';
 import { UserActivityPanel } from '../components/UserActivityPanel';
 import BrandingPanel from '../components/enterprise/BrandingPanel';
+import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 // CONSTANTS
 // -----------------------------------------------------------------------------
@@ -104,7 +105,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
     };
     const webhookUrl = config.zalo?.webhookUrl || zaloStatus?.webhookUrl || `${window.location.origin}/api/webhooks/zalo`;
     return (
-        <div className="animate-enter max-w-4xl">
+                <div className="animate-enter max-w-4xl">
             <SectionHeader
                 title={t('ent.zalo_title')}
                 subtitle={t('ent.zalo_subtitle')}
@@ -1120,7 +1121,9 @@ export const EnterpriseSettings: React.FC = () => {
     };
     return (
         <>
+          <SeoHead title="Cài Đặt Doanh Nghiệp | SGS LAND" description="Cấu hình và quản lý cài đặt doanh nghiệp, thương hiệu và tích hợp SGS LAND." canonicalPath="/enterprise-settings" />
         <div className="space-y-6 pb-20 relative animate-enter p-4 sm:p-6">
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4 w-full overflow-hidden">
                 <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-[var(--text-tertiary)]">{t('ent.tenant_label')}:</span>

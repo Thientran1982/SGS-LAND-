@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { db } from '../services/dbApi';
 import { LeadStage, LEAD_SOURCES } from '../types';
+import { SeoHead } from '../components/SeoHead';
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface AudienceFilter {
   source?: 'leads' | 'users';
@@ -325,6 +326,12 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
 
   return (
     <div className="fixed inset-0 z-50 flex">
+      <SeoHead
+        title="Chiến Dịch Marketing BĐS | SGS LAND"
+        description="Quản lý chiến dịch marketing bất động sản đa kênh: email, Zalo, Facebook. Theo dõi hiệu quả và ROI trên SGS LAND."
+        canonicalPath="/campaigns"
+      />
+
       <div className="flex-1 bg-black/40" onClick={onClose} />
       <div className="w-full max-w-2xl h-full bg-white dark:bg-sgs-primary-deep shadow-2xl overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-sgs-primary-deep border-b border-[var(--glass-border)] px-6 py-4 flex items-center justify-between z-10">

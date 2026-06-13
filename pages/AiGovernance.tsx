@@ -6,6 +6,7 @@ import { AiTenantConfig, PromptTemplate, AiSafetyLog, AiModelType } from '../typ
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { SeoHead } from '../components/SeoHead';
 interface ConfigTabProps {
     config: AiTenantConfig;
     onSave: () => void;
@@ -1176,7 +1177,9 @@ export const AiGovernance: React.FC = () => {
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('ai.loading')}</div>;
     return (
         <>
+          <SeoHead title="Quản Trị AI | SGS LAND" description="Theo dõi và quản lý các chính sách AI, cost governance và audit log trên SGS LAND." canonicalPath="/ai-governance" />
         <div className="space-y-6 pb-20 relative animate-enter p-4 sm:p-6">
+
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('ai.title')}</h2>

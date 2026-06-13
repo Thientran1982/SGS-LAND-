@@ -185,7 +185,7 @@ export const Marketplace: React.FC = () => {
 
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="w-14 h-14 rounded-2xl shadow-sm bg-[var(--glass-surface)] flex items-center justify-center p-2 border border-[var(--glass-border)]">
-                                            <img src={app.icon} className="w-full h-full object-contain" alt="" />
+                                            <img src={app.icon} className="w-full h-full object-contain" alt=""  loading="lazy" />
                                         </div>
                                         {isInstalled && <span className="bg-sgs-champagne text-sgs-verified px-2 py-1 rounded text-xs2 font-bold uppercase tracking-wider border border-emerald-100">{t('market.installed_badge')}</span>}
                                     </div>

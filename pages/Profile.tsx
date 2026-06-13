@@ -4,6 +4,7 @@ import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Skeleton } from '../components/Skeleton';
+import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 //  1. CONSTANTS & UTILS
 // -----------------------------------------------------------------------------
@@ -387,8 +388,10 @@ export const Profile: React.FC = () => {
     if (loading) return <div className="p-4 sm:p-6"><Skeleton className="h-64 w-full" /></div>;
     if (!user) return null;
     return (
-        <>
+                <>
+                  <SeoHead title="Hồ Sơ Cá Nhân | SGS LAND" description="Xem và chỉnh sửa thông tin cá nhân, bảo mật tài khoản SGS LAND." canonicalPath="/profile" />
         <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 animate-enter">
+
             {/* Header Card */}
             <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
                 <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>                

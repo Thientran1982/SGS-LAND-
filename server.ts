@@ -3884,7 +3884,7 @@ async function startServer() {
   app.post("/api/webhooks/zalo", webhookRateLimit, verifyWebhookSignature('zalo'), async (req, res) => {
     try {
       const { sender, message, timestamp, event_name } = req.body;
-      console.log(`[Zalo Webhook] Received event: ${event_name} from ${sender?.id}`);
+      console.info(`[Zalo Webhook] Received event: ${event_name} from ${sender?.id}`);
 
       if (event_name === 'user_send_text') {
         await webhookQueue.add('zalo-event', { platform: 'zalo', payload: req.body });
@@ -3900,7 +3900,7 @@ async function startServer() {
   app.post("/api/webhooks/facebook", webhookRateLimit, verifyWebhookSignature('facebook'), async (req, res) => {
     try {
       const { object, entry } = req.body;
-      console.log(`[Facebook Webhook] Received event`);
+      console.info(`[Facebook Webhook] Received event`);
 
       if (object === 'page') {
         await webhookQueue.add('facebook-event', { platform: 'facebook', payload: req.body });

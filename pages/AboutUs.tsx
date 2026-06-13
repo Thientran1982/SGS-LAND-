@@ -187,7 +187,7 @@ export const AboutUs: React.FC = () => {
                         {leaders.map((leader, i) => (
                             <div key={i} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] text-center group hover:border-sgs-border transition-colors">
                                 <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 shadow-lg group-hover:scale-105 transition-transform">
-                                    <img src={leader.img} className="w-full h-full object-cover" alt={leader.name} />
+                                    <img src={leader.img} className="w-full h-full object-cover" alt={leader.name}  loading="lazy" />
                                 </div>
                                 <h3 className="text-lg font-bold text-[var(--text-primary)]">{leader.name}</h3>
                                 <div className="text-xs font-bold text-sgs-primary uppercase tracking-wider mb-4">{leader.role}</div>

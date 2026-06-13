@@ -3,6 +3,7 @@ import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { db } from '../services/dbApi';
 import { User } from '../types';
+import { SeoHead } from '../components/SeoHead';
 // ─── SVG Icon helper ──────────────────────────────────────────────────────────
 function Ico({ d, d2, cls = 'w-6 h-6' }: { d: string; d2?: string; cls?: string }) {
     return (
@@ -188,7 +189,7 @@ const FAQ_ITEMS = [
 ];
 // ─── Sub-components ──────────────────────────────────────────────────────────
 const StepCard: React.FC<typeof PROCESS_STEPS[0]> = ({ num, icon, title, desc, detail }) => (
-    <div className="relative flex gap-4 md:gap-6">
+        <div className="relative flex gap-4 md:gap-6">
         <div className="flex flex-col items-center">
             <div className="w-12 h-12 rounded-2xl bg-sgs-primary text-white font-black text-lg flex items-center justify-center shadow-lg flex-shrink-0">
                 {num}
@@ -307,6 +308,8 @@ export const Consignment: React.FC = () => {
     };
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] overflow-y-auto h-[100dvh] no-scrollbar">
+          <SeoHead title="Ký Gửi Bất Động Sản | SGS LAND" description="Đăng ký ký gửi bất động sản và theo dõi tình trạng ký gửi tại SGS LAND." canonicalPath="/consignment" />
+
 
             {/* ── Header ── */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">

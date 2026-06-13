@@ -13,6 +13,7 @@ import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/Ta
 import { StatusBadge, PriorityBadge, DeadlineTag, AvatarStack, TaskSkeleton } from '../components/task/Badges';
 import { STATUS_LABELS, PRIORITY_LABELS, ALL_STATUSES, isValidTransition, exportTasksToCSV } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
+import { SeoHead } from '../components/SeoHead';
 type SortKey = 'priority' | 'deadline' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
 const LIMIT = 20;
@@ -260,6 +261,12 @@ function TaskList() {
   }, []);
   return (
     <div className="h-full flex flex-col overflow-hidden animate-enter">
+      <SeoHead
+        title="Danh Sách Công Việc | SGS LAND"
+        description="Quản lý danh sách công việc bất động sản: tạo, phân công, theo dõi và hoàn thành nhiệm vụ trên SGS LAND."
+        canonicalPath="/tasks"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-[var(--glass-border)] flex-shrink-0 gap-3">
         <div className="flex items-center gap-2 min-w-0">

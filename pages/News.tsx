@@ -216,7 +216,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {article.images?.map((url, index) => (
                                 <div key={`img-${index}`} className="aspect-video rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
-                                    <img src={url} alt={`Gallery ${index}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=80&fit=crop'; }} />
+                                    <img src={url} alt={`Gallery ${index}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=80&fit=crop'; }}  loading="lazy" />
                                 </div>
                             ))}
                             {article.videos?.map((url, index) => (
@@ -430,7 +430,7 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                             {formData.images?.map((url, index) => (
                                 <div key={`img-${index}`} className="relative group rounded-xl overflow-hidden aspect-square border border-[var(--glass-border)]">
-                                    <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                    <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover"  loading="lazy" />
                                     <button 
                                         type="button" 
                                         onClick={() => removeMedia('image', index)}
@@ -836,7 +836,7 @@ export const News: React.FC = () => {
                         onClick={() => setSelectedArticleId(featured.id)}
                         className="mb-16 group cursor-pointer relative rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl min-h-[420px] md:min-h-0 md:aspect-[21/9] flex flex-col justify-end transform transition-transform hover:scale-[1.01] isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                     >
-                        <img src={featured.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={featured.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&fit=crop'; }} />
+                        <img src={featured.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={featured.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&fit=crop'; }}  loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                         <div className="absolute top-6 left-6 md:top-10 md:left-10 z-10">
                              <span className="inline-block px-4 py-1.5 rounded-xl bg-[var(--bg-surface)]/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
@@ -870,7 +870,7 @@ export const News: React.FC = () => {
                             className="bg-[var(--bg-surface)] rounded-2xl md:rounded-[32px] border border-[var(--glass-border)] overflow-hidden hover:shadow-2xl transition-all duration-300 group cursor-pointer hover:-translate-y-2 flex flex-col h-full isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                         >
                             <div className="aspect-[4/3] overflow-hidden relative isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
-                                <img src={article.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={article.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80&fit=crop'; }} />
+                                <img src={article.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={article.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80&fit=crop'; }}  loading="lazy" />
                                 <div className="absolute top-4 left-4">
                                     <span className="px-3 py-1 bg-[var(--bg-surface)]/90 backdrop-blur-sm text-[var(--text-primary)] text-xs2 font-bold rounded-lg shadow-sm">
                                         {article.category}

@@ -5,6 +5,7 @@ import { Interaction, Channel, Direction } from '../types';
 import { MessageBubble } from '../components/ChatUI';
 import { motion } from 'motion/react';
 import { getSEOOverrides } from '../utils/seo';
+import { SeoHead } from '../components/SeoHead';
 // ---------------------------------------------------------------------------
 // Public API helpers — no JWT required, all routes are rate-limited
 // ---------------------------------------------------------------------------
@@ -267,7 +268,7 @@ export default function LiveChat() {
     };
     if (!leadId) {
         return (
-            <div className="min-h-full w-full bg-[var(--glass-surface)] flex flex-col p-4 md:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto no-scrollbar">
+                        <div className="min-h-full w-full bg-[var(--glass-surface)] flex flex-col p-4 md:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto no-scrollbar">
                 <div className="flex-1 min-h-[2rem]"></div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--bg-surface)] p-6 md:p-8 rounded-2xl shadow-xl max-w-md w-full border border-[var(--glass-border)] mx-auto shrink-0">
                     <div className="w-16 h-16 bg-sgs-primary rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-200">
@@ -301,6 +302,12 @@ export default function LiveChat() {
     }
     return (
         <div className="h-full w-full bg-[var(--glass-surface)] flex flex-col max-w-2xl mx-auto shadow-2xl overflow-hidden">
+          <SeoHead
+            title="Tư Vấn Trực Tuyến | SGS LAND"
+            description="Chat trực tiếp với chuyên gia bất động sản SGS LAND. Giải đáp thắc mắc về mua bán, cho thuê, đầu tư BĐS TP.HCM."
+            canonicalPath="/live-chat"
+          />
+
             {/* Header */}
             <div className={`${isHumanMode ? 'bg-emerald-600' : 'bg-sgs-primary'} text-white p-4 flex items-center justify-between shadow-md z-10 shrink-0 transition-colors duration-500`}>
                 <div className="flex items-center gap-3">

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { commissionApi, type LedgerItem, type LedgerStatus } from '../services/api/commissionApi';
 import { db } from '../services/dbApi';
 import { Dropdown } from '../components/Dropdown';
+import { SeoHead } from '../components/SeoHead';
 const PAGE_SIZE = 25;
 const STATUS_LABEL: Record<LedgerStatus, string> = {
   PENDING:   'Chờ chốt',
@@ -134,6 +135,12 @@ export const Commissions: React.FC = () => {
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   return (
     <div className="p-4 sm:p-6 max-w-[1400px] mx-auto">
+      <SeoHead
+        title="Quản Lý Hoa Hồng | SGS LAND"
+        description="Theo dõi và quản lý hoa hồng giao dịch bất động sản: tính toán, phân chia và báo cáo thu nhập cho môi giới."
+        canonicalPath="/commissions"
+      />
+
       <header className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--text-primary)]">Hoa hồng</h1>

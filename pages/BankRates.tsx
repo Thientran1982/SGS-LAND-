@@ -5,6 +5,7 @@ import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { SeoHead } from '../components/SeoHead';
 const ICONS = {
   BACK:  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>,
   BANK:  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10"/></svg>,
@@ -304,6 +305,12 @@ export const BankRates: React.FC = () => {
   );
   return (
     <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+      <SeoHead
+        title="Lãi Suất Ngân Hàng | SGS LAND"
+        description="Cập nhật lãi suất vay mua nhà từ các ngân hàng lớn tại Việt Nam. Công cụ tính toán tài chính BĐS trên SGS LAND."
+        canonicalPath="/bank-rates"
+      />
+
       {/* Toast */}
       {toast && (
         <div className={`fixed top-20 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>

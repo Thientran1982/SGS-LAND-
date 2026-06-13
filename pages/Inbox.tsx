@@ -12,6 +12,7 @@ import { getSEOOverrides } from '../utils/seo';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { motion, AnimatePresence } from 'motion/react';
+import { SeoHead } from '../components/SeoHead';
 const CONFIG = {
     TOAST_DURATION: 3000
 };
@@ -613,6 +614,7 @@ export const Inbox: React.FC = () => {
     }, [messages, isAiActiveForSelected]);
     return (
         <>
+          <SeoHead title="Hộp Thư | SGS LAND" description="Quản lý tin nhắn, thông báo và giao tiếp với khách hàng trên nền tảng SGS LAND." canonicalPath="/inbox" />
         {/* Full-bleed on mobile, padded on sm+ — fills the flex-1 parent from Layout */}
         <div className="h-full sm:p-4 md:p-6">
         <div className="flex h-full bg-[var(--bg-surface)] sm:rounded-[24px] sm:border border-[var(--glass-border)] sm:shadow-sm overflow-hidden animate-enter relative">

@@ -19,6 +19,7 @@ import {
     downloadImportTemplate,
     type ImportResult,
 } from '../utils/listingExcel';
+import { SeoHead } from '../components/SeoHead';
 // ─────────────────────────────────────────────────────────────────────────────
 // Icons
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3462,6 +3463,7 @@ export function Projects() {
     };
     return (
         <div className="h-full flex flex-col bg-[var(--bg-app)] overflow-hidden">
+          <SeoHead title="Dự Án Bất Động Sản | SGS LAND" description="Khám phá các dự án bất động sản nổi bật tại TP.HCM và các tỉnh thành lân cận." canonicalPath="/projects" />
             {/* Header — title + search + filters + create all in one bar */}
             <div className="shrink-0 px-5 py-3.5 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]">
                 <div className="flex items-center gap-3 flex-wrap">

@@ -5,6 +5,7 @@ import { RoutingRule, RoutingStrategy, User, Team, LEAD_SOURCES } from '../types
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { SeoHead } from '../components/SeoHead';
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
@@ -209,7 +210,7 @@ export const RoutingRules: React.FC = () => {
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     if (loadError) return (
-        <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
+                <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
             <div className="w-14 h-14 bg-rose-50 text-rose-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
             </div>
@@ -251,7 +252,9 @@ export const RoutingRules: React.FC = () => {
     };
     return (
         <>
+          <SeoHead title="Quy Tắc Phân Phối | SGS LAND" description="Cấu hình quy tắc phân phối khách hàng tiềm năng và tự động hóa." canonicalPath="/routing-rules" />
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
+
 
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>

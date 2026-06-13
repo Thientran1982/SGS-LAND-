@@ -4,6 +4,7 @@ import { db } from '../services/dbApi';
 import { Proposal, Listing, Lead, User, LeadScore } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & CONFIGURATION
 // -----------------------------------------------------------------------------
@@ -140,7 +141,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
     const styles = RISK_STYLES[riskAssessment.level];
 
     return (
-        <div 
+                <div 
             className={`bg-[var(--bg-surface)] rounded-[20px] border shadow-sm relative overflow-hidden transition-all duration-300 group flex flex-col h-full
                 ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' : `border-[var(--glass-border)] hover:border-[var(--glass-border)] hover:shadow-md`}`}
             onClick={() => onToggleSelect(proposal.id)}
@@ -357,7 +358,9 @@ export const ApprovalInbox: React.FC = () => {
 
     return (
         <>
+          <SeoHead title="Hộp Phê Duyệt | SGS LAND" description="Xem xét và phê duyệt các yêu cầu, hợp đồng và giao dịch bất động sản." canonicalPath="/approval-inbox" />
         <div className="p-4 sm:p-6 space-y-6 pb-24 relative animate-enter">
+
             {/* METRICS BAR */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between col-span-2 md:col-span-1">

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 /* ─────────────────────────────────────────────
    SVG ICON LIBRARY
    All icons use stroke="currentColor", consistent
@@ -116,7 +117,7 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; badg
 ───────────────────────────────────────────── */
 function Tip({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 mt-5">
+                <div className="flex gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 mt-5">
             <span className="text-emerald-400 mt-0.5 shrink-0">{Ico.TIP}</span>
             <p className="text-sm text-slate-300 leading-relaxed">{children}</p>
         </div>
@@ -512,6 +513,8 @@ export function UserGuide() {
 
     return (
         <div className="min-h-screen bg-sgs-primary-deep text-white flex flex-col">
+          <SeoHead title="Hướng Dẫn Sử Dụng | SGS LAND" description="Hướng dẫn sử dụng đầy đủ các tính năng của nền tảng SGS LAND." canonicalPath="/user-guide" />
+
             {/* TOP BAR */}
             <header className="sticky top-0 z-40 bg-sgs-primary-deep/95 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 md:px-6 h-14 shrink-0">
                 <div className="flex items-center gap-3">

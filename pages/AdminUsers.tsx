@@ -6,6 +6,7 @@ import { User, UserRole, CommonStatus, Department } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { SeoHead } from '../components/SeoHead';
 interface AgentStatsData {
     deals: number;
     lost: number;
@@ -54,7 +55,7 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
     return (
         <>
             {/* Mobile: slim icon-only bar */}
-            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
+                        <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
                 <button
                     onClick={() => onPageChange(page - 1)}
                     disabled={page === 1}
@@ -690,7 +691,9 @@ export const AdminUsers: React.FC = () => {
     }
     return (
         <>
+          <SeoHead title="Quản Lý Người Dùng | SGS LAND" description="Quản lý tài khoản người dùng, phân quyền và bảo mật hệ thống SGS LAND." canonicalPath="/admin/users" />
         <div className="h-full flex flex-col relative animate-enter">
+
             {/* HEADER */}
             <div className="flex flex-col bg-[var(--bg-surface)] border-b border-[var(--glass-border)] shrink-0">
                 {/* Row 1: Số liệu thành viên + nút mời */}
@@ -1013,6 +1016,6 @@ export const AdminUsers: React.FC = () => {
             ) : null,
             document.body
         )}
-        </>
+    </>
     );
 };

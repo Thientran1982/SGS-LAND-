@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../services/dbApi';
 import { Contract, ContractType, ContractStatus, PaymentMilestone, PaymentStatus } from '../types';
 import { useTenant } from '../services/tenantContext';
+import { SeoHead } from '../components/SeoHead';
 interface PublicContractProps {
     token: string;
 }
@@ -87,7 +88,7 @@ const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }>
     );
 };
 const Divider: React.FC<{ style?: React.CSSProperties; className?: string }> = ({ style, className }) => (
-    <div className={className} style={{ borderBottom: '1px solid #000', margin: '6px 0', ...style }} />
+        <div className={className} style={{ borderBottom: '1px solid #000', margin: '6px 0', ...style }} />
 );
 export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     const { isLoading: isTenantLoading } = useTenant();
@@ -456,6 +457,8 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
     /* ── Render ── */
     return (
         <div style={{ minHeight: '100vh', background: '#e8e8e8', padding: '32px 16px', fontFamily: FONT_SANS }} className="public-contract-page">
+          <SeoHead title="Hợp Đồng Công Khai | SGS LAND" description="Xem thông tin hợp đồng bất động sản công khai trên SGS LAND." canonicalPath="/contracts/public" />
+
 
             {/* ── TOOLBAR (ẩn khi in) ── */}
             <div className="no-print" style={{

@@ -6,6 +6,7 @@ import { Contract, ContractType, ContractStatus } from '../types';
 import { ContractModal } from '../components/ContractModal';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { SeoHead } from '../components/SeoHead';
 const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
     useEffect(() => {
         const node = ref.current;
@@ -113,7 +114,7 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
         </button>
     );
     return (
-        <>
+                <>
             <button
                 ref={btnRef}
                 onClick={toggle}
@@ -147,7 +148,7 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
                 </div>,
                 document.body
             )}
-        </>
+                </>
     );
 };
 /* ── Main page ── */
@@ -215,7 +216,9 @@ const Contracts: React.FC = () => {
     };
     return (
         <>
+          <SeoHead title="Quản Lý Hợp Đồng | SGS LAND" description="Tạo, theo dõi và quản lý hợp đồng mua bán, cho thuê bất động sản." canonicalPath="/contracts" />
         <div className="p-4 sm:p-6 h-full flex flex-col animate-enter">
+
             {/* Header row */}
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-lg font-black text-[var(--text-primary)] tracking-tight">{t('contracts.title')}</h1>

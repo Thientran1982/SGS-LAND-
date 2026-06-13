@@ -5,6 +5,7 @@ import { Sequence, LeadStage } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { SeoHead } from '../components/SeoHead';
 // ── Template types (mirrors server/sequenceTemplates.ts) ──────────────────────
 interface SequenceTemplate {
     id: string;
@@ -114,7 +115,7 @@ const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t 
     };
     const isMessage = form.type === 'EMAIL' || form.type === 'SMS' || form.type === 'ZALO';
     return createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" role="dialog" aria-modal="true">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
             <div className="bg-[var(--bg-surface)] w-full max-w-md rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex justify-between items-center mb-5">
@@ -795,7 +796,9 @@ export const Sequences: React.FC = () => {
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
     return (
         <>
+          <SeoHead title="Chuỗi Email | SGS LAND" description="Tạo và quản lý chuỗi email tự động cho khách hàng bất động sản." canonicalPath="/sequences" />
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
+
 
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>

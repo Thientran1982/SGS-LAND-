@@ -10,6 +10,7 @@ import { useTheme } from '../services/theme';
 import { socket } from '../services/websocket';
 import { CampaignCost } from '../types';
 import { Dropdown } from '../components/Dropdown';
+import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 // 1. TYPES & INTERFACES
 // -----------------------------------------------------------------------------
@@ -853,6 +854,8 @@ export const Reports: React.FC = () => {
     if (!data) return null;
     return (
         <div className="p-4 sm:p-6 space-y-4 pb-20 relative animate-enter">
+          <SeoHead title="Báo Cáo | SGS LAND" description="Xem báo cáo kinh doanh, phân tích hiệu suất và thống kê bất động sản." canonicalPath="/reports" />
+
             {/* Header: single bar — Tabs (left) + Time Filter (right) on desktop; stacked on mobile */}
             <div className="bg-[var(--bg-surface)] px-4 sm:px-5 py-3 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 {/* Desktop: one row */}

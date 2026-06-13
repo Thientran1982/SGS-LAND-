@@ -4,6 +4,7 @@ import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
 import { ROUTES } from '../config/routes';
+import { SeoHead } from '../components/SeoHead';
 interface LoginProps {
   onLoginSuccess: () => void;
 }
@@ -440,7 +441,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           : 'border-white/10 focus:border-indigo-500/50 focus:ring-indigo-500/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-hidden relative">      
+    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-hidden relative">
+      <SeoHead
+        title="Đăng Nhập | SGS LAND"
+        description="Đăng nhập vào nền tảng bất động sản SGS LAND. Truy cập tài khoản, quản lý BĐS và theo dõi giao dịch của bạn."
+        canonicalPath="/login"
+      />
+      
       {/* FORM COLUMN */}
       <div className="w-full lg:w-[520px] xl:w-[600px] flex flex-col relative z-20 overflow-y-auto no-scrollbar scroll-smooth h-[100dvh] bg-black/40 backdrop-blur-md border-r border-white/5 shadow-2xl">        
         {/* Top Bar */}

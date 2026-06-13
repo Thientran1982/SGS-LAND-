@@ -4,6 +4,7 @@ import { db } from '../services/dbApi';
 import { ComplianceConfig, DlpRule, SecuritySession } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { SeoHead } from '../components/SeoHead';
 const ICONS = {
     LOCK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
     SHIELD: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
@@ -124,8 +125,10 @@ export const SecurityCompliance: React.FC = () => {
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
-        <>
+                <>
+                  <SeoHead title="Bảo Mật & Tuân Thủ | SGS LAND" description="Cài đặt bảo mật, kiểm tra tuân thủ và nhật ký hoạt động hệ thống." canonicalPath="/security-compliance" />
         <div className="space-y-6 pb-20 animate-enter relative p-4 sm:p-6">
+
 
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>

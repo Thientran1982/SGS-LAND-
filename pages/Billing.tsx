@@ -6,6 +6,7 @@ import { useTranslation } from '../services/i18n';
 import { PlanTier, Subscription, Invoice, UsageMetrics, Plan } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ROUTES } from '../config/routes';
+import { SeoHead } from '../components/SeoHead';
 const ICONS = {
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
     DOWNLOAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4-4m4 4V4" /></svg>,
@@ -103,7 +104,9 @@ export const Billing: React.FC = () => {
     const currentPlan = PLANS[subscription?.planId as PlanTier] || PLANS.INDIVIDUAL;
     return (
         <>
-        <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
+          <SeoHead title="Thanh Toán & Hoá Đơn | SGS LAND" description="Quản lý hóa đơn, lịch sử thanh toán và gói dịch vụ SGS LAND." canonicalPath="/billing" />
+                <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
+
 
             {/* Page Header */}
             <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

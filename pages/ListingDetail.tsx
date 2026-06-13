@@ -18,6 +18,7 @@ import { ListingForm } from '../components/ListingForm';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Lock, Plus, Edit2, Trash2, Download, Upload, Sparkles, MoreVertical } from 'lucide-react';
 import { AiCreditBadge, AiQuotaGate, type QuotaInfo } from '../components/AiCreditBadge';
+import { SeoHead } from '../components/SeoHead';
 // Icons with pointer-events-none to prevent click hijacking
 const ICONS = {
     BACK: <svg className="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
@@ -1546,6 +1547,7 @@ export const ListingDetail: React.FC = () => {
         : t('common.contact_on_site');
     return (
         <>
+          <SeoHead title="Chi Tiết Bất Động Sản | SGS LAND" description="Xem thông tin chi tiết bất động sản, hình ảnh, giá và đặt lịch xem nhà trên SGS LAND." canonicalPath="/listings" />
         <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-[var(--bg-surface)] pb-28 lg:pb-20 animate-enter relative">
             {/* Header */}
             <div className="sticky top-0 z-40 bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--glass-border)] px-4 py-3 md:px-6 md:py-4 flex justify-between items-center gap-2">

@@ -5,6 +5,7 @@ import { useTranslation } from '../services/i18n';
 import { copyToClipboard } from '../utils/clipboard';
 import { db } from '../services/dbApi';
 import { User } from '../types';
+import { SeoHead } from '../components/SeoHead';
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     COPY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
@@ -19,7 +20,7 @@ const CodeBlock = ({ code, language = 'bash' }: { code: string, language?: strin
         setTimeout(() => setCopied(false), 2000);
     };
     return (
-        <div className="bg-[#1e1e1e] rounded-xl overflow-hidden border border-white/10 my-4 shadow-lg group">
+                <div className="bg-[#1e1e1e] rounded-xl overflow-hidden border border-white/10 my-4 shadow-lg group">
             <div className="flex justify-between items-center px-4 py-2 bg-[var(--bg-surface)]/5 border-b border-white/5">
                 <span className="text-xs2 font-mono text-slate-400 uppercase">{language}</span>
                 <button onClick={handleCopy} className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 text-xs2 font-bold uppercase tracking-wider">
@@ -45,6 +46,8 @@ export const ApiDocs: React.FC = () => {
     const [activeSection, setActiveSection] = useState('intro');
     return (
         <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] h-[100dvh] flex flex-col">
+          <SeoHead title="Tài Liệu API | SGS LAND" description="Hướng dẫn tích hợp và sử dụng API SGS LAND cho các nhà phát triển." canonicalPath="/api-docs" />
+
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)] shrink-0">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">

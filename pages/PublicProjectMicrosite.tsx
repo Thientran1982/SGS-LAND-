@@ -8,6 +8,7 @@ import {
 import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
 import { buildLeadAttribution, trackPageView } from '../services/attribution';
+import { SeoHead } from '../components/SeoHead';
 interface Props {
   projectCode: string;
 }
@@ -387,8 +388,14 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       className="min-h-[100dvh] bg-sgs-bg text-sgs-text"
       style={{ ['--brand-primary' as any]: brandPrimary }}
     >
+      <SeoHead
+        title="Microsite Dự Án BĐS | SGS LAND"
+        description="Trang thông tin chi tiết dự án bất động sản: vị trí, tiện ích, mặt bằng và chính sách bán hàng từ SGS LAND."
+        canonicalPath="/project"
+      />
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section className="relative bg-sgs-primary-deep text-white">
+
         <div className="absolute inset-0 overflow-hidden">
           <img
             src={optimizedImageUrl(gallery[activeImageIdx] || NO_IMAGE_URL, 1600)}

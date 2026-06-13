@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { SeoHead } from '../components/SeoHead';
 interface VendorAdmin {
   id: string;
   email: string;
@@ -236,6 +237,12 @@ export default function VendorManagement() {
   }, {});
   return (
     <div className="min-h-full bg-sgs-bg">
+      <SeoHead
+        title="Quản Lý Đối Tác | SGS LAND"
+        description="Quản lý đối tác và nhà cung cấp dịch vụ bất động sản: môi giới, nhà thầu, công ty quản lý BĐS trên SGS LAND."
+        canonicalPath="/vendors"
+      />
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-5">
         <div className="max-w-7xl mx-auto">

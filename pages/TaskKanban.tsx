@@ -14,6 +14,7 @@ import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/Ta
 import { PriorityBadge, AvatarStack } from '../components/task/Badges';
 import { CATEGORY_LABELS_SHORT, STATUS_LABELS, formatDeadlineRelative, isValidTransition } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
+import { SeoHead } from '../components/SeoHead';
 const KANBAN_LIMIT = 500;
 function serializeKanbanFilters(f: TaskFilters): string {
   const qs = new URLSearchParams();
@@ -293,6 +294,12 @@ export function TaskKanban() {
   );
   return (
     <div className="h-full flex flex-col overflow-hidden animate-enter">
+      <SeoHead
+        title="Bảng Kanban Công Việc | SGS LAND"
+        description="Quản lý công việc theo phương pháp Kanban trực quan: kéo thả, theo dõi tiến độ đội ngũ bất động sản SGS LAND."
+        canonicalPath="/task-kanban"
+      />
+
       <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0 space-y-2.5">
         <div className="flex items-center justify-between gap-3">
           <div>

@@ -3,6 +3,7 @@ import { api } from '../services/api/apiClient';
 import { db } from '../services/dbApi';
 import { User, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
+import { SeoHead } from '../components/SeoHead';
 interface CostReport {
   period: string;
   totalValuations: number;
@@ -241,6 +242,12 @@ const AdminAiCost: React.FC = () => {
   }
   return (
     <div className="p-4 sm:p-6 space-y-6 animate-enter pb-20">
+      <SeoHead
+        title="Chi Phí AI | Quản Trị SGS LAND"
+        description="Theo dõi và quản lý chi phí sử dụng AI trên nền tảng bất động sản SGS LAND: token, requests và tối ưu ngân sách."
+        canonicalPath="/admin/ai-cost"
+      />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm">
         <div>

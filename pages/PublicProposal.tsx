@@ -5,6 +5,7 @@ import { Logo } from '../components/Logo';
 import { useTenant } from '../services/tenantContext';
 import { formatSmartPrice } from '../utils/textUtils';
 import { NO_IMAGE_URL } from '../utils/constants';
+import { SeoHead } from '../components/SeoHead';
 interface PublicProposalProps {
     token: string;
 }
@@ -66,7 +67,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
     }, [proposal]);
     const heroImage = imgError ? NO_IMAGE_URL : (listingImages[0] || NO_IMAGE_URL);
     if (loading) return (
-        <div className="h-screen flex items-center justify-center text-slate-400 font-mono animate-pulse">
+                <div className="h-screen flex items-center justify-center text-slate-400 font-mono animate-pulse">
             {t('common.loading')}
         </div>
     );
@@ -91,6 +92,8 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
     const listingDirection: string = proposal.listingAttributes?.direction || '';
     return (
         <div className="fixed inset-0 h-[100dvh] w-full bg-sgs-bg font-sans overflow-y-auto no-scrollbar">
+          <SeoHead title="Đề Xuất Công Khai | SGS LAND" description="Xem chi tiết đề xuất bất động sản và báo giá từ SGS LAND." canonicalPath="/proposals/public" />
+
             {/* Sticky Header */}
             <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100">
                 <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { billingApi, CheckoutSessionDTO } from '../services/api/billingApi';
+import { SeoHead } from '../components/SeoHead';
 const ICONS = {
     LOCK: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +117,7 @@ export const Checkout: React.FC = () => {
     };
     if (loading) {
         return (
-            <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">
+                        <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">
                 Đang tải phiên thanh toán…
             </div>
         );
@@ -143,6 +144,8 @@ export const Checkout: React.FC = () => {
     const isCancelled = session.status === 'CANCELLED';
     return (
         <div className="p-4 sm:p-6 pb-20 animate-enter">
+          <SeoHead title="Thanh Toán | SGS LAND" description="Hoàn tất thanh toán và đặt mua bất động sản trên SGS LAND." canonicalPath="/checkout" />
+
             <div className="max-w-3xl mx-auto">
                 <button
                     onClick={() => navigateTo(ROUTES.BILLING)}

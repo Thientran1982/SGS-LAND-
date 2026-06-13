@@ -19,6 +19,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { floorPlanApi, FloorPlanDetail, FloorPlanListingDetail } from '../services/api/floorPlanApi';
+import DOMPurify from 'dompurify';
 export interface FloorPlanRendererProps {
   projectId: string;
   planId: string;
@@ -109,7 +110,7 @@ export const FloorPlanRenderer: React.FC<FloorPlanRendererProps> = ({
       .then(([d, svg]) => {
         if (aborted) return;
         setDetail(d);
-        setSvgMarkup(svg);
+        setSvgMarkup(DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } }));
       })
       .catch((e) => {
         if (aborted) return;

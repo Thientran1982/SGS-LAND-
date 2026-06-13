@@ -129,7 +129,7 @@ export const CrmLanding: React.FC = () => {
                         </div>
                         <div className="ml-4 w-64 h-6 bg-[var(--glass-surface-hover)] rounded-lg"></div>
                     </div>
-                    <img src={SCREENSHOT_URL} alt="Dashboard UI" className="w-full mt-12 object-cover opacity-90 transition-opacity group-hover:opacity-100" />
+                    <img src={SCREENSHOT_URL} alt="Dashboard UI" className="w-full mt-12 object-cover opacity-90 transition-opacity group-hover:opacity-100"  loading="lazy" />
                 </div>
             </section>
             {/* Features Grid */}

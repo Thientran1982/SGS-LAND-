@@ -6,6 +6,7 @@ import {
   ChevronRight, BarChart3, Landmark, Clock, Heart, Building2,
   Sun, Moon, Globe, User, Menu, X,
 } from "lucide-react";
+import { SeoHead } from '../components/SeoHead';
 // ═══════════════════════════════════════════════════════════════
 //  TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -1532,6 +1533,12 @@ function Landing({ featuredListings, stats }: Props) {
   };
   return (
     <div className="flex flex-col overflow-x-hidden">
+      <SeoHead
+        title="SGS LAND - Nền Tảng BĐS AI Hàng Đầu TP.HCM"
+        description="SGS LAND: nền tảng bất động sản AI TP.HCM. Mua bán, cho thuê, định giá thông minh và quản lý BĐS toàn diện."
+        canonicalPath="/"
+      />
+
       {!isCrm && <PublicHeader />}
       <HeroSection   onSearch={handleSearch} lang={lang} isCrm={isCrm} />
       <StatsBar      lang={lang} />

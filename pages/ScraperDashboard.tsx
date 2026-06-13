@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { SeoHead } from '../components/SeoHead';
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Tab = 'market' | 'projects' | 'leads';
 // -- Market tab
@@ -1308,6 +1309,12 @@ export default function ScraperDashboard() {
   ];
   return (
     <div className="flex flex-col h-full overflow-auto bg-[var(--bg-base)]">
+      <SeoHead
+        title="Dashboard Thu Thập Dữ Liệu | SGS LAND"
+        description="Theo dõi và quản lý công cụ thu thập dữ liệu thị trường bất động sản TP.HCM trên SGS LAND."
+        canonicalPath="/scraper-dashboard"
+      />
+
       {/* Header */}
       <div className="flex-shrink-0 px-6 pt-6 pb-0">
         <div className="flex items-center gap-3 mb-5">

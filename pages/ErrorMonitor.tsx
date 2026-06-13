@@ -4,6 +4,7 @@ import {
   AlertCircle, Info, Globe, Server, Zap, Clock, ChevronDown, ChevronUp,
   X, Check, ShieldAlert, CheckCircle2
 } from 'lucide-react';
+import { SeoHead } from '../components/SeoHead';
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ErrorLogEntry {
   id: number;
@@ -245,6 +246,12 @@ export default function ErrorMonitor() {
   const unresolved = stats?.unresolved ?? 0;
   return (
     <div className="min-h-full bg-[var(--bg-app)] text-[var(--text-primary)] p-4 md:p-6 space-y-5">
+      <SeoHead
+        title="Giám Sát Hệ Thống | SGS LAND"
+        description="Theo dõi và xử lý lỗi hệ thống bất động sản SGS LAND: logs, cảnh báo và trạng thái vận hành."
+        canonicalPath="/error-monitor"
+      />
+
       {/* ── Header ───────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-3">

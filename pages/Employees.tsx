@@ -3,6 +3,7 @@ import {
   Loader2, AlertTriangle, UserCheck, Users, RefreshCw, ChevronUp, ChevronDown, AlertCircle,
 } from 'lucide-react';
 import { api } from '../services/api';
+import { SeoHead } from '../components/SeoHead';
 interface EmployeeSummary {
   user_id: string;
   name: string;
@@ -108,6 +109,12 @@ export function Employees() {
   );
   return (
     <div className="h-full flex flex-col overflow-hidden animate-enter">
+      <SeoHead
+        title="Quản Lý Nhân Viên | SGS LAND"
+        description="Quản lý đội ngũ nhân viên bất động sản: phân công, hiệu suất, KPI và cơ cấu tổ chức trên SGS LAND."
+        canonicalPath="/employees"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[var(--glass-border)] flex-shrink-0">
         <div className="flex items-center gap-2">

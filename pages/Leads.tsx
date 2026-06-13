@@ -10,6 +10,7 @@ import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { aiService } from '../services/aiService';
+import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 //  CONSTANTS & STYLES
 // -----------------------------------------------------------------------------
@@ -1010,6 +1011,7 @@ export const Leads: React.FC = () => {
     const canDelete = currentUser && ['SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD'].includes(currentUser.role);
     return (
         <>
+          <SeoHead title="Quản Lý Khách Hàng Tiềm Năng | SGS LAND" description="Theo dõi và quản lý khách hàng tiềm năng, phân tích pipeline bán hàng bất động sản SGS LAND." canonicalPath="/leads" />
         <div className="h-full flex flex-col relative">
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">

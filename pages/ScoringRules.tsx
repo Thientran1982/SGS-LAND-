@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { ScoringConfig } from '../types';
 import { useTranslation } from '../services/i18n';
+import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 // 1. CONSTANTS & CONFIG
 // -----------------------------------------------------------------------------
@@ -26,7 +27,7 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
     // Calculate percentage for background gradient
     const percent = (value / max) * 100;    
     return (
-        <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-all hover:shadow-md group">
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-all hover:shadow-md group">
             <div className="flex justify-between mb-4 items-center">
                 <label className="font-bold text-[var(--text-primary)] text-sm group-hover:text-sgs-primary transition-colors">{label}</label>
                 <span className="font-mono font-bold text-sgs-primary bg-sgs-champagne px-3 py-1 rounded-lg text-xs border border-sgs-border min-w-[60px] text-center">
@@ -156,7 +157,9 @@ export const ScoringRules: React.FC = () => {
     );
     return (
         <>
+          <SeoHead title="Quy Tắc Chấm Điểm | SGS LAND" description="Cấu hình quy tắc chấm điểm và xếp hạng khách hàng tiềm năng." canonicalPath="/scoring-rules" />
         <div className="p-4 sm:p-6 space-y-6 pb-20 relative animate-enter">
+
 
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>

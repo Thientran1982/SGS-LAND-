@@ -74,7 +74,7 @@ function RoleChip({ role }: { role: string }) {
 }
 function UserAvatar({ name, avatar }: { name: string; avatar?: string }) {
   if (avatar) {
-    return <img src={avatar} alt={name} className="w-8 h-8 rounded-full object-cover shrink-0" />;
+    return <img src={avatar} alt={name} className="w-8 h-8 rounded-full object-cover shrink-0"  loading="lazy" />;
   }
   const initials = name?.split(' ').slice(-1)[0]?.[0]?.toUpperCase() || '?';
   return (

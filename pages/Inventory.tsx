@@ -12,6 +12,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { smartMatch, formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
 import { ROUTES } from '../config/routes';
 import MapView from '../components/MapView';
+import { SeoHead } from '../components/SeoHead';
 // -----------------------------------------------------------------------------
 //  CONSTANTS & CONFIG
 // -----------------------------------------------------------------------------
@@ -708,6 +709,7 @@ export const Inventory: React.FC = () => {
     const transactionOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_transactions') }, ...Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) }))], [t]);
     return (
         <>
+          <SeoHead title="Quản Lý Kho Hàng | SGS LAND" description="Quản lý danh sách bất động sản, theo dõi tình trạng và cập nhật thông tin tài sản." canonicalPath="/inventory" />
         <div className="h-full flex flex-col relative">
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 sm:px-5 sm:py-3 transition-all flex-none">

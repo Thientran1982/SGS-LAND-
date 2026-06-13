@@ -7,6 +7,7 @@ import { ListingCard } from '../components/ListingCard';
 import { Dropdown } from '../components/Dropdown';
 import { ROUTES } from '../config/routes';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { SeoHead } from '../components/SeoHead';
 const CONFIG = { PAGE_SIZE: 12 };
 const SORT_KEYS = [
     { value: 'date_desc',  key: 'favorites.sort_date_desc' },
@@ -96,8 +97,10 @@ export const Favorites: React.FC = () => {
         SORT_KEYS.map(o => ({ value: o.value, label: t(o.key) })),
     [t]);
     return (
-        <>
+                <>
+                  <SeoHead title="Yêu Thích | SGS LAND" description="Danh sách bất động sản yêu thích và đã lưu trên SGS LAND." canonicalPath="/favorites" />
         <div className="p-4 sm:p-6 h-full flex flex-col pb-20 animate-enter relative">
+
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6">
                 {/* Row 1: count label + sort dropdown */}
                 <div className="flex items-center justify-between gap-2">

@@ -15,6 +15,7 @@ import { DashboardSkeleton } from '../components/Skeleton';
 import { GlassBento as BentoCard } from '../components/GlassBento';
 import { Dropdown } from '../components/Dropdown';
 import { useSocket, socket } from '../services/websocket';
+import { SeoHead } from '../components/SeoHead';
 // --- ICONS ---
 const ICONS = {
     TREND_UP: <svg className="w-3 h-3 text-sgs-verified dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
@@ -533,6 +534,7 @@ export const Dashboard: React.FC = () => {
     const scopeLabel = isSalesScope ? t('dash.scope_personal') : t('dash.scope_company');
     return (
     <>
+      <SeoHead title="Dashboard | SGS LAND" description="Bảng điều khiển tổng quan SGS LAND - quản lý bất động sản, phân tích thị trường và theo dõi hiệu suất kinh doanh." canonicalPath="/dashboard" />
         <div className="space-y-6 p-4 sm:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">

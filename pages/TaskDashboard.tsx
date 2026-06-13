@@ -5,6 +5,7 @@ import { TaskDashboardStats, Department } from '../types';
 import { ROUTES } from '../config/routes';
 import { STATUS_LABELS, PRIORITY_LABELS, PRIORITY_DOT } from '../utils/taskUtils';
 import { SelectDropdown } from '../components/task/SelectDropdown';
+import { SeoHead } from '../components/SeoHead';
 interface Props {
   onNavigate?: (route: string) => void;
 }
@@ -106,6 +107,12 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
     ? Math.round((overview.done / overview.total_tasks) * 100) : 0;
   return (
     <div className="h-full overflow-y-auto p-4 md:p-6 space-y-6 animate-enter no-scrollbar">
+      <SeoHead
+        title="Dashboard Công Việc | SGS LAND"
+        description="Tổng quan công việc đội ngũ bất động sản: tiến độ, ưu tiên, deadline và phân công nhiệm vụ trên SGS LAND."
+        canonicalPath="/task-dashboard"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

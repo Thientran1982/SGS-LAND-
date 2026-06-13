@@ -5,6 +5,7 @@ import { TaskDashboardStats, Department } from '../types';
 import { CATEGORY_LABELS } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
 import { SelectDropdown } from '../components/task/SelectDropdown';
+import { SeoHead } from '../components/SeoHead';
 interface ProjectReport {
   id: string;
   name: string;
@@ -128,6 +129,12 @@ export function TaskReports() {
   const completionRate = totalTasks > 0 ? ((stats!.overview.done / totalTasks) * 100).toFixed(1) : '0';
   return (
     <div className="h-full overflow-y-auto p-4 md:p-6 space-y-6 animate-enter no-scrollbar">
+      <SeoHead
+        title="Báo Cáo Công Việc | SGS LAND"
+        description="Phân tích hiệu suất công việc đội ngũ bất động sản: hoàn thành, trễ hạn và năng suất nhân viên SGS LAND."
+        canonicalPath="/task-reports"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

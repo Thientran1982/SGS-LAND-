@@ -11,6 +11,7 @@ import { ROUTES } from '../config/routes';
 import { smartMatch, formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
 import MapView from '../components/MapView';
 import { motion } from 'motion/react';
+import { SeoHead } from '../components/SeoHead';
 // --- ICONS ---
 const ICONS = {
     SEARCH: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
@@ -85,7 +86,7 @@ const CursorPaginationControl = memo(({ totalItems, hasPrev, hasNext, onPrev, on
 }) => {
     const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
     return (
-        <div className="flex items-center justify-between px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-4">
+                <div className="flex items-center justify-between px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-4">
             <span className="text-xs font-bold text-[var(--text-primary)]">
                 {totalItems.toLocaleString('vi-VN')} {t('pagination.results')}
             </span>
@@ -329,6 +330,8 @@ export const ProductSearch: React.FC = () => {
     }, [filteredListings]);
     return (
         <div className="h-[100dvh] flex flex-col bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] overflow-hidden relative">
+          <SeoHead title="Tìm Kiếm Sản Phẩm | SGS LAND" description="Tìm kiếm và lọc bất động sản theo khu vực, giá, diện tích trên SGS LAND." canonicalPath="/product-search" />
+
             {toast && (
                 <div className="fixed top-20 right-6 z-[100] bg-sgs-primary-deep text-white px-4 py-2 rounded-lg shadow-lg text-sm font-bold animate-enter flex items-center gap-2">
                     <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
