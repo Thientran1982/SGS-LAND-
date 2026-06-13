@@ -35,6 +35,60 @@ import {
 // dẫn đến response bị cắt giữa chừng. Với chatbot BĐS, thinking không cần thiết.
 const THINKING_OFF = { thinkingBudget: 0 } as const;
 
+// I1: Standardised Thinking Mode naming
+// THINKING_OFF     = standard  (budget=0):   Fast responses, no chain-of-thought — used by ROUTER, WRITER, simple agents
+// THINKING_STANDARD= standard  (budget=2048): Light reasoning — INVENTORY, FINANCE, SALES, MARKETING basic queries
+// THINKING_EXTENDED= extended  (budget=8192): Deep analysis — LEGAL, CONTRACT, LEAD_ANALYST, ORCHESTRATOR
+// THINKING_MAXIMUM = maximum   (budget=24576):Full reasoning — VALUATION_AGENT (AVM calculations), ORCHESTRATOR complex
+const THINKING_STANDARD  = { thinkingBudget: 2048  } as const;
+const THINKING_EXTENDED  = { thinkingBudget: 8192  } as const;
+const THINKING_MAXIMUM   = { thinkingBudget: 24576 } as const;
+
+// I4: Gemini Fallback Chain — primary → flash → legacy
+// Handles model timeouts and overload errors gracefully
+const FALLBACK_CHAIN = [
+  'gemini-2.5-pro',    // primary — highest quality
+  'gemini-2.5-flash',  // fallback-1 — fast & cost-efficient
+  'gemini-2.0-flash',  // fallback-2 — stable legacy
+] as const;
+
+/**
+ * I4: generateWithFallback
+ * Attempts generation with the configured model; on timeout/overload,
+ * retries with progressively cheaper/faster models in FALLBACK_CHAIN.
+ */
+async function generateWithFallback(
+  requestConfig: Parameters<ReturnType<typeof getAiClient>['models']['generateContent']>[0]
+): Promise<Awaited<ReturnType<ReturnType<typeof getAiClient>['models']['generateContent']>>> {
+  const primaryModel = requestConfig.model as string;
+  // Build attempt chain: start with primary, then fallback
+  const chain = [primaryModel, ...FALLBACK_CHAIN.filter(m => m !== primaryModel)];
+
+  let lastErr: unknown;
+  for (const model of chain) {
+    try {
+      const result = await generateWithFallback({
+        ...requestConfig,
+        model,
+      });
+      if (model !== primaryModel) {
+        console.log(`[I4-Fallback] Primary ${primaryModel} failed, used fallback: ${model}`);
+      }
+      return result;
+    } catch (err: any) {
+      const isRetriable = err?.status === 503 || err?.status === 429 ||
+        err?.code === 'DEADLINE_EXCEEDED' || /timeout|overload|unavailable/i.test(err?.message || '');
+      if (isRetriable) {
+        lastErr = err;
+        console.warn(`[I4-Fallback] Model ${model} retriable error (${err?.status || err?.code}), trying next...`);
+        continue;
+      }
+      throw err; // non-retriable error — bubble up immediately
+    }
+  }
+  throw lastErr; // all models exhausted
+}
+
 const GENAI_CONFIG = {
     MODELS: {
         ROUTER: 'gemini-2.5-flash',
@@ -158,7 +212,7 @@ async function fetchCurrentBankRates(): Promise<string> {
     try {
         const now = new Date();
         const monthYear = `tháng ${now.getMonth() + 1}/${now.getFullYear()}`;
-        const searchRes = await getAiClient().models.generateContent({
+        const searchRes = await generateWithFallback({
             model: 'gemini-2.0-flash',   // Flash for fast grounding — no deep reasoning needed
             contents: `Lãi suất vay mua nhà ${monthYear} tại Việt Nam. Cho tôi bảng lãi suất ưu đãi và thả nổi hiện tại của: Vietcombank, BIDV, Agribank, VietinBank, MB Bank, Techcombank, VIB, Sacombank, ACB, TPBank, VPBank. Định dạng: [NH]: ưu đãi X%/năm (X tháng đầu), thả nổi ~Y%/năm. Thêm nhận xét: ngân hàng nào đang có gói tốt nhất cho người mua nhà lần đầu?`,
             config: {
@@ -1169,7 +1223,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
 
             const routerInstruction = await getRouterInstruction(state.tenantId);
             const _routerStart = Date.now();
-            const routerRes = await getAiClient().models.generateContent({
+            const routerRes = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.ROUTER,
                 contents: routerPrompt,
                 config: {
@@ -1430,10 +1484,10 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
 
             const inventorySystemInstruction = await getInventoryInstruction(state.tenantId);
             const _invStart = Date.now();
-            const inventoryAI = await getAiClient().models.generateContent({
+            const inventoryAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: inventoryAnalysisPrompt + invRlhf.fewShotSection + invRlhf.negativeRulesSection + invObsInsights,
-                config: { systemInstruction: inventorySystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
+                config: { systemInstruction: inventorySystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard reasoning for property search */ }
             });
             const inventoryAnalysisText = inventoryAI.text || '';
             trackAiUsage('CHAT_INVENTORY_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _invStart, inventoryAnalysisPrompt, inventoryAnalysisText, { tenantId: state.tenantId });
@@ -1560,10 +1614,10 @@ PHÂN TÍCH TÀI CHÍNH — KỊCH BẢN: ${loanScenario} (bullet point, max 180
 
             const financeSystemInstruction = await getFinanceInstruction(state.tenantId);
             const _finStart = Date.now();
-            const financeAI = await getAiClient().models.generateContent({
+            const financeAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: financeAdvisoryPrompt + finRlhf.fewShotSection + finRlhf.negativeRulesSection + finObsInsights,
-                config: { systemInstruction: financeSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
+                config: { systemInstruction: financeSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard reasoning for finance calcs */ }
             });
             const financeAdvisoryText = financeAI.text || '';
             trackAiUsage('CHAT_FINANCE_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _finStart, financeAdvisoryPrompt, financeAdvisoryText, { tenantId: state.tenantId });
@@ -1634,10 +1688,10 @@ Viết tiếng Việt, bullet point, tối đa 180 từ. Tuyệt đối không t
 
             const legalSystemInstruction = await getLegalInstruction(state.tenantId);
             const _legalStart = Date.now();
-            const legalAI = await getAiClient().models.generateContent({
+            const legalAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: legalAnalysisPrompt + legalRlhf.fewShotSection + legalRlhf.negativeRulesSection + legalObsInsights,
-                config: { systemInstruction: legalSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
+                config: { systemInstruction: legalSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_EXTENDED /* I1: legal analysis needs deep reasoning */ }
             });
             const legalAnalysisText = legalAI.text || '';
             trackAiUsage('CHAT_LEGAL_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _legalStart, legalAnalysisPrompt, legalAnalysisText, { tenantId: state.tenantId });
@@ -1739,10 +1793,10 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 150 từ. Đây là 
 
             const salesSystemInstruction = await getSalesInstruction(state.tenantId);
             const _salesStart = Date.now();
-            const bookingAI = await getAiClient().models.generateContent({
+            const bookingAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: bookingPersonalizerPrompt + salesRlhf.fewShotSection + salesRlhf.negativeRulesSection + salesObsInsights,
-                config: { systemInstruction: salesSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
+                config: { systemInstruction: salesSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard reasoning for sales queries */ }
             });
             const bookingBriefText = bookingAI.text || '';
             trackAiUsage('CHAT_SALES_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _salesStart, bookingPersonalizerPrompt, bookingBriefText, { tenantId: state.tenantId });
@@ -1810,10 +1864,10 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 160 từ.`;
 
             const marketingSystemInstruction = await getMarketingInstruction(state.tenantId);
             const _mktStart = Date.now();
-            const marketingAI = await getAiClient().models.generateContent({
+            const marketingAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: marketingAnalysisPrompt + mktRlhf.fewShotSection + mktRlhf.negativeRulesSection + mktObsInsights,
-                config: { systemInstruction: marketingSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
+                config: { systemInstruction: marketingSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard for marketing content */ }
             });
             const marketingAnalysisText = marketingAI.text || '';
             trackAiUsage('CHAT_MARKETING_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _mktStart, marketingAnalysisPrompt, marketingAnalysisText, { tenantId: state.tenantId });
@@ -1883,10 +1937,10 @@ PHÂN TÍCH HỢP ĐỒNG ${contractType} — KỊCH BẢN ${contractScenario} (
 
             const contractSystemInstruction = await getContractInstruction(state.tenantId);
             const _contractStart = Date.now();
-            const contractAI = await getAiClient().models.generateContent({
+            const contractAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: contractAnalysisPrompt + contractRlhf.fewShotSection + contractRlhf.negativeRulesSection + contractObsInsights,
-                config: { systemInstruction: contractSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_OFF }
+                config: { systemInstruction: contractSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_EXTENDED /* I1: contract drafting needs deep reasoning */ }
             });
             const contractAnalysisText = contractAI.text || '';
             trackAiUsage('CHAT_CONTRACT_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _contractStart, contractAnalysisPrompt, contractAnalysisText, { tenantId: state.tenantId });
@@ -1950,13 +2004,13 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
 
             const leadAnalystSystemInstruction = await getLeadAnalystInstruction(state.tenantId);
             const _analysisStart = Date.now();
-            const analysisRes = await getAiClient().models.generateContent({
+            const analysisRes = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: enrichedAnalysisPrompt,
                 config: {
                     systemInstruction: leadAnalystSystemInstruction,
                     maxOutputTokens: 350,
-                    thinkingConfig: THINKING_OFF,
+                    thinkingConfig: THINKING_EXTENDED /* I1: lead analysis needs deep reasoning */,
                 }
             });
 
@@ -2581,7 +2635,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
             const writerModel = await getGovernanceModel(state.tenantId);
             const writerInstruction = await getAgentSystemInstruction(state.tenantId);
             const _writerStart = Date.now();
-            const writerRes = await getAiClient().models.generateContent({
+            const writerRes = await generateWithFallback({
                 model: writerModel,
                 contents: writerPrompt + rlhfPromptAddition,
                 config: {
@@ -3150,7 +3204,7 @@ reasoning phải bằng ${lang === 'en' ? 'English' : 'Tiếng Việt'}, cụ th
 
             const scoreModel = await getGovernanceModel(tenantId);
             const _scoreStart = Date.now();
-            const response = await getAiClient().models.generateContent({
+            const response = await generateWithFallback({
                 model: scoreModel,
                 contents: prompt,
                 config: {
@@ -3313,7 +3367,7 @@ Viết phân tích chân dung khách hàng theo 4 điểm sau. Mỗi điểm 2-3
 4. HÀNH ĐỘNG TIẾP THEO: 1-2 bước cụ thể và khả thi nhất cho sale thực hiện trong 24-48h tới để đẩy deal tiến lên.${previousMemories.length > 0 ? '\n5. TIẾN TRIỂN: So với lần phân tích trước, tình hình đã thay đổi ra sao? Deal đang tốt lên hay xấu đi?' : ''}`;
 
                 const _sumStart = Date.now();
-                const response = await getAiClient().models.generateContent({
+                const response = await generateWithFallback({
                     model: summarizeModel,
                     contents: prompt,
                     config: { systemInstruction }
@@ -3359,7 +3413,7 @@ Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise
 4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.${previousMemories.length > 0 ? '\n5. PROGRESS: Compared to previous analysis, how has the situation changed? Is the deal progressing or regressing?' : ''}`;
 
                 const _sumStartEn = Date.now();
-                const response = await getAiClient().models.generateContent({
+                const response = await generateWithFallback({
                     model: summarizeModel,
                     contents: prompt,
                     config: { systemInstruction }
@@ -3499,13 +3553,13 @@ Viết TRỰC TIẾP nội dung tin nhắn — KHÔNG giải thích, KHÔNG brie
 
         const followupInstruction = await getFollowupInstruction(tenantId);
         const _aiStart = Date.now();
-        const response = await getAiClient().models.generateContent({
+        const response = await generateWithFallback({
             model: GENAI_CONFIG.MODELS.EXTRACTOR,
             contents: followupPrompt,
             config: {
                 systemInstruction: followupInstruction,
                 maxOutputTokens: 600,
-                thinkingConfig: THINKING_OFF,
+                thinkingConfig: THINKING_STANDARD /* I1: standard for followup messages */,
             },
         });
 
@@ -4022,7 +4076,7 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
                 while (true) {
                     try {
                         const _extractStart = Date.now();
-                        const resp = await getAiClient().models.generateContent({
+                        const resp = await generateWithFallback({
                             model: extractionModel,
                             contents: extractPrompt,
                             config: {
@@ -4233,7 +4287,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
 - Nếu không có dữ liệu tại "${address}", lấy dữ liệu cùng quận/phường tương đương.`;
 
                     const _verifyStart = Date.now();
-                    const verifyRes = await getAiClient().models.generateContent({
+                    const verifyRes = await generateWithFallback({
                         model: GENAI_CONFIG.MODELS.WRITER,
                         contents: verifyPrompt,
                         config: {
@@ -4434,3 +4488,28 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
 }
 
 export const aiService = new AiEngine();
+
+// ─── N3: Streaming Response Helper ─────────────────────────────────────────
+/**
+ * N3: streamAgentResponse
+ * Streams Gemini response for long-form agents (Contract, Legal, etc.)
+ * Returns an async iterable of text chunks.
+ * @param systemInstruction - Agent system prompt
+ * @param userMessage - User's question/request
+ * @param model - Gemini model to use (defaults to gemini-2.5-flash for streaming)
+ */
+export async function* streamAgentResponse(
+  systemInstruction: string,
+  userMessage: string,
+  model: string = 'gemini-2.5-flash'
+): AsyncGenerator<string, void, unknown> {
+  const ai = getAiClient();
+  const responseStream = await ai.models.generateContentStream({
+    model,
+    contents: userMessage,
+    config: { systemInstruction, thinkingConfig: THINKING_OFF },
+  });
+  for await (const chunk of responseStream) {
+    if (chunk.text) yield chunk.text;
+  }
+}

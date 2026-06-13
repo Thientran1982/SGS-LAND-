@@ -120,7 +120,7 @@ async function startServer() {
     threshold: 1024,  // only compress responses > 1KB
     filter: (req, res) => {
       // Don't compress SSE streams (they handle their own framing)
-      if (req.path.includes('/api/ai-chat-stream') || req.path.includes('/api/events')) return false;
+      if (req.path.includes('/api/ai-chat-stream') || req.path.includes('/api/events') || req.path.includes('/api/agents/stream')) return false;
       return compression.filter(req, res);
     },
   }));

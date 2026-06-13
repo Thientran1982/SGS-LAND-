@@ -6,6 +6,7 @@
  */
 
 import { BaseRepository } from './baseRepository';
+import { pool } from '../db';
 import { logger } from '../middleware/logger';
 
 const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
@@ -277,7 +278,7 @@ class AgentRepository extends BaseRepository {
    * Also trims old memories to keep only the last MAX_MEMORIES per lead.
    */
   async saveMemory(tenantId: string, agentId: string, leadId: string, summary: string, signals: Record<string, any> = {}): Promise<AgentMemory> {
-    const MAX_MEMORIES = 10;
+    const MAX_MEMORIES = 25; // I2: Increased from 10 — supports VIP leads with high interaction volume
 
     return this.withTenant(tenantId, async (client) => {
       const res = await client.query(
@@ -378,7 +379,7 @@ class AgentRepository extends BaseRepository {
     summary: string,
     signals: ValuationMemorySignals | Record<string, any> = {}
   ): Promise<AgentMemory> {
-    const MAX_MEMORIES = 10;
+    const MAX_MEMORIES = 25; // I2: Increased from 10 — supports VIP leads with high interaction volume
 
     return this.withTenant(tenantId, async (client) => {
       const res = await client.query(
@@ -614,6 +615,107 @@ class AgentRepository extends BaseRepository {
     });
   }
 
+  /**
+   * N1: Tenant-level prompt customization
+   * Merges tenant-specific overrides into a base system prompt.
+   * Sections are delimited by === SECTION_NAME === markers in the prompt.
+   * Tenant can override: brand_name, focus_area, language, custom_instructions
+   */
+  async mergeTenantPrompt(
+    basePrompt: string,
+    tenantId: string
+  ): Promise<string> {
+    try {
+      const result = await pool.query<{
+        brand_name?: string;
+        focus_area?: string;
+        language?: string;
+        custom_instructions?: string;
+      }>(
+        `SELECT brand_name, focus_area, language, custom_instructions
+         FROM tenant_prompt_overrides
+         WHERE tenant_id = $1
+         LIMIT 1`,
+        [tenantId]
+      );
+      if (result.rows.length === 0) return basePrompt;
+      const override = result.rows[0];
+      let merged = basePrompt;
+      if (override.brand_name) {
+        merged = merged.replace(/SGS LAND|SGSLand/g, override.brand_name);
+      }
+      if (override.focus_area) {
+        merged = merged + `\n\n=== TENANT FOCUS ===\n${override.focus_area}`;
+      }
+      if (override.custom_instructions) {
+        merged = merged + `\n\n=== CUSTOM INSTRUCTIONS ===\n${override.custom_instructions}`;
+      }
+      return merged;
+    } catch {
+      return basePrompt; // graceful fallback — never break on prompt merge failure
+    }
+  }
+
+  /**
+   * N2: Track prompt performance per version
+   */
+  async logPromptPerformance(params: {
+    tenantId: string;
+    agentId: string;
+    promptVersion: string;
+    sessionId: string;
+    confidenceScore?: number;
+    wasEscalated?: boolean;
+    responseTimeMs?: number;
+    tokensUsed?: number;
+  }): Promise<void> {
+    try {
+      await pool.query(
+        `INSERT INTO prompt_performance_log
+          (tenant_id, agent_id, prompt_version, session_id, confidence_score,
+           was_escalated, response_time_ms, tokens_used, logged_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
+         ON CONFLICT DO NOTHING`,
+        [
+          params.tenantId, params.agentId, params.promptVersion,
+          params.sessionId, params.confidenceScore ?? null,
+          params.wasEscalated ?? false, params.responseTimeMs ?? null,
+          params.tokensUsed ?? null,
+        ]
+      );
+    } catch {
+      // fire-and-forget — never throw
+    }
+  }
+
+  /**
+   * N2: Get prompt performance metrics by agent + version
+   */
+  async getPromptPerformanceMetrics(tenantId: string, agentId?: string): Promise<{
+    agentId: string;
+    promptVersion: string;
+    sessionCount: number;
+    avgConfidence: number | null;
+    escalationRate: number;
+    avgResponseTimeMs: number | null;
+  }[]> {
+    const result = await pool.query(
+      `SELECT
+         agent_id AS "agentId",
+         prompt_version AS "promptVersion",
+         COUNT(*) AS "sessionCount",
+         ROUND(AVG(confidence_score)::numeric, 3) AS "avgConfidence",
+         ROUND(AVG(CASE WHEN was_escalated THEN 1.0 ELSE 0.0 END)::numeric, 3) AS "escalationRate",
+         ROUND(AVG(response_time_ms)::numeric, 0) AS "avgResponseTimeMs"
+       FROM prompt_performance_log
+       WHERE tenant_id = $1
+         ${agentId ? 'AND agent_id = $2' : ''}
+       GROUP BY agent_id, prompt_version
+       ORDER BY agent_id, prompt_version DESC`,
+      agentId ? [tenantId, agentId] : [tenantId]
+    );
+    return result.rows;
+  }
 }
 
 export const agentRepository = new AgentRepository();

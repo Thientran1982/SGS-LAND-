@@ -6,6 +6,7 @@
 
 import { Router, Request, Response } from 'express';
 import { agentRepository } from '../repositories/agentRepository';
+import { streamAgentResponse } from '../ai';
 
 const ADMIN_ROLES = ['ADMIN', 'TEAM_LEAD'];
 const PARTNER_ROLES = ['PARTNER', 'PARTNER_AGENT'];
@@ -183,5 +184,50 @@ export function createAgentRoutes(authenticateToken: any): Router {
     }
   });
 
-return router;
+  // N2: GET /api/agents/performance — prompt performance metrics dashboard
+  router.get('/performance', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền truy cập' });
+      const agentId = req.query.agentId as string | undefined;
+      const metrics = await agentRepository.getPromptPerformanceMetrics(user.tenantId, agentId);
+      res.json(metrics);
+    } catch (e) {
+      console.error('agentRoutes GET /performance error:', e);
+      res.status(500).json({ error: 'Failed to get performance metrics' });
+    }
+  });
+
+// N3: POST /api/agents/stream — SSE streaming for long-form agents (Contract, Legal)
+  router.post('/stream', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { systemPrompt, userMessage, model } = req.body as {
+        systemPrompt?: string;
+        userMessage: string;
+        model?: string;
+      };
+      if (!userMessage) return res.status(400).json({ error: 'userMessage is required' });
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      const sysPrompt = systemPrompt || 'You are a helpful Vietnamese real estate assistant.';
+      const streamModel = model || 'gemini-2.5-flash';
+      for await (const chunk of streamAgentResponse(sysPrompt, userMessage, streamModel)) {
+        res.write('data: ' + JSON.stringify({ text: chunk }) + '\n\n');
+      }
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (e) {
+      console.error('agentRoutes POST /stream error:', e);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Streaming failed' });
+      } else {
+        res.write('data: ' + JSON.stringify({ error: 'Stream interrupted' }) + '\n\n');
+        res.end();
+      }
+    }
+  });
+
+  return router;
 }
