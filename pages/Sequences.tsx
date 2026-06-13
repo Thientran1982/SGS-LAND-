@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, memo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { Sequence, LeadStage } from '../types';
@@ -665,8 +666,6 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, onDuplicate, onToggle,
 // MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const Sequences: React.FC = () => {
-    const [sequences, setSequences] = useState<Sequence[]>([]);
-    const [loading, setLoading] = useState(true);
     const [selectedSeq, setSelectedSeq] = useState<Sequence | null>(null);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
@@ -678,18 +677,22 @@ export const Sequences: React.FC = () => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     }, []);
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const data = await db.getSequences();
-            setSequences(data || []);
-        } catch (e) {
-            notify(t('common.error'), 'error');
-        } finally {
-            setLoading(false);
-        }
-    }, [t, notify]);
-    useEffect(() => { fetchData(); }, [fetchData]);
+    const queryClient = useQueryClient();
+    const [sequences, setSequences] = useState<Sequence[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { data: sequencesData, isLoading: sequencesLoading } = useQuery({
+      queryKey: ['sequences'],
+      queryFn: () => db.getSequences(),
+      staleTime: 60_000,
+    });
+    useEffect(() => {
+      if (sequencesData) {
+        setSequences(sequencesData || []);
+        setLoading(false);
+      } else {
+        setLoading(sequencesLoading);
+      }
+    }, [sequencesData, sequencesLoading]);
     const openTemplateGallery = useCallback(async () => {
         setShowTemplates(true);
         if (templates.length > 0) return;

@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { errorMonitorApi } from '../services/api/errorMonitorApi';
 import {
   Bug, RefreshCw, CheckCheck, Trash2, Filter, AlertTriangle,
   AlertCircle, Info, Globe, Server, Zap, Clock, ChevronDown, ChevronUp,
@@ -172,47 +174,40 @@ const STATUS_OPTIONS: DropdownOption[] = [
 ];
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ErrorMonitor() {
-  const [entries, setEntries]           = useState<ErrorLogEntry[]>([]);
-  const [stats, setStats]               = useState<ErrorStats | null>(null);
-  const [total, setTotal]               = useState(0);
   const [page, setPage]                 = useState(1);
-  const [loading, setLoading]           = useState(true);
-  const [fetchError, setFetchError]     = useState<string | null>(null);
   const [filterType, setFilterType]     = useState<string>('');
   const [filterSeverity, setFilterSeverity] = useState<string>('');
   const [filterResolved, setFilterResolved] = useState<string>('false');
   const [expandedId, setExpandedId]     = useState<number | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const PAGE_SIZE = 30;
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setFetchError(null);
-    try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+  const queryClient = useQueryClient();
+  const PAGE_SIZE_Q = PAGE_SIZE;
+  const { data: logsData, isLoading: loading, error: logsQueryError, refetch: refetchLogs } = useQuery<any>({
+    queryKey: ['errorLogs', page, filterType, filterSeverity, filterResolved],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE_Q) });
       if (filterType)     params.set('type',     filterType);
       if (filterSeverity) params.set('severity', filterSeverity);
       if (filterResolved) params.set('resolved', filterResolved);
-      const [listRes, statsRes] = await Promise.all([
-        fetch(`/api/error-logs?${params}`, { credentials: 'include' }),
-        fetch('/api/error-logs/stats',      { credentials: 'include' }),
-      ]);
-      if (!listRes.ok || !statsRes.ok) throw new Error('Không có quyền truy cập hoặc lỗi máy chủ');
-      const [listData, statsData] = await Promise.all([listRes.json(), statsRes.json()]);
-      setEntries(listData.items ?? []);
-      setTotal(listData.total ?? 0);
-      setStats(statsData);
-    } catch (e: any) {
-      setFetchError(e.message ?? 'Không thể tải danh sách lỗi');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, filterType, filterSeverity, filterResolved]);
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return errorMonitorApi.getLogs(Object.fromEntries(params));
+    },
+    staleTime: 30_000,
+  });
+  const { data: stats } = useQuery<any>({
+    queryKey: ['errorLogStats'],
+    queryFn: () => errorMonitorApi.getStats(),
+    staleTime: 30_000,
+  });
+  const entries: ErrorLogEntry[] = logsData?.items ?? [];
+  const total: number = logsData?.total ?? 0;
+  const fetchError = logsQueryError ? (logsQueryError as Error).message : null;
   const handleResolve = async (id: number) => {
     setActionLoading(true);
     try {
       await fetch(`/api/error-logs/${id}/resolve`, { method: 'PATCH', credentials: 'include' });
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['errorLogs'] });
+      queryClient.invalidateQueries({ queryKey: ['errorLogStats'] });
     } finally {
       setActionLoading(false);
     }
@@ -222,7 +217,8 @@ export default function ErrorMonitor() {
     setActionLoading(true);
     try {
       await fetch('/api/error-logs/resolve-all', { method: 'POST', credentials: 'include' });
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['errorLogs'] });
+      queryClient.invalidateQueries({ queryKey: ['errorLogStats'] });
     } finally {
       setActionLoading(false);
     }
@@ -232,7 +228,8 @@ export default function ErrorMonitor() {
     setActionLoading(true);
     try {
       await fetch('/api/error-logs/resolved', { method: 'DELETE', credentials: 'include' });
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['errorLogs'] });
+      queryClient.invalidateQueries({ queryKey: ['errorLogStats'] });
     } finally {
       setActionLoading(false);
     }
@@ -270,7 +267,7 @@ export default function ErrorMonitor() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchData}
+            onClick={() => refetchLogs()}
             disabled={loading}
             className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] hover:bg-[var(--glass-surface-hover)] transition-all text-[var(--text-secondary)]"
           >
@@ -359,9 +356,9 @@ export default function ErrorMonitor() {
           <div className="bg-[var(--bg-surface)] rounded-2xl p-4 border border-[var(--glass-border)]">
             <div className="text-sm font-semibold text-[var(--text-primary)] mb-3">Phân loại theo nguồn gốc</div>
             <div className="space-y-2.5">
-              {Object.entries(stats.byType).sort((a,b) => b[1]-a[1]).map(([k, v]) => {
+              {Object.entries(stats.byType).sort((a,b) => (b[1] as number)-(a[1] as number)).map(([k, v]) => {
                 const cfg = TYPE_CONFIG[k];
-                const pct = stats.total > 0 ? Math.round((v / stats.total) * 100) : 0;
+                const pct = stats.total > 0 ? Math.round(((v as number) / (stats.total as number)) * 100) : 0;
                 return (
                   <div key={k}>
                     <div className="flex items-center justify-between text-xs mb-1">
@@ -369,7 +366,7 @@ export default function ErrorMonitor() {
                         <span className={`w-2 h-2 rounded-full ${cfg?.dot ?? 'bg-slate-400'}`} />
                         {cfg?.label ?? k}
                       </span>
-                      <span className="text-[var(--text-secondary)] font-mono">{v.toLocaleString('vi-VN')} <span className="text-[var(--text-secondary)]/60">({pct}%)</span></span>
+                      <span className="text-[var(--text-secondary)] font-mono">{(v as number).toLocaleString('vi-VN')} <span className="text-[var(--text-secondary)]/60">({pct}%)</span></span>
                     </div>
                     <div className="h-1.5 bg-[var(--bg-app)] rounded-full overflow-hidden">
                       <div
@@ -389,7 +386,7 @@ export default function ErrorMonitor() {
               {(['critical', 'error', 'warning'] as const).map(sev => {
                 const v = stats.bySeverity[sev] ?? 0;
                 const cfg = SEVERITY_CONFIG[sev];
-                const pct = stats.total > 0 ? Math.round((v / stats.total) * 100) : 0;
+                const pct = stats.total > 0 ? Math.round(((v as number) / (stats.total as number)) * 100) : 0;
                 return (
                   <div key={sev}>
                     <div className="flex items-center justify-between text-xs mb-1">
@@ -397,7 +394,7 @@ export default function ErrorMonitor() {
                         <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
                         {cfg.label}
                       </span>
-                      <span className="text-[var(--text-secondary)] font-mono">{v.toLocaleString('vi-VN')} <span className="text-[var(--text-secondary)]/60">({pct}%)</span></span>
+                      <span className="text-[var(--text-secondary)] font-mono">{(v as number).toLocaleString('vi-VN')} <span className="text-[var(--text-secondary)]/60">({pct}%)</span></span>
                     </div>
                     <div className="h-1.5 bg-[var(--bg-app)] rounded-full overflow-hidden">
                       <div

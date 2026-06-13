@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { bankRatesApi } from '../services/api/bankRatesApi';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { db } from '../services/dbApi';
@@ -77,8 +79,6 @@ function getAuthHeaders() {
 export const BankRates: React.FC = () => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
-  const [rates, setRates] = useState<BankRate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingRate, setEditingRate] = useState<BankRate | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -91,22 +91,16 @@ export const BankRates: React.FC = () => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
   }, []);
+  const queryClient = useQueryClient();
+  const { data: ratesData, isLoading: loading } = useQuery<any>({
+    queryKey: ['bankRates'],
+    queryFn: () => bankRatesApi.getRates(),
+  });
+  const rates: BankRate[] = Array.isArray(ratesData?.rates) ? ratesData.rates : (Array.isArray(ratesData) ? ratesData : []);
   useEffect(() => {
     db.getCurrentUser().then(setUser);
-    fetchRates();
   }, []);
-  async function fetchRates() {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/public/bank-rates');
-      if (res.ok) {
-        const data = await res.json();
-        setRates(data.rates || []);
-      }
-    } catch { /* silent */ } finally {
-      setLoading(false);
-    }
-  }
+
   function validate() {
     const e: Record<string, string> = {};
     if (!form.bank_name.trim()) e.bank_name = t('bank_rates.err_bank');
@@ -144,7 +138,7 @@ export const BankRates: React.FC = () => {
       notify(t('bank_rates.success'), 'success');
       setForm(EMPTY_FORM);
       setShowForm(false);
-      fetchRates();
+      queryClient.invalidateQueries({ queryKey: ['bankRates'] });
     } catch (err: any) {
       notify(err.message || t('bank_rates.err_submit'), 'error');
     } finally {
@@ -174,7 +168,7 @@ export const BankRates: React.FC = () => {
       notify(t('bank_rates.success_edit'), 'success');
       setEditingRate(null);
       setForm(EMPTY_FORM);
-      fetchRates();
+      queryClient.invalidateQueries({ queryKey: ['bankRates'] });
     } catch (err: any) {
       notify(err.message || t('bank_rates.err_edit'), 'error');
     } finally {
@@ -194,7 +188,7 @@ export const BankRates: React.FC = () => {
       }
       notify(t('bank_rates.success_delete'), 'success');
       setConfirmDeleteId(null);
-      fetchRates();
+      queryClient.invalidateQueries({ queryKey: ['bankRates'] });
     } catch (err: any) {
       notify(err.message || t('bank_rates.err_delete'), 'error');
     } finally {
