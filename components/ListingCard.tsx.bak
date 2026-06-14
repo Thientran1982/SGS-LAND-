@@ -37,7 +37,7 @@ function toThumbnailUrl(src: string, width = 800): string {
     }
     return src;
 }
-const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction, eagerLoad }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType, eagerLoad?: boolean }) => {
+const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [imgError, setImgError] = useState(false);
     const hasImages = images && images.length > 0 && !imgError;
@@ -100,7 +100,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                         src={toThumbnailUrl(images![currentIndex])}
                         alt={title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        loading={eagerLoad ? "eager" : "lazy"}
+                        loading="lazy"
                         decoding="async"
                         onError={() => setImgError(true)}
                     />
@@ -197,9 +197,8 @@ interface ListingCardProps {
     onDuplicate?: (id: string) => void;
     onClick?: () => void;
     showActions?: boolean;
-  eagerLoad?: boolean;
 }
-export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, onEdit, onDelete, onCopy, onDuplicate, onClick, showActions, eagerLoad }: ListingCardProps) => {
+export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, onEdit, onDelete, onCopy, onDuplicate, onClick, showActions }: ListingCardProps) => {
     // 1. Guard Clause: Essential for crash prevention if data is malformed
     if (!item) return null;
     const viewCount = item.viewCount || 0;

@@ -1,0 +1,165 @@
+openapi: "3.1.0"
+info:
+  title: SGS LAND Real Estate API
+  description: |
+    API của SGS LAND - Nền tảng bất động sản AI tại TP.HCM, Đồng Nai, Bình Dương.
+    Cung cấp tìm kiếm listing, thông tin dự án, định giá AI và chỉ số thị trường.
+  version: "1.0.0"
+  contact:
+    email: info@sgsland.vn
+servers:
+  - url: https://sgsland.vn
+    description: SGS LAND Production Server
+paths:
+  /api/public/listings:
+    get:
+      operationId: searchListings
+      summary: Tìm kiếm bất động sản đang bán/cho thuê
+      description: Trả về danh sách listings lọc theo vị trí, giá, loại BDS, giao dịch.
+      parameters:
+        - name: location
+          in: query
+          description: Tên khu vực (vd\: Quận 7, Long Thành, Aqua City)
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Loại BDS (Apartment, Villa, House, Land, Shophouse)
+          schema:
+            type: string
+        - name: transaction
+          in: query
+          description: Giao dịch (SELL hoặc RENT)
+          schema:
+            type: string
+            enum: [SELL, RENT]
+        - name: minPrice
+          in: query
+          description: Giá tối thiểu (VNĐ)
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          description: Giá tối đa (VNĐ)
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: Số kết quả trả về (mặc định 20)
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Danh sách bất động sản phù hợp
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  \$ref: "#/components/schemas/Listing"
+  /api/public/listings/{slugId}:
+    get:
+      operationId: getListingDetail
+      summary: Chi tiết một bất động sản
+      parameters:
+        - name: slugId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Thông tin chi tiết BDS
+          content:
+            application/json:
+              schema:
+                \$ref: "#/components/schemas/Listing"
+  /api/public/projects:
+    get:
+      operationId: listProjects
+      summary: Danh sách các dự án bất động sản
+      responses:
+        "200":
+          description: Danh sách dự án
+          content:
+            application/json:
+              schema:
+                type: array
+  /api/public/projects/{code}:
+    get:
+      operationId: getProjectDetail
+      summary: Chi tiết dự án theo mã dự án
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Chi tiết dự án
+  /api/valuation/teaser:
+    get:
+      operationId: aiValuation
+      summary: Định giá AI cho bất động sản
+      description: Trả về ước tính giá thị trường với phương pháp 9 AVM coefficients
+      parameters:
+        - name: address
+          in: query
+          schema:
+            type: string
+        - name: area
+          in: query
+          schema:
+            type: number
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Kết quả định giá AI
+  /data/long-thanh-price-index.json:
+    get:
+      operationId: getLongThanhPriceIndex
+      summary: Chỉ số giá BDS Long Thành theo quý
+      responses:
+        "200":
+          description: Price index data
+  /data/area-price-index.json:
+    get:
+      operationId: getAreaPriceIndex
+      summary: Chỉ số giá BDS theo 13 khu vực TP.HCM và vùng lân cận
+      responses:
+        "200":
+          description: Area price index data
+components:
+  schemas:
+    Listing:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          description: Loại BDS (Villa, Apartment, House, Land, Shophouse)
+        transaction:
+          type: string
+          enum: [SELL, RENT]
+        price:
+          type: number
+          description: Giá niêm yết (VNĐ)
+        area:
+          type: number
+          description: Diện tích (m²)
+        location:
+          type: string
+        status:
+          type: string
+        images:
+          type: array
+          items:
+            type: string

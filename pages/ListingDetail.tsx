@@ -2025,6 +2025,7 @@ export const ListingDetail: React.FC = () => {
                                 <ListingCard 
                                     item={item} 
                                     t={t} 
+                                    eagerLoad={true} 
                                     formatCurrency={formatCurrency} 
                                     onToggleFavorite={async (id) => {
                                         const sim = similarListings.find(s => s.id === id);

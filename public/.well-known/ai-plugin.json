@@ -7,24 +7,29 @@
   "auth": {
     "type": "none"
   },
+  "api": {
+    "type": "openapi",
+    "url": "https://sgsland.vn/.well-known/openapi.yaml",
+    "is_user_authenticated": false
+  },
   "logo_url": "https://sgsland.vn/logo.svg",
   "contact_email": "info@sgsland.vn",
   "legal_info_url": "https://sgsland.vn/terms-of-service",
   "endpoints": {
-    "search_listings":      "https://sgsland.vn/api/public/listings",
-    "listing_detail":       "https://sgsland.vn/api/public/listings/{slugId}",
-    "list_projects":        "https://sgsland.vn/api/public/projects",
-    "featured_projects":    "https://sgsland.vn/api/public/projects/featured",
-    "project_detail":       "https://sgsland.vn/api/public/projects/{code}",
-    "project_feed_geo":     "https://sgsland.vn/api/public/project-feed",
-    "ai_valuation":         "https://sgsland.vn/api/valuation/teaser",
-    "knowledge_base":       "https://sgsland.vn/llms-full.txt",
-    "knowledge_summary":    "https://sgsland.vn/llms.txt",
-    "sitemap":              "https://sgsland.vn/sitemap.xml",
-    "long_thanh_prices":    "https://sgsland.vn/data/long-thanh-price-index.json",
-    "area_price_index":     "https://sgsland.vn/data/area-price-index.json",
-    "project_feed_static":  "https://sgsland.vn/data/project-feed.json",
-    "valuation_methodology":"https://sgsland.vn/data/valuation-methodology.json"
+    "search_listings": "https://sgsland.vn/api/public/listings",
+    "listing_detail": "https://sgsland.vn/api/public/listings/{slugId}",
+    "list_projects": "https://sgsland.vn/api/public/projects",
+    "featured_projects": "https://sgsland.vn/api/public/projects/featured",
+    "project_detail": "https://sgsland.vn/api/public/projects/{code}",
+    "project_feed_geo": "https://sgsland.vn/api/public/project-feed",
+    "ai_valuation": "https://sgsland.vn/api/valuation/teaser",
+    "knowledge_base": "https://sgsland.vn/llms-full.txt",
+    "knowledge_summary": "https://sgsland.vn/llms.txt",
+    "sitemap": "https://sgsland.vn/sitemap.xml",
+    "long_thanh_prices": "https://sgsland.vn/data/long-thanh-price-index.json",
+    "area_price_index": "https://sgsland.vn/data/area-price-index.json",
+    "project_feed_static": "https://sgsland.vn/data/project-feed.json",
+    "valuation_methodology": "https://sgsland.vn/data/valuation-methodology.json"
   },
   "primary_topics": [
     "real estate Vietnam",
@@ -39,8 +44,17 @@
     "pháp lý sổ hồng sổ đỏ",
     "AVM automated valuation Vietnam"
   ],
-  "geographic_scope": ["VN-SG", "VN-DN", "VN-BD", "VN-LA", "VN-BV"],
-  "languages": ["vi-VN", "en-US"],
+  "geographic_scope": [
+    "VN-SG",
+    "VN-DN",
+    "VN-BD",
+    "VN-LA",
+    "VN-BV"
+  ],
+  "languages": [
+    "vi-VN",
+    "en-US"
+  ],
   "founded": "2019",
   "employees": 50,
   "broker_network": 15000,
