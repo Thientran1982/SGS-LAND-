@@ -93,28 +93,30 @@ export function rateLimit(options: {
         count = await upstashIncr(redis, redisKey, windowSecs);
         const ttl = await redis.ttl(redisKey) as number;
         resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : windowMs);
-      } catch (redisErr: any) {
-        // If Redis quota is exhausted (Upstash free tier limit) or any Redis error,
-        // skip rate limiting rather than falling back to a shared in-memory counter
-        // which can produce false positives when multiple users share the same process.
-        const msg = String(redisErr?.message || redisErr || '');
-        if (msg.includes('max requests limit exceeded') || msg.includes('QUOTA') || msg.includes('ERR max')) {
-          return next();
+        } catch (redisErr: any) {
+          // H2 FIX: Distinguish quota errors (Upstash free tier) from network errors.
+          const msg = String(redisErr?.message || redisErr || '');
+          const isQuotaError =
+            msg.includes('max requests limit exceeded') ||
+            msg.includes('QUOTA') ||
+            msg.includes('ERR max');
+          if (isQuotaError) {
+            // Upstash free-tier quota exhausted: skip rate limiting gracefully.
+            return next();
+          }
+          // For genuine Redis network/timeout errors: return 503 instead of
+          // falling back to an in-memory store that would be bypassed in
+          // multi-instance deployments, giving a false sense of security.
+          console.error('[RateLimit] Redis unavailable — returning 503:', msg);
+          return res.status(503).json({
+            error: 'service_temporarily_unavailable',
+            message: 'Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau.',
+            retryAfter: 10,
+          });
         }
-        // For other Redis errors (network, timeout) — use in-memory fallback
-        const store = getStore(name);
-        const now = Date.now();
-        let entry = store.get(key);
-        if (!entry || now > entry.resetAt) {
-          entry = { count: 0, resetAt: now + windowMs };
-          store.set(key, entry);
-        }
-        entry.count++;
-        count = entry.count;
-        resetAt = entry.resetAt;
-      }
     } else {
-      // In-memory fallback (single-process only)
+      // No Redis configured: use in-memory store (dev/single-process only).
+        // WARNING: unsafe in multi-instance deployments.
       const store = getStore(name);
       const now = Date.now();
       let entry = store.get(key);
@@ -157,6 +159,26 @@ export const authRateLimit = rateLimit({
   maxRequests: 20,
   keyFn: (req) => req.ip || 'anonymous',
   message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau 15 phút.',
+});
+
+// H3 FIX: Stricter rate limit specifically for login & password endpoints.
+// Prevents brute-force attacks: 5 attempts / 15 min per IP.
+export const loginRateLimit = rateLimit({
+  name: 'login',
+  windowMs: 15 * 60_000,
+  maxRequests: 5,
+  keyFn: (req) => req.ip || 'anonymous',
+  message: 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau 15 phút.',
+});
+
+// H3 FIX: Rate limit for password-reset / forgot-password endpoints.
+// Prevents email-flooding: 3 requests / 60 min per IP.
+export const passwordResetRateLimit = rateLimit({
+  name: 'password_reset',
+  windowMs: 60 * 60_000,
+  maxRequests: 3,
+  keyFn: (req) => req.ip || 'anonymous',
+  message: 'Quá nhiều yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau 60 phút.',
 });
 
 export const apiRateLimit = rateLimit({

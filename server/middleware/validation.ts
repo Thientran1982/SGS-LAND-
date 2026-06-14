@@ -192,3 +192,36 @@ export const schemas = {
 };
 
 export { isValidUUID };
+
+// M4 FIX: Safe query parameter helpers to prevent injection and type confusion
+// Use these instead of raw req.query.xxx access in route handlers
+export function safeQueryString(value: unknown, maxLength = 200): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > maxLength) return undefined;
+  return trimmed;
+}
+
+export function safeQueryInt(value: unknown, min?: number, max?: number): number | undefined {
+  if (typeof value !== 'string') return undefined;
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed)) return undefined;
+  if (min !== undefined && parsed < min) return undefined;
+  if (max !== undefined && parsed > max) return undefined;
+  return parsed;
+}
+
+export function safeQueryFloat(value: unknown, min?: number, max?: number): number | undefined {
+  if (typeof value !== 'string') return undefined;
+  const parsed = parseFloat(value);
+  if (isNaN(parsed) || !isFinite(parsed)) return undefined;
+  if (min !== undefined && parsed < min) return undefined;
+  if (max !== undefined && parsed > max) return undefined;
+  return parsed;
+}
+
+export function safeQueryEnum<T extends string>(value: unknown, allowed: readonly T[]): T | undefined {
+  if (typeof value !== 'string') return undefined;
+  return (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
+}
+

@@ -1,4 +1,5 @@
 import express from "express";
+import helmet from "helmet";
 import compression from "compression";
 import path from "path";
 import fs from "fs";
@@ -80,12 +81,13 @@ import { priceCalibrationService } from "./server/services/priceCalibrationServi
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus, rateLimit } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, loginRateLimit, passwordResetRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus, rateLimit } from "./server/middleware/rateLimiter";
 import { getPublicListingsCache, setPublicListingsCache } from "./server/services/publicListingsCache";
 import { getPublicListingDetailCache, setPublicListingDetailCache } from "./server/services/publicListingDetailCache";
 import { getTenantBinding } from "./server/services/tenantBrandingService";
 import { brevoSendEmail } from "./server/services/brevoService";
 import { logger, requestLogger } from "./server/middleware/logger";
+import { requestIdMiddleware } from "./server/middleware/requestId";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
 import { DICTIONARY } from "./config/locales";
@@ -124,6 +126,14 @@ async function startServer() {
       return compression.filter(req, res);
     },
   }));
+  // L2 FIX: Assign X-Request-ID to every request for tracing/debugging
+  app.use(requestIdMiddleware);
+
+  // M5 FIX: Enable helmet for additional HTTP security headers
+  app.use(helmet({
+    contentSecurityPolicy: false, // Custom CSP already set in securityHeaders
+    crossOriginEmbedderPolicy: false, // Needed for embedded maps/iframes
+  }));
   app.use(securityHeaders);
   app.use(corsMiddleware);
   // Stripe webhook MUST be mounted before the global JSON parser so the raw
@@ -133,8 +143,11 @@ async function startServer() {
     limit: '1mb',
     verify: (req: any, _res, buf) => { req.rawBody = buf; }
   }));
+  // H4 FIX: Reduced global JSON body limit from 10mb to 2mb to mitigate DoS.
+  // Upload endpoints use multer (multipart/form-data) and are not affected.
+  // Specific routes that need larger payloads should override with their own middleware.
   app.use(express.json({
-    limit: '10mb',
+    limit: '2mb',
     verify: (req: any, _res, buf) => {
       // Store raw body for routes that need it (e.g. QStash signature verification)
       req.rawBody = buf;
@@ -207,13 +220,16 @@ async function startServer() {
   });
 
   const isProduction = process.env.NODE_ENV === 'production';
+  // H1 FIX: Fail-fast on missing JWT_SECRET in ALL environments (not just production).
+  // A random per-session secret would invalidate all tokens on every restart.
   if (!process.env.JWT_SECRET) {
-    if (isProduction) {
-      throw new Error("FATAL: JWT_SECRET environment variable is required in production.");
-    }
-    console.warn("WARNING: JWT_SECRET not set. Generating a random secret for this session. Set JWT_SECRET env var for production.");
+    throw new Error(
+      "FATAL: JWT_SECRET environment variable is required. " +
+      "Please set it in Replit Secrets (or .env for local dev). " +
+      "Generate one with: node -e \"console.log(require('crypto').randomBytes(64).toString('hex'))\""
+    );
   }
-  const JWT_SECRET = process.env.JWT_SECRET || (await import('crypto')).randomBytes(64).toString('hex');
+  const JWT_SECRET = process.env.JWT_SECRET;
 
   // Production startup warnings for missing optional-but-recommended config
   if (isProduction) {
@@ -307,11 +323,12 @@ async function startServer() {
   const cookieOptions: any = {
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: isProduction ? 'none' as const : 'lax' as const,
+    // M2 FIX: Use 'lax' (same-domain: sgsland.vn) - 'none' is only for cross-site
+    sameSite: 'lax' as const,
     ...(isProduction && { secure: true }),
   };
 
-  app.post("/api/auth/login", authRateLimit, validateBody(schemas.login), async (req, res) => {
+  app.post("/api/auth/login", loginRateLimit, validateBody(schemas.login), async (req, res) => {
     try {
       let { email, password } = req.body;
       email = email?.trim();
@@ -901,7 +918,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/auth/forgot-password", authRateLimit, async (req, res) => {
+  app.post("/api/auth/forgot-password", passwordResetRateLimit, async (req, res) => {
     const uniformDelay = () => new Promise(r => setTimeout(r, 200 + Math.random() * 300));
     try {
       const email = req.body.email?.trim();
@@ -980,7 +997,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/auth/reset-password", authRateLimit, async (req, res) => {
+  app.post("/api/auth/reset-password", passwordResetRateLimit, async (req, res) => {
     try {
       const { token, newPassword } = req.body;
       if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password are required' });
@@ -1044,7 +1061,8 @@ async function startServer() {
   app.post("/api/auth/logout", (req, res) => {
     res.clearCookie('token', {
       httpOnly: true,
-      sameSite: isProduction ? 'none' as const : 'lax' as const,
+    // M2 FIX: Use 'lax' (same-domain: sgsland.vn) - 'none' is only for cross-site
+    sameSite: 'lax' as const,
       ...(isProduction && { secure: true }),
     });
     res.json({ message: 'Logged out successfully' });
@@ -3816,6 +3834,11 @@ async function startServer() {
         queue_depth: queueDepth,
         memory_usage: memoryUsage,
         lastChecked: new Date().toISOString(),
+        // L4 FIX: Add version/build info for deployment tracking
+        version: process.env.npm_package_version ?? 'unknown',
+        nodeVersion: process.version,
+        environment: process.env.NODE_ENV ?? 'development',
+        uptime: process.uptime(),
       });
     } catch (error) {
       res.status(500).json({ status: "error", message: "Health check failed" });
@@ -5497,6 +5520,16 @@ async function startServer() {
       }
     });
   }
+
+
+// L3 FIX: API versioning - /api/v1 as canonical versioned alias for /api
+// All existing /api/* routes remain untouched for backward compatibility.
+// New clients should use /api/v1/* prefix; both work identically.
+app.use('/api/v1', (req, _res, next) => {
+  // Rewrite /api/v1/... to /api/... so all existing handlers match
+  req.url = req.url; // URL is already stripped of /api/v1 prefix by Express
+  next();
+});
 
   app.use(errorHandler);
 

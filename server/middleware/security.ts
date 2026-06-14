@@ -71,7 +71,8 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
     res.setHeader('Access-Control-Allow-Origin', devOrigin);
   }
 
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  // M1 FIX: Added PATCH to Allow-Methods (was missing, causing PATCH requests to fail CORS preflight)
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Tenant-ID');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');

@@ -43,7 +43,9 @@ export class ValidationError extends AppError {
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
     logger.warn(`[${req.method}] ${req.path} - ${err.statusCode}: ${err.message}`);
+    const requestId2 = (req as any).id as string | undefined;
     const response: any = { error: err.message };
+    if (requestId2) response.requestId = requestId2;
     if (err instanceof ValidationError && err.details.length > 0) {
       response.details = err.details;
     }
@@ -67,9 +69,12 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     },
   });
 
+  // M3 FIX: Include request ID for traceability; never expose stack/message in production
   const isDev = process.env.NODE_ENV !== 'production';
+  const requestId = (req as any).id as string | undefined;
   res.status(500).json({
     error: 'Internal server error',
+    ...(requestId && { requestId }),
     ...(isDev && { message: err.message, stack: err.stack }),
   });
 }

@@ -13,9 +13,27 @@ function formatTimestamp(): string {
   return new Date().toISOString();
 }
 
+// L1 FIX: Redact PII fields from log metadata before serialization
+const PII_FIELDS = new Set([
+  'password', 'currentPassword', 'newPassword', 'confirmPassword',
+  'token', 'accessToken', 'refreshToken', 'secret', 'apiKey',
+  'creditCard', 'cardNumber', 'cvv', 'pin',
+]);
+
+function redactPII(obj: any, depth = 0): any {
+  if (depth > 5 || obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(v => redactPII(v, depth + 1));
+  const result: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    result[k] = PII_FIELDS.has(k) ? '[REDACTED]' : redactPII(v, depth + 1);
+  }
+  return result;
+}
+
 function formatLog(level: LogLevel, message: string, meta?: any): string {
   const timestamp = formatTimestamp();
-  const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+  const safeMeta = meta ? redactPII(meta) : undefined;
+  const metaStr = safeMeta ? ` ${JSON.stringify(safeMeta)}` : '';
   return `[${timestamp}] [${level}]${metaStr} ${message}`;
 }
 
