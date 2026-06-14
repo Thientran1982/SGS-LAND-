@@ -133,7 +133,7 @@ function useInView(threshold = 0.25) {
   return { ref, inView };
 }
 function useCountUp(target: number, duration = 1800, active = false) {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(target);
   useEffect(() => {
     if (!active) return;
     let frame: number;

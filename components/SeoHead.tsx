@@ -52,11 +52,11 @@ export function SeoHead({
   // Helmet re-renders <script> tags as new nodes on every route change; updating
   // textContent on a stable element avoids that duplication.
   useEffect(() => {
-    if (!structuredData) {
-      const existing = document.getElementById('json-ld-schema');
-      if (existing) existing.remove();
-      return;
-    }
+      if (!structuredData) {
+    // Do NOT remove server-injected schema (from metaInjector SSR)
+    // Only clear if we will inject a new client-side schema
+    return;
+  }
     if (process.env.NODE_ENV === 'development') {
       if (!Array.isArray(structuredData) && '@context' in (structuredData as Record<string, unknown>)) {
         console.warn(
