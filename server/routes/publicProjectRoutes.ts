@@ -38,6 +38,15 @@ import {
   type TenantHostBinding,
 } from '../services/tenantBrandingService';
 
+// Base URL for converting relative image paths to absolute — required by React Native Image component
+const APP_BASE_URL = (process.env.APP_URL || 'https://sgsland.vn').replace(/\/+$/, '');
+
+function resolveImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${APP_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 // Fallback platform-wide contact (chỉ dùng khi tenant chưa cấu hình public_brand)
 const FALLBACK_HOTLINE         = '0971132378';
 const FALLBACK_HOTLINE_DISPLAY = '0971 132 378';
@@ -243,10 +252,10 @@ function pickPublicProject(row: any) {
     totalUnits: row.total_units ?? row.totalUnits ?? null,
     openDate: row.open_date ?? row.openDate ?? null,
     handoverDate: row.handover_date ?? row.handoverDate ?? null,
-    coverImage: meta.coverImage || meta.cover_image || null,
+    coverImage: resolveImageUrl(meta.coverImage || meta.cover_image),
     metadata: {
       // Chỉ trả về các metadata an toàn — KHÔNG trả drive_url (tài liệu nội bộ)
-      coverImage: meta.coverImage || meta.cover_image || null,
+      coverImage: resolveImageUrl(meta.coverImage || meta.cover_image),
       gallery: Array.isArray(meta.gallery) ? meta.gallery.slice(0, 30) : [],
       amenities: Array.isArray(meta.amenities) ? meta.amenities : [],
       highlights: Array.isArray(meta.highlights) ? meta.highlights : [],
@@ -400,7 +409,7 @@ export function createPublicProjectRoutes(): Router {
           location: row.location,
           status: row.status,
           totalUnits: row.total_units ?? null,
-          coverImage: meta.coverImage || meta.cover_image || null,
+          coverImage: resolveImageUrl(meta.coverImage || meta.cover_image),
           description: row.description,
           developer: meta.developer || null,
         };
