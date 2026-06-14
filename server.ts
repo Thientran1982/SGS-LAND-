@@ -4864,6 +4864,71 @@ async function startServer() {
     res.sendFile(filePath, { dotfiles: 'allow' }, (err) => { if (err && !res.headersSent) res.status(404).end(); });
   });
 
+  // ─── EIO-resilient static handlers for public/ subtrees ─────────────────────
+  // express.static() calls next(err) on EIO (Replit VM overlay FS transient bug),
+  // which bubbles to the global error handler and returns {"error":"Internal server error"}.
+  // These handlers intercept /landing/* and /images/* BEFORE express.static and
+  // retry up to 3 times with incremental delay, identical to the /assets/*path handler.
+  {
+    const PUB_MIME: Record<string, string> = {
+      '.html': 'text/html; charset=utf-8',  '.css': 'text/css',
+      '.js':   'application/javascript',     '.json': 'application/json',
+      '.jpg':  'image/jpeg',                 '.jpeg': 'image/jpeg',
+      '.webp': 'image/webp',                 '.png':  'image/png',
+      '.gif':  'image/gif',                  '.svg':  'image/svg+xml',
+      '.ico':  'image/x-icon',               '.woff': 'font/woff',
+      '.woff2':'font/woff2',                 '.mp4':  'video/mp4',
+      '.txt':  'text/plain',                 '.xml':  'application/xml',
+    };
+
+    const eioRead = (fp: string, attempt: number, cb: (err: any, data?: Buffer) => void) => {
+      fs.readFile(fp, (err: any, data?: Buffer) => {
+        if (err && err.code === 'EIO' && attempt < 4) {
+          return setTimeout(() => eioRead(fp, attempt + 1, cb), attempt * 150);
+        }
+        cb(err, data);
+      });
+    };
+
+    // /landing/* — GEO project landing pages (HTML + hero images)
+    app.get('/landing/*path', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const publicRoot = path.join(process.cwd(), 'public');
+      const reqPath = req.path.replace(/\/+$/, '');
+      const candidates = [
+        path.join(publicRoot, reqPath),
+        path.join(publicRoot, reqPath, 'index.html'),
+      ];
+      if (!candidates[0].startsWith(publicRoot)) return next();
+      const tryCandidate = (idx: number) => {
+        if (idx >= candidates.length) return next();
+        eioRead(candidates[idx], 1, (err: any, data?: Buffer) => {
+          if (err && (err.code === 'ENOENT' || err.code === 'EISDIR')) return tryCandidate(idx + 1);
+          if (err) return next();
+          const ext = path.extname(candidates[idx]).toLowerCase() || '.html';
+          res.setHeader('Content-Type', PUB_MIME[ext] || 'application/octet-stream');
+          res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+          res.end(data);
+        });
+      };
+      tryCandidate(0);
+    });
+
+    // /images/* — project cover images and other static images
+    app.get('/images/*path', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const publicRoot = path.join(process.cwd(), 'public');
+      const filePath = path.join(publicRoot, req.path);
+      if (!filePath.startsWith(publicRoot)) return next();
+      eioRead(filePath, 1, (err: any, data?: Buffer) => {
+        if (err && err.code === 'ENOENT') return next();
+        if (err) return next();
+        const ext = path.extname(filePath).toLowerCase();
+        res.setHeader('Content-Type', PUB_MIME[ext] || 'application/octet-stream');
+        res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+        res.end(data);
+      });
+    });
+  }
+
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
