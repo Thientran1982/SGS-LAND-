@@ -91,7 +91,37 @@ export function ProjectDetailPage({ project, slug }: Props) {
         ))}
       </div>
 
-      {/* CTA */}
+      
+        {/* Google Maps embed for specific projects */}
+        {(["aqua-city","vinhomes-central-park","masteri-cosmo-central","diamond-sky-van-phuc-city","legacy-66"] as string[]).includes(slug) && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>Vị Trí Trên Bản Đồ</h2>
+            <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: "400px" }}>
+              <iframe
+                title={`Bản đồ ${project.name}`}
+                src={
+                  slug === "aqua-city"
+                    ? "https://maps.google.com/maps?q=Aqua+City+Novaland+Nhon+Trach+Dong+Nai&t=&z=14&ie=UTF8&iwloc=&output=embed"
+                    : slug === "vinhomes-central-park"
+                    ? "https://maps.google.com/maps?q=Vinhomes+Central+Park+Binh+Thanh+TPHCM&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                    : slug === "masteri-cosmo-central"
+                    ? "https://maps.google.com/maps?q=The+Global+City+Masterise+Thu+Duc+TPHCM&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                    : slug === "diamond-sky-van-phuc-city"
+                    ? "https://maps.google.com/maps?q=Van+Phuc+City+Thu+Duc+TPHCM&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                    : "https://maps.google.com/maps?q=Quan+5+Ho+Chi+Minh+City&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                }
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2">* Bản đồ mang tính tham khảo vị trí dự án.</p>
+          </div>
+        )}
+        {/* CTA */}
       <div className="p-8 rounded-2xl" style={{ background: "var(--primary-subtle)", border: "1px solid var(--primary-600)20" }}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div>

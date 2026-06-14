@@ -34,6 +34,14 @@ const FOOTER_ABOUT = [
   { label: "BĐS Đồng Nai",        href: "/bat-dong-san-dong-nai"   },
   { label: "BĐS Long Thành",      href: "/bat-dong-san-long-thanh" },
   { label: "BĐS Thủ Đức",         href: "/bat-dong-san-thu-duc"    },
+  { label: "Vinhomes Central Park", href: "/bat-dong-san-binh-thanh/vinhomes-central-park-tong-quan" },
+  { label: "Central Park cho thuê", href: "/bat-dong-san-binh-thanh/central-park-cho-thue" },
+  { label: "Aqua City có nên mua?", href: "/bat-dong-san-dong-nai/aqua-city-co-nen-mua-khong-2026" },
+  { label: "Đất Long Thành 2026", href: "/bat-dong-san-dong-nai/dat-long-thanh-gia-bao-nhieu" },
+  { label: "The Global City", href: "/bat-dong-san-thu-duc/the-global-city-masterise" },
+  { label: "Căn hộ Thủ Thiêm", href: "/bat-dong-san-thu-duc/can-ho-thu-thiem-gia-bao-nhieu" },
+  { label: "Aqua City vs Izumi", href: "/bat-dong-san-dong-nai/aqua-city-vs-izumi-city-so-sanh" },
+  { label: "Izumi City 2026", href: "/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat" },
   { label: "Trạng thái hệ thống", href: "/status"              },
 ];
 
