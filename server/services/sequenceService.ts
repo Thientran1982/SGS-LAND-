@@ -3,19 +3,21 @@ import { pool } from '../db';
 /**
  * Auto-enroll a lead into all ACTIVE sequences whose triggerEvent matches the new stage.
  * Called whenever a lead's stage changes in leadRoutes.
+ * Uses correct column names from migration 105_sequence_tracking.
  */
 export async function enrollLeadToMatchingSequences(
   _pool: any,
   tenantId: string,
-  leadId: string,
+  _leadId: string,
   leadEmail: string,
   leadName: string,
   newStage: string,
 ): Promise<void> {
   try {
-    // Find all active sequences for this tenant with matching triggerEvent
+    if (!leadEmail) return;
+
     const seqRes = await pool.query(
-      `SELECT id, name, steps FROM sequences
+      `SELECT id, name FROM sequences
        WHERE tenant_id = $1
          AND is_active = true
          AND trigger_event = $2
@@ -23,36 +25,17 @@ export async function enrollLeadToMatchingSequences(
       [tenantId, newStage],
     );
 
-    if (seqRes.rowCount === 0) return;
+    if (!seqRes.rowCount) return;
 
     for (const seq of seqRes.rows) {
-      // Check if already enrolled (duplicate guard)
-      const existRes = await pool.query(
-        `SELECT id FROM sequence_enrollments
-         WHERE sequence_id = $1 AND lead_email = $2 AND tenant_id = $3
-         LIMIT 1`,
-        [seq.id, leadEmail, tenantId],
-      );
-      if ((existRes.rowCount ?? 0) > 0) {
-        console.log(`[Sequence] Lead ${leadEmail} already enrolled in seq ${seq.name}, skipping`);
-        continue;
-      }
-
-      // Insert enrollment
       await pool.query(
         `INSERT INTO sequence_enrollments
-           (tenant_id, sequence_id, lead_id, lead_email, name, status, current_step, enrolled_at)
-         VALUES ($1, $2, $3, $4, $5, 'ACTIVE', 0, NOW())`,
-        [tenantId, seq.id, leadId, leadEmail, leadName],
+           (tenant_id, sequence_id, lead_email, lead_name, step_index, status)
+         VALUES ($1, $2, $3, $4, 0, 'PENDING')
+         ON CONFLICT (sequence_id, lead_email) DO NOTHING`,
+        [tenantId, seq.id, leadEmail, leadName || null],
       );
-
-      // Update sequence enrolled count
-      await pool.query(
-        `UPDATE sequences SET enrolled_count = enrolled_count + 1, updated_at = NOW() WHERE id = $1`,
-        [seq.id],
-      );
-
-      console.log(`[Sequence] Auto-enrolled lead ${leadEmail} into sequence "${seq.name}" (stage: ${newStage})`);
+      console.log(`[Sequence] Auto-enrolled ${leadEmail} → "${seq.name}" (trigger: ${newStage})`);
     }
   } catch (err: any) {
     console.error('[Sequence] enrollLeadToMatchingSequences error:', err.message);

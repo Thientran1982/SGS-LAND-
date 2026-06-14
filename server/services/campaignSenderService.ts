@@ -131,7 +131,7 @@ function buildAudienceQuery(
   };
 }
 /**
- * Inject tracking pixel + rewrite link cho email body.
+ * Inject tracking pixel + rewrite link + unsubscribe footer cho email body.
  */
 export function decorateBody(
   bodyHtml: string,
@@ -148,13 +148,13 @@ export function decorateBody(
       return `href=${q}${tracked}${q}`;
     },
   );
-  // Add unsubscribe footer
-  const unsubFooter = `
-<div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;font-family:sans-serif;">
-  <p style="margin:0">Bạn nhận được email này vì đã đăng ký tại SGS Land.</p>
-  <p style="margin:4px 0 0">Để <a href="${publicBaseUrl}/api/unsubscribe/${recipientId}" style="color:#6b7280">hủy đăng ký</a> nhận email, nhấn vào đây.</p>
-</div>`;
-  return `${rewritten}${pixel}${unsubFooter}`;
+  const unsubscribeFooter = [
+    '<p style="margin-top:32px;font-size:12px;color:#999;text-align:center;">',
+    'Bạn nhận email này vì đã đăng ký nhận thông tin từ SGS LAND. ',
+    `Để hủy đăng ký, <a href="${publicBaseUrl}/api/unsubscribe/${recipientId}" style="color:#999;">nhấn vào đây</a>.`,
+    '</p>',
+  ].join('');
+  return `${rewritten}${unsubscribeFooter}${pixel}`;
 }
 /**
  * Chạy chiến dịch: build audience, chèn recipients, gửi từng email qua Brevo.
@@ -217,16 +217,12 @@ export async function runCampaign(
     const personalised = bodyTpl.replace(/\{\{name\}\}/g, escapeHtml(rec.name || 'bạn'));
     const decorated = decorateBody(personalised, rec.id, publicBaseUrl);
     try {
-      // Đi qua emailService.sendEmail để cùng được kiểm tra dedupe + quota
-      // (theo gói cước tenant) và ghi nhận vào email_log như mọi email khác.
       const result = await emailService.sendEmail(c.tenant_id, {
         to: rec.email,
         subject,
         html: decorated,
         template: 'campaign',
-        // Mỗi (campaign, recipient_row) là duy nhất ⇒ dedupe ngăn gửi lặp do retry
         dedupeKey: `campaign:${campaignId}:${rec.id}`,
-        // Cửa sổ rộng (24h) — campaign không nên gửi lại cùng người trong ngày
         dedupeWindowMinutes: 60 * 24,
         tags: [`campaign:${campaignId}`, `variant:${rec.variant}`],
       });

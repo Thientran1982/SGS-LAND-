@@ -5,8 +5,8 @@ import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 const LOCATION_SEO_META: Record<string, { title: string; description: string }> = {
     'bat-dong-san-dong-nai': {
-        title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2026 — SGS LAND',
-        description: 'Mua bán bất động sản Đồng Nai: Nhơn Trạch, Biên Hòa, Long Thành. Kho hàng nghìn căn, giá thực tế, pháp lý kiểm tra trước. SGS LAND.',
+        title: 'Bất Động Sản Đồng Nai 2026 – Dự án & Giá Đất Mới Nhất | SGSLand',
+        description: 'Tổng hợp dự án BĐS Đồng Nai: Aqua City, Izumi City, Long Thành. Giá đất 2026, quy hoạch mới, hỗ trợ pháp lý. Xem ngay tại SGSLand.',
     },
     'bat-dong-san-long-thanh': {
         title: 'Bất Động Sản Long Thành | Đất Nền, Nhà Phố — SGS LAND',
@@ -33,16 +33,16 @@ const LOCATION_SEO_META: Record<string, { title: string; description: string }> 
         description: 'Mua bán bất động sản Bình Chánh: đất nền, nhà phố, dự án ven Vành đai 3. Cửa ngõ Tây Nam TP.HCM, tiềm năng tăng giá cao. SGS LAND tư vấn miễn phí.',
     },
     'bat-dong-san-binh-thanh': {
-        title: 'Bất Động Sản Bình Thạnh TP.HCM 2026 | Vinhomes Central Park, Masterise — SGS LAND',
-        description: 'Mua bán căn hộ, nhà phố Bình Thạnh TP.HCM 2026: Vinhomes Central Park (Landmark 81), Masterise Grand Marina Saigon, Lumière Riverside. Giá 50–400 triệu/m². SGS LAND tư vấn miễn phí.',
+        title: 'Bất Động Sản Bình Thạnh 2026 – Vinhomes, Cho Thuê | SGSLand',
+        description: 'BĐS Bình Thạnh TP.HCM: Vinhomes Central Park, căn hộ cho thuê 15-60 triệu/tháng. Giá đất theo đường, view sông Sài Gòn. Tư vấn miễn phí!',
     },
     'bat-dong-san-long-an': {
         title: 'Bất Động Sản Long An 2026 | Đất Nền Đức Hòa, Bến Lức, Cần Đước — SGS LAND',
         description: 'Mua bán bất động sản Long An 2026: đất nền Đức Hòa 5–20 triệu/m², Bến Lức 8–25 triệu/m², Cần Đước 4–12 triệu/m². Hưởng lợi Vành đai 3&4. SGS LAND tư vấn miễn phí.',
     },
     'dau-tu-bat-dong-san': {
-        title: 'Đầu Tư Bất Động Sản Hiệu Quả 2026 | Hướng Dẫn Toàn Diện — SGS LAND',
-        description: 'Hướng dẫn đầu tư bất động sản 2026: chiến lược chọn BĐS sinh lời, tính ROI, quản lý rủi ro pháp lý và tối ưu tài chính. Tư vấn miễn phí từ chuyên gia SGS LAND.',
+        title: 'Đầu Tư BĐS TP.HCM 2026 – Phân Tích & Cơ Hội Sinh Lời | SGSLand',
+        description: 'Phân tích thị trường BĐS TP.HCM 2026: khu vực tiềm năng, yield cho thuê, lãi suất ngân hàng, chiến lược đầu tư an toàn. Tư vấn miễn phí.',
     },
     'phap-ly-nha-dat': {
         title: 'Pháp Lý Nhà Đất 2026 | Hướng Dẫn Kiểm Tra Sổ Đỏ, Quy Hoạch — SGS LAND',

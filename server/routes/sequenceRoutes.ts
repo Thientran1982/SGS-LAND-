@@ -189,6 +189,9 @@ export function createSequenceRoutes(pool: Pool, authenticateToken: any) {
       const sequence = await sequenceRepository.findById(user.tenantId, req.params.id as string);
       if (!sequence) return res.status(404).json({ error: 'Sequence not found' });
       if (!sequence.isActive) return res.status(400).json({ error: 'Sequence is not active' });
+      if (!sequence.steps || (sequence.steps as any[]).length === 0) {
+        return res.status(400).json({ error: 'Vui lòng thêm ít nhất 1 bước trước khi thực thi sequence' });
+      }
 
       const { lead } = req.body;
       if (!lead || !lead.email) {

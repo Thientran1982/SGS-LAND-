@@ -10,51 +10,51 @@ export interface SEOConfig {
 export const ROUTE_SEO: Record<string, SEOConfig> = {
   // Default / root (hash empty)
   '': {
-    title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
-    description: 'SGS LAND - Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
+    title: 'SGS LAND 2026 – Nền Tảng BĐS AI TP.HCM | Định Giá & Mua Bán',
+    description: 'SGS LAND: mua bán bất động sản TP.HCM 2026, định giá AI ±4,8%, CRM đa kênh Zalo/Facebook. Aqua City, Vinhomes, Masterise – tư vấn miễn phí ngay hôm nay.',
     path: '/',
   },
   // ROUTES.LANDING = 'home'
   home: {
-    title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
-    description: 'SGS LAND - Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
+    title: 'SGS LAND 2026 – Nền Tảng BĐS AI TP.HCM | Định Giá & Mua Bán',
+    description: 'SGS LAND: mua bán bất động sản TP.HCM 2026, định giá AI ±4,8%, CRM đa kênh Zalo/Facebook. Aqua City, Vinhomes, Masterise – tư vấn miễn phí ngay hôm nay.',
     path: '/home',
   },
   // ROUTES.SEARCH = 'marketplace'
   marketplace: {
-    title: 'Tìm Kiếm Bất Động Sản | Kho Hàng Realtime - SGS LAND',
-    description: 'Tìm kiếm bất động sản theo vị trí, loại hình, diện tích và mức giá. Kho hàng hàng nghìn bất động sản được cập nhật realtime trên toàn quốc.',
+    title: 'Sàn BĐS 2026 – Mua Bán Căn Hộ & Nhà Đất TP.HCM | SGSLand',
+    description: 'Tìm kiếm & so sánh bất động sản theo bản đồ. Hàng nghìn căn hộ, nhà phố, đất nền TP.HCM & vùng ven. Lọc giá, diện tích, pháp lý nhanh chóng. Xem ngay!',
     path: '/marketplace',
   },
   // ROUTES.AI_VALUATION = 'ai-valuation'
   'ai-valuation': {
-    title: 'Định Giá Bất Động Sản Bằng AI | Sai Số ±5% - SGS LAND',
-    description: 'Công nghệ định giá bất động sản AI từ SGS LAND. Phân tích đa nguồn (CBRE, Savills, batdongsan.com.vn) với sai số chỉ ±5–10% — ngang chuẩn thẩm định viên chuyên nghiệp. Hoàn toàn miễn phí.',
+    title: 'Định Giá AI Bất Động Sản 2026 – Chính Xác & Miễn Phí | SGSLand',
+    description: 'Định giá AI bất động sản TP.HCM chính xác ±4,8%, cập nhật giá thị trường theo ngày. So sánh giá Aqua City, Vinhomes, Masterise. Tư vấn miễn phí.',
     path: '/ai-valuation',
   },
   // ROUTES.CRM_SOLUTION = 'crm-platform'
   'crm-platform': {
-    title: 'Nền Tảng CRM Bất Động Sản Thế Hệ Mới | SGS LAND',
-    description: 'Hệ thống CRM bất động sản tích hợp AI, đa kênh Zalo/Facebook/Email, tự động hóa quy trình từ lead đến hợp đồng. Dành cho sàn giao dịch và môi giới chuyên nghiệp.',
+    title: 'Nền Tảng CRM BĐS 2026 – Quản Lý Lead & Hợp Đồng | SGSLand',
+    description: 'CRM BĐS thế hệ mới: quản lý lead, hợp đồng, kho hàng trên 1 nền tảng. Tích hợp Zalo/Facebook/Email. Dành cho môi giới và sàn giao dịch BĐS. Dùng thử miễn phí!',
     path: '/crm-platform',
   },
   // ROUTES.ABOUT = 'about-us'
   'about-us': {
-    title: 'Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn',
-    description: 'SGS LAND - Công ty công nghệ bất động sản hàng đầu Việt Nam với đội ngũ chuyên gia AI và bất động sản. Tìm hiểu về tầm nhìn, sứ mệnh và giá trị cốt lõi của chúng tôi.',
+    title: 'Về Chúng Tôi – SGS LAND | Đại Lý BĐS F1 TP.HCM Từ 2019',
+    description: 'SGS LAND – đại lý F1 chính thức Novaland, Vinhomes, Masterise Homes từ 2019. Đội ngũ 10+ năm kinh nghiệm, dịch vụ tư vấn BĐS toàn diện. Liên hệ ngay!',
     path: '/about-us',
   },
   // ROUTES.NEWS = 'news'
   news: {
-    title: 'Tin Tức Bất Động Sản | Thị Trường BĐS Cập Nhật - SGS LAND',
-    description: 'Cập nhật tin tức bất động sản mới nhất, phân tích thị trường, xu hướng giá và các chính sách pháp luật liên quan đến bất động sản Việt Nam.',
+    title: 'Tin Tức BĐS TP.HCM 2026 – Cập Nhật Mới Nhất | SGSLand',
+    description: 'Cập nhật tin tức BĐS TP.HCM, Đồng Nai, Bình Dương: giá thị trường, pháp lý, quy hoạch, lãi suất vay ngân hàng tháng 6/2026. Đọc ngay tại SGSLand.',
     path: '/news',
     noIndex: false,
   },
   // ROUTES.CONTACT = 'contact'
   contact: {
-    title: 'Liên Hệ Tư Vấn | SGS LAND',
-    description: 'Liên hệ với đội ngũ tư vấn SGS LAND để được hỗ trợ demo, tư vấn gói dịch vụ và tích hợp nền tảng quản lý bất động sản.',
+    title: 'Liên Hệ Tư Vấn BĐS 2026 | SGSLand TP.HCM',
+    description: 'Liên hệ SGSLand để tư vấn mua bán bất động sản TP.HCM, Aqua City, Vinhomes miễn phí. Hotline: +84-971-132-378. Phản hồi trong 15 phút!',
     path: '/contact',
   },
   // ROUTES.CAREERS = 'careers'

@@ -6,7 +6,15 @@ import ProjectDirectory from './ProjectDirectory';
 const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
     'aqua-city': {
         title: 'Aqua City Novaland | Nhà Phố, Biệt Thự Đồng Nai - SGS LAND',
-        description: 'Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.',
+        description: 'Dự án Aqua City Novaland Đồng Nai: giá căn hộ 2026, tiến độ xây dựng, pháp lý, vị trí, mặt bằng chi tiết. Tư vấn trực tiếp qua SGSLand.',
+    },
+    'legacy-66': {
+        title: 'Legacy 66 Căn Hộ Quận 5 2026 – Bảng Giá & Mặt Bằng',
+        description: 'Legacy 66 Quận 5 TP.HCM: căn hộ trung tâm theo tầng/diện tích. Bảng giá 2026, video walkaround, pháp lý rõ. Tư vấn miễn phí tại SGSLand.',
+    },
+    'masteri-cosmo-central': {
+        title: 'Masteri Cosmo Central The Global City 2026 | SGSLand',
+        description: 'Masteri Cosmo Central trong The Global City Masterise: ở đâu, giá 2026, mặt bằng chi tiết, FAQ. Xem ngay tại SGSLand.',
     },
     'izumi-city': {
         title: 'Izumi City Nam Long | Đô Thị Chuẩn Nhật Bản Đồng Nai - SGS LAND',
@@ -21,7 +29,7 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
         description: 'Vinhomes Grand Park Quận 9 TP Thủ Đức: căn hộ, shophouse, biệt thự siêu đô thị 271ha. Công viên 36ha, Metro số 1, Vinmec, Vinschool. Bảng giá tại SGS LAND.',
     },
     'vinhomes-central-park': {
-        title: 'Vinhomes Central Park | Căn Hộ Cao Cấp Bình Thạnh Landmark 81 - SGS LAND',
+        title: 'Vinhomes Central Park Bình Thạnh 2026 - Giá, View Sông | SGSLand',
         description: 'Vinhomes Central Park Bình Thạnh: 44 tòa cao tầng, Landmark 81, bể bơi vô cực ven sông Sài Gòn. Căn hộ từ 50 triệu/m², cho thuê 15-60 triệu/tháng. Tư vấn tại SGS LAND.',
     },
     'thu-thiem': {
@@ -41,7 +49,7 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
         description: 'The Global City Masterise Homes An Phú Thủ Đức: đại đô thị 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Tư vấn tại SGS LAND.',
     },
     'nha-pho-trung-tam': {
-        title: 'Nhà Phố Trung Tâm TP.HCM | Mặt Tiền, Nhà Hẻm, Shophouse - SGS LAND',
+        title: 'Nhà Phố Trung Tâm TP.HCM 2026 - Xem Giá & Vị Trí Thực | SGSLand',
         description: 'Mua bán nhà phố trung tâm TP.HCM: mặt tiền Q1 từ 500 triệu/m², nhà hẻm Q3 từ 100 triệu/m². Định giá AI miễn phí, kiểm tra pháp lý độc lập tại SGS LAND.',
     },
     'vinhomes-can-gio': {
@@ -49,7 +57,7 @@ const PROJECT_SEO_META: Record<string, { title: string; description: string }> =
         description: 'Vinhomes Cần Giờ (Green Paradise): siêu đô thị lấn biển 2.870ha tại TP.HCM, bãi biển 7km, Vinwonders, golf, marina. Từ 12 tỷ. Đặt chỗ ưu tiên miễn phí tại SGS LAND.',
     },
     'diamond-sky-van-phuc-city': {
-        title: 'Diamond Sky Vạn Phúc City | Căn Hộ Cao Tầng View Sông Sài Gòn 2026 — SGS LAND',
+        title: 'Diamond Sky Vạn Phúc 2026 - Bảng Giá & Tiến Độ Mới Nhất | SGSLand',
         description: 'Diamond Sky Vạn Phúc City: tháp căn hộ hạng sang 20 tầng trong KĐT 198ha của Tập đoàn Vạn Phúc, Hiệp Bình Phước TP Thủ Đức (giáp Thuận An, Bình Dương). 1–3PN view sông Sài Gòn, từ 9,6 tỷ (~192 triệu/m²), sổ hồng lâu dài. Bảng giá & ưu đãi 2026 tại SGS LAND.',
     },
 };

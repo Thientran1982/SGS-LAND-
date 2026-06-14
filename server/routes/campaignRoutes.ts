@@ -359,17 +359,27 @@ export function createCampaignRouter(pool: Pool, authenticateToken: RequestHandl
   });
 
 
-// --- Unsubscribe ---
-router.get('/api/unsubscribe/:recipientId', async (req: Request, res: Response) => {
-  const recipientId = String(req.params.recipientId || '');
-  try {
-    await pool.query(
-      `UPDATE campaign_recipients SET status='UNSUBSCRIBED', error='unsubscribed' WHERE id=$1`,
-      [recipientId],
-    );
-  } catch (e: any) {
-    res.status(500).send('Error');
-  }
-});
+  // ── Public: Unsubscribe (không auth — link trong email) ─────────────────────
+  router.get('/api/unsubscribe/:recipientId', async (req: Request, res: Response) => {
+    const recipientId = String(req.params.recipientId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(recipientId)) {
+      return res.status(400).send('Liên kết không hợp lệ.');
+    }
+    try {
+      await pool.query(
+        `UPDATE campaign_recipients SET status='UNSUBSCRIBED' WHERE id=$1`,
+        [recipientId],
+      );
+      res.send(
+        '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>Đã hủy đăng ký</title></head>' +
+        '<body style="font-family:sans-serif;text-align:center;padding:60px;">' +
+        '<h2>Đã hủy đăng ký thành công</h2>' +
+        '<p>Bạn sẽ không còn nhận email từ SGS LAND nữa.</p>' +
+        '</body></html>',
+      );
+    } catch (_e: any) {
+      res.status(500).send('Đã xảy ra lỗi, vui lòng thử lại sau.');
+    }
+  });
   return router;
 }
