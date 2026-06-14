@@ -80,6 +80,7 @@ export default defineConfig(({ mode }) => {
                 './pages/Marketplace',
                 './pages/Billing',
                 './pages/SystemStatus',
+            './pages/AiValuation',
               ],
             },
           },
