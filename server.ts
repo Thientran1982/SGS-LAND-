@@ -5276,9 +5276,9 @@ async function startServer() {
             if ((err as any).code === 'ENOENT') {
               return res.status(404).end();
             }
-            if ((err as any).code === 'EIO' && attempt < 2) {
-              // Retry once after 50ms on transient I/O error
-              return setTimeout(() => tryRead(attempt + 1), 50);
+            if ((err as any).code === 'EIO' && attempt < 4) {
+              // Retry up to 3 times with increasing delay on transient Replit overlay FS I/O error
+              return setTimeout(() => tryRead(attempt + 1), attempt * 150);
             }
             return next(err);
           }

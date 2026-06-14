@@ -415,21 +415,21 @@
   <body>
     <div id="app-background"></div>
     <div id="root">
-        <!-- SEO h1: visible to bots in raw HTML; React replaces root content on mount -->
-        <h1 id="seo-h1" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;">SGS LAND — Đại Lý Bất Động Sản TP.HCM</h1>
-        <!-- ssr-body-placeholder -->
-      <div id="ssr-body" aria-hidden="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">
-        <h2>SGS LAND – Đại Lý Bất Động Sản TP.HCM</h2>
-        <p>Nền tảng BĐS AI: định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Hơn 45.000 sản phẩm tại TP.HCM, Đồng Nai, Bình Dương.</p>
-        <ul>
-          <li>Mua bán cho thuê bất động sản TP.HCM, Long Thành, Aqua City, Vinhomes Căn Giờ</li>
-          <li>Định giá AI ±4,8% MAPE – 9 AVM coefficients, cập nhật hàng ngày</li>
-          <li>Dự án nổi bật: Aqua City Novaland, The Global City Masterise, Vinhomes Căn Giờ, Grand Marina Saigon</li>
-          <li>Hoạt động từ 2019 – đại lý F1 chính thức Novaland, Vinhomes, Masterise Homes</li>
-          <li>Liên hệ: +84-971-132-378 | info@sgsland.vn</li>
-        </ul>
-        <p>Người sáng lập: Trần Minh Thiện – CEO, 10+ năm kinh nghiệm phân phối bất động sản.</p>
-      </div>
+        <!-- SEO content: inside noscript so browsers with JS never render it;
+             search crawlers (Googlebot, Bingbot) read noscript content normally. -->
+        <noscript>
+          <h1>SGS LAND — Đại Lý Bất Động Sản TP.HCM</h1>
+          <h2>SGS LAND – Đại Lý Bất Động Sản TP.HCM</h2>
+          <p>Nền tảng BĐS AI: định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Hơn 45.000 sản phẩm tại TP.HCM, Đồng Nai, Bình Dương.</p>
+          <ul>
+            <li>Mua bán cho thuê bất động sản TP.HCM, Long Thành, Aqua City, Vinhomes Căn Giờ</li>
+            <li>Định giá AI ±4,8% MAPE – 9 AVM coefficients, cập nhật hàng ngày</li>
+            <li>Dự án nổi bật: Aqua City Novaland, The Global City Masterise, Vinhomes Căn Giờ, Grand Marina Saigon</li>
+            <li>Hoạt động từ 2019 – đại lý F1 chính thức Novaland, Vinhomes, Masterise Homes</li>
+            <li>Liên hệ: +84-971-132-378 | info@sgsland.vn</li>
+          </ul>
+          <p>Người sáng lập: Trần Minh Thiện – CEO, 10+ năm kinh nghiệm phân phối bất động sản.</p>
+        </noscript>
         <!-- Optimized Skeleton Loader -->
         <div class="initial-loader">
             <div class="loader-logo">
