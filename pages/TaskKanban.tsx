@@ -54,7 +54,7 @@ const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: st
   { id: 'done',        label: 'Hoàn thành',       color: 'bg-emerald-50/60 dark:bg-emerald-900/10', headerColor: 'bg-emerald-100/80 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
   { id: 'cancelled',   label: 'Đã hủy',           color: 'bg-rose-50/40 dark:bg-rose-900/10',      headerColor: 'bg-rose-100/80 dark:bg-rose-900/30',      dot: 'bg-rose-400' },
 ];
-function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: boolean; onClick?: () => void }) {
+function TaskCardBase({ task, overlay = false, onClick }: { task: WfTask; overlay?: boolean; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const style = overlay ? undefined : {
     transform: CSS.Translate.toString(transform),
@@ -104,6 +104,9 @@ function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: 
     </div>
   );
 }
+
+export const TaskCard = React.memo(TaskCardBase);
+
 function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tasks: WfTask[]; onCardClick: (id: string) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
   return (

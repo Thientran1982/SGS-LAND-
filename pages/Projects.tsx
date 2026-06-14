@@ -61,7 +61,7 @@ function fmtDate(d?: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 interface ProjectFormProps {
     project?: Project | null;
-    onSave: (data: any) => Promise<void>;
+    onSave: (data: Record<string, unknown>) => Promise<void>;
     onClose: () => void;
     t: (k: string) => string;
 }
@@ -875,7 +875,7 @@ function fmtSqm(v: number) {
     return (v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tr/m²';
 }
 const EMPTY_ROW = { tower: '', floor_from: 1, floor_to: 99, direction: 'ALL', bedroom_type: 'ALL', base_price_sqm: '', adjustment_pct: '0', notes: '' };
-function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit: boolean; onClose: () => void }) {
+function PriceMatrixPanel({ project, canEdit, onClose }: { project: Project; canEdit: boolean; onClose: () => void }) {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState<any | null>(null);
@@ -929,8 +929,8 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
         finally { setDeleting(null); }
     };
 
-    const startEdit = (row: any) => {
-        setEditId(row.id);
+    const startEdit = (row: Record<string, unknown>) => {
+        setEditId(String(row.id));
         setForm({ ...row, base_price_sqm: (Number(row.base_price_sqm) / 1_000_000).toFixed(2) });
     };
 
@@ -961,25 +961,25 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tòa / Tower</label>
-                                <input value={form.tower ?? ''} onChange={e => setForm((f: any) => ({ ...f, tower: e.target.value }))}
+                                <input value={form.tower ?? ''} onChange={e => setForm((f) => ({ ...f, tower: e.target.value }))}
                                     placeholder="A, B, C... (bỏ trống = tất cả)"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng từ</label>
-                                <input type="number" min={1} max={200} value={form.floor_from} onChange={e => setForm((f: any) => ({ ...f, floor_from: e.target.value }))}
+                                <input type="number" min={1} max={200} value={form.floor_from} onChange={e => setForm((f) => ({ ...f, floor_from: e.target.value }))}
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Tầng đến</label>
-                                <input type="number" min={1} max={200} value={form.floor_to} onChange={e => setForm((f: any) => ({ ...f, floor_to: e.target.value }))}
+                                <input type="number" min={1} max={200} value={form.floor_to} onChange={e => setForm((f) => ({ ...f, floor_to: e.target.value }))}
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Hướng</label>
                                 <SelectDropdown
                                     value={form.direction}
-                                    onChange={v => setForm((f: any) => ({ ...f, direction: v }))}
+                                    onChange={v => setForm((f) => ({ ...f, direction: v }))}
                                     options={DIRECTIONS}
                                     labelMap={DIR_LABEL}
                                 />
@@ -988,26 +988,26 @@ function PriceMatrixPanel({ project, canEdit, onClose }: { project: any; canEdit
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Loại phòng</label>
                                 <SelectDropdown
                                     value={form.bedroom_type}
-                                    onChange={v => setForm((f: any) => ({ ...f, bedroom_type: v }))}
+                                    onChange={v => setForm((f) => ({ ...f, bedroom_type: v }))}
                                     options={BEDROOM_TYPES}
                                     labelMap={BEDROOM_LABEL}
                                 />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Giá gốc (tr/m²)</label>
-                                <input type="number" min={0} step={0.01} value={form.base_price_sqm} onChange={e => setForm((f: any) => ({ ...f, base_price_sqm: e.target.value }))}
+                                <input type="number" min={0} step={0.01} value={form.base_price_sqm} onChange={e => setForm((f) => ({ ...f, base_price_sqm: e.target.value }))}
                                     placeholder="VD: 85.5"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div>
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Điều chỉnh (%)</label>
-                                <input type="number" step={0.1} value={form.adjustment_pct} onChange={e => setForm((f: any) => ({ ...f, adjustment_pct: e.target.value }))}
+                                <input type="number" step={0.1} value={form.adjustment_pct} onChange={e => setForm((f) => ({ ...f, adjustment_pct: e.target.value }))}
                                     placeholder="0"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
                             <div className="col-span-2 sm:col-span-2">
                                 <label className="block text-xs text-[var(--text-tertiary)] mb-1">Ghi chú</label>
-                                <input value={form.notes ?? ''} onChange={e => setForm((f: any) => ({ ...f, notes: e.target.value }))}
+                                <input value={form.notes ?? ''} onChange={e => setForm((f) => ({ ...f, notes: e.target.value }))}
                                     placeholder="VD: Tầng cao view kênh đào, tăng giá 5%"
                                     className="w-full h-8 px-2 text-xs border border-[var(--glass-border)] rounded-lg bg-[var(--bg-app)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-400" />
                             </div>
@@ -1181,10 +1181,10 @@ class ListingsPanelErrorBoundary extends React.Component<
     }
 }
 interface ProjectListingsPanelProps {
-    project: any;
+    project: Project;
     canCreate: boolean;
     isAdmin: boolean;
-    userRole?: string;
+    userRole?: UserRole | null;
     onClose: () => void;
     onListingCreated?: () => void;
     t: (k: string) => string;
@@ -1215,7 +1215,7 @@ function deriveCodeCandidatesClient(filename: string): string[] {
 function BulkImageUploadModal({
     project, onClose, onCompleted, t,
 }: {
-    project: any;
+    project: Project;
     onClose: () => void;
     onCompleted: () => void;
     t: (k: string) => string;
@@ -1756,7 +1756,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         if (isAdmin) db.listTenants().then(setTenants).catch(() => {});
     }, [isAdmin]);
 
-    const handleListingSubmit = async (data: any) => {
+    const handleListingSubmit = async (data: Record<string, unknown>) => {
         const listing = await db.createListing({
             ...data,
             projectCode: project.code || data.projectCode,
@@ -1923,13 +1923,13 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         }
     }, []);
     // ── Stats recompute from listings array ───────────────────────────────────
-    const recomputeStats = useCallback((updatedListings: any[]) => {
+    const recomputeStats = useCallback((updatedListings: Listing[]) => {
         const c = { AVAILABLE: 0, HOLD: 0, BOOKING: 0, SOLD: 0, OPENING: 0, RENTED: 0, INACTIVE: 0 };
         for (const l of updatedListings) {
             const s = (l.status || '').toUpperCase() as keyof typeof c;
             if (s in c) c[s]++;
         }
-        setStats((prev: any) => prev ? {
+        setStats((prev) => prev ? {
             ...prev,
             availableCount: c.AVAILABLE,
             holdCount:      c.HOLD,
@@ -1942,7 +1942,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         } : prev);
     }, []);
     // ── Row edit ──────────────────────────────────────────────────────────────
-    const handleEditSubmit = async (data: any) => {
+    const handleEditSubmit = async (data: Record<string, unknown>) => {
         if (!editTarget) return;
         try {
             const updated = await db.updateListing(editTarget.id, data);
@@ -2591,7 +2591,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     onClose={() => setShowBulkImages(false)}
                     /* Refresh listings + stats only — bulk image upload does NOT
                        create new listings, so don't invoke onListingCreated
-                       (parent uses it to bump project.listingCount by +1). */
+                       (parent uses it to bump (project as any).listingCount by +1). */
                     onCompleted={() => { load(); syncStats(); }}
                     t={t}
                 />
@@ -2870,8 +2870,8 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
 // Listing Access Panel  (Phân quyền xem từng sản phẩm)
 // ─────────────────────────────────────────────────────────────────────────────
 interface ListingAccessPanelProps {
-    listings: any[];      // 1 hoặc nhiều listing được chọn
-    tenants: any[];
+    listings: Listing[];  // 1 hoặc nhiều listing được chọn
+    tenants: Record<string, unknown>[];
     onClose: () => void;
     t: (k: string) => string;
 }
@@ -2979,7 +2979,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                                     value={grantForm.partnerTenantId}
                                     onChange={(v) => setGrantForm(f => ({ ...f, partnerTenantId: v as string }))}
                                     placeholder={t('project.listing_access_select')}
-                                    options={tenants.map(t2 => ({ value: t2.id, label: `${t2.name} (${t2.domain})` }))}
+                                    options={tenants.map((t2: any) => ({ value: String(t2.id), label: `${t2.name} (${t2.domain})` }))}
                                 />
                             </div>
                             <div>
@@ -3072,7 +3072,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
 // Project Card
 // ─────────────────────────────────────────────────────────────────────────────
 interface ProjectCardProps {
-    project: any;
+    project: Project;
     isAdmin: boolean;
     isPartner: boolean;
     onEdit: () => void;
@@ -3083,7 +3083,7 @@ interface ProjectCardProps {
     t: (k: string) => string;
 }
 
-function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, onListings, onPriceMatrix, t }: ProjectCardProps) {
+function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, onListings, onPriceMatrix, t }: ProjectCardProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
@@ -3135,8 +3135,8 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                                 </span>
                             )}
                         </div>
-                        {isPartner && project.developer_name && (
-                            <p className="text-xs text-sgs-primary font-semibold mt-0.5 truncate">{t('project.developer')}: {project.developer_name}</p>
+                        {isPartner && (project as any).developer_name && (
+                            <p className="text-xs text-sgs-primary font-semibold mt-0.5 truncate">{t('project.developer')}: {(project as any).developer_name}</p>
                         )}
                         {project.location && (
                             <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate flex items-center gap-1">
@@ -3179,19 +3179,19 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                             </span>
                         </div>
                     )}
-                    {project.listingCount != null && (
+                    {(project as any).listingCount != null && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
-                                <span className="font-semibold text-[var(--text-secondary)]">{project.listingCount}</span> {t('project.listing_count')}
+                                <span className="font-semibold text-[var(--text-secondary)]">{(project as any).listingCount}</span> {t('project.listing_count')}
                             </span>
                         </div>
                     )}
-                    {!isPartner && project.partnerCount != null && (
+                    {!isPartner && (project as any).partnerCount != null && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
-                                <span className="font-semibold text-[var(--text-secondary)]">{project.partnerCount}</span> {t('project.partner_count')}
+                                <span className="font-semibold text-[var(--text-secondary)]">{(project as any).partnerCount}</span> {t('project.partner_count')}
                             </span>
                         </div>
                     )}
@@ -3218,9 +3218,9 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                     {t('project.view_listings')}
-                    {(project.listingCount || 0) > 0 && (
+                    {((project as any).listingCount || 0) > 0 && (
                         <span className="ml-auto px-2 py-0.5 bg-sgs-champagne text-sgs-verified text-xs font-bold rounded-full">
-                            {project.listingCount}
+                            {(project as any).listingCount}
                         </span>
                     )}
                 </button>
@@ -3266,6 +3266,9 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
+
+export const ProjectCard = React.memo(ProjectCardBase);
+
 export function Projects() {
     const { t } = useTranslation();
     const [user, setUser] = useState<any>(null);
@@ -3410,7 +3413,7 @@ export function Projects() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id, loading]);
 
-    const handleSave = async (data: any) => {
+    const handleSave = async (data: Record<string, unknown>) => {
         if (formTarget === 'new') {
             const created = await db.createProject(data);
             setProjects(prev => [created, ...prev]);
@@ -3432,7 +3435,7 @@ export function Projects() {
                 try {
                     localStorage.setItem(
                         `sgs_proj_order_${user?.id}`,
-                        JSON.stringify(next.map((p: any) => p.id))
+                        JSON.stringify(next.map((p: Project) => p.id))
                     );
                 } catch {}
                 return next;

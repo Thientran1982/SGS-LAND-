@@ -17,7 +17,7 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   done: 'bg-emerald-500',
   cancelled: 'bg-rose-400',
 };
-function StatCard({ label, value, sub, color, icon }: { label: string; value: number | string; sub?: string; color: string; icon: React.ReactNode }) {
+function StatCardBase({ label, value, sub, color, icon }: { label: string; value: number | string; sub?: string; color: string; icon: React.ReactNode }) {
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl p-5 border border-[var(--glass-border)] flex items-start gap-4 shadow-sm">
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
@@ -31,6 +31,9 @@ function StatCard({ label, value, sub, color, icon }: { label: string; value: nu
     </div>
   );
 }
+
+export const StatCard = React.memo(StatCardBase);
+
 function SkeletonCard() {
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl p-5 border border-[var(--glass-border)] flex items-start gap-4 shadow-sm animate-pulse">
