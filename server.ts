@@ -5330,30 +5330,86 @@ async function startServer() {
       '.map':   'application/json',
     };
 
-    app.get('/assets/*path', (req, res, next) => {
+    // ─── In-memory asset cache ────────────────────────────────────────────────
+    // Replit VM overlay FS returns transient EIO on dist/assets reads, especially
+    // in the first few minutes after a fresh deployment. 4-retry/900ms is not
+    // enough — EIO can persist for several minutes, causing the main JS bundle to
+    // fail to load and the React app to get stuck on the "Đang khởi động hệ thống"
+    // splash screen.  Solution: load ALL dist/assets files into RAM at startup
+    // (7.6 MB total, well within Node heap), serve from the Map on every request.
+    // A pending-promise queue prevents thundering-herd: concurrent requests for
+    // the same file wait for the single inflight read rather than spawning many.
+    const _assetCache = new Map<string, Buffer>();
+    const _assetPending = new Map<string, Promise<Buffer | null>>();
+
+    const _readWithEioRetry = (fp: string, attempt = 1): Promise<Buffer | null> =>
+      new Promise(resolve => {
+        fs.readFile(fp, (err, data) => {
+          if (!err) return resolve(data);
+          if ((err as any).code === 'ENOENT') return resolve(null);
+          if ((err as any).code === 'EIO') {
+            // Exponential backoff: 500ms, 1s, 2s, 4s … capped at 30s, unlimited retries
+            const delay = Math.min(500 * Math.pow(2, attempt - 1), 30_000);
+            logger.warn(`[AssetCache] EIO on ${fp} attempt ${attempt}, retry in ${delay}ms`);
+            setTimeout(() => _readWithEioRetry(fp, attempt + 1).then(resolve), delay);
+          } else {
+            logger.error('[AssetCache] Unexpected error reading asset', err);
+            resolve(null);
+          }
+        });
+      });
+
+    // Pre-warm: load every file in dist/assets into cache at startup.
+    // Runs in background — server starts immediately, cache fills gradually.
+    (async () => {
+      try {
+        const assetsDir = path.join(process.cwd(), 'dist', 'assets');
+        const files = await fs.promises.readdir(assetsDir).catch(() => [] as string[]);
+        await Promise.all(files.map(async f => {
+          const fp = path.join(assetsDir, f);
+          const data = await _readWithEioRetry(fp);
+          if (data) _assetCache.set(fp, data);
+        }));
+        logger.info(`[AssetCache] Pre-warmed ${_assetCache.size} assets into RAM`);
+      } catch (e) {
+        logger.warn('[AssetCache] Pre-warm error', e);
+      }
+    })();
+
+    app.get('/assets/*path', (req: express.Request, res: express.Response, next: express.NextFunction) => {
       const filePath = path.join(process.cwd(), 'dist', req.path);
       const ext = path.extname(filePath).toLowerCase();
       const contentType = MIME[ext] || 'application/octet-stream';
 
-      const tryRead = (attempt: number) => {
-        fs.readFile(filePath, (err, data) => {
-          if (err) {
-            if ((err as any).code === 'ENOENT') {
-              return res.status(404).end();
-            }
-            if ((err as any).code === 'EIO' && attempt < 4) {
-              // Retry up to 3 times with increasing delay on transient Replit overlay FS I/O error
-              return setTimeout(() => tryRead(attempt + 1), attempt * 150);
-            }
-            return next(err);
-          }
-          res.setHeader('Content-Type', contentType);
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-          res.setHeader('Vary', 'Accept-Encoding');
-          res.end(data);
+      // Serve from RAM cache if already loaded
+      const cached = _assetCache.get(filePath);
+      if (cached) {
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.setHeader('Vary', 'Accept-Encoding');
+        res.setHeader('X-Asset-Cache', 'hit');
+        return res.end(cached);
+      }
+
+      // Not yet cached: coalesce concurrent requests into one inflight read
+      let pending = _assetPending.get(filePath);
+      if (!pending) {
+        pending = _readWithEioRetry(filePath).then(data => {
+          _assetPending.delete(filePath);
+          if (data) _assetCache.set(filePath, data);
+          return data;
         });
-      };
-      tryRead(1);
+        _assetPending.set(filePath, pending);
+      }
+
+      pending.then(data => {
+        if (!data) return res.status(404).end();
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.setHeader('Vary', 'Accept-Encoding');
+        res.setHeader('X-Asset-Cache', 'miss');
+        res.end(data);
+      }).catch(next);
     });
 
     // Long-lived cache for hashed assets (JS/CSS chunks have content hash in filename)
