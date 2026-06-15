@@ -1,0 +1,191 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "SGS LAND Bao Cao Thi Truong BDS Dong Nam Bo Q2/2026",
+  "description": "Bao cao thi truong bat dong san Dong Nam Bo (TP.HCM, Dong Nai, Binh Duong, Long An) Quy 2 nam 2026. Du lieu giao dich thuc te, xu huong gia, nhan xet chuyen gia.",
+  "url": "https://sgsland.vn/data/market-report-q2-2026.json",
+  "identifier": "sgsland-market-report-q2-2026",
+  "version": "1.0",
+  "creator": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#organization",
+    "name": "SGS LAND Research"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "SGS LAND Research Team"
+  },
+  "dateModified": "2026-06-15",
+  "dateCreated": "2026-06-01",
+  "temporalCoverage": "2026-04/2026-06",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "inLanguage": "vi-VN",
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "contentUrl": "https://sgsland.vn/data/market-report-q2-2026.json",
+      "encodingFormat": "application/json"
+    }
+  ],
+  "keywords": [
+    "thi truong BDS",
+    "Q2 2026",
+    "TP.HCM",
+    "Dong Nam Bo",
+    "xu huong gia",
+    "giao dich"
+  ],
+  "reportPeriod": "Q2/2026 (Thang 4-6/2026)",
+  "dataSource": "45.000+ giao dich cong chung, CBRE, Savills, du lieu noi bo SGS LAND",
+  "executiveSummary": {
+    "headline": "Thi truong BDS Dong Nam Bo phuc hoi manh Q2/2026",
+    "keyFindings": [
+      "Gia can ho TP.HCM tang trung binh 8.2% yoy, cao nhat trong 4 quy lien tiep",
+      "Long Thanh la diem nong nhat voi giao dich tang 145% qoq truoc khi san bay khai thac",
+      "Lai suat vay mua nha giam ve 7.5-8.5%, kich thich cau mua o that",
+      "Nguon cung can ho moi TP.HCM Q2/2026 dat 8.200 can, tang 35% so voi Q1",
+      "Ty le hap thu (absorption rate) dat 78%, muc cao nhat tu Q3/2024"
+    ]
+  },
+  "marketData": {
+    "hcmcApartment": {
+      "totalNewSupply_units": 8200,
+      "totalTransactions_units": 6396,
+      "absorptionRate_percent": 78,
+      "avgPriceGrowth_yoy_percent": 8.2,
+      "priceBySegment": [
+        {
+          "segment": "Affordable (<2 ty)",
+          "supply_units": 1200,
+          "absorption_percent": 95,
+          "avgPrice_million_per_m2": 35
+        },
+        {
+          "segment": "Mid-range (2-5 ty)",
+          "supply_units": 4500,
+          "absorption_percent": 82,
+          "avgPrice_million_per_m2": 52
+        },
+        {
+          "segment": "High-end (5-10 ty)",
+          "supply_units": 2000,
+          "absorption_percent": 68,
+          "avgPrice_million_per_m2": 85
+        },
+        {
+          "segment": "Luxury (>10 ty)",
+          "supply_units": 500,
+          "absorption_percent": 45,
+          "avgPrice_million_per_m2": 145
+        }
+      ]
+    },
+    "longThanhMarket": {
+      "totalTransactions": 1850,
+      "transactionGrowth_qoq_percent": 145,
+      "avgLandPrice_million_per_m2": 18.5,
+      "priceGrowth_yoy_percent": 22,
+      "catalystFactor": "San bay quoc te Long Thanh giai doan 1 hoan thanh cuoi 2026"
+    },
+    "binhDuongMarket": {
+      "totalTransactions": 2100,
+      "avgApartmentPrice_million_per_m2": 28,
+      "priceGrowth_yoy_percent": 6.5,
+      "keyArea": "Thuoc Thu Dau Mot, Di An, Thuan An"
+    },
+    "interestRateTrend": {
+      "currentRate_min_percent": 7.5,
+      "currentRate_max_percent": 9.0,
+      "trend": "Giam 0.5-1% so voi Q2/2025",
+      "forecast_H2_2026": "On dinh hoac tiep tuc giam nhe 0.25-0.5%"
+    }
+  },
+  "priceIndexTable": {
+    "unit": "trieu VND/m2",
+    "period": "Q2/2026",
+    "districts": [
+      {
+        "area": "Quan 1",
+        "type": "Nha pho",
+        "priceMin": 200,
+        "priceMax": 500,
+        "yoyChange_percent": 5
+      },
+      {
+        "area": "Quan 2 (TP Thu Duc)",
+        "type": "Can ho",
+        "priceMin": 45,
+        "priceMax": 120,
+        "yoyChange_percent": 12
+      },
+      {
+        "area": "Quan 7",
+        "type": "Can ho + Nha pho",
+        "priceMin": 40,
+        "priceMax": 150,
+        "yoyChange_percent": 8
+      },
+      {
+        "area": "Quan 9 (TP Thu Duc)",
+        "type": "Can ho",
+        "priceMin": 28,
+        "priceMax": 75,
+        "yoyChange_percent": 10
+      },
+      {
+        "area": "Binh Thanh",
+        "type": "Nha pho",
+        "priceMin": 80,
+        "priceMax": 250,
+        "yoyChange_percent": 9
+      },
+      {
+        "area": "Long Thanh (Dong Nai)",
+        "type": "Dat nen",
+        "priceMin": 8,
+        "priceMax": 30,
+        "yoyChange_percent": 22
+      },
+      {
+        "area": "Nhon Trach (Dong Nai)",
+        "type": "Biet thu/Nha pho",
+        "priceMin": 10,
+        "priceMax": 50,
+        "yoyChange_percent": 15
+      },
+      {
+        "area": "Thu Dau Mot (Binh Duong)",
+        "type": "Can ho + Nha pho",
+        "priceMin": 25,
+        "priceMax": 65,
+        "yoyChange_percent": 6
+      },
+      {
+        "area": "Di An (Binh Duong)",
+        "type": "Can ho",
+        "priceMin": 22,
+        "priceMax": 50,
+        "yoyChange_percent": 7
+      },
+      {
+        "area": "Can Giuoc (Long An)",
+        "type": "Dat nen",
+        "priceMin": 5,
+        "priceMax": 15,
+        "yoyChange_percent": 8
+      }
+    ]
+  },
+  "expertOutlook": {
+    "h2_2026_forecast": {
+      "apartmentPriceGrowth_percent": "6-10%",
+      "villaTownhouseGrowth_percent": "8-15%",
+      "landLongThanhGrowth_percent": "20-35%",
+      "riskFactors": [
+        "Lai suat tang dot bien",
+        "Chinh sach that chat tin dung BDS",
+        "Cung vuot cau o phan khuc cao cap"
+      ]
+    }
+  }
+}

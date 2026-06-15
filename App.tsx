@@ -47,6 +47,8 @@ const AiValuation = lazyLoad(() => import('./pages/AiValuation'), 'AiValuation')
 const CrmLanding = lazyLoad(() => import('./pages/CrmLanding'), 'CrmLanding'); 
 const ListingDetail = lazyLoad(() => import('./pages/ListingDetail'), 'ListingDetail'); 
 const AboutUs = lazyLoad(() => import('./pages/AboutUs'), 'AboutUs');
+const Methodology = lazyLoad(() => import('./pages/Methodology'), 'Methodology');
+const PressMedia = lazyLoad(() => import('./pages/PressMedia'), 'PressMedia');
 const News = lazyLoad(() => import('./pages/News'), 'News');
 const Contact = lazyLoad(() => import('./pages/Contact'), 'Contact'); 
 const Careers = lazyLoad(() => import('./pages/Careers'), 'Careers'); 
@@ -173,6 +175,8 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.AI_VALUATION]: AiValuation, 
     [ROUTES.CRM_SOLUTION]: CrmLanding,
     [ROUTES.ABOUT]: AboutUs,
+  [ROUTES.METHODOLOGY]: Methodology,
+  [ROUTES.PRESS_MEDIA]: PressMedia,
     [ROUTES.NEWS]: News,
     [ROUTES.CONTACT]: Contact,
     [ROUTES.CAREERS]: Careers,

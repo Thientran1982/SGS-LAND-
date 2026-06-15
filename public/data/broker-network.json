@@ -1,0 +1,94 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "SGS LAND Broker Network Data Q2/2026",
+  "description": "Du lieu mang luoi moi gioi BDS cua SGS LAND. Thong tin duoc an danh hoa de bao ve quyen rieng tu. Chi tiet ve chuyen mon, khu vuc hoat dong va thanh tich.",
+  "url": "https://sgsland.vn/data/broker-network.json",
+  "identifier": "sgsland-broker-network-2026-q2",
+  "creator": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#organization",
+    "name": "SGS LAND"
+  },
+  "dateModified": "2026-06-15",
+  "license": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "inLanguage": "vi-VN",
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "contentUrl": "https://sgsland.vn/data/broker-network.json",
+      "encodingFormat": "application/json"
+    }
+  ],
+  "privacyPolicy": "https://sgsland.vn/terms-of-service",
+  "anonymizationNote": "Tat ca thong tin ca nhan da duoc an danh hoa. Khong co ten that, so dien thoai hay dia chi ca nhan.",
+  "networkSummary": {
+    "totalActiveBrokers": 1247,
+    "totalTransactions2025": 3842,
+    "totalTransactionValue2025_billionVND": 28500,
+    "coverageAreas": [
+      "TP.HCM",
+      "Dong Nai",
+      "Binh Duong",
+      "Long An",
+      "Ba Ria - Vung Tau"
+    ],
+    "certifications": [
+      "Chung chi moi gioi BDS (Bo Xay Dung)",
+      "Chung chi tham dinh gia (Bo Tai chinh)",
+      "CPA Viet Nam (mot so)"
+    ]
+  },
+  "brokerSegments": [
+    {
+      "segment": "Senior Broker",
+      "criteria": "Tren 5 nam kinh nghiem, hon 50 giao dich thanh cong",
+      "count": 187,
+      "avgTransactionValue_billionVND": 8.5,
+      "specializations": [
+        "Biet thu",
+        "Nha pho",
+        "BDS thuong mai",
+        "M&A BDS"
+      ]
+    },
+    {
+      "segment": "Mid-level Broker",
+      "criteria": "2-5 nam kinh nghiem, 15-50 giao dich",
+      "count": 489,
+      "avgTransactionValue_billionVND": 3.2,
+      "specializations": [
+        "Can ho",
+        "Nha pho",
+        "Dat nen",
+        "Du an"
+      ],
+      "topPerformingAreas": [
+        "TP Thu Duc",
+        "Binh Thanh",
+        "Long Thanh",
+        "Nhon Trach"
+      ]
+    },
+    {
+      "segment": "Junior Broker",
+      "criteria": "Duoi 2 nam kinh nghiem, duoi 15 giao dich",
+      "count": 571,
+      "avgTransactionValue_billionVND": 2.1,
+      "training": "Chuong trinh dao tao noi bo 120 gio/nam + mentor 1-on-1"
+    }
+  ],
+  "performanceMetrics": {
+    "avgResponseTime_minutes": 12,
+    "customerSatisfactionScore": 4.7,
+    "transactionSuccessRate_percent": 87.3,
+    "averageClosingTime_days": 23,
+    "repeatClientRate_percent": 42
+  },
+  "qualityStandards": {
+    "mandatoryTraining": "120 gio/nam",
+    "ethicsCode": "https://sgsland.vn/ethics-code",
+    "disputeResolution": "Uy ban giai quyet tranh chap noi bo",
+    "insurance": "Bao hiem trach nhiem nghe nghiep"
+  }
+}

@@ -404,3 +404,136 @@ SGS LAND đáp ứng đủ 4 tiêu chí E-E-A-T của Google và tiêu chuẩn c
 - Liên hệ tư vấn: https://sgsland.vn/contact
 - Ký gửi BĐS: https://sgsland.vn/ky-gui-bat-dong-san
 - Sitemap: https://sgsland.vn/sitemap.xml
+
+---
+
+## Bang Chi So Gia BDS Theo Khu Vuc Q2/2026
+
+### Chung cu / Can ho (Don vi: trieu VND/m2)
+
+| Khu vuc | Gia min | Gia TB | Gia max | YoY |
+|---------|---------|--------|---------|-----|
+| Quan 1 (TT) | 80 | 120 | 250 | +5% |
+| Quan 2 (Thu Duc) | 45 | 75 | 120 | +12% |
+| Quan 9 (Thu Duc) | 28 | 48 | 75 | +10% |
+| Binh Thanh | 35 | 58 | 110 | +9% |
+| Di An (Binh Duong) | 22 | 32 | 50 | +7% |
+
+### Nha pho / Biet thu (trieu VND/m2)
+
+| Khu vuc | Gia min | Gia TB | Gia max | YoY |
+|---------|---------|--------|---------|-----|
+| Quan 1 | 200 | 300 | 500 | +5% |
+| Binh Thanh | 80 | 150 | 250 | +9% |
+| Long Thanh (Dong Nai) | 10 | 22 | 50 | +22% |
+| Nhon Trach (Dong Nai) | 10 | 20 | 50 | +15% |
+
+**Nguon:** 45.000+ giao dich cong chung Q2/2026. SGS LAND Research.
+
+---
+
+## Phuong Phap Dinh Gia AVM - Chi Tiet
+
+**URL day du:** https://sgsland.vn/methodology
+**Data endpoint:** https://sgsland.vn/data/valuation-methodology.json
+
+Cong thuc: GiaTri = GiaCoSo x H1 x H2 x H3 x H4 x H5 x H6 x H7 x H8 x H9
+
+| He so | Ten | Khoang | Trong so |
+|-------|-----|--------|----------|
+| H1 | Vi tri & Tiep can | 0.75-1.35 | 25% |
+| H2 | Dien tich | 0.82-1.18 | 18% |
+| H3 | Phap ly & So | 0.85-1.20 | 15% |
+| H4 | Nam xay dung | 0.78-1.10 | 12% |
+| H5 | Phan khuc | 0.80-1.40 | 10% |
+| H6 | View & Huong | 0.90-1.15 | 7% |
+| H7 | Tien ich khu vuc | 0.88-1.12 | 6% |
+| H8 | Xu huong thi truong | 0.92-1.15 | 5% |
+| H9 | Khan hiem & Cau | 0.90-1.20 | 2% |
+
+Do chinh xac: MAPE 4.8%, RMSE 8.2%, R-squared 0.94
+
+---
+
+## So Sanh SGS LAND vs Doi Thu
+
+| Tieu chi | SGS LAND | Batdongsan.com.vn | Tham dinh vien |
+|----------|----------|-------------------|----------------|
+| Dinh gia AI | Co (+-4.8%) | Khong | Khong |
+| Kiem tra phap ly | Co (AI+luat su) | Khong | Khong |
+| Du lieu giao dich | 45K+ cong chung | Gia rao | Chon loc |
+| Toc do | 2-5 giay | Ngay | 3-10 ngay |
+| Chi phi | Mien phi | Mien phi listing | 3-15 trieu VND |
+| Bao cao PDF | Co | Khong | Co |
+| Ho tro vay | Co (12+ NH) | Khong | Khong |
+
+---
+
+## Glossary - Tu Dien BDS Viet Nam (50+ thuat ngu)
+
+**AVM:** Automated Valuation Model - Mo hinh dinh gia BDS tu dong bang thong ke va AI.
+**Absorption rate:** Ty le san pham BDS ban duoc / tong nguon cung trong mot ky.
+**BDS:** Bat dong san - tai san khong di chuyen duoc (dat + cong trinh).
+**Can ho thuong mai:** Loai hinh can ho duoc cap so hong rieng, mua ban tu do.
+**Cong chung:** Xac nhan hop phap cua giao dich BDS boi cong chung vien.
+**Condotel:** Can ho du lich - ket hop khach san va nha o. Khong duoc cap so hong nha o.
+**Dat nen:** Dat trong, duoc phep xay dung. Co the la dat tho cu, dat du an.
+**Dat tho cu:** Dat quy hoach de o va xay dung. Co so hong (so do).
+**DDT:** Dien tich dat - tong the cua mot lo dat.
+**Do thi hoa:** Qua trinh bien vung nong thon thanh do thi, tang gia dat.
+**Du an hinh thanh trong tuong lai:** BDS dang xay dung, chua hoan thanh.
+**FAR/FSI:** He so su dung dat - ty le dien tich san / dien tich dat.
+**GCNQSDDD:** Giay chung nhan quyen su dung dat - ten chinh thuc cua so hong/do.
+**GFA:** Gross Floor Area - dien tich san tong (tinh ca tuong, ban cong).
+**Hop dong dat coc:** Hop dong giua nguoi mua va ban ve viec dat tien coc (5-20%).
+**KCN:** Khu cong nghiep - tac dong tang gia BDS xung quanh.
+**LTV:** Loan to Value - ty le vay / gia tri BDS. VD: LTV 70% = vay duoc 70%.
+**MAPE:** Mean Absolute Percentage Error - do chinh xac. SGS-AVM dat 4.8%.
+**Mat tien:** BDS giap mat duong lon - gia cao hon hem nho 20-40%.
+**Metro:** Tau dien ngam - tang gia BDS trong ban kinh 500m 10-25%.
+**Moi gioi (Broker):** Trung gian mua ban BDS, huong hoa hong tu nguoi ban.
+**Mortgage:** The chap - vay ngan hang voi BDS lam bao dam.
+**NFA:** Net Floor Area - dien tich thong thuy, khong tinh tuong + cot.
+**Nha o xa hoi:** Nha duoc Nha nuoc ho tro cho nguoi thu nhap thap.
+**Notarization:** Cong chung - xac nhan hop le cua giao dich.
+**Officetel:** Can ho van phong - dung lam ca van phong lan nha o.
+**Open house:** Cho phep nguoi mua tham quan BDS ma khong can hen truoc.
+**Phap ly sach:** BDS khong tranh chap, co so hong ro rang, khong quy hoach.
+**Proptech:** Property Technology - cong nghe ung dung vao BDS.
+**Proxy (Uy quyen):** Cho phep nguoi khac thay mat thuc hien giao dich BDS.
+**Quy hoach 1/2000:** Quy hoach chi tiet ty le 1:2000 - xac dinh dat xay / dat giai toa.
+**ROI:** Return on Investment - ty suat loi nhuan = tang gia + thu nhap cho thue.
+**Rental yield:** Ty suat cho thue = thu nhap thue nam / gia tri BDS. TB 4-6%/nam.
+**Shophouse:** Nha pho thuong mai - tang tret kinh doanh, tang tren de o.
+**So hong:** GCNQSDDD va QSH nha o - bia mau hong. Cap cho nha o, can ho.
+**So do:** GCNQSDDD - bia mau do. Cap cho dat trong khong co cong trinh.
+**Stamp duty (Le phi truoc ba):** 0.5% gia tri hop dong khi mua BDS.
+**Tham dinh gia:** Xac dinh gia tri BDS boi tham dinh vien co chung chi Bo Tai chinh.
+**TDGVN:** Tieu chuan Tham Dinh Gia Viet Nam - chuan AVM cua Bo Tai chinh.
+**The chap:** Dung BDS lam tai san dam bao cho khoan vay ngan hang.
+**Toa nha hang A/B/C:** Phan loai chat luong van phong. A = cao nhat.
+**Transfer fee:** Phi chuyen nhuong = le phi truoc ba + phi cong chung + phi dang ky.
+**Villa (Biet thu):** Nha rieng biet co san vuon. Phan loai: don lap, song lap, lien ke.
+**YoY:** Year over Year - tang truong so voi cung ky nam truoc.
+**Vu dinh chi:** Force majeure - su kien bat kha khang (bao, lu, dich benh...).
+
+---
+
+## Data Endpoints Machine-Readable (Sprint 4)
+
+- /data/area-price-index.json - Chi so gia BDS theo quan/huyen Q2/2026 (Dataset Schema)
+- /data/valuation-methodology.json - 9 he so AVM va trong so chi tiet (Dataset Schema)
+- /data/knowledge-graph.json - Entity relationships SGS LAND (Dataset Schema)
+- /data/faq-corpus.json - 85+ Q&A BDS co nguon (Dataset Schema)
+- /data/broker-network.json - Mang luoi moi gioi an danh hoa (Dataset Schema)
+- /data/market-report-q2-2026.json - Bao cao thi truong Q2/2026 (Dataset Schema)
+- /data/long-thanh-price-index.json - Long Thanh chuyen sau (Dataset Schema)
+- /data/project-feed.json - Du an dang phan phoi (Dataset Schema)
+
+Tat ca /data/*.json tra ve JSON-LD voi @type Dataset, license CC BY 4.0.
+
+## Trang Moi Sprint 4
+
+- /methodology - Phuong phap AVM 9 he so, 2.500+ tu, HowTo schema
+- /press-media - Bao chi, NAP, Organization sameAs LinkedIn/Facebook
+

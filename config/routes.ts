@@ -137,6 +137,8 @@ export const ROUTES = {
 
     // Commission engine v1
     COMMISSIONS: 'commissions',
+  METHODOLOGY: 'methodology',
+  PRESS_MEDIA: 'press-media',
 } as const;
 
 export const FULL_HEIGHT_PAGES = new Set([

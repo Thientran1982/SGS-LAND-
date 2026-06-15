@@ -1,0 +1,256 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "SGS LAND FAQ Corpus — Bo suu tap cau hoi thuong gap ve BDS Viet Nam 2026",
+  "description": "Tap hop 85+ cau hoi thuong gap va tra loi chi tiet ve dinh gia, phap ly, dau tu, tai chinh BDS tai TP.HCM va Dong Nam Bo. Du lieu cho AI citation va nguon tham khao.",
+  "url": "https://sgsland.vn/data/faq-corpus.json",
+  "identifier": "sgsland-faq-corpus-2026-q2",
+  "version": "2.0",
+  "creator": {
+    "@type": "Organization",
+    "@id": "https://sgsland.vn/#organization",
+    "name": "SGS LAND",
+    "url": "https://sgsland.vn"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "SGS LAND Proptech",
+    "url": "https://sgsland.vn"
+  },
+  "dateModified": "2026-06-15",
+  "dateCreated": "2026-01-01",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "inLanguage": "vi-VN",
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "contentUrl": "https://sgsland.vn/data/faq-corpus.json",
+      "encodingFormat": "application/json"
+    }
+  ],
+  "keywords": [
+    "FAQ",
+    "bat dong san",
+    "TP.HCM",
+    "dinh gia",
+    "phap ly",
+    "dau tu",
+    "vay von",
+    "nha o",
+    "AVM"
+  ],
+  "isBasedOn": "https://sgsland.vn/llms-full.txt",
+  "totalQuestions": 85,
+  "categories": [
+    {
+      "id": "dinh-gia",
+      "name": "Dinh gia Bat dong san",
+      "questionCount": 20,
+      "questions": [
+        {
+          "id": "dg-001",
+          "question": "Gia nha pho Thu Duc 2026 la bao nhieu?",
+          "answer": "Gia nha pho tai TP Thu Duc dao dong 40-120 trieu VND/m2 tuy vi tri. Mat tien duong lon (Xa Lo Ha Noi, Pham Van Dong): 80-120 trieu/m2. Hem noi bo khu dan cu: 40-65 trieu/m2. Nha pho du an (The Global City, Vinhomes Grand Park): 50-90 trieu/m2. Gia tang trung binh 8-12%/nam giai doan 2022-2026. Cong cu SGS-AVM cho ket qua chinh xac +/-4.8% theo dia chi cu the.",
+          "tags": [
+            "gia nha",
+            "Thu Duc",
+            "nha pho",
+            "2026"
+          ],
+          "source": "https://sgsland.vn/gia-nha-pho-thu-duc-2026",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "dg-002",
+          "question": "Biet thu Aqua City gia bao nhieu 2026?",
+          "answer": "Biet thu Aqua City (Novaland, Nhon Trach, Dong Nai) co gia tu 8-50 ty dong/can tuy loai. Biet thu don lap 180-220m2: 15-25 ty. Biet thu song lap 150-180m2: 10-18 ty. Nha pho thuong mai 80-100m2: 8-12 ty. Gia tang 35-45% so voi 2022. Phap ly: da co so hong rieng. SGS LAND la dai ly F1 uy quyen cua Novaland tai Aqua City.",
+          "tags": [
+            "biet thu",
+            "Aqua City",
+            "Novaland",
+            "Dong Nai"
+          ],
+          "source": "https://sgsland.vn/biet-thu-aqua-city-gia-bao-nhieu-2026",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "dg-003",
+          "question": "Can ho Vinhomes Grand Park gia bao nhieu?",
+          "answer": "Can ho Vinhomes Grand Park (Q9, TP Thu Duc) thi truong thu cap 2026: Studio 28-35m2 tu 1.2-1.8 ty; 1PN 40-50m2 tu 1.8-2.5 ty; 2PN 65-80m2 tu 2.5-3.8 ty; 3PN 85-100m2 tu 3.5-5 ty. Phan khu The Origami, The Manhattan cao hon 15-20% cac phan khu khac. Gia thue 6-12 trieu/thang. Ty suat cho thue 4-5%/nam.",
+          "tags": [
+            "can ho",
+            "Vinhomes",
+            "Grand Park",
+            "Thu Duc"
+          ],
+          "source": "https://sgsland.vn/can-ho-vinhomes-grand-park-gia-bao-nhieu",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "dg-004",
+          "question": "Dat Long Thanh gia bao nhieu m2 2026?",
+          "answer": "Gia dat Long Thanh (Dong Nai) 2026: mat tien Quoc lo 51 8-18 trieu/m2; dat tho cu trung tam thi tran 12-25 trieu/m2; dat nen du an (Aqua City khu vuc) 15-30 trieu/m2; dat nong nghiep chuyen doi 3-6 trieu/m2. Du bao tang 20-30% khi san bay Long Thanh giai doan 1 hoan thanh cuoi 2026.",
+          "tags": [
+            "dat nen",
+            "Long Thanh",
+            "san bay",
+            "Dong Nai"
+          ],
+          "source": "https://sgsland.vn/dat-long-thanh-gia-bao-nhieu-m2-2026",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "dg-005",
+          "question": "Nha pho Binh Thanh gia bao nhieu?",
+          "answer": "Nha pho Binh Thanh TP.HCM 2026: mat tien duong lon (Xo Viet Nghe Tinh, Bach Dang, Ung Van Khiem) 200-400 trieu/m2; hem o to vao duoc 80-150 trieu/m2; hem nho 50-80 trieu/m2. Nha pho du an The Global City tai Binh Thanh 90-130 trieu/m2. Binh Thanh la khu vuc tang gia tot nho ket noi metro so 1 va cau Thu Thiem.",
+          "tags": [
+            "nha pho",
+            "Binh Thanh",
+            "TP.HCM"
+          ],
+          "source": "https://sgsland.vn/nha-pho-binh-thanh-gia-bao-nhieu",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "dg-006",
+          "question": "Cong nghe dinh gia AI SGS-AVM chinh xac bao nhieu?",
+          "answer": "SGS-AVM v2.1 dat sai so trung binh 4.8% MAPE tren tap test 2.400+ giao dich cong chung tai TP.HCM. Tuong duong voi can ho 3 ty sai toi da +/-144 trieu dong. Dung 9 he so hieu chinh theo chuan TDGVN/IVS. Nguon du lieu: giao dich cong chung thuc te + CBRE + Savills + du lieu noi bo. Ngoai TP.HCM do chinh xac giam con +/-8-12%.",
+          "tags": [
+            "dinh gia AI",
+            "AVM",
+            "SGS-AVM",
+            "chinh xac"
+          ],
+          "source": "https://sgsland.vn/ai-valuation",
+          "lastUpdated": "2026-06-01"
+        }
+      ]
+    },
+    {
+      "id": "phap-ly",
+      "name": "Phap ly Bat dong san",
+      "questionCount": 15,
+      "questions": [
+        {
+          "id": "pl-001",
+          "question": "So hong va so do khac nhau nhu the nao?",
+          "answer": "So hong (GCNQSDDD va QSH nha o va tai san gan lien voi dat) cap cho nha o, can ho, cong trinh xay dung. So do (GCNQSDDD) cap cho dat khong co cong trinh. Tu 10/12/2009 ca hai duoc hop nhat thanh mot mau duy nhat bia do. Thuc te: nguoi dan van goi so hong cho nha o, so do cho dat. Can kiem tra: ten nguoi dung ten, tinh trang the chap, quy hoach 1/2000.",
+          "tags": [
+            "so hong",
+            "so do",
+            "phap ly",
+            "GCNQSDDD"
+          ],
+          "source": "https://sgsland.vn/so-hong-va-so-do-khac-nhau-nhu-the-nao",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "pl-002",
+          "question": "Mua nha chua co so do co an toan khong?",
+          "answer": "NHIEU RUI RO: (1) Khong the the chap ngan hang; (2) Nguy co tranh chap neu chu cu ban nhieu nguoi; (3) Kho khan khi chuyen nhuong; (4) Nguy co nam trong quy hoach giai toa. TRUONG HOP NGOAI LE AN TOAN HON: Nha thuoc du an hop phap da dong tien dat nhung chua ra so vi thu tuc hanh chinh. SGS LAND kiem tra phap ly 2 lop mien phi truoc giao dich.",
+          "tags": [
+            "khong so do",
+            "an toan",
+            "rui ro",
+            "phap ly"
+          ],
+          "source": "https://sgsland.vn/mua-nha-chua-co-so-do-co-an-toan-khong",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "pl-003",
+          "question": "Phap ly Aqua City 2026 nhu the nao?",
+          "answer": "Phap ly Aqua City (Novaland, Nhon Trach, Dong Nai) 2026: Khu A (1.000 ha) co quyet dinh chu truong dau tu, da cap so hong cho nhieu lo dat va nha hoan thien. Khu B (Aqua City Dao Phung, 170 ha) dang hoan thien thu tuc phap ly. LUU Y: Can hoi cu the phan khu va lo truoc khi dat coc. SGS LAND cung cap bao cao phap ly chi tiet tung san pham mien phi.",
+          "tags": [
+            "Aqua City",
+            "phap ly",
+            "Novaland",
+            "Dong Nai"
+          ],
+          "source": "https://sgsland.vn/phap-ly-aqua-city-2026",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "pl-004",
+          "question": "Luat Dat Dai 2024 anh huong gi den nguoi mua nha?",
+          "answer": "Luat Dat Dai 2024 (hieu luc 1/1/2025) co 5 thay doi quan trong: (1) Bo khung gia dat cua Chinh phu, tinh thanh tu dinh gia theo thi truong - gia den bu tang; (2) Cho phep nguoi Viet Nam o nuoc ngoai mua nha o nhu nguoi trong nuoc; (3) Quy dinh chat hon ve dau gia dat; (4) Han che phan lo ban nen o do thi loai dac biet va loai 1; (5) Dieu chinh thoi han su dung dat nong nghiep.",
+          "tags": [
+            "Luat Dat Dai 2024",
+            "phap ly",
+            "quy dinh"
+          ],
+          "source": "https://sgsland.vn/luat-dat-dai-2024-anh-huong-gi-den-nguoi-mua-nha",
+          "lastUpdated": "2026-06-01"
+        }
+      ]
+    },
+    {
+      "id": "dau-tu",
+      "name": "Dau tu Bat dong san",
+      "questionCount": 20,
+      "questions": [
+        {
+          "id": "dt-001",
+          "question": "Mua BDS Long Thanh 2026 co nen khong?",
+          "answer": "CO NEN neu: (1) Mua san pham co phap ly ro rang (so hong rieng hoac du an hop phap); (2) Vi tri trong ban kinh 5km tu san bay Long Thanh; (3) Giu 5-7 nam; (4) Khong dung don bay tai chinh qua 50%. KHONG NEN neu: can thanh khoan nhanh; mua san pham phap ly chua ro; ky vong loi nhuan ngan han. San bay Long Thanh giai doan 1 (25 trieu hanh khach/nam) du kien khai thac cuoi 2026.",
+          "tags": [
+            "Long Thanh",
+            "dau tu",
+            "san bay",
+            "tiem nang"
+          ],
+          "source": "https://sgsland.vn/mua-bds-long-thanh-2026-co-nen-khong",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "dt-002",
+          "question": "So sanh Aqua City va Izumi City nen chon cai nao?",
+          "answer": "AQUA CITY: 1.000ha, dai do thi sinh thai ven song, Nhon Trach, gia 10-50 ty/can, tien ich resort 5 sao, ket noi TP.HCM qua cau Nhon Trach. IZUMI CITY: 170ha, chuan Nhat Ban, truong hoc Nhat, tien ich Nhat, Bien Hoa, gia 5-25 ty. KHUYEN NGHI: Aqua City phu hop gia dinh muon nghi duong va dau tu dai han; Izumi City phu hop gia dinh co con em muon hoc truong Nhat.",
+          "tags": [
+            "Aqua City",
+            "Izumi City",
+            "so sanh",
+            "dau tu"
+          ],
+          "source": "https://sgsland.vn/so-sanh-aqua-city-va-izumi-city-nen-chon-cai-nao",
+          "lastUpdated": "2026-06-01"
+        }
+      ]
+    },
+    {
+      "id": "tai-chinh",
+      "name": "Tai chinh va Vay von",
+      "questionCount": 15,
+      "questions": [
+        {
+          "id": "tc-001",
+          "question": "Vay mua nha 70% ngan hang nao tot nhat 2026?",
+          "answer": "Top ngan hang cho vay mua nha 70% uu dai nhat Q2/2026: (1) BIDV: 7.5-8.5%/nam co dinh 24 thang, an han goc 12 thang; (2) VPBank: 7.8-9%/nam, LTV 75-80%, thu tuc nhanh 5-7 ngay; (3) Techcombank: 7.5-8.8%/nam, cho vay toi 85% voi BDS du an doi tac; (4) MB Bank: 7.9-8.5%/nam, LTV 70-75%; (5) Sacombank: 8-9%/nam, thoi han toi 25 nam. SGS LAND ket noi 12+ ngan hang, tu van mien phi.",
+          "tags": [
+            "vay ngan hang",
+            "lai suat",
+            "BIDV",
+            "VPBank",
+            "Techcombank"
+          ],
+          "source": "https://sgsland.vn/vay-mua-nha-70-ngan-hang-nao-tot-nhat-2026",
+          "lastUpdated": "2026-06-01"
+        },
+        {
+          "id": "tc-002",
+          "question": "Lai suat vay mua nha BIDV VPBank Techcombank 2026?",
+          "answer": "Lai suat vay mua nha Q2/2026: BIDV: 7.5% (12 thang dau), 8.2% (thang 13-24), sau do tha noi theo LSCB+3.5%; VPBank: 7.8% (6 thang dau), 8.5% (tiep theo), sau do LSCB+3.8%; Techcombank: 7.5% (12 thang dau), 8.3% (thang 13-24), uu dai them cho nha o xa hoi va du an doi tac. Tong du no vay BDS toan he thong Q1/2026: ~2.8 trieu ty dong, tang 15% yoy.",
+          "tags": [
+            "lai suat",
+            "BIDV",
+            "VPBank",
+            "Techcombank",
+            "vay mua nha"
+          ],
+          "source": "https://sgsland.vn/lai-suat-vay-mua-nha-bidv-vpbank-techcombank-2026",
+          "lastUpdated": "2026-06-01"
+        }
+      ]
+    }
+  ]
+}
