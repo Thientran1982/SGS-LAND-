@@ -423,16 +423,10 @@ const STATIC_PAGE_META: Record<string, {
   'methodology': {
     title: 'Phuong Phap Dinh Gia AI SGS-AVM | 9 He So Hieu Chinh | Do Chinh Xac +/-4.8%',
     description: 'Tai lieu ky thuat day du ve phuong phap dinh gia bat dong san tu dong SGS-AVM v2.1. Su dung 9 he so hieu chinh theo chuan TDGVN/IVS, do chinh xac +/-4.8% MAPE, du lieu 45.000+ giao dich thuc te.',
-    ogTitle: 'Phuong Phap Dinh Gia AI SGS-AVM v2.1 | SGS LAND',
-    ogDescription: 'He thong AVM 9 he so hieu chinh, do chinh xac +/-4.8%, 45.000+ giao dich thuc te tai TP.HCM va Dong Nam Bo.',
-    canonicalPath: '/methodology',
   },
   'press-media': {
     title: 'Press & Media | SGS LAND - Bao Chi Va Truyen Thong',
     description: 'Tong hop cac lan SGS LAND duoc de cap tren bao chi, truyen thong va cac an pham chuyen nganh BDS Viet Nam. Press kit va thong tin lien he truyen thong.',
-    ogTitle: 'SGS LAND - Press & Media Coverage',
-    ogDescription: 'SGS LAND la nen tang proptech hang dau Viet Nam, duoc de cap tren CafeLand, Reatimes, DauTuChungKhoan va nhieu bao chi chuyen nganh BDS.',
-    canonicalPath: '/press-media',
   },
   'about-us': {
     title: 'Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn',

@@ -4888,10 +4888,11 @@ async function startServer() {
   });
 
   // ─── EIO-resilient static handlers for public/ subtrees ─────────────────────
-  // express.static() calls next(err) on EIO (Replit VM overlay FS transient bug),
-  // which bubbles to the global error handler and returns {"error":"Internal server error"}.
-  // These handlers intercept /landing/* and /images/* BEFORE express.static and
-  // retry up to 3 times with incremental delay, identical to the /assets/*path handler.
+  // express.static() calls next(err) on EIO (Replit VM overlay FS transient bug).
+  // Fix: unlimited exponential-backoff retry (same as /assets/* RAM cache) +
+  // in-memory cache so each file is only read once from disk.
+  // Pre-warms public/images/projects/ at startup so project cover images are
+  // always served from RAM on mobile/web without ever hitting the FS again.
   {
     const PUB_MIME: Record<string, string> = {
       '.html': 'text/html; charset=utf-8',  '.css': 'text/css',
@@ -4904,14 +4905,72 @@ async function startServer() {
       '.txt':  'text/plain',                 '.xml':  'application/xml',
     };
 
-    const eioRead = (fp: string, attempt: number, cb: (err: any, data?: Buffer) => void) => {
-      fs.readFile(fp, (err: any, data?: Buffer) => {
-        if (err && err.code === 'EIO' && attempt < 4) {
-          return setTimeout(() => eioRead(fp, attempt + 1, cb), attempt * 150);
-        }
-        cb(err, data);
+    // Shared RAM cache for /images/* and /landing/* files.
+    const _pubCache   = new Map<string, Buffer>();
+    const _pubPending = new Map<string, Promise<Buffer | null>>();
+
+    // Unlimited exponential-backoff retry (500ms → 1s → 2s … capped at 30s).
+    const _pubRead = (fp: string, attempt = 1): Promise<Buffer | null> =>
+      new Promise(resolve => {
+        fs.readFile(fp, (err: any, data?: Buffer) => {
+          if (!err) return resolve(data as Buffer);
+          if (err.code === 'ENOENT' || err.code === 'EISDIR') return resolve(null);
+          if (err.code === 'EIO') {
+            const delay = Math.min(500 * Math.pow(2, attempt - 1), 30_000);
+            logger.warn(`[PubCache] EIO on ${fp} attempt ${attempt}, retry in ${delay}ms`);
+            return setTimeout(() => _pubRead(fp, attempt + 1).then(resolve), delay);
+          }
+          logger.error('[PubCache] Unexpected read error', { fp, err: err.message });
+          resolve(null);
+        });
       });
+
+    // Coalescing read: concurrent requests share one inflight Promise.
+    const _pubReadCached = (fp: string): Promise<Buffer | null> => {
+      const cached = _pubCache.get(fp);
+      if (cached) return Promise.resolve(cached);
+      let pending = _pubPending.get(fp);
+      if (!pending) {
+        pending = _pubRead(fp).then(data => {
+          _pubPending.delete(fp);
+          if (data) _pubCache.set(fp, data);
+          return data;
+        });
+        _pubPending.set(fp, pending);
+      }
+      return pending;
     };
+
+    // Pre-warm public/images/projects/ at startup so cover images are in RAM
+    // before any mobile/browser request arrives (avoids first-hit EIO 500).
+    (async () => {
+      try {
+        const projDir = path.join(process.cwd(), 'public', 'images', 'projects');
+        const files = await fs.promises.readdir(projDir).catch(() => [] as string[]);
+        await Promise.all(files.map(async f => {
+          const fp = path.join(projDir, f);
+          const data = await _pubRead(fp);
+          if (data) _pubCache.set(fp, data);
+        }));
+        logger.info(`[PubCache] Pre-warmed ${_pubCache.size} public images into RAM`);
+      } catch (e) {
+        logger.warn('[PubCache] Pre-warm error', e);
+      }
+    })();
+
+    // /images/* — project cover images and other static images
+    app.get('/images/*path', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const publicRoot = path.join(process.cwd(), 'public');
+      const filePath = path.join(publicRoot, req.path);
+      if (!filePath.startsWith(publicRoot)) return next();
+      _pubReadCached(filePath).then(data => {
+        if (!data) return next();
+        const ext = path.extname(filePath).toLowerCase();
+        res.setHeader('Content-Type', PUB_MIME[ext] || 'application/octet-stream');
+        res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+        res.end(data);
+      }).catch(next);
+    });
 
     // /landing/* — GEO project landing pages (HTML + hero images)
     app.get('/landing/*path', (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -4924,31 +4983,15 @@ async function startServer() {
       if (!candidates[0].startsWith(publicRoot)) return next();
       const tryCandidate = (idx: number) => {
         if (idx >= candidates.length) return next();
-        eioRead(candidates[idx], 1, (err: any, data?: Buffer) => {
-          if (err && (err.code === 'ENOENT' || err.code === 'EISDIR')) return tryCandidate(idx + 1);
-          if (err) return next();
+        _pubReadCached(candidates[idx]).then(data => {
+          if (data === null) return tryCandidate(idx + 1);
           const ext = path.extname(candidates[idx]).toLowerCase() || '.html';
           res.setHeader('Content-Type', PUB_MIME[ext] || 'application/octet-stream');
           res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
           res.end(data);
-        });
+        }).catch(next);
       };
       tryCandidate(0);
-    });
-
-    // /images/* — project cover images and other static images
-    app.get('/images/*path', (req: express.Request, res: express.Response, next: express.NextFunction) => {
-      const publicRoot = path.join(process.cwd(), 'public');
-      const filePath = path.join(publicRoot, req.path);
-      if (!filePath.startsWith(publicRoot)) return next();
-      eioRead(filePath, 1, (err: any, data?: Buffer) => {
-        if (err && err.code === 'ENOENT') return next();
-        if (err) return next();
-        const ext = path.extname(filePath).toLowerCase();
-        res.setHeader('Content-Type', PUB_MIME[ext] || 'application/octet-stream');
-        res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
-        res.end(data);
-      });
     });
   }
 
