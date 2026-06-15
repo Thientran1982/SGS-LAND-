@@ -102,6 +102,60 @@ const FAQ_ITEMS = [
     q_en: "Which projects does SGS LAND currently distribute?",
     a_en: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Can Gio, Masteri Cosmo Central, Vinhomes Hoc Mon — continuously updated.",
   },
+  {
+    q: "Giá nhà phố tại TP.HCM hiện nay là bao nhiêu?",
+    a: "Giá nhà phố tại TP.HCM dao động rất lớn theo khu vực: Quận 1 và trung tâm 150-400 triệu/m2, Thủ Đức (quận 9, 2) 40-80 triệu/m2, Bình Thạnh và Phú Nhuận 80-150 triệu/m2. Nhà phố liền kề trong dự án như Aqua City, The Global City giá 5-15 tỷ/căn. Shophouse mặt tiền trục chính cao hơn 20-40%. Bạn có thể sử dụng công cụ Định Giá AI miễn phí của SGS LAND để tra cứu giá chính xác theo địa chỉ cụ thể.",
+    q_en: "What is the current price of townhouses in Ho Chi Minh City?",
+    a_en: "Townhouse prices in HCMC vary significantly: District 1 150-400M/sqm, Thu Duc 40-80M/sqm. Use SGS LAND free AI valuation for precise pricing.",
+  },
+  {
+    q: "Nên mua căn hộ hay nhà phố để đầu tư?",
+    a: "Mỗi loại có ưu nhược điểm riêng: Căn hộ dễ cho thuê, thanh khoản cao, phù hợp đầu tư tài chính; nhà phố có biên độ tăng giá tốt hơn dài hạn, dòng tiền cho thuê cao hơn, nhưng vốn đầu tư lớn hơn. Nếu ngân sách 2-4 tỷ, căn hộ tại các dự án lớn như Vinhomes, Masterise phù hợp hơn. Ngân sách 5-15 tỷ, nhà phố liền kề tại Long Thành, Aqua City có tiềm năng tăng giá 3-5 năm. Tư vấn chuyên gia SGS LAND để phân tích phù hợp ngân sách bạn.",
+    q_en: "Should I invest in apartments or townhouses?",
+    a_en: "Apartments offer higher liquidity and easier rental management. Townhouses have better long-term appreciation. Choose based on your budget and investment horizon. SGS LAND experts can analyze options for your specific budget.",
+  },
+  {
+    q: "Vay mua nhà cần chuẩn bị những gì?",
+    a: "Để vay mua nhà thành công, bạn cần chuẩn bị: (1) Vốn tự có tối thiểu 20-30% giá trị BĐS; (2) Thu nhập ổn định, có xác nhận thu nhập 6-12 tháng gần nhất; (3) Lịch sử tín dụng tốt (không nợ xấu); (4) Hồ sơ BĐS đầy đủ pháp lý (sổ đỏ/sổ hồng, hợp đồng mua bán công chứng); (5) CMND/CCCD, hộ khẩu, giấy đăng ký kết hôn. SGS LAND hỗ trợ tư vấn vay vốn miễn phí với 12+ ngân hàng đối tác, lãi suất ưu đãi 7-8.5%/năm.",
+    q_en: "What do I need to prepare to get a mortgage?",
+    a_en: "You need: 20-30% down payment, stable income proof, good credit history, complete legal documentation, and personal ID. SGS LAND provides free mortgage consultation with 12+ partner banks.",
+  },
+  {
+    q: "Sổ hồng và sổ đỏ khác nhau như thế nào?",
+    a: "Sổ hồng (Giấy chứng nhận quyền sử dụng đất và quyền sở hữu nhà ở) cấp cho nhà ở, căn hộ chung cư, nhà phố. Sổ đỏ (Giấy chứng nhận quyền sử dụng đất) cấp cho đất trống, đất nông nghiệp. Từ năm 2009, cả hai được gộp thành một loại giấy chứng nhận thống nhất màu hồng đỏ. Khi mua BĐS, quan trọng nhất là BĐS phải có giấy chứng nhận hợp lệ, không tranh chấp, và tình trạng pháp lý rõ ràng. SGS LAND kiểm tra pháp lý 2 lớp miễn phí cho mọi giao dịch.",
+    q_en: "What is the difference between Pink Book and Red Book in Vietnam?",
+    a_en: "Pink Book covers residential property; Red Book covers land use rights. Since 2009 they are merged into one unified certificate. SGS LAND provides free 2-layer legal verification for all transactions.",
+  },
+  {
+    q: "BĐS Long Thành có đáng đầu tư không?",
+    a: "Long Thành là điểm nóng đầu tư BĐS 2026-2030 nhờ: (1) Sân bay quốc tế Long Thành giai đoạn 1 hoàn thành 2026, dự kiến 25 triệu hành khách/năm; (2) Hạ tầng cao tốc kết nối TP.HCM đã hoàn thiện; (3) Quỹ đất còn lớn, giá hiện 8-25 triệu/m2 còn thấp so với tiềm năng; (4) Novaland Aqua City, Gem Sky World và nhiều dự án lớn đang phát triển mạnh. Rủi ro: pháp lý chưa hoàn chỉnh một số dự án nhỏ, cần kiểm tra kỹ. SGS LAND tư vấn chuyên sâu BĐS Long Thành.",
+    q_en: "Is investing in Long Thanh real estate worthwhile?",
+    a_en: "Long Thanh is a top investment hotspot for 2026-2030, driven by the new international airport completing Phase 1 in 2026 and strong infrastructure development. SGS LAND provides specialized Long Thanh investment consultation.",
+  },
+  {
+    q: "Thủ Đức có còn là khu vực đáng đầu tư không?",
+    a: "TP. Thủ Đức vẫn là khu vực hàng đầu TP.HCM về tiềm năng đầu tư BĐS nhờ: (1) Là trung tâm đổi mới sáng tạo, đại học công nghệ, khu công nghệ cao; (2) Vinhomes Grand Park với 280 ha và 80.000 dân đang tạo hệ sinh thái đô thị hoàn chỉnh; (3) Hạ tầng giao thông metro line 1 và đường vành đai đang phát triển; (4) Giá căn hộ còn 35-70 triệu/m2, thấp hơn quận trung tâm 50-60%. Khu vực An Phú, Thảo Điền, Bình An là hot spot nhất. Tư vấn đầu tư Thủ Đức miễn phí với SGS LAND.",
+    q_en: "Is Thu Duc City still a good investment area?",
+    a_en: "Thu Duc City remains HCMC's top investment area with its tech innovation hub, Vinhomes Grand Park mega-project, and planned Metro Line 1. Apartment prices at 35-70M/sqm still offer upside potential. Free Thu Duc investment consultation available at SGS LAND.",
+  },
+  {
+    q: "Mua nhà lần đầu cần lưu ý gì?",
+    a: "Người mua nhà lần đầu cần chú ý 5 điểm quan trọng: (1) Pháp lý rõ ràng — kiểm tra sổ hồng/đỏ, không tranh chấp, quy hoạch 1/2000; (2) Định giá đúng — dùng công cụ AI hoặc tham khảo 3-5 BĐS tương đương; (3) Khả năng tài chính — đừng vay quá 40% thu nhập hàng tháng cho khoản trả nợ; (4) Tính thanh khoản — chọn khu vực có nhu cầu cao, gần tiện ích; (5) Uy tín chủ đầu tư — kiểm tra tiến độ dự án và lịch sử giao nhà. SGS LAND hỗ trợ kiểm tra pháp lý và định giá miễn phí cho người mua nhà lần đầu.",
+    q_en: "What should first-time home buyers know?",
+    a_en: "Key points for first-time buyers: verify legal documents, get proper valuation, keep mortgage payments under 40% of income, choose high-liquidity areas, and verify developer track record. SGS LAND offers free legal and valuation checks for first-time buyers.",
+  },
+  {
+    q: "SGS LAND phục vụ khu vực nào?",
+    a: "SGS LAND hiện phục vụ toàn bộ thị trường BĐS khu vực Đông Nam Bộ bao gồm: TP.HCM (tất cả 22 quận/huyện và TP Thủ Đức), Đồng Nai (Long Thành, Nhơn Trạch, Biên Hòa), Bình Dương (Thuận An, Dĩ An, Thủ Dầu Một, Bến Cát), Long An (Cần Giuộc, Bến Lức), và Bà Rịa - Vũng Tàu. Công cụ Định Giá AI phủ sóng hơn 45.000+ giao dịch thực tế trong vùng. Ngoài vùng phủ sóng chính, chúng tôi vẫn tư vấn theo yêu cầu.",
+    q_en: "Which areas does SGS LAND serve?",
+    a_en: "SGS LAND covers all of Southeast Vietnam: Ho Chi Minh City (22 districts + Thu Duc City), Dong Nai (Long Thanh, Nhon Trach, Bien Hoa), Binh Duong, Long An, and Ba Ria-Vung Tau — covering 45,000+ real transactions in the region.",
+  },
+  {
+    q: "Làm thế nào để biết giá BĐS trong khu vực đang tăng hay giảm?",
+    a: "Để theo dõi xu hướng giá BĐS khu vực, bạn có thể: (1) Dùng công cụ Định Giá AI SGS LAND so sánh lịch sử giá 24 tháng; (2) Theo dõi chỉ số giao dịch thực tế (không phải giá rao bán) từ cơ sở dữ liệu 45.000+ giao dịch công chứng; (3) Xem xét các yếu tố vĩ mô: lãi suất, tín dụng BĐS, chính sách nhà ở; (4) Chú ý hạ tầng mới: cao tốc, metro, khu công nghiệp kéo theo giá tăng; (5) Tham khảo báo cáo thị trường SGS LAND cập nhật hàng quý. Đăng ký nhận báo cáo thị trường miễn phí tại sgsland.vn.",
+    q_en: "How do I know if real estate prices in my area are rising or falling?",
+    a_en: "Monitor price trends using SGS LAND's AI valuation with 24-month history, track actual transaction data from 45,000+ notarized deals, and monitor infrastructure developments that drive price appreciation. Subscribe to SGS LAND quarterly market reports at sgsland.vn.",
+  },
 ];
 const FILTER_TABS = [
   { id: "all", vi: "Tất cả", en: "All" },
