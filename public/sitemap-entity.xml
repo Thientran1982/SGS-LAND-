@@ -294,4 +294,23 @@
     <entity:name>Phuong phap dinh gia AI SGS LAND</entity:name>
   </url>
 
+
+  <!-- DEFINED TERM SET -->
+  <url>
+    <loc>https://sgsland.vn/tu-dien-bat-dong-san#glossary</loc>
+    <lastmod>2026-06-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <entity:type>DefinedTermSet</entity:type>
+    <entity:name>Tu dien Bat dong san Viet Nam</entity:name>
+  </url>
+  <!-- DATASET ENTITY -->
+  <url>
+    <loc>https://sgsland.vn/bao-cao-thi-truong#dataset</loc>
+    <lastmod>2026-06-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <entity:type>Dataset</entity:type>
+    <entity:name>Chi so gia BDS Dong Nam Bo Q2/2026</entity:name>
+  </url>
 </urlset>

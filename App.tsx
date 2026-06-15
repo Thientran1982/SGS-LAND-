@@ -50,6 +50,8 @@ const AboutUs = lazyLoad(() => import('./pages/AboutUs'), 'AboutUs');
 const Methodology = lazyLoad(() => import('./pages/Methodology'), 'Methodology');
 const PressMedia = lazyLoad(() => import('./pages/PressMedia'), 'PressMedia');
 const News = lazyLoad(() => import('./pages/News'), 'News');
+const Glossary = lazyLoad(() => import('./pages/Glossary'), 'Glossary');
+const MarketReport = lazyLoad(() => import('./pages/MarketReport'), 'MarketReport');
 const Contact = lazyLoad(() => import('./pages/Contact'), 'Contact'); 
 const Careers = lazyLoad(() => import('./pages/Careers'), 'Careers'); 
 const HelpCenter = lazyLoad(() => import('./pages/HelpCenter'), 'HelpCenter'); 
@@ -178,6 +180,8 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
   [ROUTES.METHODOLOGY]: Methodology,
   [ROUTES.PRESS_MEDIA]: PressMedia,
     [ROUTES.NEWS]: News,
+            [ROUTES.GLOSSARY]: Glossary,
+            [ROUTES.MARKET_REPORT]: MarketReport,
     [ROUTES.CONTACT]: Contact,
     [ROUTES.CAREERS]: Careers,
     [ROUTES.HELP_CENTER]: HelpCenter,

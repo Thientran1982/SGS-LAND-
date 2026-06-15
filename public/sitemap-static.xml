@@ -403,4 +403,20 @@
     <priority>0.40</priority>
   </url>
 
+
+  <!-- AUTHORITY CONTENT -->
+  <url>
+    <loc>https://sgsland.vn/tu-dien-bat-dong-san</loc>
+    <lastmod>2026-06-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/tu-dien-bat-dong-san" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bao-cao-thi-truong</loc>
+    <lastmod>2026-06-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bao-cao-thi-truong" />
+  </url>
 </urlset>

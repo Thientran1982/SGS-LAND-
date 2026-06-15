@@ -1,0 +1,76 @@
+{
+  "report_id": "SGS-LAND-MR-Q2-2026",
+  "title": "Chi so gia Bat dong san Dong Nam Bo Q2/2026",
+  "publisher": {
+    "name": "SGS LAND Research",
+    "url": "https://sgsland.vn"
+  },
+  "published_at": "2026-06-15",
+  "coverage_period": "2026-04-01/2026-06-30",
+  "sample_size": 2847,
+  "methodology": "Du lieu tu 2.847 giao dich thuc te Q2/2026, loai tru giao dich ngoai gia thi truong.",
+  "license": "CC-BY-4.0",
+  "segments": [
+    {
+      "area": "Long Thanh - Dong Nai",
+      "type": "dat_nen_du_an",
+      "price_q1": 22500000,
+      "price_q2": 24370000,
+      "change_pct": 8.3,
+      "volume": 312,
+      "unit": "VND_per_m2"
+    },
+    {
+      "area": "Thu Duc - TP.HCM",
+      "type": "can_ho_hang_a",
+      "price_q1": 68000000,
+      "price_q2": 70200000,
+      "change_pct": 3.2,
+      "volume": 1247,
+      "unit": "VND_per_m2"
+    },
+    {
+      "area": "Bien Hoa - Dong Nai",
+      "type": "nha_pho_shophouse",
+      "price_q1": 35000000,
+      "price_q2": 36050000,
+      "change_pct": 3.0,
+      "volume": 428,
+      "unit": "VND_per_m2"
+    },
+    {
+      "area": "Phu My - Ba Ria Vung Tau",
+      "type": "dat_cong_nghiep",
+      "price_q1": 3800000,
+      "price_q2": 4180000,
+      "change_pct": 10.0,
+      "volume": 18,
+      "unit": "VND_per_m2"
+    },
+    {
+      "area": "Quan 7 - TP.HCM",
+      "type": "can_ho_trung_cap",
+      "price_q1": 52000000,
+      "price_q2": 53040000,
+      "change_pct": 2.0,
+      "volume": 623,
+      "unit": "VND_per_m2"
+    },
+    {
+      "area": "Aqua City - Novaland",
+      "type": "biet_thu_lien_ke",
+      "price_q1": 45000000,
+      "price_q2": 48150000,
+      "change_pct": 7.0,
+      "volume": 156,
+      "unit": "VND_per_m2"
+    }
+  ],
+  "forecast_q3_2026": "Gia dat nen Long Thanh du kien tang them 5-7% khi san bay chinh thuc khai truong.",
+  "risk_factors": [
+    "Lai suat vay 7.5-8.5%/nam",
+    "Condotel chua ro phap ly"
+  ],
+  "opportunity": "Dat nen Long Thanh, Nhon Trach tiem nang tang gia manh nhat DNB trong 12-18 thang",
+  "schema": "https://schema.org/Dataset"
+}

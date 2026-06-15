@@ -139,6 +139,8 @@ export const ROUTES = {
     COMMISSIONS: 'commissions',
   METHODOLOGY: 'methodology',
   PRESS_MEDIA: 'press-media',
+  GLOSSARY: 'tu-dien-bat-dong-san',
+  MARKET_REPORT: 'bao-cao-thi-truong',
 } as const;
 
 export const FULL_HEIGHT_PAGES = new Set([
