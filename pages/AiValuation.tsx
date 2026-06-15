@@ -2812,6 +2812,103 @@ export const AiValuation: React.FC = () => {
             </div>,
             document.body
         )}
+
+  {/* AVM EDUCATION SECTION — for AEO/GEO */}
+  <section className="py-16 px-4 bg-slate-50 mt-8">
+    <div className="max-w-4xl mx-auto">
+      <h2 className="text-3xl font-bold text-slate-800 mb-3">Cách SGS Định Giá AI™ Hoạt Động — 9 Hệ Số AVM</h2>
+      <p className="text-slate-500 mb-10 max-w-2xl">Mô hình AVM (Automated Valuation Model) của SGS LAND sử dụng 9 hệ số chính để tính toán giá trị bất động sản với độ chính xác ±4.8% MAPE trên 2.400+ giao dịch công chứng thực tế.</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
+        {[
+          {no:'1',name:'Vị trí vi mô',plain:'Khoảng cách đến trung tâm, bệnh viện, trường học, chợ trong bán kính 500m. Đường hẻm hay mặt tiền, ngõ thông hay cụt.',weight:'25%'},
+          {no:'2',name:'Diện tích sử dụng',plain:'Diện tích đất (m²) × hệ số hình dạng lô đất. Đất vuông vắn > đất méo. Diện tích xây dựng ≠ diện tích đất.',weight:'18%'},
+          {no:'3',name:'Tuổi & trạng thái nhà',plain:'Nhà xây năm nào, đã sửa chưa, nội thất mới hay cũ. Nhà 5 năm tuổi khấu hao ~2%/năm so với nhà mới.',weight:'12%'},
+          {no:'4',name:'Giá so sánh thị trường',plain:'Giá 5-10 căn tương đương đã giao dịch trong bán kính 500m, 6 tháng gần nhất. Đây là hệ số quan trọng nhất.',weight:'22%'},
+          {no:'5',name:'Xu hướng giá khu vực',plain:'Giá khu vực tăng hay giảm trong 3-6 tháng? Dự án hạ tầng gần đó (cầu, metro, đường) ảnh hưởng lên giá.',weight:'10%'},
+          {no:'6',name:'Pháp lý & sổ đỏ',plain:'Có sổ hồng/sổ đỏ chưa? Nhà có tranh chấp không? Quy hoạch khu đất như thế nào? Pháp lý sạch = giá cao hơn 5-10%.',weight:'8%'},
+          {no:'7',name:'Số tầng & diện tích sàn',plain:'Nhà 3 tầng vs 1 tầng cùng diện tích đất → giá sàn 3 tầng cao hơn do diện tích sử dụng lớn hơn.',weight:'3%'},
+          {no:'8',name:'Tiện ích nội khu',plain:'Dự án có hồ bơi, gym, bảo vệ 24/7 không? Phí quản lý cao nhưng tăng giá cho thuê và bán lại.',weight:'1.5%'},
+          {no:'9',name:'Điều chỉnh thị trường',plain:'Điều chỉnh theo mùa (Q1 thường thấp hơn Q3-Q4), lãi suất ngân hàng, và tâm lý thị trường.',weight:'0.5%'},
+        ].map((f)=>(
+          <div key={f.no} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center shrink-0">{f.no}</span>
+              <span className="font-bold text-slate-700">{f.name}</span>
+              <span className="ml-auto text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{f.weight}</span>
+            </div>
+            <p className="text-slate-500 text-sm leading-relaxed">{f.plain}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Case Study */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold text-slate-800 mb-3">Case Study: Định Giá Căn 2PN Vinhomes Grand Park</h2>
+        <p className="text-slate-500 text-sm mb-6">Ví dụ thực tế cách SGS Định Giá AI™ tính toán từng bước cho căn hộ 2PN tại Vinhomes Grand Park, TP.Thủ Đức.</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-bold text-slate-700 mb-3 text-base">Thông Tin Đầu Vào</h3>
+              <ul className="space-y-1 text-sm text-slate-600">
+                {[['Địa chỉ','Phân khu The Rainbow, Vinhomes Grand Park, TP.Thủ Đức'],['Diện tích','68m² (sàn) + 4m² ban công'],['Tầng','Tầng 15/22'],['Hướng','Đông Nam, view hồ công viên'],['Tuổi nhà','2022 (4 năm tuổi)'],['Nội thất','Cơ bản, chưa cải tạo'],['Pháp lý','Sổ hồng riêng']].map(([k,v])=>(
+                  <li key={k} className="flex gap-2"><span className="text-slate-400 shrink-0">{k}:</span><span className="font-medium">{v}</span></li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-700 mb-3 text-base">Kết Quả Định Giá AI</h3>
+              <div className="text-3xl font-bold text-blue-600 mb-1">3,85 tỷ đồng</div>
+              <div className="text-sm text-slate-400 mb-4">Khoảng dao động: 3,62 – 4,08 tỷ | Độ tin cậy: 87%</div>
+              <ul className="space-y-2 text-sm text-slate-600">
+                {[['Giá so sánh thị trường (×22%)','+3,60 tỷ'],['Điều chỉnh tầng (+15)','+80 triệu'],['Hướng Đông Nam + view hồ','+120 triệu'],['Khấu hao 4 năm tuổi','-45 triệu'],['Nội thất cơ bản','-30 triệu'],['Điều chỉnh thị trường Q2/2026','+25 triệu']].map(([k,v])=>(
+                  <li key={k} className="flex justify-between"><span>{k}</span><span className={v.startsWith('+')?'text-green-600 font-medium':v.startsWith('-')?'text-red-500 font-medium':'font-medium'}>{v}</span></li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI vs Traditional */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold text-slate-800 mb-3">So Sánh: Định Giá AI vs Thẩm Định Viên Truyền Thống</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead><tr className="bg-slate-700 text-white"><th className="px-4 py-2 text-left">Tiêu Chí</th><th className="px-4 py-2 text-center">SGS Định Giá AI™</th><th className="px-4 py-2 text-center">Thẩm Định Viên Truyền Thống</th></tr></thead>
+            <tbody>{[[' Thời gian','3-5 phút','3-7 ngày'],['Chi phí','Miễn phí','1-5 triệu đồng'],['Độ chính xác (tổng thể)','±4.8% MAPE','±3-5% (chuyên gia giỏi)'],['Dữ liệu so sánh','2.400+ giao dịch thực tế','5-10 căn so sánh thủ công'],['Cập nhật thị trường','Hàng ngày (tự động)','Theo kinh nghiệm cá nhân'],['Pháp lý kiểm tra','Tự động từ dữ liệu công khai','Kiểm tra thực địa, hồ sơ gốc'],['Phù hợp cho','Tham khảo nhanh, sàng lọc BĐS','Vay ngân hàng, tranh chấp pháp lý']].map(([tc,ai,tv],i)=>(
+              <tr key={i} className={i%2===0?'bg-white':'bg-slate-50'}><td className="px-4 py-2 font-medium text-slate-600">{tc}</td><td className="px-4 py-2 text-center text-blue-600 font-medium">{ai}</td><td className="px-4 py-2 text-center text-slate-500">{tv}</td></tr>
+            ))}</tbody>
+          </table>
+        </div>
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+          <strong>⚠️ Khi nào NÊN dùng thẩm định viên truyền thống:</strong> Vay ngân hàng (bắt buộc có thẩm định viên độc lập), tranh chấp pháp lý, nhà đặc thù (di sản, biệt thự luxury &gt;20 tỷ), đất nông nghiệp chuyển đổi mục đích sử dụng.
+        </div>
+      </div>
+
+      {/* FAQ */}
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4">Câu Hỏi Thường Gặp — Định Giá BĐS Bằng AI</h2>
+        <div className="space-y-3">{[
+          {q:'Định giá AI có chính xác không? Sai số bao nhiêu?',a:'SGS Định Giá AI™ đạt sai số ±4.8% MAPE (Mean Absolute Percentage Error) trên tập test 2.400+ giao dịch công chứng tại TP.HCM. Tương đương với căn hộ 3 tỷ, sai số tối đa khoảng ±144 triệu đồng. Độ chính xác phụ thuộc vào mức độ điền đầy đủ thông tin.'},
+          {q:'Định giá AI dùng dữ liệu gì?',a:'SGS AVM sử dụng: (1) 2.400+ giao dịch công chứng thực tế, (2) Giá đăng bán trên 5 sàn BĐS lớn, (3) Dữ liệu quy hoạch và hạ tầng từ cổng thông tin chính phủ, (4) Dữ liệu về tiện ích từ OpenStreetMap và Google Places, (5) Xu hướng giá theo quý được cập nhật hàng ngày.'},
+          {q:'Kết quả định giá AI có thể dùng để vay ngân hàng không?',a:'Không. Ngân hàng yêu cầu thẩm định viên độc lập được cấp phép (Chứng chỉ thẩm định giá — Bộ Tài chính) cho mục đích vay. SGS Định Giá AI™ phù hợp để tham khảo nhanh, đàm phán giá, sàng lọc cơ hội đầu tư, không thay thế thẩm định chính thức.'},
+          {q:'Tại sao kết quả định giá của tôi thấp hơn giá tôi mua?',a:'Có nhiều lý do: (1) Thị trường đã điều chỉnh sau khi bạn mua, (2) Bạn mua với giá cao hơn thị trường (sốt đất, phí môi giới cao), (3) Tình trạng pháp lý hoặc vị trí cụ thể chưa được phản ánh đầy đủ. Liên hệ chuyên gia SGS LAND để có đánh giá chi tiết hơn.'},
+          {q:'Định giá AI có tính phí không?',a:'SGS Định Giá AI™ cung cấp 3 lượt định giá miễn phí/tháng. Từ lượt thứ 4 cần đăng ký tài khoản. Gói Premium không giới hạn lượt định giá, xuất báo cáo PDF đầy đủ, so sánh lịch sử giá, và tư vấn chuyên gia: chỉ từ 99.000 đồng/tháng.'},
+          {q:'Làm sao để có kết quả định giá chính xác nhất?',a:'Để có sai số tối thiểu: Điền đầy đủ địa chỉ chi tiết (số nhà, tên hẻm/đường) + loại BĐS + diện tích + số tầng + tuổi nhà + tình trạng pháp lý + nội thất. Độ chính xác tăng từ ±12% (chỉ địa chỉ) lên ±4.8% (điền đầy đủ).'},
+          {q:'AI định giá có tính đến view (hướng nhìn) và tầng không?',a:'Có. SGS AVM tính điều chỉnh +2-5% cho tầng cao (trên tầng 10), +3-8% cho hướng Đông Nam/Nam, +5-12% cho view hồ/sông/công viên. Những điều chỉnh này dựa trên phân tích thống kê từ dữ liệu giao dịch thực tế.'},
+          {q:'Định giá bất động sản ở ngoài TP.HCM có chính xác không?',a:'SGS AVM hiện có độ chính xác cao nhất tại TP.HCM (đặc biệt các quận nội thành và Thủ Đức). Tại Bình Dương, Đồng Nai và Long An, độ chính xác giảm còn ±8-12% do mật độ dữ liệu giao dịch thấp hơn. Chúng tôi đang bổ sung dữ liệu tại các tỉnh thành này.'},
+        ].map((item,idx)=>(
+          <details key={idx} className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+            <summary className="px-4 py-3 cursor-pointer font-medium text-slate-700 hover:bg-slate-50 flex items-center justify-between list-none">
+              <span>{item.q}</span><span className="text-slate-400 ml-2 shrink-0">+</span>
+            </summary>
+            <div className="px-4 pb-4 text-slate-600 text-sm leading-relaxed">{item.a}</div>
+          </details>
+        ))}</div>
+      </div>
+    </div>
+  </section>
+
         </>
     );
 };

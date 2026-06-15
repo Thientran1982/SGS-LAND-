@@ -641,6 +641,77 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           </div>
         </div>
       </section>
+        {/* AQUA CITY EXTENDED CONTENT */}
+        {data && data.project.code === 'AQUA-CITY' && (
+          <>
+            <section className="py-12 px-4 bg-slate-50">
+              <div className="max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Phân Tích Đầu Tư Aqua City Novaland</h2>
+                <p className="text-slate-500 text-sm mb-6">Cập nhật Q2/2026 — SGS LAND, đại lý phân phối ủy quyền Novaland Group.</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {[{label:'Rental Yield',value:'4-6%',sub:'Nhà phố/năm'},{label:'Tăng Giá',value:'+3-5%',sub:'Bình quân/năm'},{label:'Lấp đầy',value:'85%+',sub:'Khu bàn giao'},{label:'Hoàn vốn',value:'18-22 năm',sub:'Ước tính thuê'}].map((m)=>(
+                    <div key={m.label} className="bg-white border border-slate-200 rounded-xl p-4 text-center">
+                      <div className="text-xl font-bold text-blue-600">{m.value}</div>
+                      <div className="font-medium text-slate-700 text-sm mt-1">{m.label}</div>
+                      <div className="text-xs text-slate-400">{m.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mb-8">
+                  <h3 className="font-bold text-slate-700 mb-3">Lịch Sử Giá Nhà Phố Theo Quý</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead><tr className="bg-slate-700 text-white"><th className="px-3 py-2 text-left">Quý</th><th className="px-3 py-2 text-right">Giá (tỷ/căn)</th><th className="px-3 py-2 text-right">Biến Động</th></tr></thead>
+                      <tbody>{[['Q1/2024','5,2-6,8',''],['Q3/2024','5,8-7,5','+4%'],['Q1/2025','6,2-8,0','+2%'],['Q2/2026','6,5-8,5','+3%']].map(([q,g,b],i)=>(
+                        <tr key={i} className={i%2===0?'bg-white':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-700">{q}</td><td className="px-3 py-2 text-right text-slate-600">{g}</td><td className="px-3 py-2 text-right text-green-600 font-medium">{b}</td></tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="mb-8">
+                  <h3 className="font-bold text-slate-700 mb-3">Pháp Lý Theo Phân Khu</h3>
+                  <div className="space-y-2">{[{pk:'The Aqua 1 & 2',done:true,note:'Sổ hồng riêng — bàn giao 2022-2023'},{pk:'Phoenix South',done:false,note:'Đang hoàn thiện thủ tục sổ hồng'},{pk:'Eagle',done:false,note:'Bàn giao 2024, đang chờ sổ hồng'}].map((p)=>(
+                    <div key={p.pk} className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${p.done?'bg-green-500':'bg-yellow-400'}`} />
+                      <div className="flex-1"><span className="font-medium text-slate-700 text-sm">{p.pk}</span><span className="text-slate-400 text-xs ml-2">{p.note}</span></div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${p.done?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{p.done?'Đã có sổ':'Đang xử lý'}</span>
+                    </div>
+                  ))}</div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-700 mb-3">So Sánh vs Dự Án Cạnh Tranh</h3>
+                  <div className="overflow-x-auto"><table className="w-full text-sm border-collapse">
+                    <thead><tr className="bg-slate-700 text-white"><th className="px-3 py-2 text-left">Tiêu Chí</th><th className="px-3 py-2 text-center">Aqua City</th><th className="px-3 py-2 text-center">Izumi City</th><th className="px-3 py-2 text-center">Van Phuc</th></tr></thead>
+                    <tbody>{[['Quy mô','1.000 ha','170 ha','198 ha'],['Chủ đầu tư','Novaland','An Gia','Van Phuc Group'],['Giá nhà phố','từ 6,5 tỷ','từ 7,5 tỷ','từ 8 tỷ'],['Cách HCM','~30 phút','~35 phút','~20 phút'],['Pháp lý','Sổ hồng (PK1&2)','Đang hoàn thiện','Sổ hồng riêng'],['Rental yield','4-6%/năm','4-5%/năm','3-5%/năm']].map(([tc,ac,iz,vp],i)=>(
+                      <tr key={i} className={i%2===0?'bg-white':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-600">{tc}</td><td className="px-3 py-2 text-center text-blue-600 font-medium">{ac}</td><td className="px-3 py-2 text-center text-slate-500">{iz}</td><td className="px-3 py-2 text-center text-slate-500">{vp}</td></tr>
+                    ))}</tbody>
+                  </table></div>
+                </div>
+              </div>
+            </section>
+            <section className="py-12 px-4 bg-white">
+              <div className="max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold text-slate-800 mb-4">Câu Hỏi Thường Gặp — Aqua City Novaland</h2>
+                <div className="space-y-3">{[
+                  {q:'Aqua City có đáng mua không?',a:'Aqua City phù hợp cho người mua ở thực tìm kiếm không gian xanh cách trung tâm 30 phút, hệ tiện ích 5 sao (golf, marina, bệnh viện, trường quốc tế). Về đầu tư: rental yield 4-6%/năm, tăng giá 3-5%/năm. SGS LAND khuyến nghị ưu tiên phân khu đã có sổ hồng riêng để giảm rủi ro pháp lý.'},
+                  {q:'Giá nhà phố Aqua City hiện nay bao nhiêu?',a:'Q2/2026: nhà phố Aqua City từ 6,5-8,5 tỷ đồng/căn tùy phân khu. Nhà phố view sông, mặt tiền đường lớn: 9-12 tỷ. Giá tăng bình quân 3-5%/năm trong 2 năm gần đây.'},
+                  {q:'Pháp lý Aqua City an toàn không?',a:'The Aqua 1 và The Aqua 2 đã có sổ hồng riêng (bàn giao 2022-2023). Phoenix South và Eagle đang hoàn thiện thủ tục. SGS LAND kiểm tra pháp lý từng căn trước khi tư vấn — miễn phí.'},
+                  {q:'Cho thuê nhà phố Aqua City được bao nhiêu?',a:'Nhà phố cho thuê: 15-30 triệu/tháng. Biệt thự: 35-80 triệu/tháng. Rental yield 4-6%/năm. SGS LAND cung cấp dịch vụ quản lý cho thuê tài sản để tối ưu lợi nhuận.'},
+                  {q:'So sánh Aqua City vs Izumi City — nên chọn dự án nào?',a:'Aqua City (1.000ha) có quy mô và tiện ích vượt trội hơn Izumi City (170ha). An Gia (chủ đầu tư Izumi) được đánh giá tài chính ổn định hơn Novaland. Tùy mục tiêu: ở thực không gian lớn → Aqua City; an toàn tài chính chủ đầu tư → Izumi.'},
+                  {q:'Hỗ trợ vay ngân hàng mua Aqua City như thế nào?',a:'SGS LAND hỗ trợ thủ tục vay ngân hàng miễn phí. VPBank, Sacombank, Techcombank cho vay tối đa 70% giá trị BĐS, lãi suất ưu đãi 12 tháng từ 8.5%/năm. Hotline: +84 971 132 378.'},
+                ].map((item,idx)=>(
+                  <details key={idx} className="border border-slate-200 rounded-xl overflow-hidden">
+                    <summary className="px-4 py-3 cursor-pointer font-medium text-slate-700 hover:bg-slate-50 flex items-center justify-between list-none">
+                      <span>{item.q}</span><span className="text-slate-400 ml-2 shrink-0">+</span>
+                    </summary>
+                    <div className="px-4 pb-4 text-slate-600 text-sm leading-relaxed">{item.a}</div>
+                  </details>
+                ))}</div>
+              </div>
+            </section>
+          </>
+        )}
+
       {/* ── FOOTER ─────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-sgs-text-muted">

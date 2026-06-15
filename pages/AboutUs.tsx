@@ -197,7 +197,82 @@ export const AboutUs: React.FC = () => {
                     </div>
                 </div>
             </section>
-            {/* Footer CTA */}
+            {/* Timeline Section */}
+            <section className="py-16 px-6">
+              <div className="max-w-4xl mx-auto">
+                <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-3 text-center">{t('about.timeline_title')}</h2>
+                <p className="text-[var(--text-tertiary)] text-center mb-12 max-w-2xl mx-auto">{t('about.timeline_desc')}</p>
+                <div className="relative border-l-2 border-sgs-primary ml-4 space-y-10">
+                  {[
+                    { year: '2019', event: 'Thành lập SGS LAND — đội nhóm 5 chuyên viên tư vấn BĐS cao cấp tại TP.HCM. GPKD số 0312960439 được cấp. Năm đầu tiên: 120+ giao dịch thành công.' },
+                    { year: '2021', event: 'Mở rộng lên 50+ môi giới. Ra mắt hệ thống CRM nội bộ quản lý 5.000+ khách hàng. Tổng giá trị giao dịch vượt 500 tỷ đồng.' },
+                    { year: '2022', event: 'Bắt đầu nghiên cứu và phát triển mô hình AVM (Automated Valuation Model). Thu thập 1.200+ điểm dữ liệu giao dịch công chứng để hiệu chỉnh thuật toán.' },
+                    { year: '2024', event: 'Ra mắt SGS Định Giá AI™ — hệ thống định giá BĐS tự động đầu tiên tại Việt Nam đạt độ chính xác ±4.8% MAPE. Nền tảng đạt 10.000+ môi giới tin dùng.' },
+                    { year: '2026', event: 'Nền tảng hiện tại: 45.000+ tin đăng xác thực, 15.000+ môi giới, $2B+ giá trị giao dịch. Mục tiêu: PropTech #1 Đông Nam Á.' },
+                  ].map((item) => (
+                    <div key={item.year} className="relative pl-8">
+                      <div className="absolute -left-[11px] w-5 h-5 rounded-full bg-sgs-primary border-2 border-white shadow" />
+                      <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-5 shadow-sm">
+                        <span className="text-sgs-primary font-bold text-xl">{item.year}</span>
+                        <p className="text-[var(--text-secondary)] text-sm mt-1 leading-relaxed">{item.event}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Philosophy Section */}
+            <section className="py-16 px-6 bg-[var(--bg-surface)]">
+              <div className="max-w-4xl mx-auto">
+                <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-3 text-center">{t('about.philosophy_title')}</h2>
+                <p className="text-[var(--text-tertiary)] text-center max-w-3xl mx-auto leading-relaxed text-base mb-10">{t('about.philosophy_desc')}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { icon: '📊', title: 'Dữ Liệu Thực Tế', desc: '2.400+ giao dịch công chứng được sử dụng để calibrate AVM. Mọi định giá đều dựa trên giá giao dịch thực tế, không phải giá chào bán.' },
+                    { icon: '⚖️', title: 'Tư Vấn Độc Lập', desc: 'SGS LAND tư vấn độc lập, không phụ thuộc chủ đầu tư. Chúng tôi sẽ nói thẳng nếu dự án không phù hợp với mục tiêu của bạn.' },
+                    { icon: '🤝', title: 'Đồng Hành Lâu Dài', desc: '94% khách hàng hài lòng và giới thiệu người thân. Đội ngũ hỗ trợ sau giao dịch: pháp lý, tài chính, quản lý tài sản.' },
+                  ].map((item) => (
+                    <div key={item.title} className="bg-[var(--bg-primary)] border border-[var(--glass-border)] rounded-2xl p-6 text-center">
+                      <div className="text-4xl mb-3">{item.icon}</div>
+                      <h3 className="font-bold text-[var(--text-primary)] mb-2">{item.title}</h3>
+                      <p className="text-[var(--text-tertiary)] text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Certification & Partners Section */}
+            <section className="py-16 px-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3">{t('about.cert_title')}</h2>
+                    <p className="text-[var(--text-tertiary)] text-sm mb-5 leading-relaxed">{t('about.cert_desc')}</p>
+                    <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
+                      <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span>GPKD số 0312960439 — Sở KH&ĐT TP.HCM</li>
+                      <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span>Chứng chỉ môi giới BĐS — Bộ Xây Dựng Việt Nam</li>
+                      <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span>Thành viên Hiệp hội BĐS Việt Nam (VNREA)</li>
+                      <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span>Tuân thủ Luật Kinh doanh BĐS 2014 (sửa đổi 2023)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3">{t('about.press_title')}</h2>
+                    <p className="text-[var(--text-tertiary)] text-sm mb-5 leading-relaxed">{t('about.press_desc')}</p>
+                    <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
+                      <li className="flex items-start gap-2"><span className="text-blue-500 mt-0.5">◆</span>Đại lý phân phối F1 — Novaland Group</li>
+                      <li className="flex items-start gap-2"><span className="text-blue-500 mt-0.5">◆</span>Đối tác chiến lược — Nam Long Group</li>
+                      <li className="flex items-start gap-2"><span className="text-blue-500 mt-0.5">◆</span>Đại lý ủy quyền — Masterise Homes</li>
+                      <li className="flex items-start gap-2"><span className="text-blue-500 mt-0.5">◆</span>Đại lý phân phối — Izumi City (An Gia)</li>
+                      <li className="flex items-start gap-2"><span className="text-blue-500 mt-0.5">◆</span>Đối tác — Van Phuc City, Aqua City</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+                        {/* Footer CTA */}
             <section className="py-24 bg-sgs-primary-deep text-center px-6">
                 <h2 className="text-3xl font-bold text-white mb-6">{t('about.cta_title')}</h2>
                 <button
