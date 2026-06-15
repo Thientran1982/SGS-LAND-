@@ -24,8 +24,13 @@
     <!-- ══ CANONICAL ═════════════════════════════════════════════════════ -->
     <link id="canonical-url" rel="canonical" href="https://sgsland.vn/" />
     <!-- ══ THEME & PWA ════════════════════════════════════════════════════ -->
-    <meta name="theme-color" content="#1B3A5C" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#091523" media="(prefers-color-scheme: dark)" />
+    <!-- Single theme-color tag — JS in theme-init.js updates it dynamically.
+         Two tags with media queries cause cross-browser inconsistency:
+         Chrome respects media attribute; Edge ignores it and uses first tag. -->
+    <meta id="theme-color-meta" name="theme-color" content="#1B3A5C" />
+    <!-- Edge / Windows IE/Chromium tile color -->
+    <meta name="msapplication-TileColor" content="#1B3A5C" />
+    <meta name="msapplication-navbutton-color" content="#1B3A5C" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

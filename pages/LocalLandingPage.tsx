@@ -56,6 +56,7 @@ interface LocationConfig {
     province: string;
     searchQuery: string;
     heroDescription: string;
+  answerBox?: string;
     stats: { label: string; value: string }[];
     highlights: { title: string; desc: string }[];
     faqs: { q: string; a: string }[];
@@ -949,6 +950,3156 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             { name: 'Izumi City Nam Long', slug: 'izumi-city' },
         ],
     },
+  'gia-nha-pho-thu-duc-2026': {
+    slug: 'gia-nha-pho-thu-duc-2026',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Gia nha pho Quan 9, Linh Trung, Long Thanh My nam 2026 dao dong 4-8 ty/can (60-80m2). Muc tang gia trung binh 12-18%/nam do ha tang Song Duong va cong nghe cao. SGS LAND cap nhat du lieu theo quy.',
+    answerBox: 'Nha pho Thu Duc 2026 dat 4-8 ty/can, tang 12-18%/nam nho Song Duong va cong nghe cao.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Gia nha pho Quan 9, Linh Trung, Long Thanh My nam 2026 dao dong 4-8 ty/can (60-80m2). Muc tang gia trung binh 12-18%/nam do ha tang Song Duong va cong nghe cao. SGS LAND cap nhat du lieu theo quy. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc hay thue?',
+            a: 'Mua BDS TP Thu Duc phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua BDS TP Thu Duc can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue BDS TP Thu Duc duoc bao nhieu/thang?',
+            a: 'Cho thue BDS TP Thu Duc dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban BDS TP Thu Duc mat bao lau?',
+            a: 'Mua ban BDS TP Thu Duc mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua BDS TP Thu Duc khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'biet-thu-aqua-city-gia-bao-nhieu-2026': {
+    slug: 'biet-thu-aqua-city-gia-bao-nhieu-2026',
+    name: 'BDS Aqua City',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Aqua City',
+    h1Title: 'BDS Aqua City 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Biet thu Aqua City Novaland 2026 co gia tu 8-25 ty/can, nha pho 5-10 ty tuy phan khu. So sach phap ly dang cap tien. SGS LAND tu van mien phi, ket noi truc tiep chu dau tu.',
+    answerBox: 'Biet thu Aqua City 2026 tu 8-25 ty, nha pho 5-10 ty. Phap ly dang tien tien do theo phan khu.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Aqua City hien nay la bao nhieu?',
+            a: 'Biet thu Aqua City Novaland 2026 co gia tu 8-25 ty/can, nha pho 5-10 ty tuy phan khu. So sach phap ly dang cap tien. SGS LAND tu van mien phi, ket noi truc tiep chu dau tu. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Aqua City hay thue?',
+            a: 'Mua BDS Aqua City phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'BDS Aqua City co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua BDS Aqua City can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Aqua City nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue BDS Aqua City duoc bao nhieu/thang?',
+            a: 'Cho thue BDS Aqua City dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban BDS Aqua City mat bao lau?',
+            a: 'Mua ban BDS Aqua City mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua BDS Aqua City khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'can-ho-vinhomes-grand-park-gia-bao-nhieu': {
+    slug: 'can-ho-vinhomes-grand-park-gia-bao-nhieu',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Can ho Vinhomes Grand Park 2026: studio 1.8-2.5 ty, 1PN 2.5-3.5 ty, 2PN 3.5-5 ty, 3PN 6-9 ty. Da co so hong. Cho thue 8-15 trieu/thang. SGS LAND tu van chon can phu hop.',
+    answerBox: 'Can ho Vinhomes Grand Park 2026: 2PN tu 3.5 ty, da co so hong, cho thue 10-15 trieu/thang.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Can ho Vinhomes Grand Park 2026: studio 1.8-2.5 ty, 1PN 2.5-3.5 ty, 2PN 3.5-5 ty, 3PN 6-9 ty. Da co so hong. Cho thue 8-15 trieu/thang. SGS LAND tu van chon can phu hop. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc hay thue?',
+            a: 'Mua BDS TP Thu Duc phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua BDS TP Thu Duc can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue BDS TP Thu Duc duoc bao nhieu/thang?',
+            a: 'Cho thue BDS TP Thu Duc dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban BDS TP Thu Duc mat bao lau?',
+            a: 'Mua ban BDS TP Thu Duc mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua BDS TP Thu Duc khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'dat-long-thanh-gia-bao-nhieu-m2-2026': {
+    slug: 'dat-long-thanh-gia-bao-nhieu-m2-2026',
+    name: 'BDS Long Thanh',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Long Thanh',
+    h1Title: 'BDS Long Thanh 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Dat nen Long Thanh 2026: ven duong quoc lo 51 tu 8-15 trieu/m2, khu quy hoach san bay tu 20-35 trieu/m2. Tang gia 20-30%/nam. SGS LAND ho tro phap ly, ket noi ngan hang vay mua dat.',
+    answerBox: 'Dat Long Thanh 2026 tu 8-35 trieu/m2 tuy khu vuc, tang 20-30%/nam nho san bay quoc te Long Thanh.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Long Thanh hien nay la bao nhieu?',
+            a: 'Dat nen Long Thanh 2026: ven duong quoc lo 51 tu 8-15 trieu/m2, khu quy hoach san bay tu 20-35 trieu/m2. Tang gia 20-30%/nam. SGS LAND ho tro phap ly, ket noi ngan hang vay mua dat. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Long Thanh hay thue?',
+            a: 'Mua BDS Long Thanh phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'BDS Long Thanh co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua BDS Long Thanh can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Long Thanh nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue BDS Long Thanh duoc bao nhieu/thang?',
+            a: 'Cho thue BDS Long Thanh dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban BDS Long Thanh mat bao lau?',
+            a: 'Mua ban BDS Long Thanh mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua BDS Long Thanh khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'nha-pho-binh-thanh-gia-bao-nhieu': {
+    slug: 'nha-pho-binh-thanh-gia-bao-nhieu',
+    name: 'BDS Binh Thanh',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Binh Thanh',
+    h1Title: 'BDS Binh Thanh 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Nha pho Binh Thanh 2026: duong lon 12-30 ty/can, hem xe hoi 6-12 ty. Can ho Vinhomes Central Park 3.5-8 ty. Vi tri trung tam Q1, gia dat o muc cao va on dinh. SGS LAND tu van phap ly.',
+    answerBox: 'Nha pho Binh Thanh 2026: duong lon 12-30 ty, hem xe hoi 6-12 ty. Vi tri trung tam, gia on dinh.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Binh Thanh hien nay la bao nhieu?',
+            a: 'Nha pho Binh Thanh 2026: duong lon 12-30 ty/can, hem xe hoi 6-12 ty. Can ho Vinhomes Central Park 3.5-8 ty. Vi tri trung tam Q1, gia dat o muc cao va on dinh. SGS LAND tu van phap ly. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Binh Thanh hay thue?',
+            a: 'Mua BDS Binh Thanh phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'BDS Binh Thanh co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua BDS Binh Thanh can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Binh Thanh nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue BDS Binh Thanh duoc bao nhieu/thang?',
+            a: 'Cho thue BDS Binh Thanh dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban BDS Binh Thanh mat bao lau?',
+            a: 'Mua ban BDS Binh Thanh mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua BDS Binh Thanh khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'so-hong-va-so-do-khac-nhau-nhu-the-nao': {
+    slug: 'so-hong-va-so-do-khac-nhau-nhu-the-nao',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Phan Tich Thi Truong',
+    heroDescription: 'So hong (GCNQSD dat + tai san) cap cho nha o rieng le, chung cu, nha do thi; so do (GCNQSD dat) cap cho dat nong nghiep, dat rung. Tu nam 2023 tat ca hop nhat vao so hong mau hong. SGS LAND kiem tra phap ly mien phi.',
+    answerBox: 'So hong: dat o + tai san gan lien. So do: dat nong nghiep. Tu 2023 hop nhat thanh so hong mau hong.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'So hong (GCNQSD dat + tai san) cap cho nha o rieng le, chung cu, nha do thi; so do (GCNQSD dat) cap cho dat nong nghiep, dat rung. Tu nam 2023 tat ca hop nhat vao so hong mau hong. SGS LAND kiem tra phap ly mien phi. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly hay thue?',
+            a: 'Mua Phap Ly phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Phap Ly can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Phap Ly duoc bao nhieu/thang?',
+            a: 'Cho thue Phap Ly dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Phap Ly mat bao lau?',
+            a: 'Mua ban Phap Ly mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Phap Ly khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'mua-nha-chua-co-so-do-co-an-toan-khong': {
+    slug: 'mua-nha-chua-co-so-do-co-an-toan-khong',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Mua nha chua so do CO the an toan NEU: chu dau tu co giay phep xay dung, hop dong cong chung ro rang, tien do bao lanh ngan hang, du an khong co tranh chap. Rui ro chinh: ngay sao ke, gia dat thap hon. SGS LAND tu van ky truoc giao dich.',
+    answerBox: 'Mua nha chua so do an toan khi: co giay phep XD, hop dong cong chung, bao lanh ngan hang. SGS LAND kiem tra mien phi.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'Mua nha chua so do CO the an toan NEU: chu dau tu co giay phep xay dung, hop dong cong chung ro rang, tien do bao lanh ngan hang, du an khong co tranh chap. Rui ro chinh: ngay sao ke, gia dat thap hon. SGS LAND tu van ky truoc giao dich. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly hay thue?',
+            a: 'Mua Phap Ly phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Phap Ly can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Phap Ly duoc bao nhieu/thang?',
+            a: 'Cho thue Phap Ly dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Phap Ly mat bao lau?',
+            a: 'Mua ban Phap Ly mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Phap Ly khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'phap-ly-aqua-city-2026': {
+    slug: 'phap-ly-aqua-city-2026',
+    name: 'BDS Aqua City',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Aqua City',
+    h1Title: 'BDS Aqua City 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Phap ly Aqua City 2026: phan khu The Aqua 1-5 da co so hong. Phan khu The Aqua 6-9 du kien Q4/2026 - Q2/2027. Phan khu The Sun va The Grand dang lam thu tuc. SGS LAND cap nhat tien do tung lo theo tuan.',
+    answerBox: 'Aqua City 2026: The Aqua 1-5 da co so hong, The Aqua 6-9 du kien Q4/2026, cac phan khu khac dang lam thu tuc.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Aqua City hien nay la bao nhieu?',
+            a: 'Phap ly Aqua City 2026: phan khu The Aqua 1-5 da co so hong. Phan khu The Aqua 6-9 du kien Q4/2026 - Q2/2027. Phan khu The Sun va The Grand dang lam thu tuc. SGS LAND cap nhat tien do tung lo theo tuan. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Aqua City hay thue?',
+            a: 'Mua BDS Aqua City phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'BDS Aqua City co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua BDS Aqua City can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Aqua City nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue BDS Aqua City duoc bao nhieu/thang?',
+            a: 'Cho thue BDS Aqua City dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban BDS Aqua City mat bao lau?',
+            a: 'Mua ban BDS Aqua City mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua BDS Aqua City khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'luat-dat-dai-2024-anh-huong-gi-den-nguoi-mua-nha': {
+    slug: 'luat-dat-dai-2024-anh-huong-gi-den-nguoi-mua-nha',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Luat Dat Dai 2024 (hieu luc 1/1/2025) thay doi: (1) Cap so hong nhanh hon; (2) Bo khung gia dat nha nuoc ap gia thi truong; (3) Nguoi Viet dinh cu nuoc ngoai duoc mua nha de hon; (4) Tang thoi han thue dat thuong mai len 70 nam; (5) Minh bach hoa quy hoach dat online. SGS LAND tu van cap nhat.',
+    answerBox: 'Luat Dat Dai 2024 co 5 thay doi lon: so hong nhanh, gia dat thi truong, kieu bao mua nha de hon, thue 70 nam, quy hoach online.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'Luat Dat Dai 2024 (hieu luc 1/1/2025) thay doi: (1) Cap so hong nhanh hon; (2) Bo khung gia dat nha nuoc ap gia thi truong; (3) Nguoi Viet dinh cu nuoc ngoai duoc mua nha de hon; (4) Tang thoi han thue dat thuong mai len 70 nam; (5) Minh bach hoa quy hoach dat online. SGS LAND tu van cap nhat. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly hay thue?',
+            a: 'Mua Phap Ly phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Phap Ly can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Phap Ly duoc bao nhieu/thang?',
+            a: 'Cho thue Phap Ly dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Phap Ly mat bao lau?',
+            a: 'Mua ban Phap Ly mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Phap Ly khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'mua-bds-long-thanh-2026-co-nen-khong': {
+    slug: 'mua-bds-long-thanh-2026-co-nen-khong',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Nen dau tu BDS Long Thanh 2026 neu: co von tu 5-15 ty, chap nhan giu 3-7 nam, muon huong loi tu san bay quoc te (du kien khai thac 2026). Khong nen neu can von ngan, khong chap nhan rui ro phap ly. SGS LAND phan tich ROI mien phi.',
+    answerBox: 'Long Thanh 2026: nen dau tu neu co von 5-15 ty, giu 3-7 nam, huong loi san bay quoc te. ROI du kien 15-25%/nam.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Nen dau tu BDS Long Thanh 2026 neu: co von tu 5-15 ty, chap nhan giu 3-7 nam, muon huong loi tu san bay quoc te (du kien khai thac 2026). Khong nen neu can von ngan, khong chap nhan rui ro phap ly. SGS LAND phan tich ROI mien phi. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS hay thue?',
+            a: 'Mua Dau Tu BDS phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Dau Tu BDS can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Dau Tu BDS duoc bao nhieu/thang?',
+            a: 'Cho thue Dau Tu BDS dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Dau Tu BDS mat bao lau?',
+            a: 'Mua ban Dau Tu BDS mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Dau Tu BDS khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'top-du-an-can-ho-tot-nhat-tphcm-2026': {
+    slug: 'top-du-an-can-ho-tot-nhat-tphcm-2026',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Top 5 can ho tot nhat TPHCM 2026: (1) Vinhomes Grand Park - so hong, tien ich hoan hao; (2) Masteri An Phu - vi tri Q2 trung tam; (3) Lumiere Riverside - view song Sai Gon; (4) Grand Marina - hang sang Q1; (5) Aqua City - do thi ven song. SGS LAND tu van chon phu hop.',
+    answerBox: 'Top 5 can ho TPHCM 2026: Vinhomes Grand Park, Masteri An Phu, Lumiere Riverside, Grand Marina, Aqua City. SGS LAND tu van chon.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Top 5 can ho tot nhat TPHCM 2026: (1) Vinhomes Grand Park - so hong, tien ich hoan hao; (2) Masteri An Phu - vi tri Q2 trung tam; (3) Lumiere Riverside - view song Sai Gon; (4) Grand Marina - hang sang Q1; (5) Aqua City - do thi ven song. SGS LAND tu van chon phu hop. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS hay thue?',
+            a: 'Mua Dau Tu BDS phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Dau Tu BDS can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Dau Tu BDS duoc bao nhieu/thang?',
+            a: 'Cho thue Dau Tu BDS dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Dau Tu BDS mat bao lau?',
+            a: 'Mua ban Dau Tu BDS mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Dau Tu BDS khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'so-sanh-aqua-city-va-izumi-city-nen-chon-cai-nao': {
+    slug: 'so-sanh-aqua-city-va-izumi-city-nen-chon-cai-nao',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Aqua City (Novaland): manh do thi ven song, tien ich phong phu, gia cao hon. Izumi City (Nam Long): phu hop nguoi Nhat, ha tang tot, gia hap dan hon. Chon Aqua City neu can thanh khoan cao; Izumi City neu muon cho thue dai han cho chuyen gia Nhat Ban. SGS LAND tu van.',
+    answerBox: 'Aqua City: do thi ven song, tien ich phong phu, thanh khoan cao. Izumi City: ha tang Nhat Ban, cho thue dai han hieu qua.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Aqua City (Novaland): manh do thi ven song, tien ich phong phu, gia cao hon. Izumi City (Nam Long): phu hop nguoi Nhat, ha tang tot, gia hap dan hon. Chon Aqua City neu can thanh khoan cao; Izumi City neu muon cho thue dai han cho chuyen gia Nhat Ban. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS hay thue?',
+            a: 'Mua Dau Tu BDS phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Dau Tu BDS can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Dau Tu BDS duoc bao nhieu/thang?',
+            a: 'Cho thue Dau Tu BDS dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Dau Tu BDS mat bao lau?',
+            a: 'Mua ban Dau Tu BDS mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Dau Tu BDS khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'vay-mua-nha-70-ngan-hang-nao-tot-nhat-2026': {
+    slug: 'vay-mua-nha-70-ngan-hang-nao-tot-nhat-2026',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Vay mua nha 70% LTV 2026: (1) Vietcombank: 6.5-8.5%/nam, mieng ha uy tin; (2) BIDV: 7-9%, ho tro mua du an lon; (3) VPBank: linh hoat, giai ngan nhanh; (4) Techcombank: co phe duyet nhanh nhat thi truong, ha tang so tot. SGS LAND ket noi ngan hang mien phi.',
+    answerBox: 'Top ngan hang vay mua nha 70% 2026: Vietcombank (6.5-8.5%), BIDV (7-9%), VPBank, Techcombank. SGS LAND ket noi mien phi.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Vay mua nha 70% LTV 2026: (1) Vietcombank: 6.5-8.5%/nam, mieng ha uy tin; (2) BIDV: 7-9%, ho tro mua du an lon; (3) VPBank: linh hoat, giai ngan nhanh; (4) Techcombank: co phe duyet nhanh nhat thi truong, ha tang so tot. SGS LAND ket noi ngan hang mien phi. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS hay thue?',
+            a: 'Mua Tai Chinh BDS phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Tai Chinh BDS can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Tai Chinh BDS duoc bao nhieu/thang?',
+            a: 'Cho thue Tai Chinh BDS dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Tai Chinh BDS mat bao lau?',
+            a: 'Mua ban Tai Chinh BDS mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Tai Chinh BDS khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'lai-suat-vay-mua-nha-bidv-vpbank-techcombank-2026': {
+    slug: 'lai-suat-vay-mua-nha-bidv-vpbank-techcombank-2026',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Lai suat vay mua nha Q2/2026: BIDV 7.0-9.0%/nam (6 thang dau 5.9%); VPBank 7.5-9.5%/nam (khuyen mai 6.5% nam dau); Techcombank 8.0-9.5%/nam (phe duyet trong 48h). Thoi gian vay toi da 25-30 nam. SGS LAND tu van chon ngan hang phu hop.',
+    answerBox: 'Lai suat vay mua nha 2026: BIDV 5.9-9%, VPBank 6.5-9.5%, Techcombank 8-9.5%. Vay 25-30 nam, SGS LAND tu van mien phi.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Lai suat vay mua nha Q2/2026: BIDV 7.0-9.0%/nam (6 thang dau 5.9%); VPBank 7.5-9.5%/nam (khuyen mai 6.5% nam dau); Techcombank 8.0-9.5%/nam (phe duyet trong 48h). Thoi gian vay toi da 25-30 nam. SGS LAND tu van chon ngan hang phu hop. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS hay thue?',
+            a: 'Mua Tai Chinh BDS phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Tai Chinh BDS can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Tai Chinh BDS duoc bao nhieu/thang?',
+            a: 'Cho thue Tai Chinh BDS dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Tai Chinh BDS mat bao lau?',
+            a: 'Mua ban Tai Chinh BDS mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Tai Chinh BDS khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'bds-tp-thu-duc-con-tiem-nang-khong': {
+    slug: 'bds-tp-thu-duc-con-tiem-nang-khong',
+    name: 'Khu Vuc TPHCM',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Khu Vuc TPHCM',
+    h1Title: 'Khu Vuc TPHCM 2026 — Phan Tich Thi Truong',
+    heroDescription: 'BDS TP Thu Duc 2026 van tiem nang cao nho: (1) Ha tang Song Duong hoan thanh 2025-2026; (2) Cong nghe cao SHTP thu hut FDI; (3) Dai hoc Quoc gia giu dan so dong; (4) Quy dat han che day gia len. Gia tang 12-18%/nam. SGS LAND tu van BDS Thu Duc.',
+    answerBox: 'Thu Duc 2026: Tang gia 12-18%/nam nho Song Duong, SHTP, DHQG. Con tiem nang cao nhung can chon phan khu ky.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Khu Vuc TPHCM hien nay la bao nhieu?',
+            a: 'BDS TP Thu Duc 2026 van tiem nang cao nho: (1) Ha tang Song Duong hoan thanh 2025-2026; (2) Cong nghe cao SHTP thu hut FDI; (3) Dai hoc Quoc gia giu dan so dong; (4) Quy dat han che day gia len. Gia tang 12-18%/nam. SGS LAND tu van BDS Thu Duc. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Khu Vuc TPHCM hay thue?',
+            a: 'Mua Khu Vuc TPHCM phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Khu Vuc TPHCM co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Khu Vuc TPHCM can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Khu Vuc TPHCM nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Khu Vuc TPHCM duoc bao nhieu/thang?',
+            a: 'Cho thue Khu Vuc TPHCM dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Khu Vuc TPHCM mat bao lau?',
+            a: 'Mua ban Khu Vuc TPHCM mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Khu Vuc TPHCM khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'khu-vuc-nao-tphcm-dang-tang-gia-2026': {
+    slug: 'khu-vuc-nao-tphcm-dang-tang-gia-2026',
+    name: 'Khu Vuc TPHCM',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Khu Vuc TPHCM',
+    h1Title: 'Khu Vuc TPHCM 2026 — Phan Tich Thi Truong',
+    heroDescription: 'Khu vuc tang gia manh nhat TPHCM 2026: (1) Thu Duc/An Phu: +15-20%/nam nho Song Duong; (2) Binh Thanh: +10-15% nho ket noi Q1; (3) Binh Chanh: +8-12% nho Vanh Dai 4; (4) Nha Be: +10-15% nho cau Nguyen Khoai 2; (5) Can Gio: +20-30% nho du an biet thu ven bien. SGS LAND tu van.',
+    answerBox: 'TPHCM 2026: Thu Duc/An Phu tang 15-20%, Binh Thanh 10-15%, Binh Chanh 8-12%, Nha Be 10-15%, Can Gio 20-30%.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '12-18%' },
+        { label: 'So giao dich', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '±4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Du lieu thi truong thoi gian thuc', desc: 'SGS LAND cap nhat gia BDS theo quy, su dung AVM ±4.8% MAPE tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach', desc: 'Doi ngu chuyen gia kiem tra phap ly mien phi trong 24h, bao gom quy hoach, tranh chap, tien do so hong.' },
+      { title: 'Ket noi ngan hang', desc: 'SGS LAND ket noi 12+ ngan hang lon, ho tro vay 70% gia tri BDS voi lai suat tot nhat thi truong 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Khu Vuc TPHCM hien nay la bao nhieu?',
+            a: 'Khu vuc tang gia manh nhat TPHCM 2026: (1) Thu Duc/An Phu: +15-20%/nam nho Song Duong; (2) Binh Thanh: +10-15% nho ket noi Q1; (3) Binh Chanh: +8-12% nho Vanh Dai 4; (4) Nha Be: +10-15% nho cau Nguyen Khoai 2; (5) Can Gio: +20-30% nho du an biet thu ven bien. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Khu Vuc TPHCM hay thue?',
+            a: 'Mua Khu Vuc TPHCM phu hop neu co von 30-40%, o lau dai tren 5 nam. Thue phu hop neu cong viec linh dong. SGS LAND tu van ROI cu the.',
+          },
+          {
+            q: 'Khu Vuc TPHCM co tiem nang tang gia khong?',
+            a: 'Co tiem nang tang gia 8-20%/nam tuy vi tri va phan khu. Nen chon san pham gan ha tang, phap ly ro rang. SGS LAND phan tich cu the theo ngan sach.',
+          },
+          {
+            q: 'Mua Khu Vuc TPHCM can luu y gi ve phap ly?',
+            a: 'Can kiem tra: so hong/so do ro rang, khong co tranh chap, giay phep XD dung han, hop dong cong chung. SGS LAND kiem tra phap ly mien phi trong 24h.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Khu Vuc TPHCM nhu the nao?',
+            a: 'SGS LAND ho tro: (1) Tu van chon san pham phu hop ngan sach; (2) Kiem tra phap ly mien phi; (3) Ket noi ngan hang vay lai suat tot; (4) Ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Cho thue Khu Vuc TPHCM duoc bao nhieu/thang?',
+            a: 'Cho thue Khu Vuc TPHCM dat 8-20 trieu/thang tuy vi tri va dien tich. Ty suat cho thue dat 3-5%/nam. SGS LAND ho tro tim khach thue mien phi 1 thang phi.',
+          },
+          {
+            q: 'Thoi gian mua ban Khu Vuc TPHCM mat bao lau?',
+            a: 'Mua ban Khu Vuc TPHCM mat 30-90 ngay tu luc thoa thuan gia den sang ten. Qua trinh: hop dong coc 7-14 ngay, cong chung 1-2 ngay, nop thue 15-30 ngay, cap so hong 30-60 ngay. SGS LAND ho tro toan bo.',
+          },
+          {
+            q: 'Co nen vay ngan hang mua Khu Vuc TPHCM khong?',
+            a: 'Nen vay neu: ty le vay khong qua 50-60% gia tri BDS, lai suat on dinh, thu nhap hang thang du tra no. Khong nen vay qua 70% hoac lai suat thieu thuc. SGS LAND tu van cu the theo tinh hinh tai chinh.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'BDS Long Thanh', slug: 'bat-dong-san-long-thanh' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Izumi City Nam Long', slug: 'izumi-city' },
+    ],
+  },
+  'gia-dat-binh-duong-2026': {
+    slug: 'gia-dat-binh-duong-2026',
+    name: 'BDS Binh Duong',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Binh Duong',
+    h1Title: 'BDS Binh Duong 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Dat nen Binh Duong 2026: Thu Dau Mot 15-35 trieu/m2, Thuan An 10-25 trieu/m2, Di An 12-28 trieu/m2. Tang gia 10-15%/nam nho cong nghiep.',
+    answerBox: 'Dat Binh Duong 2026 tu 6-35 trieu/m2, tang 10-15%/nam. Thuan An va Di An tang nhanh nho ket noi TPHCM.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Binh Duong hien nay la bao nhieu?',
+            a: 'Dat nen Binh Duong 2026: Thu Dau Mot 15-35 trieu/m2, Thuan An 10-25 trieu/m2, Di An 12-28 trieu/m2. Tang gia 10-15%/nam nho cong nghiep. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Binh Duong o thuc hay dau tu?',
+            a: 'Mua BDS Binh Duong o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS Binh Duong co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS Binh Duong.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Binh Duong nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS Binh Duong.',
+          },
+          {
+            q: 'Ti suat cho thue BDS Binh Duong la bao nhieu?',
+            a: 'Ti suat cho thue BDS Binh Duong dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS Binh Duong?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS Binh Duong ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS Binh Duong.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS Binh Duong can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'mua-nha-quan-9-co-tot-khong': {
+    slug: 'mua-nha-quan-9-co-tot-khong',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Quan 9 (nay la TP Thu Duc) 2026: gia nha pho 3-8 ty, quy hoach ro rang, ha tang Song Duong hoan thanh. Phu hop ca o thuc lan dau tu. SGS LAND tu van cu the.',
+    answerBox: 'Quan 9 2026 tot cho ca o thuc (3-8 ty) va dau tu (+15-18%/nam) nho ha tang Song Duong hoan thien.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Quan 9 (nay la TP Thu Duc) 2026: gia nha pho 3-8 ty, quy hoach ro rang, ha tang Song Duong hoan thanh. Phu hop ca o thuc lan dau tu. SGS LAND tu van cu the. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc o thuc hay dau tu?',
+            a: 'Mua BDS TP Thu Duc o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Ti suat cho thue BDS TP Thu Duc la bao nhieu?',
+            a: 'Ti suat cho thue BDS TP Thu Duc dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS TP Thu Duc?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS TP Thu Duc ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS TP Thu Duc can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'can-ho-studio-vinhomes-grand-park-co-nen-mua': {
+    slug: 'can-ho-studio-vinhomes-grand-park-co-nen-mua',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Can ho studio Vinhomes Grand Park 2026: gia 1.8-2.5 ty, dien tich 28-35m2. Cho thue 7-9 trieu/thang. Ti suat cho thue 4-5%/nam. Da co so hong. SGS LAND tu van chon can.',
+    answerBox: 'Studio Vinhomes Grand Park 2026: 1.8-2.5 ty, cho thue 7-9 trieu/thang (ti suat 4-5%), da so hong.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Can ho studio Vinhomes Grand Park 2026: gia 1.8-2.5 ty, dien tich 28-35m2. Cho thue 7-9 trieu/thang. Ti suat cho thue 4-5%/nam. Da co so hong. SGS LAND tu van chon can. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc o thuc hay dau tu?',
+            a: 'Mua BDS TP Thu Duc o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Ti suat cho thue BDS TP Thu Duc la bao nhieu?',
+            a: 'Ti suat cho thue BDS TP Thu Duc dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS TP Thu Duc?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS TP Thu Duc ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS TP Thu Duc can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'dat-dong-nai-khu-vuc-nao-tot-nhat-2026': {
+    slug: 'dat-dong-nai-khu-vuc-nao-tot-nhat-2026',
+    name: 'BDS Dong Nai',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Dong Nai',
+    h1Title: 'BDS Dong Nai 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Dat Dong Nai 2026: Long Thanh tot nhat (san bay), Nhon Trach (cau moi), Bien Hoa (cong nghiep). Gia 15-80 trieu/m2 tuy khu. Nen chon Long Thanh neu co von 5-15 ty. SGS LAND phan tich.',
+    answerBox: 'Dat Dong Nai 2026: Long Thanh (san bay) 20-80 trieu/m2, Nhon Trach (cau moi) 15-35 trieu/m2 tot nhat.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Dong Nai hien nay la bao nhieu?',
+            a: 'Dat Dong Nai 2026: Long Thanh tot nhat (san bay), Nhon Trach (cau moi), Bien Hoa (cong nghiep). Gia 15-80 trieu/m2 tuy khu. Nen chon Long Thanh neu co von 5-15 ty. SGS LAND phan tich. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Dong Nai o thuc hay dau tu?',
+            a: 'Mua BDS Dong Nai o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS Dong Nai co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS Dong Nai.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Dong Nai nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS Dong Nai.',
+          },
+          {
+            q: 'Ti suat cho thue BDS Dong Nai la bao nhieu?',
+            a: 'Ti suat cho thue BDS Dong Nai dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS Dong Nai?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS Dong Nai ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS Dong Nai.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS Dong Nai can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'phap-ly-izumi-city-2026': {
+    slug: 'phap-ly-izumi-city-2026',
+    name: 'BDS Dong Nai',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Dong Nai',
+    h1Title: 'BDS Dong Nai 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Phap ly Izumi City Nam Long 2026: Khu A, B da co so hong. Khu C du kien Q2/2026. Khu D du kien Q4/2026. Tong 864ha, quy hoach 1/500 phe duyet. SGS LAND cap nhat theo tuan.',
+    answerBox: 'Izumi City 2026: Khu A-B da co so hong, Khu C Q2/2026, Khu D Q4/2026. Phap ly minh bach.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Dong Nai hien nay la bao nhieu?',
+            a: 'Phap ly Izumi City Nam Long 2026: Khu A, B da co so hong. Khu C du kien Q2/2026. Khu D du kien Q4/2026. Tong 864ha, quy hoach 1/500 phe duyet. SGS LAND cap nhat theo tuan. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Dong Nai o thuc hay dau tu?',
+            a: 'Mua BDS Dong Nai o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS Dong Nai co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS Dong Nai.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Dong Nai nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS Dong Nai.',
+          },
+          {
+            q: 'Ti suat cho thue BDS Dong Nai la bao nhieu?',
+            a: 'Ti suat cho thue BDS Dong Nai dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS Dong Nai?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS Dong Nai ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS Dong Nai.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS Dong Nai can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'manhattan-novaland-co-nen-mua-khong': {
+    slug: 'manhattan-novaland-co-nen-mua-khong',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Grand Manhattan Q1 2026: can ho luxury 8-25 ty/can, vi tri 69 Nguyen Hue Q1 dat vang. Thi truong cap cao han che nguon cung. Phu hop dau tu dai han, cho thue chuyen gia. SGS LAND tu van.',
+    answerBox: 'Grand Manhattan Q1 2026: 8-25 ty/can luxury, cho thue 35-80 trieu/thang cho chuyen gia nuoc ngoai.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Grand Manhattan Q1 2026: can ho luxury 8-25 ty/can, vi tri 69 Nguyen Hue Q1 dat vang. Thi truong cap cao han che nguon cung. Phu hop dau tu dai han, cho thue chuyen gia. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc o thuc hay dau tu?',
+            a: 'Mua BDS TP Thu Duc o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Ti suat cho thue BDS TP Thu Duc la bao nhieu?',
+            a: 'Ti suat cho thue BDS TP Thu Duc dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS TP Thu Duc?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS TP Thu Duc ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS TP Thu Duc can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'thu-tuc-mua-nha-lan-dau-o-viet-nam': {
+    slug: 'thu-tuc-mua-nha-lan-dau-o-viet-nam',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Thu tuc mua nha lan dau 2026: dat coc 3-7% gia tri, vay ngan hang, cong chung hop dong chuyen nhuong, nop thue truoc ba 2%, cap so hong 1-3 thang. SGS LAND ho tro toan bo.',
+    answerBox: 'Mua nha lan dau 2026: dat coc 3-7%, cong chung, nop thue 2%, cap so hong 1-3 thang. SGS LAND dong hanh.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'Thu tuc mua nha lan dau 2026: dat coc 3-7% gia tri, vay ngan hang, cong chung hop dong chuyen nhuong, nop thue truoc ba 2%, cap so hong 1-3 thang. SGS LAND ho tro toan bo. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly o thuc hay dau tu?',
+            a: 'Mua Phap Ly o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Phap Ly.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Phap Ly.',
+          },
+          {
+            q: 'Ti suat cho thue Phap Ly la bao nhieu?',
+            a: 'Ti suat cho thue Phap Ly dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Phap Ly?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Phap Ly ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Phap Ly.',
+          },
+          {
+            q: 'Vay ngan hang mua Phap Ly can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'kiem-tra-quy-hoach-truoc-khi-mua-nha': {
+    slug: 'kiem-tra-quy-hoach-truoc-khi-mua-nha',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Kiem tra quy hoach dat truoc mua: xem ban do 1/2000 tai UBND phuong mien phi, tra cuu online cong TPHCM, yeu cau giay chung nhan quy hoach. SGS LAND kiem tra mien phi 24h.',
+    answerBox: 'Kiem tra quy hoach dat: ban do 1/2000 tai UBND, tra cuu online, giay chung nhan. SGS LAND kiem tra mien phi 24h.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'Kiem tra quy hoach dat truoc mua: xem ban do 1/2000 tai UBND phuong mien phi, tra cuu online cong TPHCM, yeu cau giay chung nhan quy hoach. SGS LAND kiem tra mien phi 24h. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly o thuc hay dau tu?',
+            a: 'Mua Phap Ly o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Phap Ly.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Phap Ly.',
+          },
+          {
+            q: 'Ti suat cho thue Phap Ly la bao nhieu?',
+            a: 'Ti suat cho thue Phap Ly dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Phap Ly?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Phap Ly ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Phap Ly.',
+          },
+          {
+            q: 'Vay ngan hang mua Phap Ly can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'sang-ten-nha-dat-mat-bao-lau': {
+    slug: 'sang-ten-nha-dat-mat-bao-lau',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Sang ten nha dat 2026 mat tong 45-90 ngay: cong chung 1-3 ngay, nop ho so 3-5 ngay, phe duyet thue 15-30 ngay, cap so hong 30-60 ngay. Phi: thue truoc ba 2%, cong chung 0.1-0.2%. SGS LAND ho tro rut gon.',
+    answerBox: 'Sang ten nha dat 2026 mat 45-90 ngay, phi thue 2% + cong chung 0.1-0.2%. SGS LAND ho tro rut gon thoi gian.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'Sang ten nha dat 2026 mat tong 45-90 ngay: cong chung 1-3 ngay, nop ho so 3-5 ngay, phe duyet thue 15-30 ngay, cap so hong 30-60 ngay. Phi: thue truoc ba 2%, cong chung 0.1-0.2%. SGS LAND ho tro rut gon. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly o thuc hay dau tu?',
+            a: 'Mua Phap Ly o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Phap Ly.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Phap Ly.',
+          },
+          {
+            q: 'Ti suat cho thue Phap Ly la bao nhieu?',
+            a: 'Ti suat cho thue Phap Ly dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Phap Ly?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Phap Ly ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Phap Ly.',
+          },
+          {
+            q: 'Vay ngan hang mua Phap Ly can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'tranh-chap-dat-dai-giai-quyet-nhu-the-nao': {
+    slug: 'tranh-chap-dat-dai-giai-quyet-nhu-the-nao',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Tranh chap dat dai giai quyet qua: hoa giai UBND phuong mien phi (45 ngay), khoi kien Toa an (6-24 thang), trong tai thuong mai. Phong tranh bang kiem tra phap ly ky truoc mua. SGS LAND tu van.',
+    answerBox: 'Tranh chap dat: hoa giai UBND mien phi, kien toa an 6-24 thang. Phong tranh bang kiem tra phap ly truoc mua.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'Tranh chap dat dai giai quyet qua: hoa giai UBND phuong mien phi (45 ngay), khoi kien Toa an (6-24 thang), trong tai thuong mai. Phong tranh bang kiem tra phap ly ky truoc mua. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly o thuc hay dau tu?',
+            a: 'Mua Phap Ly o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Phap Ly.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Phap Ly.',
+          },
+          {
+            q: 'Ti suat cho thue Phap Ly la bao nhieu?',
+            a: 'Ti suat cho thue Phap Ly dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Phap Ly?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Phap Ly ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Phap Ly.',
+          },
+          {
+            q: 'Vay ngan hang mua Phap Ly can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'dau-tu-bds-cho-thue-o-tphcm-2026': {
+    slug: 'dau-tu-bds-cho-thue-o-tphcm-2026',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Dau tu BDS cho thue TPHCM 2026: can ho 1-2PN ti suat 3-5%/nam, phong tro 8-12%/nam, officetel 4-6%/nam. Can ho 2PN la lua chon can bang nhat giua ti suat va quan ly. SGS LAND tu van.',
+    answerBox: 'BDS cho thue TPHCM 2026: can ho 2PN ti suat 3-5%, phong tro 8-12%, officetel 4-6%. Can ho 2PN can bang nhat.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Dau tu BDS cho thue TPHCM 2026: can ho 1-2PN ti suat 3-5%/nam, phong tro 8-12%/nam, officetel 4-6%/nam. Can ho 2PN la lua chon can bang nhat giua ti suat va quan ly. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Dau Tu BDS.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Dau Tu BDS.',
+          },
+          {
+            q: 'Ti suat cho thue Dau Tu BDS la bao nhieu?',
+            a: 'Ti suat cho thue Dau Tu BDS dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Dau Tu BDS?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Dau Tu BDS ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Dau Tu BDS.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'yield-cho-thue-bds-viet-nam-2026': {
+    slug: 'yield-cho-thue-bds-viet-nam-2026',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Ty suat cho thue BDS Viet Nam 2026: TPHCM 3-6%, Ha Noi 3-5%, Da Nang 4-7%, Long An 5-8%. Can ho nho cho thue hieu qua nhat. Nen dat muc tieu yield toi thieu 4%/nam truoc thue. SGS LAND tinh ROI.',
+    answerBox: 'Rental yield BDS 2026: TPHCM 3-6%, Da Nang 4-7%, Long An 5-8%. Can ho nho Vinhomes dat 4-5% hieu qua.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Ty suat cho thue BDS Viet Nam 2026: TPHCM 3-6%, Ha Noi 3-5%, Da Nang 4-7%, Long An 5-8%. Can ho nho cho thue hieu qua nhat. Nen dat muc tieu yield toi thieu 4%/nam truoc thue. SGS LAND tinh ROI. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Dau Tu BDS.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Dau Tu BDS.',
+          },
+          {
+            q: 'Ti suat cho thue Dau Tu BDS la bao nhieu?',
+            a: 'Ti suat cho thue Dau Tu BDS dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Dau Tu BDS?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Dau Tu BDS ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Dau Tu BDS.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'flipping-bds-la-gi-co-nen-lam-khong': {
+    slug: 'flipping-bds-la-gi-co-nen-lam-khong',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'BDS flipping (mua go ban ngay) 2026 rui ro cao: thue TNCN 2%, canh tranh nhieu. Chi nen khi: biet gia thanh chinh xac, co nguon khach rieng, von tu nhanh, thong tin quy hoach som. SGS LAND tu van.',
+    answerBox: 'BDS flipping 2026 rui ro cao: thue 2%, canh tranh lon. Chi nen khi co von tu, nguon khach rieng, thong tin som.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'BDS flipping (mua go ban ngay) 2026 rui ro cao: thue TNCN 2%, canh tranh nhieu. Chi nen khi: biet gia thanh chinh xac, co nguon khach rieng, von tu nhanh, thong tin quy hoach som. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Dau Tu BDS.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Dau Tu BDS.',
+          },
+          {
+            q: 'Ti suat cho thue Dau Tu BDS la bao nhieu?',
+            a: 'Ti suat cho thue Dau Tu BDS dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Dau Tu BDS?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Dau Tu BDS ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Dau Tu BDS.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'dau-tu-bds-voi-von-1-ty': {
+    slug: 'dau-tu-bds-voi-von-1-ty',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Dau tu BDS voi von 1 ty 2026: mua dat Long An xa trung tam (tiem nang dai han), gop von nhom, hoac can ho gia thap vay 70%. Can chon ky doi tac va phap ly. SGS LAND tu van mo hinh phu hop.',
+    answerBox: 'Von 1 ty mua BDS 2026: dat Long An/Binh Duong xa trung tam, gop von nhom, hoac can ho vay 70%. Can chon ky.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Dau tu BDS voi von 1 ty 2026: mua dat Long An xa trung tam (tiem nang dai han), gop von nhom, hoac can ho gia thap vay 70%. Can chon ky doi tac va phap ly. SGS LAND tu van mo hinh phu hop. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Dau Tu BDS.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Dau Tu BDS.',
+          },
+          {
+            q: 'Ti suat cho thue Dau Tu BDS la bao nhieu?',
+            a: 'Ti suat cho thue Dau Tu BDS dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Dau Tu BDS?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Dau Tu BDS ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Dau Tu BDS.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'thue-tncn-ban-nha-dat-2026': {
+    slug: 'thue-tncn-ban-nha-dat-2026',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Thue TNCN ban nha dat 2026: 2% gia ban (khong phu thuoc lai/lo). Mien thue: nha duy nhat, o 6 thang+, thu nhap duoi 11 trieu/thang, duoc tang/thua ke. Phi truoc ba 0.5% nguoi mua tra. SGS LAND ho tro.',
+    answerBox: 'Ban nha dat 2026 thue TNCN 2% gia ban. Mien neu nha duy nhat, o tu 6 thang+. SGS LAND ho tro ke khai thue.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Thue TNCN ban nha dat 2026: 2% gia ban (khong phu thuoc lai/lo). Mien thue: nha duy nhat, o 6 thang+, thu nhap duoi 11 trieu/thang, duoc tang/thua ke. Phi truoc ba 0.5% nguoi mua tra. SGS LAND ho tro. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS o thuc hay dau tu?',
+            a: 'Mua Tai Chinh BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Tai Chinh BDS.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Tai Chinh BDS.',
+          },
+          {
+            q: 'Ti suat cho thue Tai Chinh BDS la bao nhieu?',
+            a: 'Ti suat cho thue Tai Chinh BDS dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Tai Chinh BDS?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Tai Chinh BDS ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Tai Chinh BDS.',
+          },
+          {
+            q: 'Vay ngan hang mua Tai Chinh BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'tinh-kha-nang-vay-ngan-hang-2026': {
+    slug: 'tinh-kha-nang-vay-ngan-hang-2026',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Kha nang vay mua nha: thu nhap x 40-50% = so tien tra toi da/thang. Vi du: luong 30 trieu -> tra toi da 12-15 trieu -> vay duoc 1.5-1.8 ty (lai 9%, 20 nam). Von tu toi thieu 30%. SGS LAND tinh chinh xac.',
+    answerBox: 'Vay mua nha 2026: luong 30 trieu -> vay 1.5-1.8 ty (tra 12-15 trieu/thang). Von tu toi thieu 30%.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Kha nang vay mua nha: thu nhap x 40-50% = so tien tra toi da/thang. Vi du: luong 30 trieu -> tra toi da 12-15 trieu -> vay duoc 1.5-1.8 ty (lai 9%, 20 nam). Von tu toi thieu 30%. SGS LAND tinh chinh xac. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS o thuc hay dau tu?',
+            a: 'Mua Tai Chinh BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Tai Chinh BDS.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Tai Chinh BDS.',
+          },
+          {
+            q: 'Ti suat cho thue Tai Chinh BDS la bao nhieu?',
+            a: 'Ti suat cho thue Tai Chinh BDS dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Tai Chinh BDS?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Tai Chinh BDS ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Tai Chinh BDS.',
+          },
+          {
+            q: 'Vay ngan hang mua Tai Chinh BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'phi-moi-gioi-mua-ban-nha-dat': {
+    slug: 'phi-moi-gioi-mua-ban-nha-dat',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Phi moi gioi 2026: nguoi ban tra 1-2% gia tri BDS. Nguoi mua thuong khong tra. Moi gioi san giao dich thuoc chu dau tu (1-3%). SGS LAND khong thu phi nguoi mua, ket noi mien phi.',
+    answerBox: 'Phi moi gioi 2026: nguoi ban tra 1-2%, nguoi mua thuong mien phi. SGS LAND tu van va ket noi mien phi.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Phi moi gioi 2026: nguoi ban tra 1-2% gia tri BDS. Nguoi mua thuong khong tra. Moi gioi san giao dich thuoc chu dau tu (1-3%). SGS LAND khong thu phi nguoi mua, ket noi mien phi. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS o thuc hay dau tu?',
+            a: 'Mua Tai Chinh BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai Tai Chinh BDS.',
+          },
+          {
+            q: 'SGS LAND ho tro mua Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai Tai Chinh BDS.',
+          },
+          {
+            q: 'Ti suat cho thue Tai Chinh BDS la bao nhieu?',
+            a: 'Ti suat cho thue Tai Chinh BDS dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban Tai Chinh BDS?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua Tai Chinh BDS ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai Tai Chinh BDS.',
+          },
+          {
+            q: 'Vay ngan hang mua Tai Chinh BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'bds-quan-7-phu-my-hung-2026': {
+    slug: 'bds-quan-7-phu-my-hung-2026',
+    name: 'BDS Quan 7',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Quan 7',
+    h1Title: 'BDS Quan 7 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Quan 7 Phu My Hung 2026: nha pho 10-25 ty, can ho Masteri 4-7 ty, ti suat cho thue 4-6%/nam. Do thi van minh, truong quoc te, chuyen gia nuoc ngoai ua thich. SGS LAND tu van Quan 7.',
+    answerBox: 'Quan 7/Phu My Hung 2026: nha pho 10-25 ty, can ho 4-7 ty, cho thue 4-6%/nam. Chuyen gia nuoc ngoai ua thich.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Quan 7 hien nay la bao nhieu?',
+            a: 'Quan 7 Phu My Hung 2026: nha pho 10-25 ty, can ho Masteri 4-7 ty, ti suat cho thue 4-6%/nam. Do thi van minh, truong quoc te, chuyen gia nuoc ngoai ua thich. SGS LAND tu van Quan 7. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Quan 7 o thuc hay dau tu?',
+            a: 'Mua BDS Quan 7 o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS Quan 7 co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS Quan 7.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Quan 7 nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS Quan 7.',
+          },
+          {
+            q: 'Ti suat cho thue BDS Quan 7 la bao nhieu?',
+            a: 'Ti suat cho thue BDS Quan 7 dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS Quan 7?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS Quan 7 ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS Quan 7.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS Quan 7 can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'bds-binh-chanh-vanh-dai-2026': {
+    slug: 'bds-binh-chanh-vanh-dai-2026',
+    name: 'BDS Binh Chanh',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Binh Chanh',
+    h1Title: 'BDS Binh Chanh 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Binh Chanh 2026 huong loi Vanh Dai 3 (Q4/2025) va Vanh Dai 4 (du kien 2028). Nha pho 3-7 ty, dat nen 3-8 trieu/m2. Gia tang 8-12%/nam. Phu hop o thuc va dau tu dai han. SGS LAND tu van.',
+    answerBox: 'Binh Chanh 2026: nha pho 3-7 ty, dat 3-8 trieu/m2, tang 8-12%/nam nho Vanh Dai 3 va 4.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Binh Chanh hien nay la bao nhieu?',
+            a: 'Binh Chanh 2026 huong loi Vanh Dai 3 (Q4/2025) va Vanh Dai 4 (du kien 2028). Nha pho 3-7 ty, dat nen 3-8 trieu/m2. Gia tang 8-12%/nam. Phu hop o thuc va dau tu dai han. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Binh Chanh o thuc hay dau tu?',
+            a: 'Mua BDS Binh Chanh o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS Binh Chanh co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS Binh Chanh.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS Binh Chanh nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS Binh Chanh.',
+          },
+          {
+            q: 'Ti suat cho thue BDS Binh Chanh la bao nhieu?',
+            a: 'Ti suat cho thue BDS Binh Chanh dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS Binh Chanh?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS Binh Chanh ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS Binh Chanh.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS Binh Chanh can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'bds-nha-be-2026': {
+    slug: 'bds-nha-be-2026',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Nha Be 2026 hap dan nho cau Nguyen Khoai 2 va quy hoach do thi bien. Nha pho 6-12 ty, dat 10-20 trieu/m2. Tang gia 10-15%/nam. SGS LAND tu van BDS Nha Be.',
+    answerBox: 'Nha Be 2026: nha pho 6-12 ty, dat 10-20 trieu/m2, tang 10-15%/nam nho cau Nguyen Khoai 2.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung, chinh xac hon tham dinh truyen thong.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap, tien do cap so.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Nha Be 2026 hap dan nho cau Nguyen Khoai 2 va quy hoach do thi bien. Nha pho 6-12 ty, dat 10-20 trieu/m2. Tang gia 10-15%/nam. SGS LAND tu van BDS Nha Be. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc o thuc hay dau tu?',
+            a: 'Mua BDS TP Thu Duc o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'SGS LAND ho tro mua BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Ti suat cho thue BDS TP Thu Duc la bao nhieu?',
+            a: 'Ti suat cho thue BDS TP Thu Duc dat 3-6%/nam tuy vi tri. Can ho 1-2PN dat ti suat cao nhat. SGS LAND tinh ROI cu the va tim khach thue mien phi 1 thang.',
+          },
+          {
+            q: 'Khi nao nen ban BDS TP Thu Duc?',
+            a: 'Nen ban khi gia tang 30-50%, can von cho ke hoach khac, hoac co thong tin tang gia dot bien. Khong nen ban vi hoang loan. SGS LAND tu van thoi diem toi uu.',
+          },
+          {
+            q: 'Chi phi mua BDS TP Thu Duc ngoai gia ban?',
+            a: 'Chi phi phu: thue truoc ba 0.5% (nguoi mua), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri BDS tai BDS TP Thu Duc.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS TP Thu Duc can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'can-ho-officetel-co-nen-mua-khong': {
+    slug: 'can-ho-officetel-co-nen-mua-khong',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Officetel 2026: gia 1.5-3 ty/can, cho thue van phong 8-12 trieu/thang, cho thue ngan han 15-20 trieu. Ti suat 4-6%/nam. Rui ro: thoi han thue dat 50 nam, kho vay ngan hang. Nen mua khi co von tu tu 1.5 ty.',
+    answerBox: 'Officetel 2026 ti suat 4-6%/nam, gia 1.5-3 ty. Rui ro thoi han 50 nam, kho vay. Nen neu co von tu.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Officetel 2026: gia 1.5-3 ty/can, cho thue van phong 8-12 trieu/thang, cho thue ngan han 15-20 trieu. Ti suat 4-6%/nam. Rui ro: thoi han thue dat 50 nam, kho vay ngan hang. Nen mua khi co von tu tu 1.5 ty. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Dau Tu BDS 2026 co on dinh khong?',
+            a: 'Thi truong Dau Tu BDS 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Dau Tu BDS nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Dau Tu BDS?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'bds-can-gio-co-tiem-nang-khong': {
+    slug: 'bds-can-gio-co-tiem-nang-khong',
+    name: 'Khu Vuc TPHCM',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Khu Vuc TPHCM',
+    h1Title: 'Khu Vuc TPHCM 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Can Gio TPHCM 2026 co tiem nang cao do du an dat vang ven bien (5,000 ha), quy hoach do thi sinh thai. Biet thu, dat bien tang 20-40%/nam. Rui ro: con xa trung tam 60km. SGS LAND phan tich Can Gio.',
+    answerBox: 'Can Gio 2026 tang 20-40%/nam nho du an dat vang 5,000 ha ven bien. Rui ro: xa trung tam 60km.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Khu Vuc TPHCM hien nay la bao nhieu?',
+            a: 'Can Gio TPHCM 2026 co tiem nang cao do du an dat vang ven bien (5,000 ha), quy hoach do thi sinh thai. Biet thu, dat bien tang 20-40%/nam. Rui ro: con xa trung tam 60km. SGS LAND phan tich Can Gio. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Khu Vuc TPHCM o thuc hay dau tu?',
+            a: 'Mua Khu Vuc TPHCM o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Khu Vuc TPHCM co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Khu Vuc TPHCM nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Khu Vuc TPHCM 2026 co on dinh khong?',
+            a: 'Thi truong Khu Vuc TPHCM 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Khu Vuc TPHCM nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Khu Vuc TPHCM?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Khu Vuc TPHCM can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'bds-thu-duc-phan-khu-nao-tang-gia-manh': {
+    slug: 'bds-thu-duc-phan-khu-nao-tang-gia-manh',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Phan khu tang gia manh nhat Thu Duc 2026: Truong Tho/Hiep Binh Phuoc (Song Duong), An Khanh (cau Nguyen Khoai), Long Binh/Long Truong (quy hoach hien dai). Gia tang 15-25%/nam. SGS LAND tu van chon phan khu.',
+    answerBox: 'Thu Duc 2026: Truong Tho, An Khanh, Long Binh tang 15-25%/nam nho Song Duong va cau moi.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Phan khu tang gia manh nhat Thu Duc 2026: Truong Tho/Hiep Binh Phuoc (Song Duong), An Khanh (cau Nguyen Khoai), Long Binh/Long Truong (quy hoach hien dai). Gia tang 15-25%/nam. SGS LAND tu van chon phan khu. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc o thuc hay dau tu?',
+            a: 'Mua BDS TP Thu Duc o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong BDS TP Thu Duc 2026 co on dinh khong?',
+            a: 'Thi truong BDS TP Thu Duc 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai BDS TP Thu Duc nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai BDS TP Thu Duc?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS TP Thu Duc can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'cho-thue-can-ho-vinhomes-co-loi-khong': {
+    slug: 'cho-thue-can-ho-vinhomes-co-loi-khong',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Cho thue can ho Vinhomes 2026: 2PN dat 12-18 trieu/thang, 3PN 18-25 trieu, studio 7-10 trieu. Ty suat cho thue 4-5%/nam. Nen thue quan ly cho thue chuyen nghiep (6-10% doanh thu) de ton it cong suc.',
+    answerBox: 'Cho thue Vinhomes 2026: 2PN 12-18 trieu/thang, ti suat 4-5%/nam. Nen thue quan ly chuyen nghiep 6-10%.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'Cho thue can ho Vinhomes 2026: 2PN dat 12-18 trieu/thang, 3PN 18-25 trieu, studio 7-10 trieu. Ty suat cho thue 4-5%/nam. Nen thue quan ly cho thue chuyen nghiep (6-10% doanh thu) de ton it cong suc. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Dau Tu BDS 2026 co on dinh khong?',
+            a: 'Thi truong Dau Tu BDS 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Dau Tu BDS nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Dau Tu BDS?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'mua-nha-o-xa-hay-can-ho-trung-tam': {
+    slug: 'mua-nha-o-xa-hay-can-ho-trung-tam',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Nha o xa (3-7 ty, 80-120m2) vs Can ho trung tam (3-6 ty, 50-70m2): nha o xa co san vuon, chi phi thap hon nhung di lai mat thoi gian. Can ho trung tam thuan tien, tien ich tot, cho thue de. SGS LAND tu van theo nhu cau.',
+    answerBox: 'Nha o xa 3-7 ty (rong hon) vs can ho trung tam 3-6 ty (thuan tien hon). SGS LAND tu van theo nhu cau thuc te.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Nha o xa (3-7 ty, 80-120m2) vs Can ho trung tam (3-6 ty, 50-70m2): nha o xa co san vuon, chi phi thap hon nhung di lai mat thoi gian. Can ho trung tam thuan tien, tien ich tot, cho thue de. SGS LAND tu van theo nhu cau. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS o thuc hay dau tu?',
+            a: 'Mua Tai Chinh BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Tai Chinh BDS 2026 co on dinh khong?',
+            a: 'Thi truong Tai Chinh BDS 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Tai Chinh BDS nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Tai Chinh BDS?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Tai Chinh BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'bds-long-an-khu-vuc-nao-tiem-nang': {
+    slug: 'bds-long-an-khu-vuc-nao-tiem-nang',
+    name: 'BDS Long An',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS Long An',
+    h1Title: 'BDS Long An 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Long An 2026 co 3 khu vuc tiem nang: Duc Hoa (cong nghiep, logistics), Ben Luc (cao toc TPHCM - Trung Luong), Can Duoc (biet thu ven song). Gia 4-12 trieu/m2. Tang gia 10-18%/nam. SGS LAND tu van Long An.',
+    answerBox: 'Long An 2026: Duc Hoa (cong nghiep), Ben Luc (cao toc), Can Duoc (ven song). Dat 4-12 trieu/m2, tang 10-18%/nam.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS Long An hien nay la bao nhieu?',
+            a: 'Long An 2026 co 3 khu vuc tiem nang: Duc Hoa (cong nghiep, logistics), Ben Luc (cao toc TPHCM - Trung Luong), Can Duoc (biet thu ven song). Gia 4-12 trieu/m2. Tang gia 10-18%/nam. SGS LAND tu van Long An. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS Long An o thuc hay dau tu?',
+            a: 'Mua BDS Long An o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS Long An co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu BDS Long An nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong BDS Long An 2026 co on dinh khong?',
+            a: 'Thi truong BDS Long An 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai BDS Long An nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai BDS Long An?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS Long An can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'quy-hoach-vanh-dai-3-tphcm-anh-huong-bds': {
+    slug: 'quy-hoach-vanh-dai-3-tphcm-anh-huong-bds',
+    name: 'Khu Vuc TPHCM',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Khu Vuc TPHCM',
+    h1Title: 'Khu Vuc TPHCM 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Vanh Dai 3 TPHCM (dai khai thac Q4/2025) ket noi TPHCM, Binh Duong, Dong Nai, Long An. BDS tai cac nut giao dao gia 20-40%/nam. Khu vuc huong loi nhat: Binh Chanh, Nha Be, Thu Duc, Binh Duong.',
+    answerBox: 'Vanh Dai 3 TPHCM (Q4/2025): BDS nut giao tang 20-40%/nam. Binh Chanh, Nha Be, Thu Duc, Binh Duong huong loi.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Khu Vuc TPHCM hien nay la bao nhieu?',
+            a: 'Vanh Dai 3 TPHCM (dai khai thac Q4/2025) ket noi TPHCM, Binh Duong, Dong Nai, Long An. BDS tai cac nut giao dao gia 20-40%/nam. Khu vuc huong loi nhat: Binh Chanh, Nha Be, Thu Duc, Binh Duong. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Khu Vuc TPHCM o thuc hay dau tu?',
+            a: 'Mua Khu Vuc TPHCM o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Khu Vuc TPHCM co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Khu Vuc TPHCM nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Khu Vuc TPHCM 2026 co on dinh khong?',
+            a: 'Thi truong Khu Vuc TPHCM 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Khu Vuc TPHCM nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Khu Vuc TPHCM?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Khu Vuc TPHCM can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'du-lich-bds-nghỉ-duong-viet-nam-2026': {
+    slug: 'du-lich-bds-nghỉ-duong-viet-nam-2026',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'BDS nghi duong Viet Nam 2026: Phu Quoc (phuc hoi manh), Da Nang (on dinh), Hoi An (dac trung), Nha Trang (thanh khoan cao). Ti suat cho thue 4-8%/nam khu vuc tot. Rui ro: quy hoach, nguon khach du lich.',
+    answerBox: 'BDS nghi duong 2026: Phu Quoc, Da Nang tot nhat. Ti suat 4-8%/nam. Can chon khu vuc du khach quoc te.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'BDS nghi duong Viet Nam 2026: Phu Quoc (phuc hoi manh), Da Nang (on dinh), Hoi An (dac trung), Nha Trang (thanh khoan cao). Ti suat cho thue 4-8%/nam khu vuc tot. Rui ro: quy hoach, nguon khach du lich. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Dau Tu BDS 2026 co on dinh khong?',
+            a: 'Thi truong Dau Tu BDS 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Dau Tu BDS nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Dau Tu BDS?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'kien-truc-nha-pho-thu-duc-loai-nao-tot': {
+    slug: 'kien-truc-nha-pho-thu-duc-loai-nao-tot',
+    name: 'BDS TP Thu Duc',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'BDS TP Thu Duc',
+    h1Title: 'BDS TP Thu Duc 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Nha pho Thu Duc 2026: nha pho o to vao (3.5-5m mat tien) gia 4-8 ty, thich hop o thuc; nha pho hem xe hoi (3-3.5m) gia 2.5-5 ty, thich hop cho thue. Nen chon mat tien khu tap trung dan cu. SGS LAND tu van.',
+    answerBox: 'Nha pho Thu Duc 2026: mat o to 4-8 ty (o thuc tot), hem xe hoi 2.5-5 ty (cho thue tot). Chon theo nhu cau.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia BDS TP Thu Duc hien nay la bao nhieu?',
+            a: 'Nha pho Thu Duc 2026: nha pho o to vao (3.5-5m mat tien) gia 4-8 ty, thich hop o thuc; nha pho hem xe hoi (3-3.5m) gia 2.5-5 ty, thich hop cho thue. Nen chon mat tien khu tap trung dan cu. SGS LAND tu van. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua BDS TP Thu Duc o thuc hay dau tu?',
+            a: 'Mua BDS TP Thu Duc o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'BDS TP Thu Duc co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu BDS TP Thu Duc nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong BDS TP Thu Duc 2026 co on dinh khong?',
+            a: 'Thi truong BDS TP Thu Duc 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai BDS TP Thu Duc nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai BDS TP Thu Duc?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua BDS TP Thu Duc can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'thi-truong-bds-viet-nam-2026-tong-quan': {
+    slug: 'thi-truong-bds-viet-nam-2026-tong-quan',
+    name: 'Khu Vuc TPHCM',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Khu Vuc TPHCM',
+    h1Title: 'Khu Vuc TPHCM 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Thi truong BDS Viet Nam 2026: phuc hoi tich cuc sau giai doan 2022-2023. Can ho tang manh 15-20%, dat nen ben vung 10-15%. Phap ly minh bach hon nho Luat Dat Dai 2024. FDI do vao BDS cong nghiep va nghi duong tang.',
+    answerBox: 'BDS Viet Nam 2026 phuc hoi tich cuc: can ho tang 15-20%, dat nen 10-15%. Phap ly minh bach nho Luat Dat Dai 2024.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Khu Vuc TPHCM hien nay la bao nhieu?',
+            a: 'Thi truong BDS Viet Nam 2026: phuc hoi tich cuc sau giai doan 2022-2023. Can ho tang manh 15-20%, dat nen ben vung 10-15%. Phap ly minh bach hon nho Luat Dat Dai 2024. FDI do vao BDS cong nghiep va nghi duong tang. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Khu Vuc TPHCM o thuc hay dau tu?',
+            a: 'Mua Khu Vuc TPHCM o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Khu Vuc TPHCM co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Khu Vuc TPHCM nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Khu Vuc TPHCM 2026 co on dinh khong?',
+            a: 'Thi truong Khu Vuc TPHCM 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Khu Vuc TPHCM nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Khu Vuc TPHCM?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Khu Vuc TPHCM can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'bds-cong-nghiep-viet-nam-2026': {
+    slug: 'bds-cong-nghiep-viet-nam-2026',
+    name: 'Dau Tu BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Dau Tu BDS',
+    h1Title: 'Dau Tu BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'BDS cong nghiep Viet Nam 2026: nha xuong xay san cho thue 3.5-6 USD/m2/thang, dat KCN 150-300 USD/m2. Tang manh nho dich chuyen chuoi cung ung. KCN Long Thanh, Nhon Trach, Binh Duong nhieu nha dau tu FDI nhat.',
+    answerBox: 'BDS cong nghiep 2026: nha xuong 3.5-6 USD/m2/thang, dat KCN 150-300 USD/m2. Long Thanh, Binh Duong dan dau.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Dau Tu BDS hien nay la bao nhieu?',
+            a: 'BDS cong nghiep Viet Nam 2026: nha xuong xay san cho thue 3.5-6 USD/m2/thang, dat KCN 150-300 USD/m2. Tang manh nho dich chuyen chuoi cung ung. KCN Long Thanh, Nhon Trach, Binh Duong nhieu nha dau tu FDI nhat. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Dau Tu BDS o thuc hay dau tu?',
+            a: 'Mua Dau Tu BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Dau Tu BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Dau Tu BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Dau Tu BDS 2026 co on dinh khong?',
+            a: 'Thi truong Dau Tu BDS 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Dau Tu BDS nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Dau Tu BDS?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Dau Tu BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'so-sanh-mua-va-thue-nha-o-viet-nam': {
+    slug: 'so-sanh-mua-va-thue-nha-o-viet-nam',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Mua nha (3-7 ty): xay dung tai san, khong phu thuoc chu nha, nhung ton von lon, kho linh dong. Thue nha (8-18 trieu/thang): linh dong, it phieu phong nhung tien thue mat di. Nen mua neu: on dinh, co von 30-40%, du dinh o 5+ nam.',
+    answerBox: 'Mua nha vs thue: mua xay dung tai san nhung ton von, thue linh dong nhung mat tien. Nen mua khi on dinh, co von 30-40%.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Mua nha (3-7 ty): xay dung tai san, khong phu thuoc chu nha, nhung ton von lon, kho linh dong. Thue nha (8-18 trieu/thang): linh dong, it phieu phong nhung tien thue mat di. Nen mua neu: on dinh, co von 30-40%, du dinh o 5+ nam. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS o thuc hay dau tu?',
+            a: 'Mua Tai Chinh BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Tai Chinh BDS 2026 co on dinh khong?',
+            a: 'Thi truong Tai Chinh BDS 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Tai Chinh BDS nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Tai Chinh BDS?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Tai Chinh BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'qua-trinh-vay-mua-nha-bao-nhieu-buoc': {
+    slug: 'qua-trinh-vay-mua-nha-bao-nhieu-buoc',
+    name: 'Tai Chinh BDS',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Tai Chinh BDS',
+    h1Title: 'Tai Chinh BDS 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Quy trinh vay mua nha 2026: (1) Chon ngan hang, xem dieu kien; (2) Nop ho so (CMND, ho khau, chung minh thu nhap); (3) Tham dinh BDS; (4) Phe duyet tin dung 5-15 ngay; (5) Ky hop dong vay; (6) Giai ngan. SGS LAND ho tro du buoc.',
+    answerBox: 'Vay mua nha 2026: 6 buoc, tu nop ho so den giai ngan mat 2-4 tuan. SGS LAND ket noi ngan hang, ho tro ho so mien phi.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Tai Chinh BDS hien nay la bao nhieu?',
+            a: 'Quy trinh vay mua nha 2026: (1) Chon ngan hang, xem dieu kien; (2) Nop ho so (CMND, ho khau, chung minh thu nhap); (3) Tham dinh BDS; (4) Phe duyet tin dung 5-15 ngay; (5) Ky hop dong vay; (6) Giai ngan. SGS LAND ho tro du buoc. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Tai Chinh BDS o thuc hay dau tu?',
+            a: 'Mua Tai Chinh BDS o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Tai Chinh BDS co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Tai Chinh BDS nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Tai Chinh BDS 2026 co on dinh khong?',
+            a: 'Thi truong Tai Chinh BDS 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Tai Chinh BDS nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Tai Chinh BDS?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Tai Chinh BDS can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
+  'lam-the-nao-de-chon-moi-gioi-bds-tot': {
+    slug: 'lam-the-nao-de-chon-moi-gioi-bds-tot',
+    name: 'Phap Ly',
+    province: 'TP. Ho Chi Minh',
+    searchQuery: 'Phap Ly',
+    h1Title: 'Phap Ly 2026 — Goc Nhin Chuyen Gia SGS LAND',
+    heroDescription: 'Chon moi gioi BDS tot 2026: kiem tra chung chi hanh nghe (bat buoc tu 2024), kinh nghiem khu vuc, so giao dich thanh cong, co uy tin online. Khong nen chon moi gioi ep buoc hay thu phi cao voi nguoi mua. SGS LAND co 200+ chuyen vien.',
+    answerBox: 'Chon moi gioi BDS tot: co chung chi hanh nghe (bat buoc tu 2024), kinh nghiem khu vuc, so giao dich thanh cong. SGS LAND 200+ chuyen vien.',
+    stats: [
+        { label: 'Muc tang gia/nam', value: '10-20%' },
+        { label: 'Giao dich tham chieu', value: '2.400+' },
+        { label: 'Do chinh xac AVM', value: '+/-4.8%' },
+        { label: 'Tu van mien phi', value: '100%' },
+    ],
+    highlights: [
+      { title: 'Dinh gia AI chinh xac', desc: 'AVM SGS LAND dat MAPE +/-4.8% tu 2.400+ giao dich cong chung.' },
+      { title: 'Phap ly minh bach 24h', desc: 'Chuyen gia kiem tra phap ly mien phi: so hong, quy hoach, tranh chap.' },
+      { title: 'Ket noi ngan hang 12+', desc: 'SGS LAND ket noi Vietcombank, BIDV, VPBank, Techcombank voi lai suat tot nhat 2026.' },
+    ],
+    faqs: [
+          {
+            q: 'Gia Phap Ly hien nay la bao nhieu?',
+            a: 'Chon moi gioi BDS tot 2026: kiem tra chung chi hanh nghe (bat buoc tu 2024), kinh nghiem khu vuc, so giao dich thanh cong, co uy tin online. Khong nen chon moi gioi ep buoc hay thu phi cao voi nguoi mua. SGS LAND co 200+ chuyen vien. SGS LAND cap nhat theo quy.',
+          },
+          {
+            q: 'Nen mua Phap Ly o thuc hay dau tu?',
+            a: 'Mua Phap Ly o thuc phu hop von 30-40%, giu 5+ nam. Dau tu phu hop chap nhan rui ro 3-7 nam. SGS LAND phan tich ROI cu the.',
+          },
+          {
+            q: 'Phap Ly co phap ly ro rang khong?',
+            a: 'Can kiem tra: so hong chinh chu, khong tranh chap, giay phep XD dung han. SGS LAND kiem tra phap ly mien phi 24h cho moi giao dich.',
+          },
+          {
+            q: 'SGS LAND ho tro tim hieu Phap Ly nhu the nao?',
+            a: 'SGS LAND ho tro: tu van chon san pham, kiem tra phap ly mien phi 24h, ket noi 12+ ngan hang vay tot, ho tro cong chung va sang ten. Goi hotline mien phi.',
+          },
+          {
+            q: 'Thi truong Phap Ly 2026 co on dinh khong?',
+            a: 'Thi truong Phap Ly 2026 on dinh va phuc hoi tot nho Luat Dat Dai 2024 minh bach phap ly, FDI do vao manh, ha tang cai thien. SGS LAND cap nhat du lieu thi truong theo thang.',
+          },
+          {
+            q: 'Nhan dien BDS ao gia tai Phap Ly nhu the nao?',
+            a: 'BDS ao gia thuong co: gia chao cao bat thuong so voi thi truong, thong tin phap ly mo ho, ap luc mua gap. Can so sanh it nhat 5-10 giao dich gan day tai cung vi tri. SGS LAND dinh gia AVM mien phi.',
+          },
+          {
+            q: 'Chi phi khac khi mua BDS tai Phap Ly?',
+            a: 'Chi phi khi mua BDS: thue truoc ba 0.5% (nguoi mua tra), cong chung 0.1-0.2%, phi tham dinh 0.05%. Tong chi phi phu khoang 1-2% gia tri. SGS LAND ho tro ke khai minh bach.',
+          },
+          {
+            q: 'Vay ngan hang mua Phap Ly can dieu kien gi?',
+            a: 'Can: thu nhap chung minh duoc (2-3x so tien tra/thang), khong no xau, von tu 30%+, tai san the chap la BDS mua. SGS LAND ket noi ngan hang phu hop.',
+          },
+    ],
+    relatedLocations: [
+      { name: 'BDS Thu Duc', slug: 'bat-dong-san-thu-duc' },
+      { name: 'Phap Ly Nha Dat', slug: 'phap-ly-nha-dat' },
+      { name: 'Dau Tu BDS', slug: 'dau-tu-bat-dong-san' },
+    ],
+    relatedProjects: [
+      { name: 'Aqua City Novaland', slug: 'aqua-city' },
+      { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+    ],
+  },
 };
 function navigate(path: string) {
     window.history.pushState(null, '', path);
@@ -1101,6 +4252,11 @@ export default function LocalLandingPage() {
                     <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-4 leading-tight">
                         {cfg.h1Title ?? `Bất Động Sản ${cfg.name}`}
                     </h1>
+              {cfg.answerBox && (
+                <div className="answer-box bg-[var(--bg-app)] border-l-4 border-[var(--primary-600)] rounded-xl p-5 mb-6 shadow-sm" itemProp="description">
+                  <p className="text-base md:text-lg font-medium text-[var(--text-primary)] leading-relaxed">{cfg.answerBox}</p>
+                </div>
+              )}
                     <p className="text-[var(--text-secondary)] text-base md:text-lg max-w-3xl leading-relaxed mb-8">
                         {cfg.heroDescription}
                     </p>

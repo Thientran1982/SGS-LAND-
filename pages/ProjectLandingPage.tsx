@@ -1528,6 +1528,25 @@ export default function ProjectLandingPage() {
                     <h2 className="text-2xl font-bold mb-2 text-[var(--text-primary)]">Câu Hỏi Thường Gặp — {cfg.name}</h2>
                     <p className="text-sm text-[var(--text-secondary)] mb-8">Giải đáp các thắc mắc phổ biến về dự án {cfg.name}.</p>
                     <FAQAccordion items={cfg.faqs} />
+                {cfg.slug === 'aqua-city' && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-3 text-[var(--text-primary)]">Phan Tich Chuyen Sau — Aqua City 2026</h3>
+                    {[
+                      { q: 'Gia biet thu Aqua City 2026 la bao nhieu?', a: 'Biet thu don lap Aqua City 2026 co gia 12-25 ty/can (250-400m2 san), biet thu song lap 8-16 ty (150-250m2), nha pho 5-10 ty (80-130m2). Gia thay doi theo phan khu (The Aqua 1-5 cao hon do da co so hong). SGS LAND cap nhat gia theo tung lo tung tuan.' },
+                      { q: 'Phap ly Aqua City 2026 cu the nhu the nao theo tung phan khu?', a: 'Phap ly Aqua City: The Aqua 1-5 (da co so hong toan bo); The Aqua 6-9 (du kien Q4/2026 - Q2/2027); The Sun (du kien Q1/2027); The Grand (du kien Q3/2027). Novaland bao lanh ngan hang toan bo tien do. SGS LAND cap nhat hang tuan.' },
+                      { q: 'Aqua City co cho thue duoc gia tot khong?', a: 'Cho thue Aqua City 2026: nha pho 100-130m2 cho thue 12-18 trieu/thang, song lap 150-250m2 cho thue 18-28 trieu, don lap 250-400m2 cho thue 25-45 trieu. Ti suat cho thue 4-6%/nam, cao nho khu do thi khep kin chat luong cao.' },
+                      { q: 'Co nen vay ngan hang de mua Aqua City khong?', a: 'Vay mua Aqua City kha thi: BIDV, VPBank, Techcombank, Vietcombank ho tro vay toi 70-75% san pham da co so hong. Lai suat uu dai 5.9-7.5%/nam (6 thang dau). Nen vay khong qua 50-60% gia tri de dam bao dong tien hang thang duoi 40% thu nhap.' },
+                      { q: 'Nen mua phan khu nao tai Aqua City de dau tu an toan nhat?', a: 'An toan nhat: The Aqua 1-5 (da co so hong, thanh khoan cao, gia tang on dinh). Tiem nang cao hon: The Aqua 6-9 (phap ly sap hoan thanh, gia chua tang het). SGS LAND khuyen nghi chon phan khu da co so hong neu dau tu 3-5 nam.' },
+                      { q: 'Aqua City cach TPHCM bao xa va giao thong the nao?', a: 'Aqua City cach TPHCM khoang 30-35km theo cao toc TPHCM - Long Thanh - Dau Giay. Thoi gian di chuyen: 30-45 phut bang o to (cao toc), 45-60 phut gio cao diem. Tuong lai: metro Long Thanh se rut ngan xuong 20-30 phut. Xe bus ca be cung duoc to chuc.' },
+                      { q: 'ROI dau tu Aqua City trong 5 nam la bao nhieu?', a: 'ROI dau tu Aqua City 5 nam (du bao 2026-2030): tang gia BDS du kien 50-75% (12-15%/nam kep); neu cho thue: them 4-6%/nam; tong ROI du kien 70-105% trong 5 nam. SGS LAND phan tich ROI chi tiet theo tung can va phan khu.' },
+                    ].map((item, idx) => (
+                      <details key={idx} className="mb-2 border border-[var(--glass-border)] rounded-lg overflow-hidden">
+                        <summary className="p-4 cursor-pointer font-medium text-[var(--text-primary)] hover:bg-[var(--bg-surface)]">{item.q}</summary>
+                        <div className="p-4 text-sm text-[var(--text-secondary)] leading-relaxed">{item.a}</div>
+                      </details>
+                    ))}
+                  </div>
+                )}
 
                     {/* ── E-E-A-T author byline ── */}
                     <aside

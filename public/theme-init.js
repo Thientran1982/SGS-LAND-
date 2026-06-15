@@ -11,13 +11,16 @@
     var localTheme = localStorage.getItem('sgs-theme');
     var sysTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     var theme = (localTheme === 'dark' || localTheme === 'light') ? localTheme : sysTheme;
+    // Use ID selector for reliable single-tag targeting (no media-query ambiguity).
+    var meta = document.getElementById('theme-color-meta') ||
+               document.querySelector('meta[name="theme-color"]');
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', '#050505');
+      if (meta) meta.setAttribute('content', '#0D1F33');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
+      if (meta) meta.setAttribute('content', '#1B3A5C');
     }
   } catch (e) {}
   try {
