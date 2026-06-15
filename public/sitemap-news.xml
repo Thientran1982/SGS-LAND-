@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+
+  <url>
+    <loc>https://sgsland.vn/news/thi-truong-bds-q2-2026</loc>
+    <news:news>
+      <news:publication>
+        <news:name>SGS LAND News</news:name>
+        <news:language>vi</news:language>
+      </news:publication>
+      <news:publication_date>2026-06-10</news:publication_date>
+      <news:title>Thi truong Bat Dong San Dong Nam Bo Q2/2026: Phan tich va Du bao</news:title>
+      <news:keywords>bat dong san, thi truong BDS, Dong Nam Bo, Q2 2026</news:keywords>
+    </news:news>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://sgsland.vn/news/dinh-gia-bat-dong-san-ai</loc>
+    <news:news>
+      <news:publication>
+        <news:name>SGS LAND News</news:name>
+        <news:language>vi</news:language>
+      </news:publication>
+      <news:publication_date>2026-06-05</news:publication_date>
+      <news:title>Dinh Gia Bat Dong San Bang AI: Cong nghe AVM 9 He So cua SGS LAND</news:title>
+      <news:keywords>dinh gia AI, AVM, bat dong san, tu dong</news:keywords>
+    </news:news>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://sgsland.vn/news/long-thanh-airport-bat-dong-san</loc>
+    <news:news>
+      <news:publication>
+        <news:name>SGS LAND News</news:name>
+        <news:language>vi</news:language>
+      </news:publication>
+      <news:publication_date>2026-06-01</news:publication_date>
+      <news:title>San Bay Long Thanh: Co Hoi Dau Tu Bat Dong San 2026-2030</news:title>
+      <news:keywords>Long Thanh, san bay, bat dong san, dau tu</news:keywords>
+    </news:news>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://sgsland.vn/news/lai-suat-vay-mua-nha-2026</loc>
+    <news:news>
+      <news:publication>
+        <news:name>SGS LAND News</news:name>
+        <news:language>vi</news:language>
+      </news:publication>
+      <news:publication_date>2026-05-28</news:publication_date>
+      <news:title>Lai Suat Vay Mua Nha 2026: So Sanh 10 Ngan Hang Lon Nhat Viet Nam</news:title>
+      <news:keywords>lai suat, vay mua nha, ngan hang, 2026</news:keywords>
+    </news:news>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://sgsland.vn/news/can-ho-tp-hcm-gia-bao-nhieu</loc>
+    <news:news>
+      <news:publication>
+        <news:name>SGS LAND News</news:name>
+        <news:language>vi</news:language>
+      </news:publication>
+      <news:publication_date>2026-05-20</news:publication_date>
+      <news:title>Can Ho TPHCM Gia Bao Nhieu? Bang Gia Chi Tiet 24 Quan</news:title>
+      <news:keywords>can ho, TPHCM, gia bat dong san, bang gia</news:keywords>
+    </news:news>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>

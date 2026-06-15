@@ -861,7 +861,7 @@ export const News: React.FC = () => {
                 </div>
                 {/* Featured Article */}
                 {featured && (
-                    <div 
+                        <article itemScope itemType="https://schema.org/NewsArticle" 
                         onClick={() => openArticle(featured.id, (featured as any).slug)}
                         className="mb-16 group cursor-pointer relative rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl min-h-[420px] md:min-h-0 md:aspect-[21/9] flex flex-col justify-end transform transition-transform hover:scale-[1.01] isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                     >
@@ -888,12 +888,12 @@ export const News: React.FC = () => {
                                 <span>{featured.readTime} đọc</span>
                             </div>
                         </div>
-                    </div>
+                    </article>
                 )}
                 {/* Grid Articles */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
                     {others.map(article => (
-                        <div 
+                            <article itemScope itemType="https://schema.org/NewsArticle" 
                             key={article.id} 
                             onClick={() => openArticle(article.id, (article as any).slug)}
                             className="bg-[var(--bg-surface)] rounded-2xl md:rounded-[32px] border border-[var(--glass-border)] overflow-hidden hover:shadow-2xl transition-all duration-300 group cursor-pointer hover:-translate-y-2 flex flex-col h-full isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
@@ -920,7 +920,7 @@ export const News: React.FC = () => {
                                     Đọc chi tiết {ICONS.ARROW}
                                 </div>
                             </div>
-                        </div>
+                        </article>
                     ))}
                 </div>
                 {/* Pagination Controls */}

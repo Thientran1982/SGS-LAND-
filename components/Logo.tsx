@@ -20,6 +20,8 @@ export const Logo: React.FC<LogoProps> = memo(({
             alt={label}
             role="img"
             aria-label={label}
+            width={180}
+            height={48}
             className={`object-contain transition-transform duration-300 logo-adaptive ${className}`}
             draggable={false}
         />

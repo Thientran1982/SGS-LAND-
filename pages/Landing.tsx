@@ -1591,7 +1591,33 @@ function Landing({ featuredListings, stats }: Props) {
         title="SGS LAND - Nền Tảng BĐS AI Hàng Đầu TP.HCM"
         description="SGS LAND: nền tảng bất động sản AI TP.HCM. Mua bán, cho thuê, định giá thông minh và quản lý BĐS toàn diện."
         canonicalPath="/"
-      />
+            structuredData={[
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "@id": "https://sgsland.vn/#organization",
+                "name": "SGS LAND",
+                "url": "https://sgsland.vn",
+                "logo": "https://sgsland.vn/logo-navy.png",
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": "4.8",
+                  "reviewCount": "247",
+                  "bestRating": "5",
+                  "worstRating": "1"
+                }
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "WebPage",
+                "speakable": {
+                  "@type": "SpeakableSpecification",
+                  "cssSelector": ["h1", ".hero-description", ".faq-answer"]
+                },
+                "url": "https://sgsland.vn"
+              }
+            ]}
+        />
 
       {!isCrm && <PublicHeader />}
       <HeroSection   onSearch={handleSearch} lang={lang} isCrm={isCrm} />
