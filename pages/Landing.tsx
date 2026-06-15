@@ -52,10 +52,10 @@ const TICKER_ITEMS: { vi: string; en: string }[] = [
   { vi: "Biệt thự The Global City — 15 tỷ — Đặt cọc thành công 03/06/2026",        en: "The Global City Villa — 15B VND — Deposit secured 03/06/2026"          },
   { vi: "Nhà phố Izumi City 4PN — 7,8 tỷ — Chốt hôm nay 01/06/2026",              en: "Izumi City Townhouse 4BR — 7.8B VND — Closed today 01/06/2026"         },
   { vi: "Shophouse Masteri Cosmo Central — 12,4 tỷ — Sang tên 29/05/2026",         en: "Masteri Cosmo Central Shophouse — 12.4B VND — Transferred 29/05/2026"  },
-  { vi: "Căn hộ Vinhomes Cần Giờ 2PN — 8,5 tỷ — Nhận đặt cọc 27/05/2026",        en: "Vinhomes Can Gio 2BR Apt — 8.5B VND — Deposit accepted 27/05/2026"     },
+  { vi: "Nhà phố Vinhomes Cần Giờ 4PN — 8,5 tỷ — Nhận đặt cọc 27/05/2026",        en: "Vinhomes Can Gio 4BR Apt — 8.5B VND — Deposit accepted 27/05/2026"     },
 ];
 const PLACEHOLDERS: { vi: string; en: string }[] = [
-  { vi: "Căn hộ 2PN gần Metro số 1, dưới 3 tỷ…",                       en: "2BR apartment near Metro Line 1, under 3B VND…"              },
+  { vi: "Căn hộ 2PN gần Metro số 1, dưới 6 tỷ…",                       en: "2BR apartment near Metro Line 1, under 6B VND…"              },
   { vi: "Biệt thự Aqua City có sổ hồng riêng…",                         en: "Villa at Aqua City with freehold title…"                     },
   { vi: "Căn hộ Masteri Cosmo Central pháp lý sạch dưới 7 tỷ…",        en: "Legal-clean Masteri Cosmo Central apartment under 7B VND…"  },
   { vi: "Vay 70% mua Vinhomes Hóc Môn, lãi suất thấp nhất…",           en: "70% mortgage for Vinhomes Hoc Mon, lowest rate…"            },
@@ -68,9 +68,9 @@ const QUICK_CHIPS: { vi: string; en: string }[] = [
 const FAQ_ITEMS = [
   {
     q: "Tại sao nên mua bất động sản qua SGS LAND?",
-    a: "SGS LAND là đại lý F1 uỷ quyền chính thức của Novaland, Masterise Homes, Nam Long và Vinhomes — đảm bảo giá gốc, không phát sinh phí môi giới cho người mua, pháp lý minh bạch 2 lớp độc lập.",
+    a: "SGS LAND là đại lý F1 uỷ quyền chính thức của Novaland, Masterise Homes, Nam Long, Vạn Phúc và Vinhomes — đảm bảo giá gốc, không phát sinh phí môi giới cho người mua, pháp lý minh bạch 2 lớp độc lập.",
     q_en: "Why buy real estate through SGS LAND?",
-    a_en: "SGS LAND is the officially authorized F1 agent of Novaland, Masterise Homes, Nam Long and Vinhomes — guaranteeing original prices, zero broker fees for buyers, and transparent 2-layer independent legal verification.",
+    a_en: "SGS LAND is the officially authorized F1 agent of Novaland, Masterise Homes, Nam Long, Van Phuc and Vinhomes — guaranteeing original prices, zero broker fees for buyers, and transparent 2-layer independent legal verification.",
   },
   {
     q: "Công nghệ định giá AI của SGS LAND chính xác bao nhiêu?",
@@ -92,15 +92,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "SGS LAND hỗ trợ vay ngân hàng như thế nào?",
-    a: "Đối tác với 12+ ngân hàng lớn (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, lãi suất từ 6–8,5%/năm. Đội tư vấn tài chính đồng hành từ hồ sơ đến giải ngân.",
+    a: "Đối tác với 12+ ngân hàng lớn (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, lãi suất từ 7–8,5%/năm. Đội tư vấn tài chính đồng hành từ hồ sơ đến giải ngân.",
     q_en: "How does SGS LAND help with bank financing?",
-    a_en: "Partners with 12+ major banks (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, interest rates from 6–8.5%/year. Our financial advisory team guides you from application to disbursement.",
+    a_en: "Partners with 12+ major banks (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, interest rates from 7–8.5%/year. Our financial advisory team guides you from application to disbursement.",
   },
   {
     q: "Những dự án nào đang phân phối tại SGS LAND?",
-    a: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Cần Giờ, Masteri Cosmo Central, Vinhomes Hóc Môn — cập nhật liên tục.",
+    a: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Cần Giờ, Masteri Cosmo Central, Diamond Sky, Vinhomes Hóc Môn — cập nhật liên tục.",
     q_en: "Which projects does SGS LAND currently distribute?",
-    a_en: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Can Gio, Masteri Cosmo Central, Vinhomes Hoc Mon — continuously updated.",
+    a_en: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Can Gio, Masteri Cosmo Central, Diamond Sky, Vinhomes Hoc Mon — continuously updated.",
   },
   {
     q: "Giá nhà phố tại TP.HCM hiện nay là bao nhiêu?",
@@ -110,7 +110,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Nên mua căn hộ hay nhà phố để đầu tư?",
-    a: "Mỗi loại có ưu nhược điểm riêng: Căn hộ dễ cho thuê, thanh khoản cao, phù hợp đầu tư tài chính; nhà phố có biên độ tăng giá tốt hơn dài hạn, dòng tiền cho thuê cao hơn, nhưng vốn đầu tư lớn hơn. Nếu ngân sách 2-4 tỷ, căn hộ tại các dự án lớn như Vinhomes, Masterise phù hợp hơn. Ngân sách 5-15 tỷ, nhà phố liền kề tại Long Thành, Aqua City có tiềm năng tăng giá 3-5 năm. Tư vấn chuyên gia SGS LAND để phân tích phù hợp ngân sách bạn.",
+    a: "Mỗi loại có ưu nhược điểm riêng: Căn hộ dễ cho thuê, thanh khoản cao, phù hợp đầu tư tài chính; nhà phố có biên độ tăng giá tốt hơn dài hạn, dòng tiền cho thuê cao hơn, nhưng vốn đầu tư lớn hơn. Nếu ngân sách 4-6 tỷ, căn hộ tại các dự án lớn như Vinhomes, Masterise phù hợp hơn. Ngân sách 5-15 tỷ, nhà phố liền kề tại Long Thành, Aqua City có tiềm năng tăng giá 3-5 năm. Tư vấn chuyên gia SGS LAND để phân tích phù hợp ngân sách bạn.",
     q_en: "Should I invest in apartments or townhouses?",
     a_en: "Apartments offer higher liquidity and easier rental management. Townhouses have better long-term appreciation. Choose based on your budget and investment horizon. SGS LAND experts can analyze options for your specific budget.",
   },
@@ -502,7 +502,6 @@ function LegalTicker({ lang }: { lang: Lang }) {
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 4 — PROJECTS
 // ═══════════════════════════════════════════════════════════════
-
 function ProjectCard({ proj, lang }: { proj: FeaturedProject; lang: Lang }) {
   return (
     <a
@@ -592,7 +591,6 @@ function ProjectsSection({ lang }: { lang: Lang }) {
             {lang === "vi" ? "Xem tất cả" : "View all"} <ArrowRight className="w-4 h-4" />
           </a>
         </div>
-
         {/* Filter tabs */}
         <div className="flex gap-2 mb-8 flex-wrap">
           {FILTER_TABS.map(tab => (
@@ -610,7 +608,6 @@ function ProjectsSection({ lang }: { lang: Lang }) {
             </button>
           ))}
         </div>
-
         {/* 1-col mobile / 2-col tablet / 3-col desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map(p => <ProjectCard key={p.slug} proj={p} lang={lang} />)}
@@ -1075,7 +1072,7 @@ function CTABanner({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void })
             onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
           >
             <Phone className="w-4 h-4" />
-            Hotline +84 971 132 378
+            Hotline
           </a>
           <button
             onClick={onChatOpen}
