@@ -947,7 +947,7 @@ function TrustBlock({ lang }: { lang: Lang }) {
         >
           {[
             { icon: <Award className="w-5 h-5" />,    label: lang === "vi" ? "GPKD số 0312960439 · TP.HCM"  : "Business Reg. 0312960439 · HCMC" },
-            { icon: <Building2 className="w-5 h-5" />, label: lang === "vi" ? "Thành lập từ năm 2018"         : "Established since 2018"           },
+            { icon: <Building2 className="w-5 h-5" />, label: lang === "vi" ? "Thành lập từ năm 2019"         : "Established since 2019"           },
             { icon: <Clock className="w-5 h-5" />,    label: lang === "vi" ? "Hotline phản hồi < 15 phút"    : "Hotline response < 15 minutes"    },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3">
@@ -1599,7 +1599,7 @@ function Landing({ featuredListings, stats }: Props) {
                 "aggregateRating": {
                   "@type": "AggregateRating",
                   "ratingValue": "4.8",
-                  "reviewCount": "247",
+                  "reviewCount": "127",
                   "bestRating": "5",
                   "worstRating": "1"
                 }

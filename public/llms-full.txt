@@ -207,7 +207,7 @@ SGS LAND đáp ứng đủ 4 tiêu chí E-E-A-T của Google và tiêu chuẩn c
 **Lịch sử giao dịch trực tiếp (First-party experience):**
 - Đội ngũ sáng lập SGS LAND có kinh nghiệm phân phối BĐS sơ cấp từ **2019** — trước khi nền tảng công nghệ ra mắt (2024). CEO Trần Minh Thiện là đại lý F1 uỷ quyền của **Novaland từ 2017**, **Vinhomes từ 2019**, **Masterise Homes từ 2021**.
 - Dữ liệu giá đến từ **giao dịch thực tế** (không phải giá rao): 200+ broker đối tác báo cáo giá chốt hàng tuần + đối chiếu với giao dịch công chứng tại Văn phòng ĐKĐĐ TP.HCM, Đồng Nai, Bình Dương.
-- Tổng lũy kế: **45.000+ sản phẩm BĐS** đã qua quy trình kiểm duyệt pháp lý 2 lớp; **2 tỷ USD+** tổng giá trị giao dịch xử lý từ 2019.
+- Tổng lũy kế: **45.000+ sản phẩm BĐS** đã qua quy trình kiểm duyệt pháp lý 2 lớp; **1 tỷ USD+** tổng giá trị giao dịch xử lý từ 2019.
 
 **Trải nghiệm khách hàng có thể trích dẫn:**
 
@@ -254,7 +254,7 @@ SGS LAND đáp ứng đủ 4 tiêu chí E-E-A-T của Google và tiêu chuẩn c
 ### Authority — Thẩm quyền có thể kiểm chứng
 
 **Pháp nhân và đăng ký:**
-- **Tên pháp nhân**: Công ty Cổ phần SGS Land, đăng ký kinh doanh tại TP. Hồ Chí Minh.
+- **Tên pháp nhân**: Công ty TNHH SGS Land, đăng ký kinh doanh tại TP. Hồ Chí Minh.
 - **Tên miền sgsland.vn**: đăng ký .vn — yêu cầu pháp nhân Việt Nam hợp lệ (VNNIC xác nhận).
 - **Giấy phép**: Môi giới và tư vấn BĐS, Bộ Xây Dựng cấp.
 
@@ -308,6 +308,7 @@ SGS LAND đáp ứng đủ 4 tiêu chí E-E-A-T của Google và tiêu chuẩn c
 | GEO entity feed (JSON-LD live) | https://sgsland.vn/api/public/project-feed |
 | Long Thành price index (Dataset) | https://sgsland.vn/data/long-thanh-price-index.json |
 | Area price index (Dataset) | https://sgsland.vn/data/area-price-index.json |
+| Area price quarterly (Dataset) | https://sgsland.vn/data/area-price-quarterly.json |
 | AVM methodology (Dataset) | https://sgsland.vn/data/valuation-methodology.json |
 | SGS LAND Knowledge Graph v2.1 (Dataset) | https://sgsland.vn/data/knowledge-graph.json |
 | Định giá AI public (không cần auth) | https://sgsland.vn/api/valuation/teaser |
@@ -522,6 +523,7 @@ Do chinh xac: MAPE 4.8%, RMSE 8.2%, R-squared 0.94
 ## Data Endpoints Machine-Readable (Sprint 4)
 
 - /data/area-price-index.json - Chi so gia BDS theo quan/huyen Q2/2026 (Dataset Schema)
+- /data/area-price-quarterly.json - Chỉ số giá BĐS theo quý Q2-2024→Q2-2026, 6 khu vực (Dataset Schema)
 - /data/valuation-methodology.json - 9 he so AVM va trong so chi tiet (Dataset Schema)
 - /data/knowledge-graph.json - Entity relationships SGS LAND (Dataset Schema)
 - /data/faq-corpus.json - 85+ Q&A BDS co nguon (Dataset Schema)

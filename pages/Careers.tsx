@@ -136,7 +136,7 @@ export const Careers: React.FC = () => {
                         about: {
                             '@type': 'Organization',
                             name: 'SGS LAND',
-                            legalName: 'Công ty Cổ phần SGS Land',
+                            legalName: 'Công ty TNHH SGS Land',
                             url: 'https://sgsland.vn',
                             taxID: '0312960439',
                             numberOfEmployees: { '@type': 'QuantitativeValue', value: '200+' },

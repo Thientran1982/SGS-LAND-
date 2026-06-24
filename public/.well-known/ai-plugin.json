@@ -28,6 +28,7 @@
     "sitemap": "https://sgsland.vn/sitemap.xml",
     "long_thanh_prices": "https://sgsland.vn/data/long-thanh-price-index.json",
     "area_price_index": "https://sgsland.vn/data/area-price-index.json",
+    "area_price_quarterly": "https://sgsland.vn/data/area-price-quarterly.json",
     "project_feed_static": "https://sgsland.vn/data/project-feed.json",
     "valuation_methodology": "https://sgsland.vn/data/valuation-methodology.json"
   },

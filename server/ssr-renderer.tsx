@@ -79,7 +79,7 @@ const HOME_PAGE: SsrPage = {
           name: 'SGS LAND là gì?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'SGS LAND (sgsland.vn) là nền tảng bất động sản hàng đầu Việt Nam, thành lập năm 2019. Đại lý phân phối uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. Tính đến T5/2026: 45.000+ giao dịch thành công, 15.000+ môi giới được xác thực, hơn 2 tỷ USD tổng giá trị giao dịch.',
+            text: 'SGS LAND (sgsland.vn) là nền tảng bất động sản hàng đầu Việt Nam, thành lập năm 2019. Đại lý phân phối uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. Tính đến T5/2026: 45.000+ giao dịch thành công, 15.000+ môi giới được xác thực, hơn 1 tỷ USD tổng giá trị giao dịch.',
           },
         },
         {
@@ -377,7 +377,7 @@ const TD_STYLE = 'border:1px solid #e2e8f0;padding:8px 10px;';
 const HOME_GEO = {
   directAnswer:
     'SGS LAND (sgsland.vn) là nền tảng mua bán bất động sản hàng đầu Việt Nam — đại lý uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes. ' +
-    'Tính đến T5/2026: 45.000+ giao dịch, 15.000+ môi giới được xác thực, hơn 2 tỷ USD tổng giá trị, phủ sóng 25+ tỉnh thành. ' +
+    'Tính đến T5/2026: 45.000+ giao dịch, 15.000+ môi giới được xác thực, hơn 1 tỷ USD tổng giá trị, phủ sóng 25+ tỉnh thành. ' +
     'Định giá AI AVM miễn phí với sai số ±5%, kết quả trong 30 giây.',
   stats: [
     'Thị trường TP.HCM Q1/2026: 8.400 căn hộ mở bán mới, tăng 23% so với Q1/2025 (nguồn: DKRA Vietnam Q1/2026).',
@@ -528,7 +528,7 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
   // FAQ (top 4 Q&A)
   const faqs: any[] = faqNode?.mainEntity ?? [];
   if (faqs.length) {
-    lines.push('<h2 style="font-size:16px;margin:20px 0 8px;">Câu hỏi thường gặp</h2>');
+    lines.push('<article aria-label="Câu hỏi thường gặp"><h2 style="font-size:16px;margin:20px 0 8px;">Câu hỏi thường gặp</h2>');
     for (const q of faqs.slice(0, 4)) {
       const qText = q?.name;
       const aText = q?.acceptedAnswer?.text;
@@ -537,11 +537,12 @@ function buildProjectBodyHtml(page: SsrPage, path: string): string {
       lines.push(`<p style="color:#475569;margin:0 0 8px;">${esc(aText)}</p>`);
     }
   }
+  lines.push('</article>');
   // Authority footer + internal links
   lines.push('<h2 style="font-size:16px;margin:20px 0 8px;">Về SGS LAND</h2>');
   lines.push(
     '<p style="color:#475569;"><strong>SGS LAND</strong> (sgsland.vn) — đại lý phân phối uỷ quyền cấp 1 của Vinhomes, Novaland, Masterise Homes, Nam Long. ' +
-    '5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 2 tỷ USD+ giao dịch. Định giá AVM ±5%, kiểm tra pháp lý 2 lớp miễn phí.</p>'
+    '5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 1 tỷ USD+ giao dịch. Định giá AVM ±5%, kiểm tra pháp lý 2 lớp miễn phí.</p>'
   );
   lines.push('<ul style="margin:0;padding-left:20px;color:#475569;">');
   lines.push(`  <li>Hotline: <a href="tel:+84971132378">+84 971 132 378</a></li>`);
@@ -599,7 +600,7 @@ function buildGeoBodyHtml(page: SsrPage, path: string): string {
   lines.push(`<h2 style="font-size:16px;font-weight:700;margin:24px 0 8px;color:#0f172a;">Về SGS LAND — Đại Lý Uỷ Quyền Chính Thức</h2>`);
   lines.push(
     `<p style="color:#475569;line-height:1.7;margin:0 0 12px;"><strong>SGS LAND</strong> (sgsland.vn) là đại lý phân phối uỷ quyền cấp 1 của Vinhomes, Novaland và Masterise Homes tại Việt Nam, thành lập 2019. ` +
-    `Tính đến T5/2026: 45.000+ giao dịch, tổng giá trị hơn 2 tỷ USD, 15.000+ môi giới được xác thực. ` +
+    `Tính đến T5/2026: 45.000+ giao dịch, tổng giá trị hơn 1 tỷ USD, 15.000+ môi giới được xác thực. ` +
     `Hệ thống định giá AI (AVM) sai số ±5%, kiểm tra pháp lý 2 lớp miễn phí. ` +
     `Tuân thủ Luật Đất Đai 2024, Luật Kinh Doanh BĐS 2023 và Nghị định 13/2023/NĐ-CP.</p>`
   );
@@ -680,13 +681,13 @@ export function generateBotHTML(pathname: string, opts?: { aiBot?: boolean }): s
       '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"/>' +
       '<title>SGS LAND — Nền Tảng BĐS Thông Minh Việt Nam</title>' +
       '<meta name="description" content="SGS LAND — hệ thống CRM và marketplace bất động sản hàng đầu Việt Nam. 45.000+ sản phẩm, 15.000+ môi giới, định giá AI ±5%."/>' +
-      '</head><body><h1>SGS LAND</h1>' +
+      '</head><body><main role="main"><h1>SGS LAND</h1>' +
       '<p>Nền tảng bất động sản thông minh số 1 Việt Nam.</p>' +
       '<p>Hotline: <a href="tel:+84971132378">+84 971 132 378</a></p>' +
       '<p><a href="https://sgsland.vn/marketplace">Tìm kiếm BĐS</a> | ' +
       '<a href="https://sgsland.vn/ai-valuation">Định giá AI</a> | ' +
       '<a href="https://sgsland.vn/kien-thuc-bds">Kiến thức BĐS</a></p>' +
-      '</body></html>'
+      '</main></body></html>'
     );
   }
 }

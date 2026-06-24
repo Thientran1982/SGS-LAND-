@@ -381,7 +381,7 @@ export default function ProjectDirectory() {
                         description: 'Thư mục các dự án bất động sản đang phân phối tại SGS LAND, bao gồm thông tin chủ đầu tư, vị trí, bảng giá và pháp lý.',
                         inLanguage: 'vi-VN',
                         isPartOf: { '@type': 'WebSite', name: 'SGS LAND', url: 'https://sgsland.vn' },
-                        publisher: { '@type': 'Organization', name: 'SGS LAND', legalName: 'Công ty Cổ phần SGS Land', taxID: '0312960439', url: 'https://sgsland.vn' },
+                        publisher: { '@type': 'Organization', name: 'SGS LAND', legalName: 'Công ty TNHH SGS Land', taxID: '0312960439', url: 'https://sgsland.vn' },
                         dateModified: new Date().toISOString().slice(0, 10),
                     },
                     {

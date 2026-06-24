@@ -1,0 +1,152 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "@id": "https://sgsland.vn/data/area-price-quarterly.json",
+  "name": "Chỉ số giá BĐS theo quý - Đông Nam Bộ (SGS LAND)",
+  "description": "Chuỗi thời gian giá bất động sản theo quý (9 kỳ, Q2/2024-Q2/2026) cho khu vực trọng điểm TP.HCM, Đồng Nai, Bình Dương. Đơn vị triệu VNĐ/m2, căn cứ giá giao dịch công chứng. Cập nhật hàng quý.",
+  "version": "1.0.0",
+  "dateModified": "2026-06-15",
+  "datePublished": "2026-06-15",
+  "creator": {
+    "@id": "https://sgsland.vn/#organization",
+    "@type": "Organization",
+    "name": "SGS LAND",
+    "url": "https://sgsland.vn"
+  },
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "temporalCoverage": "2024-04/2026-06",
+  "spatialCoverage": {
+    "@type": "AdministrativeArea",
+    "name": "Đông Nam Bộ",
+    "containedIn": {
+      "@type": "Country",
+      "name": "Việt Nam"
+    }
+  },
+  "keywords": [
+    "chỉ số giá BĐS",
+    "giá nhà đất theo quý",
+    "giá căn hộ TP.HCM",
+    "đất nền Đồng Nai",
+    "xu hướng giá BĐS 2026"
+  ],
+  "measurementTechnique": "AVM 9 hệ số, MAPE +/-4.8%, chuẩn TĐGVN/IVS",
+  "data": {
+    "unit": "triệu VNĐ/m2",
+    "quarters": [
+      "Q2-2024",
+      "Q3-2024",
+      "Q4-2024",
+      "Q1-2025",
+      "Q2-2025",
+      "Q3-2025",
+      "Q4-2025",
+      "Q1-2026",
+      "Q2-2026"
+    ],
+    "series": [
+      {
+        "area": "Quận 1 (TP.HCM)",
+        "area_slug": "quan-1",
+        "segment": "nhà phố mặt tiền",
+        "avg_price": [
+          770,
+          785,
+          800,
+          812,
+          820,
+          830,
+          838,
+          845,
+          850
+        ],
+        "yoy_growth_pct": 8
+      },
+      {
+        "area": "TP Thủ Đức",
+        "area_slug": "thu-duc",
+        "segment": "căn hộ",
+        "avg_price": [
+          48,
+          49,
+          51,
+          53,
+          55,
+          57,
+          58,
+          60,
+          62
+        ],
+        "yoy_growth_pct": 12
+      },
+      {
+        "area": "Bình Thạnh (TP.HCM)",
+        "area_slug": "binh-thanh",
+        "segment": "căn hộ+nhà phố",
+        "avg_price": [
+          95,
+          98,
+          102,
+          106,
+          110,
+          113,
+          116,
+          118,
+          120
+        ],
+        "yoy_growth_pct": 11
+      },
+      {
+        "area": "Long Thành (Đồng Nai)",
+        "area_slug": "long-thanh",
+        "segment": "đất nền sổ đỏ",
+        "avg_price": [
+          14,
+          15.5,
+          17,
+          19,
+          21,
+          23,
+          24.5,
+          26,
+          28
+        ],
+        "yoy_growth_pct": 22
+      },
+      {
+        "area": "Biên Hòa (Đồng Nai)",
+        "area_slug": "bien-hoa",
+        "segment": "nhà phố compound",
+        "avg_price": [
+          38,
+          40,
+          42,
+          44,
+          46,
+          48,
+          49,
+          51,
+          53
+        ],
+        "yoy_growth_pct": 15
+      },
+      {
+        "area": "Thuận An (Bình Dương)",
+        "area_slug": "thuan-an",
+        "segment": "căn hộ",
+        "avg_price": [
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41
+        ],
+        "yoy_growth_pct": 10
+      }
+    ]
+  }
+}

@@ -8,7 +8,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Tên pháp nhân | Công ty Cổ phần SGS Land |
+| Tên pháp nhân | Công ty TNHH SGS Land |
 | Thương hiệu | SGS LAND |
 | Website | https://sgsland.vn |
 | Thành lập đội ngũ | 2019 (phân phối BĐS thủ công) |
@@ -18,7 +18,7 @@
 | Nhân sự nội bộ | 50 người (bộ phận công nghệ, pháp lý, tư vấn) |
 | Mạng lưới môi giới | 15.000+ broker đối tác đã xác thực danh tính |
 | Sản phẩm BĐS quản lý | 45.000+ listing thường trực |
-| Tổng giá trị giao dịch | 2 tỷ USD+ (tổng lũy kế từ 2019) |
+| Tổng giá trị giao dịch | 1 tỷ USD+ (tổng lũy kế từ 2019) |
 | Giải thưởng | Top Proptech Việt Nam 2025 |
 | Hotline | +84 971 132 378 |
 | Email | info@sgsland.vn |
@@ -174,6 +174,7 @@ Organization (SGS LAND / sgsland.vn)
 └── exposes → Dataset[]
     ├── /data/long-thanh-price-index.json
     ├── /data/area-price-index.json
+    ├── /data/area-price-quarterly.json
     ├── /data/project-feed.json
     └── /data/valuation-methodology.json
 ```
@@ -270,6 +271,7 @@ Organization (SGS LAND / sgsland.vn)
 
 - [/data/long-thanh-price-index.json](https://sgsland.vn/data/long-thanh-price-index.json) — Chỉ số giá BĐS Long Thành 2024-2026 (9 kỳ quý)
 - [/data/area-price-index.json](https://sgsland.vn/data/area-price-index.json) — Chỉ số giá tất cả khu vực trọng điểm Đông Nam Bộ
+- [/data/area-price-quarterly.json](https://sgsland.vn/data/area-price-quarterly.json) — Chỉ số giá BĐS theo quý (Q2-2024→Q2-2026, 6 khu vực, cập nhật định kỳ)
 - [/data/project-feed.json](https://sgsland.vn/data/project-feed.json) — JSON-LD entity catalog 13 dự án lớn
 - [/data/valuation-methodology.json](https://sgsland.vn/data/valuation-methodology.json) — 9 hệ số AVM, trọng số, kiểm chứng
 - [/data/knowledge-graph.json](https://sgsland.vn/data/knowledge-graph.json) — SGS LAND Knowledge Graph v2.1: entity relationships, Organization, Person, ApartmentComplex, Dataset (for AI crawlers & LLMs)

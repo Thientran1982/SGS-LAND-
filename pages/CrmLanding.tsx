@@ -43,7 +43,7 @@ export const CrmLanding: React.FC = () => {
                             { '@type': 'Offer', name: 'Starter', price: '990000', priceCurrency: 'VND', priceSpecification: { '@type': 'UnitPriceSpecification', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitCode: 'MON' } } },
                             { '@type': 'Offer', name: 'Pro', price: '2990000', priceCurrency: 'VND', priceSpecification: { '@type': 'UnitPriceSpecification', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitCode: 'MON' } } },
                         ],
-                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '247', bestRating: '5', worstRating: '1' },
+                        aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127', bestRating: '5', worstRating: '1' },
                         review: [
                             {
                                 '@type': 'Review',

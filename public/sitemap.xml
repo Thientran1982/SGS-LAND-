@@ -25,4 +25,11 @@
     <lastmod>2026-05-02</lastmod>
   </sitemap>
 
+
+  <!-- Sitemap entity: GEO entity feed (Organization, Project, Dataset) cho AI crawlers -->
+  <sitemap>
+    <loc>https://sgsland.vn/sitemap-entity.xml</loc>
+    <lastmod>2026-06-15</lastmod>
+  </sitemap>
+
 </sitemapindex>
