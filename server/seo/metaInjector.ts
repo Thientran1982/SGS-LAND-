@@ -3035,7 +3035,7 @@ export function buildArticleMeta(article: any): MetaData {
     },
     speakable: {
       '@type': 'SpeakableSpecification',
-      cssSelector: ['h1', 'h2', '.article-summary', '.article-body p'],
+      cssSelector: ['h1', 'h2', 'p:first-of-type'],
     },
   };
 
