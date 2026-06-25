@@ -67,7 +67,7 @@ async function generateWithFallback(
   let lastErr: unknown;
   for (const model of chain) {
     try {
-      const result = await generateWithFallback({
+      const result = await getAiClient().models.generateContent({
         ...requestConfig,
         model,
       });
@@ -1235,7 +1235,14 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             });
             trackAiUsage('CHAT_ROUTER', GENAI_CONFIG.MODELS.ROUTER, Date.now() - _routerStart, routerPrompt, routerRes.text || '', { tenantId: state.tenantId });
 
-            const plan = JSON.parse(routerRes.text || '{}');
+            let plan: any;
+            try {
+              plan = JSON.parse(routerRes.text || '{}');
+            } catch (parseErr) {
+              // Router returned malformed JSON → fail safe to DIRECT_ANSWER instead of crashing the chat turn
+              logger.warn('[ROUTER] Failed to parse router JSON, falling back to DIRECT_ANSWER: ' + String((parseErr as any)?.message || parseErr));
+              plan = { next_step: 'DIRECT_ANSWER', extraction: {} };
+            }
 
               // =====================================================
               // C3 HARD GUARD: ANALYZE_LEAD is internal-only.
