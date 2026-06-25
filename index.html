@@ -197,41 +197,114 @@
     </script>
     <!-- ══ STRUCTURED DATA: RealEstateAgent + ItemList of distributed projects ══ -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "RealEstateAgent",
-      "@id": "https://sgsland.vn/#agent",
-      "name": "SGS LAND",
-      "url": "https://sgsland.vn",
-      "image": "https://sgsland.vn/og-image.jpg",
-      "description": "Đại lý phân phối bất động sản uỷ quyền tại TP.HCM, Đồng Nai, Tây Ninh — đối tác chính thức của Novaland, Masterise Homes, Nam Long, Vinhomes, Sơn Kim Land, Đại Quang Minh.",
-      "address": {
+{
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "@id": "https://sgsland.vn/#agent",
+    "name": "SGS LAND",
+    "url": "https://sgsland.vn",
+    "image": "https://sgsland.vn/og-image.jpg",
+    "description": "Đại lý phân phối bất động sản uỷ quyền tại TP.HCM, Đồng Nai, Tây Ninh — đối tác chính thức của Novaland, Masterise Homes, Nam Long, Vinhomes, Sơn Kim Land, Đại Quang Minh.",
+    "address": {
         "@type": "PostalAddress",
         "addressCountry": "VN",
         "addressLocality": "Hồ Chí Minh",
         "addressRegion": "TP. Hồ Chí Minh"
-      },
-      "telephone": "+84971132378",
-      "email": "info@sgsland.vn",
-      "areaServed": [
-        "TP. Hồ Chí Minh", "Đồng Nai", "Bình Dương", "Long An", "Bà Rịa - Vũng Tàu"
-      ],
-      "knowsLanguage": ["vi", "en"],
-      "makesOffer": {
-        "@type": "ItemList",
-        "name": "Dự án bất động sản SGS LAND phân phối uỷ quyền",
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Aqua City Novaland",       "url": "https://sgsland.vn/du-an/aqua-city",          "description": "Đại đô thị sinh thái 1.000ha tại Long Hưng, Đồng Nai — chủ đầu tư Novaland." },
-          { "@type": "ListItem", "position": 2, "name": "The Global City",           "url": "https://sgsland.vn/du-an/the-global-city",    "description": "Đô thị thương mại 117ha tại TP Thủ Đức — chủ đầu tư Masterise Homes." },
-          { "@type": "ListItem", "position": 3, "name": "Izumi City",                "url": "https://sgsland.vn/du-an/izumi-city",         "description": "Đô thị tích hợp 170ha tại Biên Hòa, Đồng Nai — chủ đầu tư Nam Long." },
-          { "@type": "ListItem", "position": 4, "name": "Vinhomes Grand Park",       "url": "https://sgsland.vn/du-an/vinhomes-grand-park","description": "Siêu đô thị 271ha tại TP Thủ Đức — chủ đầu tư Vinhomes." },
-          { "@type": "ListItem", "position": 5, "name": "Vinhomes Cần Giờ",          "url": "https://sgsland.vn/du-an/vinhomes-can-gio",   "description": "Siêu đô thị lấn biển 2.870ha tại Cần Giờ, TP.HCM — chủ đầu tư Vinhomes." },
-          { "@type": "ListItem", "position": 6, "name": "Masterise Homes",           "url": "https://sgsland.vn/du-an/masterise-homes",    "description": "Hệ sinh thái căn hộ hạng sang tại TP.HCM — chủ đầu tư Masterise Homes." },
-          { "@type": "ListItem", "position": 7, "name": "Lumière",                   "url": "https://sgsland.vn/du-an/masterise-homes",    "description": "Dòng căn hộ Lumière hạng sang ven sông Sài Gòn — chủ đầu tư Masterise Homes." }
-        ]
-      }
-    }
-    </script>
+    },
+    "telephone": "+84971132378",
+    "email": "info@sgsland.vn",
+    "areaServed": [
+        "TP. Hồ Chí Minh",
+        "Đồng Nai",
+        "Bình Dương",
+        "Long An",
+        "Bà Rịa - Vũng Tàu"
+    ],
+    "knowsLanguage": [
+        "vi",
+        "en"
+    ],
+    "makesOffer": [
+        {
+            "@type": "Offer",
+            "name": "Aqua City Novaland",
+            "url": "https://sgsland.vn/du-an/aqua-city",
+            "description": "Đại đô thị sinh thái 1.000ha tại Long Hưng, Đồng Nai — chủ đầu tư Novaland.",
+            "itemOffered": {
+                "@type": "Residence",
+                "name": "Aqua City Novaland",
+                "url": "https://sgsland.vn/du-an/aqua-city"
+            }
+        },
+        {
+            "@type": "Offer",
+            "name": "The Global City",
+            "url": "https://sgsland.vn/du-an/the-global-city",
+            "description": "Đô thị thương mại 117ha tại TP Thủ Đức — chủ đầu tư Masterise Homes.",
+            "itemOffered": {
+                "@type": "Residence",
+                "name": "The Global City",
+                "url": "https://sgsland.vn/du-an/the-global-city"
+            }
+        },
+        {
+            "@type": "Offer",
+            "name": "Izumi City",
+            "url": "https://sgsland.vn/du-an/izumi-city",
+            "description": "Đô thị tích hợp 170ha tại Biên Hòa, Đồng Nai — chủ đầu tư Nam Long.",
+            "itemOffered": {
+                "@type": "Residence",
+                "name": "Izumi City",
+                "url": "https://sgsland.vn/du-an/izumi-city"
+            }
+        },
+        {
+            "@type": "Offer",
+            "name": "Vinhomes Grand Park",
+            "url": "https://sgsland.vn/du-an/vinhomes-grand-park",
+            "description": "Siêu đô thị 271ha tại TP Thủ Đức — chủ đầu tư Vinhomes.",
+            "itemOffered": {
+                "@type": "Residence",
+                "name": "Vinhomes Grand Park",
+                "url": "https://sgsland.vn/du-an/vinhomes-grand-park"
+            }
+        },
+        {
+            "@type": "Offer",
+            "name": "Vinhomes Cần Giờ",
+            "url": "https://sgsland.vn/du-an/vinhomes-can-gio",
+            "description": "Siêu đô thị lấn biển 2.870ha tại Cần Giờ, TP.HCM — chủ đầu tư Vinhomes.",
+            "itemOffered": {
+                "@type": "Residence",
+                "name": "Vinhomes Cần Giờ",
+                "url": "https://sgsland.vn/du-an/vinhomes-can-gio"
+            }
+        },
+        {
+            "@type": "Offer",
+            "name": "Masterise Homes",
+            "url": "https://sgsland.vn/du-an/masterise-homes",
+            "description": "Hệ sinh thái căn hộ hạng sang tại TP.HCM — chủ đầu tư Masterise Homes.",
+            "itemOffered": {
+                "@type": "Residence",
+                "name": "Masterise Homes",
+                "url": "https://sgsland.vn/du-an/masterise-homes"
+            }
+        },
+        {
+            "@type": "Offer",
+            "name": "Lumière",
+            "url": "https://sgsland.vn/du-an/masterise-homes",
+            "description": "Dòng căn hộ Lumière hạng sang ven sông Sài Gòn — chủ đầu tư Masterise Homes.",
+            "itemOffered": {
+                "@type": "Residence",
+                "name": "Lumière",
+                "url": "https://sgsland.vn/du-an/masterise-homes"
+            }
+        }
+    ]
+}
+</script>
     <!-- ══ STRUCTURED DATA: Real customer reviews (E-E-A-T trust signal) ══ -->
     <script type="application/ld+json">
     {

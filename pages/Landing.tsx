@@ -1609,7 +1609,7 @@ function Landing({ featuredListings, stats }: Props) {
                 "@type": "WebPage",
                 "speakable": {
                   "@type": "SpeakableSpecification",
-                  "cssSelector": ["h1", ".hero-description", ".faq-answer"]
+                  "cssSelector": ["h1", "h2", "p:first-of-type"]
                 },
                 "url": "https://sgsland.vn"
               }
