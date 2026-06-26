@@ -1,14 +1,11 @@
 // @ts-nocheck
 "use client";
-
 import { useEffect, useState } from "react";
 import { User, Save, Loader2, AlertCircle, CheckCircle, KeyRound } from "lucide-react";
-
 interface UserProfile { id: number; name: string; email: string; phone?: string; role?: string; created_at?: string; }
 const inp = "w-full px-3 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all";
 const inpS: React.CSSProperties = { background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-primary)" };
 const ROLE: Record<string, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Quản trị viên", TEAM_LEAD: "Trưởng nhóm", SALES: "Kinh doanh", VIEWER: "Xem" };
-
 function Card({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl p-6" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
@@ -20,7 +17,6 @@ function Card({ title, icon: Icon, children }: { title: string; icon: React.Elem
 function Toast({ ok, msg }: { ok: boolean; msg: string }) {
   return <div className="flex items-center gap-2 text-sm p-3 rounded-xl" style={{ background: ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", color: ok ? "#10b981" : "#ef4444" }}>{ok ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}{msg}</div>;
 }
-
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,14 +26,12 @@ export default function ProfilePage() {
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
   const [pwSaving, setPwSaving] = useState(false);
   const [pwToast, setPwToast] = useState<{ ok: boolean; msg: string } | null>(null);
-
   useEffect(() => {
     fetch("/api/users/me", { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) { setUser(d); setForm({ name: d.name || "", phone: d.phone || "" }); } })
       .finally(() => setLoading(false));
   }, []);
-
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setToast(null);
     try {
@@ -46,7 +40,6 @@ export default function ProfilePage() {
       setToast(r.ok ? { ok: true, msg: "Cập nhật thành công!" } : { ok: false, msg: d.message || "Lỗi cập nhật" });
     } catch { setToast({ ok: false, msg: "Lỗi kết nối" }); } finally { setSaving(false); }
   };
-
   const changePw = async (e: React.FormEvent) => {
     e.preventDefault();
     if (pw.next !== pw.confirm) { setPwToast({ ok: false, msg: "Mật khẩu xác nhận không khớp" }); return; }
@@ -58,9 +51,7 @@ export default function ProfilePage() {
       else setPwToast({ ok: false, msg: d.message || "Lỗi đổi mật khẩu" });
     } catch { setPwToast({ ok: false, msg: "Lỗi kết nối" }); } finally { setPwSaving(false); }
   };
-
   if (loading) return <div className="p-6 space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="h-40 rounded-2xl animate-pulse" style={{ background: "var(--border-default)" }} />)}</div>;
-
   return (
     <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
       <div><h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Hồ sơ cá nhân</h1><p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>Quản lý thông tin tài khoản</p></div>

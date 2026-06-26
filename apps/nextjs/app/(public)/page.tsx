@@ -4,19 +4,15 @@ import type { Listing } from "@/types";
 import { LandingPage } from "@/components/public/LandingPage";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getFAQSchema, getBreadcrumbSchema, getFoundersSchema, FAQ_HOMEPAGE, SITE_URL } from "@/lib/schema";
-
 export const metadata: Metadata = {
   title: "Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam",
   description:
     "SGS LAND — Marketplace BĐS, định giá AI tự động ±5%, CRM đa kênh. Khám phá 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương. Đại lý F1: Vinhomes Hóc Môn, Vinhomes Cần Giờ, Aqua City.",
   alternates: { canonical: "https://sgsland.vn/" },
 };
-
 // SSG — statically generated, revalidate every 1 hour for hero stats
 export const dynamic = "force-dynamic";
-
 // ── Additional GEO schemas for Phase 4 ──────────────────────────────────────
-
 const SPECIAL_ANNOUNCEMENT_VHM = {
   "@context": "https://schema.org",
   "@type": "SpecialAnnouncement",
@@ -35,7 +31,6 @@ const SPECIAL_ANNOUNCEMENT_VHM = {
     url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
   },
 };
-
 const SPECIAL_ANNOUNCEMENT_VCG = {
   "@context": "https://schema.org",
   "@type": "SpecialAnnouncement",
@@ -54,7 +49,6 @@ const SPECIAL_ANNOUNCEMENT_VCG = {
     url: `${SITE_URL}/du-an/vinhomes-can-gio`,
   },
 };
-
 const DATASET_AREA_PRICE_INDEX = {
   "@context": "https://schema.org",
   "@type": "Dataset",
@@ -74,7 +68,6 @@ const DATASET_AREA_PRICE_INDEX = {
   keywords: ["bất động sản TP.HCM", "chỉ số giá nhà", "giá đất Đồng Nai", "AVM Việt Nam"],
   license: "https://creativecommons.org/licenses/by/4.0/",
 };
-
 const DATASET_VHM = {
   "@context": "https://schema.org",
   "@type": "Dataset",
@@ -92,13 +85,10 @@ const DATASET_VHM = {
     url: SITE_URL,
   },
 };
-
-
 export default async function HomePage() {
   // Fetch featured listings & stats at build/revalidation time
   let featuredListings: Listing[] = [];
   let stats = { totalListings: 45000, totalProjects: 12, totalBrokers: 15000 };
-
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=6&featured=true`,
@@ -111,11 +101,9 @@ export default async function HomePage() {
   } catch {
     // Fallback to static data during build
   }
-
   const homeBreadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
   ]);
-
   return (
     <>
       {/* Page-specific JSON-LD: FAQ (GEO-optimised) + Breadcrumb + Founders (E-E-A-T) */}
