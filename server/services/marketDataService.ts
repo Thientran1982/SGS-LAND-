@@ -827,7 +827,7 @@ class MarketDataService {
 
   private async storeEntry(key: string, entry: MarketDataEntry): Promise<MarketDataEntry> {
     // Sanity bounds
-    if (entry.pricePerM2 < MIN_PRICE_VND || entry.pricePerM2 > MAX_PRICE_VND) {
+    if (!Number.isFinite(entry.pricePerM2) || entry.pricePerM2 < MIN_PRICE_VND || entry.pricePerM2 > MAX_PRICE_VND) {
       logger.warn(`[MarketData] Price out of range for "${entry.location}" (${entry.pricePerM2}) — falling back`);
       entry = this.buildRegionalEntry(entry.location, key);
     }

@@ -520,6 +520,20 @@ function parseBudgetFromMessage(msg: string): number | undefined {
     return undefined;
 }
 
+// I0: Prompt-injection hardening for untrusted user input.
+// Caps length (cost/context guard) and neutralises forged prompt delimiters /
+// system-instruction overrides before the message reaches specialist prompts.
+const MAX_USER_MESSAGE_LEN = 2000;
+function sanitizeUserInput(raw: string | undefined | null): string {
+	let msg = String(raw ?? "");
+	if (msg.length > MAX_USER_MESSAGE_LEN) msg = msg.slice(0, MAX_USER_MESSAGE_LEN);
+	msg = msg.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ");
+	msg = msg.replace(/([=#*\-_]{3,})/g, (d) => "[" + d + "]");
+	const OVERRIDE = /(ignore|disregard|forget|override)\s+(all|any|the|previous|above|prior)\s+(instructions?|prompts?|rules?)|b[\u1ecf\u1ecd o]\s*qua\s+(h[\u01b0u][\u1edbo]ng\s*d[\u1eaba]n|y[\u00eae]u\s*c[\u1ea7a]u|ch[\u1ec9i]\s*th[\u1ecbi]|quy\s*t[\u1eafa]c)|system\s*prompt|you\s+are\s+now|b[\u1ea1a]n\s+(b[\u00e2a]y\s*gi[\u1eddo]|gi[\u1eddo]\s*[\u0111d][\u00e2a]y)\s+l[\u00e0a]/gi;
+	msg = msg.replace(OVERRIDE, (m) => m.split("").join("\u200b"));
+	return msg.trim();
+}
+
 // Vietnamese gender detection from given name (last word of full name)
 function detectVietnameseGender(name: string): 'MALE' | 'FEMALE' | 'UNKNOWN' {
     const MALE_GIVEN = new Set(['hùng','dũng','nam','tuấn','khoa','trung','hải','phong','thành','đức','quân','long','huy','vũ','cường','nhân','tú','kiên','duy','tùng','sơn','toàn','thắng','việt','đạt','hiếu','mạnh','trọng','hào','bình','hưng','phúc','tài','tiến','quốc','thịnh','lâm','khải','khôi','lực','bảo','trí','phát','khang','nhật','tấn','hoan','hoàng']);
@@ -3112,6 +3126,8 @@ ${dataFreshnessNote}`;
             propertyType: f.propertyType,
         }));
 
+        // I0: harden untrusted input once -> protects every downstream specialist agent
+        userMessage = sanitizeUserInput(userMessage);
         const initialState: AgentState = {
             lead,
             userMessage,

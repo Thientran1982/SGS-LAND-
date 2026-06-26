@@ -4941,22 +4941,59 @@ async function startServer() {
       return pending;
     };
 
-    // Pre-warm public/images/projects/ at startup so cover images are in RAM
-    // before any mobile/browser request arrives (avoids first-hit EIO 500).
+    // Pre-warm critical public files into RAM at startup.
+    // Covers: (1) all root-level public/ files (logos, favicons, manifests, init scripts)
+    //         (2) public/images/projects/ cover images for mobile listing view
+    // Unlimited EIO retry during pre-warm — if the FS is flaky at boot, keep retrying.
+    const PREWARM_EXTS = new Set([
+      '.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico',
+      '.js', '.css', '.json', '.txt', '.xml',
+    ]);
     (async () => {
       try {
-        const projDir = path.join(process.cwd(), 'public', 'images', 'projects');
-        const files = await fs.promises.readdir(projDir).catch(() => [] as string[]);
-        await Promise.all(files.map(async f => {
+        const publicRoot = path.join(process.cwd(), 'public');
+
+        // (1) Root-level public files — logos, favicons, manifests, theme-init.js etc.
+        const rootEntries = await fs.promises.readdir(publicRoot).catch(() => [] as string[]);
+        await Promise.all(rootEntries.map(async f => {
+          if (!PREWARM_EXTS.has(path.extname(f).toLowerCase())) return;
+          const fp = path.join(publicRoot, f);
+          try { if (!(await fs.promises.stat(fp)).isFile()) return; } catch { return; }
+          const data = await _pubRead(fp);
+          if (data) _pubCache.set(fp, data);
+        }));
+
+        // (2) Project cover images (mobile listing cards)
+        const projDir = path.join(publicRoot, 'images', 'projects');
+        const projEntries = await fs.promises.readdir(projDir).catch(() => [] as string[]);
+        await Promise.all(projEntries.map(async f => {
           const fp = path.join(projDir, f);
           const data = await _pubRead(fp);
           if (data) _pubCache.set(fp, data);
         }));
-        logger.info(`[PubCache] Pre-warmed ${_pubCache.size} public images into RAM`);
+
+        logger.info(`[PubCache] Pre-warmed ${_pubCache.size} public files into RAM`);
       } catch (e) {
         logger.warn('[PubCache] Pre-warm error', e);
       }
     })();
+
+    // Cache-first middleware: intercept any request whose resolved path is already
+    // in _pubCache and serve directly from RAM — runs before express.static("public")
+    // so EIO-prone files are never re-read from disk after the first successful load.
+    app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+      // Only plain file paths — skip API, uploads, parameterised routes
+      if (req.path.includes('..') || req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next();
+      const publicRoot = path.join(process.cwd(), 'public');
+      const filePath = path.join(publicRoot, req.path);
+      if (!filePath.startsWith(publicRoot + '/')) return next();
+      const cached = _pubCache.get(filePath);
+      if (!cached) return next();
+      const ext = path.extname(filePath).toLowerCase();
+      res.setHeader('Content-Type', PUB_MIME[ext] || 'application/octet-stream');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      return res.end(cached);
+    });
 
     // /images/* — project cover images and other static images
     app.get('/images/*path', (req: express.Request, res: express.Response, next: express.NextFunction) => {

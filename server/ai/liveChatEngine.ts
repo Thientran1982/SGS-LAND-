@@ -21,6 +21,19 @@ import { applyAVM, getRegionalBasePrice } from '../valuationEngine';
 import { logger } from '../middleware/logger';
 import { agentRepository } from '../repositories/agentRepository';
 
+// Prompt-injection sanitizer for live-chat user content (message, leadName, history).
+// User text is interpolated into the LLM prompt, so neutralize escape vectors and
+// role-spoofing (fake "AI:"/"Khach:" turns) before embedding.
+function sanitizeChatInput(str: any, maxLen = 600): string {
+  if (typeof str !== "string" || !str) return "";
+  let out = str.slice(0, maxLen);
+  out = out.replace(/[`\\]/g, "");
+  out = out.replace(/\n{3,}/g, "\n\n");
+  out = out.replace(/^[ \t]*(AI|Assistant|System|Khach|Kh\u00e1ch)[ \t]*:/gim, "-");
+  out = out.replace(/\b(ignore|system\s+prompt|instruction|override|jailbreak|forget\s+everything)\b/gi, "[x]");
+  return out.trim();
+}
+
 // ---------------------------------------------------------------------------
 // Gemini client — reuse GEMINI_API_KEY from env (same as server/ai.ts)
 // ---------------------------------------------------------------------------
@@ -1009,9 +1022,9 @@ async function handle_live_chat(args: Record<string, any>): Promise<any> {
     }
 
     // Build a grounded prompt with KB context
-    const contextBlock = context.leadName ? `Khách hàng: ${context.leadName}` : '';
+    const contextBlock = context.leadName ? `Khách hàng: ${sanitizeChatInput(context.leadName, 80)}` : '';
     const historyBlock = Array.isArray(context.history)
-        ? context.history.slice(-4).map((m: any) => `${m.role === 'user' ? 'Khách' : 'AI'}: ${m.content}`).join('\n')
+        ? context.history.slice(-4).map((m: any) => `${m.role === 'user' ? 'Khách' : 'AI'}: ${sanitizeChatInput(m.content)}`).join('\n')
         : '';
     const kbBlock = detectedIntent === 'LEGAL'       ? `\n[KB Pháp lý]\n${LEGAL_RULES_KB}` :
                     detectedIntent === 'LONGTHANH'    ? `\n[KB Long Thành]\n${LONGTHANH_KB}` :
@@ -1060,7 +1073,7 @@ async function handle_analyze_chat_session(args: Record<string, any>): Promise<a
 
     const transcript = messages
         .slice(-20)
-        .map((m: any) => `[${m.role === 'user' ? 'KHÁCH' : 'AGENT'}] ${m.content}`)
+        .map((m: any) => `[${m.role === 'user' ? 'KHÁCH' : 'AGENT'}] ${sanitizeChatInput(m.content)}`)
         .join('\n');
 
     const prompt = `Bạn là AI phân tích CRM bất động sản chuyên nghiệp. Phân tích transcript cuộc hội thoại sau và trả về JSON chuẩn.

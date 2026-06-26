@@ -749,7 +749,10 @@ export function applyAVM(input: AVMInput): AVMOutput {
   } = input;
 
   // ── Multi-source blending: determine actual base price ────────
-  let effectiveBasePrice = marketBasePrice;
+  // Numeric hallucination guard at the source: an AI/LLM-derived marketBasePrice that
+  // is NaN / Infinity / negative / absurd must never flow into the output or any math.
+  const _mbpFinite = (typeof marketBasePrice === "number" && Number.isFinite(marketBasePrice)) ? marketBasePrice : 0;
+  let effectiveBasePrice = Math.min(100000, Math.max(0, _mbpFinite));
   let effectiveConfidence = confidence;
   let sources: ValuationSources | undefined;
 
@@ -798,8 +801,12 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const Kbr = Kbr_data?.value ?? 1.0;
 
   // ── Method 1: AVM/Comps ────────────────────────────────────────
-  const safeArea = Math.max(1, area);
-  const safeMarketBase = Math.max(0, effectiveBasePrice);
+  // --- Numeric hallucination guard: Math.max(0, NaN) === NaN, so a non-finite
+  // area/base would silently poison every downstream price. Coerce to finite first.
+  const finiteArea = (typeof area === "number" && Number.isFinite(area)) ? area : 0;
+  const safeArea = Math.min(100000, Math.max(1, finiteArea));
+  const finiteBase = (typeof effectiveBasePrice === "number" && Number.isFinite(effectiveBasePrice)) ? effectiveBasePrice : 0;
+  const safeMarketBase = Math.min(100000, Math.max(0, finiteBase));
   const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn * Kage * Kbr;
   const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));
   const compsPrice = Math.max(0, Math.round(pricePerM2 * safeArea));
