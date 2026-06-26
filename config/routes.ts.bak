@@ -84,7 +84,6 @@ export const ROUTES = {
   AEO_QUA_TRINH_VAY_MUA_NHA_BAO_NHIEU_BUOC: 'qua-trinh-vay-mua-nha-bao-nhieu-buoc',
   AEO_LAM_THE_NAO_DE_CHON_MOI_GIOI_BDS_TOT: 'lam-the-nao-de-chon-moi-gioi-bds-tot',
     DU_AN: 'du-an',
-    CHU_DAU_TU: 'chu-dau-tu',
 
     // Legal Pages
     PRIVACY: 'privacy-policy',

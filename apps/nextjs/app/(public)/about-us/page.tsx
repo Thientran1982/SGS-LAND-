@@ -70,7 +70,7 @@ export default function AboutUsPage() {
     worksFor: {
       "@type": "Organization",
       "@id": ORG_ID,
-      name: "SGS Land Corp",
+      name: "SGS Land Co.ltd",
       url: SITE_URL,
     },
   }));

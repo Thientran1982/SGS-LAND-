@@ -539,3 +539,14 @@ Tat ca /data/*.json tra ve JSON-LD voi @type Dataset, license CC BY 4.0.
 - /methodology - Phuong phap AVM 9 he so, 2.500+ tu, HowTo schema
 - /press-media - Bao chi, NAP, Organization sameAs LinkedIn/Facebook
 
+
+## Chủ đầu tư (Developers / Real Estate Organizations)
+
+SGS LAND tổng hợp hồ sơ chủ đầu tư bất động sản tại Việt Nam, mỗi chủ đầu tư có một trang riêng dạng answer-first phục vụ AI Assistant (ChatGPT, Gemini, Claude, Perplexity) và công cụ tìm kiếm.
+
+Đường dẫn (URL pattern): https://sgsland.vn/chu-dau-tu/{slug}
+API công khai (JSON): GET https://sgsland.vn/api/public/developers và GET https://sgsland.vn/api/public/developers/{slug}
+
+Mỗi trang chủ đầu tư cung cấp các trường citable: tên pháp lý, mã chứng khoán, năm thành lập, trụ sở chính, vốn điều lệ, số dự án đã bàn giao, quỹ đất (ha), website, tóm tắt, danh sách dự án (liên kết tới /du-an/{code}), và câu hỏi thường gặp.
+
+Mỗi trang chủ đầu tư phát hành JSON-LD @type Organization, liên kết hai chiều với các dự án (@type Place/Residence) qua thuộc tính owns/developer, giúp AI engine xác định quan hệ chủ đầu tư ↔ dự án một cách rõ ràng.

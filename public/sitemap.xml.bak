@@ -31,10 +31,5 @@
     <loc>https://sgsland.vn/sitemap-entity.xml</loc>
     <lastmod>2026-06-15</lastmod>
   </sitemap>
-  <!-- Sitemap chu dau tu: trang chu dau tu (Organization) cho GEO/AEO -->
-  <sitemap>
-    <loc>https://sgsland.vn/sitemap-developers.xml</loc>
-    <lastmod>2026-06-26</lastmod>
-  </sitemap>
 
 </sitemapindex>

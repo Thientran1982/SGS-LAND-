@@ -66,6 +66,7 @@ const Consignment = lazyLoad(() => import('./pages/Consignment'), 'Consignment')
 const BankRates = lazyLoad(() => import('./pages/BankRates'), 'BankRates');
 const LocalLandingPage = lazyLoad(() => import('./pages/LocalLandingPage'), 'LocalLandingPage');
 const ProjectLandingPage = lazyLoad(() => import('./pages/ProjectLandingPage'), 'ProjectLandingPage');
+const DeveloperPage = lazyLoad(() => import('./pages/DeveloperPage'), 'DeveloperPage');
 // Private Pages - Core
 const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
 const Leads = lazyLoad(() => import('./pages/Leads'), 'Leads');
@@ -256,6 +257,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
       [ROUTES.AEO_QUA_TRINH_VAY_MUA_NHA_BAO_NHIEU_BUOC]: LocalLandingPage,
       [ROUTES.AEO_LAM_THE_NAO_DE_CHON_MOI_GIOI_BDS_TOT]: LocalLandingPage,
     [ROUTES.DU_AN]: ProjectLandingPage,
+    [ROUTES.CHU_DAU_TU]: DeveloperPage,
     [ROUTES.LOGIN]: Login,
     [ROUTES.LISTING]: ListingDetail, 
     [ROUTES.LISTING_BDS]: ListingDetail,
@@ -333,6 +335,7 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.DAU_TU_BDS,
     ROUTES.PHAP_LY_NHA_DAT,
     ROUTES.DU_AN,
+    ROUTES.CHU_DAU_TU,
     ROUTES.LOGIN,
     ROUTES.RESET_PASSWORD,
     ROUTES.VERIFY_EMAIL,
