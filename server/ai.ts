@@ -26,15 +26,12 @@ import {
     DEFAULT_VALUATION_SEARCH_SYSTEM,
     DEFAULT_VALUATION_RENTAL_SYSTEM,
 } from './ai/defaultPrompts';
-
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
 // -----------------------------------------------------------------------------
-
 // Tắt "thinking" cho gemini-2.5-flash — thinking tokens tính vào maxOutputTokens,
 // dẫn đến response bị cắt giữa chừng. Với chatbot BĐS, thinking không cần thiết.
 const THINKING_OFF = { thinkingBudget: 0 } as const;
-
 // I1: Standardised Thinking Mode naming
 // THINKING_OFF     = standard  (budget=0):   Fast responses, no chain-of-thought — used by ROUTER, WRITER, simple agents
 // THINKING_STANDARD= standard  (budget=2048): Light reasoning — INVENTORY, FINANCE, SALES, MARKETING basic queries
@@ -43,7 +40,6 @@ const THINKING_OFF = { thinkingBudget: 0 } as const;
 const THINKING_STANDARD  = { thinkingBudget: 2048  } as const;
 const THINKING_EXTENDED  = { thinkingBudget: 8192  } as const;
 const THINKING_MAXIMUM   = { thinkingBudget: 24576 } as const;
-
 // I4: Gemini Fallback Chain — primary → flash → legacy
 // Handles model timeouts and overload errors gracefully
 const FALLBACK_CHAIN = [
@@ -51,7 +47,6 @@ const FALLBACK_CHAIN = [
   'gemini-2.5-flash',  // fallback-1 — fast & cost-efficient
   'gemini-2.0-flash',  // fallback-2 — stable legacy
 ] as const;
-
 /**
  * I4: generateWithFallback
  * Attempts generation with the configured model; on timeout/overload,
@@ -63,7 +58,6 @@ async function generateWithFallback(
   const primaryModel = requestConfig.model as string;
   // Build attempt chain: start with primary, then fallback
   const chain = [primaryModel, ...FALLBACK_CHAIN.filter(m => m !== primaryModel)];
-
   let lastErr: unknown;
   for (const model of chain) {
     try {
@@ -88,7 +82,6 @@ async function generateWithFallback(
   }
   throw lastErr; // all models exhausted
 }
-
 const GENAI_CONFIG = {
     MODELS: {
         ROUTER: 'gemini-2.5-flash',
@@ -112,7 +105,6 @@ const GENAI_CONFIG = {
         'gemini-1.5-pro':               0.003500,
     } as Record<string, number>,
 };
-
 // ----- SINGLETON: reuse GoogleGenAI instance -----
 let _aiInstance: GoogleGenAI | null = null;
 function getAiClient(): GoogleGenAI {
@@ -122,20 +114,15 @@ function getAiClient(): GoogleGenAI {
     _aiInstance = new GoogleGenAI({ apiKey });
     return _aiInstance;
 }
-
 // ----- CACHES -----
 // Governance model cache: 5-min TTL, never invalidated mid-request
 const modelCache: Map<string, { model: string; expiresAt: number }> = new Map();
-
 // Valuation result cache: 30-min TTL (giảm từ 1h để tăng độ tươi dữ liệu)
 const valuationCache: Map<string, { result: any; expiresAt: number; fetchedAt: number }> = new Map();
-
 // Tool data cache: 5-min TTL for enterprise config (legal/marketing/contract rarely change)
 const toolDataCache: Map<string, { value: any; expiresAt: number }> = new Map();
-
 // Bank rates cache: 10-min TTL — lãi suất thay đổi theo tuần/tháng, không cần real-time từng giây
 const bankRatesCache: Map<'rates', { data: string; fetchedAt: number }> = new Map();
-
 function getCachedToolData<T>(key: string): T | null {
     const entry = toolDataCache.get(key);
     if (entry && Date.now() < entry.expiresAt) return entry.value as T;
@@ -144,36 +131,30 @@ function getCachedToolData<T>(key: string): T | null {
 function setCachedToolData(key: string, value: any, ttlMs = 300_000) {
     toolDataCache.set(key, { value, expiresAt: Date.now() + ttlMs });
 }
-
 /**
  * Clear cached prompt template for a tenant — called by AI Governance when
  * an admin promotes a new version so the next request picks it up immediately.
  */
 export function clearPromptCache(tenantId: string, templateKey?: string): void {
-    if (templateKey) {
-        toolDataCache.delete(`prompt:${tenantId}:${templateKey}`);
+    if (templateKey) {        toolDataCache.delete(`prompt:${tenantId}:${templateKey}`);
     } else {
         for (const key of toolDataCache.keys()) {
             if (key.startsWith(`prompt:${tenantId}:`)) toolDataCache.delete(key);
         }
     }
 }
-
 // --- RLHF: Few-shot examples & negative rules from feedback ---
 interface RlhfContext {
     fewShotSection: string;
     negativeRulesSection: string;
 }
-
 async function buildRlhfContext(tenantId: string, intent: string): Promise<RlhfContext> {
     const cacheKey = `rlhf:${tenantId}:${intent}`;
     const cached = getCachedToolData<RlhfContext>(cacheKey);
     if (cached) return cached;
-
     try {
         const signal = await feedbackRepository.getRewardSignal(tenantId, intent);
         if (!signal) return { fewShotSection: '', negativeRulesSection: '' };
-
         let fewShotSection = '';
         const topExamples = (signal as any).topExamples || [];
         if (topExamples.length > 0) {
@@ -182,7 +163,6 @@ async function buildRlhfContext(tenantId: string, intent: string): Promise<RlhfC
             ).join('\n');
             fewShotSection = `\n[MẪU TRẢ LỜI ĐƯỢC ĐÁNH GIÁ TỐT (RLHF)]:\n${exLines}`;
         }
-
         let negativeRulesSection = '';
         const negPatterns = (signal as any).negativePatterns || [];
         if (negPatterns.length > 0) {
@@ -191,7 +171,6 @@ async function buildRlhfContext(tenantId: string, intent: string): Promise<RlhfC
             ).join('\n');
             negativeRulesSection = `\n[LƯU Ý TỪ FEEDBACK NGƯỜI DÙNG]:\nCác trường hợp phản hồi cần tránh lặp lại:\n${negLines}`;
         }
-
         const result = { fewShotSection, negativeRulesSection };
         setCachedToolData(cacheKey, result, 600_000); // cache 10 minutes
         return result;
@@ -199,7 +178,6 @@ async function buildRlhfContext(tenantId: string, intent: string): Promise<RlhfC
         return { fewShotSection: '', negativeRulesSection: '' };
     }
 }
-
 // ---------------------------------------------------------------------------
 // Real-time bank lending rates via Gemini Google Search grounding
 // Cache TTL: 10 min — rates change weekly at most, no need per-request fetch
@@ -230,7 +208,6 @@ async function fetchCurrentBankRates(): Promise<string> {
         return '';   // silent fallback — FINANCE_AGENT uses hardcoded knowledge from system prompt
     }
 }
-
 // ---------------------------------------------------------------------------
 // Prompt injection sanitizer — strip dangerous control tokens from user inputs
 // before embedding them inside AI prompts.
@@ -240,8 +217,7 @@ function sanitizePromptInput(str: string, maxLen = 300): string {
     return str
         .slice(0, maxLen)
         .replace(/[`\\]/g, '')                        // remove backticks & backslashes (prompt escape vectors)
-        .replace(/\n{3,}/g, '\n\n')                   // collapse excessive newlines
-        .replace(/\b(?:ignore|system\s+prompt|instruction|override|jailbreak|forget\s+everything)\b/gi, '[x]')
+        .replace(/\n{3,}/g, '\n\n')                   // collapse excessive newlines        .replace(/\b(?:ignore|system\s+prompt|instruction|override|jailbreak|forget\s+everything)\b/gi, '[x]')
         .trim();
 }
 
@@ -263,7 +239,6 @@ async function flushSpendBuffer() {
         }
     }
 }
-
 function scheduleSpendFlush() {
     if (spendFlushTimer) return;
     spendFlushTimer = setTimeout(async () => {
@@ -271,7 +246,6 @@ function scheduleSpendFlush() {
         await flushSpendBuffer();
     }, 30_000); // flush every 30s
 }
-
 // Models confirmed working with new API keys — gemini-2.0.x and 1.5.x are
 // restricted for new users so we silently upgrade them to the safe fallback.
 const SAFE_MODEL_FALLBACK = 'gemini-2.5-flash';
@@ -282,13 +256,11 @@ const DEPRECATED_MODEL_PREFIXES = [
     'gemini-1.5-flash',
     'gemini-1.5-pro',
 ];
-
 function ensureSafeModel(model: string | undefined): string {
     if (!model) return SAFE_MODEL_FALLBACK;
     const isDeprecated = DEPRECATED_MODEL_PREFIXES.some(prefix => model.startsWith(prefix));
     return isDeprecated ? SAFE_MODEL_FALLBACK : model;
 }
-
 async function getGovernanceModel(tenantId: string): Promise<string> {
     const cached = modelCache.get(tenantId);
     if (cached && Date.now() < cached.expiresAt) return cached.model;
@@ -301,7 +273,6 @@ async function getGovernanceModel(tenantId: string): Promise<string> {
         return GENAI_CONFIG.MODELS.WRITER;
     }
 }
-
 /**
  * Fire-and-forget cost tracker for any individual Gemini call.
  * Writes a row to ai_usage_log labelled with `feature` so the admin
@@ -328,7 +299,6 @@ function trackAiUsage(
             latencyMs,
             source: ctx?.source || null,
         }).catch(() => {});
-
         // ── Fix E: Governance audit log — đồng bộ với ai_usage_log để admin trace
         // toàn bộ AI traffic (cost, latency, model) qua AI Governance panel.
         // Không block bất kỳ flow nào — silent failure.
@@ -347,7 +317,6 @@ function trackAiUsage(
         // never throw from a tracking helper
     }
 }
-
 async function writeSafetyLog(
     tenantId: string,
     taskType: string,
@@ -361,7 +330,6 @@ async function writeSafetyLog(
         const tokens = Math.round((prompt.length + response.length) / 4);
         const ratePerK = GENAI_CONFIG.MODEL_COSTS[model] ?? GENAI_CONFIG.MODEL_COSTS['gemini-2.5-flash'];
         const costUsd = parseFloat(((tokens / 1000) * ratePerK * pipelineMultiplier).toFixed(6));
-
         await aiGovernanceRepository.createSafetyLog(tenantId, {
             taskType, model, latencyMs, costUsd,
             prompt: prompt.slice(0, 500),
@@ -369,7 +337,6 @@ async function writeSafetyLog(
             flagged: false,
             safetyFlags: [],
         });
-
         // Accumulate cost — flush to DB in batch (no modelCache invalidation)
         spendBuffer.set(tenantId, (spendBuffer.get(tenantId) || 0) + costUsd);
         scheduleSpendFlush();
@@ -377,11 +344,9 @@ async function writeSafetyLog(
         logger.error('[AI Governance] Failed to write safety log:', e);
     }
 }
-
 // ── PLATFORM FEATURES GUIDE — dùng trong NAVIGATE_PLATFORM writer branch ──────
 const PLATFORM_FEATURES_GUIDE = `
 [TÍNH NĂNG NỀN TẢNG SGS LAND — URL & HƯỚNG DẪN SỬ DỤNG]
-
 ## QUẢN LÝ KINH DOANH (yêu cầu đăng nhập)
 • Dashboard tổng quan        → /dashboard          — thống kê lead, doanh số, KPI
 • Khách hàng (Lead/CRM)      → /leads              — quản lý, phân loại, follow-up khách
@@ -413,9 +378,7 @@ const PLATFORM_FEATURES_GUIDE = `
 • Bảo mật & Tuân thủ        → /security            — log đăng nhập, cài đặt 2FA, quyền truy cập
 • Thanh toán & Gói dịch vụ  → /billing             — nâng cấp gói, lịch sử hoá đơn
 `.trim();
-
 // Default system instructions — overridable via admin prompt templates
-
 // ── Helper functions — load từ DB (admin override) hoặc dùng default ──────
 async function getInventoryInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'INVENTORY_SYSTEM', DEFAULT_INVENTORY_SYSTEM);
@@ -450,7 +413,6 @@ async function getValuationRentalInstruction(tenantId: string): Promise<string> 
 async function getFollowupInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'FOLLOWUP_SYSTEM', DEFAULT_FOLLOWUP_SYSTEM);
 }
-
 async function getPromptTemplate(tenantId: string, templateKey: string, fallback: string): Promise<string> {
     const cacheKey = `prompt:${tenantId}:${templateKey}`;
     const cached = getCachedToolData<string>(cacheKey);
@@ -491,17 +453,14 @@ async function getPromptTemplate(tenantId: string, templateKey: string, fallback
         return fallback;
     }
 }
-
 async function getRouterInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'ROUTER_SYSTEM', DEFAULT_ROUTER_INSTRUCTION);
 }
-
 async function getAgentSystemInstruction(tenantId: string): Promise<string> {
     const brandName = getCachedToolData<string>(`brandName:${tenantId}`) || 'Trợ lý ảo BĐS';
     const defaultPersona = DEFAULT_WRITER_PERSONA(brandName);
     return getPromptTemplate(tenantId, 'WRITER_PERSONA', defaultPersona);
 }
-
 // Detect customer message language: return 'en' if no Vietnamese diacritics present
 function detectMessageLang(msg: string, hint?: string): string {
     if (hint && hint !== 'vn') return hint; // explicit non-vn lang from client → trust it
@@ -510,7 +469,6 @@ function detectMessageLang(msg: string, hint?: string): string {
     if (/[a-zA-Z]/.test(msg)) return 'en'; // Latin letters, no Vietnamese → English
     return 'vn'; // fallback (emoji/numbers only)
 }
-
 // Shared utility: extract Vietnamese budget from message (fallback when ROUTER misses)
 function parseBudgetFromMessage(msg: string): number | undefined {
     const match = msg.match(/(\d+(?:[.,]\d+)?)\s*(tỷ|tỉ)/i);
@@ -519,7 +477,6 @@ function parseBudgetFromMessage(msg: string): number | undefined {
     if (trMatch) return parseFloat(trMatch[1].replace(',', '.')) * 1_000_000;
     return undefined;
 }
-
 // I0: Prompt-injection hardening for untrusted user input.
 // Caps length (cost/context guard) and neutralises forged prompt delimiters /
 // system-instruction overrides before the message reaches specialist prompts.
@@ -533,7 +490,6 @@ function sanitizeUserInput(raw: string | undefined | null): string {
 	msg = msg.replace(OVERRIDE, (m) => m.split("").join("\u200b"));
 	return msg.trim();
 }
-
 // Vietnamese gender detection from given name (last word of full name)
 function detectVietnameseGender(name: string): 'MALE' | 'FEMALE' | 'UNKNOWN' {
     const MALE_GIVEN = new Set(['hùng','dũng','nam','tuấn','khoa','trung','hải','phong','thành','đức','quân','long','huy','vũ','cường','nhân','tú','kiên','duy','tùng','sơn','toàn','thắng','việt','đạt','hiếu','mạnh','trọng','hào','bình','hưng','phúc','tài','tiến','quốc','thịnh','lâm','khải','khôi','lực','bảo','trí','phát','khang','nhật','tấn','hoan','hoàng']);
@@ -544,7 +500,6 @@ function detectVietnameseGender(name: string): 'MALE' | 'FEMALE' | 'UNKNOWN' {
     if (FEMALE_GIVEN.has(given)) return 'FEMALE';
     return 'UNKNOWN';
 }
-
 // Module-level system context builder (no recreation per call)
 function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]): string {
     if (!lead) return 'Khách vãng lai — chưa có hồ sơ.';
@@ -561,7 +516,6 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
     if (lead.preferences?.propertyTypes?.length) parts.push(`Loại BĐS: ${lead.preferences.propertyTypes.join(', ')}`);
     if (lead.phone)                              parts.push('SĐT: Có');
     if (lead.email)                              parts.push('Email: Có');
-
     // Behavioral pattern: phát hiện xu hướng từ lịch sử intent
     const intentHistory: string[] = lead.preferences?._intentHistory || [];
     if (intentHistory.length >= 3) {
@@ -573,12 +527,10 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
             .map(([intent, count]) => `${intent}(${count}x)`);
         parts.push(`Xu hướng hỏi: ${topIntents.join(', ')}`);
     }
-
     // Last analysis summary (nếu có)
     if (lead.preferences?._lastAnalysisSummary) {
         parts.push(`Phân tích gần nhất: ${lead.preferences._lastAnalysisSummary}`);
     }
-
     // P3 self-learning: accumulated persona signals from past sessions — Writer reads this as long-term memory
     const personaBlock: string[] = [];
     if (lead.preferences?._inferredPersona)         personaBlock.push(`Persona: ${lead.preferences._inferredPersona}`);
@@ -586,13 +538,11 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
     if (lead.preferences?._lastUrgency && lead.preferences._lastUrgency !== 'LOW')         personaBlock.push(`Mức độ gấp: ${lead.preferences._lastUrgency}`);
     if (lead.preferences?._lastEmotionalState && lead.preferences._lastEmotionalState !== 'NEUTRAL') personaBlock.push(`Trạng thái cảm xúc: ${lead.preferences._lastEmotionalState}`);
     if (personaBlock.length > 0) parts.push(`[PERSONA_PROFILE]: ${personaBlock.join(' | ')}`);
-
     if (lead.preferences?._lastInteraction) {
         const lastDate = new Date(lead.preferences._lastInteraction);
         const diffDays = Math.floor((Date.now() - lastDate.getTime()) / 86400000);
         if (diffDays > 0) parts.push(`Lần cuối tương tác: ${diffDays} ngày trước`);
     }
-
     let favoritesBlock = '';
     if (userFavorites && userFavorites.length > 0) {
         const favLines = userFavorites.slice(0, 8).map((f, i) => {
@@ -603,10 +553,8 @@ function buildSystemContext(lead: Lead | null, userFavorites?: CompactFavorite[]
         }).join('\n');
         favoritesBlock = `\n[WATCHLIST KHÁCH HÀNG — ${userFavorites.length} BĐS đã lưu]:\n${favLines}\n→ Ưu tiên đề xuất BĐS KHÁC với watchlist. Nếu khách hỏi về BĐS đã lưu, hãy nhắc tên/địa chỉ cụ thể.`;
     }
-
     return parts.join(' | ') + favoritesBlock;
 }
-
 // Typed Router plan output
 type RouterPlan = {
     next_step: string;
@@ -649,7 +597,6 @@ type RouterPlan = {
     };
     confidence: number;
 };
-
 const ROUTER_SCHEMA: Schema = {
     type: Type.OBJECT,
     properties: {
@@ -701,11 +648,9 @@ const ROUTER_SCHEMA: Schema = {
     },
     required: ['next_step', 'confidence', 'extraction']
 };
-
 // -----------------------------------------------------------------------------
 // 2. TOOL BINDINGS (Simulated RAG)
 // -----------------------------------------------------------------------------
-
 const TOOL_EXECUTOR = {
     async search_inventory(
         tenantId: string,
@@ -732,7 +677,6 @@ const TOOL_EXECUTOR = {
             if (floorMax !== undefined) filters.floor_lte = floorMax;
             if (direction) filters.direction = direction;
             if (tower) filters.tower = tower;
-
             if (projectCode) {
                 // Project catalog view: show all active statuses (not just AVAILABLE)
                 filters.projectCode = projectCode;
@@ -740,7 +684,6 @@ const TOOL_EXECUTOR = {
             } else {
                 filters.status = 'AVAILABLE';
             }
-
             // Project catalog: 50 per page (show all on page);
             // general search: 10 per page, rank by budget proximity.
             const fetchSize = projectCode ? 50 : 10;
@@ -750,7 +693,6 @@ const TOOL_EXECUTOR = {
                 { page: currentPage, pageSize: fetchSize },
                 filters
             );
-
             // Build active-filter summary for the agent to understand what was searched
             const activeFilters: string[] = [];
             if (query) activeFilters.push(`Khu vực/Từ khóa: "${query}"`);
@@ -813,12 +755,10 @@ const TOOL_EXECUTOR = {
                 const fmt = fallback.data.slice(0, 5).map((l: any, i: number) => formatListing(l, i)).join('\n');
                 return `${filterSummary}\nKhông tìm thấy đúng ngân sách, gợi ý gần nhất (${fallback.total} sản phẩm):\n${fmt}`;
             }
-
             // Sort by price proximity to budget if budget is known; for project catalog keep order
             const sorted = (projectCode || !priceMax)
                 ? result.data
                 : [...result.data].sort((a: any, b: any) => Math.abs((a.price || 0) - priceMax!) - Math.abs((b.price || 0) - priceMax!));
-
             // Project catalog: show all fetched units on this page (up to 50).
             // General search: show top 5 ranked by budget proximity.
             const top = projectCode ? sorted : sorted.slice(0, 5);
@@ -826,7 +766,6 @@ const TOOL_EXECUTOR = {
                 const globalIdx = (currentPage - 1) * fetchSize + i;
                 return formatListing(l, globalIdx);
             }).join('\n');
-
             // Pagination metadata
             const totalPages = Math.ceil(result.total / fetchSize);
             const pageNote = totalPages > 1
@@ -836,7 +775,6 @@ const TOOL_EXECUTOR = {
             const nextPageHint = hasNextPage
                 ? ` (còn ${totalPages - currentPage} trang — khách hỏi "trang tiếp theo" để xem thêm)`
                 : '';
-
             const summaryLabel = projectCode
                 ? `Danh sách ${result.total} sản phẩm trong dự án [${projectCode}]${pageNote}${nextPageHint}`
                 : `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất)${pageNote}${nextPageHint}`;
@@ -846,7 +784,6 @@ const TOOL_EXECUTOR = {
             return "Lỗi khi tìm kiếm kho hàng. Vui lòng thử lại.";
         }
     },
-
     async calculate_loan(principal: number, rate: number = 8.5, years: number = 20) {
         const r = rate / 100 / 12;
         const months = years * 12;
@@ -858,7 +795,6 @@ const TOOL_EXECUTOR = {
             months
         };
     },
-
     async get_legal_info(tenantId: string, term: string): Promise<string> {
         const DEFAULTS: Record<string, string> = {
             PINK_BOOK: `Sổ Hồng / Sổ Đỏ — Giấy chứng nhận quyền sử dụng đất (GCNQSDĐ):
@@ -903,7 +839,6 @@ const TOOL_EXECUTOR = {
             return DEFAULTS[term] || DEFAULTS.NONE;
         }
     },
-
     async get_marketing_info(tenantId: string, campaign?: string): Promise<string> {
         const DEFAULT_CAMPAIGNS = [
             "Chiết khấu 5% cho khách hàng thanh toán nhanh trong tháng này.",
@@ -914,8 +849,7 @@ const TOOL_EXECUTOR = {
         try {
             let dbCampaigns = getCachedToolData<string[]>(cacheKey);
             if (!dbCampaigns) {
-                dbCampaigns = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiMarketingCampaigns') as string[];
-                setCachedToolData(cacheKey, dbCampaigns);
+                dbCampaigns = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiMarketingCampaigns') as string[];                setCachedToolData(cacheKey, dbCampaigns);
             }
             const campaigns = (Array.isArray(dbCampaigns) && dbCampaigns.length > 0)
                 ? dbCampaigns
@@ -932,7 +866,6 @@ const TOOL_EXECUTOR = {
             return `Các chương trình ưu đãi hiện tại:\n- ${DEFAULT_CAMPAIGNS.join('\n- ')}`;
         }
     },
-
     async get_contract_info(tenantId: string, type?: string): Promise<string> {
         const DEFAULTS: Record<string, string> = {
             Deposit: `Hợp đồng đặt cọc (Deposit Agreement):
@@ -980,14 +913,12 @@ const TOOL_EXECUTOR = {
             return DEFAULTS[key] || DEFAULTS.Sales;
         }
     },
-
     async get_showroom_location(tenantId: string): Promise<string> {
         const cacheKey = `showroom:${tenantId}`;
         try {
             let loc = getCachedToolData<string>(cacheKey);
             if (!loc) {
-                loc = await enterpriseConfigRepository.getConfigKey(tenantId, 'showroomAddress') as string;
-                setCachedToolData(cacheKey, loc);
+                loc = await enterpriseConfigRepository.getConfigKey(tenantId, 'showroomAddress') as string;                setCachedToolData(cacheKey, loc);
             }
             return (loc && typeof loc === 'string' && loc.trim()) ? loc.trim() : 'Phòng trưng bày (liên hệ Sales để biết địa chỉ cụ thể)';
         } catch {
@@ -995,11 +926,9 @@ const TOOL_EXECUTOR = {
         }
     }
 };
-
 // -----------------------------------------------------------------------------
 // 3. LANGGRAPH CORE (Native Implementation)
 // -----------------------------------------------------------------------------
-
 export type FollowupResult = {
     message: string;
     channel: 'ZALO' | 'EMAIL' | 'CALL' | 'SMS';
@@ -1012,7 +941,6 @@ export type FollowupResult = {
     tokensEstimate: number;
     durationMs: number;
 };
-
 export type CompactFavorite = {
     id: string;
     title?: string;
@@ -1021,7 +949,6 @@ export type CompactFavorite = {
     area?: number;
     propertyType?: string;
 };
-
 export type AgentState = {
     lead: Lead;
     userMessage: string;
@@ -1042,44 +969,35 @@ export type AgentState = {
     userFavorites?: CompactFavorite[];
   isInternalRequest?: boolean; // C3 guard: if true, ANALYZE_LEAD is allowed
 };
-
 type NodeFunction = (state: AgentState) => Promise<Partial<AgentState>>;
 type EdgeCondition = (state: AgentState) => string;
-
 export class StateGraph {
     private nodes: Map<string, NodeFunction> = new Map();
     private edges: Map<string, Record<string, string> | EdgeCondition> = new Map();
     private entryPoint: string = '';
-
     addNode(name: string, func: NodeFunction) {
         this.nodes.set(name, func);
         return this;
     }
-
     setEntryPoint(name: string) {
         this.entryPoint = name;
         return this;
     }
-
     addConditionalEdges(source: string, condition: EdgeCondition, mapping: Record<string, string>) {
         this.edges.set(source, (state: AgentState) => mapping[condition(state)] || mapping['default']);
         return this;
     }
-
     addEdge(source: string, target: string) {
         this.edges.set(source, { default: target });
         return this;
     }
-
     async compileAndRun(initialState: AgentState): Promise<AgentState> {
         let currentState = { ...initialState };
         let currentNode = this.entryPoint;
         const MAX_ITERATIONS = 20; // Safety: prevent infinite loops in misconfigured graphs
         let iterations = 0;
-
         while (currentNode && currentNode !== 'END') {
-            if (++iterations > MAX_ITERATIONS) {
-                logger.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
+            if (++iterations > MAX_ITERATIONS) {                logger.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
                 currentState.finalResponse = currentState.t('ai.msg_system_busy');
                 currentState.isSysMsg = true;
                 break;
@@ -1100,8 +1018,7 @@ export class StateGraph {
                     currentNode = 'END';
                 }
             } catch (error: any) {
-                logger.error(`Error in node ${currentNode}:`, error);
-                currentState.trace.push({ id: `err_${Date.now()}`, node: 'ERROR', status: 'ERROR', output: error.message, timestamp: Date.now() });
+                logger.error(`Error in node ${currentNode}:`, error);                currentState.trace.push({ id: `err_${Date.now()}`, node: 'ERROR', status: 'ERROR', output: error.message, timestamp: Date.now() });
                 currentState.finalResponse = currentState.t('ai.msg_system_busy');
                 currentState.isSysMsg = true;
                 currentState.error = error;
@@ -1111,18 +1028,14 @@ export class StateGraph {
         return currentState;
     }
 }
-
 // -----------------------------------------------------------------------------
 // 4. AI ENGINE CORE
 // -----------------------------------------------------------------------------
-
 class AiEngine {
     private workflow: StateGraph;
-
     constructor() {
         this.workflow = this.buildWorkflow();
     }
-
     private updateTrace(trace: AgentTraceStep[], output: string, model?: string) {
         if (trace.length > 0) {
             const last = trace[trace.length - 1];
@@ -1140,26 +1053,19 @@ class AiEngine {
             }
         }
     }
-
     private buildWorkflow(): StateGraph {
         const graph = new StateGraph();
-
         // Node 1: Router
         graph.addNode('ROUTER', async (state) => {
-            state.trace.push({ id: 'ROUTER', node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });
-            
+            state.trace.push({ id: 'ROUTER', node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });            
             // 6 turns (3 exchanges) sufficient for intent classification — saves ~50% router tokens
             const historyText = state.history.slice(-6)
                 .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN'}: "${h.content}"`)
                 .join('\n');
-
             const routerPrompt = `LỊCH SỬ HỘI THOẠI (6 tin nhắn gần nhất):
 ${historyText || '(Chưa có lịch sử)'}
-
 TIN NHẮN HIỆN TẠI: "${state.userMessage}"
-
 THÔNG TIN KHÁCH: ${state.systemContext}
-
 QUY TẮC TRÍCH XUẤT SỐ TIẾNG VIỆT:
 Ngân sách: "2 tỷ/hai tỷ/2 tỉ"→2000000000 | "1.5 tỷ/một rưỡi/1,5 tỷ"→1500000000 | "500 triệu/0.5 tỷ"→500000000
 Diện tích: "trên 80m²/ít nhất 100m/khoảng 70m"→area_min: 80/100/70
@@ -1177,7 +1083,6 @@ Tầng/Hướng/Tòa (chỉ cho SEARCH_INVENTORY):
 • valuation_furnishing: "nội thất cao cấp/luxury/full option"→LUXURY | "full/đầy đủ/nội thất đầy đủ"→FULL | "cơ bản/một phần/bán nội thất"→BASIC | "thô/không nội thất/bàn giao thô"→NONE
 • valuation_building_age: "xây 2015"→10 | "mới xây/xây mới"→1 | "cũ 15 năm"→15 | "nhà cũ"→20 | "nhà cũ kỹ"→30
 • valuation_bedrooms: "studio"→0 | "1PN/1 phòng ngủ"→1 | "2PN/2 phòng"→2 | "3PN"→3 | "4PN trở lên"→4
-
 BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 1. EXPLAIN_LEGAL — Hỏi: sổ hồng, sổ đỏ, pháp lý, giấy tờ, vi bằng, HĐMB, sang tên, thế chấp, quy hoạch
    → legal_concern: PINK_BOOK (sổ hồng/đỏ/sang tên) | HDMB (hợp đồng mua bán/dự án) | VI_BANG (vi bằng/giấy tay) | NONE (chưa rõ)
@@ -1194,19 +1099,16 @@ BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
    → PHÂN BIỆT: "Nhà tôi ở X → giá?" = ESTIMATE_VALUATION | "Nhà ở X giá bao nhiêu để mua" = SEARCH_INVENTORY
 9. DIRECT_ANSWER — Chào hỏi, cảm ơn, câu hỏi đơn giản, hỏi tiến độ/thông tin chung dự án (KHÔNG kèm tên dự án cụ thể), giờ mở cửa, thông tin liên hệ; HỎI VỀ TÍNH NĂNG/CÁCH SỬ DỤNG NỀN TẢNG như: "đăng lãi suất chỗ nào", "đăng tin ở đâu", "tìm tính năng X ở đâu", "làm sao dùng Y", "hướng dẫn dùng Z"
 10. ESCALATE_TO_HUMAN — Tức giận, phàn nàn nghiêm trọng, yêu cầu gặp nhân viên thật, từ chối AI
-
 QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
 - Giá + vay → SEARCH_INVENTORY (tìm nhà trước, tính vay sau)
 - Pháp lý + giá → EXPLAIN_LEGAL (pháp lý là quan tâm chính)
 - Định giá + hỏi mua → ESTIMATE_VALUATION nếu nhắc "nhà tôi" / "đất của tôi" / "muốn bán"
 - Đặt lịch + hỏi giá → DRAFT_BOOKING (muốn xem nhà)
-
 ĐỊA DANH VIỆT NAM — 63 tỉnh/thành phố → chuẩn hoá location_keyword:
 MIỀN NAM: TP. Hồ Chí Minh (Q.1, Q.3, Q.7, Bình Thạnh, Gò Vấp, Tân Bình, Tân Phú, Phú Nhuận, Bình Tân, Hóc Môn, Củ Chi, Nhà Bè, Cần Giờ, TP Thủ Đức) | Bình Dương (Thuận An, Dĩ An, Bến Cát, Tân Uyên, Phú Giáo, TP Thủ Dầu Một) | Đồng Nai (Biên Hòa, Long Thành, Nhơn Trạch, Trảng Bom) | Bà Rịa - Vũng Tàu | Long An (Bến Lức, Đức Hòa, Cần Giuộc) | Tây Ninh | Bình Phước | An Giang | Kiên Giang (Phú Quốc) | Cần Thơ | Đồng Tháp | Tiền Giang | Vĩnh Long | Bến Tre | Trà Vinh | Sóc Trăng | Hậu Giang | Bạc Liêu | Cà Mau
 MIỀN TRUNG: Đà Nẵng (Hải Châu, Sơn Trà, Ngũ Hành Sơn, Liên Chiểu, Cẩm Lệ) | Thừa Thiên Huế (TP Huế) | Quảng Nam (Hội An, Tam Kỳ) | Quảng Ngãi | Bình Định (Quy Nhơn) | Phú Yên (Tuy Hòa) | Khánh Hòa (Nha Trang, Cam Ranh) | Ninh Thuận (Phan Rang) | Bình Thuận (Phan Thiết, Mũi Né, Lagi) | Quảng Bình | Quảng Trị | Hà Tĩnh | Nghệ An (Vinh)
 TÂY NGUYÊN: Lâm Đồng (Đà Lạt, Bảo Lộc) | Đắk Lắk (Buôn Ma Thuột) | Đắk Nông | Gia Lai (Pleiku) | Kon Tum
 MIỀN BẮC: Hà Nội (Hoàn Kiếm, Ba Đình, Đống Đa, Hai Bà Trưng, Cầu Giấy, Nam Từ Liêm, Bắc Từ Liêm, Tây Hồ, Hoàng Mai, Thanh Xuân, Long Biên, Gia Lâm, Đông Anh, Sóc Sơn) | Hải Phòng | Quảng Ninh (Hạ Long, Cẩm Phả, Vân Đồn) | Hải Dương | Hưng Yên | Bắc Ninh (Từ Sơn) | Vĩnh Phúc (Vĩnh Yên) | Hà Nam | Nam Định | Ninh Bình | Thái Bình | Phú Thọ (Việt Trì) | Bắc Giang | Thái Nguyên | Lạng Sơn | Cao Bằng | Bắc Kạn | Tuyên Quang | Hà Giang | Lào Cai (Sa Pa) | Yên Bái | Sơn La | Điện Biên | Lai Châu | Hòa Bình | Thanh Hóa | Hà Tĩnh
-
 LOẠI HÌNH BĐS → property_type (chuẩn hoá):
 - Căn hộ chung cư / Apartment: "căn hộ", "chung cư", "apartment", "flat"
 - Căn hộ studio: "studio"
@@ -1234,7 +1136,6 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
 - Khách sạn / Hotel: "khách sạn", "hotel", "mini hotel"
 - Homestay / Nhà nghỉ: "homestay", "nhà nghỉ", "guesthouse"
 - BĐS công nghiệp (nhà xưởng KCN): "BĐS công nghiệp", "industrial property"`;
-
             const routerInstruction = await getRouterInstruction(state.tenantId);
             const _routerStart = Date.now();
             const routerRes = await generateWithFallback({
@@ -1248,7 +1149,6 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 }
             });
             trackAiUsage('CHAT_ROUTER', GENAI_CONFIG.MODELS.ROUTER, Date.now() - _routerStart, routerPrompt, routerRes.text || '', { tenantId: state.tenantId });
-
             let plan: any;
             try {
               plan = JSON.parse(routerRes.text || '{}');
@@ -1257,7 +1157,6 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
               logger.warn('[ROUTER] Failed to parse router JSON, falling back to DIRECT_ANSWER: ' + String((parseErr as any)?.message || parseErr));
               plan = { next_step: 'DIRECT_ANSWER', extraction: {} };
             }
-
               // =====================================================
               // C3 HARD GUARD: ANALYZE_LEAD is internal-only.
               // If the Router AI incorrectly classifies a customer
@@ -1295,7 +1194,6 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                 : [];
             const secIntentsStr = secIntentsArr.length > 0 ? ` [+ ${secIntentsArr.join(', ')}]` : '';
             this.updateTrace(state.trace, `→ ${plan.next_step}${secIntentsStr} (conf: ${confPct}%)${entityStr}`, GENAI_CONFIG.MODELS.ROUTER);
-
             // --- CONFIDENCE-BASED ROUTING ---
             // < 50% : CLARIFY  — quá mơ hồ, chỉ hỏi lại 1 câu, không đoán mù
             // 50-60%: LOW_CONFIDENCE hint → DIRECT_ANSWER + gợi ý hỏi thêm
@@ -1303,16 +1201,11 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             let routerSystemContextAddition = '';
             if (plan.confidence < 0.5) {
                 const originalIntent = plan.next_step;
-                plan.next_step = 'CLARIFY';
-                routerSystemContextAddition = `\n[ROUTER_CLARIFY]: Confidence=${confPct}% — Tin nhắn quá mơ hồ (intent dự đoán: "${originalIntent}"). WRITER PHẢI hỏi đúng 1 câu cụ thể để xác định nhu cầu — KHÔNG được đoán hoặc trả lời nội dung.`;
-                this.updateTrace(state.trace, `⚠️ Confidence ${confPct}% < 50% → CLARIFY (hỏi lại khách)`, GENAI_CONFIG.MODELS.ROUTER);
+                plan.next_step = 'CLARIFY';                routerSystemContextAddition = `\n[ROUTER_CLARIFY]: Confidence=${confPct}% — Tin nhắn quá mơ hồ (intent dự đoán: "${originalIntent}"). WRITER PHẢI hỏi đúng 1 câu cụ thể để xác định nhu cầu — KHÔNG được đoán hoặc trả lời nội dung.`;                this.updateTrace(state.trace, `⚠️ Confidence ${confPct}% < 50% → CLARIFY (hỏi lại khách)`, GENAI_CONFIG.MODELS.ROUTER);
             } else if (plan.confidence < 0.6) {
                 const originalIntent = plan.next_step;
-                plan.next_step = 'DIRECT_ANSWER';
-                routerSystemContextAddition = `\n[ROUTER_LOW_CONFIDENCE]: Confidence=${confPct}% — AI chưa chắc chắn (intent dự đoán: "${originalIntent}"). WRITER: (1) trả lời ngắn nếu có thể, (2) hỏi 1 câu làm rõ tự nhiên. Không đoán mù.`;
-                this.updateTrace(state.trace, `⚠️ Confidence ${confPct}% (50-60%) → DIRECT_ANSWER + clarification hint`, GENAI_CONFIG.MODELS.ROUTER);
+                plan.next_step = 'DIRECT_ANSWER';                routerSystemContextAddition = `\n[ROUTER_LOW_CONFIDENCE]: Confidence=${confPct}% — AI chưa chắc chắn (intent dự đoán: "${originalIntent}"). WRITER: (1) trả lời ngắn nếu có thể, (2) hỏi 1 câu làm rõ tự nhiên. Không đoán mù.`;                this.updateTrace(state.trace, `⚠️ Confidence ${confPct}% (50-60%) → DIRECT_ANSWER + clarification hint`, GENAI_CONFIG.MODELS.ROUTER);
             }
-
             // --- PROGRESSIVE LEAD ENRICHMENT ---
             // Ghi nhớ dài hạn: tự cập nhật lead.preferences từ mỗi extraction
             // Lần sau AI sẽ nhớ ngân sách, khu vực, loại BĐS từ hội thoại trước
@@ -1321,7 +1214,6 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                     const currentPrefs = state.lead.preferences || {};
                     const updates: Record<string, any> = {};
                     let hasChange = false;
-
                     if (ext.budget_max && ext.budget_max !== currentPrefs.budgetMax) {
                         updates.budgetMax = ext.budget_max;
                         hasChange = true;
@@ -1344,18 +1236,14 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                             hasChange = true;
                         }
                     }
-
                     // Track intent history for behavioral pattern detection
                     const intentHistory: string[] = currentPrefs._intentHistory || [];
                     intentHistory.push(plan.next_step);
-                    updates._intentHistory = intentHistory.slice(-10); // last 10 intents
-                    updates._lastInteraction = new Date().toISOString();
+                    updates._intentHistory = intentHistory.slice(-10); // last 10 intents                    updates._lastInteraction = new Date().toISOString();
                     hasChange = true;
-
                     // P3 self-learning: persist persona_signals emitted by Router (P2) into lead.preferences
                     // Accumulates across sessions — Writer reads this back as [PERSONA_PROFILE] block
-                    const ps = plan.persona_signals as {
-                        inferred_persona?: string;
+                    const ps = plan.persona_signals as {                        inferred_persona?: string;
                         life_event?: string;
                         urgency?: string;
                         emotional_state?: string;
@@ -1389,13 +1277,11 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                     }
                 } catch { /* non-blocking — enrichment is optional */ }
             }
-
             // --- ROUTER OBSERVATION LOGGING (self-learning) ---
             const _ps = plan.persona_signals as {
                 inferred_persona?: string; life_event?: string;
                 urgency?: string; emotional_state?: string;
-            } | undefined;
-            feedbackRepository.logObservation(state.tenantId, 'ROUTER', plan.next_step, 'INTENT_CLASSIFIED', {
+            } | undefined;            feedbackRepository.logObservation(state.tenantId, 'ROUTER', plan.next_step, 'INTENT_CLASSIFIED', {
                 intent: plan.next_step,
                 confidence: confPct,
                 lowConfidence: plan.confidence < 0.6,
@@ -1417,15 +1303,12 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                     : state.systemContext,
             };
         });
-
         // Node 2a: Inventory Agent
         graph.addNode('INVENTORY_AGENT', async (state) => {
             state.trace.push({ id: 'INVENTORY', node: 'INVENTORY_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-
             let budgetMax = extraction.budget_max;
             if (!budgetMax) budgetMax = parseBudgetFromMessage(state.userMessage);
-
             // ── Project-catalog lookup: resolve project name → project_code ────────────
             // When the router extracts project_name (e.g. "Cosmo Central"), we look up
             // the real project_code in the DB so that search_inventory can use
@@ -1444,24 +1327,19 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                     logger.warn('[INVENTORY_AGENT] project lookup failed:', e);
                 }
             }
-
             const rawPage = (extraction as Record<string, any>).inventory_page as number | undefined;
             const inventoryPage = (rawPage && rawPage > 0) ? Math.floor(rawPage) : 1;
-
             const searchRes = await TOOL_EXECUTOR.search_inventory(
-                state.tenantId,
-                extraction.location_keyword || extraction.explicit_question || '',
+                state.tenantId,                extraction.location_keyword || extraction.explicit_question || '',
                 budgetMax,
                 extraction.property_type,
                 extraction.area_min,
                 extraction.floor_min,
-                extraction.floor_max,
-                extraction.unit_direction,
+                extraction.floor_max,                extraction.unit_direction,
                 extraction.tower,
                 resolvedProjectCode,
                 inventoryPage,
             );
-
             // ── Buyer profile detection for branching ──────────────────────────────
             const msg = state.userMessage.toLowerCase();
             const isInvestor = (state.lead?.score?.score ?? 0) > 70
@@ -1489,7 +1367,6 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
             // ── Gemini pre-processing: rank + differentiate top matches ─────────────
             const inventoryAnalysisPrompt = `KẾT QUẢ TÌM KIẾM KHO HÀNG:
 ${searchRes}
-
 HỒ SƠ: Ngân sách ${budgetTier} | Khu vực: ${extraction.location_keyword || 'Chưa rõ'} | Loại: ${extraction.property_type || 'Chưa rõ'} | Diện tích: ${extraction.area_min ? '>=' + extraction.area_min + 'm²' : 'Chưa rõ'}${extraction.floor_min !== undefined || extraction.floor_max !== undefined ? ` | Tầng: ${extraction.floor_min ?? '?'}–${extraction.floor_max ?? '?'}` : ''}${extraction.unit_direction ? ` | Hướng: ${extraction.unit_direction}` : ''}${extraction.tower ? ` | Tòa: ${extraction.tower}` : ''} | Mục đích: ${isInvestor ? 'ĐẦU TƯ' : isFirstBuyer ? 'Ở THỰC LẦN ĐẦU' : 'Chưa rõ'} | Khẩn cấp: ${isUrgent ? 'CÓ' : 'Không'}${favCrossCheck}
 
 PHÂN TÍCH TOP 3 BĐS PHÙ HỢP NHẤT (bullet point, max 200 từ):
@@ -1498,11 +1375,9 @@ PHÂN TÍCH TOP 3 BĐS PHÙ HỢP NHẤT (bullet point, max 200 từ):
 3. ${isInvestor ? 'Ước tính tỷ suất cho thuê (%)' : '1 điểm mạnh + 1 rủi ro tiềm ẩn mỗi căn'}
 4. Khuyến nghị căn PHÙ NHẤT — lý do 1 câu
 ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU" và đề xuất phương án so sánh' : ''}`;
-
             // ── RLHF injection: học từ feedback các lần tìm kho trước ─────────────
             const invRlhf = await buildRlhfContext(state.tenantId, 'SEARCH_INVENTORY').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }));
             const invObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, 'INVENTORY_AGENT').catch(() => '');
-
             const inventorySystemInstruction = await getInventoryInstruction(state.tenantId);
             const _invStart = Date.now();
             const inventoryAI = await generateWithFallback({
@@ -1510,14 +1385,11 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
                 contents: inventoryAnalysisPrompt + invRlhf.fewShotSection + invRlhf.negativeRulesSection + invObsInsights,
                 config: { systemInstruction: inventorySystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard reasoning for property search */ }
             });
-            const inventoryAnalysisText = inventoryAI.text || '';
-            trackAiUsage('CHAT_INVENTORY_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _invStart, inventoryAnalysisPrompt, inventoryAnalysisText, { tenantId: state.tenantId });
-            const firstLine = searchRes.split('\n')[0];
-            this.updateTrace(state.trace, firstLine || 'Kho hàng đã được tra cứu.', GENAI_CONFIG.MODELS.EXTRACTOR);
+            const inventoryAnalysisText = inventoryAI.text || '';            trackAiUsage('CHAT_INVENTORY_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _invStart, inventoryAnalysisPrompt, inventoryAnalysisText, { tenantId: state.tenantId });
+            const firstLine = searchRes.split('\n')[0];            this.updateTrace(state.trace, firstLine || 'Kho hàng đã được tra cứu.', GENAI_CONFIG.MODELS.EXTRACTOR);
 
             // ── Observation logging (self-learning) ───────────────────────────
-            const resultCountMatch = searchRes.match(/Tìm thấy (\d+) sản phẩm/);
-            feedbackRepository.logObservation(state.tenantId, 'INVENTORY_AGENT', 'SEARCH_INVENTORY', 'QUERY_RESULT', {
+            const resultCountMatch = searchRes.match(/Tìm thấy (\d+) sản phẩm/);            feedbackRepository.logObservation(state.tenantId, 'INVENTORY_AGENT', 'SEARCH_INVENTORY', 'QUERY_RESULT', {
                 resultCount: resultCountMatch ? parseInt(resultCountMatch[1]) : 0,
                 hasResults: !searchRes.includes('chưa có sản phẩm'),
                 budgetTier,
@@ -1541,7 +1413,6 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
                     + `\n[DATA_FRESHNESS]: Dữ liệu kho hàng vừa được lấy từ cơ sở dữ liệu lúc ${inventoryFetchedAt} (real-time)`
             };
         });
-
         // Node 2b: Finance Agent
         graph.addNode('FINANCE_AGENT', async (state) => {
             state.trace.push({ id: 'FINANCE', node: 'FINANCE_AGENT', status: 'RUNNING', timestamp: Date.now() });

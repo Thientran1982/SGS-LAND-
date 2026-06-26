@@ -1,16 +1,13 @@
 // @ts-nocheck
 "use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import type { Author } from "@/data/authors";
-
 interface AuthorCardProps {
   author: Author;
   variant?: "inline" | "full";
   className?: string;
 }
-
 function Initials({ name }: { name: string }) {
   const parts = name.trim().split(" ");
   const initials = parts.length >= 2
@@ -26,7 +23,6 @@ function Initials({ name }: { name: string }) {
     </div>
   );
 }
-
 export function AuthorCard({ author, variant = "inline", className = "" }: AuthorCardProps) {
   if (variant === "inline") {
     return (
@@ -42,7 +38,6 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
             />
           </div>
         </Link>
-
         <div className="min-w-0">
           <Link
             href={`/tac-gia/${author.slug}`}
@@ -55,7 +50,6 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
             {author.title}
           </p>
         </div>
-
         {author.credentials.slice(0, 1).map((cred) => (
           <span
             key={cred}
@@ -68,7 +62,6 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
       </div>
     );
   }
-
   // variant === "full"
   return (
     <div
@@ -88,7 +81,6 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
             />
           </div>
         </Link>
-
         <div className="flex-1 min-w-0">
           <Link
             href={`/tac-gia/${author.slug}`}
@@ -101,9 +93,7 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
           <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }} itemProp="jobTitle">
             {author.title}
           </p>
-
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {author.credentials.map((cred) => (
+          <div className="flex flex-wrap gap-1.5 mt-2">            {author.credentials.map((cred) => (
               <span
                 key={cred}
                 className="px-2 py-0.5 rounded-full text-xs font-medium"
@@ -115,14 +105,11 @@ export function AuthorCard({ author, variant = "inline", className = "" }: Autho
           </div>
         </div>
       </div>
-
       <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }} itemProp="description">
         {author.bio}
       </p>
-
       <div className="flex items-center justify-between text-xs" style={{ color: "var(--text-tertiary)" }}>
         <span>{author.articlesCount} bài viết</span>
-
         <a
           href={author.linkedIn}
           target="_blank"

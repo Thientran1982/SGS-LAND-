@@ -15,14 +15,11 @@
  * The component is a Server Component (no "use client") — safe to render in
  * App Router layouts and page components without hydration overhead.
  */
-
 interface SchemaScriptProps {
   schemas: object[];
 }
-
 export function SchemaScript({ schemas }: SchemaScriptProps) {
   if (!schemas.length) return null;
-
   return (
     <>
       {schemas.map((schema, index) => (

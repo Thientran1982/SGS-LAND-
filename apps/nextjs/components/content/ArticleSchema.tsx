@@ -1,14 +1,12 @@
 // @ts-nocheck
 import type { Article } from "@/data/articles";
 import type { Author } from "@/data/authors";
-
 const SITE_URL = "https://sgsland.vn";
 
 interface ArticleSchemaProps {
   article: Article;
   author: Author;
 }
-
 /**
  * Injects Article JSON-LD structured data for GEO + E-E-A-T.
  *
@@ -33,14 +31,12 @@ export function ArticleSchema({ article, author }: ArticleSchemaProps) {
       name: "SGS LAND",
     },
   };
-
   const citations = article.sources.map((src) => ({
     "@type": "CreativeWork",
     name: src.name,
     url: src.url,
     datePublished: String(src.publishedYear),
   }));
-
   const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -80,7 +76,6 @@ export function ArticleSchema({ article, author }: ArticleSchemaProps) {
       "@id": canonicalUrl,
     },
   };
-
   // Add reviewedBy for legal articles (YMYL trust signal)
   if (article.isLegal) {
     schema.reviewedBy = {
@@ -91,7 +86,6 @@ export function ArticleSchema({ article, author }: ArticleSchemaProps) {
     };
     schema.legislationIdentifier = "Luật Đất Đai 2024 (Luật số 31/2024/QH15)";
   }
-
   return (
     <script
       type="application/ld+json"

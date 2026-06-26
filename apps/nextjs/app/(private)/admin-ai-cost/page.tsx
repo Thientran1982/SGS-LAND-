@@ -1,22 +1,17 @@
 // @ts-nocheck
 "use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { Cpu, RefreshCw, DollarSign, Zap, BarChart3, Calendar } from "lucide-react";
-
 interface AgentRun { id: number; agent_type?: string; model?: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; duration_ms?: number; status?: string; created_at?: string; user_name?: string; }
 interface CostSummary { total_cost_usd: number; total_input_tokens: number; total_output_tokens: number; total_runs: number; }
-
 function fmtDate(d?: string) { return d ? new Date(d).toLocaleString("vi-VN") : "—"; }
 function fmtCost(c?: number) { return c ? `$${c.toFixed(4)}` : "$0.0000"; }
 function fmtNum(n?: number) { return n ? n.toLocaleString() : "0"; }
-
 export default function AdminAiCostPage() {
   const [runs, setRuns] = useState<AgentRun[]>([]);
   const [summary, setSummary] = useState<CostSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
@@ -33,7 +28,6 @@ export default function AdminAiCostPage() {
       });
     } catch { setError("Lỗi kết nối"); } finally { setLoading(false); }
   }, []);
-
   useEffect(() => { load(); }, [load]);
 
   const stats = summary ? [
@@ -42,7 +36,6 @@ export default function AdminAiCostPage() {
     { label: "Token đầu vào", value: fmtNum(summary.total_input_tokens), icon: BarChart3, color: "#10b981" },
     { label: "Token đầu ra", value: fmtNum(summary.total_output_tokens), icon: BarChart3, color: "#8b5cf6" },
   ] : [];
-
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -51,10 +44,8 @@ export default function AdminAiCostPage() {
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} style={{ color: "var(--text-secondary)" }} />
         </button>
       </div>
-
       {loading && <div className="space-y-4"><div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => <div key={i} className="h-24 rounded-2xl animate-pulse" style={{ background: "var(--border-default)" }} />)}</div><div className="h-64 rounded-2xl animate-pulse" style={{ background: "var(--border-default)" }} /></div>}
       {error && <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>{error}</div>}
-
       {!loading && !error && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -65,7 +56,6 @@ export default function AdminAiCostPage() {
               </div>
             ))}
           </div>
-
           <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
             <table className="w-full text-sm">
               <thead><tr style={{ background: "var(--bg-elevated)" }}>
@@ -94,4 +84,3 @@ export default function AdminAiCostPage() {
     </div>
   );
 }
-

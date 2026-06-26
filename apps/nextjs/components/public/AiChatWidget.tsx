@@ -1,16 +1,13 @@
 // @ts-nocheck
 "use client";
-
 import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, Loader2, Minimize2 } from "lucide-react";
-
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   ts: number;
 }
-
 const WELCOME: Message = {
   id: "welcome",
   role: "assistant",
@@ -18,7 +15,6 @@ const WELCOME: Message = {
     "Xin chào! Tôi là **SGS AI** — trợ lý bất động sản thông minh của SGS LAND.\n\nTôi có thể giúp bạn:\n• 🏠 Tìm kiếm bất động sản phù hợp\n• 💰 Định giá & phân tích đầu tư\n• ⚖️ Tư vấn pháp lý, sổ hồng\n• 📊 Thị trường Đông Nam Bộ\n\nBạn đang quan tâm đến BĐS nào?",
   ts: Date.now(),
 };
-
 export function AiChatWidget() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -28,34 +24,28 @@ export function AiChatWidget() {
   const [unread, setUnread] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
   // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
   // Focus input when opened
   useEffect(() => {
     if (open && !minimized) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open, minimized]);
-
   const handleOpen = () => {
     setOpen(true);
     setMinimized(false);
     setUnread(0);
   };
-
   const handleSend = async () => {
     const text = input.trim();
     if (!text || loading) return;
-
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text, ts: Date.now() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
@@ -65,10 +55,8 @@ export function AiChatWidget() {
           history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
         }),
       });
-
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
-
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -76,7 +64,6 @@ export function AiChatWidget() {
         ts: Date.now(),
       };
       setMessages((prev) => [...prev, aiMsg]);
-
       // Unread badge when minimized/closed
       if (minimized || !open) setUnread((n) => n + 1);
     } catch {
@@ -93,14 +80,12 @@ export function AiChatWidget() {
       setLoading(false);
     }
   };
-
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
-
   // Simple markdown-to-HTML renderer
   const renderContent = (text: string) => {
     return text
@@ -108,7 +93,6 @@ export function AiChatWidget() {
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
       .replace(/\n/g, "<br/>");
   };
-
   return (
     <>
       {/* Chat panel */}
@@ -150,7 +134,6 @@ export function AiChatWidget() {
               </button>
             </div>
           </div>
-
           {/* Messages */}
           {!minimized && (
             <>
@@ -188,7 +171,6 @@ export function AiChatWidget() {
                 )}
                 <div ref={bottomRef} />
               </div>
-
               {/* Input */}
               <div className="px-3 py-3 border-t shrink-0" style={{ borderColor: "var(--border-default)" }}>
                 <div className="flex items-end gap-2 rounded-xl border px-3 py-2" style={{ borderColor: "var(--border-default)", background: "var(--bg-elevated)" }}>
@@ -219,7 +201,6 @@ export function AiChatWidget() {
           )}
         </div>
       )}
-
       {/* FAB Button */}
       <button
         onClick={handleOpen}

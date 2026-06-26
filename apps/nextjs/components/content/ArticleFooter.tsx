@@ -6,21 +6,18 @@ import type { Category } from "@/data/categories";
 import { AuthorCard } from "./AuthorCard";
 import { RelatedArticles } from "./RelatedArticles";
 import { ExternalLink } from "lucide-react";
-
 const SOURCE_TYPE_LABELS: Record<string, string> = {
   legal: "Văn bản pháp luật",
   official: "Cơ quan nhà nước",
   research: "Nghiên cứu / Báo cáo",
   news: "Báo chí",
 };
-
 const SOURCE_TYPE_COLORS: Record<string, string> = {
   legal: "#065F46",
   official: "#1E40AF",
   research: "#7C3AED",
   news: "#92400E",
 };
-
 interface ArticleFooterProps {
   article: Article;
   author: Author;
@@ -28,7 +25,6 @@ interface ArticleFooterProps {
   categories: Category[];
   className?: string;
 }
-
 export function ArticleFooter({
   article,
   author,
@@ -79,7 +75,6 @@ export function ArticleFooter({
           </ol>
         </section>
       )}
-
       {/* Fact-check notice for legal articles */}
       {article.isLegal && (
         <div
@@ -96,7 +91,6 @@ export function ArticleFooter({
           {new Date(article.updatedAt).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })} theo Luật Đất Đai 2024.
         </div>
       )}
-
       {/* Author bio full */}
       <section aria-label={`Về tác giả ${author.name}`}>
         <h2 className="text-lg font-bold mb-4" style={{ color: "var(--text-primary)", borderLeft: "3px solid var(--primary-600)", paddingLeft: "0.75rem" }}>
@@ -104,7 +98,6 @@ export function ArticleFooter({
         </h2>
         <AuthorCard author={author} variant="full" />
       </section>
-
       {/* Editorial policy */}
       <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
         <span>📋</span>
@@ -116,12 +109,10 @@ export function ArticleFooter({
           . Bài viết được fact-check và cập nhật định kỳ.
         </span>
       </div>
-
       {/* Related articles */}
       {relatedArticles.length > 0 && (
         <RelatedArticles articles={relatedArticles} categories={categories} />
       )}
-
       {/* CTA */}
       <div
         className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-2xl"

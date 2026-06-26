@@ -1,9 +1,7 @@
 // @ts-nocheck
 "use client";
-
 import Link from "next/link";
 import { Phone, Mail, MapPin } from "lucide-react";
-
 const FOOTER_PROJECTS = [
   { label: "Aqua City Novaland",      href: "/du-an/aqua-city"           },
   { label: "The Global City",         href: "/du-an/the-global-city"     },
@@ -13,7 +11,6 @@ const FOOTER_PROJECTS = [
   { label: "Masteri Cosmo Central",   href: "/p/mcc"                     },
   { label: "Vinhomes Hóc Môn",        href: "/du-an/vinhomes-hoc-mon"    },
 ];
-
 const FOOTER_SUPPORT = [
   { label: "Tìm kiếm BĐS",          href: "/marketplace"          },
   { label: "Định giá AI",            href: "/ai-valuation"         },
@@ -25,7 +22,6 @@ const FOOTER_SUPPORT = [
   { label: "Điều khoản sử dụng",     href: "/terms-of-service"     },
   { label: "Cookie",                 href: "/cookie-settings"      },
 ];
-
 const FOOTER_ABOUT = [
   { label: "Về chúng tôi",       href: "/about-us"            },
   { label: "Tin tức",             href: "/news"                },
@@ -44,20 +40,16 @@ const FOOTER_ABOUT = [
   { label: "Izumi City 2026", href: "/bat-dong-san-dong-nai/izumi-city-tien-do-moi-nhat" },
   { label: "Trạng thái hệ thống", href: "/status"              },
 ];
-
 const LEGAL_LINKS = [
   { label: "Chính sách bảo mật", href: "/privacy-policy"  },
   { label: "Điều khoản",          href: "/terms-of-service" },
   { label: "Cookie",              href: "/cookie-settings"  },
 ];
-
 const linkHover = (e: React.MouseEvent<HTMLAnchorElement | HTMLElement>, hover: boolean) => {
   (e.currentTarget as HTMLElement).style.color = hover ? "#D4A855" : "#B9C6D4";
 };
-
 export function PublicFooter() {
   const year = new Date().getFullYear();
-
   return (
     <footer style={{ background: "var(--sgs-primary-deep)", borderTop: "1px solid rgba(200,150,62,0.2)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4">
@@ -134,7 +126,6 @@ export function PublicFooter() {
               </div>
             </div>
           </div>
-
           {/* Col 2 — Dự án ──────────────────────────────── */}
           <div>
             <h3
@@ -159,7 +150,6 @@ export function PublicFooter() {
               ))}
             </ul>
           </div>
-
           {/* Col 3 — Hỗ trợ & Chính sách ────────────────── */}
           <div>
             <h3
@@ -184,7 +174,6 @@ export function PublicFooter() {
               ))}
             </ul>
           </div>
-
           {/* Col 4 — Về SGS LAND + pháp nhân ────────────── */}
           <div>
             <h3
@@ -219,11 +208,10 @@ export function PublicFooter() {
             </div>
           </div>
         </div>
-
         {/* ── Bottom bar ────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5">
           <p className="text-xs" style={{ color: "var(--sgs-on-dark-muted)" }}>
-            © {year} Công ty Cổ phần SGS Land. Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.
+            © {year} Công ty TNHH SGS Land. Đại lý F1: Novaland · Masterise Homes · Nam Long · Vinhomes.
           </p>
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
             {LEGAL_LINKS.map((link) => (

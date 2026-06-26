@@ -1,8 +1,6 @@
 // @ts-nocheck
 "use client";
-
 import { useEffect } from "react";
-
 export default function GlobalError({
   error,
   reset,
@@ -13,7 +11,6 @@ export default function GlobalError({
   useEffect(() => {
     console.error(error);
   }, [error]);
-
   return (
     <html lang="vi">
       <body className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">

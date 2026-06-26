@@ -1,10 +1,8 @@
 // @ts-nocheck
 "use client";
-
 import React, { useState } from "react";
 import Link from "next/link";
 import { MapPin, Bed, Bath, Square, Phone, Share2, Heart, ArrowLeft, CheckCircle } from "lucide-react";
-
 interface Listing {
   id: string;
   code?: string;
@@ -27,38 +25,31 @@ interface Listing {
     legalStatus?: string;
   };
 }
-
 interface Props {
   listing: Listing;
   similarListings: Listing[];
 }
-
 function formatPrice(price: number): string {
   return price >= 1e9
     ? `${(price / 1e9).toFixed(2)} tỷ VNĐ`
     : `${Math.round(price / 1e6).toLocaleString()} triệu VNĐ`;
 }
-
 function formatUnitPrice(price: number, area?: number): string {
   if (!area) return "";
   const unitPrice = price / area / 1e6;
   return `${unitPrice.toFixed(1)} triệu/m²`;
 }
-
 export function ListingDetailPage({ listing, similarListings }: Props) {
   const [currentImg, setCurrentImg] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isFav, setIsFav] = useState(false);
-
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
   const images = listing.images?.length ? listing.images : ["/images/placeholder.jpg"];
   const attr = listing.attributes ?? {};
-
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
@@ -69,7 +60,6 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
         <span>/</span>
         <span className="truncate max-w-xs" style={{ color: "var(--text-primary)" }}>{listing.title}</span>
       </nav>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Images + Details */}
         <div className="lg:col-span-2 space-y-6">
@@ -99,7 +89,6 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
               </div>
             )}
           </div>
-
           {/* Title & Meta */}
           <div>
             <div className="flex items-start justify-between gap-4 mb-3">
@@ -128,14 +117,12 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                   style={{ color: isFav ? undefined : "var(--text-tertiary)" }} />
               </button>
             </div>
-
             {listing.location && (
               <p className="flex items-center gap-1.5 text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
                 <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--primary-600)" }} />
                 {listing.location}
               </p>
             )}
-
             {/* Attributes */}
             <div className="flex flex-wrap gap-4 mb-6">
               {listing.area && (
@@ -163,7 +150,6 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 <span className="text-sm" style={{ color: "var(--text-secondary)" }}>View {attr.view}</span>
               )}
             </div>
-
             {/* Description */}
             {listing.description && (
               <div className="p-4 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
@@ -175,7 +161,6 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
             )}
           </div>
         </div>
-
         {/* Right: Price + Contact */}
         <div className="space-y-4">
           {/* Price card */}
@@ -188,7 +173,6 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 ~ {formatUnitPrice(listing.price, listing.area)}
               </p>
             )}
-
             {/* Legal status */}
             {(listing.legalStatus || attr.legalStatus) && (
               <div className="flex items-center gap-2 mb-4 p-3 rounded-xl"
@@ -199,7 +183,6 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 </span>
               </div>
             )}
-
             <div className="space-y-3">
               <a href="tel:+84971132378"
                 className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold text-white"
@@ -213,14 +196,12 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
                 Để lại thông tin
               </Link>
             </div>
-
             <p className="text-xs text-center mt-4" style={{ color: "var(--text-muted)" }}>
               SGS LAND — Đại lý uỷ quyền chính thức
             </p>
           </div>
         </div>
       </div>
-
       {/* Similar listings */}
       {similarListings.length > 0 && (
         <section className="mt-16">

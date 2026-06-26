@@ -5,7 +5,6 @@ Object.defineProperty(exports, "ReplaySsrOnlyErrors", {
   enumerable: true,
   get: function () { return ReplaySsrOnlyErrors; }
 });
-
 // Patched version of next-devtools ReplaySsrOnlyErrors.
 // Next.js 15.5.18's streaming format no longer emits raw <html>/<body> bytes,
 // so the createRootLayoutValidatorStream always marks them as missing — a false

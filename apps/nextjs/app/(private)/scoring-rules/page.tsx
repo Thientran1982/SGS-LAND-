@@ -1,11 +1,8 @@
 // @ts-nocheck
 "use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { Target, RefreshCw, Save, Loader2, CheckCircle, AlertCircle, Plus, Trash2 } from "lucide-react";
-
 interface ScoringRule { id: number; name?: string; field?: string; operator?: string; value?: string; score?: number; is_active?: boolean; }
-
 const FIELD_OPTIONS = [
   { v: "source", l: "Nguồn lead" }, { v: "budget", l: "Ngân sách" }, { v: "timeline", l: "Thời gian mua" },
   { v: "property_type", l: "Loại BĐS" }, { v: "location", l: "Khu vực" }, { v: "engagement", l: "Mức độ tương tác" },
@@ -18,7 +15,6 @@ export default function ScoringRulesPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
-
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
@@ -28,9 +24,7 @@ export default function ScoringRulesPage() {
       setRules(Array.isArray(d) ? d : d.rules || d.data || []);
     } catch { setError("Lỗi kết nối"); } finally { setLoading(false); }
   }, []);
-
   useEffect(() => { load(); }, [load]);
-
   const saveAll = async () => {
     setSaving(true); setToast(null);
     try {
@@ -38,13 +32,10 @@ export default function ScoringRulesPage() {
       setToast(r.ok ? { ok: true, msg: "Lưu quy tắc thành công!" } : { ok: false, msg: "Lỗi lưu quy tắc" });
     } catch { setToast({ ok: false, msg: "Lỗi kết nối" }); } finally { setSaving(false); }
   };
-
   const add = () => setRules((prev) => [...prev, { id: Date.now(), name: "", field: "source", operator: "eq", value: "", score: 10, is_active: true }]);
   const update = (id: number, k: keyof ScoringRule, v: unknown) => setRules((prev) => prev.map((r) => r.id === id ? { ...r, [k]: v } : r));
   const remove = (id: number) => setRules((prev) => prev.filter((r) => r.id !== id));
-
   const inpS: React.CSSProperties = { background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-primary)" };
-
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -61,13 +52,11 @@ export default function ScoringRulesPage() {
           </button>
         </div>
       </div>
-
       {loading && <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-2xl animate-pulse" style={{ background: "var(--border-default)" }} />)}</div>}
       {error && <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>{error}</div>}
       {toast && <div className="flex items-center gap-2 text-sm p-3 rounded-xl" style={{ background: toast.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", color: toast.ok ? "#10b981" : "#ef4444" }}>
         {toast.ok ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}{toast.msg}
       </div>}
-
       {!loading && rules.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Target className="w-12 h-12 mb-3" style={{ color: "var(--border-default)" }} />
@@ -75,7 +64,6 @@ export default function ScoringRulesPage() {
           <button onClick={add} className="mt-3 px-4 py-2 rounded-xl text-sm font-medium" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>Thêm quy tắc đầu tiên</button>
         </div>
       )}
-
       {!loading && rules.length > 0 && (
         <div className="space-y-3">
           {rules.map((rule) => (

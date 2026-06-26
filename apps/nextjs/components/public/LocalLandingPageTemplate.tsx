@@ -1,7 +1,6 @@
 // @ts-nocheck
 import Link from "next/link";
 import { MapPin, Building2, ArrowRight } from "lucide-react";
-
 interface Props {
   area: string;
   areaSlug: string;
@@ -11,7 +10,6 @@ interface Props {
   totalListings: number;
   description: string;
 }
-
 // Server Component — pure SSG
 export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, priceRange, totalListings, description }: Props) {
   return (
@@ -30,7 +28,6 @@ export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, 
           {description}
         </p>
       </div>
-
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
         {[
@@ -46,7 +43,6 @@ export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, 
           </div>
         ))}
       </div>
-
       {/* Districts */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
@@ -66,7 +62,6 @@ export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, 
           ))}
         </div>
       </section>
-
       {/* Projects */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
@@ -92,7 +87,6 @@ export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, 
           ))}
         </div>
       </section>
-
       {/* CTA */}
       <div className="p-8 rounded-2xl text-center"
         style={{ background: "var(--primary-subtle)", border: "1px solid var(--primary-600)20" }}>

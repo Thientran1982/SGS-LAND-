@@ -7,14 +7,12 @@ import type { Author } from "@/data/authors";
 import type { Category } from "@/data/categories";
 import { AuthorCard } from "./AuthorCard";
 import { LegalDisclaimer } from "./LegalDisclaimer";
-
 interface ArticleHeaderProps {
   article: Article;
   author: Author;
   category: Category | undefined;
   className?: string;
 }
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("vi-VN", {
     day: "2-digit",
@@ -22,10 +20,8 @@ function formatDate(iso: string) {
     year: "numeric",
   });
 }
-
 export function ArticleHeader({ article, author, category, className = "" }: ArticleHeaderProps) {
   const categoryColor = category?.color ?? "var(--primary-600)";
-
   return (
     <header className={`mb-8 ${className}`}>
       {/* Breadcrumb */}
@@ -50,7 +46,6 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
           </li>
         </ol>
       </nav>
-
       {/* Category badge */}
       {category && (
         <span
@@ -60,7 +55,6 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
           {category.name}
         </span>
       )}
-
       {/* H1 */}
       <h1
         className="text-3xl sm:text-4xl font-extrabold leading-tight mb-5"
@@ -68,7 +62,6 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
       >
         {article.title}
       </h1>
-
       {/* Metadata row */}
       <div className="flex flex-wrap items-center gap-3 mb-5 text-xs" style={{ color: "var(--text-tertiary)" }}>
         <span className="flex items-center gap-1">
@@ -88,7 +81,6 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
           {article.wordCount.toLocaleString("vi-VN")} từ
         </span>
       </div>
-
       {/* Author inline */}
       <AuthorCard author={author} variant="inline" className="mb-5" />
 
@@ -106,7 +98,6 @@ export function ArticleHeader({ article, author, category, className = "" }: Art
           Đã xem xét bởi chuyên gia pháp lý — Cập nhật theo Luật Đất Đai 2024, hiệu lực 01/08/2024
         </div>
       )}
-
       {/* Legal disclaimer for legal articles */}
       {article.isLegal && <LegalDisclaimer className="mb-6" />}
 

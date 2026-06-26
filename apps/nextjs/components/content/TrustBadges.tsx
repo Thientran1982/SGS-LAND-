@@ -6,7 +6,6 @@ interface TrustBadgesProps {
   className?: string;
   compact?: boolean;
 }
-
 const PARTNERS = ["Novaland", "Vinhomes", "Masterise", "Nam Long"];
 
 const BADGES = [
@@ -15,7 +14,6 @@ const BADGES = [
   { icon: BookOpen, label: "Chuyên gia SGS Land biên soạn" },
   { icon: Award, label: "Top Proptech Việt Nam 2025" },
 ];
-
 export const TrustBadges: FC<TrustBadgesProps> = ({ className = "", compact = false }) => (
   <aside
     className={`rounded-2xl p-5 ${className}`}
@@ -34,7 +32,6 @@ export const TrustBadges: FC<TrustBadgesProps> = ({ className = "", compact = fa
         </li>
       ))}
     </ul>
-
     {!compact && (
       <>
         <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-tertiary)" }}>

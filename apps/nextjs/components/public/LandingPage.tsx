@@ -1,6 +1,5 @@
 // @ts-nocheck
 "use client";
-
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,29 +9,23 @@ import {
   CheckCircle, Star, Bot, Search, TrendingUp, Users, Award,
   ChevronRight, BarChart3, Landmark, Clock, Heart, Building2,
 } from "lucide-react";
-
 // ═══════════════════════════════════════════════════════════════
 //  TYPES
 // ═══════════════════════════════════════════════════════════════
-
 type Lang = "vi" | "en";
-
 interface FeaturedProject {
   slug: string; name: string; dev: string; loc: string;
   scale: string; priceFrom: string; type: string;
   badge: string; badgeType: "sale" | "open" | "soon";
   img: string; legal?: boolean; category: string;
 }
-
 interface Props {
   featuredListings: any[];
   stats: { totalListings: number; totalProjects: number; totalBrokers: number };
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  STATIC DATA
 // ═══════════════════════════════════════════════════════════════
-
 const PROJECTS: FeaturedProject[] = [
   { slug: "aqua-city",             name: "Aqua City Novaland",       dev: "Novaland",          loc: "Biên Hòa, Đồng Nai",   scale: "1.000 ha", priceFrom: "6,5 tỷ",  type: "Biệt thự & Nhà phố", badge: "Đang bàn giao", badgeType: "sale", img: "/landing/aqua-city/hero-opt.jpg",            legal: true,  category: "villa"     },
   { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",     badge: "Đang mở bán",  badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"       },
@@ -42,7 +35,6 @@ const PROJECTS: FeaturedProject[] = [
   { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",          badge: "Còn hàng",     badgeType: "sale", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "apt"       },
   { slug: "van-phuc-city",         name: "Vạn Phúc City",            dev: "Vạn Phúc Group",    loc: "TP Thủ Đức",           scale: "198 ha",   priceFrom: "15 tỷ",   type: "Nhà phố & Biệt thự", badge: "Đang mở bán",  badgeType: "open", img: "/landing/legacy-66/hero.jpg",                              category: "townhouse" },
 ];
-
 const STATS_DATA = [
   { num: 45000, suffix: "+",        prefix: "",   vi: "BĐS quản lý",        en: "Properties"       },
   { num: 15000, suffix: "+",        prefix: "",   vi: "Môi giới đối tác",   en: "Partner Agents"   },
@@ -50,7 +42,6 @@ const STATS_DATA = [
   { num: 48,    suffix: "/5",       prefix: "4.", vi: "Đánh giá khách hàng",en: "Customer Rating"  },
   { num: 5,     suffix: "%",        prefix: "±",  vi: "Sai số định giá AI", en: "AI Valuation MAPE"},
 ];
-
 const TICKER_ITEMS = [
   "Căn hộ Vinhomes Grand Park 2PN — 3,2 tỷ — Đã công chứng 10/06/2026",
   "Nhà phố Aqua City 5×20m — 8,5 tỷ — Sổ hồng trao tay 08/06/2026",
@@ -60,20 +51,17 @@ const TICKER_ITEMS = [
   "Shophouse Masteri Cosmo Central — 6,43 tỷ — Sang tên 29/05/2026",
   "Biệt thự Vạn Phúc ven sông — 18 tỷ — Pháp lý sạch 27/05/2026",
 ];
-
 const PLACEHOLDERS = [
   "Căn hộ 2PN gần Metro số 1, dưới 3 tỷ…",
   "Biệt thự Aqua City có sổ hồng riêng…",
   "Đất nền Biên Hòa pháp lý sạch dưới 2 tỷ…",
   "Vay 70% mua Grand Park, lãi suất thấp nhất…",
 ];
-
 const QUICK_CHIPS = [
   "Biệt thự Aqua City có sổ hồng",
   "Đất nền pháp lý sạch Biên Hòa",
   "Vay 70% lãi suất thấp",
 ];
-
 const FAQ_ITEMS = [
   { q: "Tại sao nên mua bất động sản qua SGS LAND?",           a: "SGS LAND là đại lý F1 uỷ quyền chính thức của Novaland, Masterise Homes, Nam Long và Vinhomes — đảm bảo giá gốc, không phát sinh phí môi giới cho người mua, pháp lý minh bạch 2 lớp độc lập." },
   { q: "Công nghệ định giá AI của SGS LAND chính xác bao nhiêu?", a: "Công nghệ SGS-AVM v2.1 sử dụng 9 hệ số định giá chuẩn TĐGVN/IVS, MAPE ±4.8%, dựa trên hơn 2.400 giao dịch công chứng thực tế. Kết quả tức thì, minh bạch từng yếu tố ảnh hưởng." },
@@ -82,24 +70,20 @@ const FAQ_ITEMS = [
   { q: "SGS LAND hỗ trợ vay ngân hàng như thế nào?",           a: "Đối tác với 12+ ngân hàng lớn (BIDV, VPBank, Techcombank, Vietcombank, MB Bank…). LTV 70–80%, lãi suất từ 6–8,5%/năm. Đội tư vấn tài chính đồng hành từ hồ sơ đến giải ngân." },
   { q: "Những dự án nào đang phân phối tại SGS LAND?",         a: "Aqua City Novaland, The Global City Masterise, Izumi City Nam Long, Vinhomes Grand Park, Vinhomes Cần Giờ, Masteri Cosmo Central, Vinhomes Hóc Môn — cập nhật liên tục." },
 ];
-
 const FILTER_TABS = [
   { id: "all", vi: "Tất cả", en: "All" },
   { id: "apt", vi: "Căn hộ", en: "Apartments" },
   { id: "villa", vi: "Biệt thự", en: "Villas" },
   { id: "townhouse", vi: "Nhà phố", en: "Townhouses" },
 ];
-
 const BADGE_STYLES: Record<string, React.CSSProperties> = {
   sale: { background: "rgba(30,127,92,0.12)", color: "var(--sgs-verified)", border: "1px solid rgba(30,127,92,0.25)" },
   open: { background: "rgba(27,58,92,0.10)",  color: "var(--sgs-primary)", border: "1px solid rgba(27,58,92,0.2)"  },
   soon: { background: "rgba(200,150,62,0.12)",color: "var(--sgs-accent-text)", border: "1px solid rgba(200,150,62,0.3)" },
 };
-
 // ═══════════════════════════════════════════════════════════════
 //  HOOKS
 // ═══════════════════════════════════════════════════════════════
-
 function useInView(threshold = 0.25) {
   const ref = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
@@ -115,7 +99,6 @@ function useInView(threshold = 0.25) {
   }, [threshold]);
   return { ref, inView };
 }
-
 function useCountUp(target: number, duration = 1800, active = false) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -135,11 +118,9 @@ function useCountUp(target: number, duration = 1800, active = false) {
   }, [target, duration, active]);
   return count;
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SHARED: Section Heading
 // ═══════════════════════════════════════════════════════════════
-
 function SectionHeading({ title, subtitle, center = false }: {
   title: React.ReactNode; subtitle?: string; center?: boolean;
 }) {
@@ -167,22 +148,18 @@ function SectionHeading({ title, subtitle, center = false }: {
     </div>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 1 — HERO
 // ═══════════════════════════════════════════════════════════════
-
 function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: Lang }) {
   const [query, setQuery]           = useState("");
   const [phIdx, setPhIdx]           = useState(0);
   const [visible, setVisible]       = useState(false);
-
   useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
   useEffect(() => {
     const id = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 3200);
     return () => clearInterval(id);
   }, []);
-
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query || PLACEHOLDERS[phIdx]);
@@ -191,7 +168,6 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
     setQuery(text);
     document.getElementById("sgs-search")?.focus();
   };
-
   return (
     <section
       className="relative flex flex-col justify-center overflow-hidden"
@@ -209,7 +185,6 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
             fill="var(--sgs-accent)"/>
         </svg>
       </div>
-
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         {/* Badge */}
         <div
@@ -219,7 +194,6 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
           <Award className="w-3.5 h-3.5" />
           Đại lý F1 uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes
         </div>
-
         {/* Kinetic headline */}
         <h1
           id="seo-h1"
@@ -263,7 +237,6 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
             </>
           )}
         </h1>
-
         <p
           className="text-base sm:text-lg max-w-lg mb-10"
           style={{
@@ -277,7 +250,6 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
             ? "Định giá AI ±5%, pháp lý 2 lớp, CRM đa kênh. Kết nối 15.000+ môi giới và 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương."
             : "AI Valuation ±5%, 2-layer legal check, multi-channel CRM. Connecting 15,000+ agents and 45,000+ properties across HCMC, Dong Nai, Binh Duong."}
         </p>
-
         {/* Glass AI Search Panel */}
         <div style={{ marginBottom: "-52px", maxWidth: "680px" }}>
           <div
@@ -354,11 +326,9 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 2 — STATS BAR
 // ═══════════════════════════════════════════════════════════════
-
 function StatItem({ num, suffix, prefix, label }: { num: number; suffix: string; prefix: string; label: string }) {
   const { ref, inView } = useInView(0.3);
   const count = useCountUp(num, 1800, inView);
@@ -378,7 +348,6 @@ function StatItem({ num, suffix, prefix, label }: { num: number; suffix: string;
     </div>
   );
 }
-
 function StatsBar({ lang }: { lang: Lang }) {
   return (
     <section
@@ -404,11 +373,9 @@ function StatsBar({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 3 — LEGAL TICKER
 // ═══════════════════════════════════════════════════════════════
-
 function LegalTicker() {
   const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
   return (
@@ -445,11 +412,9 @@ function LegalTicker() {
     </div>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 4 — PROJECTS
 // ═══════════════════════════════════════════════════════════════
-
 function ProjectCard({ proj }: { proj: FeaturedProject }) {
   return (
     <Link
@@ -520,11 +485,9 @@ function ProjectCard({ proj }: { proj: FeaturedProject }) {
     </Link>
   );
 }
-
 function ProjectsSection({ lang }: { lang: Lang }) {
   const [filter, setFilter] = useState("all");
   const filtered = filter === "all" ? PROJECTS : PROJECTS.filter(p => p.category === filter);
-
   return (
     <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -541,7 +504,6 @@ function ProjectsSection({ lang }: { lang: Lang }) {
             {lang === "vi" ? "Xem tất cả" : "View all"} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-
         {/* Filter tabs */}
         <div className="flex gap-2 mb-8 flex-wrap">
           {FILTER_TABS.map(tab => (
@@ -559,7 +521,6 @@ function ProjectsSection({ lang }: { lang: Lang }) {
             </button>
           ))}
         </div>
-
         {/* 1-col mobile / 2-col tablet / 3-col desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map(p => <ProjectCard key={p.slug} proj={p} />)}
@@ -568,11 +529,9 @@ function ProjectsSection({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 5 — VALUATION PROMO
 // ═══════════════════════════════════════════════════════════════
-
 function ValuationSection({ lang }: { lang: Lang }) {
   return (
     <section className="py-20" style={{ background: "var(--sgs-surface, #FFFFFF)" }}>
@@ -616,7 +575,6 @@ function ValuationSection({ lang }: { lang: Lang }) {
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-
           {/* Mock valuation UI */}
           <div
             className="rounded-2xl p-6"
@@ -690,11 +648,9 @@ function ValuationSection({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 6 — BENTO "WHY SGS LAND"
 // ═══════════════════════════════════════════════════════════════
-
 function BentoSection({ lang }: { lang: Lang }) {
   return (
     <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }}>
@@ -748,7 +704,6 @@ function BentoSection({ lang }: { lang: Lang }) {
               <p className="text-[11px]" style={{ color: "var(--sgs-on-dark-muted)" }}>Thị trường BĐS Đông Nam Bộ Q2/2026</p>
             </div>
           </div>
-
           {/* Legal */}
           <div
             className="sm:col-span-2 rounded-2xl p-6 flex items-start gap-4"
@@ -780,7 +735,6 @@ function BentoSection({ lang }: { lang: Lang }) {
               </div>
             </div>
           </div>
-
           {/* Free for buyers */}
           <div
             className="rounded-2xl p-6"
@@ -797,7 +751,6 @@ function BentoSection({ lang }: { lang: Lang }) {
               {lang === "vi" ? "với người mua & thuê" : "for buyers & renters"}
             </p>
           </div>
-
           {/* Bank loans */}
           <div
             className="rounded-2xl p-6"
@@ -829,11 +782,9 @@ function BentoSection({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 7 — TRUST BLOCK
 // ═══════════════════════════════════════════════════════════════
-
 const PARTNERS = ["Novaland", "Masterise Homes", "Nam Long Group", "Vinhomes"];
 
 function TrustBlock({ lang }: { lang: Lang }) {
@@ -844,7 +795,6 @@ function TrustBlock({ lang }: { lang: Lang }) {
           title={lang === "vi" ? "Đối tác phân phối F1" : "F1 Distribution Partners"}
           subtitle={lang === "vi" ? "Uỷ quyền chính thức từ chủ đầu tư" : "Officially authorized by developers"}
         />
-
         {/* Partner logos */}
         <div className="flex flex-wrap items-center gap-4 mt-8 mb-12">
           {PARTNERS.map(p => (
@@ -864,7 +814,6 @@ function TrustBlock({ lang }: { lang: Lang }) {
             </div>
           ))}
         </div>
-
         {/* Testimonial card */}
         <div
           className="rounded-2xl p-7 flex flex-col sm:flex-row gap-6 items-start"
@@ -897,7 +846,6 @@ function TrustBlock({ lang }: { lang: Lang }) {
             <p className="text-xs" style={{ color: "var(--sgs-text-muted)" }}>Khách hàng mua Aqua City · TP.HCM, tháng 1/2026</p>
           </div>
         </div>
-
         {/* Micro-trust bar */}
         <div
           className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-8"
@@ -921,11 +869,9 @@ function TrustBlock({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 8 — FAQ
 // ═══════════════════════════════════════════════════════════════
-
 function FAQItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean; onToggle: () => void }) {
   return (
     <div
@@ -959,11 +905,9 @@ function FAQItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean
     </div>
   );
 }
-
 function FAQSection({ lang }: { lang: Lang }) {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
   const half = Math.ceil(FAQ_ITEMS.length / 2);
-
   return (
     <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -982,8 +926,7 @@ function FAQSection({ lang }: { lang: Lang }) {
                 open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? null : i)} />
             ))}
           </div>
-          <div className="space-y-3">
-            {FAQ_ITEMS.slice(half).map((item, i) => (
+          <div className="space-y-3">            {FAQ_ITEMS.slice(half).map((item, i) => (
               <FAQItem key={i + half} q={item.q} a={item.a}
                 open={openIdx === i + half} onToggle={() => setOpenIdx(openIdx === (i + half) ? null : i + half)} />
             ))}
@@ -993,11 +936,9 @@ function FAQSection({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 9 — CTA BANNER
 // ═══════════════════════════════════════════════════════════════
-
 function CTABanner({ lang }: { lang: Lang }) {
   return (
     <section
@@ -1053,11 +994,9 @@ function CTABanner({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 //  MAIN EXPORT
 // ═══════════════════════════════════════════════════════════════
-
 export function LandingPage({ featuredListings, stats }: Props) {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>("vi");
@@ -1076,7 +1015,6 @@ export function LandingPage({ featuredListings, stats }: Props) {
     if (q.trim()) router.push(`/marketplace?q=${encodeURIComponent(q.trim())}`);
     else router.push("/marketplace");
   };
-
   return (
     <div className="flex flex-col overflow-x-hidden">
       <HeroSection   onSearch={handleSearch} lang={lang} />

@@ -2,14 +2,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MiniSiteProjectPage } from "@/components/public/MiniSiteProjectPage";
-
 // ─── ISR — Mini-site projects (Cosmo Central, etc.) ──────
 export const dynamic = "force-dynamic";
 
 // ─── Metadata ─────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params;
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let project: any = null;
   try {
@@ -22,10 +20,8 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
       project = data.project ?? null;
     }
   } catch {}
-
   const name = project?.name ?? code.toUpperCase();
   const loc = project?.location ?? "TP.HCM";
-
   return {
     title: `${name} | Dự án BĐS | SGS LAND`,
     description: `${name} — ${loc}. Xem danh sách căn hộ, bảng giá và thông tin chi tiết tại SGS LAND.`,
@@ -37,10 +33,8 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     },
   };
 }
-
 export default async function MiniSitePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-
   // Fetch from Express → which calls the real project API
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let projectData: any = null;
@@ -62,7 +56,6 @@ export default async function MiniSitePage({ params }: { params: Promise<{ code:
       }
     }
   } catch {}
-
   if (!projectData) notFound();
 
   return <MiniSiteProjectPage project={projectData} />;

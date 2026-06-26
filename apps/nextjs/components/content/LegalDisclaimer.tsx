@@ -1,13 +1,11 @@
 // @ts-nocheck
 import type { FC } from "react";
 import { Scale } from "lucide-react";
-
 interface LegalDisclaimerProps {
   lastUpdatedMonth?: string;
   lawName?: string;
   className?: string;
 }
-
 export const LegalDisclaimer: FC<LegalDisclaimerProps> = ({
   lastUpdatedMonth = "05/2025",
   lawName = "Luật Đất Đai 2024",

@@ -1,10 +1,8 @@
 // @ts-nocheck
 "use client";
-
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { Phone, MapPin, Bed, Square, Building2, ChevronDown } from "lucide-react";
-
 interface MiniListing {
   id: string;
   code?: string;
@@ -14,7 +12,6 @@ interface MiniListing {
   bedrooms?: number;
   attributes?: { tower?: string; floor?: number; view?: string; legalStatus?: string };
 }
-
 interface Project {
   name: string;
   location?: string;
@@ -26,11 +23,9 @@ interface Project {
   developer?: string;
   description?: string;
 }
-
 export function MiniSiteProjectPage({ project }: { project: Project }) {
   const [filterBR, setFilterBR] = useState<number | null>(null);
   const [filterMaxPrice, setFilterMaxPrice] = useState<number | null>(null);
-
   const bedroomGroups = useMemo(() => {
     const map: Record<number, MiniListing[]> = {};
     for (const l of project.listings ?? []) {
@@ -51,11 +46,9 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
     }),
     [listings, filterBR, filterMaxPrice]
   );
-
   const uniqueBedrooms = [...new Set(listings.map((l) => l.bedrooms).filter(Boolean))].sort() as number[];
   const minPrice = listings.length ? Math.min(...listings.map((l) => l.price)) : 0;
   const maxPrice = listings.length ? Math.max(...listings.map((l) => l.price)) : 0;
-
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Hero */}
@@ -79,7 +72,6 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
               {project.location}
             </p>
           </div>
-
           <div className="text-right">
             <p className="text-xs mb-1" style={{ color: "var(--text-tertiary)" }}>Giá từ</p>
             <p className="text-2xl font-bold" style={{ color: "var(--primary-600)" }}>
@@ -88,7 +80,6 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
             <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>đến {(maxPrice / 1e9).toFixed(2)} tỷ</p>
           </div>
         </div>
-
         {/* Quick stats */}
         <div className="flex flex-wrap gap-6 mt-6 pt-6 border-t" style={{ borderColor: "var(--border-default)" }}>
           <div>
@@ -103,7 +94,6 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
           ))}
         </div>
       </div>
-
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
         <button onClick={() => setFilterBR(null)}
@@ -119,7 +109,6 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
           </button>
         ))}
       </div>
-
       {/* Listing table */}
       <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
         <div className="overflow-x-auto">
@@ -172,13 +161,11 @@ export function MiniSiteProjectPage({ project }: { project: Project }) {
           </table>
         </div>
       </div>
-
       {filtered.length === 0 && (
         <div className="py-12 text-center" style={{ color: "var(--text-secondary)" }}>
           Không có căn hộ phù hợp với bộ lọc hiện tại.
         </div>
       )}
-
       {/* CTA */}
       <div className="mt-10 p-6 rounded-2xl text-center" style={{ background: "var(--primary-subtle)", border: "1px solid var(--primary-600)20" }}>
         <p className="font-bold text-lg mb-2" style={{ color: "var(--text-primary)" }}>

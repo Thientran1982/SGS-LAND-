@@ -1,11 +1,8 @@
 // @ts-nocheck
 import type { MetadataRoute } from "next";
-
 const BASE = "https://sgsland.vn";
-
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`,                            lastModified: now, changeFrequency: "daily",   priority: 1.0 },
     { url: `${BASE}/marketplace`,                 lastModified: now, changeFrequency: "hourly",  priority: 0.9 },
@@ -47,18 +44,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // New 2026 GEO Tier S projects
     "vinhomes-hoc-mon", "masteri-cosmo-central",
   ];
-
   const projectRoutes: MetadataRoute.Sitemap = projectSlugs.map((slug) => ({
     url: `${BASE}/du-an/${slug}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
-
   const miniSites: MetadataRoute.Sitemap = [
     { url: `${BASE}/p/mcc`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
   ];
-
   // FAQ content pages (high GEO value)
   const faqRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/dau-tu-bat-dong-san`,     lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
@@ -71,6 +65,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/mua-hay-thue-nha-tphcm`,   lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/vinhomes-hoc-mon`,         lastModified: now, changeFrequency: "weekly",  priority: 0.9 },
   ];
-
   return [...staticRoutes, ...projectRoutes, ...miniSites, ...faqRoutes];
 }

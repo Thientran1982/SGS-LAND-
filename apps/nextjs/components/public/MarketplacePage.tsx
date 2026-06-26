@@ -1,12 +1,10 @@
 // @ts-nocheck
 "use client";
-
 import React, { useState, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Search, SlidersHorizontal, MapPin, Bed, X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Listing } from "@/types";
-
 interface Props {
   initialListings: Listing[];
   totalCount: number;
@@ -22,7 +20,6 @@ interface Props {
     transaction?: string;
   };
 }
-
 const PROPERTY_TYPES = ["Apartment", "Villa", "Townhouse", "Land", "Commercial", "Office"];
 const BEDROOM_OPTIONS = [1, 2, 3, 4];
 const PRICE_RANGES = [
@@ -32,16 +29,13 @@ const PRICE_RANGES = [
   { label: "10 – 20 tỷ", min: "10", max: "20" },
   { label: "Trên 20 tỷ", min: "20", max: "" },
 ];
-
 function formatPrice(price: number): string {
   return price >= 1e9
     ? `${(price / 1e9).toFixed(2)} tỷ`
     : `${Math.round(price / 1e6)} triệu`;
 }
-
 function ListingCard({ listing }: { listing: Listing }) {
   const slug = `${listing.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40)}-${listing.code}`;
-
   return (
     <Link
       href={`/bds/${slug}`}
@@ -59,7 +53,6 @@ function ListingCard({ listing }: { listing: Listing }) {
           {listing.type}
         </span>
       </div>
-
       <div className="p-4">
         <h3 className="font-semibold text-sm mb-2 line-clamp-2 leading-snug group-hover:text-sgs-primary transition-colors"
           style={{ color: "var(--text-primary)" }}>
@@ -87,14 +80,12 @@ function ListingCard({ listing }: { listing: Listing }) {
     </Link>
   );
 }
-
 export function MarketplacePage({ initialListings, totalCount, totalPages, searchParams: sp }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch] = useState(sp.q ?? "");
-
   const updateParam = useCallback((key: string, value: string) => {
     const params = new URLSearchParams();
     if (sp.q)           params.set("q", sp.q);
@@ -104,11 +95,9 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
     if (sp.maxPrice)    params.set("maxPrice", sp.maxPrice);
     if (sp.bedrooms)    params.set("bedrooms", sp.bedrooms);
     if (sp.transaction) params.set("transaction", sp.transaction);
-
     if (value) params.set(key, value);
     else params.delete(key);
     params.delete("page"); // reset to page 1
-
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
@@ -118,9 +107,7 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
     e.preventDefault();
     updateParam("q", search.trim());
   };
-
   const currentPage = parseInt(sp.page ?? "1");
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -137,7 +124,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </h2>
         )}
       </div>
-
       {/* Search bar */}
       <form onSubmit={handleSearch} className="flex gap-3 mb-4">
         <div className="flex-1 relative">
@@ -161,7 +147,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           Lọc
         </button>
       </form>
-
       {/* Filter bar */}
       {showFilters && (
         <div className="flex flex-wrap gap-3 p-4 mb-4 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
@@ -176,7 +161,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
               </button>
             ))}
           </div>
-
           {/* Bedrooms */}
           <div className="flex items-center flex-wrap gap-2">
             <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>Phòng ngủ:</span>
@@ -188,7 +172,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
               </button>
             ))}
           </div>
-
           {/* Price */}
           <div className="flex items-center flex-wrap gap-2">
             <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>Giá:</span>
@@ -210,7 +193,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </div>
         </div>
       )}
-
       {/* Active filters */}
       {(sp.q || sp.type || sp.bedrooms || sp.minPrice || sp.area) && (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -229,7 +211,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           ))}
         </div>
       )}
-
       {/* Grid */}
       <div className={`transition-opacity ${isPending ? "opacity-50" : "opacity-100"}`}>
         {initialListings.length === 0 ? (
@@ -246,7 +227,6 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
           </div>
         )}
       </div>
-
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
@@ -256,11 +236,9 @@ export function MarketplacePage({ initialListings, totalCount, totalPages, searc
             style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}>
             <ChevronLeft className="w-4 h-4" /> Trước
           </Link>
-
           <span className="px-4 py-2 text-sm" style={{ color: "var(--text-secondary)" }}>
             Trang {currentPage} / {totalPages}
           </span>
-
           <Link
             href={`${pathname}?${new URLSearchParams({ ...sp, page: String(Math.min(totalPages, currentPage + 1)) }).toString()}`}
             className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${currentPage >= totalPages ? "opacity-40 pointer-events-none" : "hover:bg-[var(--bg-elevated)]"}`}

@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { LocalLandingPageTemplate } from "@/components/public/LocalLandingPageTemplate";
 import type { Metadata } from "next";
-
 export const metadata: Metadata = {
   title: "Bất Động Sản Bình Chánh | Nhà Đất Bình Chánh TP.HCM | SGS LAND",
   description: "Tìm BĐS Bình Chánh TP.HCM: đất nền, nhà phố, căn hộ giá tốt. Hạ tầng vành đai, KCN Vĩnh Lộc phát triển mạnh. Pháp lý rõ ràng, cập nhật liên tục.",

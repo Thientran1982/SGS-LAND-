@@ -2,14 +2,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, Building2, ArrowRight } from "lucide-react";
-
 export const metadata: Metadata = {
   title: "Dự Án Bất Động Sản | SGS LAND",
   description: "Khám phá các dự án BĐS lớn nhất TP.HCM, Đồng Nai, Bình Dương, Long An. Aqua City, The Global City, Vinhomes, Masterise Homes và nhiều dự án nổi bật khác.",
   alternates: { canonical: "https://sgsland.vn/du-an" },
 };
 export const dynamic = "force-dynamic";
-
 const PROJECTS = [
   { slug: "aqua-city", name: "Aqua City Novaland", dev: "Novaland", loc: "Biên Hòa, Đồng Nai", scale: "1.000 ha", price: "Từ 6,5 tỷ", type: "Đại đô thị sinh thái", badge: "Đang bàn giao", hot: true },
   { slug: "the-global-city", name: "The Global City", dev: "Masterise Homes", loc: "An Phú, TP Thủ Đức", scale: "117 ha", price: "Từ 15 tỷ", type: "Đại đô thị thương mại", badge: "Đang mở bán", hot: true },
@@ -27,7 +25,6 @@ const PROJECTS = [
   { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central", dev: "Masterise Homes", loc: "TP. Thủ Đức", scale: "117 ha", price: "Từ 5 tỷ", type: "Căn hộ cao cấp", badge: "Đang bán", hot: true },
   { slug: "legacy-66", name: "Legacy 66", dev: "Nhiều chủ đầu tư", loc: "TP.HCM", scale: "Đang phát triển", price: "Liên hệ để biết giá", type: "Bất động sản cao cấp", badge: "Thứ cấp", hot: false },
 ];
-
 export default function DuAnPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -35,7 +32,6 @@ export default function DuAnPage() {
         <h1 className="text-4xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>Dự Án Bất Động Sản</h1>
         <p style={{ color: "var(--text-secondary)" }}>{PROJECTS.length} dự án lớn tại TP.HCM, Đồng Nai, Bình Dương, Long An</p>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {PROJECTS.map((p) => (
           <Link key={p.slug} href={`/du-an/${p.slug}`}

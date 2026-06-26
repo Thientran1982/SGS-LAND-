@@ -1,15 +1,11 @@
 // @ts-nocheck
 "use client";
-
 import { useState } from "react";
 import { Send, CheckCircle } from "lucide-react";
-
 type FormState = { name: string; email: string; phone: string; subject: string; message: string };
-
 export function ContactForm() {
   const [form, setForm] = useState<FormState>({ name: "", email: "", phone: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
@@ -24,7 +20,6 @@ export function ContactForm() {
       setStatus("error");
     }
   };
-
   if (status === "success") {
     return (
       <div className="flex flex-col items-center justify-center h-full py-16 text-center">
@@ -34,7 +29,6 @@ export function ContactForm() {
       </div>
     );
   }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -56,7 +50,6 @@ export function ContactForm() {
           </div>
         ))}
       </div>
-
       <div>
         <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Email</label>
         <input
@@ -68,7 +61,6 @@ export function ContactForm() {
           style={{ background: "var(--bg-elevated)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" }}
         />
       </div>
-
       <div>
         <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Chủ đề *</label>
         <select
@@ -87,7 +79,6 @@ export function ContactForm() {
           <option>Khác</option>
         </select>
       </div>
-
       <div>
         <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Nội dung *</label>
         <textarea
@@ -100,7 +91,6 @@ export function ContactForm() {
           style={{ background: "var(--bg-elevated)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" }}
         />
       </div>
-
       <button
         type="submit"
         disabled={status === "loading"}
@@ -114,7 +104,6 @@ export function ContactForm() {
         )}
         {status === "loading" ? "Đang gửi..." : "Gửi tin nhắn"}
       </button>
-
       {status === "error" && (
         <p className="text-sm text-center" style={{ color: "var(--color-danger)" }}>
           Có lỗi xảy ra. Vui lòng gọi trực tiếp 0971 132 378.

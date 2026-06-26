@@ -5,11 +5,9 @@ export const dynamic = "force-dynamic";
  * GEO Tier S: SSR/SSG, JSON-LD (WebPage + RealEstateListing + FAQPage +
  * BreadcrumbList + Organization), noscript AI layer, Vietnamese UI, EN code.
  */
-
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-
 import { SchemaScript } from "@/components/SchemaScript";
 import {
   getFAQSchema,
@@ -17,7 +15,6 @@ import {
   getOrganizationSchema,
   SITE_URL,
 } from "@/lib/schema";
-
 import {
   LANDING_PROJECTS,
   LANDING_SLUGS,
@@ -25,12 +22,10 @@ import {
 } from "@/data/landing-projects";
 import LandingPageClient from "../LandingPageClient";
 import "../landing.css";
-
 // ─── Static params ─────────────────────────────────────────────────────────
 export function generateStaticParams() {
   return LANDING_SLUGS.map((slug) => ({ slug }));
 }
-
 // ─── Metadata ──────────────────────────────────────────────────────────────
 export async function generateMetadata({
   params,
@@ -40,7 +35,6 @@ export async function generateMetadata({
   const { slug } = await params;
   const project = LANDING_PROJECTS[slug];
   if (!project) return {};
-
   const canonicalUrl = `${SITE_URL}/landing/${slug}`;
   return {
     title: project.titleFull,
@@ -71,7 +65,6 @@ export async function generateMetadata({
     },
   };
 }
-
 // ─── Noscript helper ───────────────────────────────────────────────────────
 // React 19 cannot hydrate JSX children inside <noscript>: when JS is enabled,
 // browsers do NOT parse <noscript> content as DOM nodes — the content stays as
@@ -85,7 +78,6 @@ function esc(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
-
 function buildNoscriptHtml(p: LandingProject): string {
   const paras = p.overviewParas.map((t) => `<p>${esc(t)}</p>`).join("");
   const faqs = p.faq
@@ -102,7 +94,6 @@ function buildNoscriptHtml(p: LandingProject): string {
     "</article></div>",
   ].join("");
 }
-
 // ─── Page ──────────────────────────────────────────────────────────────────
 export default async function LandingProjectPage({
   params,
@@ -112,9 +103,7 @@ export default async function LandingProjectPage({
   const { slug } = await params;
   const project = LANDING_PROJECTS[slug];
   if (!project) notFound();
-
   const canonicalUrl = `${SITE_URL}/landing/${slug}`;
-
   // ── JSON-LD schemas ────────────────────────────────────────────────────
   const webPageSchema = {
     "@context": "https://schema.org",
@@ -131,7 +120,6 @@ export default async function LandingProjectPage({
     },
     dateModified: new Date().toISOString().split("T")[0],
   };
-
   const listingSchema = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
@@ -184,15 +172,12 @@ export default async function LandingProjectPage({
     project.faq.map((f) => ({ question: f.q, answer: f.a })),
     `${canonicalUrl}#faq`,
   );
-
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: "SGS Land", url: SITE_URL },
     { name: "Dự Án Nổi Bật", url: `${SITE_URL}/#du-an` },
     { name: project.titleShort, url: canonicalUrl },
   ]);
-
   const schemas = [webPageSchema, listingSchema, faqSchema, breadcrumbSchema, getOrganizationSchema()];
-
   // ── Per-project theme injection via CSS custom properties ─────────────
   const themeVars = {
     "--lpp": project.theme.primary,
@@ -214,7 +199,6 @@ export default async function LandingProjectPage({
       <noscript
         dangerouslySetInnerHTML={{ __html: buildNoscriptHtml(project) }}
       />
-
       {/* ── Main page wrapper — CSS custom properties injected here ─────── */}
       <div className="lp-page" style={themeVars}>
         {/* ─── NAVIGATION ─────────────────────────────────────────────── */}
@@ -226,7 +210,6 @@ export default async function LandingProjectPage({
             </Link>
 
             <span className="lp-logo">SGS LAND</span>
-
             <ul id="lp-nav-links" className="lp-nav-links">
               {project.navLinks.map((link) => (
                 <li key={link.href}>
@@ -234,11 +217,9 @@ export default async function LandingProjectPage({
                 </li>
               ))}
             </ul>
-
             <a href="#lien-he" className="lp-nav-cta">
               Tư vấn ngay
             </a>
-
             <button
               id="lp-burger"
               className="lp-burger"
@@ -250,7 +231,6 @@ export default async function LandingProjectPage({
             </button>
           </div>
         </nav>
-
         {/* ─── HERO ───────────────────────────────────────────────────── */}
         <section
           className="lp-hero"
@@ -265,7 +245,6 @@ export default async function LandingProjectPage({
             <h1>{project.heroH1}</h1>
             <p className="lp-sub">{project.heroSub}</p>
             <p className="lp-meta">{project.heroMeta}</p>
-
             {/* Hero stats bar */}
             <div className="lp-stats" role="list" aria-label="Thông số dự án">
               {project.stats.map((s) => (
@@ -275,7 +254,6 @@ export default async function LandingProjectPage({
                 </div>
               ))}
             </div>
-
             <div className="lp-cta-row">
               <a href="#lien-he" className="lp-btn lp-btn-gold">
                 📋 Nhận tư vấn miễn phí
@@ -286,7 +264,6 @@ export default async function LandingProjectPage({
             </div>
           </div>
         </section>
-
         {/* ─── TỔNG QUAN ──────────────────────────────────────────────── */}
         <section id="tong-quan" className="lp-section lp-bg-white" aria-labelledby="h-tong-quan">
           <div className="lp-wrap">
@@ -294,21 +271,18 @@ export default async function LandingProjectPage({
             <h2 id="h-tong-quan" className="lp-reveal">
               {project.titleShort} — <span className="ac">Thông Tin Chi Tiết</span>
             </h2>
-
             {/* SSR article block for GEO AI indexing */}
             <article className="lp-exec lp-reveal" aria-label={`Giới thiệu ${project.schemaName}`}>
               {project.overviewParas.map((para, i) => (
                 <p key={i} dangerouslySetInnerHTML={{ __html: para }} />
               ))}
             </article>
-
             {/* Entity table */}
             <div
               className="lp-entity lp-reveal"
               role="table"
               aria-label={`Thông số kỹ thuật ${project.schemaName}`}
-            >
-              {project.entityTable.map((row) => (
+            >              {project.entityTable.map((row) => (
                 <div key={row.k} className="lp-er" role="row">
                   <div className="lp-ek" role="rowheader">
                     {row.k}
@@ -321,7 +295,6 @@ export default async function LandingProjectPage({
             </div>
           </div>
         </section>
-
         {/* ─── VỊ TRÍ ─────────────────────────────────────────────────── */}
         <section id="vi-tri" className="lp-section lp-bg-soft" aria-labelledby="h-vi-tri">
           <div className="lp-wrap">
@@ -330,7 +303,6 @@ export default async function LandingProjectPage({
               Vị Trí <span className="ac">Chiến Lược</span>
             </h2>
             <p className="lp-lead lp-reveal">{project.locationIntro}</p>
-
             {/* Google Maps embed */}
             <div
               className="lp-reveal"
@@ -355,7 +327,6 @@ export default async function LandingProjectPage({
             </div>
           </div>
         </section>
-
         {/* ─── TIỆN ÍCH ───────────────────────────────────────────────── */}
         <section id="tien-ich" className="lp-section lp-bg-white" aria-labelledby="h-tien-ich">
           <div className="lp-wrap">
@@ -366,7 +337,6 @@ export default async function LandingProjectPage({
             <p className="lp-lead lp-reveal">
               {project.schemaName} tích hợp toàn bộ tiện ích thiết yếu và cao cấp trong một khu đô thị — đảm bảo cư dân hưởng thụ chất lượng sống quốc tế ngay tại nhà.
             </p>
-
             <div className="lp-grid3" style={{ marginTop: 28 }}>
               {project.schemaAmenities.map((amenity, i) => (
                 <div key={i} className="lp-card lp-reveal">
@@ -379,7 +349,6 @@ export default async function LandingProjectPage({
             </div>
           </div>
         </section>
-
         {/* ─── FAQ ────────────────────────────────────────────────────── */}
         <section id="faq" className="lp-section lp-bg-soft" aria-labelledby="h-faq">
           <div className="lp-wrap">
@@ -390,7 +359,6 @@ export default async function LandingProjectPage({
             <p className="lp-lead lp-reveal">
               Tổng hợp các câu hỏi phổ biến nhất từ nhà đầu tư và khách hàng về {project.schemaName}, được SGS Land trả lời dựa trên dữ liệu thị trường cập nhật.
             </p>
-
             <div className="lp-faq-list lp-reveal" itemScope itemType="https://schema.org/FAQPage">
               {project.faq.map((item, i) => (
                 <details
@@ -416,7 +384,6 @@ export default async function LandingProjectPage({
             </div>
           </div>
         </section>
-
         {/* ─── FORM LIÊN HỆ ───────────────────────────────────────────── */}
         <section
           id="lien-he"
@@ -433,7 +400,6 @@ export default async function LandingProjectPage({
             <p className="lp-lead">
               Đội ngũ chuyên gia SGS Land sẽ liên hệ trong vòng 30 phút để tư vấn pháp lý, bảng giá, chính sách và phương án thanh toán phù hợp nhất.
             </p>
-
             <div className="lp-form-card">
               <form id="lp-lead-form" noValidate aria-label="Form đăng ký tư vấn dự án">
                 <div className="lp-form-row">
@@ -467,8 +433,7 @@ export default async function LandingProjectPage({
                     <input
                       id="lp-email"
                       name="email"
-                      type="email"
-                      placeholder="email@example.com"
+                      type="email"                      placeholder="email@example.com"
                       autoComplete="email"
                     />
                   </div>
@@ -502,16 +467,13 @@ export default async function LandingProjectPage({
                     )}
                   </div>
                 </div>
-
                 <button type="submit" className="lp-btn-submit">
                   Gửi yêu cầu tư vấn →
                 </button>
-
                 <p className="lp-form-note">
                   🔒 Thông tin được bảo mật tuyệt đối. SGS Land cam kết không chia sẻ dữ liệu với bên thứ ba.
                 </p>
               </form>
-
               <div id="lp-form-success" className="lp-form-success" role="status" aria-live="polite">
                 ✅ Cảm ơn bạn! Chuyên gia SGS Land sẽ gọi lại trong vòng 30 phút. Hotline hỗ trợ ngay:{" "}
                 <a href="tel:+84971132378" style={{ color: "#0C5132", fontWeight: 700 }}>
@@ -521,7 +483,6 @@ export default async function LandingProjectPage({
             </div>
           </div>
         </section>
-
         {/* ─── FOOTER ─────────────────────────────────────────────────── */}
         <footer className="lp-footer" aria-label="Chân trang">
           <div className="lp-wrap">
@@ -538,7 +499,6 @@ export default async function LandingProjectPage({
                   </a>
                 </p>
               </div>
-
               <div>
                 <h4>Dự Án</h4>
                 <ul>
@@ -549,7 +509,6 @@ export default async function LandingProjectPage({
                   <li><Link href="/du-an">Tất cả dự án →</Link></li>
                 </ul>
               </div>
-
               <div>
                 <h4>Dịch Vụ</h4>
                 <ul>
@@ -560,7 +519,6 @@ export default async function LandingProjectPage({
                   <li><Link href="/">Quản lý cho thuê</Link></li>
                 </ul>
               </div>
-
               <div>
                 <h4>Pháp Lý</h4>
                 <ul>
@@ -571,21 +529,18 @@ export default async function LandingProjectPage({
                 </ul>
               </div>
             </div>
-
             <div className="lp-foot-bottom">
               <p>
-                © {new Date().getFullYear()} SGS Land Corp. Đại lý phân phối ủy quyền — không phải chủ đầu tư.
+                © {new Date().getFullYear()} SGS Land Co.ltd. Đại lý phân phối ủy quyền — không phải chủ đầu tư.
                 Thông tin mang tính tham khảo, không phải cam kết pháp lý.
                 Giá và chính sách có thể thay đổi không báo trước.
               </p>
             </div>
           </div>
         </footer>
-
         {/* ─── FLOATING ACTION BUTTONS ────────────────────────────────── */}
         <div className="lp-float" role="complementary" aria-label="Liên hệ nhanh">
-          <a
-            href="https://zalo.me/0971132378"
+          <a            href="https://zalo.me/0971132378"
             className="lp-zalo"
             target="_blank"
             rel="noopener noreferrer"

@@ -1,8 +1,6 @@
 // @ts-nocheck
 "use client";
-
 import { useState } from "react";
-
 const STATIC_BANKS = [
   { bank: "Vietcombank", rate6m: "5.2%", rate12m: "6.8%", rate24m: "7.2%", rate36m: "7.5%", note: "Ưu đãi 12 tháng đầu" },
   { bank: "BIDV", rate6m: "5.0%", rate12m: "6.5%", rate24m: "7.0%", rate36m: "7.3%", note: "Ưu đãi lãi suất mua nhà" },
@@ -13,7 +11,6 @@ const STATIC_BANKS = [
   { bank: "ACB", rate6m: "5.6%", rate12m: "7.1%", rate24m: "7.6%", rate36m: "7.9%", note: "Hỗ trợ mua BĐS cao cấp" },
   { bank: "Sacombank", rate6m: "5.4%", rate12m: "6.8%", rate24m: "7.3%", rate36m: "7.7%", note: "Ưu đãi theo gói sản phẩm" },
 ];
-
 interface StaticBankRate {
   bank: string;
   rate6m: string;
@@ -22,15 +19,12 @@ interface StaticBankRate {
   rate36m: string;
   note: string;
 }
-
 export function BankRatesPage({ bankRates }: { bankRates: StaticBankRate[] | unknown[] }) {
   const rates: StaticBankRate[] = bankRates.length > 0 ? (bankRates as StaticBankRate[]) : STATIC_BANKS;
-
   // Simple mortgage calculator
   const [loanAmount, setLoanAmount] = useState(3); // tỷ
   const [loanRate, setLoanRate] = useState(7);    // %/năm
   const [loanTerm, setLoanTerm] = useState(20);   // năm
-
   const monthlyPayment = () => {
     const P = loanAmount * 1e9;
     const r = loanRate / 100 / 12;
@@ -38,7 +32,6 @@ export function BankRatesPage({ bankRates }: { bankRates: StaticBankRate[] | unk
     if (r === 0) return P / n;
     return (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
   };
-
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
@@ -49,7 +42,6 @@ export function BankRatesPage({ bankRates }: { bankRates: StaticBankRate[] | unk
           Tổng hợp lãi suất tốt nhất từ các ngân hàng lớn — cập nhật hàng tuần
         </p>
       </div>
-
       {/* Rate table */}
       <div className="rounded-2xl overflow-hidden mb-12" style={{ border: "1px solid var(--border-default)" }}>
         <div className="overflow-x-auto">
@@ -80,7 +72,6 @@ export function BankRatesPage({ bankRates }: { bankRates: StaticBankRate[] | unk
           </table>
         </div>
       </div>
-
       {/* Mortgage calculator */}
       <div className="p-6 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
         <h2 className="text-xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
@@ -102,7 +93,6 @@ export function BankRatesPage({ bankRates }: { bankRates: StaticBankRate[] | unk
             </div>
           ))}
         </div>
-
         <div className="p-4 rounded-xl text-center" style={{ background: "var(--primary-subtle)" }}>
           <p className="text-xs mb-1" style={{ color: "var(--text-secondary)" }}>Thanh toán hàng tháng (ước tính)</p>
           <p className="text-3xl font-bold" style={{ color: "var(--primary-600)" }}>

@@ -1,22 +1,17 @@
 // @ts-nocheck
 "use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { GitBranch, RefreshCw, Plus, Trash2, Save, Loader2, CheckCircle, AlertCircle, GripVertical } from "lucide-react";
-
 interface RoutingRule { id: number; name?: string; priority?: number; conditions?: Record<string, unknown>; action?: string; assignee_id?: number; assignee_name?: string; is_active?: boolean; }
-
 function Badge({ active }: { active?: boolean }) {
   return <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: active ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", color: active ? "#10b981" : "#ef4444" }}>{active ? "Kích hoạt" : "Tắt"}</span>;
 }
-
 export default function RoutingRulesPage() {
   const [rules, setRules] = useState<RoutingRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
-
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
@@ -26,7 +21,6 @@ export default function RoutingRulesPage() {
       setRules(Array.isArray(d) ? d : d.rules || d.data || []);
     } catch { setError("Lỗi kết nối"); } finally { setLoading(false); }
   }, []);
-
   useEffect(() => { load(); }, [load]);
 
   const toggle = async (rule: RoutingRule) => {
@@ -35,7 +29,6 @@ export default function RoutingRulesPage() {
       setRules((prev) => prev.map((r) => r.id === rule.id ? { ...r, is_active: !r.is_active } : r));
     } catch { }
   };
-
   const remove = async (id: number) => {
     if (!confirm("Xóa quy tắc này?")) return;
     try {
@@ -43,7 +36,6 @@ export default function RoutingRulesPage() {
       setRules((prev) => prev.filter((r) => r.id !== id));
     } catch { }
   };
-
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -54,10 +46,8 @@ export default function RoutingRulesPage() {
           </button>
         </div>
       </div>
-
       {loading && <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ background: "var(--border-default)" }} />)}</div>}
       {error && <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>{error}</div>}
-
       {!loading && !error && rules.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <GitBranch className="w-12 h-12 mb-3" style={{ color: "var(--border-default)" }} />
@@ -65,7 +55,6 @@ export default function RoutingRulesPage() {
           <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>Tạo quy tắc để tự động phân phối leads</p>
         </div>
       )}
-
       {!loading && rules.length > 0 && (
         <div className="space-y-3">
           {rules.map((rule, i) => (

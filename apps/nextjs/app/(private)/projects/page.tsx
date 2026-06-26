@@ -1,20 +1,15 @@
 // @ts-nocheck
 "use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { Building2, Plus, Search, RefreshCw, MapPin, Calendar, Users, ExternalLink, Loader2 } from "lucide-react";
-
 interface Project {
   id: number; name: string; code?: string; description?: string; location?: string;
   status?: string; total_units?: number; open_date?: string; handover_date?: string;
   created_at?: string; metadata?: Record<string, unknown>;
 }
-
 const STATUS_LABEL: Record<string, string> = { ACTIVE: "Đang mở bán", COMPLETED: "Đã bàn giao", UPCOMING: "Sắp mở bán", SUSPENDED: "Tạm dừng" };
 const STATUS_COLOR: Record<string, string> = { ACTIVE: "#10b981", COMPLETED: "#6366f1", UPCOMING: "#f59e0b", SUSPENDED: "#ef4444" };
-
 function fmt(d?: string) { return d ? new Date(d).toLocaleDateString("vi-VN") : "—"; }
-
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,11 +26,9 @@ export default function ProjectsPage() {
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Lỗi kết nối"); }
     finally { setLoading(false); }
   }, []);
-
   useEffect(() => { load(); }, [load]);
 
   const filtered = projects.filter((p) => !q || p.name.toLowerCase().includes(q.toLowerCase()) || (p.code || "").toLowerCase().includes(q.toLowerCase()) || (p.location || "").toLowerCase().includes(q.toLowerCase()));
-
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -49,16 +42,13 @@ export default function ProjectsPage() {
           </a>
         </div>
       </div>
-
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
         <input className="w-full pl-9 pr-3 py-2.5 rounded-xl text-sm outline-none" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", color: "var(--text-primary)" }}
           placeholder="Tìm dự án..." value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
-
       {loading && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{[...Array(6)].map((_, i) => <div key={i} className="h-48 rounded-2xl animate-pulse" style={{ background: "var(--border-default)" }} />)}</div>}
       {error && <div className="p-4 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>{error}</div>}
-
       {!loading && !error && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Building2 className="w-12 h-12 mb-3" style={{ color: "var(--border-default)" }} />
@@ -66,7 +56,6 @@ export default function ProjectsPage() {
           <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>Thêm dự án đầu tiên của bạn</p>
         </div>
       )}
-
       {!loading && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((p) => (

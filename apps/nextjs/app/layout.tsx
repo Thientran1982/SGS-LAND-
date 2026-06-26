@@ -3,7 +3,6 @@ import { Inter, JetBrains_Mono, Noto_Serif_Display, Be_Vietnam_Pro, IBM_Plex_Mon
 import "./globals.css";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getOrganizationSchema, getWebsiteSchema, getEntityDisambiguationSchema, getMetricsSchema, getLocalBusinessSchema, getAggregateRatingSchema } from "@/lib/schema";
-
 // ─── Fonts (self-hosted by next/font — no Google Fonts request at runtime) ──
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -11,35 +10,30 @@ const inter = Inter({
   display: "swap",
   weight: ["300", "400", "500", "600", "700", "800"],
 });
-
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
   display: "swap",
   weight: ["400", "500"],
 });
-
 const notoSerifDisplay = Noto_Serif_Display({
   subsets: ["latin", "vietnamese"],
   variable: "--font-noto-serif",
   display: "swap",
   weight: ["400", "600", "700"],
 });
-
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
   variable: "--font-be-vietnam",
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
-
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   variable: "--font-ibm-plex-mono",
   display: "swap",
   weight: ["400", "500"],
 });
-
 // ─── Global Metadata ───────────────────────────────────────
 export const metadata: Metadata = {
   metadataBase: new URL("https://sgsland.vn"),
@@ -61,8 +55,8 @@ export const metadata: Metadata = {
     "sàn top 1 bất động sản Việt Nam",
   ],
   authors: [{ name: "SGS Land Corp", url: "https://sgsland.vn" }],
-  creator: "SGS Land Corp",
-  publisher: "SGS Land Corp",
+  creator: "SGS Land Co.ltd",
+  publisher: "SGS Land Co.ltd",
   robots: {
     index: true,
     follow: true,
@@ -133,7 +127,6 @@ export const metadata: Metadata = {
     "DC.language": "vi",
   },
 };
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -145,13 +138,11 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)",  color: "#312E81" },
   ],
 };
-
 // Force SSR on every page — prevents the /_not-found static-prerender crash
 // where Next.js 15's ContextOnlyDispatcher returns null for OuterLayoutRouter.
 // All user-facing pages are already under force-dynamic group layouts so this
 // only affects the not-found route; it has no impact on performance.
 export const dynamic = "force-dynamic";
-
 // ─── Root Layout ───────────────────────────────────────────
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

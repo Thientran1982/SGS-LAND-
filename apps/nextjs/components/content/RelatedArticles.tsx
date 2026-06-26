@@ -3,16 +3,13 @@ import Link from "next/link";
 import { ArrowRight, Clock } from "lucide-react";
 import type { Article } from "@/data/articles";
 import type { Category } from "@/data/categories";
-
 interface RelatedArticlesProps {
   articles: Article[];
   categories: Category[];
   className?: string;
 }
-
 export function RelatedArticles({ articles, categories, className = "" }: RelatedArticlesProps) {
   if (!articles.length) return null;
-
   const catMap = Object.fromEntries(categories.map((c) => [c.slug, c]));
 
   return (

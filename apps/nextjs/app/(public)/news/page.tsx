@@ -11,7 +11,6 @@ import { CategoryFilter } from "@/components/content/CategoryFilter";
 import { AuthorCard } from "@/components/content/AuthorCard";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
-
 export const metadata: Metadata = {
   title: "Kiến Thức & Tin Tức BĐS | Chuyên gia SGS LAND",
   description:
@@ -31,24 +30,19 @@ export const metadata: Metadata = {
     modifiedTime: new Date().toISOString(),
   },
 };
-
 export const dynamic = "force-dynamic";
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-
 function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
   const cat = CATEGORIES.find((c) => c.slug === article.category);
   const author = AUTHORS.find((a) => a.slug === article.author);
   const catColor = cat?.color ?? "var(--primary-600)";
-
   return (
     <article
       className="group flex flex-col rounded-2xl overflow-hidden transition-transform hover:scale-[1.01]"
       style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
-      itemScope
-      itemType="https://schema.org/Article"
+      itemScope      itemType="https://schema.org/Article"
     >
       <Link href={`/news/${article.slug}`} className="block aspect-[16/9] relative overflow-hidden shrink-0" tabIndex={-1} aria-hidden>
         <Image
@@ -59,7 +53,6 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
           sizes="(max-width: 768px) 100vw, 50vw"
         />
       </Link>
-
       <div className="flex flex-col flex-1 p-5">
         <div className="flex items-center gap-2 mb-3">
           {cat && (
@@ -79,7 +72,6 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
             {article.readTime} phút
           </span>
         </div>
-
         <h2
           className="font-bold text-base leading-snug mb-2 group-hover:text-sgs-primary transition-colors line-clamp-2 flex-1"
           style={{ color: "var(--text-primary)" }}
@@ -87,11 +79,9 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
         >
           <Link href={`/news/${article.slug}`}>{article.title}</Link>
         </h2>
-
         <p className="text-sm leading-relaxed mb-4 line-clamp-2" style={{ color: "var(--text-secondary)" }} itemProp="description">
           {article.excerpt}
         </p>
-
         <div className="flex items-center justify-between mt-auto">
           {author && (
             <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
@@ -113,12 +103,10 @@ function ArticleCard({ article }: { article: (typeof ARTICLES)[0] }) {
     </article>
   );
 }
-
 function FeaturedArticle({ article }: { article: (typeof ARTICLES)[0] }) {
   const cat = CATEGORIES.find((c) => c.slug === article.category);
   const author = AUTHORS.find((a) => a.slug === article.author);
   const catColor = cat?.color ?? "var(--primary-600)";
-
   return (
     <article
       className="group grid grid-cols-1 md:grid-cols-2 gap-0 rounded-2xl overflow-hidden mb-10"
@@ -138,7 +126,6 @@ function FeaturedArticle({ article }: { article: (typeof ARTICLES)[0] }) {
           Nổi bật
         </span>
       </Link>
-
       <div className="flex flex-col justify-center p-7">
         {cat && (
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold mb-3 inline-block w-fit"
@@ -162,16 +149,13 @@ function FeaturedArticle({ article }: { article: (typeof ARTICLES)[0] }) {
     </article>
   );
 }
-
 export default function NewsPage() {
   const featured = getFeaturedArticles(1);
   const rest = ARTICLES.filter((a) => !a.featured);
-
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
     { name: "Kiến thức & Tin tức", url: `${SITE_URL}/news` },
   ]);
-
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -190,11 +174,9 @@ export default function NewsPage() {
       })),
     },
   };
-
   return (
     <>
       <SchemaScript schemas={[breadcrumb, collectionSchema]} />
-
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Page header */}
         <div className="mb-8">
@@ -205,15 +187,12 @@ export default function NewsPage() {
             Phân tích chuyên sâu, hướng dẫn pháp lý và kiến thức đầu tư từ chuyên gia SGS LAND
           </p>
         </div>
-
         {/* Category filter (client component) */}
         <Suspense>
           <CategoryFilter categories={CATEGORIES} className="mb-8" />
         </Suspense>
-
         {/* Featured article */}
         {featured[0] && <FeaturedArticle article={featured[0]} />}
-
         {/* Main grid + sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Articles grid */}
@@ -224,7 +203,6 @@ export default function NewsPage() {
               ))}
             </div>
           </div>
-
           {/* Sidebar: Expert authors */}
           <aside className="space-y-4">
             <p className="font-bold text-base mb-2" style={{ color: "var(--text-primary)" }}>

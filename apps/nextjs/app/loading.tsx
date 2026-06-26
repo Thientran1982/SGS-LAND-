@@ -14,7 +14,7 @@ export default function RootLoading() {
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
       aria-live="polite"
-      aria-label="Đang khởi động hệ thống"
+      aria-label="SGS LAND"
     >
       {/* Animated logo */}
       <div
@@ -39,7 +39,6 @@ export default function RootLoading() {
           aria-hidden
         />
       </div>
-
       {/* Brand */}
       <p
         style={{
@@ -52,7 +51,6 @@ export default function RootLoading() {
       >
         SGS LAND
       </p>
-
       {/* Status */}
       <p
         style={{
@@ -62,9 +60,8 @@ export default function RootLoading() {
           letterSpacing: "0.025em",
         }}
       >
-        Đang khởi động hệ thống...
+        SGS LAND ...
       </p>
-
       {/* Progress bar */}
       <div
         style={{
@@ -84,7 +81,6 @@ export default function RootLoading() {
           }}
         />
       </div>
-
       {/* Keyframe definitions */}
       <style>{`
         @keyframes sgsGlow {

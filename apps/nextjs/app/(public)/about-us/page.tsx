@@ -5,23 +5,19 @@ import { Linkedin, Award, Shield, Users, TrendingUp, Building2 } from "lucide-re
 import { AUTHORS } from "@/data/authors";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, getOrganizationSchema, SITE_URL, ORG_ID } from "@/lib/schema";
-
 export const metadata: Metadata = {
   title: "Về SGS LAND | Nền tảng BĐS AI hàng đầu Việt Nam",
   description:
     "SGS LAND — Công ty TNHH SGS Land, thành lập 2024. Đại lý uỷ quyền Vinhomes, Novaland, Masterise, Nam Long. 15.000+ môi giới, 45.000+ sản phẩm, 200 triệu USD giao dịch. Top Proptech VN 2025.",
   alternates: { canonical: `${SITE_URL}/about-us` },
 };
-
 export const dynamic = "force-dynamic";
-
 const STATS = [
   { value: "2024", label: "Năm thành lập", icon: Building2 },
   { value: "15.000+", label: "Môi giới trong mạng lưới", icon: Users },
   { value: "45.000+", label: "Sản phẩm BĐS quản lý", icon: Building2 },
   { value: "2 tỷ USD+", label: "Giá trị giao dịch", icon: TrendingUp },
 ];
-
 const TIMELINE = [
   { year: "T1/2024", event: "Thành lập SGS Land Co.,ltd tại TP. Hồ Chí Minh" },
   { year: "T3/2024", event: "Ra mắt nền tảng marketplace BĐS và hệ thống CRM đa kênh" },
@@ -32,7 +28,6 @@ const TIMELINE = [
   { year: "T3/2025", event: "Ra mắt ứng dụng di động cho người mua nhà (iOS & Android)" },
   { year: "T5/2025", event: "Vinh danh Top Proptech Việt Nam 2025 — vượt mốc 45.000 sản phẩm" },
 ];
-
 const PARTNERS = [
   { name: "Vinhomes", since: 2024 },
   { name: "Novaland", since: 2024 },
@@ -41,20 +36,17 @@ const PARTNERS = [
   { name: "Sơn Kim Land", since: 2025 },
   { name: "Khang Điền", since: 2025 },
 ];
-
 const AWARDS = [
   { title: "Top Proptech Việt Nam 2025", org: "Vietnam PropTech Awards", icon: "🏆" },
   { title: "Đại lý phân phối uỷ quyền chính thức", org: "Vinhomes, Novaland, Masterise Homes, Nam Long", icon: "🤝" },
   { title: "Tuân thủ NĐ 13/2023/NĐ-CP", org: "Nghị định bảo vệ dữ liệu cá nhân", icon: "🔒" },
   { title: "Chuẩn TĐGVN/IVS", org: "Định giá theo tiêu chuẩn quốc tế, Luật Đất Đai 2024", icon: "📊" },
 ];
-
 export default function AboutUsPage() {
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
     { name: "Về chúng tôi", url: `${SITE_URL}/about-us` },
   ]);
-
   // AboutPage + Organization JSON-LD
   const aboutSchema = {
     "@context": "https://schema.org",
@@ -66,7 +58,6 @@ export default function AboutUsPage() {
       "SGS LAND là nền tảng bất động sản AI hàng đầu Việt Nam. Đại lý phân phối uỷ quyền Vinhomes, Novaland, Masterise Homes và Nam Long — 15.000+ môi giới, 45.000+ sản phẩm.",
     about: { "@id": ORG_ID },
   };
-
   // Person JSON-LD for each leader (GEO Tier S: E-E-A-T named authorship)
   const personSchemas = AUTHORS.slice(0, 3).map((author) => ({
     "@context": "https://schema.org",
@@ -83,7 +74,6 @@ export default function AboutUsPage() {
       url: SITE_URL,
     },
   }));
-
   return (
     <>
       <SchemaScript schemas={[breadcrumb, aboutSchema, getOrganizationSchema(), ...personSchemas]} />
@@ -97,7 +87,6 @@ export default function AboutUsPage() {
             <li aria-current="page" style={{ color: "var(--text-secondary)" }}>Về chúng tôi</li>
           </ol>
         </nav>
-
         {/* Hero */}
         <section className="mb-12">
           <h1 className="text-4xl font-extrabold mb-4" style={{ color: "var(--text-primary)" }}>
@@ -111,7 +100,6 @@ export default function AboutUsPage() {
             giao dịch.
           </p>
         </section>
-
         {/* Stats */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-5 mb-14">
           {STATS.map(({ value, label, icon: Icon }) => (
@@ -126,7 +114,6 @@ export default function AboutUsPage() {
             </div>
           ))}
         </section>
-
         {/* Team — E-E-A-T: named leadership with full profiles */}
         <section className="mb-14">
           <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
@@ -138,8 +125,7 @@ export default function AboutUsPage() {
                 key={author.slug}
                 className="p-5 rounded-2xl"
                 style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
-                itemScope
-                itemType="https://schema.org/Person"
+                itemScope                itemType="https://schema.org/Person"
               >
                 <div
                   className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-white"
@@ -172,7 +158,6 @@ export default function AboutUsPage() {
             ))}
           </div>
         </section>
-
         {/* Timeline */}
         <section className="mb-14">
           <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
@@ -204,7 +189,6 @@ export default function AboutUsPage() {
             </ol>
           </div>
         </section>
-
         {/* Partners */}
         <section className="mb-14">
           <h2 className="text-2xl font-bold mb-5" style={{ color: "var(--text-primary)" }}>
@@ -223,7 +207,6 @@ export default function AboutUsPage() {
             ))}
           </div>
         </section>
-
         {/* Awards & Compliance */}
         <section className="mb-10">
           <h2 className="text-2xl font-bold mb-5" style={{ color: "var(--text-primary)" }}>
@@ -245,7 +228,6 @@ export default function AboutUsPage() {
             ))}
           </ul>
         </section>
-
         {/* Legal compliance note */}
         <div
           className="flex items-start gap-3 p-5 rounded-2xl text-sm"

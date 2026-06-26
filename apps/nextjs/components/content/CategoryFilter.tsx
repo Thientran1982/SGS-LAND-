@@ -1,24 +1,19 @@
 // @ts-nocheck
 "use client";
-
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Category } from "@/data/categories";
-
 interface CategoryFilterProps {
   categories: Category[];
   className?: string;
 }
-
 export function CategoryFilter({ categories, className = "" }: CategoryFilterProps) {
   const router = useRouter();
   const params = useSearchParams();
   const active = params?.get("category") ?? "all";
-
   function select(slug: string) {
     const url = slug === "all" ? "/news" : `/news?category=${slug}`;
     router.push(url, { scroll: false });
   }
-
   return (
     <div className={`flex flex-wrap gap-2 ${className}`} role="group" aria-label="Lọc theo chuyên mục">
       <button
@@ -33,7 +28,6 @@ export function CategoryFilter({ categories, className = "" }: CategoryFilterPro
       >
         Tất cả
       </button>
-
       {categories.map((cat) => (
         <button
           key={cat.slug}

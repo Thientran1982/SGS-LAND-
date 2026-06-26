@@ -1,6 +1,5 @@
 // @ts-nocheck
 "use client";
-
 import Link from "next/link";
 import { MapPin, Phone, ArrowRight, Building2 } from "lucide-react";
 
@@ -18,12 +17,10 @@ interface ProjectDetail {
   property_types?: string[];
   investment_score?: number;
 }
-
 interface Props {
   project: ProjectDetail;
   slug: string;
 }
-
 export function ProjectDetailPage({ project, slug }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -35,7 +32,6 @@ export function ProjectDetailPage({ project, slug }: Props) {
         <span>/</span>
         <span style={{ color: "var(--text-primary)" }}>{project.name}</span>
       </nav>
-
       {/* Hero */}
       <div className="mb-10">
         <div className="flex items-center gap-2 mb-3">
@@ -52,7 +48,6 @@ export function ProjectDetailPage({ project, slug }: Props) {
             </span>
           )}
         </div>
-
         <h1 className="text-4xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>{project.name}</h1>
 
         {project.location && (
@@ -62,14 +57,12 @@ export function ProjectDetailPage({ project, slug }: Props) {
             {project.developer && ` · ${project.developer}`}
           </p>
         )}
-
         {project.description && (
           <p className="text-base leading-relaxed max-w-3xl" style={{ color: "var(--text-secondary)" }}>
             {project.description}
           </p>
         )}
       </div>
-
       {/* Key info grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
         {[
@@ -89,9 +82,7 @@ export function ProjectDetailPage({ project, slug }: Props) {
             <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{item.label}</p>
           </div>
         ))}
-      </div>
-
-      
+      </div>      
         {/* Google Maps embed for specific projects */}
         {(["aqua-city","vinhomes-central-park","masteri-cosmo-central","diamond-sky-van-phuc-city","legacy-66"] as string[]).includes(slug) && (
           <div className="mb-8">
