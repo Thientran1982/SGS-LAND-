@@ -14,7 +14,6 @@ import {
   SITE_URL,
 } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
-
 // ─── Static project data (SEO seed) ──────────────────────
 const PROJECT_META: Record<
   string,
@@ -409,7 +408,6 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
     },
   ];
 }
-
 // -- Apartment Complex SEO Meta from "next";
 import { notFound } from "next/navigation";
 import { ProjectDetailPage } from "@/components/public/ProjectDetailPage";
@@ -425,7 +423,6 @@ import {
   SITE_URL,
 } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
-
 // ─── Static project data (SEO seed) ──────────────────────
 const PROJECT_META: Record<
   string,

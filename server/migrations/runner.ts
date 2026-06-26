@@ -128,6 +128,7 @@ import m107 from './107_agent_prompt_versions';
 import m108 from './108_lead_journey_memory';
 import m109 from './109_n1_n2_tables';
 import m110 from './110_developers';
+import m111 from './111_seed_developers';
 
 dotenv.config();
 
@@ -252,6 +253,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '108_lead_journey_memory.ts': m108,
   '109_n1_n2_tables.ts': m109,
   '110_developers.ts': m110,
+  '111_seed_developers.ts': m111,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
