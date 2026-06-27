@@ -289,7 +289,10 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                     fontFamily: "var(--font-be-vietnam, sans-serif)",
                   }}
                   onFocus={e => {
-                    e.currentTarget.placeholder = e.currentTarget.dataset.placeholderFull || "Mô tả nhu cầu BĐS...";
+                    // Only expand placeholder to rotating examples on desktop (≥640px)
+                    if (typeof window !== "undefined" && window.innerWidth >= 640) {
+                      e.currentTarget.placeholder = e.currentTarget.dataset.placeholderFull || "Mô tả nhu cầu BĐS...";
+                    }
                     e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)";
                   }}
                   onBlur={e => {
@@ -386,12 +389,14 @@ function LegalTicker() {
   const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
   return (
     <div
-      className="overflow-hidden relative"
+      className="relative"
       style={{
         background: "var(--sgs-primary-deep)",
         borderTop: "1px solid rgba(200,150,62,0.15)",
         borderBottom: "1px solid rgba(200,150,62,0.15)",
         padding: "7px 0",
+        width: "100%",
+        overflow: "hidden",
       }}
     >
       {/* Edge fades */}
@@ -406,7 +411,7 @@ function LegalTicker() {
         {doubled.map((item, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm px-5 sm:px-8"
+            className="inline-flex items-center gap-1 text-xs px-3 sm:px-6"
             style={{
               color: "rgba(185,198,212,0.88)",
               fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
