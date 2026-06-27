@@ -52,10 +52,10 @@ const TICKER_ITEMS = [
   "Biệt thự Vạn Phúc ven sông — 18 tỷ — Pháp lý sạch 27/05/2026",
 ];
 const PLACEHOLDERS = [
-  "Căn hộ 2PN gần Metro số 1, dưới 3 tỷ…",
-  "Biệt thự Aqua City có sổ hồng riêng…",
-  "Đất nền Biên Hòa pháp lý sạch dưới 2 tỷ…",
-  "Vay 70% mua Grand Park, lãi suất thấp nhất…",
+  "Mua căn hộ 2PN gần Metro…",
+  "Tìm nhà phố có sổ hồng…",
+  "Đất nền Biên Hòa pháp lý sạch…",
+  "Vay mua nhà lãi suất thấp…",
 ];
 const QUICK_CHIPS = [
   "Biệt thự Aqua City có sổ hồng",
