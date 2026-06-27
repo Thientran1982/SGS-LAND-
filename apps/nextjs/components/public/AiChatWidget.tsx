@@ -98,10 +98,12 @@ export function AiChatWidget() {
       {/* Chat panel */}
       {open && (
         <div
-          className={`fixed bottom-24 right-4 sm:right-6 z-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
-            minimized ? "h-14" : "h-[520px]"
+          className={`fixed z-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
+            minimized ? "h-14" : "h-[520px] max-h-[80vh]"
           }`}
           style={{
+            bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
+            right: "calc(1rem + env(safe-area-inset-right, 0px))",
             width: "min(400px, calc(100vw - 32px))",
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
@@ -204,7 +206,11 @@ export function AiChatWidget() {
       {/* FAB Button */}
       <button
         onClick={handleOpen}
-        className="fixed bottom-6 right-4 sm:right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 bg-sgs-primary hover:bg-sgs-primary"
+        className="fixed z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 bg-sgs-primary hover:bg-sgs-primary"
+        style={{
+          bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
+          right: "calc(1rem + env(safe-area-inset-right, 0px))",
+        }}
         aria-label="Chat với SGS AI"
       >
         {open ? (

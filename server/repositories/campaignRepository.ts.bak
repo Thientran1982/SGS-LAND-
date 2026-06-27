@@ -17,7 +17,7 @@
 
 import { Pool } from 'pg';
 
-export type CampaignType = 'NUDGE_A' | 'NUDGE_B' | 'NUDGE_C' | 'NUDGE_D' | 'NUDGE_E' | 'NUDGE_LOGIN_3' | 'NUDGE_LOGIN_5' | 'NUDGE_LOGIN_7';
+export type CampaignType = 'NUDGE_A' | 'NUDGE_B' | 'NUDGE_C' | 'NUDGE_D' | 'NUDGE_E';
 export type LeadCampaignType = 'LEAD_WELCOME' | 'LEAD_NURTURE';
 
 export interface CampaignUser {
@@ -42,10 +42,6 @@ const COOLDOWN_DAYS: Record<CampaignType, number> = {
   NUDGE_C: 30,
   NUDGE_D: 60,
   NUDGE_E: 30,
-  // Nhac dang nhap theo moc 3/5/7 ngay khong hoat dong
-  NUDGE_LOGIN_3: 7,
-  NUDGE_LOGIN_5: 7,
-  NUDGE_LOGIN_7: 14,
 };
 
 const LEAD_COOLDOWN_DAYS: Record<LeadCampaignType, number> = {
@@ -208,87 +204,6 @@ export async function querySegmentC(pool: Pool): Promise<CampaignUser[]> {
         WHERE ecl.user_id = u.id
           AND ecl.campaign = 'NUDGE_C'
           AND ecl.sent_at > NOW() - INTERVAL '30 days'
-      )
-    ORDER BY u.last_login_at ASC
-    LIMIT 100
-  `);
-  return result.rows;
-}
-
-/**
- * Login3 - User khong dang nhap trong khoang [3, 5) ngay (moc nhac 3 ngay).
- * Cooldown 7 ngay: khong gui lai neu da gui NUDGE_LOGIN_3 trong 7 ngay qua.
- * Cua so BETWEEN duoc dung de tach bach voi cac moc khac va voi Segment C (>= 30 ngay).
- */
-export async function querySegmentLogin3(pool: Pool): Promise<CampaignUser[]> {
-  const result = await pool.query(`
-    SELECT u.id, u.tenant_id, u.email, u.name
-    FROM users u
-    WHERE u.status = 'ACTIVE'
-      AND u.email IS NOT NULL
-      AND u.email != ''
-      AND u.last_login_at IS NOT NULL
-      AND u.last_login_at <= NOW() - INTERVAL '3 days'
-      AND u.last_login_at >  NOW() - INTERVAL '5 days'
-      AND NOT EXISTS (
-        SELECT 1 FROM email_campaign_log ecl
-        WHERE ecl.user_id = u.id
-          AND ecl.campaign = 'NUDGE_LOGIN_3'
-          AND ecl.sent_at > NOW() - INTERVAL '7 days'
-      )
-    ORDER BY u.last_login_at ASC
-    LIMIT 100
-  `);
-  return result.rows;
-}
-
-/**
- * Login5 - User khong dang nhap trong khoang [5, 7) ngay (moc nhac 5 ngay).
- * Cooldown 7 ngay: khong gui lai neu da gui NUDGE_LOGIN_5 trong 7 ngay qua.
- * Cua so BETWEEN duoc dung de tach bach voi cac moc khac va voi Segment C (>= 30 ngay).
- */
-export async function querySegmentLogin5(pool: Pool): Promise<CampaignUser[]> {
-  const result = await pool.query(`
-    SELECT u.id, u.tenant_id, u.email, u.name
-    FROM users u
-    WHERE u.status = 'ACTIVE'
-      AND u.email IS NOT NULL
-      AND u.email != ''
-      AND u.last_login_at IS NOT NULL
-      AND u.last_login_at <= NOW() - INTERVAL '5 days'
-      AND u.last_login_at >  NOW() - INTERVAL '7 days'
-      AND NOT EXISTS (
-        SELECT 1 FROM email_campaign_log ecl
-        WHERE ecl.user_id = u.id
-          AND ecl.campaign = 'NUDGE_LOGIN_5'
-          AND ecl.sent_at > NOW() - INTERVAL '7 days'
-      )
-    ORDER BY u.last_login_at ASC
-    LIMIT 100
-  `);
-  return result.rows;
-}
-
-/**
- * Login7 - User khong dang nhap trong khoang [7, 30) ngay (moc nhac 7 ngay).
- * Cooldown 14 ngay: khong gui lai neu da gui NUDGE_LOGIN_7 trong 14 ngay qua.
- * Cua so BETWEEN duoc dung de tach bach voi cac moc khac va voi Segment C (>= 30 ngay).
- */
-export async function querySegmentLogin7(pool: Pool): Promise<CampaignUser[]> {
-  const result = await pool.query(`
-    SELECT u.id, u.tenant_id, u.email, u.name
-    FROM users u
-    WHERE u.status = 'ACTIVE'
-      AND u.email IS NOT NULL
-      AND u.email != ''
-      AND u.last_login_at IS NOT NULL
-      AND u.last_login_at <= NOW() - INTERVAL '7 days'
-      AND u.last_login_at >  NOW() - INTERVAL '30 days'
-      AND NOT EXISTS (
-        SELECT 1 FROM email_campaign_log ecl
-        WHERE ecl.user_id = u.id
-          AND ecl.campaign = 'NUDGE_LOGIN_7'
-          AND ecl.sent_at > NOW() - INTERVAL '14 days'
       )
     ORDER BY u.last_login_at ASC
     LIMIT 100

@@ -1644,126 +1644,6 @@ async function sendVendorRejectedEmail(
 }
 // ── Exports ───────────────────────────────────────────────────────────────────
 
-/**
- * sendNudgeLogin3 - Email nhac user da 3 ngay khong dang nhap, keu goi quay lai.
- */
-async function sendNudgeLogin3(tenantId: string, to: string, userName: string): Promise<EmailResult> {
-  const safeName = escapeHtml(userName || 'ban');
-  const loginUrl = 'https://sgsland.vn/#/dang-nhap';
-  const content = `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '&#128075;')}</td></tr>
-    </table>
-    ${spacer(20)}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">
-        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
-          Lau roi khong gap ban!
-        </h1>
-      </td></tr>
-      <tr><td align="center" style="padding-top:8px;">
-        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
-          Xin chao <strong>${safeName}</strong>, da ${3} ngay chung toi chua thay ban tren SGS LAND.
-        </span>
-      </td></tr>
-    </table>
-    ${spacer(24)}
-    ${divider()}
-    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
-      Da 3 ngay ban chua ghe tham SGS LAND. Nhieu tin BDS moi va co hoi dau tu vua duoc cap nhat - dang nhap de khong bo lo nhe.
-    </p>
-    ${spacer(4)}
-    ${primaryButton(loginUrl, 'Dang Nhap Ngay')}
-    ${spacer(20)}
-  `;
-  return sendEmail(tenantId, {
-    to,
-    subject: "SGS LAND - Thi truong BDS dang chuyen dong, dung bo lo nhe!",
-    html: emailBase(content, 'Email nay duoc gui tu dong vi ban la thanh vien SGS LAND.'),
-    text: `Xin chao ${userName},\n\nDa 3 ngay ban chua ghe tham SGS LAND. Nhieu tin BDS moi va co hoi dau tu vua duoc cap nhat - dang nhap de khong bo lo nhe.\n\nDang nhap lai:\n${loginUrl}\n\n- SGS LAND`,
-  });
-}
-
-/**
- * sendNudgeLogin5 - Email nhac user da 5 ngay khong dang nhap, keu goi quay lai.
- */
-async function sendNudgeLogin5(tenantId: string, to: string, userName: string): Promise<EmailResult> {
-  const safeName = escapeHtml(userName || 'ban');
-  const loginUrl = 'https://sgsland.vn/#/dang-nhap';
-  const content = `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '&#128075;')}</td></tr>
-    </table>
-    ${spacer(20)}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">
-        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
-          Ban van khoe chu?
-        </h1>
-      </td></tr>
-      <tr><td align="center" style="padding-top:8px;">
-        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
-          Xin chao <strong>${safeName}</strong>, da ${5} ngay chung toi chua thay ban tren SGS LAND.
-        </span>
-      </td></tr>
-    </table>
-    ${spacer(24)}
-    ${divider()}
-    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
-      Da 5 ngay ban chua quay lai SGS LAND. Thi truong dang co nhieu bien dong dang chu y - hay dang nhap de cap nhat thong tin moi nhat.
-    </p>
-    ${spacer(4)}
-    ${primaryButton(loginUrl, 'Dang Nhap Ngay')}
-    ${spacer(20)}
-  `;
-  return sendEmail(tenantId, {
-    to,
-    subject: "SGS LAND - Co nhieu tin moi danh cho ban",
-    html: emailBase(content, 'Email nay duoc gui tu dong vi ban la thanh vien SGS LAND.'),
-    text: `Xin chao ${userName},\n\nDa 5 ngay ban chua quay lai SGS LAND. Thi truong dang co nhieu bien dong dang chu y - hay dang nhap de cap nhat thong tin moi nhat.\n\nDang nhap lai:\n${loginUrl}\n\n- SGS LAND`,
-  });
-}
-
-/**
- * sendNudgeLogin7 - Email nhac user da 7 ngay khong dang nhap, keu goi quay lai.
- */
-async function sendNudgeLogin7(tenantId: string, to: string, userName: string): Promise<EmailResult> {
-  const safeName = escapeHtml(userName || 'ban');
-  const loginUrl = 'https://sgsland.vn/#/dang-nhap';
-  const content = `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '&#128075;')}</td></tr>
-    </table>
-    ${spacer(20)}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">
-        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
-          Chung toi nho ban!
-        </h1>
-      </td></tr>
-      <tr><td align="center" style="padding-top:8px;">
-        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
-          Xin chao <strong>${safeName}</strong>, da ${7} ngay chung toi chua thay ban tren SGS LAND.
-        </span>
-      </td></tr>
-    </table>
-    ${spacer(24)}
-    ${divider()}
-    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
-      Da 7 ngay ban chua dang nhap SGS LAND. Rat nhieu tin BDS va co hoi tot dang cho ban - dang nhap ngay de khong bo lo.
-    </p>
-    ${spacer(4)}
-    ${primaryButton(loginUrl, 'Dang Nhap Ngay')}
-    ${spacer(20)}
-  `;
-  return sendEmail(tenantId, {
-    to,
-    subject: "SGS LAND - Quay lai de khong bo lo co hoi",
-    html: emailBase(content, 'Email nay duoc gui tu dong vi ban la thanh vien SGS LAND.'),
-    text: `Xin chao ${userName},\n\nDa 7 ngay ban chua dang nhap SGS LAND. Rat nhieu tin BDS va co hoi tot dang cho ban - dang nhap ngay de khong bo lo.\n\nDang nhap lai:\n${loginUrl}\n\n- SGS LAND`,
-  });
-}
-
 export const emailService = {
   sendEmail,
   sendPasswordResetEmail,
@@ -1778,9 +1658,6 @@ export const emailService = {
   sendNudgeC,
   sendNudgeD,
   sendNudgeE,
-  sendNudgeLogin3,
-  sendNudgeLogin5,
-  sendNudgeLogin7,
   sendLeadNurture,
   sendBillingReceiptEmail,
   sendBillingAdminAlertEmail,

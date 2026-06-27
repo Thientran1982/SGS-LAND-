@@ -23,9 +23,6 @@ import {
   querySegmentD,
   querySegmentE,
   queryLeadsNeedingNurture,
-  querySegmentLogin3,
-  querySegmentLogin5,
-  querySegmentLogin7,
   logCampaignEmail,
   logLeadCampaignEmail,
   CampaignUser,
@@ -58,9 +55,6 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
       nudge_c:       { queried: 0, sent: 0, failed: 0 },
       nudge_d:       { queried: 0, sent: 0, failed: 0 },
       nudge_e:       { queried: 0, sent: 0, failed: 0 },
-      nudge_login_3: { queried: 0, sent: 0, failed: 0 },
-      nudge_login_5: { queried: 0, sent: 0, failed: 0 },
-      nudge_login_7: { queried: 0, sent: 0, failed: 0 },
       lead_nurture:  { queried: 0, sent: 0, failed: 0 },
     };
 
@@ -93,33 +87,6 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
       for (const user of usersC) {
         await processUser(pool, user, 'NUDGE_C', dryRun, stats.nudge_c,
           () => emailService.sendNudgeC(user.tenant_id, user.email, user.name));
-      }
-
-      // === Segment LOGIN_3: chua dang nhap 3 ngay ===
-      const usersL3 = await querySegmentLogin3(pool);
-      stats.nudge_login_3.queried = usersL3.length;
-      logger.info(`[EngagementCron] NUDGE_LOGIN_3: ${usersL3.length} user`);
-      for (const user of usersL3) {
-        await processUser(pool, user, 'NUDGE_LOGIN_3', dryRun, stats.nudge_login_3,
-          () => emailService.sendNudgeLogin3(user.tenant_id, user.email, user.name));
-      }
-
-      // === Segment LOGIN_5: chua dang nhap 5 ngay ===
-      const usersL5 = await querySegmentLogin5(pool);
-      stats.nudge_login_5.queried = usersL5.length;
-      logger.info(`[EngagementCron] NUDGE_LOGIN_5: ${usersL5.length} user`);
-      for (const user of usersL5) {
-        await processUser(pool, user, 'NUDGE_LOGIN_5', dryRun, stats.nudge_login_5,
-          () => emailService.sendNudgeLogin5(user.tenant_id, user.email, user.name));
-      }
-
-      // === Segment LOGIN_7: chua dang nhap 7 ngay ===
-      const usersL7 = await querySegmentLogin7(pool);
-      stats.nudge_login_7.queried = usersL7.length;
-      logger.info(`[EngagementCron] NUDGE_LOGIN_7: ${usersL7.length} user`);
-      for (const user of usersL7) {
-        await processUser(pool, user, 'NUDGE_LOGIN_7', dryRun, stats.nudge_login_7,
-          () => emailService.sendNudgeLogin7(user.tenant_id, user.email, user.name));
       }
 
       // ── Segment D ─────────────────────────────────────────────────────────

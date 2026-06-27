@@ -38,7 +38,7 @@ const PROJECTS: FeaturedProject[] = [
 const STATS_DATA = [
   { num: 45000, suffix: "+",        prefix: "",   vi: "BĐS quản lý",        en: "Properties"       },
   { num: 15000, suffix: "+",        prefix: "",   vi: "Môi giới đối tác",   en: "Partner Agents"   },
-  { num: 2,     suffix: " tỷ USD+", prefix: "",   vi: "Giá trị giao dịch",  en: "Transaction Value"},
+  { num: 1,     suffix: " tỷ USD+", prefix: "",   vi: "Giá trị giao dịch",  en: "Transaction Value"},
   { num: 48,    suffix: "/5",       prefix: "4.", vi: "Đánh giá khách hàng",en: "Customer Rating"  },
   { num: 5,     suffix: "%",        prefix: "±",  vi: "Sai số định giá AI", en: "AI Valuation MAPE"},
 ];
@@ -170,10 +170,9 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
   };
   return (
     <section
-      className="relative flex flex-col justify-center overflow-hidden"
+      className="relative flex flex-col justify-center overflow-hidden min-h-[74vh] sm:min-h-[88vh]"
       style={{
-        minHeight: "88vh",
-        paddingTop: "80px",
+        paddingTop: "72px",
         background: "linear-gradient(175deg, #0A1E33 0%, #0F2740 45%, var(--sgs-primary) 80%, rgba(200,150,62,0.18) 100%)",
       }}
     >
@@ -185,10 +184,10 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
             fill="var(--sgs-accent)"/>
         </svg>
       </div>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-14 sm:py-20">
         {/* Badge */}
         <div
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-6"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-4 sm:mb-6"
           style={{ background: "rgba(200,150,62,0.15)", border: "1px solid rgba(200,150,62,0.4)", color: "#D4A855" }}
         >
           <Award className="w-3.5 h-3.5" />
@@ -197,11 +196,11 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
         {/* Kinetic headline */}
         <h1
           id="seo-h1"
-          className="mb-5"
+          className="mb-3 sm:mb-5"
           style={{
             fontFamily: "var(--font-noto-serif, var(--font-inter), Georgia, serif)",
             fontWeight: 600,
-            fontSize: "clamp(2rem, 5vw, 3.8rem)",
+            fontSize: "clamp(1.75rem, 5vw, 3.8rem)",
             lineHeight: 1.15,
             color: "#FFFFFF",
             letterSpacing: "-0.02em",
@@ -238,7 +237,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
           )}
         </h1>
         <p
-          className="text-base sm:text-lg max-w-lg mb-10"
+          className="text-sm sm:text-lg max-w-lg mb-6 sm:mb-10"
           style={{
             color: "rgba(220,232,244,0.78)",
             fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
@@ -272,15 +271,16 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                 : "Ask AI — describe your needs in natural language"}
             </p>
             <form onSubmit={submit} className="flex gap-2">
-              <div className="flex-1 relative">
-                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--sgs-accent)" }} />
+              <div className="flex-1 relative min-w-0">
+                <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 shrink-0" style={{ color: "var(--sgs-accent)" }} />
                 <input
                   id="sgs-search"
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder={PLACEHOLDERS[phIdx]}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  placeholder="Mô tả nhu cầu BĐS..."
+                  data-placeholder-full={PLACEHOLDERS[phIdx]}
+                  className="w-full pl-10 pr-3 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
                     background: "#F8F9FB",
                     border: "1.5px solid rgba(27,58,92,0.1)",
@@ -288,19 +288,25 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                     caretColor: "var(--sgs-accent)",
                     fontFamily: "var(--font-be-vietnam, sans-serif)",
                   }}
-                  onFocus={e => (e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)")}
-                  onBlur={e  => (e.currentTarget.style.border = "1.5px solid rgba(27,58,92,0.1)")}
+                  onFocus={e => {
+                    e.currentTarget.placeholder = e.currentTarget.dataset.placeholderFull || "Mô tả nhu cầu BĐS...";
+                    e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)";
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.placeholder = "Mô tả nhu cầu BĐS...";
+                    e.currentTarget.style.border = "1.5px solid rgba(27,58,92,0.1)";
+                  }}
                 />
               </div>
               <button
                 type="submit"
-                className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
+                className="flex items-center gap-1.5 px-3 sm:px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shrink-0"
                 style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
                 onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
               >
                 <ArrowRight className="w-4 h-4" />
-                {lang === "vi" ? "Hỏi ngay" : "Search"}
+                <span className="hidden sm:inline">{lang === "vi" ? "Hỏi ngay" : "Search"}</span>
               </button>
             </form>
             <div className="flex flex-wrap gap-2 mt-3">
@@ -360,7 +366,7 @@ function StatsBar({ lang }: { lang: Lang }) {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 divide-x divide-slate-100">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-2 gap-y-4 sm:gap-6">
           {STATS_DATA.map(s => (
             <StatItem
               key={s.vi}
@@ -380,31 +386,35 @@ function LegalTicker() {
   const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
   return (
     <div
-      className="overflow-hidden"
+      className="overflow-hidden relative"
       style={{
         background: "var(--sgs-primary-deep)",
         borderTop: "1px solid rgba(200,150,62,0.15)",
         borderBottom: "1px solid rgba(200,150,62,0.15)",
-        padding: "9px 0",
+        padding: "7px 0",
       }}
     >
+      {/* Edge fades */}
+      <div className="absolute inset-y-0 left-0 w-10 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, var(--sgs-primary-deep), transparent)" }} />
+      <div className="absolute inset-y-0 right-0 w-10 z-10 pointer-events-none" style={{ background: "linear-gradient(to left, var(--sgs-primary-deep), transparent)" }} />
       <div
         className="flex whitespace-nowrap"
-        style={{ animation: "ticker-scroll 28s linear infinite" }}
+        style={{ animation: "ticker-scroll 32s linear infinite" }}
         onMouseEnter={e => (e.currentTarget.style.animationPlayState = "paused")}
         onMouseLeave={e => (e.currentTarget.style.animationPlayState = "running")}
       >
         {doubled.map((item, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-2 text-sm px-8"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm px-5 sm:px-8"
             style={{
-              color: "#B9C6D4",
+              color: "rgba(185,198,212,0.88)",
               fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+              letterSpacing: "0.01em",
             }}
           >
-            <span style={{ color: "var(--sgs-accent)", fontSize: "8px" }}>●</span>
-            <span style={{ color: "var(--sgs-verified)", fontWeight: 600 }}>✓</span>
+            <span style={{ color: "var(--sgs-accent)", fontSize: "6px", opacity: 0.75 }}>●</span>
+            <span style={{ color: "var(--sgs-verified)", fontWeight: 600, fontSize: "10px" }}>✓</span>
             {item}
           </span>
         ))}
