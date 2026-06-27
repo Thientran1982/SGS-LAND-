@@ -155,11 +155,25 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
   const [query, setQuery]           = useState("");
   const [phIdx, setPhIdx]           = useState(0);
   const [visible, setVisible]       = useState(false);
+  // isMobile: null before hydration → avoids SSR mismatch; set via matchMedia after mount
+  const [isMobile, setIsMobile]     = useState<boolean | null>(null);
   useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
   useEffect(() => {
     const id = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 3200);
     return () => clearInterval(id);
   }, []);
+  // Detect mobile viewport — drives placeholder, never changes after matchMedia init
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  // Short static placeholder on mobile; rotating examples on desktop
+  const placeholderText = (isMobile === null || isMobile)
+    ? "Mô tả nhu cầu BĐS..."
+    : PLACEHOLDERS[phIdx];
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query || PLACEHOLDERS[phIdx]);
@@ -278,8 +292,7 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Mô tả nhu cầu BĐS..."
-                  data-placeholder-full={PLACEHOLDERS[phIdx]}
+                  placeholder={placeholderText}
                   className="w-full pl-10 pr-3 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
                     background: "#F8F9FB",
@@ -289,14 +302,9 @@ function HeroSection({ onSearch, lang }: { onSearch: (q: string) => void; lang: 
                     fontFamily: "var(--font-be-vietnam, sans-serif)",
                   }}
                   onFocus={e => {
-                    // Only expand placeholder to rotating examples on desktop (≥640px)
-                    if (typeof window !== "undefined" && window.innerWidth >= 640) {
-                      e.currentTarget.placeholder = e.currentTarget.dataset.placeholderFull || "Mô tả nhu cầu BĐS...";
-                    }
                     e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)";
                   }}
                   onBlur={e => {
-                    e.currentTarget.placeholder = "Mô tả nhu cầu BĐS...";
                     e.currentTarget.style.border = "1.5px solid rgba(27,58,92,0.1)";
                   }}
                 />
