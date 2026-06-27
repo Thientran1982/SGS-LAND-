@@ -769,7 +769,6 @@ const PROJECT_META: Record<
     priceHigh: 50000000000,
   },
 };
-
 // ─── Project-specific FAQ builder ────────────────────────
 function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, priceRange: string): FAQItem[] {
   return [
@@ -791,7 +790,6 @@ function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, p
     },
   ];
 }
-
 // —— Apartment Complex SEO Meta (GEO Tier S) ——————————————————————————
 const APARTMENT_COMPLEX_META: Record<string, {
   amenities: string[];
@@ -884,14 +882,11 @@ const APARTMENT_COMPLEX_META: Record<string, {
     priceRange: "VND 1000000000-50000000000",
   },
 };
-
 // ─── Generate static paths ────────────────────────────────
 export async function generateStaticParams() {
   return Object.keys(PROJECT_META).map((slug) => ({ slug }));
 }
-
 // ─── Metadata ─────────────────────────────────────────────
-
 const SLUG_KEYWORDS: Record<string, string> = {
   "aqua-city": "Aqua City Novaland Dong Nai, nha pho Aqua City, Aqua City co nen mua khong 2026, Aqua City Long Thanh, Aqua City gia bao nhieu",
   "vinhomes-central-park": "Vinhomes Central Park Binh Thanh, can ho Vinhomes Central Park, Landmark 81, can ho cho thue Vinhomes Central Park, gia can ho Vinhomes Central Park 2026",
@@ -899,7 +894,6 @@ const SLUG_KEYWORDS: Record<string, string> = {
   "legacy-66": "can ho Legacy 66 Quan 5, Legacy 66 gia bao nhieu, Legacy 66 ban phong nao, mua can ho Legacy 66",
   "diamond-sky-van-phuc-city": "Diamond Sky Van Phuc City, Diamond Sky Thu Duc, can ho Diamond Sky gia bao nhieu, can ho Van Phuc City 2026",
 };
-
 export async function generateMetadata({
   params,
 }: {
@@ -907,12 +901,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const meta = PROJECT_META[slug];
-
   const title = meta
     ? `${meta.name} | Dự án BĐS | SGS LAND`
     : `Dự án ${slug} | SGS LAND`;
   const description = meta?.desc ?? "Thông tin chi tiết dự án bất động sản tại SGS LAND.";
-
   return {
     title,
     description,
@@ -926,7 +918,6 @@ export async function generateMetadata({
     },
   };
 }
-
 // ─── ISR — revalidate every 6 hours ──────────────────────
 export const dynamic = "force-dynamic";
 
@@ -936,7 +927,6 @@ export default async function ProjectPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-
   // Fetch live project data from Express backend (server-side, ISR cached)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let project: any = null;
@@ -952,19 +942,16 @@ export default async function ProjectPage({
   } catch {
     // Fallback to static meta below
   }
-
   if (!project && !PROJECT_META[slug]) {
     notFound();
   }
-
   const meta = PROJECT_META[slug];
   const projectData = project ?? {
     name: meta?.name ?? slug,
     developer: meta?.dev ?? "",
     location: meta?.loc ?? "",
     description: meta?.desc ?? "",
-    slug,
-  
+    slug,  
   "diamond-sky-van-phuc-city": {
     name: "Diamond Sky Vạn Phúc City – Căn hộ Hạng Sang Thủ Đức",
     dev: "Tập đoàn Vạn Phúc (Van Phuc Group)",
@@ -977,7 +964,6 @@ export default async function ProjectPage({
     priceHigh: 30_000_000_000,
   },
 };
-
   // ─── JSON-LD schemas ──────────────────────────────────
   const listingSchema = getRealEstateListingSchema({
     name: projectData.name,
@@ -992,15 +978,12 @@ export default async function ProjectPage({
     price_low: meta?.priceLow,
     price_high: meta?.priceHigh,
   });
-
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
     { name: "Dự án BĐS", url: `${SITE_URL}/du-an` },
     { name: projectData.name, url: `${SITE_URL}/du-an/${slug}` },
   ]);
-
   const orgSchema = getOrganizationSchema();
-
   const faqItems = buildProjectFAQ(
     slug,
     projectData.name,
@@ -1011,7 +994,6 @@ export default async function ProjectPage({
   const faqSchema = getFAQSchema(faqItems, `${SITE_URL}/du-an/${slug}#faq`);
   const videoSchema = getVideoSchema(slug);
   const announcementSchema = getSpecialAnnouncementSchema(slug);
-
   // Serialised JSON for noscript layer
   const aptMeta = APARTMENT_COMPLEX_META[slug];
   const apartmentSchema = aptMeta ? getApartmentComplexSchema({
@@ -1024,17 +1006,14 @@ export default async function ProjectPage({
     amenities: aptMeta.amenities,
     priceRange: aptMeta.priceRange,
   }) : null;
-
   const schemasJson = JSON.stringify(
     [listingSchema, breadcrumbSchema, orgSchema, faqSchema, ...(apartmentSchema ? [apartmentSchema] : [])],
     null, 2
   );
-
   return (
     <>
       {/* ── JSON-LD schemas: SSR-rendered, visible in raw HTML ── */}
       <SchemaScript schemas={[listingSchema, breadcrumbSchema, orgSchema, faqSchema, ...(videoSchema ? [videoSchema] : []), ...(announcementSchema ? [announcementSchema] : [])]} />
-
       {/*
        * ── noscript fallback layer ──────────────────────────────
        * AI crawlers that do not execute JavaScript still receive
@@ -1053,7 +1032,6 @@ export default async function ProjectPage({
           }}
         />
       </noscript>
-
       {/*
        * ── Server-rendered article block ───────────────────────
        * Provides fully hydrated, AI-parseable content before the
@@ -1068,39 +1046,33 @@ export default async function ProjectPage({
       <article
         className="sr-only"
         aria-label={`Thông tin dự án ${projectData.name}`}
-        itemScope
-        itemType="https://schema.org/RealEstateListing"
+        itemScope        itemType="https://schema.org/RealEstateListing"
       >
         <h1 itemProp="name">{projectData.name}</h1>
         <p itemProp="description">{projectData.description ?? meta?.desc}</p>
-
         <dl>
           <dt>Chủ đầu tư</dt>
           <dd itemProp="brand">{projectData.developer || meta?.dev}</dd>
 
           <dt>Vị trí</dt>
           <dd itemProp="address">{projectData.location || meta?.loc}</dd>
-
           {meta?.scale && (
             <>
               <dt>Quy mô</dt>
               <dd>{meta.scale}</dd>
             </>
           )}
-
           {meta?.priceRange && (
             <>
               <dt>Giá tham khảo</dt>
               <dd itemProp="offers">{meta.priceRange}</dd>
             </>
           )}
-
           <dt>Đại lý phân phối uỷ quyền</dt>
           <dd>
             SGS LAND (sgsland.vn) — đại lý F1 chính thức, định giá AI AVM ±4.8%,
             kiểm tra pháp lý 2 lớp, miễn phí cho người mua. Hotline: +84 971 132 378.
           </dd>
-
           <dt>URL</dt>
           <dd>
             <a href={`https://sgsland.vn/du-an/${slug}`}>
@@ -1108,7 +1080,6 @@ export default async function ProjectPage({
             </a>
           </dd>
         </dl>
-
         {/* FAQ section for AI extraction */}
         <section aria-label="Câu hỏi thường gặp">
           <h2>Câu hỏi thường gặp về {projectData.name}</h2>
@@ -1122,7 +1093,6 @@ export default async function ProjectPage({
           ))}
         </section>
       </article>
-
       {/* ── Interactive client component ── */}
       <ProjectDetailPage project={projectData} slug={slug} />
     </>

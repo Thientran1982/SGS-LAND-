@@ -1376,7 +1376,6 @@ const FOOTER_ABOUT = [
   { vi: "Tuyển dụng",          en: "Careers",               href: "/careers"                  },
   { vi: "Liên hệ",             en: "Contact",               href: "/contact"                  },
   { vi: "BĐS Thủ Đức",          en: "Thu Duc Properties",    href: "/bat-dong-san-thu-duc"    },
-    { vi: "Chủ đầu tư", en: "Developers", href: "/chu-dau-tu" },
   { vi: "BĐS Long Thành",       en: "Long Thanh Properties", href: "/bat-dong-san-long-thanh" },
   { vi: "BĐS Đồng Nai",         en: "Dong Nai Properties",   href: "/bat-dong-san-dong-nai"   },
   { vi: "BĐS Bình Thạnh",       en: "Binh Thanh Properties", href: "/bat-dong-san-binh-thanh" },

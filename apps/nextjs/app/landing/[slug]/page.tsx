@@ -167,7 +167,6 @@ export default async function LandingProjectPage({
     provider: { "@id": `${SITE_URL}/#organization` },
     dateModified: new Date().toISOString().split("T")[0],
   };
-
   const faqSchema = getFAQSchema(
     project.faq.map((f) => ({ question: f.q, answer: f.a })),
     `${canonicalUrl}#faq`,
@@ -187,11 +186,9 @@ export default async function LandingProjectPage({
     "--lpgs": project.theme.goldSoft,
     "--lpc": project.theme.cream,
   } as React.CSSProperties;
-
   return (
     <>
       <SchemaScript schemas={schemas} />
-
       {/* ── GEO noscript fallback layer (AI crawlers with JS disabled) ──── */}
       {/* dangerouslySetInnerHTML prevents React 19 hydration mismatch: browsers
           with JS enabled do not parse <noscript> content as DOM nodes, so React

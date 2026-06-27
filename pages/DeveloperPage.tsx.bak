@@ -41,7 +41,7 @@ function FAQAccordion({ items }: { items: { q: string; a: string }[] }) {
             className="w-full text-left px-4 py-3 font-semibold flex justify-between items-center"
           >
             <span>{it.q}</span>
-            <span>{open === i ? '−' : '+'}</span>
+            <span>{open === i ? '\u2212' : '+'}</span>
           </button>
           {open === i && (
             <div className="px-4 py-3 text-[var(--text-secondary)] border-t border-[var(--border)]">
@@ -61,12 +61,8 @@ export default function DeveloperPage() {
   const [projects, setProjects] = useState<DeveloperProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const isListView = !slug;
-  const [devList, setDevList] = useState<DeveloperData[]>([]);
-  const [listLoading, setListLoading] = useState(true);
   useEffect(() => {
     let active = true;
-    if (!slug) { setLoading(false); return; }
     setLoading(true);
     fetch('/api/public/developers/' + encodeURIComponent(slug))
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
@@ -85,59 +81,6 @@ export default function DeveloperPage() {
       active = false;
     };
   }, [slug]);
-  useEffect(() => {
-    if (slug) return;
-    let active = true;
-    setListLoading(true);
-    fetch('/api/public/developers')
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((json) => {
-        if (!active) return;
-        if (json && json.ok) setDevList(json.developers || []);
-      })
-      .catch(() => {})
-      .finally(() => active && setListLoading(false));
-    return () => { active = false; };
-  }, [slug]);
-  if (isListView) {
-    const listTitle = 'Chủ đầu tư bất động sản | SGS LAND';
-    const listDesc = 'Danh sách các chủ đầu tư bất động sản lớn tại Việt Nam: thông tin doanh nghiệp, dự án và pháp lý.';
-    return (
-      <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)]">
-        <SeoHead title={listTitle} description={listDesc} />
-        <header className="max-w-4xl mx-auto px-4 pt-8">
-          <a href="/" aria-label="SGS LAND"><Logo /></a>
-        </header>
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <nav className="text-sm text-[var(--text-secondary)] mb-4">
-            <a href="/" className="hover:underline">Trang chủ</a> /{' '}
-            <span>Chủ đầu tư</span>
-          </nav>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 leading-tight">Chủ đầu tư bất động sản</h1>
-          <p className="text-lg text-[var(--text-secondary)] mb-8 max-w-3xl">{listDesc}</p>
-          {listLoading ? (
-            <div className="text-[var(--text-secondary)]">Đang tải danh sách chủ đầu tư...</div>
-          ) : devList.length === 0 ? (
-            <div className="text-[var(--text-secondary)]">Chưa có chủ đầu tư nào được công bố.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {devList.map((d) => (
-                <a
-                  key={d.slug}
-                  href={'/' + 'chu-dau-tu' + '/' + d.slug}
-                  className="block border border-[var(--border)] rounded-lg p-5 hover:border-[var(--accent)] transition-colors"
-                >
-                  <div className="font-bold text-lg mb-1">{d.name}</div>
-                  {d.brand && <div className="text-sm text-[var(--text-secondary)] mb-2">{d.brand}</div>}
-                  {d.summary && <div className="text-sm text-[var(--text-secondary)] line-clamp-3">{d.summary}</div>}
-                </a>
-              ))}
-            </div>
-          )}
-        </main>
-      </div>
-    );
-  }
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">

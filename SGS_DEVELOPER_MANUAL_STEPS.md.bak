@@ -45,29 +45,10 @@ NÊN chèn version thủ công vào schema_versions (để runner coi như đã 
       ('109_n1_n2_tables.ts')
     ON CONFLICT (version) DO NOTHING;
 
+## 3) Seed dữ liệu (tuỳ chọn)
 
-## 3) Đăng ký migration 111 (seed 8 chủ đầu tư) + chạy trên Neon
+Bảng developers là multi-tenant + RLS (tenant_id). Khi INSERT seed, phải set tenant context:
 
-File server/migrations/111_seed_developers.ts seed 8 chủ đầu tư BĐS lớn cho MỎI tenant:
-novaland, vinhomes, khang-dien, hung-thinh, an-gia, phat-dat, sun-group, masterise-homes.
-Mỗi bản ghi có đủ summary + description + faq[] + awards[] (citable cho AI engines, chuẩn GEO/AEO).
-INSERT dùng ON CONFLICT (tenant_id, slug) DO NOTHING nên an toàn khi chạy lại (idempotent).
+    SET app.current_tenant_id = '<tenant-uuid>';
 
-(a) Thêm import (cạnh import m110, ~dòng 127):
-
-    import m111 from './111_seed_developers';
-
-(b) Thêm entry vào MIGRATION_REGISTRY (ngay sau '110_developers.ts': m110):
-
-    '111_seed_developers.ts': m111,
-
-(c) Chạy migration (BẠN tự chạy - tôi KHÔNG tự chạy trên production):
-
-    npm run migrate:dry   # xem trước 110 + 111, không đổi DB
-    npm run migrate       # áp dụng m110 (tạo bảng) rồi m111 (seed) lên Neon
-
-Lưu ý thứ tự: m110 PHẢI chạy trước m111 (m110 tạo bảng developers, m111 seed vào đó).
-Runner sắp xếp theo version nên chỉ cần đăng ký đúng cả hai trong registry.
-
-RLS: seed chạy bằng owner connection của migration runner nên không bị RLS chặn.
-Nếu seed thủ công bằng app connection thì phải SET app.current_tenant_id = '<tenant-uuid>' trước INSERT.
+hoặc dùng withRlsBypass trong migration seed (111_seed_developers.ts) giống pattern hiện có.

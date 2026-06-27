@@ -86,7 +86,7 @@ const SEED_DEVELOPERS: SeedDeveloper[] = [
     stock_code: 'KDH',
     founded_year: 2001,
     headquarters: '978 Đường 3/2, Phường 15, Quận 11, TP.HCM',
-    website: 'https://khangdien.com.vn',
+    website: 'https://khanhdien.com.vn',
     charter_capital: '3490000000000',
     projects_delivered: 25,
     land_bank_ha: '700.00',
@@ -94,9 +94,9 @@ const SEED_DEVELOPERS: SeedDeveloper[] = [
     summary:
       'Khang Điền (mã KDH) là chủ đầu tư bất động sản nhà ở uy tín tại TP.HCM, thành lập năm 2001, chuyên phát triển nhà phố, biệt thự và căn hộ tại khu Đông và khu Nam TP.HCM với tiêu chí pháp lý minh bạch và chất lượng xây dựng cao.',
     description:
-      'Khang Điền tập trung vào phân khúc nhà phố thương mại và biệt thự tại TP.HCM. Các dự án tiêu biểu gồm Verosa Park (TP. Thủ Đức), Lovera Vista (Bình Chánh), IvyCity (TP. Thủ Đức). Công ty nổi tiếng với cam kết pháp lý sổ đỏ rõ ràng và tiến độ xây dựng đúng hẹn.',
+      'Khang Điền tập trung vào phân khúc nhà phố thương mại và biệt thự tại TP.HCM. Các dự án tiêu biểu gồm Verosa Park (Quận 9), Lovera Vista (Bình Chánh), IvyCity (TP. Thủ Đức). Công ty nổi tiếng với cam kết pháp lý sổ đỏ rõ ràng và tiến độ xây dựng đúng hẹn.',
     faq: [
-      { q: 'Khang Điền có những dự án nào tại TP.HCM?', a: 'Khang Điền là chủ đầu tư Verosa Park (TP. Thủ Đức), Lovera Vista (Bình Chánh), IvyCity (TP. Thủ Đức) và nhiều dự án nhà phố, biệt thự khác.' },
+      { q: 'Khang Điền có những dự án nào tại TP.HCM?', a: 'Khang Điền là chủ đầu tư Verosa Park (Quận 9), Lovera Vista (Bình Chánh), IvyCity (TP. Thủ Đức) và nhiều dự án nhà phố, biệt thự khác.' },
       { q: 'Mã cổ phiếu Khang Điền là gì?', a: 'Khang Điền niêm yết trên HOSE với mã KDH.' },
       { q: 'Khang Điền có uy tín không?', a: 'Khang Điền được đánh giá cao về pháp lý minh bạch và chất lượng xây dựng, nhiều năm liền thuộc Top 10 chủ đầu tư uy tín tại TP.HCM.' },
       { q: 'Khang Điền tập trung vào phân khúc nào?', a: 'Khang Điền chuyên phát triển nhà phố thương mại, biệt thự và căn hộ trung cao cấp tại khu Đông và khu Nam TP.HCM.' },
@@ -211,7 +211,7 @@ const SEED_DEVELOPERS: SeedDeveloper[] = [
     summary:
       'Masterise Homes là thương hiệu bất động sản cao cấp thuộc Masterise Group (Tập đoàn Thành Công), chuyên phát triển căn hộ hạng sang và biệt thự cao cấp tại TP.HCM và Hà Nội theo chuẩn quốc tế, hợp tác với thương hiệu Marriott.',
     description:
-      'Masterise Homes hướng đến phân khúc luxury và ultra-luxury với chuẩn thiết kế quốc tế. Dự án tiêu biểu tại TP.HCM: Masteri Waterfront (TP. Thủ Đức), Masteri Centre Point, Grand Marina Saigon (hợp tác Marriott). Tại Hà Nội: Masteri West Heights, Masteri Waterfront Hà Nội.',
+      'Masterise Homes hướng đến phân khúc luxury và ultra-luxury với chuẩn thiết kế quốc tế. Dự án tiêu biểu tại TP.HCM: Masteri Waterfront (Quận 9), Masteri Centre Point, Grand Marina Saigon (hợp tác Marriott). Tại Hà Nội: Masteri West Heights, Masteri Waterfront Hà Nội.',
     faq: [
       { q: 'Masterise Homes có những dự án nào tại TP.HCM?', a: 'Masterise Homes phát triển Grand Marina Saigon (Quận 1), Masteri Centre Point (TP. Thủ Đức), Masteri Waterfront tại TP.HCM.' },
       { q: 'Masterise Homes thuộc tập đoàn nào?', a: 'Masterise Homes là thương hiệu BĐS thuộc Masterise Group, công ty con của Tập đoàn Thành Công (TC Group).' },

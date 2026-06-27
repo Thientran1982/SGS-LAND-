@@ -57,18 +57,14 @@ export function createPublicDeveloperRoutes(): Router {
     try {
       const rows = await withRlsBypass(async (client) => {
         const r = await client.query<DeveloperRow>(
-          `SELECT * FROM (
-           SELECT DISTINCT ON (slug)
-                  id, slug, name, legal_name, brand, stock_code, founded_year,
+          `SELECT id, slug, name, legal_name, brand, stock_code, founded_year,
                   headquarters, website, logo_url, charter_capital,
                   projects_delivered, land_bank_ha, awards, summary,
                   description, faq, metadata
-           FROM developers
-           WHERE COALESCE(metadata->>'public', 'true') <> 'false'
-           ORDER BY slug, COALESCE(projects_delivered, 0) DESC
-         ) d
-         ORDER BY COALESCE(projects_delivered, 0) DESC, name ASC
-         LIMIT 200`
+             FROM developers
+            WHERE COALESCE(metadata->>'public', 'true') <> 'false'
+            ORDER BY COALESCE(projects_delivered, 0) DESC, name ASC
+            LIMIT 200`
         );
         return r.rows;
       });
