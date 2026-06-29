@@ -45,7 +45,6 @@ import { createBillingWebhookRouter } from "./server/routes/billingWebhookRoutes
 import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uploadRoutes";
 import { createScimRoutes } from "./server/routes/scimRoutes";
 import { createValuationRoutes } from "./server/routes/valuationRoutes";
-import { createAdvisorRoutes } from "./server/routes/advisorRoutes";
 import { createProjectRoutes } from "./server/routes/projectRoutes";
 import { createCommissionRoutes } from "./server/routes/commissionRoutes";
 import { createTenantRoutes } from "./server/routes/tenantRoutes";
@@ -3728,7 +3727,6 @@ async function startServer() {
   app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());
   // Advanced valuation: multi-source, 7-coefficient AVM + market cache
   app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit, userValuationRateLimit));
-  app.use('/api/advisor', apiRateLimit, createAdvisorRoutes(pool, authenticateToken, aiRateLimit));
   app.use('/api/connectors', apiRateLimit, createConnectorRoutes(authenticateToken));
   app.use('/api/scraper',          apiRateLimit, createScraperRoutes(authenticateToken));
   app.use('/api/scraper/projects', apiRateLimit, createScraperProjectRoutes(authenticateToken));

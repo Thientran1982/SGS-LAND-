@@ -43,7 +43,8 @@ const isProjectCodeToken = (t: string | undefined | null): boolean =>
 const Landing = lazyLoad(() => import('./pages/Landing'), 'Landing');
 const ProductSearch = lazyLoad(() => import('./pages/ProductSearch'), 'ProductSearch');
 // Ensure these match file names exactly
-const AiValuation = lazyLoad(() => import('./pages/AiValuation'), 'AiValuation'); 
+const AiValuation = lazyLoad(() => import('./pages/AiValuation'), 'AiValuation');
+const AiAdvisor = lazyLoad(() => import('./pages/AiAdvisor'), 'AiAdvisor'); 
 const CrmLanding = lazyLoad(() => import('./pages/CrmLanding'), 'CrmLanding'); 
 const ListingDetail = lazyLoad(() => import('./pages/ListingDetail'), 'ListingDetail'); 
 const AboutUs = lazyLoad(() => import('./pages/AboutUs'), 'AboutUs');
@@ -175,7 +176,8 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     // Public
     [ROUTES.LANDING]: Landing,
     [ROUTES.SEARCH]: ProductSearch,
-    [ROUTES.AI_VALUATION]: AiValuation, 
+    [ROUTES.AI_VALUATION]: AiValuation,
+    [ROUTES.AI_ADVISOR]: AiAdvisor, 
     [ROUTES.CRM_SOLUTION]: CrmLanding,
     [ROUTES.ABOUT]: AboutUs,
   [ROUTES.METHODOLOGY]: Methodology,

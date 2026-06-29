@@ -17,7 +17,7 @@
 
 import { Pool } from 'pg';
 
-export type CampaignType = 'NUDGE_A' | 'NUDGE_B' | 'NUDGE_C' | 'NUDGE_D' | 'NUDGE_E' | 'NUDGE_LOGIN_3' | 'NUDGE_LOGIN_5' | 'NUDGE_LOGIN_7' | 'NUDGE_LISTING_VIEWS';
+export type CampaignType = 'NUDGE_A' | 'NUDGE_B' | 'NUDGE_C' | 'NUDGE_D' | 'NUDGE_E' | 'NUDGE_LOGIN_3' | 'NUDGE_LOGIN_5' | 'NUDGE_LOGIN_7';
 export type LeadCampaignType = 'LEAD_WELCOME' | 'LEAD_NURTURE';
 
 export interface CampaignUser {
@@ -46,8 +46,6 @@ const COOLDOWN_DAYS: Record<CampaignType, number> = {
   NUDGE_LOGIN_3: 7,
   NUDGE_LOGIN_5: 7,
   NUDGE_LOGIN_7: 14,
-  // Tin dang hot (>20 luot xem) - nhac chu tin toi da 1 lan / 7 ngay
-  NUDGE_LISTING_VIEWS: 7,
 };
 
 const LEAD_COOLDOWN_DAYS: Record<LeadCampaignType, number> = {
@@ -455,49 +453,3 @@ export async function queryLeadsNeedingChatFollowUp(
   );
   return result.rows;
 }
-
-
-// — Tin dang hot: view_count > 20, kem email chu tin (created_by) —————————————
-export interface HotListingRow {
-  listing_id: string;
-  tenant_id: string;
-  owner_id: string;
-  email: string;
-  owner_name: string | null;
-  title: string | null;
-  type: string | null;
-  price: number | null;
-  location: string | null;
-  area: number | null;
-  bedrooms: number | null;
-  view_count: number;
-}
-
-/**
- * Lay cac tin dang co view_count > 20, con AVAILABLE, kem email chu so huu.
- * Cooldown: khong nhac lai chu tin neu da gui NUDGE_LISTING_VIEWS trong 7 ngay qua.
- */
-export async function queryHotListings(pool: Pool): Promise<HotListingRow[]> {
-  const result = await pool.query(`
-    SELECT l.id AS listing_id, l.tenant_id, u.id AS owner_id, u.email,
-           u.name AS owner_name, l.title, l.type, l.price, l.location,
-           l.area, l.bedrooms, l.view_count
-    FROM listings l
-    JOIN users u ON u.id = l.created_by
-    WHERE l.view_count > 20
-      AND l.status = 'AVAILABLE'
-      AND u.status = 'ACTIVE'
-      AND u.email IS NOT NULL
-      AND u.email != ''
-      AND NOT EXISTS (
-        SELECT 1 FROM email_campaign_log ecl
-        WHERE ecl.user_id = u.id
-          AND ecl.campaign = 'NUDGE_LISTING_VIEWS'
-          AND ecl.sent_at > NOW() - INTERVAL '7 days'
-      )
-    ORDER BY l.view_count DESC
-    LIMIT 100
-  `);
-  return result.rows;
-}
-

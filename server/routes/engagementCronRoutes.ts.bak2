@@ -26,8 +26,6 @@ import {
   querySegmentLogin3,
   querySegmentLogin5,
   querySegmentLogin7,
-  queryHotListings,
-  HotListingRow,
   logCampaignEmail,
   logLeadCampaignEmail,
   CampaignUser,
@@ -35,7 +33,6 @@ import {
   CampaignType,
   LeadCampaignType,
 } from '../repositories/campaignRepository';
-import { generateBoostSuggestions } from '../services/listingBoostService';
 
 export function createEngagementCronRouter(pool: Pool, cronSecret: string): Router {
   const router = Router();
@@ -64,7 +61,6 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
       nudge_login_3: { queried: 0, sent: 0, failed: 0 },
       nudge_login_5: { queried: 0, sent: 0, failed: 0 },
       nudge_login_7: { queried: 0, sent: 0, failed: 0 },
-      nudge_listing_views: { queried: 0, sent: 0, failed: 0 },
       lead_nurture:  { queried: 0, sent: 0, failed: 0 },
     };
 
@@ -124,49 +120,6 @@ export function createEngagementCronRouter(pool: Pool, cronSecret: string): Rout
       for (const user of usersL7) {
         await processUser(pool, user, 'NUDGE_LOGIN_7', dryRun, stats.nudge_login_7,
           () => emailService.sendNudgeLogin7(user.tenant_id, user.email, user.name));
-      }
-
-      // === Tin dang hot (>20 luot xem): goi y AI + email cho chu tin ===
-      const hotListings: HotListingRow[] = await queryHotListings(pool);
-      stats.nudge_listing_views.queried = hotListings.length;
-      logger.info(`[EngagementCron] NUDGE_LISTING_VIEWS: ${hotListings.length} tin`);
-      for (const lst of hotListings) {
-        try {
-          if (dryRun) {
-            logger.info(`[EngagementCron][dry-run] NUDGE_LISTING_VIEWS -> ${lst.email} (listing ${lst.listing_id}, ${lst.view_count} views)`);
-            stats.nudge_listing_views.sent++;
-            continue;
-          }
-          const suggestions = await generateBoostSuggestions({
-            id: lst.listing_id,
-            title: lst.title,
-            type: lst.type,
-            price: lst.price,
-            location: lst.location,
-            area: lst.area,
-            bedrooms: lst.bedrooms,
-            viewCount: lst.view_count,
-          });
-          const r = await emailService.sendListingBoost(
-            lst.tenant_id,
-            lst.email,
-            lst.owner_name || '',
-            lst.title || 'tin dang cua ban',
-            lst.view_count,
-            suggestions,
-          );
-          if (r.success) {
-            await logCampaignEmail(pool, lst.tenant_id, lst.owner_id, lst.email, 'NUDGE_LISTING_VIEWS');
-            stats.nudge_listing_views.sent++;
-            logger.info(`[EngagementCron] NUDGE_LISTING_VIEWS ok -> ${lst.email}`);
-          } else {
-            stats.nudge_listing_views.failed++;
-            logger.warn(`[EngagementCron] NUDGE_LISTING_VIEWS that bai -> ${lst.email}`);
-          }
-        } catch (e: any) {
-          stats.nudge_listing_views.failed++;
-          logger.error(`[EngagementCron] NUDGE_LISTING_VIEWS loi -> ${lst.email}: ${e?.message || e}`);
-        }
       }
 
       // ── Segment D ─────────────────────────────────────────────────────────

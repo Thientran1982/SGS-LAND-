@@ -7,7 +7,8 @@ export const ROUTES = {
     // Public Pages
     LANDING: 'home', 
     SEARCH: 'marketplace',  // Matched with footer and other navigation
-    AI_VALUATION: 'ai-valuation',   
+    AI_VALUATION: 'ai-valuation',
+  AI_ADVISOR: 'ai-advisor',   
     CRM_SOLUTION: 'crm-platform',   
     ABOUT: 'about-us',
     NEWS: 'news',
