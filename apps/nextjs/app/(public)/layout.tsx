@@ -2,12 +2,10 @@
 // prerender phase — PublicHeader is "use client" and calls useState/useEffect
 // which crash under the ContextOnlyDispatcher.
 export const dynamic = "force-dynamic";
-
 import { Providers } from "@/components/shared/Providers";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { AiChatWidgetWrapper } from "@/components/public/AiChatWidgetWrapper";
-
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <Providers>

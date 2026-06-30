@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
-
 const BASE = "https://sgsland.vn";
-
 const FAQ_PAGES = [
   { path: "/dau-tu-bat-dong-san",         title: "Đầu tư bất động sản TP.HCM 2026" },
   { path: "/ky-gui-bat-dong-san",          title: "Ký gửi bất động sản" },
@@ -54,10 +52,8 @@ const FAQ_PAGES = [
   { path: "/about-us",                                 title: "Về SGS LAND — đội ngũ, sứ mệnh" },
   { path: "/contact",                                  title: "Liên hệ tư vấn BĐS SGS LAND" },
 ];
-
 export async function GET() {
   const now = new Date().toISOString();
-
   const urlset = FAQ_PAGES.map(
     (page) => `
   <url>
@@ -67,15 +63,10 @@ export async function GET() {
     <priority>0.8</priority>
   </url>`
   ).join("");
-
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 ${urlset}
 </urlset>`;
-
   return new NextResponse(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",

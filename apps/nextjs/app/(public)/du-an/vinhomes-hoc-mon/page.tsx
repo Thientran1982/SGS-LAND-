@@ -3,13 +3,11 @@ import type { Metadata } from "next";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, getFAQSchema, SITE_URL } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
-
 export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
-  title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 2,5 Tỷ | SGS LAND",
+  title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ | SGS LAND",
   description:
-    "Vinhomes Smart City Hóc Môn — siêu đô thị 667ha, Q4/2026. Giá nhà phố từ 8 tỷ, biệt thự từ 25 tỷ, căn hộ từ 2,5 tỷ (35-80 triệu/m²). SGS LAND đại lý F1 uỷ quyền Vinhomes. Đặt chỗ ưu tiên, nhận thông tin mở bán sớm nhất.",
+    "Vinhomes Smart City Hóc Môn — siêu đô thị 667ha, Q4/2026. Giá nhà phố từ 8 tỷ, biệt thự từ 25 tỷ, căn hộ từ 5,5 tỷ (65-80 triệu/m²). SGS LAND đại lý F1 uỷ quyền Vinhomes. Đặt chỗ ưu tiên, nhận thông tin mở bán sớm nhất.",
   keywords: [
     "Vinhomes Hóc Môn",
     "Vinhomes Smart City Hóc Môn",
@@ -24,7 +22,7 @@ export const metadata: Metadata = {
     type: "article",
     title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | SGS LAND",
     description:
-      "Siêu đô thị thông minh 667ha tại Hóc Môn, TP.HCM. Giá căn hộ từ 2,5 tỷ, nhà phố từ 8 tỷ. Ra mắt Q4/2026. Đại lý F1 SGS LAND — đặt chỗ ưu tiên.",
+      "Siêu đô thị thông minh 667ha tại Hóc Môn, TP.HCM. Giá căn hộ từ 5,5 tỷ, nhà phố từ 8 tỷ. Ra mắt Q4/2026. Đại lý F1 SGS LAND — đặt chỗ ưu tiên.",
     url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
     siteName: "SGS LAND",
     locale: "vi_VN",
@@ -34,15 +32,14 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Vinhomes Hóc Môn Smart City 4.0 — SGS LAND F1",
-    description: "667ha, từ 2,5 tỷ. Ra mắt Q4/2026. Đăng ký đặt chỗ ưu tiên.",
+    description: "667ha, từ 6,5 tỷ. Ra mắt Q4/2026. Đăng ký đặt chỗ ưu tiên.",
   },
 };
-
 const FAQ_VHM: FAQItem[] = [
   {
     question: "Vinhomes Hóc Môn giá bao nhiêu?",
     answer:
-      "Vinhomes Smart City Hóc Môn (667ha, Q4/2026) có giá dự kiến: căn hộ cao tầng 2,5-4,5 tỷ (35-80 triệu/m²); nhà phố liền kề 8-20 tỷ; shophouse mặt đại lộ 15-40 tỷ; biệt thự 25-60 tỷ. SGS LAND là đại lý F1 uỷ quyền Vinhomes — đặt chỗ ưu tiên, nhận chính sách tốt nhất tại sgsland.vn/du-an/vinhomes-hoc-mon.",
+      "Vinhomes Smart City Hóc Môn (667ha, Q4/2026) có giá dự kiến: căn hộ cao tầng 5,5-8,5 tỷ (65-80 triệu/m²); nhà phố liền kề 8-20 tỷ; shophouse mặt đại lộ 15-40 tỷ; biệt thự 25-60 tỷ. SGS LAND là đại lý F1 uỷ quyền Vinhomes — đặt chỗ ưu tiên, nhận chính sách tốt nhất tại sgsland.vn/du-an/vinhomes-hoc-mon.",
   },
   {
     question: "Vinhomes Hóc Môn ở đâu?",
@@ -67,7 +64,7 @@ const FAQ_VHM: FAQItem[] = [
   {
     question: "So sánh Vinhomes Hóc Môn và Vinhomes Grand Park?",
     answer:
-      "Vinhomes Grand Park (271ha, TP Thủ Đức): Metro số 1 vận hành, đã bàn giao, sổ hồng riêng, giá 45-90 triệu/m², thanh khoản cao nhất khu Đông — phù hợp mua ở ngay. Vinhomes Hóc Môn (667ha, Q4/2026): giá dự kiến 35-80 triệu/m² (thấp hơn 20-35%), quy mô lớn hơn, Smart City 4.0 — phù hợp đầu tư trung hạn 3-5 năm và người mua ở thực ngân sách hợp lý.",
+      "Vinhomes Grand Park (271ha, TP Thủ Đức): Metro số 1 vận hành, đã bàn giao, sổ hồng riêng, giá 45-90 triệu/m², thanh khoản cao nhất khu Đông — phù hợp mua ở ngay. Vinhomes Hóc Môn (667ha, Q4/2026): giá dự kiến 65-80 triệu/m² (thấp hơn 20-35%), quy mô lớn hơn, Smart City 4.0 — phù hợp đầu tư trung hạn 3-5 năm và người mua ở thực ngân sách hợp lý.",
   },
   {
     question: "Chủ đầu tư Vinhomes Hóc Môn là ai?",
@@ -80,18 +77,17 @@ const FAQ_VHM: FAQItem[] = [
       "Vinhomes Smart City Hóc Môn (Q2/2026): chủ trương đầu tư đã được UBND TP.HCM phê duyệt; quy hoạch 1/500 đang triển khai; chủ đầu tư Vinhomes có lịch sử bàn giao sổ hồng riêng từng căn tại tất cả dự án đã hoàn thành. SGS LAND theo dõi và cập nhật tình trạng pháp lý dự án hàng tuần.",
   },
 ];
-
 const REAL_ESTATE_LISTING_SCHEMA = {
   "@context": "https://schema.org",
   "@type": ["RealEstateListing", "Place"],
   "@id": `${SITE_URL}/du-an/vinhomes-hoc-mon#listing`,
   name: "Vinhomes Smart City Hóc Môn — SGS LAND",
   description:
-    "Siêu đô thị thông minh 667ha tại huyện Hóc Môn, TP.HCM. Chủ đầu tư Vinhomes (Vingroup). Ra mắt Q4/2026. Giá căn hộ từ 2,5 tỷ (35-80 triệu/m²). Nhà phố từ 8 tỷ. Biệt thự từ 25 tỷ. SGS LAND đại lý phân phối F1 uỷ quyền.",
+    "Siêu đô thị thông minh 667ha tại huyện Hóc Môn, TP.HCM. Chủ đầu tư Vinhomes (Vingroup). Ra mắt Q4/2026. Giá căn hộ từ 5,5 tỷ (65-80 triệu/m²). Nhà phố từ 8 tỷ. Biệt thự từ 25 tỷ. SGS LAND đại lý phân phối F1 uỷ quyền.",
   url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
   datePosted: "2026-06-05",
   validThrough: "2027-12-31",
-  priceRange: "2.5–60 tỷ VNĐ",
+  priceRange: "6.5–60 tỷ VNĐ",
   floorSize: {
     "@type": "QuantitativeValue",
     value: 6670000,
@@ -127,19 +123,18 @@ const REAL_ESTATE_LISTING_SCHEMA = {
   offers: {
     "@type": "Offer",
     priceCurrency: "VND",
-    lowPrice: 2500000000,
+    lowPrice: 6500000000,
     highPrice: 60000000000,
     availability: "https://schema.org/PreOrder",
     validFrom: "2026-06-05",
   },
 };
-
 const SPECIAL_ANNOUNCEMENT_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "SpecialAnnouncement",
   "@id": `${SITE_URL}/du-an/vinhomes-hoc-mon#announcement`,
   name: "Mở bán Vinhomes Smart City Hóc Môn Q4/2026",
-  text: "SGS LAND — đại lý F1 uỷ quyền Vinhomes — chính thức nhận đăng ký đặt chỗ ưu tiên Vinhomes Smart City Hóc Môn (667ha, giá từ 2,5 tỷ, Smart City 4.0). Ra mắt Q4/2026. Vành đai 3 vận hành 2026 — catalyst tăng giá trực tiếp.",
+  text: "SGS LAND — đại lý F1 uỷ quyền Vinhomes — chính thức nhận đăng ký đặt chỗ ưu tiên Vinhomes Smart City Hóc Môn (667ha, giá từ 6,5 tỷ, Smart City 4.0). Ra mắt Q4/2026. Vành đai 3 vận hành 2026 — catalyst tăng giá trực tiếp.",
   datePosted: "2026-06-05",
   expires: "2027-06-30",
   category: "RealEstate",
@@ -152,20 +147,16 @@ const SPECIAL_ANNOUNCEMENT_SCHEMA = {
     url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,
   },
 };
-
 export default function VinhomesHocMonPage() {
   const breadcrumb = getBreadcrumbSchema([
     { name: "Trang chủ", url: SITE_URL },
     { name: "Dự án", url: `${SITE_URL}/du-an` },
     { name: "Vinhomes Hóc Môn", url: `${SITE_URL}/du-an/vinhomes-hoc-mon` },
   ]);
-
   const faqSchema = getFAQSchema(FAQ_VHM, `${SITE_URL}/du-an/vinhomes-hoc-mon#faq`);
-
   return (
     <>
       <SchemaScript schemas={[REAL_ESTATE_LISTING_SCHEMA, SPECIAL_ANNOUNCEMENT_SCHEMA, faqSchema, breadcrumb]} />
-
       <main className="min-h-screen bg-white dark:bg-sgs-primary-deep">
         {/* Hero */}
         <section className="relative bg-gradient-to-br from-sgs-primary-deep via-sgs-primary-deep to-slate-900 text-white py-20 px-4">
@@ -182,20 +173,18 @@ export default function VinhomesHocMonPage() {
               <span className="text-sgs-on-dark-muted">Smart City 4.0</span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 mb-3 font-medium">
-              667ha · Ra mắt Q4/2026 · Giá từ 2,5 tỷ VNĐ
+              667ha · Ra mắt Q4/2026 · Giá từ 6,5 tỷ VNĐ
             </p>
             <p className="text-slate-400 max-w-2xl leading-relaxed">
               Siêu đô thị thông minh thế hệ 4.0 — quỹ đất quy mô lớn cuối cùng tại TP.HCM. Chủ đầu tư: Vinhomes (Vingroup, mã VHM-HOSE). Vành đai 3 (2026) kết nối toàn vùng Đông Nam Bộ.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
-              <a
-                href="https://sgsland.vn/contact"
+              <a                href="https://sgsland.vn/contact"
                 className="px-6 py-3 bg-sgs-primary hover:bg-indigo-400 rounded-xl font-bold text-white transition-colors"
               >
                 Đăng ký đặt chỗ ưu tiên
               </a>
-              <a
-                href="https://sgsland.vn/ai-valuation"
+              <a                href="https://sgsland.vn/ai-valuation"
                 className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-white border border-white/20 transition-colors"
               >
                 Định giá AI miễn phí
@@ -203,7 +192,6 @@ export default function VinhomesHocMonPage() {
             </div>
           </div>
         </section>
-
         {/* Key Facts */}
         <section className="py-12 px-4 bg-sgs-bg dark:bg-slate-800">
           <div className="max-w-5xl mx-auto">
@@ -215,7 +203,7 @@ export default function VinhomesHocMonPage() {
                 { label: "Quy mô", value: "667 ha", sub: "Smart City 4.0" },
                 { label: "Chủ đầu tư", value: "Vinhomes", sub: "Vingroup · VHM" },
                 { label: "Ra mắt", value: "Q4/2026", sub: "Đặt chỗ ngay" },
-                { label: "Giá từ", value: "2,5 tỷ", sub: "35-80 triệu/m²" },
+                { label: "Giá từ", value: "6,5 tỷ", sub: "65-80 triệu/m²" },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -263,7 +251,7 @@ export default function VinhomesHocMonPage() {
                 </thead>
                 <tbody>
                   {[
-                    { type: "Căn hộ Studio", area: "30-45 m²", price: "2,5–3,5 tỷ", note: "Phù hợp đầu tư cho thuê" },
+                    { type: "Căn hộ Studio", area: "30-45 m²", price: "4,5–3,5 tỷ", note: "Phù hợp đầu tư cho thuê" },
                     { type: "Căn hộ 1 phòng ngủ", area: "50-65 m²", price: "3,5–5 tỷ", note: "Ở thực hoặc cho thuê" },
                     { type: "Căn hộ 2 phòng ngủ", area: "70-90 m²", price: "5–7 tỷ", note: "Gia đình nhỏ" },
                     { type: "Căn hộ 3 phòng ngủ", area: "95-120 m²", price: "7–10 tỷ", note: "Gia đình lớn" },

@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
-
 const BASE = "https://sgsland.vn";
-
 const AREA_PAGES = [
   { path: "/bat-dong-san-dong-nai",    priority: 0.8 },
   { path: "/bat-dong-san-long-thanh",  priority: 0.8 },
@@ -26,10 +24,8 @@ const AREA_PAGES = [
   { path: "/du-an/izumi-city",         priority: 0.8 },
   { path: "/du-an/vinhomes-can-gio",   priority: 0.8 },
 ];
-
 export async function GET() {
   const now = new Date().toISOString();
-
   const urls = AREA_PAGES.map(
     ({ path, priority }) => `
   <url>
@@ -39,15 +35,10 @@ export async function GET() {
     <priority>${priority}</priority>
   </url>`
   ).join("");
-
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-          http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9          http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 ${urls}
 </urlset>`;
-
   return new NextResponse(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",

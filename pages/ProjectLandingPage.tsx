@@ -1699,7 +1699,6 @@ export default function ProjectLandingPage() {
           </section>
         </>
       )}
-
             {/* ── Internal Links ── */}
             <section className="py-10 px-4 bg-[var(--bg-app)]">
                 <div className="max-w-6xl mx-auto">

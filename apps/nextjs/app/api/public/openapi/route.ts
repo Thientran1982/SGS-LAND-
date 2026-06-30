@@ -1,9 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
-
 export const dynamic = "force-static";
 export const revalidate = 86400;
-
 const OPENAPI_SCHEMA = {
   openapi: "3.0.0",
   info: {
@@ -45,7 +43,6 @@ const OPENAPI_SCHEMA = {
     industry: "Real Estate Technology (Proptech)",
   },
 };
-
 export async function GET() {
   return NextResponse.json(OPENAPI_SCHEMA, {
     headers: {

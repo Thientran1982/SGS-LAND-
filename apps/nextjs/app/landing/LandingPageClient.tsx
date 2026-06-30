@@ -32,14 +32,16 @@ export default function LandingPageClient({ slug }: Props) {
         const open = navLinks.classList.toggle("lp-open");
         burger.setAttribute("aria-expanded", String(open));
       });
-      // Close on link click      navLinks.querySelectorAll("a").forEach((a) => {
+      // Close on link click
+      navLinks.querySelectorAll("a").forEach((a) => {
         a.addEventListener("click", () => {
           navLinks.classList.remove("lp-open");
           burger.setAttribute("aria-expanded", "false");
         });
       });
     }
-    // ── Interest chips ───────────────────────────────    document.querySelectorAll<HTMLButtonElement>(".lp-chip").forEach((chip) => {
+    // ── Interest chips ───────────────────────────────
+    document.querySelectorAll(".lp-chip").forEach((chip) => {
       chip.addEventListener("click", () => {
         chip.classList.toggle("on");
       });
@@ -50,12 +52,12 @@ export default function LandingPageClient({ slug }: Props) {
     if (form) {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const btn = form.querySelector<HTMLButtonElement>(".lp-btn-submit");
+        const btn = form.querySelector(".lp-btn-submit");
         if (btn) {
           btn.disabled = true;
           btn.textContent = "Đang gửi...";
         }
-        const interests = Array.from(          form.querySelectorAll<HTMLButtonElement>(".lp-chip.on"),
+        const interests = Array.from(          form.querySelectorAll(".lp-chip.on"),
         ).map((c) => c.textContent ?? "");
         const payload = {
           name: (form.elements.namedItem("name") as HTMLInputElement)?.value ?? "",
@@ -102,7 +104,8 @@ export default function LandingPageClient({ slug }: Props) {
       );
       document.querySelectorAll(".lp-reveal").forEach((el) => io.observe(el));
     } else {
-      // Fallback: show all immediately      document.querySelectorAll<HTMLElement>(".lp-reveal").forEach((el) => {
+      // Fallback: show all immediately
+      document.querySelectorAll(".lp-reveal").forEach((el) => {
         el.classList.add("lp-in");
       });
     }

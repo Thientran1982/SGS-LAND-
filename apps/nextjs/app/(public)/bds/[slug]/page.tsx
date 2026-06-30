@@ -13,8 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const code = uuidMatch ? uuidMatch[0] : (slug.split("-").pop() ?? slug);
   let listing: Listing | null = null;
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/${code}`,
+    const res = await fetch(      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings/${code}`,
       { cache: "no-store" }
     );
     if (res.ok) listing = await res.json();

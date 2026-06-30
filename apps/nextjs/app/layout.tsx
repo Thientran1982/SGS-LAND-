@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   description:
     "SGS LAND - Nền tảng BĐS AI: định giá tự động, CRM đa kênh, quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.",
   keywords: [
-    "phần mềm quản lý bất động sản",
+    "sàn quản lý bất động sản",
     "CRM bất động sản",
     "phần mềm môi giới bất động sản",
     "định giá bất động sản AI",

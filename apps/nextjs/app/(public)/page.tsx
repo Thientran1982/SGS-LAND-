@@ -90,8 +90,7 @@ export default async function HomePage() {
   let featuredListings: Listing[] = [];
   let stats = { totalListings: 45000, totalProjects: 12, totalBrokers: 15000 };
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=6&featured=true`,
+    const res = await fetch(      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/public/listings?limit=6&featured=true`,
       { next: { revalidate: 3600 } }
     );
     if (res.ok) {

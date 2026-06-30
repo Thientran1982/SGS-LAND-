@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
-
 const BASE = "https://sgsland.vn";
-
 const LOCAL_PAGES = [
   // TP.HCM quận/huyện landing pages
   { path: "/bat-dong-san-quan-1",          title: "Bất động sản Quận 1 TP.HCM" },
@@ -37,10 +35,8 @@ const LOCAL_PAGES = [
   { path: "/du-an/vinhomes-grand-park",   title: "Dự án Vinhomes Grand Park — Thủ Đức" },
   { path: "/du-an/masteri-cosmo-central", title: "Dự án Masteri Cosmo Central — Bình Thạnh" },
 ];
-
 export async function GET() {
   const now = new Date().toISOString();
-
   const urlset = LOCAL_PAGES.map(
     (page) => `
   <url>
@@ -50,15 +46,10 @@ export async function GET() {
     <priority>0.7</priority>
   </url>`
   ).join("");
-
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 ${urlset}
 </urlset>`;
-
   return new NextResponse(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
