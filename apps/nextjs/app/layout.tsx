@@ -154,6 +154,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="dns-prefetch" href="https://c.clarity.ms" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LBRB691S4" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-3LBRB691S4');`,
+          }}
+        />
 
         {/* Sitewide JSON-LD: WebSite (SearchAction) + Organization (E-E-A-T) */}
         <SchemaScript schemas={[

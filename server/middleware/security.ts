@@ -23,11 +23,11 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
-      `script-src 'self' ${scriptInline}https://www.clarity.ms; ` +
+      `script-src 'self' ${scriptInline}https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms; ` +
       `style-src 'self' ${styleInline}https://fonts.googleapis.com; ` +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms https://w.clarity.ms; " +
+      "connect-src 'self' wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms https://w.clarity.ms; " +
       "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';"
     );
@@ -37,11 +37,11 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' ws: wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org; " +
+      "connect-src 'self' ws: wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms; " +
       "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';"
     );
