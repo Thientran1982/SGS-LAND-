@@ -55,10 +55,10 @@ const TICKER_ITEMS: { vi: string; en: string }[] = [
   { vi: "Nhà phố Vinhomes Cần Giờ 4PN — 8,5 tỷ — Nhận đặt cọc 27/05/2026",        en: "Vinhomes Can Gio 4BR Apt — 8.5B VND — Deposit accepted 27/05/2026"     },
 ];
 const PLACEHOLDERS: { vi: string; en: string }[] = [
-  { vi: "Căn hộ 2PN gần Metro số 1, dưới 6 tỷ…",                       en: "2BR apartment near Metro Line 1, under 6B VND…"              },
-  { vi: "Biệt thự Aqua City có sổ hồng riêng…",                         en: "Villa at Aqua City with freehold title…"                     },
-  { vi: "Căn hộ Masteri Cosmo Central pháp lý sạch dưới 7 tỷ…",        en: "Legal-clean Masteri Cosmo Central apartment under 7B VND…"  },
-  { vi: "Vay 70% mua Vinhomes Hóc Môn, lãi suất thấp nhất…",           en: "70% mortgage for Vinhomes Hoc Mon, lowest rate…"            },
+  { vi: "Mua căn hộ 2PN gần Metro…",       en: "2BR apartment near Metro…"        },
+  { vi: "Tìm nhà phố có sổ hồng…",         en: "Townhouse with freehold title…"   },
+  { vi: "Căn hộ Masteri pháp lý sạch…",    en: "Legal-clean Masteri apartment…"   },
+  { vi: "Vay mua nhà lãi suất thấp…",      en: "Low-rate mortgage for a home…"    },
 ];
 const QUICK_CHIPS: { vi: string; en: string }[] = [
   { vi: "Biệt thự Aqua City có sổ hồng", en: "Aqua City villa with freehold title" },
@@ -242,11 +242,23 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
   const [query, setQuery]           = useState("");
   const [phIdx, setPhIdx]           = useState(0);
   const [visible, setVisible]       = useState(false);
+  // null = before mount (SSR-safe); true = mobile ≤639px; false = desktop
+  const [isMobile, setIsMobile]     = useState<boolean | null>(null);
   useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
   useEffect(() => {
     const id = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 3200);
     return () => clearInterval(id);
   }, []);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  const placeholderText = (isMobile === null || isMobile)
+    ? (lang === "vi" ? "Mô tả nhu cầu BĐS..." : "Describe your property needs...")
+    : PLACEHOLDERS[phIdx][lang];
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query || PLACEHOLDERS[phIdx][lang]);
@@ -365,7 +377,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder={PLACEHOLDERS[phIdx][lang]}
+                  placeholder={placeholderText}
                   className="w-full px-4 py-3 rounded-xl text-[16px] md:text-sm outline-none transition-all"
                   style={{
                     background: "var(--sgs-subtle-bg, #F8F9FB)",

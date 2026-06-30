@@ -5148,7 +5148,7 @@ async function startServer() {
   } else {
     // ── Production: SSR meta-tag injection ────────────────────────────────────
     // Import the injector lazily so it is never bundled when running in dev mode.
-    const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta, buildProjectMeta } =
+    const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta } =
       await import('./server/seo/metaInjector');
     const { renderSsrPage, generateBotHTML } = await import('./server/ssr-renderer');
     const { isAIBot, isSocialBot, isBot } = await import('./server/bot-detector');
@@ -5237,16 +5237,7 @@ async function startServer() {
           bedrooms: raw.bedrooms, bathrooms: raw.bathrooms, location: raw.location,
           images: raw.images,
         };
-        // BDS_AI_EXTRAS — attach DB-stored price history + news so the listing SSR body
-      // renders the AI Price History and AI News sections for crawlers.
-      try {
-        let priceHistory: any[] = [];
-        let news: any[] = [];
-        try { const ph = await pool.query(`SELECT recorded_at, price_per_m2, price_min, price_max, trend_text, confidence, location_display FROM market_price_history ORDER BY recorded_at DESC LIMIT 6`); priceHistory = ph.rows.map((r: any) => ({ recordedAt: r.recorded_at, pricePerM2: r.price_per_m2, priceMin: r.price_min, priceMax: r.price_max, trendText: r.trend_text, confidence: r.confidence, locationDisplay: r.location_display })); } catch { /* ignore */ }
-        try { const nw = await pool.query(`SELECT title, slug, published_at FROM articles WHERE status = 'PUBLISHED' ORDER BY published_at DESC NULLS LAST LIMIT 6`); news = nw.rows.map((r: any) => ({ title: r.title, slug: r.slug, publishedAt: r.published_at })); } catch { /* ignore */ }
-        (listing as any).__aiExtras = { priceHistory, news };
-      } catch { /* non-fatal */ }
-      sendMeta(res, buildListingMeta(listing));
+        sendMeta(res, buildListingMeta(listing));
       } catch { next(); }
     });
 
@@ -5314,7 +5305,7 @@ async function startServer() {
         sendMeta(res, buildStaticPageMeta(null, null, null, route));
       });
     }
-    app.get('/du-an/:projectSlug', async (req: express.Request, res: express.Response) => {
+    app.get('/du-an/:projectSlug', (req: express.Request, res: express.Response) => {
       const pagePath = `/du-an/${req.params.projectSlug}`;
       if (req.path.startsWith('/assets/')) { return res.status(404).end(); }
       const ua = String(req.headers['user-agent'] || '');
@@ -5322,22 +5313,7 @@ async function startServer() {
       // GEO-maximized body for AI crawlers (GPTBot, PerplexityBot, ClaudeBot);
       // standard body + RealEstateListing schema for all other requests.
       // Falls back to STATIC_PAGE_META for project pages not in PAGE_META.
-      // DU_AN_DB_PRIORITY — prefer DB-driven rich body (8 AI sections) over hardcoded PAGE_META.
-      let ssrHtml: string | null = null;
-      try {
-        const pslug0 = String(req.params.projectSlug || '');
-        const pr0 = await pool.query(`SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`, [pslug0]);
-        const row0: any = pr0.rows[0];
-        if (row0) {
-          const project0: any = { id: row0.id, name: row0.name, code: row0.code, description: row0.description, location: row0.location, openDate: row0.open_date, handoverDate: row0.handover_date, metadata: row0.metadata && typeof row0.metadata === 'object' ? row0.metadata : {} };
-          let priceHistory0: any[] = [], news0: any[] = [];
-          try { const ph0 = await pool.query(`SELECT recorded_at, price_per_m2, price_min, price_max, trend_text, confidence, location_display FROM market_price_history ORDER BY recorded_at DESC LIMIT 6`); priceHistory0 = ph0.rows.map((r: any) => ({ recordedAt: r.recorded_at, pricePerM2: r.price_per_m2, priceMin: r.price_min, priceMax: r.price_max, trendText: r.trend_text, confidence: r.confidence, locationDisplay: r.location_display })); } catch {}
-          try { const nw0 = await pool.query(`SELECT title, slug, published_at FROM articles WHERE status = 'PUBLISHED' ORDER BY published_at DESC NULLS LAST LIMIT 6`); news0 = nw0.rows.map((r: any) => ({ title: r.title, slug: r.slug, publishedAt: r.published_at })); } catch {}
-          project0.__aiExtras = { priceHistory: priceHistory0, news: news0 };
-          ssrHtml = injectMeta(getBaseHtml(), buildProjectMeta(project0));
-        }
-      } catch { ssrHtml = null; }
-      if (!ssrHtml) ssrHtml = renderSsrPage(pagePath, { aiBot });
+      const ssrHtml = renderSsrPage(pagePath, { aiBot });
       if (ssrHtml) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         // AI-bot responses must not be served from a shared cache (content differs
@@ -5352,25 +5328,6 @@ async function startServer() {
         res.send(ssrHtml);
         return;
       }
-      // DU_AN_PROJECT_SSR — look up project by slug and render rich GEO body (DB data only).
-      try {
-        const pslug = String(req.params.projectSlug || '');
-        const pr = await pool.query(
-          `SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`,
-          [pslug]
-        );
-        const prow: any = pr.rows[0];
-        if (prow) {
-          const project: any = { id: prow.id, name: prow.name, code: prow.code, description: prow.description, location: prow.location, openDate: prow.open_date, handoverDate: prow.handover_date, metadata: prow.metadata && typeof prow.metadata === 'object' ? prow.metadata : {} };
-          let priceHistory: any[] = [];
-          let news: any[] = [];
-          try { const ph = await pool.query(`SELECT recorded_at, price_per_m2, price_min, price_max, trend_text, confidence, location_display FROM market_price_history ORDER BY recorded_at DESC LIMIT 6`); priceHistory = ph.rows.map((r: any) => ({ recordedAt: r.recorded_at, pricePerM2: r.price_per_m2, priceMin: r.price_min, priceMax: r.price_max, trendText: r.trend_text, confidence: r.confidence, locationDisplay: r.location_display })); } catch { /* ignore */ }
-          try { const nw = await pool.query(`SELECT title, slug, published_at FROM articles WHERE status = 'PUBLISHED' ORDER BY published_at DESC NULLS LAST LIMIT 6`); news = nw.rows.map((r: any) => ({ title: r.title, slug: r.slug, publishedAt: r.published_at })); } catch { /* ignore */ }
-          project.__aiExtras = { priceHistory, news };
-          sendMeta(res, buildProjectMeta(project));
-          return;
-        }
-      } catch (e) { /* fall through to static meta */ }
       sendMeta(res, buildStaticPageMeta(null, null, null, pagePath));
     });
 
@@ -5624,37 +5581,7 @@ async function startServer() {
 
       if (isBot(ua)) {
         const aiBot = isAIBot(ua);
-        // BOT_DB_SSR — for project/listing detail pages, render rich crawlable body
-      // from DB (8 AI sections + FAQ/ApartmentComplex/RealEstateListing JSON-LD).
-      let html: string | null = null;
-      try {
-        const phMatch = pathname.match(/^\/du-an\/([^\/?#]+)\/?$/);
-        const bdMatch = pathname.match(/^\/bds\/.*-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
-        const fetchExtras = async () => {
-          let priceHistory: any[] = [], news: any[] = [];
-          try { const ph = await pool.query(`SELECT recorded_at, price_per_m2, price_min, price_max, trend_text, confidence, location_display FROM market_price_history ORDER BY recorded_at DESC LIMIT 6`); priceHistory = ph.rows.map((r: any) => ({ recordedAt: r.recorded_at, pricePerM2: r.price_per_m2, priceMin: r.price_min, priceMax: r.price_max, trendText: r.trend_text, confidence: r.confidence, locationDisplay: r.location_display })); } catch {}
-          try { const nw = await pool.query(`SELECT title, slug, published_at FROM articles WHERE status = 'PUBLISHED' ORDER BY published_at DESC NULLS LAST LIMIT 6`); news = nw.rows.map((r: any) => ({ title: r.title, slug: r.slug, publishedAt: r.published_at })); } catch {}
-          return { priceHistory, news };
-        };
-        if (phMatch) {
-          const pr = await pool.query(`SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`, [phMatch[1]]);
-          const row: any = pr.rows[0];
-          if (row) {
-            const project: any = { id: row.id, name: row.name, code: row.code, description: row.description, location: row.location, openDate: row.open_date, handoverDate: row.handover_date, metadata: row.metadata && typeof row.metadata === 'object' ? row.metadata : {} };
-            project.__aiExtras = await fetchExtras();
-            html = injectMeta(getBaseHtml(), buildProjectMeta(project));
-          }
-        } else if (bdMatch) {
-          const lr = await pool.query(`SELECT id, code, title, description, type, transaction, status, price, currency, area, bedrooms, bathrooms, location, images, attributes FROM listings WHERE id = $1 LIMIT 1`, [bdMatch[1]]);
-          const row: any = lr.rows[0];
-          if (row) {
-            const listing: any = { id: row.id, code: row.code, title: row.title, description: row.description, type: row.type, transaction: row.transaction, status: row.status, price: row.price != null ? Number(row.price) : null, currency: row.currency, area: row.area != null ? Number(row.area) : null, bedrooms: row.bedrooms, bathrooms: row.bathrooms, location: row.location, images: row.images, attributes: row.attributes && typeof row.attributes === 'object' ? row.attributes : {} };
-            listing.__aiExtras = await fetchExtras();
-            html = injectMeta(getBaseHtml(), buildListingMeta(listing));
-          }
-        }
-      } catch (e) { html = null; }
-      if (!html) html = generateBotHTML(pathname, { aiBot });
+        const html = generateBotHTML(pathname, { aiBot });
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('X-Rendered-By', 'SGS-SSR');
         res.setHeader(
