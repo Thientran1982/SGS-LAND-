@@ -1296,7 +1296,6 @@ class DatabaseApiClient {
     const coreItems: any[] = [
       { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
       { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
-      { id: 'ai-advisor', labelKey: 'menu.ai_advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
     ];
     if (isHostTenant) {
       coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });

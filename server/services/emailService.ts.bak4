@@ -293,8 +293,13 @@ function warningBox(title: string, body: string): string {
 </table>`;
 }
 function iconCircle(bgColor: string, emoji: string): string {
-  // Emoji-free: decorative badge removed for clean, professional emails.
-  return '';
+  return `<table cellpadding="0" cellspacing="0" border="0" align="center">
+  <tr>
+    <td width="64" height="64" bgcolor="${bgColor}" align="center" valign="middle" style="border-radius:32px;width:64px;height:64px;text-align:center;font-size:28px;font-family:Arial,sans-serif;">
+      ${emoji}
+    </td>
+  </tr>
+</table>`;
 }
 function spacer(h: number): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:${h}px;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
@@ -474,7 +479,7 @@ async function sendVerificationEmail(tenantId: string, to: string, userName: str
   const safeUrl  = escapeHtml(verifyUrl);
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#E8EEF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#E8EEF5', '&#9993;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -513,7 +518,7 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
   const safeUrl = escapeHtml(resetUrl);
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#FEF3C7', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#FEF3C7', '&#128274;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -533,7 +538,7 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
     ${linkBox(safeUrl)}
     ${spacer(20)}
     ${divider()}
-    ${warningBox('Lưu ý bảo mật', 'Link này có hiệu lực trong <strong>1 giờ</strong>. Nếu bạn không yêu cầu đặt lại mật khẩu, tài khoản của bạn vẫn an toàn — hãy bỏ qua email này.')}
+    ${warningBox('&#9888; Lưu ý bảo mật', 'Link này có hiệu lực trong <strong>1 giờ</strong>. Nếu bạn không yêu cầu đặt lại mật khẩu, tài khoản của bạn vẫn an toàn — hãy bỏ qua email này.')}
   `;
   return sendEmail(tenantId, {
     to,
@@ -549,11 +554,11 @@ async function sendWelcomeEmail(tenantId: string, to: string, userName: string):
   const safeName = escapeHtml(userName);
   const featureRow = (text: string) =>
     `<tr><td style="padding:5px 0;color:#334155;font-size:13px;font-family:Arial,sans-serif;">
-      <span style="color:var(--sgs-primary);font-weight:bold;"></span>&nbsp;&nbsp;${text}
+      <span style="color:var(--sgs-primary);font-weight:bold;">&#10004;</span>&nbsp;&nbsp;${text}
     </td></tr>`;
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#ECFDF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#ECFDF5', '&#127881;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -600,7 +605,7 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
   const roleDisplay = roleLabels[role.toLowerCase()] || escapeHtml(role);
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#E8EEF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#E8EEF5', '&#128100;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -669,7 +674,7 @@ async function sendContactNotification(
   const safeMsg     = escapeHtml(message).replace(/\n/g, '<br>');
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#E8EEF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#E8EEF5', '&#9993;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -723,7 +728,7 @@ async function sendContactNotification(
 const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: string; guidance: string; cta?: { url: string; label: string } }> = {
   support: {
     label: 'Tư vấn Thiết kế & Xây dựng',
-    icon:  '',
+    icon:  '&#127775;',
     iconBg: '#E8EEF5',
     guidance: `
       <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
@@ -740,7 +745,7 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
   },
   sales: {
     label: 'Tư vấn Mua/Bán Bất Động Sản',
-    icon:  '',
+    icon:  '&#127968;',
     iconBg: '#ECFDF5',
     guidance: `
       <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
@@ -757,7 +762,7 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
   },
   partnership: {
     label: 'Hợp tác Kinh doanh',
-    icon:  '',
+    icon:  '&#129309;',
     iconBg: '#FFF7ED',
     guidance: `
       <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
@@ -765,16 +770,16 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
       </p>
       <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">Hình thức hợp tác chúng tôi quan tâm:</p>
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;"></span>&nbsp; Hợp tác phân phối & môi giới bất động sản</td></tr>
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;"></span>&nbsp; Liên doanh phát triển dự án</td></tr>
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;"></span>&nbsp; Cung cấp dịch vụ cho hệ sinh thái bất động sản</td></tr>
-        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;"></span>&nbsp; Đối tác công nghệ & truyền thông</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Hợp tác phân phối & môi giới bất động sản</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Liên doanh phát triển dự án</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Cung cấp dịch vụ cho hệ sinh thái bất động sản</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Đối tác công nghệ & truyền thông</td></tr>
       </table>`,
     cta: { url: 'https://sgsland.vn/#/contact', label: 'Liên Hệ Hợp Tác Ngay' },
   },
   other: {
     label: 'Yêu cầu khác',
-    icon:  '',
+    icon:  '&#128172;',
     iconBg: '#F0F9FF',
     guidance: `
       <p style="color:#475569;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">
@@ -856,7 +861,7 @@ async function sendNudgeA(tenantId: string, to: string, userName: string): Promi
   const listingUrl = 'https://sgsland.vn/#/dang-tin';
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#E8EEF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#E8EEF5', '&#127968;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -881,19 +886,19 @@ async function sendNudgeA(tenantId: string, to: string, userName: string): Promi
       <tr><td style="padding:16px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Miễn phí 100%</strong> — Không mất phí đăng tin
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Hỗ trợ AI</strong> — Mô tả tự động, gợi ý giá thị trường
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
               <strong>Tiếp cận ngay</strong> — Tin hiển thị trên SGS LAND ngay sau khi đăng
             </td>
@@ -925,7 +930,7 @@ async function sendNudgeB(tenantId: string, to: string, userName: string): Promi
   const listingUrl   = 'https://sgsland.vn/#/dang-tin';
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#FFF7ED', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#FFF7ED', '&#128204;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -949,19 +954,19 @@ async function sendNudgeB(tenantId: string, to: string, userName: string): Promi
       <tr><td style="padding:16px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Cập nhật giá</strong> — Điều chỉnh theo xu hướng thị trường hiện tại
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Thêm ảnh thực tế</strong> — Tin có nhiều ảnh được xem nhiều hơn 3 lần
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
               <strong>Đăng thêm tin mới</strong> — Nhiều tin = nhiều cơ hội thành giao dịch
             </td>
@@ -998,7 +1003,7 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
   const marketUrl  = 'https://sgsland.vn/#/tim-kiem';
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#F0FDF4', '&#128200;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1022,19 +1027,19 @@ async function sendNudgeC(tenantId: string, to: string, userName: string): Promi
       <tr><td style="padding:16px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>TP.HCM</strong> — Phân khúc căn hộ trung cấp giao dịch tăng mạnh quý này
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Hà Nội</strong> — Đất nền ven đô thu hút nhà đầu tư dài hạn
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
               <strong>Lãi suất</strong> — Các ngân hàng đang có gói vay ưu đãi từ 6%/năm
             </td>
@@ -1071,7 +1076,7 @@ async function sendNudgeD(tenantId: string, to: string, userName: string): Promi
 
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#FFF7ED', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#FFF7ED', '&#11088;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1095,25 +1100,25 @@ async function sendNudgeD(tenantId: string, to: string, userName: string): Promi
       <tr><td style="padding:16px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127381;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Đẩy tin ưu tiên</strong> — Tin của bạn hiển thị top đầu kết quả tìm kiếm
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128202;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Phân tích nâng cao</strong> — Báo cáo lượt xem, tỷ lệ chuyển đổi và đề xuất giá AI
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#129302;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>AI CRM không giới hạn</strong> — Tự động chăm sóc khách hàng 24/7
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127775;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
               <strong>Huy hiệu "Môi giới Pro"</strong> — Tăng độ tin cậy với khách mua
             </td>
@@ -1146,7 +1151,7 @@ async function sendNudgeE(tenantId: string, to: string, userName: string): Promi
 
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#EFF6FF', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#EFF6FF', '&#129302;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1170,25 +1175,25 @@ async function sendNudgeE(tenantId: string, to: string, userName: string): Promi
       <tr><td style="padding:16px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128176;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>AI Định Giá</strong> — Nhập địa chỉ, nhận ước tính giá thị trường ngay lập tức
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128221;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>AI Mô Tả Tin Đăng</strong> — Nhập thông tin cơ bản, AI viết mô tả hấp dẫn và chuẩn SEO
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128172;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>AI Chatbot 24/7</strong> — Trả lời tự động câu hỏi của khách mua khi bạn bận
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128269;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
               <strong>AI Phân Tích Thị Trường</strong> — Xu hướng giá, khu vực tiềm năng, báo cáo tức thì
             </td>
@@ -1232,7 +1237,7 @@ async function sendLeadNurture(
   const contactUrl  = `https://sgsland.vn/#/lien-he`;
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#F0FDF4', '&#127968;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1256,25 +1261,25 @@ async function sendLeadNurture(
       <tr><td style="padding:16px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128209;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Bảng giá mới nhất</strong> từ chủ đầu tư ${safeProject}
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127963;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Mặt bằng phân khu</strong> và quỹ căn còn lại ưu tiên
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#127981;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
               <strong>Chính sách vay ngân hàng</strong> ưu đãi, lãi suất từ 6%/năm
             </td>
           </tr>
           <tr>
-            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;"></td>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128204;</td>
             <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
               <strong>Cập nhật tiến độ pháp lý</strong> và lịch mở bán chính thức
             </td>
@@ -1288,7 +1293,7 @@ async function sendLeadNurture(
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
         <a href="tel:${hotline}" style="color:var(--sgs-primary);font-size:14px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;">
-          Gọi ngay: ${hotlineDisp} (24/7)
+          &#128222; Gọi ngay: ${hotlineDisp} (24/7)
         </a>
       </td></tr>
     </table>
@@ -1431,7 +1436,7 @@ async function sendBillingReceiptEmail(
     </tr>`;
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#ECFDF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#ECFDF5', '&#10004;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1504,7 +1509,7 @@ async function sendBillingAdminAlertEmail(
     </tr>`;
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#E8EEF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#E8EEF5', '&#128176;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1556,7 +1561,7 @@ async function sendVendorApprovedEmail(
   const safeUrl     = escapeHtml(loginUrl);
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#ECFDF5', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#ECFDF5', '&#10003;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1573,10 +1578,10 @@ async function sendVendorApprovedEmail(
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0FDF4" style="border:1px solid #BBF7D0;border-radius:8px;">
       <tr><td style="padding:16px 20px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;"></span>&nbsp;&nbsp;Quản lý bất động sản và danh sách cho thuê/bán</td></tr>
-          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;"></span>&nbsp;&nbsp;Hệ thống CRM theo dõi khách hàng tiềm năng</td></tr>
-          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;"></span>&nbsp;&nbsp;AI hỗ trợ định giá và tư vấn tự động</td></tr>
-          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;"></span>&nbsp;&nbsp;Báo cáo doanh thu và phân tích thị trường</td></tr>
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;Quản lý bất động sản và danh sách cho thuê/bán</td></tr>
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;Hệ thống CRM theo dõi khách hàng tiềm năng</td></tr>
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;AI hỗ trợ định giá và tư vấn tự động</td></tr>
+          <tr><td style="padding:4px 0;color:#166534;font-size:13px;font-family:Arial,sans-serif;"><span style="font-weight:bold;">&#10004;</span>&nbsp;&nbsp;Báo cáo doanh thu và phân tích thị trường</td></tr>
         </table>
       </td></tr>
     </table>
@@ -1608,7 +1613,7 @@ async function sendVendorRejectedEmail(
   const safeReason  = escapeHtml(reason);
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#FFF1F2', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#FFF1F2', '&#10007;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1647,7 +1652,7 @@ async function sendNudgeLogin3(tenantId: string, to: string, userName: string): 
   const loginUrl = 'https://sgsland.vn/#/dang-nhap';
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#F0FDF4', '&#128075;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1687,7 +1692,7 @@ async function sendNudgeLogin5(tenantId: string, to: string, userName: string): 
   const loginUrl = 'https://sgsland.vn/#/dang-nhap';
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#F0FDF4', '&#128075;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1727,7 +1732,7 @@ async function sendNudgeLogin7(tenantId: string, to: string, userName: string): 
   const loginUrl = 'https://sgsland.vn/#/dang-nhap';
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#F0FDF4', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#F0FDF4', '&#128075;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1782,7 +1787,7 @@ async function sendListingBoost(
     .join('');
   const content = `
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center">${iconCircle('#EFF6FF', '')}</td></tr>
+      <tr><td align="center">${iconCircle('#EFF6FF', '&#128200;')}</td></tr>
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">

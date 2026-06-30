@@ -238,12 +238,6 @@ export async function querySegmentLogin3(pool: Pool): Promise<CampaignUser[]> {
           AND ecl.campaign = 'NUDGE_LOGIN_3'
           AND ecl.sent_at > NOW() - INTERVAL '7 days'
       )
-        AND NOT EXISTS (
-          SELECT 1 FROM email_campaign_log ecl_x
-          WHERE ecl_x.user_id = u.id
-            AND ecl_x.campaign IN ('NUDGE_LOGIN_3','NUDGE_LOGIN_5','NUDGE_LOGIN_7')
-            AND ecl_x.sent_at >= u.last_login_at
-        )
     ORDER BY u.last_login_at ASC
     LIMIT 100
   `);
@@ -271,12 +265,6 @@ export async function querySegmentLogin5(pool: Pool): Promise<CampaignUser[]> {
           AND ecl.campaign = 'NUDGE_LOGIN_5'
           AND ecl.sent_at > NOW() - INTERVAL '7 days'
       )
-        AND NOT EXISTS (
-          SELECT 1 FROM email_campaign_log ecl_x
-          WHERE ecl_x.user_id = u.id
-            AND ecl_x.campaign IN ('NUDGE_LOGIN_3','NUDGE_LOGIN_5','NUDGE_LOGIN_7')
-            AND ecl_x.sent_at >= u.last_login_at
-        )
     ORDER BY u.last_login_at ASC
     LIMIT 100
   `);
@@ -304,12 +292,6 @@ export async function querySegmentLogin7(pool: Pool): Promise<CampaignUser[]> {
           AND ecl.campaign = 'NUDGE_LOGIN_7'
           AND ecl.sent_at > NOW() - INTERVAL '14 days'
       )
-        AND NOT EXISTS (
-          SELECT 1 FROM email_campaign_log ecl_x
-          WHERE ecl_x.user_id = u.id
-            AND ecl_x.campaign IN ('NUDGE_LOGIN_3','NUDGE_LOGIN_5','NUDGE_LOGIN_7')
-            AND ecl_x.sent_at >= u.last_login_at
-        )
     ORDER BY u.last_login_at ASC
     LIMIT 100
   `);
