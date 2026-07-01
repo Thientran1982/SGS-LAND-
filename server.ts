@@ -5574,6 +5574,7 @@ async function startServer() {
 
     // Long-lived cache for hashed assets (JS/CSS chunks have content hash in filename)
     app.use(express.static("dist", {
+      index: false, // SSR-fix: dont auto-serve dist/index.html for / so homepage reaches bot-SSR catch-all
       maxAge: '1y',
       immutable: true,
       setHeaders: (res, filePath) => {

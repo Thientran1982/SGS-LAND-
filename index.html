@@ -501,8 +501,7 @@
   <body>
     <div id="app-background"></div>
     <div id="root">
-        <!-- SEO content: inside noscript so browsers with JS never render it;
-             search crawlers (Googlebot, Bingbot) read noscript content normally. -->
+        <!-- The noscript block below is a fallback ONLY for users who disable JavaScript. SEO content for crawlers is injected server-side directly into #root by the bot-SSR renderer (see server/ssr-renderer.tsx); JS-rendering crawlers like Googlebot will not read noscript content. -->
         <noscript>
           <p class="ns-tagline" style="font-size:18px;font-weight:700;color:#4F46E5;margin-bottom:8px;">SGS LAND — Đại Lý Bất Động Sản TP.HCM</p>
           <h2>SGS LAND – Đại Lý Bất Động Sản TP.HCM</h2>
