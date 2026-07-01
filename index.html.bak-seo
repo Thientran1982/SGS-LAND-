@@ -2,7 +2,7 @@
 <html lang="vi" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content, viewport-fit=cover" />
     <!-- ══ GOOGLE ANALYTICS ══════════════════════════════════════════════ -->
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LBRB691S4"></script>

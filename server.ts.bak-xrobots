@@ -5176,7 +5176,7 @@ async function startServer() {
         // For noIndex pages (e.g. /login) we honour the meta flag.
         res.setHeader(
           'X-Robots-Tag',
-          ((meta as any).noIndex || res.statusCode >= 400)
+          (meta as any).noIndex
             ? 'noindex, nofollow'
             : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
         );

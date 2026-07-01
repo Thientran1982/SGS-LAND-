@@ -5176,7 +5176,7 @@ async function startServer() {
         // For noIndex pages (e.g. /login) we honour the meta flag.
         res.setHeader(
           'X-Robots-Tag',
-          ((meta as any).noIndex || res.statusCode >= 400)
+          (meta as any).noIndex
             ? 'noindex, nofollow'
             : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
         );
@@ -5288,13 +5288,7 @@ async function startServer() {
         } else {
           article = await articleRepository.findBySlug(DEFAULT_TENANT_ID, idOrSlug);
         }
-        if (!article) {
-        // SEO-FIX: bai viet khong ton tai -> 404 that su (chong soft-404)
-        res.status(404);
-        res.setHeader('X-Robots-Tag', 'noindex, follow');
-        res.setHeader('Cache-Control', 'no-store');
-        return next();
-      }
+        if (!article) return next();
         sendMeta(res, buildArticleMeta(article));
       } catch { next(); }
     });
@@ -5330,13 +5324,11 @@ async function startServer() {
       // Falls back to STATIC_PAGE_META for project pages not in PAGE_META.
       // DU_AN_DB_PRIORITY — prefer DB-driven rich body (8 AI sections) over hardcoded PAGE_META.
       let ssrHtml: string | null = null;
-      let projectFound = false; // SEO-FIX soft-404
       try {
         const pslug0 = String(req.params.projectSlug || '');
         const pr0 = await pool.query(`SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`, [pslug0]);
         const row0: any = pr0.rows[0];
         if (row0) {
-          projectFound = true; // SEO-FIX soft-404
           const project0: any = { id: row0.id, name: row0.name, code: row0.code, description: row0.description, location: row0.location, openDate: row0.open_date, handoverDate: row0.handover_date, metadata: row0.metadata && typeof row0.metadata === 'object' ? row0.metadata : {} };
           let priceHistory0: any[] = [], news0: any[] = [];
           try { const ph0 = await pool.query(`SELECT recorded_at, price_per_m2, price_min, price_max, trend_text, confidence, location_display FROM market_price_history ORDER BY recorded_at DESC LIMIT 6`); priceHistory0 = ph0.rows.map((r: any) => ({ recordedAt: r.recorded_at, pricePerM2: r.price_per_m2, priceMin: r.price_min, priceMax: r.price_max, trendText: r.trend_text, confidence: r.confidence, locationDisplay: r.location_display })); } catch {}
@@ -5345,15 +5337,6 @@ async function startServer() {
           ssrHtml = injectMeta(getBaseHtml(), buildProjectMeta(project0));
         }
       } catch { ssrHtml = null; }
-      // SEO-FIX: du an khong ton tai -> 404 that su (chong soft-404).
-      // Cho phep cac slug du an tinh (STATIC) van tra 200 du khong co trong DB.
-      const KNOWN_PROJECT_SLUGS = new Set(['aqua-city','izumi-city','vinhomes-grand-park','vinhomes-can-gio','vinhomes-central-park','the-global-city','masterise-homes','van-phuc-city','sala','thu-thiem','manhattan','son-kim-land','nha-pho-trung-tam','diamond-sky-van-phuc-city','legacy-66','vinhomes-hoc-mon','masteri-cosmo-central','grand-manhattan-novaland','son-kim-land','thu-thiem']);
-      const slugForCheck = String(req.params.projectSlug || '').toLowerCase();
-      if (!projectFound && !KNOWN_PROJECT_SLUGS.has(slugForCheck)) {
-        res.status(404);
-        res.setHeader('X-Robots-Tag', 'noindex, follow');
-        res.setHeader('Cache-Control', 'no-store');
-      }
       if (!ssrHtml) ssrHtml = renderSsrPage(pagePath, { aiBot });
       if (ssrHtml) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
