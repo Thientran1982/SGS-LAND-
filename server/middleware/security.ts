@@ -27,7 +27,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       `style-src 'self' ${styleInline}https://fonts.googleapis.com; ` +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms https://w.clarity.ms; " +
+      "connect-src 'self' wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://*.clarity.ms; " +
       "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';"
     );
@@ -41,7 +41,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' ws: wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://www.clarity.ms https://c.clarity.ms https://e.clarity.ms; " +
+      "connect-src 'self' ws: wss: https://www.google-analytics.com https://analytics.google.com https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org https://*.clarity.ms; " +
       "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';"
     );

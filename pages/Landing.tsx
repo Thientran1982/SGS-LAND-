@@ -367,48 +367,34 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
           <div
             className="rounded-2xl overflow-hidden"
             style={{
-              background: "rgba(8,20,38,0.72)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.07)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10)",
             }}
           >
             {/* Top bar — AI status */}
             <div
-              className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              className="flex items-center px-4 sm:px-5 pt-4 pb-3"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
             >
               <div className="flex items-center gap-2">
-                {/* Pulsing AI dot */}
                 <span style={{ position: "relative", display: "inline-flex" }}>
                   <span style={{
-                    display: "block", width: 8, height: 8, borderRadius: "50%",
+                    display: "block", width: 7, height: 7, borderRadius: "50%",
                     background: "#4ADE80",
-                    boxShadow: "0 0 6px 2px rgba(74,222,128,0.5)",
+                    boxShadow: "0 0 5px 1px rgba(74,222,128,0.45)",
                     animation: "pulse-dot 2s ease-in-out infinite",
                   }} />
                 </span>
                 <span style={{
                   fontSize: "11px", fontWeight: 600, letterSpacing: "0.04em",
-                  color: "rgba(255,255,255,0.55)", textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.45)", textTransform: "uppercase",
                   fontFamily: "var(--font-be-vietnam, sans-serif)",
                 }}>
                   {lang === "vi" ? "AI · Đang lắng nghe" : "AI · Listening"}
                 </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span style={{
-                  fontSize: "10px", fontWeight: 500,
-                  color: "rgba(200,150,62,0.8)", letterSpacing: "0.03em",
-                  fontFamily: "var(--font-be-vietnam, sans-serif)",
-                }}>
-                  SGS-AVM v2.1
-                </span>
-                <span style={{
-                  display: "inline-block", width: 6, height: 6, borderRadius: "50%",
-                  background: "rgba(200,150,62,0.7)",
-                }} />
               </div>
             </div>
 
@@ -501,9 +487,6 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                     e.currentTarget.style.color = "rgba(255,255,255,0.70)";
                   }}
                 >
-                  <span style={{ opacity: 0.6, fontSize: "10px" }}>
-                    {["🏡","🏙️","💰"][i] ?? "✦"}
-                  </span>
                   {c[lang]}
                 </button>
               ))}
