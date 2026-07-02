@@ -1,0 +1,917 @@
+You are a Principal Software Architect, Enterprise Product Owner, Senior QA Auditor, AI Architect and CTO.
+
+Your mission is NOT to create new features first.
+
+Your first task is to perform a COMPLETE ENTERPRISE AUDIT of the SGS LAND platform.
+
+The objective is to verify that every function of SGS LAND has already been implemented correctly.
+
+==================================================
+GENERAL RULES
+==================================================
+
+Read the ENTIRE codebase.
+
+Do not skip any file.
+
+Inspect:
+
+Frontend
+
+Backend
+
+Database
+
+API
+
+Authentication
+
+Permissions
+
+Dashboard
+
+Admin
+
+CRM
+
+CMS
+
+Search
+
+AI
+
+Property Module
+
+Project Module
+
+SEO
+
+Analytics
+
+Notification
+
+Payment
+
+Infrastructure
+
+Security
+
+Performance
+
+Everything.
+
+Never assume.
+
+Always verify.
+
+==================================================
+OUTPUT FORMAT
+==================================================
+
+Generate a complete report.
+
+For every module output:
+
+Module Name
+
+Purpose
+
+Status
+
+Implemented %
+
+Missing Features
+
+Bugs
+
+Database Tables
+
+API Endpoints
+
+Frontend Pages
+
+Admin Pages
+
+Permissions
+
+Dependencies
+
+Priority
+
+Estimated Completion
+
+==================================================
+AUDIT EVERY FEATURE BELOW
+==================================================
+
+#############################################
+1. WEBSITE
+#############################################
+
+Home Page
+
+Landing Pages
+
+Dynamic Pages
+
+About
+
+Contact
+
+Careers
+
+Privacy
+
+Terms
+
+FAQ
+
+Blog
+
+News
+
+Knowledge Base
+
+Guides
+
+Market Reports
+
+Investment Reports
+
+Market Trends
+
+Area Pages
+
+Province Pages
+
+District Pages
+
+Ward Pages
+
+Street Pages
+
+Project Pages
+
+Developer Pages
+
+Property Pages
+
+Agent Pages
+
+Company Pages
+
+Landing Pages
+
+Campaign Pages
+
+SEO Pages
+
+Sitemap
+
+Robots
+
+RSS
+
+Manifest
+
+PWA
+
+Offline Mode
+
+#############################################
+2. PROPERTY SYSTEM
+#############################################
+
+Property CRUD
+
+Property Categories
+
+Apartment
+
+Villa
+
+Townhouse
+
+Shophouse
+
+Land
+
+Commercial
+
+Warehouse
+
+Office
+
+Factory
+
+Rental
+
+Sale
+
+Auction
+
+Luxury
+
+Featured
+
+Urgent
+
+Sold
+
+Hidden
+
+Draft
+
+Expired
+
+Approval Workflow
+
+Media
+
+Gallery
+
+Video
+
+360 Tour
+
+Virtual Tour
+
+Street View
+
+Map
+
+Nearby Places
+
+Amenities
+
+Utilities
+
+Legal Documents
+
+Price History
+
+Status History
+
+Owner
+
+Broker
+
+Developer
+
+Commission
+
+Lead Source
+
+Custom Fields
+
+#############################################
+3. PROJECT SYSTEM
+#############################################
+
+Project CRUD
+
+Master Plan
+
+Building
+
+Tower
+
+Block
+
+Floor
+
+Unit
+
+Developer
+
+Progress
+
+Construction
+
+Legal Status
+
+Gallery
+
+Brochure
+
+Downloads
+
+Location
+
+Nearby
+
+Pricing
+
+Inventory
+
+Booking
+
+Promotion
+
+Timeline
+
+Payment Schedule
+
+Availability
+
+#############################################
+4. SEARCH ENGINE
+#############################################
+
+Global Search
+
+AI Search
+
+Natural Language Search
+
+Map Search
+
+Polygon Search
+
+Radius Search
+
+Nearby Search
+
+Voice Search
+
+Image Search
+
+Search Suggestions
+
+Autocomplete
+
+Advanced Filters
+
+Saved Searches
+
+Recent Searches
+
+Trending Searches
+
+#############################################
+5. AI FEATURES
+#############################################
+
+AI Chat
+
+AI Property Recommendation
+
+AI Valuation
+
+AI Market Prediction
+
+AI Investment Score
+
+AI Price Forecast
+
+AI Lead Qualification
+
+AI Content Writer
+
+AI SEO Generator
+
+AI Image Analysis
+
+AI Legal Analysis
+
+AI Mortgage Advisor
+
+AI Risk Analysis
+
+AI Fraud Detection
+
+AI Duplicate Detection
+
+AI OCR
+
+AI Voice
+
+AI Translation
+
+AI Summaries
+
+AI Email Writer
+
+AI CRM Assistant
+
+AI Agent Assistant
+
+Prompt Management
+
+LLM Configuration
+
+Embeddings
+
+Vector Database
+
+Knowledge Base
+
+Memory
+
+RAG
+
+Function Calling
+
+Tool Calling
+
+#############################################
+6. CRM
+#############################################
+
+Lead Management
+
+Pipeline
+
+Kanban
+
+Tasks
+
+Calendar
+
+Meetings
+
+Calls
+
+SMS
+
+WhatsApp
+
+Messenger
+
+Email
+
+Automation
+
+Workflow
+
+Notes
+
+Files
+
+Contracts
+
+Activities
+
+Reminders
+
+Lead Scoring
+
+Sales Funnel
+
+Customer Timeline
+
+Tags
+
+Segments
+
+Reports
+
+#############################################
+7. USER SYSTEM
+#############################################
+
+Authentication
+
+OAuth
+
+Google
+
+Facebook
+
+Apple
+
+OTP
+
+2FA
+
+RBAC
+
+Permissions
+
+Roles
+
+Admin
+
+Super Admin
+
+Agent
+
+Broker
+
+Developer
+
+Customer
+
+Investor
+
+Lawyer
+
+Bank
+
+Moderator
+
+Support
+
+#############################################
+8. ADMIN PANEL
+#############################################
+
+Dashboard
+
+Analytics
+
+Users
+
+Properties
+
+Projects
+
+Blog
+
+SEO
+
+Media
+
+Settings
+
+CMS
+
+Permissions
+
+Audit Logs
+
+System Logs
+
+Notifications
+
+Backups
+
+Queue Monitor
+
+Jobs
+
+API Monitor
+
+AI Monitor
+
+#############################################
+9. SEO
+#############################################
+
+Meta
+
+OpenGraph
+
+Twitter
+
+Schema
+
+JSON-LD
+
+RealEstateListing
+
+Organization
+
+FAQ
+
+Breadcrumb
+
+Article
+
+Project Schema
+
+Review Schema
+
+Geo Schema
+
+Internal Links
+
+Canonical
+
+Pagination
+
+Hreflang
+
+Dynamic Sitemap
+
+Image Sitemap
+
+Video Sitemap
+
+News Sitemap
+
+AEO
+
+GEO
+
+LLMO
+
+Answer Engine Optimization
+
+AI Index Optimization
+
+Google AI Overview Optimization
+
+ChatGPT Optimization
+
+Gemini Optimization
+
+Claude Optimization
+
+Perplexity Optimization
+
+#############################################
+10. GEO & MAP
+#############################################
+
+Google Maps
+
+Mapbox
+
+Leaflet
+
+Heatmaps
+
+Polygon
+
+Distance
+
+Nearby
+
+Schools
+
+Hospitals
+
+Banks
+
+Restaurants
+
+Transportation
+
+Street View
+
+#############################################
+11. LEGAL
+#############################################
+
+Land Documents
+
+Ownership
+
+Red Book
+
+Pink Book
+
+Planning
+
+Construction Permit
+
+Dispute Detection
+
+Mortgage
+
+Lien
+
+Legal Verification
+
+Legal Workflow
+
+#############################################
+12. BANKING
+#############################################
+
+Mortgage
+
+Loan Calculator
+
+Interest Calculator
+
+Pre Approval
+
+Bank API
+
+Payment Schedule
+
+Installment
+
+#############################################
+13. NOTIFICATIONS
+#############################################
+
+Email
+
+SMS
+
+Push
+
+Web Push
+
+Telegram
+
+Slack
+
+Webhook
+
+Realtime
+
+#############################################
+14. ANALYTICS
+#############################################
+
+GA4
+
+Search Console
+
+Clarity
+
+Mixpanel
+
+PostHog
+
+Heatmaps
+
+Funnels
+
+Events
+
+Conversions
+
+AI Analytics
+
+#############################################
+15. SECURITY
+#############################################
+
+Rate Limit
+
+CSRF
+
+XSS
+
+SQL Injection
+
+Encryption
+
+JWT
+
+Secrets
+
+Audit Logs
+
+Firewall
+
+RBAC
+
+Permissions
+
+#############################################
+16. PERFORMANCE
+#############################################
+
+Caching
+
+Redis
+
+CDN
+
+Image Optimization
+
+Lazy Loading
+
+Compression
+
+SSR
+
+ISR
+
+CSR
+
+Streaming
+
+Queue
+
+Workers
+
+Background Jobs
+
+#############################################
+17. DATABASE
+#############################################
+
+Verify every table.
+
+Missing tables.
+
+Indexes.
+
+Relations.
+
+Constraints.
+
+Triggers.
+
+Views.
+
+Stored Procedures.
+
+#############################################
+18. API
+#############################################
+
+List ALL endpoints.
+
+REST
+
+GraphQL
+
+WebSocket
+
+Authentication
+
+Response
+
+Validation
+
+Errors
+
+Pagination
+
+Caching
+
+#############################################
+19. TESTING
+#############################################
+
+Unit Tests
+
+Integration Tests
+
+E2E
+
+Security Tests
+
+Performance Tests
+
+Accessibility
+
+SEO Tests
+
+AI Tests
+
+#############################################
+20. FINAL REPORT
+#############################################
+
+Generate:
+
+A complete feature inventory.
+
+Completion percentage.
+
+Missing modules.
+
+Critical bugs.
+
+Architecture problems.
+
+Scalability issues.
+
+Security risks.
+
+Performance bottlenecks.
+
+Technical debt.
+
+Database issues.
+
+SEO issues.
+
+AI issues.
+
+CRM issues.
+
+UX issues.
+
+Accessibility issues.
+
+Prioritized roadmap.
+
+Implementation order.
+
+Estimated development hours.
+
+Estimated cost.
+
+Enterprise maturity score.
+
+Overall completion score.
+
+Give a final verdict:
+
+Can SGS LAND compete with Zillow, Realtor, Redfin, PropertyGuru, Batdongsan.com.vn, OneHousing, and PropTiger?
+
+If NOT,
+
+show every missing feature required to become a world-class AI PropTech platform.
+
+Never stop until the entire codebase has been audited.
