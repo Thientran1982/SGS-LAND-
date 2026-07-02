@@ -45,7 +45,6 @@ const STATIC_PAGE_META: Record<string, {
   geoRegion?: string;
   h1?: string;
   noIndex?: boolean;
-  bodyHtml?: string;
   structuredData?: object;
 }> = {
   '': {
@@ -433,159 +432,6 @@ const STATIC_PAGE_META: Record<string, {
     title: 'Press & Media | SGS LAND - Bao Chi Va Truyen Thong',
     description: 'Tong hop cac lan SGS LAND duoc de cap tren bao chi, truyen thong va cac an pham chuyen nganh BDS Viet Nam. Press kit va thong tin lien he truyen thong.',
   },
-  'tac-gia/tran-minh-thien': {
-    title: 'Trần Minh Thiện — Founder & CEO | SGS LAND',
-    description: 'Trần Minh Thiện, Founder & CEO tại SGS LAND. Chuyên môn: Đầu tư bất động sản, Tư vấn pháp lý BĐS, Thị trường nhà đất TP.HCM, Định giá BĐS AI. Tác giả và biên tập viên nội dung phân tích bất động sản SGS LAND.',
-    h1: 'Trần Minh Thiện',
-    keywords: 'Trần Minh Thiện, Founder & CEO SGS LAND, chuyên gia bất động sản',
-    bodyHtml: `<div id=ssr-body style="font-family:system-ui;max-width:760px;margin:0 auto;padding:24px 16px;color:#1e293b"><nav style=font-size:12px;color:#64748b;margin-bottom:16px><a href=/ style=color:#4f46e5;text-decoration:none>SGS LAND</a> &rsaquo; <a href=/about-us style=color:#4f46e5;text-decoration:none>Đội ngũ</a> &rsaquo; <span>Trần Minh Thiện</span></nav><h1 style=font-size:26px;font-weight:700;margin:0 0 6px>Trần Minh Thiện</h1><p style=font-size:15px;color:#4f46e5;font-weight:600;margin:0 0 16px>Founder & CEO — SGS LAND</p><p style=font-size:15px;line-height:1.7;color:#334155>Với vai trò nhà sáng lập, Trần Minh Thiện định hướng chiến lược dữ liệu và định giá AI cho SGS LAND. Là founder & ceo tại SGS LAND, Trần Minh Thiện trực tiếp tham gia biên tập và kiểm chứng nội dung phân tích thị trường bất động sản, đảm bảo dữ liệu giá và pháp lý được đối chiếu theo quy trình kiểm chứng 2 lớp của công ty.</p><h2 style=font-size:18px;font-weight:700;margin:20px 0 8px>Lĩnh vực chuyên môn</h2><ul style=font-size:15px;line-height:1.8;color:#334155><li>Đầu tư bất động sản</li><li>Tư vấn pháp lý BĐS</li><li>Thị trường nhà đất TP.HCM</li><li>Định giá BĐS AI</li></ul><p style=font-size:13px;color:#64748b;margin-top:20px>Xem <a href=/chinh-sach-bien-tap style=color:#4f46e5>Chính sách biên tập &amp; kiểm chứng dữ liệu</a> của SGS LAND.</p></div>`,
-    structuredData: {
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
-            { '@type': 'ListItem', position: 2, name: 'Đội ngũ', item: `${APP_URL}/about-us` },
-            { '@type': 'ListItem', position: 3, name: 'Trần Minh Thiện', item: `${APP_URL}/tac-gia/tran-minh-thien` },
-          ],
-        },
-        {
-          '@type': 'ProfilePage',
-          '@id': `${APP_URL}/tac-gia/tran-minh-thien#profilepage`,
-          url: `${APP_URL}/tac-gia/tran-minh-thien`,
-          name: 'Trần Minh Thiện — Founder & CEO',
-          inLanguage: 'vi',
-          isPartOf: { '@id': `${APP_URL}/#website` },
-          about: { '@id': `${APP_URL}/tac-gia/tran-minh-thien#person` },
-          mainEntity: { '@id': `${APP_URL}/tac-gia/tran-minh-thien#person` },
-        },
-        {
-          '@type': 'Person',
-          '@id': `${APP_URL}/tac-gia/tran-minh-thien#person`,
-          name: 'Trần Minh Thiện',
-          url: `${APP_URL}/tac-gia/tran-minh-thien`,
-          jobTitle: 'Founder & CEO',
-          worksFor: { '@id': `${APP_URL}/#org` },
-          knowsAbout: ['Đầu tư bất động sản', 'Tư vấn pháp lý BĐS', 'Thị trường nhà đất TP.HCM', 'Định giá BĐS AI'],
-          sameAs: ['https://www.linkedin.com/in/thien-tran-195117aa/'],
-        },
-      ],
-    },
-  },
-  'tac-gia/nguyen-hoang-nam': {
-    title: 'Nguyễn Hoàng Nam — CTO | SGS LAND',
-    description: 'Nguyễn Hoàng Nam, CTO tại SGS LAND. Chuyên môn: Trí tuệ nhân tạo, Machine Learning, AVM bất động sản, Kiến trúc phần mềm. Tác giả và biên tập viên nội dung phân tích bất động sản SGS LAND.',
-    h1: 'Nguyễn Hoàng Nam',
-    keywords: 'Nguyễn Hoàng Nam, CTO SGS LAND, chuyên gia bất động sản',
-    bodyHtml: `<div id=ssr-body style="font-family:system-ui;max-width:760px;margin:0 auto;padding:24px 16px;color:#1e293b"><nav style=font-size:12px;color:#64748b;margin-bottom:16px><a href=/ style=color:#4f46e5;text-decoration:none>SGS LAND</a> &rsaquo; <a href=/about-us style=color:#4f46e5;text-decoration:none>Đội ngũ</a> &rsaquo; <span>Nguyễn Hoàng Nam</span></nav><h1 style=font-size:26px;font-weight:700;margin:0 0 6px>Nguyễn Hoàng Nam</h1><p style=font-size:15px;color:#4f46e5;font-weight:600;margin:0 0 16px>CTO — SGS LAND</p><p style=font-size:15px;line-height:1.7;color:#334155>Phụ trách toàn bộ nền tảng công nghệ và mô hình định giá tự động (AVM) của SGS LAND. Là cto tại SGS LAND, Nguyễn Hoàng Nam trực tiếp tham gia biên tập và kiểm chứng nội dung phân tích thị trường bất động sản, đảm bảo dữ liệu giá và pháp lý được đối chiếu theo quy trình kiểm chứng 2 lớp của công ty.</p><h2 style=font-size:18px;font-weight:700;margin:20px 0 8px>Lĩnh vực chuyên môn</h2><ul style=font-size:15px;line-height:1.8;color:#334155><li>Trí tuệ nhân tạo</li><li>Machine Learning</li><li>AVM bất động sản</li><li>Kiến trúc phần mềm</li></ul><p style=font-size:13px;color:#64748b;margin-top:20px>Xem <a href=/chinh-sach-bien-tap style=color:#4f46e5>Chính sách biên tập &amp; kiểm chứng dữ liệu</a> của SGS LAND.</p></div>`,
-    structuredData: {
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
-            { '@type': 'ListItem', position: 2, name: 'Đội ngũ', item: `${APP_URL}/about-us` },
-            { '@type': 'ListItem', position: 3, name: 'Nguyễn Hoàng Nam', item: `${APP_URL}/tac-gia/nguyen-hoang-nam` },
-          ],
-        },
-        {
-          '@type': 'ProfilePage',
-          '@id': `${APP_URL}/tac-gia/nguyen-hoang-nam#profilepage`,
-          url: `${APP_URL}/tac-gia/nguyen-hoang-nam`,
-          name: 'Nguyễn Hoàng Nam — CTO',
-          inLanguage: 'vi',
-          isPartOf: { '@id': `${APP_URL}/#website` },
-          about: { '@id': `${APP_URL}/tac-gia/nguyen-hoang-nam#person` },
-          mainEntity: { '@id': `${APP_URL}/tac-gia/nguyen-hoang-nam#person` },
-        },
-        {
-          '@type': 'Person',
-          '@id': `${APP_URL}/tac-gia/nguyen-hoang-nam#person`,
-          name: 'Nguyễn Hoàng Nam',
-          url: `${APP_URL}/tac-gia/nguyen-hoang-nam`,
-          jobTitle: 'CTO',
-          worksFor: { '@id': `${APP_URL}/#org` },
-          knowsAbout: ['Trí tuệ nhân tạo', 'Machine Learning', 'AVM bất động sản', 'Kiến trúc phần mềm'],
-        },
-      ],
-    },
-  },
-  'tac-gia/le-thi-hoa': {
-    title: 'Lê Thị Hoa — COO | SGS LAND',
-    description: 'Lê Thị Hoa, COO tại SGS LAND. Chuyên môn: Vận hành sàn BĐS, Quản lý môi giới, Pháp lý kinh doanh BĐS, Đào tạo môi giới. Tác giả và biên tập viên nội dung phân tích bất động sản SGS LAND.',
-    h1: 'Lê Thị Hoa',
-    keywords: 'Lê Thị Hoa, COO SGS LAND, chuyên gia bất động sản',
-    bodyHtml: `<div id=ssr-body style="font-family:system-ui;max-width:760px;margin:0 auto;padding:24px 16px;color:#1e293b"><nav style=font-size:12px;color:#64748b;margin-bottom:16px><a href=/ style=color:#4f46e5;text-decoration:none>SGS LAND</a> &rsaquo; <a href=/about-us style=color:#4f46e5;text-decoration:none>Đội ngũ</a> &rsaquo; <span>Lê Thị Hoa</span></nav><h1 style=font-size:26px;font-weight:700;margin:0 0 6px>Lê Thị Hoa</h1><p style=font-size:15px;color:#4f46e5;font-weight:600;margin:0 0 16px>COO — SGS LAND</p><p style=font-size:15px;line-height:1.7;color:#334155>Phụ trách vận hành, quản lý mạng lưới môi giới và quy trình kiểm chứng dữ liệu thực địa. Là coo tại SGS LAND, Lê Thị Hoa trực tiếp tham gia biên tập và kiểm chứng nội dung phân tích thị trường bất động sản, đảm bảo dữ liệu giá và pháp lý được đối chiếu theo quy trình kiểm chứng 2 lớp của công ty.</p><h2 style=font-size:18px;font-weight:700;margin:20px 0 8px>Lĩnh vực chuyên môn</h2><ul style=font-size:15px;line-height:1.8;color:#334155><li>Vận hành sàn BĐS</li><li>Quản lý môi giới</li><li>Pháp lý kinh doanh BĐS</li><li>Đào tạo môi giới</li></ul><p style=font-size:13px;color:#64748b;margin-top:20px>Xem <a href=/chinh-sach-bien-tap style=color:#4f46e5>Chính sách biên tập &amp; kiểm chứng dữ liệu</a> của SGS LAND.</p></div>`,
-    structuredData: {
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
-            { '@type': 'ListItem', position: 2, name: 'Đội ngũ', item: `${APP_URL}/about-us` },
-            { '@type': 'ListItem', position: 3, name: 'Lê Thị Hoa', item: `${APP_URL}/tac-gia/le-thi-hoa` },
-          ],
-        },
-        {
-          '@type': 'ProfilePage',
-          '@id': `${APP_URL}/tac-gia/le-thi-hoa#profilepage`,
-          url: `${APP_URL}/tac-gia/le-thi-hoa`,
-          name: 'Lê Thị Hoa — COO',
-          inLanguage: 'vi',
-          isPartOf: { '@id': `${APP_URL}/#website` },
-          about: { '@id': `${APP_URL}/tac-gia/le-thi-hoa#person` },
-          mainEntity: { '@id': `${APP_URL}/tac-gia/le-thi-hoa#person` },
-        },
-        {
-          '@type': 'Person',
-          '@id': `${APP_URL}/tac-gia/le-thi-hoa#person`,
-          name: 'Lê Thị Hoa',
-          url: `${APP_URL}/tac-gia/le-thi-hoa`,
-          jobTitle: 'COO',
-          worksFor: { '@id': `${APP_URL}/#org` },
-          knowsAbout: ['Vận hành sàn BĐS', 'Quản lý môi giới', 'Pháp lý kinh doanh BĐS', 'Đào tạo môi giới'],
-        },
-      ],
-    },
-  },
-  'tac-gia/ban-bien-tap': {
-    title: 'Ban Biên tập SGS LAND | Đội ngũ Nội dung',
-    description: 'Ban Biên tập SGS LAND — nhóm chuyên gia phân tích, pháp lý và nghiên cứu thị trường biên soạn và kiểm chứng nội dung bất động sản.',
-    h1: 'Ban Biên tập SGS LAND',
-    keywords: 'Ban Biên tập SGS LAND, đội ngũ nội dung, biên tập bất động sản',
-    bodyHtml: `<div id=ssr-body style="font-family:system-ui;max-width:760px;margin:0 auto;padding:24px 16px;color:#1e293b"><nav style=font-size:12px;color:#64748b;margin-bottom:16px><a href=/ style=color:#4f46e5;text-decoration:none>SGS LAND</a> &rsaquo; <span>Ban Biên tập</span></nav><h1 style=font-size:26px;font-weight:700;margin:0 0 6px>Ban Biên tập SGS LAND</h1><p style=font-size:15px;line-height:1.7;color:#334155>Ban Biên tập SGS LAND là nhóm chuyên gia phân tích, pháp lý và nghiên cứu thị trường chịu trách nhiệm biên soạn, kiểm chứng và cập nhật toàn bộ nội dung phân tích bất động sản trên SGS LAND. Mọi dữ liệu giá đều được đối chiếu theo quy trình kiểm chứng 2 lớp.</p><p style=font-size:13px;color:#64748b;margin-top:20px>Xem <a href=/chinh-sach-bien-tap style=color:#4f46e5>Chính sách biên tập</a>.</p></div>`,
-    structuredData: {
-      '@context': 'https://schema.org',
-      '@graph': [
-        { '@type': 'BreadcrumbList', itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
-          { '@type': 'ListItem', position: 2, name: 'Ban Biên tập', item: `${APP_URL}/tac-gia/ban-bien-tap` },
-        ] },
-        { '@type': 'ProfilePage', '@id': `${APP_URL}/tac-gia/ban-bien-tap#profilepage`, url: `${APP_URL}/tac-gia/ban-bien-tap`, name: 'Ban Biên tập SGS LAND', inLanguage: 'vi', isPartOf: { '@id': `${APP_URL}/#website` }, mainEntity: { '@id': `${APP_URL}/tac-gia/ban-bien-tap#team` } },
-        { '@type': 'Organization', '@id': `${APP_URL}/tac-gia/ban-bien-tap#team`, name: 'Ban Biên tập SGS LAND', parentOrganization: { '@id': `${APP_URL}/#org` }, knowsAbout: ['Phân tích thị trường BĐS', 'Kiểm chứng dữ liệu giá', 'Pháp lý bất động sản'] },
-      ],
-    },
-  },
-  'chinh-sach-bien-tap': {
-    title: 'Chính sách Biên tập &amp; Kiểm chứng Dữ liệu | SGS LAND',
-    description: 'Quy trình kiểm chứng dữ liệu giá 2 lớp của SGS LAND: đối chiếu giao dịch công chứng thực tế và khảo sát chéo tối thiểu 3 môi giới/khu vực. Cập nhật hàng quý.',
-    h1: 'Chính sách Biên tập &amp; Kiểm chứng Dữ liệu',
-    keywords: 'chính sách biên tập, kiểm chứng dữ liệu giá, nguồn dữ liệu bất động sản',
-    bodyHtml: `<div id=ssr-body style="font-family:system-ui;max-width:760px;margin:0 auto;padding:24px 16px;color:#1e293b"><nav style=font-size:12px;color:#64748b;margin-bottom:16px><a href=/ style=color:#4f46e5;text-decoration:none>SGS LAND</a> &rsaquo; <span>Chính sách biên tập</span></nav><h1 style=font-size:26px;font-weight:700;margin:0 0 10px>Chính sách Biên tập &amp; Kiểm chứng Dữ liệu</h1><p style=font-size:15px;line-height:1.7;color:#334155>SGS LAND cam kết cung cấp dữ liệu bất động sản chính xác, minh bạch và có thể kiểm chứng. Toàn bộ dữ liệu giá trên nền tảng được xử lý qua quy trình kiểm chứng 2 lớp.</p><h2 style=font-size:19px;font-weight:700;margin:22px 0 8px>Nguồn dữ liệu giá</h2><p style=font-size:15px;line-height:1.7;color:#334155>Dữ liệu giá được tổng hợp từ giao dịch công chứng thực tế, giá niêm yết thị trường và khảo sát môi giới khu vực. Cập nhật định kỳ <strong>hàng quý</strong> (bản hiện tại: Q1/2025).</p><h2 style=font-size:19px;font-weight:700;margin:22px 0 8px>Quy trình kiểm chứng 2 lớp</h2><ol style=font-size:15px;line-height:1.8;color:#334155><li><strong>Lớp 1 — Đối chiếu giao dịch công chứng:</strong> giá tham chiếu được đối chiếu với dữ liệu giao dịch công chứng thực tế tại khu vực.</li><li><strong>Lớp 2 — Khảo sát chéo môi giới:</strong> mỗi khu vực được khảo sát chéo với <strong>tối thiểu 3 môi giới</strong> địa phương để xác thực biên độ giá.</li></ol><h2 style=font-size:19px;font-weight:700;margin:22px 0 8px>Độ tin cậy</h2><p style=font-size:15px;line-height:1.7;color:#334155>Mỗi bảng giá công bố kèm chỉ số độ tin cậy (65–80%%) phản ánh mức độ đồng thuận của dữ liệu. Thông tin chỉ mang tính tham khảo, không phải tư vấn đầu tư.</p></div>`,
-    structuredData: {
-      '@context': 'https://schema.org',
-      '@graph': [
-        { '@type': 'BreadcrumbList', itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: APP_URL },
-          { '@type': 'ListItem', position: 2, name: 'Chính sách biên tập', item: `${APP_URL}/chinh-sach-bien-tap` },
-        ] },
-        { '@type': 'CreativeWork', '@id': `${APP_URL}/chinh-sach-bien-tap#policy`, name: 'Chính sách Biên tập và Kiểm chứng Dữ liệu SGS LAND', url: `${APP_URL}/chinh-sach-bien-tap`, inLanguage: 'vi', publisher: { '@id': `${APP_URL}/#org` }, about: 'Quy trình kiểm chứng dữ liệu giá bất động sản 2 lớp' },
-      ],
-    },
-  },
   'about-us': {
     title: 'Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn',
     description: 'SGS LAND — công ty công nghệ bất động sản hàng đầu Việt Nam. 5+ năm kinh nghiệm, 15.000+ môi giới, 45.000+ sản phẩm, 1 tỷ USD+ giao dịch. Sứ mệnh minh bạch hóa thị trường BĐS.',
@@ -619,7 +465,6 @@ const STATIC_PAGE_META: Record<string, {
           alternateName: ['SGS Land', 'SGS LAND Enterprise', 'sgsland.vn'],
           url: APP_URL,
           foundingDate: '2019',
-          publishingPrinciples: `${APP_URL}/chinh-sach-bien-tap`,
           description: 'SGS LAND — nền tảng công nghệ bất động sản B2B2C hàng đầu Việt Nam. 15.000+ môi giới, 45.000+ sản phẩm, 1 tỷ USD+ giao dịch. Dịch vụ: định giá AI (AVM ±5%), CRM đa kênh, phân phối dự án, ký gửi BĐS.',
           numberOfEmployees: { '@type': 'QuantitativeValue', value: 50 },
           areaServed: { '@type': 'Country', name: 'Việt Nam' },
@@ -3523,13 +3368,6 @@ export function buildArticleMeta(article: any): MetaData {
   const datePublished = article.publishedAt || article.published_at || undefined;
   const dateModified = article.updatedAt || article.updated_at || datePublished;
   const authorName = article.author || 'Đội ngũ Biên tập SGS LAND';
-  const AUTHOR_SLUG_MAP: Record<string,string> = {
-    'Trần Minh Thiện': 'tran-minh-thien',
-    'Nguyễn Hoàng Nam': 'nguyen-hoang-nam',
-    'Lê Thị Hoa': 'le-thi-hoa',
-  };
-  const authorKey = String(authorName).split(' - ')[0].trim();
-  const authorSlug = AUTHOR_SLUG_MAP[authorKey] || 'ban-bien-tap';
   const articleSection = article.category || article.section || 'Tin tức Bất động sản';
   const keywords = article.keywords || article.tags ||
     'bất động sản, BĐS Việt Nam, BĐS TP.HCM, đầu tư BĐS, dự án BĐS, SGS LAND';
@@ -3562,7 +3400,7 @@ export function buildArticleMeta(article: any): MetaData {
     author: {
       '@type': 'Person',
       name: authorName,
-           url: `${APP_URL}/tac-gia/${authorSlug}`,
+      url: `${APP_URL}/about-us`,
       worksFor: { '@id': `${APP_URL}/#org` },
     },
     publisher: {
@@ -3676,7 +3514,6 @@ export function buildStaticPageMeta(
     geoRegion: routeMeta.geoRegion,
     noIndex: routeMeta.noIndex,
     structuredData: routeMeta.structuredData,
-    bodyHtml: (routeMeta as any).bodyHtml,
   };
 }
 

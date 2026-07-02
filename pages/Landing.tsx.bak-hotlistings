@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AiChatWidget } from "../components/AiChatWidget";
 import {
-  Eye, Sparkles, ArrowRight, Phone, Mail, MapPin, Shield, ChevronDown,
+  Sparkles, ArrowRight, Phone, Mail, MapPin, Shield, ChevronDown,
   CheckCircle, Star, Bot, Search, TrendingUp, Users, Award,
   ChevronRight, BarChart3, Landmark, Clock, Heart, Building2,
   Sun, Moon, Globe, User, Menu, X,
@@ -631,128 +631,6 @@ function ProjectsSection({ lang }: { lang: Lang }) {
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 5 — VALUATION PROMO
 // ═══════════════════════════════════════════════════════════════
-// ============================================================
-// SECTION - HOT LISTINGS (Sản phẩm được xem nhiều nhất)
-// ============================================================
-function HotListingsSection({ lang }: { lang: Lang }) {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    fetch(`/api/public/listings?pageSize=100`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (!alive) return;
-        const data = Array.isArray(d?.data) ? d.data : [];
-        const sorted = data
-          .filter((x: any) => (x?.viewCount || 0) > 0)
-          .sort((a: any, b: any) => (b?.viewCount || 0) - (a?.viewCount || 0))
-          .slice(0, 6);
-        setItems(sorted);
-      })
-      .catch(() => setItems([]))
-      .finally(() => alive && setLoading(false));
-    return () => { alive = false; };
-  }, []);
-
-  const fmtPrice = (p: number) => {
-    if (!p) return lang === "vi" ? "Liên hệ" : "Contact";
-    if (p >= 1e9) return `${(p / 1e9).toFixed(1)} tỷ`;
-    if (p >= 1e6) return `${Math.round(p / 1e6)} triệu`;
-    return p.toLocaleString("vi-VN");
-  };
-  const fmtViews = (v: number) => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v));
-
-  const statusLabel = (s: string) => {
-    const m: Record<string, [string, string]> = {
-      AVAILABLE: ["ĐANG BÁN", "For Sale"],
-      OPENING: ["MỎ BÁN", "Opening"],
-      BOOKING: ["ĐẶT CHỖ", "Booking"],
-      HOLD: ["GIỮ CHỖ", "On Hold"],
-      SOLD: ["ĐÃ BÁN", "Sold"],
-    };
-    return (m[s] || [s, s])[lang === "vi" ? 0 : 1];
-  };
-
-  return (
-    <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }} data-section="hot-listings">
-      <div className="max-w-6xl mx-auto px-5">
-        <SectionHeading
-          title={lang === "vi" ? "Sản phẩm được xem nhiều nhất" : "Most Viewed Listings"}
-          subtitle={lang === "vi" ? "Những BĐS được quan tâm nhiều nhất trên sàn giao dịch SGS LAND" : "The most-viewed properties on the SGS LAND exchange"}
-        />
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="rounded-2xl overflow-hidden animate-pulse" style={{ background: "var(--sgs-surface, #fff)", border: "1px solid var(--sgs-border)" }}>
-                <div className="aspect-[4/3]" style={{ background: "var(--sgs-border)" }} />
-                <div className="p-5 space-y-3">
-                  <div className="h-4 w-2/3 rounded-full" style={{ background: "var(--sgs-border)" }} />
-                  <div className="h-3 w-1/2 rounded-full" style={{ background: "var(--sgs-border)" }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : items.length === 0 ? null : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-            {items.map((it, idx) => {
-              const img = (Array.isArray(it.images) && it.images[0]) || "/placeholder.jpg";
-              const loc = it.location || it.address || (lang === "vi" ? "Đang cập nhật" : "Updating");
-              return (
-                <a
-                  key={it.id || idx}
-                  href={`#/listing/${it.id}`}
-                  className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                  style={{ background: "var(--sgs-surface, #fff)", border: "1px solid var(--sgs-border)", boxShadow: "0 1px 2px rgba(10,31,68,0.04)", textDecoration: "none" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 32px rgba(10,31,68,0.12)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 2px rgba(10,31,68,0.04)"; }}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img src={img} alt={it.title || "Listing"} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(212,168,85,0.95)", color: "#0A1F44", backdropFilter: "blur(4px)" }}>
-                      {idx === 0 ? <Award className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
-                      {idx === 0 ? (lang === "vi" ? "XEM NHIỀU NHẤT" : "TOP VIEWED") : `#${idx + 1}`}
-                    </div>
-                    <div className="absolute top-3 right-3 flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(10,31,68,0.82)", color: "#fff", backdropFilter: "blur(4px)" }}>
-                      <Eye className="w-3.5 h-3.5" />{fmtViews(it.viewCount || 0)}
-                    </div>
-                    <div className="absolute bottom-3 left-3 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.92)", color: "var(--sgs-text, #1e293b)" }}>
-                      {statusLabel(it.status)}
-                    </div>
-                  </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <h3 className="text-base font-bold leading-snug line-clamp-2 mb-2" style={{ color: "var(--sgs-text-heading, var(--sgs-text))", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
-                      {it.title}
-                    </h3>
-                    <div className="flex items-center gap-1 text-xs mb-3" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
-                      <MapPin className="w-3 h-3 shrink-0" />
-                      <span className="line-clamp-1">{loc}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs mb-4" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
-                      {it.area ? <span>{it.area} m²</span> : null}
-                      {it.bedrooms ? <span>{""}{it.bedrooms} PN</span> : null}
-                    </div>
-                    <div className="mt-auto flex items-end justify-between">
-                      <div className="text-lg font-bold tabular-nums" style={{ color: "var(--sgs-accent-text, var(--sgs-primary))", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}>
-                        {fmtPrice(it.price)}
-                      </div>
-                      <div className="flex items-center gap-1 text-xs font-medium transition-transform group-hover:translate-x-1" style={{ color: "var(--sgs-primary)" }}>
-                        {lang === "vi" ? "Xem chi tiết" : "View details"}<ChevronRight className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 function ValuationSection({ lang }: { lang: Lang }) {
   return (
     <section className="py-20" style={{ background: "var(--sgs-surface, #FFFFFF)" }}>
@@ -1756,8 +1634,7 @@ function Landing({ featuredListings, stats }: Props) {
       <StatsBar      lang={lang} />
       <LegalTicker   lang={lang} />
       <ProjectsSection  lang={lang} />
-      <HotListingsSection lang={lang} />
-        <ValuationSection lang={lang} />
+      <ValuationSection lang={lang} />
       <BentoSection     lang={lang} />
       <TrustBlock       lang={lang} />
       <FAQSection       lang={lang} />
