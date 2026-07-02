@@ -1011,7 +1011,9 @@ class DatabaseApiClient {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Login failed' }));
       const error: any = new Error(err.error || 'Login failed');
-      if (err.error === 'EMAIL_NOT_VERIFIED') {
+      if (err.error === 'TWO_FACTOR_REQUIRED' || err.code === 'TWO_FACTOR_REQUIRED') {
+        error.code = 'TWO_FACTOR_REQUIRED';
+      } else if (err.error === 'EMAIL_NOT_VERIFIED') {
         error.code = 'EMAIL_NOT_VERIFIED';
         error.email = err.email || email;
       } else if (err.error === 'TENANT_PENDING_APPROVAL') {
@@ -1029,6 +1031,50 @@ class DatabaseApiClient {
     this.cachedCurrentUser = data.user;
     window.dispatchEvent(new CustomEvent('auth:login'));
     return data.user;
+  }
+  async authenticateWithTotp(email: string, password: string, totpToken: string) {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, totpToken }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Login failed' }));
+      throw new Error(err.error || 'Invalid code');
+    }
+    const data = await res.json();
+    this._isLoggedOut = false;
+    _cache.clearAll();
+    this.cachedCurrentUser = data.user;
+    window.dispatchEvent(new CustomEvent('auth:login'));
+    return data.user;
+  }
+  async getTotpStatus(): Promise<{ enabled: boolean }> {
+    const res = await fetch('/api/auth/2fa/status', { credentials: 'include' });
+    if (!res.ok) return { enabled: false };
+    return res.json();
+  }
+  async setupTotp(): Promise<{ secret: string; otpauthUrl: string; backupCodes: string[] }> {
+    const res = await fetch('/api/auth/2fa/setup', { method: 'POST', credentials: 'include' });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Setup failed'); }
+    return res.json();
+  }
+  async enableTotp(token: string): Promise<void> {
+    const res = await fetch('/api/auth/2fa/enable', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Enable failed'); }
+  }
+  async disableTotp(token: string): Promise<void> {
+    const res = await fetch('/api/auth/2fa/disable', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Disable failed'); }
   }
   async register(name: string, email: string, password: string, company?: string) {
     const res = await fetch('/api/auth/register', {

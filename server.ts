@@ -37,6 +37,7 @@ import { emailService } from "./server/services/emailService";
 import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
 import { createAgentRoutes } from "./server/routes/agentRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
+import { createTwoFactorRoutes } from "./server/routes/twoFactorRoutes";
 import { createActivityRoutes } from "./server/routes/activityRoutes";
 import { createNotificationRoutes } from "./server/routes/notificationRoutes";
 import { createBillingRoutes } from "./server/routes/billingRoutes";
@@ -80,7 +81,7 @@ import { createCampaignRouter } from "./server/routes/campaignRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { priceCalibrationService } from "./server/services/priceCalibrationService";
-import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
+import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution, csrfTokenIssuer, csrfProtection, csrfTokenHandler } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
 import { aiRateLimit, authRateLimit, loginRateLimit, passwordResetRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota, monthlyAriaQuota, getMonthlyQuotaStatus, getMonthlyAriaQuotaStatus, rateLimit } from "./server/middleware/rateLimiter";
@@ -90,7 +91,7 @@ import { getTenantBinding } from "./server/services/tenantBrandingService";
 import { brevoSendEmail } from "./server/services/brevoService";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { requestIdMiddleware } from "./server/middleware/requestId";
-import { writeAuditLog } from "./server/middleware/auditLog";
+import { writeAuditLog, globalMutationAudit } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
 import { DICTIONARY } from "./config/locales";
 import { interactionRepository } from "./server/repositories/interactionRepository";
@@ -156,9 +157,16 @@ async function startServer() {
     }
   }));
   app.use(cookieParser());
+// CSRF protection (double-submit-cookie, enforcing). Must sit after cookieParser + body parse.
+app.use(csrfTokenIssuer);
+app.get("/api/csrf-token", csrfTokenHandler);
+app.use(csrfProtection);
   app.use(preventParamPollution);
   app.use(sanitizeInput);
   app.use(requestLogger);
+// Global fallback audit trail for sensitive DELETE operations (runs on finish,
+// after per-route auth has populated req.user). Closes audit-log DELETE gap.
+app.use(globalMutationAudit);
 
   // Disable HTTP caching for all API routes — prevents browser 304/ETag issues
   // where fresh data after mutations is served as "not modified" from browser cache
@@ -390,6 +398,40 @@ async function startServer() {
         }
       }
 
+      // --- 2FA gate: admins with TOTP enabled must present a valid code ---
+      if (['SUPER_ADMIN', 'ADMIN'].includes(dbUser.role) && (dbUser as any).totpEnabled) {
+        const totpToken = (req.body?.totpToken || req.body?.totp || (req as any).body?.code) as string | undefined;
+        if (!totpToken) {
+          writeAuditLog(tenantId, dbUser.id, 'LOGIN_2FA_REQUIRED', 'auth', dbUser.id, undefined, req.ip);
+          return res.status(401).json({ error: 'TWO_FACTOR_REQUIRED', code: 'TWO_FACTOR_REQUIRED', twoFactorRequired: true });
+        }
+        let totpOk = false;
+        try {
+          const { verifyToken, decryptSecret, matchBackupCode, hashBackupCode } = await import("./server/utils/totp");
+          const enc = (dbUser as any).totpSecret;
+          if (enc) {
+            const secret = decryptSecret(enc);
+            totpOk = verifyToken(String(totpToken), secret);
+            if (!totpOk) {
+              // Allow a one-time backup/recovery code as fallback.
+              const hashes: string[] = Array.isArray((dbUser as any).totpBackupCodes) ? (dbUser as any).totpBackupCodes : [];
+              const matched = matchBackupCode(String(totpToken), hashes);
+              if (matched) {
+                totpOk = true;
+                const remaining = hashes.filter((h) => h !== matched);
+                await userRepository.consumeBackupCode(tenantId, dbUser.id, remaining);
+              }
+            }
+          }
+        } catch (e) {
+          logger.error('2FA verification error', e as any);
+          totpOk = false;
+        }
+        if (!totpOk) {
+          writeAuditLog(tenantId, dbUser.id, 'LOGIN_2FA_FAILED', 'auth', dbUser.id, undefined, req.ip);
+          return res.status(401).json({ error: 'Invalid 2FA code', code: 'TWO_FACTOR_INVALID' });
+        }
+      }
       const jwtPayload = {
         id: dbUser.id,
         email: dbUser.email,
@@ -3716,6 +3758,7 @@ async function startServer() {
   app.use('/api/billing', apiRateLimit, createBillingRoutes(authenticateToken));
   app.use('/api/admin/email-metrics', apiRateLimit, createEmailMetricsRoutes(authenticateToken));
   app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
+  app.use('/api/auth/2fa', authRateLimit, createTwoFactorRoutes(authenticateToken));
   app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));
   app.use('/api/activity', apiRateLimit, createActivityRoutes(authenticateToken));
   app.use('/api/notifications', apiRateLimit, createNotificationRoutes(authenticateToken));

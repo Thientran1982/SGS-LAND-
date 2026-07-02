@@ -12,6 +12,10 @@ export interface UserRow {
   passwordHash?: string;
   role: string;
   permissions?: any;
+  totpSecret?: string | null;
+  totpEnabled?: boolean;
+  totpBackupCodes?: string[];
+  totpEnrolledAt?: string | null;
   avatar?: string;
   status: string;
   source?: string;
@@ -263,7 +267,8 @@ export class UserRepository extends BaseRepository {
   }
 
   toPublicUser(user: UserRow): Omit<UserRow, 'passwordHash'> {
-    const { passwordHash, ...publicUser } = user;
+    const { passwordHash, totpSecret, totpBackupCodes, ...publicUser } = user as any;
+    void totpSecret; void totpBackupCodes;
     // Normalize permissions: DB may return string (TEXT col) or object — ensure array
     let perms = publicUser.permissions;
     if (typeof perms === 'string') {
@@ -272,6 +277,46 @@ export class UserRepository extends BaseRepository {
     publicUser.permissions = Array.isArray(perms) ? perms : [];
     return publicUser;
   }
+
+  // --- TOTP / 2FA (admin) ---
+  // Stores the encrypted secret + hashed backup codes. Does NOT enable 2FA yet.
+  async setTotpSecret(tenantId: string, id: string, encryptedSecret: string, backupCodeHashes: string[]): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE users SET totp_secret = $1, totp_backup_codes = $2::jsonb, updated_at = NOW() WHERE id = $3`,
+        [encryptedSecret, JSON.stringify(backupCodeHashes), id]
+      );
+    });
+  }
+
+  async enableTotp(tenantId: string, id: string): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE users SET totp_enabled = TRUE, totp_enrolled_at = NOW(), updated_at = NOW() WHERE id = $1`,
+        [id]
+      );
+    });
+  }
+
+  async disableTotp(tenantId: string, id: string): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE users SET totp_enabled = FALSE, totp_secret = NULL, totp_backup_codes = '[]'::jsonb, totp_enrolled_at = NULL, updated_at = NOW() WHERE id = $1`,
+        [id]
+      );
+    });
+  }
+
+  // Removes a single (already-verified) backup code hash after it is consumed.
+  async consumeBackupCode(tenantId: string, id: string, remainingHashes: string[]): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE users SET totp_backup_codes = $1::jsonb, updated_at = NOW() WHERE id = $2`,
+        [JSON.stringify(remainingHashes), id]
+      );
+    });
+  }
+
 }
 
 export const userRepository = new UserRepository();

@@ -12,6 +12,13 @@ interface PaginatedResponse<T> {
   pageSize: number;
   totalPages: number;
 }
+// Reads the double-submit CSRF token issued by the server (non-HttpOnly cookie).
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {}, params } = options;
   let url = `${BASE_URL}${path}`;

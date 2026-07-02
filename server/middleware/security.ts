@@ -162,3 +162,111 @@ export function preventParamPollution(req: Request, res: Response, next: NextFun
   }
   next();
 }
+
+// ---------------------------------------------------------------------------
+// CSRF protection (double-submit-cookie pattern) — ENFORCING mode.
+// Because auth is cookie-based (req.cookies.token), state-changing requests are
+// vulnerable to CSRF. We issue a non-HttpOnly `csrf_token` cookie and require a
+// matching `X-CSRF-Token` header (or _csrf body/query field) on every unsafe
+// method (POST/PUT/PATCH/DELETE). Comparison is timing-safe.
+// ---------------------------------------------------------------------------
+
+export const CSRF_COOKIE_NAME = 'csrf_token';
+export const CSRF_HEADER_NAME = 'x-csrf-token';
+
+const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+// Path prefixes exempt from CSRF: server-to-server webhooks (signature/token
+// verified) and pre-session auth bootstrap endpoints (no session cookie yet).
+const CSRF_EXEMPT_PREFIXES = [
+  '/api/webhooks',
+  '/api/billing/webhook',
+  '/api/_client_error',
+  '/api/csrf-token',
+  '/api/auth/login',
+  '/api/auth/sso',
+  '/api/auth/register',
+  '/api/auth/onboard-vendor',
+  '/api/auth/verify-email',
+  '/api/auth/resend-verification',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/logout',
+  '/api/buyer/auth/request-otp',
+  '/api/buyer/auth/verify-otp',
+  '/api/buyer/auth/logout',
+];
+
+export function generateCsrfToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function isCsrfExempt(path: string): boolean {
+  return CSRF_EXEMPT_PREFIXES.some(
+    (p) => path === p || path.startsWith(p + '/'),
+  );
+}
+
+function timingSafeEqualStr(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  try {
+    return crypto.timingSafeEqual(ab, bb);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ensures every response has a fresh csrf_token cookie available to the SPA.
+ * Non-HttpOnly on purpose so the frontend JS can read it and echo it back in
+ * the X-CSRF-Token header (double-submit-cookie). Mount BEFORE csrfProtection.
+ */
+export function csrfTokenIssuer(req: Request, res: Response, next: NextFunction) {
+  if (!req.cookies || !req.cookies[CSRF_COOKIE_NAME]) {
+    const token = generateCsrfToken();
+    res.cookie(CSRF_COOKIE_NAME, token, {
+      httpOnly: false,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
+    // Make it readable within the same request too.
+    (req as any).csrfToken = token;
+    if (!req.cookies) (req as any).cookies = {};
+    (req as any).cookies[CSRF_COOKIE_NAME] = token;
+  } else {
+    (req as any).csrfToken = req.cookies[CSRF_COOKIE_NAME];
+  }
+  next();
+}
+
+/**
+ * Enforcing CSRF guard. Rejects unsafe-method requests whose X-CSRF-Token
+ * header does not match the csrf_token cookie. Mount AFTER csrfTokenIssuer.
+ */
+export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+  if (CSRF_SAFE_METHODS.has(req.method)) return next();
+  if (isCsrfExempt(req.path)) return next();
+
+  const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
+  const headerToken =
+    (req.headers[CSRF_HEADER_NAME] as string | undefined) ||
+    (req.body && typeof req.body === 'object' ? req.body._csrf : undefined) ||
+    (req.query ? (req.query._csrf as string | undefined) : undefined);
+
+  if (!cookieToken || !headerToken || !timingSafeEqualStr(cookieToken, headerToken)) {
+    return res.status(403).json({
+      error: 'CSRF token validation failed',
+      code: 'EBADCSRFTOKEN',
+    });
+  }
+  return next();
+}
+
+// GET handler that returns the current CSRF token for SPA bootstrap.
+export function csrfTokenHandler(req: Request, res: Response) {
+  const token = (req as any).csrfToken || req.cookies?.[CSRF_COOKIE_NAME] || generateCsrfToken();
+  res.json({ csrfToken: token });
+}

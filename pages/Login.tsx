@@ -125,7 +125,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
 //  MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY' | 'VERIFY_EMAIL' | 'PENDING_APPROVAL' | 'TENANT_REJECTED'>('LOGIN');  
+  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY' | 'VERIFY_EMAIL' | 'PENDING_APPROVAL' | 'TENANT_REJECTED' | 'TWO_FACTOR'>('LOGIN');  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -152,7 +152,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resendingReset, setResendingReset] = useState(false);
   const [resentResetMsg, setResentResetMsg] = useState('');
   const [showManualToken, setShowManualToken] = useState(false);
-  const [manualToken, setManualToken] = useState('');  
+  const [manualToken, setManualToken] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [totpLoading, setTotpLoading] = useState(false);
+  const [totpError, setTotpError] = useState('');
+  const pendingCredentials = React.useRef<{ email: string; password: string } | null>(null);
   const { t, language, setLanguage } = useTranslation();
   const localizeServerError = (msg: string): string => {
       if (!msg) return t('auth.error_generic');
@@ -388,6 +392,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       }
       onLoginSuccess();
     } catch (err: any) {
+      // 2FA required: admin has TOTP enabled — show code input step
+      if (err?.code === 'TWO_FACTOR_REQUIRED') {
+        pendingCredentials.current = { email: email.trim(), password };
+        setTotpCode('');
+        setTotpError('');
+        setView('TWO_FACTOR');
+        setLoading(false);
+        return;
+      }
       // Special case: login blocked because email not yet verified
       if (err?.code === 'EMAIL_NOT_VERIFIED') {
         setRegisteredEmail(err.email || email.trim());
@@ -414,6 +427,23 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       triggerShake();
     } finally {
       setLoading(false);
+    }
+  };
+  const handleTotpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const creds = pendingCredentials.current;
+    if (!creds || !totpCode.trim()) return;
+    setTotpLoading(true);
+    setTotpError('');
+    try {
+      await db.authenticateWithTotp(creds.email, creds.password, totpCode.trim());
+      if (rememberMe) localStorage.setItem('sgs_last_email', creds.email);
+      onLoginSuccess();
+    } catch (err: any) {
+      setTotpError(err.message?.includes('Invalid') || err.message?.includes('invalid') ? 'Mã không đúng. Thử lại hoặc dùng backup code.' : 'Xác thực thất bại. Thử lại.');
+      setTotpCode('');
+    } finally {
+      setTotpLoading(false);
     }
   };
   const handleResendVerification = async () => {
@@ -476,7 +506,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         <div className="flex-1 flex flex-col px-8 md:px-14 justify-center min-h-[600px]">            
             <div className="space-y-2 mb-8">
                 <h1 className="text-3xl font-bold tracking-tight text-white animate-enter">
-                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : view === 'PENDING_APPROVAL' ? t('auth.pending_approval_title') : view === 'TENANT_REJECTED' ? t('auth.rejected_title') : t('auth.welcome')}
+                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : view === 'PENDING_APPROVAL' ? t('auth.pending_approval_title') : view === 'TENANT_REJECTED' ? t('auth.rejected_title') : view === 'TWO_FACTOR' ? 'Xác thực 2 bước' : t('auth.welcome')}
                 </h1>
                 <p className="text-gray-400 text-sm leading-relaxed max-w-sm animate-enter" style={{animationDelay: '0.1s'}}>
                     {view === 'REGISTER' ? t('auth.register_subtitle') : 
@@ -485,7 +515,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                      view === 'FORGOT_REQUEST' ? t('auth.reset_subtitle') :
                      view === 'VERIFY_EMAIL' ? t('auth.verify_email_subtitle') :
                      view === 'PENDING_APPROVAL' ? t('auth.pending_approval_subtitle') :
-                     view === 'TENANT_REJECTED' ? t('auth.rejected_subtitle') : t('auth.login_subtitle')}
+                     view === 'TENANT_REJECTED' ? t('auth.rejected_subtitle') :
+                     view === 'TWO_FACTOR' ? 'Nhập mã 6 chữ số từ ứng dụng Authenticator của bạn.' :
+                     t('auth.login_subtitle')}
                 </p>
             </div>
             {/* ── VERIFY EMAIL VIEW ─────────────────────────── */}
@@ -574,8 +606,54 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                 </div>
             )}
+            {/* ── TWO FACTOR VIEW ───────────────────────────── */}
+            {view === 'TWO_FACTOR' && (
+                <form onSubmit={handleTotpSubmit} className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
+                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-5 text-center">
+                        <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <svg className="w-7 h-7 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">Mã thay đổi mỗi 30 giây. Bạn cũng có thể dùng <span className="text-indigo-300 font-semibold">backup code</span>.</p>
+                    </div>
+                    {totpError && (
+                        <div className="text-rose-200 text-xs font-medium bg-rose-500/10 p-3 rounded-xl border border-rose-500/20" role="alert">
+                            {totpError}
+                        </div>
+                    )}
+                    <div className="space-y-1.5">
+                        <label htmlFor="totp-code" className="text-xs3 font-bold uppercase tracking-wider text-gray-400 ml-1">Mã xác thực</label>
+                        <input
+                            id="totp-code"
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            maxLength={10}
+                            value={totpCode}
+                            onChange={e => setTotpCode(e.target.value.replace(/\s/g, ''))}
+                            autoFocus
+                            placeholder="000000"
+                            className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-4 py-3.5 text-white text-center text-2xl font-mono tracking-[0.5em] placeholder:text-white/20 outline-none transition-all"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={totpLoading || totpCode.trim().length < 6}
+                        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/10 disabled:text-white/30 text-white font-bold rounded-xl py-3.5 text-sm transition-all flex items-center justify-center gap-2"
+                    >
+                        {totpLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                        Xác nhận
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => { setView('LOGIN'); setTotpCode(''); setTotpError(''); pendingCredentials.current = null; }}
+                        className="w-full bg-white/5 border border-white/10 text-white/60 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all"
+                    >
+                        Quay lại đăng nhập
+                    </button>
+                </form>
+            )}
             {/* ── AUTH FORMS (all other views) ──────────────── */}
-            <form onSubmit={handleSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''} ${(view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED') ? 'hidden' : ''}`} style={{animationDelay: '0.2s'}}>
+            <form onSubmit={handleSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''} ${(view === 'VERIFY_EMAIL' || view === 'PENDING_APPROVAL' || view === 'TENANT_REJECTED' || view === 'TWO_FACTOR') ? 'hidden' : ''}`} style={{animationDelay: '0.2s'}}>
                 {/* Global Feedback */}
                 {globalError && (
                     <div className="text-rose-200 text-xs font-medium bg-rose-500/10 p-4 rounded-xl border border-rose-500/20 flex items-start animate-pulse" role="alert">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -146,6 +147,13 @@ export const Profile: React.FC = () => {
     const [emailSaving, setEmailSaving] = useState(false);
     const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});    
     const fileInputRef = useRef<HTMLInputElement>(null);
+    // TOTP 2FA state
+    const [totpEnabled, setTotpEnabled] = useState(false);
+    const [totpSetupData, setTotpSetupData] = useState<{ secret: string; otpauthUrl: string; backupCodes: string[] } | null>(null);
+    const [totpStep, setTotpStep] = useState<'idle' | 'setup' | 'verify' | 'disable'>('idle');
+    const [totpCode, setTotpCode] = useState('');
+    const [totpMsg, setTotpMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const [totpLoading, setTotpLoading] = useState(false);
     const { t } = useTranslation();
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -164,6 +172,9 @@ export const Profile: React.FC = () => {
     }, []);
 
     useEffect(() => { loadData(); }, [loadData]);
+    useEffect(() => {
+        db.getTotpStatus().then(s => setTotpEnabled(s.enabled)).catch(() => {});
+    }, []);
     // Reset avatarError whenever the avatar URL is changed (new upload or load)
     useEffect(() => { setAvatarError(false); }, [formData.avatar]);
     useEffect(() => {
@@ -196,6 +207,54 @@ export const Profile: React.FC = () => {
         })();
         return () => { cancelled = true; };
     }, [activeTab, user, perfData]);
+    const handleTotpSetup = async () => {
+        setTotpLoading(true);
+        setTotpMsg(null);
+        try {
+            const data = await db.setupTotp();
+            setTotpSetupData(data);
+            setTotpStep('setup');
+        } catch {
+            setTotpMsg({ text: 'Không thể khởi tạo 2FA. Thử lại sau.', type: 'error' });
+        } finally {
+            setTotpLoading(false);
+        }
+    };
+    const handleTotpEnable = async () => {
+        if (!totpCode.trim()) return;
+        setTotpLoading(true);
+        setTotpMsg(null);
+        try {
+            await db.enableTotp(totpCode.trim());
+            setTotpEnabled(true);
+            setTotpStep('idle');
+            setTotpSetupData(null);
+            setTotpCode('');
+            setTotpMsg({ text: '2FA đã được bật thành công!', type: 'success' });
+        } catch (e: any) {
+            setTotpMsg({ text: e.message?.includes('Invalid') ? 'Mã không đúng, thử lại.' : 'Lỗi kích hoạt 2FA.', type: 'error' });
+            setTotpCode('');
+        } finally {
+            setTotpLoading(false);
+        }
+    };
+    const handleTotpDisable = async () => {
+        if (!totpCode.trim()) return;
+        setTotpLoading(true);
+        setTotpMsg(null);
+        try {
+            await db.disableTotp(totpCode.trim());
+            setTotpEnabled(false);
+            setTotpStep('idle');
+            setTotpCode('');
+            setTotpMsg({ text: '2FA đã được tắt.', type: 'success' });
+        } catch (e: any) {
+            setTotpMsg({ text: e.message?.includes('Invalid') ? 'Mã không đúng, thử lại.' : 'Lỗi tắt 2FA.', type: 'error' });
+            setTotpCode('');
+        } finally {
+            setTotpLoading(false);
+        }
+    };
     const getLocalizedError = useCallback((msg: string) => {
         if (msg === 'Email already exists') return t('profile.err_email_exists');
         if (msg === 'Invalid credentials') return t('auth.error_generic');
@@ -664,6 +723,103 @@ export const Profile: React.FC = () => {
                                         </button>
                                     </div>
                                 </form>
+                                {/* ─── TOTP 2FA Section ─────────────────────────────── */}
+                                <div className="mt-8 pt-8 border-t border-[var(--glass-border)]">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-[var(--text-primary)]">Xác thực 2 bước (2FA)</h3>
+                                            <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Bảo vệ tài khoản bằng ứng dụng Authenticator (Google, Authy, v.v.)</p>
+                                        </div>
+                                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${totpEnabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                            {totpEnabled ? 'Đang bật' : 'Tắt'}
+                                        </span>
+                                    </div>
+                                    {totpMsg && (
+                                        <div className={`mb-4 text-xs font-medium p-3 rounded-xl border ${totpMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800' : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800'}`}>
+                                            {totpMsg.text}
+                                        </div>
+                                    )}
+                                    {totpStep === 'idle' && !totpEnabled && (
+                                        <button onClick={handleTotpSetup} disabled={totpLoading}
+                                            className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-60 flex items-center gap-2">
+                                            {totpLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>}
+                                            Bật 2FA
+                                        </button>
+                                    )}
+                                    {totpStep === 'setup' && totpSetupData && (
+                                        <div className="space-y-5 animate-enter">
+                                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">Quét mã QR bằng ứng dụng Authenticator, sau đó nhập mã 6 chữ số để xác nhận.</p>
+                                            <div className="flex justify-center">
+                                                <div className="p-3 bg-white rounded-2xl shadow-md inline-block">
+                                                    <QRCodeSVG value={totpSetupData.otpauthUrl} size={180} />
+                                                </div>
+                                            </div>
+                                            <div className="bg-[var(--glass-surface)] rounded-xl p-3 text-center">
+                                                <p className="text-xs text-[var(--text-tertiary)] mb-1">Nhập thủ công nếu không quét được:</p>
+                                                <code className="text-xs font-mono font-bold text-[var(--text-primary)] tracking-widest break-all">{totpSetupData.secret}</code>
+                                            </div>
+                                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+                                                <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-2">Lưu backup codes (hiển thị 1 lần):</p>
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    {totpSetupData.backupCodes.map((c, i) => (
+                                                        <code key={i} className="text-xs font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded text-center border border-amber-200 dark:border-slate-700">{c}</code>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs3 font-bold uppercase tracking-wider text-[var(--text-tertiary)] ml-1">Mã xác nhận từ app</label>
+                                                <input type="text" inputMode="numeric" maxLength={8} value={totpCode}
+                                                    onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                                                    placeholder="000000"
+                                                    className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-center font-mono text-lg tracking-[0.4em] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all text-[var(--text-primary)]"
+                                                />
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <button onClick={handleTotpEnable} disabled={totpLoading || totpCode.length < 6}
+                                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                                                    {totpLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                                                    Xác nhận & Bật 2FA
+                                                </button>
+                                                <button onClick={() => { setTotpStep('idle'); setTotpSetupData(null); setTotpCode(''); }}
+                                                    className="px-5 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold py-2.5 rounded-xl hover:bg-[var(--glass-surface)] transition-colors">
+                                                    Huỷ
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {totpStep === 'idle' && totpEnabled && (
+                                        <div className="space-y-3">
+                                            {totpStep === 'idle' && (
+                                                <button onClick={() => { setTotpStep('disable'); setTotpCode(''); setTotpMsg(null); }}
+                                                    className="px-5 py-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-sm font-bold rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors">
+                                                    Tắt 2FA
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    {totpStep === 'disable' && (
+                                        <div className="space-y-4 animate-enter">
+                                            <p className="text-xs text-[var(--text-secondary)]">Nhập mã từ ứng dụng Authenticator để xác nhận tắt 2FA.</p>
+                                            <input type="text" inputMode="numeric" maxLength={8} value={totpCode}
+                                                onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                                                autoFocus
+                                                placeholder="000000"
+                                                className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-center font-mono text-lg tracking-[0.4em] outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all text-[var(--text-primary)]"
+                                            />
+                                            <div className="flex gap-3">
+                                                <button onClick={handleTotpDisable} disabled={totpLoading || totpCode.length < 6}
+                                                    className="flex-1 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-sm font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                                                    {totpLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                                                    Xác nhận tắt
+                                                </button>
+                                                <button onClick={() => { setTotpStep('idle'); setTotpCode(''); }}
+                                                    className="px-5 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold py-2.5 rounded-xl hover:bg-[var(--glass-surface)] transition-colors">
+                                                    Huỷ
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             )
                         ) : (
                             // ─── Performance Tab ───────────────────────────────────────────────

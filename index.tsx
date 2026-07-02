@@ -1,4 +1,7 @@
 import './styles/globals.css';
+// CSRF: install fetch interceptor before any request is made.
+import { installCsrfFetch } from './services/csrfFetch';
+installCsrfFetch();
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
