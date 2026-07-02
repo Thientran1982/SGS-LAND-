@@ -732,8 +732,12 @@ function HotListingsSection({ lang }: { lang: Lang }) {
 
   const fmtPrice = (p: number) => {
     if (!p) return lang === "vi" ? "Liên hệ" : "Contact";
-    if (p >= 1e9) return `${(p / 1e9).toFixed(1)} tỷ`;
-    if (p >= 1e6) return `${Math.round(p / 1e6)} triệu`;
+    if (p >= 1e9) {
+      const v = p / 1e9;
+      const s = Number.isInteger(v) ? String(v) : v.toFixed(1).replace(".", ",");
+      return `${s} tỷ`;
+    }
+    if (p >= 1e6) return `${Math.round(p / 1e6).toLocaleString("vi-VN")} triệu`;
     return p.toLocaleString("vi-VN");
   };
   const fmtViews = (v: number) => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v));
