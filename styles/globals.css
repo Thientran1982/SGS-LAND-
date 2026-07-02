@@ -183,4 +183,19 @@ html.dark body {
 .markdown-body pre code { background-color: transparent; padding: 0; }
 .markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--sgs-text-muted); font-style: italic; }
 .dark .markdown-body blockquote { border-left-color: rgba(255,255,255,0.1); }
+
+/* ── Hero AI Search Panel animations ─────────────────────────── */
+@keyframes underline-draw {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+@keyframes aurora-border {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 6px 2px rgba(74,222,128,0.5); }
+  50%       { opacity: 0.5; box-shadow: 0 0 10px 4px rgba(74,222,128,0.25); }
+}
 .markdown-body a { color: var(--sgs-primary); text-decoration: underline; text-underline-offset: 2px; }

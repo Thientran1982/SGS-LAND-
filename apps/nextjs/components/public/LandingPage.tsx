@@ -352,69 +352,155 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
             ? "Định giá AI ±5%, pháp lý 2 lớp, CRM đa kênh. Kết nối 15.000+ môi giới và 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương."
             : "AI Valuation ±5%, 2-layer legal check, multi-channel CRM. Connecting 15,000+ agents and 45,000+ properties across HCMC, Dong Nai, Binh Duong."}
         </p>
-        {/* Glass AI Search Panel */}
-        <div style={{ marginBottom: "-52px", maxWidth: "680px", position: "relative", zIndex: 20 }}>
+        {/* ── 2026 AI Search Panel ── */}
+        <div style={{ marginBottom: "-52px", maxWidth: "720px", position: "relative", zIndex: 20 }}>
+          {/* Ambient glow behind the card */}
           <div
-            className="rounded-2xl p-4 sm:p-5"
+            aria-hidden
             style={{
-              background: "rgba(255,255,255,0.95)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              border: "1px solid rgba(200,150,62,0.4)",
-              boxShadow: "0 20px 60px rgba(10,30,51,0.4), 0 4px 16px rgba(200,150,62,0.12)",
+              position: "absolute", inset: "-2px", borderRadius: "20px", zIndex: -1,
+              background: "linear-gradient(135deg, rgba(200,150,62,0.55) 0%, rgba(100,160,220,0.35) 50%, rgba(200,150,62,0.55) 100%)",
+              backgroundSize: "300% 300%",
+              animation: "aurora-border 6s ease infinite",
+              filter: "blur(8px)",
+              opacity: 0.7,
+            }}
+          />
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{
+              background: "rgba(8,20,38,0.72)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: "1px solid rgba(255,255,255,0.10)",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
             }}
           >
-            <p
-              className="text-xs font-semibold mb-3"
-              style={{ color: "var(--sgs-accent-text)" }}
+            {/* Top bar — AI status */}
+            <div
+              className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              {lang === "vi"
-                ? "Hỏi AI — mô tả nhu cầu bằng ngôn ngữ tự nhiên"
-                : "Ask AI — describe your needs in natural language"}
-            </p>
-            <form onSubmit={submit} className="flex gap-2">
-              <div className="flex-1 relative">
+              <div className="flex items-center gap-2">
+                <span style={{ position: "relative", display: "inline-flex" }}>
+                  <span style={{
+                    display: "block", width: 8, height: 8, borderRadius: "50%",
+                    background: "#4ADE80",
+                    boxShadow: "0 0 6px 2px rgba(74,222,128,0.5)",
+                    animation: "pulse-dot 2s ease-in-out infinite",
+                  }} />
+                </span>
+                <span style={{
+                  fontSize: "11px", fontWeight: 600, letterSpacing: "0.04em",
+                  color: "rgba(255,255,255,0.55)", textTransform: "uppercase",
+                  fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+                }}>
+                  {lang === "vi" ? "AI · Đang lắng nghe" : "AI · Listening"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span style={{
+                  fontSize: "10px", fontWeight: 500,
+                  color: "rgba(200,150,62,0.8)", letterSpacing: "0.03em",
+                  fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+                }}>
+                  SGS-AVM v2.1
+                </span>
+                <span style={{
+                  display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                  background: "rgba(200,150,62,0.7)",
+                }} />
+              </div>
+            </div>
+
+            {/* Search input row */}
+            <form onSubmit={submit} className="px-3 sm:px-4 py-3 sm:py-4">
+              <div
+                className="flex items-center rounded-xl"
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1.5px solid rgba(255,255,255,0.12)",
+                  transition: "border-color 0.25s, box-shadow 0.25s",
+                }}
+                onFocusCapture={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.border = "1.5px solid rgba(200,150,62,0.7)";
+                  el.style.boxShadow = "0 0 0 3px rgba(200,150,62,0.12)";
+                }}
+                onBlurCapture={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.border = "1.5px solid rgba(255,255,255,0.12)";
+                  el.style.boxShadow = "none";
+                }}
+              >
+                <span className="pl-4 pr-1 flex-shrink-0" style={{ color: "rgba(200,150,62,0.7)", lineHeight: 1 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L13.5 9L20 10.5L13.5 12L12 19L10.5 12L4 10.5L10.5 9L12 2Z" fill="currentColor" opacity="0.9"/>
+                    <path d="M19 2L19.8 5.2L23 6L19.8 6.8L19 10L18.2 6.8L15 6L18.2 5.2L19 2Z" fill="currentColor" opacity="0.6"/>
+                  </svg>
+                </span>
                 <input
                   id="sgs-search"
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={placeholderText}
-                  className="w-full px-4 py-3 rounded-xl text-[16px] md:text-sm outline-none transition-all"
+                  className="flex-1 py-3 px-2 text-[16px] md:text-sm outline-none bg-transparent"
                   style={{
-                    background: "var(--sgs-subtle-bg, #F8F9FB)",
-                    border: "1.5px solid rgba(27,58,92,0.1)",
-                    color: "var(--sgs-text, var(--sgs-text))",
-                    caretColor: "var(--sgs-accent)",
-                    fontFamily: "var(--font-be-vietnam, sans-serif)",
+                    color: "rgba(255,255,255,0.92)",
+                    caretColor: "#D4A855",
+                    fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
                   }}
-                  onFocus={e => (e.currentTarget.style.border = "1.5px solid rgba(200,150,62,0.6)")}
-                  onBlur={e  => (e.currentTarget.style.border = "1.5px solid rgba(27,58,92,0.1)")}
                 />
+                <button
+                  type="submit"
+                  className="flex-shrink-0 m-1.5 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #D4A855 0%, #C8963C 100%)",
+                    color: "#0A1C33",
+                    letterSpacing: "0.02em",
+                    boxShadow: "0 2px 12px rgba(200,150,62,0.35)",
+                    whiteSpace: "nowrap",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(200,150,62,0.5)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(200,150,62,0.35)"; }}
+                >
+                  {lang === "vi" ? "Hỏi ngay" : "Ask AI"}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </button>
               </div>
-              <button
-                type="submit"
-                className="px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
-                style={{ background: "var(--sgs-accent)", color: "var(--sgs-primary-deep)" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#D9A94E")}
-                onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-accent)")}
-              >
-                {lang === "vi" ? "Hỏi ngay" : "Search"}
-              </button>
             </form>
-            <div className="flex flex-wrap gap-2 mt-3">
-              {QUICK_CHIPS.map(c => (
+
+            {/* Quick chips */}
+            <div className="px-3 sm:px-4 pb-4 flex flex-wrap gap-2">
+              {QUICK_CHIPS.map((c, i) => (
                 <button
                   key={c.vi}
                   onClick={() => chip(c[lang])}
-                  className="text-xs px-3 py-1.5 rounded-full transition-all"
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
-                    background: "var(--sgs-champagne)", color: "var(--sgs-text-heading, var(--sgs-primary))",
-                    border: "1px solid rgba(200,150,62,0.25)",
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "rgba(255,255,255,0.70)",
+                    fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+                    backdropFilter: "blur(8px)",
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "#EAD5B0")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "var(--sgs-champagne)")}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = "rgba(200,150,62,0.15)";
+                    e.currentTarget.style.border = "1px solid rgba(200,150,62,0.45)";
+                    e.currentTarget.style.color = "#D4A855";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                    e.currentTarget.style.border = "1px solid rgba(255,255,255,0.12)";
+                    e.currentTarget.style.color = "rgba(255,255,255,0.70)";
+                  }}
                 >
+                  <span style={{ opacity: 0.6, fontSize: "10px" }}>
+                    {["🏡","🏙️","💰"][i] ?? "✦"}
+                  </span>
                   {c[lang]}
                 </button>
               ))}
