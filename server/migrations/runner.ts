@@ -325,7 +325,7 @@ export async function runPendingMigrations(pool: Pool, isDryRun = false): Promis
       console.log(`[migrations] Applying ${file}: ${migration.description || ''}`);
       await migration.up(client);
       await client.query(
-        'INSERT INTO schema_versions (version, description) VALUES ($1, $2)',
+        'INSERT INTO schema_versions (version, description) VALUES ($1, $2) ON CONFLICT (version) DO NOTHING',
         [file, migration.description || null]
       );
       console.log(`[migrations] ✓ ${file}`);

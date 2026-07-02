@@ -677,7 +677,7 @@ export const Profile: React.FC = () => {
                                         {t('profile.sso_manage_btn')}
                                     </a>
                                 </div>
-                            ) : (
+                            ) : (<>
                                 <form onSubmit={handleSavePassword} className="space-y-6 max-w-2xl animate-enter">
                                     <InputField 
                                         id="current-password"
@@ -820,7 +820,7 @@ export const Profile: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                            )
+                            </>)
                         ) : (
                             // ─── Performance Tab ───────────────────────────────────────────────
                             <div className="animate-enter">
