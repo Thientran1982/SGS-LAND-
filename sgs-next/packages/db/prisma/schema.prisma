@@ -1,0 +1,279 @@
+// ============================================================
+//  SGS NEXT — Enterprise PropTech Platform
+//  PostgreSQL schema (Prisma ORM)
+//  Multi-tenant, RBAC, Clean Architecture core data model
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto, pg_trgm, vector]
+}
+
+// ---------------------- ENUMS ----------------------
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  FACEBOOK
+  APPLE
+  OTP
+}
+
+enum PropertyType {
+  APARTMENT
+  VILLA
+  TOWNHOUSE
+  SHOPHOUSE
+  LAND
+  OFFICE
+  WAREHOUSE
+  HOTEL
+  FARM
+}
+
+enum ListingType {
+  SALE
+  RENT
+  TRANSFER
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  SOLD
+  RENTED
+  ARCHIVED
+}
+
+enum LegalStatus {
+  RED_BOOK
+  PINK_BOOK
+  SALE_CONTRACT
+  PENDING
+  DISPUTED
+  UNKNOWN
+}
+
+enum Direction {
+  EAST
+  WEST
+  SOUTH
+  NORTH
+  SOUTHEAST
+  SOUTHWEST
+  NORTHEAST
+  NORTHWEST
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  AI_CHAT
+  REFERRAL
+  ADS
+  SOCIAL
+  ZALO
+  CALL
+  WALK_IN
+}
+
+enum TransactionStatus {
+  RESERVED
+  DEPOSITED
+  CONTRACTED
+  COMPLETED
+  CANCELLED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  SYSTEM
+  LEAD
+  MESSAGE
+  APPOINTMENT
+  TRANSACTION
+  MARKETING
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  TOUR_360
+  FLOOR_PLAN
+  DOCUMENT
+  BROCHURE
+}
+
+// ---------------------- MULTI-TENANCY ----------------------
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  domain    String?  @unique
+  logoUrl   String?
+  settings  Json     @default("{}")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  properties   Property[]
+  projects     Project[]
+  developers   Developer[]
+  leads        Lead[]
+  transactions Transaction[]
+
+  @@index([slug])
+}
+
+// ---------------------- RBAC ----------------------
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique // e.g. property.create
+  description String?
+  roles       RolePermission[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String
+  key         String   @unique // ADMIN, BROKER, CUSTOMER, MANAGER
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+// ---------------------- USERS & PROFILES ----------------------
+
+model User {
+  id            String       @id @default(cuid())
+  tenantId      String
+  email         String
+  phone         String?
+  passwordHash  String?
+  fullName      String
+  avatarUrl     String?
+  provider      AuthProvider @default(EMAIL)
+  providerId    String?
+  status        UserStatus   @default(PENDING)
+  emailVerified Boolean      @default(false)
+  phoneVerified Boolean      @default(false)
+  twoFactorEnabled Boolean   @default(false)
+  locale        String       @default("vi")
+  lastLoginAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  tenant        Tenant       @relation(fields: [tenantId], references: [id])
+  roles         UserRole[]
+  brokerProfile BrokerProfile?
+  customerProfile CustomerProfile?
+  sessions      Session[]
+  notifications Notification[]
+  favorites     Favorite[]
+  savedSearches SavedSearch[]
+  reviews       Review[]
+  sentMessages  Message[]      @relation("MessageSender")
+  aiConversations AiConversation[]
+  auditLogs     AuditLog[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId, status])
+  @@index([provider, providerId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model BrokerProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  licenseNo     String?
+  bio           String?
+  agencyName    String?
+  rating        Float    @default(0)
+  totalSales    Int      @default(0)
+  commissionRate Float   @default(0)
+  rank          String?
+  isVerified    Boolean  @default(false)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties    Property[]
+  leads         Lead[]
+  appointments  Appointment[]
+  transactions  Transaction[]
+}
+
+model CustomerProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  budgetMin    Decimal? @db.Decimal(15, 2)
+  budgetMax    Decimal? @db.Decimal(15, 2)
+  preferredAreas String[]
+  interests    Json     @default("{}")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  transactions Transaction[]
+}
