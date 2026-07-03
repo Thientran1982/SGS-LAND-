@@ -1,9 +1,6 @@
 // @ts-nocheck
 import Link from "next/link";
 import { MapPin, Building2, ArrowRight } from "lucide-react";
-import { SchemaScript } from "@/components/SchemaScript";
-import { getFAQSchema, getBreadcrumbSchema } from "@/lib/schema";
-import type { FAQItem } from "@/lib/schema";
 interface Props {
   area: string;
   areaSlug: string;
@@ -12,12 +9,9 @@ interface Props {
   priceRange: string;
   totalListings: number;
   description: string;
-  intro?: { heading: string; body: string }[];
-  subAreas?: { label: string; href: string }[];
-  faqs?: FAQItem[];
 }
 // Server Component — pure SSG
-export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, priceRange, totalListings, description, intro, subAreas, faqs }: Props) {
+export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, priceRange, totalListings, description }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       {/* Hero */}
@@ -28,35 +22,13 @@ export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, 
           <span>Bất động sản {area}</span>
         </nav>
         <h1 className="text-4xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-          Bất Động Sản {area} 2026
+          Bất Động Sản {area} 2025
         </h1>
         <p className="text-lg max-w-2xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
           {description}
         </p>
       </div>
-      {/* Intro content sections (SEO/AEO) */}
-        {intro && intro.length > 0 && (
-          <div className="mb-12 space-y-6">
-            {intro.map((sec) => (
-              <section key={sec.heading}>
-                <h2 className="text-2xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>{sec.heading}</h2>
-                <p className="text-base leading-relaxed" style={{ color: "var(--text-secondary)" }}>{sec.body}</p>
-              </section>
-            ))}
-          </div>
-        )}
-        {/* Sub-area internal links (satellite cluster) */}
-        {subAreas && subAreas.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Khu vực &amp; dự án nổi bật</h2>
-            <div className="flex flex-wrap gap-3">
-              {subAreas.map((sa) => (
-                <Link key={sa.href} href={sa.href} className="px-4 py-2 rounded-xl text-sm font-medium" style={{ background: "var(--primary-subtle)", color: "var(--primary-600)" }}>{sa.label}</Link>
-              ))}
-            </div>
-          </div>
-        )}
-        {/* Quick stats */}
+      {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
         {[
           { label: "Sản phẩm", value: `${totalListings.toLocaleString()}+` },
@@ -115,26 +87,7 @@ export function LocalLandingPageTemplate({ area, areaSlug, districts, projects, 
           ))}
         </div>
       </section>
-      {/* FAQ section (AEO) */}
-        {faqs && faqs.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>Câu hỏi thường gặp về bất động sản {area}</h2>
-            <div className="space-y-4">
-              {faqs.map((f, i) => (
-                <div key={i} className="p-5 rounded-2xl" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
-                  <h3 className="font-semibold mb-2" style={{ color: "var(--text-primary)" }}>{f.question}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{f.answer}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {/* JSON-LD structured data (SSR) */}
-        <SchemaScript schemas={[
-          getBreadcrumbSchema([{ name: `Bất động sản ${area}`, url: `https://sgsland.vn/${areaSlug}` }]),
-          ...(faqs && faqs.length > 0 ? [getFAQSchema(faqs, `https://sgsland.vn/${areaSlug}`)] : []),
-        ]} />
-        {/* CTA */}
+      {/* CTA */}
       <div className="p-8 rounded-2xl text-center"
         style={{ background: "var(--primary-subtle)", border: "1px solid var(--primary-600)20" }}>
         <h2 className="text-xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>

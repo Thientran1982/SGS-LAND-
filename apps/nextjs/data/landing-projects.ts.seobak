@@ -321,10 +321,10 @@ const LEGACY_66: LandingProject = {
 // ─────────────────────────────────────────────
 const MASTERI_COSMO: LandingProject = {
   slug: "masteri-cosmo-central",
-  titleFull: "Masteri Cosmo Central – Giá & Mặt Bằng Căn Hộ The Global City 2026 | SGS Land",
+  titleFull: "Masteri Cosmo Central — The Global City | Foster + Partners | TP. Thủ Đức 2026",
   titleShort: "Masteri Cosmo Central",
   eyebrow: "Masterise Homes • Foster + Partners • The Global City 117,4ha",
-  desc: "Masteri Cosmo Central ở đâu? Căn hộ tại The Global City 117,4ha, TP Thủ Đức – 6 tòa tháp 19-29 tầng do Foster + Partners thiết kế. Loại căn 1PN-4PN, giá từ 6,429 tỷ, lãi suất 0%. ☎ Xem bảng giá & mặt bằng miễn phí từ SGS Land!",
+  desc: "Masteri Cosmo Central tại The Global City 117,4ha: 6 tòa tháp 19–29 tầng thiết kế bởi Foster + Partners, giá từ 6,429 tỷ, lãi suất 0%, view kênh đào nhạc nước lớn nhất Đông Nam Á. Tư vấn miễn phí từ SGS Land.",
   keywords: "Masteri Cosmo Central, The Global City, Foster Partners căn hộ, Masterise Homes TP Thủ Đức, căn hộ kênh đào nhạc nước",
   heroImageAlt: "Masteri Cosmo Central — phân khu căn hộ cao cấp tại The Global City 117,4ha, TP. Thủ Đức, thiết kế bởi Foster + Partners",
   heroGradient: "linear-gradient(135deg,rgba(17,28,51,.82),rgba(17,28,51,.50))",

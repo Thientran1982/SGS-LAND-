@@ -4,8 +4,8 @@ import Link from "next/link";
 import { TrendingUp, Shield, MapPin, BarChart3 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Đầu Tư Bất Động Sản 2026: 5 Kênh Sinh Lời 8-15%/Năm | SGS Land",
-  description: "Đầu tư BĐS 2026 sinh lời 8-15%/năm: chọn dự án tiềm năng, pháp lý rõ ràng, dòng tiền ổn định tại TP.HCM, Đồng Nai, Bình Dương. ☎ Nhận tư vấn & báo giá miễn phí từ SGS Land!",
+  title: "Đầu Tư Bất Động Sản 2025 | Cơ Hội & Chiến Lược | SGS LAND",
+  description: "Tư vấn đầu tư BĐS sinh lời 2025: phân tích thị trường, chọn dự án tiềm năng, chiến lược đầu tư dài hạn tại TP.HCM, Đồng Nai, Bình Dương.",
   alternates: { canonical: "https://sgsland.vn/dau-tu-bat-dong-san" },
 };
 export const dynamic = "force-dynamic";

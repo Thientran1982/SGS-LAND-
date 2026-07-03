@@ -103,7 +103,6 @@ const nextConfig: NextConfig = {
       { source: "/lai-suat-vay-ngan-hang",  destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/lai-suat-vay-mua-nha",    destination: "/lai-suat-ngan-hang",      permanent: true },
       { source: "/nha-pho-trung-tam",       destination: "/du-an/nha-pho-trung-tam", permanent: true },
-      { source: "/landing/aqua-city", destination: "/du-an/aqua-city", permanent: true },
       { source: "/developers",              destination: "/help-center",              permanent: false },
       { source: "/status",                  destination: "/help-center",              permanent: false },
     ];

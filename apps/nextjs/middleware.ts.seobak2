@@ -44,14 +44,6 @@ const AUTH_ONLY_ROUTES = ["/login", "/reset-password", "/verify-email"];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // —— Canonical host: 301 redirect www → non-www (SEO consolidation) ——
-  const host = request.headers.get("host") || "";
-  if (host.startsWith("www.")) {
-    const url = request.nextUrl.clone();
-    url.host = host.slice(4);
-    return NextResponse.redirect(url, 301);
-  }
-
   // Detect auth via JWT cookie (set by Express backend)
   const token = request.cookies.get("auth_token")?.value
     || request.cookies.get("sgs_token")?.value;

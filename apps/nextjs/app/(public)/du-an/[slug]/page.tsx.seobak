@@ -27,24 +27,8 @@ const PROJECT_META: Record<
     areaHa: number;
     priceLow: number;
     priceHigh: number;
-    metaTitle?: string;
-    metaDescription?: string;
-    subdivisions?: { name: string; price: string; area?: string; note?: string }[];
   }
 > = {
-  "diamond-sky-van-phuc-city": {
-    name: "Diamond Sky Vạn Phúc City",
-    dev: "Tập đoàn Vạn Phúc (Van Phuc Group)",
-    loc: "KĐĐT Vạn Phúc, Hiệp Bình Phước, TP Thủ Đức, TP.HCM",
-    desc: "Diamond Sky Vạn Phúc City – tòa căn hộ hạng sang 20 tầng view sông Sài Gòn trong KĐĐT Vạn Phúc 198ha. Giá 2026: 1PN từ 9,6 tỷ, 2PN từ 14 tỷ, 3PN từ 20 tỷ. Sổ hồng lâu dài, bàn giao Q4/2026.",
-    priceRange: "1PN từ 9,6 tỷ; 2PN từ 14 tỷ; 3PN từ 20 tỷ VNĐ (2026)",
-    scale: "20 tầng, ~520 căn hộ",
-    areaHa: 198,
-    priceLow: 9_600_000_000,
-    priceHigh: 30_000_000_000,
-    metaTitle: "Diamond Sky Vạn Phúc City – Giá, Mặt bằng, Chính sách 2026 | SGS Land",
-    metaDescription: "Diamond Sky Vạn Phúc City: giá căn hộ Vạn Phúc City từ 9,6 tỷ (1PN), 2PN 14 tỷ, 3PN 20 tỷ. Xem mặt bằng, bảng giá & chính sách 2026. ☎ Nhận báo giá gốc từ SGS Land ngay!",
-  },
   "aqua-city": {
     name: "Nhà phố Aqua City Novaland Đồng Nai",
     dev: "Novaland",
@@ -55,20 +39,9 @@ const PROJECT_META: Record<
     areaHa: 1000,
     priceLow: 6_000_000_000,
     priceHigh: 50_000_000_000,
-    metaTitle: "Aqua City Novaland Đồng Nai – Giá Nhà Phố, Biệt Thự & Mặt Bằng 2026 | SGS Land",
-    metaDescription: "Aqua City Novaland đô thị sinh thái 1.000ha Long Thành, Đồng Nai: nhà phố từ 6 tỷ, biệt thự từ 15 tỷ. Xem giá dự án Aqua City, mặt bằng phân khu & tiến độ 2026. ☎ Nhận bảng giá gốc từ SGS Land!",
-    subdivisions: [
-      { name: "Venice Island (đảo Venít)", price: "Biệt thự từ 25 tỷ", area: "đảo VIP", note: "Phân khu đẳng cấp nhất, view sông 3 mặt" },
-      { name: "Zenpark", price: "Nhà phố từ 6 tỷ", area: "6x18m", note: "Đã bàn giao, view công viên" },
-      { name: "Harbor Hill", price: "Nhà phố từ 8 tỷ", area: "7x20m", note: "View cảng du thuyền" },
-      { name: "Grand Sapphire", price: "Biệt thự từ 15 tỷ", area: "8x18m", note: "Phân khu mới 2026" },
-    ],
   },
   "the-global-city": {
     name: "The Global City",
-    metaTitle: "The Global City Thủ Đức 2026 – Giá, Mặt Bằng, Căn Hộ & Nhà Phố | SGS Land",
-    metaDescription: "The Global City Thủ Đức (Masterise Homes): giá căn hộ, nhà phố, biệt thự 2026, mặt bằng phân khu, tiến độ. ☎ Nhận báo giá gốc từ SGS Land!",
-    subdivisions: [{"name":"SOHO (nhà phố thương mại)","price":"Từ 25 tỷ","area":"5x20m","note":"Mặt tiền đại lộ"},{"name":"The Manhattan (nhà phố, biệt thự)","price":"Từ 28 tỷ","area":"5x18m","note":"View kênh đào"},{"name":"The Global City căn hộ","price":"Đang cập nhật","area":"1–3PN","note":"Giai đoạn tiếp theo"}],
     dev: "Masterise Homes",
     loc: "An Phú, TP Thủ Đức",
     desc: "Đô thị thương mại 117ha của Masterise Homes, trung tâm tài chính TP Thủ Đức.",
@@ -80,9 +53,6 @@ const PROJECT_META: Record<
   },
   "izumi-city": {
     name: "Izumi City Nam Long",
-    metaTitle: "Izumi City Nam Long Đồng Nai 2026 – Giá, Mặt Bằng Nhà Phố & Biệt Thự | SGS Land",
-    metaDescription: "Izumi City Nam Long Biên Hòa Đồng Nai: giá nhà phố, biệt thự 2026, mặt bằng phân khu, tiến độ ven sông Đồng Nai. ☎ Nhận báo giá gốc SGS Land!",
-    subdivisions: [{"name":"Nhà phố Izumi","price":"Từ 6 tỷ","area":"5x18m","note":"Ven sông"},{"name":"Biệt thự Izumi","price":"Từ 12 tỷ","area":"8x18m","note":"View công viên"},{"name":"Shophouse Izumi","price":"Từ 9 tỷ","area":"5x20m","note":"Mặt đường lớn"}],
     dev: "Nam Long Group",
     loc: "Biên Hòa, Đồng Nai",
     desc: "Đô thị tích hợp chuẩn Nhật 170ha, tiêu chuẩn sống quốc tế, giá từ 8,4 tỷ.",
@@ -94,9 +64,6 @@ const PROJECT_META: Record<
   },
   "vinhomes-can-gio": {
     name: "Vinhomes Cần Giờ",
-    metaTitle: "Vinhomes Cần Giờ (Green Paradise) 2026 – Giá, Mặt Bằng & Tiến Độ | SGS Land",
-    metaDescription: "Vinhomes Cần Giờ – Vinhomes Green Paradise: giá bán 2026, mặt bằng phân khu, tiến độ siêu đô thị lấn biển. ☎ Nhận báo giá gốc SGS Land!",
-    subdivisions: [{"name":"Biệt thự biển","price":"Đang cập nhật","area":"Nhiều loại","note":"Phân khu ven biển"},{"name":"Nhà phố thương mại","price":"Đang cập nhật","area":"Nhiều loại","note":"Khu đô thị lấn biển"}],
     dev: "Vinhomes",
     loc: "Cần Giờ, TP.HCM",
     desc: "Siêu đô thị lấn biển 2.870ha, tuyến Metro số 4, khu đô thị sinh thái biển đầu tiên Việt Nam.",
@@ -108,9 +75,6 @@ const PROJECT_META: Record<
   },
   "vinhomes-grand-park": {
     name: "Vinhomes Grand Park",
-    metaTitle: "Vinhomes Grand Park Quận 9 2026 – Giá Căn Hộ, Mặt Bằng & Cho Thuê | SGS Land",
-    metaDescription: "Vinhomes Grand Park TP Thủ Đức (Quận 9): giá căn hộ 2026, mặt bằng phân khu, cho thuê, tiến độ. ☎ Nhận báo giá gốc từ SGS Land!",
-    subdivisions: [{"name":"The Origami","price":"Từ 2.8 tỷ","area":"1–3PN","note":"Phong cách Nhật"},{"name":"The Beverly","price":"Từ 3.5 tỷ","area":"1–3PN","note":"View công viên"},{"name":"Glory Heights","price":"Từ 3.9 tỷ","area":"2–3PN","note":"Phân khu mới"}],
     dev: "Vinhomes",
     loc: "TP Thủ Đức, TP.HCM",
     desc: "Siêu đô thị 271ha, 12 công viên chủ đề, Metro số 1, tâm điểm phát triển phía Đông TP.HCM.",
@@ -130,14 +94,6 @@ const PROJECT_META: Record<
     areaHa: 43.9,
     priceLow: 4_000_000_000,
     priceHigh: 25_000_000_000,
-    metaTitle: "Vinhomes Central Park Bình Thạnh – Giá Căn Hộ & Mặt Bằng Landmark 81 (2026) | SGS Land",
-    metaDescription: "Vinhomes Central Park Bình Thạnh: căn hộ từ 4 tỷ, cho thuê từ 15 triệu/tháng, view sông Sài Gòn & Landmark 81. Xem giá, mặt bằng từng phân khu. ☎ Nhận bảng giá từ SGS Land!",
-    subdivisions: [
-      { name: "Landmark 81", price: "Căn hộ từ 8 tỷ", area: "51-150m2", note: "Tòa cao nhất Việt Nam, view toàn thành phố" },
-      { name: "The Park (Park 1-7)", price: "Căn hộ từ 4 tỷ", area: "50-100m2", note: "Cận công viên 14ha, đã bàn giao" },
-      { name: "The Central (C1-C3)", price: "Căn hộ từ 4,5 tỷ", area: "53-116m2", note: "Trung tâm dự án, gần Vincom" },
-      { name: "The Landmark (L1-L6)", price: "Căn hộ từ 5 tỷ", area: "54-120m2", note: "View sông Sài Gòn trực diện" },
-    ],
   },
   "masterise-homes": {
     name: "Masterise Homes",
@@ -196,9 +152,6 @@ const PROJECT_META: Record<
   },
   sala: {
     name: "Sala Đại Quang Minh",
-    metaTitle: "Khu Đô Thị Sala Đại Quang Minh Thủ Thiêm 2026 – Giá, Mặt Bằng | SGS Land",
-    metaDescription: "Khu đô thị Sala Đại Quang Minh Thủ Thiêm Quận 2: giá căn hộ, nhà phố, biệt thự 2026, mặt bằng phân khu. ☎ Nhận báo giá gốc SGS Land!",
-    subdivisions: [{"name":"Sarimi căn hộ","price":"Từ 7 tỷ","area":"2–3PN","note":"Trung tâm Sala"},{"name":"Sarica căn hộ","price":"Từ 9 tỷ","area":"2–3PN","note":"Cao cấp"},{"name":"Nhà phố & biệt thự Sala","price":"Từ 40 tỷ","area":"Nhiều loại","note":"Ven sông"}],
     dev: "Đại Quang Minh",
     loc: "TP Thủ Đức, TP.HCM",
     desc: "Khu đô thị ven sông 98ha, trung tâm thương mại, căn hộ và nhà phố cao cấp.",
@@ -210,9 +163,6 @@ const PROJECT_META: Record<
   },
   "thu-thiem": {
     name: "Thủ Thiêm",
-    metaTitle: "Dự Án Thủ Thiêm Quận 2 TP Thủ Đức 2026 – Giá Bán & Mặt Bằng | SGS Land",
-    metaDescription: "Dự án Thủ Thiêm Quận 2: giá bán mới nhất 2026, khu đô thị, quảng trường trung tâm, căn hộ và nhà phố. ☎ Tư vấn miễn phí từ SGS Land!",
-    subdivisions: [{"name":"The Metropole Thủ Thiêm","price":"Từ 10 tỷ","area":"1–3PN","note":"Ven sông"},{"name":"Empire City","price":"Từ 9 tỷ","area":"1–4PN","note":"Tháp biểu tượng"},{"name":"The River Thủ Thiêm","price":"Từ 8 tỷ","area":"1–3PN","note":"Refico"}],
     dev: "Nhiều CĐT",
     loc: "TP Thủ Đức, TP.HCM",
     desc: "Trung tâm tài chính - thương mại mới của TP.HCM, 657ha, nhiều dự án hạng sang.",
@@ -224,9 +174,6 @@ const PROJECT_META: Record<
   },
   manhattan: {
     name: "Manhattan",
-    metaTitle: "Grand Manhattan Novaland Quận 1 2026 – Giá Căn Hộ, Mặt Bằng | SGS Land",
-    metaDescription: "The Grand Manhattan Novaland Quận 1: giá căn hộ 2026, mặt bằng, cho thuê, tiến độ trung tâm Quận 1. ☎ Nhận báo giá gốc SGS Land!",
-    subdivisions: [{"name":"Tháp A","price":"Từ 9 tỷ","area":"1–3PN","note":"Trung tâm Quận 1"},{"name":"Tháp B","price":"Từ 10 tỷ","area":"2–3PN","note":"Cao cấp"}],
     dev: "Hưng Thịnh Land",
     loc: "Quận 7, TP.HCM",
     desc: "Khu căn hộ cao tầng 5,1ha tại Quận 7, tiện ích đầy đủ, gần Phú Mỹ Hưng.",
@@ -238,9 +185,6 @@ const PROJECT_META: Record<
   },
   "son-kim-land": {
     name: "Sơn Kim Land",
-    metaTitle: "SonKim Land 2026 – The Metropole, Serenity Sky Villas & Gateway | SGS Land",
-    metaDescription: "SonKim Land: các dự án cao cấp The Metropole Thủ Thiêm, Serenity Sky Villas, Gateway Thảo Điền. Giá 2026, mặt bằng. ☎ Tư vấn SGS Land!",
-    subdivisions: [{"name":"The Metropole Thủ Thiêm","price":"Từ 10 tỷ","area":"1–3PN","note":"Quận 2"},{"name":"Serenity Sky Villas","price":"Từ 25 tỷ","area":"Sky villa","note":"Quận 3"},{"name":"Gateway Thảo Điền","price":"Từ 8 tỷ","area":"1–3PN","note":"Quận 2"}],
     dev: "Sơn Kim Group",
     loc: "TP.HCM",
     desc: "Hệ sinh thái BĐS cao cấp Sơn Kim Land tại TP.HCM, pháp lý minh bạch.",
@@ -260,14 +204,9 @@ const PROJECT_META: Record<
     areaHa: 0,
     priceLow: 10_000_000_000,
     priceHigh: 150_000_000_000,
-    metaTitle: "Nhà Phố Trung Tâm TP.HCM – Giá Từ 10 Tỷ, Sổ Hồng, Vị Trí Đắc Địa | SGS Land",
-    metaDescription: "Nhà phố & biệt thự trung tâm TP.HCM giá từ 10 tỷ, sổ hồng lâu dài, vị trí đắc địa. Xem bảng giá, mặt bằng & chính sách mới nhất. ☎ Nhận tư vấn miễn phí từ SGS Land!",
   },
   "vinhomes-hoc-mon": {
     name: "Vinhomes Hóc Môn",
-    metaTitle: "Vinhomes Hóc Môn (Green City) 2026 – Giá, Mặt Bằng & Tiến Độ | SGS Land",
-    metaDescription: "Vinhomes Hóc Môn – Vinhomes Green City: giá bán 2026, mặt bằng phân khu, tiến độ đại đô thị Tây Bắc TP.HCM. ☎ Nhận báo giá gốc SGS Land!",
-    subdivisions: [{"name":"Nhà phố thương mại","price":"Đang cập nhật","area":"Nhiều loại","note":"Đại đô thị"},{"name":"Biệt thự sinh thái","price":"Đang cập nhật","area":"Nhiều loại","note":"Công viên trung tâm"}],
     dev: "Vinhomes",
     loc: "Hóc Môn, TP.HCM",
     desc: "Đại đô thị hiện đại phía Tây Bắc TP.HCM.",
@@ -279,7 +218,6 @@ const PROJECT_META: Record<
   },
   "masteri-cosmo-central": {
     name: "Masteri Cosmo Central The Global City Thủ Đức",
-    subdivisions: [{"name":"Cosmo 1","price":"Từ 3.5 tỷ","area":"1–2PN","note":"View kênh đào"},{"name":"Cosmo 2","price":"Từ 4.2 tỷ","area":"2–3PN","note":"View quảng trường"}],
     dev: "Masterise Homes",
     loc: "An Phú, TP. Thủ Đức, TP.HCM",
     desc: "Masteri Cosmo Central tại The Global City Thủ Đức – dự án căn hộ All-in-One 6 tòa tháp, quần 2 cũ, cách trung tâm 10 phút. Masteri Cosmo ở đâu? Tọa lạc tại An Phú, nơi giao thoa giữa Thủ Thêem và Quận 2. Tổng 3.000 căn, giá từ 6,429 tỷ/căn. Loại: studio, 1PN+, 2PN, 3PN. Tiện ích 5 sao: hồ bơi sky, clubhouse, trung tâm thương mại. Masteri Cosmo Central The Global City – từ khóa SEO chính. Mở bán 2026.",
@@ -291,9 +229,6 @@ const PROJECT_META: Record<
 },
   "legacy-66": {
     name: "Căn hộ Legacy 66 Quận 5",
-    metaTitle: "Legacy 66 Quận 5 2026 – Giá Căn Hộ, Mặt Bằng & Chính Sách | SGS Land",
-    metaDescription: "Căn hộ Legacy 66 Quận 5: giá bán 2026, mặt bằng, chính sách thanh toán, tiến độ trung tâm Quận 5. ☎ Nhận báo giá gốc SGS Land!",
-    subdivisions: [{"name":"Tháp căn hộ","price":"Đang cập nhật","area":"1–3PN","note":"Trung tâm Quận 5"}],
     dev: "Nhiều chủ đầu tư",
     loc: "Quận 5, TP.HCM",
     desc: "Căn hộ Legacy 66 Quận 5 – dự án căn hộ cáo cấp ngay trung tâm Quận 5, tổ hợp thương mại, văn phòng và căn hộ. Bảng giá Legacy 66 theo tầng: tầng 5-10 từ 4,5 tỷ/căn (52m²), tầng 15-20 từ 5,2 tỷ/căn (65m²), tầng penthouse từ 8 tỷ. Loại: 1PN (52m²), 2PN (75m²), 3PN (95m²). Tiện ích: hồ bơi, gym, sky lounge, trung tâm thương mại tầng 1-4. Video walkaround căn mẫu tại sgsland.vn/du-an/legacy-66.",
@@ -430,9 +365,6 @@ const PROJECT_META: Record<
 function buildProjectFAQ(slug: string, name: string, dev: string, loc: string, priceRange: string): FAQItem[] {
   // SEO #1 FIX: 10 FAQ questions per project for FAQPage structured data
   // Targets search intents: price, legal, developer, location, investment
-  if (slug === "thu-thiem") {
-    return [{"question":"Thủ Thiêm thuộc quận nào?","answer":"Khu đô thị mới Thủ Thiêm thuộc Thành phố Thủ Đức (trước đây là Quận 2), TP.HCM, nằm bên bờ Đông sông Sài Gòn đối diện Quận 1."},{"question":"Khu đô thị Thủ Thiêm có những dự án nào?","answer":"Thủ Thiêm có các dự án lớn như The Metropole Thủ Thiêm, Empire City, The River Thủ Thiêm, Zeit River và khu đô thị Sala Đại Quang Minh. Đây là trung tâm tài chính mới của TP.HCM."},{"question":"Quảng trường trung tâm Thủ Thiêm ở đâu?","answer":"Quảng trường trung tâm Thủ Thiêm nằm tại khu chức năng số 1, ven sông Sài Gòn, là quảng trường lớn nhất Việt Nam theo quy hoạch, kết nối cầu Thủ Thiêm và hầm vượt sông Sài Gòn."},{"question":"Giá bán bất động sản Thủ Thiêm mới nhất bao nhiêu?","answer":"Giá bán căn hộ Thủ Thiêm 2026 từ 8–10 tỷ (Empire City, The River, Metropole); nhà phố và biệt thự Sala từ 40 tỷ. Liên hệ SGS Land để nhận bảng giá từng dự án."},{"question":"Có nên đầu tư bất động sản Thủ Thiêm không?","answer":"Thủ Thiêm được quản lý quy hoạch thành trung tâm tài chính – thương mại quốc tế, hạ tầng cầu đường hoàn thiện, tiềm năng tăng giá dài hạn cao. Phù hợp đầu tư và an cư cao cấp."},{"question":"Thủ Thiêm cách trung tâm Quận 1 bao xa?","answer":"Thủ Thiêm chỉ cách trung tâm Quận 1 khoảng 300m qua sông Sài Gòn, di chuyển qua hầm Thủ Thiêm hoặc cầu Thủ Thiêm chỉ vài phút."}];
-  }
   return [
     {
       question: `${name} giá bao nhiêu năm 2026?`,
@@ -574,8 +506,8 @@ export async function generateStaticParams() {
 }
 // ─── Metadata ─────────────────────────────────────────────
 const SLUG_KEYWORDS: Record<string, string> = {
-  "aqua-city": "Aqua City Novaland Dong Nai, nha pho Aqua City, biet thu Aqua City, gia du an Aqua City, Aqua City Long Thanh, Aqua City co nen mua khong 2026, Aqua City gia bao nhieu, mat bang Aqua City",
-  "vinhomes-central-park": "Vinhomes Central Park Binh Thanh, can ho Vinhomes Central Park, Central Park Binh Thanh, Landmark 81, can ho cho thue Vinhomes Central Park, gia can ho Vinhomes Central Park 2026, mat bang Vinhomes Central Park",
+  "aqua-city": "Aqua City Novaland Dong Nai, nha pho Aqua City, Aqua City co nen mua khong 2026, Aqua City Long Thanh, Aqua City gia bao nhieu",
+  "vinhomes-central-park": "Vinhomes Central Park Binh Thanh, can ho Vinhomes Central Park, Landmark 81, can ho cho thue Vinhomes Central Park, gia can ho Vinhomes Central Park 2026",
   "masteri-cosmo-central": "Masteri Cosmo Central The Global City, Masteri Cosmo o dau, Masteri Cosmo Thu Duc, Masteri Cosmo gia bao nhieu, can ho The Global City 2026",
   "legacy-66": "can ho Legacy 66 Quan 5, Legacy 66 gia bao nhieu, Legacy 66 ban phong nao, mua can ho Legacy 66",
   "diamond-sky-van-phuc-city": "Diamond Sky Van Phuc City, Diamond Sky Thu Duc, can ho Diamond Sky gia bao nhieu, can ho Van Phuc City 2026",
@@ -587,15 +519,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const meta = PROJECT_META[slug];
-  const title = meta?.metaTitle
-    ? meta.metaTitle
-    : meta
+  const title = meta
     ? `${meta.name} | Dự án BĐS | SGS LAND`
     : `Dự án ${slug} | SGS LAND`;
-  const description =
-    meta?.metaDescription ??
-    meta?.desc ??
-    "Thông tin chi tiết dự án bất động sản tại SGS LAND.";
+  const description = meta?.desc ?? "Thông tin chi tiết dự án bất động sản tại SGS LAND.";
   return {
     title,
     description,
@@ -741,37 +668,6 @@ export default async function ProjectPage({
       >
         <h1 itemProp="name">{projectData.name}</h1>
         <p itemProp="description">{projectData.description ?? meta?.desc}</p>
-
-        {/* — Bảng giá theo phân khu (SEO/GEO structured content) — */}
-        {meta?.subdivisions && meta.subdivisions.length > 0 && (
-          <section aria-label={`Bảng giá các phân khu ${projectData.name}`}>
-            <h2>Bảng giá & mặt bằng các phân khu {projectData.name}</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Phân khu</th>
-                  <th scope="col">Giá từ</th>
-                  <th scope="col">Diện tích</th>
-                  <th scope="col">Ghi chú</th>
-                </tr>
-              </thead>
-              <tbody>
-                {meta.subdivisions.map((sub, i) => (
-                  <tr key={i}>
-                    <th scope="row">{sub.name}</th>
-                    <td>{sub.price}</td>
-                    <td>{sub.area ?? "—"}</td>
-                    <td>{sub.note ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p>
-              Bảng giá {projectData.name} cập nhật mới nhất 2026. Liên hệ SGS Land
-              để nhận bảng giá gốc, mặt bằng chi tiết từng phân khu và chính sách bán hàng.
-            </p>
-          </section>
-        )}
         <dl>
           <dt>Chủ đầu tư</dt>
           <dd itemProp="brand">{projectData.developer || meta?.dev}</dd>
