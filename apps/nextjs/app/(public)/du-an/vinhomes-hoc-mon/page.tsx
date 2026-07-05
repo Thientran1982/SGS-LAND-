@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Metadata } from "next";
 import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, getFAQSchema, SITE_URL } from "@/lib/schema";

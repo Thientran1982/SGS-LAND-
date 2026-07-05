@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { trackPropertyView } from "@/lib/tracking";
 import Link from "next/link";
 import { MapPin, Bed, Bath, Square, Phone, Share2, Heart, ArrowLeft, CheckCircle } from "lucide-react";
 interface Listing {
@@ -43,6 +44,11 @@ export function ListingDetailPage({ listing, similarListings }: Props) {
   const [currentImg, setCurrentImg] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isFav, setIsFav] = useState(false);
+
+  useEffect(() => {
+    trackPropertyView(listing.code || listing.id, listing.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing.id]);
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);

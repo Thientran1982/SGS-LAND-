@@ -12,7 +12,7 @@ import { Router, Request, Response } from 'express';
 import { brevoSendEmail, isBrevoConfigured } from '../services/brevoService';
 import { recordEmailSend } from '../services/emailMetricsService';
 import { logger } from '../middleware/logger';
-import { pool } from '../db';
+import { pool, withRlsBypass } from '../db';
 import { logLeadCampaignEmail } from '../repositories/campaignRepository';
 
 const HOTLINE = '0971132378';
@@ -72,7 +72,7 @@ function isValidVNPhone(p: string): boolean {
 
 async function checkDuplicateLead(phone: string, projectSlug: string): Promise<boolean> {
   try {
-    const result = await pool.query(
+    const result = await withRlsBypass((client) => client.query(
       `SELECT id FROM leads
        WHERE tenant_id = $1
          AND phone = $2
@@ -80,7 +80,7 @@ async function checkDuplicateLead(phone: string, projectSlug: string): Promise<b
          AND created_at > NOW() - INTERVAL '24 hours'
        LIMIT 1`,
       [DEFAULT_TENANT_ID, phone, projectSlug]
-    );
+    ));
     return result.rows.length > 0;
   } catch {
     return false;
@@ -153,7 +153,7 @@ async function saveLeadToDB(payload: {
       payload.chatTranscript ? `[Chat transcript]\n${payload.chatTranscript}` : '',
     ].filter(Boolean).join('\n\n');
 
-    const result = await pool.query(
+    const result = await withRlsBypass((client) => client.query(
       `INSERT INTO leads
          (tenant_id, name, phone, email, source, stage, notes, tags, metadata,
           utm_source, utm_medium, utm_campaign, utm_term, utm_content,
@@ -173,7 +173,7 @@ async function saveLeadToDB(payload: {
         utm_source, utm_medium, utm_campaign, utm_term, utm_content,
         landing_page, first_referrer, gclid, fbclid, visitor_id,
       ]
-    );
+    ));
     return result.rows[0]?.id ?? null;
   } catch (err: any) {
     logger.error(`[LandingLead] DB insert failed: ${err.message}`);

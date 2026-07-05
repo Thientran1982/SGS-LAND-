@@ -1,5 +1,15 @@
 // @ts-nocheck
 import type { Metadata } from "next";
+import Link from "next/link";
+
+function expertSlug(name) {
+  return name
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0111/g, "d").replace(/\u0110/g, "D")
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-").replace(/-+/g, "-");
+}
 
 export const metadata: Metadata = {
   title: "Chuyên Gia Bất Động Sản | Đội Ngũ Tư Vấn SGS LAND",
@@ -124,6 +134,13 @@ export default function ChuyenGiaPage() {
             <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
               {expert.desc}
             </p>
+              <Link
+                href={`/chuyen-gia/${expertSlug(expert.name)}`}
+                className="inline-block mt-4 text-sm font-semibold"
+                style={{ color: "var(--primary-600)" }}
+              >
+                Xem hồ sơ →
+              </Link>
           </div>
         ))}
       </div>

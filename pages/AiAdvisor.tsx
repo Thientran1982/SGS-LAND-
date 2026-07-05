@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Dropdown } from '../components/Dropdown';
 
 /**
  * AiAdvisor.tsx - Trang AI Tu Van Dau Tu BDS (AI Property Advisor).
@@ -149,27 +150,15 @@ export default function AiAdvisor() {
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <span>Mục đích</span>
-          <select value={purpose} onChange={(e) => setPurpose(e.target.value)} style={inputStyle}>
-            {PURPOSES.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <Dropdown value={purpose} onChange={(v) => setPurpose(v as string)} options={PURPOSES} />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <span>Mức chấp nhận rủi ro</span>
-          <select value={risk} onChange={(e) => setRisk(e.target.value)} style={inputStyle}>
-            {RISKS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <Dropdown value={risk} onChange={(v) => setRisk(v as string)} options={RISKS} />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <span>Kỳ vọng dòng tiền</span>
-          <select value={cashflow} onChange={(e) => setCashflow(e.target.value)} style={inputStyle}>
-            {CASHFLOWS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <Dropdown value={cashflow} onChange={(v) => setCashflow(v as string)} options={CASHFLOWS} />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6, gridColumn: '1 / span 2' }}>
           <span>Ghi chú thêm (tuỳ chọn)</span>

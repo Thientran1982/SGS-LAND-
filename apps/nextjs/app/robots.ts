@@ -51,6 +51,12 @@ export default function robots(): MetadataRoute.Robots {
       "https://sgsland.vn/sitemap-faq.xml",
       "https://sgsland.vn/sitemap-local.xml",
       "https://sgsland.vn/geo-sitemap.xml",
+      "https://sgsland.vn/sitemap-images.xml",
+      "https://sgsland.vn/sitemap-videos.xml",
+      "https://sgsland.vn/sitemap-news.xml",
+      "https://sgsland.vn/feed.xml",
+      "https://sgsland.vn/khu-vuc",
+      "https://sgsland.vn/bao-cao-thi-truong",
     ],
     host: "https://sgsland.vn",
   };

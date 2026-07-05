@@ -291,7 +291,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
           style={{ background: "rgba(200,150,62,0.15)", border: "1px solid rgba(200,150,62,0.4)", color: "#D4A855" }}
         >
           <Award className="w-3.5 h-3.5" />
-          {lang === "vi" ? "Đại lý F1 uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes" : "Authorized F1 Agent — Novaland · Masterise · Nam Long · Vinhomes"}
+          {lang === "vi" ? "Đại lý uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes" : "Authorized Agent — Novaland · Masterise · Nam Long · Vinhomes"}
         </div>
         {/* Kinetic headline */}
         <h1
@@ -347,7 +347,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
           }}
         >
           {lang === "vi"
-            ? "Định giá AI ±5%, pháp lý 2 lớp, CRM đa kênh. Kết nối 15.000+ môi giới và 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương."
+            ? "Mua nhà sợ nhất là hớ giá và dính pháp lý. Chúng tôi định giá bằng AI, kiểm tra pháp lý kỹ trước khi bạn xuống tiền. 45.000+ căn nhà, đất tại TP.HCM – Đồng Nai – Bình Dương đang chờ bạn."
             : "AI Valuation ±5%, 2-layer legal check, multi-channel CRM. Connecting 15,000+ agents and 45,000+ properties across HCMC, Dong Nai, Binh Duong."}
         </p>
         {/* ── 2026 AI Search Panel ── */}

@@ -73,6 +73,9 @@ const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
 const Leads = lazyLoad(() => import('./pages/Leads'), 'Leads');
 const Contracts = lazyLoad(() => import('./pages/Contracts'), 'Contracts');
 const Inventory = lazyLoad(() => import('./pages/Inventory'), 'Inventory');
+const CustomFields = lazyLoad(() => import('./pages/CustomFields'), 'CustomFields');
+const Auction = lazyLoad(() => import('./pages/Auction'), 'Auction');
+const UnitInventory = lazyLoad(() => import('./pages/UnitInventory'), 'UnitInventory');
 const Projects = lazyLoad(() => import('./pages/Projects'), 'Projects');
 const Favorites = lazyLoad(() => import('./pages/Favorites'), 'Favorites');
 const Inbox = lazyLoad(() => import('./pages/Inbox'), 'Inbox');
@@ -268,6 +271,9 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.LEADS]: Leads,
     [ROUTES.CONTRACTS]: Contracts,
     [ROUTES.INVENTORY]: Inventory,
+  [ROUTES.CUSTOM_FIELDS]: CustomFields,
+  [ROUTES.AUCTION]: Auction,
+  [ROUTES.UNIT_INVENTORY]: UnitInventory,
     [ROUTES.PROJECTS]: Projects,
     [ROUTES.FAVORITES]: Favorites,
     [ROUTES.INBOX]: Inbox,

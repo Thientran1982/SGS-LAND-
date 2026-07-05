@@ -1,0 +1,17 @@
+{
+  "name": "SGS LAND - Nen tang bat dong san AI",
+  "short_name": "SGS LAND",
+  "description": "Nen tang quan ly bat dong san the he moi voi AI dinh gia, CRM da kenh.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#f97316",
+  "lang": "vi",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

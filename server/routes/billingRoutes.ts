@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { subscriptionRepository } from '../repositories/subscriptionRepository';
 import { notificationRepository } from '../repositories/notificationRepository';
 import { writeAuditLog } from '../middleware/auditLog';
-import { pool } from '../db';
+import { pool, withTenantContext } from '../db';
 import {
   createTransaction,
   getTransaction,
@@ -39,10 +39,10 @@ async function notifyTenantAdmins(tenantId: string, payload: {
   metadata: Record<string, any>;
 }): Promise<Array<{ id: string; email: string; name: string | null }>> {
   try {
-    const admins = await pool.query(
+    const admins = await withTenantContext(tenantId, (client) => client.query(
       `SELECT id, email, name FROM users WHERE tenant_id = $1 AND role IN ('ADMIN','TEAM_LEAD') AND status = 'ACTIVE'`,
       [tenantId]
-    );
+    ));
     for (const row of admins.rows) {
       await notificationRepository.create({
         tenantId,

@@ -930,7 +930,7 @@ async function scrapeSgslandLeads(): Promise<LeadScrapeResult> {
 
   try {
     const DEFAULT_TENANT = '00000000-0000-0000-0000-000000000001';
-    const { rows } = await pool.query(
+    const { rows } = await withTenantContext(DEFAULT_TENANT, (client) => client.query(
       `SELECT id, name, COALESCE(phone,'') AS phone, COALESCE(email,'') AS email,
               COALESCE(source,'DIRECT') AS source, COALESCE(stage,'NEW') AS stage,
               COALESCE(notes,'') AS notes, created_at
@@ -940,7 +940,7 @@ async function scrapeSgslandLeads(): Promise<LeadScrapeResult> {
         ORDER BY created_at DESC
         LIMIT 200`,
       [DEFAULT_TENANT]
-    );
+    ));
 
     for (const r of rows) {
       leads.push({
@@ -1713,10 +1713,10 @@ export function createScraperProjectRoutes(authenticateToken: any) {
       const tenantId       = user.tenantId ?? DEFAULT_TENANT;
 
       // Dedup check
-      const { rows: dup } = await pool.query(
-        `SELECT id FROM leads WHERE tenant_id = $1 AND phone = $2 LIMIT 1`,
+      const { rows: dup } = await withTenantContext(tenantId, (client) => client.query(
+        `SELECT id FROM leads WHERE tenant_id =          AND phone =        LIMIT 1`,
         [tenantId, phone]
-      );
+      ));
       if (dup.length) {
         return res.status(409).json({ error: 'SĐT đã tồn tại trong CRM', leadId: dup[0].id });
       }
@@ -1775,10 +1775,10 @@ export function createScraperProjectRoutes(authenticateToken: any) {
       for (const lead of leads.slice(0, 50)) {
         if (!lead.phone) { skipped++; continue; }
         try {
-          const { rows: dup } = await pool.query(
-            `SELECT id FROM leads WHERE tenant_id = $1 AND phone = $2 LIMIT 1`,
+          const { rows: dup } = await withTenantContext(tenantId, (client) => client.query(
+            `SELECT id FROM leads WHERE tenant_id =              AND phone =            LIMIT 1`,
             [tenantId, lead.phone]
-          );
+          ));
           if (dup.length) { skipped++; continue; }
 
           const notesText = [

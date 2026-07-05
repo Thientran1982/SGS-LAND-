@@ -16,6 +16,7 @@ import { applyAVM, getRegionalBasePrice, PROPERTY_TYPE_PRICE_MULT } from '../val
 import type { PropertyType, LegalStatus } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
 import { startAgentRun, finishAgentRun } from '../services/agentRunsService';
+import { withRlsBypass } from '../db';
 
 const REFRESH_THRESHOLD = 0.05;      // Chênh lệch > 5% thì cập nhật
 const BATCH_SIZE        = 50;         // Xử lý theo lô để tránh quá tải
@@ -84,7 +85,7 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
 
     try {
       const tenantFilter = tenantId === 'all' ? '' : `AND tenant_id = '${tenantId.replace(/'/g, "''")}'`;
-      const { rows: listings } = await pool.query(`
+      const { rows: listings } = await withRlsBypass((client) => client.query(`
         SELECT id, tenant_id, title, location, type, price, area,
                attributes, project_code
         FROM listings
@@ -94,7 +95,7 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
           ${tenantFilter}
         ORDER BY updated_at ASC
         LIMIT $1
-      `, [MAX_LISTINGS]);
+      `, [MAX_LISTINGS]));
 
       stats.total = listings.length;
       logger.info(`[PriceRefresh] Tìm thấy ${listings.length} listing cần xem xét`);
@@ -159,10 +160,10 @@ export function createListingPriceRefreshRouter(pool: Pool, cronSecret: string):
             }
 
             if (!dryRun) {
-              await pool.query(
-                `UPDATE listings SET price = $1, updated_at = NOW() WHERE id = $2`,
+              await withRlsBypass((client) => client.query(
+                `UPDATE listings SET price =                 , updated_at = NOW() WHERE id =               `,
                 [newPrice, listing.id]
-              );
+              ));
 
               await pool.query(
                 `INSERT INTO listing_price_refresh_log

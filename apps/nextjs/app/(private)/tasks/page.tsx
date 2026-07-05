@@ -1,7 +1,8 @@
 // @ts-nocheck
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { Target, RefreshCw, AlertCircle, Calendar, User, Flag } from "lucide-react";
+import { Target, RefreshCw, AlertCircle, Calendar, User, Flag, List } from "lucide-react";
+import TaskCalendarView from "@/components/private/TaskCalendarView";
 
 interface Task {
   id: string; title: string; status?: string; priority?: string;
@@ -29,6 +30,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
   const fetchTasks = useCallback(() => {
     setLoading(true); setError(null);
@@ -64,9 +66,21 @@ export default function TasksPage() {
             style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)", color: "var(--text-secondary)" }}>
             <RefreshCw className="w-4 h-4" />
           </button>
+          <div className="flex items-center rounded-xl overflow-hidden ml-1" style={{ border: "1px solid var(--border-default)" }}>
+            <button onClick={() => setViewMode("list")} className="px-3 py-2 text-sm flex items-center gap-1.5"
+              style={{ background: viewMode === "list" ? "var(--bg-canvas)" : "var(--bg-elevated)", color: viewMode === "list" ? "var(--text-primary)" : "var(--text-tertiary)", fontWeight: viewMode === "list" ? 600 : 400 }}>
+              <List className="w-4 h-4" /> Danh sách
+            </button>
+            <button onClick={() => setViewMode("calendar")} className="px-3 py-2 text-sm flex items-center gap-1.5"
+              style={{ background: viewMode === "calendar" ? "var(--bg-canvas)" : "var(--bg-elevated)", color: viewMode === "calendar" ? "var(--text-primary)" : "var(--text-tertiary)", fontWeight: viewMode === "calendar" ? 600 : 400 }}>
+              <Calendar className="w-4 h-4" /> Lịch
+            </button>
+          </div>
         </div>
       </div>
 
+      {viewMode === "list" && (
+      <>
       {error && (
         <div className="flex items-center gap-3 p-4 rounded-2xl mb-6 text-sm"
           style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#dc2626" }}>
@@ -136,6 +150,11 @@ export default function TasksPage() {
             </tbody>
           </table>
         </div>
+      )}
+      </>
+      )}
+      {viewMode === "calendar" && (
+        <TaskCalendarView />
       )}
     </div>
   );

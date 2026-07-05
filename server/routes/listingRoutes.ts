@@ -260,11 +260,11 @@ async function notifyStatusChange(
   actorName: string,
 ): Promise<void> {
   try {
-    const { pool } = await import('../db');
-    const admins = await pool.query<{ id: string }>(
+    const { pool, withTenantContext } = await import('../db');
+    const admins = await withTenantContext(tenantId, (client) => client.query<{ id: string }>(
       `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('SUPER_ADMIN', 'ADMIN', 'TEAM_LEAD') AND status = 'ACTIVE'`,
       [tenantId]
-    );
+    ));
     const fromLabel = STATUS_LABEL[oldStatus] ?? oldStatus;
     const toLabel   = STATUS_LABEL[newStatus] ?? newStatus;
     await Promise.all(admins.rows.map(a =>
@@ -978,11 +978,11 @@ export function createListingRoutes(authenticateToken: any) {
           return res.status(400).json({ error: 'userId must be a valid UUID or null' });
         }
         // Verify the assignee belongs to the same tenant and is an internal staff member
-        const { pool } = await import('../db');
-        const assigneeResult = await pool.query(
+        const { pool, withTenantContext } = await import('../db');
+        const assigneeResult = await withTenantContext(user.tenantId, (client) => client.query(
           `SELECT id, role FROM users WHERE id = $1 AND tenant_id = $2`,
           [userId, user.tenantId]
-        );
+        ));
         if (assigneeResult.rows.length === 0) {
           return res.status(404).json({ error: 'User not found in tenant' });
         }

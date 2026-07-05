@@ -130,6 +130,9 @@ import m109 from './109_n1_n2_tables';
 import m110 from './110_developers';
 import m111 from './111_seed_developers';
 import m113 from './113_admin_totp';
+import m114 from './114_visitor_consent_and_erasure';
+import m115 from './115_sms_log';
+import m116 from './116_audit_trigger_enforcement';
 
 dotenv.config();
 
@@ -256,6 +259,9 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '110_developers.ts': m110,
   '111_seed_developers.ts': m111,
   '113_admin_totp.ts': m113,
+  '114_visitor_consent_and_erasure.ts': m114,
+  '115_sms_log.ts': m115,
+  '116_audit_trigger_enforcement.ts': m116,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

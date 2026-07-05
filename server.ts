@@ -1944,45 +1944,78 @@ app.use(globalMutationAudit);
         return res.json(cached);
       }
 
-      // Business rule: cùng QUẬN/HUYỆN + cùng property TYPE + giá ±20%, top 3.
-      // Quận/huyện = token chứa "Quận"/"Huyện"/"Thành phố"/"Thị xã" trong
-      // chuỗi location, fallback về token gần cuối (định dạng VN: "đường,
-      // phường, quận, tỉnh"). Verified-vendor gate cũng áp dụng ở đây.
+      // Business rule: cung QUAN/HUYEN + cung property TYPE + gia +-20%, top 3.
+      // Lop collaborative filtering: nhung khach da xem tin nay con xem tin nao khac
+      // (dua tren visitor_events, chi co du lieu khi khach da dong y BEHAVIORAL cookie)
+      // duoc dung de RE-RANK trong nhom ung vien rule-based, khong thay the rule-based.
       const items = await withRlsBypass(async (client) => {
         const seed = await client.query(
-          `SELECT l.id, l.type, l.project_code, l.location, l.price
-             FROM listings l
-             JOIN tenants t ON t.id = l.tenant_id
-             WHERE l.id = $1 AND t.approval_status = 'APPROVED'
-             LIMIT 1`,
+          `SELECT l.id, l.code, l.tenant_id, l.type, l.project_code, l.location, l.price
+           FROM listings l
+           JOIN tenants t ON t.id = l.tenant_id
+           WHERE l.id = $1 AND t.approval_status = 'APPROVED'
+           LIMIT 1`,
           [id]
         );
         if (!seed.rows[0]) return [];
         const s = seed.rows[0];
-        // Tách quận/huyện từ location
         const tokens = String(s.location || '').split(',').map((t: string) => t.trim()).filter(Boolean);
-        const districtToken = tokens.find((t: string) => /^(Quận|Huyện|Thành phố|Thị xã|TP\.?)\s+/i.test(t)) || tokens[tokens.length - 2] || '';
+        const districtToken = tokens.find((t: string) => /^(Quan|Huyen|Thanh pho|Thi xa|TP\.?)\s+/i.test(t)) || tokens[tokens.length - 2] || '';
         if (!districtToken || !s.type) return [];
         const seedPrice = s.price !== null ? Number(s.price) : null;
         const priceMin = seedPrice ? Math.floor(seedPrice * 0.8) : null;
         const priceMax = seedPrice ? Math.ceil(seedPrice * 1.2) : null;
         const r = await client.query(
           `SELECT l.* FROM listings l
-             JOIN tenants t ON t.id = l.tenant_id
-             WHERE l.id <> $1
-               AND l.status IN ('AVAILABLE','BOOKING','OPENING')
-               AND t.approval_status = 'APPROVED'
-               AND l.type = $2
-               AND l.location ILIKE $3
-               AND ($4::numeric IS NULL OR l.price BETWEEN $4 AND $5)
-             ORDER BY l.updated_at DESC
-             LIMIT 3`,
+           JOIN tenants t ON t.id = l.tenant_id
+           WHERE l.id <> $1
+             AND l.status IN ('AVAILABLE','BOOKING','OPENING')
+             AND t.approval_status = 'APPROVED'
+             AND l.type = $2
+             AND l.location ILIKE $3
+             AND ($4::numeric IS NULL OR l.price BETWEEN $4 AND $5)
+           ORDER BY l.updated_at DESC
+           LIMIT 15`,
           [id, s.type, `%${districtToken}%`, priceMin, priceMax]
         );
-        return r.rows;
+        const candidates = r.rows as any[];
+        if (candidates.length <= 3 || !s.code) {
+          return candidates.slice(0, 3);
+        }
+
+        let coViewMap = new Map<string, number>();
+        try {
+          const coView = await client.query(
+            `WITH seed_viewers AS (
+               SELECT DISTINCT visitor_id FROM visitor_events
+               WHERE tenant_id = $1 AND event_type = 'property_view'
+                 AND metadata->>'listingCode' = $2
+                 AND visitor_id IS NOT NULL
+                 AND created_at > NOW() - INTERVAL '90 days'
+             )
+             SELECT ve.metadata->>'listingCode' AS code, COUNT(DISTINCT ve.visitor_id)::int AS co_views
+             FROM visitor_events ve
+             JOIN seed_viewers sv ON sv.visitor_id = ve.visitor_id
+             WHERE ve.tenant_id = $1 AND ve.event_type = 'property_view'
+               AND ve.metadata->>'listingCode' IS NOT NULL
+               AND ve.metadata->>'listingCode' <> $2
+               AND ve.created_at > NOW() - INTERVAL '90 days'
+             GROUP BY ve.metadata->>'listingCode'`,
+            [s.tenant_id, s.code]
+          );
+          coViewMap = new Map(coView.rows.map((row: any) => [row.code, Number(row.co_views) || 0]));
+        } catch (coViewError) {
+          console.warn('[SimilarListings] collaborative signal skipped:', (coViewError as any)?.message || coViewError);
+        }
+
+        const ranked = candidates
+          .map((row, idx) => ({ row, idx, coScore: coViewMap.get(row.code) || 0 }))
+          .sort((a, b) => (b.coScore - a.coScore) || (a.idx - b.idx));
+        return ranked.slice(0, 3).map((x) => x.row);
       });
 
       const sanitized = items.map((row: any) => sanitizePublicListing(mapListingRow(row)));
+
       setPublicListingDetailCache(cacheKey, sanitized);
       res.setHeader('X-Public-Listing-Detail-Cache', 'MISS');
       res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
@@ -3422,8 +3455,8 @@ app.use(globalMutationAudit);
 
       // Check dynamic sitemaps via DB count — these routes are always available in Express.
       const [listingsCount, projectsCount, newsCount] = await Promise.all([
-        pool.query(`SELECT COUNT(*)::int AS n FROM listings l JOIN tenants t ON t.id = l.tenant_id WHERE l.status IN ('AVAILABLE','BOOKING','OPENING') AND t.approval_status = 'APPROVED'`).catch(() => ({ rows: [{ n: 0 }] })),
-        pool.query(`SELECT COUNT(*)::int AS n FROM projects WHERE code IS NOT NULL AND code <> '' AND metadata->>'public_microsite' = 'true'`).catch(() => ({ rows: [{ n: 0 }] })),
+        withRlsBypass((client) => client.query(`SELECT COUNT(*)::int AS n FROM listings l JOIN tenants t ON t.id = l.tenant_id WHERE l.status IN ('AVAILABLE','BOOKING','OPENING') AND t.approval_status = 'APPROVED'`)).catch(() => ({ rows: [{ n: 0 }] })),
+        withRlsBypass((client) => client.query(`SELECT COUNT(*)::int AS n FROM projects WHERE code IS NOT NULL AND code <> '' AND metadata->>'public_microsite' = 'true'`)).catch(() => ({ rows: [{ n: 0 }] })),
         pool.query(`SELECT COUNT(*)::int AS n FROM articles WHERE status = 'PUBLISHED'`).catch(() => ({ rows: [{ n: 0 }] })),
       ]);
 
@@ -5415,10 +5448,10 @@ app.use(globalMutationAudit);
       // DU_AN_PROJECT_SSR — look up project by slug and render rich GEO body (DB data only).
       try {
         const pslug = String(req.params.projectSlug || '');
-        const pr = await pool.query(
-          `SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`,
-          [pslug]
-        );
+        const pr = await withRlsBypass((client) => client.query(
+        `SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`,
+        [pslug]
+      ));
         const prow: any = pr.rows[0];
         if (prow) {
           const project: any = { id: prow.id, name: prow.name, code: prow.code, description: prow.description, location: prow.location, openDate: prow.open_date, handoverDate: prow.handover_date, metadata: prow.metadata && typeof prow.metadata === 'object' ? prow.metadata : {} };
@@ -5698,7 +5731,7 @@ app.use(globalMutationAudit);
           return { priceHistory, news };
         };
         if (phMatch) {
-          const pr = await pool.query(`SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`, [phMatch[1]]);
+          const pr = await withRlsBypass((client) => client.query(`SELECT id, name, code, description, location, open_date, handover_date, metadata FROM projects WHERE (metadata->>'slug' = $1 OR LOWER(code) = LOWER($1) OR id::text = $1) LIMIT 1`, [phMatch[1]]));
           const row: any = pr.rows[0];
           if (row) {
             const project: any = { id: row.id, name: row.name, code: row.code, description: row.description, location: row.location, openDate: row.open_date, handoverDate: row.handover_date, metadata: row.metadata && typeof row.metadata === 'object' ? row.metadata : {} };
@@ -5706,7 +5739,7 @@ app.use(globalMutationAudit);
             html = injectMeta(getBaseHtml(), buildProjectMeta(project));
           }
         } else if (bdMatch) {
-          const lr = await pool.query(`SELECT id, code, title, description, type, transaction, status, price, currency, area, bedrooms, bathrooms, location, images, attributes FROM listings WHERE id = $1 LIMIT 1`, [bdMatch[1]]);
+          const lr = await withRlsBypass((client) => client.query(`SELECT id, code, title, description, type, transaction, status, price, currency, area, bedrooms, bathrooms, location, images, attributes FROM listings WHERE id = $1 LIMIT 1`, [bdMatch[1]]));
           const row: any = lr.rows[0];
           if (row) {
             const listing: any = { id: row.id, code: row.code, title: row.title, description: row.description, type: row.type, transaction: row.transaction, status: row.status, price: row.price != null ? Number(row.price) : null, currency: row.currency, area: row.area != null ? Number(row.area) : null, bedrooms: row.bedrooms, bathrooms: row.bathrooms, location: row.location, images: row.images, attributes: row.attributes && typeof row.attributes === 'object' ? row.attributes : {} };

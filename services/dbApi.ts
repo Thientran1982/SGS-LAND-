@@ -1342,7 +1342,7 @@ class DatabaseApiClient {
     const coreItems: any[] = [
       { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
       { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
-      { id: 'ai-advisor', labelKey: 'menu.ai_advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
+      { id: 'ai-advisor', labelKey: 'menu.ai-advisor', route: ROUTES.AI_ADVISOR, iconKey: ROUTES.AI_ADVISOR },
     ];
     if (isHostTenant) {
       coreItems.push({ id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH });
@@ -1358,6 +1358,9 @@ class DatabaseApiClient {
     const ops = { id: 'ops', labelKey: 'menu.operations', items: [
       { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
+    { id: 'custom-fields', labelKey: 'menu.custom-fields', route: ROUTES.CUSTOM_FIELDS, iconKey: ROUTES.CUSTOM_FIELDS },
+    { id: 'auction', labelKey: 'menu.auction', route: ROUTES.AUCTION, iconKey: ROUTES.AUCTION },
+    { id: 'unit-inventory', labelKey: 'menu.unit-inventory', route: ROUTES.UNIT_INVENTORY, iconKey: ROUTES.UNIT_INVENTORY },
       { id: 'routing', labelKey: 'menu.routing-rules', route: ROUTES.ROUTING_RULES, iconKey: ROUTES.ROUTING_RULES },
       { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
       { id: 'campaigns', labelKey: 'menu.campaigns', route: ROUTES.CAMPAIGNS, iconKey: ROUTES.CAMPAIGNS },

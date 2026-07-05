@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Noto_Serif_Display, Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SchemaScript } from "@/components/SchemaScript";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import ConsentBanner from "@/components/ConsentBanner";
 import { getOrganizationSchema, getWebsiteSchema, getEntityDisambiguationSchema, getMetricsSchema, getLocalBusinessSchema, getAggregateRatingSchema } from "@/lib/schema";
 // ─── Fonts (self-hosted by next/font — no Google Fonts request at runtime) ──
 const inter = Inter({
@@ -70,6 +72,11 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://sgsland.vn",
+    types: {
+      "application/rss+xml": [
+        { url: "https://sgsland.vn/feed.xml", title: "SGS LAND - Tin tuc bat dong san" },
+      ],
+    },
     languages: {
       vi: "https://sgsland.vn/",
       en: "https://sgsland.vn/?lang=en",
@@ -187,6 +194,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
       >
         {children}
+        <ConsentBanner />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

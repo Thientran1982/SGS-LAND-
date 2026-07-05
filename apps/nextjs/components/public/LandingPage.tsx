@@ -1466,7 +1466,7 @@ const FOOTER_ABOUT = [
   { vi: "BĐS Bình Thạnh",       en: "Binh Thanh Properties", href: "/bat-dong-san-binh-thanh" },
   { vi: "BĐS Quận 7",           en: "District 7 Properties", href: "/bat-dong-san-quan-7"     },
   { vi: "BĐS Long An",          en: "Long An Properties",    href: "/bat-dong-san-long-an"    },
-  { vi: "Nhà phố Trung Tâm",    en: "Central Townhouses",    href: "/nha-pho-trung-tam"       },
+  { vi: "Nhà phố Trung Tâm",    en: "Central Townhouses",    href: "/du-an/nha-pho-trung-tam"       },
   { vi: "Trạng thái hệ thống",  en: "System Status",         href: "/status"                  },
 ];
 const LEGAL_LINKS = [

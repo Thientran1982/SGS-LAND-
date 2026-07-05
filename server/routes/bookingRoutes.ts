@@ -696,10 +696,10 @@ export function createBookingRoutes(
           // Email receipt to the buyer (if they provided one) — Brevo only.
           if (booking.buyer_email && isBrevoConfigured()) {
             try {
-              const meta = await pool.query(
-                `SELECT title, code FROM listings WHERE id = $1 LIMIT 1`,
-                [booking.listing_id],
-              );
+              const meta = await withRlsBypass((client) => client.query(
+            `SELECT title, code FROM listings WHERE id = $1 LIMIT 1`,
+            [booking.listing_id],
+          ));
               await brevoSendEmail({
                 to: booking.buyer_email,
                 subject: 'Biên nhận đặt cọc — SGS Land',

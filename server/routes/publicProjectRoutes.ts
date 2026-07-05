@@ -335,7 +335,7 @@ async function findPublicListingsByProject(tenantId: string, code: string): Prom
 
 async function checkDuplicateLead(tenantId: string, phone: string, code: string): Promise<boolean> {
   try {
-    const result = await pool.query(
+    const result = await withRlsBypass((client) => client.query(
       `SELECT id FROM leads
          WHERE tenant_id = $1
            AND phone = $2
@@ -343,7 +343,7 @@ async function checkDuplicateLead(tenantId: string, phone: string, code: string)
            AND created_at > NOW() - INTERVAL '24 hours'
          LIMIT 1`,
       [tenantId, phone, code]
-    );
+    ));
     return result.rows.length > 0;
   } catch {
     return false;
@@ -779,7 +779,7 @@ export function createPublicProjectRoutes(): Router {
 
       let leadId: string | null = null;
       try {
-        const result = await pool.query(
+        const result = await withRlsBypass((client) => client.query(
           `INSERT INTO leads
              (tenant_id, name, phone, email, source, stage, notes, tags, metadata,
               utm_source, utm_medium, utm_campaign, utm_term, utm_content,
@@ -799,7 +799,7 @@ export function createPublicProjectRoutes(): Router {
             utm_source, utm_medium, utm_campaign, utm_term, utm_content,
             landing_page, first_referrer, gclid, fbclid, visitor_id,
           ]
-        );
+        ));
         leadId = result.rows[0]?.id ?? null;
       } catch (dbErr: any) {
         logger.error(`[PublicProject] Lead insert failed: ${dbErr?.message || dbErr}`);

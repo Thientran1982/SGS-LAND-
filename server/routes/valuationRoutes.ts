@@ -978,7 +978,9 @@ export function createValuationRoutes(
         // Broad type prefix match (e.g. "apartment", "townhouse", "land", "shophouse")
         const typePrefix = (propertyType as string).split('_')[0];
 
-        const compsRes = await pool.query<{ price_per_m2: string }>(
+        const { withRlsBypass } = await import('../db');
+
+        const compsRes = await withRlsBypass((client) => client.query<{ price_per_m2: string }>(
           `SELECT ROUND(price::numeric / area::numeric) AS price_per_m2
            FROM listings
            WHERE area BETWEEN $1 AND $2
@@ -989,7 +991,7 @@ export function createValuationRoutes(
            ORDER BY updated_at DESC
            LIMIT 40`,
           [areaMin, areaMax, `%${districtKw}%`, `%${typePrefix}%`]
-        );
+        ));
 
         if (compsRes.rows.length >= 2) {
           const validPrices = compsRes.rows
