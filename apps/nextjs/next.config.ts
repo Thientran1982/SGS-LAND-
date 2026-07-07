@@ -125,7 +125,9 @@ const nextConfig: NextConfig = {
   devIndicators: false,
 
   // ─── Experimental ─────────────────────────────────────
-  experimental: {
+    experimental: {
+    // Allow importing shared modules from outside apps/nextjs (monorepo root)
+    externalDir: true,
     // Only include safe, pure ESM-tree-shakeable packages here
     optimizePackageImports: ["lucide-react"],
   },

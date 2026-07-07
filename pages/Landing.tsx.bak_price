@@ -1,21 +1,25 @@
-// @ts-nocheck
-"use client";
 import React, { useState, useEffect, useRef } from "react";
-import { AiChatWidgetWrapper } from "./AiChatWidgetWrapper";
+import { AiChatWidget } from "../components/AiChatWidget";
 import {
-  Sparkles, ArrowRight, Phone, Mail, MapPin, Shield, ChevronDown,
+  Eye, Sparkles, ArrowRight, Phone, Mail, MapPin, Shield, ChevronDown,
   CheckCircle, Star, Bot, Search, TrendingUp, Users, Award,
   ChevronRight, BarChart3, Landmark, Clock, Heart, Building2,
   Sun, Moon, Globe, User, Menu, X,
 } from "lucide-react";
-import { type FeaturedProject, FEATURED_PROJECTS as PROJECTS } from '../../../../shared/featuredProjects';
-
+import { SeoHead } from '../components/SeoHead';
 // ═══════════════════════════════════════════════════════════════
 //  TYPES
 // ═══════════════════════════════════════════════════════════════
 type Lang = "vi" | "en";
 type Theme = "light" | "dark";
-
+interface FeaturedProject {
+  slug: string; name: string; dev: string; loc: string;
+  scale: string; priceFrom: string;
+  type: string; type_en: string;
+  badge: string; badge_en: string; badgeType: "sale" | "open" | "soon";
+  img: string; legal?: boolean; category: string;
+  landingHref?: string;
+}
 interface Props {
   featuredListings: any[];
   stats: { totalListings: number; totalProjects: number; totalBrokers: number };
@@ -23,7 +27,17 @@ interface Props {
 // ═══════════════════════════════════════════════════════════════
 //  STATIC DATA
 // ═══════════════════════════════════════════════════════════════
-
+const PROJECTS: FeaturedProject[] = [
+  { slug: "aqua-city",             name: "Aqua City Novaland",       dev: "Novaland",          loc: "Biên Hòa, Đồng Nai",   scale: "1.000 ha", priceFrom: "6,2 tỷ",  type: "Biệt thự & Nhà phố",  type_en: "Villas & Townhouses",       badge: "Đang bàn giao", badge_en: "Delivering",          badgeType: "sale", img: "/landing/aqua-city/hero-opt.jpg",            legal: true,  category: "villa" },
+  { slug: "the-global-city",       name: "The Global City",          dev: "Masterise Homes",   loc: "An Phú, TP Thủ Đức",    scale: "117 ha",   priceFrom: "7,5 tỷ",  type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/the-global-city.webp",      legal: true,  category: "apt"   },
+  { slug: "izumi-city",            name: "Izumi City Nam Long",      dev: "Nam Long Group",    loc: "Biên Hòa, Đồng Nai",   scale: "170 ha",   priceFrom: "1,2 tỷ",  type: "Đô thị chuẩn Nhật",   type_en: "Japanese-Standard Township", badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/izumi-city.webp",           legal: true,  category: "apt"   },
+  { slug: "vinhomes-can-gio",      name: "Vinhomes Cần Giờ",         dev: "Vinhomes",          loc: "Cần Giờ, TP.HCM",      scale: "2.870 ha", priceFrom: "8 tỷ",    type: "Đô thị biển",          type_en: "Coastal Township",          badge: "Đang mở bán", badge_en: "Now Selling",     badgeType: "sale", img: "/images/projects/vinhomes-can-gio.webp",                   category: "villa" },
+  { slug: "masteri-cosmo-central", name: "Masteri Cosmo Central",    dev: "Masterise Homes",   loc: "Đỗ Xuân Hợp, Thủ Đức", scale: "20 căn",   priceFrom: "6,43 tỷ", type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Còn hàng",     badge_en: "Available",           badgeType: "sale", img: "/landing/masteri-cosmo-central/hero.jpg",    legal: true,  category: "apt",  landingHref: "/landing/masteri-cosmo-central/" },
+  { slug: "vinhomes-grand-park",   name: "Vinhomes Grand Park",      dev: "Vinhomes",          loc: "TP Thủ Đức",           scale: "271 ha",   priceFrom: "2,5 tỷ",  type: "Đại đô thị",          type_en: "Mega Township",             badge: "Còn hàng",     badge_en: "Available",           badgeType: "sale", img: "/images/projects/vinhomes-grand-park.webp",  legal: true,  category: "apt"   },
+  { slug: "vinhomes-hoc-mon",      name: "Vinhomes Hóc Môn",         dev: "Vinhomes",          loc: "Hóc Môn, TP.HCM",      scale: "TBA",      priceFrom: "6,5 tỷ",  type: "Đô thị mới",          type_en: "New Urban Township",        badge: "Đang mở bán",   badge_en: "Now Selling",         badgeType: "open", img: "/landing/vinhomes-hoc-mon/hero.jpg",         legal: true,  category: "villa", landingHref: "/landing/vinhomes-hoc-mon/" },
+  { slug: "diamond-sky-van-phuc-city", name: "Diamond Sky Vạn Phúc City", dev: "Vạn Phúc Corp", loc: "Thủ Đức, TP.HCM",  scale: "18 tầng",  priceFrom: "6,8 tỷ",  type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/images/projects/diamond-sky-van-phuc-city.webp", legal: true, category: "apt"  },
+  { slug: "legacy-66",             name: "Legacy 66",                dev: "Tân Thành",          loc: "Chợ Lớn, Q.5, TP.HCM", scale: "348 căn",  priceFrom: "Liên hệ", type: "Căn hộ cao cấp",      type_en: "Premium Apartments",        badge: "Đang mở bán",  badge_en: "Now Selling",         badgeType: "open", img: "/landing/legacy-66/hero.jpg",                legal: true,  category: "apt",  landingHref: "/landing/legacy-66/"               },
+];
 const STATS_DATA = [
   { num: 45000, suffix: "+",        prefix: "",   vi: "BĐS quản lý",        en: "Properties"       },
   { num: 15000, suffix: "+",        prefix: "",   vi: "Môi giới đối tác",   en: "Partner Agents"   },
@@ -34,10 +48,10 @@ const STATS_DATA = [
 const TICKER_ITEMS: { vi: string; en: string }[] = [
   { vi: "Căn hộ Vinhomes Grand Park 2PN — 3,2 tỷ — Đã công chứng 10/06/2026",       en: "Vinhomes Grand Park 2BR Apt — 3.2B VND — Notarized 10/06/2026"         },
   { vi: "Nhà phố Aqua City 5×20m — 5,5 tỷ — Sổ hồng trao tay 08/06/2026",          en: "Aqua City Townhouse 5×20m — 5.5B VND — Title transferred 08/06/2026"  },
-  { vi: "Nhà phố Vinhomes Hóc Môn 4×16m — 4,5 tỷ — Sổ hồng trao tay 05/06/2026",  en: "Vinhomes Hoc Mon Townhouse 4×16m — 4.5B VND — Title transferred 05/06/2026" },
-  { vi: "Biệt thự The Global City — 15 tỷ — Đặt cọc thành công 03/06/2026",        en: "The Global City Villa — 15B VND — Deposit secured 03/06/2026"          },
+  { vi: "Nhà phố Vinhomes Hóc Môn 4×16m — 5,8 tỷ — Sổ hồng trao tay 05/06/2026",  en: "Vinhomes Hoc Mon Townhouse 4×16m — 5.8B VND — Title transferred 05/06/2026" },
+  { vi: "Biệt thự The Global City — 35 tỷ — Đặt cọc thành công 03/06/2026",        en: "The Global City Villa — 35B VND — Deposit secured 03/06/2026"          },
   { vi: "Nhà phố Izumi City 4PN — 7,8 tỷ — Chốt hôm nay 01/06/2026",              en: "Izumi City Townhouse 4BR — 7.8B VND — Closed today 01/06/2026"         },
-  { vi: "Shophouse Masteri Cosmo Central — 12,4 tỷ — Sang tên 29/05/2026",         en: "Masteri Cosmo Central Shophouse — 12.4B VND — Transferred 29/05/2026"  },
+  { vi: "Shophouse Masteri Cosmo Central — 19,4 tỷ — Sang tên 29/05/2026",         en: "Masteri Cosmo Central Shophouse — 19.4B VND — Transferred 29/05/2026"  },
   { vi: "Nhà phố Vinhomes Cần Giờ 4PN — 8,5 tỷ — Nhận đặt cọc 27/05/2026",        en: "Vinhomes Can Gio 4BR Apt — 8.5B VND — Deposit accepted 27/05/2026"     },
 ];
 const PLACEHOLDERS: { vi: string; en: string }[] = [
@@ -277,7 +291,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
           style={{ background: "rgba(200,150,62,0.15)", border: "1px solid rgba(200,150,62,0.4)", color: "#D4A855" }}
         >
           <Award className="w-3.5 h-3.5" />
-          {lang === "vi" ? "Đại lý F1 uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes" : "Authorized F1 Agent — Novaland · Masterise · Nam Long · Vinhomes"}
+          {lang === "vi" ? "Đại lý uỷ quyền — Novaland · Masterise · Nam Long · Vinhomes" : "Authorized Agent — Novaland · Masterise · Nam Long · Vinhomes"}
         </div>
         {/* Kinetic headline */}
         <h1
@@ -312,13 +326,13 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                   }}
                 />
               </span>{" "}
-              BĐS TP.HCM
+              Bất Động Sản 
             </>
           ) : (
             <>
               Search, Buy &amp;{" "}
               <span className="italic" style={{ color: "#D4A855" }}>invest</span>{" "}
-              in HCMC Real Estate
+              Real Estate
             </>
           )}
         </h1>
@@ -333,8 +347,8 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
           }}
         >
           {lang === "vi"
-            ? "Định giá AI ±5%, pháp lý 2 lớp, CRM đa kênh. Kết nối 15.000+ môi giới và 45.000+ sản phẩm BĐS tại TP.HCM, Đồng Nai, Bình Dương."
-            : "AI Valuation ±5%, 2-layer legal check, multi-channel CRM. Connecting 15,000+ agents and 45,000+ properties across HCMC, Dong Nai, Binh Duong."}
+           ? "Mua đúng giá. Pháp lý rõ ràng. 15.000+ môi giới và 45.000+ bất động sản chờ bạn tại TP.HCM – Đồng Nai – Bình Dương - Long An."
+            : "Buy at the right price. Clear legal stactus. 15.000 agents and 45,000+ properties waiting for you across HCMC - Dong Nai - Binh Duong - Long An."}
         </p>
         {/* ── 2026 AI Search Panel ── */}
         <div style={{ marginBottom: "-52px", maxWidth: "720px", position: "relative", zIndex: 20 }}>
@@ -377,7 +391,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                 <span style={{
                   fontSize: "11px", fontWeight: 600, letterSpacing: "0.04em",
                   color: "rgba(255,255,255,0.45)", textTransform: "uppercase",
-                  fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+                  fontFamily: "var(--font-be-vietnam, sans-serif)",
                 }}>
                   {lang === "vi" ? "AI · Đang lắng nghe" : "AI · Listening"}
                 </span>
@@ -387,7 +401,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
             {/* Search input row */}
             <form onSubmit={submit} className="px-3 sm:px-4 py-3 sm:py-4">
               <div
-                className="flex items-center rounded-xl"
+                className="flex items-center rounded-xl transition-all"
                 style={{
                   background: "rgba(255,255,255,0.05)",
                   border: "1.5px solid rgba(255,255,255,0.12)",
@@ -404,6 +418,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                   el.style.boxShadow = "none";
                 }}
               >
+                {/* Sparkle icon */}
                 <span className="pl-4 pr-1 flex-shrink-0" style={{ color: "rgba(200,150,62,0.7)", lineHeight: 1 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path d="M12 2L13.5 9L20 10.5L13.5 12L12 19L10.5 12L4 10.5L10.5 9L12 2Z" fill="currentColor" opacity="0.9"/>
@@ -420,9 +435,10 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                   style={{
                     color: "rgba(255,255,255,0.92)",
                     caretColor: "#D4A855",
-                    fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+                    fontFamily: "var(--font-be-vietnam, sans-serif)",
                   }}
                 />
+                {/* Inline submit */}
                 <button
                   type="submit"
                   className="flex-shrink-0 m-1.5 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all"
@@ -445,7 +461,9 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
             </form>
 
             {/* Quick chips */}
-            <div className="px-3 sm:px-4 pb-4 flex flex-wrap gap-2">
+            <div
+              className="px-3 sm:px-4 pb-4 flex flex-wrap gap-2"
+            >
               {QUICK_CHIPS.map((c, i) => (
                 <button
                   key={c.vi}
@@ -455,7 +473,7 @@ function HeroSection({ onSearch, lang, isCrm }: { onSearch: (q: string) => void;
                     background: "rgba(255,255,255,0.06)",
                     border: "1px solid rgba(255,255,255,0.12)",
                     color: "rgba(255,255,255,0.70)",
-                    fontFamily: "var(--font-be-vietnam, var(--font-inter), sans-serif)",
+                    fontFamily: "var(--font-be-vietnam, sans-serif)",
                     backdropFilter: "blur(8px)",
                   }}
                   onMouseEnter={e => {
@@ -573,7 +591,7 @@ function LegalTicker({ lang }: { lang: Lang }) {
 function ProjectCard({ proj, lang }: { proj: FeaturedProject; lang: Lang }) {
   return (
     <a
-      href={proj.landingHref ?? `/du-an/${proj.slug}`}
+      href={`/du-an/${proj.slug}`}
       className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
       style={{
         background: "var(--sgs-surface, #FFFFFF)",
@@ -687,6 +705,132 @@ function ProjectsSection({ lang }: { lang: Lang }) {
 // ═══════════════════════════════════════════════════════════════
 //  SECTION 5 — VALUATION PROMO
 // ═══════════════════════════════════════════════════════════════
+// ============================================================
+// SECTION - HOT LISTINGS (Sản phẩm được xem nhiều nhất)
+// ============================================================
+function HotListingsSection({ lang }: { lang: Lang }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/public/listings?pageSize=100`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        const data = Array.isArray(d?.data) ? d.data : [];
+        const sorted = data
+          .filter((x: any) => (x?.viewCount || 0) > 0)
+          .sort((a: any, b: any) => (b?.viewCount || 0) - (a?.viewCount || 0))
+          .slice(0, 6);
+        setItems(sorted);
+      })
+      .catch(() => setItems([]))
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+  }, []);
+
+  const fmtPrice = (p: number) => {
+    if (!p) return lang === "vi" ? "Liên hệ" : "Contact";
+    if (p >= 1e9) {
+      const v = p / 1e9;
+      const s = Number.isInteger(v) ? String(v) : v.toFixed(1).replace(".", ",");
+      return `${s} tỷ`;
+    }
+    if (p >= 1e6) return `${Math.round(p / 1e6).toLocaleString("vi-VN")} triệu`;
+    return p.toLocaleString("vi-VN");
+  };
+  const fmtViews = (v: number) => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v));
+
+  const statusLabel = (s: string) => {
+    const m: Record<string, [string, string]> = {
+      AVAILABLE: ["ĐANG BÁN", "For Sale"],
+      OPENING: ["MỎ BÁN", "Opening"],
+      BOOKING: ["ĐẶT CHỖ", "Booking"],
+      HOLD: ["GIỮ CHỖ", "On Hold"],
+      SOLD: ["ĐÃ BÁN", "Sold"],
+    };
+    return (m[s] || [s, s])[lang === "vi" ? 0 : 1];
+  };
+
+  return (
+    <section className="py-20" style={{ background: "var(--sgs-bg, #FAFAF8)" }} data-section="hot-listings">
+      <div className="max-w-6xl mx-auto px-5">
+        <SectionHeading
+          title={lang === "vi" ? "Sản phẩm được xem nhiều nhất" : "Most Viewed Listings"}
+          subtitle={lang === "vi" ? "Những BĐS được quan tâm nhiều nhất trên sàn giao dịch SGS LAND" : "The most-viewed properties on the SGS LAND exchange"}
+        />
+
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="rounded-2xl overflow-hidden animate-pulse" style={{ background: "var(--sgs-surface, #fff)", border: "1px solid var(--sgs-border)" }}>
+                <div className="aspect-[4/3]" style={{ background: "var(--sgs-border)" }} />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 w-2/3 rounded-full" style={{ background: "var(--sgs-border)" }} />
+                  <div className="h-3 w-1/2 rounded-full" style={{ background: "var(--sgs-border)" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? null : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+            {items.map((it, idx) => {
+              const img = (Array.isArray(it.images) && it.images[0]) || "/placeholder.jpg";
+              const loc = it.location || it.address || (lang === "vi" ? "Đang cập nhật" : "Updating");
+              return (
+                <a
+                  key={it.id || idx}
+                  href={`#/listing/${it.id}`}
+                  className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                  style={{ background: "var(--sgs-surface, #fff)", border: "1px solid var(--sgs-border)", boxShadow: "0 1px 2px rgba(10,31,68,0.04)", textDecoration: "none" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 32px rgba(10,31,68,0.12)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 2px rgba(10,31,68,0.04)"; }}
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img src={img} alt={it.title || "Listing"} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(212,168,85,0.95)", color: "#0A1F44", backdropFilter: "blur(4px)" }}>
+                      {idx === 0 ? <Award className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
+                      {idx === 0 ? (lang === "vi" ? "XEM NHIỀU NHẤT" : "TOP VIEWED") : `#${idx + 1}`}
+                    </div>
+                    <div className="absolute top-3 right-3 flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(10,31,68,0.82)", color: "#fff", backdropFilter: "blur(4px)" }}>
+                      <Eye className="w-3.5 h-3.5" />{fmtViews(it.viewCount || 0)}
+                    </div>
+                    <div className="absolute bottom-3 left-3 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.92)", color: "var(--sgs-text, #1e293b)" }}>
+                      {statusLabel(it.status)}
+                    </div>
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="text-base font-bold leading-snug line-clamp-2 mb-2" style={{ color: "var(--sgs-text-heading, var(--sgs-text))", fontFamily: "var(--font-be-vietnam, sans-serif)" }}>
+                      {it.title}
+                    </h3>
+                    <div className="flex items-center gap-1 text-xs mb-3" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="line-clamp-1">{loc}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs mb-4" style={{ color: "var(--sgs-text-muted, #5C6B7A)" }}>
+                      {it.area ? <span>{it.area} m²</span> : null}
+                      {it.bedrooms ? <span>{""}{it.bedrooms} PN</span> : null}
+                    </div>
+                    <div className="mt-auto flex items-end justify-between">
+                      <div className="text-lg font-bold tabular-nums" style={{ color: "var(--sgs-accent-text, var(--sgs-primary))", fontFamily: "var(--font-ibm-plex-mono, monospace)" }}>
+                        {fmtPrice(it.price)}
+                      </div>
+                      <div className="flex items-center gap-1 text-xs font-medium transition-transform group-hover:translate-x-1" style={{ color: "var(--sgs-primary)" }}>
+                        {lang === "vi" ? "Xem chi tiết" : "View details"}<ChevronRight className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ValuationSection({ lang }: { lang: Lang }) {
   return (
     <section className="py-20" style={{ background: "var(--sgs-surface, #FFFFFF)" }}>
@@ -1001,11 +1145,11 @@ function TrustBlock({ lang }: { lang: Lang }) {
             </div>
             <blockquote className="text-sm leading-relaxed mb-3" style={{ color: "var(--sgs-text, var(--sgs-text))" }}>
               {lang === "vi"
-                ? '"Mua biệt thự Aqua City qua SGS LAND tháng 3/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay BIDV và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."'
-                : '"Purchased an Aqua City villa through SGS LAND in March 2026. The advisory team clearly explained payment policies, assisted with BIDV financing, and handled free legal checks. From deposit to contract signing took just 5 business days."'}
+                ? '"Mua biệt thự Aqua City qua SGS LAND tháng 6/2026. Đội tư vấn giải thích rõ chính sách thanh toán, hỗ trợ vay ngân hàng MB và kiểm tra pháp lý miễn phí. Quá trình từ đặt cọc đến ký hợp đồng chỉ 5 ngày làm việc."'
+                : '"Purchased an Aqua City villa through SGS LAND in July 2026. The advisory team clearly explained payment policies, assisted with MB financing, and handled free legal checks. From deposit to contract signing took just 5 business days."'}
             </blockquote>
             <p className="text-sm font-semibold" style={{ color: "var(--sgs-text-heading, var(--sgs-primary))" }}>{lang === "vi" ? "Anh Nguyễn Văn Hải" : "Mr. Nguyen Van Hai"}</p>
-            <p className="text-xs" style={{ color: "var(--sgs-text-muted)" }}>{lang === "vi" ? "Khách hàng mua Aqua City · TP.HCM, tháng 1/2026" : "Aqua City buyer · HCMC, January 2026"}</p>
+            <p className="text-xs" style={{ color: "var(--sgs-text-muted)" }}>{lang === "vi" ? "Khách hàng mua Aqua City · TP.HCM, tháng 6/2026" : "Aqua City buyer · HCMC, June 2026"}</p>
           </div>
         </div>
         {/* Micro-trust bar */}
@@ -1443,8 +1587,8 @@ const FOOTER_ABOUT = [
   { vi: "Tin tức",             en: "News",                  href: "/news"                     },
   { vi: "Tuyển dụng",          en: "Careers",               href: "/careers"                  },
   { vi: "Liên hệ",             en: "Contact",               href: "/contact"                  },
+  { vi: "Chủ đầu tư", en: "Developers", href: "/chu-dau-tu" },
   { vi: "BĐS Thủ Đức",          en: "Thu Duc Properties",    href: "/bat-dong-san-thu-duc"    },
-    { vi: "Chủ đầu tư", en: "Developers", href: "/chu-dau-tu" },
   { vi: "BĐS Long Thành",       en: "Long Thanh Properties", href: "/bat-dong-san-long-thanh" },
   { vi: "BĐS Đồng Nai",         en: "Dong Nai Properties",   href: "/bat-dong-san-dong-nai"   },
   { vi: "BĐS Bình Thạnh",       en: "Binh Thanh Properties", href: "/bat-dong-san-binh-thanh" },
@@ -1633,7 +1777,7 @@ function PublicFooter({ lang }: { lang: Lang }) {
     </footer>
   );
 }
-export function LandingPage({ featuredListings, stats }: Props) {  
+function Landing({ featuredListings, stats }: Props) {  
   const [lang, setLang] = useState<Lang>("vi");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatQuery, setChatQuery] = useState("");
@@ -1653,19 +1797,72 @@ export function LandingPage({ featuredListings, stats }: Props) {
   };
   return (
     <div className="flex flex-col overflow-x-hidden">
+      <SeoHead
+        title="SGS LAND - Nền Tảng BĐS AI Hàng Đầu TP.HCM"
+        description="SGS LAND: nền tảng bất động sản AI TP.HCM. Mua bán, cho thuê, định giá thông minh và quản lý BĐS toàn diện."
+        canonicalPath="/"
+            structuredData={[
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "@id": "https://sgsland.vn/#organization",
+                "name": "SGS LAND",
+                "url": "https://sgsland.vn",
+                "logo": "https://sgsland.vn/logo-navy.png",
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": "4.8",
+                  "reviewCount": "127",
+                  "bestRating": "5",
+                  "worstRating": "1"
+                }
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "WebPage",
+                "speakable": {
+                  "@type": "SpeakableSpecification",
+                  "cssSelector": ["h1", "h2", "p:first-of-type"]
+                },
+                "url": "https://sgsland.vn"
+              }
+            ]}
+        />
+
       {!isCrm && <PublicHeader />}
       <HeroSection   onSearch={handleSearch} lang={lang} isCrm={isCrm} />
       <StatsBar      lang={lang} />
       <LegalTicker   lang={lang} />
       <ProjectsSection  lang={lang} />
-      <ValuationSection lang={lang} />
+      <HotListingsSection lang={lang} />
+        <ValuationSection lang={lang} />
       <BentoSection     lang={lang} />
       <TrustBlock       lang={lang} />
       <FAQSection       lang={lang} />
-      <CTABanner        lang={lang} onChatOpen={() => {}} />
+      <CTABanner        lang={lang} onChatOpen={() => setChatOpen(true)} />
       <PublicFooter     lang={lang} />
-      {/* AI Chat Widget (Next.js self-contained, ssr:false) */}
-      <AiChatWidgetWrapper />
+      {/* ── Floating AI Chat Button ───────────────────────────────── */}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold shadow-xl transition-all hover:scale-105 active:scale-95"
+        style={{
+          background: "linear-gradient(135deg, var(--sgs-primary) 0%, var(--sgs-primary-deep) 100%)",
+          color: "#FFFFFF",
+          boxShadow: "0 8px 32px rgba(15,39,64,0.45), 0 2px 8px rgba(200,150,62,0.25)",
+          display: chatOpen ? "none" : "flex",
+        }}
+        aria-label="Mở chat AI"
+      >
+        <Bot className="w-5 h-5" style={{ color: "var(--sgs-accent)" }} />
+        <span>{lang === "vi" ? "Chat AI" : "AI Chat"}</span>
+        <span
+          className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+          style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.7)" }}
+        />
+      </button>
+      {/* ── AI Chat Widget ────────────────────────────────────────── */}
+      <AiChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} initialQuery={chatQuery} />
     </div>
   );
 }
+export default Landing;

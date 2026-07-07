@@ -215,21 +215,6 @@ const FEATURED_PROJECTS: ProjectSeed[] = [
     slug: 'son-kim-land',
     matchKeywords: ['sơn kim', 'son kim', 'gateway thảo điền', 'serenity sky villas', 'metropole thủ thiêm'],
   },
-  {
-    code: 'MASTERI-PARK-PLACE',
-    name: 'Masteri Park Place',
-    developer: 'Masterise Homes',
-    location: 'The Global City, Đỗ Xuân Hợp, Bình Trưng, TP. Thủ Đức, TP.HCM',
-    scale: '3,12 ha',
-    priceFrom: 'Liên hệ nhận bảng giá',
-    type: 'Căn hộ cao cấp',
-    badge: 'Sắp mở bán',
-    status: 'ACTIVE',
-    totalUnits: 1700,
-    slug: 'masteri-park-place',
-    image: '/images/projects/masteri-park-place.png',
-    matchKeywords: ['masteri park place', 'park place', 'masteri park place the global city', 'căn hộ masteri park place'],
-  },
 ];
 
 export default {
