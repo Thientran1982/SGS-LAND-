@@ -1,6 +1,8 @@
 import express from "express";
 import helmet from "helmet";
 import compression from "compression";
+// @ts-ignore
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import path from "path";
 import fs from "fs";
 import { Server } from "socket.io";
@@ -5699,6 +5701,31 @@ app.use(globalMutationAudit);
       res.setHeader('X-Robots-Tag', 'index, follow, max-image-preview:large, max-snippet:-1');
       res.send(html);
     });
+
+    // ---------------------------------------------------------------------------
+    // Reverse-proxy: public marketing pages → Next.js site (port 3001)
+    // This allows the CRM (port 5000) to also serve the public site without
+    // requiring users to juggle two ports. Next.js runs internally; all public
+    // routes are forwarded transparently. API, /assets, /login etc. are excluded
+    // and continue to be handled by Express as normal.
+    // ---------------------------------------------------------------------------
+    const NEXTJS_ORIGIN = process.env.NEXTJS_URL || 'http://localhost:3001';
+    const publicSiteProxy = createProxyMiddleware({
+      target: NEXTJS_ORIGIN,
+      changeOrigin: true,
+      on: {
+        error: (_err: any, _req: any, res: any, _target: any) => {
+          // If Next.js is not running, return 502 instead of crashing Express
+          if (res && typeof res.status === 'function' && !res.headersSent) {
+            res.status(502).end('Next.js public site not available');
+          }
+        },
+      },
+    });
+    // Next.js static assets (JS/CSS chunks, images)
+    app.use('/_next', publicSiteProxy);
+    // Homepage — proxy exactly
+    app.get('/', publicSiteProxy);
 
     // ---------------------------------------------------------------------------
     // Universal catch-all — must be last route.
