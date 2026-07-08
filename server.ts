@@ -5215,6 +5215,9 @@ app.use(globalMutationAudit);
     }
   });
 
+  // Homepage canonical: 301 redirect '/' -> '/home' (dedupe, runs before Vite & prod SSR)
+  app.get('/', (req, res) => { res.redirect(301, '/home'); });
+
   // Vite middleware for development (dynamically imported so vite is not required in production)
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");

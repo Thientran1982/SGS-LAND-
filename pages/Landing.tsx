@@ -19,6 +19,10 @@ const STYLE = `
   .lp-sans  { font-family: var(--font-be-vietnam, system-ui, sans-serif); }
 
   .lp-root {
+      --font-noto-serif: "Noto Serif";
+      --font-inter: "Inter";
+      --font-be-vietnam: "Inter";
+      --font-ibm-plex-mono: "JetBrains Mono";
     --lp-bg:    #F7F4EC; --lp-paper: #FBF9F3; --lp-ink: #152232;
     --lp-muted: #68727F; --lp-soft:  #9AA2AC; --lp-hair: #E2DDD0;
     --lp-line:  #C9C2B0; --lp-navy:  #1B3A5C; --lp-gold: #BE8F14;
@@ -37,6 +41,11 @@ const STYLE = `
   .lp-pin-ring { animation: lp-ring 2.6s ease-out infinite; transform-origin: center; }
   @keyframes lp-dash  { to{stroke-dashoffset:-540} }
   .lp-route { animation: lp-dash 30s linear infinite; }
+  @keyframes lp-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .lp-ph-wrap { position:relative; flex:1; min-width:0; overflow:hidden; }
+  .lp-ph-track { display:inline-flex; white-space:nowrap; will-change:transform; animation: lp-marquee 12s linear infinite; }
+  .lp-ph-track > span { padding-right:48px; }
+  .lp-ph-over { position:absolute; inset:0; display:flex; align-items:center; pointer-events:none; color:var(--lp-bg); opacity:.55; font-size:15px; font-family:var(--font-be-vietnam,sans-serif); }
 
   .lp-rv { opacity:0; transform:translateY(26px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1); }
   .lp-rv.in { opacity:1; transform:none; }
@@ -74,10 +83,10 @@ const FAQ_ITEMS = [
 
 // ─── Projects ────────────────────────────────────────────────────────────────
 const PROJECTS = [
-  { slug:"aqua-city",        no:"№ 01 · Novaland",   name:"Aqua City",              desc:{ vi:"1.000 ha · Biên Hòa · từ 3 tỷ ₫",                  en:"1,000 ha · Bien Hoa · from 3B VND" },  price:{ vi:"Từ 3 tỷ ₫",         en:"From 3B VND" },  loc:{ vi:"Biên Hòa · Golf 18 lỗ, Marina", en:"Bien Hoa · 18-hole Golf, Marina" } },
-  { slug:"the-global-city",  no:"№ 02 · Masterise",  name:"The Global City",        desc:{ vi:"117 ha · Thủ Đức · bảng giá T7/2026",               en:"117 ha · Thu Duc · price list Jul/2026" }, price:{ vi:"Bảng giá T7/2026",  en:"Price list Jul/2026" }, loc:{ vi:"Thủ Đức · trung tâm mới quốc tế", en:"Thu Duc · New International CBD" } },
-  { slug:"vinhomes-can-gio", no:"№ 03 · Vinhomes",   name:"Vinhomes Cần Giờ",       desc:{ vi:"2.870 ha · siêu đô thị biển · 2026",                en:"2,870 ha · Coastal megacity · 2026" },  price:{ vi:"Mở bán 2026",       en:"Launch 2026" },  loc:{ vi:"Siêu đô thị biển lớn nhất TPHCM", en:"Largest coastal city in HCMC" } },
-  { slug:"izumi-city",       no:"№ 04 · Nam Long",   name:"Izumi City",             desc:{ vi:"170 ha · Biên Hòa · chuẩn Nhật Bản",               en:"170 ha · Bien Hoa · Japanese standard" }, price:{ vi:"Giá tốt",           en:"Competitive price" }, loc:{ vi:"Biên Hòa · chuẩn sống Nhật Bản", en:"Bien Hoa · Japanese living standard" } },
+  { slug:"aqua-city", img:"/images/projects/aqua-city.jpg",        no:"№ 01 · Novaland",   name:"Aqua City",              desc:{ vi:"1.000 ha · Biên Hòa · từ 6 tỷ",                  en:"1,000 ha · Bien Hoa · from 6B VND" },  price:{ vi:"Từ 6 tỷ",         en:"From 6B VND" },  loc:{ vi:"Biên Hòa · Golf 18 lỗ, Marina", en:"Bien Hoa · 18-hole Golf, Marina" } },
+  { slug:"the-global-city", img:"/images/projects/the-global-city.jpg",  no:"№ 02 · Masterise",  name:"The Global City",        desc:{ vi:"117 ha · Thủ Đức · từ 9 tỷ",               en:"117 ha · Thu Duc · prom 9B VND" }, price:{ vi:"Từ 9 tỷ",  en:"Prom 9B VND" }, loc:{ vi:"Thủ Đức · trung tâm mới quốc tế", en:"Thu Duc · New International CBD" } },
+  { slug:"vinhomes-can-gio", img:"/images/projects/vinhomes-can-gio.jpg", no:"№ 03 · Vinhomes",   name:"Vinhomes Cần Giờ",       desc:{ vi:"2.870 ha · siêu đô thị biển · từ 8 tỷ",                en:"2,870 ha · Coastal megacity · from 8B VND" },  price:{ vi:"Từ 8 tỷ",       en:"From 8B VND" },  loc:{ vi:"Siêu đô thị biển lớn nhất TPHCM", en:"Largest coastal city in HCMC" } },
+  { slug:"izumi-city", img:"/images/projects/izumi-city.jpg",       no:"№ 04 · Nam Long",   name:"Izumi City",             desc:{ vi:"170 ha · Biên Hòa · chuẩn Nhật Bản · từ 7,8 tỷ",               en:"170 ha · Bien Hoa · Japanese standard · from 7.8B VND" }, price:{ vi:"Từ 7,8 tỷ",           en:"From 7.8B VND" }, loc:{ vi:"Biên Hòa · chuẩn sống Nhật Bản", en:"Bien Hoa · Japanese living standard" } },
   { slug:"masterise-homes",  no:"№ 05 · Masterise",  name:"Grand Marina · Masteri", desc:{ vi:"TPHCM · căn hộ hàng hiệu",                          en:"HCMC · Branded residences" },            price:{ vi:"Tư vấn 1-1",        en:"1-on-1 consultation" }, loc:{ vi:"Trung tâm TPHCM · hàng hiệu", en:"Central HCMC · luxury residences" } },
 ];
 
@@ -105,7 +114,7 @@ function useReveal() {
 // ─── MAP HERO ─────────────────────────────────────────────────────────────────
 function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
   const [activePin, setActivePin] = useState<number | null>(null);
-  const [cardPos, setCardPos]     = useState<{ left: number; top: number }>({ left: 0, top: 0 });
+  const [cardPos, setCardPos]     = useState<{ left: number; top: number; w: number }>({ left: 0, top: 0, w: 290 });
   const [query, setQuery]         = useState("");
   const [visible, setVisible]     = useState(false);
   const cardRef    = useRef<HTMLDivElement>(null);
@@ -121,12 +130,14 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
     const svgW = 1200, svgH = 640;
     const scaleX = mr.width / svgW, scaleY = mr.height / svgH;
     const pxX = cx * scaleX, pxY = cy * scaleY;
-    const cw = 290, ch = 250;
+    const cw = Math.min(290, mr.width - 32), ch = 250;
     let left = pxX + 18, top = pxY - 10;
     if (left + cw > mr.width - 20) left = pxX - cw - 18;
     if (top + ch > mr.height - 16) top = mr.height - ch - 16;
     if (top < 16) top = 16;
-    setCardPos({ left, top });
+    if (left < 16) left = 16;
+    if (left + cw > mr.width - 16) left = mr.width - cw - 16;
+    setCardPos({ left, top, w: cw });
     setActivePin(i);
   }, []);
 
@@ -136,32 +147,32 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
 
   const proj   = activePin !== null ? PROJECTS[activePin] : null;
   const pin    = activePin !== null ? PIN_DATA[activePin] : null;
-  const imgSrc = proj ? `https://sgsland.vn/og/du-an/${proj.slug}` : "";
+  const imgSrc = proj ? (proj.img || `/images/projects/${proj.slug}.webp`) : "";
 
   return (
     <section id="ban-do" style={{ padding: "120px 0 0", background: "var(--lp-bg)" }}>
       <div className="lp-wrap">
-        <div style={{ display:"grid", gridTemplateColumns:"1fr auto", alignItems:"end", gap:"24px", marginBottom:"26px" }}
-          className="max-sm:grid-cols-1">
+        <div style={{ display:"grid", alignItems:"end", gap:"24px", marginBottom:"26px" }}
+          className="grid grid-cols-1 sm:[grid-template-columns:1fr_auto]">
           <h1
             className="lp-serif"
             style={{
-              fontSize:"clamp(34px,5.2vw,70px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
+              fontSize:"clamp(26px,6vw,70px)", fontWeight:550, lineHeight:1.03, letterSpacing:"-.015em",
               color:"var(--lp-ink)",
               opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(20px)",
               transition: "opacity .75s ease .1s, transform .75s ease .1s",
             }}
           >
             {lang === "vi"
-              ? <>Sàn F1 uy tín · bất động sản<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}>6 tỉnh miền Nam.</em></>
-              : <>Trusted F1 agency · real estate<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}>across 6 southern provinces.</em></>
+              ? <>Tìm kiếm, mua & đầu tư · bất động sản<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}> </em></>
+              : <>Search, buy & invest · real estate<br /><em style={{ color:"var(--lp-navy)", fontStyle:"italic", fontWeight:340 }}> </em></>
             }
           </h1>
           <p style={{ maxWidth:"320px", fontSize:"14px", color:"var(--lp-muted)", textAlign:"right", opacity: visible ? 1 : 0, transition:"opacity .75s ease .3s" }}
             className="max-sm:text-left">
             {lang === "vi"
-              ? "Dự án BĐS TPHCM, Đồng Nai, Bình Dương, BR-VT, Long An, Tây Ninh. Di chuột lên từng điểm ghim để xem giá và pháp lý."
-              : "Real estate projects in HCMC, Dong Nai, Binh Duong, BR-VT, Long An, Tay Ninh. Hover each pin for verified pricing and legal status."}
+              ? "Mua đúng giá, pháp lý rõ ràng. 15.000+ môi giới và 45.000+ bất động sản chờ bạn tại Tp.HCM - Đồng Nai - Tây Ninh."
+              : "Buy at the right price, clear legal status. 15000+ agents and 45.000+ properties waiting for you across HCMC - Dong Nai - Tay Ninh."}
           </p>
         </div>
 
@@ -179,7 +190,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
               { cls:"bl", style:{bottom:24,left:30}, text:"10°25′–11°00′ N" },
               { cls:"br", style:{bottom:24,right:30},text:"106°30′–107°00′ E" },
             ].map(c => (
-              <span key={c.cls} className="lp-mono" style={{ position:"absolute", color:"var(--lp-muted)", zIndex:3, pointerEvents:"none", fontSize:"10px", letterSpacing:".14em", ...c.style }}>
+              <span key={c.cls} className="lp-mono max-sm:!hidden" style={{ position:"absolute", color:"var(--lp-muted)", zIndex:3, pointerEvents:"none", fontSize:"10px", letterSpacing:".14em", ...c.style }}>
                 {c.text}
               </span>
             ))}
@@ -247,8 +258,8 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             </svg>
 
             {/* Legend */}
-            <div style={{ position:"absolute", left:30, bottom:52, zIndex:3, background:"var(--lp-navbg)", backdropFilter:"blur(6px)", border:"1px solid var(--lp-line)", borderRadius:"12px", padding:"12px 16px", fontSize:"11.5px", color:"var(--lp-muted)", display:"flex", flexDirection:"column", gap:"6px" }}
-              className="max-sm:hidden">
+            <div style={{ position:"absolute", left:30, bottom:52, zIndex:3, background:"var(--lp-navbg)", backdropFilter:"blur(6px)", border:"1px solid var(--lp-line)", borderRadius:"12px", padding:"12px 16px", fontSize:"11.5px", color:"var(--lp-muted)", flexDirection:"column", gap:"6px" }}
+              className="hidden sm:flex">
               <b className="lp-mono" style={{ color:"var(--lp-ink)", fontSize:"11px" }}>{lang==="vi" ? "Chú giải" : "Legend"}</b>
               <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-navy)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Dự án pháp lý 2 lớp" : "Two-layer legal verified"}</span>
               <span style={{ display:"flex", alignItems:"center", gap:"8px" }}><i style={{ width:9,height:9,borderRadius:"50%",background:"var(--lp-gold)",flexShrink:0,display:"inline-block" }}/>{lang==="vi" ? "Đang xem" : "Viewing"}</span>
@@ -258,7 +269,7 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
             {activePin !== null && proj && pin && (
               <div
                 ref={cardRef}
-                style={{ position:"absolute", zIndex:10, width:"290px", background:"var(--lp-cardbg)", border:"1px solid var(--lp-line)", borderRadius:"16px", overflow:"hidden", boxShadow:"0 26px 60px var(--lp-shadow)", left:cardPos.left, top:cardPos.top, pointerEvents:"auto", transition:"opacity .2s,transform .2s" }}
+                style={{ position:"absolute", zIndex:10, width:(cardPos.w||290)+"px", maxWidth:"calc(100% - 20px)", background:"var(--lp-cardbg)", border:"1px solid var(--lp-line)", borderRadius:"16px", overflow:"hidden", boxShadow:"0 26px 60px var(--lp-shadow)", left:cardPos.left, top:cardPos.top, pointerEvents:"auto", transition:"opacity .2s,transform .2s" }}
                 onMouseEnter={() => { if (hideTimer.current) clearTimeout(hideTimer.current); }}
                 onMouseLeave={hideCard}
               >
@@ -283,27 +294,34 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
         </div>
 
         {/* AI Search bar */}
-        <div style={{ display:"flex", justifyContent:"center", marginTop:"-30px", position:"relative", zIndex:20, padding:"0 20px" }}>
+        <div className="max-sm:!mt-3" style={{ display:"flex", justifyContent:"center", marginTop:"-30px", position:"relative", zIndex:20, padding:"0 20px" }}>
           <form
+            className="max-sm:!pl-4"
             style={{ background:"var(--lp-ink)", color:"var(--lp-bg)", borderRadius:"999px", boxShadow:"0 24px 60px var(--lp-shadow)", display:"flex", alignItems:"center", gap:"12px", padding:"10px 10px 10px 24px", width:"min(640px,100%)" }}
             onSubmit={e => {
               e.preventDefault();
-              if (query.trim()) {
-                onChatOpen();
-              } else {
-                location.href = "/marketplace";
-              }
+              onChatOpen();
             }}
           >
             <span className="lp-mono" style={{ color:"var(--lp-gold)", fontSize:"14px" }}>⌘</span>
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              type="search"
-              placeholder={lang==="vi" ? "Nhà phố Thủ Đức dưới 8 tỷ, pháp lý sạch…" : "Townhouse Thu Duc under 8B VND, clean title…"}
-              style={{ flex:1, border:"none", outline:"none", background:"none", color:"var(--lp-bg)", fontFamily:"var(--font-be-vietnam,sans-serif)", fontSize:"15px", minWidth:0 }}
-              aria-label={lang==="vi" ? "Hỏi AI về bất động sản" : "Ask AI about real estate"}
-            />
+            <div className="lp-ph-wrap">
+              {!query && (
+                <span className="lp-ph-over" aria-hidden="true">
+                  <span className="lp-ph-track">
+                    <span>{lang==="vi" ? "Nhà phố Thủ Đức dưới 8 tỷ, pháp lý sạch…" : "Townhouse Thu Duc under 8B VND, clean title…"}</span>
+                    <span>{lang==="vi" ? "Nhà phố Thủ Đức dưới 8 tỷ, pháp lý sạch…" : "Townhouse Thu Duc under 8B VND, clean title…"}</span>
+                  </span>
+                </span>
+              )}
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                type="search"
+                placeholder=""
+                style={{ width:"100%", border:"none", outline:"none", background:"none", color:"var(--lp-bg)", fontFamily:"var(--font-be-vietnam,sans-serif)", fontSize:"15px", minWidth:0 }}
+                aria-label={lang==="vi" ? "Hỏi AI về bất động sản" : "Ask AI about real estate"}
+              />
+            </div>
             <button type="submit" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", borderRadius:"999px", padding:"11px 20px", fontSize:"13.5px", fontWeight:600, whiteSpace:"nowrap", cursor:"pointer", border:"none", transition:"opacity .2s" }}>
               {lang==="vi" ? "Hỏi AI →" : "Ask AI →"}
             </button>
@@ -311,14 +329,14 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
         </div>
 
         {/* Stats */}
-        <div style={{ display:"flex", justifyContent:"center", gap:0, padding:"56px 0 0", flexWrap:"wrap" }}>
+        <div className="max-sm:!grid max-sm:grid-cols-2 max-sm:gap-y-7" style={{ display:"flex", justifyContent:"center", gap:0, padding:"56px 0 0", flexWrap:"wrap" }}>
           {[
             { num:"45.000+", vi:"sản phẩm realtime",    en:"listings in realtime"   },
             { num:"±4.8%",   vi:"sai số định giá AI",   en:"AI valuation error"     },
             { num:"24h",     vi:"xác minh thực địa",    en:"on-site verification"   },
             { num:"$1B+",    vi:"giao dịch xử lý",      en:"transactions processed" },
           ].map((s, i) => (
-            <div key={i} style={{ padding:"0 34px", borderLeft: i===0 ? "none" : "1px solid var(--lp-hair)", textAlign:"center" }}>
+            <div key={i} className="max-sm:!px-2 max-sm:!border-0" style={{ padding:"0 34px", borderLeft: i===0 ? "none" : "1px solid var(--lp-hair)", textAlign:"center" }}>
               <b className="lp-serif" style={{ fontSize:"clamp(24px,2.6vw,36px)", fontWeight:550, display:"block", lineHeight:1.15, color:"var(--lp-ink)" }}>{s.num}</b>
               <span style={{ fontSize:"12px", color:"var(--lp-muted)" }}>{s[lang]}</span>
             </div>
@@ -357,7 +375,7 @@ function ProjectCard({ p, lang }: { p: typeof PROJECTS[number]; lang: Lang }) {
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform=""; (e.currentTarget as HTMLElement).style.boxShadow=""; }}
     >
       <img
-        src={`https://sgsland.vn/og/du-an/${p.slug}`}
+        src={p.img || `/images/projects/${p.slug}.webp`}
         alt={p.name}
         loading="lazy"
         style={{ aspectRatio:"4/3", objectFit:"cover", width:"100%", display:"block" }}
@@ -397,7 +415,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
           title={lang==="vi" ? <>Cầm dự án <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>trên tay</em></> : <>Hold each project <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>in hand</em></>}
           side={lang==="vi" ? "Ảnh thật, giá gốc chủ đầu tư, pháp lý đã kiểm định 2 lớp." : "Real photos, developer prices, two-layer legal verification."}
         />
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"26px" }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
+        <div style={{ display:"grid", gap:"26px" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           {PROJECTS.map((p) => (
             <ProjectCard key={p.slug} p={p} lang={lang} />
           ))}
@@ -435,7 +453,7 @@ function MethodSection({ lang }: { lang: Lang }) {
           title={lang==="vi" ? <>Bốn lớp <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>bảo chứng</em></> : <>Four layers of <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>assurance</em></>}
           side={lang==="vi" ? "Miễn phí hoàn toàn với người mua và người thuê." : "Completely free for buyers and renters."}
         />
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"clamp(20px,3vw,44px)" }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
+        <div style={{ display:"grid", gap:"clamp(20px,3vw,44px)" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           {methods.map((m, i) => (
             <MethodCard key={i} m={m} lang={lang} />
           ))}
@@ -636,9 +654,9 @@ function PublicHeader() {
         <div className="flex items-center justify-between" style={{ height: "64px" }}>
           {/* Logo */}
           <a href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <img src="/logo-white.png" alt="SGS Land" className="w-9 h-9 transition-transform group-hover:scale-105" style={{ objectFit:"contain" }} />
+            <img src={theme === "dark" ? "/logo-white.png" : "/logo-navy.png"} alt="SGS Land" className="w-9 h-9 transition-transform group-hover:scale-105" style={{ objectFit:"contain" }} />
             <div>
-              <div className="font-bold text-lg leading-tight" style={{ color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)", fontFamily:"var(--font-noto-serif, var(--font-inter), Georgia, serif)", letterSpacing:"-0.02em" }}>
+              <div className="font-bold text-lg leading-tight" style={{ color: isHero ? (theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)") : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)", fontFamily:"var(--font-noto-serif, var(--font-inter), Georgia, serif)", letterSpacing:"-0.02em" }}>
                 SGS <span style={{ color:"var(--sgs-accent)" }}>LAND</span>
               </div>
               <div className="text-[9px] font-semibold uppercase hidden sm:block" style={{ color: isHero ? "rgba(200,150,62,0.85)" : theme === "dark" ? "var(--sgs-accent)" : "var(--sgs-accent-text)", letterSpacing:"0.2em" }}>
@@ -652,9 +670,9 @@ function PublicHeader() {
             {navLinks.map((link) => (
               <a key={link.href} href={link.href}
                 className="px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
-                style={{ color: isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "var(--sgs-primary)", fontFamily:"var(--font-be-vietnam, var(--font-inter), sans-serif)" }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = isHero ? "rgba(255,255,255,0.1)" : theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(27,58,92,0.06)"; el.style.color = isHero ? "#FFFFFF" : theme === "dark" ? "#FFFFFF" : "var(--sgs-primary-deep)"; }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = isHero ? "rgba(255,255,255,0.85)" : theme === "dark" ? "#B0CDE0" : "var(--sgs-primary)"; }}
+                style={{ color: isHero ? (theme === "dark" ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)") : theme === "dark" ? "#B0CDE0" : "var(--sgs-primary)", fontFamily:"var(--font-be-vietnam, var(--font-inter), sans-serif)" }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = isHero ? (theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.05)") : theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(27,58,92,0.06)"; el.style.color = isHero ? (theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)") : theme === "dark" ? "#FFFFFF" : "var(--sgs-primary-deep)"; }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = isHero ? (theme === "dark" ? "rgba(255,255,255,0.85)" : "var(--sgs-primary)") : theme === "dark" ? "#B0CDE0" : "var(--sgs-primary)"; }}
               >
                 {lang === "vi" ? link.vi : link.en}
               </a>
@@ -664,26 +682,26 @@ function PublicHeader() {
           {/* Right Controls */}
           <div className="hidden md:flex items-center gap-2">
             <button onClick={toggleLang} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-              style={{ background: isHero ? "rgba(255,255,255,0.12)" : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)", border:`1px solid ${isHero ? "rgba(255,255,255,0.3)" : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`, color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)" }}
+              style={{ background: isHero ? (theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(27,58,92,0.06)") : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)", border:`1px solid ${isHero ? (theme === "dark" ? "rgba(255,255,255,0.3)" : "rgba(27,58,92,0.18)") : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`, color: isHero ? (theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)") : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)" }}
               aria-label="Chuyển ngôn ngữ VI / EN">
               {lang.toUpperCase()}
             </button>
             <button onClick={() => setTheme(t => t === "light" ? "dark" : "light")} className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-              style={{ background: isHero ? "rgba(255,255,255,0.12)" : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)", border:`1px solid ${isHero ? "rgba(255,255,255,0.3)" : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`, color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)" }}
+              style={{ background: isHero ? (theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(27,58,92,0.06)") : theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.07)", border:`1px solid ${isHero ? (theme === "dark" ? "rgba(255,255,255,0.3)" : "rgba(27,58,92,0.18)") : theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(27,58,92,0.18)"}`, color: isHero ? (theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)") : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)" }}
               aria-label="Chuyển chế độ sáng / tối">
               {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
             <a href="/login" className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-              style={{ background: isHero ? "rgba(255,255,255,0.15)" : "var(--sgs-accent)", color: isHero ? "#FFFFFF" : "var(--sgs-primary-deep)", border:`1px solid ${isHero ? "rgba(255,255,255,0.35)" : "transparent"}` }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isHero ? "rgba(255,255,255,0.22)" : "#D9A94E"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isHero ? "rgba(255,255,255,0.15)" : "var(--sgs-accent)"; }}>
+              style={{ background: isHero ? (theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(27,58,92,0.06)") : "var(--sgs-accent)", color: isHero ? (theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)") : "var(--sgs-primary-deep)", border:`1px solid ${isHero ? (theme === "dark" ? "rgba(255,255,255,0.35)" : "rgba(27,58,92,0.18)") : "transparent"}` }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isHero ? (theme === "dark" ? "rgba(255,255,255,0.22)" : "rgba(27,58,92,0.12)") : "#D9A94E"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isHero ? (theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(27,58,92,0.06)") : "var(--sgs-accent)"; }}>
               {lang === "vi" ? "Đăng nhập" : "Login"}
             </a>
           </div>
 
           {/* Mobile hamburger */}
           <button onClick={() => setMenuOpen(o => !o)} className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-all"
-            style={{ color: isHero ? "#FFFFFF" : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)", background: isHero ? "rgba(255,255,255,0.1)" : "transparent" }}
+            style={{ color: isHero ? (theme === "dark" ? "#FFFFFF" : "var(--sgs-primary)") : theme === "dark" ? "#E4EDF5" : "var(--sgs-primary)", background: isHero ? (theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(27,58,92,0.05)") : "transparent" }}
             aria-label="Menu">
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -715,6 +733,9 @@ function PublicHeader() {
               style={{ background:"var(--sgs-accent)", color:"var(--sgs-primary-deep)" }}>
               {lang === "vi" ? "Định Giá AI" : "AI Valuation"}
             </a>
+              <a href="/login" onClick={() => setMenuOpen(false)} className="flex-1 text-center text-sm font-semibold py-2.5 rounded-lg" style={{ background:"var(--sgs-primary)", color:"#FFFFFF" }}>
+                {lang === "vi" ? "Đăng nhập" : "Login"}
+              </a>
           </div>
         </div>
       )}
@@ -726,6 +747,7 @@ function PublicHeader() {
 const FOOTER_PROJECTS = [
   { label: "Aqua City Novaland",        href: "/du-an/aqua-city"               },
   { label: "The Global City",           href: "/du-an/the-global-city"         },
+  { label: "Masteri Park Place",        href: "/du-an/masteri-park-place"       },
   { label: "Izumi City Nam Long",       href: "/du-an/izumi-city"              },
   { label: "Vinhomes Grand Park",       href: "/du-an/vinhomes-grand-park"     },
   { label: "Vinhomes Cần Giờ",          href: "/du-an/vinhomes-can-gio"        },
@@ -793,8 +815,8 @@ function PublicFooter({ lang }: { lang: Lang }) {
             </div>
             <p className="text-xs mb-3 leading-relaxed" style={{ color:"#7A91A8" }}>
               {lang === "vi"
-                ? "Sàn BĐS F1 uy tín · định giá AI · pháp lý 2 lớp tại TP.HCM & 5 tỉnh miền Nam."
-                : "Trusted F1 real estate platform · AI valuation · 2-layer legal in HCMC & 5 southern provinces."}
+                ? "Nền tảng AI quản lý & phân phối BĐS · Sàn BĐS F1 uy tín · Tin dùng bởi 15.000+ môi giới."
+                : "Ai-powered real estate management & distribution platform · Trusted F1 · Trusted by 15.000+ brokers."}
             </p>
             <div className="flex flex-col gap-1.5">
               <a href="tel:+84971132378" className="text-xs flex items-center gap-2" style={{ color:"#B9C6D4" }}
