@@ -58,7 +58,6 @@ const nextConfig: NextConfig = {
   // ─── API Proxy Rewrites → Express backend ──────────────
   async rewrites() {
     return [
-      { source: "/home", destination: "/" },
       { source: "/api/:path*",        destination: `${BACKEND_URL}/api/:path*` },
       { source: "/socket.io/:path*",  destination: `${BACKEND_URL}/socket.io/:path*` },
       { source: "/yjs/:path*",        destination: `${BACKEND_URL}/yjs/:path*` },
