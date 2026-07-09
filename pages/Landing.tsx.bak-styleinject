@@ -546,20 +546,6 @@ function CtaSection({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }
 
 // ─── ROOT COMPONENT ───────────────────────────────────────────────────────────
 export function Landing({ featuredListings = [], stats }: Props) {
-  // Inject critical landing CSS into <head> so it is always parsed as an active stylesheet,
-  // including on client-side SPA navigation (a <style> in the body via dangerouslySetInnerHTML
-  // does not always get an active .sheet on client-nav, which broke fonts/map styling).
-  useEffect(() => {
-    const id = 'lp-critical-style';
-    let el = document.getElementById(id) as HTMLStyleElement | null;
-    if (!el) {
-      el = document.createElement('style');
-      el.id = id;
-      document.head.appendChild(el);
-    }
-    if (el.textContent !== STYLE) el.textContent = STYLE;
-  }, []);
-
   const [lang, setLang]         = useState<Lang>("vi");
   const [chatOpen, setChatOpen] = useState(false);
   const [isCrm, setIsCrm]       = useState(false);
@@ -588,7 +574,7 @@ export function Landing({ featuredListings = [], stats }: Props) {
         canonicalPath="/"
         ogType="website"
       />
-      {/* critical CSS injected into <head> via useEffect (see below) for reliable client-nav */}
+      <style dangerouslySetInnerHTML={{ __html: STYLE }} />
       <div className="lp-root lp-sans" style={{ background:"var(--lp-bg)", color:"var(--lp-ink)", minHeight:"100vh" }}>
         {!isCrm && <PublicHeader />}
         <MapHero lang={lang} onChatOpen={onChatOpen} />
@@ -837,12 +823,12 @@ function PublicFooter({ lang }: { lang: Lang }) {
                 onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
                 📞 0971 132 378
               </a>
-              <a href="mailto:info@sgsland.vn" className="text-xs" style={{ color:"#B9C6D4" }}
+              <a href="mailto:contact@sgsland.vn" className="text-xs" style={{ color:"#B9C6D4" }}
                 onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
                 ✉ contact@sgsland.vn
               </a>
               <p className="text-xs mt-1" style={{ color:"#7A91A8" }}>
-                {lang === "vi" ? "Hỗ trợ 7/7 · 8:00 – 18:00" : "Support 7/7 · 8:00 – 18:00"}
+                {lang === "vi" ? "Hỗ trợ 7/7 · 8:00 – 20:00" : "Support 7/7 · 8:00 – 20:00"}
               </p>
             </div>
           </div>
