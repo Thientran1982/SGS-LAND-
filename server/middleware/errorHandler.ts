@@ -41,6 +41,10 @@ export class ValidationError extends AppError {
 }
 
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
+  // Never allow error responses to be cached (prevents stale 500 replay on back/forward nav)
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   if (err instanceof AppError) {
     logger.warn(`[${req.method}] ${req.path} - ${err.statusCode}: ${err.message}`);
     const requestId2 = (req as any).id as string | undefined;
