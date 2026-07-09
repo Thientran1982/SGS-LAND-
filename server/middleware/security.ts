@@ -16,7 +16,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     // inline <style>, inline <script>, and inline JSON-LD schemas. They contain
     // no user-controlled data (form posts go to a separate API), so we relax
     // script-src/style-src for that path only — strict CSP elsewhere.
-    const isLandingHtml = req.path.startsWith('/landing/');
+    const isLandingHtml = req.path === '/' || req.path === '/home' || req.path.startsWith('/landing/');
     const scriptInline = isLandingHtml ? "'unsafe-inline' " : '';
     const styleInline = isLandingHtml ? "'unsafe-inline' " : '';
 
