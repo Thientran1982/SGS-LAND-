@@ -360,7 +360,7 @@ export const ProductSearch: React.FC = () => {
                             <input
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
-                                className="w-full pl-10 pr-8 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                                className="w-full pl-10 pr-8 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                                 placeholder={t('search.placeholder')}
                             />
                             {query && (
@@ -437,7 +437,7 @@ export const ProductSearch: React.FC = () => {
                     <a
                         key={href}
                         href={href}
-                        className="shrink-0 text-xs font-medium px-3 py-1 rounded-full border border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-400 hover:text-sgs-primary dark:hover:text-sgs-text-muted transition-all bg-[var(--glass-surface)] whitespace-nowrap"
+                        className="shrink-0 text-xs font-medium px-3 py-1 rounded-full border border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--sgs-primary)] hover:text-sgs-primary dark:hover:text-sgs-text-muted transition-all bg-[var(--glass-surface)] whitespace-nowrap"
                     >
                         {label}
                     </a>
@@ -474,7 +474,7 @@ export const ProductSearch: React.FC = () => {
                             {/* Non-blocking loading chip — map stays fully interactive while data loads */}
                             {boardLoading && (
                                 <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-full px-4 py-2 pointer-events-none">
-                                    <div className="w-4 h-4 rounded-full border-2 border-sgs-border border-t-indigo-600 animate-spin flex-shrink-0" />
+                                    <div className="w-4 h-4 rounded-full border-2 border-sgs-border border-t-[var(--sgs-primary)] animate-spin flex-shrink-0" />
                                     <span className="text-xs font-semibold text-sgs-text-muted whitespace-nowrap">{t('common.loading')}</span>
                                 </div>
                             )}
@@ -595,7 +595,7 @@ export const ProductSearch: React.FC = () => {
                                                                     <div className="font-bold text-[var(--text-primary)] text-sm mb-0.5 line-clamp-1 max-w-[200px] lg:max-w-[300px]"><a href={detailHref(item)} onClick={(e) => { e.preventDefault(); handleNavigate(item.id); }} className="hover:underline focus:outline-none focus:ring-1 focus:ring-sgs-primary rounded">{item.title}</a></div>
                                                                     <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                                                                         <span className="lg:hidden truncate max-w-[150px]">{item.location}</span>
-                                                                        <span className={`px-1.5 py-0.5 rounded text-xs2 font-bold uppercase ${item.transaction === 'SALE' ? 'bg-indigo-50 text-indigo-600' : 'bg-purple-50 text-purple-600'}`}>
+                                                                        <span className={`px-1.5 py-0.5 rounded text-xs2 font-bold uppercase ${item.transaction === 'SALE' ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]' : 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]'}`}>
                                                                             {t(`transaction.${item.transaction}`)}
                                                                         </span>
                                                                     </div>
@@ -749,7 +749,7 @@ export const ProductSearch: React.FC = () => {
                                                             </button>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 mb-1.5">
-                                                            <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
+                                                            <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10' : 'text-blue-600 bg-blue-50'}`}>
                                                                 {t(`transaction.${item.transaction}`)}
                                                             </span>
                                                             <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>

@@ -447,7 +447,7 @@ const AdminAiCost: React.FC = () => {
               return (
                 <div key={d.day} className="flex flex-col items-center min-w-[24px] group">
                   <div
-                    className="w-5 rounded-t bg-indigo-500/80 group-hover:bg-sgs-primary transition-all relative"
+                    className="w-5 rounded-t bg-[var(--sgs-primary)]/100/80 group-hover:bg-sgs-primary transition-all relative"
                     style={{ height: `${h}%` }}
                     title={`${d.day}: ${d.valuations} lượt • ${fmtUsd(d.costUsd)}`}
                   />

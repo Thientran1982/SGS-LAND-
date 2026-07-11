@@ -67,7 +67,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
         onChange(milestones.filter(m => m.id !== id));
     }, [milestones, onChange]);
 
-    const inputCls = "w-full border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] disabled:opacity-60 disabled:cursor-not-allowed";
+    const inputCls = "w-full border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] disabled:opacity-60 disabled:cursor-not-allowed";
     return (
         <div className="space-y-4">
             {/* Summary bar */}
@@ -280,7 +280,7 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                 <button
                     type="button"
                     onClick={addMilestone}
-                    className="w-full py-2.5 rounded-xl border-2 border-dashed border-sgs-border text-sgs-primary hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-sgs-primary text-xs font-bold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
+                    className="w-full py-2.5 rounded-xl border-2 border-dashed border-sgs-border text-sgs-primary hover:border-[var(--sgs-primary)] hover:bg-[var(--sgs-primary)]/10 hover:text-sgs-primary text-xs font-bold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sgs-primary"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                     {t('payment.add_milestone')}

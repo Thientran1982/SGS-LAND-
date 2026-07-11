@@ -65,9 +65,9 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                 {/* 1. GLASS BENTO CARD - LIVE ANALYTICS */}
                 <div className="bg-[var(--bg-surface)]/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden relative group">
                     {/* Primary orb — top-right */}
-                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-[var(--sgs-primary)]/100/25 rounded-full blur-3xl pointer-events-none"></div>
                     {/* Secondary accent orb — bottom-left */}
-                    <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-violet-500/15 rounded-full blur-2xl pointer-events-none"></div>                    
+                    <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-[var(--sgs-primary)]/100/15 rounded-full blur-2xl pointer-events-none"></div>                    
                     <div className="p-6 border-b border-white/5 flex justify-between items-center">
                         <div>
                             <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('auth.market_velocity')}</div>
@@ -87,15 +87,15 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                             <AreaChart data={CHART_DATA}>
                                 <defs>
                                     <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#1B3A5C" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#1B3A5C" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <YAxis hide domain={['dataMin', 'dataMax']} />
                                 <Area 
                                     type="monotone" 
                                     dataKey="value" 
-                                    stroke="#6366f1" 
+                                    stroke="#1B3A5C" 
                                     strokeWidth={3}
                                     fillOpacity={1} 
                                     fill="url(#colorVal)" 
@@ -468,10 +468,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       return `w-full bg-white/5 border rounded-xl pl-10 pr-4 py-3 text-[16px] focus:ring-2 transition-all outline-none text-white placeholder-white/25
       ${hasError 
           ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 bg-rose-500/5' 
-          : 'border-white/10 focus:border-indigo-500/50 focus:ring-indigo-500/50 focus:bg-white/8'}`;
+          : 'border-white/10 focus:border-[var(--sgs-primary)]/50 focus:ring-[var(--sgs-primary)]/50 focus:bg-white/8'}`;
   }, []);
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-hidden relative">
+    <div className="min-h-[100dvh] w-full flex bg-[#09090b] text-white font-sans selection:bg-[var(--sgs-primary)]/100/30 selection:text-[var(--sgs-primary)] overflow-hidden relative">
       <SeoHead
         title="Đăng Nhập | SGS LAND"
         description="Đăng nhập vào nền tảng bất động sản SGS LAND. Truy cập tài khoản, quản lý BĐS và theo dõi giao dịch của bạn."
@@ -524,7 +524,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {view === 'VERIFY_EMAIL' && (
                 <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
                     {/* Envelope icon + email info */}
-                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-6 text-center">
+                    <div className="bg-[var(--sgs-primary)]/100/10 border border-[var(--sgs-primary)]/20 rounded-2xl p-6 text-center">
                         <div className="text-5xl mb-4">✉️</div>
                         <p className="text-sm text-gray-400 mb-2">{t('auth.verify_email_sent_to')}</p>
                         <p className="text-white font-bold text-base mb-4 break-all">{registeredEmail}</p>
@@ -609,11 +609,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {/* ── TWO FACTOR VIEW ───────────────────────────── */}
             {view === 'TWO_FACTOR' && (
                 <form onSubmit={handleTotpSubmit} className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
-                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-5 text-center">
-                        <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <svg className="w-7 h-7 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <div className="bg-[var(--sgs-primary)]/100/10 border border-[var(--sgs-primary)]/20 rounded-2xl p-5 text-center">
+                        <div className="w-14 h-14 bg-[var(--sgs-primary)]/100/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <svg className="w-7 h-7 text-[var(--sgs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">Mã thay đổi mỗi 30 giây. Bạn cũng có thể dùng <span className="text-indigo-300 font-semibold">backup code</span>.</p>
+                        <p className="text-xs text-gray-400 leading-relaxed">Mã thay đổi mỗi 30 giây. Bạn cũng có thể dùng <span className="text-[var(--sgs-primary)] font-semibold">backup code</span>.</p>
                     </div>
                     {totpError && (
                         <div className="text-rose-200 text-xs font-medium bg-rose-500/10 p-3 rounded-xl border border-rose-500/20" role="alert">
@@ -632,13 +632,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             onChange={e => setTotpCode(e.target.value.replace(/\s/g, ''))}
                             autoFocus
                             placeholder="000000"
-                            className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-4 py-3.5 text-white text-center text-2xl font-mono tracking-[0.5em] placeholder:text-white/20 outline-none transition-all"
+                            className="w-full bg-white/5 border border-white/10 focus:border-[var(--sgs-primary)]/60 focus:ring-2 focus:ring-[var(--sgs-primary)]/20 rounded-xl px-4 py-3.5 text-white text-center text-2xl font-mono tracking-[0.5em] placeholder:text-white/20 outline-none transition-all"
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={totpLoading || totpCode.trim().length < 6}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/10 disabled:text-white/30 text-white font-bold rounded-xl py-3.5 text-sm transition-all flex items-center justify-center gap-2"
+                        className="w-full bg-[var(--sgs-primary)] hover:bg-[var(--sgs-primary)]/100 disabled:bg-white/10 disabled:text-white/30 text-white font-bold rounded-xl py-3.5 text-sm transition-all flex items-center justify-center gap-2"
                     >
                         {totpLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
                         Xác nhận
@@ -752,16 +752,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <>
                         {!tokenFromUrl ? (
                             /* Waiting for user to click email link — no form, just info + resend */
-                            <div className="bg-indigo-500/10 p-5 rounded-2xl border border-indigo-500/20 animate-enter text-center space-y-4">
-                                <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto">
+                            <div className="bg-[var(--sgs-primary)]/100/10 p-5 rounded-2xl border border-[var(--sgs-primary)]/20 animate-enter text-center space-y-4">
+                                <div className="w-12 h-12 bg-[var(--sgs-primary)]/100/20 rounded-full flex items-center justify-center mx-auto">
                                     <svg className="w-6 h-6 text-sgs-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 </div>
                                 <p className="text-sm font-bold text-white">{t('auth.check_email_title')}</p>
-                                <p className="text-xs text-indigo-200 leading-relaxed">
+                                <p className="text-xs text-[var(--sgs-primary)] leading-relaxed">
                                     {t('auth.check_email_body')} <span className="font-bold text-white">{email}</span>.<br/>
                                     {t('auth.check_email_instruction')}
                                 </p>
-                                <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam')}</p>
+                                <p className="text-xs2 text-[var(--sgs-primary)]/60">{t('auth.check_email_spam')}</p>
                                 {/* Dev mode: hiện link reset trực tiếp khi email không thật */}
                                 {devResetInfo && (
                                     <div className="bg-sgs-accent/10 p-3 rounded-xl border border-amber-500/30 text-left">
@@ -810,7 +810,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                                 value={manualToken}
                                                 onChange={e => setManualToken(e.target.value)}
                                                 placeholder="https://...reset-password/abc123... hoặc chỉ token"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 font-mono focus:outline-none focus:border-indigo-500/50"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 font-mono focus:outline-none focus:border-[var(--sgs-primary)]/50"
                                             />
                                             <button
                                                 type="button"
@@ -910,7 +910,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             id="remember" 
                             checked={rememberMe} 
                             onChange={e => setRememberMe(e.target.checked)}
-                            className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                            className="w-4 h-4 accent-[var(--sgs-primary)] rounded cursor-pointer"
                         />
                         <label htmlFor="remember" className="text-xs text-gray-400 cursor-pointer select-none">{t('auth.remember_me')}</label>
                     </div>

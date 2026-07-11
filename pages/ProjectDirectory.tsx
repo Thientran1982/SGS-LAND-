@@ -312,7 +312,7 @@ const STATUS_OPTIONS: FilterOption[] = [
 ];
 const STATUS_BADGE: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    indigo: 'bg-indigo-50 text-sgs-primary border-indigo-200',
+    indigo: 'bg-[var(--sgs-primary)]/10 text-sgs-primary border-[var(--sgs-primary)]',
     amber: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -509,10 +509,10 @@ export default function ProjectDirectory() {
                 </div>
             </nav>
             {/* ── Hero ── */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-sgs-primary-deep to-slate-900 text-white py-16 px-4">
+            <section className="relative overflow-hidden bg-gradient-to-br from-[var(--sgs-primary)] via-sgs-primary-deep to-slate-900 text-white py-16 px-4">
                 <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl" />
-                    <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-indigo-600/10 blur-2xl" />
+                    <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-[var(--sgs-primary)]/100/10 blur-3xl" />
+                    <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-[var(--sgs-primary)]/10 blur-2xl" />
                 </div>
                 <div className="relative max-w-4xl mx-auto text-center">
                     <p className="text-xs font-bold text-sgs-on-dark-muted uppercase tracking-widest mb-4">
@@ -522,7 +522,7 @@ export default function ProjectDirectory() {
                         Dự Án BĐS<br />
                         <span className="text-sgs-text-muted">SGS LAND Đang Phân Phối</span>
                     </h1>
-                    <p className="text-base text-indigo-100/80 max-w-2xl mx-auto mb-8">
+                    <p className="text-base text-[var(--sgs-primary)]/80 max-w-2xl mx-auto mb-8">
                         {ALL_PROJECTS.length} dự án từ Novaland, Masterise Homes, Vinhomes, Nam Long — tại TP.HCM và Đồng Nai. Tư vấn miễn phí, không thu phí người mua.
                     </p>
                     <div className="flex flex-wrap gap-3 justify-center text-sm">
@@ -552,7 +552,7 @@ export default function ProjectDirectory() {
                         {/* Filter toggle (mobile) */}
                         <button
                             onClick={() => setShowFilters(v => !v)}
-                            className={`sm:hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${hasActiveFilters ? 'border-indigo-500 text-sgs-primary bg-indigo-50' : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)]'}`}
+                            className={`sm:hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${hasActiveFilters ? 'border-[var(--sgs-primary)] text-sgs-primary bg-[var(--sgs-primary)]/10' : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)]'}`}
                         >
                             <SlidersHorizontal className="w-4 h-4" />
                             Lọc {hasActiveFilters && '•'}
@@ -634,9 +634,9 @@ export default function ProjectDirectory() {
             {/* ── CTA ── */}
             <section className="bg-gradient-to-br from-sgs-primary to-sgs-primary text-white py-14 px-4 mt-4">
                 <div className="max-w-3xl mx-auto text-center">
-                    <p className="text-xs font-bold uppercase tracking-widest text-indigo-200 mb-3">Tư Vấn Miễn Phí · Không Thu Phí Người Mua</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-[var(--sgs-primary)] mb-3">Tư Vấn Miễn Phí · Không Thu Phí Người Mua</p>
                     <h2 className="text-2xl md:text-3xl font-extrabold mb-4">Cần Tư Vấn Dự Án Cụ Thể?</h2>
-                    <p className="text-indigo-100/80 text-sm mb-8 max-w-xl mx-auto">
+                    <p className="text-[var(--sgs-primary)]/80 text-sm mb-8 max-w-xl mx-auto">
                         Đội ngũ SGS LAND hỗ trợ so sánh dự án, kiểm tra pháp lý, hỗ trợ hồ sơ vay vốn và đặt chỗ ưu tiên — hoàn toàn miễn phí.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -727,9 +727,9 @@ function FilterDropdown({
                 onClick={() => setOpen(v => !v)}
                 className={`${fullWidth ? 'w-full' : ''} flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap select-none
                     ${isActive
-                        ? 'border-indigo-500 text-sgs-primary bg-indigo-50 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-600'
-                        : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)] hover:border-indigo-300 hover:text-indigo-600'
-                    } ${open ? 'ring-2 ring-indigo-400/30' : ''}`}
+                        ? 'border-[var(--sgs-primary)] text-sgs-primary bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/60 dark:text-[var(--sgs-primary)] dark:border-[var(--sgs-primary)]'
+                        : 'border-[var(--glass-border)] text-[var(--text-secondary)] bg-[var(--bg-app)] hover:border-[var(--sgs-primary)] hover:text-[var(--sgs-primary)]'
+                    } ${open ? 'ring-2 ring-[var(--sgs-primary)]/30' : ''}`}
             >
                 <span className={`${isActive ? 'text-sgs-primary' : 'text-[var(--text-tertiary)]'}`}>
                     {icon}
@@ -765,7 +765,7 @@ function FilterDropdown({
                                     onClick={() => { onChange(opt.value); setOpen(false); }}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs text-left transition-colors
                                         ${isSelected
-                                            ? 'bg-indigo-50 text-sgs-primary font-bold dark:bg-indigo-950/60 dark:text-indigo-300'
+                                            ? 'bg-[var(--sgs-primary)]/10 text-sgs-primary font-bold dark:bg-[var(--sgs-primary)]/60 dark:text-[var(--sgs-primary)]'
                                             : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] font-medium'
                                         }
                                         ${i === 1 && !isAll ? 'mt-0.5' : ''}

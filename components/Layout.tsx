@@ -189,7 +189,7 @@ const Sidebar = memo(({
                 {!isMobile && (
                     <button
                         onClick={onToggleCollapse}
-                        className={`absolute -right-2.5 top-8 w-5 h-5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-indigo-600 shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'rotate-180' : ''}`}
+                        className={`absolute -right-2.5 top-8 w-5 h-5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sgs-primary)] shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)] ${isCollapsed ? 'rotate-180' : ''}`}
                         aria-label={t('nav.toggle_sidebar') || "Đóng mở thanh bên"}
                     >
                         <ChevronLeft size={12} strokeWidth={2.5} />
@@ -230,13 +230,13 @@ const Sidebar = memo(({
                                             title={isCollapsed ? t(item.labelKey) : undefined}
                                             aria-current={isActive ? 'page' : undefined}
                                             className={`
-                                                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+                                                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sgs-primary)]
                                                 ${isActive
-                                                    ? 'bg-gradient-to-r from-indigo-50 to-transparent dark:from-indigo-900/20 text-sgs-primary dark:text-indigo-300 shadow-sm border-l-4 border-indigo-500'
+                                                    ? 'bg-gradient-to-r from-[var(--sgs-primary)]/10 to-transparent dark:from-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] shadow-sm border-l-4 border-[var(--sgs-primary)]'
                                                     : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] border-l-4 border-transparent'}
                                             `}
                                         >
-                                            <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'} ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
+                                            <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'} ${isActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)]'}`}>
                                                 {Icon}
                                             </div>                                            
                                             {!isCollapsed && (
@@ -259,7 +259,7 @@ const Sidebar = memo(({
                 <div className="h-10 w-full shrink-0"></div>
             </nav>
             {/* 3. Footer Controls */}
-            <div className="px-2 py-1.5 border-t border-[var(--glass-border)] space-y-1 shrink-0 bg-[var(--bg-surface)] z-20 rounded-b-[24px]">
+            <div className="px-2 py-1.5 border-t border-[var(--glass-border)] space-y-1 shrink-0 bg-[var(--bg-app)] z-20 rounded-b-[24px]">
                 <div className={`grid ${isCollapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-1`}>
                     <button
                         onClick={onToggleTheme}
@@ -446,13 +446,13 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         t
     }), [activePage, handleNavigate, handleLogoutClick, toggleTheme, language, theme, menuGroups, t, setLanguage]);
     return (
-        <div className="fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-indigo-500/30">            
+        <div className="fixed inset-0 h-[100dvh] supports-[height:100cqh]:h-[100cqh] w-full bg-[var(--bg-app)] p-0 sm:p-2 md:p-3 flex gap-0 sm:gap-2 md:gap-3 overflow-hidden font-sans text-[var(--text-primary)] transition-colors duration-300 relative selection:bg-[var(--sgs-primary)]/30">            
             {/* SIDEBAR ISLAND (Desktop/Tablet) */}
             <aside 
                 className={`
                     relative h-full z-40 transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]
-                    bg-[var(--bg-surface)]
-                    rounded-none sm:rounded-[24px] shadow-sm border-r sm:border border-[var(--glass-border)]
+                    bg-[var(--bg-app)]
+                    rounded-none sm:rounded-[24px] shadow-none border-none
                     flex flex-col shrink-0 no-scrollbar
                     ${desktopCollapsed ? 'w-0 md:w-[76px]' : 'w-0 md:w-64'} 
                     hidden md:flex overflow-visible
@@ -472,7 +472,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                 aria-hidden="true"
             />            
             <div
-                className={`fixed inset-y-0 left-0 w-72 bg-[var(--bg-surface)] shadow-2xl z-[101] md:hidden transition-transform duration-300 ease-out transform flex flex-col no-scrollbar ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                className={`fixed inset-y-0 left-0 w-72 bg-[var(--bg-app)] shadow-2xl z-[101] md:hidden transition-transform duration-300 ease-out transform flex flex-col no-scrollbar ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 role="dialog"
                 aria-modal="true"
                 aria-label={t('common.menu')}
@@ -488,9 +488,9 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
             <main 
                 className={`
                     flex-1 flex flex-col min-w-0 min-h-0 relative 
-                    bg-[var(--bg-surface)]
-                    rounded-none sm:rounded-[24px] shadow-none sm:shadow-sm 
-                    border-x-0 border-y-0 sm:border border-[var(--glass-border)]
+                    bg-[var(--bg-app)]
+                    rounded-none sm:rounded-[24px] shadow-none
+                    border-none
                     isolate overflow-hidden
                 `}
             >

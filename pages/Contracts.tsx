@@ -288,7 +288,7 @@ const Contracts: React.FC = () => {
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
                             onChange={e => { setSearch(e.target.value); setPage(1); }}
-                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
@@ -373,14 +373,14 @@ const Contracts: React.FC = () => {
                                             tabIndex={0}
                                             onClick={() => handleEdit(c)}
                                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEdit(c); } }}
-                                            className="cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors group focus-visible:outline-none focus-visible:bg-indigo-50/50"
+                                            className="cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors group focus-visible:outline-none focus-visible:bg-[var(--sgs-primary)]/10"
                                         >
                                             <td className="p-4">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold mb-1 ${
                                                     c.type === ContractType.RESERVATION
-                                                        ? 'bg-violet-100 text-violet-700'
+                                                        ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]'
                                                         : c.type === ContractType.DEPOSIT
-                                                            ? 'bg-indigo-100 text-indigo-700'
+                                                            ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]'
                                                             : 'bg-emerald-100 text-emerald-700'
                                                 }`}>
                                                     {c.type === ContractType.RESERVATION && (

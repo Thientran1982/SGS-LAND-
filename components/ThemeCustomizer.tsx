@@ -14,7 +14,7 @@ interface ThemeCustomizerProps {
 }
 const PRESET_COLORS = [
   { value: 'var(--sgs-primary)', label: 'Indigo' },
-  { value: '#7C3AED', label: 'Violet' },
+  { value: '#1B3A5C', label: 'Violet' },
   { value: '#DB2777', label: 'Pink' },
   { value: '#0EA5E9', label: 'Sky' },
   { value: 'var(--sgs-verified)', label: 'Emerald' },

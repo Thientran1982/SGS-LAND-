@@ -79,7 +79,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                             value={name}
                             onChange={e => { setName(e.target.value); if (errors.name) setErrors(p => ({ ...p, name: undefined })); }}
                             disabled={isSubmitting}
-                            className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50 ${errors.name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:border-indigo-500 focus:ring-indigo-500/20 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]'}`}
+                            className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50 ${errors.name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:border-[var(--sgs-primary)] focus:ring-[var(--sgs-primary)]/20 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]'}`}
                             placeholder={t('common.placeholder_fullname')}
                         />
                         {errors.name && <p className="text-xs2 text-rose-500 font-bold mt-1 ml-1">{errors.name}</p>}
@@ -91,7 +91,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                             value={phone}
                             onChange={e => { setPhone(e.target.value); if (errors.phone) setErrors(p => ({ ...p, phone: undefined })); }}
                             disabled={isSubmitting}
-                            className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50 ${errors.phone ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:border-indigo-500 focus:ring-indigo-500/20 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]'}`}
+                            className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50 ${errors.phone ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:border-[var(--sgs-primary)] focus:ring-[var(--sgs-primary)]/20 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]'}`}
                             placeholder="0912345678"
                         />
                         {errors.phone && <p className="text-xs2 text-rose-500 font-bold mt-1 ml-1">{errors.phone}</p>}

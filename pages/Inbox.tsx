@@ -41,7 +41,7 @@ const ICONS = {
 };
 /* ── Colour tokens for InboxDropdown — must be static strings for Tailwind ── */
 const DD_COLORS: Record<string, { open: string; item: string; check: string }> = {
-    indigo:  { open: 'bg-indigo-50 border-indigo-400 text-indigo-700',   item: 'bg-indigo-50 text-indigo-700',   check: 'text-sgs-primary'  },
+    indigo:  { open: 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] text-[var(--sgs-primary)]',   item: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',   check: 'text-sgs-primary'  },
     blue:    { open: 'bg-blue-50 border-blue-400 text-blue-700',         item: 'bg-blue-50 text-blue-700',       check: 'text-blue-600'    },
     emerald: { open: 'bg-emerald-50 border-emerald-400 text-emerald-700',item: 'bg-emerald-50 text-emerald-700', check: 'text-emerald-600' },
     amber:   { open: 'bg-amber-50 border-amber-400 text-amber-700',      item: 'bg-amber-50 text-amber-700',     check: 'text-amber-600'   },
@@ -699,7 +699,7 @@ export const Inbox: React.FC = () => {
                                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedLeadId(thread.lead.id); } }}
                                     aria-label={thread.lead.name}
                                     aria-pressed={selectedLeadId === thread.lead.id}
-                                    className={`p-4 border-b border-slate-50 hover:bg-[var(--glass-surface)] cursor-pointer transition-colors group relative ${selectedLeadId === thread.lead.id ? 'bg-indigo-50/50' : ''}`}
+                                    className={`p-4 border-b border-slate-50 hover:bg-[var(--glass-surface)] cursor-pointer transition-colors group relative ${selectedLeadId === thread.lead.id ? 'bg-[var(--sgs-primary)]/10' : ''}`}
                                 >
                                     <div className="flex justify-between items-start mb-1 gap-2">
                                         <div className="font-bold text-sm text-[var(--text-primary)] flex items-center gap-1.5 min-w-0 flex-1">
@@ -730,9 +730,9 @@ export const Inbox: React.FC = () => {
                                                 const styles: Record<string, string> = {
                                                     ZALO:    'bg-blue-100 text-blue-700',
                                                     FACEBOOK:'bg-[#1877F2]/10 text-[#1877F2]',
-                                                    EMAIL:   'bg-indigo-50 text-indigo-600',
+                                                    EMAIL:   'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
                                                     SMS:     'bg-emerald-50 text-emerald-600',
-                                                    WEB:     'bg-violet-50 text-violet-600',
+                                                    WEB:     'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
                                                     WEBHOOK: 'bg-slate-100 text-slate-600',
                                                     VOICE:   'bg-amber-50 text-amber-600',
                                                 };
@@ -801,7 +801,7 @@ export const Inbox: React.FC = () => {
                                 {ICONS.BACK}
                             </button>
                             {/* Avatar */}
-                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center font-bold text-sgs-primary border border-sgs-border shrink-0 text-sm">
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-[var(--sgs-primary)]/10 to-[var(--sgs-primary)] flex items-center justify-center font-bold text-sgs-primary border border-sgs-border shrink-0 text-sm">
                                 {selectedThread.lead.name.charAt(0).toUpperCase()}
                             </div>
                             {/* Name + status */}
@@ -849,7 +849,7 @@ export const Inbox: React.FC = () => {
                                                             handleAssign(selectedThread.lead.id, u.id);
                                                             setIsAssignOpen(false);
                                                         }}
-                                                        className={`w-full text-left px-3 py-2.5 text-sm hover:bg-indigo-50 transition-colors flex items-center justify-between gap-2 ${selectedThread.lead.assignedTo === u.id ? 'text-indigo-600 font-bold bg-indigo-50/50' : 'text-[var(--text-secondary)]'}`}
+                                                        className={`w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--sgs-primary)]/10 transition-colors flex items-center justify-between gap-2 ${selectedThread.lead.assignedTo === u.id ? 'text-[var(--sgs-primary)] font-bold bg-[var(--sgs-primary)]/10' : 'text-[var(--text-secondary)]'}`}
                                                     >
                                                         <span className="truncate min-w-0 flex-1">{u.name}</span>
                                                         {selectedThread.lead.assignedTo === u.id && (
@@ -913,9 +913,9 @@ export const Inbox: React.FC = () => {
                             <div className="flex justify-start animate-pulse">
                                 <div className="bg-[var(--bg-surface)] border border-sgs-border text-sgs-primary px-4 py-3 rounded-2xl rounded-tl-none text-xs font-bold flex items-center gap-2 shadow-sm">
                                     <div className="flex gap-1">
-                                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
-                                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
-                                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-150"></span>
+                                        <span className="w-1.5 h-1.5 bg-[var(--sgs-primary)] rounded-full animate-bounce"></span>
+                                        <span className="w-1.5 h-1.5 bg-[var(--sgs-primary)] rounded-full animate-bounce delay-75"></span>
+                                        <span className="w-1.5 h-1.5 bg-[var(--sgs-primary)] rounded-full animate-bounce delay-150"></span>
                                     </div>
                                     {t('inbox.ai_replying')}
                                 </div>
@@ -979,7 +979,7 @@ export const Inbox: React.FC = () => {
                             )}
                         </div>
                         {/* Text input row */}
-                        <div className="flex items-end gap-1.5 bg-[var(--bg-surface)] p-1 pl-2.5 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all shadow-sm">
+                        <div className="flex items-end gap-1.5 bg-[var(--bg-surface)] p-1 pl-2.5 rounded-xl border border-[var(--glass-border)] focus-within:border-[var(--sgs-primary)] focus-within:ring-4 focus-within:ring-[var(--sgs-primary)]/50 transition-all shadow-sm">
                             <input 
                                 type="file" 
                                 ref={fileInputRef} 
@@ -1097,11 +1097,11 @@ export const Inbox: React.FC = () => {
                                         {/* Channel selector — choose platform to share link */}
                                         <div className="flex flex-wrap gap-1.5 mb-2">
                                             {([
-                                                { key: 'LINK' as const, label: t('inbox.widget_channel_link'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
+                                                { key: 'LINK' as const, label: t('inbox.widget_channel_link'), activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
                                                 { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
-                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
+                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
@@ -1109,7 +1109,7 @@ export const Inbox: React.FC = () => {
                                                     className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         linkChannel === key
                                                             ? activeClass
-                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
+                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
                                                     {label}
@@ -1166,11 +1166,11 @@ export const Inbox: React.FC = () => {
                                         {/* Embed channel selector */}
                                         <div className="flex flex-wrap gap-1.5 mb-2">
                                             {([
-                                                { key: 'EMBED' as const, label: t('inbox.widget_channel_embed'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
+                                                { key: 'EMBED' as const, label: t('inbox.widget_channel_embed'), activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
                                                 { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
-                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
+                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
@@ -1178,7 +1178,7 @@ export const Inbox: React.FC = () => {
                                                     className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         embedChannel === key
                                                             ? activeClass
-                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
+                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
                                                     {label}
@@ -1213,11 +1213,11 @@ export const Inbox: React.FC = () => {
                                         {/* QR channel selector */}
                                         <div className="flex flex-wrap gap-1.5 mb-3">
                                             {([
-                                                { key: 'QR' as const, label: t('inbox.widget_channel_qr'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
+                                                { key: 'QR' as const, label: t('inbox.widget_channel_qr'), activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
                                                 { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
                                                 { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
                                                 { key: 'TIKTOK' as const, label: 'TikTok', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-sm' },
-                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
+                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-[var(--sgs-primary)]/100 text-white border-[var(--sgs-primary)] shadow-sm' },
                                             ]).map(({ key, label, activeClass }) => (
                                                 <button
                                                     key={key}
@@ -1225,7 +1225,7 @@ export const Inbox: React.FC = () => {
                                                     className={`flex-1 min-w-[60px] py-1.5 text-xs font-semibold rounded-lg transition-all border ${
                                                         qrChannel === key
                                                             ? activeClass
-                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
+                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'
                                                     }`}
                                                 >
                                                     {label}

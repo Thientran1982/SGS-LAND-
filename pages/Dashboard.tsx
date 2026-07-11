@@ -63,7 +63,7 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
             case 'LEAD': return { icon: ICONS.USER, bg: 'bg-sgs-primary/10 text-sgs-primary dark:bg-sgs-primary/20 dark:text-sgs-on-dark-muted' };
             case 'DEAL': return { icon: ICONS.CHECK, bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' };
             case 'SYSTEM': return { icon: ICONS.CLOUD, bg: 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] dark:bg-slate-800 dark:text-slate-300' };
-            default: return { icon: ICONS.AI, bg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' };
+            default: return { icon: ICONS.AI, bg: 'bg-[var(--sgs-primary)]/12 text-[var(--sgs-primary)] dark:bg-[var(--sgs-primary)]/25 dark:text-[var(--sgs-primary)]' };
         }
     };
     const style = getIcon(activity.type);
@@ -142,8 +142,8 @@ const EmptyState = ({ message }: { message: string }) => (
 );
 // --- AGENT AVATAR with initials fallback ---
 const AVATAR_COLORS = [
-    'bg-sgs-primary', 'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
-    'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-pink-500',
+    'bg-sgs-primary', 'bg-[var(--sgs-accent)]', 'bg-sky-500', 'bg-emerald-500',
+    'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-teal-600',
 ];
 const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
     const [broken, setBroken] = React.useState(false);
@@ -366,8 +366,8 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                         <ComposedChart data={data}>
                             <defs>
                                 <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={colors.info || '#3B82F6'} stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor={colors.info || '#3B82F6'} stopOpacity={0}/>
+                                    <stop offset="5%" stopColor={colors.info || '#3E6D9C'} stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor={colors.info || '#3E6D9C'} stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
                             <XAxis dataKey="time" hide />
@@ -376,7 +376,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                                 type="monotone" 
                                 dataKey="latency" 
                                 name={t('dash.avg_latency')}
-                                stroke={colors.info || '#3B82F6'} 
+                                stroke={colors.info || '#3E6D9C'} 
                                 strokeWidth={2}
                                 fill="url(#latencyGradient)" 
                                 isAnimationActive={false} 
@@ -805,7 +805,7 @@ export const Dashboard: React.FC = () => {
                                                 <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.7}>
                                                     {analytics.marketPulse.map((entry: any, index: number) => {
                                                         // Generate a color based on location
-                                                        const colors = ['#3B82F6', 'var(--sgs-verified)', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
+                                                        const colors = ['#3E6D9C', 'var(--sgs-verified)', '#F59E0B', '#D14545', '#C8963E', '#4A7C8C', '#14B8A6'];
                                                         const hash = entry.location.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
                                                         const color = colors[hash % colors.length];
                                                         return <Cell key={`cell-${index}`} fill={color} />;
@@ -816,7 +816,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                     <div className="flex flex-wrap items-center justify-center gap-3 pt-2 pb-1">
                                         {Array.from(new Set(analytics.marketPulse.map((item: any) => item.location))).map((loc: any, idx: number) => {
-                                            const colors = ['#3B82F6', 'var(--sgs-verified)', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
+                                            const colors = ['#3E6D9C', 'var(--sgs-verified)', '#F59E0B', '#D14545', '#C8963E', '#4A7C8C', '#14B8A6'];
                                             const hash = loc.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
                                             const color = colors[hash % colors.length];
                                             return (

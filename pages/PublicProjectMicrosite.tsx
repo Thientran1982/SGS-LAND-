@@ -13,7 +13,7 @@ interface Props {
   projectCode: string;
 }
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
-  OPENING:   { label: 'Mở bán',     cls: 'bg-indigo-50 text-sgs-primary border-indigo-200' },
+  OPENING:   { label: 'Mở bán',     cls: 'bg-[var(--sgs-primary)]/10 text-sgs-primary border-[var(--sgs-primary)]' },
   BOOKING:   { label: 'Đặt chỗ',   cls: 'bg-sky-50 text-sky-700 border-sky-200' },
   AVAILABLE: { label: 'Còn hàng',   cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
 };
@@ -340,7 +340,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
     return (
       <div className="min-h-[100dvh] bg-sgs-bg flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-sgs-text-muted">
-          <div className="w-10 h-10 border-3 border-slate-300 border-t-indigo-600 rounded-full animate-spin" />
+          <div className="w-10 h-10 border-3 border-slate-300 border-t-[var(--sgs-primary)] rounded-full animate-spin" />
           <p className="text-sm">Đang tải mini-site dự án…</p>
         </div>
       </div>
@@ -409,7 +409,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           <div className="absolute inset-0 bg-gradient-to-b from-sgs-primary-deep/40 via-slate-900/60 to-slate-900" />
         </div>
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-          <div className="flex items-center gap-3 text-xs text-indigo-200 font-mono uppercase tracking-widest mb-3">
+          <div className="flex items-center gap-3 text-xs text-[var(--sgs-primary)] font-mono uppercase tracking-widest mb-3">
             {brandLogo ? (
               <img
                 src={brandLogo}
@@ -454,24 +454,24 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
             <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-              <div className="text-xs text-indigo-200 uppercase">Sản phẩm công khai</div>
+              <div className="text-xs text-[var(--sgs-primary)] uppercase">Sản phẩm công khai</div>
               <div className="text-xl font-bold mt-1">{data.listingCount}</div>
             </div>
             {project.totalUnits != null && (
               <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-                <div className="text-xs text-indigo-200 uppercase">Tổng số căn</div>
+                <div className="text-xs text-[var(--sgs-primary)] uppercase">Tổng số căn</div>
                 <div className="text-xl font-bold mt-1">{project.totalUnits.toLocaleString('vi-VN')}</div>
               </div>
             )}
             {project.openDate && (
               <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-                <div className="text-xs text-indigo-200 uppercase">Mở bán</div>
+                <div className="text-xs text-[var(--sgs-primary)] uppercase">Mở bán</div>
                 <div className="text-sm font-bold mt-1">{new Date(project.openDate).toLocaleDateString('vi-VN')}</div>
               </div>
             )}
             {project.handoverDate && (
               <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-                <div className="text-xs text-indigo-200 uppercase">Bàn giao</div>
+                <div className="text-xs text-[var(--sgs-primary)] uppercase">Bàn giao</div>
                 <div className="text-sm font-bold mt-1">{new Date(project.handoverDate).toLocaleDateString('vi-VN')}</div>
               </div>
             )}
@@ -490,7 +490,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
               {gallery.map((img, i) => (
                 <button key={i} type="button"
                   onClick={() => setActiveImageIdx(i)}
-                  className={`shrink-0 rounded-xl overflow-hidden border-2 transition ${i === activeImageIdx ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-transparent hover:border-slate-300'}`}>
+                  className={`shrink-0 rounded-xl overflow-hidden border-2 transition ${i === activeImageIdx ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-transparent hover:border-slate-300'}`}>
                   <img src={optimizedImageUrl(img, 256)} alt={`${project.name} ${i + 1}`}
                     width={128} height={80}
                     className="w-24 h-16 sm:w-32 sm:h-20 object-cover"
@@ -578,10 +578,10 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           <div className="grid lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2">
               <h2 className="text-2xl font-bold mb-2">Nhận tư vấn miễn phí</h2>
-              <p className="text-indigo-100 text-sm mb-4">
+              <p className="text-[var(--sgs-primary)] text-sm mb-4">
                 Để lại thông tin — chuyên viên SGS Land sẽ gửi bảng giá, chính sách và tư vấn 1-1 trong vòng 30 phút.
               </p>
-              <ul className="text-sm text-indigo-100 space-y-2 mb-4">
+              <ul className="text-sm text-[var(--sgs-primary)] space-y-2 mb-4">
                 <li className="flex items-center gap-2">Hotline: <strong className="text-white">{tenantContact.hotlineDisplay}</strong></li>
                 <li className="flex items-center gap-2">Zalo: <a href={tenantContact.zalo} className="text-white underline">{tenantContact.hotlineDisplay}</a></li>
                 <li className="flex items-center gap-2">Cam kết bảo mật thông tin theo Nghị định 13/2023</li>
@@ -592,23 +592,23 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 type="text" required value={form.name}
                 onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="Họ và tên *"
-                className="px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
                 autoComplete="name" />
               <input
                 type="tel" required value={form.phone} inputMode="tel"
                 onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
                 placeholder="Số điện thoại *"
-                className="px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
                 autoComplete="tel" />
               <input
                 type="email" value={form.email}
                 onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
                 placeholder="Email (không bắt buộc)"
-                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
                 autoComplete="email" />
               <select value={form.interest}
                 onChange={(e) => setForm(f => ({ ...f, interest: e.target.value }))}
-                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]">
                 <option value="">Tôi quan tâm tới…</option>
                 <option value="Bảng giá">Bảng giá & chính sách</option>
                 <option value="Xem nhà mẫu">Đặt lịch xem nhà mẫu</option>
@@ -619,7 +619,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
               <textarea value={form.note} rows={3}
                 onChange={(e) => setForm(f => ({ ...f, note: e.target.value }))}
                 placeholder="Ghi chú thêm (không bắt buộc)"
-                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none" />
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] resize-none" />
               {data?.captcha && (
                 <div ref={turnstileContainerRef}
                   className="sm:col-span-2 flex justify-center"
@@ -634,7 +634,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 className="sm:col-span-2 px-6 py-3 rounded-xl bg-white text-sgs-primary font-bold text-sm hover:bg-sgs-champagne disabled:opacity-60 transition shadow-lg">
                 {submitting ? 'Đang gửi…' : 'Gửi yêu cầu tư vấn'}
               </button>
-              <p className="sm:col-span-2 text-xs text-indigo-200 text-center">
+              <p className="sm:col-span-2 text-xs text-[var(--sgs-primary)] text-center">
                 Gửi đi nghĩa là bạn đồng ý SGS Land lưu trữ và liên hệ tư vấn theo Chính sách bảo mật.
               </p>
             </form>
@@ -761,7 +761,7 @@ const ListingsTable: React.FC<{ listings: PublicListing[] }> = ({ listings }) =>
             const status = STATUS_LABELS[l.status] || { label: l.status, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
             const orient = l.attributes?.orientation || l.attributes?.view || '';
             return (
-              <tr key={l.id} className="hover:bg-indigo-50/30 transition">
+              <tr key={l.id} className="hover:bg-[var(--sgs-primary)]/10 transition">
                 <td className="px-4 py-3">
                   <div className="font-mono text-xs text-sgs-text-muted">{l.code || '—'}</div>
                   <div className="font-semibold text-sgs-text line-clamp-1">{l.title || '—'}</div>

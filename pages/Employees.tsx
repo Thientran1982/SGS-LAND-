@@ -154,7 +154,7 @@ export function Employees() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Tìm nhân viên hoặc phòng ban..."
-          className="w-full h-[38px] px-3 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          className="w-full h-[38px] px-3 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30"
         />
       </div>
       {/* Sort header */}

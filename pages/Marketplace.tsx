@@ -114,8 +114,8 @@ export const Marketplace: React.FC = () => {
                     <p className="text-sm text-[var(--text-tertiary)]">{t('market.subtitle')}</p>
                 </div>
                 <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl">
-                    <button onClick={() => setActiveTab('BROWSE')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'BROWSE' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_browse')}</button>
-                    <button onClick={() => setActiveTab('INSTALLED')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INSTALLED' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_installed')}</button>
+                    <button onClick={() => setActiveTab('BROWSE')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'BROWSE' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_browse')}</button>
+                    <button onClick={() => setActiveTab('INSTALLED')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INSTALLED' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_installed')}</button>
                 </div>
             </div>
 
@@ -127,7 +127,7 @@ export const Marketplace: React.FC = () => {
                             {ICONS.SEARCH}
                         </div>
                         <input 
-                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('common.search')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -148,7 +148,7 @@ export const Marketplace: React.FC = () => {
                         <button 
                             key={cat}
                             onClick={() => setCategory(cat)}
-                            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all uppercase tracking-wide ${category === cat ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[var(--bg-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)] border border-[var(--glass-border)]'}`}
+                            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all uppercase tracking-wide ${category === cat ? 'bg-[var(--sgs-primary)] text-white shadow-lg' : 'bg-[var(--bg-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)] border border-[var(--glass-border)]'}`}
                         >
                             {getCatLabel(cat)}
                         </button>

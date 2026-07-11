@@ -203,7 +203,7 @@ const LeadEmailMetricsPanel: React.FC = () => {
                             type="checkbox"
                             checked={includeAutoreply}
                             onChange={(e) => setIncludeAutoreply(e.target.checked)}
-                            className="accent-indigo-600"
+                            className="accent-[var(--sgs-primary)]"
                         />
                         Tính cả auto-reply
                     </label>

@@ -177,7 +177,7 @@ export const KnowledgeBase: React.FC = () => {
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-9 pr-8 py-2 h-[38px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-9 pr-8 py-2 h-[38px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('knowledge.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -196,7 +196,7 @@ export const KnowledgeBase: React.FC = () => {
                     </div>
                     {/* Upload button — header shortcut */}
                     {canUpload && (
-                        <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-sgs-primary text-white text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
+                        <label className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 h-[38px] bg-sgs-primary text-white text-sm font-bold rounded-xl shadow-sm hover:bg-[var(--sgs-primary)] transition-all active:scale-95 cursor-pointer whitespace-nowrap ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                             {isUploading
                                 ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                 : ICONS.UPLOAD
@@ -225,14 +225,14 @@ export const KnowledgeBase: React.FC = () => {
                 <div
                     className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 border-2 border-dashed rounded-2xl transition-all duration-300 overflow-hidden ${
                         isDragging
-                            ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 scale-[1.005]'
-                            : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-indigo-300 hover:bg-[var(--glass-surface)]'
+                            ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/30 scale-[1.005]'
+                            : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-[var(--sgs-primary)] hover:bg-[var(--glass-surface)]'
                     }`}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
                     onDrop={onDrop}
                 >
-                    <div className="shrink-0 w-10 h-10 rounded-xl bg-sgs-champagne dark:bg-indigo-950/40 flex items-center justify-center pointer-events-none">
+                    <div className="shrink-0 w-10 h-10 rounded-xl bg-sgs-champagne dark:bg-[var(--sgs-primary)]/40 flex items-center justify-center pointer-events-none">
                         {ICONS.CLOUD}
                     </div>
                     <div className="flex-1 min-w-0 pointer-events-none">
@@ -245,7 +245,7 @@ export const KnowledgeBase: React.FC = () => {
                     </div>
                     <label className={`relative z-10 shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-[var(--glass-surface-hover)] hover:bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-semibold rounded-xl transition-all active:scale-95 cursor-pointer hidden sm:flex ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                         {isUploading
-                            ? <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                            ? <div className="w-4 h-4 border-2 border-[var(--sgs-primary)] border-t-[var(--sgs-primary)] rounded-full animate-spin" />
                             : ICONS.UPLOAD
                         }
                         {isUploading

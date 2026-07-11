@@ -318,7 +318,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <select
                 value={previewCode}
                 onChange={(e) => setPreviewCode(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[260px]"
+                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 max-w-[260px]"
                 aria-label="Chọn dự án xem trước"
               >
                 {micrositeProjects.map((p) => (
@@ -483,7 +483,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                 placeholder="var(--sgs-primary)"
                 maxLength={7}
                 onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-mono text-sm uppercase"
+                className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 font-mono text-sm uppercase"
               />
             </div>
             <span className="text-xs text-[var(--text-tertiary)]">Mã hex 6 ký tự, ví dụ var(--sgs-primary).</span>
@@ -496,7 +496,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                 value={(form[key] as string) || ''}
                 placeholder={placeholder}
                 onChange={(e) => updateField(key, e.target.value)}
-                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                className="px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30"
               />
               {help && <span className="text-xs text-[var(--text-tertiary)]">{help}</span>}
             </label>
@@ -638,7 +638,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             value={hostInput}
             placeholder="brand.example.com"
             onChange={(e) => setHostInput(e.target.value.toLowerCase())}
-            className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-sm"
+            className="flex-1 px-3 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 text-sm"
           />
           <button
             type="button"

@@ -76,7 +76,7 @@ export const ApiDocs: React.FC = () => {
                             <li key={sec}>
                                 <button 
                                     onClick={() => setActiveSection(sec)}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === sec ? 'bg-indigo-50 text-indigo-700' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === sec ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
                                 >
                                     {t(`api.${sec}`)}
                                 </button>

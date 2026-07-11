@@ -194,7 +194,7 @@ const StepCard: React.FC<typeof PROCESS_STEPS[0]> = ({ num, icon, title, desc, d
             <div className="w-12 h-12 rounded-2xl bg-sgs-primary text-white font-black text-lg flex items-center justify-center shadow-lg flex-shrink-0">
                 {num}
             </div>
-            <div className="w-0.5 flex-1 bg-gradient-to-b from-indigo-300 to-transparent mt-2" />
+            <div className="w-0.5 flex-1 bg-gradient-to-b from-[var(--sgs-primary)] to-transparent mt-2" />
         </div>
         <div className="pb-10 flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
@@ -218,7 +218,7 @@ const FaqItem: React.FC<{ q: string; a: string; defaultOpen?: boolean }> = ({ q,
                 aria-expanded={open}
             >
                 <span className="font-semibold text-[var(--text-primary)] text-sm md:text-base group-hover:text-sgs-primary transition-colors">{q}</span>
-                <span className={`text-indigo-500 mt-0.5 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+                <span className={`text-[var(--sgs-primary)] mt-0.5 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </span>
             </button>
@@ -339,13 +339,13 @@ export const Consignment: React.FC = () => {
                 </div>
             </div>
             {/* ── Hero ── */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-sgs-primary-deep to-slate-900 text-white py-20 md:py-32 px-6">
+            <section className="relative overflow-hidden bg-gradient-to-br from-[var(--sgs-primary)] via-sgs-primary-deep to-slate-900 text-white py-20 md:py-32 px-6">
                 <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-400 rounded-full blur-3xl" />
-                    <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-400 rounded-full blur-3xl" />
+                    <div className="absolute top-20 left-10 w-72 h-72 bg-[var(--sgs-primary)] rounded-full blur-3xl" />
+                    <div className="absolute bottom-10 right-10 w-96 h-96 bg-[var(--sgs-primary)] rounded-full blur-3xl" />
                 </div>
                 <div className="relative max-w-4xl mx-auto text-center">
-                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur text-indigo-200 text-xs font-bold px-4 py-2 rounded-full mb-6 border border-white/20">
+                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur text-[var(--sgs-primary)] text-xs font-bold px-4 py-2 rounded-full mb-6 border border-white/20">
                         <Ico d={P.star} cls="w-4 h-4 text-yellow-400" /> Nền tảng ký gửi BĐS uy tín số 1 TP. Hồ Chí Minh
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight">
@@ -353,7 +353,7 @@ export const Consignment: React.FC = () => {
                         <br />
                         <span className="text-sgs-on-dark-muted">Miễn Phí · An Toàn · Hiệu Quả</span>
                     </h1>
-                    <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mx-auto leading-relaxed mb-10">
+                    <p className="text-lg md:text-xl text-[var(--sgs-primary)] max-w-2xl mx-auto leading-relaxed mb-10">
                         Chủ sở hữu ủy quyền — SGS LAND lo toàn bộ: Marketing AI, pháp lý hợp đồng, kết nối khách mua/thuê.
                         Hoa hồng chỉ thu khi giao dịch thành công. Không phí nếu không giao dịch.
                     </p>
@@ -467,14 +467,14 @@ export const Consignment: React.FC = () => {
                 </div>
             </section>
             {/* ── Legal Commitment Box ── */}
-            <section className="py-12 px-6 bg-indigo-950 text-white">
+            <section className="py-12 px-6 bg-[var(--sgs-primary)] text-white">
                 <div className="max-w-4xl mx-auto">
                     <div className="border border-sgs-primary rounded-2xl p-8 md:p-10">
                         <div className="flex gap-4 items-start">
                             <span className="flex-shrink-0 text-sgs-on-dark-muted"><Ico d={P.lock} cls="w-10 h-10" /></span>
                             <div>
                                 <h2 className="text-xl md:text-2xl font-black mb-4 text-white">Cam Kết Pháp Lý Về Hoa Hồng</h2>
-                                <div className="space-y-3 text-sm text-indigo-200 leading-relaxed">
+                                <div className="space-y-3 text-sm text-[var(--sgs-primary)] leading-relaxed">
                                     <p>
                                         <strong className="text-white">1. Hợp đồng ký gửi có giá trị pháp lý:</strong> Ngay sau khi hai bên ký kết Hợp đồng Ký gửi Bất động sản, SGS LAND có đầy đủ căn cứ pháp lý để yêu cầu thanh toán hoa hồng theo Điều 41 Luật KDBĐS 2023 khi giao dịch thành công — kể cả trường hợp chủ sở hữu tự ý hủy hợp đồng mua bán sau khi đã có sự giới thiệu của SGS LAND.
                                     </p>
@@ -591,7 +591,7 @@ export const Consignment: React.FC = () => {
                                                         type="radio" name="transaction" value={v}
                                                         checked={form.transaction === v}
                                                         onChange={handleChange}
-                                                        className="accent-indigo-600"
+                                                        className="accent-[var(--sgs-primary)]"
                                                     />
                                                     <span className="inline-flex items-center gap-1 text-sm font-medium text-[var(--text-primary)]">
                                                         {v === 'SELL'
@@ -645,7 +645,7 @@ export const Consignment: React.FC = () => {
                             <label className="flex items-start gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox" name="agreed" checked={form.agreed} onChange={handleChange}
-                                    className="mt-0.5 w-4 h-4 accent-indigo-600 flex-shrink-0"
+                                    className="mt-0.5 w-4 h-4 accent-[var(--sgs-primary)] flex-shrink-0"
                                 />
                                 <span className="text-xs text-[var(--text-secondary)] leading-relaxed group-hover:text-[var(--text-primary)] transition-colors">
                                     Tôi đồng ý để SGS LAND liên hệ tư vấn và xử lý thông tin cá nhân theo{' '}
@@ -663,8 +663,8 @@ export const Consignment: React.FC = () => {
                                 disabled={submitting}
                                 className={`w-full py-4 rounded-2xl font-black text-white text-base transition-all shadow-lg ${
                                     submitting
-                                        ? 'bg-indigo-400 cursor-not-allowed'
-                                        : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'
+                                        ? 'bg-[var(--sgs-primary)] cursor-not-allowed'
+                                        : 'bg-[var(--sgs-primary)] hover:bg-[var(--sgs-primary)] active:scale-[0.98]'
                                 }`}
                             >
                                 {submitting ? (

@@ -21,10 +21,10 @@ const stripMarkdown = (text: string): string =>
         .trim();
 const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: any) => (
     <div className="bg-white p-5 rounded-2xl mb-8 border border-sgs-border shadow-sm animate-enter relative group overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-[var(--sgs-primary)]/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="flex justify-between items-center mb-4 relative z-10">
             <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-sgs-primary rounded-xl text-white shadow-lg shadow-indigo-200">
+                <div className="p-2 bg-sgs-primary rounded-xl text-white shadow-lg shadow-[var(--sgs-primary)]">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <div>
@@ -123,7 +123,7 @@ const ICONS = {
     EDIT_PEN: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-sgs-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
 };
 const STYLES = {
-    INPUT: "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all",
+    INPUT: "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] transition-all",
     INPUT_ERROR: "w-full border border-rose-300 bg-rose-50 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
 };
 interface LeadDetailProps {
@@ -290,7 +290,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             <input 
                                 value={formData.name}
                                 onChange={(e) => handleInputChange('name', e.target.value)}
-                                className={`font-bold text-xl md:text-2xl text-[var(--text-primary)] w-full bg-transparent border border-transparent rounded-lg px-2 py-1 focus:bg-[var(--glass-surface)] focus:border-indigo-200 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-300 truncate`}
+                                className={`font-bold text-xl md:text-2xl text-[var(--text-primary)] w-full bg-transparent border border-transparent rounded-lg px-2 py-1 focus:bg-[var(--glass-surface)] focus:border-[var(--sgs-primary)] focus:ring-4 focus:ring-[var(--sgs-primary)]/10 outline-none transition-all placeholder:text-slate-300 truncate`}
                                 placeholder={t('auth.placeholder_name')}
                             />
                             <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
@@ -411,7 +411,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 value={formData.notes || ''}
                                 onChange={e => handleInputChange('notes', e.target.value)}
                                 rows={formData.notes ? 6 : 3}
-                                className={`w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none no-scrollbar ${formData.notes ? 'bg-amber-50/60 font-mono text-xs text-[var(--text-secondary)] leading-relaxed' : ''}`}
+                                className={`w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] outline-none resize-none no-scrollbar ${formData.notes ? 'bg-amber-50/60 font-mono text-xs text-[var(--text-secondary)] leading-relaxed' : ''}`}
                                 placeholder={t('leads.notes_placeholder')}
                             />
                         </DetailField>
@@ -567,7 +567,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     <div className="mb-8 bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm">
                         <div className="flex items-center gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
                             {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
-                                <button key={ch} onClick={() => setActiveChannel(ch)} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${activeChannel === ch ? 'bg-indigo-50 text-sgs-primary ring-1 ring-indigo-200' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'}`}>
+                                <button key={ch} onClick={() => setActiveChannel(ch)} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${activeChannel === ch ? 'bg-[var(--sgs-primary)]/10 text-sgs-primary ring-1 ring-[var(--sgs-primary)]' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)]'}`}>
                                     {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {ch}
                                 </button>
                             ))}
@@ -576,7 +576,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             <textarea 
                                 value={messageContent}
                                 onChange={e => setMessageContent(e.target.value)}
-                                className="w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary outline-none resize-none h-24 no-scrollbar"
+                                className="w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary outline-none resize-none h-24 no-scrollbar"
                                 placeholder={t('detail.placeholder_msg')}
                             />
                             <div className="flex justify-between items-center mt-2">

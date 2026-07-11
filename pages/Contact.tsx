@@ -222,7 +222,7 @@ export const Contact: React.FC = () => {
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-sgs-primary transition-colors">{t('contact.label_name')} <span className="text-rose-500">*</span></label>
                                     <input
                                         type="text"
-                                        className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all ${errors.name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
+                                        className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all ${errors.name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] focus:bg-[var(--bg-surface)]'}`}
                                         placeholder={t('contact.placeholder_name')}
                                         value={form.name}
                                         onChange={e => handleInputChange('name', e.target.value)}
@@ -233,7 +233,7 @@ export const Contact: React.FC = () => {
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-sgs-primary transition-colors">{t('contact.label_email')} <span className="text-rose-500">*</span></label>
                                     <input
                                         type="email"
-                                        className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all ${errors.email ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
+                                        className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all ${errors.email ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] focus:bg-[var(--bg-surface)]'}`}
                                         placeholder="name@example.com"
                                         value={form.email}
                                         onChange={e => handleInputChange('email', e.target.value)}
@@ -257,7 +257,7 @@ export const Contact: React.FC = () => {
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-sgs-primary transition-colors">{t('contact.label_message')} <span className="text-rose-500">*</span></label>
                                 <textarea
                                     rows={5}
-                                    className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all resize-none ${errors.message ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
+                                    className={`w-full border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 transition-all resize-none ${errors.message ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] focus:bg-[var(--bg-surface)]'}`}
                                     placeholder={t('contact.placeholder_message')}
                                     value={form.message}
                                     onChange={e => handleInputChange('message', e.target.value)}

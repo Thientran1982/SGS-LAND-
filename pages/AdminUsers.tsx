@@ -25,14 +25,14 @@ interface AgentStatsData {
 function getRoleBadgeClass(role: string): string {
     switch (role) {
         case 'ADMIN':          return 'bg-rose-50 text-rose-700 border border-rose-200';
-        case 'MANAGER':        return 'bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200';
-        case 'TEAM_LEAD':      return 'bg-indigo-50 text-sgs-primary border border-indigo-200';
+        case 'MANAGER':        return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
+        case 'TEAM_LEAD':      return 'bg-[var(--sgs-primary)]/10 text-sgs-primary border border-[var(--sgs-primary)]';
         case 'SALES':          return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
         case 'MARKETING':      return 'bg-amber-50 text-amber-700 border border-amber-200';
         case 'SUPPORTER':      return 'bg-sky-50 text-sky-700 border border-sky-200';
         case 'VIEWER':         return 'bg-slate-100 text-slate-600 border border-slate-200';
-        case 'PARTNER_ADMIN':  return 'bg-violet-50 text-violet-700 border border-violet-200';
-        case 'PARTNER_AGENT':  return 'bg-purple-50 text-purple-700 border border-purple-200';
+        case 'PARTNER_ADMIN':  return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
+        case 'PARTNER_AGENT':  return 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]';
         default:               return 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]';
     }
 }
@@ -131,7 +131,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
         ? data.slaScore >= 90 ? 'text-emerald-500' : data.slaScore >= 70 ? 'text-sgs-primary' : 'text-amber-500'
         : 'text-[var(--text-secondary)]';
     const slaLabelColor = data
-        ? data.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : data.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'
+        ? data.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : data.slaScore >= 70 ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-amber-600 dark:text-amber-400'
         : '';
     const circumference = 2 * Math.PI * 50;
     return createPortal(
@@ -160,7 +160,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                 <div className="overflow-y-auto px-6 py-5 space-y-5 no-scrollbar">
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
-                            <div className="w-8 h-8 border-4 border-sgs-border border-t-indigo-600 rounded-full animate-spin" />
+                            <div className="w-8 h-8 border-4 border-sgs-border border-t-[var(--sgs-primary)] rounded-full animate-spin" />
                             <p className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</p>
                         </div>
                     )}
@@ -227,7 +227,7 @@ const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = 
                                     {/* Revenue */}
                                     <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_revenue')}</p>
-                                        <p className="text-xl font-extrabold text-sgs-primary dark:text-violet-400">
+                                        <p className="text-xl font-extrabold text-sgs-primary dark:text-[var(--sgs-primary)]">
                                             {data.revenue >= 1e9
                                                 ? `${(data.revenue / 1e9).toFixed(1)} ${t('profile.perf_billion')}`
                                                 : data.revenue >= 1e6
@@ -340,7 +340,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     if (!isOpen) return null;
     const inputCls = (field: string) =>
         `w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-        ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`;
+        ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)]'}`;
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
             {/* Backdrop */}
@@ -438,7 +438,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                                 className="w-full"
                                 placement="top"
                             />
-                            <div className="mt-2 bg-indigo-50/60 border border-sgs-border rounded-xl p-3 flex gap-2">
+                            <div className="mt-2 bg-[var(--sgs-primary)]/10 border border-sgs-border rounded-xl p-3 flex gap-2">
                                 <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                                 <div>
                                     <h4 className="text-xs2 font-bold text-sgs-primary uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
@@ -669,7 +669,7 @@ export const AdminUsers: React.FC = () => {
             <div className="flex items-center gap-1">
                 {label}
                 {sort.field === field && (
-                    <span className={`text-indigo-500 transition-transform ${sort.order === 'desc' ? 'rotate-180' : ''}`}>
+                    <span className={`text-[var(--sgs-primary)] transition-transform ${sort.order === 'desc' ? 'rotate-180' : ''}`}>
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
                     </span>
                 )}
@@ -738,7 +738,7 @@ export const AdminUsers: React.FC = () => {
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
+                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
                             placeholder={t('admin.users.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -888,7 +888,7 @@ export const AdminUsers: React.FC = () => {
                                                         title={t('admin.users.resend')}
                                                     >
                                                         {resendingId === user.id ? (
-                                                            <div className="w-4 h-4 border-2 border-sgs-border border-t-indigo-600 rounded-full animate-spin"></div>
+                                                            <div className="w-4 h-4 border-2 border-sgs-border border-t-[var(--sgs-primary)] rounded-full animate-spin"></div>
                                                         ) : (
                                                             ICONS.SEND
                                                         )}
@@ -979,7 +979,7 @@ export const AdminUsers: React.FC = () => {
                             {t('admin.users.confirm_role_change', { name: userToRoleChange.user.name, role: t(`role.${userToRoleChange.newRole}`) })}
                         </p>
                         
-                        <div className="bg-indigo-50/50 border border-sgs-border rounded-xl p-3 flex gap-2 mb-6">
+                        <div className="bg-[var(--sgs-primary)]/10 border border-sgs-border rounded-xl p-3 flex gap-2 mb-6">
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
                                 <h4 className="text-xs2 font-bold text-sgs-primary uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>

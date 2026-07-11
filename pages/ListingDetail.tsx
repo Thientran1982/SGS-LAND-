@@ -65,7 +65,7 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
                     {t('common.share_desc')}
                 </p>
 
-                <div className="bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)] flex items-center gap-2 mb-4 group focus-within:border-sgs-primary focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                <div className="bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)] flex items-center gap-2 mb-4 group focus-within:border-sgs-primary focus-within:ring-2 focus-within:ring-[var(--sgs-primary)]/20 transition-all">
                     <input 
                         readOnly 
                         value={url} 
@@ -394,8 +394,8 @@ const AssigneeDropdown = memo(({
                     'flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs transition-all select-none',
                     disabled
                         ? 'opacity-60 cursor-not-allowed border-[var(--glass-border)] bg-[var(--glass-surface)]'
-                        : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-indigo-300 hover:shadow-sm cursor-pointer',
-                    isOpen && !disabled ? 'border-indigo-400 ring-1 ring-indigo-300/50' : '',
+                        : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-[var(--sgs-primary)] hover:shadow-sm cursor-pointer',
+                    isOpen && !disabled ? 'border-[var(--sgs-primary)] ring-1 ring-[var(--sgs-primary)]/50' : '',
                 ].join(' ')}
             >
                 {/* Avatar / spinner / placeholder */}

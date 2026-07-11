@@ -208,7 +208,7 @@ export default function Methodology() {
             {[
               { metric: "MAPE", value: "4.8%", desc: "Mean Absolute Percentage Error — do chinh xac toan bo model", color: "bg-green-50 border-green-200" },
               { metric: "RMSE", value: "8.2%", desc: "Root Mean Square Error — nhan manh cac truong hop lech lon", color: "bg-blue-50 border-blue-200" },
-              { metric: "R²", value: "0.94", desc: "He so xac dinh — 94% bien dong gia duoc giai thich boi model", color: "bg-purple-50 border-purple-200" },
+              { metric: "R²", value: "0.94", desc: "He so xac dinh — 94% bien dong gia duoc giai thich boi model", color: "bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)]" },
             ].map((m, i) => (
               <div key={i} className={`rounded-xl p-6 border ${m.color}`}>
                 <div className="text-3xl font-bold text-slate-800 mb-1">{m.value}</div>

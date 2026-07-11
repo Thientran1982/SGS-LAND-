@@ -218,7 +218,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
                             <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
-                            <span className={`text-3xs font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
+                            <span className={`text-3xs font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10' : 'text-blue-600 bg-blue-50'}`}>
                                 {t(`transaction.${item.transaction}`)}
                             </span>
                         </div>
@@ -374,7 +374,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
             </div>            
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`text-3xs font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
+                    <span className={`text-3xs font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10' : 'text-blue-600 bg-blue-50'}`}>
                         {t(`transaction.${item.transaction}`)}
                     </span>
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
@@ -477,7 +477,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
+                        <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10' : 'text-blue-600 bg-blue-50'}`}>
                             {t(`transaction.${item.transaction}`)}
                         </span>
                         <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
@@ -722,7 +722,7 @@ export const Inventory: React.FC = () => {
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2 min-h-[40px] sm:py-2.5 sm:min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                className="w-full pl-10 pr-10 py-2 min-h-[40px] sm:py-2.5 sm:min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('inventory.search_hint')} 
                             />
                             {search && (
@@ -1055,7 +1055,7 @@ export const Inventory: React.FC = () => {
                             {/* Non-blocking loading chip — map stays interactive while full dataset loads */}
                             {boardLoading && (
                                 <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-full px-4 py-2 pointer-events-none">
-                                    <div className="w-4 h-4 rounded-full border-2 border-sgs-border border-t-indigo-600 animate-spin flex-shrink-0" />
+                                    <div className="w-4 h-4 rounded-full border-2 border-sgs-border border-t-[var(--sgs-primary)] animate-spin flex-shrink-0" />
                                     <span className="text-xs font-semibold text-sgs-text-muted whitespace-nowrap">{t('common.loading')}</span>
                                 </div>
                             )}

@@ -326,7 +326,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
         </div>
     );
 });
-const FUNNEL_COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#7c3aed', '#8b5cf6', '#4f46e5'];
+const FUNNEL_COLORS = ['#1B3A5C', '#3E6D9C', '#a5b4fc', '#1B3A5C', '#1B3A5C', '#4f46e5'];
 const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTheme: any }) => {
     // Separate LOST from active pipeline stages for display
     const activeFunnel = data.funnel.filter(f => f.stage !== 'LOST');

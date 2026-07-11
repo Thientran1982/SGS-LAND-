@@ -127,7 +127,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
     }
   };
   const inputCls = (field: string) =>
-    `w-full h-[38px] px-3 text-[16px] bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${errors[field] ? 'border-rose-400' : 'border-[var(--glass-border)] focus:border-indigo-400'}`;
+    `w-full h-[38px] px-3 text-[16px] bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 transition-colors ${errors[field] ? 'border-rose-400' : 'border-[var(--glass-border)] focus:border-[var(--sgs-primary)]'}`;
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -159,7 +159,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               placeholder="Mô tả chi tiết công việc..."
-              className="w-full px-3 py-2.5 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none transition-colors"
+              className="w-full px-3 py-2.5 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 focus:border-[var(--sgs-primary)] resize-none transition-colors"
             />
           </div>
           {/* Priority + Deadline row */}
@@ -219,7 +219,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
             {selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {selectedUsers.map(u => (
-                  <span key={u.id} className="inline-flex items-center gap-1 text-xs bg-sgs-champagne dark:bg-sgs-primary/20 text-sgs-primary dark:text-sgs-text-muted border border-sgs-border dark:border-indigo-800 rounded-lg px-2 py-0.5 font-medium">
+                  <span key={u.id} className="inline-flex items-center gap-1 text-xs bg-sgs-champagne dark:bg-sgs-primary/20 text-sgs-primary dark:text-sgs-text-muted border border-sgs-border dark:border-[var(--sgs-primary)] rounded-lg px-2 py-0.5 font-medium">
                     {u.name}
                     <button type="button" onClick={() => removeAssignee(u.id)} className="hover:text-rose-500 transition-colors ml-0.5">
                       <XCircle size={11} />
@@ -235,7 +235,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
                 onChange={e => { setAssigneeSearch(e.target.value); setUserPickerOpen(true); }}
                 onFocus={() => { setUserPickerOpen(true); if (!assigneeSearch.trim()) searchUsers(''); }}
                 placeholder="Tìm tên nhân viên..."
-                className="w-full h-[38px] pl-9 pr-3 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                className="w-full h-[38px] pl-9 pr-3 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 focus:border-[var(--sgs-primary)]"
               />
               {userPickerOpen && (userResults.length > 0 || searchingUsers) && (
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 overflow-hidden max-h-[200px] overflow-y-auto no-scrollbar">
@@ -244,7 +244,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
                   ) : (
                     userResults.map(u => (
                       <button key={u.id} type="button" onClick={() => { toggleAssignee(u); setAssigneeSearch(''); setUserPickerOpen(false); }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[var(--glass-surface-hover)] transition-colors ${assigneeIds.includes(u.id) ? 'bg-indigo-50 dark:bg-indigo-900/10' : ''}`}>
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-[var(--glass-surface-hover)] transition-colors ${assigneeIds.includes(u.id) ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25' : ''}`}>
                         <div className="w-7 h-7 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-[11px] font-bold text-sgs-primary flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
                         </div>

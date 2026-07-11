@@ -24,7 +24,7 @@ html.dark {
 /* ── SGS Land public page design tokens ──────────────────────── */
 :root {
   /* === SGS LAND DESIGN TOKENS — WCAG CERTIFIED (Light Mode) === */
-  --sgs-bg:             #FAFAF8;   /* nền trang (trắng ngà âm) */
+  --sgs-bg:               #FFFFFF;   /* nền trang (trắng ngà âm) */
   --sgs-surface:        #FFFFFF;   /* card, search bar, panel */
   --sgs-primary:        #1B3A5C;   /* navy đậm — header, heading, nút phụ (11.6:1) */
   --sgs-primary-deep:   #0F2740;   /* gradient hero, footer, CTA banner */

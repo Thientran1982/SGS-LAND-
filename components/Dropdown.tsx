@@ -39,8 +39,8 @@ const STYLES = {
     // State variants
     DISABLED: "bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 cursor-not-allowed border-[var(--glass-border)] dark:border-slate-700",
     ERROR: "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/20",
-    DEFAULT: "bg-[var(--bg-surface)] dark:bg-slate-800 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.99] text-[var(--text-secondary)] dark:text-slate-200",
-    OPEN: "border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20"
+    DEFAULT: "bg-[var(--bg-surface)] dark:bg-slate-800 border-[var(--glass-border)] dark:border-slate-700 hover:border-[var(--sgs-primary)] dark:hover:border-[var(--sgs-primary)] hover:shadow-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 active:scale-[0.99] text-[var(--text-secondary)] dark:text-slate-200",
+    OPEN: "border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20"
 };
 // -----------------------------------------------------------------------------
 // 3. MAIN COMPONENT
@@ -155,7 +155,7 @@ export const Dropdown = memo(<T extends string | number>({
     return (
         <div className={`relative ${className}`} ref={containerRef}>
             {label && (
-                <label className={`${STYLES.LABEL} ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] dark:text-slate-400 group-focus-within:text-indigo-500 dark:group-focus-within:text-indigo-400'}`}>
+                <label className={`${STYLES.LABEL} ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] dark:text-slate-400 group-focus-within:text-[var(--sgs-primary)] dark:group-focus-within:text-[var(--sgs-primary)]'}`}>
                     {label}
                 </label>
             )}            
@@ -181,7 +181,7 @@ export const Dropdown = memo(<T extends string | number>({
                         <span className={error ? "text-rose-400" : "text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]"}>{displayPlaceholder}</span>
                     )}
                 </div>                
-                <div className={`text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] ${isOpen ? 'rotate-180 text-indigo-500 dark:text-indigo-400' : ''} transition-transform duration-200`}>
+                <div className={`text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] ${isOpen ? 'rotate-180 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : ''} transition-transform duration-200`}>
                     {ICONS.CHEVRON}
                 </div>
             </button>
@@ -213,7 +213,7 @@ export const Dropdown = memo(<T extends string | number>({
                                         aria-selected={isSelected}
                                         type="button"
                                         onClick={() => handleSelect(opt.value as T)}
-                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-300 font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
+                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
                                     >
                                         {opt.icon && (
                                             <span className={`transition-transform duration-200 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>

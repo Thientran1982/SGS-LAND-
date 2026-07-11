@@ -129,9 +129,9 @@ export const Hero3D = () => {
   return (
     <div className="relative w-full max-w-2xl mx-auto">
       {/* Primary orb — behind building roof, centered */}
-      <div className="absolute top-[2%] left-1/2 -translate-x-1/2 w-[52%] h-[48%] bg-indigo-500/22 dark:bg-indigo-400/28 blur-[72px] rounded-full pointer-events-none" />
-      {/* Accent orb — behind price data tag (right side, violet) */}
-      <div className="absolute top-[22%] right-[4%] w-[24%] h-[32%] bg-violet-500/14 dark:bg-violet-400/18 blur-[56px] rounded-full pointer-events-none" />
+      <div className="absolute top-[2%] left-1/2 -translate-x-1/2 w-[52%] h-[48%] bg-[var(--sgs-primary)]/100/22 dark:bg-[var(--sgs-primary)]/28 blur-[72px] rounded-full pointer-events-none" />
+      {/* Accent orb — behind price data tag (right side, gold) */}
+      <div className="absolute top-[22%] right-[4%] w-[24%] h-[32%] bg-[var(--sgs-accent)]/14 dark:bg-[var(--sgs-accent)]/18 blur-[56px] rounded-full pointer-events-none" />
       {/* Accent orb — behind match data tag (left side, emerald) */}
       <div className="absolute top-[32%] left-[4%] w-[20%] h-[28%] bg-emerald-500/10 dark:bg-emerald-400/14 blur-[48px] rounded-full pointer-events-none" />
       <motion.svg viewBox="0 0 800 650" className="w-full h-auto drop-shadow-2xl relative z-10"
@@ -159,7 +159,7 @@ export const Hero3D = () => {
             <stop offset="0%" stopColor="var(--sgs-primary)" /><stop offset="100%" stopColor="var(--sgs-primary)" />
           </linearGradient>
           <linearGradient id="aiHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--sgs-primary)" /><stop offset="100%" stopColor="#8B5CF6" />
+            <stop offset="0%" stopColor="var(--sgs-primary)" /><stop offset="100%" stopColor="#1B3A5C" />
           </linearGradient>
           <linearGradient id="emeraldGlow" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="var(--sgs-verified)" stopOpacity="0" />
@@ -256,11 +256,11 @@ export const Hero3D = () => {
             fill="rgba(99,102,241,0.07)" stroke="var(--sgs-primary)" strokeWidth="1.5" opacity="0.75" />
           <rect x="60" y="-170" width="90" height="90"
             fill="rgba(99,102,241,0.10)" stroke="#7FA8D0" strokeWidth="1" opacity="0.6" />
-          {/* SW block — violet */}
+          {/* SW block — gold */}
           <rect x="-210" y="24" width="186" height="186"
-            fill="rgba(139,92,246,0.07)" stroke="#8B5CF6" strokeWidth="1.5" opacity="0.65" />
+            fill="rgba(27,58,92,0.07)" stroke="#1B3A5C" strokeWidth="1.5" opacity="0.65" />
           <rect x="-170" y="60" width="90" height="90"
-            fill="rgba(139,92,246,0.10)" stroke="#A78BFA" strokeWidth="1" opacity="0.55" />
+            fill="rgba(27,58,92,0.10)" stroke="#C8963E" strokeWidth="1" opacity="0.55" />
           {/* SE block — blue */}
           <rect x="24" y="24" width="186" height="186"
             fill="rgba(59,130,246,0.06)" stroke="#3B82F6" strokeWidth="1.5" opacity="0.55" />
@@ -281,7 +281,7 @@ export const Hero3D = () => {
           {[[-140,-140],[80,-140],[-140,80]].map(([px,py],i)=>(
             <g key={`pin-${i}`}>
               <circle cx={px} cy={py} r={5}
-                fill={['var(--sgs-verified)','var(--sgs-primary)','#8B5CF6'][i]} opacity="0.9" />
+                fill={['var(--sgs-verified)','var(--sgs-primary)','#1B3A5C'][i]} opacity="0.9" />
               <circle cx={px} cy={py} r={2.5} fill="#fff" opacity="0.8" />
             </g>
           ))}
@@ -427,14 +427,14 @@ export const Hero3D = () => {
         </motion.g>
         {/* ── DATA TAG 1: Price ── */}
         <motion.g animate={{ y: [0,-8,0] }} transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}>
-          <line x1="560" y1="240" x2="628" y2="192" stroke="#8B5CF6" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.65" />
+          <line x1="560" y1="240" x2="628" y2="192" stroke="#1B3A5C" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.65" />
           {/* Connector dot — halo + core + white center */}
-          <circle cx="628" cy="192" r="8" fill="#8B5CF6" opacity="0.18" filter="url(#glow)" />
-          <circle cx="628" cy="192" r="4.5" fill="#8B5CF6" filter="url(#glow)" />
+          <circle cx="628" cy="192" r="8" fill="#1B3A5C" opacity="0.18" filter="url(#glow)" />
+          <circle cx="628" cy="192" r="4.5" fill="#1B3A5C" filter="url(#glow)" />
           <circle cx="628" cy="192" r="1.8" fill="#fff" opacity="0.9" />
-          <rect x="640" y="170" width="114" height="46" rx="9" fill="#1E293B" stroke="#8B5CF6" strokeWidth="1.5" opacity="0.97" />
+          <rect x="640" y="170" width="114" height="46" rx="9" fill="#1E293B" stroke="#1B3A5C" strokeWidth="1.5" opacity="0.97" />
           <rect x="640" y="170" width="114" height="46" rx="9" fill="url(#aiHighlight)" opacity="0.06" />
-          <text x="697" y="188" fill="#A78BFA" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1.2">{labelPrice}</text>
+          <text x="697" y="188" fill="#C8963E" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1.2">{labelPrice}</text>
           <text x="697" y="207" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textPrice}</text>
         </motion.g>
         {/* ── DATA TAG 2: Match ── */}

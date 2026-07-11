@@ -17,7 +17,7 @@ const CONSTANTS = {
     },
     // ADDED rounded-[32px] here to fix the square corners issue
     BASE_CLASS: "glass-card rounded-[32px] p-6 md:p-8 flex flex-col group relative text-left w-full h-full transition-all duration-500 ease-out",
-    INTERACTIVE_CLASS: "cursor-pointer active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+    INTERACTIVE_CLASS: "cursor-pointer active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/50"
 };
 export const GlassBento: React.FC<BentoCardProps> = memo(({ 
     title, 

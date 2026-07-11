@@ -19,7 +19,7 @@ type SearchItem =
     | { type: 'ACTION'; id: string; title: string; subtitle: string; icon: 'ACTION'; route?: string; action?: () => void };
 const ICONS = {
     SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
-    LOADING: <div className="w-4 h-4 border-2 border-indigo-500/40 border-t-indigo-500 rounded-full animate-spin"></div>,
+    LOADING: <div className="w-4 h-4 border-2 border-[var(--sgs-primary)]/40 border-t-[var(--sgs-primary)] rounded-full animate-spin"></div>,
     LEAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
     LISTING: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 01 1v4a1 1 0 001 1m-6 0h6" /></svg>,
     USER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -42,7 +42,7 @@ const HighlightedText = memo(({ text, query }: { text: string, query: string }) 
         <span>
             {parts.map((part, i) => 
                 part.toLowerCase() === query.toLowerCase() ? (
-                    <span key={i} className="text-sgs-primary dark:text-sgs-text-muted bg-sgs-champagne dark:bg-indigo-500/20 font-bold px-0.5 rounded">{part}</span>
+                    <span key={i} className="text-sgs-primary dark:text-sgs-text-muted bg-sgs-champagne dark:bg-[var(--sgs-primary)]/20 font-bold px-0.5 rounded">{part}</span>
                 ) : ( <span key={i}>{part}</span> )
             )}
         </span>
@@ -181,13 +181,13 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                 onClick={() => handleSelect(item)}
                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all group border-l-[3px] ${
                     isSelected 
-                        ? 'bg-indigo-50 dark:bg-indigo-500/15 border-indigo-500' 
+                        ? 'bg-[var(--sgs-primary)]/8 dark:bg-[var(--sgs-primary)]/15 border-[var(--sgs-primary)]' 
                         : 'hover:bg-[var(--glass-surface)] border-transparent'
                 }`}
             >
                 <div className={`p-2 rounded-xl transition-colors shrink-0 ${
                     isSelected 
-                        ? 'bg-indigo-100 dark:bg-indigo-500/25 text-sgs-primary dark:text-indigo-300' 
+                        ? 'bg-[var(--sgs-primary)]/12 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)]' 
                         : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface)] group-hover:text-[var(--text-secondary)]'
                 }`}>
                     {isHistory ? ICONS.HISTORY : Icon}
@@ -195,7 +195,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                 <div className="min-w-0 flex-1">
                     <div className={`font-semibold text-sm truncate ${
                         isSelected 
-                            ? 'text-indigo-700 dark:text-indigo-200' 
+                            ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' 
                             : 'text-[var(--text-primary)]'
                     }`}>
                         {query ? <HighlightedText text={item.title} query={query} /> : item.title}
@@ -205,7 +205,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                     </div>
                 </div>
                 {isSelected && (
-                    <div className="shrink-0 text-xs2 text-sgs-text-muted dark:text-sgs-text-muted font-mono bg-sgs-champagne dark:bg-indigo-500/20 px-1.5 py-0.5 rounded-md opacity-80">
+                    <div className="shrink-0 text-xs2 text-sgs-text-muted dark:text-sgs-text-muted font-mono bg-sgs-champagne dark:bg-[var(--sgs-primary)]/20 px-1.5 py-0.5 rounded-md opacity-80">
                         ↵
                     </div>
                 )}
@@ -224,7 +224,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
             <div className="w-full max-w-2xl bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[70vh] animate-scale-up ring-1 ring-black/10 dark:ring-white/10">                
                 {/* SEARCH INPUT */}
                 <div className="flex items-center gap-3 px-4 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] group">
-                    <div className={`shrink-0 transition-colors ${loading ? 'text-sgs-primary' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>
+                    <div className={`shrink-0 transition-colors ${loading ? 'text-sgs-primary' : 'text-[var(--text-tertiary)] group-focus-within:text-[var(--sgs-primary)]'}`}>
                         {loading ? ICONS.LOADING : ICONS.SEARCH}
                     </div>
                     <input 

@@ -410,7 +410,7 @@ export const CookieSettings: React.FC = () => {
             </div>
             <button 
                 onClick={handleSave} 
-                className={`px-8 py-3 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 ${saved ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-900 hover:bg-indigo-600'}`}
+                className={`px-8 py-3 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 ${saved ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-900 hover:bg-[var(--sgs-primary)]'}`}
             >
                 {saved ? t('legal.saved_changes') : t('legal.save_pref')}
             </button>

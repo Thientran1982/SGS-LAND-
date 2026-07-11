@@ -136,12 +136,12 @@ const ARTICLES: Article[] = [
     },
 ];
 const CATEGORIES = [
-    { id: 'mua-ban-phap-ly', label: 'Mua Bán & Pháp Lý',  color: 'bg-indigo-50 text-indigo-600',  icon: ICONS.HOME },
+    { id: 'mua-ban-phap-ly', label: 'Mua Bán & Pháp Lý',  color: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',  icon: ICONS.HOME },
     { id: 'dinh-gia-ai',     label: 'Định Giá AI',          color: 'bg-emerald-50 text-emerald-600', icon: ICONS.AI },
     { id: 'ky-gui',          label: 'Ký Gửi & Đăng Tin',    color: 'bg-blue-50 text-blue-600',      icon: ICONS.CONSIGN },
     { id: 'lai-suat-vay',    label: 'Lãi Suất Vay',         color: 'bg-amber-50 text-amber-600',    icon: ICONS.BANK },
     { id: 'khu-vuc-hot',     label: 'Khu Vực Hot',          color: 'bg-rose-50 text-rose-600',      icon: ICONS.HOT },
-    { id: 'dat-coc',         label: 'Đặt Cọc & Thanh Toán', color: 'bg-violet-50 text-violet-600',  icon: ICONS.DEPOSIT },
+    { id: 'dat-coc',         label: 'Đặt Cọc & Thanh Toán', color: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',  icon: ICONS.DEPOSIT },
 ];
 const FEEDBACK_LS_KEY = 'sgs_helpcenter_feedback';
 type FeedbackMap = Record<number, 'up' | 'down'>;
@@ -232,7 +232,7 @@ export const HelpCenter: React.FC = () => {
                         <input
                             value={searchQuery}
                             onChange={e => { setSearchQuery(e.target.value); setOpenArticleId(null); }}
-                            className="w-full h-14 pl-14 pr-12 rounded-2xl bg-white/10 text-white text-base shadow-2xl focus:ring-4 focus:ring-indigo-500/40 outline-none transition-all placeholder:text-slate-400 border border-white/10 focus:border-indigo-400 focus:bg-white/15"
+                            className="w-full h-14 pl-14 pr-12 rounded-2xl bg-white/10 text-white text-base shadow-2xl focus:ring-4 focus:ring-[var(--sgs-primary)]/40 outline-none transition-all placeholder:text-slate-400 border border-white/10 focus:border-[var(--sgs-primary)] focus:bg-white/15"
                             placeholder="Tìm kiếm: sổ hồng, vay ngân hàng, đặt cọc, Long Thành…"
                         />
                         {searchQuery && (
@@ -270,7 +270,7 @@ export const HelpCenter: React.FC = () => {
                         <button
                             key={cat.id}
                             onClick={() => { setActiveCategory(prev => prev === cat.id ? null : cat.id); setOpenArticleId(null); }}
-                            className={`bg-[var(--bg-surface)] p-5 rounded-2xl shadow-xl border transition-all text-left group hover:-translate-y-0.5 ${activeCategory === cat.id ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-[var(--glass-border)]'}`}
+                            className={`bg-[var(--bg-surface)] p-5 rounded-2xl shadow-xl border transition-all text-left group hover:-translate-y-0.5 ${activeCategory === cat.id ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-[var(--glass-border)]'}`}
                         >
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${cat.color} group-hover:scale-110 transition-transform`}>
                                 {cat.icon}
@@ -309,10 +309,10 @@ export const HelpCenter: React.FC = () => {
                                         onClick={() => toggleArticle(article.id)}
                                         className="w-full flex items-center justify-between px-8 py-5 text-left hover:bg-[var(--glass-surface)] transition-colors group"
                                     >
-                                        <span className={`font-medium text-sm md:text-base pr-4 transition-colors ${isOpen ? 'text-sgs-primary' : 'text-[var(--text-secondary)] group-hover:text-indigo-600'}`}>
+                                        <span className={`font-medium text-sm md:text-base pr-4 transition-colors ${isOpen ? 'text-sgs-primary' : 'text-[var(--text-secondary)] group-hover:text-[var(--sgs-primary)]'}`}>
                                             {article.q}
                                         </span>
-                                        <span className={`shrink-0 text-[var(--text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`}>
+                                        <span className={`shrink-0 text-[var(--text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--sgs-primary)]' : ''}`}>
                                             {ICONS.CHEVRON_DOWN}
                                         </span>
                                     </button>

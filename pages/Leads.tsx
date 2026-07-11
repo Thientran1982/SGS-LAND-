@@ -24,7 +24,7 @@ const DENSITY_STYLES = {
 const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: string }> = {
     [LeadStage.NEW]: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
     [LeadStage.CONTACTED]: { color: 'text-sgs-primary', bg: 'bg-sgs-champagne', border: 'border-sgs-border' },
-    [LeadStage.QUALIFIED]: { color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' },
+    [LeadStage.QUALIFIED]: { color: 'text-[var(--sgs-primary)]', bg: 'bg-[var(--sgs-primary)]/10', border: 'border-[var(--sgs-primary)]' },
     [LeadStage.PROPOSAL]: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
     [LeadStage.NEGOTIATION]: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200' },
     [LeadStage.WON]: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
@@ -209,7 +209,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
         setMenuOpen(v => !v);
     };
     const stickyClass = isSelected 
-        ? 'bg-indigo-50 dark:bg-slate-800' 
+        ? 'bg-[var(--sgs-primary)]/10 dark:bg-slate-800' 
         : 'bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50';
     const paddingY = DENSITY_STYLES[density as RowDensity] || DENSITY_STYLES.normal;
     const scoreValue = lead.score?.score || 0;
@@ -218,7 +218,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
     return (
         <tr 
             onClick={() => onClick(lead)}
-            className={`group border-b border-slate-50 dark:border-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50'}`}
+            className={`group border-b border-slate-50 dark:border-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25' : 'hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50'}`}
             tabIndex={0}
         >
             {/* Sticky Checkbox (Left 0) */}
@@ -229,7 +229,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 <div className="flex items-center justify-center h-full w-full">
                     <button 
                         onClick={() => onSelect(lead.id)}
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-sgs-primary text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-indigo-400'}`}
+                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-[var(--sgs-primary)] border-sgs-primary text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-[var(--sgs-primary)]'}`}
                     >
                         {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                     </button>
@@ -246,7 +246,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                         {lead.tags && lead.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                                 {lead.tags.slice(0, 3).map((tag: string) => (
-                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border dark:bg-sgs-primary/30 dark:text-sgs-text-muted dark:border-indigo-800 whitespace-nowrap">
+                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-sgs-champagne text-sgs-primary border border-sgs-border dark:bg-sgs-primary/30 dark:text-sgs-text-muted dark:border-[var(--sgs-primary)] whitespace-nowrap">
                                         {tag}
                                     </span>
                                 ))}
@@ -1024,7 +1024,7 @@ export const Leads: React.FC = () => {
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('leads.search_placeholder')} 
                             />
                             {search && (
@@ -1083,7 +1083,7 @@ export const Leads: React.FC = () => {
                                 <button
                                     ref={colSettingsBtnRef}
                                     onClick={() => setShowColumnSettings(v => !v)}
-                                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] text-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
                                     title={t('leads.col_settings_title')}
                                 >
                                     <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
@@ -1137,7 +1137,7 @@ export const Leads: React.FC = () => {
                                                     <button
                                                         key={d}
                                                         onClick={() => setDensity(d)}
-                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
                                                     >
                                                         {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
                                                     </button>

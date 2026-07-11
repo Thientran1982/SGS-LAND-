@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<WfTaskStatus, string> = {
 };
 const STATUS_COLORS: Record<WfTaskStatus, string> = {
   todo: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  in_progress: 'bg-indigo-100 text-sgs-primary dark:bg-indigo-900/30 dark:text-indigo-300',
+  in_progress: 'bg-[var(--sgs-primary)]/10 text-sgs-primary dark:bg-[var(--sgs-primary)]/25 dark:text-[var(--sgs-primary)]',
   review: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
   done: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300',
   cancelled: 'bg-rose-100 text-rose-500 dark:bg-rose-900/30 dark:text-rose-400',
@@ -49,7 +49,7 @@ interface Props {
 function Avatar({ name, size = 7 }: { name: string; size?: number }) {
   const sizeClass = `w-${size} h-${size}`;
   return (
-    <div className={`${sizeClass} rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-sgs-primary dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0`}>
+    <div className={`${sizeClass} rounded-full bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 flex items-center justify-center text-[11px] font-bold text-sgs-primary dark:text-[var(--sgs-primary)] border border-white dark:border-slate-700 flex-shrink-0`}>
       {name?.charAt(0).toUpperCase()}
     </div>
   );
@@ -252,7 +252,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                   <input
                     value={editData.title || ''}
                     onChange={e => setEditData(p => ({ ...p, title: e.target.value }))}
-                    className="w-full text-xl font-bold bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full text-xl font-bold bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30"
                   />
                 ) : (
                   <h2 className="text-xl font-bold text-[var(--text-primary)] leading-tight">{task.title}</h2>
@@ -283,7 +283,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Calendar size={11} /> Deadline</label>
                     {editing ? (
                       <input type="date" value={editData.deadline?.toString().split('T')[0] || ''} onChange={e => setEditData(p => ({ ...p, deadline: e.target.value }))}
-                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30" />
                     ) : (
                       <span className={`text-sm ${task.is_overdue ? 'text-rose-500 font-semibold' : 'text-[var(--text-secondary)]'}`}>
                         {task.deadline ? task.deadline.toString().split('T')[0] : '—'}
@@ -313,7 +313,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Clock size={11} /> Giờ ước tính</label>
                     {editing ? (
                       <input type="number" min="0.5" step="0.5" value={editData.estimated_hours || ''} onChange={e => setEditData(p => ({ ...p, estimated_hours: parseFloat(e.target.value) || undefined }))}
-                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30" />
                     ) : (
                       <span className="text-sm text-[var(--text-secondary)]">{task.estimated_hours ? `${task.estimated_hours}h` : '—'}</span>
                     )}
@@ -351,7 +351,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                       value={editData.description || ''}
                       onChange={e => setEditData(p => ({ ...p, description: e.target.value }))}
                       placeholder="Thêm mô tả công việc..."
-                      className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
+                      className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 resize-none"
                     />
                   ) : (
                     <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">
@@ -406,7 +406,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                 <div className="flex px-5 pt-1 gap-4 border-b border-[var(--glass-border)]">
                   {(['comments', 'activity'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                      className={`text-sm font-medium py-3 border-b-2 transition-colors ${activeTab === tab ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
+                      className={`text-sm font-medium py-3 border-b-2 transition-colors ${activeTab === tab ? 'border-[var(--sgs-primary)] text-[var(--sgs-primary)]' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>
                       {tab === 'comments' ? `Bình luận (${comments.length})` : `Hoạt động (${activity.length})`}
                     </button>
                   ))}
@@ -442,7 +442,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                             onChange={e => setNewComment(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendComment(); }}
                             placeholder="Thêm bình luận... (Ctrl+Enter để gửi)"
-                            className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
+                            className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 resize-none"
                           />
                           <div className="flex justify-end mt-1.5">
                             <button onClick={sendComment} disabled={!newComment.trim() || sendingComment}

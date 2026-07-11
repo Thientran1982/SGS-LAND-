@@ -18,7 +18,7 @@ const MODEL_GROUPS: { label: string; badge: string; badgeColor: string; models: 
     {
         label: 'Gemini 3.x — Preview',
         badge: 'Mới nhất',
-        badgeColor: 'bg-violet-100 text-violet-700 border-violet-200',
+        badgeColor: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--sgs-primary)]',
         models: ['gemini-3.1-pro-preview', 'gemini-3-pro-preview', 'gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview'],
     },
     {
@@ -252,8 +252,8 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                                     })}
                                 </div>
                             </div>
-                            <div className="bg-indigo-50/30">
-                                <div className="text-2xs font-bold text-sgs-primary px-3 py-1.5 bg-indigo-100/60 border-b border-sgs-border">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : `(${rightVersionObj?.status || ''})`}</div>
+                            <div className="bg-[var(--sgs-primary)]/10">
+                                <div className="text-2xs font-bold text-sgs-primary px-3 py-1.5 bg-[var(--sgs-primary)]/10 border-b border-sgs-border">v{targetVersion} {rightVersionObj?.status === 'DRAFT' ? '(draft)' : `(${rightVersionObj?.status || ''})`}</div>
                                 <div className="font-mono text-[11px] leading-5 max-h-[40vh] overflow-auto">
                                     {diff.right.map((ln, idx) => {
                                         const bg = ln.type === 'added' ? 'bg-emerald-100/70' : ln.type === 'pad' ? 'bg-slate-50' : '';
@@ -302,7 +302,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
                                         {runningBoth && !leftOutput ? 'Đang chạy...' : (leftOutput?.text || '—')}
                                     </pre>
                                 </div>
-                                <div className="border border-sgs-border bg-indigo-50/50 rounded-xl p-3 max-h-56 overflow-auto">
+                                <div className="border border-sgs-border bg-[var(--sgs-primary)]/10 rounded-xl p-3 max-h-56 overflow-auto">
                                     <div className="text-2xs font-bold text-sgs-primary mb-1 flex items-center justify-between">
                                         <span>v{targetVersion}</span>
                                         {rightOutput?.latencyMs != null && <span className="font-mono text-[10px] text-sgs-primary">{rightOutput.latencyMs}ms</span>}
@@ -394,7 +394,7 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                                         const isChecked = config.allowedModels?.includes(m) || false;
                                         const isDeprecated = DEPRECATED_MODELS.has(m as string);
                                         return (
-                                            <label key={m} className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${isChecked ? (isDeprecated ? 'bg-rose-50 border-rose-300 text-rose-700 line-through' : 'bg-indigo-50 border-indigo-200 text-indigo-700') : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
+                                            <label key={m} className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${isChecked ? (isDeprecated ? 'bg-rose-50 border-rose-300 text-rose-700 line-through' : 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] text-[var(--sgs-primary)]') : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
                                                 <input 
                                                     type="checkbox" 
                                                     className="hidden" 
@@ -505,7 +505,7 @@ const PromptsTab = memo(({
                                 onMouseEnter={() => setHoveredKey(key)}
                                 onMouseLeave={() => setHoveredKey(null)}
                                 title={configured ? t('ai.catalog_configured_hint') : `${t('ai.catalog_create_hint')} "${key}"`}
-                                className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-indigo-200 hover:bg-indigo-50'}`}
+                                className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)] hover:bg-[var(--sgs-primary)]/10'}`}
                             >
                                 <div className="flex items-center gap-1.5 mb-0.5">
                                     {configured
@@ -562,7 +562,7 @@ const PromptsTab = memo(({
                     <div 
                         key={p.id} 
                         onClick={() => onSelect(p)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all group ${selectedPrompt?.id === p.id ? 'bg-indigo-50 border-indigo-200 shadow-sm ring-1 ring-indigo-200' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:bg-[var(--glass-surface)]'}`}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all group ${selectedPrompt?.id === p.id ? 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] shadow-sm ring-1 ring-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:bg-[var(--glass-surface)]'}`}
                     >
                         <div className="flex justify-between items-start">
                             <div className={`font-bold text-sm ${selectedPrompt?.id === p.id ? 'text-sgs-primary' : 'text-[var(--text-secondary)]'}`}>{p.name}</div>
@@ -594,7 +594,7 @@ const PromptsTab = memo(({
                                                 className={`px-2 py-0.5 rounded font-mono text-2xs border transition-colors ${
                                                     isActive
                                                         ? 'bg-emerald-100 border-emerald-300 text-emerald-700 cursor-default'
-                                                        : 'bg-white border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600'
+                                                        : 'bg-white border-slate-200 text-slate-500 hover:bg-[var(--sgs-primary)]/10 hover:border-[var(--sgs-primary)] hover:text-[var(--sgs-primary)]'
                                                 }`}
                                             >
                                                 v{v.version}{v.status === 'DRAFT' ? '·draft' : ''}
@@ -862,7 +862,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                         </div>
                                         <div className="text-center">
                                             <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Few-shot</div>
-                                            <span className={`px-1.5 py-0.5 rounded-full font-bold text-[10px] ${fewShot > 0 ? 'bg-indigo-50 text-indigo-600' : 'text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span>
+                                            <span className={`px-1.5 py-0.5 rounded-full font-bold text-[10px] ${fewShot > 0 ? 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span>
                                         </div>
                                         <div className="text-center">
                                             <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Neg. Rules</div>
@@ -915,7 +915,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                                 <td className="p-3 font-bold text-[var(--text-secondary)]">{INTENT_LABELS[sig.intent] || sig.intent}</td>
                                                 <td className="p-3 text-center"><span className="text-sgs-verified font-bold">{sig.positiveCount}</span><span className="text-[var(--text-tertiary)] mx-1">/</span><span className="text-rose-500 font-bold">{sig.negativeCount}</span></td>
                                                 <td className="p-3 text-center"><span className={`font-bold ${approvalColor(Math.round((sig.avgScore + 1) / 2 * 100))}`}>{typeof sig.avgScore === 'number' ? sig.avgScore.toFixed(2) : '—'}</span></td>
-                                                <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${fewShot > 0 ? 'bg-indigo-50 text-sgs-primary border border-indigo-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span></td>
+                                                <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${fewShot > 0 ? 'bg-[var(--sgs-primary)]/10 text-sgs-primary border border-[var(--sgs-primary)]' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span></td>
                                                 <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${negRules > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{negRules > 0 ? `${negRules} quy tắc` : '—'}</span></td>
                                                 <td className="p-3 text-[var(--text-tertiary)] font-mono">{sig.lastComputed ? formatTime(sig.lastComputed) : '—'}</td>
                                             </tr>
@@ -1186,10 +1186,10 @@ export const AiGovernance: React.FC = () => {
                     <p className="text-sm text-[var(--text-tertiary)]">{t('ai.subtitle')}</p>
                 </div>
                 <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl flex-wrap gap-y-1">
-                    <button onClick={() => setActiveTab('CONFIG')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'CONFIG' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_config')}</button>
-                    <button onClick={() => setActiveTab('PROMPTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_prompts')}</button>
-                    <button onClick={() => setActiveTab('SAFETY')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
-                    <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_rlhf')}</button>
+                    <button onClick={() => setActiveTab('CONFIG')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'CONFIG' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_config')}</button>
+                    <button onClick={() => setActiveTab('PROMPTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_prompts')}</button>
+                    <button onClick={() => setActiveTab('SAFETY')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
+                    <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_rlhf')}</button>
                 </div>
             </div>
             {activeTab === 'CONFIG' && <ConfigTab config={config} onSave={handleSaveConfig} onUpdateConfig={handleUpdateConfig} t={t} />}           

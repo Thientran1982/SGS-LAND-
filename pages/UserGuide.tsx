@@ -101,14 +101,14 @@ const NAV_ITEMS: { id: SectionId; label: string; icon: React.ReactNode; color: s
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; badge: string }> = {
     emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
     blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/30',    text: 'text-blue-400',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30'       },
-    violet:  { bg: 'bg-violet-500/10',  border: 'border-violet-500/30',  text: 'text-violet-400',  badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+    violet:  { bg: 'bg-[var(--sgs-primary)]/100/10',  border: 'border-[var(--sgs-primary)]/30',  text: 'text-[var(--sgs-primary)]',  badge: 'bg-[var(--sgs-primary)]/100/20 text-[var(--sgs-primary)] border-[var(--sgs-primary)]/30' },
     cyan:    { bg: 'bg-cyan-500/10',    border: 'border-cyan-500/30',    text: 'text-cyan-400',    badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'       },
     amber:   { bg: 'bg-amber-500/10',   border: 'border-amber-500/30',   text: 'text-amber-400',   badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30'   },
     pink:    { bg: 'bg-pink-500/10',    border: 'border-pink-500/30',    text: 'text-pink-400',    badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30'       },
     orange:  { bg: 'bg-orange-500/10',  border: 'border-orange-500/30',  text: 'text-orange-400',  badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
     rose:    { bg: 'bg-rose-500/10',    border: 'border-rose-500/30',    text: 'text-rose-400',    badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30'       },
     teal:    { bg: 'bg-teal-500/10',    border: 'border-teal-500/30',    text: 'text-teal-400',    badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30'       },
-    indigo:  { bg: 'bg-indigo-500/10',  border: 'border-indigo-500/30',  text: 'text-sgs-text-muted',  badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
+    indigo:  { bg: 'bg-[var(--sgs-primary)]/100/10',  border: 'border-[var(--sgs-primary)]/30',  text: 'text-sgs-text-muted',  badge: 'bg-[var(--sgs-primary)]/100/20 text-[var(--sgs-primary)] border-[var(--sgs-primary)]/30' },
     lime:    { bg: 'bg-lime-500/10',    border: 'border-lime-500/30',    text: 'text-lime-400',    badge: 'bg-lime-500/20 text-lime-300 border-lime-500/30'       },
     slate:   { bg: 'bg-slate-500/10',   border: 'border-slate-500/30',   text: 'text-slate-400',   badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30'   },
 };
@@ -255,8 +255,8 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
             <h3 className="text-sm font-bold text-white mt-6 mb-3">Pipeline 6 giai đoạn</h3>
             <div className="flex flex-wrap gap-2">
                 {PIPELINE_STAGES.map(({ label, icon }, i) => (
-                    <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium">
-                        <span className="text-violet-400">{icon}</span>
+                    <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--sgs-primary)]/100/10 border border-[var(--sgs-primary)]/20 text-[var(--sgs-primary)] text-xs font-medium">
+                        <span className="text-[var(--sgs-primary)]">{icon}</span>
                         {label}
                         {i < PIPELINE_STAGES.length - 1 && <span className="text-sgs-text-muted ml-1">→</span>}
                     </div>

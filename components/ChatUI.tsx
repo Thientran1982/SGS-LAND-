@@ -31,7 +31,7 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
         <div className="mb-3 w-full max-w-full flex justify-end">
             <button 
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-2 text-xs2 font-bold text-sgs-primary bg-indigo-50/50 hover:bg-sgs-champagne transition-colors uppercase tracking-wider px-3 py-1.5 rounded-lg border border-sgs-border group w-fit max-w-full"
+                className="flex items-center gap-2 text-xs2 font-bold text-sgs-primary bg-[var(--sgs-primary)]/10 hover:bg-sgs-champagne transition-colors uppercase tracking-wider px-3 py-1.5 rounded-lg border border-sgs-border group w-fit max-w-full"
             >
                 <div className={`w-2 h-2 rounded-full shadow-sm transition-all duration-500 shrink-0 ${isExpanded ? 'bg-sgs-primary' : 'bg-sgs-primary animate-pulse'}`}></div>
                 <span className="flex-1 text-left flex items-center gap-1 truncate">

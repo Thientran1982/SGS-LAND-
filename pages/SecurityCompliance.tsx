@@ -35,11 +35,11 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_rule_name')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder={t('security.placeholder_name')} />
+                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-[var(--sgs-primary)]/20 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder={t('security.placeholder_name')} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_pattern')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] font-mono focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} placeholder={t('security.placeholder_pattern')} />
+                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] font-mono focus:ring-2 focus:ring-[var(--sgs-primary)]/20 outline-none" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} placeholder={t('security.placeholder_pattern')} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_action')}</label>
@@ -136,8 +136,8 @@ export const SecurityCompliance: React.FC = () => {
                     <p className="text-sm text-[var(--text-tertiary)]">{t('security.subtitle')}</p>
                 </div>
                 <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl">
-                    <button onClick={() => setActiveTab('POLICIES')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'POLICIES' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_policies')}</button>
-                    <button onClick={() => setActiveTab('ACCESS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'ACCESS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_access')}</button>
+                    <button onClick={() => setActiveTab('POLICIES')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'POLICIES' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_policies')}</button>
+                    <button onClick={() => setActiveTab('ACCESS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'ACCESS' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('security.tab_access')}</button>
                 </div>
             </div>
             {activeTab === 'POLICIES' && (
@@ -198,7 +198,7 @@ export const SecurityCompliance: React.FC = () => {
                                         <span className={`text-xs2 font-bold px-2 py-0.5 rounded border ${rule.action === 'BLOCK' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[var(--glass-surface-hover)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
                                             {t({ REDACT: 'security.action_redact', BLOCK: 'security.action_block', LOG_ONLY: 'security.action_log' }[rule.action] ?? `security.action_${rule.action.toLowerCase()}`)}
                                         </span>
-                                        <input type="checkbox" checked={rule.enabled} onChange={() => toggleRule(rule.id)} className="toggle accent-indigo-500 w-4 h-4 cursor-pointer" />
+                                        <input type="checkbox" checked={rule.enabled} onChange={() => toggleRule(rule.id)} className="toggle accent-[var(--sgs-primary)] w-4 h-4 cursor-pointer" />
                                         <button onClick={() => handleDeleteRule(rule.id)} className="text-[var(--text-secondary)] hover:text-rose-500 transition-colors">{ICONS.TRASH}</button>
                                     </div>
                                 </div>

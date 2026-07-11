@@ -41,8 +41,8 @@ const STATUS_FILL: Record<string, string> = {
   BOOKING:   '#eab308', // yellow-500
   HOLD:      '#f59e0b', // amber-500
   SOLD:      '#ef4444', // red-500
-  RENTED:    '#a855f7', // violet-500
-  OPENING:   '#9333ea', // purple-600
+  RENTED:    '#1B3A5C', // [var(--sgs-primary)]
+  OPENING:   '#1B3A5C', // [var(--sgs-primary)]
   INACTIVE:  '#94a3b8', // slate-400 (gray)
 };
 const STATUS_STROKE: Record<string, string> = {

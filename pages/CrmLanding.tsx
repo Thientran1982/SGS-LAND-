@@ -101,13 +101,13 @@ export const CrmLanding: React.FC = () => {
                 </span>
                 <h1 className="text-5xl md:text-7xl font-black text-[var(--text-primary)] mb-8 leading-tight tracking-tight">
                     {t('crm.hero_title')} <br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-sgs-primary to-purple-600">{t('crm.hero_title_highlight')}</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-sgs-primary to-[var(--sgs-primary)]">{t('crm.hero_title_highlight')}</span>
                 </h1>
                 <p className="text-xl text-[var(--text-tertiary)] mb-12 max-w-3xl mx-auto leading-relaxed">
                     {t('crm.hero_desc')}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button onClick={handleLogin} className="px-8 py-4 bg-sgs-primary text-white font-bold rounded-2xl text-lg shadow-xl shadow-indigo-500/30 hover:bg-sgs-primary transition-transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                    <button onClick={handleLogin} className="px-8 py-4 bg-sgs-primary text-white font-bold rounded-2xl text-lg shadow-xl shadow-[var(--sgs-primary)]/30 hover:bg-sgs-primary transition-transform hover:-translate-y-1 flex items-center justify-center gap-2">
                         {ICONS.ROCKET} {currentUser ? t('menu.dashboard') : t('crm.free_trial')}
                     </button>
                     <button

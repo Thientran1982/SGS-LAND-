@@ -73,9 +73,10 @@
         if (sz) document.documentElement.style.setProperty('--custom-font-size', sz);
       }
       var bgRules = [];
-      if (ct && ct.bgApp && /^#[a-fA-F0-9]{6}$/.test(ct.bgApp)) bgRules.push('--bg-app: ' + ct.bgApp + ';');
-      if (ct && ct.bgSidebar && /^#[a-fA-F0-9]{6}$/.test(ct.bgSidebar)) bgRules.push('--bg-sidebar: ' + ct.bgSidebar + ';');
-      if (ct && ct.bgSurface && /^#[a-fA-F0-9]{6}$/.test(ct.bgSurface)) bgRules.push('--bg-surface: ' + ct.bgSurface + ';');
+      bgRules.push('--bg-app: #FFFFFF;');
+      bgRules.push('--bg-sidebar: #FFFFFF;');
+      bgRules.push('--bg-surface: #FFFFFF;');
+      bgRules.push('--bg-elevated: #FFFFFF;');
       if (bgRules.length > 0) {
         var styleEl = document.createElement('style');
         styleEl.id = 'sgs-custom-theme-bg';

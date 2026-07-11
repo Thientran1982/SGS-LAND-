@@ -188,7 +188,7 @@ const SerpPageDropdown: React.FC<{
                 ref={btnRef}
                 type="button"
                 onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
-                className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl bg-[var(--bg-surface)] transition-all outline-none text-left ${isOpen ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-[var(--glass-border)] hover:border-indigo-300 hover:shadow-sm'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl bg-[var(--bg-surface)] transition-all outline-none text-left ${isOpen ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20' : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)] hover:shadow-sm'}`}
             >
                 {/* Status dot */}
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ring-2 ${statusDotClass(selectedStatus)} ${statusRingClass(selectedStatus)}`} />
@@ -202,7 +202,7 @@ const SerpPageDropdown: React.FC<{
                 </div>
                 {/* Chevron */}
                 <svg
-                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-500' : 'text-[var(--text-secondary)]'}`}
+                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--sgs-primary)]' : 'text-[var(--text-secondary)]'}`}
                     fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -232,7 +232,7 @@ const SerpPageDropdown: React.FC<{
                                     key={route.key}
                                     type="button"
                                     onClick={() => { onChange(route.key); setIsOpen(false); }}
-                                    className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-[var(--glass-surface)]'}`}
+                                    className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isSelected ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25' : 'hover:bg-[var(--glass-surface)]'}`}
                                 >
                                     {/* Status dot */}
                                     <span className={`w-2 h-2 rounded-full shrink-0 mt-[7px] ring-2 ${statusDotClass(status)} ${statusRingClass(status)}`} />
@@ -241,7 +241,7 @@ const SerpPageDropdown: React.FC<{
                                     <div className="flex-1 min-w-0">
                                         {/* Row 1: page name + route badge + checkmark — NO flex-wrap so label truncates correctly */}
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                            <span className={`text-xs font-bold flex-1 min-w-0 truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-[var(--text-primary)]'}`}>
+                                            <span className={`text-xs font-bold flex-1 min-w-0 truncate ${isSelected ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-primary)]'}`}>
                                                 {route.label}
                                             </span>
                                             <span className="text-[10px] font-mono text-[var(--text-muted)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded shrink-0">
@@ -396,7 +396,7 @@ const SerpPreview: React.FC<{
                 </div>
             </div>
             {/* Tips */}
-            <div className="bg-indigo-50/60 dark:bg-sgs-primary/10 border border-sgs-border dark:border-indigo-900/30 rounded-xl p-4 text-xs text-sgs-primary dark:text-sgs-on-dark-muted space-y-1">
+            <div className="bg-[var(--sgs-primary)]/10 dark:bg-sgs-primary/10 border border-sgs-border dark:border-[var(--sgs-primary)]/30 rounded-xl p-4 text-xs text-sgs-primary dark:text-sgs-on-dark-muted space-y-1">
                 <p className="font-bold mb-1">💡 Hướng dẫn tối ưu</p>
                 <p>• <strong>Title:</strong> 30–60 ký tự. Đặt từ khóa chính ở đầu. Kết thúc bằng "- SGS LAND".</p>
                 <p>• <strong>Description:</strong> 120–160 ký tự. Chứa từ khóa chính và kêu gọi hành động.</p>
@@ -480,7 +480,7 @@ const MetaEditor: React.FC<{
                 const desc = getDesc(key);
                 const cfg = ROUTE_SEO[key];
                 return (
-                    <div key={key} className={`bg-[var(--bg-surface)] border rounded-2xl p-4 shadow-sm transition-all ${dirty ? 'border-indigo-300 shadow-indigo-100/50 dark:shadow-indigo-900/20' : 'border-[var(--glass-border)]'}`}>
+                    <div key={key} className={`bg-[var(--bg-surface)] border rounded-2xl p-4 shadow-sm transition-all ${dirty ? 'border-[var(--sgs-primary)] shadow-[var(--sgs-primary)]/50 dark:shadow-[var(--sgs-primary)]/20' : 'border-[var(--glass-border)]'}`}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-sm text-[var(--text-primary)]">{label}</span>
@@ -499,7 +499,7 @@ const MetaEditor: React.FC<{
                                     type="text"
                                     value={title}
                                     onChange={e => handleChange(key, 'title', e.target.value)}
-                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] transition-all"
                                 />
                             </div>
                             <div>
@@ -511,7 +511,7 @@ const MetaEditor: React.FC<{
                                     value={desc}
                                     rows={2}
                                     onChange={e => handleChange(key, 'description', e.target.value)}
-                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all resize-none"
+                                    className="w-full border border-[var(--glass-border)] rounded-lg px-3 py-2 text-xs bg-[var(--glass-surface-hover)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] transition-all resize-none"
                                 />
                             </div>
                         </div>
@@ -536,7 +536,7 @@ const MetaEditor: React.FC<{
                                 <button
                                     onClick={() => handlePreview(key)}
                                     disabled={previewing !== null}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-sgs-champagne dark:bg-violet-900/20 text-sgs-primary dark:text-violet-400 text-2xs font-bold rounded-lg hover:bg-sgs-champagne dark:hover:bg-violet-900/30 transition-colors border border-sgs-border dark:border-violet-800 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-sgs-champagne dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] text-2xs font-bold rounded-lg hover:bg-sgs-champagne dark:hover:bg-[var(--sgs-primary)]/30 transition-colors border border-sgs-border dark:border-[var(--sgs-primary)] disabled:opacity-50"
                                 >
                                     {previewing === key ? <>{ICONS.CHECK} Đang xem (3s)…</> : 'Xem trước meta'}
                                 </button>
@@ -658,7 +658,7 @@ const HealthChecklist: React.FC = () => {
         : 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30';
     if (loading) return (
         <div className="flex items-center justify-center py-16 gap-3 text-[var(--text-secondary)]">
-            <div className="w-5 h-5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[var(--sgs-primary)] border-t-[var(--sgs-primary)] rounded-full animate-spin" />
             <span className="text-sm font-medium">Đang kiểm tra 12 tín hiệu SEO...</span>
         </div>
     );
@@ -742,8 +742,8 @@ const StructuredData: React.FC = () => {
         setTimeout(() => setCopied(null), 2000);
     };
     const typeColor = (type: string) => {
-        if (type.includes('Organization')) return 'bg-indigo-50 dark:bg-indigo-900/20 text-sgs-primary dark:text-indigo-300 border-indigo-100';
-        if (type.includes('WebSite')) return 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-100';
+        if (type.includes('Organization')) return 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] border-[var(--sgs-primary)]';
+        if (type.includes('WebSite')) return 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)] border-[var(--sgs-primary)]';
         if (type.includes('Software')) return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-100';
         if (type.includes('FAQ')) return 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-100';
         if (type.includes('Breadcrumb')) return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-100';
@@ -795,7 +795,7 @@ const EXTERNAL_TOOLS = [
     { label: 'Google Search Console', url: 'https://search.google.com/search-console', color: 'text-blue-600' },
     { label: 'PageSpeed Insights', url: 'https://pagespeed.web.dev/?url=https%3A%2F%2Fsgsland.vn', color: 'text-orange-600' },
     { label: 'Rich Results Test', url: 'https://search.google.com/test/rich-results?url=https%3A%2F%2Fsgsland.vn', color: 'text-green-600' },
-    { label: 'Schema Markup Validator', url: 'https://validator.schema.org/', color: 'text-purple-600' },
+    { label: 'Schema Markup Validator', url: 'https://validator.schema.org/', color: 'text-[var(--sgs-primary)]' },
 ];
 // ── Helpers ─────────────────────────────────────────────────────────────────────
 // Apply stored overrides to the in-memory DOM JSON-LD so StructuredData always
@@ -1066,9 +1066,9 @@ const GeoMonitor30Days: React.FC = () => {
         ? Math.round(((latest.aiMentions.totals.rate - previous.aiMentions.totals.rate) as number) * 100)
         : null;
     const COLORS: Record<string, string> = {
-        gemini: '#4285f4', chatgpt: '#10a37f', claude: '#cc785c', perplexity: '#1f6feb', grok: '#1f2937', overall: '#6366f1',
+        gemini: '#4285f4', chatgpt: '#10a37f', claude: '#cc785c', perplexity: '#1f6feb', grok: '#1f2937', overall: '#1B3A5C',
     };
-    const KW_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#a855f7'];
+    const KW_COLORS = ['#1B3A5C', '#10b981', '#f59e0b', '#ef4444', '#1B3A5C'];
 
     return (
         <section>
@@ -1466,8 +1466,8 @@ const GeoAiSearch: React.FC = () => {
                     <span className="text-2xs text-[var(--text-tertiary)]">{keywords.length} từ khóa</span>
                 </div>
                 {keywords.length === 0 && !kwLoading && (
-                    <div className="mb-3 p-3 rounded-xl border border-indigo-300 bg-indigo-50/70 dark:bg-sgs-primary/15 flex items-start gap-3">
-                        <div className="flex-1 text-xs text-sgs-primary dark:text-indigo-200">
+                    <div className="mb-3 p-3 rounded-xl border border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-sgs-primary/15 flex items-start gap-3">
+                        <div className="flex-1 text-xs text-sgs-primary dark:text-[var(--sgs-primary)]">
                             <div className="font-bold mb-0.5">💡 Bắt đầu nhanh — Nạp bộ 20 từ khoá chiến lược</div>
                             <div className="text-2xs opacity-90">Bao gồm: BĐS TP.HCM/Đồng Nai/Long Thành/Bình Dương, định giá BĐS, Aqua City, Izumi, Vinhomes Grand Park/Central Park/<strong>Cần Giờ</strong>, Global City, Masterise, <strong>Vạn Phúc City</strong>, <strong>Sala Đại Quang Minh</strong>, Thủ Thiêm, Grand Manhattan, Sơn Kim. Chỉ thêm nếu chưa có (an toàn để bấm nhiều lần).</div>
                         </div>
@@ -1605,8 +1605,8 @@ const GeoAiSearch: React.FC = () => {
                             <button onClick={() => { setAuditResult(null); setAuditError(null); runChecklist(); }} className="text-2xs font-bold text-sgs-primary hover:underline">{ICONS.RESET} Chạy lại / Quay về DOM admin</button>
                         </div>
                         {/* URL Audit input — kiểm tra trang công khai bất kỳ */}
-                        <div className="p-3 mb-3 rounded-lg border border-indigo-300 bg-indigo-50/70 dark:bg-sgs-primary/15">
-                            <div className="text-xs font-bold text-sgs-primary dark:text-indigo-200 mb-2">🔎 Kiểm tra trang công khai (server-side fetch + parse HTML thật)</div>
+                        <div className="p-3 mb-3 rounded-lg border border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-sgs-primary/15">
+                            <div className="text-xs font-bold text-sgs-primary dark:text-[var(--sgs-primary)] mb-2">🔎 Kiểm tra trang công khai (server-side fetch + parse HTML thật)</div>
                             <div className="flex flex-wrap gap-2 items-center">
                                 <input
                                     type="text"
@@ -1761,7 +1761,7 @@ export const SeoManager: React.FC = () => {
                                 href={tool.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-2xs font-bold hover:border-indigo-300 hover:shadow-sm transition-all ${tool.color}`}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-2xs font-bold hover:border-[var(--sgs-primary)] hover:shadow-sm transition-all ${tool.color}`}
                             >
                                 {tool.label} {ICONS.EXT}
                             </a>
@@ -1786,7 +1786,7 @@ export const SeoManager: React.FC = () => {
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                                 activeTab === tab.id
-                                    ? 'bg-[var(--bg-surface)] shadow text-sgs-primary dark:text-indigo-400'
+                                    ? 'bg-[var(--bg-surface)] shadow text-sgs-primary dark:text-[var(--sgs-primary)]'
                                     : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                             }`}
                         >

@@ -82,7 +82,7 @@ const TABS: Tab[] = [
         id: 'parties',
         labelKey: 'contracts.tab_parties',
         color: 'text-sgs-primary',
-        activeColor: 'border-indigo-500 text-sgs-primary bg-indigo-50',
+        activeColor: 'border-[var(--sgs-primary)] text-sgs-primary bg-[var(--sgs-primary)]/10',
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -227,7 +227,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
             setLoading(false);
         }
     };
-    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
+    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)] outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
     const labelClass = "block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1";
 
     const scheduleCount = (formData.paymentSchedule || []).length;
@@ -348,7 +348,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 )}
                                 {/* SECTION 1: KHÁCH HÀNG */}
                                 <div className="bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] p-5 space-y-4">
-                                    <h3 className="font-bold text-sgs-primary flex items-center gap-2 text-sm border-b border-violet-100 pb-2">
+                                    <h3 className="font-bold text-sgs-primary flex items-center gap-2 text-sm border-b border-[var(--sgs-primary)] pb-2">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>                                        {t('contracts.reservation_customer_title')}
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -707,7 +707,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         {formData.type !== ContractType.RESERVATION && activeTab === 'terms' && (
                             <div className="space-y-6">
                                 {/* ── PHẦN 1: THÔNG TIN KÝ KẾT ── */}
-                                <div className="rounded-xl border-2 border-sgs-border bg-indigo-50/60 p-4 space-y-4">
+                                <div className="rounded-xl border-2 border-sgs-border bg-[var(--sgs-primary)]/10 p-4 space-y-4">
                                     <h3 className="font-bold text-sgs-primary flex items-center gap-2 text-sm">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                         {t('contracts.signing_info_title')}
@@ -873,7 +873,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 key={tab.id}
                                 type="button"
                                 onClick={() => handleTabChange(tab.id)}
-                                className={`w-2 h-2 rounded-full transition-all ${activeTab === tab.id ? 'w-5 bg-indigo-500' : 'bg-slate-300 hover:bg-slate-400'}`}
+                                className={`w-2 h-2 rounded-full transition-all ${activeTab === tab.id ? 'w-5 bg-[var(--sgs-primary)]/100' : 'bg-slate-300 hover:bg-slate-400'}`}
                                 title={t(tab.labelKey)}
                                 aria-label={t(tab.labelKey)}
                             />

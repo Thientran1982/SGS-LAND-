@@ -138,8 +138,8 @@ export function TaskReports() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-            <PieChart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="w-10 h-10 bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 rounded-xl flex items-center justify-center">
+            <PieChart className="w-5 h-5 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">Báo cáo Công việc</h1>

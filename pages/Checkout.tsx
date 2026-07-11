@@ -222,7 +222,7 @@ export const Checkout: React.FC = () => {
                                 {session.providerCheckoutUrl ? (
                                     <a
                                         href={session.providerCheckoutUrl}
-                                        className="inline-flex px-5 py-3 rounded-xl bg-sgs-primary text-white text-sm font-extrabold hover:bg-sgs-primary shadow-lg shadow-indigo-500/20"
+                                        className="inline-flex px-5 py-3 rounded-xl bg-sgs-primary text-white text-sm font-extrabold hover:bg-sgs-primary shadow-lg shadow-[var(--sgs-primary)]/20"
                                     >
                                         Tiếp tục đến Stripe →
                                     </a>

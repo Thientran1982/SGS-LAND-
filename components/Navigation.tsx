@@ -68,8 +68,8 @@ const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean })
     return (
         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
             ${isActive 
-                ? 'border-indigo-500 shadow-indigo-500/20' 
-                : 'border-white dark:border-white/10 group-hover:border-indigo-500 group-hover:shadow-indigo-500/20'}`
+                ? 'border-[var(--sgs-primary)] shadow-[var(--sgs-primary)]/20' 
+                : 'border-white dark:border-white/10 group-hover:border-[var(--sgs-primary)] group-hover:shadow-[var(--sgs-primary)]/20'}`
         }>
             {hasAvatar ? (
                 <img 
@@ -147,7 +147,7 @@ const NotificationPanel = memo(({
                     notifications.map(notif => (
                         <div 
                             key={notif.id}
-                            className={`group flex items-start gap-3 px-4 py-3 border-b border-[var(--glass-border)] last:border-0 transition-colors ${!notif.readAt ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface-hover)]'}`}
+                            className={`group flex items-start gap-3 px-4 py-3 border-b border-[var(--glass-border)] last:border-0 transition-colors ${!notif.readAt ? 'bg-[var(--sgs-primary)]/8 dark:bg-[var(--sgs-primary)]/20' : 'hover:bg-[var(--glass-surface-hover)]'}`}
                         >
                             {/* Icon */}
                             <div className="w-8 h-8 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center shrink-0 mt-0.5">
@@ -250,7 +250,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
         <header role="banner" aria-label="SGS LAND navigation">
         <div className="h-12 sm:h-14 px-4 sm:px-6 md:px-8 flex items-center justify-between relative z-30 transition-all duration-300 group/header rounded-none sm:rounded-t-[24px] -mx-[1px] -mt-[1px]">
             {/* Background Blur Layer */}
-            <div className="absolute inset-0 bg-[var(--bg-surface)]/80 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm z-0 rounded-none sm:rounded-t-[24px]"></div>
+            <div className="absolute inset-0 bg-[var(--bg-app)]/80 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm z-0 rounded-none sm:rounded-t-[24px]"></div>
 
             {/* LEFT: Mobile Menu + Global Search */}
             <div className="flex items-center gap-2 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
@@ -275,7 +275,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     <button 
                         onClick={onSearch}
                         aria-label={t('common.search')}
-                        className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98]"
+                        className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-[var(--sgs-primary)] hover:shadow-lg hover:shadow-[var(--sgs-primary)]/10 active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
                             {ICONS.SEARCH}
@@ -333,7 +333,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     aria-label={t('menu.profile')}
                 >
                     <div className="text-right hidden sm:block leading-tight">
-                        <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] group-hover:text-indigo-600'}`}>
+                        <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' : 'text-[var(--text-primary)] group-hover:text-[var(--sgs-primary)]'}`}>
                             {user.name}
                         </div>
                         <div className="text-xs2 text-[var(--text-tertiary)] font-medium">

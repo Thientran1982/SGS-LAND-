@@ -42,7 +42,7 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
                     max={max} 
                     value={value} 
                     onChange={(e) => onChange(field, Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500 transition-all z-10 relative"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[var(--sgs-primary)] hover:accent-[var(--sgs-primary)] transition-all z-10 relative"
                     style={{
                         background: `linear-gradient(to right, var(--sgs-primary) 0%, var(--sgs-primary) ${percent}%, #E2E8F0 ${percent}%, #E2E8F0 100%)`
                     }}

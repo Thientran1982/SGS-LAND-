@@ -114,7 +114,7 @@ function Badge({ ok, label }: { ok: boolean; label?: string }) {
     : <span className={`${base} bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400`}><span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"/>{label ?? 'Lỗi'}</span>;
 }
 const PROJECT_COLOR_MAP: Record<string, string> = {
-  indigo:  'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-300 border-indigo-200 dark:border-indigo-700',
+  indigo:  'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)]',
   emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700',
   blue:    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700',
   sky:     'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700',
@@ -122,11 +122,11 @@ const PROJECT_COLOR_MAP: Record<string, string> = {
   amber:   'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700',
   rose:    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-700',
   teal:    'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-700',
-  violet:  'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700',
+  violet:  'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)] border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)]',
   slate:   'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600',
   green:   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700',
   orange:  'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700',
-  purple:  'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700',
+  purple:  'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)] border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)]',
   pink:    'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-700',
   lime:    'bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300 border-lime-200 dark:border-lime-700',
   yellow:  'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700',
@@ -142,7 +142,7 @@ const SOURCE_COLORS: Record<string, string> = {
   'Chợ Tốt':   'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
   'AlonNhaDat':'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
   'BatDongSan':'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
-  'Muaban':    'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
+  'Muaban':    'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]',
 };
 function MarketTab() {
   const [status,    setStatus]    = useState<StatusResponse | null>(null);
@@ -247,8 +247,8 @@ function MarketTab() {
                     className={[
                       'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
                       blocked ? 'border-[var(--glass-border)] text-[var(--text-tertiary)] opacity-50 cursor-not-allowed'
-                        : active ? 'bg-indigo-600 border-sgs-primary text-white shadow'
-                        : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-400 hover:text-indigo-600',
+                        : active ? 'bg-[var(--sgs-primary)] border-sgs-primary text-white shadow'
+                        : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--sgs-primary)] hover:text-[var(--sgs-primary)]',
                     ].join(' ')}
                   >
                     {labels[id]}{blocked && ' 🔒'}
@@ -483,12 +483,12 @@ function ProjectsTab() {
                 className={[
                   'relative bg-[var(--bg-surface)] border rounded-2xl p-4 cursor-pointer transition-all group',
                   isSelected
-                    ? 'border-indigo-400 dark:border-indigo-500 shadow-md shadow-indigo-100 dark:shadow-indigo-900/30 ring-2 ring-indigo-200 dark:ring-indigo-800'
-                    : 'border-[var(--glass-border)] hover:border-indigo-300',
+                    ? 'border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)] shadow-md shadow-[var(--sgs-primary)] dark:shadow-[var(--sgs-primary)]/30 ring-2 ring-[var(--sgs-primary)] dark:ring-[var(--sgs-primary)]'
+                    : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)]',
                 ].join(' ')}
               >
                 {/* Selection indicator */}
-                <div className={`absolute top-3 right-3 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-[var(--glass-border)]'}`}>
+                <div className={`absolute top-3 right-3 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[var(--sgs-primary)] border-[var(--sgs-primary)]' : 'border-[var(--glass-border)]'}`}>
                   {isSelected && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><polyline points="20 6 9 17 4 12"/></svg>}
                 </div>
                 <div className="flex items-start gap-3 pr-5 mb-3">
@@ -704,13 +704,13 @@ const INTEREST_LABELS: Record<LeadInterest, { label: string; cls: string }> = {
   seller:   { label: 'Người bán',    cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
   buyer:    { label: 'Người mua',    cls: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   renter:   { label: 'Thuê',         cls: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
-  investor: { label: 'Nhà đầu tư',   cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
+  investor: { label: 'Nhà đầu tư',   cls: 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' },
   unknown:  { label: 'Chưa xác định',cls: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400' },
 };
 const SOURCE_DISPLAY: Record<string, { label: string; cls: string }> = {
-  sgsland_db:    { label: 'DB nội bộ',    cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-400' },
+  sgsland_db:    { label: 'DB nội bộ',    cls: 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)]' },
   batdongsan:    { label: 'BatDongSan',   cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
-  muaban:        { label: 'Muaban',       cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
+  muaban:        { label: 'Muaban',       cls: 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-[var(--sgs-primary)] dark:text-[var(--sgs-primary)]' },
   homedy:        { label: 'Homedy',       cls: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' },
   homedy_forum:  { label: 'Homedy HĐ',   cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
   alonhadat:     { label: 'AlonNhaDat',  cls: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
@@ -891,8 +891,8 @@ function LeadsTab() {
                   className={[
                     'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all',
                     isSelected
-                      ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-sgs-primary dark:text-indigo-300 shadow-sm'
-                      : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300',
+                      ? 'border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)] shadow-sm'
+                      : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--sgs-primary)]',
                   ].join(' ')}
                 >
                   <span className={`w-6 h-6 rounded-lg flex items-center justify-center border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>
@@ -966,9 +966,9 @@ function LeadsTab() {
                   title={locked ? 'Cần cấu hình token — nhấn để mở Cấu hình API' : `Chạy ${src.label}`}
                   className={[
                     'ml-1 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all',
-                    busy ? 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary cursor-not-allowed'
+                    busy ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary cursor-not-allowed'
                       : locked ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700',
+                      : 'bg-[var(--sgs-primary)] text-white hover:bg-[var(--sgs-primary)]',
                   ].join(' ')}
                 >
                   {busy
@@ -1087,14 +1087,14 @@ function LeadsTab() {
               <button
                 onClick={() => setViewMode('table')}
                 title="Chế độ bảng"
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
               </button>
               <button
                 onClick={() => setViewMode('cards')}
                 title="Chế độ thẻ"
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-sgs-primary dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-sgs-primary dark:text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
               </button>
@@ -1340,7 +1340,7 @@ export default function ScraperDashboard() {
               className={[
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all -mb-px',
                 tab === t.id
-                  ? 'border-indigo-600 text-sgs-primary dark:text-indigo-400 dark:border-indigo-400'
+                  ? 'border-[var(--sgs-primary)] text-sgs-primary dark:text-[var(--sgs-primary)] dark:border-[var(--sgs-primary)]'
                   : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
               ].join(' ')}
             >

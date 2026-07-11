@@ -276,7 +276,7 @@ function TaskList() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => exportTasksToCSV(tasks)} title="Xuất CSV"
-            className="h-[34px] w-[34px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:text-sgs-primary hover:border-indigo-300 transition-colors">
+            className="h-[34px] w-[34px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:text-sgs-primary hover:border-[var(--sgs-primary)] transition-colors">
             <Download size={15} />
           </button>
           <button onClick={() => setShowCreate(true)}
@@ -300,14 +300,14 @@ function TaskList() {
       </div>
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 bg-sgs-champagne dark:bg-sgs-primary/20 border-b border-sgs-border dark:border-indigo-800 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 bg-sgs-champagne dark:bg-sgs-primary/20 border-b border-sgs-border dark:border-[var(--sgs-primary)] flex-shrink-0">
           <span className="text-xs font-semibold text-sgs-primary dark:text-sgs-on-dark-muted">{selectedIds.size} đã chọn</span>
           <div className="flex flex-wrap gap-2 ml-auto items-center">
             {/* Bulk assign picker */}
             <div className="relative" ref={bulkAssignRef}>
               <button
                 onClick={() => { setBulkAction('assign'); setBulkAssignPickerOpen(v => !v); }}
-                className={`h-[28px] px-2.5 text-xs border rounded-lg flex items-center gap-1.5 transition-colors font-medium ${bulkAction === 'assign' ? 'border-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700' : 'border-indigo-200 dark:border-indigo-700 text-sgs-primary hover:bg-indigo-100'}`}>
+                className={`h-[28px] px-2.5 text-xs border rounded-lg flex items-center gap-1.5 transition-colors font-medium ${bulkAction === 'assign' ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25 text-[var(--sgs-primary)]' : 'border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)] text-sgs-primary hover:bg-[var(--sgs-primary)]/10'}`}>
                 <User2 size={11} /> Giao cho...
               </button>
               {bulkAssignPickerOpen && (

@@ -201,7 +201,7 @@ export const Careers: React.FC = () => {
                                             value={form.name}
                                             onChange={e => { setForm(p => ({ ...p, name: e.target.value })); setErrors(p => ({ ...p, name: '' })); }}
                                             placeholder="Nguyễn Văn A"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-[16px] outline-none transition-all ${errors.name ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`}
+                                            className={`w-full px-4 py-2.5 rounded-xl border text-[16px] outline-none transition-all ${errors.name ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-[var(--sgs-primary)] focus:ring-2 focus:ring-[var(--sgs-primary)]'}`}
                                         />
                                         {errors.name && <p className="text-rose-500 text-xs mt-1">{errors.name}</p>}
                                     </div>
@@ -212,7 +212,7 @@ export const Careers: React.FC = () => {
                                             value={form.email}
                                             onChange={e => { setForm(p => ({ ...p, email: e.target.value })); setErrors(p => ({ ...p, email: '' })); }}
                                             placeholder="ten@email.com"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-[16px] outline-none transition-all ${errors.email ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`}
+                                            className={`w-full px-4 py-2.5 rounded-xl border text-[16px] outline-none transition-all ${errors.email ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-[var(--sgs-primary)] focus:ring-2 focus:ring-[var(--sgs-primary)]'}`}
                                         />
                                         {errors.email && <p className="text-rose-500 text-xs mt-1">{errors.email}</p>}
                                     </div>
@@ -224,7 +224,7 @@ export const Careers: React.FC = () => {
                                         value={form.phone}
                                         onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
                                         placeholder="0901 234 567"
-                                        className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 text-[16px] outline-none transition-all"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:border-[var(--sgs-primary)] focus:ring-2 focus:ring-[var(--sgs-primary)] text-[16px] outline-none transition-all"
                                     />
                                 </div>
                                 <div>
@@ -234,7 +234,7 @@ export const Careers: React.FC = () => {
                                         value={form.message}
                                         onChange={e => { setForm(p => ({ ...p, message: e.target.value })); setErrors(p => ({ ...p, message: '' })); }}
                                         placeholder="Giới thiệu ngắn về bản thân, kinh nghiệm liên quan và lý do bạn muốn gia nhập SGS LAND..."
-                                        className={`w-full px-4 py-2.5 rounded-xl border text-[16px] outline-none transition-all resize-none ${errors.message ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`}
+                                        className={`w-full px-4 py-2.5 rounded-xl border text-[16px] outline-none transition-all resize-none ${errors.message ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-[var(--sgs-primary)] focus:ring-2 focus:ring-[var(--sgs-primary)]'}`}
                                     />
                                     {errors.message && <p className="text-rose-500 text-xs mt-1">{errors.message}</p>}
                                 </div>
@@ -271,11 +271,11 @@ export const Careers: React.FC = () => {
             <section className="py-24 px-6 text-center bg-sgs-primary-deep text-white relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sgs-primary-deep/40 via-slate-900 to-slate-900"></div>
                 <div className="relative z-10 max-w-4xl mx-auto animate-enter">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-sgs-on-dark-muted text-xs font-bold uppercase tracking-widest mb-8">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--sgs-primary)]/100/20 border border-[var(--sgs-primary)]/30 text-sgs-on-dark-muted text-xs font-bold uppercase tracking-widest mb-8">
                         {t('careers.hero_badge')}
                     </div>
                     <h1 className="text-4xl md:text-7xl font-extrabold mb-8 tracking-tight leading-tight">
-                        {t('careers.hero_title')} <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">{t('careers.hero_title_highlight')}</span>
+                        {t('careers.hero_title')} <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--sgs-primary)] to-cyan-400">{t('careers.hero_title_highlight')}</span>
                     </h1>
                     <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-12 leading-relaxed">
                         {t('careers.hero_desc')}

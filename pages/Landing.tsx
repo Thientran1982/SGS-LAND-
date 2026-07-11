@@ -308,8 +308,8 @@ function MapHero({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
               {!query && (
                 <span className="lp-ph-over" aria-hidden="true">
                   <span className="lp-ph-track">
-                    <span>{lang==="vi" ? "Nhà phố Thủ Đức dưới 8 tỷ, pháp lý sạch…" : "Townhouse Thu Duc under 8B VND, clean title…"}</span>
-                    <span>{lang==="vi" ? "Nhà phố Thủ Đức dưới 8 tỷ, pháp lý sạch…" : "Townhouse Thu Duc under 8B VND, clean title…"}</span>
+                    <span>{lang==="vi" ? "Nhà phố Aqua City dưới 6 tỷ, pháp lý sạch…" : "Townhouse Aqua City under 6B VND, clean title…"}</span>
+                    <span>{lang==="vi" ? "Căn hộ Global City dưới 8 tỷ, pháp lý sạch…" : "Apartment Global City under 8B VND, clean title…"}</span>
                   </span>
                 </span>
               )}

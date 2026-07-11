@@ -376,7 +376,7 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         <p style={{ margin: '4px 0' }}>
                             <strong>- Hiệu lực phiếu giữ chỗ đến hết ngày: </strong>
                             {expiryDate
-                                ? <strong style={{ color: '#7c3aed' }}>{fmtShortDate(expiryDate)}</strong>
+                                ? <strong style={{ color: '#1B3A5C' }}>{fmtShortDate(expiryDate)}</strong>
                                 : <span style={{ color: '#999', fontStyle: 'italic' }}>Theo thỏa thuận</span>
                             }
                         </p>

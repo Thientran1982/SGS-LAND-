@@ -124,11 +124,11 @@ export const AboutUs: React.FC = () => {
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-sgs-primary-deep via-slate-900/80 to-transparent"></div>
                 <div className="relative z-10 max-w-4xl mx-auto px-6 text-center animate-enter">
-                    <span className="inline-block py-1 px-3 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-sgs-on-dark-muted text-xs font-bold uppercase tracking-widest mb-6">
+                    <span className="inline-block py-1 px-3 rounded-full bg-[var(--sgs-primary)]/100/20 border border-[var(--sgs-primary)]/30 text-sgs-on-dark-muted text-xs font-bold uppercase tracking-widest mb-6">
                         {t('about.hero_badge')}
                     </span>
                     <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-                        {t('about.hero_title')} <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">{t('about.hero_title_highlight')}</span>
+                        {t('about.hero_title')} <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--sgs-primary)] to-emerald-400">{t('about.hero_title_highlight')}</span>
                     </h1>
                     <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
                         {t('about.hero_desc')}

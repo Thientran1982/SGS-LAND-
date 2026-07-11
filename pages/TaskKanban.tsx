@@ -49,7 +49,7 @@ function deserializeKanbanFilters(): TaskFilters {
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
   { id: 'todo',        label: 'Chờ xử lý',      color: 'bg-slate-50 dark:bg-slate-800/30',       headerColor: 'bg-slate-100 dark:bg-slate-800/60',       dot: 'bg-slate-400' },
-  { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10',  headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30',  dot: 'bg-sgs-primary' },
+  { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25',  headerColor: 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25',  dot: 'bg-sgs-primary' },
   { id: 'review',      label: 'Chờ duyệt',       color: 'bg-amber-50/60 dark:bg-amber-900/10',    headerColor: 'bg-amber-100/80 dark:bg-amber-900/30',    dot: 'bg-amber-500' },
   { id: 'done',        label: 'Hoàn thành',       color: 'bg-emerald-50/60 dark:bg-emerald-900/10', headerColor: 'bg-emerald-100/80 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
   { id: 'cancelled',   label: 'Đã hủy',           color: 'bg-rose-50/40 dark:bg-rose-900/10',      headerColor: 'bg-rose-100/80 dark:bg-rose-900/30',      dot: 'bg-rose-400' },
@@ -110,7 +110,7 @@ export const TaskCard = React.memo(TaskCardBase);
 function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tasks: WfTask[]; onCardClick: (id: string) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
   return (
-    <div className={`flex flex-col rounded-2xl border transition-colors ${col.color} ${isOver ? 'border-indigo-400 dark:border-indigo-500 shadow-md' : 'border-[var(--glass-border)]'}`}
+    <div className={`flex flex-col rounded-2xl border transition-colors ${col.color} ${isOver ? 'border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)] shadow-md' : 'border-[var(--glass-border)]'}`}
       style={{ width: '272px', minWidth: '272px' }}>
       <div className={`px-3 py-2.5 flex items-center justify-between ${col.headerColor} rounded-t-2xl`}>
         <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tas
           {tasks.length}
         </span>
       </div>
-      <div ref={setNodeRef} className={`flex-1 overflow-y-auto p-2.5 space-y-2 no-scrollbar min-h-[120px] transition-colors ${isOver ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
+      <div ref={setNodeRef} className={`flex-1 overflow-y-auto p-2.5 space-y-2 no-scrollbar min-h-[120px] transition-colors ${isOver ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25' : ''}`}>
         {tasks.length === 0 ? (
           <p className={`text-center text-xs py-8 transition-colors ${isOver ? 'text-sgs-text-muted' : 'text-[var(--text-tertiary)]'}`}>
             {isOver ? 'Thả vào đây' : 'Không có công việc'}

@@ -273,7 +273,7 @@ export default function VendorManagement() {
               <button
                 key={s}
                 onClick={() => { setFilterStatus(filterStatus === s ? '' : s); setPage(1); }}
-                className={`bg-white rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-gray-100'}`}
+                className={`bg-white rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-gray-100'}`}
               >
                 <p className="text-2xl font-bold text-sgs-text">{statusCounts[s] || 0}</p>
                 <p className="text-xs font-semibold mt-1">
@@ -294,7 +294,7 @@ export default function VendorManagement() {
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Tìm theo tên công ty hoặc email..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] bg-white"
             />
           </div>
           <Dropdown

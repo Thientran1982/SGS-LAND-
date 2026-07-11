@@ -13,7 +13,7 @@ const CLUSTER_RADIUS_PX = 60;
 let nominatimReachable = true;
 let nominatimTrippedAt = 0;
 // ── Transaction → design tokens ──────────────────────────────────────────────
-// Priority: PropertyType.PROJECT → blue-600 | TransactionType.RENT → violet-600 | default → indigo-600
+// Priority: PropertyType.PROJECT → blue-600 | TransactionType.RENT → [var(--sgs-primary)] | default → [var(--sgs-primary)]
 // bg values MUST match the CSS classes in critical.css (.sgs-pin-sale/rent/project).
 // NOTE: PropertyType.PROJECT = 'Project' (PascalCase enum value stored in DB).
 //       Compare case-insensitively so we match 'Project', 'PROJECT', 'project', etc.
@@ -21,8 +21,8 @@ function pinTokens(transaction?: string, propertyType?: string) {
     if (propertyType?.toUpperCase() === 'PROJECT')
         return { bg: '#2563eb', glow: 'rgba(37,99,235,0.40)' };       // blue-600 — Dự án
     if (transaction?.toUpperCase() === 'RENT')
-        return { bg: '#7c3aed', glow: 'rgba(124,58,237,0.40)' };      // violet-600 — Thuê
-    return { bg: '#4f46e5', glow: 'rgba(79,70,229,0.40)' };           // indigo-600 — Bán
+        return { bg: '#1B3A5C', glow: 'rgba(124,58,237,0.40)' };      // [var(--sgs-primary)] — Thuê
+    return { bg: '#4f46e5', glow: 'rgba(79,70,229,0.40)' };           // [var(--sgs-primary)] — Bán
 }
 // ── Geo utilities ────────────────────────────────────────────────────────────
 const hasRealCoords = (listing: any): boolean => {

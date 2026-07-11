@@ -32,12 +32,12 @@ const CONSTANTS = {
 const DESIGN_TOKENS = {
     light: {
         primary: 'var(--sgs-primary)',
-        secondary: '#8B5CF6',
-        tertiary: '#EC4899',
+        secondary: '#C8963E',
+        tertiary: '#4A7C8C',
         success: 'var(--sgs-verified)',
         warning: '#F59E0B',
-        info: '#3B82F6',
-        danger: '#F43F5E',
+        info: '#3E6D9C',
+        danger: '#DC5A5A',
         grid: 'var(--sgs-border)',
         text: '#64748B',
         background: '#FFFFFF',
@@ -47,12 +47,12 @@ const DESIGN_TOKENS = {
     },
     dark: {
         primary: 'var(--sgs-primary)',
-        secondary: '#A78BFA',
-        tertiary: '#F472B6',
+        secondary: '#D4A855',
+        tertiary: '#6BA3B5',
         success: '#34D399',
         warning: '#FBBF24',
-        info: '#60A5FA',
-        danger: '#FB7185',
+        info: '#7FB0D9',
+        danger: '#E88A8A',
         grid: '#334155',
         text: '#94A3B8',
         background: '#0F172A',
@@ -61,7 +61,7 @@ const DESIGN_TOKENS = {
         barGradientEnd: 'var(--sgs-primary)',
     },
 };
-const CHART_PALETTE = ['var(--sgs-primary)', '#8B5CF6', '#EC4899', 'var(--sgs-verified)', '#F59E0B', '#3B82F6', '#EF4444'];
+const CHART_PALETTE = ['var(--sgs-primary)', '#C8963E', '#4A7C8C', 'var(--sgs-verified)', '#F59E0B', '#3E6D9C', '#D14545'];
 // -----------------------------------------------------------------------------
 //  INTERNAL — fetch tenant theme (not exported)
 // -----------------------------------------------------------------------------

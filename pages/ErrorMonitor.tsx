@@ -34,7 +34,7 @@ interface ErrorStats {
 // ─── Config maps ──────────────────────────────────────────────────────────────
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; dot: string }> = {
   frontend:         { label: 'Giao diện (Frontend)', icon: <Globe size={14} />,    color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10',   dot: 'bg-blue-500' },
-  backend:          { label: 'Máy chủ (Backend)',     icon: <Server size={14} />,   color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10', dot: 'bg-purple-500' },
+  backend:          { label: 'Máy chủ (Backend)',     icon: <Server size={14} />,   color: 'text-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/100/10', dot: 'bg-[var(--sgs-primary)]/100' },
   unhandled_promise:{ label: 'Bất đồng bộ (Promise)', icon: <Zap size={14} />,     color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10', dot: 'bg-amber-500' },
   chunk_load:       { label: 'Tải module (Chunk)',    icon: <RefreshCw size={14} />, color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-500/10',    dot: 'bg-cyan-500' },
 };
@@ -114,7 +114,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
         className={`
           flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl border transition-all
           ${value
-            ? 'border-indigo-300 dark:border-indigo-500/50 bg-indigo-50 dark:bg-indigo-500/10 text-sgs-primary dark:text-indigo-300'
+            ? 'border-[var(--sgs-primary)] dark:border-[var(--sgs-primary)]/50 bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/100/10 text-sgs-primary dark:text-[var(--sgs-primary)]'
             : 'border-[var(--glass-border)] bg-[var(--bg-app)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
           }
         `}
@@ -137,7 +137,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
               className={`
                 w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors
                 ${opt.value === value
-                  ? 'bg-indigo-50 dark:bg-indigo-500/10 text-sgs-primary dark:text-indigo-300'
+                  ? 'bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/100/10 text-sgs-primary dark:text-[var(--sgs-primary)]'
                   : 'hover:bg-[var(--glass-surface-hover)] text-[var(--text-primary)]'
                 }
               `}
@@ -157,7 +157,7 @@ function FilterDropdown({ value, onChange, options, placeholder }: FilterDropdow
 const TYPE_OPTIONS: DropdownOption[] = [
   { value: '', label: 'Tất cả loại lỗi' },
   { value: 'frontend',          label: 'Giao diện (Frontend)',    icon: <Globe size={14} />,     dotColor: 'bg-blue-500' },
-  { value: 'backend',           label: 'Máy chủ (Backend)',       icon: <Server size={14} />,    dotColor: 'bg-purple-500' },
+  { value: 'backend',           label: 'Máy chủ (Backend)',       icon: <Server size={14} />,    dotColor: 'bg-[var(--sgs-primary)]/100' },
   { value: 'unhandled_promise', label: 'Bất đồng bộ (Promise)',  icon: <Zap size={14} />,       dotColor: 'bg-amber-500' },
   { value: 'chunk_load',        label: 'Tải module (Chunk)',      icon: <RefreshCw size={14} />, dotColor: 'bg-cyan-500' },
 ];

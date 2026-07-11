@@ -143,7 +143,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
     return (
                 <div 
             className={`bg-[var(--bg-surface)] rounded-[20px] border shadow-sm relative overflow-hidden transition-all duration-300 group flex flex-col h-full
-                ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' : `border-[var(--glass-border)] hover:border-[var(--glass-border)] hover:shadow-md`}`}
+                ${isSelected ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]/20 bg-[var(--sgs-primary)]/10' : `border-[var(--glass-border)] hover:border-[var(--glass-border)] hover:shadow-md`}`}
             onClick={() => onToggleSelect(proposal.id)}
         >
             {/* Header / Selection */}
@@ -151,7 +151,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                 <div className="flex items-center gap-3">
                     <div 
                         className={`w-5 h-5 rounded border transition-colors flex items-center justify-center
-                            ${isSelected ? 'bg-indigo-600 border-sgs-primary text-white' : 'bg-[var(--bg-surface)] border-slate-300 text-transparent group-hover:border-indigo-400'}`}
+                            ${isSelected ? 'bg-[var(--sgs-primary)] border-sgs-primary text-white' : 'bg-[var(--bg-surface)] border-slate-300 text-transparent group-hover:border-[var(--sgs-primary)]'}`}
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>

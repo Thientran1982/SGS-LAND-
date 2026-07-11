@@ -165,7 +165,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : overview ? (
           <>
-            <StatCard label="Tổng công việc" value={overview.total_tasks} icon={<ClipboardList className="w-5 h-5 text-sgs-primary" />} color="bg-indigo-100 dark:bg-indigo-900/30" />
+            <StatCard label="Tổng công việc" value={overview.total_tasks} icon={<ClipboardList className="w-5 h-5 text-sgs-primary" />} color="bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/25" />
             <StatCard label="Quá hạn" value={overview.overdue_count} sub="Cần xử lý ngay" icon={<AlertTriangle className="w-5 h-5 text-rose-600" />} color="bg-rose-100 dark:bg-rose-900/30" />
             <StatCard label="Hoàn thành" value={`${completionRate}%`} sub={`${overview.done} / ${overview.total_tasks}`} icon={<CheckCircle2 className="w-5 h-5 text-sgs-verified" />} color="bg-emerald-100 dark:bg-emerald-900/30" />
             <StatCard label="Đến hạn hôm nay" value={overview.due_today_count} icon={<Clock className="w-5 h-5 text-sgs-accent-text" />} color="bg-amber-100 dark:bg-amber-900/30" />
@@ -293,7 +293,7 @@ export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
                 key={t.id}
                 className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--glass-surface-hover)] transition-colors cursor-pointer"
                 onClick={() => { window.location.hash = `#/${ROUTES.TASKS}/${t.id}`; }}>
-                <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${t.days_until_deadline === 0 ? 'bg-rose-500' : (t.days_until_deadline ?? 99) <= 3 ? 'bg-amber-400' : 'bg-indigo-400'}`} />
+                <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${t.days_until_deadline === 0 ? 'bg-rose-500' : (t.days_until_deadline ?? 99) <= 3 ? 'bg-amber-400' : 'bg-[var(--sgs-primary)]'}`} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-[var(--text-primary)] truncate">{t.title}</p>
                   <p className="text-xs text-[var(--text-tertiary)]">

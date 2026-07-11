@@ -424,7 +424,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   onKeyDown={e => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') setEditingTitle(false); }}
                   onBlur={saveTitle}
                   autoFocus
-                  className="flex-1 text-2xl font-bold bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="flex-1 text-2xl font-bold bg-[var(--glass-surface-hover)] border border-[var(--sgs-primary)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30"
                 />
                 {savingTitle && <Loader2 size={16} className="animate-spin text-sgs-primary mt-3 flex-shrink-0" />}
               </div>
@@ -573,7 +573,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 <textarea rows={5} value={editDesc} onChange={e => setEditDesc(e.target.value)}
                   onBlur={saveDesc} autoFocus
                   placeholder="Nhập mô tả công việc... (tự động lưu khi rời ô)"
-                  className="w-full text-sm bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
+                  className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--sgs-primary)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 resize-none"
                 />
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => setEditingDesc(false)} className="h-8 px-3 text-xs border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">Hủy</button>
@@ -599,7 +599,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                     className={`text-sm px-4 py-2 rounded-xl border font-medium transition-all disabled:opacity-50 flex items-center gap-2 ${
                       s === 'done' ? 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-300' :
                       s === 'cancelled' ? 'border-rose-300 text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/20 dark:border-rose-700 dark:text-rose-400' :
-                      'border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:border-indigo-300 hover:text-indigo-600'
+                      'border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:border-[var(--sgs-primary)] hover:text-[var(--sgs-primary)]'
                     }`}>
                     {changingStatus ? <Loader2 size={14} className="animate-spin" /> :
                       s === 'done' ? <CheckCircle2 size={14} /> :
@@ -656,7 +656,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 <input value={assigneeSearch} onChange={e => { setAssigneeSearch(e.target.value); setUserPickerOpen(true); }}
                   onFocus={() => setUserPickerOpen(true)}
                   placeholder="Tìm và thêm nhân viên..."
-                  className="w-full h-[36px] pl-9 pr-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+                  className="w-full h-[36px] pl-9 pr-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30" />
               </div>
               {userPickerOpen && (userResults.length > 0 || searchingUsers) && (
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 overflow-hidden">
@@ -684,7 +684,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
             </div>
             {/* Pending assignee: due_note + confirm */}
             {pendingAssignee && (
-              <div className="mt-2 p-3 bg-sgs-champagne dark:bg-sgs-primary/20 rounded-xl border border-sgs-border dark:border-indigo-800 space-y-2">
+              <div className="mt-2 p-3 bg-sgs-champagne dark:bg-sgs-primary/20 rounded-xl border border-sgs-border dark:border-[var(--sgs-primary)] space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-sgs-champagne dark:bg-sgs-primary/30 flex items-center justify-center text-[10px] font-bold text-sgs-primary flex-shrink-0">
                     {pendingAssignee.name?.charAt(0).toUpperCase()}
@@ -696,7 +696,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 </div>
                 <input value={dueNote} onChange={e => setDueNote(e.target.value)}
                   placeholder="Ghi chú cho người thực hiện (tùy chọn)..."
-                  className="w-full h-[32px] px-3 text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                  className="w-full h-[32px] px-3 text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--sgs-primary)]" />
                 <button onClick={addAssignee} disabled={addingAssignee}
                   className="w-full h-[32px] bg-sgs-primary text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-sgs-primary disabled:opacity-50 transition-colors">
                   {addingAssignee ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Xác nhận giao việc
@@ -736,7 +736,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                     {editingCommentId === c.id ? (
                       <div className="space-y-2">
                         <textarea autoFocus rows={2} value={editCommentText} onChange={e => setEditCommentText(e.target.value)}
-                          className="w-full text-sm bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none resize-none" />
+                          className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--sgs-primary)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none resize-none" />
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => setEditingCommentId(null)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">Hủy</button>
                           <button onClick={() => saveComment(c.id)} className="text-xs text-sgs-primary hover:text-sgs-primary font-semibold">Lưu</button>
@@ -757,7 +757,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 <textarea ref={commentRef} rows={2} value={newComment} onChange={e => setNewComment(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendComment(); }}
                   placeholder="Thêm bình luận... (Ctrl+Enter để gửi)"
-                  className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none" />
+                  className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 resize-none" />
                 <div className="flex justify-end">
                   <button onClick={sendComment} disabled={sendingComment || !newComment.trim()}
                     className="h-8 px-4 bg-sgs-primary text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-sgs-primary disabled:opacity-50 transition-colors">
@@ -788,7 +788,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div key={log.id} className="flex gap-2.5">
                 <div className="flex flex-col items-center flex-shrink-0">
                   <div className="w-6 h-6 rounded-full bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--sgs-primary)]" />
                   </div>
                   {i < activity.length - 1 && <div className="w-px flex-1 bg-[var(--glass-border)] mt-1" />}
                 </div>
@@ -830,13 +830,13 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Giờ thực tế (tùy chọn)</label>
                   <input type="number" min="0.5" step="0.5" value={actualHours} onChange={e => setActualHours(e.target.value)}
                     placeholder="Số giờ thực tế..."
-                    className="w-full h-[36px] px-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+                    className="w-full h-[36px] px-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Ghi chú hoàn thành (tùy chọn)</label>
                   <textarea rows={2} value={completionNote} onChange={e => setCompletionNote(e.target.value)}
                     placeholder="Ghi chú kết quả..."
-                    className="w-full px-3 py-2 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none" />
+                    className="w-full px-3 py-2 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/30 resize-none" />
                 </div>
               </div>
             )}

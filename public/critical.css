@@ -1,9 +1,9 @@
 :root {
   /* --- DESIGN TOKENS (Light Mode) --- */
-  --bg-app:         #EEF2F7;
+  --bg-app:        #FFFFFF;
   --bg-surface:     #FFFFFF;
-  --bg-elevated:    #F8FAFC;
-  --bg-sidebar:     #F4F6FA;
+  --bg-elevated:   #FFFFFF;
+  --bg-sidebar:    #FFFFFF;
   --bg-input:       #FAFBFC;
 
   --glass-surface:       rgba(255, 255, 255, 0.72);

@@ -206,7 +206,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         ref={searchInputRef}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                        className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         placeholder={t('inventory.search_hint')}
                     />
                     {searchQuery && (
@@ -301,7 +301,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                         min="0"
                                         value={discountValue}
                                         onChange={e => setDiscountValue(Number(e.target.value))}
-                                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-4 pr-12 py-3 text-lg font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] transition-all"
+                                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-4 pr-12 py-3 text-lg font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]/20 focus:bg-[var(--bg-surface)] transition-all"
                                     />
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] font-bold text-xs pointer-events-none">
                                         {discountType === 'PERCENT' ? '%' : 'VND'}
@@ -313,7 +313,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                         min="0" max="15" step="0.5" 
                                         value={discountValue} 
                                         onChange={e => setDiscountValue(Number(e.target.value))} 
-                                        className="w-24 accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer hidden sm:block"
+                                        className="w-24 accent-[var(--sgs-primary)] h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer hidden sm:block"
                                     />
                                 )}
                             </div>
@@ -453,7 +453,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     <button
                                         type="button"
                                         onClick={() => setProposedSchedule(s => [...s, { id: `m-${Date.now()}`, label: `Đợt ${s.length + 1}`, daysFromNow: s.length * 30, percentage: 0 }])}
-                                        className="w-full text-xs font-bold text-sgs-primary hover:text-sgs-primary py-1.5 border border-dashed border-sgs-border hover:border-indigo-400 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                        className="w-full text-xs font-bold text-sgs-primary hover:text-sgs-primary py-1.5 border border-dashed border-sgs-border hover:border-[var(--sgs-primary)] rounded-lg transition-colors flex items-center justify-center gap-1"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                         Thêm đợt thanh toán

@@ -45,7 +45,7 @@ const STATUS_COLOR: Record<string, string> = {
     COMPLETED: 'bg-sky-100 text-sky-700 border-sky-200',
     ON_HOLD: 'bg-amber-100 text-amber-700 border-amber-200',
     SUSPENDED: 'bg-rose-100 text-rose-700 border-rose-200',
-    BOOKING: 'bg-violet-100 text-violet-700 border-violet-200',
+    BOOKING: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--sgs-primary)]',
 };
 const ACCESS_COLOR: Record<string, string> = {
     ACTIVE: 'bg-emerald-100 text-emerald-700',
@@ -190,7 +190,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
             setSaving(false);
         }
     };
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
@@ -325,7 +325,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                                     type="button"
                                     onClick={() => coverInputRef.current?.click()}
                                     disabled={coverUploading}
-                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-indigo-400 bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-sgs-primary transition-colors disabled:opacity-60"
+                                    className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-[var(--glass-border)] hover:border-[var(--sgs-primary)] bg-[var(--bg-app)] flex flex-col items-center justify-center gap-2 text-[var(--text-secondary)] hover:text-sgs-primary transition-colors disabled:opacity-60"
                                 >
                                     {coverUploading ? (
                                         <span className="w-6 h-6 border-2 border-current/30 border-t-current rounded-full animate-spin" />
@@ -342,12 +342,12 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                         {/* Mini-site công khai (/p/<code>) — ADMIN/SUPER_ADMIN/TEAM_LEAD của tenant chủ có quyền bật/tắt (server enforce). */}
                         <div className="col-span-2">
                             <label className={`${labelCls} mb-2`}>{t('project.microsite_section')}</label>
-                            <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
+                            <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${publicMicrosite ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/30' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}>
                                 <input
                                     type="checkbox"
                                     checked={publicMicrosite}
                                     onChange={(e) => setPublicMicrosite(e.target.checked)}
-                                    className="mt-0.5 w-4 h-4 accent-indigo-600"
+                                    className="mt-0.5 w-4 h-4 accent-[var(--sgs-primary)]"
                                 />
                                 <span className="flex-1">
                                     <span className="block text-sm font-semibold text-[var(--text-primary)]">
@@ -460,7 +460,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     // Tenants not yet ACTIVE in this project
     const activePartnerIds = new Set(accesses.filter(a => a.status === 'ACTIVE').map(a => a.partner_tenant_id));
     const availableTenants = tenants.filter(t2 => !activePartnerIds.has(t2.id));
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
@@ -567,10 +567,10 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 const STATUS_LISTING_COLOR: Record<string, string> = {
     AVAILABLE: 'bg-emerald-100 text-emerald-700',
     BOOKING:   'bg-sky-100 text-sky-700',
-    OPENING:   'bg-indigo-100 text-indigo-700',
+    OPENING:   'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
     HOLD:      'bg-amber-100 text-amber-700',
     SOLD:      'bg-slate-100 text-slate-500',
-    RENTED:    'bg-violet-100 text-violet-700',
+    RENTED:    'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]',
     INACTIVE:  'bg-rose-100 text-rose-500',
 };
 function fmtNum(v: number, maxDec = 2) {
@@ -602,11 +602,11 @@ interface ListingDetailPanelProps {
 }
 const LISTING_STATUS_OPTIONS: { value: string; idle: string }[] = [
     { value: 'BOOKING',  idle: 'bg-sky-50    text-sky-600    border border-sky-200'   },
-    { value: 'OPENING',  idle: 'bg-indigo-50 text-sgs-primary border border-indigo-200'},
+    { value: 'OPENING',  idle: 'bg-[var(--sgs-primary)]/10 text-sgs-primary border border-[var(--sgs-primary)]'},
     { value: 'AVAILABLE',idle: 'bg-emerald-50 text-emerald-600 border border-emerald-200'},
     { value: 'HOLD',     idle: 'bg-amber-50  text-amber-600  border border-amber-200' },
     { value: 'SOLD',     idle: 'bg-slate-100 text-slate-500  border border-slate-200' },
-    { value: 'RENTED',   idle: 'bg-violet-50 text-violet-600 border border-violet-200'},
+    { value: 'RENTED',   idle: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border border-[var(--sgs-primary)]'},
     { value: 'INACTIVE', idle: 'bg-rose-50   text-rose-500   border border-rose-200'  },
 ];
 function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange, t }: ListingDetailPanelProps) {
@@ -1428,8 +1428,8 @@ function BulkImageUploadModal({
                                 disabled={!projectCode || submitting}
                                 className={`w-full rounded-xl border-2 border-dashed transition-colors px-4 py-8 flex flex-col items-center justify-center gap-2 ${
                                     dragOver
-                                        ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700'
-                                        : 'border-[var(--glass-border)] hover:border-indigo-400 text-[var(--text-secondary)] hover:text-indigo-600'
+                                        ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10 dark:bg-[var(--sgs-primary)]/30 text-[var(--sgs-primary)]'
+                                        : 'border-[var(--glass-border)] hover:border-[var(--sgs-primary)] text-[var(--text-secondary)] hover:text-[var(--sgs-primary)]'
                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                             >
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -2216,11 +2216,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                 {([
                                     { key: 'totalCount',     label: t('project.stat_total'),    cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
                                     { key: 'availableCount', label: t('project.stat_available'), cls: 'bg-emerald-100 text-emerald-700' },
-                                    { key: 'openingCount',   label: t('project.stat_opening'),   cls: 'bg-indigo-100 text-indigo-700' },
+                                    { key: 'openingCount',   label: t('project.stat_opening'),   cls: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]' },
                                     { key: 'bookingCount',   label: t('project.stat_booking'),   cls: 'bg-sky-100 text-sky-700' },
                                     { key: 'holdCount',      label: t('project.stat_hold'),      cls: 'bg-amber-100 text-amber-700' },
                                     { key: 'soldCount',      label: t('project.stat_sold'),      cls: 'bg-slate-100 text-slate-500' },
-                                    { key: 'rentedCount',    label: t('project.stat_rented'),    cls: 'bg-violet-100 text-violet-700' },
+                                    { key: 'rentedCount',    label: t('project.stat_rented'),    cls: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]' },
                                     { key: 'inactiveCount',  label: t('project.stat_inactive'),  cls: 'bg-rose-50 text-rose-500 border border-rose-200' },
                                 ] as const).filter(({ key }) =>
                                     key === 'totalCount'
@@ -2526,7 +2526,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                     type="button"
                                                     onClick={() => setAccessListings([l])}
                                                     className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border whitespace-nowrap hover:bg-sgs-champagne"
-                                                    style={{ color: '#7C3AED', borderColor: '#DDD6FE' }}
+                                                    style={{ color: '#1B3A5C', borderColor: '#DDD6FE' }}
                                                 >
                                                     {IC.LOCK} {t('project.listing_access_single_btn')}
                                                 </button>
@@ -2719,7 +2719,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                 <div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-6 max-w-lg w-full space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-sgs-champagne dark:bg-violet-900/30 flex items-center justify-center text-sgs-primary shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-sgs-champagne dark:bg-[var(--sgs-primary)]/25 flex items-center justify-center text-sgs-primary shrink-0">
                                 {IC.UPLOAD}
                             </div>
                             <div>
@@ -2885,7 +2885,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
     // Inline revoke confirm: key = `${listingId}::${partnerTenantId}`
     const [revokeKey, setRevokeKey] = useState<string | null>(null);
 
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-violet-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
     // Load access list for each listing
     useEffect(() => {
@@ -2964,13 +2964,13 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                 </div>
                 <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
                     {/* Info box */}
-                    <div className="bg-sgs-champagne dark:bg-violet-900/20 border border-sgs-border dark:border-violet-700 rounded-xl px-4 py-3 text-xs text-sgs-primary dark:text-violet-300">
+                    <div className="bg-sgs-champagne dark:bg-[var(--sgs-primary)]/25 border border-sgs-border dark:border-[var(--sgs-primary)] rounded-xl px-4 py-3 text-xs text-sgs-primary dark:text-[var(--sgs-primary)]">
                         <strong>{t('project.listing_access_note')}:</strong> {t('project.listing_access_info')}
                     </div>
 
                     {/* Grant form */}
-                    <form onSubmit={handleGrant} className="bg-sgs-champagne dark:bg-violet-900/20 border border-sgs-border dark:border-violet-700 rounded-xl p-4 space-y-3">
-                        <p className="text-sm font-bold text-sgs-primary dark:text-violet-300">{t('project.listing_access_grant_title')}</p>
+                    <form onSubmit={handleGrant} className="bg-sgs-champagne dark:bg-[var(--sgs-primary)]/25 border border-sgs-border dark:border-[var(--sgs-primary)] rounded-xl p-4 space-y-3">
+                        <p className="text-sm font-bold text-sgs-primary dark:text-[var(--sgs-primary)]">{t('project.listing_access_grant_title')}</p>
                         {err && <p className="text-rose-600 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5" role="alert">{err}</p>}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
@@ -3189,7 +3189,7 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                     )}
                     {!isPartner && (project as any).partnerCount != null && (
                         <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--sgs-primary)] shrink-0" />
                             <span className="text-xs text-[var(--text-tertiary)] truncate">
                                 <span className="font-semibold text-[var(--text-secondary)]">{(project as any).partnerCount}</span> {t('project.partner_count')}
                             </span>
@@ -3227,7 +3227,7 @@ function ProjectCardBase({ project, isAdmin, isPartner, onEdit, onDelete, onAcce
                 <button
                     type="button"
                     onClick={onPriceMatrix}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne border border-[var(--glass-border)] hover:border-indigo-300 text-[var(--text-secondary)] hover:text-sgs-primary text-sm font-semibold rounded-xl transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-sgs-champagne border border-[var(--glass-border)] hover:border-[var(--sgs-primary)] text-[var(--text-secondary)] hover:text-sgs-primary text-sm font-semibold rounded-xl transition-all"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     Bảng Giá
@@ -3530,7 +3530,7 @@ export function Projects() {
                 )}
                 {loading ? (
                     <div className="flex items-center justify-center h-48">
-                        <div className="w-8 h-8 border-4 border-sgs-border border-t-indigo-600 rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-4 border-sgs-border border-t-[var(--sgs-primary)] rounded-full animate-spin" />
                     </div>
                 ) : projects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-48 text-[var(--text-secondary)]">
@@ -3570,7 +3570,7 @@ export function Projects() {
                                     isAdmin ? 'cursor-grab active:cursor-grabbing' : '',
                                     dragIdx === idx ? 'opacity-40 scale-[0.97] shadow-inner' : '',
                                     dragOverIdx === idx && dragIdx !== idx
-                                        ? 'ring-2 ring-indigo-400 ring-offset-2 rounded-2xl scale-[1.01]'
+                                        ? 'ring-2 ring-[var(--sgs-primary)] ring-offset-2 rounded-2xl scale-[1.01]'
                                         : '',
                                 ].join(' ')}
                             >

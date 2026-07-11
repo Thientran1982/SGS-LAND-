@@ -547,7 +547,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <input 
                                         value={formData.title || ''} 
                                         onChange={e => setFormData({...formData, title: e.target.value})} 
-                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold focus:border-indigo-500 outline-none ${errors.title ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold focus:border-[var(--sgs-primary)] outline-none ${errors.title ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                         placeholder={isProject ? t('inventory.placeholder_title_project') : t('inventory.placeholder_title_unit')} 
                                     />
                                     {errors.title && <p className="text-xs2 text-rose-500 mt-1">{errors.title}</p>}
@@ -561,7 +561,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <input 
                                         value={formData.contactPhone || ''} 
                                         onChange={e => setFormData({...formData, contactPhone: e.target.value})} 
-                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none font-mono ${errors.contactPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none font-mono ${errors.contactPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                         placeholder="0912..." 
                                     />
                                     {errors.contactPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.contactPhone}</p>}
@@ -586,7 +586,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             <input 
                                                 value={formData.ownerPhone || ''} 
                                                 onChange={e => setFormData({...formData, ownerPhone: e.target.value})} 
-                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--bg-surface)] font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`}
+                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none bg-[var(--bg-surface)] font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`}
                                                 placeholder="09..."
                                             />
                                             {errors.ownerPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.ownerPhone}</p>}
@@ -624,7 +624,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <input 
                                         value={formData.location || ''} 
                                         onChange={e => setFormData({...formData, location: e.target.value})} 
-                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none ${errors.location ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none ${errors.location ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                         placeholder={t('inventory.placeholder_addr')} 
                                     />
                                     {errors.location && <p className="text-xs2 text-rose-500 mt-1">{errors.location}</p>}
@@ -705,7 +705,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                         }
                                                     }
                                                 }}
-                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] focus:border-indigo-500 outline-none ${errors.price ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] focus:border-[var(--sgs-primary)] outline-none ${errors.price ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                                 placeholder={priceUnit === UNITS.BILLION.value ? 'VD: 5.5' : priceUnit === UNITS.MILLION.value ? 'VD: 5500' : 'VD: 5500000000'}
                                             />
                                             <div className="w-28 shrink-0">
@@ -750,7 +750,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 type="number" 
                                                 value={formData.area || ''} 
                                                 onChange={e => setFormData({...formData, area: Number(e.target.value)})} 
-                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8 ${errors.area ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
+                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none pr-8 ${errors.area ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                             />
                                             <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
                                         </div>
@@ -821,7 +821,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             type="checkbox" 
                                             checked={!!formData.isVerified} 
                                             onChange={e => setFormData({...formData, isVerified: e.target.checked})}
-                                            className="w-3.5 h-3.5 accent-indigo-600 rounded border-slate-300 focus:ring-sgs-primary"
+                                            className="w-3.5 h-3.5 accent-[var(--sgs-primary)] rounded border-slate-300 focus:ring-sgs-primary"
                                         />
                                         <span className="text-xs2 font-bold text-sgs-primary uppercase flex items-center gap-1">
                                             {t('inventory.verified')}
@@ -875,7 +875,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     {images.map((img, idx) => (
                                         <div 
                                             key={img + idx} 
-                                            className={`relative aspect-square rounded-xl overflow-hidden group border ${dragIdx === idx ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-[var(--glass-border)]'}`}
+                                            className={`relative aspect-square rounded-xl overflow-hidden group border ${dragIdx === idx ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-[var(--glass-border)]'}`}
                                             draggable
                                             onDragStart={() => setDragIdx(idx)}
                                             onDragOver={(e) => { e.preventDefault(); }}
@@ -900,7 +900,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             onDragOver={handleDragOver}
                                             onDragLeave={handleDragLeave}
                                             onDrop={handleDrop}
-                                            className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 text-[var(--text-secondary)] hover:border-indigo-400 hover:text-indigo-500 bg-[var(--glass-surface)] hover:bg-indigo-50'}`}
+                                            className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-[var(--sgs-primary)] bg-[var(--sgs-primary)]/10' : 'border-slate-300 text-[var(--text-secondary)] hover:border-[var(--sgs-primary)] hover:text-[var(--sgs-primary)] bg-[var(--glass-surface)] hover:bg-[var(--sgs-primary)]/10'}`}
                                         >
                                             {ICONS.IMAGE_ADD}
                                             <span className="text-xs2 font-bold mt-2 text-center px-2">{t('inventory.drag_drop')}</span>

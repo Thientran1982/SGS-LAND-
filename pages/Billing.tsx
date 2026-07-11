@@ -150,7 +150,7 @@ export const Billing: React.FC = () => {
                                 <span className="font-bold text-[var(--text-primary)]">{usage?.emailsSent ?? 0} / {currentPlan.limits.emailsPerMonth}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-purple-500" style={{ width: `${Math.min(100, ((usage?.emailsSent ?? 0) / currentPlan.limits.emailsPerMonth) * 100)}%` }}></div>
+                                <div className="h-full bg-[var(--sgs-primary)]/100" style={{ width: `${Math.min(100, ((usage?.emailsSent ?? 0) / currentPlan.limits.emailsPerMonth) * 100)}%` }}></div>
                             </div>
                         </div>
                         <div>
@@ -173,7 +173,7 @@ export const Billing: React.FC = () => {
                     {(Object.values(PLANS) as Plan[]).map((plan) => {
                         const isCurrent = plan.id === subscription?.planId;
                         return (
-                            <div key={plan.id} className={`p-6 rounded-[24px] border flex flex-col transition-all ${isCurrent ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:shadow-lg hover:-translate-y-1'}`}>
+                            <div key={plan.id} className={`p-6 rounded-[24px] border flex flex-col transition-all ${isCurrent ? 'bg-[var(--sgs-primary)]/10 border-[var(--sgs-primary)] shadow-sm' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:shadow-lg hover:-translate-y-1'}`}>
                                 <div className="flex justify-between items-start mb-4">
                                     <h4 className={`font-bold ${isCurrent ? 'text-sgs-primary' : 'text-[var(--text-primary)]'}`}>
                                         {t(`billing.plan_${plan.name.toLowerCase()}`)}
@@ -197,7 +197,7 @@ export const Billing: React.FC = () => {
                                 <button
                                     disabled={isCurrent || processingPlan === plan.id}
                                     onClick={() => !isCurrent && setUpgradeConfirmPlan(plan.id)}
-                                    className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-indigo-50 text-sgs-primary border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600 cursor-pointer'}`}
+                                    className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-[var(--sgs-primary)]/10 text-sgs-primary border border-[var(--sgs-primary)]' : 'bg-slate-900 text-white hover:bg-[var(--sgs-primary)] cursor-pointer'}`}
                                 >
                                     {processingPlan === plan.id ? '…' : isCurrent ? t('billing.current_plan') : t('billing.upgrade_btn')}
                                 </button>

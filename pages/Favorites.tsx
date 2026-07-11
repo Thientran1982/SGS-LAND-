@@ -121,7 +121,7 @@ export const Favorites: React.FC = () => {
                     <div className="flex items-center gap-1.5 flex-wrap mt-2">
                         <button
                             onClick={() => setFilterType('ALL')}
-                            className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                            className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'}`}
                         >
                             {t('favorites.all_types')}
                         </button>
@@ -129,7 +129,7 @@ export const Favorites: React.FC = () => {
                             <button
                                 key={type}
                                 onClick={() => setFilterType(type)}
-                                className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                                className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-[var(--sgs-primary)]'}`}
                             >
                                 {t(`property.${type}`)}
                             </button>

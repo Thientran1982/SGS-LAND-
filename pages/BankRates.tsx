@@ -228,7 +228,7 @@ export const BankRates: React.FC = () => {
         value={value}
         onChange={e => { setForm(f => ({ ...f, [id]: e.target.value })); if (errors[id]) setErrors(p => ({ ...p, [id]: '' })); }}
         placeholder={placeholder}
-        className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors[id] ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+        className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors[id] ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)]'}`}
       />
       {errors[id] && <p className="text-xs font-bold text-rose-500">{errors[id]}</p>}
     </div>
@@ -248,7 +248,7 @@ export const BankRates: React.FC = () => {
               value={form.bank_name}
               onChange={e => { setForm(f => ({ ...f, bank_name: e.target.value })); setErrors(p => ({ ...p, bank_name: '' })); }}
               placeholder={t('bank_rates.placeholder_bank')}
-              className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors.bank_name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+              className={`w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all ${errors.bank_name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-[var(--sgs-primary)]'}`}
             />
             <datalist id="bank-list">
               {BANK_OPTIONS.map(b => <option key={b.value} value={b.value}/>)}
@@ -282,7 +282,7 @@ export const BankRates: React.FC = () => {
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             placeholder={t('bank_rates.placeholder_notes')}
-            className="w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all resize-none bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-sgs-primary"
+            className="w-full border rounded-xl px-3 py-2.5 text-[15px] outline-none focus:ring-2 transition-all resize-none bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-[var(--sgs-primary)]/20 focus:border-sgs-primary"
           />
         </div>
         <div className="flex gap-3">
@@ -377,7 +377,7 @@ export const BankRates: React.FC = () => {
           )}
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"/>
+              <div className="w-8 h-8 border-2 border-[var(--sgs-primary)]/30 border-t-[var(--sgs-primary)] rounded-full animate-spin"/>
             </div>
           ) : rates.length === 0 ? (
             <div className="text-center py-16 text-[var(--text-tertiary)]">
@@ -490,7 +490,7 @@ export const BankRates: React.FC = () => {
           )}
         </div>
         {/* SEO content block — internal link to SSR page */}
-        <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-sgs-primary-deep/20 dark:to-purple-900/20 border border-sgs-border dark:border-indigo-800/30 rounded-2xl">
+        <div className="mt-8 p-6 bg-gradient-to-r from-[var(--sgs-primary)]/10 to-[var(--sgs-primary)]/10 dark:from-sgs-primary-deep/20 dark:to-[var(--sgs-primary)]/20 border border-sgs-border dark:border-[var(--sgs-primary)]/30 rounded-2xl">
           <h3 className="font-bold text-[var(--text-primary)] mb-2">{t('bank_rates.seo_block_title')}</h3>
           <p className="text-sm text-[var(--text-tertiary)] mb-4">{t('bank_rates.seo_block_desc')}</p>
           <a href="/lai-suat-vay-ngan-hang" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-sgs-primary hover:text-sgs-primary transition-colors">
