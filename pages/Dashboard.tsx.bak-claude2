@@ -60,7 +60,7 @@ function useTimeAgo() {
 const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
     const getIcon = (type: string) => {
         switch(type) {
-            case 'LEAD': return { icon: ICONS.USER, bg: 'bg-sgs-primary/10 text-sgs-primary dark:bg-sgs-primary/20 dark:text-sgs-on-dark-muted' };
+            case 'LEAD': return { icon: ICONS.USER, bg: 'bg-indigo-100 text-sgs-primary dark:bg-indigo-900/40 dark:text-indigo-300' };
             case 'DEAL': return { icon: ICONS.CHECK, bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' };
             case 'SYSTEM': return { icon: ICONS.CLOUD, bg: 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] dark:bg-slate-800 dark:text-slate-300' };
             default: return { icon: ICONS.AI, bg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' };
@@ -551,7 +551,7 @@ export const Dashboard: React.FC = () => {
                         {/* Scope badge */}
                         <span className={`text-xs2 font-bold px-2 py-1 rounded-full border flex items-center gap-1 shrink-0 ${
                             isSalesScope
-                                ? 'bg-sgs-primary/10 text-sgs-primary border-sgs-primary/20 dark:bg-sgs-primary/20 dark:text-sgs-on-dark-muted dark:border-sgs-primary/40'
+                                ? 'bg-indigo-50 text-sgs-primary border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700'
                                 : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                         }`}>
                             <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -634,14 +634,14 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard
                         title={t('dash.revenue_title')}
-                        className="h-full min-h-[180px] bg-gradient-to-br from-sgs-primary to-sgs-primary-deep text-white border-none shadow-xl [&_h3]:!text-white/70 overflow-hidden"
+                        className="h-full min-h-[180px] bg-gradient-to-br from-sgs-primary to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200 overflow-hidden"
                     >
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-black tracking-tight mt-2 text-white break-words">
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
-                                <div className="text-xs2 text-white/70 font-bold uppercase tracking-wider mt-1">
+                                <div className="text-xs2 text-indigo-200 font-bold uppercase tracking-wider mt-1">
                                     {t('dash.revenue_subtitle')}
                                 </div>
                             </div>
@@ -842,7 +842,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-4">
                             <div className="flex flex-col gap-3">
                                 {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
-                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-sgs-border dark:hover:border-sgs-primary/40 transition-colors">
+                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-sgs-border dark:hover:border-indigo-500/30 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <AgentAvatar name={agent.name} avatar={agent.avatar} />
@@ -866,7 +866,7 @@ export const Dashboard: React.FC = () => {
                                             <div>
                                                 <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.sla_score')}</div>
                                                 <div className="flex items-center gap-1 justify-end">
-                                                    <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-sgs-primary dark:text-sgs-on-dark-muted' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
+                                                    <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
                                                 </div>
                                                 <div className="text-2xs text-[var(--text-secondary)] font-medium">{t('dash.avg_abbr')}: {agent.avgResponseMinutes != null ? `${agent.avgResponseMinutes} ${t('dash.minutes')}` : 'N/A'}</div>
                                             </div>

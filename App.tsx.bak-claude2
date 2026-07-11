@@ -719,13 +719,7 @@ const AppShell: React.FC = () => {
             if (u) {
                 setCurrentUser(u);
                 const isPartner = u.role === 'PARTNER_ADMIN' || u.role === 'PARTNER_AGENT';
-                let returnTo = '';
-                try { returnTo = sessionStorage.getItem('sgs_return_to') || ''; sessionStorage.removeItem('sgs_return_to'); } catch {}
-                if (returnTo && !returnTo.startsWith('/' + ROUTES.LOGIN)) {
-                    navigate(returnTo);
-                } else {
-                    navigate(isPartner ? ROUTES.INVENTORY : ROUTES.DEFAULT_PRIVATE);
-                }
+                navigate(isPartner ? ROUTES.INVENTORY : ROUTES.DEFAULT_PRIVATE);
             } else {
                 navigate(ROUTES.DEFAULT_PRIVATE);
             }
@@ -822,7 +816,6 @@ const AppShell: React.FC = () => {
         
         // If unauthenticated on a private route, redirect directly to login
         if (authState === 'GUEST' && !PUBLIC_ROUTES.has(route.base) && route.base !== '') {
-            try { sessionStorage.setItem('sgs_return_to', route.fullPath); } catch {}
             navigate(ROUTES.LOGIN);
             return null;
         }

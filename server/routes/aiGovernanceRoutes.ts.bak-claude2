@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { aiGovernanceRepository } from '../repositories/aiGovernanceRepository';
 import { feedbackRepository } from '../repositories/feedbackRepository';
 import { GoogleGenAI } from '@google/genai';
-import { sendAiError } from '../utils/aiErrorHandler';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
@@ -338,7 +337,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
       res.json({ output: response.text || '', latencyMs, model: effectiveModel });
     } catch (error: any) {
       console.error('Error running prompt simulation:', error);
-      sendAiError(res, error, 'aiGovernanceRoutes/simulate');
+      res.status(500).json({ error: error?.message || 'Simulation failed' });
     }
   });
 

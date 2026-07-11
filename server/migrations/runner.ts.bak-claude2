@@ -133,7 +133,6 @@ import m113 from './113_admin_totp';
 import m114 from './114_visitor_consent_and_erasure';
 import m115 from './115_sms_log';
 import m116 from './116_audit_trigger_enforcement';
-import m117 from './117_custom_fields_and_units';
 
 dotenv.config();
 
@@ -263,7 +262,6 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '114_visitor_consent_and_erasure.ts': m114,
   '115_sms_log.ts': m115,
   '116_audit_trigger_enforcement.ts': m116,
-  '117_custom_fields_and_units.ts': m117,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

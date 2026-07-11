@@ -1172,7 +1172,7 @@ export const AiValuation: React.FC = () => {
                                     setStep('DETAILS');
                                 }}
                                 disabled={!address}
-                                className="shrink-0 bg-sgs-primary hover:bg-sgs-primary-deep text-white font-bold px-5 md:px-8 h-12 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
+                                className="shrink-0 bg-sgs-primary hover:bg-sgs-primary-deep text-[var(--text-primary)] font-bold px-5 md:px-8 h-12 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
                             >
                                 Định Giá →
                             </button>
@@ -1834,7 +1834,7 @@ export const AiValuation: React.FC = () => {
                                         !area || parseFloat(area) <= 0 || !!areaError ||
                                         !!(yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR))
                                     }
-                                    className="w-full bg-sgs-primary hover:bg-sgs-primary-deep text-white font-bold py-4 rounded-xl shadow-lg shadow-sgs-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg flex items-center justify-center gap-3"
+                                    className="w-full bg-sgs-primary hover:bg-sgs-primary-deep text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-sgs-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg flex items-center justify-center gap-3"
                                 >
                                     <span>Định Giá Ngay</span>
                                     <span className={`text-sm font-bold rounded-full px-3 py-0.5 ${accuracy >= 90 ? 'bg-sgs-verified/30 text-sgs-verified' : accuracy >= 75 ? 'bg-sgs-accent/20 text-sgs-accent-text' : 'bg-white/10 text-white/70'}`}>
@@ -1874,7 +1874,7 @@ export const AiValuation: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={runAdvancedAnalysis}
-                                        className="w-full bg-sgs-primary hover:bg-sgs-primary-deep text-white font-bold py-3 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+                                        className="w-full bg-sgs-primary hover:bg-sgs-primary-deep text-[var(--text-primary)] font-bold py-3 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
                                     >
                                         <span>Vẫn phân tích AI chuyên sâu</span>
                                         <span className="text-xs font-bold rounded-full px-2 py-0.5 bg-white/20 text-white/90">−1 lượt</span>
@@ -1978,7 +1978,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={runAdvancedAnalysis}
-                                    className="w-full bg-sgs-primary hover:bg-sgs-primary-deep text-white font-bold py-4 rounded-xl shadow-lg shadow-sgs-primary/20 transition-all active:scale-95 text-base flex items-center justify-center gap-2"
+                                    className="w-full bg-sgs-primary hover:bg-sgs-primary-deep text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-sgs-primary/20 transition-all active:scale-95 text-base flex items-center justify-center gap-2"
                                 >
                                     <span>Phân tích AI chuyên sâu</span>
                                     <span className="text-xs font-bold rounded-full px-2.5 py-0.5 bg-white/20 text-white/90">−1 lượt</span>

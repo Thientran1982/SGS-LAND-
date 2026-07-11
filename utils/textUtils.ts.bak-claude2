@@ -1,4 +1,3 @@
-import { ROUTES } from '../config/routes';
 /**
  *  TEXT UTILITIES FOR MULTILINGUAL SAAS
  * -----------------------------------------------------------------------------
@@ -187,21 +186,4 @@ export const slugify = (text: string): string => {
         .replace(REGEX_NON_WORD, '')    // Remove all non-word chars
         .replace(REGEX_MULTIPLE_DASH, '-') // Replace multiple - with single -
         .replace(REGEX_TRIM_DASH, '');  // Trim - from start/end
-};
-
-// ---------------------------------------------------------------------------
-// SEO: Canonical detail URL for a property listing (real crawlable path)
-// Produces /bds/{slug}-{id} matching the SPA router (ROUTES.LISTING_BDS).
-// ---------------------------------------------------------------------------
-const detailSlug = (s: string): string => String(s || '')
-  .toLowerCase()
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  .replace(/\u0111/g, 'd')
-  .replace(/[^a-z0-9]+/g, '-')
-  .replace(/^-+|-+$/g, '')
-  .slice(0, 60);
-
-export const detailHref = (item: { id: string; title?: string; code?: string; location?: string }): string => {
-  const slug = detailSlug(item?.title || item?.code || item?.location || 'bat-dong-san') || 'bat-dong-san';
-  return `/${ROUTES.LISTING_BDS}/${slug}-${item.id}`;
 };

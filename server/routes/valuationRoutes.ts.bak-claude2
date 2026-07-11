@@ -32,7 +32,6 @@ import {
   DEFAULT_PLAN_QUOTAS_USD,
 } from '../services/valuationUsageService';
 import { getFeatureBreakdown } from '../services/aiUsageService';
-import { sendAiError } from '../utils/aiErrorHandler';
 
 function normalizeAddrKey(addr: string): string {
   return addr.toLowerCase()
@@ -1064,7 +1063,7 @@ export function createValuationRoutes(
       });
     } catch (err: any) {
       logger.error('[Valuation] Teaser error:', err);
-      sendAiError(res, err, 'valuationRoutes/teaser');
+      res.status(500).json({ error: 'Failed to compute teaser estimate' });
     }
   });
 

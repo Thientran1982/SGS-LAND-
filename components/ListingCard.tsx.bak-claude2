@@ -5,7 +5,7 @@ import { db } from '../services/dbApi';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { copyToClipboard } from '../utils/clipboard';
 import { ROUTES } from '../config/routes';
-import { formatSmartPrice, formatUnitPrice, detailHref } from '../utils/textUtils';
+import { formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
 // Encapsulated Icons
 export const LISTING_ICONS = {
     HEART_FILLED: <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3.25 7.688 3.25c1.544 0 3.04.99 3.812 2.55.242.49.878.49 1.12 0C13.272 4.24 14.768 3.25 16.312 3.25c2.974 0 5.438 2.072 5.438 5.002 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>,
@@ -204,9 +204,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     if (!item) return null;
     const viewCount = item.viewCount || 0;
     const isProject = item.type === PropertyType.PROJECT;
-    const handleCardClick = useCallback((e?: React.MouseEvent) => {
-        if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1)) return; // allow open-in-new-tab
-        if (e) e.preventDefault();
+    const handleCardClick = useCallback(() => {
         if (onClick) {
             onClick();
         }
@@ -253,8 +251,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     const shouldShowActions = showActions !== undefined ? showActions : !onClick;
     const attrs = item.attributes || {};
     return (
-        <a
-          href={detailHref(item)}
+        <div 
             onClick={handleCardClick}
             className="bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-[24px] shadow-sm group h-full relative overflow-hidden transform-gpu will-change-transform transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 isolate cursor-pointer flex flex-col"
             style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
@@ -334,6 +331,6 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                     </div>
                 </div>
             </div>
-        </a>
+        </div>
     );
 });

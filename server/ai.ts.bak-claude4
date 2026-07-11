@@ -26,7 +26,7 @@ import {
     DEFAULT_VALUATION_SEARCH_SYSTEM,
     DEFAULT_VALUATION_RENTAL_SYSTEM,
 } from './ai/defaultPrompts';
-import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS, taskProfile } from './ai/modelPolicy';
+import { GENAI_CONFIG, SAFE_MODEL_FALLBACK, DEPRECATED_MODEL_PREFIXES, ensureSafeModel, getProviderForModel, getModelCost, isProviderConfigured, MODEL_REGISTRY, TASK_MODELS } from './ai/modelPolicy';
 import { generateWithPolicy } from './ai/providers';
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -1148,7 +1148,7 @@ LOẠI HÌNH BĐS → property_type (chuẩn hoá):
                     systemInstruction: routerInstruction,
                     responseMimeType: 'application/json',
                     responseSchema: ROUTER_SCHEMA,
-                    ...taskProfile('ROUTER'),
+                    thinkingConfig: THINKING_OFF,
                 }
             });
             trackAiUsage('CHAT_ROUTER', GENAI_CONFIG.MODELS.ROUTER, Date.now() - _routerStart, routerPrompt, routerRes.text || '', { tenantId: state.tenantId });
@@ -1386,7 +1386,7 @@ ${favIds.size > 0 ? '5. Nếu có BĐS trùng watchlist: ghi chú "★ ĐÃ LƯU
             const inventoryAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: inventoryAnalysisPrompt + invRlhf.fewShotSection + invRlhf.negativeRulesSection + invObsInsights,
-                config: { systemInstruction: inventorySystemInstruction, ...taskProfile('SPECIALIST_STANDARD') }
+                config: { systemInstruction: inventorySystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard reasoning for property search */ }
             });
             const inventoryAnalysisText = inventoryAI.text || '';            trackAiUsage('CHAT_INVENTORY_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _invStart, inventoryAnalysisPrompt, inventoryAnalysisText, { tenantId: state.tenantId });
             const firstLine = searchRes.split('\n')[0];            this.updateTrace(state.trace, firstLine || 'Kho hàng đã được tra cứu.', GENAI_CONFIG.MODELS.EXTRACTOR);
@@ -1512,7 +1512,7 @@ PHÂN TÍCH TÀI CHÍNH — KỊCH BẢN: ${loanScenario} (bullet point, max 180
             const financeAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: financeAdvisoryPrompt + finRlhf.fewShotSection + finRlhf.negativeRulesSection + finObsInsights,
-                config: { systemInstruction: financeSystemInstruction, ...taskProfile('SPECIALIST_STANDARD') }
+                config: { systemInstruction: financeSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard reasoning for finance calcs */ }
             });
             const financeAdvisoryText = financeAI.text || '';
             trackAiUsage('CHAT_FINANCE_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _finStart, financeAdvisoryPrompt, financeAdvisoryText, { tenantId: state.tenantId });
@@ -1586,7 +1586,7 @@ Viết tiếng Việt, bullet point, tối đa 180 từ. Tuyệt đối không t
             const legalAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: legalAnalysisPrompt + legalRlhf.fewShotSection + legalRlhf.negativeRulesSection + legalObsInsights,
-                config: { systemInstruction: legalSystemInstruction, ...taskProfile('SPECIALIST_EXTENDED') }
+                config: { systemInstruction: legalSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_EXTENDED /* I1: legal analysis needs deep reasoning */ }
             });
             const legalAnalysisText = legalAI.text || '';
             trackAiUsage('CHAT_LEGAL_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _legalStart, legalAnalysisPrompt, legalAnalysisText, { tenantId: state.tenantId });
@@ -1691,7 +1691,7 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 150 từ. Đây là 
             const bookingAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: bookingPersonalizerPrompt + salesRlhf.fewShotSection + salesRlhf.negativeRulesSection + salesObsInsights,
-                config: { systemInstruction: salesSystemInstruction, ...taskProfile('SPECIALIST_STANDARD') }
+                config: { systemInstruction: salesSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard reasoning for sales queries */ }
             });
             const bookingBriefText = bookingAI.text || '';
             trackAiUsage('CHAT_SALES_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _salesStart, bookingPersonalizerPrompt, bookingBriefText, { tenantId: state.tenantId });
@@ -1762,7 +1762,7 @@ Viết tiếng Việt, bullet point, thực tế, tối đa 160 từ.`;
             const marketingAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: marketingAnalysisPrompt + mktRlhf.fewShotSection + mktRlhf.negativeRulesSection + mktObsInsights,
-                config: { systemInstruction: marketingSystemInstruction, ...taskProfile('SPECIALIST_STANDARD') }
+                config: { systemInstruction: marketingSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_STANDARD /* I1: standard for marketing content */ }
             });
             const marketingAnalysisText = marketingAI.text || '';
             trackAiUsage('CHAT_MARKETING_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _mktStart, marketingAnalysisPrompt, marketingAnalysisText, { tenantId: state.tenantId });
@@ -1835,7 +1835,7 @@ PHÂN TÍCH HỢP ĐỒNG ${contractType} — KỊCH BẢN ${contractScenario} (
             const contractAI = await generateWithFallback({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
                 contents: contractAnalysisPrompt + contractRlhf.fewShotSection + contractRlhf.negativeRulesSection + contractObsInsights,
-                config: { systemInstruction: contractSystemInstruction, ...taskProfile('SPECIALIST_EXTENDED') }
+                config: { systemInstruction: contractSystemInstruction, maxOutputTokens: 350, thinkingConfig: THINKING_EXTENDED /* I1: contract drafting needs deep reasoning */ }
             });
             const contractAnalysisText = contractAI.text || '';
             trackAiUsage('CHAT_CONTRACT_AGENT', GENAI_CONFIG.MODELS.EXTRACTOR, Date.now() - _contractStart, contractAnalysisPrompt, contractAnalysisText, { tenantId: state.tenantId });
@@ -1904,7 +1904,8 @@ PHÂN TÍCH LEAD (bullet point, sắc bén):
                 contents: enrichedAnalysisPrompt,
                 config: {
                     systemInstruction: leadAnalystSystemInstruction,
-                    ...taskProfile('SPECIALIST_EXTENDED'),
+                    maxOutputTokens: 350,
+                    thinkingConfig: THINKING_EXTENDED /* I1: lead analysis needs deep reasoning */,
                 }
             });
 
@@ -2534,7 +2535,8 @@ YÊU CẦU VIẾT PHẢN HỒI:
                 contents: writerPrompt + rlhfPromptAddition,
                 config: {
                     systemInstruction: writerInstruction,
-                    ...taskProfile('WRITER'),
+                    maxOutputTokens: 1024,  // ~700-800 từ tiếng Việt — thinkingBudget:0 nên toàn bộ budget dành cho response
+                    thinkingConfig: THINKING_OFF,
                 }
             });
             trackAiUsage('CHAT_WRITER', writerModel, Date.now() - _writerStart, writerPrompt, writerRes.text || '', { tenantId: state.tenantId });
@@ -3453,7 +3455,8 @@ Viết TRỰC TIẾP nội dung tin nhắn — KHÔNG giải thích, KHÔNG brie
             contents: followupPrompt,
             config: {
                 systemInstruction: followupInstruction,
-                ...taskProfile('FOLLOWUP'),
+                maxOutputTokens: 600,
+                thinkingConfig: THINKING_STANDARD /* I1: standard for followup messages */,
             },
         });
 
@@ -3786,7 +3789,8 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                         config: {
                             systemInstruction: valSearchInstruction,
                             tools: [{ googleSearch: {} }],
-                            ...taskProfile('VALUATION_SALE')
+                            temperature: 0.3,       // moderate — allows diverse search synthesis
+                            maxOutputTokens: 2048,  // cap search summary size
                         }
                     }),
                 _cachedRental != null
@@ -3797,7 +3801,8 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                         config: {
                             systemInstruction: valRentalInstruction,
                             tools: [{ googleSearch: {} }],
-                            ...taskProfile('VALUATION_RENTAL'),
+                            temperature: 0.3,
+                            maxOutputTokens: 1536,
                         }
                     })
             ]);
@@ -3975,7 +3980,9 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
                                 systemInstruction: valuationSystemInstruction,
                                 responseMimeType: 'application/json',
                                 responseSchema: extractSchema,
-                                ...taskProfile('VALUATION_JSON')
+                                temperature: 0.1,      // very low — deterministic JSON, no hallucination
+                                topP: 0.8,
+                                maxOutputTokens: 1024, // schema output is bounded
                             }
                         });
                         extractText = resp.text || '{}';
@@ -4183,7 +4190,8 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                         config: {
                             systemInstruction: valSearchInstruction,
                             tools: [{ googleSearch: {} }],
-                            ...taskProfile('VALUATION_VERIFY'),
+                            temperature: 0.3,
+                            maxOutputTokens: 1024,
                         }
                     });
 

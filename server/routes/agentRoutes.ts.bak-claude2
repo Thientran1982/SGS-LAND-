@@ -7,7 +7,6 @@
 import { Router, Request, Response } from 'express';
 import { agentRepository } from '../repositories/agentRepository';
 import { streamAgentResponse } from '../ai';
-import { sendAiError } from '../utils/aiErrorHandler';
 
 const ADMIN_ROLES = ['ADMIN', 'TEAM_LEAD'];
 const PARTNER_ROLES = ['PARTNER', 'PARTNER_AGENT'];
@@ -222,7 +221,7 @@ export function createAgentRoutes(authenticateToken: any): Router {
     } catch (e) {
       console.error('agentRoutes POST /stream error:', e);
       if (!res.headersSent) {
-        sendAiError(res, e, 'agentRoutes/stream');
+        res.status(500).json({ error: 'Streaming failed' });
       } else {
         res.write('data: ' + JSON.stringify({ error: 'Stream interrupted' }) + '\n\n');
         res.end();

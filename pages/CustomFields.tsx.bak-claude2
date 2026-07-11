@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Dropdown } from '../components/Dropdown';
-import dbApi from '../services/dbApi';
 
 /**
- * CustomFields.tsx – Quản lý Trường Tùy Chỉnh (Custom Fields).
- * Dữ liệu lưu vào bảng custom_fields (Postgres) qua /api/custom-fields.
+ * CustomFields.tsx - Quản lý Trường Tùy Chỉnh (Custom Fields).
+ * Cho phép định nghĩa các trường dữ liệu bổ sung cho từng đối tượng
+ * (BĐS / Khách hàng / Dự án / Hợp đồng) mà không cần đổi schema.
  */
 
 interface CustomField {
@@ -31,69 +31,34 @@ const FIELD_TYPES = [
   { value: 'boolean', label: 'Có / Không' },
 ];
 
+const SEED: CustomField[] = [
+  { id: 'cf1', label: 'Mã căn nội bộ', key: 'internal_code', entity: 'listing', type: 'text', required: true },
+  { id: 'cf2', label: 'Nguồn khách', key: 'lead_source', entity: 'lead', type: 'select', required: false },
+  { id: 'cf3', label: 'Ngày bàn giao dự kiến', key: 'handover_date', entity: 'project', type: 'date', required: false },
+];
+
 const inputStyle: React.CSSProperties = { padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14 };
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20 };
 
 export default function CustomFields() {
-  const [fields, setFields] = useState<CustomField[]>([]);
+  const [fields, setFields] = useState<CustomField[]>(SEED);
   const [label, setLabel] = useState('');
   const [entity, setEntity] = useState('listing');
   const [type, setType] = useState('text');
   const [required, setRequired] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
 
-  const mapRow = (r: any): CustomField => ({
-    id: r.id,
-    label: r.label,
-    key: r.fieldKey ?? r.field_key ?? '',
-    entity: r.entity,
-    type: r.fieldType ?? r.field_type ?? 'text',
-    required: !!r.required,
-  });
+  const slug = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const rows = await dbApi.getCustomFields();
-      setFields((rows as any[]).map(mapRow));
-    } catch (e: any) {
-      setError(e?.message || 'Không tải được danh sách trường');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  const add = async () => {
-    if (!label.trim() || saving) return;
-    setSaving(true);
-    setError('');
-    try {
-      const row = await dbApi.createCustomField({ label: label.trim(), entity, fieldType: type, required });
-      setFields((prev) => [...prev, mapRow(row)]);
-      setLabel('');
-      setRequired(false);
-    } catch (e: any) {
-      setError(e?.message || 'Không thêm được trường');
-    } finally {
-      setSaving(false);
-    }
+  const add = () => {
+    if (!label.trim()) return;
+    setFields((prev) => [
+      ...prev,
+      { id: 'cf' + Date.now(), label: label.trim(), key: slug(label), entity, type, required },
+    ]);
+    setLabel('');
+    setRequired(false);
   };
-
-  const remove = async (id: string) => {
-    const prev = fields;
-    setFields((f) => f.filter((x) => x.id !== id));
-    try {
-      await dbApi.deleteCustomField(id);
-    } catch (e: any) {
-      setError(e?.message || 'Không xóa được trường');
-      setFields(prev);
-    }
-  };
+  const remove = (id: string) => setFields((prev) => prev.filter((f) => f.id !== id));
 
   const entityLabel = (v: string) => ENTITIES.find((e) => e.value === v)?.label || v;
   const typeLabel = (v: string) => FIELD_TYPES.find((t) => t.value === v)?.label || v;
@@ -104,12 +69,6 @@ export default function CustomFields() {
       <p style={{ color: '#64748b', marginBottom: 24 }}>
         Định nghĩa các trường dữ liệu bổ sung cho BĐS, khách hàng, dự án và hợp đồng.
       </p>
-
-      {error && (
-        <div style={{ ...card, marginBottom: 16, borderColor: '#fca5a5', background: '#fef2f2', color: '#b91c1c', padding: '10px 16px' }}>
-          {error}
-        </div>
-      )}
 
       <div style={{ ...card, marginBottom: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto auto', gap: 12, alignItems: 'end' }}>
@@ -129,7 +88,7 @@ export default function CustomFields() {
             <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} />
             <span>Bắt buộc</span>
           </label>
-          <button onClick={add} disabled={saving} style={{ padding: '9px 16px', background: '#1B3A5C', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'Đang lưu...' : 'Thêm'}</button>
+          <button onClick={add} style={{ padding: '9px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>Thêm</button>
         </div>
       </div>
 
@@ -158,11 +117,8 @@ export default function CustomFields() {
                 </td>
               </tr>
             ))}
-            {!loading && fields.length === 0 && (
+            {fields.length === 0 && (
               <tr><td colSpan={6} style={{ padding: 16, textAlign: 'center', color: '#94a3b8' }}>Chưa có trường nào.</td></tr>
-            )}
-            {loading && (
-              <tr><td colSpan={6} style={{ padding: 16, textAlign: 'center', color: '#94a3b8' }}>Đang tải...</td></tr>
             )}
           </tbody>
         </table>
