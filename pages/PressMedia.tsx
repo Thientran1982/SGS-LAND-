@@ -31,7 +31,7 @@ export default function PressMedia() {
     { outlet: "Tuoi Tre", date: "01/2026", headline: "Thang dien tu hoa thi truong BDS: mua nha khong can gap moi gioi", url: "https://tuoitre.vn", type: "Bao lon" },
   ];
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-[var(--bg-surface)] font-sans">
       <SeoHead
         title="Press and Media | SGS LAND - Bao Chi Va Truyen Thong"
         description="Tong hop cac lan SGS LAND duoc de cap tren bao chi va truyen thong chuyen nganh BDS Viet Nam. Press kit, tai nguyen truyen thong, thong tin lien he."
@@ -54,7 +54,7 @@ export default function PressMedia() {
         <section>
           <h2 className="text-2xl font-bold text-slate-800 mb-6">Duoc De Cap Tren Bao Chi</h2>
           <div className="space-y-4">{mentions.map((m,i)=>(
-            <div key={i} className="flex gap-4 bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
+            <div key={i} className="flex gap-4 bg-[var(--bg-surface)] border border-slate-100 rounded-xl p-5 shadow-sm">
               <div className="flex-shrink-0 w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold">{i+1}</div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1"><span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{m.type}</span><span className="text-xs text-slate-400">{m.date}</span></div>
@@ -73,7 +73,7 @@ export default function PressMedia() {
             {name:"Fact Sheet 2026",desc:"Thong tin cong ty, so lieu kinh doanh"},
             {name:"Bao cao thi truong BDS Q2/2026",desc:"PDF day du, co the trich dan voi ghi nguon"},
           ].map((item,i)=>(
-            <div key={i} className="bg-white rounded-lg p-4 border border-slate-100">
+            <div key={i} className="bg-[var(--bg-surface)] rounded-lg p-4 border border-slate-100">
               <div className="font-medium text-slate-800 text-sm">{item.name}</div>
               <div className="text-xs text-slate-500 mt-1">{item.desc}</div>
             </div>
@@ -81,7 +81,7 @@ export default function PressMedia() {
         </section>
         <section>
           <h2 className="text-xl font-bold text-slate-800 mb-4">Thong Tin Lien He (NAP - Name Address Phone)</h2>
-          <div className="grid md:grid-cols-2 gap-6 bg-white border border-slate-100 rounded-xl p-6 text-sm">
+          <div className="grid md:grid-cols-2 gap-6 bg-[var(--bg-surface)] border border-slate-100 rounded-xl p-6 text-sm">
             <div className="space-y-2">
               <div><strong>Ten:</strong> Cong ty Co phan SGS Land</div>
               <div><strong>MST:</strong> 0312960439</div>

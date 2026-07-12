@@ -210,7 +210,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                </code>
                <button 
                    onClick={this.handleCopyError}
-                   className="absolute top-2 right-2 p-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-indigo-500 transition-all opacity-0 group-hover:opacity-100 shadow-sm text-[10px] font-bold flex items-center gap-1"
+                   className="absolute top-2 right-2 p-1.5 bg-[var(--bg-surface)] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-indigo-500 transition-all opacity-0 group-hover:opacity-100 shadow-sm text-[10px] font-bold flex items-center gap-1"
                    aria-label="Copy Error"
                 >
                    {this.state.copied ? (

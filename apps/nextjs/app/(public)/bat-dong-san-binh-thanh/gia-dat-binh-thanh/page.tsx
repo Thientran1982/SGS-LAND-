@@ -221,7 +221,7 @@ export default function GiaDatBinhThanhPage() {
           SGS Land chuyên tư vấn mua bán, đầu tư nhà đất Bình Thạnh. Gọi ngay để được phân tích pháp lý và định giá miễn phí.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <a href="tel:0971132378" className="bg-white text-blue-900 px-6 py-3 rounded-lg font-semibold text-center hover:bg-blue-50">
+          <a href="tel:0971132378" className="bg-[var(--bg-surface)] text-blue-900 px-6 py-3 rounded-lg font-semibold text-center hover:bg-blue-50">
             📞 0971 132 378
           </a>
           <Link href="/bat-dong-san-binh-thanh" className="border border-white text-white px-6 py-3 rounded-lg font-semibold text-center hover:bg-blue-800">

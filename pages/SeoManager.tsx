@@ -313,7 +313,7 @@ const SerpPreview: React.FC<{
                 overrides={overrides}
             />
             {/* Google SERP Mockup */}
-            <div className="bg-white dark:bg-sgs-primary-deep border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm font-sans">
+            <div className="bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm font-sans">
                 <div className="flex items-center gap-2 mb-3">
                     <div className="w-6 h-6 bg-sgs-primary rounded-full flex items-center justify-center">
                         <span className="text-white text-2xs font-bold">G</span>

@@ -156,7 +156,7 @@ export default function VinhomesHocMonPage() {
   return (
     <>
       <SchemaScript schemas={[REAL_ESTATE_LISTING_SCHEMA, SPECIAL_ANNOUNCEMENT_SCHEMA, faqSchema, breadcrumb]} />
-      <main className="min-h-screen bg-white dark:bg-sgs-primary-deep">
+      <main className="min-h-screen bg-[var(--bg-surface)] dark:bg-sgs-primary-deep">
         {/* Hero */}
         <section className="relative bg-gradient-to-br from-sgs-primary-deep via-sgs-primary-deep to-slate-900 text-white py-20 px-4">
           <div className="max-w-5xl mx-auto">
@@ -206,7 +206,7 @@ export default function VinhomesHocMonPage() {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="bg-white dark:bg-slate-700 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-600"
+                  className="bg-[var(--bg-surface)] dark:bg-slate-700 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-600"
                 >
                   <p className="text-xs text-sgs-text-muted dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">
                     {item.label}
@@ -303,7 +303,7 @@ export default function VinhomesHocMonPage() {
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="bg-white dark:bg-slate-700 rounded-xl p-5 border border-slate-100 dark:border-slate-600"
+                  className="bg-[var(--bg-surface)] dark:bg-slate-700 rounded-xl p-5 border border-slate-100 dark:border-slate-600"
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <h3 className="font-bold text-sgs-text dark:text-white">{item.title}</h3>
@@ -348,7 +348,7 @@ export default function VinhomesHocMonPage() {
             <div className="flex flex-wrap gap-4 justify-center">
               <a
                 href="https://sgsland.vn/contact"
-                className="px-8 py-4 bg-white text-sgs-primary rounded-xl font-black text-lg hover:bg-sgs-champagne transition-colors"
+                className="px-8 py-4 bg-[var(--bg-surface)] text-sgs-primary rounded-xl font-black text-lg hover:bg-sgs-champagne transition-colors"
               >
                 Liên hệ tư vấn ngay
               </a>

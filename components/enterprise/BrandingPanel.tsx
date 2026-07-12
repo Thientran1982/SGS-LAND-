@@ -353,14 +353,14 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
             Đang tìm dự án mini-site…
           </div>
         ) : previewCode ? (
-          <div className="rounded-xl overflow-hidden border border-[var(--glass-border)] bg-white">
+          <div className="rounded-xl overflow-hidden border border-[var(--glass-border)] bg-[var(--bg-surface)]">
             <iframe
               key={`${previewCode}-${iframeKey}`}
               ref={previewIframeRef}
               src={`/p/${encodeURIComponent(previewCode)}?preview=1`}
               title={`Xem trước mini-site ${previewCode}`}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-              className="w-full h-[640px] block bg-white"
+              className="w-full h-[640px] block bg-[var(--bg-surface)]"
             />
           </div>
         ) : (
@@ -387,7 +387,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <span className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">PNG/JPG/WebP, ≤ 5MB</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="h-14 w-28 rounded bg-white border border-[var(--glass-border)] flex items-center justify-center overflow-hidden">
+              <div className="h-14 w-28 rounded bg-[var(--bg-surface)] border border-[var(--glass-border)] flex items-center justify-center overflow-hidden">
                 {form.logoUrl
                   ? <img src={form.logoUrl} alt="logo" className="max-h-full max-w-full object-contain" />
                   : <span className="text-[10px] text-slate-400">chưa có</span>}
@@ -429,7 +429,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
               <span className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">PNG 32×32 hoặc .ico</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded bg-white border border-[var(--glass-border)] flex items-center justify-center overflow-hidden">
+              <div className="h-10 w-10 rounded bg-[var(--bg-surface)] border border-[var(--glass-border)] flex items-center justify-center overflow-hidden">
                 {form.faviconUrl
                   ? <img src={form.faviconUrl} alt="favicon" className="max-h-full max-w-full object-contain" />
                   : <span className="text-[10px] text-slate-400">—</span>}
@@ -506,7 +506,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
         <div className="mt-5 p-4 rounded-xl border border-dashed border-[var(--glass-border)] flex items-center gap-3">
           <div className="text-xs text-[var(--text-tertiary)] uppercase font-bold tracking-wider">Xem nhanh:</div>
           {form.logoUrl ? (
-            <img src={form.logoUrl} alt={form.displayName || ''} className="h-8 w-auto bg-white rounded px-2 py-1 max-w-[160px] object-contain" />
+            <img src={form.logoUrl} alt={form.displayName || ''} className="h-8 w-auto bg-[var(--bg-surface)] rounded px-2 py-1 max-w-[160px] object-contain" />
           ) : (
             <span className="font-bold text-[var(--text-primary)]">{form.displayName || data.tenantName}</span>
           )}
@@ -692,7 +692,7 @@ const BrandingPanel: React.FC<Props> = ({ notify }) => {
                 <div className="text-xs text-sgs-accent-text">
                   Vào trang quản lý DNS của tên miền <strong className="font-mono">{data.binding.customDomain}</strong>, tạo bản ghi TXT:
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-1 text-xs font-mono bg-white p-3 rounded border border-amber-200">
+                <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-1 text-xs font-mono bg-[var(--bg-surface)] p-3 rounded border border-amber-200">
                   <div className="text-sgs-text-muted">Loại:</div><div>TXT</div>
                   <div className="text-sgs-text-muted">Tên:</div><div className="break-all">{txt.name}</div>
                   <div className="text-sgs-text-muted">Giá trị:</div><div className="break-all">{txt.value}</div>

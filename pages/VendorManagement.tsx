@@ -69,7 +69,7 @@ function RejectModal({
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-md">
         <div className="p-6 border-b border-gray-100">
           <h3 className="text-lg font-bold text-sgs-text">Từ chối đăng ký</h3>
           <p className="text-sm text-sgs-text-muted mt-1">
@@ -134,7 +134,7 @@ function SuspendModal({
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-md">
         <div className="p-6 border-b border-gray-100">
           <h3 className="text-lg font-bold text-sgs-text">Tạm ngừng workspace</h3>
           <p className="text-sm text-sgs-text-muted mt-1"><strong>{vendor.name}</strong></p>
@@ -244,7 +244,7 @@ export default function VendorManagement() {
       />
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-5">
+      <div className="bg-[var(--bg-surface)] border-b border-gray-200 px-6 py-5">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
@@ -273,7 +273,7 @@ export default function VendorManagement() {
               <button
                 key={s}
                 onClick={() => { setFilterStatus(filterStatus === s ? '' : s); setPage(1); }}
-                className={`bg-white rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-gray-100'}`}
+                className={`bg-[var(--bg-surface)] rounded-2xl border-2 p-4 text-left transition hover:shadow-md ${filterStatus === s ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-gray-100'}`}
               >
                 <p className="text-2xl font-bold text-sgs-text">{statusCounts[s] || 0}</p>
                 <p className="text-xs font-semibold mt-1">
@@ -294,7 +294,7 @@ export default function VendorManagement() {
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Tìm theo tên công ty hoặc email..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] bg-[var(--bg-surface)]"
             />
           </div>
           <Dropdown
@@ -319,7 +319,7 @@ export default function VendorManagement() {
           </div>
         )}
         {/* Table */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20 text-gray-400">
               <svg className="w-6 h-6 animate-spin mr-3" fill="none" viewBox="0 0 24 24">

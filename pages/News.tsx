@@ -980,7 +980,7 @@ export const News: React.FC = () => {
                         <form onSubmit={handleSubscribe} className={`flex flex-col sm:flex-row gap-3 ${subStatus === 'ERROR' ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                             <div className="relative flex-1">
                                 <input 
-                                    className={`w-full px-6 py-4 rounded-2xl bg-white border text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:ring-2 focus:ring-sgs-primary/50 
+                                    className={`w-full px-6 py-4 rounded-2xl bg-[var(--bg-surface)] border text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:ring-2 focus:ring-sgs-primary/50 
                                         ${subStatus === 'ERROR' ? 'border-rose-500 focus:border-rose-500' : 'border-white/20'}
                                     `}
                                     placeholder="Nhập email của bạn..."

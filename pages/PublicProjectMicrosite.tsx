@@ -350,7 +350,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   if (error || !data) {
     return (
       <div className="min-h-[100dvh] bg-sgs-bg flex items-center justify-center p-6">
-        <div className="max-w-md text-center bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
+        <div className="max-w-md text-center bg-[var(--bg-surface)] rounded-2xl shadow-lg p-8 border border-slate-200">
           <h1 className="text-xl font-bold text-sgs-text mb-2">
             {error?.status === 404 ? 'Dự án chưa công khai' : 'Không thể tải dự án'}
           </h1>
@@ -481,7 +481,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       {/* ── GALLERY ──────────────────────────────────────────────────── */}
       {gallery.length > 1 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-4">
+          <div className="bg-[var(--bg-surface)] rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-4">
             <div className="flex items-center justify-between mb-3 px-2">
               <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Thư viện ảnh</h2>
               <span className="text-xs text-sgs-text-muted">{activeImageIdx + 1}/{gallery.length}</span>
@@ -507,7 +507,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
       {(project.description || project.metadata.amenities.length || project.metadata.highlights.length) && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="lg:col-span-2 bg-[var(--bg-surface)] rounded-2xl shadow-sm border border-slate-200 p-6">
               <h2 className="text-xl font-bold mb-4">Giới thiệu dự án</h2>
               {project.description ? (
                 <p className="text-slate-700 leading-relaxed whitespace-pre-line">{project.description}</p>
@@ -527,7 +527,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 </div>
               )}
             </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-sm border border-slate-200 p-6">
               {project.metadata.amenities.length > 0 ? (
                 <>
                   <h3 className="text-sm font-bold uppercase tracking-wide text-sgs-text-muted mb-3">Tiện ích</h3>
@@ -543,7 +543,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 <>
                   <h3 className="text-sm font-bold uppercase tracking-wide text-sgs-text-muted mb-3">QR Code</h3>
                   <div ref={qrRef} className="flex flex-col items-center gap-3">
-                    <div className="bg-white p-3 rounded-xl border border-slate-200">
+                    <div className="bg-[var(--bg-surface)] p-3 rounded-xl border border-slate-200">
                       <QRCodeCanvas value={fullUrl} size={160} level="M" includeMargin={false} />
                     </div>
                     <button type="button" onClick={handleDownloadQR}
@@ -564,7 +564,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
           <span className="text-sm text-sgs-text-muted">{listings.length} sản phẩm</span>
         </div>
         {listings.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-sgs-text-muted">
+          <div className="bg-[var(--bg-surface)] rounded-2xl border border-slate-200 p-10 text-center text-sgs-text-muted">
             <p className="text-base mb-2">Hiện chưa có sản phẩm công khai cho dự án này.</p>
             <p className="text-sm">Vui lòng để lại thông tin bên dưới — chuyên viên sẽ gửi bảng hàng riêng cho bạn.</p>
           </div>
@@ -592,23 +592,23 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 type="text" required value={form.name}
                 onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="Họ và tên *"
-                className="px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
+                className="px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
                 autoComplete="name" />
               <input
                 type="tel" required value={form.phone} inputMode="tel"
                 onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
                 placeholder="Số điện thoại *"
-                className="px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
+                className="px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
                 autoComplete="tel" />
               <input
                 type="email" value={form.email}
                 onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
                 placeholder="Email (không bắt buộc)"
-                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
                 autoComplete="email" />
               <select value={form.interest}
                 onChange={(e) => setForm(f => ({ ...f, interest: e.target.value }))}
-                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]">
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]">
                 <option value="">Tôi quan tâm tới…</option>
                 <option value="Bảng giá">Bảng giá & chính sách</option>
                 <option value="Xem nhà mẫu">Đặt lịch xem nhà mẫu</option>
@@ -619,7 +619,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
               <textarea value={form.note} rows={3}
                 onChange={(e) => setForm(f => ({ ...f, note: e.target.value }))}
                 placeholder="Ghi chú thêm (không bắt buộc)"
-                className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] resize-none" />
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] resize-none" />
               {data?.captcha && (
                 <div ref={turnstileContainerRef}
                   className="sm:col-span-2 flex justify-center"
@@ -631,7 +631,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 </div>
               )}
               <button type="submit" disabled={submitting}
-                className="sm:col-span-2 px-6 py-3 rounded-xl bg-white text-sgs-primary font-bold text-sm hover:bg-sgs-champagne disabled:opacity-60 transition shadow-lg">
+                className="sm:col-span-2 px-6 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-primary font-bold text-sm hover:bg-sgs-champagne disabled:opacity-60 transition shadow-lg">
                 {submitting ? 'Đang gửi…' : 'Gửi yêu cầu tư vấn'}
               </button>
               <p className="sm:col-span-2 text-xs text-[var(--sgs-primary)] text-center">
@@ -650,7 +650,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 <p className="text-slate-500 text-sm mb-6">Cập nhật Q2/2026 — SGS LAND, đại lý phân phối ủy quyền Novaland Group.</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                   {[{label:'Rental Yield',value:'4-6%',sub:'Nhà phố/năm'},{label:'Tăng Giá',value:'+3-5%',sub:'Bình quân/năm'},{label:'Lấp đầy',value:'85%+',sub:'Khu bàn giao'},{label:'Hoàn vốn',value:'18-22 năm',sub:'Ước tính thuê'}].map((m)=>(
-                    <div key={m.label} className="bg-white border border-slate-200 rounded-xl p-4 text-center">
+                    <div key={m.label} className="bg-[var(--bg-surface)] border border-slate-200 rounded-xl p-4 text-center">
                       <div className="text-xl font-bold text-blue-600">{m.value}</div>
                       <div className="font-medium text-slate-700 text-sm mt-1">{m.label}</div>
                       <div className="text-xs text-slate-400">{m.sub}</div>
@@ -663,7 +663,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                     <table className="w-full text-sm border-collapse">
                       <thead><tr className="bg-slate-700 text-white"><th className="px-3 py-2 text-left">Quý</th><th className="px-3 py-2 text-right">Giá (tỷ/căn)</th><th className="px-3 py-2 text-right">Biến Động</th></tr></thead>
                       <tbody>{[['Q1/2024','5,2-6,8',''],['Q3/2024','5,8-7,5','+4%'],['Q1/2025','6,2-8,0','+2%'],['Q2/2026','6,5-8,5','+3%']].map(([q,g,b],i)=>(
-                        <tr key={i} className={i%2===0?'bg-white':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-700">{q}</td><td className="px-3 py-2 text-right text-slate-600">{g}</td><td className="px-3 py-2 text-right text-green-600 font-medium">{b}</td></tr>
+                        <tr key={i} className={i%2===0?'bg-[var(--bg-surface)]':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-700">{q}</td><td className="px-3 py-2 text-right text-slate-600">{g}</td><td className="px-3 py-2 text-right text-green-600 font-medium">{b}</td></tr>
                       ))}</tbody>
                     </table>
                   </div>
@@ -671,7 +671,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                 <div className="mb-8">
                   <h3 className="font-bold text-slate-700 mb-3">Pháp Lý Theo Phân Khu</h3>
                   <div className="space-y-2">{[{pk:'The Aqua 1 & 2',done:true,note:'Sổ hồng riêng — bàn giao 2022-2023'},{pk:'Phoenix South',done:false,note:'Đang hoàn thiện thủ tục sổ hồng'},{pk:'Eagle',done:false,note:'Bàn giao 2024, đang chờ sổ hồng'}].map((p)=>(
-                    <div key={p.pk} className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3">
+                    <div key={p.pk} className="flex items-center gap-3 bg-[var(--bg-surface)] border border-slate-200 rounded-xl p-3">
                       <span className={`w-2 h-2 rounded-full shrink-0 ${p.done?'bg-green-500':'bg-yellow-400'}`} />
                       <div className="flex-1"><span className="font-medium text-slate-700 text-sm">{p.pk}</span><span className="text-slate-400 text-xs ml-2">{p.note}</span></div>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${p.done?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{p.done?'Đã có sổ':'Đang xử lý'}</span>
@@ -683,13 +683,13 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
                   <div className="overflow-x-auto"><table className="w-full text-sm border-collapse">
                     <thead><tr className="bg-slate-700 text-white"><th className="px-3 py-2 text-left">Tiêu Chí</th><th className="px-3 py-2 text-center">Aqua City</th><th className="px-3 py-2 text-center">Izumi City</th><th className="px-3 py-2 text-center">Van Phuc</th></tr></thead>
                     <tbody>{[['Quy mô','1.000 ha','170 ha','198 ha'],['Chủ đầu tư','Novaland','An Gia','Van Phuc Group'],['Giá nhà phố','từ 6,5 tỷ','từ 7,5 tỷ','từ 8 tỷ'],['Cách HCM','~30 phút','~35 phút','~20 phút'],['Pháp lý','Sổ hồng (PK1&2)','Đang hoàn thiện','Sổ hồng riêng'],['Rental yield','4-6%/năm','4-5%/năm','3-5%/năm']].map(([tc,ac,iz,vp],i)=>(
-                      <tr key={i} className={i%2===0?'bg-white':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-600">{tc}</td><td className="px-3 py-2 text-center text-blue-600 font-medium">{ac}</td><td className="px-3 py-2 text-center text-slate-500">{iz}</td><td className="px-3 py-2 text-center text-slate-500">{vp}</td></tr>
+                      <tr key={i} className={i%2===0?'bg-[var(--bg-surface)]':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-600">{tc}</td><td className="px-3 py-2 text-center text-blue-600 font-medium">{ac}</td><td className="px-3 py-2 text-center text-slate-500">{iz}</td><td className="px-3 py-2 text-center text-slate-500">{vp}</td></tr>
                     ))}</tbody>
                   </table></div>
                 </div>
               </div>
             </section>
-            <section className="py-12 px-4 bg-white">
+            <section className="py-12 px-4 bg-[var(--bg-surface)]">
               <div className="max-w-4xl mx-auto">
                 <h2 className="text-2xl font-bold text-slate-800 mb-4">Câu Hỏi Thường Gặp — Aqua City Novaland</h2>
                 <div className="space-y-3">{[
@@ -713,7 +713,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
         )}
 
       {/* ── FOOTER ─────────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-200 bg-white">
+      <footer className="border-t border-slate-200 bg-[var(--bg-surface)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-sgs-text-muted">
           <div className="flex items-center gap-2">
             {brandLogo && (
@@ -743,7 +743,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
   );
 };
 const ListingsTable: React.FC<{ listings: PublicListing[] }> = ({ listings }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+  <div className="bg-[var(--bg-surface)] rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
         <thead className="bg-sgs-bg text-sgs-text-muted uppercase text-xs tracking-wide">

@@ -1770,7 +1770,7 @@ export default function ProjectLandingPage() {
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                         <button
                             onClick={() => navigate('/contact')}
-                            className="px-8 py-3.5 bg-white text-[var(--primary-600)] rounded-2xl font-bold hover:opacity-90 transition-all shadow-lg"
+                            className="px-8 py-3.5 bg-[var(--bg-surface)] text-[var(--primary-600)] rounded-2xl font-bold hover:opacity-90 transition-all shadow-lg"
                         >
                             Nhận Tư Vấn Miễn Phí
                         </button>

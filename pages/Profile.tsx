@@ -750,7 +750,7 @@ export const Profile: React.FC = () => {
                                         <div className="space-y-5 animate-enter">
                                             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">Quét mã QR bằng ứng dụng Authenticator, sau đó nhập mã 6 chữ số để xác nhận.</p>
                                             <div className="flex justify-center">
-                                                <div className="p-3 bg-white rounded-2xl shadow-md inline-block">
+                                                <div className="p-3 bg-[var(--bg-surface)] rounded-2xl shadow-md inline-block">
                                                     <QRCodeSVG value={totpSetupData.otpauthUrl} size={180} />
                                                 </div>
                                             </div>
@@ -762,7 +762,7 @@ export const Profile: React.FC = () => {
                                                 <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-2">Lưu backup codes (hiển thị 1 lần):</p>
                                                 <div className="grid grid-cols-2 gap-1.5">
                                                     {totpSetupData.backupCodes.map((c, i) => (
-                                                        <code key={i} className="text-xs font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded text-center border border-amber-200 dark:border-slate-700">{c}</code>
+                                                        <code key={i} className="text-xs font-mono bg-[var(--bg-surface)] dark:bg-slate-800 px-2 py-1 rounded text-center border border-amber-200 dark:border-slate-700">{c}</code>
                                                     ))}
                                                 </div>
                                             </div>

@@ -642,7 +642,7 @@ export default function ProjectDirectory() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <a
                             href={`tel:${HOTLINE_TEL}`}
-                            className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-sgs-primary rounded-2xl font-extrabold text-base hover:bg-sgs-champagne transition-all shadow-lg"
+                            className="flex items-center justify-center gap-2 px-8 py-4 bg-[var(--bg-surface)] text-sgs-primary rounded-2xl font-extrabold text-base hover:bg-sgs-champagne transition-all shadow-lg"
                         >
                             <Phone className="w-5 h-5" />
                             Gọi {HOTLINE_DISPLAY}

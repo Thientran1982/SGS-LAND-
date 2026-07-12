@@ -10,7 +10,7 @@
   :root,
   .light {
     /* Backgrounds */
-    --bg-app:      #FAFAF8;
+    --bg-app:      #FAF8F4;
     --bg-surface:  #FFFFFF;
     --bg-elevated: #FFFFFF;
     --bg-sidebar:  #1B3A5C;
@@ -39,7 +39,7 @@
     --glass-border:  rgba(148, 163, 184, 0.18);
 
     /* Borders */
-    --border-default: #E2E8F0;
+    --border-default: #E4E1D8;
     --border-strong:  #CBD5E1;
 
     /* Shadows */
@@ -50,7 +50,7 @@
     color-scheme: light;
 
     /* ── SGS Brand Design Tokens — Light ──────────────── */
-    --sgs-bg:            #FAFAF8;
+    --sgs-bg:            #FAF8F4;
     --sgs-surface:       #FFFFFF;
     --sgs-primary:       #1B3A5C;
     --sgs-primary-deep:  #0F2740;

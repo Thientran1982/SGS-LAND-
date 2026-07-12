@@ -62,7 +62,7 @@ export function InviteModalOpen() {
       {/* Background content (blurred) */}
       <div className="absolute inset-0 flex flex-col pointer-events-none select-none">
         {/* Fake CommandCenter header */}
-        <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between h-14">
+        <div className="bg-[var(--bg-surface)] border-b border-slate-100 px-4 py-3 flex items-center justify-between h-14">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-slate-200 rounded-lg" />
             <span className="text-sm font-bold text-slate-600">Quản lý thành viên</span>
@@ -70,7 +70,7 @@ export function InviteModalOpen() {
           <div className="w-8 h-8 rounded-full bg-indigo-100 border-2 border-white" />
         </div>
         {/* Fake page header */}
-        <div className="bg-white border-b border-slate-100 px-4 pt-3 pb-2 flex items-center justify-between">
+        <div className="bg-[var(--bg-surface)] border-b border-slate-100 px-4 pt-3 pb-2 flex items-center justify-between">
           <div className="flex gap-1.5">
             <div className="bg-slate-100 rounded-lg px-2 py-1.5 text-[9px] font-black text-slate-500">Tổng 5</div>
             <div className="bg-emerald-50 rounded-lg px-2 py-1.5 text-[9px] font-black text-emerald-600">HĐ 3</div>
@@ -79,10 +79,10 @@ export function InviteModalOpen() {
           <div className="bg-slate-900 text-white rounded-xl px-3 py-2 text-xs font-bold">Mời</div>
         </div>
         <div className="bg-slate-50 border-b border-slate-100 px-4 py-2.5">
-          <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-400">Tìm theo tên...</div>
+          <div className="bg-[var(--bg-surface)] border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-400">Tìm theo tên...</div>
         </div>
         {USERS.map((u) => (
-          <div key={u.email} className="bg-white border-b border-slate-50 px-3 py-3 flex items-center justify-between">
+          <div key={u.email} className="bg-[var(--bg-surface)] border-b border-slate-50 px-3 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <img src={u.avatar} className="w-8 h-8 rounded-full bg-slate-200" alt="" />
               <div>
@@ -99,7 +99,7 @@ export function InviteModalOpen() {
 
       {/* BOTTOM SHEET MODAL — matches fixed code */}
       <div className="absolute inset-0 flex items-end justify-center">
-        <div className="bg-white w-full rounded-t-[28px] p-6 pb-8 shadow-2xl border border-slate-100 relative z-10 max-h-[92%] overflow-y-auto">
+        <div className="bg-[var(--bg-surface)] w-full rounded-t-[28px] p-6 pb-8 shadow-2xl border border-slate-100 relative z-10 max-h-[92%] overflow-y-auto">
           {/* Drag handle */}
           <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
 
@@ -134,7 +134,7 @@ export function InviteModalOpen() {
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-[var(--bg-surface)]"
               >
                 {Object.entries(ROLES).map(([v, { label }]) => (
                   <option key={v} value={v}>{label}</option>

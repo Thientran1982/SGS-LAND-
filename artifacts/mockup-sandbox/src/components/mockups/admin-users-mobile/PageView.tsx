@@ -84,7 +84,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="bg-white w-full rounded-t-[28px] p-6 pb-8 shadow-2xl border border-slate-100 relative z-10 max-h-[92%] overflow-y-auto">
+      <div className="bg-[var(--bg-surface)] w-full rounded-t-[28px] p-6 pb-8 shadow-2xl border border-slate-100 relative z-10 max-h-[92%] overflow-y-auto">
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-slate-800">Mời thành viên mới</h3>
@@ -110,7 +110,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-[var(--bg-surface)]"
             >
               {Object.entries(ROLES).map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
@@ -152,7 +152,7 @@ export function PageView() {
   const lastName = currentUser.name.split(' ').pop();
 
   return (
-    <div className="flex flex-col bg-white" style={{ width: 390, height: 844, fontFamily: "Inter, sans-serif" }}>
+    <div className="flex flex-col bg-[var(--bg-surface)]" style={{ width: 390, height: 844, fontFamily: "Inter, sans-serif" }}>
 
       {/* ── COMMAND CENTER HEADER (fixed pattern) ── */}
       <div className="h-16 px-4 flex items-center justify-between relative shrink-0 border-b border-slate-100 bg-white/90 backdrop-blur-xl">
@@ -182,7 +182,7 @@ export function PageView() {
       </div>
 
       {/* ── PAGE HEADER ── */}
-      <div className="flex flex-col bg-white border-b border-slate-100 shrink-0">
+      <div className="flex flex-col bg-[var(--bg-surface)] border-b border-slate-100 shrink-0">
         <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
           <div className="flex items-center gap-1.5 min-w-0">
             <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 shrink-0">
@@ -213,20 +213,20 @@ export function PageView() {
           <div className="relative flex-1">
             <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">{SEARCH_ICON}</div>
             <input
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-slate-400 shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-slate-400 shadow-sm"
               placeholder="Tìm theo tên hoặc email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <select className="w-28 shrink-0 border border-slate-200 rounded-xl px-2 py-2.5 text-xs bg-white text-slate-700 outline-none shadow-sm">
+          <select className="w-28 shrink-0 border border-slate-200 rounded-xl px-2 py-2.5 text-xs bg-[var(--bg-surface)] text-slate-700 outline-none shadow-sm">
             <option>Tất cả vai trò</option>
           </select>
         </div>
       </div>
 
       {/* ── TABLE ── */}
-      <div className="flex-1 overflow-auto bg-white">
+      <div className="flex-1 overflow-auto bg-[var(--bg-surface)]">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider sticky top-0 z-10 border-b border-slate-100">
             <tr>
@@ -285,12 +285,12 @@ export function PageView() {
       </div>
 
       {/* ── PAGINATION ── */}
-      <div className="px-4 py-4 bg-white border-t border-slate-200 shadow-sm flex items-center justify-between gap-2 shrink-0">
-        <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
+      <div className="px-4 py-4 bg-[var(--bg-surface)] border-t border-slate-200 shadow-sm flex items-center justify-between gap-2 shrink-0">
+        <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-[var(--bg-surface)] text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
           Trước
         </button>
         <span className="text-sm font-bold text-slate-800 px-2">1 / 1</span>
-        <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
+        <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-[var(--bg-surface)] text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
           Tiếp
         </button>
       </div>

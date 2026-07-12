@@ -173,7 +173,7 @@ export default function Glossary() {
             <div
               key={t.id}
               id={t.id}
-              className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+              className="bg-[var(--bg-surface)] rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
               itemScope
               itemType="https://schema.org/DefinedTerm"
             >

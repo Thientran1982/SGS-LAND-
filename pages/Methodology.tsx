@@ -39,7 +39,7 @@ export default function Methodology() {
   ];
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-[var(--bg-surface)] font-sans">
       <SeoHead
         title="Phuong Phap Dinh Gia AI SGS-AVM | 9 He So Hieu Chinh | Do Chinh Xac +-4.8%"
         description="Tai lieu ky thuat day du ve phuong phap dinh gia bat dong san tu dong SGS-AVM v2.1. Su dung 9 he so hieu chinh theo chuan TDGVN/IVS, do chinh xac +-4.8% MAPE, du lieu 45.000+ giao dich thuc te."
@@ -103,7 +103,7 @@ export default function Methodology() {
 
           <div className="bg-blue-50 rounded-xl p-6 mt-6">
             <h3 className="font-bold text-blue-900 mb-3">Cong thuc dinh gia co ban:</h3>
-            <div className="bg-white rounded-lg p-4 font-mono text-sm text-slate-700 border border-blue-200">
+            <div className="bg-[var(--bg-surface)] rounded-lg p-4 font-mono text-sm text-slate-700 border border-blue-200">
               <p className="font-bold">GiaTri_BDS = GiaCoSo × H1 × H2 × H3 × ... × H9</p>
               <p className="mt-2 text-slate-500">Trong do:</p>
               <p>GiaCoSo = Gia trung binh BDS tuong tu (per m2) × Dien tich</p>
@@ -142,7 +142,7 @@ export default function Methodology() {
                 icon: "🏢"
               }
             ].map((item, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <div key={i} className="bg-[var(--bg-surface)] border border-slate-200 rounded-xl p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">{item.icon}</span>
                   <div>
@@ -186,7 +186,7 @@ export default function Methodology() {
                   ["H8", "Xu huong gia thi truong", "0.92 — 1.15", "5%", "Dieu chinh theo chi so tang gia quy hien tai so voi thoi diem giao dich tham chieu"],
                   ["H9", "Phan khuc cau va tinh khan hiem", "0.90 — 1.20", "2%", "Mat khan (low supply + high demand): +10-20%; Dang du cung: -5-10%"]
                 ].map(([factor, name, range, weight, desc], i) => (
-                  <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                  <tr key={i} className={i % 2 === 0 ? 'bg-[var(--bg-surface)]' : 'bg-slate-50'}>
                     <td className="px-4 py-3 font-bold text-blue-600">{factor}</td>
                     <td className="px-4 py-3 font-medium text-slate-800">{name}</td>
                     <td className="px-4 py-3 text-center font-mono text-sm text-slate-700">{range}</td>
@@ -240,7 +240,7 @@ export default function Methodology() {
                     ["Long Thanh, Nhon Trach (Dong Nai)", "287", "7.8%", "Du lieu mong, gia bien dong cao"],
                     ["Binh Duong (Thu Dau Mot, Di An)", "342", "6.5%", "Du lieu tot hon nho nhieu KCN"],
                   ].map(([area, n, mape, note], i) => (
-                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                    <tr key={i} className={i % 2 === 0 ? 'bg-[var(--bg-surface)]' : 'bg-slate-50/50'}>
                       <td className="py-2.5 text-slate-800">{area}</td>
                       <td className="py-2.5 text-center text-slate-600">{n}</td>
                       <td className="py-2.5 text-center">
@@ -280,7 +280,7 @@ export default function Methodology() {
                   ["Chia se giao dich", "Khong can thiet", "Can", "Khong", "Yeu cau"],
                   ["Tin cay phap ly", "Tham chieu", "Chinh thuc", "Khong", "Khong"],
                 ].map(([criteria, sgs, appraiser, web, broker], i) => (
-                  <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                  <tr key={i} className={i % 2 === 0 ? 'bg-[var(--bg-surface)]' : 'bg-slate-50'}>
                     <td className="px-4 py-3 font-medium text-slate-700">{criteria}</td>
                     <td className="px-4 py-3 text-center bg-blue-50 text-blue-700 font-semibold">{sgs}</td>
                     <td className="px-4 py-3 text-center text-slate-600">{appraiser}</td>
@@ -305,7 +305,7 @@ export default function Methodology() {
               { step: "04", title: "Xem ket qua va bieu do", desc: "Ket qua hien thi: gia uoc tinh, khoang dao dong, vi tri tren bieu do so sanh 10 BDS tuong tu, lich su gia 24 thang, ban do nhiet gia khu vuc." },
               { step: "05", title: "Tai bao cao PDF", desc: "Bao cao day du 4-6 trang bao gom: tom tat ket qua, bang so sanh BDS tuong tu, phan tich the manh/yeu, khuyen nghi gia dam phan." },
             ].map((item, i) => (
-              <div key={i} className="flex gap-6 bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
+              <div key={i} className="flex gap-6 bg-[var(--bg-surface)] border border-slate-100 rounded-xl p-5 shadow-sm">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg">{item.step}</div>
                 <div>
                   <h3 className="font-bold text-slate-800 mb-1">{item.title}</h3>
@@ -336,7 +336,7 @@ export default function Methodology() {
           </p>
           <a
             href="/ai-valuation"
-            className="inline-block bg-white text-blue-700 font-bold px-8 py-4 rounded-xl hover:bg-blue-50 transition-colors"
+            className="inline-block bg-[var(--bg-surface)] text-blue-700 font-bold px-8 py-4 rounded-xl hover:bg-blue-50 transition-colors"
           >
             Dinh Gia BDS Ngay →
           </a>

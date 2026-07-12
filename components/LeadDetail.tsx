@@ -20,7 +20,7 @@ const stripMarkdown = (text: string): string =>
         .replace(/`(.+?)`/g, '$1')
         .trim();
 const AIAnalysisCard = ({ summary, loading, t, onRefresh, quota, onUpgrade }: any) => (
-    <div className="bg-white p-5 rounded-2xl mb-8 border border-sgs-border shadow-sm animate-enter relative group overflow-hidden">
+    <div className="bg-[var(--bg-surface)] p-5 rounded-2xl mb-8 border border-sgs-border shadow-sm animate-enter relative group overflow-hidden">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[var(--sgs-primary)]/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="flex justify-between items-center mb-4 relative z-10">
             <div className="flex items-center gap-2.5">

@@ -175,7 +175,7 @@ export default function AquaCityCoNenMuaPage() {
         <h2 className="text-2xl font-semibold mb-3">Tư Vấn Mua Aqua City Đúng Phân Khu, Đúng Giá</h2>
         <p className="mb-4 text-blue-100">SGS Land có đội ngũ chuyên gia am hiểu toàn bộ pháp lý Aqua City. Gọi ngay để được tư vấn miễn phí và chọn đúng lô phù hợp nhu cầu.</p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <a href="tel:0971132378" className="bg-white text-blue-900 px-6 py-3 rounded-lg font-semibold text-center">📞 0971 132 378</a>
+          <a href="tel:0971132378" className="bg-[var(--bg-surface)] text-blue-900 px-6 py-3 rounded-lg font-semibold text-center">📞 0971 132 378</a>
           <Link href="/bat-dong-san-dong-nai" className="border border-white text-white px-6 py-3 rounded-lg font-semibold text-center">Xem BĐS Đồng Nai</Link>
         </div>
       </section>

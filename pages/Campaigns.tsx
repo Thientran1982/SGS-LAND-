@@ -333,8 +333,8 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
       />
 
       <div className="flex-1 bg-black/40" onClick={onClose} />
-      <div className="w-full max-w-2xl h-full bg-white dark:bg-sgs-primary-deep shadow-2xl overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-sgs-primary-deep border-b border-[var(--glass-border)] px-6 py-4 flex items-center justify-between z-10">
+      <div className="w-full max-w-2xl h-full bg-[var(--bg-surface)] dark:bg-sgs-primary-deep shadow-2xl overflow-y-auto">
+        <div className="sticky top-0 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep border-b border-[var(--glass-border)] px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-bold">{isEdit ? 'Sửa chiến dịch' : 'Tạo chiến dịch mới'}</h2>
           <button onClick={onClose} className="text-2xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">×</button>
         </div>
@@ -370,7 +370,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${
                       (audience.source || 'leads') === v
                         ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]'
-                        : 'bg-white text-slate-700 border-slate-300'
+                        : 'bg-[var(--bg-surface)] text-slate-700 border-slate-300'
                     }`}
                   >
                     {l}
@@ -389,7 +389,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                           key={s}
                           onClick={() => toggleStage(s)}
                           className={`px-2.5 py-1 rounded-md text-xs font-medium border ${
-                            on ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-white text-slate-600 border-slate-300 hover:border-[var(--sgs-primary)]'
+                            on ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] text-slate-600 border-slate-300 hover:border-[var(--sgs-primary)]'
                           }`}
                         >
                           {s}
@@ -407,7 +407,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                           key={s}
                           onClick={() => toggleSource(s)}
                           className={`px-2.5 py-1 rounded-md text-xs font-medium border ${
-                            on ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-white text-slate-600 border-slate-300 hover:border-[var(--sgs-primary)]'
+                            on ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] text-slate-600 border-slate-300 hover:border-[var(--sgs-primary)]'
                           }`}
                         >
                           {s}
@@ -440,7 +440,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                             const cur = audience.user_status || ['ACTIVE'];
                             updAudience({ user_status: cur.includes(s) ? cur.filter(x => x !== s) : [...cur, s] });
                           }}
-                          className={`px-2.5 py-1 rounded-md text-xs font-medium border ${on ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-white text-slate-600 border-slate-300'}`}
+                          className={`px-2.5 py-1 rounded-md text-xs font-medium border ${on ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] text-slate-600 border-slate-300'}`}
                         >
                           {s}
                         </button>
@@ -458,7 +458,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                       <button
                         key={i}
                         onClick={() => updAudience({ has_listings: o.v as any })}
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium border ${audience.has_listings === o.v ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-white text-slate-600 border-slate-300'}`}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium border ${audience.has_listings === o.v ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]' : 'bg-[var(--bg-surface)] text-slate-600 border-slate-300'}`}
                       >
                         {o.l}
                       </button>
@@ -514,7 +514,7 @@ const CampaignDrawer: React.FC<DrawerProps> = ({ initial, onClose, onSaved, onEr
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${
                     (form.schedule_type || 'NOW') === v
                       ? 'bg-[var(--sgs-primary)] text-white border-[var(--sgs-primary)]'
-                      : 'bg-white text-slate-700 border-slate-300'
+                      : 'bg-[var(--bg-surface)] text-slate-700 border-slate-300'
                   }`}
                 >
                   {l}

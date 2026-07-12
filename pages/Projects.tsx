@@ -642,7 +642,7 @@ function ListingDetailPanel({ listing, canEdit, onEdit, onClose, onStatusChange,
                 /* Hardcoded bg-white/dark:bg-slate-900 — see ProjectListingsPanel
                    for the same fix; CSS variable can be overridden by tenant
                    custom theme and end up matching the dark backdrop. */
-                className="bg-white dark:bg-sgs-primary-deep rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
+                className="bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -1137,7 +1137,7 @@ class ListingsPanelErrorBoundary extends React.Component<
             const msg = this.state.error?.message || String(this.state.error);
             return (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-rose-200 overflow-hidden">
+                    <div className="w-full max-w-lg bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-rose-200 overflow-hidden">
                         <div className="px-5 py-4 bg-rose-50 border-b border-rose-200 flex items-center justify-between">
                             <h3 className="text-rose-700 font-bold">Đã xảy ra lỗi khi mở danh mục sản phẩm</h3>
                             <button
@@ -1981,7 +1981,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
         <>
             <div className="fixed inset-0 z-[9999] flex items-stretch justify-center bg-black/50 p-2 sm:p-4" role="dialog" aria-modal="true">
                 {/*
-                  Panel surface — DELIBERATELY hardcoded `bg-white dark:bg-slate-900`
+                  Panel surface — DELIBERATELY hardcoded `bg-[var(--bg-surface)] dark:bg-slate-900`
                   instead of `bg-[var(--bg-surface)]`. The CSS variable can be
                   overridden by tenant custom themes (services/themeConfig.ts →
                   `:root.light { --bg-surface: ... }`), and a few tenants ended up
@@ -1991,7 +1991,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                   See bug "trắng trang" (Apr 2026) — repro: Quản lý dự án →
                   Masteri Cosmo Central → Danh mục sản phẩm.
                 */}
-                <div className="bg-white dark:bg-sgs-primary-deep rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-slate-200 dark:border-slate-700 overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
+                <div className="bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl w-full max-w-7xl mx-auto border border-slate-200 dark:border-slate-700 overflow-hidden grid" style={{ height: 'calc(100vh - 32px)', maxHeight: 'calc(100vh - 32px)', gridTemplateRows: 'auto minmax(0, 1fr) auto' }}>
 
                     {/* ── Header: project info + stats + actions ── */}
                     <div className="shrink-0 border-b border-[var(--glass-border)]">
@@ -2177,7 +2177,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                                                     ref={actionsRef}
                                                     role="menu"
                                                     aria-label={t('project.actions_btn')}
-                                                    className="fixed z-[10001] min-w-[240px] rounded-xl bg-white dark:bg-slate-800 border border-[var(--glass-border)] shadow-2xl py-1.5"
+                                                    className="fixed z-[10001] min-w-[240px] rounded-xl bg-[var(--bg-surface)] dark:bg-slate-800 border border-[var(--glass-border)] shadow-2xl py-1.5"
                                                     style={{ top: actionsPos.top, right: actionsPos.right }}
                                                 >
                                                     {items.map(it => (
@@ -2317,7 +2317,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     </div>
                     {/* ── Body: list view OR interactive floor plan view ── */}
                     {viewMode === 'floorplan' ? (
-                        <div className="overflow-hidden bg-white dark:bg-sgs-primary-deep flex flex-col">
+                        <div className="overflow-hidden bg-[var(--bg-surface)] dark:bg-sgs-primary-deep flex flex-col">
                             {!floorPlansLoaded ? (
                                 <div className="flex items-center justify-center h-40">
                                     <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -2354,7 +2354,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, userRole, onClose, 
                     /* Inner list area uses Tailwind hardcoded colors (no CSS var)
                        so it's guaranteed visible regardless of any tenant custom
                        theme override of --bg-surface. See "trắng trang" bug fix. */
-                    <div className="overflow-auto scroll-touch thin-scrollbar bg-white dark:bg-sgs-primary-deep">
+                    <div className="overflow-auto scroll-touch thin-scrollbar bg-[var(--bg-surface)] dark:bg-sgs-primary-deep">
                         {loadError && (
                             <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3" role="alert">
                                 <div className="min-w-0">

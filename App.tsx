@@ -977,7 +977,7 @@ const AppShell: React.FC = () => {
                                         await copyToClipboard(approvedNotification.link);
                                         setApprovedNotification(null);
                                     }}
-                                    className="px-3 py-1.5 bg-white text-emerald-700 font-bold rounded-lg text-xs hover:bg-emerald-50 transition-colors"
+                                    className="px-3 py-1.5 bg-[var(--bg-surface)] text-emerald-700 font-bold rounded-lg text-xs hover:bg-emerald-50 transition-colors"
                                 >
                                     {t('proposal.approved_copy_link')}
                                 </button>
@@ -1012,7 +1012,7 @@ const AppShell: React.FC = () => {
                             <div className="flex items-center gap-1.5 shrink-0">
                                 <button
                                     onClick={() => { navigate(`leads?id=${interestNotification.leadId}`); setInterestNotification(null); }}
-                                    className="px-3 py-1.5 bg-white text-indigo-700 font-bold rounded-lg text-xs hover:bg-indigo-50 transition-colors"
+                                    className="px-3 py-1.5 bg-[var(--bg-surface)] text-indigo-700 font-bold rounded-lg text-xs hover:bg-indigo-50 transition-colors"
                                 >
                                     {t('proposal.interest_view_lead')}
                                 </button>

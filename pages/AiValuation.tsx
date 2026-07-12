@@ -2832,7 +2832,7 @@ export const AiValuation: React.FC = () => {
           {no:'8',name:'Tiện ích nội khu',plain:'Dự án có hồ bơi, gym, bảo vệ 24/7 không? Phí quản lý cao nhưng tăng giá cho thuê và bán lại.',weight:'1.5%'},
           {no:'9',name:'Điều chỉnh thị trường',plain:'Điều chỉnh theo mùa (Q1 thường thấp hơn Q3-Q4), lãi suất ngân hàng, và tâm lý thị trường.',weight:'0.5%'},
         ].map((f)=>(
-          <div key={f.no} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div key={f.no} className="bg-[var(--bg-surface)] rounded-2xl border border-slate-200 p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center shrink-0">{f.no}</span>
               <span className="font-bold text-slate-700">{f.name}</span>
@@ -2847,7 +2847,7 @@ export const AiValuation: React.FC = () => {
       <div className="mb-12">
         <h2 className="text-2xl font-bold text-slate-800 mb-3">Case Study: Định Giá Căn 2PN Vinhomes Grand Park</h2>
         <p className="text-slate-500 text-sm mb-6">Ví dụ thực tế cách SGS Định Giá AI™ tính toán từng bước cho căn hộ 2PN tại Vinhomes Grand Park, TP.Thủ Đức.</p>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-slate-200 p-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-bold text-slate-700 mb-3 text-base">Thông Tin Đầu Vào</h3>
@@ -2902,7 +2902,7 @@ export const AiValuation: React.FC = () => {
           {q:'Thời gian để có kết quả định giá AI là bao lâu?',a:'Kết quả định giá AI của SGS LAND xuất hiện ngay lập tức — thường trong vòng 2-5 giây sau khi nhập địa chỉ. Hệ thống SGS-AVM phân tích đồng thời hơn 2.400+ giao dịch thực tế gần đó, đối chiếu với dữ liệu quy hoạch từ cổng thông tin chính phủ và chỉ số thị trường cập nhật hàng ngày. Kết quả bao gồm giá trị ước tính, khoảng dao động ±4.8%, và báo cáo PDF có thể tải về. Gói Premium có thêm lịch sử giá 24 tháng và phân tích xu hướng khu vực.'},
           {q:'SGS LAND có hỗ trợ định giá bất động sản thương mại không?',a:'Có, SGS-AVM hỗ trợ định giá cả bất động sản thương mại bao gồm: shophouse, nhà phố thương mại, văn phòng, nhà xưởng và đất thương mại. Đối với BĐS thương mại, hệ thống áp dụng thêm các hệ số hiệu chỉnh về mật độ giao thông, khả năng tiếp cận, và tiềm năng kinh doanh khu vực. Độ chính xác cho BĐS thương mại đạt ±6-8%, thấp hơn nhà ở do dữ liệu giao dịch ít hơn. Nên dùng kết quả AI như tham chiếu ban đầu trước khi thuê thẩm định viên chuyên nghiệp.'},
         ].map((item,idx)=>(
-          <details key={idx} className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+          <details key={idx} className="border border-slate-200 rounded-xl overflow-hidden bg-[var(--bg-surface)]">
             <summary className="px-4 py-3 cursor-pointer font-medium text-slate-700 hover:bg-slate-50 flex items-center justify-between list-none">
               <span>{item.q}</span><span className="text-slate-400 ml-2 shrink-0">+</span>
             </summary>

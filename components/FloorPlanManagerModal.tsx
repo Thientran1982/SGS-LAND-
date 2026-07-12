@@ -120,7 +120,7 @@ export const FloorPlanManagerModal: React.FC<FloorPlanManagerModalProps> = ({
       onClick={() => { if (!uploading) onClose(); }}
     >
       <div
-        className="bg-white dark:bg-sgs-primary-deep w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col"
+        className="bg-[var(--bg-surface)] dark:bg-sgs-primary-deep w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col"
         style={{ maxHeight: 'calc(100vh - 24px)' }}
         onClick={(e) => e.stopPropagation()}
       >

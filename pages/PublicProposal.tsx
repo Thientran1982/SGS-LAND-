@@ -129,7 +129,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                     </div>
                 )}
                 {/* ── HERO CARD ── */}
-                <div className="bg-white rounded-3xl shadow-sm shadow-slate-200 border border-slate-100 overflow-hidden">
+                <div className="bg-[var(--bg-surface)] rounded-3xl shadow-sm shadow-slate-200 border border-slate-100 overflow-hidden">
                     {/* Hero Image */}
                     <div className="relative w-full aspect-[16/9] bg-slate-100 overflow-hidden">
                         <img
@@ -261,7 +261,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                     </div>
                 </div>
                 {/* ── CTA CARD ── */}
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="bg-[var(--bg-surface)] rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-5 space-y-4">
 
                         {accepted ? (

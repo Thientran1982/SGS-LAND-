@@ -113,7 +113,7 @@ export default function MarketReport() {
           <p className="text-blue-200 text-lg mb-2">{REPORT_DATA.subtitle}</p>
           <p className="text-blue-300 text-sm">Ngay phat hanh: {REPORT_DATA.publishedAt} | Du lieu: 2.847 giao dich Q2/2026</p>
           <div className="mt-6 flex gap-3">
-            <a href="/market-report-q2-2026.json" download className="bg-white text-blue-900 px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-50">
+            <a href="/market-report-q2-2026.json" download className="bg-[var(--bg-surface)] text-blue-900 px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-50">
               Download JSON
             </a>
             <a href="#methodology" className="border border-white text-white px-4 py-2 rounded-lg text-sm hover:bg-white/10">
@@ -133,7 +133,7 @@ export default function MarketReport() {
         {/* Data table */}
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Dien bien gia theo phan khuc</h2>
         <div className="overflow-x-auto mb-10">
-          <table className="w-full bg-white rounded-xl shadow-sm border border-gray-100">
+          <table className="w-full bg-[var(--bg-surface)] rounded-xl shadow-sm border border-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Khu vuc</th>
@@ -167,7 +167,7 @@ export default function MarketReport() {
         <h2 className="text-xl font-bold text-gray-900 mb-4">Ghi chu phan khuc</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
           {REPORT_DATA.segments.map((s, i) => (
-            <div key={i} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <div key={i} className="bg-[var(--bg-surface)] rounded-xl p-4 border border-gray-100 shadow-sm">
               <p className="font-semibold text-gray-900 text-sm mb-1">{s.area} — {s.type}</p>
               <p className="text-gray-600 text-sm">{s.note}</p>
             </div>
@@ -208,7 +208,7 @@ export default function MarketReport() {
         <div className="bg-blue-700 text-white rounded-xl p-8 text-center">
           <h2 className="text-2xl font-bold mb-3">Can dinh gia BDS chinh xac hon?</h2>
           <p className="text-blue-200 mb-6">AI SGS LAND phan tich hon 100.000 giao dich de cho ban biet gia thi truong hien tai.</p>
-          <a href="/ai-valuation" className="bg-white text-blue-700 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 inline-block">
+          <a href="/ai-valuation" className="bg-[var(--bg-surface)] text-blue-700 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 inline-block">
             Thu Dinh gia AI Mien phi
           </a>
         </div>

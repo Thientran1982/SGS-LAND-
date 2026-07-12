@@ -87,9 +87,9 @@ export const ProjectCommissionPanel: React.FC<Props> = ({ projectId, projectName
   return createPortal(
     <div className="fixed inset-0 z-[10002] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-y-auto"
          onClick={onClose}>
-      <div className="w-full max-w-5xl bg-white dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4"
+      <div className="w-full max-w-5xl bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-2xl shadow-2xl border border-[var(--glass-border)] my-4"
            onClick={e => e.stopPropagation()}>
-        <header className="flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border)] sticky top-0 bg-white dark:bg-sgs-primary-deep rounded-t-2xl">
+        <header className="flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border)] sticky top-0 bg-[var(--bg-surface)] dark:bg-sgs-primary-deep rounded-t-2xl">
           <div>
             <h2 className="text-lg font-extrabold text-[var(--text-primary)]">Hoa hồng &amp; doanh số</h2>
             <p className="text-xs text-[var(--text-tertiary)]">{projectName}</p>

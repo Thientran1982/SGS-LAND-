@@ -82,7 +82,7 @@ export default function CrmLandingPage() {
           <h2 className="text-3xl font-bold text-white mb-4">Bắt đầu ngay — miễn phí</h2>
           <p className="text-white/80 mb-8">Cá nhân: miễn phí · Team 5-20 người: từ 990.000đ/tháng · Enterprise: liên hệ</p>
           <Link href="/login"
-            className="inline-block px-10 py-4 bg-white rounded-2xl text-sm font-bold transition-all hover:opacity-90"
+            className="inline-block px-10 py-4 bg-[var(--bg-surface)] rounded-2xl text-sm font-bold transition-all hover:opacity-90"
             style={{ color: "var(--primary-600)" }}>
             Đăng ký dùng thử
           </Link>

@@ -595,7 +595,7 @@ const PromptsTab = memo(({
                                                 className={`px-2 py-0.5 rounded font-mono text-2xs border transition-colors ${
                                                     isActive
                                                         ? 'bg-emerald-100 border-emerald-300 text-emerald-700 cursor-default'
-                                                        : 'bg-white border-slate-200 text-slate-500 hover:bg-[var(--sgs-primary)]/10 hover:border-[var(--sgs-primary)] hover:text-[var(--sgs-primary)]'
+                                                        : 'bg-[var(--bg-surface)] border-slate-200 text-slate-500 hover:bg-[var(--sgs-primary)]/10 hover:border-[var(--sgs-primary)] hover:text-[var(--sgs-primary)]'
                                                 }`}
                                             >
                                                 v{v.version}{v.status === 'DRAFT' ? '·draft' : ''}
@@ -629,7 +629,7 @@ const PromptsTab = memo(({
                                     className={`ml-auto px-2 py-1 text-xs2 font-bold rounded border shrink-0 transition-colors ${
                                         diffMode
                                             ? 'bg-amber-100 text-amber-700 border-amber-300'
-                                            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                            : 'bg-[var(--bg-surface)] text-slate-500 border-slate-200 hover:bg-slate-50'
                                     }`}
                                     title="So sánh side-by-side với version active"
                                 >
@@ -649,7 +649,7 @@ const PromptsTab = memo(({
                                         <select
                                             value={diffRightVersion ?? ''}
                                             onChange={(e) => onSelectDiffVersion(Number(e.target.value))}
-                                            className="text-2xs border border-slate-200 rounded px-1 py-0.5 bg-white"
+                                            className="text-2xs border border-slate-200 rounded px-1 py-0.5 bg-[var(--bg-surface)]"
                                         >
                                             {(selectedPrompt.versions || []).map(v => (
                                                 <option key={v.version} value={v.version}>v{v.version} {v.status === 'DRAFT' ? '(draft)' : ''}</option>

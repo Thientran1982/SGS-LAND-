@@ -211,7 +211,7 @@ export const Commissions: React.FC = () => {
           {err}
         </div>
       )}
-      <div className="rounded-2xl border border-[var(--glass-border)] bg-white dark:bg-sgs-primary-deep overflow-hidden">
+      <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] dark:bg-sgs-primary-deep overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-sgs-bg dark:bg-slate-800/60 text-xs uppercase text-[var(--text-tertiary)]">

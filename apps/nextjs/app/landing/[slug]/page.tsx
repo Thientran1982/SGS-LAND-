@@ -262,7 +262,7 @@ export default async function LandingProjectPage({
           </div>
         </section>
         {/* ─── TỔNG QUAN ──────────────────────────────────────────────── */}
-        <section id="tong-quan" className="lp-section lp-bg-white" aria-labelledby="h-tong-quan">
+        <section id="tong-quan" className="lp-section lp-bg-[var(--bg-surface)]" aria-labelledby="h-tong-quan">
           <div className="lp-wrap">
             <span className="lp-eyebrow lp-reveal">Tổng Quan Dự Án</span>
             <h2 id="h-tong-quan" className="lp-reveal">
@@ -325,7 +325,7 @@ export default async function LandingProjectPage({
           </div>
         </section>
         {/* ─── TIỆN ÍCH ───────────────────────────────────────────────── */}
-        <section id="tien-ich" className="lp-section lp-bg-white" aria-labelledby="h-tien-ich">
+        <section id="tien-ich" className="lp-section lp-bg-[var(--bg-surface)]" aria-labelledby="h-tien-ich">
           <div className="lp-wrap">
             <span className="lp-eyebrow lp-reveal">Tiện Ích Nội Khu</span>
             <h2 id="h-tien-ich" className="lp-reveal">
