@@ -515,7 +515,7 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                 </div>                
                 {/* Content Area — each page mounts as absolute inset-0 inside children
                     and manages its own overflow/scrolling via overflow-y-auto. */}
-                <div className="flex-1 relative w-full min-h-0">
+                <div className="flex-1 relative w-full min-h-0 bg-[var(--bg-app)]">
                     {children}
                 </div>
             </main>
