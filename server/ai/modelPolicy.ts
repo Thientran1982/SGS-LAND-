@@ -230,3 +230,52 @@ export function getProviderApiKey(provider: AiProvider): string | undefined {
 export function isProviderConfigured(provider: AiProvider): boolean {
   return !!getProviderApiKey(provider);
 }
+
+/**
+ * Danh sach model kha dung, nhom theo nha cung cap.
+ * - Loai bo model deprecated (Gemini 1.x / 2.x — Google khong con dung).
+ * - Loai bo model embedding (khong dung cho chat/agent).
+ * - Danh dau provider da cau hinh API key hay chua.
+ * Dung cho endpoint GET /api/ai/models de UI Quan tri AI lay dong.
+ */
+export interface ModelInfo {
+  id: string;
+  provider: AiProvider;
+  costPer1k: number;
+  preview: boolean;
+  supportsThinking: boolean;
+}
+export interface ProviderModelGroup {
+  provider: AiProvider;
+  label: string;
+  configured: boolean;
+  models: ModelInfo[];
+}
+const PROVIDER_LABELS: Record<AiProvider, string> = {
+  google: 'Google Gemini',
+  openai: 'OpenAI (ChatGPT)',
+  anthropic: 'Anthropic (Claude)',
+  xai: 'xAI (Grok)',
+};
+const PROVIDER_ORDER: AiProvider[] = ['google', 'openai', 'anthropic', 'xai'];
+export function listAvailableModels(): ProviderModelGroup[] {
+  const groups = new Map<AiProvider, ModelInfo[]>();
+  for (const spec of Object.values(MODEL_REGISTRY)) {
+    if (spec.deprecated) continue;
+    if (spec.id.includes('embedding')) continue;
+    if (!groups.has(spec.provider)) groups.set(spec.provider, []);
+    groups.get(spec.provider)!.push({
+      id: spec.id,
+      provider: spec.provider,
+      costPer1k: spec.costPer1k,
+      preview: !!spec.preview,
+      supportsThinking: !!spec.supportsThinking,
+    });
+  }
+  return PROVIDER_ORDER.filter((p) => groups.has(p)).map((p) => ({
+    provider: p,
+    label: PROVIDER_LABELS[p],
+    configured: isProviderConfigured(p),
+    models: groups.get(p)!,
+  }));
+}

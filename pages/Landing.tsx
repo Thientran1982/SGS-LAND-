@@ -839,7 +839,7 @@ function PublicFooter({ lang }: { lang: Lang }) {
               </a>
               <a href="mailto:info@sgsland.vn" className="text-xs" style={{ color:"#B9C6D4" }}
                 onMouseEnter={e => linkHover(e, true)} onMouseLeave={e => linkHover(e, false)}>
-                ✉info@sgsland.vn
+                ✉ info@sgsland.vn
               </a>
               <p className="text-xs mt-1" style={{ color:"#7A91A8" }}>
                 {lang === "vi" ? "Hỗ trợ 7/7 · 8:00 – 18:00" : "Support 7/7 · 8:00 – 18:00"}

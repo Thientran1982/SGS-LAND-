@@ -320,7 +320,7 @@ export class ListingRepository extends BaseRepository {
     tenantId: string,
     userId?: string,
     userRole?: string
-  ): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; totalCount: number }> {
+  ): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; otherCount: number; totalCount: number }> {
     return this.withTenant(tenantId, async (client) => {
       const conditions: string[] = [];
       const values: any[] = [];
@@ -360,6 +360,7 @@ export class ListingRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
           COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
           COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
+          COUNT(*) FILTER (WHERE l.status IS NULL OR l.status NOT IN ('AVAILABLE','HOLD','SOLD','RENTED','BOOKING','OPENING','INACTIVE'))::int AS other_count,
           COUNT(*)::int                                         AS total_count
          FROM listings l ${whereClause}`,
         values
@@ -373,6 +374,7 @@ export class ListingRepository extends BaseRepository {
         bookingCount:   sr.booking_count,
         openingCount:   sr.opening_count,
         inactiveCount:  sr.inactive_count,
+        otherCount:    sr.other_count,
         totalCount:     sr.total_count,
       };
     });

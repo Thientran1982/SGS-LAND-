@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { SeoHead } from '../components/SeoHead';
 interface ConfigTabProps {
     config: AiTenantConfig;
+    modelGroups: any[];
     onSave: () => void;
     onUpdateConfig: (k: keyof AiTenantConfig, v: any) => void;
     t: any;
@@ -375,7 +376,7 @@ const DiffPromoteModal: React.FC<DiffPromoteModalProps> = ({ open, prompt, targe
         document.body
     );
 };
-const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) => (
+const ConfigTab = memo(({ config, modelGroups, onSave, onUpdateConfig, t }: ConfigTabProps) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
         <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
             <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('ai.policy')}</h3>
@@ -383,7 +384,7 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                 <div>
                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.allowed')}</label>
                     <div className="mt-2 space-y-3">
-                        {MODEL_GROUPS.map(group => (
+                        {modelGroups.map((group: any) => (
                             <div key={group.label}>
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wide">{group.label}</span>
@@ -1007,6 +1008,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
 });
 export const AiGovernance: React.FC = () => {
     const [config, setConfig] = useState<AiTenantConfig | null>(null);
+    const [modelGroups, setModelGroups] = useState<any[]>(MODEL_GROUPS);
     const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
     const [safetyLogs, setSafetyLogs] = useState<AiSafetyLog[]>([]);
     const [loading, setLoading] = useState(true);
@@ -1070,6 +1072,22 @@ export const AiGovernance: React.FC = () => {
             .then(r => r.ok ? r.json() : {})
             .then(d => setPromptDefaults(d))
             .catch(() => {});
+    }, []);
+    useEffect(() => {
+      fetch('/api/ai/governance/models', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (!d || !Array.isArray(d.groups) || d.groups.length === 0) return;
+          const meta: any = { google: { badge: 'Google', badgeColor: 'bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)] border-[var(--sgs-primary)]' }, openai: { badge: 'OpenAI', badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200' }, anthropic: { badge: 'Claude', badgeColor: 'bg-amber-100 text-amber-700 border-amber-200' }, xai: { badge: 'xAI', badgeColor: 'bg-slate-100 text-slate-700 border-slate-200' } };
+          const groups = d.groups.map((g: any) => ({
+            label: g.label + (g.configured ? '' : ' (chưa cấu hình API key)'),
+            badge: meta[g.provider]?.badge || g.provider,
+            badgeColor: meta[g.provider]?.badgeColor || 'bg-slate-100 text-slate-700 border-slate-200',
+            models: g.models.map((m: any) => m.id),
+          }));
+          setModelGroups(groups);
+        })
+        .catch(() => {});
     }, []);
     const handleUpdateConfig = useCallback((key: keyof AiTenantConfig, value: any) => {
         if (!config) return;
@@ -1192,7 +1210,7 @@ export const AiGovernance: React.FC = () => {
                     <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-[var(--sgs-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_rlhf')}</button>
                 </div>
             </div>
-            {activeTab === 'CONFIG' && <ConfigTab config={config} onSave={handleSaveConfig} onUpdateConfig={handleUpdateConfig} t={t} />}           
+            {activeTab === 'CONFIG' && <ConfigTab config={config} modelGroups={modelGroups} onSave={handleSaveConfig} onUpdateConfig={handleUpdateConfig} t={t} />}           
             {activeTab === 'PROMPTS' && (
                 <PromptsTab 
                     prompts={prompts}

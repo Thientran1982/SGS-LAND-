@@ -3,9 +3,20 @@ import { aiGovernanceRepository } from '../repositories/aiGovernanceRepository';
 import { feedbackRepository } from '../repositories/feedbackRepository';
 import { GoogleGenAI } from '@google/genai';
 import { sendAiError } from '../utils/aiErrorHandler';
+import { listAvailableModels } from '../ai/modelPolicy';
 
 export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
+
+  // GET /api/ai/governance/models — danh sach model dong tu MODEL_REGISTRY (da loai deprecated)
+  router.get('/models', authenticateToken, async (_req: Request, res: Response) => {
+    try {
+      res.json({ groups: listAvailableModels() });
+    } catch (error) {
+      console.error('Error listing AI models:', error);
+      res.status(500).json({ error: 'Failed to list AI models' });
+    }
+  });
 
   router.get('/safety-logs', authenticateToken, async (req: Request, res: Response) => {
     try {
