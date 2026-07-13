@@ -212,15 +212,18 @@ export async function runCampaign(
   let sent = 0;
   let failed = 0;
   for (const rec of recipientIds) {
-    const subject = rec.variant === 'B' && ab.variant_b_subject ? ab.variant_b_subject : c.subject;
+    const subjectTpl = rec.variant === 'B' && ab.variant_b_subject ? ab.variant_b_subject : c.subject;
     const bodyTpl = rec.variant === 'B' && ab.variant_b_body_html ? ab.variant_b_body_html : c.body_html;
-    const personalised = bodyTpl.replace(/\{\{name\}\}/g, escapeHtml(rec.name || 'bạn'));
-    const decorated = decorateBody(personalised, rec.id, publicBaseUrl);
+    const subject = renderTemplate(subjectTpl, rec);
+    const renderedHtml = renderTemplateHtml(bodyTpl, rec);
+    const decorated = decorateBody(renderedHtml, rec.id, publicBaseUrl);
+    const textContent = htmlToPlainText(decorated);
     try {
       const result = await emailService.sendEmail(c.tenant_id, {
         to: rec.email,
         subject,
         html: decorated,
+        text: textContent,
         template: 'campaign',
         dedupeKey: `campaign:${campaignId}:${rec.id}`,
         dedupeWindowMinutes: 60 * 24,
@@ -273,4 +276,49 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;');
+}
+/**
+ * Replace {{name}} / {{email}} placeholders — raw output (dùng cho subject và text/plain).
+ */
+function renderTemplate(
+  template: string,
+  recipient: { name: string | null; email: string },
+): string {
+  return template
+    .replace(/\{\{name\}\}/g, recipient.name || 'bạn')
+    .replace(/\{\{email\}\}/g, recipient.email || '');
+}
+/**
+ * Replace {{name}} / {{email}} placeholders — HTML-escaped output (dùng cho html body).
+ */
+function renderTemplateHtml(
+  template: string,
+  recipient: { name: string | null; email: string },
+): string {
+  return renderTemplate(template, {
+    name: escapeHtml(recipient.name || 'bạn'),
+    email: escapeHtml(recipient.email || ''),
+  });
+}
+/**
+ * Convert HTML sang plain text — dùng cho trường text của email (multipart).
+ * Giúp Gmail/Outlook hiển thị đúng khi client ưu tiên text/plain.
+ */
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<img[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
