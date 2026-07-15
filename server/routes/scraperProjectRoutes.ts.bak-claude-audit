@@ -1613,7 +1613,7 @@ export function createScraperProjectRoutes(authenticateToken: any) {
   router.get('/catalog', authenticateToken, (_req: Request, res: Response) => {
     const hasKey = !!process.env.SCRAPERAPI_KEY;
     res.json({
-      projects: PROJECT_CATALOG.filter(p => p.id !== 'sgsland').map(p => ({
+      projects: PROJECT_CATALOG.map(p => ({
         ...p,
         apiReady: p.id === 'sgsland' ? true : hasKey,
         note:     p.id === 'sgsland'

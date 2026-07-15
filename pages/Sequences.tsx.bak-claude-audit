@@ -380,7 +380,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                 <div className="flex-1 overflow-y-auto p-6 no-scrollbar space-y-6">
                     {/* Stats (if available) */}
                     {sequence.stats && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-4 gap-3">
                             <StatPill label={t('seq.stats_enrolled')} value={sequence.stats.enrolled} color="bg-blue-50 text-blue-700" />
                             <StatPill label={t('seq.stats_open_rate')} value={`${sequence.stats.openRate}%`} color="bg-emerald-50 text-emerald-700" />
                             <StatPill label={t('seq.stats_reply_rate')} value={`${sequence.stats.replyRate}%`} color="bg-[var(--sgs-primary)]/10 text-[var(--sgs-primary)]" />
@@ -641,7 +641,7 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, onDuplicate, onToggle,
                 </div>
             </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 py-3 border-t border-b border-slate-50 my-4">
+        <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-slate-50 my-4">
             <div className="text-center">
                 <div className="text-lg font-bold text-[var(--text-primary)]">{sequence.stats?.enrolled || 0}</div>
                 <div className="text-2xs text-[var(--text-secondary)] font-bold uppercase">{t('seq.stat_active')}</div>

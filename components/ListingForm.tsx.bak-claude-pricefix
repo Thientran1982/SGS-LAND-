@@ -687,18 +687,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 inputMode="decimal"
                                                 value={priceShort} 
                                                 onChange={e => {
-                                                    let raw = e.target.value.replace(/[^\d.,]/g,'');
-                                                const seps=(raw.match(/[.,]/g)||[]).length;
-                                                if(seps>1){raw=raw.replace(/[.,]/g,'');}
-                                                else if(seps===1){const p=raw.split(/[.,]/);if(p[1]&&p[1].length===3)raw=p.join('');else raw=p.join('.');}
-                                                    if (/^\d*\.?\d*$/.test(raw)) setPriceShort(raw);
+                                                    const raw = e.target.value.replace(',', '.');
+                                                    if (/^(\d+\.?\d*)?$/.test(raw)) setPriceShort(raw);
                                                 }}
                                                 onBlur={() => {
                                                     const num = parseFloat(priceShort);
                                                     if (isNaN(num) || num <= 0) return;
                                                     const rawVal = num * priceUnit;
                                                     // Nếu tổng VNĐ > 10.000 tỷ → chắc chắn user nhập số VNĐ thô, tự chuyển đơn vị
-                                                    if (num >= 1_000_000) {
+                                                    if (rawVal > 1e13) {
                                                         if (num >= 1_000_000_000) {
                                                             setPriceUnit(UNITS.BILLION.value);
                                                             setPriceShort(parseFloat((num / 1_000_000_000).toFixed(6)).toString());

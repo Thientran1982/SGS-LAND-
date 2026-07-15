@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from '../services/i18n';
 import { db } from '../services/dbApi';
 import { LeadStage, LEAD_SOURCES } from '../types';
 import { SeoHead } from '../components/SeoHead';
@@ -70,7 +69,6 @@ const fmtDate = (s: string | null) => {
 const pct = (n: number, d: number) => d > 0 ? `${((n / d) * 100).toFixed(1)}%` : '—';
 // ─── Page ───────────────────────────────────────────────────────────────────
 export const Campaigns: React.FC = () => {
-  const { t } = useTranslation();
   const [items, setItems] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,7 +163,7 @@ export const Campaigns: React.FC = () => {
           + Tạo chiến dịch
         </button>
       </div>
-      {loading && <div className="py-12 text-center text-[var(--text-tertiary)]">{t('common.loading')}</div>}
+      {loading && <div className="py-12 text-center text-[var(--text-tertiary)]">Đang tải...</div>}
       {error && <div className="py-4 px-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg">{error}</div>}
       {!loading && !error && items.length === 0 && (
         <div className="py-16 text-center bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)]">
@@ -180,8 +178,7 @@ export const Campaigns: React.FC = () => {
       )}
       {!loading && items.length > 0 && (
         <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] overflow-hidden">
-          <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[640px]">
+          <table className="w-full text-sm">
             <thead className="bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] text-xs uppercase">
               <tr>
                 <th className="text-left px-4 py-3">Tên chiến dịch</th>
@@ -240,7 +237,6 @@ export const Campaigns: React.FC = () => {
               ))}
             </tbody>
           </table>
-              </div>
         </div>
       )}
       {editing && (
