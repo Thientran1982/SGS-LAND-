@@ -4,7 +4,7 @@ import Link from "next/link";
 import { HelpCircle, MessageSquare, Phone, Mail, BookOpen, ChevronRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Trung Tâm Trợ Giúp | SGS LAND",
+  title: "Trung Tâm Trợ Giúp",
   description: "Hỗ trợ khách hàng SGS LAND: hướng dẫn sử dụng nền tảng, tư vấn BĐS, giải đáp thắc mắc. Liên hệ qua hotline, chat hoặc email.",
   alternates: { canonical: "https://sgsland.vn/help-center" },
 };

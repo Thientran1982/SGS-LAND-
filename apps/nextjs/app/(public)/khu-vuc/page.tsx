@@ -6,12 +6,12 @@ import { AREA_PRICES } from "@/data/areas";
 const PAGE_URL = `${SITE_URL}/khu-vuc`;
 
 export const metadata: Metadata = {
-  title: "Bất Động Sản Theo Khu Vực TP.HCM & Vùng Ven | SGS LAND",
+  title: "Bất Động Sản Theo Khu Vực TP.HCM & Vùng Ven",
   description:
     "Khám phá bất động sản theo khu vực: Thủ Đức, Quận 7, Bình Thạnh, Phú Nhuận, Bình Chánh, Cần Giờ, Hóc Môn, Đồng Nai, Long Thành, Bình Dương, Long An. Giá tham khảo và dự án nổi bật từng khu vực.",
   alternates: { canonical: PAGE_URL },
   openGraph: {
-    title: "Bất Động Sản Theo Khu Vực | SGS LAND",
+    title: "Bất Động Sản Theo Khu Vực",
     description:
       "Bản đồ giá và dự án nổi bật theo từng khu vực TP.HCM và vùng ven.",
     url: PAGE_URL,

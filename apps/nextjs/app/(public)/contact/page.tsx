@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ContactForm } from "@/components/public/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Liên Hệ | SGS LAND",
+  title: "Liên Hệ",
   description:
     "Liên hệ SGS LAND — Hotline: 0971 132 378 | Email: info@sgsland.vn | TP. Hồ Chí Minh. Tư vấn BĐS, CRM, định giá AI miễn phí.",
   alternates: { canonical: "https://sgsland.vn/contact" },

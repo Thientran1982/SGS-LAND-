@@ -12,11 +12,11 @@ Allow: /careers
 Allow: /help-center
 Allow: /developers
 Allow: /status
-Allow: /livechat
+Disallow: /livechat
 Allow: /privacy-policy
 Allow: /terms-of-service
 Allow: /cookie-settings
-Allow: /crm-platform
+Disallow: /crm-platform
 Allow: /ky-gui-bat-dong-san
 Allow: /lai-suat-vay-ngan-hang
 Allow: /du-an

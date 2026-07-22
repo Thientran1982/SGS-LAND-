@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Ký Gửi Bất Động Sản | SGS LAND",
+  title: "Ký Gửi Bất Động Sản",
   description:
     "Ký gửi BĐS tại SGS LAND — phân phối nhanh, pháp lý bảo đảm, hoa hồng cạnh tranh. 15.000+ môi giới trong mạng lưới. Liên hệ ngay.",
   alternates: { canonical: "https://sgsland.vn/ky-gui-bat-dong-san" },

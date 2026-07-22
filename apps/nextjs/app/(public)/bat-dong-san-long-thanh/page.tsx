@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { LocalLandingPageTemplate } from "@/components/public/LocalLandingPageTemplate";
 
 export const metadata: Metadata = {
-  title: "Bất Động Sản Long Thành 2026 | BĐS Hành Lang Sân Bay | SGS LAND",
+  title: "Bất Động Sản Long Thành 2026 | BĐS Hành Lang Sân Bay",
   description:
     "3.200+ bất động sản Long Thành, Đồng Nai. Hưởng lợi từ Sân Bay Quốc Tế Long Thành, cao tốc Bến Lức — Long Thành. Đất nền, nhà phố, khu công nghiệp.",
   keywords: ["bất động sản Long Thành", "đất Long Thành", "BĐS sân bay Long Thành"],

@@ -21,13 +21,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const author = getAuthorBySlug(slug);
-  if (!author) return { title: "Tác giả không tìm thấy | SGS LAND" };
+  if (!author) return { title: "Tác giả không tìm thấy" };
   return {
-    title: `${author.name} — ${author.title} | SGS LAND`,
+    title: `${author.name} — ${author.title}`,
     description: author.bio,
     alternates: { canonical: `${SITE_URL}/tac-gia/${slug}` },
     openGraph: {
-      title: `${author.name} | SGS LAND`,
+      title: `${author.name}`,
       description: author.bio,
       url: `${SITE_URL}/tac-gia/${slug}`,
       images: [{ url: `${SITE_URL}${author.avatar}`, width: 400, height: 400, alt: author.name }],

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Điều Khoản Sử Dụng | SGS LAND", alternates: { canonical: "https://sgsland.vn/terms-of-service" } };
+export const metadata: Metadata = { title: "Điều Khoản Sử Dụng", alternates: { canonical: "https://sgsland.vn/terms-of-service" } };
 export const dynamic = "force-dynamic";
 export default function TermsPage() {
   return (

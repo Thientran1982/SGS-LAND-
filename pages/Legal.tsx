@@ -63,7 +63,7 @@ const LEGAL_CONTENT = {
             },
             {
                 heading: "13. Liên Hệ & Khiếu Nại",
-                content: "Nếu bạn có câu hỏi về Chính sách này, muốn thực hiện quyền dữ liệu, hoặc muốn khiếu nại về việc xử lý dữ liệu cá nhân, vui lòng liên hệ:\n\nBộ phận Bảo vệ Dữ liệu (DPO — Data Protection Officer)\nSGS Land Corp\nĐịa chỉ đăng ký: TP. Hồ Chí Minh, Việt Nam\nEmail: legal@sgsland.vn\nThời gian làm việc: 08:00 – 17:30 (Thứ Hai – Thứ Sáu, trừ ngày lễ theo quy định)\n\nNếu sau khi liên hệ với chúng tôi, bạn không hài lòng với cách giải quyết, bạn có quyền nộp khiếu nại lên Cục An toàn thông tin, Bộ Thông tin và Truyền thông Việt Nam tại địa chỉ: ais.gov.vn hoặc theo các kênh khiếu nại chính thức của cơ quan nhà nước có thẩm quyền."
+                content: "Nếu bạn có câu hỏi về Chính sách này, muốn thực hiện quyền dữ liệu, hoặc muốn khiếu nại về việc xử lý dữ liệu cá nhân, vui lòng liên hệ:\n\nBộ phận Bảo vệ Dữ liệu (DPO — Data Protection Officer)\nSGS Land Corp\nĐịa chỉ đăng ký: 122 - 124 B2, Khu đô thị Sala, Phường An Khánh, TP.HCM, Việt Nam\nEmail: legal@sgsland.vn\nThời gian làm việc: 08:00 – 17:30 (Thứ Hai – Thứ Sáu, trừ ngày lễ theo quy định)\n\nNếu sau khi liên hệ với chúng tôi, bạn không hài lòng với cách giải quyết, bạn có quyền nộp khiếu nại lên Cục An toàn thông tin, Bộ Thông tin và Truyền thông Việt Nam tại địa chỉ: ais.gov.vn hoặc theo các kênh khiếu nại chính thức của cơ quan nhà nước có thẩm quyền."
             }
         ],
         terms: [
@@ -291,7 +291,7 @@ const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpda
                     <button onClick={handleHome} className="hover:text-sgs-primary transition-colors">{t('legal.back_home')}</button>
                 </div>
                 <div className="mt-4 text-center text-xs text-slate-400">
-                    SGS Land Corp · MST: 0312960439 · TP. Hồ Chí Minh, Việt Nam
+                    SGS Land Corp · MST: 0312960439 · 122 - 124 B2, Khu đô thị Sala, Phường An Khánh, TP.HCM, Việt Nam
                 </div>
             </div>
         </div>

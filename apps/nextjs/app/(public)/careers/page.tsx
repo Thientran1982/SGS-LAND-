@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Tuyển Dụng | SGS LAND",
+  title: "Tuyển Dụng",
   description:
     "Cơ hội nghề nghiệp tại SGS LAND — Môi giới BĐS, Kỹ sư phần mềm, Product Manager, Data Analyst. Startup proptech hàng đầu Việt Nam.",
   alternates: { canonical: "https://sgsland.vn/careers" },

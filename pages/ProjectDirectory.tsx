@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
+import { PublicFooter } from '../components/PublicFooter';
 import { motion } from 'motion/react';
 import { MapPin, Building2, ArrowRight, Phone, Search, SlidersHorizontal, ChevronDown, Check, MapPinned, LayoutGrid, Activity, Download } from 'lucide-react';
 import { useTranslation } from '../services/i18n';
@@ -663,24 +664,7 @@ export default function ProjectDirectory() {
                 </p>
             </div>
             {/* ── Footer ── */}
-            <footer className="border-t border-[var(--glass-border)] bg-[var(--bg-surface)] py-8 px-4">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Logo className="w-5 h-5 text-[var(--text-primary)]" />
-                            <span className="font-bold text-[var(--text-primary)]">SGS LAND</span>
-                        </div>
-                        <p className="text-xs text-[var(--text-secondary)]">Đại lý BĐS phân phối chính thức tại TP.HCM</p>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
-                        <button onClick={() => navigate('/marketplace')} className="hover:text-sgs-primary">Mua Bán BĐS</button>
-                        <button onClick={() => navigate('/ai-valuation')} className="hover:text-sgs-primary">Định Giá AI</button>
-                        <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-sgs-primary">Ký Gửi BĐS</button>
-                        <button onClick={() => navigate('/news')} className="hover:text-sgs-primary">Tin Tức</button>
-                        <button onClick={() => navigate('/contact')} className="hover:text-sgs-primary">Liên Hệ</button>
-                    </div>
-                </div>
-            </footer>
+            <PublicFooter lang="vi" />
         </div>
     );
 }

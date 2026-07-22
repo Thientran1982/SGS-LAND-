@@ -62,6 +62,14 @@ const HOME_PAGE: SsrPage = {
       url: APP,
       logo: { '@type': 'ImageObject', url: `${APP}/logo.png`, width: 200, height: 60 },
       foundingDate: '2019',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: '122 - 124 B2, Khu đô thị Sala, Phường An Khánh',
+        addressLocality: 'TP. Hồ Chí Minh',
+        addressRegion: 'TP.HCM',
+        postalCode: '700000',
+        addressCountry: 'VN'
+      },
       areaServed: 'VN',
       numberOfEmployees: { '@type': 'QuantitativeValue', value: 15000 },
       contactPoint: {
@@ -690,4 +698,60 @@ export function generateBotHTML(pathname: string, opts?: { aiBot?: boolean }): s
       '</main></body></html>'
     );
   }
+}
+// -----------------------------------------------------------------------------
+// Task 2.1 — Hybrid rendering policy (SSG/SSR/ISR) per route type.
+// This app is Vite + Express (not Next.js), so "ISR" is implemented via HTTP
+// Cache-Control with stale-while-revalidate: the CDN/browser serves a cached
+// static render and revalidates in the background after `max-age`.
+//
+//   strategy   meaning
+//   'ssg-isr'  static generate + background revalidate (projects/regions/news)
+//   'ssr'      always render fresh on the server (listings — data changes often)
+//   'isr-home' homepage: fresh-ish (60s) to balance SEO + freshness
+//   'csr'      client-side only, not SEO-critical (AI Valuation, CRM)
+// -----------------------------------------------------------------------------
+export type RenderStrategy = 'ssg-isr' | 'ssr' | 'isr-home' | 'csr';
+
+export interface RenderPolicy {
+  strategy: RenderStrategy;
+  // Cache-Control for non-AI crawlers / CDN. AI bots always get 'no-store'.
+  cacheControl: string;
+}
+
+export function getRenderPolicy(pathname: string): RenderPolicy {
+  const p = (pathname || '/').split('?')[0].replace(/\/+$/, '') || '/';
+
+  // Homepage — ISR 60s (balance SEO + freshness)
+  if (p === '' || p === '/' || p === '/home') {
+    return { strategy: 'isr-home', cacheControl: 'public, max-age=60, stale-while-revalidate=300' };
+  }
+
+  // Property listings (detail + marketplace) — SSR, data changes frequently
+  if (p.startsWith('/bds') || p === '/marketplace' || p.startsWith('/marketplace/')) {
+    return { strategy: 'ssr', cacheControl: 'public, max-age=30, stale-while-revalidate=60' };
+  }
+
+  // Region / local pages — SSG + ISR (prices refreshed weekly)
+  if (p.startsWith('/bat-dong-san')) {
+    return { strategy: 'ssg-isr', cacheControl: 'public, max-age=3600, stale-while-revalidate=86400' };
+  }
+
+  // News / articles — SSG + ISR (static once published)
+  if (p.startsWith('/tin-tuc') || p === '/news' || p.startsWith('/news/')) {
+    return { strategy: 'ssg-isr', cacheControl: 'public, max-age=600, stale-while-revalidate=86400' };
+  }
+
+  // Project pages (detail + directory) — SSG + ISR (rarely change, strong SEO)
+  if (p.startsWith('/du-an') || p === '/du-an') {
+    return { strategy: 'ssg-isr', cacheControl: 'public, max-age=300, stale-while-revalidate=3600' };
+  }
+
+  // Interactive / internal apps — CSR, not SEO-critical
+  if (p.startsWith('/ai-valuation') || p.startsWith('/dinh-gia') || p.startsWith('/crm') || p.startsWith('/dashboard')) {
+    return { strategy: 'csr', cacheControl: 'no-store' };
+  }
+
+  // Default static marketing pages — SSG + ISR
+  return { strategy: 'ssg-isr', cacheControl: 'public, max-age=3600, stale-while-revalidate=86400' };
 }

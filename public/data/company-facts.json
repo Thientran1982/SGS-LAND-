@@ -1,0 +1,38 @@
+{
+  "_comment": "SINGLE SOURCE OF TRUTH (SSOT) for SGS LAND canonical facts. All pages, JSON-LD, llms-full.txt and server.ts content MUST match these values. Last synced: 2026-07-21.",
+  "company": {
+    "legalName": "Công ty TNHH SGS Land",
+    "brandName": "SGS LAND",
+    "domain": "sgsland.vn",
+    "foundingDate": "2019",
+    "foundingYearText": "thành lập năm 2019",
+    "teamExperienceText": "5+ năm kinh nghiệm (đội ngũ)",
+    "headquarters": "TP.HCM",
+    "serviceAreas": ["TP.HCM", "Đồng Nai", "Bình Dương", "Tây Ninh"]
+  },
+  "contact": {
+    "hotline": "0971 132 378",
+    "hotlineDigits": "0971132378",
+    "email": "info@sgsland.vn",
+    "noreplyEmail": "noreply@sgsland.vn"
+  },
+  "metrics": {
+    "agents": "15.000+",
+    "products": "45.000+",
+    "transactionVolume": "1 tỷ USD+",
+    "projectCatalogCount": 13
+  },
+  "avm": {
+    "accuracyMAPE": "±4.8%",
+    "rmse": "8.2%",
+    "rSquared": 0.94,
+    "coefficients": 9,
+    "accuracyPhrase": "sai số ±4.8%"
+  },
+  "partners": ["Novaland", "Masterise Homes", "Nam Long", "Vinhomes", "Sơn Kim Land", "Đại Quang Minh"],
+  "team": [
+    { "name": "Trần Minh Thiện", "jobTitle": "Founder & CEO" },
+    { "name": "Nguyễn Hoàng Nam", "jobTitle": "CTO" },
+    { "name": "Lê Thị Hoa", "jobTitle": "Chief Operating Officer" }
+  ]
+}

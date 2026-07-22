@@ -26,3 +26,12 @@ server.js.map
 # Uploaded files
 uploads/
 .local/migration/
+# Environment variables (secrets) - added by security fix Task 1.6
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+*.env
+!.env.example

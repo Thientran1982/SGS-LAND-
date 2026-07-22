@@ -3,7 +3,7 @@ import { LocalLandingPageTemplate } from "@/components/public/LocalLandingPageTe
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Bất Động Sản Long An | Đất Nền Long An Giá Tốt | SGS LAND",
+  title: "Bất Động Sản Long An | Đất Nền Long An Giá Tốt",
   description: "Tìm BĐS Long An: đất nền, nhà phố, Waterpoint Nam Long. Giá tốt, pháp lý rõ ràng, giáp TP.HCM, tiềm năng đầu tư cao nhờ hạ tầng kết nối đang hoàn thiện.",
   alternates: { canonical: "https://sgsland.vn/bat-dong-san-long-an" },
 };

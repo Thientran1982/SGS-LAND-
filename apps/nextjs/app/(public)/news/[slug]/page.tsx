@@ -27,7 +27,7 @@ export async function generateMetadata({
   const article = getArticleBySlug(slug);
   if (!article) {
     return {
-      title: "Bài viết không tìm thấy | SGS LAND",
+      title: "Bài viết không tìm thấy",
       alternates: { canonical: canonicalUrl },
     };
   }

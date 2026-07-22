@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { BankRatesPage } from "@/components/public/BankRatesPage";
 
 export const metadata: Metadata = {
-  title: "Lãi Suất Ngân Hàng 2025 | Vay Mua BĐS | SGS LAND",
+  title: "Lãi Suất Ngân Hàng 2025 | Vay Mua BĐS",
   description:
     "Tổng hợp lãi suất vay mua nhà tốt nhất 2025 từ Vietcombank, BIDV, VietinBank, Techcombank, VPBank, MB. Tính toán khoản vay thông minh cùng SGS LAND.",
   keywords: ["lãi suất vay mua nhà 2025", "lãi suất ngân hàng bất động sản", "vay mua nhà tốt nhất"],

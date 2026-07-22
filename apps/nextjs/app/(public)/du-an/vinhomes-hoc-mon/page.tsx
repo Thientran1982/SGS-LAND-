@@ -4,7 +4,7 @@ import { getBreadcrumbSchema, getFAQSchema, SITE_URL } from "@/lib/schema";
 import type { FAQItem } from "@/lib/schema";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ | SGS LAND",
+  title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | Giá Từ 6,5 Tỷ",
   description:
     "Vinhomes Smart City Hóc Môn — siêu đô thị 667ha, Q4/2026. Giá nhà phố từ 8 tỷ, biệt thự từ 25 tỷ, căn hộ từ 5,5 tỷ (65-80 triệu/m²). SGS LAND đại lý F1 uỷ quyền Vinhomes. Đặt chỗ ưu tiên, nhận thông tin mở bán sớm nhất.",
   keywords: [
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/du-an/vinhomes-hoc-mon` },
   openGraph: {
     type: "article",
-    title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha | SGS LAND",
+    title: "Vinhomes Hóc Môn — Smart City 4.0, 667ha",
     description:
       "Siêu đô thị thông minh 667ha tại Hóc Môn, TP.HCM. Giá căn hộ từ 5,5 tỷ, nhà phố từ 8 tỷ. Ra mắt Q4/2026. Đại lý F1 SGS LAND — đặt chỗ ưu tiên.",
     url: `${SITE_URL}/du-an/vinhomes-hoc-mon`,

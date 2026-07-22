@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
+import { PublicFooter } from '../components/PublicFooter';
+import { buildReviewSchema, buildAggregateRatingSchema } from '../shared/reviews';
 import ProjectDirectory from './ProjectDirectory';
 const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
     'aqua-city': {
@@ -1409,14 +1411,8 @@ export default function ProjectLandingPage() {
                         description: seoMeta.description,
                         brand: { '@type': 'Brand', name: cfg.developer },
                         category: cfg.projectType,
-                        aggregateRating: { '@type': 'AggregateRating', ratingValue: 4.8, reviewCount: 127, bestRating: 5, worstRating: 1 },
-                        review: {
-                            '@type': 'Review',
-                            author: { '@type': 'Person', name: 'Nguyễn Minh Tuấn' },
-                            datePublished: '2026-03-01',
-                            reviewRating: { '@type': 'Rating', ratingValue: 5, bestRating: 5, worstRating: 1 },
-                            reviewBody: 'Tư vấn pháp lý chi tiết, hỗ trợ hồ sơ vay ngân hàng nhanh. Đặt cọc qua SGS LAND minh bạch, nhận bảng giá chính chủ trong ngày.',
-                        },
+                        aggregateRating: buildAggregateRatingSchema(),
+                        review: buildReviewSchema(),
                         offers: {
                             '@type': 'AggregateOffer',
                             priceCurrency: 'VND',
@@ -1795,24 +1791,7 @@ export default function ProjectLandingPage() {
                 </div>
             </section>
             {/* ── Footer ── */}
-            <footer className="bg-[var(--bg-surface)] border-t border-[var(--glass-border)] py-8 px-4">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Logo className="w-5 h-5 text-[var(--text-primary)]" />
-                            <p className="font-bold text-[var(--text-primary)]">SGS LAND</p>
-                        </div>
-                        <p className="text-xs text-[var(--text-secondary)]">Nền tảng BĐS AI hàng đầu Việt Nam</p>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
-                        <button onClick={() => navigate('/marketplace')} className="hover:text-[var(--primary-600)]">Mua Bán BĐS</button>
-                        <button onClick={() => navigate('/ai-valuation')} className="hover:text-[var(--primary-600)]">Định Giá AI</button>
-                        <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-[var(--primary-600)]">Ký Gửi BĐS</button>
-                        <button onClick={() => navigate('/news')} className="hover:text-[var(--primary-600)]">Tin Tức</button>
-                        <button onClick={() => navigate('/contact')} className="hover:text-[var(--primary-600)]">Liên Hệ</button>
-                    </div>
-                </div>
-            </footer>
+            <PublicFooter lang="vi" />
         </div>
         </>
     );

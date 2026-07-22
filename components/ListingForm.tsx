@@ -66,6 +66,19 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [geocodeMsg, setGeocodeMsg] = useState<string>('');
     // Split Price State for UX
     const [priceShort, setPriceShort] = useState<string>('');
+  useEffect(() => {
+    setErrors(prev => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = { ...prev };
+      if (next.title && formData.title?.trim()) delete next.title;
+      if (next.location && formData.location?.trim()) delete next.location;
+      if (next.price && priceShort) delete next.price;
+      if (next.area && formData.area) delete next.area;
+      if (next.contactPhone && formData.contactPhone?.trim()) delete next.contactPhone;
+      if (next.ownerPhone && formData.ownerPhone?.trim()) delete next.ownerPhone;
+      return next;
+    });
+  }, [formData.title, formData.location, priceShort, formData.area, formData.contactPhone, formData.ownerPhone]);
     const [priceUnit, setPriceUnit] = useState<number>(UNITS.BILLION.value);
     // Shared geocoding helper — returns { lat, lng } or null.
     // Uses buildVNGeoQueries which:
@@ -260,7 +273,13 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         return Object.keys(newErrors).length === 0;
     };
     const handleSubmit = async () => {
-        if (!validate()) return;
+        if (!validate()) {
+      setTimeout(() => {
+        const el = document.querySelector('.border-rose-300') as HTMLElement | null;
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus?.(); }
+      }, 50);
+      return;
+    }
         setIsSubmitting(true);
         // Calculate final raw price for DB — Math.round loại bỏ lỗi floating-point
         const finalPrice = Math.round(parseFloat(priceShort) * priceUnit);
@@ -559,7 +578,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         {t('leads.phone')} <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
-                                        value={formData.contactPhone || ''} 
+                                        type="tel" inputMode="tel" value={formData.contactPhone || ''} 
                                         onChange={e => setFormData({...formData, contactPhone: e.target.value})} 
                                         className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none font-mono ${errors.contactPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                         placeholder="0912..." 
@@ -584,7 +603,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         <div>
                                             <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_owner_phone')}</label>
                                             <input 
-                                                value={formData.ownerPhone || ''} 
+                                                type="tel" inputMode="tel" value={formData.ownerPhone || ''} 
                                                 onChange={e => setFormData({...formData, ownerPhone: e.target.value})} 
                                                 className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-[var(--sgs-primary)] outline-none bg-[var(--bg-surface)] font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`}
                                                 placeholder="09..."
@@ -919,7 +938,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                     <button onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-70">{t('common.cancel')}</button>
                     <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-3 bg-sgs-primary text-white font-bold rounded-xl shadow-lg hover:bg-sgs-primary transition-all hover:-translate-y-0.5 disabled:opacity-70 flex items-center justify-center gap-2">
                         {isSubmitting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-                        {t('common.save')}
+                        {initialData && initialData.id ? t('inventory.update_submit') : t('inventory.create_submit')}
                     </button>
                 </div>
             </div>

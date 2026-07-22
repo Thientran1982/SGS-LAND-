@@ -23,11 +23,11 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const name = project?.name ?? code.toUpperCase();
   const loc = project?.location ?? "TP.HCM";
   return {
-    title: `${name} | Dự án BĐS | SGS LAND`,
+    title: `${name} | Dự án BĐS`,
     description: `${name} — ${loc}. Xem danh sách căn hộ, bảng giá và thông tin chi tiết tại SGS LAND.`,
     alternates: { canonical: `https://sgsland.vn/p/${code}` },
     openGraph: {
-      title: `${name} | SGS LAND`,
+      title: `${name}`,
       description: `Dự án ${name} tại ${loc} — xem bảng giá và danh sách căn hộ thực tế.`,
       url: `https://sgsland.vn/p/${code}`,
     },

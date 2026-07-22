@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Scale, FileText, CheckCircle, AlertCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Pháp Lý Nhà Đất 2025 | Hướng Dẫn Mua Bán BĐS | SGS LAND",
+  title: "Pháp Lý Nhà Đất 2025 | Hướng Dẫn Mua Bán BĐS",
   description: "Hướng dẫn pháp lý mua bán nhà đất 2025: kiểm tra sổ hồng, thủ tục sang tên, thuế phí, lưu ý khi ký hợp đồng. Bảo vệ quyền lợi người mua.",
   alternates: { canonical: "https://sgsland.vn/phap-ly-nha-dat" },
 };

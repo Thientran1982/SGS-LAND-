@@ -4,6 +4,7 @@ import { Logo } from '../components/Logo';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { SeoHead } from '../components/SeoHead';
+import { PublicFooter } from '../components/PublicFooter';
 // ─── SVG Icon helper ──────────────────────────────────────────────────────────
 function Ico({ d, d2, cls = 'w-6 h-6' }: { d: string; d2?: string; cls?: string }) {
     return (
@@ -683,23 +684,7 @@ export const Consignment: React.FC = () => {
                 </div>
             </section>
             {/* ── Footer ── */}
-            <footer className="py-10 px-6 border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">
-                <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm text-[var(--text-secondary)] mb-6">
-                    <button onClick={() => navigate(ROUTES.LANDING)} className="hover:text-sgs-primary transition-colors">Trang chủ</button>
-                    <span>·</span>
-                    <button onClick={() => navigate(ROUTES.SEARCH)} className="hover:text-sgs-primary transition-colors">Tìm BĐS</button>
-                    <span>·</span>
-                    <button onClick={() => navigate(ROUTES.CONTACT)} className="hover:text-sgs-primary transition-colors">Liên hệ</button>
-                    <span>·</span>
-                    <button onClick={() => navigate(ROUTES.PRIVACY)} className="hover:text-sgs-primary transition-colors">Chính sách bảo mật</button>
-                    <span>·</span>
-                    <button onClick={() => navigate(ROUTES.TERMS)} className="hover:text-sgs-primary transition-colors">Điều khoản dịch vụ</button>
-                </div>
-                <p className="text-center text-xs text-[var(--text-tertiary)]">
-                    SGS Land Corp · MST: 0312960439 · TP. Hồ Chí Minh, Việt Nam<br />
-                    <a href="mailto:info@sgsland.vn" className="hover:text-sgs-primary transition-colors">info@sgsland.vn</a>
-                </p>
-            </footer>
+            <PublicFooter lang="vi" />
         </div>
     );
 };

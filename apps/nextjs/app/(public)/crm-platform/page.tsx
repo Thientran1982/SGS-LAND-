@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BarChart3, Users, Zap, Globe2, Shield, Bot } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "CRM Bất Động Sản AI | Giải Pháp #1 Việt Nam | SGS LAND",
+  title: "CRM Bất Động Sản AI | Giải Pháp #1 Việt Nam",
   description:
     "SGS LAND CRM — Quản lý leads, hợp đồng, kho hàng BĐS trên 1 nền tảng. AI định giá, chat đa kênh (Zalo, Facebook, Email), báo cáo realtime. Dùng miễn phí.",
   alternates: { canonical: "https://sgsland.vn/crm-platform" },

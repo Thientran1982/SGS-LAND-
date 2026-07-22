@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   } catch {}
   if (!listing) {
     return {
-      title: "Bất động sản | SGS LAND",
+      title: "Bất động sản",
       alternates: { canonical: `https://sgsland.vn/bds/${slug}` },
       openGraph: { url: `https://sgsland.vn/bds/${slug}` },
     };
@@ -29,11 +29,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     ? `${(listing.price / 1e9).toFixed(2)} tỷ`
     : `${Math.round(listing.price / 1e6)} triệu`;
   return {
-    title: `${listing.title} | ${price} | SGS LAND`,
+    title: `${listing.title} | ${price}`,
     description: `${listing.title} — ${listing.location}. Giá: ${price}. ${listing.area}m², ${listing.bedrooms ?? ""}PN. Pháp lý: ${listing.legalStatus ?? "Đang cập nhật"}.`,
     alternates: { canonical: `https://sgsland.vn/bds/${slug}` },
     openGraph: {
-      title: `${listing.title} | SGS LAND`,
+      title: `${listing.title}`,
       description: `Giá ${price} | ${listing.location} | ${listing.area}m²`,
       url: `https://sgsland.vn/bds/${slug}`,
       images: listing.images?.[0] ? [{ url: listing.images[0] }] : [],

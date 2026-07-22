@@ -6,7 +6,7 @@ import { SchemaScript } from "@/components/SchemaScript";
 import { getBreadcrumbSchema, SITE_URL } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Chính Sách Biên Tập | SGS LAND",
+  title: "Chính Sách Biên Tập",
   description:
     "Quy trình biên soạn, kiểm chứng thông tin và cập nhật nội dung pháp lý của SGS LAND. Tất cả bài viết được fact-check bởi chuyên gia và cập nhật theo luật hiện hành.",
   alternates: { canonical: `${SITE_URL}/chinh-sach-bien-tap` },

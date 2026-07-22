@@ -949,7 +949,7 @@ export const AiValuation: React.FC = () => {
                     url: 'https://sgsland.vn/ai-valuation',
                     inLanguage: 'vi-VN',
                     offers: { '@type': 'Offer', price: '0', priceCurrency: 'VND' },
-                    aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '127', bestRating: '5', worstRating: '1' },
+                    aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '3', bestRating: '5', worstRating: '1' },
                     review: [
                         {
                             '@type': 'Review',

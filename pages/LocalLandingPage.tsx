@@ -3,6 +3,8 @@ import { ROUTES } from '../config/routes';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
+import { PublicFooter } from '../components/PublicFooter';
+import { buildReviewSchema, buildAggregateRatingSchema } from '../shared/reviews';
 const LOCATION_SEO_META: Record<string, { title: string; description: string }> = {
     'bat-dong-san-dong-nai': {
         title: 'Bất Động Sản Đồng Nai 2026 – Dự án & Giá Đất Mới Nhất | SGSLand',
@@ -4169,29 +4171,8 @@ export default function LocalLandingPage() {
                             taxID: '0312960439',
                             url: 'https://sgsland.vn',
                         },
-                        aggregateRating: {
-                            '@type': 'AggregateRating',
-                            ratingValue: '4.8',
-                            reviewCount: '127',
-                            bestRating: '5',
-                            worstRating: '1',
-                        },
-                        review: [
-                            {
-                                '@type': 'Review',
-                                author: { '@type': 'Person', name: 'Nguyễn Minh Trí' },
-                                datePublished: '2026-03-10',
-                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
-                                reviewBody: 'Chuyên viên SGS LAND tư vấn kỹ về thị trường BĐS địa phương, hỗ trợ kiểm tra pháp lý miễn phí và kết nối vay ngân hàng tốt.',
-                            },
-                            {
-                                '@type': 'Review',
-                                author: { '@type': 'Person', name: 'Đặng Thị Hương' },
-                                datePublished: '2026-02-05',
-                                reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
-                                reviewBody: 'Tư vấn nhiệt tình và am hiểu thị trường địa phương. SGS LAND là lựa chọn đáng tin cậy khi mua BĐS tại khu vực này.',
-                            },
-                        ],
+                        aggregateRating: buildAggregateRatingSchema(),
+                        review: buildReviewSchema(),
                     },
                     {
                         '@type': 'BreadcrumbList',
@@ -4418,28 +4399,7 @@ export default function LocalLandingPage() {
                 </div>
             </section>
             {/* ── Footer ── */}
-            <footer className="bg-[var(--bg-surface)] border-t border-[var(--glass-border)] py-8 px-4">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Logo className="w-5 h-5 text-[var(--text-primary)]" />
-                            <p className="font-bold text-[var(--text-primary)]">SGS LAND</p>
-                        </div>
-                        <p className="text-xs text-[var(--text-secondary)]">Nền tảng BĐS AI hàng đầu Việt Nam</p>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
-                        <button onClick={() => navigate('/marketplace')} className="hover:text-[var(--primary-600)]">Mua Bán BĐS</button>
-                        <button onClick={() => navigate('/ai-valuation')} className="hover:text-[var(--primary-600)]">Định Giá AI</button>
-                        <button onClick={() => navigate('/ky-gui-bat-dong-san')} className="hover:text-[var(--primary-600)]">Ký Gửi BĐS</button>
-                        <button onClick={() => navigate('/news')} className="hover:text-[var(--primary-600)]">Tin Tức</button>
-                        <button onClick={() => navigate('/bat-dong-san-binh-thanh')} className="hover:text-[var(--primary-600)]">BĐS Bình Thạnh</button>
-                        <button onClick={() => navigate('/bat-dong-san-long-an')} className="hover:text-[var(--primary-600)]">BĐS Long An</button>
-                        <button onClick={() => navigate('/dau-tu-bat-dong-san')} className="hover:text-[var(--primary-600)]">Đầu Tư BĐS</button>
-                        <button onClick={() => navigate('/phap-ly-nha-dat')} className="hover:text-[var(--primary-600)]">Pháp Lý Nhà Đất</button>
-                        <button onClick={() => navigate('/contact')} className="hover:text-[var(--primary-600)]">Liên Hệ</button>
-                    </div>
-                </div>
-            </footer>
+            <PublicFooter lang="vi" />
         </div>
         </>
     );

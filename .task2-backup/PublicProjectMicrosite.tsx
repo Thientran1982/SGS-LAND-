@@ -1,0 +1,795 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
+import {
+  publicProjectApi,
+  type PublicListing,
+  type PublicProjectPayload,
+} from '../services/api/publicProjectApi';
+import { NO_IMAGE_URL } from '../utils/constants';
+import { optimizedImageUrl } from '../utils/imageUrl';
+import { buildLeadAttribution, trackPageView } from '../services/attribution';
+import { SeoHead } from '../components/SeoHead';
+interface Props {
+  projectCode: string;
+}
+const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
+  OPENING:   { label: 'Mở bán',     cls: 'bg-[var(--sgs-primary)]/10 text-sgs-primary border-[var(--sgs-primary)]' },
+  BOOKING:   { label: 'Đặt chỗ',   cls: 'bg-sky-50 text-sky-700 border-sky-200' },
+  AVAILABLE: { label: 'Còn hàng',   cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+};
+function formatPrice(price: number | null, currency: string | null): string {
+  if (price == null) return 'Liên hệ';
+  const cur = currency || 'VND';
+  if (cur === 'VND') {
+    if (price >= 1_000_000_000) {
+      const v = price / 1_000_000_000;
+      return `${v.toFixed(v >= 10 ? 0 : 2).replace(/\.?0+$/, '')} tỷ`;
+    }
+    if (price >= 1_000_000) return `${Math.round(price / 1_000_000)} triệu`;
+    return price.toLocaleString('vi-VN') + ' đ';
+  }
+  return `${price.toLocaleString('vi-VN')} ${cur}`;
+}
+function formatArea(area: number | null): string {
+  if (!area) return '—';
+  return `${area} m²`;
+}
+const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
+  const [data, setData]     = useState<PublicProjectPayload | null>(null);
+  const [error, setError]   = useState<{ status: number; message: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const qrRef = useRef<HTMLDivElement | null>(null);
+  // Live preview overlay (task #36) — nhận postMessage từ BrandingPanel khi
+  // mini-site này đang được nhúng iframe trong tab Branding của CĐT. Chỉ
+  // accept khi `?preview=1` để không ảnh hưởng người dùng cuối, và origin
+  // phải khớp window.location.origin (cùng domain — iframe nội bộ).
+  const [brandingOverride, setBrandingOverride] =
+    useState<Partial<{
+      logoUrl: string | null;
+      faviconUrl: string | null;
+      primaryColor: string | null;
+      displayName: string | null;
+      messenger: string | null;
+      ga4Id: string | null;
+      fbPixelId: string | null;
+      gtmId: string | null;
+    }> | null>(null);
+
+  const isPreviewMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('preview') === '1';
+    } catch { return false; }
+  }, []);
+  useEffect(() => {
+    if (!isPreviewMode || typeof window === 'undefined') return;
+    const onMessage = (ev: MessageEvent) => {
+      if (ev.origin !== window.location.origin) return;
+      const msg: any = ev.data;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type !== 'sgs:branding-preview') return;
+      const b = msg.branding && typeof msg.branding === 'object' ? msg.branding : {};
+      const next: Record<string, string | null> = {};
+      const allowed = ['logoUrl', 'faviconUrl', 'primaryColor', 'displayName', 'messenger'] as const;
+      for (const k of allowed) {
+        const v = b[k];
+        if (typeof v === 'string') next[k] = v;
+        else if (v === null) next[k] = null;
+      }
+      setBrandingOverride(next);
+    };
+    window.addEventListener('message', onMessage);
+    // Notify parent ready để parent gửi snapshot ngay sau khi iframe load
+    try {
+      window.parent?.postMessage({ type: 'sgs:preview-ready' }, window.location.origin);
+    } catch { /* noop */ }
+    return () => window.removeEventListener('message', onMessage);
+  }, [isPreviewMode]);
+  // Lead form state
+  const [form, setForm] = useState({ name: '', phone: '', email: '', interest: '', note: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMsg, setSubmitMsg]   = useState<{ ok: boolean; text: string } | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetIdRef  = useRef<string | null>(null);
+  const code = projectCode.trim().toUpperCase();
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setData(null);
+    publicProjectApi
+      .fetchProject(code)
+      .then((payload) => { if (!cancelled) setData(payload); })
+      .catch((err: any) => {
+        if (cancelled) return;
+        const status = err?.status === 404 ? 404 : 500;
+        setError({ status, message: err?.message || 'Không thể tải dữ liệu' });
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [code]);
+  // Update <title> + <meta description> client-side cho user (server đã inject sẵn cho crawler)
+  useEffect(() => {
+    if (!data?.project) return;
+    const original = document.title;
+    document.title = `${data.project.name} — Mini-site SGS Land`;
+    return () => { document.title = original; };
+  }, [data]);
+  const gallery = useMemo<string[]>(() => {
+    if (!data) return [];
+    const out: string[] = [];
+    if (data.project.coverImage) out.push(data.project.coverImage);
+    for (const url of data.project.metadata.gallery || []) {
+      if (url && !out.includes(url)) out.push(url);
+    }
+    for (const l of data.listings) {
+      if (Array.isArray(l.images)) {
+        for (const img of l.images.slice(0, 2)) {
+          if (img && !out.includes(img) && out.length < 24) out.push(img);
+        }
+      }
+    }
+    if (out.length === 0) out.push(NO_IMAGE_URL);
+    return out;
+  }, [data]);
+  // Reset active image when gallery changes
+  useEffect(() => { setActiveImageIdx(0); }, [gallery.length]);
+  const fullUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/p/${code}`
+    : `https://sgsland.vn/p/${code}`;
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: data?.project.name || code, url: fullUrl });
+      } else {
+        await navigator.clipboard.writeText(fullUrl);
+        setSubmitMsg({ ok: true, text: 'Đã copy đường dẫn vào clipboard.' });
+        setTimeout(() => setSubmitMsg(null), 3000);
+      }
+    } catch { /* user dismissed */ }
+  };
+  const handleDownloadQR = () => {
+    const canvas = qrRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qr-${code}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.phone.trim()) {
+      setSubmitMsg({ ok: false, text: 'Vui lòng nhập Họ tên và Số điện thoại.' });
+      return;
+    }
+    if (data?.captcha && !captchaToken) {
+      setSubmitMsg({ ok: false, text: 'Vui lòng xác nhận captcha trước khi gửi.' });
+      return;
+    }
+    setSubmitting(true);
+    setSubmitMsg(null);
+    try {
+      const res = await publicProjectApi.submitLead(code, {
+        ...form,
+        captchaToken: captchaToken || undefined,
+        pageUrl: typeof window !== 'undefined' ? window.location.href : '',
+        referrer: typeof document !== 'undefined' ? document.referrer : '',
+        attribution: buildLeadAttribution(),
+      });
+      if (res.ok) {
+        setSubmitMsg({ ok: true, text: res.message || 'Cảm ơn bạn! Chuyên viên sẽ liên hệ sớm.' });
+        setForm({ name: '', phone: '', email: '', interest: '', note: '' });
+        // Reset Turnstile sau submit thành công để user có thể submit lại lần sau
+        try {
+          const w = (window as any).turnstile;
+          if (w && turnstileWidgetIdRef.current) w.reset(turnstileWidgetIdRef.current);
+          setCaptchaToken('');
+        } catch { /* noop */ }
+      } else {
+        setSubmitMsg({ ok: false, text: res.error || 'Có lỗi xảy ra. Vui lòng thử lại.' });
+      }
+    } catch (err: any) {
+      setSubmitMsg({ ok: false, text: err?.message || 'Lỗi kết nối. Vui lòng thử lại.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  // Turnstile loader (chỉ inject khi server bật captcha)
+  useEffect(() => {
+    if (!data?.captcha?.siteKey) return;
+    const SCRIPT_ID = 'cf-turnstile-script';
+    const render = () => {
+      const w = (window as any).turnstile;
+      if (!w || !turnstileContainerRef.current) return;
+      if (turnstileWidgetIdRef.current) return; // đã render
+      try {
+        turnstileWidgetIdRef.current = w.render(turnstileContainerRef.current, {
+          sitekey: data!.captcha!.siteKey,
+          callback: (token: string) => setCaptchaToken(token),
+          'error-callback': () => setCaptchaToken(''),
+          'expired-callback': () => setCaptchaToken(''),
+          theme: 'light',
+        });
+      } catch { /* noop */ }
+    };
+    if ((window as any).turnstile) {
+      render();
+    } else if (!document.getElementById(SCRIPT_ID)) {
+      const s = document.createElement('script');
+      s.id = SCRIPT_ID;
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true;
+      s.defer = true;
+      s.onload = render;
+      document.head.appendChild(s);
+    } else {
+      // Script đang load → poll nhẹ
+      const t = setInterval(() => { if ((window as any).turnstile) { render(); clearInterval(t); } }, 200);
+      setTimeout(() => clearInterval(t), 8000);
+    }
+    return () => {
+      try {
+        const w = (window as any).turnstile;
+        if (w && turnstileWidgetIdRef.current) w.remove(turnstileWidgetIdRef.current);
+      } catch { /* noop */ }
+      turnstileWidgetIdRef.current = null;
+    };
+  }, [data?.captcha?.siteKey]);
+  // ─── Marketing attribution & visitor tracking ────────────────────────────
+  // - Capture UTM/referrer first-click + track pageview cho khách vãng lai.
+  // - Skip preview iframe (?preview=1) để không nhiễu data thật.
+  useEffect(() => {
+    if (isPreviewMode) return;
+    if (!data?.project?.code) return;
+    trackPageView({
+      projectCode: data.project.code,
+      pageLabel: `Microsite: ${data.project.name}`,
+    });
+  }, [isPreviewMode, data?.project?.code, data?.project?.name]);
+  // Inject GA4 / Meta Pixel / GTM scripts theo branding của tenant (task #4).
+  // Chỉ inject 1 lần / 1 ID / page-load; cleanup khi unmount để không leak khi
+  // user điều hướng giữa các microsite của 2 tenant khác nhau.
+  useEffect(() => {
+    if (isPreviewMode) return;
+    const branding = data?.branding ?? null;
+    if (!branding) return;
+    const { ga4Id, fbPixelId, gtmId } = branding;
+    if (!ga4Id && !fbPixelId && !gtmId) return;
+    const appended: HTMLElement[] = [];
+    // GA4 (gtag.js)
+    if (ga4Id && !document.querySelector(`script[data-sgs-ga4="${ga4Id}"]`)) {
+      const s1 = document.createElement('script');
+      s1.async = true;
+      s1.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`;
+      s1.setAttribute('data-sgs-ga4', ga4Id);
+      document.head.appendChild(s1);
+      appended.push(s1);
+      const s2 = document.createElement('script');
+      s2.setAttribute('data-sgs-ga4-init', ga4Id);
+      s2.text = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id.replace(/'/g, '')}',{send_page_view:true});`;
+      document.head.appendChild(s2);
+      appended.push(s2);
+    }
+    // Meta (Facebook) Pixel
+    if (fbPixelId && !document.querySelector(`script[data-sgs-fbp="${fbPixelId}"]`)) {
+      const s = document.createElement('script');
+      s.setAttribute('data-sgs-fbp', fbPixelId);
+      s.text = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${fbPixelId.replace(/'/g, '')}');fbq('track','PageView');`;
+      document.head.appendChild(s);
+      appended.push(s);
+    }
+    // Google Tag Manager
+    if (gtmId && !document.querySelector(`script[data-sgs-gtm="${gtmId}"]`)) {
+      const s = document.createElement('script');
+      s.setAttribute('data-sgs-gtm', gtmId);
+      s.text = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId.replace(/'/g, '')}');`;
+      document.head.appendChild(s);
+      appended.push(s);
+    }
+    return () => {
+      appended.forEach((el) => { try { el.remove(); } catch { /* noop */ } });
+    };
+  }, [isPreviewMode, data?.branding?.ga4Id, data?.branding?.fbPixelId, data?.branding?.gtmId]);
+  // Inject favicon + document.title cho tab browser CĐT (task #28).
+  // PHẢI đặt trước mọi early-return để giữ thứ tự hooks ổn định giữa các render
+  // (loading → loaded). Các giá trị branding được derive trong effect để không
+  // cần biến cục bộ sống ngoài effect khi data chưa có.
+  useEffect(() => {
+    const branding = data?.branding ?? null;
+    if (!branding) return;
+    const projectName = data?.project?.name || '';
+    const brandLabel  = branding.displayName || data?.tenantContact?.brandName || 'SGS LAND';
+    const prevTitle = document.title;
+    if (brandLabel && projectName) document.title = `${projectName} — ${brandLabel}`;
+    let faviconLink: HTMLLinkElement | null = null;
+    let prevFaviconHref: string | null = null;
+    let createdFaviconLink = false;
+    if (branding.faviconUrl) {
+      faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+      if (!faviconLink) {
+        faviconLink = document.createElement('link');
+        faviconLink.rel = 'icon';
+        document.head.appendChild(faviconLink);
+        createdFaviconLink = true;
+      } else {
+        prevFaviconHref = faviconLink.href;
+      }
+      faviconLink.href = branding.faviconUrl;
+    }
+    return () => {
+      document.title = prevTitle;
+      if (faviconLink) {
+        if (createdFaviconLink) {
+          // Tự tay tạo → phải tự gỡ, tránh tích luỹ <link rel=icon> trên SPA
+          // navigation và tránh browser dùng icon CĐT khi user về trang khác.
+          faviconLink.parentNode?.removeChild(faviconLink);
+        } else if (prevFaviconHref !== null) {
+          faviconLink.href = prevFaviconHref;
+        }
+      }
+    };
+  }, [data?.branding, data?.project?.name, data?.tenantContact?.brandName]);
+  // ─── Loading ────────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="min-h-[100dvh] bg-sgs-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-sgs-text-muted">
+          <div className="w-10 h-10 border-3 border-slate-300 border-t-[var(--sgs-primary)] rounded-full animate-spin" />
+          <p className="text-sm">Đang tải mini-site dự án…</p>
+        </div>
+      </div>
+    );
+  }
+  // ─── Error / Not Found ──────────────────────────────────────────────────
+  if (error || !data) {
+    return (
+      <div className="min-h-[100dvh] bg-sgs-bg flex items-center justify-center p-6">
+        <div className="max-w-md text-center bg-[var(--bg-surface)] rounded-2xl shadow-lg p-8 border border-slate-200">
+          <h1 className="text-xl font-bold text-sgs-text mb-2">
+            {error?.status === 404 ? 'Dự án chưa công khai' : 'Không thể tải dự án'}
+          </h1>
+          <p className="text-sgs-text-muted text-sm mb-6">
+            {error?.status === 404
+              ? 'Mini-site cho dự án này chưa được kích hoạt hoặc đã tạm ẩn. Vui lòng liên hệ hotline để được tư vấn trực tiếp.'
+              : error?.message || 'Đã xảy ra lỗi trong quá trình tải.'}
+          </p>
+          <a href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sgs-primary text-white font-semibold text-sm hover:bg-sgs-primary transition">
+            ← Về trang chủ
+          </a>
+        </div>
+      </div>
+    );
+  }
+  const { project, listings, tenantContact } = data;
+  // Branding overlay (task #36): khi mini-site được nhúng iframe trong
+  // BrandingPanel, parent gửi `sgs:branding-preview` postMessage chứa các
+  // field đang sửa nhưng chưa lưu — overlay lên branding từ server để CĐT
+  // thấy ngay logo/màu/tên thay đổi mà không cần lưu DB.
+  const baseBranding = data.branding ?? {
+    logoUrl: null, faviconUrl: null, primaryColor: null,
+    displayName: null, messenger: null,
+    ga4Id: null, fbPixelId: null, gtmId: null,
+  };
+  const branding = brandingOverride
+    ? { ...baseBranding, ...brandingOverride }
+    : baseBranding;
+  const brandPrimary = branding?.primaryColor || 'var(--sgs-primary)';
+  const brandLabel   = branding?.displayName || tenantContact.brandName || 'SGS LAND';
+  const brandLogo    = branding?.logoUrl || null;
+  return (
+    <div
+      className="min-h-[100dvh] bg-sgs-bg text-sgs-text"
+      style={{ ['--brand-primary' as any]: brandPrimary }}
+    >
+      <SeoHead
+        title="Microsite Dự Án BĐS | SGS LAND"
+        description="Trang thông tin chi tiết dự án bất động sản: vị trí, tiện ích, mặt bằng và chính sách bán hàng từ SGS LAND."
+        canonicalPath="/project"
+      />
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <section className="relative bg-sgs-primary-deep text-white">
+
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={optimizedImageUrl(gallery[activeImageIdx] || NO_IMAGE_URL, 1600)}
+            alt={project.name}
+            className="w-full h-full object-cover opacity-50"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-sgs-primary-deep/40 via-slate-900/60 to-slate-900" />
+        </div>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+          <div className="flex items-center gap-3 text-xs text-[var(--sgs-primary)] font-mono uppercase tracking-widest mb-3">
+            {brandLogo ? (
+              <img
+                src={brandLogo}
+                alt={brandLabel}
+                className="h-8 w-auto max-w-[160px] object-contain bg-white/90 rounded px-2 py-1"
+                loading="eager"
+                onError={(e) => { (e.currentTarget.style.display = 'none'); }}
+              />
+            ) : (
+              <span>{brandLabel}</span>
+            )}
+            <span className="opacity-50">/</span>
+            <span>{project.code}</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-bold leading-tight mb-3">{project.name}</h1>
+          {project.location && (
+            <p className="text-base sm:text-lg text-slate-200 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              {project.location}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-3 mb-6">
+            <a href={`tel:${tenantContact.hotline}`}
+              style={{ backgroundColor: brandPrimary }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm transition shadow-lg hover:opacity-90">
+              Hotline {tenantContact.hotlineDisplay}
+            </a>
+            <a href={tenantContact.zalo} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
+              Chat Zalo
+            </a>
+            {branding?.messenger && (
+              <a href={branding.messenger} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
+                Messenger
+              </a>
+            )}
+            <button type="button" onClick={handleShare}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition border border-white/20">
+              Chia sẻ
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
+            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+              <div className="text-xs text-[var(--sgs-primary)] uppercase">Sản phẩm công khai</div>
+              <div className="text-xl font-bold mt-1">{data.listingCount}</div>
+            </div>
+            {project.totalUnits != null && (
+              <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                <div className="text-xs text-[var(--sgs-primary)] uppercase">Tổng số căn</div>
+                <div className="text-xl font-bold mt-1">{project.totalUnits.toLocaleString('vi-VN')}</div>
+              </div>
+            )}
+            {project.openDate && (
+              <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                <div className="text-xs text-[var(--sgs-primary)] uppercase">Mở bán</div>
+                <div className="text-sm font-bold mt-1">{new Date(project.openDate).toLocaleDateString('vi-VN')}</div>
+              </div>
+            )}
+            {project.handoverDate && (
+              <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                <div className="text-xs text-[var(--sgs-primary)] uppercase">Bàn giao</div>
+                <div className="text-sm font-bold mt-1">{new Date(project.handoverDate).toLocaleDateString('vi-VN')}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+      {/* ── GALLERY ──────────────────────────────────────────────────── */}
+      {gallery.length > 1 && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
+          <div className="bg-[var(--bg-surface)] rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-3 px-2">
+              <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Thư viện ảnh</h2>
+              <span className="text-xs text-sgs-text-muted">{activeImageIdx + 1}/{gallery.length}</span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+              {gallery.map((img, i) => (
+                <button key={i} type="button"
+                  onClick={() => setActiveImageIdx(i)}
+                  className={`shrink-0 rounded-xl overflow-hidden border-2 transition ${i === activeImageIdx ? 'border-[var(--sgs-primary)] ring-2 ring-[var(--sgs-primary)]' : 'border-transparent hover:border-slate-300'}`}>
+                  <img src={optimizedImageUrl(img, 256)} alt={`${project.name} ${i + 1}`}
+                    width={128} height={80}
+                    className="w-24 h-16 sm:w-32 sm:h-20 object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+      {/* ── DESCRIPTION + AMENITIES ─────────────────────────────────── */}
+      {(project.description || project.metadata.amenities.length || project.metadata.highlights.length) && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-[var(--bg-surface)] rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-xl font-bold mb-4">Giới thiệu dự án</h2>
+              {project.description ? (
+                <p className="text-slate-700 leading-relaxed whitespace-pre-line">{project.description}</p>
+              ) : (
+                <p className="text-sgs-text-muted italic">Đang cập nhật mô tả chi tiết.</p>
+              )}
+              {project.metadata.highlights.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-sgs-text-muted mb-3">Điểm nổi bật</h3>
+                  <ul className="grid sm:grid-cols-2 gap-2">
+                    {project.metadata.highlights.map((h, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                        <span className="text-sgs-verified mt-0.5">✓</span>{h}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-sm border border-slate-200 p-6">
+              {project.metadata.amenities.length > 0 ? (
+                <>
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-sgs-text-muted mb-3">Tiện ích</h3>
+                  <ul className="space-y-2">
+                    {project.metadata.amenities.slice(0, 12).map((a, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sgs-primary shrink-0" />{a}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-sgs-text-muted mb-3">QR Code</h3>
+                  <div ref={qrRef} className="flex flex-col items-center gap-3">
+                    <div className="bg-[var(--bg-surface)] p-3 rounded-xl border border-slate-200">
+                      <QRCodeCanvas value={fullUrl} size={160} level="M" includeMargin={false} />
+                    </div>
+                    <button type="button" onClick={handleDownloadQR}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold">
+                      Tải QR (PNG)
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+      {/* ── LISTINGS TABLE ──────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Sản phẩm đang mở bán</h2>
+          <span className="text-sm text-sgs-text-muted">{listings.length} sản phẩm</span>
+        </div>
+        {listings.length === 0 ? (
+          <div className="bg-[var(--bg-surface)] rounded-2xl border border-slate-200 p-10 text-center text-sgs-text-muted">
+            <p className="text-base mb-2">Hiện chưa có sản phẩm công khai cho dự án này.</p>
+            <p className="text-sm">Vui lòng để lại thông tin bên dưới — chuyên viên sẽ gửi bảng hàng riêng cho bạn.</p>
+          </div>
+        ) : (
+          <ListingsTable listings={listings} />
+        )}
+      </section>
+      {/* ── LEAD FORM ──────────────────────────────────────────────── */}
+      <section id="lead-form" className="max-w-6xl mx-auto px-4 sm:px-6 mt-10 mb-12">
+        <div className="bg-gradient-to-br from-sgs-primary to-sgs-primary rounded-2xl p-6 sm:p-8 text-white shadow-xl">
+          <div className="grid lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-2">
+              <h2 className="text-2xl font-bold mb-2">Nhận tư vấn miễn phí</h2>
+              <p className="text-[var(--sgs-primary)] text-sm mb-4">
+                Để lại thông tin — chuyên viên SGS Land sẽ gửi bảng giá, chính sách và tư vấn 1-1 trong vòng 30 phút.
+              </p>
+              <ul className="text-sm text-[var(--sgs-primary)] space-y-2 mb-4">
+                <li className="flex items-center gap-2">Hotline: <strong className="text-white">{tenantContact.hotlineDisplay}</strong></li>
+                <li className="flex items-center gap-2">Zalo: <a href={tenantContact.zalo} className="text-white underline">{tenantContact.hotlineDisplay}</a></li>
+                <li className="flex items-center gap-2">Cam kết bảo mật thông tin theo Nghị định 13/2023</li>
+              </ul>
+            </div>
+            <form onSubmit={handleSubmit} className="lg:col-span-3 grid sm:grid-cols-2 gap-3">
+              <input
+                type="text" required value={form.name}
+                onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Họ và tên *"
+                className="px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
+                autoComplete="name" />
+              <input
+                type="tel" required value={form.phone} inputMode="tel"
+                onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="Số điện thoại *"
+                className="px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
+                autoComplete="tel" />
+              <input
+                type="email" value={form.email}
+                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="Email (không bắt buộc)"
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]"
+                autoComplete="email" />
+              <select value={form.interest}
+                onChange={(e) => setForm(f => ({ ...f, interest: e.target.value }))}
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)]">
+                <option value="">Tôi quan tâm tới…</option>
+                <option value="Bảng giá">Bảng giá & chính sách</option>
+                <option value="Xem nhà mẫu">Đặt lịch xem nhà mẫu</option>
+                <option value="Đầu tư">Tư vấn đầu tư cho thuê</option>
+                <option value="Pháp lý">Pháp lý & hỗ trợ vay</option>
+                <option value="Khác">Khác</option>
+              </select>
+              <textarea value={form.note} rows={3}
+                onChange={(e) => setForm(f => ({ ...f, note: e.target.value }))}
+                placeholder="Ghi chú thêm (không bắt buộc)"
+                className="sm:col-span-2 px-4 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--sgs-primary)] resize-none" />
+              {data?.captcha && (
+                <div ref={turnstileContainerRef}
+                  className="sm:col-span-2 flex justify-center"
+                  data-testid="turnstile-container" />
+              )}
+              {submitMsg && (
+                <div className={`sm:col-span-2 px-3 py-2 rounded-lg text-sm ${submitMsg.ok ? 'bg-emerald-500/20 text-emerald-50 border border-emerald-300/30' : 'bg-rose-500/20 text-rose-50 border border-rose-300/30'}`}>
+                  {submitMsg.text}
+                </div>
+              )}
+              <button type="submit" disabled={submitting}
+                className="sm:col-span-2 px-6 py-3 rounded-xl bg-[var(--bg-surface)] text-sgs-primary font-bold text-sm hover:bg-sgs-champagne disabled:opacity-60 transition shadow-lg">
+                {submitting ? 'Đang gửi…' : 'Gửi yêu cầu tư vấn'}
+              </button>
+              <p className="sm:col-span-2 text-xs text-[var(--sgs-primary)] text-center">
+                Gửi đi nghĩa là bạn đồng ý SGS Land lưu trữ và liên hệ tư vấn theo Chính sách bảo mật.
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+        {/* AQUA CITY EXTENDED CONTENT */}
+        {data && data.project.code === 'AQUA-CITY' && (
+          <>
+            <section className="py-12 px-4 bg-slate-50">
+              <div className="max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Phân Tích Đầu Tư Aqua City Novaland</h2>
+                <p className="text-slate-500 text-sm mb-6">Cập nhật Q2/2026 — SGS LAND, đại lý phân phối ủy quyền Novaland Group.</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {[{label:'Rental Yield',value:'4-6%',sub:'Nhà phố/năm'},{label:'Tăng Giá',value:'+3-5%',sub:'Bình quân/năm'},{label:'Lấp đầy',value:'85%+',sub:'Khu bàn giao'},{label:'Hoàn vốn',value:'18-22 năm',sub:'Ước tính thuê'}].map((m)=>(
+                    <div key={m.label} className="bg-[var(--bg-surface)] border border-slate-200 rounded-xl p-4 text-center">
+                      <div className="text-xl font-bold text-blue-600">{m.value}</div>
+                      <div className="font-medium text-slate-700 text-sm mt-1">{m.label}</div>
+                      <div className="text-xs text-slate-400">{m.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mb-8">
+                  <h3 className="font-bold text-slate-700 mb-3">Lịch Sử Giá Nhà Phố Theo Quý</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead><tr className="bg-slate-700 text-white"><th className="px-3 py-2 text-left">Quý</th><th className="px-3 py-2 text-right">Giá (tỷ/căn)</th><th className="px-3 py-2 text-right">Biến Động</th></tr></thead>
+                      <tbody>{[['Q1/2024','5,2-6,8',''],['Q3/2024','5,8-7,5','+4%'],['Q1/2025','6,2-8,0','+2%'],['Q2/2026','6,5-8,5','+3%']].map(([q,g,b],i)=>(
+                        <tr key={i} className={i%2===0?'bg-[var(--bg-surface)]':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-700">{q}</td><td className="px-3 py-2 text-right text-slate-600">{g}</td><td className="px-3 py-2 text-right text-green-600 font-medium">{b}</td></tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="mb-8">
+                  <h3 className="font-bold text-slate-700 mb-3">Pháp Lý Theo Phân Khu</h3>
+                  <div className="space-y-2">{[{pk:'The Aqua 1 & 2',done:true,note:'Sổ hồng riêng — bàn giao 2022-2023'},{pk:'Phoenix South',done:false,note:'Đang hoàn thiện thủ tục sổ hồng'},{pk:'Eagle',done:false,note:'Bàn giao 2024, đang chờ sổ hồng'}].map((p)=>(
+                    <div key={p.pk} className="flex items-center gap-3 bg-[var(--bg-surface)] border border-slate-200 rounded-xl p-3">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${p.done?'bg-green-500':'bg-yellow-400'}`} />
+                      <div className="flex-1"><span className="font-medium text-slate-700 text-sm">{p.pk}</span><span className="text-slate-400 text-xs ml-2">{p.note}</span></div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${p.done?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{p.done?'Đã có sổ':'Đang xử lý'}</span>
+                    </div>
+                  ))}</div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-700 mb-3">So Sánh vs Dự Án Cạnh Tranh</h3>
+                  <div className="overflow-x-auto"><table className="w-full text-sm border-collapse">
+                    <thead><tr className="bg-slate-700 text-white"><th className="px-3 py-2 text-left">Tiêu Chí</th><th className="px-3 py-2 text-center">Aqua City</th><th className="px-3 py-2 text-center">Izumi City</th><th className="px-3 py-2 text-center">Van Phuc</th></tr></thead>
+                    <tbody>{[['Quy mô','1.000 ha','170 ha','198 ha'],['Chủ đầu tư','Novaland','An Gia','Van Phuc Group'],['Giá nhà phố','từ 6,5 tỷ','từ 7,5 tỷ','từ 8 tỷ'],['Cách HCM','~30 phút','~35 phút','~20 phút'],['Pháp lý','Sổ hồng (PK1&2)','Đang hoàn thiện','Sổ hồng riêng'],['Rental yield','4-6%/năm','4-5%/năm','3-5%/năm']].map(([tc,ac,iz,vp],i)=>(
+                      <tr key={i} className={i%2===0?'bg-[var(--bg-surface)]':'bg-slate-50'}><td className="px-3 py-2 font-medium text-slate-600">{tc}</td><td className="px-3 py-2 text-center text-blue-600 font-medium">{ac}</td><td className="px-3 py-2 text-center text-slate-500">{iz}</td><td className="px-3 py-2 text-center text-slate-500">{vp}</td></tr>
+                    ))}</tbody>
+                  </table></div>
+                </div>
+              </div>
+            </section>
+            <section className="py-12 px-4 bg-[var(--bg-surface)]">
+              <div className="max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold text-slate-800 mb-4">Câu Hỏi Thường Gặp — Aqua City Novaland</h2>
+                <div className="space-y-3">{[
+                  {q:'Aqua City có đáng mua không?',a:'Aqua City phù hợp cho người mua ở thực tìm kiếm không gian xanh cách trung tâm 30 phút, hệ tiện ích 5 sao (golf, marina, bệnh viện, trường quốc tế). Về đầu tư: rental yield 4-6%/năm, tăng giá 3-5%/năm. SGS LAND khuyến nghị ưu tiên phân khu đã có sổ hồng riêng để giảm rủi ro pháp lý.'},
+                  {q:'Giá nhà phố Aqua City hiện nay bao nhiêu?',a:'Q2/2026: nhà phố Aqua City từ 6,5-8,5 tỷ đồng/căn tùy phân khu. Nhà phố view sông, mặt tiền đường lớn: 9-12 tỷ. Giá tăng bình quân 3-5%/năm trong 2 năm gần đây.'},
+                  {q:'Pháp lý Aqua City an toàn không?',a:'The Aqua 1 và The Aqua 2 đã có sổ hồng riêng (bàn giao 2022-2023). Phoenix South và Eagle đang hoàn thiện thủ tục. SGS LAND kiểm tra pháp lý từng căn trước khi tư vấn — miễn phí.'},
+                  {q:'Cho thuê nhà phố Aqua City được bao nhiêu?',a:'Nhà phố cho thuê: 15-30 triệu/tháng. Biệt thự: 35-80 triệu/tháng. Rental yield 4-6%/năm. SGS LAND cung cấp dịch vụ quản lý cho thuê tài sản để tối ưu lợi nhuận.'},
+                  {q:'So sánh Aqua City vs Izumi City — nên chọn dự án nào?',a:'Aqua City (1.000ha) có quy mô và tiện ích vượt trội hơn Izumi City (170ha). An Gia (chủ đầu tư Izumi) được đánh giá tài chính ổn định hơn Novaland. Tùy mục tiêu: ở thực không gian lớn → Aqua City; an toàn tài chính chủ đầu tư → Izumi.'},
+                  {q:'Hỗ trợ vay ngân hàng mua Aqua City như thế nào?',a:'SGS LAND hỗ trợ thủ tục vay ngân hàng miễn phí. VPBank, Sacombank, Techcombank cho vay tối đa 70% giá trị BĐS, lãi suất ưu đãi 12 tháng từ 8.5%/năm. Hotline: +84 971 132 378.'},
+                ].map((item,idx)=>(
+                  <details key={idx} className="border border-slate-200 rounded-xl overflow-hidden">
+                    <summary className="px-4 py-3 cursor-pointer font-medium text-slate-700 hover:bg-slate-50 flex items-center justify-between list-none">
+                      <span>{item.q}</span><span className="text-slate-400 ml-2 shrink-0">+</span>
+                    </summary>
+                    <div className="px-4 pb-4 text-slate-600 text-sm leading-relaxed">{item.a}</div>
+                  </details>
+                ))}</div>
+              </div>
+            </section>
+          </>
+        )}
+
+      {/* ── FOOTER ─────────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-200 bg-[var(--bg-surface)]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-sgs-text-muted">
+          <div className="flex items-center gap-2">
+            {brandLogo && (
+              <img src={brandLogo} alt={brandLabel} className="h-6 w-auto max-w-[120px] object-contain" />
+            )}
+            <span>© {brandLabel} — Mini-site dự án <strong>{project.name}</strong></span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={handleDownloadQR} className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-xs font-semibold">
+              Tải QR
+            </button>
+            <a href={`tel:${tenantContact.hotline}`}
+              style={{ backgroundColor: brandPrimary }}
+              className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90">
+              {tenantContact.hotlineDisplay}
+            </a>
+          </div>
+        </div>
+        {/* Off-screen QR for footer download (when amenities present, qrRef above is replaced) */}
+        {project.metadata.amenities.length > 0 && (
+          <div ref={qrRef} className="sr-only" aria-hidden>
+            <QRCodeCanvas value={fullUrl} size={256} level="M" includeMargin={false} />
+          </div>
+        )}
+      </footer>
+    </div>
+  );
+};
+const ListingsTable: React.FC<{ listings: PublicListing[] }> = ({ listings }) => (
+  <div className="bg-[var(--bg-surface)] rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead className="bg-sgs-bg text-sgs-text-muted uppercase text-xs tracking-wide">
+          <tr>
+            <th className="text-left px-4 py-3">Mã / Tên</th>
+            <th className="text-left px-4 py-3">Loại</th>
+            <th className="text-right px-4 py-3">Diện tích</th>
+            <th className="text-right px-4 py-3">PN/WC</th>
+            <th className="text-right px-4 py-3">Giá</th>
+            <th className="text-center px-4 py-3">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {listings.map((l) => {
+            const status = STATUS_LABELS[l.status] || { label: l.status, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
+            const orient = l.attributes?.orientation || l.attributes?.view || '';
+            return (
+              <tr key={l.id} className="hover:bg-[var(--sgs-primary)]/10 transition">
+                <td className="px-4 py-3">
+                  <div className="font-mono text-xs text-sgs-text-muted">{l.code || '—'}</div>
+                  <div className="font-semibold text-sgs-text line-clamp-1">{l.title || '—'}</div>
+                  {orient && <div className="text-xs text-sgs-text-muted mt-0.5">{String(orient)}</div>}
+                </td>
+                <td className="px-4 py-3 text-slate-700">{l.type || '—'}</td>
+                <td className="px-4 py-3 text-right text-slate-700">{formatArea(l.area)}</td>
+                <td className="px-4 py-3 text-right text-slate-700">
+                  {(l.bedrooms ?? '—')} / {(l.bathrooms ?? '—')}
+                </td>
+                <td className="px-4 py-3 text-right font-bold text-sgs-primary">{formatPrice(l.price, l.currency)}</td>
+                <td className="px-4 py-3 text-center">
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border ${status.cls}`}>
+                    {status.label}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+    <div className="px-4 py-3 bg-sgs-bg border-t border-slate-200 text-center">
+      <a href="#lead-form" className="text-sm text-sgs-primary font-semibold hover:underline">
+        Cần bảng giá đầy đủ? Để lại thông tin tư vấn ↓
+      </a>
+    </div>
+  </div>
+);
+export default PublicProjectMicrosite;
+export { PublicProjectMicrosite };

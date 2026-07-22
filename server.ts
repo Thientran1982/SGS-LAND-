@@ -3180,7 +3180,7 @@ app.use(globalMutationAudit);
       { keyword: 'bất động sản Long Thành',       targetUrl: '/bat-dong-san-long-thanh',   notes: 'Hưởng lợi sân bay Long Thành',                    searchVolume: 18100 },
       { keyword: 'bất động sản Bình Dương',       targetUrl: '/bat-dong-san-binh-duong',   notes: 'KCN, căn hộ chuyên gia',                          searchVolume: 22200 },
       { keyword: 'bất động sản Thủ Đức',          targetUrl: '/bat-dong-san-thu-duc',      notes: 'Metro số 1, Thủ Thiêm',                           searchVolume: 14800 },
-      { keyword: 'định giá bất động sản',         targetUrl: '/ai-valuation',              notes: 'Công cụ AI miễn phí, sai số ±5%',                searchVolume: 9900 },
+      { keyword: 'định giá bất động sản',         targetUrl: '/ai-valuation',              notes: 'Công cụ AI miễn phí, sai số ±4.8%',                searchVolume: 9900 },
       { keyword: 'sàn bất động sản uy tín',       targetUrl: '/',                          notes: 'Định vị thương hiệu — top of funnel',             searchVolume: 4400 },
       { keyword: 'giá nhà đất TP.HCM',            targetUrl: '/marketplace',               notes: 'Dữ liệu giá giao dịch thực tế',                   searchVolume: 12100 },
       // Dự án
@@ -5233,7 +5233,7 @@ app.use(globalMutationAudit);
     // Import the injector lazily so it is never bundled when running in dev mode.
     const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta, buildProjectMeta } =
       await import('./server/seo/metaInjector');
-    const { renderSsrPage, generateBotHTML } = await import('./server/ssr-renderer');
+    const { renderSsrPage, generateBotHTML, getRenderPolicy } = await import('./server/ssr-renderer');
     const { isAIBot, isSocialBot, isBot } = await import('./server/bot-detector');
     const { getGlossaryTermHtml, getGlossaryIndexHtml } = await import('./server/pseo/glossary');
 
@@ -5758,11 +5758,12 @@ app.use(globalMutationAudit);
       if (!html) html = generateBotHTML(pathname, { aiBot });
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('X-Rendered-By', 'SGS-SSR');
+        // Task 2.1 — per-route hybrid render policy (SSG/SSR/ISR).
+        const __policy = getRenderPolicy(pathname);
+        res.setHeader('X-Render-Strategy', __policy.strategy);
         res.setHeader(
           'Cache-Control',
-          aiBot
-            ? 'no-store'
-            : 'public, max-age=3600, stale-while-revalidate=86400'
+          aiBot ? 'no-store' : __policy.cacheControl
         );
         return res.send(html);
       }

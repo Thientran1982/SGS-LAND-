@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, Building2, ArrowRight } from "lucide-react";
 export const metadata: Metadata = {
-  title: "Dự Án Bất Động Sản | SGS LAND",
+  title: "Dự Án Bất Động Sản",
   description: "Khám phá các dự án BĐS lớn nhất TP.HCM, Đồng Nai, Bình Dương, Long An. Aqua City, The Global City, Vinhomes, Masterise Homes và nhiều dự án nổi bật khác.",
   alternates: { canonical: "https://sgsland.vn/du-an" },
 };

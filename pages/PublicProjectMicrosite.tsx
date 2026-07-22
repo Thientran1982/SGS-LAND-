@@ -9,6 +9,7 @@ import { NO_IMAGE_URL } from '../utils/constants';
 import { optimizedImageUrl } from '../utils/imageUrl';
 import { buildLeadAttribution, trackPageView } from '../services/attribution';
 import { SeoHead } from '../components/SeoHead';
+import { PublicFooter } from '../components/PublicFooter';
 interface Props {
   projectCode: string;
 }
@@ -713,32 +714,7 @@ const PublicProjectMicrosite: React.FC<Props> = ({ projectCode }) => {
         )}
 
       {/* ── FOOTER ─────────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-200 bg-[var(--bg-surface)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-sgs-text-muted">
-          <div className="flex items-center gap-2">
-            {brandLogo && (
-              <img src={brandLogo} alt={brandLabel} className="h-6 w-auto max-w-[120px] object-contain" />
-            )}
-            <span>© {brandLabel} — Mini-site dự án <strong>{project.name}</strong></span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={handleDownloadQR} className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-xs font-semibold">
-              Tải QR
-            </button>
-            <a href={`tel:${tenantContact.hotline}`}
-              style={{ backgroundColor: brandPrimary }}
-              className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold hover:opacity-90">
-              {tenantContact.hotlineDisplay}
-            </a>
-          </div>
-        </div>
-        {/* Off-screen QR for footer download (when amenities present, qrRef above is replaced) */}
-        {project.metadata.amenities.length > 0 && (
-          <div ref={qrRef} className="sr-only" aria-hidden>
-            <QRCodeCanvas value={fullUrl} size={256} level="M" includeMargin={false} />
-          </div>
-        )}
-      </footer>
+      <PublicFooter lang="vi" />
     </div>
   );
 };

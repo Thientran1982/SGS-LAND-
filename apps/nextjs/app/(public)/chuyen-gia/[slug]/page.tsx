@@ -12,13 +12,14 @@ export function generateStaticParams() {
   return getExpertSlugs().map((slug) => ({ slug }));
 }
 
-export function generateMetadata({
+export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
-}): Metadata {
-  const expert = getExpertBySlug(params.slug);
-  if (!expert) return { title: "Không tìm thấy chuyên gia | SGS LAND" };
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const expert = getExpertBySlug(slug);
+  if (!expert) return { title: "Không tìm thấy chuyên gia" };
   const title = `${expert.name} - ${expert.title} | SGS LAND`;
   const url = `${SITE_URL}/chuyen-gia/${expert.slug}`;
   return {
@@ -34,12 +35,13 @@ export function generateMetadata({
   };
 }
 
-export default function ExpertProfilePage({
+export default async function ExpertProfilePage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const expert = getExpertBySlug(params.slug);
+  const { slug } = await params;
+  const expert = getExpertBySlug(slug);
   if (!expert) notFound();
 
   const url = `${SITE_URL}/chuyen-gia/${expert.slug}`;

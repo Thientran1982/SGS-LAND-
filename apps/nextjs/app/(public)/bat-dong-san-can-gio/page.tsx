@@ -3,7 +3,7 @@ import { LocalLandingPageTemplate } from "@/components/public/LocalLandingPageTe
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Bất Động Sản Cần Giờ | Siêu Đô Thị Lấn Biển | SGS LAND",
+  title: "Bất Động Sản Cần Giờ | Siêu Đô Thị Lấn Biển",
   description: "BĐS Cần Giờ TP.HCM: cơ hội đầu tư đón sóng Vinhomes Cần Giờ 2.870ha và Metro số 4. Giá đất còn thấp, tiềm năng tăng trưởng cao nhất TP.HCM.",
   alternates: { canonical: "https://sgsland.vn/bat-dong-san-can-gio" },
 };

@@ -6,12 +6,12 @@ import { AREA_PRICES, AREA_META } from "@/data/areas";
 const PAGE_URL = `${SITE_URL}/bao-cao-thi-truong`;
 
 export const metadata: Metadata = {
-  title: "Báo Cáo Thị Trường Bất Động Sản TP.HCM & Vùng Ven | SGS LAND",
+  title: "Báo Cáo Thị Trường Bất Động Sản TP.HCM & Vùng Ven",
   description:
     "Báo cáo chỉ số giá bất động sản theo khu vực TP.HCM và vùng ven: giá trung bình/m², biến động YoY, khoảng giá và dự án nổi bật từng khu vực. Cập nhật định kỳ bởi SGS LAND.",
   alternates: { canonical: PAGE_URL },
   openGraph: {
-    title: "Báo Cáo Thị Trường Bất Động Sản | SGS LAND",
+    title: "Báo Cáo Thị Trường Bất Động Sản",
     description:
       "Chỉ số giá BĐS theo khu vực TP.HCM và vùng ven, biến động YoY và dự án nổi bật.",
     url: PAGE_URL,
