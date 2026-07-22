@@ -1509,8 +1509,8 @@ app.use(globalMutationAudit);
 
     // ── Tenant white-label (task #28): cron 5 phút verify TXT custom domain ──
     try {
-      startCustomDomainVerifyCron();
-      logger.info('[tenant] Custom-domain TXT verify cron started (5min interval)');
+      startCustomDomainVerifyCron({ intervalMs: 30 * 60 * 1000 }); // Neon scale-to-zero fix 2026-07-22: 5min->30min, no QStash counterpart
+      logger.info('[tenant] Custom-domain TXT verify cron started (30min interval)');
     } catch (err: any) {
       logger.warn(`[tenant] Failed to start TXT verify cron: ${err?.message || err}`);
     }
@@ -4507,7 +4507,7 @@ app.use(globalMutationAudit);
       '';
     app.use(createCampaignSchedulerCronRouter(pool, campaignSchedulerSecret));
     try {
-      startCampaignSchedulerCron(pool);
+      startCampaignSchedulerCron(pool, { intervalMs: 15 * 60 * 1000 }); // Neon scale-to-zero fix 2026-07-22: giam tu 5p xuong 15p (QSTASH_TOKEN hien invalid nen khong the xac nhan QStash schedule con hoat dong, giu interval vua phai an toan hon)
     } catch (err: any) {
       logger.warn(`[CampaignScheduler] Không thể khởi động in-process cron: ${err?.message || err}`);
     }
@@ -4555,7 +4555,7 @@ app.use(globalMutationAudit);
       logger.warn(`[VNPay] config invalid at boot: ${err?.message || err}`);
     }
     try {
-      startBuyerPushCron(pool);
+      startBuyerPushCron(pool, { intervalMs: 60 * 60 * 1000 }); // Neon scale-to-zero fix 2026-07-22: no QStash schedule found for this job, was 15min
     } catch (err: any) {
       logger.warn(`[push] Không thể khởi động in-process buyer-push cron: ${err?.message || err}`);
     }
