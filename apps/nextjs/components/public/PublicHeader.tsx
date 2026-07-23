@@ -142,8 +142,7 @@ export function PublicHeader() {
               }}
               aria-label="Chuyển ngôn ngữ VI / EN"
             >
-              <Globe className="w-3.5 h-3.5" />
-              {lang.toUpperCase()}
+                            {lang.toUpperCase()}
             </button>
 
             {/* Light / Dark Toggle */}
@@ -157,7 +156,7 @@ export function PublicHeader() {
               }}
               aria-label="Chuyển chế độ sáng / tối"
             >
-              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {theme === "light" ? "Tối" : "Sáng"}
             </button>
 
             {/* Login — ghost outline */}
@@ -242,7 +241,7 @@ export function PublicHeader() {
                 style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-primary)" }}
                 aria-label="Chuyển ngôn ngữ"
               >
-                <Globe className="w-3.5 h-3.5" /> {lang.toUpperCase()}
+                {lang.toUpperCase()}
               </button>
               <button
                 onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
@@ -250,7 +249,7 @@ export function PublicHeader() {
                 style={{ background: "rgba(27,58,92,0.07)", color: "var(--sgs-primary)" }}
                 aria-label="Chuyển chế độ sáng tối"
               >
-                {theme === "light" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                {theme === "light" ? "Tối" : "Sáng"}
                 {theme === "light" ? "Tối" : "Sáng"}
               </button>
             </div>

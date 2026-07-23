@@ -140,7 +140,7 @@ export default function ConsentBanner() {
   return (
     <div
       role="dialog"
-      aria-label="Cai dat cookie"
+      aria-label="Cài đặt cookie"
       style={{
         position: "fixed",
         left: 0,
@@ -157,44 +157,44 @@ export default function ConsentBanner() {
         {!showDetails ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
             <p style={{ margin: 0, fontSize: 14, color: "#4b5563", flex: "1 1 320px" }}>
-              SGS LAND su dung cookie thiet yeu de van hanh website va cookie tuy chon (neu ban dong y) de
+              SGS LAND sử dụng cookie thiết yếu để vận hành website và cookie tùy chọn (nếu bạn đồng ý) để
               ca nhan hoa goi y bat dong san phu hop hon. Xem{" "}
               <a href="/cookie-settings" style={{ textDecoration: "underline" }}>
-                chinh sach cookie
+                chính sách cookie
               </a>
               .
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button onClick={() => setShowDetails(true)} disabled={saving} style={secondaryBtn}>
-                Tuy chinh
+                Tùy chỉnh
               </button>
               <button onClick={handleRejectNonEssential} disabled={saving} style={secondaryBtn}>
-                Chi thiet yeu
+                Chỉ thiết yếu
               </button>
               <button onClick={handleAcceptAll} disabled={saving} style={primaryBtn}>
-                Chap nhan tat ca
+                Chấp nhận tất cả
               </button>
             </div>
           </div>
         ) : (
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Tuy chon cookie</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Tùy chọn cookie</h2>
             <ConsentToggleRow
-              label="Thiet yeu (bat buoc)"
-              description="Can thiet de website hoat dong, khong the tat."
+              label="Thiết yếu (bắt buộc)"
+              description="Cần thiết để website hoạt động, không thể tắt."
               checked={true}
               disabled
               onChange={() => {}}
             />
             <ConsentToggleRow
-              label="Hanh vi & ca nhan hoa"
-              description="Giup goi y bat dong san tuong tu va thong bao phu hop hon voi ban."
+              label="Hành vi & cá nhân hóa"
+              description="Giúp gợi ý bất động sản tương tự và thông báo phù hợp hơn với bạn."
               checked={draft.BEHAVIORAL}
               onChange={(v) => setDraft((d) => ({ ...d, BEHAVIORAL: v }))}
             />
             <ConsentToggleRow
-              label="Quang cao"
-              description="Giup do luong va toi uu hieu qua quang cao tren cac nen tang khac."
+              label="Quảng cáo"
+              description="Giúp đo lường và tối ưu hiệu quả quảng cáo trên các nền tảng khác."
               checked={draft.ADVERTISING}
               onChange={(v) => setDraft((d) => ({ ...d, ADVERTISING: v }))}
             />
