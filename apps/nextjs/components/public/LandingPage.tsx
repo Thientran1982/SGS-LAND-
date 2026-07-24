@@ -405,7 +405,7 @@ function ProjectsSection({ lang }: { lang: Lang }) {
           title={lang==="vi" ? <>Cầm dự án <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>trên tay</em></> : <>Hold each project <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>in hand</em></>}
           side={lang==="vi" ? "Ảnh thật, giá gốc chủ đầu tư, pháp lý đã kiểm định 2 lớp." : "Real photos, developer prices, two-layer legal verification."}
         />
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"26px" }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
+        <div style={{ display:"grid", gap:"26px" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           {PROJECTS.map((p) => (
             <ProjectCard key={p.slug} p={p} lang={lang} />
           ))}
