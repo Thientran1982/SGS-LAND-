@@ -203,7 +203,7 @@ export function PublicHeader() {
           {/* ── Mobile Hamburger ──────────────────────────── */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="lg:hidden p-2 rounded-lg transition-colors"
+            className="md:hidden p-2 rounded-lg transition-colors"
             style={{ color: isHero ? "#FFFFFF" : "var(--sgs-primary)" }}
             aria-label="Mở menu"
           >
@@ -215,7 +215,7 @@ export function PublicHeader() {
       {/* ── Mobile Menu Drawer ─────────────────────────────── */}
       {menuOpen && (
         <div
-          className="lg:hidden"
+          className="md:hidden"
           style={{
             background: "rgba(255,255,255,0.97)",
             backdropFilter: "blur(14px)",
