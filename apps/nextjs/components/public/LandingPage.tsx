@@ -444,7 +444,7 @@ function MethodSection({ lang }: { lang: Lang }) {
           title={lang==="vi" ? <>Bốn lớp <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>bảo chứng</em></> : <>Four layers of <em style={{ fontStyle:"italic", fontWeight:340, color:"var(--lp-navy)" }}>assurance</em></>}
           side={lang==="vi" ? "Miễn phí hoàn toàn với người mua và người thuê." : "Completely free for buyers and renters."}
         />
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"clamp(20px,3vw,44px)" }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
+        <div style={{ display:"grid", gap:"clamp(20px,3vw,44px)" }} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           {methods.map((m, i) => (
             <MethodCard key={i} m={m} lang={lang} />
           ))}
