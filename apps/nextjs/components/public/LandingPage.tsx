@@ -495,7 +495,7 @@ function FaqSection({ lang }: { lang: Lang }) {
 }
 
 // ─── CTA SECTION ─────────────────────────────────────────────────────────────
-function CtaSection({ lang }: { lang: Lang }) {
+function CtaSection({ lang, onChatOpen }: { lang: Lang; onChatOpen: () => void }) {
   const { ref, inView } = useReveal();
   return (
     <section style={{ padding:"120px 0", background:"var(--lp-bg)", textAlign:"center" }}>
@@ -520,13 +520,14 @@ function CtaSection({ lang }: { lang: Lang }) {
             >
               {lang==="vi" ? "Định giá AI miễn phí" : "Free AI valuation"}
             </a>
-            <a href="tel:+84971132378"
-              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize:"15px", border:"1px solid var(--lp-ink)", color:"var(--lp-ink)", textDecoration:"none", transition:"all .25s" }}
+            <button
+              onClick={onChatOpen}
+              style={{ display:"inline-flex", alignItems:"center", gap:"10px", padding:"17px 36px", borderRadius:"999px", fontWeight:500, fontSize:"15px", border:"1px solid var(--lp-ink)", color:"var(--lp-ink)", background:"transparent", cursor:"pointer", transition:"all .25s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="var(--lp-ink)"; (e.currentTarget as HTMLElement).style.color="var(--lp-bg)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="transparent"; (e.currentTarget as HTMLElement).style.color="var(--lp-ink)"; }}
             >
-              {lang==="vi" ? "Gọi 0971 132 378" : "Call +84 971 132 378"}
-            </a>
+              {lang==="vi" ? "Hỏi chuyên gia" : "Ask a specialist"}
+            </button>
           </div>
         </div>
       </div>
@@ -565,7 +566,7 @@ export function LandingPage({ featuredListings = [], stats }: Props) {
         <ProjectsSection lang={lang} />
         <MethodSection lang={lang} />
         <FaqSection lang={lang} />
-        <CtaSection lang={lang} />
+        <CtaSection lang={lang} onChatOpen={onChatOpen} />
       </div>
     </>
   );
